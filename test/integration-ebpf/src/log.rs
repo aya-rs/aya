@@ -3,10 +3,18 @@
 
 use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
-use aya_ebpf::{macros::uprobe, programs::ProbeContext};
+use aya_ebpf::{
+    macros::{map, uprobe},
+    maps::Array,
+    programs::ProbeContext,
+};
 use aya_log_ebpf::{debug, error, info, trace, warn};
+use integration_common::log::Buffer;
 #[cfg(not(test))]
 extern crate ebpf_panic;
+
+#[map]
+static BUFFER: Array<Buffer> = Array::with_max_entries(1, 0);
 
 #[uprobe]
 pub fn test_log(ctx: ProbeContext) {
@@ -88,4 +96,19 @@ pub fn test_log(ctx: ProbeContext) {
 
         debug!(&ctx, "{:x}", no_copy.consume());
     }
+
+    let Some(ptr) = BUFFER.get_ptr_mut(0) else {
+        return;
+    };
+    let src = unsafe { ptr.as_ref() };
+    let Some(Buffer { buf, len }) = src else {
+        return;
+    };
+    let len = *len;
+    let buf = if len < buf.len() {
+        &buf[..len]
+    } else {
+        &buf[..]
+    };
+    info!(&ctx, "variable length buffer: {:x}", buf);
 }
