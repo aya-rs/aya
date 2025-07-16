@@ -14,6 +14,20 @@ pub mod bpf_probe_read {
     unsafe impl aya::Pod for TestResult {}
 }
 
+pub mod log {
+    pub const BUF_LEN: usize = 1024;
+
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct Buffer {
+        pub buf: [u8; BUF_LEN], // 64 KiB, one more than LogValueLength::MAX.
+        pub len: usize,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for Buffer {}
+}
+
 pub mod raw_tracepoint {
     #[repr(C)]
     #[derive(Clone, Copy)]

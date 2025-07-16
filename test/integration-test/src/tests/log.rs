@@ -1,7 +1,8 @@
 use std::{borrow::Cow, sync::Mutex};
 
-use aya::{Ebpf, EbpfLoader, programs::UProbe};
+use aya::{Ebpf, EbpfLoader, maps::Array, programs::UProbe};
 use aya_log::EbpfLogger;
+use integration_common::log::{BUF_LEN, Buffer};
 use log::{Level, Log, Record};
 
 #[unsafe(no_mangle)]
@@ -38,6 +39,21 @@ struct CapturedLog<'a> {
 #[test_log::test]
 fn log() {
     let mut bpf = Ebpf::load(crate::LOG).unwrap();
+
+    {
+        let buffer = bpf.map_mut("BUFFER").unwrap();
+        let mut buffer: Array<_, Buffer> = Array::try_from(buffer).unwrap();
+        buffer
+            .set(
+                0,
+                Buffer {
+                    buf: [0xff; BUF_LEN],
+                    len: 3,
+                },
+                0,
+            )
+            .unwrap();
+    }
 
     let mut captured_logs = Vec::new();
     let logger = TestingLogger {
@@ -167,6 +183,15 @@ fn log() {
         Some(&CapturedLog {
             body: "42 43 44 45".into(),
             level: Level::Debug,
+            target: "log".into(),
+        })
+    );
+
+    assert_eq!(
+        records.next(),
+        Some(&CapturedLog {
+            body: "variable length buffer: ffffff".into(),
+            level: Level::Info,
             target: "log".into(),
         })
     );
