@@ -295,7 +295,7 @@ impl Format for u32 {
             Some(DisplayHint::Ip) => Ok(Ipv4Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
-            _ => Ok(DefaultFormatter::format(self)),
+            None => Ok(DefaultFormatter::format(self)),
         }
     }
 }
@@ -351,7 +351,7 @@ impl Format for [u8; 6] {
             Some(DisplayHint::Ip) => Err(()),
             Some(DisplayHint::LowerMac) => Ok(LowerMacFormatter::format(*self)),
             Some(DisplayHint::UpperMac) => Ok(UpperMacFormatter::format(*self)),
-            _ => Err(()),
+            None => Err(()),
         }
     }
 }
@@ -365,7 +365,7 @@ impl Format for [u8; 16] {
             Some(DisplayHint::Ip) => Ok(Ipv6Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
-            _ => Err(()),
+            None => Err(()),
         }
     }
 }
@@ -379,7 +379,7 @@ impl Format for [u16; 8] {
             Some(DisplayHint::Ip) => Ok(Ipv6Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
-            _ => Err(()),
+            None => Err(()),
         }
     }
 }
@@ -395,7 +395,7 @@ macro_rules! impl_format {
                     Some(DisplayHint::Ip) => Err(()),
                     Some(DisplayHint::LowerMac) => Err(()),
                     Some(DisplayHint::UpperMac) => Err(()),
-                    _ => Ok(DefaultFormatter::format(self)),
+                    None => Ok(DefaultFormatter::format(self)),
                 }
             }
         }
@@ -424,7 +424,7 @@ macro_rules! impl_format_float {
                     Some(DisplayHint::Ip) => Err(()),
                     Some(DisplayHint::LowerMac) => Err(()),
                     Some(DisplayHint::UpperMac) => Err(()),
-                    _ => Ok(DefaultFormatter::format(self)),
+                    None => Ok(DefaultFormatter::format(self)),
                 }
             }
         }
