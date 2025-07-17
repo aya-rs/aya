@@ -151,10 +151,7 @@ impl<T: Log> EbpfLogger<T> {
             .ok_or_else(|| Error::MapNotFound)?
             .iter()
             .filter_map(|id| MapInfo::from_id(*id).ok())
-            .find(|map_info| match map_info.name_as_str() {
-                Some(name) => name == MAP_NAME,
-                None => false,
-            })
+            .find(|map_info| map_info.name_as_str() == Some(MAP_NAME))
             .ok_or(Error::MapNotFound)?;
         let map = MapData::from_id(map.id())?;
 
