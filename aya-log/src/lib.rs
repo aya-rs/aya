@@ -100,11 +100,7 @@ pub struct EbpfLogger<T> {
 
 impl<T> AsRawFd for EbpfLogger<T> {
     fn as_raw_fd(&self) -> std::os::unix::prelude::RawFd {
-        let Self {
-            ring_buf,
-            logger: _,
-        } = self;
-        ring_buf.as_raw_fd()
+        self.ring_buf.as_raw_fd()
     }
 }
 
