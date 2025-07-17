@@ -76,9 +76,11 @@ use aya_log_common::{Argument, DisplayHint, LOG_FIELDS, Level, LogValueLength, R
 use log::{Log, Record, error};
 use thiserror::Error;
 
+#[expect(dead_code)]
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 struct RecordFieldWrapper(RecordField);
+#[expect(dead_code)]
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 struct ArgumentWrapper(Argument);
