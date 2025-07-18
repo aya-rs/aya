@@ -71,6 +71,8 @@ impl<T: log::Log> aya_log::EbpfLogger<T>
 pub fn aya_log::EbpfLogger<T>::flush(&mut self)
 pub fn aya_log::EbpfLogger<T>::init_from_id_with_logger(program_id: u32, logger: T) -> core::result::Result<Self, aya_log::Error>
 pub fn aya_log::EbpfLogger<T>::init_with_logger(bpf: &mut aya::bpf::Ebpf, logger: T) -> core::result::Result<Self, aya_log::Error>
+impl<T> std::os::fd::owned::AsFd for aya_log::EbpfLogger<T>
+pub fn aya_log::EbpfLogger<T>::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
 impl<T> std::os::fd::raw::AsRawFd for aya_log::EbpfLogger<T>
 pub fn aya_log::EbpfLogger<T>::as_raw_fd(&self) -> std::os::fd::raw::RawFd
 impl<T> core::marker::Freeze for aya_log::EbpfLogger<T> where T: core::marker::Freeze
