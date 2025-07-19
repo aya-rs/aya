@@ -61,7 +61,7 @@ use std::{
     fmt::{LowerHex, UpperHex},
     mem,
     net::{Ipv4Addr, Ipv6Addr},
-    os::fd::AsRawFd,
+    os::fd::{AsFd, AsRawFd},
     ptr, str,
 };
 
@@ -96,6 +96,16 @@ unsafe impl Pod for DisplayHintWrapper {}
 pub struct EbpfLogger<T> {
     ring_buf: RingBuf<MapData>,
     logger: T,
+}
+
+impl<T> AsFd for EbpfLogger<T> {
+    fn as_fd(&self) -> std::os::fd::BorrowedFd<'_> {
+        let Self {
+            ring_buf,
+            logger: _,
+        } = self;
+        ring_buf.as_fd()
+    }
 }
 
 impl<T> AsRawFd for EbpfLogger<T> {
