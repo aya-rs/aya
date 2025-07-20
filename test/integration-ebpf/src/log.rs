@@ -3,10 +3,18 @@
 
 use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
-use aya_ebpf::{macros::uprobe, programs::ProbeContext};
+use aya_ebpf::{
+    macros::{map, uprobe},
+    maps::Array,
+    programs::ProbeContext,
+};
 use aya_log_ebpf::{debug, error, info, trace, warn};
+use integration_common::log::Buffer;
 #[cfg(not(test))]
 extern crate ebpf_panic;
+
+#[map]
+static BUFFER: Array<Buffer> = Array::with_max_entries(1, 0);
 
 #[uprobe]
 pub fn test_log(ctx: ProbeContext) {
@@ -62,11 +70,17 @@ pub fn test_log(ctx: ProbeContext) {
     warn!(&ctx, "hex lc: {:x}, hex uc: {:X}", hex, hex);
     let hex = [0xde, 0xad, 0xbe, 0xef].as_slice();
     debug!(&ctx, "hex lc: {:x}, hex uc: {:X}", hex, hex);
-    let len = 42;
-    let size = 43;
-    let slice = 44;
-    let record = 45;
-    debug!(&ctx, "{} {} {} {}", len, size, slice, record);
+    let header = 42;
+    let tmp = 43;
+    let kind = 44;
+    let value = 45;
+    let size = 46;
+    let op = 47;
+    let buf = 48;
+    debug!(
+        &ctx,
+        "{} {} {} {} {} {} {}", header, tmp, kind, value, size, op, buf
+    );
 
     // Testing compilation only.
     if false {
@@ -82,4 +96,19 @@ pub fn test_log(ctx: ProbeContext) {
 
         debug!(&ctx, "{:x}", no_copy.consume());
     }
+
+    let Some(ptr) = BUFFER.get_ptr_mut(0) else {
+        return;
+    };
+    let src = unsafe { ptr.as_ref() };
+    let Some(Buffer { buf, len }) = src else {
+        return;
+    };
+    let len = *len;
+    let buf = if len < buf.len() {
+        &buf[..len]
+    } else {
+        &buf[..]
+    };
+    info!(&ctx, "variable length buffer: {:x}", buf);
 }
