@@ -177,20 +177,12 @@ impl<T> core::clone::CloneToUninit for aya_log_common::RecordFieldKind where T: 
 pub unsafe fn aya_log_common::RecordFieldKind::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_log_common::RecordFieldKind
 pub fn aya_log_common::RecordFieldKind::from(t: T) -> T
-pub trait aya_log_common::Argument
+pub trait aya_log_common::Argument: aya_log_common::sealed::Sealed
 pub fn aya_log_common::Argument::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 impl aya_log_common::Argument for &[u8]
 pub fn &[u8]::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 impl aya_log_common::Argument for &str
 pub fn &str::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
-impl aya_log_common::Argument for [u16; 8]
-pub fn [u16; 8]::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
-impl aya_log_common::Argument for [u8; 16]
-pub fn [u8; 16]::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
-impl aya_log_common::Argument for [u8; 4]
-pub fn [u8; 4]::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
-impl aya_log_common::Argument for [u8; 6]
-pub fn [u8; 6]::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 impl aya_log_common::Argument for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 impl aya_log_common::Argument for core::net::ip_addr::IpAddr
@@ -223,6 +215,8 @@ impl aya_log_common::Argument for u8
 pub fn u8::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 impl aya_log_common::Argument for usize
 pub fn usize::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl<const N: usize> aya_log_common::Argument for [u8; N]
+pub fn [u8; N]::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 pub trait aya_log_common::DefaultFormatter
 impl aya_log_common::DefaultFormatter for &str
 impl aya_log_common::DefaultFormatter for bool

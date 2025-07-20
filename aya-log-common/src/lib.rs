@@ -160,12 +160,18 @@ pub enum DisplayHint {
     UpperMac,
 }
 
-pub trait Argument {
+mod sealed {
+    pub trait Sealed {}
+}
+
+pub trait Argument: sealed::Sealed {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>);
 }
 
 macro_rules! impl_argument {
     ($self:ident, $arg_type:expr) => {
+        impl sealed::Sealed for $self {}
+
         impl Argument for $self {
             fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
                 ($arg_type, self.to_ne_bytes())
@@ -207,6 +213,7 @@ where
     }
 }
 
+impl sealed::Sealed for IpAddr {}
 impl Argument for IpAddr {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
         match self {
@@ -222,55 +229,48 @@ impl Argument for IpAddr {
     }
 }
 
+impl sealed::Sealed for Ipv4Addr {}
 impl Argument for Ipv4Addr {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
         (ArgumentKind::Ipv4Addr, self.octets())
     }
 }
 
-impl Argument for [u8; 4] {
-    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
-        (ArgumentKind::ArrU8Len4, self)
-    }
-}
-
+impl sealed::Sealed for Ipv6Addr {}
 impl Argument for Ipv6Addr {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
         (ArgumentKind::Ipv6Addr, self.octets())
     }
 }
 
-impl Argument for [u8; 16] {
+impl<const N: usize> sealed::Sealed for [u8; N] {}
+impl<const N: usize> Argument for [u8; N] {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
-        (ArgumentKind::ArrU8Len16, self)
+        let kind = match N {
+            4 => ArgumentKind::ArrU8Len4,
+            6 => ArgumentKind::ArrU8Len6,
+            16 => ArgumentKind::ArrU8Len16,
+            _ => ArgumentKind::Bytes,
+        };
+        (kind, *self)
     }
 }
 
-impl Argument for [u16; 8] {
-    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
-        let bytes = unsafe { core::mem::transmute::<&[u16; 8], &[u8; 16]>(self) };
-        (ArgumentKind::ArrU16Len8, bytes)
-    }
-}
-
-impl Argument for [u8; 6] {
-    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
-        (ArgumentKind::ArrU8Len6, self)
-    }
-}
-
+impl sealed::Sealed for &[u8] {}
 impl Argument for &[u8] {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
-        (ArgumentKind::Bytes, self)
+        (ArgumentKind::Bytes, *self)
     }
 }
 
+impl sealed::Sealed for &str {}
 impl Argument for &str {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
         (ArgumentKind::Str, self.as_bytes())
     }
 }
 
+impl sealed::Sealed for DisplayHint {}
 impl Argument for DisplayHint {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
         let v: u8 = (*self).into();
