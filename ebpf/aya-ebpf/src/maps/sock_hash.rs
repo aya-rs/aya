@@ -96,9 +96,6 @@ impl<K> SockHash<K> {
         let sk = lookup(self.def.get(), key.borrow()).ok_or(1u32)?;
         let ret = unsafe { bpf_sk_assign(ctx.as_ptr().cast(), sk.as_ptr(), flags) };
         unsafe { bpf_sk_release(sk.as_ptr()) };
-        match ret {
-            0 => Ok(()),
-            _ret => Err(1),
-        }
+        (ret == 0).then_some(()).ok_or(1)
     }
 }
