@@ -370,6 +370,32 @@ impl Map {
             Self::XskMap(map) => map.pin(path),
         }
     }
+
+    /// Constructs a [`Map`] enum variant directly from a [`MapData`] instance.
+    ///
+    /// This allows creating a user-space handle to a pinned BPF map. It only supports:
+    /// - [`bpf_map_type::BPF_MAP_TYPE_HASH`]
+    /// - [`bpf_map_type::BPF_MAP_TYPE_LRU_HASH`]
+    /// - [`bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH`]
+    /// - [`bpf_map_type::BPF_MAP_TYPE_LRU_PERCPU_HASH`]
+    ///
+    /// # Arguments
+    ///
+    /// * `map_data` - The map data obtained from MapData::from_pin(...)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the map type is not supported.
+    pub fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
+        let map_type = map_data.obj.map_type();
+        match bpf_map_type::try_from(map_type)? {
+            bpf_map_type::BPF_MAP_TYPE_HASH => Ok(Self::HashMap(map_data)),
+            bpf_map_type::BPF_MAP_TYPE_LRU_HASH => Ok(Self::LruHashMap(map_data)),
+            bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH => Ok(Self::PerCpuHashMap(map_data)),
+            bpf_map_type::BPF_MAP_TYPE_LRU_PERCPU_HASH => Ok(Self::PerCpuLruHashMap(map_data)),
+            _ => Err(MapError::InvalidMapType { map_type }),
+        }
+    }
 }
 
 // Implements map pinning for different map implementations
@@ -1240,5 +1266,85 @@ mod tests {
                 assert_eq!(io_error.raw_os_error(), Some(EFAULT));
             }
         );
+    }
+
+    #[test]
+    #[cfg_attr(miri, ignore = "file operations not supported in Miri isolation")]
+    fn test_pin_and_reopen_hashmap() {
+        use std::{env, fs, mem::size_of};
+
+        use aya_obj::generated::{bpf_cmd, bpf_map_info, bpf_map_type};
+
+        use crate::{
+            Pod,
+            maps::{HashMap, Map, MapData},
+            sys::{Syscall, override_syscall},
+        };
+
+        #[repr(transparent)]
+        #[derive(Copy, Clone)]
+        struct TestKey(u32);
+        unsafe impl Pod for TestKey {}
+
+        #[repr(transparent)]
+        #[derive(Copy, Clone)]
+        struct TestVal(u32);
+        unsafe impl Pod for TestVal {}
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                ..
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_PIN,
+                ..
+            } => Ok(0),
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET,
+                ..
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                attr,
+            } => {
+                let attr = unsafe { &mut *(attr as *mut aya_obj::generated::bpf_attr) };
+                let info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) };
+                info.key_size = size_of::<TestKey>() as u32;
+                info.value_size = size_of::<TestVal>() as u32;
+                info.type_ = bpf_map_type::BPF_MAP_TYPE_HASH as u32;
+                Ok(0)
+            }
+            call => panic!("unexpected syscall {call:?}"),
+        });
+
+        let obj_map = aya_obj::maps::Map::Legacy(aya_obj::maps::LegacyMap {
+            def: aya_obj::maps::bpf_map_def {
+                map_type: bpf_map_type::BPF_MAP_TYPE_HASH as u32,
+                key_size: size_of::<TestKey>() as u32,
+                value_size: size_of::<TestVal>() as u32,
+                max_entries: 1024,
+                map_flags: 0,
+                id: 0,
+                pinning: PinningType::None,
+            },
+            section_index: 0,
+            section_kind: EbpfSectionKind::Maps,
+            symbol_index: None,
+            data: Vec::new(),
+        });
+
+        let map_data = MapData::create(obj_map, "test_map", None).unwrap();
+        let map = Map::HashMap(map_data);
+
+        let pin_path = env::temp_dir().join("aya_test_hash_map");
+        let _ = fs::remove_file(&pin_path);
+
+        map.pin(&pin_path).unwrap();
+        let reopened_map_data = MapData::from_pin(&pin_path).unwrap();
+        let reopened_map = Map::from_map_data(reopened_map_data).unwrap();
+        let _: HashMap<_, TestKey, TestVal> = HashMap::try_from(&reopened_map).unwrap();
+
+        let _ = fs::remove_file(&pin_path);
     }
 }
