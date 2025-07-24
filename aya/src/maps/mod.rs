@@ -370,6 +370,60 @@ impl Map {
             Self::XskMap(map) => map.pin(path),
         }
     }
+
+    /// Constructs a [`Map`] enum variant directly from a [`MapData`] instance. This allows creating
+    /// a user-space handle to a pinned BPF map.
+    ///
+    /// # Arguments
+    ///
+    /// * `map_data` - The map data obtained from [`MapData::from_pin`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the map type is not supported.
+    pub fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
+        let map_type = map_data.obj.map_type();
+        let map = match bpf_map_type::try_from(map_type)? {
+            bpf_map_type::BPF_MAP_TYPE_HASH => Self::HashMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_ARRAY => Self::Array(map_data),
+            bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY => Self::ProgramArray(map_data),
+            bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY => Self::PerfEventArray(map_data),
+            bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH => Self::PerCpuHashMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY => Self::PerCpuArray(map_data),
+            bpf_map_type::BPF_MAP_TYPE_STACK_TRACE => Self::StackTraceMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_LRU_HASH => Self::LruHashMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_LRU_PERCPU_HASH => Self::PerCpuLruHashMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_LPM_TRIE => Self::LpmTrie(map_data),
+            bpf_map_type::BPF_MAP_TYPE_DEVMAP => Self::DevMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_SOCKMAP => Self::SockMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_CPUMAP => Self::CpuMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_XSKMAP => Self::XskMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_SOCKHASH => Self::SockHash(map_data),
+            bpf_map_type::BPF_MAP_TYPE_QUEUE => Self::Queue(map_data),
+            bpf_map_type::BPF_MAP_TYPE_STACK => Self::Stack(map_data),
+            bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => Self::DevMapHash(map_data),
+            bpf_map_type::BPF_MAP_TYPE_RINGBUF => Self::RingBuf(map_data),
+            bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER => Self::BloomFilter(map_data),
+            bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_TASK_STORAGE => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_CGRP_STORAGE => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_ARENA => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED => {
+                Self::Unsupported(map_data)
+            }
+            bpf_map_type::BPF_MAP_TYPE_UNSPEC => return Err(MapError::InvalidMapType { map_type }),
+            bpf_map_type::__MAX_BPF_MAP_TYPE => return Err(MapError::InvalidMapType { map_type }),
+        };
+        Ok(map)
+    }
 }
 
 // Implements map pinning for different map implementations
