@@ -64,7 +64,7 @@ pub fn generate<T: AsRef<str>>(
     let dir = tempdir().unwrap();
     let file_path = dir.path().join(name);
     let mut file = File::create(&file_path).unwrap();
-    let () = file.write_all(c_header.as_bytes()).unwrap();
+    file.write_all(c_header.as_bytes()).unwrap();
 
     let flags = combine_flags(&bindgen.command_line_flags(), &additional_flags);
 
