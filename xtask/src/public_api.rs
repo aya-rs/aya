@@ -18,7 +18,7 @@ pub struct Options {
     #[clap(long)]
     pub bless: bool,
 
-    /// Bless new API changes.
+    /// Build for the target triple.
     #[clap(long)]
     pub target: Option<String>,
 }
