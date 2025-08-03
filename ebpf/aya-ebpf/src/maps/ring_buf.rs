@@ -32,6 +32,45 @@ pub struct RingBuf {
 
 unsafe impl Sync for RingBuf {}
 
+/// A ring buffer entry, returned from [`RingBuf::reserve_bytes`].
+///
+/// You must [`submit`] or [`discard`] this entry before it gets dropped.
+///
+/// [`submit`]: RingBufBytes::submit
+/// [`discard`]: RingBufBytes::discard
+#[must_use = "eBPF verifier requires ring buffer entries to be either submitted or discarded"]
+pub struct RingBufBytes<'a>(&'a mut [u8]);
+
+impl Deref for RingBufBytes<'_> {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        let Self(inner) = self;
+        inner
+    }
+}
+
+impl DerefMut for RingBufBytes<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        let Self(inner) = self;
+        inner
+    }
+}
+
+impl RingBufBytes<'_> {
+    /// Commit this ring buffer entry. The entry will be made visible to the userspace reader.
+    pub fn submit(self, flags: u64) {
+        let Self(inner) = self;
+        unsafe { bpf_ringbuf_submit(inner.as_mut_ptr().cast(), flags) };
+    }
+
+    /// Discard this ring buffer entry. The entry will be skipped by the userspace reader.
+    pub fn discard(self, flags: u64) {
+        let Self(inner) = self;
+        unsafe { bpf_ringbuf_discard(inner.as_mut_ptr().cast(), flags) };
+    }
+}
+
 /// A ring buffer entry, returned from [`RingBuf::reserve`].
 ///
 /// You must [`submit`] or [`discard`] this entry before it gets dropped.
@@ -45,25 +84,29 @@ impl<T> Deref for RingBufEntry<T> {
     type Target = MaybeUninit<T>;
 
     fn deref(&self) -> &Self::Target {
-        self.0
+        let Self(inner) = self;
+        inner
     }
 }
 
 impl<T> DerefMut for RingBufEntry<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        self.0
+        let Self(inner) = self;
+        inner
     }
 }
 
 impl<T> RingBufEntry<T> {
     /// Discard this ring buffer entry. The entry will be skipped by the userspace reader.
     pub fn discard(self, flags: u64) {
-        unsafe { bpf_ringbuf_discard(self.0.as_mut_ptr() as *mut _, flags) };
+        let Self(inner) = self;
+        unsafe { bpf_ringbuf_discard(inner.as_mut_ptr().cast(), flags) };
     }
 
     /// Commit this ring buffer entry. The entry will be made visible to the userspace reader.
     pub fn submit(self, flags: u64) {
-        unsafe { bpf_ringbuf_submit(self.0.as_mut_ptr() as *mut _, flags) };
+        let Self(inner) = self;
+        unsafe { bpf_ringbuf_submit(inner.as_mut_ptr().cast(), flags) };
     }
 }
 
@@ -98,6 +141,18 @@ impl RingBuf {
         }
     }
 
+    /// Reserve a dynamically sized byte buffer in the ring buffer.
+    ///
+    /// Returns `None` if the ring buffer is full.
+    pub fn reserve_bytes(&self, size: usize, flags: u64) -> Option<RingBufBytes<'_>> {
+        let ptr =
+            unsafe { bpf_ringbuf_reserve(self.def.get().cast(), size as u64, flags) }.cast::<u8>();
+        (!ptr.is_null()).then(|| {
+            let inner = unsafe { core::slice::from_raw_parts_mut(ptr, size) };
+            RingBufBytes(inner)
+        })
+    }
+
     /// Reserve memory in the ring buffer that can fit `T`.
     ///
     /// Returns `None` if the ring buffer is full.
@@ -125,8 +180,9 @@ impl RingBuf {
 
     fn reserve_impl<T: 'static>(&self, flags: u64) -> Option<RingBufEntry<T>> {
         let ptr = unsafe {
-            bpf_ringbuf_reserve(self.def.get() as *mut _, mem::size_of::<T>() as _, flags)
-        } as *mut MaybeUninit<T>;
+            bpf_ringbuf_reserve(self.def.get().cast(), mem::size_of::<T>() as u64, flags)
+        }
+        .cast::<MaybeUninit<T>>();
         unsafe { ptr.as_mut() }.map(|ptr| RingBufEntry(ptr))
     }
 
@@ -149,9 +205,9 @@ impl RingBuf {
         assert_eq!(8 % mem::align_of_val(data), 0);
         let ret = unsafe {
             bpf_ringbuf_output(
-                self.def.get() as *mut _,
-                data as *const _ as *mut _,
-                mem::size_of_val(data) as _,
+                self.def.get().cast(),
+                core::ptr::from_ref(data).cast_mut().cast(),
+                mem::size_of_val(data) as u64,
                 flags,
             )
         };
@@ -162,6 +218,6 @@ impl RingBuf {
     ///
     /// Consult `bpf_ringbuf_query` documentation for a list of allowed flags.
     pub fn query(&self, flags: u64) -> u64 {
-        unsafe { bpf_ringbuf_query(self.def.get() as *mut _, flags) }
+        unsafe { bpf_ringbuf_query(self.def.get().cast(), flags) }
     }
 }
