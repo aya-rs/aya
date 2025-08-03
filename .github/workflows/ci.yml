@@ -42,13 +42,13 @@ jobs:
       - run: ./clippy.sh
 
       - run: cargo xtask public-api
-        if: github.event_name == 'pull_request'
+        if: github.event_name != 'schedule'
 
       - run: cargo xtask public-api --bless
-        if: github.event_name != 'pull_request' && github.repository_owner == 'aya-rs'
+        if: github.event_name == 'schedule'
 
       - uses: peter-evans/create-pull-request@v7
-        if: github.event_name != 'pull_request' && github.repository_owner == 'aya-rs'
+        if: github.event_name == 'schedule'
         with:
           # GitHub actions aren't allowed to trigger other actions to prevent
           # abuse; the canonical workaround is to use a sufficiently authorized
