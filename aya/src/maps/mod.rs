@@ -174,6 +174,10 @@ pub enum MapError {
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
 
+    /// An error indicating that an interior nul byte was found.
+    #[error(transparent)]
+    NulError(#[from] std::ffi::NulError),
+
     /// Could not pin map
     #[error("map `{name:?}` requested pinning. pinning failed")]
     PinError {
