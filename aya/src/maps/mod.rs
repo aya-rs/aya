@@ -55,7 +55,7 @@ use std::{
     mem,
     ops::Deref,
     os::fd::{AsFd, BorrowedFd, OwnedFd},
-    path::Path,
+    path::{Path, PathBuf},
     ptr,
 };
 
@@ -197,6 +197,16 @@ pub enum MapError {
         name: String,
         /// The map type
         map_type: bpf_map_type,
+    },
+
+    /// An error indicating that an interior nul byte was found.
+    #[error("invalid path '{path}' to create CString {source}")]
+    InvalidPath {
+        /// The path that caused the error.
+        path: PathBuf,
+        /// The underlying NUL error.
+        #[source]
+        source: std::ffi::NulError,
     },
 }
 
