@@ -120,7 +120,7 @@ impl MapInfo {
 
         let path_string =
             CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|nul_error| {
-                MapError::InvalidPath {
+                MapError::InvalidCString {
                     path: path.as_ref().to_path_buf(),
                     source: nul_error,
                 }

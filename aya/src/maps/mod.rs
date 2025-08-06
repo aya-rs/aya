@@ -200,8 +200,8 @@ pub enum MapError {
     },
 
     /// An error indicating that an interior nul byte was found.
-    #[error("invalid path '{path}' to create CString {source}")]
-    InvalidPath {
+    #[error("path contains null bytes: {path:?}")]
+    InvalidCString {
         /// The path that caused the error.
         path: PathBuf,
         /// The underlying NUL error.
