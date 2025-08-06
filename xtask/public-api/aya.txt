@@ -1273,6 +1273,9 @@ pub aya::maps::MapError::CreateError
 pub aya::maps::MapError::CreateError::io_error: std::io::error::Error
 pub aya::maps::MapError::CreateError::name: alloc::string::String
 pub aya::maps::MapError::ElementNotFound
+pub aya::maps::MapError::InvalidCString
+pub aya::maps::MapError::InvalidCString::path: std::path::PathBuf
+pub aya::maps::MapError::InvalidCString::source: alloc::ffi::c_str::NulError
 pub aya::maps::MapError::InvalidKeySize
 pub aya::maps::MapError::InvalidKeySize::expected: usize
 pub aya::maps::MapError::InvalidKeySize::size: usize
