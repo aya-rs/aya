@@ -10430,3 +10430,6 @@ pub fn aya::features() -> &'static aya_obj::obj::Features
 pub type aya::Bpf = aya::Ebpf
 pub type aya::BpfError = aya::EbpfError
 pub type aya::BpfLoader<'a> = aya::EbpfLoader<'a>
+pub aya::maps::MapError::InvalidCString
+pub aya::maps::MapError::InvalidCString::path: std::path::PathBuf
+pub aya::maps::MapError::InvalidCString::source: alloc::ffi::c_str::NulError
