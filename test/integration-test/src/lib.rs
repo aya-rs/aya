@@ -48,13 +48,14 @@ bpf_file!(
     REDIRECT => "redirect",
     RELOCATIONS => "relocations",
     RING_BUF => "ring_buf",
+    RING_BUF_PINNED => "ring_buf_pinned",
     SIMPLE_PROG => "simple_prog",
     STRNCMP => "strncmp",
     TCX => "tcx",
     TEST => "test",
     TWO_PROGS => "two_progs",
-    XDP_SEC => "xdp_sec",
     UPROBE_COOKIE => "uprobe_cookie",
+    XDP_SEC => "xdp_sec",
 );
 
 #[cfg(test)]
