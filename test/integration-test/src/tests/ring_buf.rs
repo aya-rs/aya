@@ -1,6 +1,5 @@
 use std::{
-    fs,
-    mem,
+    fs, mem,
     os::fd::AsRawFd as _,
     sync::{
         Arc,
@@ -199,7 +198,10 @@ fn ring_buf(n: usize) {
 // filesystem since the map "remembers" the last consumer index position even if all processes
 // unloaded it
 fn pinned_ring_buf(n: usize) {
-    let run_test = |mut ring_buf: RingBuf<MapData>, regs: PerCpuArray<MapData, Registers>, data: Vec<u64>, expected_capacity: usize| {
+    let run_test = |mut ring_buf: RingBuf<MapData>,
+                    regs: PerCpuArray<MapData, Registers>,
+                    data: Vec<u64>,
+                    expected_capacity: usize| {
         let mut expected = Vec::new();
         let mut expected_rejected = 0u64;
         let mut expected_dropped = 0u64;
