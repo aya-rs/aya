@@ -303,6 +303,10 @@ impl ProducerData {
         let len = page_size + 2 * usize::try_from(byte_size).unwrap();
         let mmap = MMap::new(fd, len, PROT_READ, MAP_SHARED, offset.try_into().unwrap())?;
 
+        // Load the initial value of the producer position from the shared memory mmap.
+        let pos = unsafe { mmap.ptr().cast::<AtomicUsize>().as_ref() };
+        let pos_cache = load_producer_pos(pos);
+
         // byte_size is required to be a power of two multiple of page_size (which implicitly is a
         // power of 2), so subtracting one will create a bitmask for values less than byte_size.
         debug_assert!(byte_size.is_power_of_two());
@@ -310,7 +314,7 @@ impl ProducerData {
         Ok(Self {
             mmap,
             data_offset: page_size,
-            pos_cache: 0,
+            pos_cache,
             mask,
         })
     }
@@ -348,16 +352,14 @@ impl ProducerData {
 
         fn data_available(
             producer: &AtomicUsize,
-            cache: &mut usize,
+            producer_cache: &mut usize,
             consumer: &ConsumerPos,
         ) -> bool {
             let ConsumerPos { pos: consumer, .. } = consumer;
-            if consumer == cache {
-                // This value is written using Release by the kernel [1], and should be read with
-                // Acquire to ensure that the prior writes to the entry header are visible.
-                //
-                // [1]: https://github.com/torvalds/linux/blob/eb26cbb1/kernel/bpf/ringbuf.c#L447-L448
-                *cache = producer.load(Ordering::Acquire);
+            // Refresh the producer position cache if it appears that the consumer is caught up
+            // with the producer position.
+            if consumer == producer_cache {
+                *producer_cache = load_producer_pos(producer);
             }
 
             // Note that we don't compare the order of the values because the producer position may
@@ -369,7 +371,7 @@ impl ProducerData {
             // producer position has wrapped around.
             //
             // [1]: https://github.com/torvalds/linux/blob/4b810bf0/kernel/bpf/ringbuf.c#L434-L440
-            consumer != cache
+            consumer != producer_cache
         }
 
         fn read_item<'data>(data: &'data [u8], mask: u32, pos: &ConsumerPos) -> Item<'data> {
@@ -401,4 +403,13 @@ impl ProducerData {
             }
         }
     }
+}
+
+// Loads the producer position from the shared memory mmap.
+fn load_producer_pos(producer: &AtomicUsize) -> usize {
+    // This value is written using Release by the kernel [1], and should be read with
+    // Acquire to ensure that the prior writes to the entry header are visible.
+    //
+    // [1]: https://github.com/torvalds/linux/blob/eb26cbb1/kernel/bpf/ringbuf.c#L447-L448
+    producer.load(Ordering::Acquire)
 }
