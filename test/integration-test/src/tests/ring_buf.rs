@@ -234,7 +234,7 @@ async fn ring_buf_async_with_drops() {
         "seen={seen}, rejected={rejected}, dropped={dropped}, total={total}, max_seen={max_seen}, \
         max_rejected={max_rejected}, max_dropped={max_dropped}",
     );
-    assert_eq!(seen + rejected + dropped, total, "{facts}",);
+    assert_eq!(seen + rejected + dropped, total, "{facts}");
     assert!(
         (0u64..=max_dropped).contains(&dropped),
         "dropped={dropped} not in 0..={max_dropped}; {facts}",

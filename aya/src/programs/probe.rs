@@ -251,7 +251,7 @@ fn create_probe_event(
     .unwrap();
 
     let mut probe = OsString::new();
-    write!(&mut probe, "{}:{}s/", probe_type_prefix, kind.pmu(),).unwrap();
+    write!(&mut probe, "{}:{}s/", probe_type_prefix, kind.pmu()).unwrap();
     probe.push(&event_alias);
     probe.push(" ");
     probe.push(fn_name);

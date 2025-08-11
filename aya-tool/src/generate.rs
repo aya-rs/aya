@@ -174,32 +174,32 @@ mod test {
     #[test]
     fn test_combine_flags() {
         assert_eq!(
-            combine_flags(&to_vec("a b"), &to_vec("c d"),).join(" "),
+            combine_flags(&to_vec("a b"), &to_vec("c d")).join(" "),
             "a b c d",
         );
 
         assert_eq!(
-            combine_flags(&to_vec("a -- b"), &to_vec("a b"),).join(" "),
+            combine_flags(&to_vec("a -- b"), &to_vec("a b")).join(" "),
             "a a b -- b",
         );
 
         assert_eq!(
-            combine_flags(&to_vec("a -- b"), &to_vec("c d"),).join(" "),
+            combine_flags(&to_vec("a -- b"), &to_vec("c d")).join(" "),
             "a c d -- b",
         );
 
         assert_eq!(
-            combine_flags(&to_vec("a b"), &to_vec("c -- d"),).join(" "),
+            combine_flags(&to_vec("a b"), &to_vec("c -- d")).join(" "),
             "a b c -- d",
         );
 
         assert_eq!(
-            combine_flags(&to_vec("a -- b"), &to_vec("c -- d"),).join(" "),
+            combine_flags(&to_vec("a -- b"), &to_vec("c -- d")).join(" "),
             "a c -- b d",
         );
 
         assert_eq!(
-            combine_flags(&to_vec("a -- b"), &to_vec("-- c d"),).join(" "),
+            combine_flags(&to_vec("a -- b"), &to_vec("-- c d")).join(" "),
             "a -- b c d",
         );
     }

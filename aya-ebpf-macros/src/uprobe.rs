@@ -89,7 +89,7 @@ impl UProbe {
                     .ok_or(item.sig.span().error("expected `function` attribute"))?;
                 match offset {
                     None => format!("{prefix}/{path}:{function}").into(),
-                    Some(offset) => format!("{prefix}/{path}:{function}+{offset}",).into(),
+                    Some(offset) => format!("{prefix}/{path}:{function}+{offset}").into(),
                 }
             }
         };

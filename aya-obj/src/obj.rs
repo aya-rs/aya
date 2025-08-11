@@ -1662,7 +1662,7 @@ mod tests {
                 "kprobe/foo",
                 &42u32.to_ne_bytes(),
                 None,
-            ),),
+            )),
             Err(ParseError::InvalidProgramCode)
         );
     }
