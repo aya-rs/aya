@@ -162,9 +162,7 @@ impl Link for CgroupDeviceLinkInner {
 id_as_key!(CgroupDeviceLinkInner, CgroupDeviceLinkIdInner);
 
 define_link_wrapper!(
-    /// The link used by [CgroupDevice] programs.
     CgroupDeviceLink,
-    /// The type returned by [CgroupDevice::attach]. Can be passed to [CgroupDevice::detach].
     CgroupDeviceLinkId,
     CgroupDeviceLinkInner,
     CgroupDeviceLinkIdInner,

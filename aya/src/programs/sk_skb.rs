@@ -113,9 +113,7 @@ impl SkSkb {
 }
 
 define_link_wrapper!(
-    /// The link used by [SkSkb] programs.
     SkSkbLink,
-    /// The type returned by [SkSkb::attach]. Can be passed to [SkSkb::detach].
     SkSkbLinkId,
     ProgAttachLink,
     ProgAttachLinkId,

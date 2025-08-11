@@ -177,9 +177,7 @@ impl Link for CgroupSkbLinkInner {
 id_as_key!(CgroupSkbLinkInner, CgroupSkbLinkIdInner);
 
 define_link_wrapper!(
-    /// The link used by [CgroupSkb] programs.
     CgroupSkbLink,
-    /// The type returned by [CgroupSkb::attach]. Can be passed to [CgroupSkb::detach].
     CgroupSkbLinkId,
     CgroupSkbLinkInner,
     CgroupSkbLinkIdInner,

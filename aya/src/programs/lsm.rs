@@ -79,12 +79,4 @@ impl Lsm {
     }
 }
 
-define_link_wrapper!(
-    /// The link used by [Lsm] programs.
-    LsmLink,
-    /// The type returned by [Lsm::attach]. Can be passed to [Lsm::detach].
-    LsmLinkId,
-    FdLink,
-    FdLinkId,
-    Lsm,
-);
+define_link_wrapper!(LsmLink, LsmLinkId, FdLink, FdLinkId, Lsm);

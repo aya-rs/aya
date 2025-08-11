@@ -90,9 +90,7 @@ impl TracePoint {
 }
 
 define_link_wrapper!(
-    /// The link used by [TracePoint] programs.
     TracePointLink,
-    /// The type returned by [TracePoint::attach]. Can be passed to [TracePoint::detach].
     TracePointLinkId,
     PerfLinkInner,
     PerfLinkIdInner,

@@ -98,9 +98,7 @@ impl SkMsg {
 }
 
 define_link_wrapper!(
-    /// The link used by [SkMsg] programs.
     SkMsgLink,
-    /// The type returned by [SkMsg::attach]. Can be passed to [SkMsg::detach].
     SkMsgLinkId,
     ProgAttachLink,
     ProgAttachLinkId,

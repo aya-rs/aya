@@ -121,7 +121,7 @@ impl LircMode2 {
     }
 }
 
-/// The type returned by [LircMode2::attach]. Can be passed to [LircMode2::detach].
+/// The type returned by [`LircMode2::attach`]. Can be passed to [`LircMode2::detach`].
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct LircLinkId(RawFd, RawFd);
 

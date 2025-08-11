@@ -78,9 +78,7 @@ impl BtfTracePoint {
 }
 
 define_link_wrapper!(
-    /// The link used by [BtfTracePoint] programs.
     BtfTracePointLink,
-    /// The type returned by [BtfTracePoint::attach]. Can be passed to [BtfTracePoint::detach].
     BtfTracePointLinkId,
     FdLink,
     FdLinkId,

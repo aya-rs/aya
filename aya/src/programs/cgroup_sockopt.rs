@@ -153,9 +153,7 @@ impl Link for CgroupSockoptLinkInner {
 id_as_key!(CgroupSockoptLinkInner, CgroupSockoptLinkIdInner);
 
 define_link_wrapper!(
-    /// The link used by [CgroupSockopt] programs.
     CgroupSockoptLink,
-    /// The type returned by [CgroupSockopt::attach]. Can be passed to [CgroupSockopt::detach].
     CgroupSockoptLinkId,
     CgroupSockoptLinkInner,
     CgroupSockoptLinkIdInner,

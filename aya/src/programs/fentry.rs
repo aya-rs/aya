@@ -73,12 +73,4 @@ impl FEntry {
     }
 }
 
-define_link_wrapper!(
-    /// The link used by [FEntry] programs.
-    FEntryLink,
-    /// The type returned by [FEntry::attach]. Can be passed to [FEntry::detach].
-    FEntryLinkId,
-    FdLink,
-    FdLinkId,
-    FEntry,
-);
+define_link_wrapper!(FEntryLink, FEntryLinkId, FdLink, FdLinkId, FEntry);

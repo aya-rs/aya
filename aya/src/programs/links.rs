@@ -473,12 +473,18 @@ macro_rules! id_as_key {
 pub(crate) use id_as_key;
 
 macro_rules! define_link_wrapper {
-    (#[$doc1:meta] $wrapper:ident, #[$doc2:meta] $wrapper_id:ident, $base:ident, $base_id:ident, $program:ident,) => {
-        #[$doc2]
+    ($wrapper:ident, $wrapper_id:ident, $base:ident, $base_id:ident, $program:ident $(,)?) => {
+        /// The type returned by
+        #[doc = concat!("[`", stringify!($program), "::attach`]")]
+        /// . Can be passed to
+        #[doc = concat!("[`", stringify!($program), "::detach`]")]
+        /// .
         #[derive(Debug, Hash, Eq, PartialEq)]
         pub struct $wrapper_id($base_id);
 
-        #[$doc1]
+        /// The link used by
+        #[doc = concat!("[`", stringify!($program), "`]")]
+        /// programs.
         #[derive(Debug)]
         pub struct $wrapper(Option<$base>);
 

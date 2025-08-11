@@ -211,9 +211,7 @@ fn test_resolve_attach_path() {
 }
 
 define_link_wrapper!(
-    /// The link used by [UProbe] programs.
     UProbeLink,
-    /// The type returned by [UProbe::attach]. Can be passed to [UProbe::detach].
     UProbeLinkId,
     PerfLinkInner,
     PerfLinkIdInner,

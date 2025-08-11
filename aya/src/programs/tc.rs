@@ -463,9 +463,7 @@ impl TryFrom<FdLink> for SchedClassifierLink {
 }
 
 define_link_wrapper!(
-    /// The link used by [SchedClassifier] programs.
     SchedClassifierLink,
-    /// The type returned by [SchedClassifier::attach]. Can be passed to [SchedClassifier::detach].
     SchedClassifierLinkId,
     TcLinkInner,
     TcLinkIdInner,

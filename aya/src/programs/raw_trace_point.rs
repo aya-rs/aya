@@ -57,9 +57,7 @@ impl RawTracePoint {
 }
 
 define_link_wrapper!(
-    /// The link used by [RawTracePoint] programs.
     RawTracePointLink,
-    /// The type returned by [RawTracePoint::attach]. Can be passed to [RawTracePoint::detach].
     RawTracePointLinkId,
     FdLink,
     FdLinkId,

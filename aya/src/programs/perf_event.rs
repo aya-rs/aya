@@ -203,9 +203,7 @@ impl TryFrom<FdLink> for PerfEventLink {
 }
 
 define_link_wrapper!(
-    /// The link used by [PerfEvent] programs.
     PerfEventLink,
-    /// The type returned by [PerfEvent::attach]. Can be passed to [PerfEvent::detach].
     PerfEventLinkId,
     PerfLinkInner,
     PerfLinkIdInner,

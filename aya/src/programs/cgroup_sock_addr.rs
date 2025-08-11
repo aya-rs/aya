@@ -154,9 +154,7 @@ impl Link for CgroupSockAddrLinkInner {
 id_as_key!(CgroupSockAddrLinkInner, CgroupSockAddrLinkIdInner);
 
 define_link_wrapper!(
-    /// The link used by [CgroupSockAddr] programs.
     CgroupSockAddrLink,
-    /// The type returned by [CgroupSockAddr::attach]. Can be passed to [CgroupSockAddr::detach].
     CgroupSockAddrLinkId,
     CgroupSockAddrLinkInner,
     CgroupSockAddrLinkIdInner,

@@ -118,15 +118,7 @@ impl TryFrom<FdLink> for IterLink {
 
 impl_try_into_fdlink!(IterLink, PerfLinkInner);
 
-define_link_wrapper!(
-    /// The link used by [`Iter`] programs.
-    IterLink,
-    /// The type returned by [`Iter::attach`]. Can be passed to [`Iter::detach`].
-    IterLinkId,
-    PerfLinkInner,
-    PerfLinkIdInner,
-    Iter,
-);
+define_link_wrapper!(IterLink, IterLinkId, PerfLinkInner, PerfLinkIdInner, Iter);
 
 impl IterLink {
     /// Converts [`IterLink`] into a [`File`] that can be used to retrieve the

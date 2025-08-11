@@ -319,12 +319,4 @@ impl TryFrom<FdLink> for XdpLink {
     }
 }
 
-define_link_wrapper!(
-    /// The link used by [Xdp] programs.
-    XdpLink,
-    /// The type returned by [Xdp::attach]. Can be passed to [Xdp::detach].
-    XdpLinkId,
-    XdpLinkInner,
-    XdpLinkIdInner,
-    Xdp,
-);
+define_link_wrapper!(XdpLink, XdpLinkId, XdpLinkInner, XdpLinkIdInner, Xdp);

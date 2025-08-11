@@ -73,12 +73,4 @@ impl FExit {
     }
 }
 
-define_link_wrapper!(
-    /// The link used by [FExit] programs.
-    FExitLink,
-    /// The type returned by [FExit::attach]. Can be passed to [FExit::detach].
-    FExitLinkId,
-    FdLink,
-    FdLinkId,
-    FExit,
-);
+define_link_wrapper!(FExitLink, FExitLinkId, FdLink, FdLinkId, FExit);

@@ -197,12 +197,4 @@ fn get_btf_info(
     Ok((btf_fd, btf_id))
 }
 
-define_link_wrapper!(
-    /// The link used by [Extension] programs.
-    ExtensionLink,
-    /// The type returned by [Extension::attach]. Can be passed to [Extension::detach].
-    ExtensionLinkId,
-    FdLink,
-    FdLinkId,
-    Extension,
-);
+define_link_wrapper!(ExtensionLink, ExtensionLinkId, FdLink, FdLinkId, Extension);

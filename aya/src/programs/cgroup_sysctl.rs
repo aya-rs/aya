@@ -137,9 +137,7 @@ impl Link for CgroupSysctlLinkInner {
 id_as_key!(CgroupSysctlLinkInner, CgroupSysctlLinkIdInner);
 
 define_link_wrapper!(
-    /// The link used by [CgroupSysctl] programs.
     CgroupSysctlLink,
-    /// The type returned by [CgroupSysctl::attach]. Can be passed to [CgroupSysctl::detach].
     CgroupSysctlLinkId,
     CgroupSysctlLinkInner,
     CgroupSysctlLinkIdInner,

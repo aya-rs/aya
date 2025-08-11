@@ -82,12 +82,4 @@ impl SkLookup {
     }
 }
 
-define_link_wrapper!(
-    /// The link used by [SkLookup] programs.
-    SkLookupLink,
-    /// The type returned by [SkLookup::attach]. Can be passed to [SkLookup::detach].
-    SkLookupLinkId,
-    FdLink,
-    FdLinkId,
-    SkLookup,
-);
+define_link_wrapper!(SkLookupLink, SkLookupLinkId, FdLink, FdLinkId, SkLookup);

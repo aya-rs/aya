@@ -120,7 +120,7 @@ impl SocketFilter {
     }
 }
 
-/// The type returned by [SocketFilter::attach]. Can be passed to [SocketFilter::detach].
+/// The type returned by [`SocketFilter::attach`]. Can be passed to [`SocketFilter::detach`].
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct SocketFilterLinkId(RawFd, RawFd);
 

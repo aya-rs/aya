@@ -132,9 +132,7 @@ impl Link for SockOpsLinkInner {
 id_as_key!(SockOpsLinkInner, SockOpsLinkIdInner);
 
 define_link_wrapper!(
-    /// The link used by [SockOps] programs.
     SockOpsLink,
-    /// The type returned by [SockOps::attach]. Can be passed to [SockOps::detach].
     SockOpsLinkId,
     SockOpsLinkInner,
     SockOpsLinkIdInner,

@@ -149,9 +149,7 @@ impl Link for FlowDissectorLinkInner {
 id_as_key!(FlowDissectorLinkInner, FlowDissectorLinkIdInner);
 
 define_link_wrapper!(
-    /// The link used by [FlowDissector] programs.
     FlowDissectorLink,
-    /// The type returned by [FlowDissector::attach]. Can be passed to [FlowDissector::detach].
     FlowDissectorLinkId,
     FlowDissectorLinkInner,
     FlowDissectorLinkIdInner,

@@ -104,9 +104,7 @@ impl KProbe {
 }
 
 define_link_wrapper!(
-    /// The link used by [KProbe] programs.
     KProbeLink,
-    /// The type returned by [KProbe::attach]. Can be passed to [KProbe::detach].
     KProbeLinkId,
     PerfLinkInner,
     PerfLinkIdInner,
