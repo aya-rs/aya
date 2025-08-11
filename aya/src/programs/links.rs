@@ -546,7 +546,9 @@ macro_rules! define_link_wrapper {
             /// Takes ownership of the link referenced by the provided `link_id`.
             ///
             /// The caller takes the responsibility of managing the lifetime of the link. When the
-            /// returned [`$wrapper`] is dropped, the link is detached.
+            /// returned
+            #[doc = concat!("[`", stringify!($wrapper), "`]")]
+            /// is dropped, the link will be detached.
             pub fn take_link(&mut self, link_id: $wrapper_id) -> Result<$wrapper, ProgramError> {
                 self.data.links.forget(link_id)
             }
