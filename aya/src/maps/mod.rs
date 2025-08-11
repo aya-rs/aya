@@ -649,13 +649,16 @@ impl MapData {
         use std::os::unix::ffi::OsStrExt as _;
 
         // try to open map in case it's already pinned
-        let path = path.as_ref().join(name);
+        let path = path.as_ref();
         let path_string = match CString::new(path.as_os_str().as_bytes()) {
             Ok(path) => path,
             Err(error) => {
                 return Err(MapError::PinError {
                     name: Some(name.into()),
-                    error: PinError::InvalidPinPath { path, error },
+                    error: PinError::InvalidPinPath {
+                        path: path.to_path_buf(),
+                        error,
+                    },
                 });
             }
         };
@@ -669,7 +672,7 @@ impl MapData {
             }),
             Err(_) => {
                 let map = Self::create(obj, name, btf_fd)?;
-                map.pin(&path).map_err(|error| MapError::PinError {
+                map.pin(path).map_err(|error| MapError::PinError {
                     name: Some(name.into()),
                     error,
                 })?;
