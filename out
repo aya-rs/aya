@@ -1,0 +1,371 @@
+cargo:warning=warning: unused variable: `i`
+cargo:warning=   --> test/integration-test/src/tests/ring_buf.rs:226:10
+cargo:warning=    |
+cargo:warning=226 |     for (i, &v) in data.iter().take(to_write_before_reopen).enumerate() {
+cargo:warning=    |          ^
+cargo:warning=    |
+cargo:warning=    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+cargo:warning=help: if this is intentional, prefix it with an underscore
+cargo:warning=    |
+cargo:warning=226 |     for (_i, &v) in data.iter().take(to_write_before_reopen).enumerate() {
+cargo:warning=    |          +
+cargo:warning=help: you might have meant to pattern match on the similarly named constant `SIZE`
+cargo:warning=    |
+cargo:warning=226 -     for (i, &v) in data.iter().take(to_write_before_reopen).enumerate() {
+cargo:warning=226 +     for (tests::xdp::af_xdp::SIZE, &v) in data.iter().take(to_write_before_reopen).enumerate() {
+cargo:warning=    |
+cargo:warning=
+cargo:warning=
+cargo:warning=warning: unused variable: `i`
+cargo:warning=   --> test/integration-test/src/tests/ring_buf.rs:233:9
+cargo:warning=    |
+cargo:warning=233 |     for i in 0..to_read_before_reopen {
+cargo:warning=    |         ^
+cargo:warning=    |
+cargo:warning=help: if this is intentional, prefix it with an underscore
+cargo:warning=    |
+cargo:warning=233 |     for _i in 0..to_read_before_reopen {
+cargo:warning=    |         +
+cargo:warning=help: you might have meant to pattern match on the similarly named constant `SIZE`
+cargo:warning=    |
+cargo:warning=233 -     for i in 0..to_read_before_reopen {
+cargo:warning=233 +     for tests::xdp::af_xdp::SIZE in 0..to_read_before_reopen {
+cargo:warning=    |
+cargo:warning=
+cargo:warning=
+cargo:warning=warning: unused variable: `i`
+cargo:warning=   --> test/integration-test/src/tests/ring_buf.rs:252:10
+cargo:warning=    |
+cargo:warning=252 |     for (i, &v) in data.iter().skip(to_write_before_reopen).enumerate() {
+cargo:warning=    |          ^
+cargo:warning=    |
+cargo:warning=help: if this is intentional, prefix it with an underscore
+cargo:warning=    |
+cargo:warning=252 |     for (_i, &v) in data.iter().skip(to_write_before_reopen).enumerate() {
+cargo:warning=    |          +
+cargo:warning=help: you might have meant to pattern match on the similarly named constant `SIZE`
+cargo:warning=    |
+cargo:warning=252 -     for (i, &v) in data.iter().skip(to_write_before_reopen).enumerate() {
+cargo:warning=252 +     for (tests::xdp::af_xdp::SIZE, &v) in data.iter().skip(to_write_before_reopen).enumerate() {
+cargo:warning=    |
+cargo:warning=
+cargo:warning=
+cargo:warning=warning: field `regs` is never read
+cargo:warning=  --> test/integration-test/src/tests/ring_buf.rs:35:5
+cargo:warning=   |
+cargo:warning=32 | struct PinnedRingBufTest {
+cargo:warning=   |        ----------------- field in this struct
+cargo:warning=...
+cargo:warning=35 |     regs: PerCpuArray<MapData, Registers>,
+cargo:warning=   |     ^^^^
+cargo:warning=   |
+cargo:warning=   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+cargo:warning=
+cargo:warning=
+cargo:warning=warning: unused variable: `i`
+cargo:warning=   --> test/integration-test/src/tests/ring_buf.rs:226:10
+cargo:warning=    |
+cargo:warning=226 |     for (i, &v) in data.iter().take(to_write_before_reopen).enumerate() {
+cargo:warning=    |          ^
+cargo:warning=    |
+cargo:warning=    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+cargo:warning=help: if this is intentional, prefix it with an underscore
+cargo:warning=    |
+cargo:warning=226 |     for (_i, &v) in data.iter().take(to_write_before_reopen).enumerate() {
+cargo:warning=    |          +
+cargo:warning=help: you might have meant to pattern match on the similarly named constant `SIZE`
+cargo:warning=    |
+cargo:warning=226 -     for (i, &v) in data.iter().take(to_write_before_reopen).enumerate() {
+cargo:warning=226 +     for (tests::xdp::af_xdp::SIZE, &v) in data.iter().take(to_write_before_reopen).enumerate() {
+cargo:warning=    |
+cargo:warning=
+cargo:warning=
+cargo:warning=warning: unused variable: `i`
+cargo:warning=   --> test/integration-test/src/tests/ring_buf.rs:233:9
+cargo:warning=    |
+cargo:warning=233 |     for i in 0..to_read_before_reopen {
+cargo:warning=    |         ^
+cargo:warning=    |
+cargo:warning=help: if this is intentional, prefix it with an underscore
+cargo:warning=    |
+cargo:warning=233 |     for _i in 0..to_read_before_reopen {
+cargo:warning=    |         +
+cargo:warning=help: you might have meant to pattern match on the similarly named constant `SIZE`
+cargo:warning=    |
+cargo:warning=233 -     for i in 0..to_read_before_reopen {
+cargo:warning=233 +     for tests::xdp::af_xdp::SIZE in 0..to_read_before_reopen {
+cargo:warning=    |
+cargo:warning=
+cargo:warning=
+cargo:warning=warning: unused variable: `i`
+cargo:warning=   --> test/integration-test/src/tests/ring_buf.rs:252:10
+cargo:warning=    |
+cargo:warning=252 |     for (i, &v) in data.iter().skip(to_write_before_reopen).enumerate() {
+cargo:warning=    |          ^
+cargo:warning=    |
+cargo:warning=help: if this is intentional, prefix it with an underscore
+cargo:warning=    |
+cargo:warning=252 |     for (_i, &v) in data.iter().skip(to_write_before_reopen).enumerate() {
+cargo:warning=    |          +
+cargo:warning=help: you might have meant to pattern match on the similarly named constant `SIZE`
+cargo:warning=    |
+cargo:warning=252 -     for (i, &v) in data.iter().skip(to_write_before_reopen).enumerate() {
+cargo:warning=252 +     for (tests::xdp::af_xdp::SIZE, &v) in data.iter().skip(to_write_before_reopen).enumerate() {
+cargo:warning=    |
+cargo:warning=
+cargo:warning=
+cargo:warning=warning: field `regs` is never read
+cargo:warning=  --> test/integration-test/src/tests/ring_buf.rs:35:5
+cargo:warning=   |
+cargo:warning=32 | struct PinnedRingBufTest {
+cargo:warning=   |        ----------------- field in this struct
+cargo:warning=...
+cargo:warning=35 |     regs: PerCpuArray<MapData, Registers>,
+cargo:warning=   |     ^^^^
+cargo:warning=   |
+cargo:warning=   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+cargo:warning=
+cargo:warning=
+[    0.000000] Booting Linux on physical CPU 0x0000000000 [0x610f0000]
+[    0.000000] Linux version 6.1.0-39-cloud-arm64 (debian-kernel@lists.debian.org) (gcc-12 (Debian 12.2.0-14+deb12u1) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #1 SMP Debian 6.1.148-1 (2025-08-26)
+[    0.000000] random: crng init done
+[    0.000000] Machine model: linux,dummy-virt
+[    0.000000] efi: UEFI not found.
+[    0.000000] NUMA: No NUMA configuration found
+[    0.000000] NUMA: Faking a node at [mem 0x0000000040000000-0x000000005fffffff]
+[    0.000000] NUMA: NODE_DATA [mem 0x5feed380-0x5feeffff]
+[    0.000000] Zone ranges:
+[    0.000000]   DMA      [mem 0x0000000040000000-0x000000005fffffff]
+[    0.000000]   DMA32    empty
+[    0.000000]   Normal   empty
+[    0.000000] Movable zone start for each node
+[    0.000000] Early memory node ranges
+[    0.000000]   node   0: [mem 0x0000000040000000-0x000000005fffffff]
+[    0.000000] Initmem setup node 0 [mem 0x0000000040000000-0x000000005fffffff]
+[    0.000000] cma: Reserved 64 MiB at 0x000000005b600000
+[    0.000000] psci: probing for conduit method from DT.
+[    0.000000] psci: PSCIv1.1 detected in firmware.
+[    0.000000] psci: Using standard PSCI v0.2 function IDs
+[    0.000000] psci: Trusted OS migration not required
+[    0.000000] psci: SMC Calling Convention v1.0
+[    0.000000] percpu: Embedded 30 pages/cpu s85480 r8192 d29208 u122880
+[    0.000000] Detected PIPT I-cache on CPU0
+[    0.000000] CPU features: detected: Address authentication (IMP DEF algorithm)
+[    0.000000] CPU features: detected: Spectre-v4
+[    0.000000] CPU features: detected: Spectre-BHB
+[    0.000000] alternatives: applying boot alternatives
+[    0.000000] Fallback order for Node 0: 0 
+[    0.000000] Built 1 zonelists, mobility grouping on.  Total pages: 129024
+[    0.000000] Policy zone: DMA
+[    0.000000] Kernel command line: console=ttyAMA0 init.arg=--test-threads=1 init.arg=tests::ring_buf::pinned noapic
+[    0.000000] Unknown kernel command line parameters "noapic", will be passed to user space.
+[    0.000000] Dentry cache hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    0.000000] Inode-cache hash table entries: 32768 (order: 6, 262144 bytes, linear)
+[    0.000000] mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+[    0.000000] Memory: 103892K/524288K available (12032K kernel code, 2028K rwdata, 7812K rodata, 4608K init, 598K bss, 171164K reserved, 65536K cma-reserved)
+[    0.000000] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
+[    0.000000] ftrace: allocating 38562 entries in 151 pages
+[    0.000000] ftrace: allocated 151 pages with 5 groups
+[    0.000000] trace event string verifier disabled
+[    0.000000] rcu: Hierarchical RCU implementation.
+[    0.000000] rcu: 	RCU restricting CPUs from NR_CPUS=256 to nr_cpu_ids=2.
+[    0.000000] 	Rude variant of Tasks RCU enabled.
+[    0.000000] 	Tracing variant of Tasks RCU enabled.
+[    0.000000] rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+[    0.000000] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2
+[    0.000000] NR_IRQS: 64, nr_irqs: 64, preallocated irqs: 0
+[    0.000000] Root IRQ handler: gic_handle_irq
+[    0.000000] GICv2m: range[mem 0x08020000-0x08020fff], SPI[80:143]
+[    0.000000] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    0.000000] arch_timer: cp15 timer(s) running at 24.00MHz (virt).
+[    0.000000] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x588fe9dc0, max_idle_ns: 440795202592 ns
+[    0.000000] sched_clock: 56 bits at 24MHz, resolution 41ns, wraps every 4398046511097ns
+[    0.000081] Console: colour dummy device 80x25
+[    0.000091] Calibrating delay loop (skipped), value calculated using timer frequency.. 48.00 BogoMIPS (lpj=96000)
+[    0.000092] pid_max: default: 32768 minimum: 301
+[    0.000107] LSM: Security Framework initializing
+[    0.000112] landlock: Up and running.
+[    0.000112] Yama: disabled by default; enable with sysctl kernel.yama.*
+[    0.000137] AppArmor: AppArmor initialized
+[    0.000138] TOMOYO Linux initialized
+[    0.000141] LSM support for eBPF active
+[    0.000155] Mount-cache hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    0.000156] Mountpoint-cache hash table entries: 1024 (order: 1, 8192 bytes, linear)
+[    0.000371] cacheinfo: Unable to detect cache hierarchy for CPU 0
+[    0.000463] cblist_init_generic: Setting adjustable number of callback queues.
+[    0.000464] cblist_init_generic: Setting shift to 1 and lim to 1.
+[    0.000473] cblist_init_generic: Setting adjustable number of callback queues.
+[    0.000473] cblist_init_generic: Setting shift to 1 and lim to 1.
+[    0.000496] rcu: Hierarchical SRCU implementation.
+[    0.000496] rcu: 	Max phase no-delay instances is 1000.
+[    0.000667] EFI services will not be available.
+[    0.000712] smp: Bringing up secondary CPUs ...
+[    0.000932] Detected PIPT I-cache on CPU1
+[    0.000943] cacheinfo: Unable to detect cache hierarchy for CPU 1
+[    0.001000] CPU1: Booted secondary processor 0x0000000001 [0x610f0000]
+[    0.001079] smp: Brought up 1 node, 2 CPUs
+[    0.001080] SMP: Total of 2 processors activated.
+[    0.001081] CPU features: detected: ARMv8.4 Translation Table Level
+[    0.001082] CPU features: detected: Data cache clean to the PoU not required for I/D coherence
+[    0.001082] CPU features: detected: Common not Private translations
+[    0.001082] CPU features: detected: CRC32 instructions
+[    0.001082] CPU features: detected: Data cache clean to Point of Deep Persistence
+[    0.001083] CPU features: detected: Data cache clean to Point of Persistence
+[    0.001083] CPU features: detected: E0PD
+[    0.001084] CPU features: detected: Generic authentication (IMP DEF algorithm)
+[    0.001084] CPU features: detected: RCpc load-acquire (LDAPR)
+[    0.001084] CPU features: detected: LSE atomic instructions
+[    0.001084] CPU features: detected: Privileged Access Never
+[    0.001085] CPU features: detected: RAS Extension Support
+[    0.001085] CPU features: detected: Speculation barrier (SB)
+[    0.001085] CPU features: detected: TLB range maintenance instructions
+[    0.001086] CPU features: detected: Speculative Store Bypassing Safe (SSBS)
+[    0.001127] CPU: All CPU(s) started at EL1
+[    0.001129] alternatives: applying system-wide alternatives
+[    0.002817] node 0 deferred pages initialised in 0ms
+[    0.003195] devtmpfs: initialized
+[    0.003453] Registered cp15_barrier emulation handler
+[    0.003453] setend instruction emulation is not supported on this system
+[    0.003473] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.003483] futex hash table entries: 512 (order: 3, 32768 bytes, linear)
+[    0.003579] pinctrl core: initialized pinctrl subsystem
+[    0.003607] DMI not present or invalid.
+[    0.003680] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    0.004477] DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+[    0.004487] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+[    0.004496] DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+[    0.004501] audit: initializing netlink subsys (disabled)
+[    0.004594] audit: type=2000 audit(0.004:1): state=initialized audit_enabled=0 res=1
+[    0.004624] thermal_sys: Registered thermal governor 'fair_share'
+[    0.004625] thermal_sys: Registered thermal governor 'bang_bang'
+[    0.004625] thermal_sys: Registered thermal governor 'step_wise'
+[    0.004625] thermal_sys: Registered thermal governor 'user_space'
+[    0.004629] cpuidle: using governor ladder
+[    0.004630] cpuidle: using governor menu
+[    0.004642] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.004712] ASID allocator initialised with 256 entries
+[    0.004724] Serial: AMBA PL011 UART driver
+[    0.005150] 9000000.pl011: ttyAMA0 at MMIO 0x9000000 (irq = 13, base_baud = 0) is a PL011 rev1
+[    0.027604] printk: console [ttyAMA0] enabled
+[    0.027915] KASLR enabled
+[    0.031264] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    0.031650] HugeTLB: 0 KiB vmemmap can be freed for a 1.00 GiB page
+[    0.032097] HugeTLB: registered 32.0 MiB page size, pre-allocated 0 pages
+[    0.032598] HugeTLB: 0 KiB vmemmap can be freed for a 32.0 MiB page
+[    0.032942] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    0.033159] HugeTLB: 0 KiB vmemmap can be freed for a 2.00 MiB page
+[    0.033363] HugeTLB: registered 64.0 KiB page size, pre-allocated 0 pages
+[    0.033578] HugeTLB: 0 KiB vmemmap can be freed for a 64.0 KiB page
+[    0.034138] ACPI: Interpreter disabled.
+[    0.034320] iommu: Default domain type: Translated 
+[    0.034492] iommu: DMA domain TLB invalidation policy: strict mode 
+[    0.034722] pps_core: LinuxPPS API ver. 1 registered
+[    0.034891] pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+[    0.035185] PTP clock support registered
+[    0.035404] NetLabel: Initializing
+[    0.035507] NetLabel:  domain hash size = 128
+[    0.035642] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+[    0.035832] NetLabel:  unlabeled traffic allowed by default
+[    0.036104] vgaarb: loaded
+[    0.036230] clocksource: Switched to clocksource arch_sys_counter
+[    0.041223] VFS: Disk quotas dquot_6.6.0
+[    0.041376] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[    0.041680] AppArmor: AppArmor Filesystem Enabled
+[    0.041837] pnp: PnP ACPI: disabled
+[    0.046286] NET: Registered PF_INET protocol family
+[    0.046496] IP idents hash table entries: 8192 (order: 4, 65536 bytes, linear)
+[    0.046894] tcp_listen_portaddr_hash hash table entries: 256 (order: 0, 4096 bytes, linear)
+[    0.047253] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    0.047506] TCP established hash table entries: 4096 (order: 3, 32768 bytes, linear)
+[    0.047795] TCP bind hash table entries: 4096 (order: 5, 131072 bytes, linear)
+[    0.048024] TCP: Hash tables configured (established 4096 bind 4096)
+[    0.048283] MPTCP token hash table entries: 512 (order: 1, 12288 bytes, linear)
+[    0.048507] UDP hash table entries: 256 (order: 1, 8192 bytes, linear)
+[    0.048705] UDP-Lite hash table entries: 256 (order: 1, 8192 bytes, linear)
+[    0.048934] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    0.049130] NET: Registered PF_XDP protocol family
+[    0.049288] PCI: CLS 0 bytes, default 64
+[    0.049455] Trying to unpack rootfs image as initramfs...
+[    0.056546] armv8-pmu pmu: hw perfevents: failed to probe PMU!
+[    0.056785] kvm [1]: HYP mode not available
+[    0.057041] Initialise system trusted keyrings
+[    0.057198] Key type blacklist registered
+[    0.057401] workingset: timestamp_bits=42 max_order=17 bucket_order=0
+[    0.058376] integrity: Platform Keyring initialized
+[    0.058540] integrity: Machine keyring initialized
+[    0.067965] Key type asymmetric registered
+[    0.068127] Asymmetric key parser 'x509' registered
+[    0.153535] Freeing initrd memory: 132576K
+[    0.155101] alg: self-tests for CTR-KDF (hmac(sha256)) passed
+[    0.155558] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 249)
+[    0.156072] io scheduler mq-deadline registered
+[    0.157674] pl061_gpio 9030000.pl061: PL061 GPIO chip registered
+[    0.157927] pci-host-generic 3f000000.pcie: host bridge /pcie@10000000 ranges:
+[    0.158180] pci-host-generic 3f000000.pcie:       IO 0x003eff0000..0x003effffff -> 0x0000000000
+[    0.158484] pci-host-generic 3f000000.pcie:      MEM 0x0010000000..0x003efeffff -> 0x0010000000
+[    0.158794] pci-host-generic 3f000000.pcie: ECAM at [mem 0x3f000000-0x3fffffff] for [bus 00-0f]
+[    0.159112] pci-host-generic 3f000000.pcie: PCI host bridge to bus 0000:00
+[    0.159349] pci_bus 0000:00: root bus resource [bus 00-0f]
+[    0.159537] pci_bus 0000:00: root bus resource [io  0x0000-0xffff]
+[    0.159749] pci_bus 0000:00: root bus resource [mem 0x10000000-0x3efeffff]
+[    0.159966] pci 0000:00:00.0: [1b36:0008] type 00 class 0x060000
+[    0.160240] pci 0000:00:01.0: [1af4:1000] type 00 class 0x020000
+[    0.160434] pci 0000:00:01.0: reg 0x10: [io  0x0000-0x001f]
+[    0.160632] pci 0000:00:01.0: reg 0x14: [mem 0x00000000-0x00000fff]
+[    0.160854] pci 0000:00:01.0: reg 0x20: [mem 0x00000000-0x00003fff 64bit pref]
+[    0.161099] pci 0000:00:01.0: reg 0x30: [mem 0x00000000-0x0003ffff pref]
+[    0.161450] pci 0000:00:01.0: BAR 6: assigned [mem 0x10000000-0x1003ffff pref]
+[    0.161671] pci 0000:00:01.0: BAR 4: assigned [mem 0x10040000-0x10043fff 64bit pref]
+[    0.161919] pci 0000:00:01.0: BAR 1: assigned [mem 0x10044000-0x10044fff]
+[    0.162126] pci 0000:00:01.0: BAR 0: assigned [io  0x1000-0x101f]
+[    0.162524] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[    0.163092] Serial: AMBA driver
+[    0.163276] msm_serial: driver initialized
+[    0.163603] cacheinfo: Unable to detect cache hierarchy for CPU 0
+[    0.164337] rtc-pl031 9010000.pl031: registered as rtc0
+[    0.164503] rtc-pl031 9010000.pl031: setting system clock to 2025-09-11T01:29:37 UTC (1757554177)
+[    0.171539] NET: Registered PF_INET6 protocol family
+[    0.172669] Segment Routing with IPv6
+[    0.172786] In-situ OAM (IOAM) with IPv6
+[    0.172926] mip6: Mobile IPv6
+[    0.173028] NET: Registered PF_PACKET protocol family
+[    0.173314] registered taskstats version 1
+[    0.173438] Loading compiled-in X.509 certificates
+[    0.183770] Loaded X.509 cert 'Build time autogenerated kernel key: df0f3dc76c010cb3c39ae748f86df7bdb1507a1d'
+[    0.184180] Key type .fscrypt registered
+[    0.184384] Key type fscrypt-provisioning registered
+[    0.185071] Key type encrypted registered
+[    0.185197] AppArmor: AppArmor sha1 policy hashing enabled
+[    0.185362] ima: No TPM chip found, activating TPM-bypass!
+[    0.185534] ima: Allocated hash algorithm: sha256
+[    0.185688] ima: No architecture policies found
+[    0.185841] evm: Initialising EVM extended attributes:
+[    0.186017] evm: security.selinux
+[    0.186118] evm: security.SMACK64 (disabled)
+[    0.186246] evm: security.SMACK64EXEC (disabled)
+[    0.186387] evm: security.SMACK64TRANSMUTE (disabled)
+[    0.186537] evm: security.SMACK64MMAP (disabled)
+[    0.186676] evm: security.apparmor
+[    0.186783] evm: security.ima
+[    0.186876] evm: security.capability
+[    0.186994] evm: HMAC attrs: 0x1
+[    0.252448] clk: Disabling unused clocks
+[    0.253164] Freeing unused kernel memory: 4608K
+[    0.253866] Checked W+X mappings: passed, no W+X pages found
+[    0.254044] Run /init as init process
+running RUST_BACKTRACE="1" RUST_LOG="debug" "/bin/release-integration_test" "--test-threads=1" "tests::ring_buf::pinned"
+
+running 1 test
+test tests::ring_buf::pinned_ring_buf ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 106 filtered out; finished in 0.22s
+
+running RUST_BACKTRACE="1" RUST_LOG="debug" "/bin/dev-integration_test" "--test-threads=1" "tests::ring_buf::pinned"
+
+running 1 test
+test tests::ring_buf::pinned_ring_buf ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 106 filtered out; finished in 0.28s
+
+init: success
+[    0.766075] reboot: Power down
