@@ -1,6 +1,8 @@
 use std::{
-    mem,
+    collections::VecDeque,
+    fs, mem,
     os::fd::AsRawFd as _,
+    path::Path,
     sync::{
         Arc,
         atomic::{AtomicBool, Ordering},
@@ -13,7 +15,7 @@ use anyhow::Context as _;
 use assert_matches::assert_matches;
 use aya::{
     Ebpf, EbpfLoader,
-    maps::{MapData, array::PerCpuArray, ring_buf::RingBuf},
+    maps::{Map, MapData, array::PerCpuArray, ring_buf::RingBuf},
     programs::UProbe,
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
@@ -22,6 +24,12 @@ use rand::Rng as _;
 use tokio::io::{Interest, unix::AsyncFd};
 
 struct RingBufTest {
+    _bpf: Ebpf,
+    ring_buf: RingBuf<MapData>,
+    regs: PerCpuArray<MapData, Registers>,
+}
+
+struct PinnedRingBufTest {
     _bpf: Ebpf,
     ring_buf: RingBuf<MapData>,
     regs: PerCpuArray<MapData, Registers>,
@@ -43,6 +51,7 @@ impl RingBufTest {
             .set_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
             .load(crate::RING_BUF)
             .unwrap();
+
         let ring_buf = bpf.take_map("RING_BUF").unwrap();
         let ring_buf = RingBuf::try_from(ring_buf).unwrap();
         let regs = bpf.take_map("REGISTERS").unwrap();
@@ -74,6 +83,15 @@ struct WithData(RingBufTest, Vec<u64>);
 impl WithData {
     fn new(n: usize) -> Self {
         Self(RingBufTest::new(), {
+            let mut rng = rand::rng();
+            std::iter::repeat_with(|| rng.random()).take(n).collect()
+        })
+    }
+}
+
+impl PinnedWithData {
+    fn new(n: usize, pin_path: &Path) -> Self {
+        Self(PinnedRingBufTest::new(pin_path), {
             let mut rng = rand::rng();
             std::iter::repeat_with(|| rng.random()).take(n).collect()
         })
@@ -136,6 +154,123 @@ fn ring_buf(n: usize) {
     let Registers { dropped, rejected } = regs.get(&0, 0).unwrap().iter().sum();
     assert_eq!(dropped, expected_dropped);
     assert_eq!(rejected, expected_rejected);
+}
+
+// This test checks for a bug that the consumer index always started at position
+// 0 of a newly-loaded ring-buffer map. This assumption is not true for a map
+// that is pinned to the bpffs filesystem since the map "remembers" the last
+// consumer index position even if all processes unloaded it. The structure of
+// the test is as follows:
+//
+// Create the pinned ring buffer, write some items to it, and read some of them.
+// Leave some in there, so that we can assert that upon re-opening the map, we
+// can still read them. Then, re-open the map, write some more items and read
+// both the old and new items.
+#[test]
+fn pinned_ring_buf() {
+    let mut rng = rand::rng();
+    let pin_path = Path::new("/sys/fs/bpf/").join(format!("{:x}", rng.random::<u64>()));
+    fs::create_dir_all(&pin_path).unwrap();
+    let n = RING_BUF_MAX_ENTRIES - 1; // avoid thinking about the capacity
+    let data = std::iter::repeat_with(|| rng.random())
+        .take(n)
+        .collect::<Vec<_>>();
+
+    let PinnedRingBufTest {
+        mut ring_buf,
+        regs: _,
+        _bpf,
+    } = PinnedRingBufTest::new(&pin_path);
+
+    let to_write_before_reopen = data.len().min(8);
+    let mut expected = VecDeque::new();
+    for &v in data.iter().take(to_write_before_reopen) {
+        ring_buf_trigger_ebpf_program(v);
+        if v % 2 == 0 {
+            expected.push_back(v);
+        }
+    }
+    let to_read_before_reopen = expected.len() / 2;
+    for i in 0..to_read_before_reopen {
+        let read = ring_buf.next().unwrap();
+        let read: [u8; 8] = (*read)
+            .try_into()
+            .with_context(|| format!("data: {:?}", read.len()))
+            .unwrap();
+        let arg = u64::from_ne_bytes(read);
+        let exp = expected.pop_front().unwrap();
+        assert_eq!(exp, arg);
+    }
+
+    // Close the old pinned map and re-open it.
+    drop((_bpf, ring_buf));
+    let PinnedRingBufTest {
+        mut ring_buf,
+        regs: _,
+        _bpf,
+    } = PinnedRingBufTest::new(&pin_path);
+
+    // Write some more items to the ring buffer.
+    for (i, &v) in data.iter().skip(to_write_before_reopen).enumerate() {
+        ring_buf_trigger_ebpf_program(v);
+        if v % 2 == 0 {
+            expected.push_back(v);
+        }
+    }
+    for _ in 0..expected.len() {
+        let read = ring_buf.next().unwrap();
+        let read: [u8; 8] = (*read)
+            .try_into()
+            .with_context(|| format!("data: {:?}", read.len()))
+            .unwrap();
+        let arg = u64::from_ne_bytes(read);
+        let exp = expected.pop_front().unwrap();
+        assert_eq!(exp, arg);
+    }
+
+    // Make sure that there is nothing else in the ring_buf.
+    assert_matches!(ring_buf.next(), None);
+
+    // Clean up the pinned map from the filesystem.
+    fs::remove_dir_all(pin_path).unwrap();
+}
+
+impl PinnedRingBufTest {
+    fn new(pin_path: &Path) -> Self {
+        const RING_BUF_BYTE_SIZE: u32 =
+            (RING_BUF_MAX_ENTRIES * (mem::size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
+
+        let mut bpf = EbpfLoader::new()
+            .map_pin_path(pin_path)
+            .set_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
+            .load(crate::RING_BUF_PINNED)
+            .unwrap();
+        let ring_buf_pin_path = pin_path.join("RING_BUF");
+        let ring_buf = MapData::from_pin(ring_buf_pin_path).unwrap();
+        let ring_buf = Map::RingBuf(ring_buf);
+        let ring_buf = RingBuf::try_from(ring_buf).unwrap();
+        let regs = bpf.take_map("REGISTERS").unwrap();
+        let regs = PerCpuArray::<_, Registers>::try_from(regs).unwrap();
+        let prog: &mut UProbe = bpf
+            .program_mut("ring_buf_test")
+            .unwrap()
+            .try_into()
+            .unwrap();
+        prog.load().unwrap();
+        prog.attach(
+            "ring_buf_trigger_ebpf_program",
+            "/proc/self/exe",
+            None,
+            None,
+        )
+        .unwrap();
+
+        Self {
+            _bpf: bpf,
+            ring_buf,
+            regs,
+        }
+    }
 }
 
 #[unsafe(no_mangle)]

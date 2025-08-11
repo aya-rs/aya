@@ -91,3 +91,7 @@ path = "src/xdp_sec.rs"
 [[bin]]
 name = "uprobe_cookie"
 path = "src/uprobe_cookie.rs"
+
+[[bin]]
+name = "ring_buf_pinned"
+path = "src/ring_buf_pinned.rs"
