@@ -119,7 +119,13 @@ pub struct EbpfLoader<'a> {
     btf: Option<Cow<'a, Btf>>,
     map_pin_path: Option<PathBuf>,
     globals: HashMap<&'a str, (&'a [u8], bool)>,
+    // Max entries overrides the max_entries field of the map that matches the provided name
+    // before the map is created.
     max_entries: HashMap<&'a str, u32>,
+    // Map pin path overrides the pin path of the map that matches the provided name before
+    // it is created.
+    map_pin_path_by_name: HashMap<&'a str, std::borrow::Cow<'a, Path>>,
+
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
     allow_unsupported_maps: bool,
@@ -158,6 +164,7 @@ impl<'a> EbpfLoader<'a> {
             map_pin_path: None,
             globals: HashMap::new(),
             max_entries: HashMap::new(),
+            map_pin_path_by_name: HashMap::new(),
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
             allow_unsupported_maps: false,
@@ -301,6 +308,32 @@ impl<'a> EbpfLoader<'a> {
         self
     }
 
+    /// Set the pin path for the map that matches the provided name.
+    ///
+    /// Note that this is an absolute path to the pinned map; it is not a prefix
+    /// to be combined with the map name, and it is not relative to the
+    /// configured base directory for pinned maps.
+    ///     
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::EbpfLoader;
+    ///
+    /// let bpf = EbpfLoader::new()
+    ///     .set_map_pin_path("map", "/sys/fs/bpf/my-pinned-map")
+    ///     .load_file("file.o")?;
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    ///
+    pub fn set_map_pin_path<P: Into<Cow<'a, Path>>>(
+        &mut self,
+        name: &'a str,
+        path: P,
+    ) -> &mut Self {
+        self.map_pin_path_by_name.insert(name, path.into());
+        self
+    }
+
     /// Treat the provided program as an [`Extension`]
     ///
     /// When attempting to load the program with the provided `name`
@@ -384,6 +417,7 @@ impl<'a> EbpfLoader<'a> {
             extensions,
             verifier_log_level,
             allow_unsupported_maps,
+            map_pin_path_by_name,
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
@@ -483,16 +517,21 @@ impl<'a> EbpfLoader<'a> {
                 _ => (),
             }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
-            let mut map = match obj.pinning() {
-                PinningType::None => MapData::create(obj, &name, btf_fd)?,
-                PinningType::ByName => {
-                    // pin maps in /sys/fs/bpf by default to align with libbpf
-                    // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
-                    let path = map_pin_path
-                        .as_deref()
-                        .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
+            let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
+                MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd)?
+            } else {
+                match obj.pinning() {
+                    PinningType::None => MapData::create(obj, &name, btf_fd)?,
+                    PinningType::ByName => {
+                        // pin maps in /sys/fs/bpf by default to align with libbpf
+                        // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
+                        let path = map_pin_path
+                            .as_deref()
+                            .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
+                        let path = path.join(&name);
 
-                    MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
+                        MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
+                    }
                 }
             };
             map.finalize()?;
