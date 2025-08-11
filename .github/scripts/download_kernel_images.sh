@@ -19,7 +19,7 @@ readonly URLS
 # Find the latest revision of each kernel version.
 FILES=()
 for VERSION in "${VERSIONS[@]}"; do
-  REGEX="linux-image-${VERSION//./\\.}\\.[0-9]+(-[0-9]+)?(\+bpo)?-cloud-${ARCHITECTURE}-unsigned_.*\\.deb"
+  REGEX="linux-image-${VERSION//./\\.}\\.[0-9]+(-[0-9]+)?(\+bpo|\+deb[0-9]+)?-cloud-${ARCHITECTURE}-unsigned_.*\\.deb"
   match=$(printf '%s\n' "$URLS" | grep -E "$REGEX" | sort -V | tail -n1) || {
     printf '%s\nVERSION=%s\nREGEX=%s\n' "$URLS" "$VERSION" "$REGEX" >&2
     exit 1
