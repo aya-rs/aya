@@ -39,6 +39,7 @@ bpf_file!(
     VARIABLES_RELOC => "variables_reloc.bpf.o",
 
     BPF_PROBE_READ => "bpf_probe_read",
+    LINEAR_DATA_STRUCTURES => "linear_data_structures",
     LOG => "log",
     MAP_TEST => "map_test",
     MEMMOVE_TEST => "memmove_test",
