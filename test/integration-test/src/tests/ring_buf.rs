@@ -265,7 +265,7 @@ fn pinned_ring_buf(n: usize) {
         data,
     ) = PinnedWithData::new(n);
     // Clean up the pinned map from the filesystem
-    let _ = fs::remove_file(RING_BUF_PIN_PATH).unwrap();
+    fs::remove_file(RING_BUF_PIN_PATH).unwrap();
 
     run_test(ring_buf, regs, data, expected_capacity);
 }
