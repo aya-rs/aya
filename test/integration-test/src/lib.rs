@@ -55,6 +55,7 @@ bpf_file!(
     TWO_PROGS => "two_progs",
     XDP_SEC => "xdp_sec",
     UPROBE_COOKIE => "uprobe_cookie",
+    RING_BUF_PINNED => "ring_buf_pinned",
 );
 
 #[cfg(test)]
