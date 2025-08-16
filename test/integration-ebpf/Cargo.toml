@@ -91,3 +91,7 @@ path = "src/xdp_sec.rs"
 [[bin]]
 name = "uprobe_cookie"
 path = "src/uprobe_cookie.rs"
+
+[[bin]]
+name = "queue_test"
+path = "src/queue_test.rs"
