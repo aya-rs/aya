@@ -2,7 +2,7 @@
 #![no_main]
 
 use aya_ebpf::{
-    cty::c_long,
+    cty::{c_int, c_long},
     macros::{map, uprobe},
     maps::{Array, Queue},
     programs::ProbeContext,
@@ -14,14 +14,14 @@ const PEEK_INDEX: u32 = 0;
 const POP_INDEX: u32 = 1;
 
 #[map]
-static RESULT: Array<i64> = Array::<i64>::with_max_entries(2, 0);
+static RESULT: Array<c_int> = Array::<c_int>::with_max_entries(10, 0);
 
 #[map]
-static TEST_QUEUE: Queue<i64> = Queue::with_max_entries(10, 0);
+static TEST_QUEUE: Queue<c_int> = Queue::with_max_entries(10, 0);
 
 #[uprobe]
 pub fn test_queue_push(ctx: ProbeContext) -> Result<(), c_long> {
-    let value: i64 = ctx.arg(0).ok_or(-1)?;
+    let value: c_int = ctx.arg(0).ok_or(-2)?;
     TEST_QUEUE.push(&value, 0)?;
     Ok(())
 }
@@ -29,19 +29,21 @@ pub fn test_queue_push(ctx: ProbeContext) -> Result<(), c_long> {
 #[uprobe]
 pub fn test_queue_peek(_: ProbeContext) -> Result<(), c_long> {
     let value = TEST_QUEUE.peek().unwrap_or(-1);
-    let result = RESULT.get_ptr_mut(PEEK_INDEX).ok_or(-1)?;
-    unsafe {
-        *result = value;
-    }
+    result_set(PEEK_INDEX, value)?;
     Ok(())
 }
 
 #[uprobe]
 pub fn test_queue_pop(_: ProbeContext) -> Result<(), c_long> {
     let value = TEST_QUEUE.pop().unwrap_or(-1);
-    let result = RESULT.get_ptr_mut(POP_INDEX).ok_or(-1)?;
-    unsafe {
-        *result = value;
-    }
+    result_set(POP_INDEX, value)?;
+    Ok(())
+}
+
+fn result_set(index: u32, value: c_int) -> Result<(), c_long> {
+    let ptr = RESULT.get_ptr_mut(index).ok_or(-1)?;
+    let dst = unsafe { ptr.as_mut() };
+    let dst_res = dst.ok_or(-1)?;
+    *dst_res = value;
     Ok(())
 }
