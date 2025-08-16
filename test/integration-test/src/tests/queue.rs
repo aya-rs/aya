@@ -1,5 +1,6 @@
-use aya::{EbpfLoader, maps::Array, programs::UProbe};
 use std::ffi::c_int;
+
+use aya::{EbpfLoader, maps::Array, programs::UProbe};
 
 const PEEK_INDEX: u32 = 0;
 const POP_INDEX: u32 = 1;
