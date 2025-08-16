@@ -64,3 +64,12 @@ pub mod strncmp {
     #[cfg(feature = "user")]
     unsafe impl aya::Pod for TestResult {}
 }
+
+pub mod queue {
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct TestResult(pub u64);
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
