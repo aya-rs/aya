@@ -1,10 +1,10 @@
 #![no_std]
 #![no_main]
 
-use aya_ebpf::maps::{Array, Queue};
 use aya_ebpf::{
     cty::c_long,
     macros::{map, uprobe},
+    maps::{Array, Queue},
     programs::ProbeContext,
 };
 #[cfg(not(test))]
