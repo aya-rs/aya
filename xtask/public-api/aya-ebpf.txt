@@ -595,8 +595,8 @@ pub mod aya_ebpf::maps::stack
 impl<T> aya_ebpf::maps::stack::Stack<T>
 pub fn aya_ebpf::maps::stack::Stack<T>::peek(&self) -> core::option::Option<T>
 pub const fn aya_ebpf::maps::stack::Stack<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack::Stack<T>
-pub fn aya_ebpf::maps::stack::Stack<T>::pop(&mut self) -> core::option::Option<T>
-pub fn aya_ebpf::maps::stack::Stack<T>::push(&mut self, value: &T, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::stack::Stack<T>::pop(&self) -> core::option::Option<T>
+pub fn aya_ebpf::maps::stack::Stack<T>::push(&self, value: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::stack::Stack<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack::Stack<T>
 impl<T> core::marker::Freeze for aya_ebpf::maps::stack::Stack<T>
 impl<T> core::marker::Send for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Send
@@ -1288,8 +1288,8 @@ pub fn aya_ebpf::maps::sock_map::SockMap::from(t: T) -> T
 impl<T> aya_ebpf::maps::stack::Stack<T>
 pub fn aya_ebpf::maps::stack::Stack<T>::peek(&self) -> core::option::Option<T>
 pub const fn aya_ebpf::maps::stack::Stack<T>::pinned(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack::Stack<T>
-pub fn aya_ebpf::maps::stack::Stack<T>::pop(&mut self) -> core::option::Option<T>
-pub fn aya_ebpf::maps::stack::Stack<T>::push(&mut self, value: &T, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::stack::Stack<T>::pop(&self) -> core::option::Option<T>
+pub fn aya_ebpf::maps::stack::Stack<T>::push(&self, value: &T, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::stack::Stack<T>::with_max_entries(max_entries: u32, flags: u32) -> aya_ebpf::maps::stack::Stack<T>
 impl<T> core::marker::Freeze for aya_ebpf::maps::stack::Stack<T>
 impl<T> core::marker::Send for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Send
