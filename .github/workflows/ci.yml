@@ -170,7 +170,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker
+      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker --features llvm-21
 
       - uses: taiki-e/install-action@cargo-hack
 
@@ -297,7 +297,7 @@ jobs:
       # --force so that bpf-linker gets always relinked against the latest LLVM downloaded above.
       #
       # Do this on all system (not just macOS) to avoid relying on rustc-provided libLLVM.so.
-      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker --no-default-features --force
+      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker --no-default-features --features llvm-21 --force
 
       - uses: actions/cache@v4
         with:
