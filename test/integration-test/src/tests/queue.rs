@@ -11,14 +11,16 @@ pub extern "C" fn trigger_queue_push(arg: u64) {
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn trigger_queue_peek() {
+pub extern "C" fn trigger_queue_peek(marker: u64) -> u64 {
     core::hint::black_box(trigger_queue_peek);
+    marker + 1
 }
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn trigger_queue_pop() {
+pub extern "C" fn trigger_queue_pop(marker: u64) -> u64 {
     core::hint::black_box(trigger_queue_pop);
+    marker + 2
 }
 
 #[test_log::test]
@@ -57,11 +59,17 @@ fn queue_basic() {
 
     for i in 0..9 {
         trigger_queue_push(i);
+        std::thread::sleep(std::time::Duration::from_millis(1)); // 确保完成
+    }
 
-        trigger_queue_peek();
-        assert_eq!(array.get(&PEEK_INDEX, 0).unwrap(), i);
+    for i in 0..9 {
+        trigger_queue_peek(i);
+        let peek_value = array.get(&PEEK_INDEX, 0).unwrap();
 
-        trigger_queue_pop();
-        assert_eq!(array.get(&POP_INDEX, 0).unwrap(), i);
+        trigger_queue_pop(i);
+        let pop_value = array.get(&POP_INDEX, 0).unwrap();
+
+        assert_eq!(peek_value, pop_value);
+        assert_eq!(pop_value, i);
     }
 }

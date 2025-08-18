@@ -11,19 +11,21 @@ pub extern "C" fn trigger_stack_push(arg: u64) {
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn trigger_stack_peek() {
+pub extern "C" fn trigger_stack_peek(marker: u64) -> u64 {
     core::hint::black_box(trigger_stack_peek);
+    marker + 1
 }
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn trigger_stack_pop() {
+pub extern "C" fn trigger_stack_pop(marker: u64) -> u64 {
     core::hint::black_box(trigger_stack_pop);
+    marker + 2
 }
 
 #[test_log::test]
 fn stack_basic() {
-    let mut bpf = EbpfLoader::new().load(crate::stack_TEST).unwrap();
+    let mut bpf = EbpfLoader::new().load(crate::STACK_TEST).unwrap();
 
     let prog: &mut UProbe = bpf
         .program_mut("test_stack_push")
@@ -57,11 +59,13 @@ fn stack_basic() {
 
     for i in 0..9 {
         trigger_stack_push(i);
+    }
 
-        trigger_stack_peek();
+    for i in (0..9).rev() {
+        trigger_stack_peek(i);
         assert_eq!(array.get(&PEEK_INDEX, 0).unwrap(), i);
 
-        trigger_stack_pop();
+        trigger_stack_pop(i);
         assert_eq!(array.get(&POP_INDEX, 0).unwrap(), i);
     }
 }
