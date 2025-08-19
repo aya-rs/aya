@@ -93,16 +93,7 @@ pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
 
         // Set target triple. This will set the right flags (which you can see
         // running clang -target=X  -E - -dM </dev/null)
-        let target = match arch {
-            Architecture::AArch64 => "aarch64-unknown-linux-gnu",
-            Architecture::ARMv7 => "armv7-unknown-linux-gnu",
-            Architecture::LoongArch64 => "loongarch64-unknown-linux-gnu",
-            Architecture::Mips => "mips-unknown-linux-gnu",
-            Architecture::PowerPC64 => "powerpc64le-unknown-linux-gnu",
-            Architecture::RISCV64 => "riscv64-unknown-linux-gnu",
-            Architecture::S390X => "s390x-unknown-linux-gnu",
-            Architecture::X86_64 => "x86_64-unknown-linux-gnu",
-        };
+        let target = arch.target();
         bindgen = bindgen.clang_args(["-target", target]);
 
         // Set the sysroot. This is needed to ensure that the correct arch
