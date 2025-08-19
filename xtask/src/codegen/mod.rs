@@ -34,6 +34,19 @@ impl Architecture {
     pub fn supported() -> &'static [Architecture] {
         SUPPORTED_ARCHS
     }
+
+    pub fn target(&self) -> &'static str {
+        match self {
+            Architecture::AArch64 => "aarch64-unknown-linux-gnu",
+            Architecture::ARMv7 => "armv7-unknown-linux-gnu",
+            Architecture::LoongArch64 => "loongarch64-unknown-linux-gnu",
+            Architecture::Mips => "mips-unknown-linux-gnu",
+            Architecture::PowerPC64 => "powerpc64le-unknown-linux-gnu",
+            Architecture::RISCV64 => "riscv64-unknown-linux-gnu",
+            Architecture::S390X => "s390x-unknown-linux-gnu",
+            Architecture::X86_64 => "x86_64-unknown-linux-gnu",
+        }
+    }
 }
 
 impl std::str::FromStr for Architecture {
