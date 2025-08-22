@@ -1,5 +1,7 @@
 use aya::{EbpfLoader, maps::Array, programs::UProbe};
 
+use crate::utils::attach_uprobe;
+
 const PEEK_INDEX: u32 = 0;
 const POP_INDEX: u32 = 1;
 
@@ -27,32 +29,13 @@ pub extern "C" fn trigger_stack_pop(marker: u64) -> u64 {
 fn stack_basic() {
     let mut bpf = EbpfLoader::new().load(crate::STACK_TEST).unwrap();
 
-    let prog: &mut UProbe = bpf
-        .program_mut("test_stack_push")
-        .unwrap()
-        .try_into()
-        .unwrap();
-    prog.load().unwrap();
-    prog.attach("trigger_stack_push", "/proc/self/exe", None, None)
-        .unwrap();
-
-    let prog: &mut UProbe = bpf
-        .program_mut("test_stack_pop")
-        .unwrap()
-        .try_into()
-        .unwrap();
-    prog.load().unwrap();
-    prog.attach("trigger_stack_pop", "/proc/self/exe", None, None)
-        .unwrap();
-
-    let prog: &mut UProbe = bpf
-        .program_mut("test_stack_peek")
-        .unwrap()
-        .try_into()
-        .unwrap();
-    prog.load().unwrap();
-    prog.attach("trigger_stack_peek", "/proc/self/exe", None, None)
-        .unwrap();
+    for (probe_name, symbol) in &[
+        ("test_stack_push", "trigger_stack_push"),
+        ("test_stack_peek", "trigger_stack_peek"),
+        ("test_stack_pop", "trigger_stack_pop"),
+    ] {
+        attach_uprobe(bpf, probe_name, symbol);
+    }
 
     let array_map = bpf.map("RESULT").unwrap();
     let array = Array::<_, u64>::try_from(array_map).unwrap();
