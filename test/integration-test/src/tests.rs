@@ -29,6 +29,7 @@ mod raw_tracepoint;
 mod rbpf;
 mod relocations;
 mod ring_buf;
+mod sk_reuseport;
 mod sk_storage;
 mod smoke;
 mod strncmp;
