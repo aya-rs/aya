@@ -103,12 +103,7 @@ macro_rules! kernel_assert_eq {
 pub(crate) use kernel_assert_eq;
 
 pub(crate) fn attach_uprobe(bpf: &mut Bpf, probe_name: &str, symbol: &str) {
-    let prog: &mut UProbe = bpf
-        .program_mut("test_stack_push")
-        .unwrap()
-        .try_into()
-        .unwrap();
+    let prog: &mut UProbe = bpf.program_mut(probe_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_stack_push", "/proc/self/exe", None, None)
-        .unwrap();
+    prog.attach(symbol, "/proc/self/exe", None, None).unwrap();
 }
