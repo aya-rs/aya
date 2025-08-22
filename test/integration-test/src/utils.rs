@@ -6,9 +6,7 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use aya::Ebpf;
-use aya::netlink_set_link_up;
-use aya::programs::UProbe;
+use aya::{Ebpf, netlink_set_link_up, programs::UProbe};
 use libc::if_nametoindex;
 use netns_rs::{NetNs, get_from_current_thread};
 
