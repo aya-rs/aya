@@ -94,7 +94,7 @@ pub use perf::PerfEventArray;
 pub use queue::Queue;
 pub use ring_buf::RingBuf;
 pub use sk_storage::SkStorage;
-pub use sock::{SockHash, SockMap};
+pub use sock::{ReusePortSockArray, SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
 pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
@@ -262,6 +262,8 @@ pub enum Map {
     ProgramArray(MapData),
     /// A [`Queue`] map.
     Queue(MapData),
+    /// A [`ReusePortSockArray`] map.
+    ReusePortSockArray(MapData),
     /// A [`RingBuf`] map.
     RingBuf(MapData),
     /// A [`SockHash`] map
@@ -298,6 +300,7 @@ impl Map {
             Self::PerfEventArray(map) => map.obj.map_type(),
             Self::ProgramArray(map) => map.obj.map_type(),
             Self::Queue(map) => map.obj.map_type(),
+            Self::ReusePortSockArray(map) => map.obj.map_type(),
             Self::RingBuf(map) => map.obj.map_type(),
             Self::SockHash(map) => map.obj.map_type(),
             Self::SockMap(map) => map.obj.map_type(),
@@ -330,6 +333,7 @@ impl Map {
             Self::ProgramArray(map) => map.pin(path),
             Self::Queue(map) => map.pin(path),
             Self::RingBuf(map) => map.pin(path),
+            Self::ReusePortSockArray(map) => map.pin(path),
             Self::SockHash(map) => map.pin(path),
             Self::SockMap(map) => map.pin(path),
             Self::SkStorage(map) => map.pin(path),
@@ -504,6 +508,7 @@ impl_try_from_map!(() {
     DevMapHash,
     PerfEventArray,
     ProgramArray,
+    ReusePortSockArray,
     RingBuf,
     SockMap,
     StackTraceMap,
