@@ -1,7 +1,7 @@
 use aya::{EbpfLoader, maps::Array};
+use integration_common::stack_queue::{PEEK_INDEX, POP_INDEX};
 
 use crate::utils::attach_uprobe;
-use integration_common::stack_queue::{PEEK_INDEX, POP_INDEX};
 
 #[unsafe(no_mangle)]
 #[inline(never)]
