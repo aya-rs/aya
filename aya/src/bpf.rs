@@ -25,8 +25,8 @@ use crate::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe,
         LircMode2, Lsm, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
-        SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint,
-        UProbe, Xdp,
+        SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SkSkbKind, SockOps, SocketFilter,
+        TracePoint, UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -429,6 +429,7 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::PerfEvent
                                 | ProgramSection::RawTracePoint
                                 | ProgramSection::SkLookup
+                                | ProgramSection::SkReuseport
                                 | ProgramSection::FlowDissector
                                 | ProgramSection::CgroupSock { attach_type: _ }
                                 | ProgramSection::CgroupDevice => {}
@@ -670,6 +671,9 @@ impl<'a> EbpfLoader<'a> {
                         ProgramSection::SkLookup => Program::SkLookup(SkLookup {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),
+                        ProgramSection::SkReuseport => Program::SkReuseport(SkReuseport {
+                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
+                        }),
                         ProgramSection::CgroupSock { attach_type, .. } => {
                             Program::CgroupSock(CgroupSock {
                                 data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
@@ -716,6 +720,7 @@ fn parse_map(
         BPF_MAP_TYPE_PERCPU_HASH => Map::PerCpuHashMap(map),
         BPF_MAP_TYPE_LRU_PERCPU_HASH => Map::PerCpuLruHashMap(map),
         BPF_MAP_TYPE_PERF_EVENT_ARRAY => Map::PerfEventArray(map),
+        BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Map::ReusePortSockArray(map),
         BPF_MAP_TYPE_RINGBUF => Map::RingBuf(map),
         BPF_MAP_TYPE_SOCKHASH => Map::SockHash(map),
         BPF_MAP_TYPE_SOCKMAP => Map::SockMap(map),

@@ -69,6 +69,10 @@ name = "simple_prog"
 path = "src/simple_prog.rs"
 
 [[bin]]
+name = "sk_reuseport"
+path = "src/sk_reuseport.rs"
+
+[[bin]]
 name = "strncmp"
 path = "src/strncmp.rs"
 
