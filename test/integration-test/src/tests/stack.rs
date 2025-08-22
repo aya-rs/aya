@@ -1,9 +1,7 @@
-use aya::{EbpfLoader, maps::Array, programs::UProbe};
+use aya::{EbpfLoader, maps::Array};
 
 use crate::utils::attach_uprobe;
-
-const PEEK_INDEX: u32 = 0;
-const POP_INDEX: u32 = 1;
+use integration_common::stack_queue::{PEEK_INDEX, POP_INDEX};
 
 #[unsafe(no_mangle)]
 #[inline(never)]
@@ -34,7 +32,7 @@ fn stack_basic() {
         ("test_stack_peek", "trigger_stack_peek"),
         ("test_stack_pop", "trigger_stack_pop"),
     ] {
-        attach_uprobe(bpf, probe_name, symbol);
+        attach_uprobe(&mut bpf, probe_name, symbol);
     }
 
     let array_map = bpf.map("RESULT").unwrap();

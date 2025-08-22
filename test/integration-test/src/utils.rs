@@ -6,7 +6,9 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
+use aya::Ebpf;
 use aya::netlink_set_link_up;
+use aya::programs::UProbe;
 use libc::if_nametoindex;
 use netns_rs::{NetNs, get_from_current_thread};
 
@@ -102,7 +104,7 @@ macro_rules! kernel_assert_eq {
 
 pub(crate) use kernel_assert_eq;
 
-pub(crate) fn attach_uprobe(bpf: &mut Bpf, probe_name: &str, symbol: &str) {
+pub(crate) fn attach_uprobe(bpf: &mut Ebpf, probe_name: &str, symbol: &str) {
     let prog: &mut UProbe = bpf.program_mut(probe_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
     prog.attach(symbol, "/proc/self/exe", None, None).unwrap();

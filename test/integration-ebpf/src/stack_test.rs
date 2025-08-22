@@ -9,9 +9,7 @@ use aya_ebpf::{
 };
 #[cfg(not(test))]
 extern crate ebpf_panic;
-
-const PEEK_INDEX: u32 = 0;
-const POP_INDEX: u32 = 1;
+use integration_common::stack_queue::{PEEK_INDEX, POP_INDEX};
 
 #[map]
 static RESULT: Array<u64> = Array::<u64>::with_max_entries(2, 0);

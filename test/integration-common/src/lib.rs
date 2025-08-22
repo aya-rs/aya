@@ -64,3 +64,8 @@ pub mod strncmp {
     #[cfg(feature = "user")]
     unsafe impl aya::Pod for TestResult {}
 }
+
+pub mod stack_queue {
+    pub const PEEK_INDEX: u32 = 0;
+    pub const POP_INDEX: u32 = 1;
+}
