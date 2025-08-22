@@ -56,14 +56,15 @@ bpf_file!(
     RELOCATIONS => "relocations",
     RING_BUF => "ring_buf",
     SIMPLE_PROG => "simple_prog",
+    SK_REUSEPORT => "sk_reuseport",
     SK_STORAGE => "sk_storage",
     STRNCMP => "strncmp",
     TCX => "tcx",
     TEST => "test",
     TWO_PROGS => "two_progs",
-    XDP_SEC => "xdp_sec",
     UPROBE_COOKIE => "uprobe_cookie",
     PRINTK_TEST => "printk_test",
+    XDP_SEC => "xdp_sec",
 );
 
 #[cfg(test)]
