@@ -848,4 +848,3 @@ pub unsafe fn bpf_d_path(path: *const path, dest: &mut [u8]) -> Result<&[u8], c_
 
     Ok(read_str_bytes(len, dest)?)
 }
-
