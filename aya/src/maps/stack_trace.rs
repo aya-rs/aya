@@ -24,7 +24,7 @@ use crate::{
 /// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 4.6.
-///  
+///
 /// # Examples
 ///
 /// ```no_run
@@ -108,7 +108,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
     ///
     /// Returns [`MapError::KeyNotFound`] if there is no stack trace with the
     /// given `stack_id`, or [`MapError::SyscallError`] if `bpf_map_lookup_elem` fails.
-    pub fn get(&self, stack_id: &u32, flags: u64) -> Result<StackTrace, MapError> {
+    pub fn get(&self, stack_id: &i64, flags: u64) -> Result<StackTrace, MapError> {
         let fd = self.inner.borrow().fd().as_fd();
 
         let mut frames = vec![0; self.max_stack_depth];
@@ -133,30 +133,30 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
 
     /// An iterator visiting all (`stack_id`, `stack_trace`) pairs in arbitrary order. The
     /// iterator item type is `Result<(u32, StackTrace), MapError>`.
-    pub fn iter(&self) -> MapIter<'_, u32, StackTrace, Self> {
+    pub fn iter(&self) -> MapIter<'_, i64, StackTrace, Self> {
         MapIter::new(self)
     }
 
     /// An iterator visiting all the stack_ids in arbitrary order. The iterator element
     /// type is `Result<u32, MapError>`.
-    pub fn stack_ids(&self) -> MapKeys<'_, u32> {
+    pub fn stack_ids(&self) -> MapKeys<'_, i64> {
         MapKeys::new(self.inner.borrow())
     }
 }
 
-impl<T: Borrow<MapData>> IterableMap<u32, StackTrace> for StackTraceMap<T> {
+impl<T: Borrow<MapData>> IterableMap<i64, StackTrace> for StackTraceMap<T> {
     fn map(&self) -> &MapData {
         self.inner.borrow()
     }
 
-    fn get(&self, index: &u32) -> Result<StackTrace, MapError> {
+    fn get(&self, index: &i64) -> Result<StackTrace, MapError> {
         self.get(index, 0)
     }
 }
 
 impl<'a, T: Borrow<MapData>> IntoIterator for &'a StackTraceMap<T> {
-    type Item = Result<(u32, StackTrace), MapError>;
-    type IntoIter = MapIter<'a, u32, StackTrace, StackTraceMap<T>>;
+    type Item = Result<(i64, StackTrace), MapError>;
+    type IntoIter = MapIter<'a, i64, StackTrace, StackTraceMap<T>>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
@@ -181,7 +181,7 @@ impl<T: BorrowMut<MapData>> StackTraceMap<T> {
 /// See the [`StackTraceMap`] documentation for examples.
 pub struct StackTrace {
     /// The stack trace id as returned by `bpf_get_stackid()`.
-    pub id: u32,
+    pub id: i64,
     frames: Vec<StackFrame>,
 }
 
