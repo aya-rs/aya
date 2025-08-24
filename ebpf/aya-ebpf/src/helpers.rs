@@ -15,7 +15,7 @@ use core::{
     mem::{self, MaybeUninit},
 };
 
-pub use aya_ebpf_bindings::helpers as generated;
+pub use aya_ebpf_bindings::{bindings::path, helpers as generated};
 #[doc(hidden)]
 pub use generated::*;
 
@@ -841,4 +841,15 @@ pub fn bpf_strncmp<const N: usize>(s1: &[u8; N], s2: &CStr) -> Ordering {
     // usage of strncmp in C programs.
     unsafe { generated::bpf_strncmp(s1.as_ptr() as *const _, N as u32, s2.as_ptr() as *const _) }
         .cmp(&0)
+}
+
+#[inline]
+pub unsafe fn bpf_d_path(path: *const path, dest: &mut [u8]) -> Result<&[u8], c_long> {
+    let len = generated::bpf_d_path(
+        path as *mut path,
+        dest.as_mut_ptr() as *mut _,
+        dest.len() as u32,
+    );
+
+    read_str_bytes(len, dest)
 }
