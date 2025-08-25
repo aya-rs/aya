@@ -62,6 +62,7 @@ pub mod perf_event;
 pub mod raw_trace_point;
 pub mod sk_lookup;
 pub mod sk_msg;
+pub mod sk_reuseport;
 pub mod sk_skb;
 pub mod sock_ops;
 pub mod socket_filter;
@@ -114,6 +115,7 @@ pub use crate::programs::{
     raw_trace_point::RawTracePoint,
     sk_lookup::SkLookup,
     sk_msg::SkMsg,
+    sk_reuseport::{SkReuseport, SkReuseportError},
     sk_skb::{SkSkb, SkSkbKind},
     sock_ops::SockOps,
     socket_filter::{SocketFilter, SocketFilterError},
@@ -199,6 +201,10 @@ pub enum ProgramError {
     /// An error occurred while working with a [`SocketFilter`].
     #[error(transparent)]
     SocketFilterError(#[from] SocketFilterError),
+
+    /// An error occurred while working with a [`SkReuseport`] program.
+    #[error(transparent)]
+    SkReuseportError(#[from] SkReuseportError),
 
     /// An error occurred while working with an [`Xdp`] program.
     #[error(transparent)]
@@ -319,6 +325,8 @@ pub enum Program {
     Extension(Extension),
     /// A [`SkLookup`] program
     SkLookup(SkLookup),
+    /// A [`SkReuseport`] program
+    SkReuseport(SkReuseport),
     /// A [`CgroupSock`] program
     CgroupSock(CgroupSock),
     /// A [`CgroupDevice`] program
@@ -353,6 +361,7 @@ impl Program {
             Self::Extension(_) => Extension::PROGRAM_TYPE,
             Self::CgroupSockAddr(_) => CgroupSockAddr::PROGRAM_TYPE,
             Self::SkLookup(_) => SkLookup::PROGRAM_TYPE,
+            Self::SkReuseport(_) => SkReuseport::PROGRAM_TYPE,
             Self::CgroupSock(_) => CgroupSock::PROGRAM_TYPE,
             Self::CgroupDevice(_) => CgroupDevice::PROGRAM_TYPE,
             Self::Iter(_) => Iter::PROGRAM_TYPE,
@@ -386,6 +395,7 @@ impl Program {
             Self::Extension(p) => p.pin(path),
             Self::CgroupSockAddr(p) => p.pin(path),
             Self::SkLookup(p) => p.pin(path),
+            Self::SkReuseport(p) => p.pin(path),
             Self::CgroupSock(p) => p.pin(path),
             Self::CgroupDevice(p) => p.pin(path),
             Self::Iter(p) => p.pin(path),
@@ -418,6 +428,7 @@ impl Program {
             Self::Extension(mut p) => p.unload(),
             Self::CgroupSockAddr(mut p) => p.unload(),
             Self::SkLookup(mut p) => p.unload(),
+            Self::SkReuseport(mut p) => p.unload(),
             Self::CgroupSock(mut p) => p.unload(),
             Self::CgroupDevice(mut p) => p.unload(),
             Self::Iter(mut p) => p.unload(),
@@ -452,6 +463,7 @@ impl Program {
             Self::Extension(p) => p.fd(),
             Self::CgroupSockAddr(p) => p.fd(),
             Self::SkLookup(p) => p.fd(),
+            Self::SkReuseport(p) => p.fd(),
             Self::CgroupSock(p) => p.fd(),
             Self::CgroupDevice(p) => p.fd(),
             Self::Iter(p) => p.fd(),
@@ -487,6 +499,7 @@ impl Program {
             Self::Extension(p) => p.info(),
             Self::CgroupSockAddr(p) => p.info(),
             Self::SkLookup(p) => p.info(),
+            Self::SkReuseport(p) => p.info(),
             Self::CgroupSock(p) => p.info(),
             Self::CgroupDevice(p) => p.info(),
             Self::Iter(p) => p.info(),
@@ -802,6 +815,7 @@ impl_program_unload!(
     Extension,
     CgroupSockAddr,
     SkLookup,
+    SkReuseport,
     SockOps,
     CgroupSock,
     CgroupDevice,
@@ -844,6 +858,7 @@ impl_fd!(
     Extension,
     CgroupSockAddr,
     SkLookup,
+    SkReuseport,
     SockOps,
     CgroupSock,
     CgroupDevice,
@@ -951,6 +966,7 @@ impl_program_pin!(
     Extension,
     CgroupSockAddr,
     SkLookup,
+    SkReuseport,
     SockOps,
     CgroupSock,
     CgroupDevice,
@@ -992,6 +1008,7 @@ impl_from_pin!(
     FlowDissector,
     Extension,
     SkLookup,
+    SkReuseport,
     SockOps,
     CgroupDevice,
     Iter,
@@ -1101,6 +1118,7 @@ impl_from_prog_info!(
     unsafe FExit,
     Extension,
     SkLookup,
+    SkReuseport,
     CgroupDevice,
     Iter,
 );
@@ -1157,6 +1175,7 @@ impl_try_from_program!(
     Extension,
     CgroupSockAddr,
     SkLookup,
+    SkReuseport,
     CgroupSock,
     CgroupDevice,
     Iter,
@@ -1185,6 +1204,7 @@ impl_info!(
     Extension,
     CgroupSockAddr,
     SkLookup,
+    SkReuseport,
     SockOps,
     CgroupSock,
     CgroupDevice,
