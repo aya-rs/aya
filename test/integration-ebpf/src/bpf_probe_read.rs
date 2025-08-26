@@ -22,7 +22,7 @@ fn read_str_bytes(
     let Some(ilen) = ilen else {
         return;
     };
-    let Some(ptr) = RESULT.get_ptr_mut(0) else {
+    let Ok(ptr) = RESULT.get_ptr_mut(0) else {
         return;
     };
     let dst = unsafe { ptr.as_mut() };
@@ -68,6 +68,7 @@ pub fn test_bpf_probe_read_kernel_str_bytes(ctx: ProbeContext) {
         bpf_probe_read_kernel_str_bytes,
         KERNEL_BUFFER
             .get_ptr(0)
+            .ok()
             .and_then(|ptr| unsafe { ptr.as_ref() })
             .map(|buf| buf.as_ptr()),
         ctx.arg::<usize>(0),
