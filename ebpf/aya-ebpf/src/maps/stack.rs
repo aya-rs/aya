@@ -2,7 +2,7 @@ use core::{marker::PhantomData, mem};
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_STACK},
-    helpers::{bpf_map_pop_elem, bpf_map_push_elem},
+    helpers::{bpf_map_peek_elem, bpf_map_pop_elem, bpf_map_push_elem},
     maps::PinningType,
 };
 
@@ -43,10 +43,10 @@ impl<T> Stack<T> {
         }
     }
 
-    pub fn push(&mut self, value: &T, flags: u64) -> Result<(), i64> {
+    pub fn push(&self, value: &T, flags: u64) -> Result<(), i64> {
         let ret = unsafe {
             bpf_map_push_elem(
-                &mut self.def as *mut _ as *mut _,
+                &self.def as *const _ as *mut _,
                 value as *const _ as *const _,
                 flags,
             )
@@ -54,11 +54,22 @@ impl<T> Stack<T> {
         (ret == 0).then_some(()).ok_or(ret)
     }
 
-    pub fn pop(&mut self) -> Option<T> {
+    pub fn pop(&self) -> Option<T> {
         unsafe {
             let mut value = mem::MaybeUninit::uninit();
             let ret = bpf_map_pop_elem(
-                &mut self.def as *mut _ as *mut _,
+                &self.def as *const _ as *mut _,
+                value.as_mut_ptr() as *mut _,
+            );
+            (ret == 0).then_some(value.assume_init())
+        }
+    }
+
+    pub fn peek(&self) -> Option<T> {
+        unsafe {
+            let mut value = mem::MaybeUninit::uninit();
+            let ret = bpf_map_peek_elem(
+                &self.def as *const _ as *mut _,
                 value.as_mut_ptr() as *mut _,
             );
             (ret == 0).then_some(value.assume_init())

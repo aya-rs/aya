@@ -49,6 +49,8 @@ bpf_file!(
     RELOCATIONS => "relocations",
     RING_BUF => "ring_buf",
     SIMPLE_PROG => "simple_prog",
+    QUEUE_TEST => "queue_test",
+    STACK_TEST => "stack_test",
     STRNCMP => "strncmp",
     TCX => "tcx",
     TEST => "test",
