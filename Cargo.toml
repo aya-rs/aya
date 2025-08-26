@@ -70,7 +70,7 @@ bytes = { version = "1", default-features = false }
 cargo_metadata = { version = "0.22.0", default-features = false }
 clap = { version = "4", default-features = false }
 const-assert = { version = "1.0.1", default-features = false }
-dialoguer = { version = "0.11", default-features = false }
+dialoguer = { version = "0.12", default-features = false }
 diff = { version = "0.1.13", default-features = false }
 env_logger = { version = "0.11", default-features = false }
 epoll = { version = "4.3.3", default-features = false }
@@ -81,7 +81,7 @@ indoc = { version = "2.0", default-features = false }
 libc = { version = "0.2.105", default-features = false }
 log = { version = "0.4", default-features = false }
 netns-rs = { version = "0.1", default-features = false }
-network-types = { version = "0.0.8", default-features = false }
+network-types = { version = "0.1.0", default-features = false }
 nix = { version = "0.30.1", default-features = false }
 num_enum = { version = "0.7", default-features = false }
 object = { version = "0.37", default-features = false }
