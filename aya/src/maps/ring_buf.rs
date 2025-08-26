@@ -103,7 +103,7 @@ impl<T: Borrow<MapData>> RingBuf<T> {
         let byte_size = data.obj.max_entries();
         let consumer_metadata = ConsumerMetadata::new(map_fd, 0, page_size)?;
         let consumer = ConsumerPos::new(consumer_metadata);
-        let producer = ProducerData::new(map_fd, page_size, page_size, byte_size)?;
+        let producer = ProducerData::new(map_fd, page_size, page_size, byte_size, consumer.pos)?;
         Ok(Self {
             map,
             consumer,
@@ -270,6 +270,7 @@ impl ProducerData {
         offset: usize,
         page_size: usize,
         byte_size: u32,
+        pos_cache: usize,
     ) -> Result<Self, MapError> {
         // The producer pages have one page of metadata and then the data pages, all mapped
         // read-only. Note that the length of the mapping includes the data pages twice as the
@@ -310,7 +311,7 @@ impl ProducerData {
         Ok(Self {
             mmap,
             data_offset: page_size,
-            pos_cache: 0,
+            pos_cache,
             mask,
         })
     }
