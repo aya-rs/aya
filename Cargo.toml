@@ -76,7 +76,7 @@ env_logger = { version = "0.11", default-features = false }
 epoll = { version = "4.3.3", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 glob = { version = "0.3.0", default-features = false }
-hashbrown = { version = "0.15.0", default-features = false }
+hashbrown = { version = "0.16.0", default-features = false }
 indoc = { version = "2.0", default-features = false }
 libc = { version = "0.2.105", default-features = false }
 log = { version = "0.4", default-features = false }
@@ -88,7 +88,7 @@ object = { version = "0.37", default-features = false }
 once_cell = { version = "1.20.1", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
 proc-macro2-diagnostics = { version = "0.10.1", default-features = false }
-procfs = { version = "0.17.0", default-features = false }
+procfs = { version = "0.18.0", default-features = false }
 public-api = { version = "0.50.0", default-features = false }
 quote = { version = "1", default-features = false }
 rand = { version = "0.9", default-features = false }
