@@ -11,7 +11,7 @@ use integration_common::ring_buf::Registers;
 extern crate ebpf_panic;
 
 #[map]
-static RING_BUF: RingBuf = RingBuf::pinned(0, 0);
+static pinned_ringbuf_reuse_test: RingBuf = RingBuf::pinned(0, 0);
 
 // Use a PerCpuArray to store the registers so that we can update the values from multiple CPUs
 // without needing synchronization. Atomics exist [1], but aren't exposed.
@@ -26,7 +26,7 @@ pub fn ring_buf_test(ctx: ProbeContext) {
         Some(regs) => unsafe { &mut *regs },
         None => return,
     };
-    let mut entry = match RING_BUF.reserve::<u64>(0) {
+    let mut entry = match pinned_ringbuf_reuse_test.reserve::<u64>(0) {
         Some(entry) => entry,
         None => {
             *dropped += 1;

@@ -38,7 +38,7 @@ struct PinnedRingBufTest {
 // that's not the case because the actual size will be rounded up, and fewer entries will be dropped
 // than expected.
 const RING_BUF_MAX_ENTRIES: usize = 512;
-const RING_BUF_PIN_PATH: &str = "/sys/fs/bpf/RING_BUF";
+const RING_BUF_PIN_PATH: &str = "/sys/fs/bpf/pinned_ringbuf_reuse_test";
 
 impl RingBufTest {
     fn new() -> Self {
@@ -82,10 +82,10 @@ impl PinnedRingBufTest {
             (RING_BUF_MAX_ENTRIES * (mem::size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
 
         let mut bpf = EbpfLoader::new()
-            .set_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
+            .set_max_entries("pinned_ringbuf_reuse_test", RING_BUF_BYTE_SIZE)
             .load(crate::RING_BUF_PINNED)
             .unwrap();
-        // We assume the map has been pinned as part of the loading process
+        // We assume the map has been pinned as part of the loading process.
         let ring_buf = MapData::from_pin(RING_BUF_PIN_PATH).unwrap();
         let ring_buf = Map::RingBuf(ring_buf);
         let ring_buf = RingBuf::try_from(ring_buf).unwrap();
@@ -196,7 +196,7 @@ fn ring_buf(n: usize) {
 // This test checks for a bug that the consumer index always started at position 0 of a
 // newly-loaded ring-buffer map. This assumption is not true for a map that is pinned to the bpffs
 // filesystem since the map "remembers" the last consumer index position even if all processes
-// unloaded it
+// unloaded it.
 fn pinned_ring_buf(n: usize) {
     let run_test = |mut ring_buf: RingBuf<MapData>,
                     regs: PerCpuArray<MapData, Registers>,
@@ -253,7 +253,7 @@ fn pinned_ring_buf(n: usize) {
 
     run_test(ring_buf, regs, data, expected_capacity);
 
-    // Close pinned map and re-open
+    // Close pinned map and re-open.
     drop(_bpf);
 
     let PinnedWithData(
@@ -264,7 +264,8 @@ fn pinned_ring_buf(n: usize) {
         },
         data,
     ) = PinnedWithData::new(n);
-    // Clean up the pinned map from the filesystem
+    // Remove the pinned map from the filesystem namespace. Users of the map are unaffected since
+    // they have an active reference to it.
     fs::remove_file(RING_BUF_PIN_PATH).unwrap();
 
     run_test(ring_buf, regs, data, expected_capacity);
