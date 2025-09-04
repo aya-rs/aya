@@ -34,4 +34,18 @@ pub mod macro_support {
     // test/integration-test/Cargo.toml.
     #[cfg_attr(target_arch = "bpf", map)]
     pub static AYA_LOGS: RingBuf = RingBuf::with_byte_size((LOG_BUF_CAPACITY as u32) << 4, 0);
+
+    /// Global log level controlling which log statements are active.
+    ///
+    /// Userspace may patch this symbol before load via `EbpfLoader::set_global`.
+    #[unsafe(no_mangle)]
+    pub static mut AYA_LOG_LEVEL: aya_log_common::Level = aya_log_common::Level::Trace;
+
+    /// Returns `true` if the provided level is enabled according to [`AYA_LOG_LEVEL`].
+    #[inline(always)]
+    pub fn level_enabled(level: Level) -> bool {
+        #[expect(static_mut_refs)]
+        let current_level = unsafe { core::ptr::read_volatile(&AYA_LOG_LEVEL) };
+        level as u8 <= current_level as u8
+    }
 }
