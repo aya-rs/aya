@@ -69,3 +69,37 @@ fn try_xdp_firewall(ctx: XdpContext) -> Result<u32, ()> {
 [aya]: https://github.com/aya-rs/aya
 [log]: https://docs.rs/log
 [env_logger]: https://docs.rs/env_logger
+
+## Disabling log levels at load-time
+
+eBPF instruction budgets are tight. Even if a log statement never executes at
+runtime, the verifier must still evaluate its instructions unless it can prove
+they're unreachable. `aya-log` now exposes a global bitmask `AYA_LOG_LEVEL_MASK`
+inside the eBPF object allowing you to selectively enable levels before the
+program is loaded.
+
+Bits (least-significant first) map to levels: Error=bit0, Warn=bit1, Info=bit2,
+Debug=bit3, Trace=bit4.
+
+By default all bits are set (all logging enabled). To disable all logging:
+
+```rust
+use aya::EbpfLoader;
+
+let mut bpf = EbpfLoader::new()
+    .set_log_level_mask(0) // disable all levels
+    .load_file("prog.bpf.o")?;
+# Ok::<(), aya::EbpfError>(())
+```
+
+Enable only Error and Warn:
+
+```rust
+let mut bpf = EbpfLoader::new()
+    .set_log_level_mask(0b11)
+    .load_file("prog.bpf.o")?;
+```
+
+Because the mask is placed in global read-only data, the verifier sees the
+disabled branch as unreachable and prunes the logging instructions, reducing
+overall instruction count and avoiding potential instruction limit issues.

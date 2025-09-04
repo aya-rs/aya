@@ -341,6 +341,21 @@ impl<'a> EbpfLoader<'a> {
         self
     }
 
+    /// Sets the aya-log eBPF log level mask before loading programs.
+    ///
+    /// This is a convenience wrapper around [`EbpfLoader::set_global`] that patches the
+    /// `AYA_LOG_LEVEL_MASK` symbol exposed by `aya-log-ebpf`.
+    ///
+    /// Each bit enables a level where bit0=Error, bit1=Warn, bit2=Info, bit3=Debug, bit4=Trace.
+    /// For example to enable only Error and Warn pass `0b0000_0011` (3). To disable all logging
+    /// pass 0.
+    ///
+    /// If the symbol does not exist in the object (e.g., logging not linked) no error is raised.
+    pub fn set_log_level_mask(&mut self, mask: u32) -> &mut Self {
+        // Best-effort: don't require symbol to exist.
+        self.set_global("AYA_LOG_LEVEL_MASK", &mask, false)
+    }
+
     /// Loads eBPF bytecode from a file.
     ///
     /// # Examples
