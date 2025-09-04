@@ -2,6 +2,7 @@ use std::{borrow::Cow, sync::Mutex};
 
 use aya::{Ebpf, programs::UProbe};
 use aya_log::EbpfLogger;
+use aya::EbpfLoader;
 use log::{Level, Log, Record};
 
 #[unsafe(no_mangle)]
@@ -172,4 +173,49 @@ fn log() {
     );
 
     assert_eq!(records.next(), None);
+}
+
+#[test_log::test]
+fn log_level_mask_only_error_warn() {
+    // Enable only Error (bit0) and Warn (bit1)
+    let mut bpf = EbpfLoader::new()
+        .set_log_level_mask(0b11)
+        .load(crate::LOG)
+        .unwrap();
+
+    let mut captured_logs = Vec::new();
+    let logger = TestingLogger {
+        log: Mutex::new(|record: &Record| {
+            captured_logs.push(CapturedLog {
+                body: format!("{}", record.args()).into(),
+                level: record.level(),
+                target: record.target().to_string().into(),
+            });
+        }),
+    };
+    let mut logger = EbpfLogger::init_with_logger(&mut bpf, &logger).unwrap();
+
+    let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+    prog.attach("trigger_ebpf_program", "/proc/self/exe", None, None)
+        .unwrap();
+
+    trigger_ebpf_program();
+    logger.flush();
+
+    // We expect only the Error and Warn records to be present, in program order.
+    let expected: Vec<CapturedLog<'_>> = vec![
+        CapturedLog {
+            body: "69, 420, wao, 77616f".into(),
+            level: Level::Error,
+            target: "log".into(),
+        },
+        CapturedLog {
+            body: "hex lc: 2f, hex uc: 2F".into(),
+            level: Level::Warn,
+            target: "log".into(),
+        },
+    ];
+
+    assert_eq!(captured_logs, expected, "unexpected log records when mask filters levels");
 }
