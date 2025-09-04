@@ -68,11 +68,11 @@ impl Parse for LogArgs {
     }
 }
 
-pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStream> {
+pub(crate) fn log(args: LogArgs, level_expr: Option<TokenStream>) -> Result<TokenStream> {
     let LogArgs {
         ctx,
         target,
-        level: level_expr,
+        level,
         format_string,
         formatting_args,
     } = args;
@@ -80,14 +80,14 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
         Some(t) => quote! { #t },
         None => quote! { module_path!() },
     };
-    let level = match level {
-        Some(l) => l,
+    let level_expr = match level_expr {
+        Some(level_expr) => level_expr,
         None => {
-            let l = level_expr.ok_or(Error::new(
+            let level_expr = level.ok_or(Error::new(
                 format_string.span(),
                 "missing `level` argument: try passing an `aya_log_ebpf::Level` value",
             ))?;
-            quote! { #l }
+            quote! { #level_expr }
         }
     };
 
@@ -146,37 +146,41 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
 
     let num_args = values.len();
     let values_iter = values.iter();
+    let level = Ident::new("level", Span::mixed_site());
     let buf = Ident::new("buf", Span::mixed_site());
     let size = Ident::new("size", Span::mixed_site());
     let len = Ident::new("len", Span::mixed_site());
     let record = Ident::new("record", Span::mixed_site());
     Ok(quote! {
-        match ::aya_log_ebpf::macro_support::AYA_LOG_BUF.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
-            None => {},
-            Some(::aya_log_ebpf::macro_support::LogBuf { buf: #buf }) => {
-                // Silence unused variable warning; we may need ctx in the future.
-                let _ = #ctx;
-                let _: Option<()> = (|| {
-                    let #size = ::aya_log_ebpf::macro_support::write_record_header(
-                        #buf,
-                        #target,
-                        #level,
-                        module_path!(),
-                        file!(),
-                        line!(),
-                        #num_args,
-                    )?;
-                    let mut #size = #size.get();
-                    #(
-                        {
-                            let #buf = #buf.get_mut(#size..)?;
-                            let #len = ::aya_log_ebpf::macro_support::WriteToBuf::write(#values_iter, #buf)?;
-                            #size += #len.get();
-                        }
-                    )*
-                    let #record = #buf.get(..#size)?;
-                    Result::<_, i64>::ok(::aya_log_ebpf::macro_support::AYA_LOGS.output(#record, 0))
-                })();
+        let #level = #level_expr;
+        if ::aya_log_ebpf::macro_support::level_enabled(#level) {
+            match ::aya_log_ebpf::macro_support::AYA_LOG_BUF.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
+                None => {},
+                Some(::aya_log_ebpf::macro_support::LogBuf { buf: #buf }) => {
+                    // Silence unused variable warning; we may need ctx in the future.
+                    let _ = #ctx;
+                    let _: Option<()> = (|| {
+                        let #size = ::aya_log_ebpf::macro_support::write_record_header(
+                            #buf,
+                            #target,
+                            #level,
+                            module_path!(),
+                            file!(),
+                            line!(),
+                            #num_args,
+                        )?;
+                        let mut #size = #size.get();
+                        #(
+                            {
+                                let #buf = #buf.get_mut(#size..)?;
+                                let #len = ::aya_log_ebpf::macro_support::WriteToBuf::write(#values_iter, #buf)?;
+                                #size += #len.get();
+                            }
+                        )*
+                        let #record = #buf.get(..#size)?;
+                        Result::<_, i64>::ok(::aya_log_ebpf::macro_support::AYA_LOGS.output(#record, 0))
+                    })();
+                }
             }
         }
     })
