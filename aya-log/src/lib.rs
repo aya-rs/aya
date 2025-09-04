@@ -67,12 +67,15 @@ use std::{
 
 const MAP_NAME: &str = "AYA_LOGS";
 
+pub const LEVEL: &str = "AYA_LOG_LEVEL";
+pub use aya_log_common::Level;
+
 use aya::{
     Ebpf, Pod,
     maps::{Map, MapData, MapError, MapInfo, RingBuf},
     programs::{ProgramError, loaded_programs},
 };
-use aya_log_common::{Argument, DisplayHint, LOG_FIELDS, Level, LogValueLength, RecordField};
+use aya_log_common::{Argument, DisplayHint, LOG_FIELDS, LogValueLength, RecordField};
 use log::{Log, Record, error};
 use thiserror::Error;
 

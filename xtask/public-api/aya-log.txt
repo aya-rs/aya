@@ -1,4 +1,5 @@
 pub mod aya_log
+pub use aya_log::Level
 pub enum aya_log::Error
 pub aya_log::Error::MapError(aya::maps::MapError)
 pub aya_log::Error::MapNotFound
@@ -297,6 +298,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_log::UpperMacFormatter where T: ?core
 pub fn aya_log::UpperMacFormatter::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_log::UpperMacFormatter
 pub fn aya_log::UpperMacFormatter::from(t: T) -> T
+pub const aya_log::LEVEL: &str
 pub trait aya_log::Formatter<T>
 pub fn aya_log::Formatter::format(v: T) -> alloc::string::String
 impl aya_log::Formatter<&[u8]> for aya_log::LowerHexBytesFormatter
