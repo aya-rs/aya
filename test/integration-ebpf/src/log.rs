@@ -1,7 +1,10 @@
 #![no_std]
 #![no_main]
 
-use core::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use core::{
+    hint::black_box,
+    net::{IpAddr, Ipv4Addr, Ipv6Addr},
+};
 
 use aya_ebpf::{macros::uprobe, programs::ProbeContext};
 use aya_log_ebpf::{debug, error, info, trace, warn};
@@ -82,4 +85,13 @@ pub fn test_log(ctx: ProbeContext) {
 
         debug!(&ctx, "{:x}", no_copy.consume());
     }
+}
+
+#[uprobe]
+pub fn test_log_omission(ctx: ProbeContext) {
+    debug!(
+        &ctx,
+        "This is the last u32: {}",
+        black_box(0u32..).last().unwrap_or(u32::MAX)
+    );
 }

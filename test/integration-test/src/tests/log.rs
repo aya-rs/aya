@@ -224,3 +224,39 @@ fn log_level_only_error_warn() {
 
     assert_eq!(records.next(), None);
 }
+
+#[test_log::test]
+fn log_level_prevents_verif_fail() {
+    let level = aya_log::Level::Warn as u8;
+    let mut bpf = EbpfLoader::new()
+        .set_global(aya_log::LEVEL, &level, true /* must_exist */)
+        .load(crate::LOG)
+        .unwrap();
+
+    let mut captured_logs = Vec::new();
+    let logger = TestingLogger {
+        log: Mutex::new(|record: &Record| {
+            captured_logs.push(CapturedLog {
+                body: format!("{}", record.args()).into(),
+                level: record.level(),
+                target: record.target().to_string().into(),
+            });
+        }),
+    };
+    let mut logger = EbpfLogger::init_with_logger(&mut bpf, &logger).unwrap();
+
+    let prog: &mut UProbe = bpf
+        .program_mut("test_log_omission")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+    prog.attach("trigger_ebpf_program", "/proc/self/exe", None, None)
+        .unwrap();
+
+    trigger_ebpf_program();
+    logger.flush();
+
+    let mut records = captured_logs.iter();
+    assert_eq!(records.next(), None);
+}
