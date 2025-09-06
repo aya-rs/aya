@@ -101,6 +101,15 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> 
     }
 }
 
+impl<K: Pod, V: Pod> HashMap<MapData, K, V> {
+    /// Creates a `HashMap` from `MapData`, typically loaded from a pinned path.
+    ///
+    /// This is useful when accessing a map from user-space without reloading the entire BPF object.
+    pub fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
+        Self::new(map_data)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::io;
@@ -513,5 +522,13 @@ mod tests {
         );
         assert_matches!(iter.next(), Some(Ok((30, 300))));
         assert_matches!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_from_map_data() {
+        let map = new_map(new_obj_map());
+        let map_data = map; // already a MapData
+        let map = HashMap::<_, u32, u32>::from_map_data(map_data);
+        assert!(map.is_ok());
     }
 }
