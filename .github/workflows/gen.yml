@@ -2,7 +2,8 @@ name: codegen
 
 on:
   push:
-    branches-ignore: 'create-pull-request/**'
+    branches-ignore:
+      - 'create-pull-request/**'
 
   schedule:
     - cron: 00 4 * * *
@@ -40,6 +41,7 @@ jobs:
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - uses: peter-evans/create-pull-request@v7
+        if: ${{ github.repository == 'aya-rs/aya' }}
         with:
           # GitHub actions aren't allowed to trigger other actions to prevent
           # abuse; the canonical workaround is to use a sufficiently authorized
