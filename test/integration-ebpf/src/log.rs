@@ -83,7 +83,8 @@ pub fn test_log(ctx: ProbeContext) {
 
         let no_copy = NoCopy {};
 
-        debug!(&ctx, "{:x}", no_copy.consume());
+        // Check usage in expression position.
+        let () = debug!(&ctx, "{:x}", no_copy.consume());
     }
 }
 

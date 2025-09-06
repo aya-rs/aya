@@ -152,34 +152,36 @@ pub(crate) fn log(args: LogArgs, level_expr: Option<TokenStream>) -> Result<Toke
     let len = Ident::new("len", Span::mixed_site());
     let record = Ident::new("record", Span::mixed_site());
     Ok(quote! {
-        let #level = #level_expr;
-        if ::aya_log_ebpf::macro_support::level_enabled(#level) {
-            match ::aya_log_ebpf::macro_support::AYA_LOG_BUF.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
-                None => {},
-                Some(::aya_log_ebpf::macro_support::LogBuf { buf: #buf }) => {
-                    // Silence unused variable warning; we may need ctx in the future.
-                    let _ = #ctx;
-                    let _: Option<()> = (|| {
-                        let #size = ::aya_log_ebpf::macro_support::write_record_header(
-                            #buf,
-                            #target,
-                            #level,
-                            module_path!(),
-                            file!(),
-                            line!(),
-                            #num_args,
-                        )?;
-                        let mut #size = #size.get();
-                        #(
-                            {
-                                let #buf = #buf.get_mut(#size..)?;
-                                let #len = ::aya_log_ebpf::macro_support::WriteToBuf::write(#values_iter, #buf)?;
-                                #size += #len.get();
-                            }
-                        )*
-                        let #record = #buf.get(..#size)?;
-                        Result::<_, i64>::ok(::aya_log_ebpf::macro_support::AYA_LOGS.output(#record, 0))
-                    })();
+        {
+            let #level = #level_expr;
+            if ::aya_log_ebpf::macro_support::level_enabled(#level) {
+                match ::aya_log_ebpf::macro_support::AYA_LOG_BUF.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
+                    None => {},
+                    Some(::aya_log_ebpf::macro_support::LogBuf { buf: #buf }) => {
+                        // Silence unused variable warning; we may need ctx in the future.
+                        let _ = #ctx;
+                        let _: Option<()> = (|| {
+                            let #size = ::aya_log_ebpf::macro_support::write_record_header(
+                                #buf,
+                                #target,
+                                #level,
+                                module_path!(),
+                                file!(),
+                                line!(),
+                                #num_args,
+                            )?;
+                            let mut #size = #size.get();
+                            #(
+                                {
+                                    let #buf = #buf.get_mut(#size..)?;
+                                    let #len = ::aya_log_ebpf::macro_support::WriteToBuf::write(#values_iter, #buf)?;
+                                    #size += #len.get();
+                                }
+                            )*
+                            let #record = #buf.get(..#size)?;
+                            Result::<_, i64>::ok(::aya_log_ebpf::macro_support::AYA_LOGS.output(#record, 0))
+                        })();
+                    }
                 }
             }
         }
