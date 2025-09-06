@@ -1,5 +1,7 @@
 use std::{
-    fs, mem,
+    fs,
+    io::ErrorKind,
+    mem,
     os::fd::AsRawFd as _,
     sync::{
         Arc,
@@ -13,7 +15,8 @@ use anyhow::Context as _;
 use assert_matches::assert_matches;
 use aya::{
     Ebpf, EbpfLoader,
-    maps::{Map, MapData, array::PerCpuArray, ring_buf::RingBuf},
+    maps::{MapData, array::PerCpuArray, ring_buf::RingBuf},
+    pin::PinError,
     programs::UProbe,
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
@@ -82,12 +85,16 @@ impl PinnedRingBufTest {
             (RING_BUF_MAX_ENTRIES * (mem::size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
 
         let mut bpf = EbpfLoader::new()
-            .set_max_entries("pinned_ringbuf_reuse_test", RING_BUF_BYTE_SIZE)
-            .load(crate::RING_BUF_PINNED)
+            .set_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
+            .load(crate::RING_BUF)
             .unwrap();
-        // We assume the map has been pinned as part of the loading process.
-        let ring_buf = MapData::from_pin(RING_BUF_PIN_PATH).unwrap();
-        let ring_buf = Map::RingBuf(ring_buf);
+        let ring_buf = bpf.take_map("RING_BUF").unwrap();
+        match ring_buf.pin(RING_BUF_PIN_PATH) {
+            Ok(()) => {}
+            Err(PinError::SyscallError(err)) if err.io_error.kind() == ErrorKind::AlreadyExists => {
+            }
+            _ => assert!(false, "Pinning failed or pinned map not present"),
+        }
         let ring_buf = RingBuf::try_from(ring_buf).unwrap();
         let regs = bpf.take_map("REGISTERS").unwrap();
         let regs = PerCpuArray::<_, Registers>::try_from(regs).unwrap();
