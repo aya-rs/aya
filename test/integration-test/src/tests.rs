@@ -7,6 +7,7 @@ mod iter;
 mod linear_data_structures;
 mod load;
 mod log;
+mod lsm;
 mod raw_tracepoint;
 mod rbpf;
 mod relocations;
