@@ -93,7 +93,7 @@ impl PinnedRingBufTest {
             Ok(()) => {}
             Err(PinError::SyscallError(err)) if err.io_error.kind() == ErrorKind::AlreadyExists => {
             }
-            _ => assert!(false, "Pinning failed or pinned map not present"),
+            _ => panic!("Pinning failed or pinned map not present"),
         }
         let ring_buf = RingBuf::try_from(ring_buf).unwrap();
         let regs = bpf.take_map("REGISTERS").unwrap();
