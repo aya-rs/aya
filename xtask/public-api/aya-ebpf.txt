@@ -2,6 +2,91 @@ pub mod aya_ebpf
 pub use aya_ebpf::bindings
 pub use aya_ebpf::cty
 pub use aya_ebpf::macros
+pub mod aya_ebpf::btf_maps
+pub mod aya_ebpf::btf_maps::array
+#[repr(transparent)] pub struct aya_ebpf::btf_maps::array::Array<T, const M: usize, const F: usize>(_)
+impl<T, const M: usize, const F: usize> aya_ebpf::btf_maps::array::Array<T, M, F>
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::get(&self, index: u32) -> core::option::Option<&T>
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::get_ptr_mut(&self, index: u32) -> core::option::Option<*mut T>
+pub const fn aya_ebpf::btf_maps::array::Array<T, M, F>::new() -> Self
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::set(&self, index: u32, value: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+impl<T: core::marker::Sync, const M: usize, const F: usize> core::marker::Sync for aya_ebpf::btf_maps::array::Array<T, M, F>
+impl<T, const M: usize, const F: usize> !core::marker::Freeze for aya_ebpf::btf_maps::array::Array<T, M, F>
+impl<T, const M: usize, const F: usize> !core::marker::Send for aya_ebpf::btf_maps::array::Array<T, M, F>
+impl<T, const M: usize, const F: usize> core::marker::Unpin for aya_ebpf::btf_maps::array::Array<T, M, F>
+impl<T, const M: usize, const F: usize> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::array::Array<T, M, F>
+impl<T, const M: usize, const F: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::array::Array<T, M, F> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T, U> core::convert::Into<U> for aya_ebpf::btf_maps::array::Array<T, M, F> where U: core::convert::From<T>
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::btf_maps::array::Array<T, M, F> where U: core::convert::Into<T>
+pub type aya_ebpf::btf_maps::array::Array<T, M, F>::Error = core::convert::Infallible
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::btf_maps::array::Array<T, M, F> where U: core::convert::TryFrom<T>
+pub type aya_ebpf::btf_maps::array::Array<T, M, F>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::btf_maps::array::Array<T, M, F> where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::btf_maps::array::Array<T, M, F> where T: ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::btf_maps::array::Array<T, M, F> where T: ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::btf_maps::array::Array<T, M, F>
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::from(t: T) -> T
+pub struct aya_ebpf::btf_maps::array::ArrayDef<K, V, const M: usize, const F: usize>
+impl<K, V, const M: usize, const F: usize> aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>
+pub const fn aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>::new() -> aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>
+impl<K, V, const M: usize, const F: usize> core::marker::Freeze for aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>
+impl<K, V, const M: usize, const F: usize> !core::marker::Send for aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>
+impl<K, V, const M: usize, const F: usize> !core::marker::Sync for aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>
+impl<K, V, const M: usize, const F: usize> core::marker::Unpin for aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>
+impl<K, V, const M: usize, const F: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F> where K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<K, V, const M: usize, const F: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F> where K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, U> core::convert::Into<U> for aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F> where U: core::convert::From<T>
+pub fn aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F> where U: core::convert::Into<T>
+pub type aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>::Error = core::convert::Infallible
+pub fn aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F> where U: core::convert::TryFrom<T>
+pub type aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F> where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F> where T: ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F> where T: ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>
+pub fn aya_ebpf::btf_maps::array::ArrayDef<K, V, M, F>::from(t: T) -> T
+#[repr(transparent)] pub struct aya_ebpf::btf_maps::Array<T, const M: usize, const F: usize>(_)
+impl<T, const M: usize, const F: usize> aya_ebpf::btf_maps::array::Array<T, M, F>
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::get(&self, index: u32) -> core::option::Option<&T>
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::get_ptr_mut(&self, index: u32) -> core::option::Option<*mut T>
+pub const fn aya_ebpf::btf_maps::array::Array<T, M, F>::new() -> Self
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::set(&self, index: u32, value: &T, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+impl<T: core::marker::Sync, const M: usize, const F: usize> core::marker::Sync for aya_ebpf::btf_maps::array::Array<T, M, F>
+impl<T, const M: usize, const F: usize> !core::marker::Freeze for aya_ebpf::btf_maps::array::Array<T, M, F>
+impl<T, const M: usize, const F: usize> !core::marker::Send for aya_ebpf::btf_maps::array::Array<T, M, F>
+impl<T, const M: usize, const F: usize> core::marker::Unpin for aya_ebpf::btf_maps::array::Array<T, M, F>
+impl<T, const M: usize, const F: usize> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::array::Array<T, M, F>
+impl<T, const M: usize, const F: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::array::Array<T, M, F> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T, U> core::convert::Into<U> for aya_ebpf::btf_maps::array::Array<T, M, F> where U: core::convert::From<T>
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::btf_maps::array::Array<T, M, F> where U: core::convert::Into<T>
+pub type aya_ebpf::btf_maps::array::Array<T, M, F>::Error = core::convert::Infallible
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::btf_maps::array::Array<T, M, F> where U: core::convert::TryFrom<T>
+pub type aya_ebpf::btf_maps::array::Array<T, M, F>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::btf_maps::array::Array<T, M, F> where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::btf_maps::array::Array<T, M, F> where T: ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::btf_maps::array::Array<T, M, F> where T: ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::btf_maps::array::Array<T, M, F>
+pub fn aya_ebpf::btf_maps::array::Array<T, M, F>::from(t: T) -> T
 pub mod aya_ebpf::helpers
 pub use aya_ebpf::helpers::generated
 pub macro aya_ebpf::helpers::bpf_printk!
@@ -2732,6 +2817,7 @@ pub fn aya_ebpf::programs::xdp::XdpContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::from(t: T) -> T
 pub macro aya_ebpf::bpf_printk!
+pub macro aya_ebpf::btf_map_def!
 pub struct aya_ebpf::PtRegs
 impl aya_ebpf::PtRegs
 pub fn aya_ebpf::PtRegs::arg<T: aya_ebpf::args::FromPtRegs>(&self, n: usize) -> core::option::Option<T>
@@ -2788,7 +2874,7 @@ impl<T> core::convert::From<T> for aya_ebpf::RawTracepointArgs
 pub fn aya_ebpf::RawTracepointArgs::from(t: T) -> T
 pub const aya_ebpf::TASK_COMM_LEN: usize
 pub trait aya_ebpf::EbpfContext
-pub fn aya_ebpf::EbpfContext::as_ptr(&self) -> *mut core::ffi::c_void
+pub fn aya_ebpf::EbpfContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
 pub fn aya_ebpf::EbpfContext::command(&self) -> core::result::Result<[u8; 16], aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::EbpfContext::gid(&self) -> u32
 pub fn aya_ebpf::EbpfContext::pid(&self) -> u32
