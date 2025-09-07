@@ -1250,11 +1250,9 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         }
     };
     let map_name = btf.string_at(ty.name_offset)?;
-    let mut map_def = BtfMapDef::default();
 
-    // Safety: union
     let root_type = btf.resolve_type(ty.btf_type)?;
-    let s = match btf.type_by_id(root_type)? {
+    let mut s = match btf.type_by_id(root_type)? {
         BtfType::Struct(s) => s,
         other => {
             return Err(BtfError::UnexpectedBtfType {
@@ -1262,6 +1260,55 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
             });
         }
     };
+
+    let mut map_def = BtfMapDef::default();
+
+    // In aya-ebpf, the BTF map definition types are not used directly in the
+    // map variables. Instead, they are wrapped in two nested types:
+    //
+    // * A struct representing the map type (e.g., `Array`, `HashMap`) that
+    //   provides methods for interacting with the map type (e.g.
+    //   `HashMap::get`, `RingBuf::reserve`).
+    //   * It has a single field with name `__0`.
+    // * An `UnsafeCell`, which informs the Rust compiler that the type is
+    //   thread-safe and can be safely mutated even as a global variable. The
+    //   kernel guarantees map operation safety.
+    //   * It has a single field with name `value`.
+    //
+    // Therefore, the traversal to the actual map definition looks like:
+    //
+    //   HashMap -> __0 -> value
+    match &s.members[..] {
+        [wrapper_field] if btf.string_at(wrapper_field.name_offset)?.as_ref() == "__0" => {
+            let unsafe_cell_type = btf.resolve_type(wrapper_field.btf_type)?;
+            let BtfType::Struct(unsafe_cell) = btf.type_by_id(unsafe_cell_type)? else {
+                return Err(BtfError::UnexpectedBtfType {
+                    type_id: unsafe_cell_type,
+                });
+            };
+
+            match &unsafe_cell.members[..] {
+                [unsafe_cell_field] => {
+                    if btf.string_at(unsafe_cell_field.name_offset)?.as_ref() == "value" {
+                        let map_def_type = btf.resolve_type(unsafe_cell_field.btf_type)?;
+                        let BtfType::Struct(map_def) =
+                            btf.type_by_id(unsafe_cell_field.btf_type)?
+                        else {
+                            return Err(BtfError::UnexpectedBtfType {
+                                type_id: map_def_type,
+                            });
+                        };
+                        // Assign `map_def` to `s` and let the loop below process it.
+                        s = map_def;
+                    } else {
+                        return Err(BtfError::BtfMapWrapperInvalidLayout);
+                    }
+                }
+                _ => return Err(BtfError::BtfMapWrapperInvalidLayout),
+            }
+        }
+        _ => {}
+    }
 
     for m in &s.members {
         match btf.string_at(m.name_offset)?.as_ref() {
