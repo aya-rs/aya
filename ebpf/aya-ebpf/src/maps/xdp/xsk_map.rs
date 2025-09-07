@@ -124,7 +124,7 @@ impl XskMap {
     /// ```
     #[inline(always)]
     pub fn get(&self, index: u32) -> Option<u32> {
-        let value = lookup(self.def.get(), &index)?;
+        let value = lookup(self.def.get().cast(), &index)?;
         let value: &bpf_xdp_sock = unsafe { value.as_ref() };
         Some(value.queue_id)
     }
