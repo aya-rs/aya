@@ -1,3 +1,4 @@
+mod array;
 mod bpf_probe_read;
 mod btf_relocations;
 mod elf;

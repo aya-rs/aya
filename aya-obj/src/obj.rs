@@ -1261,6 +1261,49 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         }
     };
 
+    // In aya-ebpf, the BTF map definition types are not used directly in the
+    // map variables. Instead, they are wrapped in two nested types:
+    //
+    // * A struct representing the map type (e.g., `Array`, `HashMap`) that
+    //   provides methods for interacting with the map type (e.g.
+    //   `HashMap::get`, `RingBuf::reserve`).
+    //   * It has a single field with name `__0`.
+    // * An `UnsafeCell`, which informs the Rust compiler that the type is
+    //   thread-safe and can be safely mutated even as a global variable. The
+    //   kernel guarantees map operation safety.
+    //   * It has a single field with name `value`.
+    //
+    // Therefore, the traversal to the actual map definition looks like:
+    //
+    //   HashMap -> __0 -> value
+    let mut s = s;
+    for (index, expected_field_name) in ["__0", "value"].into_iter().enumerate() {
+        match s.members.as_slice() {
+            [m] => {
+                let field_name = btf.string_at(m.name_offset)?;
+                if field_name.as_ref() != expected_field_name {
+                    return Err(BtfError::UnexpectedBtfMapWrapperLayout(s.clone()));
+                }
+                s = match btf.type_by_id(m.btf_type)? {
+                    BtfType::Struct(s) => s,
+                    _ => {
+                        return Err(BtfError::UnexpectedBtfType {
+                            type_id: m.btf_type,
+                        });
+                    }
+                };
+            }
+            // If the first wrapper level is missing, use the original struct.
+            _ => {
+                if index == 0 {
+                    break;
+                } else {
+                    return Err(BtfError::UnexpectedBtfMapWrapperLayout(s.clone()));
+                }
+            }
+        }
+    }
+
     for m in &s.members {
         match btf.string_at(m.name_offset)?.as_ref() {
             "type" => {
