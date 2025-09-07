@@ -84,7 +84,7 @@ impl<K, V> HashMap<K, V> {
 
     #[inline]
     pub fn remove(&self, key: &K) -> Result<(), c_long> {
-        remove(self.def.get(), key)
+        remove(self.def.get().cast(), key)
     }
 }
 
@@ -160,7 +160,7 @@ impl<K, V> LruHashMap<K, V> {
 
     #[inline]
     pub fn remove(&self, key: &K) -> Result<(), c_long> {
-        remove(self.def.get(), key)
+        remove(self.def.get().cast(), key)
     }
 }
 
@@ -236,7 +236,7 @@ impl<K, V> PerCpuHashMap<K, V> {
 
     #[inline]
     pub fn remove(&self, key: &K) -> Result<(), c_long> {
-        remove(self.def.get(), key)
+        remove(self.def.get().cast(), key)
     }
 }
 
@@ -312,7 +312,7 @@ impl<K, V> LruPerCpuHashMap<K, V> {
 
     #[inline]
     pub fn remove(&self, key: &K) -> Result<(), c_long> {
-        remove(self.def.get(), key)
+        remove(self.def.get().cast(), key)
     }
 }
 
@@ -330,7 +330,7 @@ const fn build_def<K, V>(ty: u32, max_entries: u32, flags: u32, pin: PinningType
 
 #[inline]
 fn get_ptr_mut<K, V>(def: *mut bpf_map_def, key: &K) -> Option<*mut V> {
-    lookup(def, key).map(|p| p.as_ptr())
+    lookup(def.cast(), key).map(|p| p.as_ptr())
 }
 
 #[inline]

@@ -28,11 +28,11 @@ pub mod helpers;
 pub mod maps;
 pub mod programs;
 
-use core::{ffi::c_void, ptr::NonNull};
+use core::ptr::NonNull;
 
 pub use aya_ebpf_cty as cty;
 pub use aya_ebpf_macros as macros;
-use cty::c_long;
+use cty::{c_long, c_void};
 use helpers::{
     bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid, bpf_map_delete_elem,
     bpf_map_lookup_elem, bpf_map_update_elem,
@@ -157,7 +157,7 @@ fn insert<K, V>(
 }
 
 #[inline]
-fn remove<K>(def: *mut bindings::bpf_map_def, key: &K) -> Result<(), c_long> {
+fn remove<K>(def: *mut c_void, key: &K) -> Result<(), c_long> {
     let key: *const _ = key;
     match unsafe { bpf_map_delete_elem(def.cast(), key.cast()) } {
         0 => Ok(()),
@@ -166,7 +166,7 @@ fn remove<K>(def: *mut bindings::bpf_map_def, key: &K) -> Result<(), c_long> {
 }
 
 #[inline]
-fn lookup<K, V>(def: *mut bindings::bpf_map_def, key: &K) -> Option<NonNull<V>> {
+fn lookup<K, V>(def: *mut c_void, key: &K) -> Option<NonNull<V>> {
     let key: *const _ = key;
     NonNull::new(unsafe { bpf_map_lookup_elem(def.cast(), key.cast()) }.cast())
 }

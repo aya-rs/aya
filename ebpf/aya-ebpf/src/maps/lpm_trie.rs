@@ -64,7 +64,7 @@ impl<K, V> LpmTrie<K, V> {
 
     #[inline]
     pub fn get(&self, key: &Key<K>) -> Option<&V> {
-        lookup(self.def.get(), key).map(|p| unsafe { p.as_ref() })
+        lookup(self.def.get().cast(), key).map(|p| unsafe { p.as_ref() })
     }
 
     #[inline]
@@ -74,7 +74,7 @@ impl<K, V> LpmTrie<K, V> {
 
     #[inline]
     pub fn remove(&self, key: &Key<K>) -> Result<(), c_long> {
-        remove(self.def.get(), key)
+        remove(self.def.get().cast(), key)
     }
 }
 
