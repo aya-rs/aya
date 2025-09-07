@@ -1,4 +1,5 @@
 pub(crate) mod args;
+mod btf_map;
 mod btf_tracepoint;
 mod cgroup_device;
 mod cgroup_skb;
@@ -24,6 +25,7 @@ mod tracepoint;
 mod uprobe;
 mod xdp;
 
+use btf_map::BtfMap;
 use btf_tracepoint::BtfTracePoint;
 use cgroup_device::CgroupDevice;
 use cgroup_skb::CgroupSkb;
@@ -49,6 +51,15 @@ use tc::SchedClassifier;
 use tracepoint::TracePoint;
 use uprobe::{UProbe, UProbeKind};
 use xdp::Xdp;
+
+#[proc_macro_attribute]
+pub fn btf_map(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match BtfMap::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
+    }
+    .into()
+}
 
 #[proc_macro_attribute]
 pub fn map(attrs: TokenStream, item: TokenStream) -> TokenStream {
