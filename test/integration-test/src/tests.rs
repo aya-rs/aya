@@ -10,6 +10,7 @@
 
 mod array;
 mod bloom_filter;
+mod bpf_d_path;
 mod bpf_probe_read;
 mod btf_maps;
 mod btf_relocations;
