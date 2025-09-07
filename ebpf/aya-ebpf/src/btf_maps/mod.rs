@@ -1,0 +1,52 @@
+use core::marker::PhantomData;
+
+pub mod array;
+
+pub use array::Array;
+
+/// A marker used to remove names of annotated types in LLVM debug info and
+/// therefore also in BTF.
+#[repr(transparent)]
+pub(crate) struct AyaBtfMapMarker(PhantomData<()>);
+
+impl AyaBtfMapMarker {
+    pub(crate) const fn new() -> Self {
+        Self(PhantomData)
+    }
+}
+
+#[macro_export]
+macro_rules! btf_map_def {
+    ($name:ident, $t:ident) => {
+        // These fields exists only for BTF metadata exposure. None of them are
+        // are actually used.
+        #[expect(dead_code)]
+        pub struct $name<K, V, const M: usize, const F: usize = 0> {
+            r#type: *const [i32; $t as usize],
+            key: *const K,
+            value: *const V,
+            max_entries: *const [i32; M],
+            map_flags: *const [i32; F],
+
+            // Anonymize the struct.
+            _anon: $crate::btf_maps::AyaBtfMapMarker,
+        }
+
+        #[expect(
+            clippy::new_without_default,
+            reason = "BPF maps are always used as static variables, therefore this method has to be `const`. `Default::default` is not `const`."
+        )]
+        impl<K, V, const M: usize, const F: usize> $name<K, V, M, F> {
+            pub const fn new() -> $name<K, V, M, F> {
+                $name {
+                    r#type: &[0i32; $t as usize],
+                    key: ::core::ptr::null(),
+                    value: ::core::ptr::null(),
+                    max_entries: &[0i32; M],
+                    map_flags: &[0i32; F],
+                    _anon: $crate::btf_maps::AyaBtfMapMarker::new(),
+                }
+            }
+        }
+    };
+}

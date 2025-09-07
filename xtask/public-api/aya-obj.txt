@@ -1,6 +1,7 @@
 pub mod aya_obj
 pub mod aya_obj::btf
 pub enum aya_obj::btf::BtfError
+pub aya_obj::btf::BtfError::BtfMapWrapperMissingUnsafeCell
 pub aya_obj::btf::BtfError::FileError
 pub aya_obj::btf::BtfError::FileError::error: std::io::error::Error
 pub aya_obj::btf::BtfError::FileError::path: std::path::PathBuf

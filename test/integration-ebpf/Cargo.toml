@@ -25,6 +25,10 @@ which = { workspace = true, features = ["real-sys"] }
 xtask = { path = "../../xtask" }
 
 [[bin]]
+name = "array"
+path = "src/array.rs"
+
+[[bin]]
 name = "bpf_probe_read"
 path = "src/bpf_probe_read.rs"
 
