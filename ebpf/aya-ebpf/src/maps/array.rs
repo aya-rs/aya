@@ -65,12 +65,12 @@ impl<T> Array<T> {
 
     #[inline(always)]
     unsafe fn lookup(&self, index: u32) -> Option<NonNull<T>> {
-        lookup(self.def.get(), &index)
+        lookup(self.def.get().cast(), &index)
     }
 
     /// Sets the value of the element at the given index.
     #[inline(always)]
     pub fn set(&self, index: u32, value: &T, flags: u64) -> Result<(), c_long> {
-        insert(self.def.get(), &index, value, flags)
+        insert(self.def.get().cast(), &index, value, flags)
     }
 }
