@@ -41,14 +41,15 @@ jobs:
 
       - run: ./clippy.sh
 
+      # On the `aya-rs/aya` repository, regenerate the public API on a schedule.
+      #
+      # On all other events and repositories assert the public API is up to date.
       - run: cargo xtask public-api
-        if: github.event_name != 'schedule'
-
+        if: ${{ !(github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
       - run: cargo xtask public-api --bless
-        if: github.event_name == 'schedule'
-
+        if: ${{ (github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
       - uses: peter-evans/create-pull-request@v7
-        if: github.event_name == 'schedule'
+        if: ${{ (github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
         with:
           # GitHub actions aren't allowed to trigger other actions to prevent
           # abuse; the canonical workaround is to use a sufficiently authorized

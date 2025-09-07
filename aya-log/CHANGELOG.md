@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### New Features
+
+- Add eBPF-side log level `AYA_LOG_LEVEL` allowing selective disabling of log
+  levels at load-time. Disabled levels are eliminated by the verifier, reducing
+  instruction count and avoiding program size limits when extensive logging is
+  present.
+
 ### Breaking Changes
 
 - The implementation is now backed by a ring buffer rather than a perf event array. This should

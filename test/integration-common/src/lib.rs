@@ -65,6 +65,12 @@ pub mod strncmp {
     unsafe impl aya::Pod for TestResult {}
 }
 
+pub mod linear_data_structures {
+    pub const PEEK_INDEX: u32 = 0;
+    pub const POP_INDEX: u32 = 1;
+}
+
+
 pub mod bpf_d_path {
     pub const PATH_BUF_LEN: usize = 128;
 
