@@ -23,6 +23,7 @@ pub use aya_ebpf_bindings::bindings;
 
 mod args;
 pub use args::{PtRegs, RawTracepointArgs};
+pub mod btf_maps;
 #[expect(clippy::missing_safety_doc, unsafe_op_in_unsafe_fn)]
 pub mod helpers;
 pub mod maps;
