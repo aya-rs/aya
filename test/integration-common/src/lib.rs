@@ -64,3 +64,17 @@ pub mod strncmp {
     #[cfg(feature = "user")]
     unsafe impl aya::Pod for TestResult {}
 }
+
+pub mod bpf_d_path {
+    pub const PATH_BUF_LEN: usize = 128;
+
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct TestResult {
+        pub buf: [u8; PATH_BUF_LEN],
+        pub len: usize,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
