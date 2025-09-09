@@ -1083,6 +1083,7 @@ pub aya::maps::Map::StackTraceMap(aya::maps::MapData)
 pub aya::maps::Map::Unsupported(aya::maps::MapData)
 pub aya::maps::Map::XskMap(aya::maps::MapData)
 impl aya::maps::Map
+pub fn aya::maps::Map::from_map_data(map_data: aya::maps::MapData) -> core::result::Result<Self, aya::maps::MapError>
 pub fn aya::maps::Map::pin<P: core::convert::AsRef<std::path::Path>>(&self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::CpuMap<aya::maps::MapData>
 pub type aya::maps::CpuMap<aya::maps::MapData>::Error = aya::maps::MapError
