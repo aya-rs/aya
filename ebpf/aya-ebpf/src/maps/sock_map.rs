@@ -77,7 +77,7 @@ impl SockMap {
         index: u32,
         flags: u64,
     ) -> Result<(), u32> {
-        let sk = lookup(self.def.get(), &index).ok_or(1u32)?;
+        let sk = lookup(self.def.get().cast(), &index).ok_or(1u32)?;
         let ret = unsafe { bpf_sk_assign(ctx.as_ptr().cast(), sk.as_ptr(), flags) };
         unsafe { bpf_sk_release(sk.as_ptr()) };
         match ret {

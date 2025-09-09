@@ -64,17 +64,17 @@ impl<K, V> LpmTrie<K, V> {
 
     #[inline]
     pub fn get(&self, key: &Key<K>) -> Option<&V> {
-        lookup(self.def.get(), key).map(|p| unsafe { p.as_ref() })
+        lookup(self.def.get().cast(), key).map(|p| unsafe { p.as_ref() })
     }
 
     #[inline]
     pub fn insert(&self, key: &Key<K>, value: &V, flags: u64) -> Result<(), c_long> {
-        insert(self.def.get(), key, value, flags)
+        insert(self.def.get().cast(), key, value, flags)
     }
 
     #[inline]
     pub fn remove(&self, key: &Key<K>) -> Result<(), c_long> {
-        remove(self.def.get(), key)
+        remove(self.def.get().cast(), key)
     }
 }
 

@@ -1,5 +1,11 @@
 #![no_std]
 
+pub mod array {
+    pub const GET_INDEX: u32 = 0;
+    pub const GET_PTR_INDEX: u32 = 1;
+    pub const GET_PTR_MUT_INDEX: u32 = 2;
+}
+
 pub mod bpf_probe_read {
     pub const RESULT_BUF_LEN: usize = 1024;
 

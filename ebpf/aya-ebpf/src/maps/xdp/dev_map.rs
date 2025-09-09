@@ -105,7 +105,7 @@ impl DevMap {
     /// ```
     #[inline(always)]
     pub fn get(&self, index: u32) -> Option<DevMapValue> {
-        let value = lookup(self.def.get(), &index)?;
+        let value = lookup(self.def.get().cast(), &index)?;
         let value: &bpf_devmap_val = unsafe { value.as_ref() };
         Some(DevMapValue {
             if_index: value.ifindex,

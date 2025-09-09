@@ -65,6 +65,6 @@ impl<T> PerCpuArray<T> {
 
     #[inline(always)]
     unsafe fn lookup(&self, index: u32) -> Option<NonNull<T>> {
-        lookup(self.def.get(), &index)
+        lookup(self.def.get().cast(), &index)
     }
 }

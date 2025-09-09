@@ -38,6 +38,7 @@ bpf_file!(
     TEXT_64_64_RELOC => "text_64_64_reloc.o",
     VARIABLES_RELOC => "variables_reloc.bpf.o",
 
+    ARRAY => "array",
     BPF_PROBE_READ => "bpf_probe_read",
     LINEAR_DATA_STRUCTURES => "linear_data_structures",
     LOG => "log",

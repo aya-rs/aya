@@ -4,6 +4,7 @@ use aya_ebpf_cty::c_long;
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_ARRAY},
+    error::EINVAL,
     insert, lookup,
     maps::PinningType,
 };
@@ -48,9 +49,19 @@ impl<T> Array<T> {
     }
 
     #[inline(always)]
-    pub fn get(&self, index: u32) -> Option<&T> {
-        // FIXME: alignment
-        unsafe { self.lookup(index).map(|p| p.as_ref()) }
+    pub fn get(&self, index: u32) -> Result<Option<&T>, c_long> {
+        unsafe {
+            match self.lookup(index) {
+                Some(p) => {
+                    if p.is_aligned() {
+                        Ok(Some(p.as_ref()))
+                    } else {
+                        Err(-EINVAL)
+                    }
+                }
+                None => Ok(None),
+            }
+        }
     }
 
     #[inline(always)]
@@ -65,12 +76,12 @@ impl<T> Array<T> {
 
     #[inline(always)]
     unsafe fn lookup(&self, index: u32) -> Option<NonNull<T>> {
-        lookup(self.def.get(), &index)
+        lookup(self.def.get().cast(), &index)
     }
 
     /// Sets the value of the element at the given index.
     #[inline(always)]
     pub fn set(&self, index: u32, value: &T, flags: u64) -> Result<(), c_long> {
-        insert(self.def.get(), &index, value, flags)
+        insert(self.def.get().cast(), &index, value, flags)
     }
 }
