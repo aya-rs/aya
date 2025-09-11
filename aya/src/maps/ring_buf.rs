@@ -303,6 +303,9 @@ impl ProducerData {
         let len = page_size + 2 * usize::try_from(byte_size).unwrap();
         let mmap = MMap::new(fd, len, PROT_READ, MAP_SHARED, offset.try_into().unwrap())?;
 
+        let pos = unsafe { mmap.ptr().cast::<AtomicUsize>().as_ref() };
+        let pos_cache = pos.load(Ordering::Acquire);
+
         // byte_size is required to be a power of two multiple of page_size (which implicitly is a
         // power of 2), so subtracting one will create a bitmask for values less than byte_size.
         debug_assert!(byte_size.is_power_of_two());
@@ -310,7 +313,7 @@ impl ProducerData {
         Ok(Self {
             mmap,
             data_offset: page_size,
-            pos_cache: 0,
+            pos_cache,
             mask,
         })
     }
