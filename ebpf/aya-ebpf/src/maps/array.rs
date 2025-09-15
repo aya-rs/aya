@@ -49,7 +49,6 @@ impl<T> Array<T> {
 
     #[inline(always)]
     pub fn get(&self, index: u32) -> Option<&T> {
-        // FIXME: alignment
         unsafe { self.lookup(index).map(|p| p.as_ref()) }
     }
 
