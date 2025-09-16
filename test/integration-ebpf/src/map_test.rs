@@ -29,7 +29,7 @@ static MAP_WITH_LOOOONG_NAAAAAAAAME: HashMap<u32, u8> = HashMap::<u32, u8>::with
 #[socket_filter]
 pub fn simple_prog(_ctx: SkBuffContext) -> i64 {
     // So that these maps show up under the `map_ids` field.
-    FOO.get(0);
+    let _ = FOO.get(0);
     // If we use the literal value `0` instead of the local variable `i`, then an additional
     // `.rodata` map will be associated with the program.
     let i = 0;

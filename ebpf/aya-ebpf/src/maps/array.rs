@@ -1,4 +1,4 @@
-use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr::NonNull};
+use core::{cell::UnsafeCell, fmt, marker::PhantomData, mem, ptr::NonNull};
 
 use aya_ebpf_cty::c_long;
 
@@ -14,9 +14,30 @@ pub struct Array<T> {
     _t: PhantomData<T>,
 }
 
+#[derive(Debug)]
+pub struct OutOfBounds {
+    length: u32,
+    index: u32,
+}
+
+impl core::error::Error for OutOfBounds {}
+
+impl fmt::Display for OutOfBounds {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Array index {} is out of bounds; length = {}",
+            self.index, self.length
+        )
+    }
+}
+
 unsafe impl<T: Sync> Sync for Array<T> {}
 
 impl<T> Array<T> {
+    /// Constructs a new [`Array`] with `max_entries` entries.
+    ///
+    /// All the entries are zero-initialized.
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Array<T> {
         Array {
             def: UnsafeCell::new(bpf_map_def {
@@ -47,25 +68,36 @@ impl<T> Array<T> {
         }
     }
 
+    /// Get a reference to an array element at the given index.
+    ///
+    /// Arrays are zero-initialised upon creation so this will always return a reference to `T` as long as the index is within bounds.
+    /// All fields of `T` may therefore be in their default state, i.e. `bool` will be `false`, `u32` will be `0`, etc.
     #[inline(always)]
-    pub fn get(&self, index: u32) -> Option<&T> {
+    pub fn get(&self, index: u32) -> Result<&T, OutOfBounds> {
         // FIXME: alignment
         unsafe { self.lookup(index).map(|p| p.as_ref()) }
     }
 
+    /// Like [`Array::get`] but returns a pointer instead.
     #[inline(always)]
-    pub fn get_ptr(&self, index: u32) -> Option<*const T> {
+    pub fn get_ptr(&self, index: u32) -> Result<*const T, OutOfBounds> {
         unsafe { self.lookup(index).map(|p| p.as_ptr() as *const T) }
     }
 
+    /// Like [`Array::get`] but returns a mutable pointer instead.
     #[inline(always)]
-    pub fn get_ptr_mut(&self, index: u32) -> Option<*mut T> {
+    pub fn get_ptr_mut(&self, index: u32) -> Result<*mut T, OutOfBounds> {
         unsafe { self.lookup(index).map(|p| p.as_ptr()) }
     }
 
     #[inline(always)]
-    unsafe fn lookup(&self, index: u32) -> Option<NonNull<T>> {
-        lookup(self.def.get(), &index)
+    unsafe fn lookup(&self, index: u32) -> Result<NonNull<T>, OutOfBounds> {
+        let map_def = self.def.get();
+
+        lookup(map_def, &index).ok_or(OutOfBounds {
+            length: unsafe { (*map_def).max_entries },
+            index,
+        })
     }
 
     /// Sets the value of the element at the given index.
