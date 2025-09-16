@@ -33,6 +33,10 @@ name = "linear_data_structures"
 path = "src/linear_data_structures.rs"
 
 [[bin]]
+name = "bpf_d_path"
+path = "src/bpf_d_path.rs"
+
+[[bin]]
 name = "log"
 path = "src/log.rs"
 

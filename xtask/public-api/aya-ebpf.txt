@@ -4,6 +4,7 @@ pub use aya_ebpf::cty
 pub use aya_ebpf::macros
 pub mod aya_ebpf::helpers
 pub use aya_ebpf::helpers::generated
+pub use aya_ebpf::helpers::path
 pub macro aya_ebpf::helpers::bpf_printk!
 #[repr(transparent)] pub struct aya_ebpf::helpers::PrintkArg(_)
 impl aya_ebpf::helpers::PrintkArg
@@ -61,6 +62,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf::helpers::PrintkArg where T: cor
 pub unsafe fn aya_ebpf::helpers::PrintkArg::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf::helpers::PrintkArg
 pub fn aya_ebpf::helpers::PrintkArg::from(t: T) -> T
+pub unsafe fn aya_ebpf::helpers::bpf_d_path(path: *const aya_ebpf_bindings::x86_64::bindings::path, dest: &mut [u8]) -> core::result::Result<&[u8], aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::helpers::bpf_get_current_comm() -> core::result::Result<[u8; 16], aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::helpers::bpf_get_current_pid_tgid() -> u64
 pub fn aya_ebpf::helpers::bpf_get_current_uid_gid() -> u64
