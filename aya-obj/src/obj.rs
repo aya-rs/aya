@@ -1164,7 +1164,6 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
             });
         }
     };
-    // Safety: union
     let arr = match &btf.type_by_id(pty.btf_type)? {
         BtfType::Array(Array { array, .. }) => array,
         other => {
@@ -1252,7 +1251,6 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
     let map_name = btf.string_at(ty.name_offset)?;
     let mut map_def = BtfMapDef::default();
 
-    // Safety: union
     let root_type = btf.resolve_type(ty.btf_type)?;
     let s = match btf.type_by_id(root_type)? {
         BtfType::Struct(s) => s,
@@ -1270,7 +1268,6 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
             }
             "key" => {
                 if let BtfType::Ptr(pty) = btf.type_by_id(m.btf_type)? {
-                    // Safety: union
                     let t = pty.btf_type;
                     map_def.key_size = btf.type_size(t)? as u32;
                     map_def.btf_key_type_id = t;
