@@ -5,7 +5,10 @@ use alloc::{
     vec,
     vec::Vec,
 };
-use core::{ffi::CStr, mem, ptr};
+use core::{
+    ffi::{CStr, FromBytesUntilNulError},
+    mem, ptr,
+};
 
 use bytes::BufMut as _;
 use log::debug;
@@ -386,13 +389,9 @@ impl Btf {
         }
 
         let offset = offset as usize;
-        let nul = self.strings[offset..]
-            .iter()
-            .position(|c| *c == 0u8)
-            .ok_or(BtfError::InvalidStringOffset { offset })?;
 
-        let s = CStr::from_bytes_with_nul(&self.strings[offset..=offset + nul])
-            .map_err(|_| BtfError::InvalidStringOffset { offset })?;
+        let s = CStr::from_bytes_until_nul(&self.strings[offset..])
+            .map_err(|FromBytesUntilNulError { .. }| BtfError::InvalidStringOffset { offset })?;
 
         Ok(s.to_string_lossy())
     }
