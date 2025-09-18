@@ -1252,7 +1252,7 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
     let map_name = btf.string_at(ty.name_offset)?;
 
     let root_type = btf.resolve_type(ty.btf_type)?;
-    let mut s = match btf.type_by_id(root_type)? {
+    let s = match btf.type_by_id(root_type)? {
         BtfType::Struct(s) => s,
         other => {
             return Err(BtfError::UnexpectedBtfType {
@@ -1278,37 +1278,17 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
     // Therefore, the traversal to the actual map definition looks like:
     //
     //   HashMap -> __0 -> value
-    match &s.members[..] {
-        [wrapper_field] if btf.string_at(wrapper_field.name_offset)?.as_ref() == "__0" => {
-            let unsafe_cell_type = btf.resolve_type(wrapper_field.btf_type)?;
-            let BtfType::Struct(unsafe_cell) = btf.type_by_id(unsafe_cell_type)? else {
-                return Err(BtfError::UnexpectedBtfType {
-                    type_id: unsafe_cell_type,
-                });
-            };
-
-            match &unsafe_cell.members[..] {
-                [unsafe_cell_field] => {
-                    if btf.string_at(unsafe_cell_field.name_offset)?.as_ref() == "value" {
-                        let map_def_type = btf.resolve_type(unsafe_cell_field.btf_type)?;
-                        let BtfType::Struct(map_def) =
-                            btf.type_by_id(unsafe_cell_field.btf_type)?
-                        else {
-                            return Err(BtfError::UnexpectedBtfType {
-                                type_id: map_def_type,
-                            });
-                        };
-                        // Assign `map_def` to `s` and let the loop below process it.
-                        s = map_def;
-                    } else {
-                        return Err(BtfError::BtfMapWrapperInvalidLayout);
-                    }
+    let s = ["__0", "value"].into_iter().try_fold(s, |crate::btf::Struct { members, ..}, field_name| {
+        match members.as_slice() {
+            [crate::btf::BtfMember { name_offset, btf_type, offset: _ }] if btf.string_at(*name_offset)?.as_ref() == field_name => {
+                match btf.type_by_id(*btf_type)? {
+                    BtfType::Struct(s) => Ok(s),
+                    _ => Err(BtfError::UnexpectedBtfType { type_id: *btf_type }),
                 }
-                _ => return Err(BtfError::BtfMapWrapperInvalidLayout),
             }
+            _ => Err(BtfError::BtfMapWrapperInvalidLayout),
         }
-        _ => {}
-    }
+    })?;
 
     for m in &s.members {
         match btf.string_at(m.name_offset)?.as_ref() {
