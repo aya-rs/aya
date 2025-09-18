@@ -159,9 +159,9 @@ pub enum BtfError {
     #[error("Unable to get symbol name")]
     InvalidSymbolName,
 
-    /// BTF map wrapper's layout is invalid
-    #[error("BTF map wrapper's layout is invalid")]
-    BtfMapWrapperInvalidLayout,
+    /// BTF map wrapper's layout is unexpected
+    #[error("BTF map wrapper's layout is unexpected")]
+    UnexpectedBtfMapWrapperLayout,
 }
 
 /// Available BTF features

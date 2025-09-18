@@ -1,7 +1,6 @@
 pub mod aya_obj
 pub mod aya_obj::btf
 pub enum aya_obj::btf::BtfError
-pub aya_obj::btf::BtfError::BtfMapWrapperInvalidLayout
 pub aya_obj::btf::BtfError::FileError
 pub aya_obj::btf::BtfError::FileError::error: std::io::error::Error
 pub aya_obj::btf::BtfError::FileError::path: std::path::PathBuf
@@ -31,6 +30,7 @@ pub aya_obj::btf::BtfError::MaximumTypeDepthReached
 pub aya_obj::btf::BtfError::MaximumTypeDepthReached::type_id: u32
 pub aya_obj::btf::BtfError::SymbolOffsetNotFound
 pub aya_obj::btf::BtfError::SymbolOffsetNotFound::symbol_name: alloc::string::String
+pub aya_obj::btf::BtfError::UnexpectedBtfMapWrapperLayout
 pub aya_obj::btf::BtfError::UnexpectedBtfType
 pub aya_obj::btf::BtfError::UnexpectedBtfType::type_id: u32
 pub aya_obj::btf::BtfError::UnknownBtfType
