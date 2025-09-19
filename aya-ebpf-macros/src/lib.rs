@@ -17,6 +17,7 @@ mod perf_event;
 mod raw_tracepoint;
 mod sk_lookup;
 mod sk_msg;
+mod sk_reuseport;
 mod sk_skb;
 mod sock_ops;
 mod socket_filter;
@@ -44,6 +45,7 @@ use proc_macro::TokenStream;
 use raw_tracepoint::RawTracePoint;
 use sk_lookup::SkLookup;
 use sk_msg::SkMsg;
+use sk_reuseport::SkReuseport;
 use sk_skb::{SkSkb, SkSkbKind};
 use sock_ops::SockOps;
 use socket_filter::SocketFilter;
@@ -617,6 +619,67 @@ pub fn flow_dissector(attrs: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SkLookup::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
+    }
+    .into()
+}
+
+/// Marks a function as an eBPF Socket Reuseport program that can be attached to
+/// a socket with SO_REUSEPORT set.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.19
+///
+/// # Examples
+///
+/// Basic usage allowing kernel to handle socket selection:
+///
+/// ```no_run
+/// use aya_ebpf::{macros::sk_reuseport, programs::{SkReuseportContext, SK_PASS, SK_DROP}};
+///
+/// #[sk_reuseport]
+/// pub fn select_socket(_ctx: SkReuseportContext) -> u32 {
+///     // Return SK_DROP to drop packet, SK_PASS to let kernel handle selection
+///     SK_PASS
+/// }
+/// ```
+///
+/// Advanced usage with custom socket selection:
+///
+/// ```no_run
+/// use aya_ebpf::{
+///     macros::{sk_reuseport, map},
+///     programs::{SkReuseportContext, SK_PASS, SK_DROP},
+///     helpers::bpf_sk_select_reuseport,
+///     maps::ReusePortSockArray,
+///     EbpfContext,
+/// };
+///
+/// #[map(name = "socket_map")]
+/// static SOCKET_MAP: ReusePortSockArray = ReusePortSockArray::with_max_entries(4, 0);
+///
+/// #[sk_reuseport]
+/// pub fn load_balance(ctx: SkReuseportContext) -> u32 {
+///     // Use packet hash for consistent load balancing
+///     let socket_idx = ctx.hash() % 4;
+///     
+///     let ret = unsafe {
+///         bpf_sk_select_reuseport(
+///             ctx.as_ptr() as *mut _,
+///             SOCKET_MAP.as_ptr(),
+///             &socket_idx as *const _ as *mut _,
+///             0
+///         )
+///     };
+///     
+///     if ret == 0 { SK_PASS } else { SK_DROP }
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn sk_reuseport(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match SkReuseport::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
         Err(err) => err.emit_as_expr_tokens(),
     }
