@@ -15,8 +15,8 @@ use libc::{
     AF_NETLINK, AF_UNSPEC, ETH_P_ALL, IFF_UP, IFLA_XDP, NETLINK_CAP_ACK, NETLINK_EXT_ACK,
     NETLINK_ROUTE, NLA_ALIGNTO, NLA_F_NESTED, NLA_TYPE_MASK, NLM_F_ACK, NLM_F_CREATE, NLM_F_DUMP,
     NLM_F_ECHO, NLM_F_EXCL, NLM_F_MULTI, NLM_F_REQUEST, NLMSG_DONE, NLMSG_ERROR, RTM_DELTFILTER,
-    RTM_GETTFILTER, RTM_NEWQDISC, RTM_NEWTFILTER, RTM_SETLINK, SOCK_RAW, SOL_NETLINK, getsockname,
-    nlattr, nlmsgerr, nlmsghdr, recv, send, setsockopt, sockaddr_nl, socket,
+    RTM_GETQDISC, RTM_GETTFILTER, RTM_NEWQDISC, RTM_NEWTFILTER, RTM_SETLINK, SOCK_RAW, SOL_NETLINK,
+    getsockname, nlattr, nlmsgerr, nlmsghdr, recv, send, setsockopt, sockaddr_nl, socket,
 };
 use thiserror::Error;
 
@@ -103,6 +103,47 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
     sock.recv()?;
     Ok(())
+}
+
+pub(crate) unsafe fn netlink_clsact_qdisc_exists(if_index: i32) -> Result<bool, NetlinkError> {
+    let sock = NetlinkSocket::open()?;
+
+    let mut req = unsafe { mem::zeroed::<TcRequest>() };
+
+    let nlmsg_len = mem::size_of::<nlmsghdr>() + mem::size_of::<tcmsg>();
+
+    req.header = nlmsghdr {
+        nlmsg_len: nlmsg_len as u32,
+        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_DUMP) as u16,
+        nlmsg_type: RTM_GETQDISC,
+        nlmsg_pid: 0,
+        nlmsg_seq: 1,
+    };
+    req.tc_info.tcm_family = AF_UNSPEC as u8;
+
+    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+
+    for msg in sock.recv()? {
+        if msg.header.nlmsg_type != RTM_NEWQDISC {
+            continue;
+        }
+
+        let tc_msg = unsafe { ptr::read_unaligned(msg.data.as_ptr() as *const tcmsg) };
+        if tc_msg.tcm_ifindex != if_index {
+            continue;
+        }
+
+        let attrs = parse_attrs(&msg.data[mem::size_of::<tcmsg>()..])
+            .map_err(|e| NetlinkError(NetlinkErrorInternal::NlAttrError(e)))?;
+
+        if let Some(opts) = attrs.get(&(TCA_KIND as u16)) {
+            if opts.data == b"clsact\0" {
+                return Ok(true);
+            }
+        }
+    }
+
+    Ok(false)
 }
 
 pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), NetlinkError> {
@@ -341,7 +382,13 @@ struct Request {
 struct TcRequest {
     header: nlmsghdr,
     tc_info: tcmsg,
-    attrs: [u8; 64],
+    // The buffer for attributes should be sized to hold at least 256 bytes,
+    // based on `CLS_BPF_NAME_LEN = 256` from the kernel:
+    // https://github.com/torvalds/linux/blob/02aee814/net/sched/cls_bpf.c#L28
+    // We currently use around ~30 bytes of attributes in addition to name.
+    // Rather than picking a "right sized buffer" for the payload (which is of
+    // varying length anyway) we use the next largest power of 2.
+    attrs: [u8; 512],
 }
 
 struct NetlinkSocket {
