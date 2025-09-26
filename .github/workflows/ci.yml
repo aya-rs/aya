@@ -205,13 +205,9 @@ jobs:
       matrix:
         include:
           - target: x86_64-apple-darwin
-            # macos-14 is arm64[0] which doesn't support nested
-            # virtualization[1].
-            #
-            # [0] https://github.com/actions/runner-images#available-images
-            #
-            # [1] https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#limitations-for-arm64-macos-runners
-            os: macos-13
+            os: macos-15-intel
+          - target: aarch64-apple-darwin
+            os: macos-15
 
           # We don't use ubuntu-latest because we care about the apt packages available.
           - target: x86_64-unknown-linux-gnu
