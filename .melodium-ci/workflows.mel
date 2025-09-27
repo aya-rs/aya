@@ -120,7 +120,7 @@ treatment buildTestAyaEntrypoint(
     startup.trigger -> buildTestAyaAll.trigger
     buildTestAyaAll.finished -> manageLogs.stop
 }
-
+/*
 #[generated(true)]
 #[github_workflow(/.github/workflows/ci.yml)]
 treatment cimatrixOs[logger: Logger](
@@ -231,6 +231,7 @@ treatment cimatrixOsEntrypoint(
     startup.trigger -> emitBuildTestAyaEbpf.trigger
     emitBuildTestAyaEbpf.emit -> cimatrixOs.need_build_test_aya_ebpf
 }
+*/
 
 #[github_workflow(/.github/workflows/gen.yml)]
 #[generated(true)]
