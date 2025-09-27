@@ -1,0 +1,100 @@
+use cicd/services/github::replicateContextsWithInputs
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+#[github_action(taiki-e/install-action@v2)]
+treatment installAction[contexts: JavaScriptEngine, logger: Logger](
+        var checksum: string = "true",
+        var fallback: string = "cargo-binstall",
+        var tool: string = ""
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+  model composite_contexts: JavaScriptEngine()
+{
+    replicateContextsWithInputs[action_contexts = composite_contexts, main_contexts = contexts](
+        inputs = |map(
+        [|entry(
+                "tool",
+                tool
+                ),
+            |entry(
+                "checksum",
+                checksum
+                ),
+            |entry(
+                "fallback",
+                fallback
+                )]
+        )
+    )
+    step0: runAction[contexts = composite_contexts, logger = logger](
+        commands = ${set -eu
+if ! command -v bash >/dev/null; then
+  if grep -Eq '^ID=alpine' /etc/os-release; then
+    printf '::group::Install packages required for install-action (bash)\n'
+    # NB: sync with apk_install in main.sh
+    if command -v sudo >/dev/null; then
+      sudo apk --no-cache add bash
+    elif command -v doas >/dev/null; then
+      doas apk --no-cache add bash
+    else
+      apk --no-cache add bash
+    fi
+    printf '::endgroup::\n'
+  else
+    printf '::error::install-action requires bash\n'
+    exit 1
+  fi
+fi
+},
+        if = "runner.os == 'Linux'",
+        name = "step0",
+        shell = "sh"
+    )
+    step1: runAction[contexts = composite_contexts, logger = logger](
+        commands = "bash --noprofile --norc \"${GITHUB_ACTION_PATH:?}/main.sh\"",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "ACTION_USER_AGENT",
+                    "${{ github.action_repository }} (${{ github.action_ref }})"
+                    ),
+                |entry(
+                    "INPUT_CHECKSUM",
+                    "${{ inputs.checksum }}"
+                    ),
+                |entry(
+                    "DEFAULT_GITHUB_TOKEN",
+                    "${{ github.token }}"
+                    ),
+                |entry(
+                    "INPUT_FALLBACK",
+                    "${{ inputs.fallback }}"
+                    ),
+                |entry(
+                    "INPUT_TOOL",
+                    "${{ inputs.tool }}"
+                    )]
+            )
+        ),
+        name = "step1",
+        shell = "bash"
+    )
+
+    Self.trigger -> replicateContextsWithInputs.trigger
+    replicateContextsWithInputs.ready -> step0.trigger
+    step0.continue -> step1.trigger
+    step1.completed -> Self.completed
+    step1.failed -> Self.failed
+    step1.continue -> Self.continue
+}
+

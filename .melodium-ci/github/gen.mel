@@ -1,0 +1,99 @@
+use root/github/actions/third/actions/checkout/ref_v5::checkout
+use root/github/actions/third/dtolnay/rust_toolchain/ref_nightly::rustToolchain
+use root/github/actions/third/peter_evans/create_pull_request/ref_v7::createPullRequest
+use root/github/actions/third/swatinem/rust_cache/ref_v2::rustCache
+use cicd/services/github::githubJobResult
+use cicd/services/github::prepareContexts
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use json/value::|null
+use json::Json
+use log/logger::Logger
+use std/data/string_map::|map
+
+#[job(codegen)]
+#[generated(true)]
+treatment codegen[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  output result: Block<Json>
+  model contexts: JavaScriptEngine()
+{
+    installHeaders: runAction[contexts = contexts, logger = logger](
+        commands = ${{set -euxo pipefail
+sudo apt -y update
+sudo apt -y install libelf-dev libc6-dev libc6-dev-{arm64,armel,loong64,riscv64,ppc64el,s390x,mips}-cross
+}},
+        display_name = "Install headers",
+        name = "installHeaders"
+    )
+    jobResult: githubJobResult[contexts = contexts](
+        local_context = |null(
+        
+        ),
+        name = "codegen",
+        outputs = |map(
+        []
+        )
+    )
+    libbpf: runAction[contexts = contexts, logger = logger](
+        commands = "echo \"sha=$(git rev-parse HEAD)\" >> \"$GITHUB_OUTPUT\"",
+        id = "libbpf",
+        name = "libbpf",
+        working_directory = "xtask/libbpf"
+    )
+    prepareContexts[contexts = contexts](
+        github_contexts = github_contexts
+    )
+    step0: checkout[contexts = contexts, logger = logger](
+        submodules = "recursive"
+    )
+    step1: rustToolchain[contexts = contexts, logger = logger](
+        components = "rustfmt, clippy"
+    )
+    step2: rustCache[contexts = contexts, logger = logger]()
+    step4: runAction[contexts = contexts, logger = logger](
+        commands = "cargo xtask codegen",
+        name = "step4"
+    )
+    step5: runAction[contexts = contexts, logger = logger](
+        commands = "cargo fmt --all",
+        name = "step5"
+    )
+    step6: runAction[contexts = contexts, logger = logger](
+        commands = "cargo xtask public-api --bless",
+        name = "step6"
+    )
+    step8: createPullRequest[contexts = contexts, logger = logger](
+        body = ${{{**Automated changes**
+
+libbpf commit: ${{ steps.libbpf.outputs.sha}}
+}}},
+        branch = "create-pull-request/codegen",
+        commit_message = ${{{aya-obj, aya-ebpf-bindings: regenerate
+
+libbpf commit: ${{ steps.libbpf.outputs.sha }}
+}}},
+        title = "aya-obj, aya-ebpf-bindings: regenerate",
+        token = "${{ secrets.CRABBY_GITHUB_TOKEN }}"
+    )
+
+    Self.trigger -> prepareContexts.trigger
+    prepareContexts.ready -> step0.trigger
+    step0.continue -> step1.trigger
+    step1.continue -> step2.trigger
+    step2.continue -> installHeaders.trigger
+    installHeaders.continue -> step4.trigger
+    step4.continue -> step5.trigger
+    step5.continue -> step6.trigger
+    step6.continue -> libbpf.trigger
+    libbpf.continue -> step8.trigger
+    step8.continue -> jobResult.trigger_release
+    jobResult.result -> Self.result
+    jobResult.finished -> Self.finished
+    jobResult.finished -> step0.post_trigger
+    jobResult.finished -> step2.post_trigger
+}
+

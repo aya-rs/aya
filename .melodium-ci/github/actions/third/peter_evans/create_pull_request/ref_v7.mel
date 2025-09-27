@@ -1,0 +1,255 @@
+use cicd/services/github::replicateContextsWithInputs
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[generated(true)]
+#[github_action(peter-evans/create-pull-request@v7)]
+treatment createPullRequest[contexts: JavaScriptEngine, logger: Logger](
+        var add_paths: string = "",
+        var assignees: string = "",
+        var author: string = "${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>",
+        var base: string = "",
+        var body: string = "Automated changes by [create-pull-request](https://github.com/peter-evans/create-pull-request) GitHub action",
+        var body_path: string = "",
+        var branch: string = "create-pull-request/patch",
+        var branch_suffix: string = "",
+        var branch_token: string = "",
+        var commit_message: string = "[create-pull-request] automated change",
+        var committer: string = "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+        var delete_branch: string = "false",
+        var draft: string = "false",
+        var labels: string = "",
+        var maintainer_can_modify: string = "true",
+        var milestone: string = "",
+        var path: string = "",
+        var push_to_fork: string = "",
+        var reviewers: string = "",
+        var sign_commits: string = "false",
+        var signoff: string = "false",
+        var team_reviewers: string = "",
+        var title: string = "Changes by create-pull-request action",
+        var token: string = "${{ github.token }}"
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+  model node_contexts: JavaScriptEngine()
+{
+    mainAction: runAction[contexts = node_contexts, logger = logger](
+        commands = "node .melodium-ci/github/actions/third/peter_evans/create_pull_request/ref_v7/dist/index.js",
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "INPUT_TOKEN",
+                    token
+                    ),
+                |entry(
+                    "INPUT_BRANCH-TOKEN",
+                    branch_token
+                    ),
+                |entry(
+                    "INPUT_PATH",
+                    path
+                    ),
+                |entry(
+                    "INPUT_ADD-PATHS",
+                    add_paths
+                    ),
+                |entry(
+                    "INPUT_COMMIT-MESSAGE",
+                    commit_message
+                    ),
+                |entry(
+                    "INPUT_COMMITTER",
+                    committer
+                    ),
+                |entry(
+                    "INPUT_AUTHOR",
+                    author
+                    ),
+                |entry(
+                    "INPUT_SIGNOFF",
+                    signoff
+                    ),
+                |entry(
+                    "INPUT_BRANCH",
+                    branch
+                    ),
+                |entry(
+                    "INPUT_DELETE-BRANCH",
+                    delete_branch
+                    ),
+                |entry(
+                    "INPUT_BRANCH-SUFFIX",
+                    branch_suffix
+                    ),
+                |entry(
+                    "INPUT_BASE",
+                    base
+                    ),
+                |entry(
+                    "INPUT_PUSH-TO-FORK",
+                    push_to_fork
+                    ),
+                |entry(
+                    "INPUT_SIGN-COMMITS",
+                    sign_commits
+                    ),
+                |entry(
+                    "INPUT_TITLE",
+                    title
+                    ),
+                |entry(
+                    "INPUT_BODY",
+                    body
+                    ),
+                |entry(
+                    "INPUT_BODY-PATH",
+                    body_path
+                    ),
+                |entry(
+                    "INPUT_LABELS",
+                    labels
+                    ),
+                |entry(
+                    "INPUT_ASSIGNEES",
+                    assignees
+                    ),
+                |entry(
+                    "INPUT_REVIEWERS",
+                    reviewers
+                    ),
+                |entry(
+                    "INPUT_TEAM-REVIEWERS",
+                    team_reviewers
+                    ),
+                |entry(
+                    "INPUT_MILESTONE",
+                    milestone
+                    ),
+                |entry(
+                    "INPUT_DRAFT",
+                    draft
+                    ),
+                |entry(
+                    "INPUT_MAINTAINER-CAN-MODIFY",
+                    maintainer_can_modify
+                    )]
+            )
+        ),
+        name = "createPullRequest"
+    )
+    replicateContextsWithInputs[action_contexts = node_contexts, main_contexts = contexts](
+        inputs = |map(
+        [|entry(
+                "token",
+                token
+                ),
+            |entry(
+                "branch-token",
+                branch_token
+                ),
+            |entry(
+                "path",
+                path
+                ),
+            |entry(
+                "add-paths",
+                add_paths
+                ),
+            |entry(
+                "commit-message",
+                commit_message
+                ),
+            |entry(
+                "committer",
+                committer
+                ),
+            |entry(
+                "author",
+                author
+                ),
+            |entry(
+                "signoff",
+                signoff
+                ),
+            |entry(
+                "branch",
+                branch
+                ),
+            |entry(
+                "delete-branch",
+                delete_branch
+                ),
+            |entry(
+                "branch-suffix",
+                branch_suffix
+                ),
+            |entry(
+                "base",
+                base
+                ),
+            |entry(
+                "push-to-fork",
+                push_to_fork
+                ),
+            |entry(
+                "sign-commits",
+                sign_commits
+                ),
+            |entry(
+                "title",
+                title
+                ),
+            |entry(
+                "body",
+                body
+                ),
+            |entry(
+                "body-path",
+                body_path
+                ),
+            |entry(
+                "labels",
+                labels
+                ),
+            |entry(
+                "assignees",
+                assignees
+                ),
+            |entry(
+                "reviewers",
+                reviewers
+                ),
+            |entry(
+                "team-reviewers",
+                team_reviewers
+                ),
+            |entry(
+                "milestone",
+                milestone
+                ),
+            |entry(
+                "draft",
+                draft
+                ),
+            |entry(
+                "maintainer-can-modify",
+                maintainer_can_modify
+                )]
+        )
+    )
+
+    Self.trigger -> replicateContextsWithInputs.trigger
+    replicateContextsWithInputs.ready -> mainAction.trigger
+    mainAction.completed -> Self.completed
+    mainAction.failed -> Self.failed
+    mainAction.continue -> Self.continue
+}
+

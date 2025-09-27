@@ -1,0 +1,275 @@
+use root/github/ci::buildTestAyaAll
+use root/github/ci::buildTestAya
+use root/github/ci::buildTestAyaEbpf
+use root/github/ci::buildWorkflowComplete
+use root/github/ci::lint
+use root/github/ci::runIntegrationTest
+use root/github/gen::codegen
+use cicd/logging::manageLogs
+use json/value::|null
+use json::Json
+use json::|to_json
+use log/logger::Logger
+use std/engine/util::startup
+use std/flow/concentrate::Concentrator
+use std/flow/concentrate::concentrateBlock
+use std/flow/concentrate::concentrated
+use std/flow::emit
+use std/flow::trigger
+use std/ops/option::|unwrap_or
+
+/*
+#[generated(true)]
+#[github_workflow(/.github/workflows/ci.yml)]
+treatment ciUbuntuLatest[logger: Logger](
+        var github_contexts: string
+)
+  input need_run_integration_test: Block<Json>
+  input trigger: Block<void>
+  output finished: Block<void>
+  model finishConcentrator: Concentrator()
+{
+    buildTestAya[logger = logger](
+        github_contexts = github_contexts
+    )
+    buildTestAyaEbpf[logger = logger](
+        github_contexts = github_contexts
+    )
+    buildTestAyaEbpfFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    buildTestAyaFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    buildWorkflowComplete[logger = logger](
+        github_contexts = github_contexts
+    )
+    buildWorkflowCompleteFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    finish: concentrated<void>[concentrator = finishConcentrator]()
+    finishTrigger: trigger<void>()
+    lint[logger = logger](
+        github_contexts = github_contexts
+    )
+    lintFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    runIntegrationTest[logger = logger](
+        github_contexts = github_contexts
+    )
+    runIntegrationTestFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+
+    Self.trigger -> finish.trigger
+    finish.data -> finishTrigger.stream
+    Self.trigger -> lint.trigger
+    lint.finished -> lintFinished.data
+    Self.trigger -> buildTestAya.trigger
+    buildTestAya.finished -> buildTestAyaFinished.data
+    Self.trigger -> buildTestAyaEbpf.trigger
+    buildTestAyaEbpf.finished -> buildTestAyaEbpfFinished.data
+    Self.trigger -> runIntegrationTest.trigger
+    runIntegrationTest.finished -> runIntegrationTestFinished.data
+    Self.trigger -> buildWorkflowComplete.trigger
+    buildWorkflowComplete.finished -> buildWorkflowCompleteFinished.data
+    lint.result -> buildWorkflowComplete.need_lint
+    buildTestAya.result -> buildWorkflowComplete.need_build_test_aya
+    buildTestAyaEbpf.result -> buildWorkflowComplete.need_build_test_aya_ebpf
+    Self.need_run_integration_test -> buildWorkflowComplete.need_run_integration_test
+    finishTrigger.end -> Self.finished
+}
+
+treatment ciUbuntuLatestEntrypoint(
+        var github_contexts: string,
+        var logs_directory: string,
+        var need_run_integration_test: string
+)
+  model logger: Logger()
+{
+    ciUbuntuLatest[logger = logger](
+        github_contexts = github_contexts
+    )
+    emitRunIntegrationTest: emit<Json>(
+        value = |unwrap_or<Json>(
+        |to_json(
+            need_run_integration_test
+            ),
+        |null(
+            
+            )
+        )
+    )
+    manageLogs[logger = logger](
+        output_directory = logs_directory
+    )
+    startup()
+
+    startup.trigger -> ciUbuntuLatest.trigger
+    ciUbuntuLatest.finished -> manageLogs.stop
+    startup.trigger -> emitRunIntegrationTest.trigger
+    emitRunIntegrationTest.emit -> ciUbuntuLatest.need_run_integration_test
+}
+*/
+
+treatment buildTestAyaEntrypoint(
+        var github_contexts: string,
+        var logs_directory: string
+)
+  model logger: Logger()
+{
+    buildTestAyaAll[logger = logger](
+        github_contexts = github_contexts
+    )
+    manageLogs[logger = logger](
+        output_directory = logs_directory
+    )
+    startup()
+
+    startup.trigger -> buildTestAyaAll.trigger
+    buildTestAyaAll.finished -> manageLogs.stop
+}
+
+#[generated(true)]
+#[github_workflow(/.github/workflows/ci.yml)]
+treatment cimatrixOs[logger: Logger](
+        var github_contexts: string
+)
+  input need_build_test_aya: Block<Json>
+  input need_build_test_aya_ebpf: Block<Json>
+  input need_lint: Block<Json>
+  input trigger: Block<void>
+  output finished: Block<void>
+  model finishConcentrator: Concentrator()
+{
+    buildTestAya[logger = logger](
+        github_contexts = github_contexts
+    )
+    buildTestAyaEbpf[logger = logger](
+        github_contexts = github_contexts
+    )
+    buildTestAyaEbpfFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    buildTestAyaFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    buildWorkflowComplete[logger = logger](
+        github_contexts = github_contexts
+    )
+    buildWorkflowCompleteFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    finish: concentrated<void>[concentrator = finishConcentrator]()
+    finishTrigger: trigger<void>()
+    lint[logger = logger](
+        github_contexts = github_contexts
+    )
+    lintFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    runIntegrationTest[logger = logger](
+        github_contexts = github_contexts
+    )
+    runIntegrationTestFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+
+    Self.trigger -> finish.trigger
+    finish.data -> finishTrigger.stream
+    Self.trigger -> lint.trigger
+    lint.finished -> lintFinished.data
+    Self.trigger -> buildTestAya.trigger
+    buildTestAya.finished -> buildTestAyaFinished.data
+    Self.trigger -> buildTestAyaEbpf.trigger
+    buildTestAyaEbpf.finished -> buildTestAyaEbpfFinished.data
+    Self.trigger -> runIntegrationTest.trigger
+    runIntegrationTest.finished -> runIntegrationTestFinished.data
+    Self.trigger -> buildWorkflowComplete.trigger
+    buildWorkflowComplete.finished -> buildWorkflowCompleteFinished.data
+    Self.need_lint -> buildWorkflowComplete.need_lint
+    Self.need_build_test_aya -> buildWorkflowComplete.need_build_test_aya
+    Self.need_build_test_aya_ebpf -> buildWorkflowComplete.need_build_test_aya_ebpf
+    runIntegrationTest.result -> buildWorkflowComplete.need_run_integration_test
+    finishTrigger.end -> Self.finished
+}
+
+treatment cimatrixOsEntrypoint(
+        var github_contexts: string,
+        var logs_directory: string,
+        var need_build_test_aya: string,
+        var need_build_test_aya_ebpf: string,
+        var need_lint: string
+)
+  model logger: Logger()
+{
+    cimatrixOs[logger = logger](
+        github_contexts = github_contexts
+    )
+    emitBuildTestAya: emit<Json>(
+        value = |unwrap_or<Json>(
+        |to_json(
+            need_build_test_aya
+            ),
+        |null(
+            
+            )
+        )
+    )
+    emitBuildTestAyaEbpf: emit<Json>(
+        value = |unwrap_or<Json>(
+        |to_json(
+            need_build_test_aya_ebpf
+            ),
+        |null(
+            
+            )
+        )
+    )
+    emitLint: emit<Json>(
+        value = |unwrap_or<Json>(
+        |to_json(
+            need_lint
+            ),
+        |null(
+            
+            )
+        )
+    )
+    manageLogs[logger = logger](
+        output_directory = logs_directory
+    )
+    startup()
+
+    startup.trigger -> cimatrixOs.trigger
+    cimatrixOs.finished -> manageLogs.stop
+    startup.trigger -> emitLint.trigger
+    emitLint.emit -> cimatrixOs.need_lint
+    startup.trigger -> emitBuildTestAya.trigger
+    emitBuildTestAya.emit -> cimatrixOs.need_build_test_aya
+    startup.trigger -> emitBuildTestAyaEbpf.trigger
+    emitBuildTestAyaEbpf.emit -> cimatrixOs.need_build_test_aya_ebpf
+}
+
+#[github_workflow(/.github/workflows/gen.yml)]
+#[generated(true)]
+treatment gen[logger: Logger](
+        var github_contexts: string
+)
+  input trigger: Block<void>
+  output finished: Block<void>
+  model finishConcentrator: Concentrator()
+{
+    codegen[logger = logger](
+        github_contexts = github_contexts
+    )
+    codegenFinished: concentrateBlock<void>[concentrator = finishConcentrator]()
+    finish: concentrated<void>[concentrator = finishConcentrator]()
+    finishTrigger: trigger<void>()
+
+    Self.trigger -> finish.trigger
+    finish.data -> finishTrigger.stream
+    Self.trigger -> codegen.trigger
+    codegen.finished -> codegenFinished.data
+    finishTrigger.end -> Self.finished
+}
+
+treatment genEntrypoint(
+        var github_contexts: string,
+        var logs_directory: string
+)
+  model logger: Logger()
+{
+    gen[logger = logger](
+        github_contexts = github_contexts
+    )
+    manageLogs[logger = logger](
+        output_directory = logs_directory
+    )
+    startup()
+
+    startup.trigger -> gen.trigger
+    gen.finished -> manageLogs.stop
+}
+

@@ -1,0 +1,218 @@
+use cicd/services/github::replicateContextsWithInputs
+use cicd/services/github::runAction
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/ops/option::|wrap
+
+#[github_action(dtolnay/rust-toolchain@nightly)]
+#[generated(true)]
+treatment rustToolchain[contexts: JavaScriptEngine, logger: Logger](
+        var components: string = "",
+        var target: string = "",
+        var targets: string = "",
+        var toolchain: string = "nightly"
+)
+  input trigger: Block<void>
+  output completed: Block<void>
+  output continue: Block<void>
+  output failed: Block<void>
+  model composite_contexts: JavaScriptEngine()
+{
+    flags: runAction[contexts = composite_contexts, logger = logger](
+        commands = ${{{: construct rustup command line
+echo "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT
+echo "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT
+echo "downgrade=${{steps.parse.outputs.toolchain == 'nightly' && inputs.components && ' --allow-downgrade' || ''}}" >> $GITHUB_OUTPUT
+}}},
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "targets",
+                    "${{inputs.targets || inputs.target || ''}}"
+                    ),
+                |entry(
+                    "components",
+                    "${{inputs.components}}"
+                    )]
+            )
+        ),
+        id = "flags",
+        name = "flags",
+        shell = "bash"
+    )
+    parse: runAction[contexts = composite_contexts, logger = logger](
+        commands = ${{{: parse toolchain version
+if [[ -z $toolchain ]]; then
+  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070
+  echo "'toolchain' is a required input" >&2
+  exit 1
+elif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then
+  if [[ ${{runner.os}} == macOS ]]; then
+    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT
+  else
+    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT
+  fi
+elif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then
+  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT
+elif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then
+  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT
+else
+  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT
+fi
+}}},
+        env = |wrap<StringMap>(
+        |map(
+            [|entry(
+                    "toolchain",
+                    "${{inputs.toolchain}}"
+                    )]
+            )
+        ),
+        id = "parse",
+        name = "parse",
+        shell = "bash"
+    )
+    replicateContextsWithInputs[action_contexts = composite_contexts, main_contexts = contexts](
+        inputs = |map(
+        [|entry(
+                "toolchain",
+                toolchain
+                ),
+            |entry(
+                "targets",
+                targets
+                ),
+            |entry(
+                "target",
+                target
+                ),
+            |entry(
+                "components",
+                components
+                )]
+        )
+    )
+    rustcVersion: runAction[contexts = composite_contexts, logger = logger](
+        commands = ${{{: create cachekey
+DATE=$(rustc +${{steps.parse.outputs.toolchain}} --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')
+HASH=$(rustc +${{steps.parse.outputs.toolchain}} --version --verbose | sed -ne 's/^commit-hash: //p')
+echo "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT
+}}},
+        id = "rustc-version",
+        name = "rustcVersion",
+        shell = "bash"
+    )
+    rustupToolchainInstallStepsParseOutputsToolchain: runAction[contexts = composite_contexts, logger = logger](
+        commands = "rustup toolchain install ${{steps.parse.outputs.toolchain}}${{steps.flags.outputs.targets}}${{steps.flags.outputs.components}} --profile minimal${{steps.flags.outputs.downgrade}} --no-self-update",
+        display_name = "rustup toolchain install ${{steps.parse.outputs.toolchain}}",
+        name = "rustupToolchainInstallStepsParseOutputsToolchain",
+        shell = "bash"
+    )
+    step10: runAction[contexts = composite_contexts, logger = logger](
+        commands = ${{{: enable Cargo sparse registry
+# implemented in 1.66, stabilized in 1.68, made default in 1.70
+if [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "${{runner.temp}}"/.implicit_cargo_registries_crates_io_protocol ]; then
+  if rustc +${{steps.parse.outputs.toolchain}} --version --verbose | grep -q '^release: 1\.6[89]\.'; then
+    touch "${{runner.temp}}"/.implicit_cargo_registries_crates_io_protocol || true
+    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV
+  elif rustc +${{steps.parse.outputs.toolchain}} --version --verbose | grep -q '^release: 1\.6[67]\.'; then
+    touch "${{runner.temp}}"/.implicit_cargo_registries_crates_io_protocol || true
+    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV
+  fi
+fi
+}}},
+        name = "step10",
+        shell = "bash"
+    )
+    step11: runAction[contexts = composite_contexts, logger = logger](
+        commands = ${{{: work around spurious network errors in curl 8.0
+# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation
+if rustc +${{steps.parse.outputs.toolchain}} --version --verbose | grep -q '^release: 1\.7[01]\.'; then
+  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV
+fi
+}}},
+        name = "step11",
+        shell = "bash"
+    )
+    step12: runAction[contexts = composite_contexts, logger = logger](
+        commands = "rustc +${{steps.parse.outputs.toolchain}} --version --verbose",
+        name = "step12",
+        shell = "bash"
+    )
+    step2: runAction[contexts = composite_contexts, logger = logger](
+        commands = ${{{: set $CARGO_HOME
+echo CARGO_HOME=${CARGO_HOME:-"${{runner.os == 'Windows' && '$USERPROFILE\.cargo' || '$HOME/.cargo'}}"} >> $GITHUB_ENV
+}}},
+        name = "step2",
+        shell = "bash"
+    )
+    step3: runAction[contexts = composite_contexts, logger = logger](
+        commands = ${: install rustup if needed
+if ! command -v rustup &>/dev/null; then
+  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y
+  echo "$CARGO_HOME/bin" >> $GITHUB_PATH
+fi
+},
+        if = "runner.os != 'Windows'",
+        name = "step3",
+        shell = "bash"
+    )
+    step4: runAction[contexts = composite_contexts, logger = logger](
+        commands = ${{{: install rustup if needed on windows
+if ! command -v rustup &>/dev/null; then
+  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://win.rustup.rs/${{runner.arch == 'ARM64' && 'aarch64' || 'x86_64'}} --output '${{runner.temp}}\rustup-init.exe'
+  '${{runner.temp}}\rustup-init.exe' --default-toolchain none --no-modify-path -y
+  echo "$CARGO_HOME\bin" >> $GITHUB_PATH
+fi
+}}},
+        if = "runner.os == 'Windows'",
+        name = "step4",
+        shell = "bash"
+    )
+    step6: runAction[contexts = composite_contexts, logger = logger](
+        commands = "rustup default ${{steps.parse.outputs.toolchain}}",
+        continue_on_error = "true",
+        name = "step6",
+        shell = "bash"
+    )
+    step8: runAction[contexts = composite_contexts, logger = logger](
+        commands = ${{: disable incremental compilation
+if [ -z "${CARGO_INCREMENTAL+set}" ]; then
+  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV
+fi
+}},
+        name = "step8",
+        shell = "bash"
+    )
+    step9: runAction[contexts = composite_contexts, logger = logger](
+        commands = ${{: enable colors in Cargo output
+if [ -z "${CARGO_TERM_COLOR+set}" ]; then
+  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV
+fi
+}},
+        name = "step9",
+        shell = "bash"
+    )
+
+    Self.trigger -> replicateContextsWithInputs.trigger
+    replicateContextsWithInputs.ready -> parse.trigger
+    parse.continue -> flags.trigger
+    flags.continue -> step2.trigger
+    step2.continue -> step3.trigger
+    step3.continue -> step4.trigger
+    step4.continue -> rustupToolchainInstallStepsParseOutputsToolchain.trigger
+    rustupToolchainInstallStepsParseOutputsToolchain.continue -> step6.trigger
+    step6.continue -> rustcVersion.trigger
+    rustcVersion.continue -> step8.trigger
+    step8.continue -> step9.trigger
+    step9.continue -> step10.trigger
+    step10.continue -> step11.trigger
+    step11.continue -> step12.trigger
+    step12.completed -> Self.completed
+    step12.failed -> Self.failed
+    step12.continue -> Self.continue
+}
+
