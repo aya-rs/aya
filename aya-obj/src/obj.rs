@@ -215,7 +215,7 @@ pub struct Function {
 /// - `lwt_in`, `lwt_out`, `lwt_seg6local`, `lwt_xmit`
 /// - `raw_tp.w+`, `raw_tracepoint.w+`
 /// - `action`
-/// - `sk_reuseport/migrate`, `sk_reuseport`
+/// - `sk_reuseport/migrate`
 /// - `syscall`
 /// - `struct_ops+`
 /// - `fmod_ret+`, `fmod_ret.s+`
@@ -268,6 +268,7 @@ pub enum ProgramSection {
     FlowDissector,
     Extension,
     SkLookup,
+    SkReuseport,
     CgroupSock {
         attach_type: CgroupSockAttachType,
     },
@@ -427,6 +428,7 @@ impl FromStr for ProgramSection {
             "flow_dissector" => FlowDissector,
             "freplace" => Extension,
             "sk_lookup" => SkLookup,
+            "sk_reuseport" => SkReuseport,
             "iter" => Iter { sleepable: false },
             "iter.s" => Iter { sleepable: true },
             _ => {

@@ -63,7 +63,7 @@ impl<T: Borrow<MapData>> SockMap<T> {
         Ok(Self { inner: map })
     }
 
-    /// An iterator over the indices of the array that point to a program. The iterator item type
+    /// An iterator over the indices of the array that point to a socket. The iterator item type
     /// is `Result<u32, MapError>`.
     pub fn indices(&self) -> MapKeys<'_, u32> {
         MapKeys::new(self.inner.borrow())
