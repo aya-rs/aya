@@ -39,6 +39,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(
     clippy::all,
+    clippy::cast_lossless,
     clippy::use_self,
     absolute_paths_not_starting_with_crate,
     deprecated_in_future,

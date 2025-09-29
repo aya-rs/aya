@@ -174,7 +174,10 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     req.tc_info.tcm_handle = handle; // auto-assigned, if zero
     req.tc_info.tcm_ifindex = if_index;
     req.tc_info.tcm_parent = attach_type.tc_parent();
-    req.tc_info.tcm_info = tc_handler_make((priority as u32) << 16, htons(ETH_P_ALL as u16) as u32);
+    req.tc_info.tcm_info = tc_handler_make(
+        u32::from(priority) << 16,
+        u32::from(htons(ETH_P_ALL as u16)),
+    );
 
     let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
 
@@ -242,7 +245,10 @@ pub(crate) unsafe fn netlink_qdisc_detach(
 
     req.tc_info.tcm_family = AF_UNSPEC as u8;
     req.tc_info.tcm_handle = handle; // auto-assigned, if zero
-    req.tc_info.tcm_info = tc_handler_make((priority as u32) << 16, htons(ETH_P_ALL as u16) as u32);
+    req.tc_info.tcm_info = tc_handler_make(
+        u32::from(priority) << 16,
+        u32::from(htons(ETH_P_ALL as u16)),
+    );
     req.tc_info.tcm_parent = attach_type.tc_parent();
     req.tc_info.tcm_ifindex = if_index;
 
@@ -452,7 +458,7 @@ impl NetlinkSocket {
                 let message = NetlinkMessage::read(&buf[offset..])?;
                 offset += align_to(message.header.nlmsg_len as usize, NLMSG_ALIGNTO as usize);
                 multipart = message.header.nlmsg_flags & NLM_F_MULTI as u16 != 0;
-                match message.header.nlmsg_type as i32 {
+                match i32::from(message.header.nlmsg_type) {
                     NLMSG_ERROR => {
                         let err = message.error.unwrap();
                         if err.error == 0 {
