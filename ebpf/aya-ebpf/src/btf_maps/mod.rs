@@ -1,9 +1,11 @@
 use core::marker::PhantomData;
 
 pub mod array;
+pub mod hash_map;
 pub mod sk_storage;
 
 pub use array::Array;
+pub use hash_map::{HashMap, LruHashMap, LruPerCpuHashMap, PerCpuHashMap};
 pub use sk_storage::SkStorage;
 
 /// A marker used to remove names of annotated types in LLVM debug info and

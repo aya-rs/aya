@@ -40,6 +40,7 @@ bpf_file!(
 
     ARRAY => "array",
     BPF_PROBE_READ => "bpf_probe_read",
+    HASH_MAP => "hash_map",
     LINEAR_DATA_STRUCTURES => "linear_data_structures",
     LOG => "log",
     MAP_TEST => "map_test",
