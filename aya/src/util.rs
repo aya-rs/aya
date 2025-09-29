@@ -417,8 +417,7 @@ pub(crate) fn page_size() -> usize {
 
 // bytes_of converts a <T> to a byte slice
 pub(crate) unsafe fn bytes_of<T: Pod>(val: &T) -> &[u8] {
-    let ptr: *const _ = val;
-    unsafe { slice::from_raw_parts(ptr.cast(), mem::size_of_val(val)) }
+    unsafe { slice::from_raw_parts(std::ptr::from_ref(val).cast(), mem::size_of_val(val)) }
 }
 
 pub(crate) fn bytes_of_slice<T: Pod>(val: &[T]) -> &[u8] {
@@ -436,7 +435,7 @@ pub(crate) fn bytes_of_bpf_name(bpf_name: &[core::ffi::c_char; 16]) -> &[u8] {
         .rposition(|ch| *ch != 0)
         .map(|pos| pos + 1)
         .unwrap_or(0);
-    unsafe { slice::from_raw_parts(bpf_name.as_ptr() as *const _, length) }
+    unsafe { slice::from_raw_parts(bpf_name.as_ptr().cast(), length) }
 }
 
 // MMap corresponds to a memory-mapped region.

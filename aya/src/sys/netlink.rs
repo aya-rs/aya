@@ -373,8 +373,8 @@ impl NetlinkSocket {
                 sock.as_raw_fd(),
                 SOL_NETLINK,
                 NETLINK_EXT_ACK,
-                &enable as *const _ as *const _,
-                mem::size_of::<i32>() as u32,
+                std::ptr::from_ref(&enable).cast(),
+                mem::size_of_val(&enable) as u32,
             ) < 0
             {
                 return Err(NetlinkErrorInternal::IoError(io::Error::last_os_error()));
@@ -385,8 +385,8 @@ impl NetlinkSocket {
                 sock.as_raw_fd(),
                 SOL_NETLINK,
                 NETLINK_CAP_ACK,
-                &enable as *const _ as *const _,
-                mem::size_of::<i32>() as u32,
+                std::ptr::from_ref(&enable).cast(),
+                mem::size_of_val(&enable) as u32,
             ) < 0
             {
                 return Err(NetlinkErrorInternal::IoError(io::Error::last_os_error()));
@@ -401,8 +401,8 @@ impl NetlinkSocket {
         if unsafe {
             getsockname(
                 sock.as_raw_fd(),
-                &mut addr as *mut _ as *mut _,
-                &mut addr_len as *mut _,
+                std::ptr::from_mut(&mut addr).cast(),
+                std::ptr::from_mut(&mut addr_len).cast(),
             )
         } < 0
         {
@@ -416,15 +416,7 @@ impl NetlinkSocket {
     }
 
     fn send(&self, msg: &[u8]) -> Result<(), NetlinkErrorInternal> {
-        if unsafe {
-            send(
-                self.sock.as_raw_fd(),
-                msg.as_ptr() as *const _,
-                msg.len(),
-                0,
-            )
-        } < 0
-        {
+        if unsafe { send(self.sock.as_raw_fd(), msg.as_ptr().cast(), msg.len(), 0) } < 0 {
             return Err(NetlinkErrorInternal::IoError(io::Error::last_os_error()));
         }
         Ok(())
@@ -437,14 +429,7 @@ impl NetlinkSocket {
         'out: while multipart {
             multipart = false;
             // Safety: libc wrapper
-            let len = unsafe {
-                recv(
-                    self.sock.as_raw_fd(),
-                    buf.as_mut_ptr() as *mut _,
-                    buf.len(),
-                    0,
-                )
-            };
+            let len = unsafe { recv(self.sock.as_raw_fd(), buf.as_mut_ptr().cast(), buf.len(), 0) };
             if len < 0 {
                 return Err(NetlinkErrorInternal::IoError(io::Error::last_os_error()));
             }
@@ -505,7 +490,7 @@ impl NetlinkMessage {
         }
 
         // Safety: nlmsghdr is POD so read is safe
-        let header = unsafe { ptr::read_unaligned(buf.as_ptr() as *const nlmsghdr) };
+        let header: nlmsghdr = unsafe { ptr::read_unaligned(buf.as_ptr().cast()) };
         let msg_len = header.nlmsg_len as usize;
         if msg_len < mem::size_of::<nlmsghdr>() || msg_len > buf.len() {
             return Err(io::Error::other("invalid nlmsg_len"));
@@ -525,9 +510,7 @@ impl NetlinkMessage {
             (
                 &buf[data_offset + mem::size_of::<nlmsgerr>()..msg_len],
                 // Safety: nlmsgerr is POD so read is safe
-                Some(unsafe {
-                    ptr::read_unaligned(buf[data_offset..].as_ptr() as *const nlmsgerr)
-                }),
+                Some(unsafe { ptr::read_unaligned(buf[data_offset..].as_ptr().cast()) }),
             )
         } else {
             (&buf[data_offset..msg_len], None)
@@ -594,8 +577,7 @@ fn write_attr<T>(
     attr_type: u16,
     value: T,
 ) -> Result<usize, io::Error> {
-    let value =
-        unsafe { slice::from_raw_parts(&value as *const _ as *const _, mem::size_of::<T>()) };
+    let value = bytes_of(&value);
     write_attr_bytes(buf, offset, attr_type, value)
 }
 
@@ -617,9 +599,7 @@ fn write_attr_bytes(
 }
 
 fn write_attr_header(buf: &mut [u8], offset: usize, attr: nlattr) -> Result<usize, io::Error> {
-    let attr =
-        unsafe { slice::from_raw_parts(&attr as *const _ as *const _, mem::size_of::<nlattr>()) };
-
+    let attr = bytes_of(&attr);
     write_bytes(buf, offset, attr)?;
     Ok(NLA_HDR_LEN)
 }
@@ -663,7 +643,7 @@ impl<'a> Iterator for NlAttrsIterator<'a> {
             }));
         }
 
-        let attr = unsafe { ptr::read_unaligned(buf.as_ptr() as *const nlattr) };
+        let attr: nlattr = unsafe { ptr::read_unaligned(buf.as_ptr().cast()) };
         let len = attr.nla_len as usize;
         let align_len = align_to(len, NLA_ALIGNTO as usize);
         if len < NLA_HDR_LEN {
@@ -751,28 +731,32 @@ mod tests {
         assert_eq!(len, nla_len);
 
         // read IFLA_XDP
-        let attr = unsafe { ptr::read_unaligned(buf.as_ptr() as *const nlattr) };
+        let attr: nlattr = unsafe { ptr::read_unaligned(buf.as_ptr().cast()) };
         assert_eq!(attr.nla_type, NLA_F_NESTED as u16 | IFLA_XDP);
         assert_eq!(attr.nla_len, nla_len);
 
         // read IFLA_XDP_FD + fd
-        let attr = unsafe { ptr::read_unaligned(buf[NLA_HDR_LEN..].as_ptr() as *const nlattr) };
+        let attr: nlattr = unsafe { ptr::read_unaligned(buf[NLA_HDR_LEN..].as_ptr().cast()) };
         assert_eq!(attr.nla_type, IFLA_XDP_FD as u16);
         assert_eq!(attr.nla_len, (NLA_HDR_LEN + mem::size_of::<u32>()) as u16);
-        let fd = unsafe { ptr::read_unaligned(buf[NLA_HDR_LEN * 2..].as_ptr() as *const u32) };
+        let fd: u32 = unsafe { ptr::read_unaligned(buf[NLA_HDR_LEN * 2..].as_ptr().cast()) };
         assert_eq!(fd, 42);
 
         // read IFLA_XDP_EXPECTED_FD + fd
-        let attr = unsafe {
+        let attr: nlattr = unsafe {
             ptr::read_unaligned(
-                buf[NLA_HDR_LEN * 2 + mem::size_of::<u32>()..].as_ptr() as *const nlattr
+                buf[NLA_HDR_LEN * 2 + mem::size_of::<u32>()..]
+                    .as_ptr()
+                    .cast(),
             )
         };
         assert_eq!(attr.nla_type, IFLA_XDP_EXPECTED_FD as u16);
         assert_eq!(attr.nla_len, (NLA_HDR_LEN + mem::size_of::<u32>()) as u16);
-        let fd = unsafe {
+        let fd: u32 = unsafe {
             ptr::read_unaligned(
-                buf[NLA_HDR_LEN * 3 + mem::size_of::<u32>()..].as_ptr() as *const u32
+                buf[NLA_HDR_LEN * 3 + mem::size_of::<u32>()..]
+                    .as_ptr()
+                    .cast(),
             )
         };
         assert_eq!(fd, 24);

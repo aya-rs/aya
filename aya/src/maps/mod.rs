@@ -681,7 +681,7 @@ impl MapData {
     pub(crate) fn finalize(&mut self) -> Result<(), MapError> {
         let Self { obj, fd } = self;
         if !obj.data().is_empty() {
-            bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
+            bpf_map_update_elem_ptr(fd.as_fd(), &0, obj.data_mut().as_mut_ptr(), 0)
                 .map_err(|io_error| SyscallError {
                     call: "bpf_map_update_elem",
                     io_error,
@@ -1197,7 +1197,8 @@ mod tests {
                 );
                 unsafe {
                     let name_bytes = mem::transmute::<&[u8], &[c_char]>(TEST_NAME.as_bytes());
-                    let map_info = attr.info.info as *mut bpf_map_info;
+                    let map_info: *mut bpf_map_info =
+                        std::ptr::with_exposed_provenance_mut(attr.info.info as usize);
                     map_info.write({
                         let mut map_info = map_info.read();
                         map_info.name[..name_bytes.len()].copy_from_slice(name_bytes);
@@ -1240,7 +1241,8 @@ mod tests {
             } => {
                 unsafe {
                     let info = attr.info;
-                    let map_info = info.info as *mut bpf_map_info;
+                    let map_info: *mut bpf_map_info =
+                        std::ptr::with_exposed_provenance_mut(info.info as usize);
                     map_info.write({
                         let mut map_info = map_info.read();
                         map_info.id = info.bpf_fd - crate::MockableFd::mock_unsigned_fd();

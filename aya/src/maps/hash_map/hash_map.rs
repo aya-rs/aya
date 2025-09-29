@@ -300,21 +300,24 @@ mod tests {
     }
 
     fn bpf_key<T: Copy>(attr: &bpf_attr) -> Option<T> {
-        match unsafe { attr.__bindgen_anon_2.key } as *const T {
-            p if p.is_null() => None,
-            p => Some(unsafe { *p }),
-        }
+        let p: *const T =
+            std::ptr::with_exposed_provenance(unsafe { attr.__bindgen_anon_2.key } as usize);
+        (!p.is_null()).then(|| unsafe { *p })
     }
 
     fn set_next_key<T: Copy>(attr: &bpf_attr, next: T) -> SysResult {
-        let key = unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.next_key } as *const T as *mut T;
-        unsafe { *key = next };
+        let p: *mut T = std::ptr::with_exposed_provenance_mut(unsafe {
+            attr.__bindgen_anon_2.__bindgen_anon_1.next_key
+        } as usize);
+        unsafe { *p = next };
         Ok(0)
     }
 
     fn set_ret<T: Copy>(attr: &bpf_attr, ret: T) -> SysResult {
-        let value = unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.value } as *const T as *mut T;
-        unsafe { *value = ret };
+        let p: *mut T = std::ptr::with_exposed_provenance_mut(unsafe {
+            attr.__bindgen_anon_2.__bindgen_anon_1.value
+        } as usize);
+        unsafe { *p = ret };
         Ok(0)
     }
 

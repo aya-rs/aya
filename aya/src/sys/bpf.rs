@@ -172,12 +172,12 @@ pub(crate) fn bpf_load_program(
     if let Some(btf_fd) = aya_attr.prog_btf_fd {
         u.prog_btf_fd = btf_fd.as_raw_fd() as u32;
         if aya_attr.line_info_rec_size > 0 {
-            u.line_info = line_info_buf.as_ptr() as *const _ as u64;
+            u.line_info = line_info_buf.as_ptr().expose_provenance() as u64;
             u.line_info_cnt = aya_attr.line_info.len() as u32;
             u.line_info_rec_size = aya_attr.line_info_rec_size as u32;
         }
         if aya_attr.func_info_rec_size > 0 {
-            u.func_info = func_info_buf.as_ptr() as *const _ as u64;
+            u.func_info = func_info_buf.as_ptr().expose_provenance() as u64;
             u.func_info_cnt = aya_attr.func_info.len() as u32;
             u.func_info_rec_size = aya_attr.func_info_rec_size as u32;
         }
@@ -212,9 +212,9 @@ fn lookup<K: Pod, V: Pod>(
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd.as_raw_fd() as u32;
     if let Some(key) = key {
-        u.key = key as *const _ as u64;
+        u.key = std::ptr::from_ref(key).expose_provenance() as u64;
     }
-    u.__bindgen_anon_1.value = &mut value as *mut _ as u64;
+    u.__bindgen_anon_1.value = std::ptr::from_mut(&mut value).expose_provenance() as u64;
     u.flags = flags;
 
     match unit_sys_bpf(cmd, &mut attr) {
@@ -264,7 +264,7 @@ pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd.as_raw_fd() as u32;
     if let Some(key) = key {
-        u.key = key as *const _ as u64;
+        u.key = std::ptr::from_ref(key).expose_provenance() as u64;
     }
     u.__bindgen_anon_1.value = value as u64;
     u.flags = flags;
@@ -287,9 +287,9 @@ pub(crate) fn bpf_map_update_elem<K: Pod, V: Pod>(
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd.as_raw_fd() as u32;
     if let Some(key) = key {
-        u.key = key as *const _ as u64;
+        u.key = std::ptr::from_ref(key).expose_provenance() as u64;
     }
-    u.__bindgen_anon_1.value = value as *const _ as u64;
+    u.__bindgen_anon_1.value = std::ptr::from_ref(value).expose_provenance() as u64;
     u.flags = flags;
 
     unit_sys_bpf(bpf_cmd::BPF_MAP_UPDATE_ELEM, &mut attr)
@@ -304,7 +304,7 @@ pub(crate) fn bpf_map_push_elem<V: Pod>(
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd.as_raw_fd() as u32;
-    u.__bindgen_anon_1.value = value as *const _ as u64;
+    u.__bindgen_anon_1.value = std::ptr::from_ref(value).expose_provenance() as u64;
     u.flags = flags;
 
     unit_sys_bpf(bpf_cmd::BPF_MAP_UPDATE_ELEM, &mut attr)
@@ -342,7 +342,7 @@ pub(crate) fn bpf_map_delete_elem<K: Pod>(fd: BorrowedFd<'_>, key: &K) -> io::Re
 
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd.as_raw_fd() as u32;
-    u.key = key as *const _ as u64;
+    u.key = std::ptr::from_ref(key).expose_provenance() as u64;
 
     unit_sys_bpf(bpf_cmd::BPF_MAP_DELETE_ELEM, &mut attr)
 }
@@ -357,9 +357,9 @@ pub(crate) fn bpf_map_get_next_key<K: Pod>(
     let u = unsafe { &mut attr.__bindgen_anon_2 };
     u.map_fd = fd.as_raw_fd() as u32;
     if let Some(key) = key {
-        u.key = key as *const _ as u64;
+        u.key = std::ptr::from_ref(key).expose_provenance() as u64;
     }
-    u.__bindgen_anon_1.next_key = &mut next_key as *mut _ as u64;
+    u.__bindgen_anon_1.next_key = std::ptr::from_mut(&mut next_key).expose_provenance() as u64;
 
     match unit_sys_bpf(bpf_cmd::BPF_MAP_GET_NEXT_KEY, &mut attr) {
         Ok(()) => Ok(Some(unsafe { next_key.assume_init() })),
@@ -573,7 +573,7 @@ fn bpf_obj_get_info_by_fd<T, F: FnOnce(&mut T)>(
     init(&mut info);
 
     attr.info.bpf_fd = fd.as_raw_fd() as u32;
-    attr.info.info = &info as *const _ as u64;
+    attr.info.info = std::ptr::from_ref(&info).expose_provenance() as u64;
     attr.info.info_len = mem::size_of_val(&info) as u32;
 
     match unit_sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
@@ -669,11 +669,11 @@ pub(crate) fn bpf_load_btf(
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_7 };
-    u.btf = raw_btf.as_ptr() as *const _ as u64;
+    u.btf = raw_btf.as_ptr().expose_provenance() as u64;
     u.btf_size = mem::size_of_val(raw_btf) as u32;
     if !log_buf.is_empty() {
         u.btf_log_level = verifier_log_level.bits();
-        u.btf_log_buf = log_buf.as_mut_ptr() as u64;
+        u.btf_log_buf = log_buf.as_mut_ptr().expose_provenance() as u64;
         u.btf_log_size = log_buf.len() as u32;
     }
     // SAFETY: `BPF_BTF_LOAD` returns a newly created fd.
