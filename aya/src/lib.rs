@@ -41,6 +41,7 @@
     clippy::all,
     clippy::cast_lossless,
     clippy::cast_precision_loss,
+    clippy::char_lit_as_u8,
     clippy::use_self,
     absolute_paths_not_starting_with_crate,
     deprecated_in_future,
