@@ -56,8 +56,6 @@ macro_rules! define_linear_ds_test {
     };
 }
 
-use define_linear_ds_test;
-
 define_linear_ds_test!(Stack, TEST_STACK,
     push_fn: test_stack_push,
     pop_fn: test_stack_pop,
