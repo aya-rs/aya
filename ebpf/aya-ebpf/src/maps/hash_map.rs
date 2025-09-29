@@ -12,329 +12,118 @@ use crate::{
     remove,
 };
 
-#[repr(transparent)]
-pub struct HashMap<K, V> {
-    def: UnsafeCell<bpf_map_def>,
-    _k: PhantomData<K>,
-    _v: PhantomData<V>,
+/// Generates a hash map definition with common methods.
+macro_rules! hash_map {
+    (
+        $map_doc:literal,
+        $map_doc_examples:literal,
+        $name:ident,
+        $t:ident
+        $(,)?
+    ) => {
+        #[doc = include_str!($map_doc)]
+        #[doc = include_str!($map_doc_examples)]
+        #[repr(transparent)]
+        pub struct $name<K, V> {
+            def: UnsafeCell<bpf_map_def>,
+            _k: PhantomData<K>,
+            _v: PhantomData<V>,
+        }
+
+        unsafe impl<K: Sync, V: Sync> Sync for $name<K, V> {}
+
+        impl<K, V> $name<K, V> {
+            pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+                Self {
+                    def: UnsafeCell::new(build_def::<K, V>(
+                        $t,
+                        max_entries,
+                        flags,
+                        PinningType::None,
+                    )),
+                    _k: PhantomData,
+                    _v: PhantomData,
+                }
+            }
+
+            pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+                Self {
+                    def: UnsafeCell::new(build_def::<K, V>(
+                        BPF_MAP_TYPE_HASH,
+                        max_entries,
+                        flags,
+                        PinningType::ByName,
+                    )),
+                    _k: PhantomData,
+                    _v: PhantomData,
+                }
+            }
+
+            #[doc = "Retrieves the value associated with `key` from the map."]
+            #[doc = include_str!("map_safety.md")]
+            #[inline]
+            pub unsafe fn get(&self, key: impl Borrow<K>) -> Option<&V> {
+                unsafe { get(self.def.get(), key.borrow()) }
+            }
+
+            #[doc = "Retrieves the pointer associated with `key` from the map."]
+            #[doc = include_str!("map_safety.md")]
+            #[inline]
+            pub fn get_ptr(&self, key: impl Borrow<K>) -> Option<*const V> {
+                get_ptr(self.def.get(), key.borrow())
+            }
+
+            #[doc = "Retrieves the mutable pointer associated with `key` from the map."]
+            #[doc = include_str!("map_safety.md")]
+            #[inline]
+            pub fn get_ptr_mut(&self, key: impl Borrow<K>) -> Option<*mut V> {
+                get_ptr_mut(self.def.get(), key.borrow())
+            }
+
+            /// Inserts a key-value pair into the map.
+            #[inline]
+            pub fn insert(
+                &self,
+                key: impl Borrow<K>,
+                value: impl Borrow<V>,
+                flags: u64,
+            ) -> Result<(), c_long> {
+                insert(self.def.get().cast(), key.borrow(), value.borrow(), flags)
+            }
+
+            /// Removes a key from the map.
+            #[inline]
+            pub fn remove(&self, key: impl Borrow<K>) -> Result<(), c_long> {
+                remove(self.def.get().cast(), key.borrow())
+            }
+        }
+    };
 }
 
-unsafe impl<K: Sync, V: Sync> Sync for HashMap<K, V> {}
-
-impl<K, V> HashMap<K, V> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self {
-            def: UnsafeCell::new(build_def::<K, V>(
-                BPF_MAP_TYPE_HASH,
-                max_entries,
-                flags,
-                PinningType::None,
-            )),
-            _k: PhantomData,
-            _v: PhantomData,
-        }
-    }
-
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self {
-            def: UnsafeCell::new(build_def::<K, V>(
-                BPF_MAP_TYPE_HASH,
-                max_entries,
-                flags,
-                PinningType::ByName,
-            )),
-            _k: PhantomData,
-            _v: PhantomData,
-        }
-    }
-
-    /// Retrieve the value associate with `key` from the map.
-    ///
-    /// # Safety
-    ///
-    /// Unless the map flag `BPF_F_NO_PREALLOC` is used, the kernel does not guarantee the atomicity
-    /// of `insert` or `remove`, and any element removed from the map might get aliased by another
-    /// element in the map, causing garbage to be read, or corruption in case of writes.
-    #[inline]
-    pub unsafe fn get(&self, key: impl Borrow<K>) -> Option<&V> {
-        unsafe { get(self.def.get(), key.borrow()) }
-    }
-
-    /// Retrieve the value associate with `key` from the map.
-    /// The same caveat as `get` applies, but this returns a raw pointer and it's up to the caller
-    /// to decide whether it's safe to dereference the pointer or not.
-    #[inline]
-    pub fn get_ptr(&self, key: impl Borrow<K>) -> Option<*const V> {
-        get_ptr(self.def.get(), key.borrow())
-    }
-
-    /// Retrieve the value associate with `key` from the map.
-    /// The same caveat as `get` applies, and additionally cares should be taken to avoid
-    /// concurrent writes, but it's up to the caller to decide whether it's safe to dereference the
-    /// pointer or not.
-    #[inline]
-    pub fn get_ptr_mut(&self, key: impl Borrow<K>) -> Option<*mut V> {
-        get_ptr_mut(self.def.get(), key.borrow())
-    }
-
-    #[inline]
-    pub fn insert(
-        &self,
-        key: impl Borrow<K>,
-        value: impl Borrow<V>,
-        flags: u64,
-    ) -> Result<(), c_long> {
-        insert(self.def.get().cast(), key.borrow(), value.borrow(), flags)
-    }
-
-    #[inline]
-    pub fn remove(&self, key: impl Borrow<K>) -> Result<(), c_long> {
-        remove(self.def.get().cast(), key.borrow())
-    }
-}
-
-#[repr(transparent)]
-pub struct LruHashMap<K, V> {
-    def: UnsafeCell<bpf_map_def>,
-    _k: PhantomData<K>,
-    _v: PhantomData<V>,
-}
-
-unsafe impl<K: Sync, V: Sync> Sync for LruHashMap<K, V> {}
-
-impl<K, V> LruHashMap<K, V> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self {
-            def: UnsafeCell::new(build_def::<K, V>(
-                BPF_MAP_TYPE_LRU_HASH,
-                max_entries,
-                flags,
-                PinningType::None,
-            )),
-            _k: PhantomData,
-            _v: PhantomData,
-        }
-    }
-
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self {
-            def: UnsafeCell::new(build_def::<K, V>(
-                BPF_MAP_TYPE_LRU_HASH,
-                max_entries,
-                flags,
-                PinningType::ByName,
-            )),
-            _k: PhantomData,
-            _v: PhantomData,
-        }
-    }
-
-    /// Retrieve the value associate with `key` from the map.
-    ///
-    /// # Safety
-    ///
-    /// Unless the map flag `BPF_F_NO_PREALLOC` is used, the kernel does not guarantee the atomicity
-    /// of `insert` or `remove`, and any element removed from the map might get aliased by another
-    /// element in the map, causing garbage to be read, or corruption in case of writes.
-    #[inline]
-    pub unsafe fn get(&self, key: impl Borrow<K>) -> Option<&V> {
-        unsafe { get(self.def.get(), key.borrow()) }
-    }
-
-    /// Retrieve the value associate with `key` from the map.
-    /// The same caveat as `get` applies, but this returns a raw pointer and it's up to the caller
-    /// to decide whether it's safe to dereference the pointer or not.
-    #[inline]
-    pub fn get_ptr(&self, key: impl Borrow<K>) -> Option<*const V> {
-        get_ptr(self.def.get(), key.borrow())
-    }
-
-    /// Retrieve the value associate with `key` from the map.
-    /// The same caveat as `get` applies, and additionally cares should be taken to avoid
-    /// concurrent writes, but it's up to the caller to decide whether it's safe to dereference the
-    /// pointer or not.
-    #[inline]
-    pub fn get_ptr_mut(&self, key: impl Borrow<K>) -> Option<*mut V> {
-        get_ptr_mut(self.def.get(), key.borrow())
-    }
-
-    #[inline]
-    pub fn insert(
-        &self,
-        key: impl Borrow<K>,
-        value: impl Borrow<V>,
-        flags: u64,
-    ) -> Result<(), c_long> {
-        insert(self.def.get().cast(), key.borrow(), value.borrow(), flags)
-    }
-
-    #[inline]
-    pub fn remove(&self, key: impl Borrow<K>) -> Result<(), c_long> {
-        remove(self.def.get().cast(), key.borrow())
-    }
-}
-
-#[repr(transparent)]
-pub struct PerCpuHashMap<K, V> {
-    def: UnsafeCell<bpf_map_def>,
-    _k: PhantomData<K>,
-    _v: PhantomData<V>,
-}
-
-unsafe impl<K, V> Sync for PerCpuHashMap<K, V> {}
-
-impl<K, V> PerCpuHashMap<K, V> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self {
-            def: UnsafeCell::new(build_def::<K, V>(
-                BPF_MAP_TYPE_PERCPU_HASH,
-                max_entries,
-                flags,
-                PinningType::None,
-            )),
-            _k: PhantomData,
-            _v: PhantomData,
-        }
-    }
-
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self {
-            def: UnsafeCell::new(build_def::<K, V>(
-                BPF_MAP_TYPE_PERCPU_HASH,
-                max_entries,
-                flags,
-                PinningType::ByName,
-            )),
-            _k: PhantomData,
-            _v: PhantomData,
-        }
-    }
-
-    /// Retrieve the value associate with `key` from the map.
-    ///
-    /// # Safety
-    ///
-    /// Unless the map flag `BPF_F_NO_PREALLOC` is used, the kernel does not guarantee the atomicity
-    /// of `insert` or `remove`, and any element removed from the map might get aliased by another
-    /// element in the map, causing garbage to be read, or corruption in case of writes.
-    #[inline]
-    pub unsafe fn get(&self, key: impl Borrow<K>) -> Option<&V> {
-        unsafe { get(self.def.get(), key.borrow()) }
-    }
-
-    /// Retrieve the value associate with `key` from the map.
-    /// The same caveat as `get` applies, but this returns a raw pointer and it's up to the caller
-    /// to decide whether it's safe to dereference the pointer or not.
-    #[inline]
-    pub fn get_ptr(&self, key: impl Borrow<K>) -> Option<*const V> {
-        get_ptr(self.def.get(), key.borrow())
-    }
-
-    /// Retrieve the value associate with `key` from the map.
-    /// The same caveat as `get` applies, and additionally cares should be taken to avoid
-    /// concurrent writes, but it's up to the caller to decide whether it's safe to dereference the
-    /// pointer or not.
-    #[inline]
-    pub fn get_ptr_mut(&self, key: impl Borrow<K>) -> Option<*mut V> {
-        get_ptr_mut(self.def.get(), key.borrow())
-    }
-
-    #[inline]
-    pub fn insert(
-        &self,
-        key: impl Borrow<K>,
-        value: impl Borrow<V>,
-        flags: u64,
-    ) -> Result<(), c_long> {
-        insert(self.def.get().cast(), key.borrow(), value.borrow(), flags)
-    }
-
-    #[inline]
-    pub fn remove(&self, key: impl Borrow<K>) -> Result<(), c_long> {
-        remove(self.def.get().cast(), key.borrow())
-    }
-}
-
-#[repr(transparent)]
-pub struct LruPerCpuHashMap<K, V> {
-    def: UnsafeCell<bpf_map_def>,
-    _k: PhantomData<K>,
-    _v: PhantomData<V>,
-}
-
-unsafe impl<K, V> Sync for LruPerCpuHashMap<K, V> {}
-
-impl<K, V> LruPerCpuHashMap<K, V> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self {
-            def: UnsafeCell::new(build_def::<K, V>(
-                BPF_MAP_TYPE_LRU_PERCPU_HASH,
-                max_entries,
-                flags,
-                PinningType::None,
-            )),
-            _k: PhantomData,
-            _v: PhantomData,
-        }
-    }
-
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self {
-            def: UnsafeCell::new(build_def::<K, V>(
-                BPF_MAP_TYPE_LRU_PERCPU_HASH,
-                max_entries,
-                flags,
-                PinningType::ByName,
-            )),
-            _k: PhantomData,
-            _v: PhantomData,
-        }
-    }
-
-    /// Retrieve the value associate with `key` from the map.
-    ///
-    /// # Safety
-    ///
-    /// Unless the map flag `BPF_F_NO_PREALLOC` is used, the kernel does not guarantee the atomicity
-    /// of `insert` or `remove`, and any element removed from the map might get aliased by another
-    /// element in the map, causing garbage to be read, or corruption in case of writes.
-    #[inline]
-    pub unsafe fn get(&self, key: impl Borrow<K>) -> Option<&V> {
-        unsafe { get(self.def.get(), key.borrow()) }
-    }
-
-    /// Retrieve the value associate with `key` from the map.
-    /// The same caveat as `get` applies, but this returns a raw pointer and it's up to the caller
-    /// to decide whether it's safe to dereference the pointer or not.
-    #[inline]
-    pub fn get_ptr(&self, key: impl Borrow<K>) -> Option<*const V> {
-        get_ptr(self.def.get(), key.borrow())
-    }
-
-    /// Retrieve the value associate with `key` from the map.
-    /// The same caveat as `get` applies, and additionally cares should be taken to avoid
-    /// concurrent writes, but it's up to the caller to decide whether it's safe to dereference the
-    /// pointer or not.
-    #[inline]
-    pub fn get_ptr_mut(&self, key: impl Borrow<K>) -> Option<*mut V> {
-        get_ptr_mut(self.def.get(), key.borrow())
-    }
-
-    #[inline]
-    pub fn insert(
-        &self,
-        key: impl Borrow<K>,
-        value: impl Borrow<V>,
-        flags: u64,
-    ) -> Result<(), c_long> {
-        insert(self.def.get().cast(), key.borrow(), value.borrow(), flags)
-    }
-
-    #[inline]
-    pub fn remove(&self, key: impl Borrow<K>) -> Result<(), c_long> {
-        remove(self.def.get().cast(), key.borrow())
-    }
-}
+hash_map!(
+    "docs/hash_map.md",
+    "docs/hash_map_examples.md",
+    HashMap,
+    BPF_MAP_TYPE_HASH,
+);
+hash_map!(
+    "docs/lru_hash_map.md",
+    "docs/lru_hash_map_examples.md",
+    LruHashMap,
+    BPF_MAP_TYPE_LRU_HASH,
+);
+hash_map!(
+    "docs/per_cpu_hash_map.md",
+    "docs/per_cpu_hash_map_examples.md",
+    PerCpuHashMap,
+    BPF_MAP_TYPE_PERCPU_HASH
+);
+hash_map!(
+    "docs/lru_per_cpu_hash_map.md",
+    "docs/lru_per_cpu_hash_map_examples.md",
+    LruPerCpuHashMap,
+    BPF_MAP_TYPE_LRU_PERCPU_HASH
+);
 
 const fn build_def<K, V>(ty: u32, max_entries: u32, flags: u32, pin: PinningType) -> bpf_map_def {
     bpf_map_def {
