@@ -377,7 +377,7 @@ pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::insert(&self, key: impl
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
-impl<K, V> core::marker::Sync for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
+impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
@@ -408,7 +408,7 @@ pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::insert(&self, key: impl co
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
-impl<K, V> core::marker::Sync for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
+impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
@@ -1202,7 +1202,7 @@ pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::insert(&self, key: impl
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
-impl<K, V> core::marker::Sync for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
+impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
@@ -1262,7 +1262,7 @@ pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::insert(&self, key: impl co
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
-impl<K, V> core::marker::Sync for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
+impl<K: core::marker::Sync, V: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
