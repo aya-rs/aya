@@ -50,6 +50,7 @@ unsafe impl<T> FromBtfArgument for *const T {
 macro_rules! unsafe_impl_from_btf_argument {
     ($type:ident) => {
         unsafe impl FromBtfArgument for $type {
+            #[allow(trivial_numeric_casts)]
             unsafe fn from_argument(ctx: *const c_void, n: usize) -> Self {
                 // BTF arguments are exposed as an array of `usize` where `usize` can
                 // either be treated as a pointer or a primitive type
@@ -78,7 +79,7 @@ pub struct PtRegs {
 /// A portable wrapper around pt_regs, user_pt_regs and user_regs_struct.
 impl PtRegs {
     pub fn new(regs: *mut pt_regs) -> Self {
-        PtRegs { regs }
+        Self { regs }
     }
 
     /// Returns the value of the register used to pass arg `n`.
@@ -485,7 +486,7 @@ impl RawTracepointArgs {
     /// `bpf_raw_tracepoint_args` raw pointer to allow easier access
     /// to raw tracepoint argumetns.
     pub fn new(args: *mut bpf_raw_tracepoint_args) -> Self {
-        RawTracepointArgs { args }
+        Self { args }
     }
 
     /// Returns the n-th argument of the raw tracepoint.
@@ -565,6 +566,7 @@ unsafe impl<T> FromRawTracepointArgs for *const T {
 macro_rules! unsafe_impl_from_raw_tracepoint_args {
     ($type:ident) => {
         unsafe impl FromRawTracepointArgs for $type {
+            #[allow(trivial_numeric_casts)]
             unsafe fn from_argument(ctx: &bpf_raw_tracepoint_args, n: usize) -> Self {
                 (unsafe { ctx.args.as_slice(n + 1) })[n] as _
             }

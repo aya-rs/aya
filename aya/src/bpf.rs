@@ -1153,7 +1153,7 @@ impl<'a, T: Pod> From<&'a T> for GlobalData<'a> {
     fn from(v: &'a T) -> Self {
         GlobalData {
             // Safety: v is Pod
-            bytes: unsafe { bytes_of(v) },
+            bytes: bytes_of(v),
         }
     }
 }

@@ -307,13 +307,15 @@ mod tests {
     }
 
     fn set_next_key<T: Copy>(attr: &bpf_attr, next: T) -> SysResult {
-        let key = unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.next_key } as *const T as *mut T;
+        let key =
+            (unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.next_key } as *const T).cast_mut();
         unsafe { *key = next };
         Ok(0)
     }
 
     fn set_ret<T: Copy>(attr: &bpf_attr, ret: T) -> SysResult {
-        let value = unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.value } as *const T as *mut T;
+        let value =
+            (unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.value } as *const T).cast_mut();
         unsafe { *value = ret };
         Ok(0)
     }

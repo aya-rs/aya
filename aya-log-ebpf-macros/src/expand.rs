@@ -21,7 +21,7 @@ mod kw {
 }
 
 impl Parse for LogArgs {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let ctx: Expr = input.parse()?;
         input.parse::<Token![,]>()?;
 

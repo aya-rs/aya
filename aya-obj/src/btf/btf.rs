@@ -187,7 +187,7 @@ impl BtfFeatures {
         btf_type_tag: bool,
         btf_enum64: bool,
     ) -> Self {
-        BtfFeatures {
+        Self {
             btf_func,
             btf_func_global,
             btf_datasec,
@@ -257,8 +257,8 @@ pub struct Btf {
 
 impl Btf {
     /// Creates a new empty instance with its header initialized
-    pub fn new() -> Btf {
-        Btf {
+    pub fn new() -> Self {
+        Self {
             header: btf_header {
                 magic: 0xeb9f,
                 version: 0x01,
@@ -305,8 +305,8 @@ impl Btf {
 
     /// Loads BTF metadata from `/sys/kernel/btf/vmlinux`.
     #[cfg(feature = "std")]
-    pub fn from_sys_fs() -> Result<Btf, BtfError> {
-        Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())
+    pub fn from_sys_fs() -> Result<Self, BtfError> {
+        Self::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())
     }
 
     /// Loads BTF metadata from the given `path`.
@@ -314,10 +314,10 @@ impl Btf {
     pub fn parse_file<P: AsRef<std::path::Path>>(
         path: P,
         endianness: Endianness,
-    ) -> Result<Btf, BtfError> {
+    ) -> Result<Self, BtfError> {
         use std::{borrow::ToOwned as _, fs};
         let path = path.as_ref();
-        Btf::parse(
+        Self::parse(
             &fs::read(path).map_err(|error| BtfError::FileError {
                 path: path.to_owned(),
                 error,
@@ -327,7 +327,7 @@ impl Btf {
     }
 
     /// Parses BTF from binary data of the given endianness
-    pub fn parse(data: &[u8], endianness: Endianness) -> Result<Btf, BtfError> {
+    pub fn parse(data: &[u8], endianness: Endianness) -> Result<Self, BtfError> {
         if data.len() < mem::size_of::<btf_header>() {
             return Err(BtfError::InvalidHeader);
         }
@@ -342,9 +342,9 @@ impl Btf {
         }
 
         let strings = data[str_off..str_off + str_len].to_vec();
-        let types = Btf::read_type_info(&header, data, endianness)?;
+        let types = Self::read_type_info(&header, data, endianness)?;
 
-        Ok(Btf {
+        Ok(Self {
             header,
             strings,
             types,
@@ -766,11 +766,7 @@ pub struct BtfExt {
 }
 
 impl BtfExt {
-    pub(crate) fn parse(
-        data: &[u8],
-        endianness: Endianness,
-        btf: &Btf,
-    ) -> Result<BtfExt, BtfError> {
+    pub(crate) fn parse(data: &[u8], endianness: Endianness, btf: &Btf) -> Result<Self, BtfError> {
         #[repr(C)]
         #[derive(Debug, Copy, Clone)]
         struct MinimalHeader {
@@ -788,7 +784,7 @@ impl BtfExt {
             // first find the actual size of the header by converting into the minimal valid header
             // Safety: MinimalHeader is POD so read_unaligned is safe
             let minimal_header = unsafe {
-                ptr::read_unaligned::<MinimalHeader>(data.as_ptr() as *const MinimalHeader)
+                ptr::read_unaligned::<MinimalHeader>(data.as_ptr().cast::<MinimalHeader>())
             };
 
             let len_to_read = minimal_header.hdr_len as usize;
@@ -812,7 +808,7 @@ impl BtfExt {
             // data.len(). Additionally, we know that the header has
             // been initialized so it's safe to call for assume_init.
             unsafe {
-                core::ptr::copy(data.as_ptr(), header.as_mut_ptr() as *mut u8, len_to_read);
+                core::ptr::copy(data.as_ptr(), header.as_mut_ptr().cast::<u8>(), len_to_read);
                 header.assume_init()
             }
         };
@@ -851,7 +847,7 @@ impl BtfExt {
             })
         };
 
-        let mut ext = BtfExt {
+        let mut ext = Self {
             header,
             relocations: Vec::new(),
             func_info: FuncInfo::new(),

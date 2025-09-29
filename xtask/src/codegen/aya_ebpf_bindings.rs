@@ -15,7 +15,7 @@ use crate::codegen::{
     helpers::{expand_helpers, extract_helpers},
 };
 
-pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
+pub(crate) fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
     let SysrootOptions {
         aarch64_sysroot,
         armv7_sysroot,

@@ -66,8 +66,8 @@ pub mod ring_buf {
         }
     }
 
-    impl<'a> core::iter::Sum<&'a Registers> for Registers {
-        fn sum<I: Iterator<Item = &'a Registers>>(iter: I) -> Self {
+    impl<'a> core::iter::Sum<&'a Self> for Registers {
+        fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
             iter.fold(Default::default(), |a, b| a + *b)
         }
     }

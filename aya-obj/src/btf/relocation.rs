@@ -200,14 +200,14 @@ pub(crate) struct Relocation {
 }
 
 impl Relocation {
-    pub(crate) unsafe fn parse(data: &[u8], number: usize) -> Result<Relocation, BtfError> {
+    pub(crate) unsafe fn parse(data: &[u8], number: usize) -> Result<Self, BtfError> {
         if mem::size_of::<bpf_core_relo>() > data.len() {
             return Err(BtfError::InvalidRelocationInfo);
         }
 
-        let rel = unsafe { ptr::read_unaligned::<bpf_core_relo>(data.as_ptr() as *const _) };
+        let rel = unsafe { ptr::read_unaligned::<bpf_core_relo>(data.as_ptr().cast()) };
 
-        Ok(Relocation {
+        Ok(Self {
             kind: rel.kind.try_into()?,
             ins_offset: rel.insn_off as usize,
             type_id: rel.type_id,
@@ -225,7 +225,7 @@ impl Object {
             _ => return Ok(()),
         };
 
-        let mut candidates_cache = HashMap::<u32, Vec<Candidate>>::new();
+        let mut candidates_cache = HashMap::<u32, Vec<Candidate<'_>>>::new();
         for (sec_name_off, relos) in btf_ext.relocations() {
             let section_name =
                 local_btf
@@ -430,8 +430,8 @@ fn find_candidates<'target>(
 }
 
 fn match_candidate<'target>(
-    local_spec: &AccessSpec,
-    candidate: &'target Candidate,
+    local_spec: &AccessSpec<'_>,
+    candidate: &'target Candidate<'_>,
 ) -> Result<Option<AccessSpec<'target>>, RelocationError> {
     let mut target_spec = AccessSpec {
         btf: candidate.btf,
@@ -466,7 +466,7 @@ fn match_candidate<'target>(
 
             fn match_enum<'a>(
                 iterator: impl Iterator<Item = (usize, u32)>,
-                candidate: &Candidate,
+                candidate: &Candidate<'_>,
                 local_variant_name: &str,
                 target_id: u32,
                 mut target_spec: AccessSpec<'a>,
@@ -672,7 +672,7 @@ impl<'a> AccessSpec<'a> {
         root_type_id: u32,
         spec: &str,
         relocation: Relocation,
-    ) -> Result<AccessSpec<'a>, RelocationError> {
+    ) -> Result<Self, RelocationError> {
         let parts = spec
             .split(':')
             .map(|s| s.parse::<usize>())
@@ -895,21 +895,21 @@ fn poison_insn(ins: &mut bpf_insn) {
 impl ComputedRelocation {
     fn new(
         rel: &Relocation,
-        local_spec: &AccessSpec,
-        target_spec: Option<&AccessSpec>,
-    ) -> Result<ComputedRelocation, RelocationError> {
+        local_spec: &AccessSpec<'_>,
+        target_spec: Option<&AccessSpec<'_>>,
+    ) -> Result<Self, RelocationError> {
         use RelocationKind::*;
         let ret = match rel.kind {
             FieldByteOffset | FieldByteSize | FieldExists | FieldSigned | FieldLShift64
-            | FieldRShift64 => ComputedRelocation {
+            | FieldRShift64 => Self {
                 local: Self::compute_field_relocation(rel, Some(local_spec))?,
                 target: Self::compute_field_relocation(rel, target_spec).ok(),
             },
-            TypeIdLocal | TypeIdTarget | TypeExists | TypeSize => ComputedRelocation {
+            TypeIdLocal | TypeIdTarget | TypeExists | TypeSize => Self {
                 local: Self::compute_type_relocation(rel, local_spec, target_spec)?,
                 target: Self::compute_type_relocation(rel, local_spec, target_spec).ok(),
             },
-            EnumVariantExists | EnumVariantValue => ComputedRelocation {
+            EnumVariantExists | EnumVariantValue => Self {
                 local: Self::compute_enum_relocation(rel, Some(local_spec))?,
                 target: Self::compute_enum_relocation(rel, target_spec).ok(),
             },
@@ -959,7 +959,7 @@ impl ComputedRelocation {
             return Ok(());
         };
 
-        let class = (ins.code & 0x07) as u32;
+        let class = u32::from(ins.code & 0x07);
 
         let target_value = target.value;
 
@@ -1055,11 +1055,11 @@ impl ComputedRelocation {
 
     fn compute_enum_relocation(
         rel: &Relocation,
-        spec: Option<&AccessSpec>,
+        spec: Option<&AccessSpec<'_>>,
     ) -> Result<ComputedRelocationValue, RelocationError> {
         use RelocationKind::*;
         let value = match (rel.kind, spec) {
-            (EnumVariantExists, spec) => spec.is_some() as u64,
+            (EnumVariantExists, spec) => u64::from(spec.is_some()),
             (EnumVariantValue, Some(spec)) => {
                 let accessor = &spec.accessors[0];
                 match spec.btf.type_by_id(accessor.type_id)? {
@@ -1068,12 +1068,12 @@ impl ComputedRelocation {
                         if en.is_signed() {
                             value as i32 as u64
                         } else {
-                            value as u64
+                            u64::from(value)
                         }
                     }
                     BtfType::Enum64(en) => {
                         let variant = &en.variants[accessor.index];
-                        ((variant.value_high as u64) << 32) | variant.value_low as u64
+                        (u64::from(variant.value_high) << 32) | u64::from(variant.value_low)
                     }
                     // candidate selection ensures that rel_kind == local_kind == target_kind
                     _ => unreachable!(),
@@ -1097,7 +1097,7 @@ impl ComputedRelocation {
 
     fn compute_field_relocation(
         rel: &Relocation,
-        spec: Option<&AccessSpec>,
+        spec: Option<&AccessSpec<'_>>,
     ) -> Result<ComputedRelocationValue, RelocationError> {
         use RelocationKind::*;
 
@@ -1105,7 +1105,7 @@ impl ComputedRelocation {
             // this is the bpf_preserve_field_info(member_access, FIELD_EXISTENCE) case. If we
             // managed to build a spec, it means the field exists.
             return Ok(ComputedRelocationValue {
-                value: spec.is_some() as u64,
+                value: u64::from(spec.is_some()),
                 size: 0,
                 type_id: None,
             });
@@ -1196,30 +1196,30 @@ impl ComputedRelocation {
 
         match rel.kind {
             FieldByteOffset => {
-                value.value = byte_off as u64;
+                value.value = u64::from(byte_off);
                 if !is_bitfield {
                     value.size = byte_size;
                     value.type_id = Some(member_type_id);
                 }
             }
             FieldByteSize => {
-                value.value = byte_size as u64;
+                value.value = u64::from(byte_size);
             }
             FieldSigned => match member_ty {
-                BtfType::Enum(en) => value.value = en.is_signed() as u64,
-                BtfType::Enum64(en) => value.value = en.is_signed() as u64,
+                BtfType::Enum(en) => value.value = u64::from(en.is_signed()),
+                BtfType::Enum64(en) => value.value = u64::from(en.is_signed()),
                 BtfType::Int(i) => value.value = i.encoding() as u64 & IntEncoding::Signed as u64,
                 _ => (),
             },
             FieldLShift64 => {
                 value.value = if cfg!(target_endian = "little") {
-                    64 - (bit_off + bit_size - byte_off * 8) as u64
+                    64 - u64::from(bit_off + bit_size - byte_off * 8)
                 } else {
-                    ((8 - byte_size) * 8 + (bit_off - byte_off * 8)) as u64
+                    u64::from((8 - byte_size) * 8 + (bit_off - byte_off * 8))
                 }
             }
             FieldRShift64 => {
-                value.value = 64 - bit_size as u64;
+                value.value = 64 - u64::from(bit_size);
             }
             kind @ (FieldExists | TypeIdLocal | TypeIdTarget | TypeExists | TypeSize
             | EnumVariantExists | EnumVariantValue) => {
@@ -1232,15 +1232,15 @@ impl ComputedRelocation {
 
     fn compute_type_relocation(
         rel: &Relocation,
-        local_spec: &AccessSpec,
-        target_spec: Option<&AccessSpec>,
+        local_spec: &AccessSpec<'_>,
+        target_spec: Option<&AccessSpec<'_>>,
     ) -> Result<ComputedRelocationValue, RelocationError> {
         use RelocationKind::*;
 
         let value = match (rel.kind, target_spec) {
-            (TypeIdLocal, _) => local_spec.root_type_id as u64,
-            (TypeIdTarget, Some(target_spec)) => target_spec.root_type_id as u64,
-            (TypeExists, target_spec) => target_spec.is_some() as u64,
+            (TypeIdLocal, _) => u64::from(local_spec.root_type_id),
+            (TypeIdTarget, Some(target_spec)) => u64::from(target_spec.root_type_id),
+            (TypeExists, target_spec) => u64::from(target_spec.is_some()),
             (TypeSize, Some(target_spec)) => {
                 target_spec.btf.type_size(target_spec.root_type_id)? as u64
             }

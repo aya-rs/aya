@@ -79,7 +79,7 @@ pub(crate) fn parse_image_and_modules(s: &str) -> Result<(PathBuf, PathBuf), std
 }
 
 #[derive(Parser)]
-pub struct Options {
+pub(crate) struct Options {
     #[clap(subcommand)]
     environment: Environment,
     /// Arguments to pass to your application.
@@ -87,7 +87,7 @@ pub struct Options {
     run_args: Vec<OsString>,
 }
 
-pub fn build<F>(target: Option<&str>, f: F) -> Result<Vec<(String, PathBuf)>>
+pub(crate) fn build<F>(target: Option<&str>, f: F) -> Result<Vec<(String, PathBuf)>>
 where
     F: FnOnce(&mut Command) -> &mut Command,
 {
@@ -142,7 +142,7 @@ where
 }
 
 /// Build and run the project.
-pub fn run(opts: Options) -> Result<()> {
+pub(crate) fn run(opts: Options) -> Result<()> {
     let Options {
         environment,
         run_args,

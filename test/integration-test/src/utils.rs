@@ -10,14 +10,14 @@ use aya::netlink_set_link_up;
 use libc::if_nametoindex;
 use netns_rs::{NetNs, get_from_current_thread};
 
-pub struct NetNsGuard {
+pub(crate) struct NetNsGuard {
     name: String,
     old_ns: NetNs,
     ns: Option<NetNs>,
 }
 
 impl NetNsGuard {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         let old_ns = get_from_current_thread().expect("Failed to get current netns");
 
         static COUNTER: AtomicU64 = AtomicU64::new(0);

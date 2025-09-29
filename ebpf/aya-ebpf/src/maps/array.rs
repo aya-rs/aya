@@ -17,8 +17,8 @@ pub struct Array<T> {
 unsafe impl<T: Sync> Sync for Array<T> {}
 
 impl<T> Array<T> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Array<T> {
-        Array {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
@@ -32,8 +32,8 @@ impl<T> Array<T> {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> Array<T> {
-        Array {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
@@ -54,7 +54,7 @@ impl<T> Array<T> {
 
     #[inline(always)]
     pub fn get_ptr(&self, index: u32) -> Option<*const T> {
-        unsafe { self.lookup(index).map(|p| p.as_ptr() as *const T) }
+        unsafe { self.lookup(index).map(|p| p.as_ptr().cast_const()) }
     }
 
     #[inline(always)]

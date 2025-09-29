@@ -3,25 +3,25 @@ use integration_common::array::{GET_INDEX, GET_PTR_INDEX, GET_PTR_MUT_INDEX};
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn set(index: u32, value: u32) {
+extern "C" fn set(index: u32, value: u32) {
     std::hint::black_box((index, value));
 }
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn get(index: u32) {
+extern "C" fn get(index: u32) {
     std::hint::black_box(index);
 }
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn get_ptr(index: u32) {
+extern "C" fn get_ptr(index: u32) {
     std::hint::black_box(index);
 }
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn get_ptr_mut(index: u32) {
+extern "C" fn get_ptr_mut(index: u32) {
     std::hint::black_box(index);
 }
 

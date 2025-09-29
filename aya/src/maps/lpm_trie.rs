@@ -63,8 +63,9 @@ pub struct LpmTrie<T, K, V> {
 /// let ipaddr = Ipv4Addr::new(8,8,8,8);
 /// let key =  Key::new(16, u32::from(ipaddr).to_be());
 /// ```
+#[derive(Clone, Copy)]
 #[repr(C, packed)]
-pub struct Key<K: Pod> {
+pub struct Key<K> {
     prefix_len: u32,
     data: K,
 }
@@ -98,14 +99,6 @@ impl<K: Pod> Key<K> {
     /// Returns the data stored in the Key.
     pub fn data(&self) -> K {
         self.data
-    }
-}
-
-impl<K: Pod> Copy for Key<K> {}
-
-impl<K: Pod> Clone for Key<K> {
-    fn clone(&self) -> Self {
-        *self
     }
 }
 

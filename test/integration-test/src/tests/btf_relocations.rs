@@ -86,6 +86,6 @@ fn relocation_tests(
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn trigger_btf_relocations_program() {
+extern "C" fn trigger_btf_relocations_program() {
     core::hint::black_box(trigger_btf_relocations_program);
 }

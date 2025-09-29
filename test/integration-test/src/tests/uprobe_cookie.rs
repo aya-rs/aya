@@ -51,12 +51,12 @@ fn test_uprobe_cookie() {
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn uprobe_cookie_trigger_ebpf_program_a(arg: u64) {
+extern "C" fn uprobe_cookie_trigger_ebpf_program_a(arg: u64) {
     std::hint::black_box(arg);
 }
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn uprobe_cookie_trigger_ebpf_program_b(arg: u32) {
+extern "C" fn uprobe_cookie_trigger_ebpf_program_b(arg: u32) {
     std::hint::black_box(arg);
 }

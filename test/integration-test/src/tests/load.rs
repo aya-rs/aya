@@ -123,7 +123,7 @@ fn pin_lifecycle_multiple_btf_maps() {
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn trigger_bpf_program() {
+extern "C" fn trigger_bpf_program() {
     core::hint::black_box(trigger_bpf_program);
 }
 

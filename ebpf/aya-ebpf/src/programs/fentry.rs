@@ -7,8 +7,8 @@ pub struct FEntryContext {
 }
 
 impl FEntryContext {
-    pub fn new(ctx: *mut c_void) -> FEntryContext {
-        FEntryContext { ctx }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { ctx }
     }
 
     /// Returns the `n`th argument to passed to the probe function, starting from 0.

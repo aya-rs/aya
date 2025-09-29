@@ -56,7 +56,9 @@
 //! [env_logger]: https://docs.rs/env_logger
 //! [Log]: https://docs.rs/log/0.4.14/log/trait.Log.html
 //! [log]: https://docs.rs/log
-//!
+
+#![cfg_attr(test, expect(unused_crate_dependencies, reason = "used in doctests"))]
+
 use std::{
     fmt::{LowerHex, UpperHex},
     mem,
@@ -174,7 +176,7 @@ impl<T: Log> EbpfLogger<T> {
     fn new(map: Map, logger: T) -> Result<Self, Error> {
         let ring_buf: RingBuf<_> = map.try_into()?;
 
-        Ok(EbpfLogger { ring_buf, logger })
+        Ok(Self { ring_buf, logger })
     }
 
     /// Reads log records from eBPF and writes them to the logger.
@@ -495,7 +497,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
             }
             RecordFieldKind::Level => {
                 let level = level.replace({
-                    let level = unsafe { ptr::read_unaligned(value.as_ptr() as *const _) };
+                    let level = unsafe { ptr::read_unaligned(value.as_ptr().cast()) };
                     match level {
                         Level::Error => log::Level::Error,
                         Level::Warn => log::Level::Warn,
@@ -557,7 +559,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
 
         match tag {
             ArgumentKind::DisplayHint => {
-                last_hint = Some(unsafe { ptr::read_unaligned(value.as_ptr() as *const _) });
+                last_hint = Some(unsafe { ptr::read_unaligned(value.as_ptr().cast()) });
             }
             ArgumentKind::I8 => {
                 full_log_msg.push_str(
@@ -717,7 +719,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .map_err(|std::array::TryFromSliceError { .. }| ())?;
                 let mut value: [u16; 8] = Default::default();
                 for (i, s) in data.chunks_exact(2).enumerate() {
-                    value[i] = ((s[1] as u16) << 8) | s[0] as u16;
+                    value[i] = (u16::from(s[1]) << 8) | u16::from(s[0]);
                 }
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
@@ -754,7 +756,7 @@ fn try_read<T: Pod>(mut buf: &[u8]) -> Result<(T, &[u8], &[u8]), ()> {
         return Err(());
     }
 
-    let tag = unsafe { ptr::read_unaligned(buf.as_ptr() as *const T) };
+    let tag = unsafe { ptr::read_unaligned(buf.as_ptr().cast::<T>()) };
     buf = &buf[mem::size_of::<T>()..];
 
     let len =

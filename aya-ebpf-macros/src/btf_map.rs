@@ -12,11 +12,11 @@ pub(crate) struct BtfMap {
 }
 
 impl BtfMap {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<BtfMap> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self> {
         let item: ItemStatic = syn::parse2(item)?;
         let mut args = syn::parse2(attrs)?;
         let name = name_arg(&mut args).unwrap_or_else(|| item.ident.to_string());
-        Ok(BtfMap { item, name })
+        Ok(Self { item, name })
     }
 
     pub(crate) fn expand(&self) -> TokenStream {

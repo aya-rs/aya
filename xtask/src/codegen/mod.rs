@@ -19,7 +19,7 @@ const SUPPORTED_ARCHS: &[Architecture] = &[
 ];
 
 #[derive(Debug, Copy, Clone)]
-pub enum Architecture {
+pub(crate) enum Architecture {
     X86_64,
     ARMv7,
     AArch64,
@@ -31,20 +31,20 @@ pub enum Architecture {
 }
 
 impl Architecture {
-    pub fn supported() -> &'static [Architecture] {
+    pub(crate) fn supported() -> &'static [Self] {
         SUPPORTED_ARCHS
     }
 
-    pub fn target(&self) -> &'static str {
+    pub(crate) fn target(&self) -> &'static str {
         match self {
-            Architecture::AArch64 => "aarch64-unknown-linux-gnu",
-            Architecture::ARMv7 => "armv7-unknown-linux-gnu",
-            Architecture::LoongArch64 => "loongarch64-unknown-linux-gnu",
-            Architecture::Mips => "mips-unknown-linux-gnu",
-            Architecture::PowerPC64 => "powerpc64le-unknown-linux-gnu",
-            Architecture::RISCV64 => "riscv64-unknown-linux-gnu",
-            Architecture::S390X => "s390x-unknown-linux-gnu",
-            Architecture::X86_64 => "x86_64-unknown-linux-gnu",
+            Self::AArch64 => "aarch64-unknown-linux-gnu",
+            Self::ARMv7 => "armv7-unknown-linux-gnu",
+            Self::LoongArch64 => "loongarch64-unknown-linux-gnu",
+            Self::Mips => "mips-unknown-linux-gnu",
+            Self::PowerPC64 => "powerpc64le-unknown-linux-gnu",
+            Self::RISCV64 => "riscv64-unknown-linux-gnu",
+            Self::S390X => "s390x-unknown-linux-gnu",
+            Self::X86_64 => "x86_64-unknown-linux-gnu",
         }
     }
 }
@@ -54,14 +54,14 @@ impl std::str::FromStr for Architecture {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
-            "aarch64" => Architecture::AArch64,
-            "armv7" => Architecture::ARMv7,
-            "loongarch64" => Architecture::LoongArch64,
-            "mips" => Architecture::Mips,
-            "powerpc64" => Architecture::PowerPC64,
-            "riscv64" => Architecture::RISCV64,
-            "s390x" => Architecture::S390X,
-            "x86_64" => Architecture::X86_64,
+            "aarch64" => Self::AArch64,
+            "armv7" => Self::ARMv7,
+            "loongarch64" => Self::LoongArch64,
+            "mips" => Self::Mips,
+            "powerpc64" => Self::PowerPC64,
+            "riscv64" => Self::RISCV64,
+            "s390x" => Self::S390X,
+            "x86_64" => Self::X86_64,
             _ => return Err("invalid architecture"),
         })
     }
@@ -70,14 +70,14 @@ impl std::str::FromStr for Architecture {
 impl std::fmt::Display for Architecture {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
-            Architecture::AArch64 => "aarch64",
-            Architecture::ARMv7 => "armv7",
-            Architecture::LoongArch64 => "loongarch64",
-            Architecture::Mips => "mips",
-            Architecture::PowerPC64 => "powerpc64",
-            Architecture::RISCV64 => "riscv64",
-            Architecture::S390X => "s390x",
-            Architecture::X86_64 => "x86_64",
+            Self::AArch64 => "aarch64",
+            Self::ARMv7 => "armv7",
+            Self::LoongArch64 => "loongarch64",
+            Self::Mips => "mips",
+            Self::PowerPC64 => "powerpc64",
+            Self::RISCV64 => "riscv64",
+            Self::S390X => "s390x",
+            Self::X86_64 => "x86_64",
         })
     }
 }
@@ -85,7 +85,7 @@ impl std::fmt::Display for Architecture {
 // sysroot options. Default to ubuntu headers installed by the
 // libc6-dev-{arm64,armel}-cross packages.
 #[derive(Parser)]
-pub struct SysrootOptions {
+pub(crate) struct SysrootOptions {
     #[arg(long, default_value = "/usr/aarch64-linux-gnu/include", action)]
     aarch64_sysroot: PathBuf,
 
@@ -112,7 +112,7 @@ pub struct SysrootOptions {
 }
 
 #[derive(Parser)]
-pub struct Options {
+pub(crate) struct Options {
     #[clap(flatten)]
     sysroot_options: SysrootOptions,
 
@@ -128,7 +128,7 @@ enum Target {
     AyaEbpfBindings,
 }
 
-pub fn codegen(opts: Options, libbpf_dir: &Path) -> Result<()> {
+pub(crate) fn codegen(opts: Options, libbpf_dir: &Path) -> Result<()> {
     let Options {
         sysroot_options,
         command,

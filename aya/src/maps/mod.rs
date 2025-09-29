@@ -681,7 +681,7 @@ impl MapData {
     pub(crate) fn finalize(&mut self) -> Result<(), MapError> {
         let Self { obj, fd } = self;
         if !obj.data().is_empty() {
-            bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
+            bpf_map_update_elem_ptr(fd.as_fd(), &0, obj.data_mut().as_mut_ptr(), 0)
                 .map_err(|io_error| SyscallError {
                     call: "bpf_map_update_elem",
                     io_error,

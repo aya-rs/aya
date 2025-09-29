@@ -358,11 +358,11 @@ pub struct aya_obj::btf::Btf
 impl aya_obj::btf::Btf
 pub fn aya_obj::btf::Btf::add_string(&mut self, name: &str) -> u32
 pub fn aya_obj::btf::Btf::add_type(&mut self, btf_type: aya_obj::btf::BtfType) -> u32
-pub fn aya_obj::btf::Btf::from_sys_fs() -> core::result::Result<aya_obj::btf::Btf, aya_obj::btf::BtfError>
+pub fn aya_obj::btf::Btf::from_sys_fs() -> core::result::Result<Self, aya_obj::btf::BtfError>
 pub fn aya_obj::btf::Btf::id_by_type_name_kind(&self, name: &str, kind: aya_obj::btf::BtfKind) -> core::result::Result<u32, aya_obj::btf::BtfError>
-pub fn aya_obj::btf::Btf::new() -> aya_obj::btf::Btf
-pub fn aya_obj::btf::Btf::parse(data: &[u8], endianness: object::endian::Endianness) -> core::result::Result<aya_obj::btf::Btf, aya_obj::btf::BtfError>
-pub fn aya_obj::btf::Btf::parse_file<P: core::convert::AsRef<std::path::Path>>(path: P, endianness: object::endian::Endianness) -> core::result::Result<aya_obj::btf::Btf, aya_obj::btf::BtfError>
+pub fn aya_obj::btf::Btf::new() -> Self
+pub fn aya_obj::btf::Btf::parse(data: &[u8], endianness: object::endian::Endianness) -> core::result::Result<Self, aya_obj::btf::BtfError>
+pub fn aya_obj::btf::Btf::parse_file<P: core::convert::AsRef<std::path::Path>>(path: P, endianness: object::endian::Endianness) -> core::result::Result<Self, aya_obj::btf::BtfError>
 pub fn aya_obj::btf::Btf::to_bytes(&self) -> alloc::vec::Vec<u8>
 impl core::clone::Clone for aya_obj::btf::Btf
 pub fn aya_obj::btf::Btf::clone(&self) -> aya_obj::btf::Btf
@@ -2265,11 +2265,11 @@ impl core::cmp::Eq for aya_obj::generated::bpf_attach_type
 impl core::cmp::PartialEq for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::eq(&self, other: &aya_obj::generated::bpf_attach_type) -> bool
 impl core::convert::From<aya_obj::programs::cgroup_sock::CgroupSockAttachType> for aya_obj::generated::bpf_attach_type
-pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> Self
 impl core::convert::From<aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType> for aya_obj::generated::bpf_attach_type
-pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> Self
 impl core::convert::From<aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType> for aya_obj::generated::bpf_attach_type
-pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> Self
 impl core::convert::From<aya_obj::programs::xdp::XdpAttachType> for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::from(value: aya_obj::programs::xdp::XdpAttachType) -> Self
 impl core::convert::TryFrom<u32> for aya_obj::generated::bpf_attach_type
@@ -8640,7 +8640,7 @@ impl core::fmt::Debug for aya_obj::ProgramSection
 pub fn aya_obj::ProgramSection::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::str::traits::FromStr for aya_obj::ProgramSection
 pub type aya_obj::ProgramSection::Err = aya_obj::ParseError
-pub fn aya_obj::ProgramSection::from_str(section: &str) -> core::result::Result<aya_obj::ProgramSection, aya_obj::ParseError>
+pub fn aya_obj::ProgramSection::from_str(section: &str) -> core::result::Result<Self, aya_obj::ParseError>
 impl core::marker::Freeze for aya_obj::ProgramSection
 impl core::marker::Send for aya_obj::ProgramSection
 impl core::marker::Sync for aya_obj::ProgramSection
@@ -8783,7 +8783,7 @@ pub aya_obj::obj::Object::programs: std::collections::hash::map::HashMap<alloc::
 impl aya_obj::Object
 pub fn aya_obj::Object::fixup_and_sanitize_btf(&mut self, features: &aya_obj::btf::BtfFeatures) -> core::result::Result<core::option::Option<&aya_obj::btf::Btf>, aya_obj::btf::BtfError>
 impl aya_obj::Object
-pub fn aya_obj::Object::parse(data: &[u8]) -> core::result::Result<aya_obj::Object, aya_obj::ParseError>
+pub fn aya_obj::Object::parse(data: &[u8]) -> core::result::Result<Self, aya_obj::ParseError>
 pub fn aya_obj::Object::patch_map_data(&mut self, globals: std::collections::hash::map::HashMap<&str, (&[u8], bool)>) -> core::result::Result<(), aya_obj::ParseError>
 pub fn aya_obj::Object::sanitize_functions(&mut self, features: &aya_obj::Features)
 impl aya_obj::Object
@@ -8875,7 +8875,7 @@ pub aya_obj::programs::cgroup_sock::CgroupSockAttachType::SockRelease
 impl core::clone::Clone for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 pub fn aya_obj::programs::cgroup_sock::CgroupSockAttachType::clone(&self) -> aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::convert::From<aya_obj::programs::cgroup_sock::CgroupSockAttachType> for aya_obj::generated::bpf_attach_type
-pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> Self
 impl core::default::Default for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 pub fn aya_obj::programs::cgroup_sock::CgroupSockAttachType::default() -> aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::fmt::Debug for aya_obj::programs::cgroup_sock::CgroupSockAttachType
@@ -8926,7 +8926,7 @@ pub aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType::UDPSendMsg6
 impl core::clone::Clone for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 pub fn aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType::clone(&self) -> aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::convert::From<aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType> for aya_obj::generated::bpf_attach_type
-pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> Self
 impl core::fmt::Debug for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 pub fn aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
@@ -8965,7 +8965,7 @@ pub aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::Set
 impl core::clone::Clone for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::clone(&self) -> aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::convert::From<aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType> for aya_obj::generated::bpf_attach_type
-pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> Self
 impl core::fmt::Debug for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
@@ -9053,7 +9053,7 @@ pub aya_obj::programs::CgroupSockAddrAttachType::UDPSendMsg6
 impl core::clone::Clone for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 pub fn aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType::clone(&self) -> aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::convert::From<aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType> for aya_obj::generated::bpf_attach_type
-pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> Self
 impl core::fmt::Debug for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 pub fn aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
@@ -9093,7 +9093,7 @@ pub aya_obj::programs::CgroupSockAttachType::SockRelease
 impl core::clone::Clone for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 pub fn aya_obj::programs::cgroup_sock::CgroupSockAttachType::clone(&self) -> aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::convert::From<aya_obj::programs::cgroup_sock::CgroupSockAttachType> for aya_obj::generated::bpf_attach_type
-pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> Self
 impl core::default::Default for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 pub fn aya_obj::programs::cgroup_sock::CgroupSockAttachType::default() -> aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::fmt::Debug for aya_obj::programs::cgroup_sock::CgroupSockAttachType
@@ -9133,7 +9133,7 @@ pub aya_obj::programs::CgroupSockoptAttachType::Set
 impl core::clone::Clone for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::clone(&self) -> aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::convert::From<aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType> for aya_obj::generated::bpf_attach_type
-pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> Self
 impl core::fmt::Debug for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
@@ -9501,7 +9501,7 @@ impl core::fmt::Debug for aya_obj::ProgramSection
 pub fn aya_obj::ProgramSection::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::str::traits::FromStr for aya_obj::ProgramSection
 pub type aya_obj::ProgramSection::Err = aya_obj::ParseError
-pub fn aya_obj::ProgramSection::from_str(section: &str) -> core::result::Result<aya_obj::ProgramSection, aya_obj::ParseError>
+pub fn aya_obj::ProgramSection::from_str(section: &str) -> core::result::Result<Self, aya_obj::ParseError>
 impl core::marker::Freeze for aya_obj::ProgramSection
 impl core::marker::Send for aya_obj::ProgramSection
 impl core::marker::Sync for aya_obj::ProgramSection
@@ -9644,7 +9644,7 @@ pub aya_obj::Object::programs: std::collections::hash::map::HashMap<alloc::strin
 impl aya_obj::Object
 pub fn aya_obj::Object::fixup_and_sanitize_btf(&mut self, features: &aya_obj::btf::BtfFeatures) -> core::result::Result<core::option::Option<&aya_obj::btf::Btf>, aya_obj::btf::BtfError>
 impl aya_obj::Object
-pub fn aya_obj::Object::parse(data: &[u8]) -> core::result::Result<aya_obj::Object, aya_obj::ParseError>
+pub fn aya_obj::Object::parse(data: &[u8]) -> core::result::Result<Self, aya_obj::ParseError>
 pub fn aya_obj::Object::patch_map_data(&mut self, globals: std::collections::hash::map::HashMap<&str, (&[u8], bool)>) -> core::result::Result<(), aya_obj::ParseError>
 pub fn aya_obj::Object::sanitize_functions(&mut self, features: &aya_obj::Features)
 impl aya_obj::Object

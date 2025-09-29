@@ -22,8 +22,8 @@ pub struct HashMap<K, V> {
 unsafe impl<K: Sync, V: Sync> Sync for HashMap<K, V> {}
 
 impl<K, V> HashMap<K, V> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> HashMap<K, V> {
-        HashMap {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(build_def::<K, V>(
                 BPF_MAP_TYPE_HASH,
                 max_entries,
@@ -35,8 +35,8 @@ impl<K, V> HashMap<K, V> {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> HashMap<K, V> {
-        HashMap {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(build_def::<K, V>(
                 BPF_MAP_TYPE_HASH,
                 max_entries,
@@ -98,8 +98,8 @@ pub struct LruHashMap<K, V> {
 unsafe impl<K: Sync, V: Sync> Sync for LruHashMap<K, V> {}
 
 impl<K, V> LruHashMap<K, V> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> LruHashMap<K, V> {
-        LruHashMap {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(build_def::<K, V>(
                 BPF_MAP_TYPE_LRU_HASH,
                 max_entries,
@@ -111,8 +111,8 @@ impl<K, V> LruHashMap<K, V> {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> LruHashMap<K, V> {
-        LruHashMap {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(build_def::<K, V>(
                 BPF_MAP_TYPE_LRU_HASH,
                 max_entries,
@@ -174,8 +174,8 @@ pub struct PerCpuHashMap<K, V> {
 unsafe impl<K, V> Sync for PerCpuHashMap<K, V> {}
 
 impl<K, V> PerCpuHashMap<K, V> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> PerCpuHashMap<K, V> {
-        PerCpuHashMap {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(build_def::<K, V>(
                 BPF_MAP_TYPE_PERCPU_HASH,
                 max_entries,
@@ -187,8 +187,8 @@ impl<K, V> PerCpuHashMap<K, V> {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> PerCpuHashMap<K, V> {
-        PerCpuHashMap {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(build_def::<K, V>(
                 BPF_MAP_TYPE_PERCPU_HASH,
                 max_entries,
@@ -250,8 +250,8 @@ pub struct LruPerCpuHashMap<K, V> {
 unsafe impl<K, V> Sync for LruPerCpuHashMap<K, V> {}
 
 impl<K, V> LruPerCpuHashMap<K, V> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> LruPerCpuHashMap<K, V> {
-        LruPerCpuHashMap {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(build_def::<K, V>(
                 BPF_MAP_TYPE_LRU_PERCPU_HASH,
                 max_entries,
@@ -263,8 +263,8 @@ impl<K, V> LruPerCpuHashMap<K, V> {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> LruPerCpuHashMap<K, V> {
-        LruPerCpuHashMap {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(build_def::<K, V>(
                 BPF_MAP_TYPE_LRU_PERCPU_HASH,
                 max_entries,
@@ -329,16 +329,16 @@ const fn build_def<K, V>(ty: u32, max_entries: u32, flags: u32, pin: PinningType
 }
 
 #[inline]
+unsafe fn get<'a, K, V>(def: *mut bpf_map_def, key: &K) -> Option<&'a V> {
+    get_ptr(def, key).map(|p| unsafe { &*p })
+}
+
+#[inline]
 fn get_ptr_mut<K, V>(def: *mut bpf_map_def, key: &K) -> Option<*mut V> {
     lookup(def.cast(), key).map(|p| p.as_ptr())
 }
 
 #[inline]
 fn get_ptr<K, V>(def: *mut bpf_map_def, key: &K) -> Option<*const V> {
-    get_ptr_mut(def, key).map(|p| p as *const V)
-}
-
-#[inline]
-unsafe fn get<'a, K, V>(def: *mut bpf_map_def, key: &K) -> Option<&'a V> {
-    get_ptr(def, key).map(|p| unsafe { &*p })
+    lookup::<_, V>(def.cast(), key).map(|p| p.as_ptr().cast_const())
 }

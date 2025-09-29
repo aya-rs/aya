@@ -22,7 +22,10 @@ use cargo_metadata::{Artifact, CompilerMessage, Message, Package, Target};
 /// prevent their use for the time being.
 ///
 /// [bindeps]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html?highlight=feature#artifact-dependencies
-pub fn build_ebpf(packages: impl IntoIterator<Item = Package>, toolchain: Toolchain) -> Result<()> {
+pub fn build_ebpf(
+    packages: impl IntoIterator<Item = Package>,
+    toolchain: Toolchain<'_>,
+) -> Result<()> {
     let out_dir = env::var_os("OUT_DIR").ok_or(anyhow!("OUT_DIR not set"))?;
     let out_dir = PathBuf::from(out_dir);
 

@@ -26,7 +26,7 @@ impl<T, const M: usize, const F: usize> Array<T, M, F> {
         reason = "BPF maps are always used as static variables, therefore this method has to be `const`. `Default::default` is not `const`."
     )]
     pub const fn new() -> Self {
-        Array(UnsafeCell::new(ArrayDef::new()))
+        Self(UnsafeCell::new(ArrayDef::new()))
     }
 
     #[inline(always)]
@@ -36,7 +36,7 @@ impl<T, const M: usize, const F: usize> Array<T, M, F> {
 
     #[inline(always)]
     pub fn get_ptr(&self, index: u32) -> Option<*const T> {
-        unsafe { self.lookup(index).map(|p| p.as_ptr() as *const T) }
+        unsafe { self.lookup(index).map(|p| p.as_ptr().cast_const()) }
     }
 
     #[inline(always)]

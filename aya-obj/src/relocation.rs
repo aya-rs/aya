@@ -289,8 +289,8 @@ impl<'a> FunctionLinker<'a> {
         relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
         symbol_table: &'a HashMap<usize, Symbol>,
         text_sections: &'a HashSet<usize>,
-    ) -> FunctionLinker<'a> {
-        FunctionLinker {
+    ) -> Self {
+        Self {
             functions,
             linked_functions: HashMap::new(),
             relocations,
@@ -403,7 +403,7 @@ impl<'a> FunctionLinker<'a> {
                     fun.section_index.0,
                     (fun.section_offset as i64
                         + ((ins_index - start_ins) as i64) * ins_size
-                        + (ins.imm + 1) as i64 * ins_size) as u64,
+                        + i64::from(ins.imm + 1) * ins_size) as u64,
                 )
             };
 
@@ -488,14 +488,14 @@ impl<'a> FunctionLinker<'a> {
 }
 
 fn insn_is_call(ins: &bpf_insn) -> bool {
-    let klass = (ins.code & 0x07) as u32;
-    let op = (ins.code & 0xF0) as u32;
-    let src = (ins.code & 0x08) as u32;
+    let klass = u32::from(ins.code & 0x07);
+    let op = u32::from(ins.code & 0xF0);
+    let src = u32::from(ins.code & 0x08);
 
     klass == BPF_JMP
         && op == BPF_CALL
         && src == BPF_K
-        && ins.src_reg() as u32 == BPF_PSEUDO_CALL
+        && u32::from(ins.src_reg()) == BPF_PSEUDO_CALL
         && ins.dst_reg() == 0
         && ins.off == 0
 }
@@ -520,7 +520,7 @@ mod test {
     }
 
     fn ins(bytes: &[u8]) -> bpf_insn {
-        unsafe { core::ptr::read_unaligned(bytes.as_ptr() as *const _) }
+        unsafe { core::ptr::read_unaligned(bytes.as_ptr().cast()) }
     }
 
     fn fake_legacy_map(symbol_index: usize) -> Map {

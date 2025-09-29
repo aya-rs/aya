@@ -11,10 +11,7 @@ pub(crate) struct CgroupSockopt {
 }
 
 impl CgroupSockopt {
-    pub(crate) fn parse(
-        attrs: TokenStream,
-        item: TokenStream,
-    ) -> Result<CgroupSockopt, Diagnostic> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self, Diagnostic> {
         if attrs.is_empty() {
             return Err(attrs.span().error("missing attach type"));
         }

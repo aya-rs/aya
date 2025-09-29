@@ -1,4 +1,4 @@
-use core::{mem::size_of, ptr::null_mut, slice::from_raw_parts};
+use core::{mem::size_of, ptr, slice::from_raw_parts};
 use std::collections::HashMap;
 
 use assert_matches::assert_matches;
@@ -24,7 +24,7 @@ fn run_with_rbpf() {
         .instructions;
     let data = unsafe {
         from_raw_parts(
-            instructions.as_ptr() as *const u8,
+            instructions.as_ptr().cast(),
             instructions.len() * size_of::<bpf_insn>(),
         )
     };
@@ -34,7 +34,7 @@ fn run_with_rbpf() {
     assert_eq!(vm.execute_program().unwrap(), XDP_PASS);
 }
 
-static mut MULTIMAP_MAPS: [*mut Vec<u64>; 3] = [null_mut(); 3];
+static mut MULTIMAP_MAPS: [*mut Vec<u64>; 3] = [ptr::null_mut(); 3];
 
 #[test_log::test]
 fn use_map_with_rbpf() {
@@ -53,7 +53,7 @@ fn use_map_with_rbpf() {
     let mut maps = HashMap::new();
     let mut map_instances = vec![vec![0u64], vec![0u64], vec![0u64]];
     unsafe {
-        MULTIMAP_MAPS = [null_mut(); 3];
+        MULTIMAP_MAPS = [ptr::null_mut(); 3];
     }
     for (name, map) in object.maps.iter() {
         assert_eq!(map.key_size(), size_of::<u32>() as u32);
@@ -74,7 +74,7 @@ fn use_map_with_rbpf() {
         maps.insert(name.to_owned(), (fd, map.clone()));
 
         unsafe {
-            MULTIMAP_MAPS[map_id] = &mut map_instances[map_id] as *mut _;
+            MULTIMAP_MAPS[map_id] = ptr::from_mut(&mut map_instances[map_id]);
         }
     }
 
@@ -102,7 +102,7 @@ fn use_map_with_rbpf() {
         .instructions;
     let data = unsafe {
         from_raw_parts(
-            instructions.as_ptr() as *const u8,
+            instructions.as_ptr().cast(),
             instructions.len() * size_of::<bpf_insn>(),
         )
     };

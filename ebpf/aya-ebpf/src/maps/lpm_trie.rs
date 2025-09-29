@@ -34,9 +34,9 @@ impl<K> Key<K> {
 }
 
 impl<K, V> LpmTrie<K, V> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> LpmTrie<K, V> {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
         let flags = flags | BPF_F_NO_PREALLOC;
-        LpmTrie {
+        Self {
             def: UnsafeCell::new(build_def::<K, V>(
                 BPF_MAP_TYPE_LPM_TRIE,
                 max_entries,
@@ -48,9 +48,9 @@ impl<K, V> LpmTrie<K, V> {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> LpmTrie<K, V> {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
         let flags = flags | BPF_F_NO_PREALLOC;
-        LpmTrie {
+        Self {
             def: UnsafeCell::new(build_def::<K, V>(
                 BPF_MAP_TYPE_LPM_TRIE,
                 max_entries,

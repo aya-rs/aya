@@ -7,8 +7,8 @@ pub struct FExitContext {
 }
 
 impl FExitContext {
-    pub fn new(ctx: *mut c_void) -> FExitContext {
-        FExitContext { ctx }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { ctx }
     }
 
     /// Returns the `n`th argument to passed to the probe function, starting from 0.

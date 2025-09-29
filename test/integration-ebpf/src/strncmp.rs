@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use aya_ebpf::{
     cty::c_long,
@@ -16,7 +17,7 @@ extern crate ebpf_panic;
 static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);
 
 #[uprobe]
-pub fn test_bpf_strncmp(ctx: ProbeContext) -> Result<(), c_long> {
+fn test_bpf_strncmp(ctx: ProbeContext) -> Result<(), c_long> {
     let s1: *const u8 = ctx.arg(0).ok_or(-1)?;
     let mut b1 = [0u8; 3];
     let _: &[u8] = unsafe { bpf_probe_read_user_str_bytes(s1, &mut b1) }?;

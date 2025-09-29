@@ -110,7 +110,7 @@ fn prog_sections() {
 }
 
 #[track_caller]
-fn ensure_symbol(obj_file: &object::File, sec_name: &str, sym_name: &str) {
+fn ensure_symbol(obj_file: &object::File<'_>, sec_name: &str, sym_name: &str) {
     let sec = obj_file.section_by_name(sec_name).unwrap_or_else(|| {
         let secs = obj_file
             .sections()

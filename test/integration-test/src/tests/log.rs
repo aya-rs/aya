@@ -7,7 +7,7 @@ use log::{Level, Log, Record};
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn trigger_ebpf_program() {
+extern "C" fn trigger_ebpf_program() {
     core::hint::black_box(trigger_ebpf_program);
 }
 
@@ -15,14 +15,14 @@ struct TestingLogger<F> {
     log: Mutex<F>,
 }
 
-impl<F: Send + FnMut(&Record)> Log for TestingLogger<F> {
-    fn enabled(&self, _metadata: &log::Metadata) -> bool {
+impl<F: Send + FnMut(&Record<'_>)> Log for TestingLogger<F> {
+    fn enabled(&self, _metadata: &log::Metadata<'_>) -> bool {
         true
     }
 
     fn flush(&self) {}
 
-    fn log(&self, record: &Record) {
+    fn log(&self, record: &Record<'_>) {
         let Self { log } = self;
         let mut log = log.lock().unwrap();
         log(record);
@@ -57,7 +57,7 @@ fn log() {
 
     let mut captured_logs = Vec::new();
     let logger = TestingLogger {
-        log: Mutex::new(|record: &Record| {
+        log: Mutex::new(|record: &Record<'_>| {
             captured_logs.push(CapturedLog {
                 body: format!("{}", record.args()).into(),
                 level: record.level(),
@@ -227,7 +227,7 @@ fn log_level_only_error_warn() {
 
     let mut captured_logs = Vec::new();
     let logger = TestingLogger {
-        log: Mutex::new(|record: &Record| {
+        log: Mutex::new(|record: &Record<'_>| {
             captured_logs.push(CapturedLog {
                 body: format!("{}", record.args()).into(),
                 level: record.level(),
@@ -278,7 +278,7 @@ fn log_level_prevents_verif_fail() {
 
     let mut captured_logs = Vec::new();
     let logger = TestingLogger {
-        log: Mutex::new(|record: &Record| {
+        log: Mutex::new(|record: &Record<'_>| {
             captured_logs.push(CapturedLog {
                 body: format!("{}", record.args()).into(),
                 level: record.level(),

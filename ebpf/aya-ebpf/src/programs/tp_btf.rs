@@ -7,8 +7,8 @@ pub struct BtfTracePointContext {
 }
 
 impl BtfTracePointContext {
-    pub fn new(ctx: *mut c_void) -> BtfTracePointContext {
-        BtfTracePointContext { ctx }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { ctx }
     }
 
     /// Returns the `n`th argument of the BTF tracepoint, starting from 0.

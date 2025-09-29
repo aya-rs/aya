@@ -20,10 +20,8 @@ pub struct ProbeContext {
 }
 
 impl ProbeContext {
-    pub fn new(ctx: *mut c_void) -> ProbeContext {
-        ProbeContext {
-            regs: ctx as *mut pt_regs,
-        }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { regs: ctx.cast() }
     }
 
     /// Returns the `n`th argument to passed to the probe function, starting from 0.
@@ -54,6 +52,6 @@ impl ProbeContext {
 
 impl EbpfContext for ProbeContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.regs as *mut c_void
+        self.regs.cast()
     }
 }

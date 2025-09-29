@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 #[cfg(not(test))]
 extern crate ebpf_panic;
@@ -44,7 +45,7 @@ macro_rules! define_array_test {
         }
 
         #[uprobe]
-        pub fn $set_prog(ctx: ProbeContext) -> Result<(), c_long> {
+        fn $set_prog(ctx: ProbeContext) -> Result<(), c_long> {
             let index = ctx.arg(0).ok_or(-1)?;
             let value = ctx.arg(1).ok_or(-1)?;
             $array_map.set(index, &value, 0)?;
@@ -52,7 +53,7 @@ macro_rules! define_array_test {
         }
 
         #[uprobe]
-        pub fn $get_prog(ctx: ProbeContext) -> Result<(), c_long> {
+        fn $get_prog(ctx: ProbeContext) -> Result<(), c_long> {
             let index = ctx.arg(0).ok_or(-1)?;
             let value = $array_map.get(index).ok_or(-1)?;
             $result_set_fn(GET_INDEX, *value)?;
@@ -60,7 +61,7 @@ macro_rules! define_array_test {
         }
 
         #[uprobe]
-        pub fn $get_ptr_prog(ctx: ProbeContext) -> Result<(), c_long> {
+        fn $get_ptr_prog(ctx: ProbeContext) -> Result<(), c_long> {
             let index = ctx.arg(0).ok_or(-1)?;
             let value = $array_map.get_ptr(index).ok_or(-1)?;
             $result_set_fn(GET_PTR_INDEX, unsafe { *value })?;
@@ -68,7 +69,7 @@ macro_rules! define_array_test {
         }
 
         #[uprobe]
-        pub fn $get_ptr_mut_prog(ctx: ProbeContext) -> Result<(), c_long> {
+        fn $get_ptr_mut_prog(ctx: ProbeContext) -> Result<(), c_long> {
             let index = ctx.arg(0).ok_or(-1)?;
             let ptr = $array_map.get_ptr_mut(index).ok_or(-1)?;
             let value = unsafe { *ptr };

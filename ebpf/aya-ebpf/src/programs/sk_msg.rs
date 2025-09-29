@@ -11,8 +11,8 @@ pub struct SkMsgContext {
 }
 
 impl SkMsgContext {
-    pub fn new(msg: *mut sk_msg_md) -> SkMsgContext {
-        SkMsgContext { msg }
+    pub fn new(msg: *mut sk_msg_md) -> Self {
+        Self { msg }
     }
 
     pub fn size(&self) -> u32 {
@@ -40,6 +40,6 @@ impl SkMsgContext {
 
 impl EbpfContext for SkMsgContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.msg as *mut _
+        self.msg.cast()
     }
 }

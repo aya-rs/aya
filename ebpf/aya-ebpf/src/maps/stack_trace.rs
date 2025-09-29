@@ -17,8 +17,8 @@ unsafe impl Sync for StackTrace {}
 const PERF_MAX_STACK_DEPTH: u32 = 127;
 
 impl StackTrace {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> StackTrace {
-        StackTrace {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_STACK_TRACE,
                 key_size: mem::size_of::<u32>() as u32,
@@ -31,8 +31,8 @@ impl StackTrace {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> StackTrace {
-        StackTrace {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_STACK_TRACE,
                 key_size: mem::size_of::<u32>() as u32,

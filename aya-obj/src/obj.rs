@@ -280,9 +280,7 @@ pub enum ProgramSection {
 impl FromStr for ProgramSection {
     type Err = ParseError;
 
-    fn from_str(section: &str) -> Result<ProgramSection, ParseError> {
-        use ProgramSection::*;
-
+    fn from_str(section: &str) -> Result<Self, ParseError> {
         // parse the common case, eg "xdp/program_name" or
         // "sk_skb/stream_verdict/program_name"
         let mut pieces = section.split('/');
@@ -296,13 +294,13 @@ impl FromStr for ProgramSection {
         let kind = next()?;
 
         Ok(match kind {
-            "kprobe" => KProbe,
-            "kretprobe" => KRetProbe,
-            "uprobe" => UProbe { sleepable: false },
-            "uprobe.s" => UProbe { sleepable: true },
-            "uretprobe" => URetProbe { sleepable: false },
-            "uretprobe.s" => URetProbe { sleepable: true },
-            "xdp" | "xdp.frags" => Xdp {
+            "kprobe" => Self::KProbe,
+            "kretprobe" => Self::KRetProbe,
+            "uprobe" => Self::UProbe { sleepable: false },
+            "uprobe.s" => Self::UProbe { sleepable: true },
+            "uretprobe" => Self::URetProbe { sleepable: false },
+            "uretprobe.s" => Self::URetProbe { sleepable: true },
+            "xdp" | "xdp.frags" => Self::Xdp {
                 frags: kind == "xdp.frags",
                 attach_type: match pieces.next() {
                     None => XdpAttachType::Interface,
@@ -315,15 +313,15 @@ impl FromStr for ProgramSection {
                     }
                 },
             },
-            "tp_btf" => BtfTracePoint,
-            "tracepoint" | "tp" => TracePoint,
-            "socket" => SocketFilter,
-            "sk_msg" => SkMsg,
+            "tp_btf" => Self::BtfTracePoint,
+            "tracepoint" | "tp" => Self::TracePoint,
+            "socket" => Self::SocketFilter,
+            "sk_msg" => Self::SkMsg,
             "sk_skb" => {
                 let name = next()?;
                 match name {
-                    "stream_parser" => SkSkbStreamParser,
-                    "stream_verdict" => SkSkbStreamVerdict,
+                    "stream_parser" => Self::SkSkbStreamParser,
+                    "stream_verdict" => Self::SkSkbStreamVerdict,
                     _ => {
                         return Err(ParseError::InvalidProgramSection {
                             section: section.to_owned(),
@@ -331,13 +329,13 @@ impl FromStr for ProgramSection {
                     }
                 }
             }
-            "sockops" => SockOps,
-            "classifier" => SchedClassifier,
+            "sockops" => Self::SockOps,
+            "classifier" => Self::SchedClassifier,
             "cgroup_skb" => {
                 let name = next()?;
                 match name {
-                    "ingress" => CgroupSkbIngress,
-                    "egress" => CgroupSkbEgress,
+                    "ingress" => Self::CgroupSkbIngress,
+                    "egress" => Self::CgroupSkbEgress,
                     _ => {
                         return Err(ParseError::InvalidProgramSection {
                             section: section.to_owned(),
@@ -348,64 +346,64 @@ impl FromStr for ProgramSection {
             "cgroup" => {
                 let name = next()?;
                 match name {
-                    "skb" => CgroupSkb,
-                    "sysctl" => CgroupSysctl,
-                    "dev" => CgroupDevice,
-                    "getsockopt" => CgroupSockopt {
+                    "skb" => Self::CgroupSkb,
+                    "sysctl" => Self::CgroupSysctl,
+                    "dev" => Self::CgroupDevice,
+                    "getsockopt" => Self::CgroupSockopt {
                         attach_type: CgroupSockoptAttachType::Get,
                     },
-                    "setsockopt" => CgroupSockopt {
+                    "setsockopt" => Self::CgroupSockopt {
                         attach_type: CgroupSockoptAttachType::Set,
                     },
-                    "sock" => CgroupSock {
+                    "sock" => Self::CgroupSock {
                         attach_type: CgroupSockAttachType::default(),
                     },
-                    "post_bind4" => CgroupSock {
+                    "post_bind4" => Self::CgroupSock {
                         attach_type: CgroupSockAttachType::PostBind4,
                     },
-                    "post_bind6" => CgroupSock {
+                    "post_bind6" => Self::CgroupSock {
                         attach_type: CgroupSockAttachType::PostBind6,
                     },
-                    "sock_create" => CgroupSock {
+                    "sock_create" => Self::CgroupSock {
                         attach_type: CgroupSockAttachType::SockCreate,
                     },
-                    "sock_release" => CgroupSock {
+                    "sock_release" => Self::CgroupSock {
                         attach_type: CgroupSockAttachType::SockRelease,
                     },
-                    "bind4" => CgroupSockAddr {
+                    "bind4" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::Bind4,
                     },
-                    "bind6" => CgroupSockAddr {
+                    "bind6" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::Bind6,
                     },
-                    "connect4" => CgroupSockAddr {
+                    "connect4" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::Connect4,
                     },
-                    "connect6" => CgroupSockAddr {
+                    "connect6" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::Connect6,
                     },
-                    "getpeername4" => CgroupSockAddr {
+                    "getpeername4" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::GetPeerName4,
                     },
-                    "getpeername6" => CgroupSockAddr {
+                    "getpeername6" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::GetPeerName6,
                     },
-                    "getsockname4" => CgroupSockAddr {
+                    "getsockname4" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::GetSockName4,
                     },
-                    "getsockname6" => CgroupSockAddr {
+                    "getsockname6" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::GetSockName6,
                     },
-                    "sendmsg4" => CgroupSockAddr {
+                    "sendmsg4" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::UDPSendMsg4,
                     },
-                    "sendmsg6" => CgroupSockAddr {
+                    "sendmsg6" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::UDPSendMsg6,
                     },
-                    "recvmsg4" => CgroupSockAddr {
+                    "recvmsg4" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::UDPRecvMsg4,
                     },
-                    "recvmsg6" => CgroupSockAddr {
+                    "recvmsg6" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::UDPRecvMsg6,
                     },
                     _ => {
@@ -415,20 +413,20 @@ impl FromStr for ProgramSection {
                     }
                 }
             }
-            "lirc_mode2" => LircMode2,
-            "perf_event" => PerfEvent,
-            "raw_tp" | "raw_tracepoint" => RawTracePoint,
-            "lsm" => Lsm { sleepable: false },
-            "lsm.s" => Lsm { sleepable: true },
-            "fentry" => FEntry { sleepable: false },
-            "fentry.s" => FEntry { sleepable: true },
-            "fexit" => FExit { sleepable: false },
-            "fexit.s" => FExit { sleepable: true },
-            "flow_dissector" => FlowDissector,
-            "freplace" => Extension,
-            "sk_lookup" => SkLookup,
-            "iter" => Iter { sleepable: false },
-            "iter.s" => Iter { sleepable: true },
+            "lirc_mode2" => Self::LircMode2,
+            "perf_event" => Self::PerfEvent,
+            "raw_tp" | "raw_tracepoint" => Self::RawTracePoint,
+            "lsm" => Self::Lsm { sleepable: false },
+            "lsm.s" => Self::Lsm { sleepable: true },
+            "fentry" => Self::FEntry { sleepable: false },
+            "fentry.s" => Self::FEntry { sleepable: true },
+            "fexit" => Self::FExit { sleepable: false },
+            "fexit.s" => Self::FExit { sleepable: true },
+            "flow_dissector" => Self::FlowDissector,
+            "freplace" => Self::Extension,
+            "sk_lookup" => Self::SkLookup,
+            "iter" => Self::Iter { sleepable: false },
+            "iter.s" => Self::Iter { sleepable: true },
             _ => {
                 return Err(ParseError::InvalidProgramSection {
                     section: section.to_owned(),
@@ -440,7 +438,7 @@ impl FromStr for ProgramSection {
 
 impl Object {
     /// Parses the binary data as an object file into an [Object]
-    pub fn parse(data: &[u8]) -> Result<Object, ParseError> {
+    pub fn parse(data: &[u8]) -> Result<Self, ParseError> {
         let obj = object::read::File::parse(data).map_err(ParseError::ElfError)?;
         let endianness = obj.endianness();
 
@@ -456,7 +454,7 @@ impl Object {
             None
         };
 
-        let mut bpf_obj = Object::new(endianness, license, kernel_version);
+        let mut bpf_obj = Self::new(endianness, license, kernel_version);
 
         if let Some(symbol_table) = obj.symbol_table() {
             for symbol in symbol_table.symbols() {
@@ -511,8 +509,8 @@ impl Object {
         Ok(bpf_obj)
     }
 
-    fn new(endianness: Endianness, license: CString, kernel_version: Option<u32>) -> Object {
-        Object {
+    fn new(endianness: Endianness, license: CString, kernel_version: Option<u32>) -> Self {
+        Self {
             endianness,
             license,
             kernel_version,
@@ -578,13 +576,13 @@ impl Object {
         Ok(())
     }
 
-    fn parse_btf(&mut self, section: &Section) -> Result<(), BtfError> {
+    fn parse_btf(&mut self, section: &Section<'_>) -> Result<(), BtfError> {
         self.btf = Some(Btf::parse(section.data, self.endianness)?);
 
         Ok(())
     }
 
-    fn parse_btf_ext(&mut self, section: &Section) -> Result<(), BtfError> {
+    fn parse_btf_ext(&mut self, section: &Section<'_>) -> Result<(), BtfError> {
         self.btf_ext = Some(BtfExt::parse(
             section.data,
             self.endianness,
@@ -593,7 +591,7 @@ impl Object {
         Ok(())
     }
 
-    fn parse_programs(&mut self, section: &Section) -> Result<(), ParseError> {
+    fn parse_programs(&mut self, section: &Section<'_>) -> Result<(), ParseError> {
         let program_section = ProgramSection::from_str(section.name)?;
         let syms =
             self.symbols_by_section
@@ -624,7 +622,7 @@ impl Object {
 
     fn parse_program(
         &self,
-        section: &Section,
+        section: &Section<'_>,
         program_section: ProgramSection,
         name: String,
         symbol: &Symbol,
@@ -660,7 +658,7 @@ impl Object {
         ))
     }
 
-    fn parse_text_section(&mut self, section: Section) -> Result<(), ParseError> {
+    fn parse_text_section(&mut self, section: Section<'_>) -> Result<(), ParseError> {
         let mut symbols_by_address = HashMap::new();
 
         for sym in self.symbol_table.values() {
@@ -731,7 +729,7 @@ impl Object {
         Ok(())
     }
 
-    fn parse_btf_maps(&mut self, section: &Section) -> Result<(), ParseError> {
+    fn parse_btf_maps(&mut self, section: &Section<'_>) -> Result<(), ParseError> {
         if self.btf.is_none() {
             return Err(ParseError::NoBTF);
         }
@@ -786,7 +784,7 @@ impl Object {
     fn parse_maps_section<'a, I: Iterator<Item = &'a usize>>(
         &self,
         maps: &mut HashMap<String, Map>,
-        section: &Section,
+        section: &Section<'_>,
         symbols: I,
     ) -> Result<(), ParseError> {
         let mut have_symbols = false;
@@ -824,7 +822,7 @@ impl Object {
         Ok(())
     }
 
-    fn parse_section(&mut self, section: Section) -> Result<(), ParseError> {
+    fn parse_section(&mut self, section: Section<'_>) -> Result<(), ParseError> {
         self.section_infos
             .insert(section.name.to_owned(), (section.index, section.size));
         match section.kind {
@@ -886,9 +884,9 @@ impl Object {
 }
 
 fn insn_is_helper_call(ins: &bpf_insn) -> bool {
-    let klass = (ins.code & 0x07) as u32;
-    let op = (ins.code & 0xF0) as u32;
-    let src = (ins.code & 0x08) as u32;
+    let klass = u32::from(ins.code & 0x07);
+    let op = u32::from(ins.code & 0xF0);
+    let src = u32::from(ins.code & 0x08);
 
     klass == BPF_JMP && op == BPF_CALL && src == BPF_K && ins.src_reg() == 0 && ins.dst_reg() == 0
 }
@@ -1029,29 +1027,29 @@ pub enum EbpfSectionKind {
 }
 
 impl EbpfSectionKind {
-    fn from_name(name: &str) -> EbpfSectionKind {
+    fn from_name(name: &str) -> Self {
         if name.starts_with("license") {
-            EbpfSectionKind::License
+            Self::License
         } else if name.starts_with("version") {
-            EbpfSectionKind::Version
+            Self::Version
         } else if name.starts_with("maps") {
-            EbpfSectionKind::Maps
+            Self::Maps
         } else if name.starts_with(".maps") {
-            EbpfSectionKind::BtfMaps
+            Self::BtfMaps
         } else if name.starts_with(".text") {
-            EbpfSectionKind::Text
+            Self::Text
         } else if name.starts_with(".bss") {
-            EbpfSectionKind::Bss
+            Self::Bss
         } else if name.starts_with(".data") {
-            EbpfSectionKind::Data
+            Self::Data
         } else if name.starts_with(".rodata") {
-            EbpfSectionKind::Rodata
+            Self::Rodata
         } else if name == ".BTF" {
-            EbpfSectionKind::Btf
+            Self::Btf
         } else if name == ".BTF.ext" {
-            EbpfSectionKind::BtfExt
+            Self::BtfExt
         } else {
-            EbpfSectionKind::Undefined
+            Self::Undefined
         }
     }
 }
@@ -1070,7 +1068,7 @@ struct Section<'a> {
 impl<'a> TryFrom<&'a ObjSection<'_, '_>> for Section<'a> {
     type Error = ParseError;
 
-    fn try_from(section: &'a ObjSection) -> Result<Section<'a>, ParseError> {
+    fn try_from(section: &'a ObjSection<'_, '_>) -> Result<Self, ParseError> {
         let index = section.index();
         let map_err = |error| ParseError::SectionError {
             index: index.0,
@@ -1177,7 +1175,7 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
 
 // Parsed '.bss' '.data' and '.rodata' sections. These sections are arrays of
 // bytes and are relocated based on their section index.
-fn parse_data_map_section(section: &Section) -> Result<Map, ParseError> {
+fn parse_data_map_section(section: &Section<'_>) -> Result<Map, ParseError> {
     let (def, data) = match section.kind {
         EbpfSectionKind::Data | EbpfSectionKind::Rodata => {
             let def = bpf_map_def {
@@ -1229,13 +1227,12 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     if data.len() < mem::size_of::<bpf_map_def>() {
         let mut map_def = bpf_map_def::default();
         unsafe {
-            let map_def_ptr =
-                from_raw_parts_mut(&mut map_def as *mut bpf_map_def as *mut u8, data.len());
+            let map_def_ptr = from_raw_parts_mut(ptr::from_mut(&mut map_def).cast(), data.len());
             map_def_ptr.copy_from_slice(data);
         }
         Ok(map_def)
     } else {
-        Ok(unsafe { ptr::read_unaligned(data.as_ptr() as *const bpf_map_def) })
+        Ok(unsafe { ptr::read_unaligned(data.as_ptr().cast()) })
     }
 }
 
@@ -1403,7 +1400,7 @@ pub fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
     }
     let instructions = data
         .chunks_exact(mem::size_of::<bpf_insn>())
-        .map(|d| unsafe { ptr::read_unaligned(d.as_ptr() as *const bpf_insn) })
+        .map(|d| unsafe { ptr::read_unaligned(d.as_ptr().cast()) })
         .collect::<Vec<_>>();
     Ok(instructions)
 }
@@ -1411,7 +1408,7 @@ pub fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
 fn get_func_and_line_info(
     btf_ext: Option<&BtfExt>,
     symbol: &Symbol,
-    section: &Section,
+    section: &Section<'_>,
     offset: usize,
     rewrite_insn_off: bool,
 ) -> (FuncSecInfo, LineSecInfo, usize, usize) {

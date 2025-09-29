@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use core::mem;
 
@@ -37,7 +38,7 @@ struct Value {
 static RULES: HashMap<u8, Value> = HashMap::<u8, Value>::with_max_entries(1, BPF_F_NO_PREALLOC);
 
 #[xdp]
-pub fn do_dnat(ctx: XdpContext) -> u32 {
+fn do_dnat(ctx: XdpContext) -> u32 {
     try_do_dnat(ctx).unwrap_or(xdp_action::XDP_DROP)
 }
 

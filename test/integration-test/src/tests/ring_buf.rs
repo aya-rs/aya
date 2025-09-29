@@ -140,7 +140,7 @@ fn ring_buf(n: usize) {
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn ring_buf_trigger_ebpf_program(arg: u64) {
+extern "C" fn ring_buf_trigger_ebpf_program(arg: u64) {
     std::hint::black_box(arg);
 }
 

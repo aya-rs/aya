@@ -207,8 +207,8 @@ where
 {
     fn as_ref(&self) -> &[u8] {
         match self {
-            Either::Left(l) => l.as_ref(),
-            Either::Right(r) => r.as_ref(),
+            Self::Left(l) => l.as_ref(),
+            Self::Right(r) => r.as_ref(),
         }
     }
 }
@@ -217,11 +217,11 @@ impl sealed::Sealed for IpAddr {}
 impl Argument for IpAddr {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
         match self {
-            IpAddr::V4(ipv4_addr) => {
+            Self::V4(ipv4_addr) => {
                 let (kind, value) = ipv4_addr.as_argument();
                 (kind, Either::Left(value))
             }
-            IpAddr::V6(ipv6_addr) => {
+            Self::V6(ipv6_addr) => {
                 let (kind, value) = ipv6_addr.as_argument();
                 (kind, Either::Right(value))
             }

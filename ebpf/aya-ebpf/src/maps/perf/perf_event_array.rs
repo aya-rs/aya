@@ -1,4 +1,4 @@
-use core::{cell::UnsafeCell, marker::PhantomData, mem};
+use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr};
 
 use crate::{
     EbpfContext,
@@ -16,8 +16,8 @@ pub struct PerfEventArray<T> {
 unsafe impl<T: Sync> Sync for PerfEventArray<T> {}
 
 impl<T> PerfEventArray<T> {
-    pub const fn new(flags: u32) -> PerfEventArray<T> {
-        PerfEventArray {
+    pub const fn new(flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
@@ -31,8 +31,8 @@ impl<T> PerfEventArray<T> {
         }
     }
 
-    pub const fn pinned(flags: u32) -> PerfEventArray<T> {
-        PerfEventArray {
+    pub const fn pinned(flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
@@ -55,10 +55,10 @@ impl<T> PerfEventArray<T> {
         unsafe {
             bpf_perf_event_output(
                 ctx.as_ptr(),
-                self.def.get() as *mut _,
+                self.def.get().cast(),
                 flags,
-                data as *const _ as *mut _,
-                mem::size_of::<T>() as u64,
+                ptr::from_ref(data).cast_mut().cast(),
+                mem::size_of_val(data) as u64,
             );
         }
     }

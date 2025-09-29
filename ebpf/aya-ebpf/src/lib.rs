@@ -14,7 +14,6 @@
     expect(incomplete_features),
     feature(generic_const_exprs)
 )]
-#![cfg_attr(unstable, feature(never_type))]
 #![cfg_attr(target_arch = "bpf", feature(asm_experimental_arch))]
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
 #![no_std]
@@ -71,7 +70,7 @@ mod intrinsics {
     use super::cty::c_int;
 
     #[unsafe(no_mangle)]
-    pub unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
+    unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
         #[expect(clippy::cast_sign_loss)]
         let b = c as u8;
         for i in 0..n {
@@ -80,12 +79,12 @@ mod intrinsics {
     }
 
     #[unsafe(no_mangle)]
-    pub unsafe extern "C" fn memcpy(dest: *mut u8, src: *mut u8, n: usize) {
+    unsafe extern "C" fn memcpy(dest: *mut u8, src: *mut u8, n: usize) {
         unsafe { copy_forward(dest, src, n) }
     }
 
     #[unsafe(no_mangle)]
-    pub unsafe extern "C" fn memmove(dest: *mut u8, src: *mut u8, n: usize) {
+    unsafe extern "C" fn memmove(dest: *mut u8, src: *mut u8, n: usize) {
         let delta = (dest as usize).wrapping_sub(src as usize);
         if delta >= n {
             // We can copy forwards because either dest is far enough ahead of src,
@@ -110,9 +109,6 @@ mod intrinsics {
         }
     }
 }
-
-#[cfg(target_arch = "bpf")]
-pub use intrinsics::*;
 
 /// Check if a value is within a range, using conditional forms compatible with
 /// the verifier.

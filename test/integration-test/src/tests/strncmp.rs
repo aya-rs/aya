@@ -45,6 +45,6 @@ fn do_bpf_strncmp(array: &Array<&MapData, TestResult>, s1: &CStr) -> Ordering {
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn trigger_bpf_strncmp(s1: *const c_char) {
+extern "C" fn trigger_bpf_strncmp(s1: *const c_char) {
     core::hint::black_box(s1);
 }

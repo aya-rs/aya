@@ -20,10 +20,8 @@ pub struct RetProbeContext {
 }
 
 impl RetProbeContext {
-    pub fn new(ctx: *mut c_void) -> RetProbeContext {
-        RetProbeContext {
-            regs: ctx as *mut pt_regs,
-        }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { regs: ctx.cast() }
     }
 
     /// Returns the return value of the probed function.
@@ -48,6 +46,6 @@ impl RetProbeContext {
 
 impl EbpfContext for RetProbeContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.regs as *mut c_void
+        self.regs.cast()
     }
 }

@@ -7,8 +7,8 @@ pub struct RawTracePointContext {
 }
 
 impl RawTracePointContext {
-    pub fn new(ctx: *mut c_void) -> RawTracePointContext {
-        RawTracePointContext { ctx: ctx.cast() }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { ctx: ctx.cast() }
     }
 
     #[expect(clippy::missing_safety_doc)]

@@ -19,18 +19,18 @@ macro_rules! define_linear_ds_host_test {
     ) => {
         #[unsafe(no_mangle)]
         #[inline(never)]
-        pub extern "C" fn $push_fn(arg: u64) {
+        extern "C" fn $push_fn(arg: u64) {
             core::hint::black_box(arg);
         }
         #[unsafe(no_mangle)]
         #[inline(never)]
-        pub extern "C" fn $peek_fn(marker: u64) -> u64 {
+        extern "C" fn $peek_fn(marker: u64) -> u64 {
             core::hint::black_box($peek_fn);
             marker + 1
         }
         #[unsafe(no_mangle)]
         #[inline(never)]
-        pub extern "C" fn $pop_fn(marker: u64) -> u64 {
+        extern "C" fn $pop_fn(marker: u64) -> u64 {
             core::hint::black_box($pop_fn);
             marker + 2
         }

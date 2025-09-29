@@ -264,15 +264,15 @@ pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::borrow_mut(&mut self) -> &mu
 impl<T> core::convert::From<T> for aya::maps::hash_map::PerCpuHashMap<T, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::from(t: T) -> T
 pub mod aya::maps::lpm_trie
-#[repr(C, packed(1))] pub struct aya::maps::lpm_trie::Key<K: aya::Pod>
+#[repr(C, packed(1))] pub struct aya::maps::lpm_trie::Key<K>
 impl<K: aya::Pod> aya::maps::lpm_trie::Key<K>
 pub fn aya::maps::lpm_trie::Key<K>::data(&self) -> K
 pub fn aya::maps::lpm_trie::Key<K>::new(prefix_len: u32, data: K) -> Self
 pub fn aya::maps::lpm_trie::Key<K>::prefix_len(&self) -> u32
 impl<K: aya::Pod> aya::Pod for aya::maps::lpm_trie::Key<K>
-impl<K: aya::Pod> core::clone::Clone for aya::maps::lpm_trie::Key<K>
-pub fn aya::maps::lpm_trie::Key<K>::clone(&self) -> Self
-impl<K: aya::Pod> core::marker::Copy for aya::maps::lpm_trie::Key<K>
+impl<K: core::clone::Clone + core::marker::Copy> core::clone::Clone for aya::maps::lpm_trie::Key<K>
+pub fn aya::maps::lpm_trie::Key<K>::clone(&self) -> aya::maps::lpm_trie::Key<K>
+impl<K: core::marker::Copy> core::marker::Copy for aya::maps::lpm_trie::Key<K>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::IterableMap<aya::maps::lpm_trie::Key<K>, V> for aya::maps::lpm_trie::LpmTrie<T, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::get(&self, key: &aya::maps::lpm_trie::Key<K>) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::map(&self) -> &aya::maps::MapData
@@ -10420,6 +10420,7 @@ impl aya::Pod for i16
 impl aya::Pod for i32
 impl aya::Pod for i64
 impl aya::Pod for i8
+impl aya::Pod for libc::unix::linux_like::linux::nlattr
 impl aya::Pod for u128
 impl aya::Pod for u16
 impl aya::Pod for u32

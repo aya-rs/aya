@@ -7,8 +7,8 @@ pub struct LsmContext {
 }
 
 impl LsmContext {
-    pub fn new(ctx: *mut c_void) -> LsmContext {
-        LsmContext { ctx }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { ctx }
     }
 
     /// Returns the `n`th argument passed to the LSM hook, starting from 0.
