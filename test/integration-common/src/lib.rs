@@ -76,6 +76,20 @@ pub mod ring_buf {
     unsafe impl aya::Pod for Registers {}
 }
 
+pub mod spin_lock {
+    use aya_common::SpinLock;
+
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct Counter {
+        pub count: u32,
+        pub spin_lock: SpinLock,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for Counter {}
+}
+
 pub mod strncmp {
     #[derive(Copy, Clone)]
     #[repr(C)]

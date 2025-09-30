@@ -14,6 +14,7 @@ mod rbpf;
 mod relocations;
 mod ring_buf;
 mod smoke;
+mod spin_lock;
 mod strncmp;
 mod tcx;
 mod uprobe_cookie;

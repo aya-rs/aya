@@ -51,6 +51,7 @@ bpf_file!(
     RELOCATIONS => "relocations",
     RING_BUF => "ring_buf",
     SIMPLE_PROG => "simple_prog",
+    SPIN_LOCK => "spin_lock",
     STRNCMP => "strncmp",
     TCX => "tcx",
     TEST => "test",
