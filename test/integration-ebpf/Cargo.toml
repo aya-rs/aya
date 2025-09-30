@@ -77,6 +77,10 @@ name = "simple_prog"
 path = "src/simple_prog.rs"
 
 [[bin]]
+name = "spin_lock"
+path = "src/spin_lock.rs"
+
+[[bin]]
 name = "strncmp"
 path = "src/strncmp.rs"
 

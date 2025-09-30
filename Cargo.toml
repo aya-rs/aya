@@ -2,6 +2,7 @@
 members = [
     "aya",
     "aya-build",
+    "aya-common",
     "aya-log",
     "aya-log-common",
     "aya-log-parser",
