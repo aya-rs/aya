@@ -16,6 +16,8 @@ use clap::Parser;
 use walkdir::WalkDir;
 use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors};
 
+const GEN_INIT_CPIO_PATCH: &str = include_str!("../patches/gen_init_cpio.c.macos.diff");
+
 #[derive(Parser)]
 enum Environment {
     /// Runs the integration tests locally.
@@ -231,68 +233,83 @@ pub(crate) fn run(opts: Options) -> Result<()> {
             // VM images and report to the user. The end.
 
             create_dir_all(&cache_dir).context("failed to create cache dir")?;
+
             let gen_init_cpio = cache_dir.join("gen_init_cpio");
-            let etag_path = cache_dir.join("gen_init_cpio.etag");
             {
-                let gen_init_cpio_exists = gen_init_cpio.try_exists().with_context(|| {
-                    format!("failed to check existence of {}", gen_init_cpio.display())
+                let dest_path = cache_dir.join("gen_init_cpio.c");
+                let etag_path = cache_dir.join("gen_init_cpio.etag");
+                let dest_path_exists = dest_path.try_exists().with_context(|| {
+                    format!("failed to check existence of {}", dest_path.display())
                 })?;
                 let etag_path_exists = etag_path.try_exists().with_context(|| {
                     format!("failed to check existence of {}", etag_path.display())
                 })?;
-                if !gen_init_cpio_exists && etag_path_exists {
+                if !dest_path_exists && etag_path_exists {
                     println!(
                         "cargo:warning=({}).exists()={} != ({})={} (mismatch)",
-                        gen_init_cpio.display(),
-                        gen_init_cpio_exists,
+                        dest_path.display(),
+                        dest_path_exists,
                         etag_path.display(),
                         etag_path_exists,
                     )
                 }
-            }
 
-            let gen_init_cpio_source = {
-                drop(github_api_token); // Currently unused, but kept around in case we need it in the future.
+                // Currently unused. Can be used for authenticated requests if needed in the future.
+                drop(github_api_token);
 
                 let mut curl = Command::new("curl");
                 curl.args([
                     "-sfSL",
                     "https://raw.githubusercontent.com/torvalds/linux/master/usr/gen_init_cpio.c",
-                ]);
+                    "--output",
+                ])
+                .arg(&dest_path);
                 for arg in ["--etag-compare", "--etag-save"] {
                     curl.arg(arg).arg(&etag_path);
                 }
 
-                let Output {
-                    status,
-                    stdout,
-                    stderr,
-                } = curl
+                let output = curl
                     .output()
                     .with_context(|| format!("failed to run {curl:?}"))?;
+                let Output { status, .. } = &output;
                 if status.code() != Some(0) {
-                    bail!("{curl:?} failed: stdout={stdout:?} stderr={stderr:?}")
+                    bail!("{curl:?} failed: {output:?}")
                 }
-                stdout
-            };
 
-            if !gen_init_cpio_source.is_empty() {
+                let mut patch = Command::new("patch");
+                patch
+                    .current_dir(&cache_dir)
+                    .args(["--quiet", "--forward", "--output", "-"])
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped());
+                let mut patch_child = patch
+                    .spawn()
+                    .with_context(|| format!("failed to spawn {patch:?}"))?;
+
+                let Child { stdin, stdout, .. } = &mut patch_child;
+                let mut stdin = stdin.take().unwrap();
+                stdin
+                    .write_all(GEN_INIT_CPIO_PATCH.as_bytes())
+                    .with_context(|| format!("failed to write to {patch:?} stdin"))?;
+                drop(stdin); // Must explicitly close to signal EOF.
+                let stdout = stdout.take().unwrap();
+
                 let mut clang = Command::new("clang");
                 clang
                     .args(["-g", "-O2", "-x", "c", "-", "-o"])
                     .arg(&gen_init_cpio)
-                    .stdin(Stdio::piped());
-                let mut clang_child = clang
+                    .stdin(stdout);
+                let clang_child = clang
                     .spawn()
                     .with_context(|| format!("failed to spawn {clang:?}"))?;
 
-                let Child { stdin, .. } = &mut clang_child;
-
-                let mut stdin = stdin.take().unwrap();
-                stdin
-                    .write_all(&gen_init_cpio_source)
-                    .with_context(|| format!("failed to write to {clang:?} stdin"))?;
-                drop(stdin); // Must explicitly close to signal EOF.
+                let output = patch_child
+                    .wait_with_output()
+                    .with_context(|| format!("failed to wait for {patch:?}"))?;
+                let Output { status, .. } = &output;
+                if status.code() != Some(0) {
+                    bail!("{patch:?} failed: {output:?}")
+                }
 
                 let output = clang_child
                     .wait_with_output()
