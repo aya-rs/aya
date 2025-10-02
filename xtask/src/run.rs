@@ -1,7 +1,7 @@
 use std::{
     ffi::OsString,
     fmt::Write as _,
-    fs::{OpenOptions, copy, create_dir_all},
+    fs::{OpenOptions, copy, create_dir_all, write},
     io::{BufRead as _, BufReader, Write as _},
     ops::Deref as _,
     path::{Path, PathBuf},
@@ -15,6 +15,8 @@ use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 use walkdir::WalkDir;
 use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors};
+
+const GEN_INIT_CPIO_PATCH: &str = include_str!("../patches/gen_init_cpio.c.macos.diff");
 
 #[derive(Parser)]
 enum Environment {
@@ -277,22 +279,45 @@ pub(crate) fn run(opts: Options) -> Result<()> {
             };
 
             if !gen_init_cpio_source.is_empty() {
+                let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
+                let source_path = tmp_dir.path().join("gen_init_cpio.c");
+                write(&source_path, &gen_init_cpio_source)
+                    .with_context(|| format!("failed to write {}", source_path.display()))?;
+
+                let mut patch = Command::new("patch");
+                patch
+                    .current_dir(tmp_dir.path())
+                    .args(["-p1", "-s", "-o", "-"])
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped());
+                let mut patch_child = patch
+                    .spawn()
+                    .with_context(|| format!("failed to spawn {patch:?}"))?;
+
+                let Child { stdin, stdout, .. } = &mut patch_child;
+                let mut stdin = stdin.take().unwrap();
+                stdin
+                    .write_all(GEN_INIT_CPIO_PATCH.as_bytes())
+                    .with_context(|| format!("failed to write to {patch:?} stdin"))?;
+                drop(stdin); // Must explicitly close to signal EOF.
+                let stdout = stdout.take().unwrap();
+
                 let mut clang = Command::new("clang");
                 clang
                     .args(["-g", "-O2", "-x", "c", "-", "-o"])
                     .arg(&gen_init_cpio)
-                    .stdin(Stdio::piped());
-                let mut clang_child = clang
+                    .stdin(stdout);
+                let clang_child = clang
                     .spawn()
                     .with_context(|| format!("failed to spawn {clang:?}"))?;
 
-                let Child { stdin, .. } = &mut clang_child;
-
-                let mut stdin = stdin.take().unwrap();
-                stdin
-                    .write_all(&gen_init_cpio_source)
-                    .with_context(|| format!("failed to write to {clang:?} stdin"))?;
-                drop(stdin); // Must explicitly close to signal EOF.
+                let output = patch_child
+                    .wait_with_output()
+                    .with_context(|| format!("failed to wait for {patch:?}"))?;
+                let Output { status, .. } = &output;
+                if status.code() != Some(0) {
+                    bail!("{patch:?} failed: {output:?}")
+                }
 
                 let output = clang_child
                     .wait_with_output()
