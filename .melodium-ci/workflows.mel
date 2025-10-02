@@ -1,10 +1,10 @@
 use root/github/ci::buildTestAyaAll
-use root/github/ci::buildTestAya
+/*use root/github/ci::buildTestAya
 use root/github/ci::buildTestAyaEbpf
 use root/github/ci::buildWorkflowComplete
 use root/github/ci::lint
 use root/github/ci::runIntegrationTest
-use root/github/gen::codegen
+use root/github/gen::codegen*/
 use cicd/logging::manageLogs
 use json/value::|null
 use json::Json
@@ -233,6 +233,7 @@ treatment cimatrixOsEntrypoint(
 }
 */
 
+/*
 #[github_workflow(/.github/workflows/gen.yml)]
 #[generated(true)]
 treatment gen[logger: Logger](
@@ -274,3 +275,4 @@ treatment genEntrypoint(
     gen.finished -> manageLogs.stop
 }
 
+*/

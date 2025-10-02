@@ -10,7 +10,7 @@ use json/value::|null
 use json::Json
 use log/logger::Logger
 use std/data/string_map::|map
-
+/*
 #[job(codegen)]
 #[generated(true)]
 treatment codegen[logger: Logger](
@@ -97,3 +97,4 @@ libbpf commit: ${{ steps.libbpf.outputs.sha }}
     jobResult.finished -> step2.post_trigger
 }
 
+*/

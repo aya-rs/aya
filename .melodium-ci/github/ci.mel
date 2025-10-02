@@ -171,6 +171,7 @@ cargo hack test --doc --feature-powerset \
     jobResult.finished -> step2.post_trigger
 }
 
+/*
 #[generated(true)]
 #[job(buildTestAyaEbpf)]
 treatment buildTestAyaEbpf[logger: Logger](
@@ -472,13 +473,11 @@ rm -rf test/.tmp/boot test/.tmp/lib
     )
     extractDebianKernels: runAction[contexts = contexts, logger = logger](
         commands = ${{set -euxo pipefail
-# The wildcard '**/boot/*' extracts kernel images and config.
-# The wildcard '**/modules/*' extracts kernel modules.
 # Modules are required since not all parts of the kernel we want to
 # test are built-in.
 find test/.tmp -name '*.deb' -print0 | xargs -t -0 -I {} \
   sh -c "dpkg --fsys-tarfile {} | tar -C test/.tmp \
-    --wildcards --extract '**/boot/*' '**/modules/*' --file -"
+    --wildcards --extract '** /boot/ *' '** /modules/ *' --file -"
 }},
         display_name = "Extract debian kernels",
         name = "extractDebianKernels"
@@ -617,3 +616,4 @@ cargo xtask integration-test vm --cache-dir test/.tmp \
     jobResult.finished -> step8.post_trigger
 }
 
+*/
