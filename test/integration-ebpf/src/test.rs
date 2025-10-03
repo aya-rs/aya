@@ -4,9 +4,12 @@
 
 use aya_ebpf::{
     bindings::{bpf_ret_code, xdp_action},
-    macros::{flow_dissector, kprobe, kretprobe, tracepoint, uprobe, uretprobe, xdp},
+    macros::{
+        flow_dissector, kprobe, kretprobe, lsm, lsm_cgroup, tracepoint, uprobe, uretprobe, xdp,
+    },
     programs::{
-        FlowDissectorContext, ProbeContext, RetProbeContext, TracePointContext, XdpContext,
+        FlowDissectorContext, LsmContext, ProbeContext, RetProbeContext, TracePointContext,
+        XdpContext,
     },
 };
 #[cfg(not(test))]
@@ -54,4 +57,14 @@ fn test_flow(_ctx: FlowDissectorContext) -> u32 {
     // TODO: write an actual flow dissector. See tools/testing/selftests/bpf/progs/bpf_flow.c in the
     // Linux kernel for inspiration.
     bpf_ret_code::BPF_FLOW_DISSECTOR_CONTINUE
+}
+
+#[lsm_cgroup(hook = "socket_bind")]
+fn test_lsmcgroup(_ctx: LsmContext) -> i32 {
+    0
+}
+
+#[lsm(hook = "socket_bind")]
+fn test_lsm(_ctx: LsmContext) -> i32 {
+    -1
 }

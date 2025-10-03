@@ -89,6 +89,22 @@ fn run() -> anyhow::Result<()> {
             data: None,
             target_mode: None,
         },
+        Mount {
+            source: "cgroup2",
+            target: "/sys/fs/cgroup",
+            fstype: "cgroup2",
+            flags: nix::mount::MsFlags::empty(),
+            data: None,
+            target_mode: None,
+        },
+        Mount {
+            source: "securityfs",
+            target: "/sys/kernel/security",
+            fstype: "securityfs",
+            flags: nix::mount::MsFlags::empty(),
+            data: None,
+            target_mode: None,
+        },
     ] {
         match target_mode {
             None => {
