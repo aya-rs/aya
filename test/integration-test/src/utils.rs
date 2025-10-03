@@ -1,14 +1,110 @@
 //! Utilities to run tests
 
 use std::{
+    borrow::Cow,
+    cell::OnceCell,
     ffi::CString,
-    io, process,
+    fs,
+    io::{self, Write as _},
+    path::Path,
+    process,
     sync::atomic::{AtomicU64, Ordering},
 };
 
 use aya::netlink_set_link_up;
 use libc::if_nametoindex;
 use netns_rs::{NetNs, get_from_current_thread};
+
+const CGROUP_ROOT: &str = "/sys/fs/cgroup";
+const CGROUP_PROCS: &str = "cgroup.procs";
+
+pub(crate) struct ChildCgroup<'a> {
+    parent: &'a Cgroup<'a>,
+    path: Cow<'a, Path>,
+    fd: OnceCell<fs::File>,
+}
+
+pub(crate) enum Cgroup<'a> {
+    Root,
+    Child(ChildCgroup<'a>),
+}
+
+impl Cgroup<'static> {
+    pub(crate) fn root() -> Self {
+        Self::Root
+    }
+}
+
+impl<'a> Cgroup<'a> {
+    fn path(&self) -> &Path {
+        match self {
+            Self::Root => Path::new(CGROUP_ROOT),
+            Self::Child(ChildCgroup {
+                parent: _,
+                path,
+                fd: _,
+            }) => path,
+        }
+    }
+
+    pub(crate) fn create_child(&'a self, name: &str) -> ChildCgroup<'a> {
+        let path = self.path().join(name);
+        fs::create_dir(&path).unwrap();
+
+        ChildCgroup {
+            parent: self,
+            path: path.into(),
+            fd: OnceCell::new(),
+        }
+    }
+
+    pub(crate) fn write_pid(&self, pid: u32) {
+        fs::write(self.path().join(CGROUP_PROCS), format!("{pid}\n")).unwrap();
+    }
+}
+
+impl<'a> ChildCgroup<'a> {
+    pub(crate) fn fd(&self) -> &fs::File {
+        let Self {
+            parent: _,
+            path,
+            fd,
+        } = self;
+        fd.get_or_init(|| {
+            fs::OpenOptions::new()
+                .read(true)
+                .open(path.as_ref())
+                .unwrap()
+        })
+    }
+
+    pub(crate) fn into_cgroup(self) -> Cgroup<'a> {
+        Cgroup::Child(self)
+    }
+}
+
+impl Drop for ChildCgroup<'_> {
+    fn drop(&mut self) {
+        let Self {
+            parent,
+            path,
+            fd: _,
+        } = self;
+
+        let pids = fs::read_to_string(path.as_ref().join(CGROUP_PROCS)).unwrap();
+        let mut dst = fs::OpenOptions::new()
+            .append(true)
+            .open(parent.path().join(CGROUP_PROCS))
+            .unwrap();
+        for pid in pids.split_inclusive('\n') {
+            dst.write_all(pid.as_bytes()).unwrap();
+        }
+
+        if let Err(e) = fs::remove_dir(&path) {
+            eprintln!("failed to remove {}: {e}", path.display());
+        }
+    }
+}
 
 pub(crate) struct NetNsGuard {
     name: String,

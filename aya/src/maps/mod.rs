@@ -82,6 +82,7 @@ pub mod lpm_trie;
 pub mod perf;
 pub mod queue;
 pub mod ring_buf;
+pub mod sk_storage;
 pub mod sock;
 pub mod stack;
 pub mod stack_trace;
@@ -95,6 +96,7 @@ pub use lpm_trie::LpmTrie;
 pub use perf::PerfEventArray;
 pub use queue::Queue;
 pub use ring_buf::RingBuf;
+pub use sk_storage::SkStorage;
 pub use sock::{SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
@@ -303,6 +305,8 @@ pub enum Map {
     SockHash(MapData),
     /// A [`SockMap`] map.
     SockMap(MapData),
+    /// A [`SkStorage`] map.
+    SkStorage(MapData),
     /// A [`Stack`] map.
     Stack(MapData),
     /// A [`StackTraceMap`] map.
@@ -334,6 +338,7 @@ impl Map {
             Self::RingBuf(map) => map.obj.map_type(),
             Self::SockHash(map) => map.obj.map_type(),
             Self::SockMap(map) => map.obj.map_type(),
+            Self::SkStorage(map) => map.obj.map_type(),
             Self::Stack(map) => map.obj.map_type(),
             Self::StackTraceMap(map) => map.obj.map_type(),
             Self::Unsupported(map) => map.obj.map_type(),
@@ -364,6 +369,7 @@ impl Map {
             Self::RingBuf(map) => map.pin(path),
             Self::SockHash(map) => map.pin(path),
             Self::SockMap(map) => map.pin(path),
+            Self::SkStorage(map) => map.pin(path),
             Self::Stack(map) => map.pin(path),
             Self::StackTraceMap(map) => map.pin(path),
             Self::Unsupported(map) => map.pin(path),
@@ -409,7 +415,7 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::Unsupported(map_data),
-            bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Self::SkStorage(map_data),
             bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_TASK_STORAGE => Self::Unsupported(map_data),
@@ -468,6 +474,7 @@ impl_map_pin!((V) {
     SockHash,
     BloomFilter,
     Queue,
+    SkStorage,
     Stack,
 });
 
@@ -546,6 +553,7 @@ impl_try_from_map!((V) {
     PerCpuArray,
     Queue,
     SockHash,
+    SkStorage,
     Stack,
 });
 
