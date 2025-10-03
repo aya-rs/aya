@@ -2,13 +2,10 @@
 
 use std::{
     borrow::{Borrow, BorrowMut},
-    os::fd::{AsFd as _, AsRawFd, BorrowedFd, RawFd},
+    os::fd::{AsRawFd, RawFd},
 };
 
-use crate::{
-    maps::{MapData, MapError, check_bounds, check_kv_size},
-    sys::{SyscallError, bpf_map_delete_elem, bpf_map_update_elem},
-};
+use crate::maps::{MapData, MapError, check_bounds, check_kv_size, hash_map};
 
 /// An array of AF_XDP sockets.
 ///
@@ -57,16 +54,6 @@ impl<T: Borrow<MapData>> XskMap<T> {
 }
 
 impl<T: BorrowMut<MapData>> XskMap<T> {
-    fn with_fd(
-        &mut self,
-        index: u32,
-        f: impl FnOnce(BorrowedFd<'_>) -> Result<(), SyscallError>,
-    ) -> Result<(), MapError> {
-        let data = self.inner.borrow_mut();
-        check_bounds(data, index)?;
-        f(data.fd().as_fd()).map_err(Into::into)
-    }
-
     /// Sets the `AF_XDP` socket at a given index.
     ///
     /// When redirecting a packet, the `AF_XDP` socket at `index` will recieve the packet. Note
@@ -78,14 +65,9 @@ impl<T: BorrowMut<MapData>> XskMap<T> {
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_update_elem` fails.
     pub fn set(&mut self, index: u32, socket_fd: impl AsRawFd, flags: u64) -> Result<(), MapError> {
-        self.with_fd(index, |fd| {
-            bpf_map_update_elem(fd, Some(&index), &socket_fd.as_raw_fd(), flags).map_err(
-                |io_error| SyscallError {
-                    call: "bpf_map_update_elem",
-                    io_error,
-                },
-            )
-        })
+        let data = self.inner.borrow_mut();
+        check_bounds(data, index)?;
+        hash_map::insert(data, &index, &socket_fd.as_raw_fd(), flags)
     }
 
     /// Un-sets the `AF_XDP` socket at a given index.
@@ -95,11 +77,8 @@ impl<T: BorrowMut<MapData>> XskMap<T> {
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_delete_elem` fails.
     pub fn unset(&mut self, index: u32) -> Result<(), MapError> {
-        self.with_fd(index, |fd| {
-            bpf_map_delete_elem(fd, &index).map_err(|io_error| SyscallError {
-                call: "bpf_map_delete_elem",
-                io_error,
-            })
-        })
+        let data = self.inner.borrow_mut();
+        check_bounds(data, index)?;
+        hash_map::remove(data, &index)
     }
 }

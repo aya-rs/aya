@@ -1,4 +1,5 @@
 //! A FIFO queue.
+
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,

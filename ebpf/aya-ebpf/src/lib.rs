@@ -33,7 +33,7 @@ pub mod helpers;
 pub mod maps;
 pub mod programs;
 
-use core::ptr::NonNull;
+use core::ptr::{self, NonNull};
 
 pub use aya_ebpf_cty as cty;
 pub use aya_ebpf_macros as macros;
@@ -144,8 +144,8 @@ pub fn check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool {
 
 #[inline]
 fn insert<K, V>(def: *mut c_void, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
-    let key: *const _ = key;
-    let value: *const _ = value;
+    let key = ptr::from_ref(key);
+    let value = ptr::from_ref(value);
     match unsafe { bpf_map_update_elem(def.cast(), key.cast(), value.cast(), flags) } {
         0 => Ok(()),
         ret => Err(ret),
@@ -154,7 +154,7 @@ fn insert<K, V>(def: *mut c_void, key: &K, value: &V, flags: u64) -> Result<(), 
 
 #[inline]
 fn remove<K>(def: *mut c_void, key: &K) -> Result<(), c_long> {
-    let key: *const _ = key;
+    let key = ptr::from_ref(key);
     match unsafe { bpf_map_delete_elem(def.cast(), key.cast()) } {
         0 => Ok(()),
         ret => Err(ret),
@@ -163,6 +163,6 @@ fn remove<K>(def: *mut c_void, key: &K) -> Result<(), c_long> {
 
 #[inline]
 fn lookup<K, V>(def: *mut c_void, key: &K) -> Option<NonNull<V>> {
-    let key: *const _ = key;
+    let key = ptr::from_ref(key);
     NonNull::new(unsafe { bpf_map_lookup_elem(def.cast(), key.cast()) }.cast())
 }

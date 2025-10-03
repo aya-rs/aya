@@ -6,9 +6,8 @@ use std::{
 };
 
 use crate::{
-    maps::{MapData, MapError, MapKeys, check_bounds, check_kv_size},
+    maps::{MapData, MapError, MapKeys, check_bounds, check_kv_size, hash_map},
     programs::ProgramFd,
-    sys::{SyscallError, bpf_map_delete_elem, bpf_map_update_elem},
 };
 
 /// An array of eBPF program file descriptors used as a jump table.
@@ -74,16 +73,7 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
     pub fn set(&mut self, index: u32, program: &ProgramFd, flags: u64) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
-        let fd = data.fd().as_fd();
-        let prog_fd = program.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
-
-        bpf_map_update_elem(fd, Some(&index), &prog_fd, flags)
-            .map_err(|io_error| SyscallError {
-                call: "bpf_map_update_elem",
-                io_error,
-            })
-            .map_err(Into::into)
+        hash_map::insert(data, &index, &program.as_fd().as_raw_fd(), flags)
     }
 
     /// Clears the value at index in the jump table.
@@ -93,13 +83,6 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
     pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, *index)?;
-        let fd = data.fd().as_fd();
-
-        bpf_map_delete_elem(fd, index)
-            .map_err(|io_error| SyscallError {
-                call: "bpf_map_delete_elem",
-                io_error,
-            })
-            .map_err(Into::into)
+        hash_map::remove(data, index)
     }
 }

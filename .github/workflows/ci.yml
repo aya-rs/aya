@@ -253,16 +253,15 @@ jobs:
         # This is provided by `brew install filosottile/musl-cross/musl-cross`.
         run: |
           set -euxo pipefail
-          brew update
-          # https://github.com/actions/setup-python/issues/577
-          find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
-          | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
-          brew install --formula curl dpkg gnu-tar llvm lynx pkg-config qemu
+          # Dependencies are tracked in `Brewfile`.
+          brew bundle
           echo $(brew --prefix curl)/bin >> $GITHUB_PATH
           echo $(brew --prefix gnu-tar)/libexec/gnubin >> $GITHUB_PATH
           echo $(brew --prefix llvm)/bin >> $GITHUB_PATH
-          brew install filosottile/musl-cross/musl-cross
-          ln -s "$(brew --prefix musl-cross)/bin/x86_64-linux-musl-gcc" /usr/local/bin/musl-gcc
+
+          # https://github.com/actions/setup-python/issues/577
+          find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
+          | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
 
       - uses: dtolnay/rust-toolchain@nightly
         with:

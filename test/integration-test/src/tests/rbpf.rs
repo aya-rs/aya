@@ -67,7 +67,7 @@ fn use_map_with_rbpf() {
             "map_1" => 0,
             "map_2" => 1,
             "map_pin_by_name" => 2,
-            n => panic!("Unexpected map: {n}"),
+            n => panic!("unexpected map: {n}"),
         };
 
         let fd = map_id as i32 | 0xCAFE00;

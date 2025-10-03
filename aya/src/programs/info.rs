@@ -270,7 +270,7 @@ pub(crate) use impl_info;
 /// for p in loaded_programs() {
 ///     match p {
 ///         Ok(program) => println!("{}", String::from_utf8_lossy(program.name())),
-///         Err(e) => println!("Error iterating programs: {:?}", e),
+///         Err(e) => println!("error iterating programs: {:?}", e),
 ///     }
 /// }
 /// ```

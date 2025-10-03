@@ -73,6 +73,10 @@ name = "ring_buf"
 path = "src/ring_buf.rs"
 
 [[bin]]
+name = "sk_storage"
+path = "src/sk_storage.rs"
+
+[[bin]]
 name = "simple_prog"
 path = "src/simple_prog.rs"
 

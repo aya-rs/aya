@@ -1,6 +1,7 @@
 //! A map that can be used to receive events from eBPF programs using the linux [`perf`] API
 //!
 //! [`perf`]: https://perf.wiki.kernel.org/index.php/Main_Page.
+
 use std::{
     borrow::{Borrow, BorrowMut},
     ops::Deref as _,
