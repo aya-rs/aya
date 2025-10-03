@@ -1,6 +1,7 @@
 //! A hash map of kernel or user space stack traces.
 //!
 //! See [`StackTraceMap`] for documentation and examples.
+
 use std::{
     borrow::{Borrow, BorrowMut},
     fs, io, mem,

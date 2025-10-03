@@ -1,4 +1,5 @@
 //! A LIFO stack.
+
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,

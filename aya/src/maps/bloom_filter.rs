@@ -1,4 +1,5 @@
 //! A Bloom Filter.
+
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
