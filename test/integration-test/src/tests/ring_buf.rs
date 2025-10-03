@@ -13,11 +13,11 @@ use anyhow::Context as _;
 use assert_matches::assert_matches;
 use aya::{
     Ebpf, EbpfLoader,
-    maps::{Array, MapData, ring_buf::RingBuf},
+    maps::{Array, MapData, MapError, ring_buf::RingBuf},
     programs::{UProbe, uprobe::UProbeScope},
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
-use integration_common::ring_buf::Registers;
+use integration_common::ring_buf::{AlignedEvent, OUTPUT_ARGUMENT, PageEvent, Registers};
 use rand::RngExt as _;
 use rstest::rstest;
 use scopeguard::defer;
@@ -32,8 +32,14 @@ struct RingBufTest {
 const RING_BUF: &str = "RING_BUF";
 const RING_BUF_LEGACY: &str = "RING_BUF_LEGACY";
 const RING_BUF_MISMATCH: &str = "RING_BUF_MISMATCH";
+const RING_BUF_ALIGNED: &str = "RING_BUF_ALIGNED";
 
-const ALL_RING_BUFS: &[&str] = &[RING_BUF, RING_BUF_LEGACY, RING_BUF_MISMATCH];
+const ALL_RING_BUFS: &[&str] = &[
+    RING_BUF,
+    RING_BUF_LEGACY,
+    RING_BUF_MISMATCH,
+    RING_BUF_ALIGNED,
+];
 
 #[derive(Clone, Copy)]
 struct RingBufVariant {
@@ -60,6 +66,8 @@ const RING_BUF_VARIANTS: &[RingBufVariant] = &[
 // that's not the case because the actual size will be rounded up, and fewer entries will be dropped
 // than expected.
 const RING_BUF_MAX_ENTRIES: usize = 512;
+const RING_BUF_BYTE_SIZE: u32 =
+    (RING_BUF_MAX_ENTRIES * (size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
 
 impl RingBufTest {
     fn new(variant: RingBufVariant) -> Self {
@@ -74,9 +82,6 @@ impl RingBufTest {
         loader_fn: impl FnOnce(&mut EbpfLoader<'loader>),
         bpf_fn: impl FnOnce(&mut Ebpf),
     ) -> Self {
-        const RING_BUF_BYTE_SIZE: u32 =
-            (RING_BUF_MAX_ENTRIES * (size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
-
         // Use the loader API to control the size of the ring_buf.
         let mut loader = EbpfLoader::new();
         for &map in ALL_RING_BUFS {
@@ -194,8 +199,6 @@ fn ring_buf_mismatch_size<T>(
 ) where
     T: Copy + Into<u64> + PartialEq + std::fmt::Debug,
 {
-    const RING_BUF_BYTE_SIZE: u32 =
-        (RING_BUF_MAX_ENTRIES * (size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
     let mut loader = EbpfLoader::new();
     for &map in ALL_RING_BUFS {
         loader.map_max_entries(map, RING_BUF_BYTE_SIZE);
@@ -252,6 +255,107 @@ fn ring_buf_mismatch_large() {
             u64::from_ne_bytes(bytes)
         },
     );
+}
+
+#[rstest]
+#[case(RING_BUF_ALIGNED, "ring_buf_aligned")]
+#[case(RING_BUF_LEGACY, "ring_buf_aligned_legacy")]
+fn ring_buf_alignment(#[case] map: &'static str, #[case] prog: &'static str) {
+    let RingBufTest {
+        mut ring_buf,
+        bpf: _bpf,
+        regs: _,
+    } = RingBufTest::new(RingBufVariant {
+        map,
+        regs: "REGISTERS",
+        prog,
+    });
+    let page_size = unsafe { libc::sysconf(libc::_SC_PAGESIZE) } as usize;
+    let capacity = (RING_BUF_BYTE_SIZE as usize).max(page_size);
+    let mut paddings = [false; 4];
+    // Each trigger consumes 24 bytes for the prefix and 64 for the aligned
+    // record. Read immediately to wrap the ring twice without overflowing it.
+    for arg in 0..(2 * capacity / 88 + 1) as u64 {
+        ring_buf_trigger_ebpf_program(arg);
+        if arg & 4 == 0 {
+            let item = ring_buf.next().unwrap();
+            let value = item.as_value::<AlignedEvent>().unwrap();
+            assert_eq!(*value, AlignedEvent([arg, arg + 1, arg + 2, arg + 3]));
+            assert!(std::ptr::from_ref(value).is_aligned());
+            paddings[item.as_ptr().align_offset(align_of::<AlignedEvent>()) / 8] = true;
+            if arg == 0 {
+                assert_matches!(
+                    item.as_value::<u64>(),
+                    Err(MapError::InvalidValueSize {
+                        size: 56,
+                        expected: 8
+                    })
+                );
+                #[repr(align(1048576))]
+                #[derive(Clone, Copy, Debug)]
+                struct TooAligned;
+                unsafe impl aya::Pod for TooAligned {}
+                let (alignment, max_alignment) = assert_matches!(
+                    item.as_value::<TooAligned>(),
+                    Err(MapError::InvalidValueAlignment { alignment, max_alignment }) => (alignment, max_alignment)
+                );
+                assert_eq!(alignment, align_of::<TooAligned>());
+                assert_eq!(max_alignment, page_size);
+            }
+        }
+        assert_matches!(ring_buf.next(), None);
+    }
+    assert_eq!(paddings, [true; 4]);
+
+    ring_buf_trigger_ebpf_program(OUTPUT_ARGUMENT);
+    {
+        let item = ring_buf.next().unwrap();
+        let expected = [
+            OUTPUT_ARGUMENT,
+            OUTPUT_ARGUMENT + 1,
+            OUTPUT_ARGUMENT + 2,
+            OUTPUT_ARGUMENT + 3,
+        ]
+        .map(u64::to_ne_bytes);
+        assert_eq!(item.as_ref(), expected.as_flattened());
+        assert_matches!(
+            item.as_value::<AlignedEvent>(),
+            Err(MapError::InvalidValueSize {
+                size: 32,
+                expected: 56
+            })
+        );
+    }
+    assert_matches!(ring_buf.next(), None);
+}
+
+#[test]
+fn ring_buf_page_alignment() {
+    let RingBufTest {
+        mut ring_buf,
+        bpf: _bpf,
+        regs: _,
+    } = RingBufTest::new_with_mutators(
+        RingBufVariant {
+            map: RING_BUF_LEGACY,
+            regs: "REGISTERS",
+            prog: "ring_buf_page_aligned",
+        },
+        |loader| {
+            // The padded record occupies 8192 bytes including its header;
+            // the ring must leave room between producer and consumer.
+            loader.map_max_entries(RING_BUF_LEGACY, 16384);
+        },
+        |_bpf| {},
+    );
+    ring_buf_trigger_ebpf_program(0);
+    {
+        let item = ring_buf.next().unwrap();
+        let value = item.as_value::<PageEvent>().unwrap();
+        assert_eq!(*value, PageEvent([42; 4096]));
+        assert!(std::ptr::from_ref(value).is_aligned());
+    }
+    assert_matches!(ring_buf.next(), None);
 }
 
 // This test differs from the other async test in that it's possible for the producer

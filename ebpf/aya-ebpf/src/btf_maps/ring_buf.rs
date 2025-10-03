@@ -1,7 +1,5 @@
-use core::{mem::MaybeUninit, ptr};
+use core::ptr;
 
-#[cfg(generic_const_exprs)]
-use crate::const_assert::{Assert, IsTrue};
 use crate::{
     btf_maps::btf_map_def,
     helpers::{bpf_ringbuf_output, bpf_ringbuf_reserve},
@@ -37,24 +35,8 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> RingBuf<T, MAX_ENTRIES, FL
     /// Reserve memory in the ring buffer that can fit the map's `T`.
     ///
     /// Returns `None` if the ring buffer is full.
-    #[cfg(generic_const_exprs)]
-    pub fn reserve(&self, flags: u64) -> Option<RingBufEntry<T>>
-    where
-        T: 'static,
-        Assert<{ 8 % align_of::<T>() == 0 }>: IsTrue,
-    {
-        self.reserve_untyped::<T>(flags)
-    }
-
-    /// Reserve memory in the ring buffer that can fit the map's `T`.
     ///
-    /// Returns `None` if the ring buffer is full.
-    ///
-    /// The kernel will reserve memory at an 8-bytes aligned boundary, so `mem::align_of<U>()` must
-    /// be equal or smaller than 8. If you use this with a `U` that isn't properly aligned, this
-    /// function will be compiled to a panic; depending on your `panic_handler`, this may make
-    /// the eBPF program fail to load, or it may make it have undefined behavior.
-    #[cfg(not(generic_const_exprs))]
+    /// See [`Self::reserve_untyped`] for the alignment padding convention.
     pub fn reserve(&self, flags: u64) -> Option<RingBufEntry<T>>
     where
         T: 'static,
@@ -65,27 +47,17 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> RingBuf<T, MAX_ENTRIES, FL
     /// Reserve memory in the ring buffer that can fit `U`.
     ///
     /// Returns `None` if the ring buffer is full.
-    #[cfg(generic_const_exprs)]
-    pub fn reserve_untyped<U: 'static>(&self, flags: u64) -> Option<RingBufEntry<U>>
-    where
-        Assert<{ 8 % align_of::<U>() == 0 }>: IsTrue,
-    {
-        self.reserve_impl::<U>(flags)
-    }
-
-    /// Reserve memory in the ring buffer that can fit `U`.
     ///
-    /// Returns `None` if the ring buffer is full.
-    #[cfg(not(generic_const_exprs))]
+    /// Types aligned to more than eight bytes reserve extra space for alignment.
+    /// The userspace reader must skip this padding; use
+    /// [`RingBufItem::as_value`](https://docs.rs/aya/latest/aya/maps/ring_buf/struct.RingBufItem.html#method.as_value).
+    /// That method checks that the alignment does not exceed the system page size,
+    /// so the kernel and userspace mappings agree on the payload's offset.
+    /// Padding bytes have unspecified contents. Alignments above eight bytes
+    /// require `CAP_PERFMON` (or `CAP_SYS_ADMIN`) when loading the program,
+    /// because the verifier must allow extracting address bits.
     pub fn reserve_untyped<U: 'static>(&self, flags: u64) -> Option<RingBufEntry<U>> {
-        assert_eq!(8 % align_of::<U>(), 0);
-        self.reserve_impl::<U>(flags)
-    }
-
-    fn reserve_impl<U: 'static>(&self, flags: u64) -> Option<RingBufEntry<U>> {
-        let ptr = unsafe { bpf_ringbuf_reserve(self.as_ptr(), size_of::<U>() as u64, flags) }
-            .cast::<MaybeUninit<U>>();
-        unsafe { RingBufEntry::from_raw(ptr) }
+        RingBufEntry::reserve(self.as_ptr(), flags)
     }
 
     /// Copy `data` to the ring buffer output using the map's `T`.
@@ -101,15 +73,12 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> RingBuf<T, MAX_ENTRIES, FL
     /// Unlike [`reserve`], this function can handle dynamically sized types (which is hard to
     /// create in eBPF but still possible, e.g. by slicing an array).
     ///
-    /// Note: `T` must be aligned to no more than 8 bytes; it's not possible to fulfill larger
-    /// alignment requests. If you use this with a `T` that isn't properly aligned, this function will
-    /// be compiled to a panic and silently make your eBPF program fail to load.
-    /// See [here](https://github.com/torvalds/linux/blob/3f01e9fed/kernel/bpf/ringbuf.c#L418).
+    /// This method copies bytes without adding alignment padding, even for types
+    /// aligned to more than eight bytes. Read those records as unaligned data.
     ///
     /// [`reserve`]: RingBuf::reserve
     /// [`submit`]: RingBufEntry::submit
     pub fn output_untyped<U: ?Sized>(&self, data: &U, flags: u64) -> Result<(), i32> {
-        assert_eq!(8 % align_of_val(data), 0);
         let ret = unsafe {
             bpf_ringbuf_output(
                 self.as_ptr(),

@@ -136,7 +136,22 @@ pub mod raw_tracepoint {
 }
 
 pub mod ring_buf {
-    // This structure's definition is duplicated in the probe.
+    pub const OUTPUT_ARGUMENT: u64 = u64::MAX - 3;
+
+    #[repr(C, align(32))]
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub struct AlignedEvent(pub [u64; 4]);
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for AlignedEvent {}
+
+    #[repr(C, align(4096))]
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub struct PageEvent(pub [u8; 4096]);
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for PageEvent {}
+
     #[repr(C)]
     #[derive(Clone, Copy, Debug, Eq, PartialEq, Default)]
     pub struct Registers {

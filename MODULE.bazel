@@ -51,8 +51,8 @@ archive_override(
 rules_rust = use_extension("@rules_rs//rs:rules_rust.bzl", "rules_rust")
 use_repo(rules_rust, "rules_rust")
 
-# Aya's eBPF crates use generic_const_exprs, asm_experimental_arch, and
-# core_intrinsics, so the hermetic Rust toolchain must be a pinned nightly.
+# Aya's eBPF crates use asm_experimental_arch and core_intrinsics,
+# so the hermetic Rust toolchain must be a pinned nightly.
 # CI reads these same version attributes; scripts/rust-toolchain-pins.py
 # advances them with Buildozer.
 toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")

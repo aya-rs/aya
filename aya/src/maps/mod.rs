@@ -196,6 +196,15 @@ pub enum MapError {
         expected: usize,
     },
 
+    /// The value's alignment exceeds the mapping's alignment guarantee.
+    #[error("invalid value alignment {alignment}, maximum {max_alignment}")]
+    InvalidValueAlignment {
+        /// Requested alignment.
+        alignment: usize,
+        /// Maximum supported alignment.
+        max_alignment: usize,
+    },
+
     /// Invalid value stride
     #[error("invalid value size {size}, expected a non-zero multiple of {stride}")]
     InvalidValueStride {

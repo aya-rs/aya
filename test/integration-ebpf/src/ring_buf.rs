@@ -10,7 +10,7 @@ use aya_ebpf::{
     maps::{Array, RingBuf as LegacyRingBuf},
     programs::ProbeContext,
 };
-use integration_common::ring_buf::Registers;
+use integration_common::ring_buf::{AlignedEvent, OUTPUT_ARGUMENT, PageEvent, Registers};
 #[cfg(not(test))]
 extern crate ebpf_panic;
 
@@ -19,6 +19,9 @@ static RING_BUF: BtfRingBuf<u64, 0, 0> = BtfRingBuf::new();
 
 #[btf_map]
 static RING_BUF_MISMATCH: BtfRingBuf<u32, 0, 0> = BtfRingBuf::new();
+
+#[btf_map]
+static RING_BUF_ALIGNED: BtfRingBuf<AlignedEvent, 0, 0> = BtfRingBuf::new();
 
 #[map]
 static RING_BUF_LEGACY: LegacyRingBuf = LegacyRingBuf::with_byte_size(0, 0);
@@ -95,3 +98,54 @@ macro_rules! define_ring_buf_mismatch {
 
 define_ring_buf_mismatch!(ring_buf_mismatch_small, u16);
 define_ring_buf_mismatch!(ring_buf_mismatch_large, u64);
+
+macro_rules! define_ring_buf_aligned {
+    ($name:ident, $ring:ident, $reserve:expr) => {
+        #[uprobe]
+        fn $name(ctx: ProbeContext) {
+            let Some(arg) = ctx.arg::<u64>(0) else { return };
+            // A 24-byte record (including its header) changes the next
+            // reservation's position modulo 32, covering all four paddings.
+            let Some(prefix) = $ring.reserve_bytes(16, 0) else {
+                return;
+            };
+            prefix.discard(0);
+            let Some(mut entry) = $reserve else { return };
+            let value = entry.write(AlignedEvent([arg, arg + 1, arg + 2, arg + 3]));
+            if arg == OUTPUT_ARGUMENT {
+                // Copy from an aligned reservation instead of a temporary:
+                // the BPF stack only guarantees eight-byte alignment.
+                let _result: Result<(), i32> = $ring.output(value, 0);
+                entry.discard(0);
+            } else if arg & 4 == 0 {
+                entry.submit(0);
+            } else {
+                entry.discard(0);
+            }
+        }
+    };
+}
+
+define_ring_buf_aligned!(
+    ring_buf_aligned,
+    RING_BUF_ALIGNED,
+    RING_BUF_ALIGNED.reserve(0)
+);
+define_ring_buf_aligned!(
+    ring_buf_aligned_legacy,
+    RING_BUF_LEGACY,
+    RING_BUF_LEGACY.reserve::<AlignedEvent>(0)
+);
+
+#[uprobe]
+fn ring_buf_page_aligned(_ctx: ProbeContext) {
+    let Some(mut entry) = RING_BUF_LEGACY.reserve::<PageEvent>(0) else {
+        return;
+    };
+    // Initialize in place instead of materializing a value larger than the
+    // BPF stack. The entire reservation payload is written before submission.
+    unsafe {
+        entry.as_mut_ptr().write_bytes(42, 1);
+    }
+    entry.submit(0);
+}

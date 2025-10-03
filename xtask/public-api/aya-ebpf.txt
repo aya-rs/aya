@@ -1312,18 +1312,18 @@ impl<'a> core::marker::Unpin for aya_ebpf::maps::ring_buf::RingBufBytes<'a>
 impl<'a> core::marker::UnsafeUnpin for aya_ebpf::maps::ring_buf::RingBufBytes<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::ring_buf::RingBufBytes<'a>
 impl<'a> !core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::ring_buf::RingBufBytes<'a>
-pub struct aya_ebpf::maps::ring_buf::RingBufEntry<T: 'static>(_)
+pub struct aya_ebpf::maps::ring_buf::RingBufEntry<T: 'static>
 impl<T> aya_ebpf::maps::ring_buf::RingBufEntry<T>
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::discard(self, u64)
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::submit(self, u64)
+impl<T: core::marker::Send> core::marker::Send for aya_ebpf::maps::ring_buf::RingBufEntry<T>
+impl<T: core::marker::Sync> core::marker::Sync for aya_ebpf::maps::ring_buf::RingBufEntry<T>
 impl<T> core::ops::deref::Deref for aya_ebpf::maps::ring_buf::RingBufEntry<T>
 pub type aya_ebpf::maps::ring_buf::RingBufEntry<T>::Target = core::mem::maybe_uninit::MaybeUninit<T>
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::deref(&self) -> &Self::Target
 impl<T> core::ops::deref::DerefMut for aya_ebpf::maps::ring_buf::RingBufEntry<T>
 pub fn aya_ebpf::maps::ring_buf::RingBufEntry<T>::deref_mut(&mut self) -> &mut Self::Target
 impl<T> core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBufEntry<T> where &'static mut core::mem::maybe_uninit::MaybeUninit<T>: core::marker::Freeze
-impl<T> core::marker::Send for aya_ebpf::maps::ring_buf::RingBufEntry<T> where &'static mut core::mem::maybe_uninit::MaybeUninit<T>: core::marker::Send
-impl<T> core::marker::Sync for aya_ebpf::maps::ring_buf::RingBufEntry<T> where &'static mut core::mem::maybe_uninit::MaybeUninit<T>: core::marker::Sync
 impl<T> core::marker::Unpin for aya_ebpf::maps::ring_buf::RingBufEntry<T> where &'static mut core::mem::maybe_uninit::MaybeUninit<T>: core::marker::Unpin
 impl<T> core::marker::UnsafeUnpin for aya_ebpf::maps::ring_buf::RingBufEntry<T> where &'static mut core::mem::maybe_uninit::MaybeUninit<T>: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::ring_buf::RingBufEntry<T> where &'static mut core::mem::maybe_uninit::MaybeUninit<T>: core::panic::unwind_safe::RefUnwindSafe
