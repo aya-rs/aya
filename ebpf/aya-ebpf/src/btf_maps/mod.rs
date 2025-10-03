@@ -40,11 +40,11 @@ macro_rules! btf_map_def {
         impl<K, V, const M: usize, const F: usize> $name<K, V, M, F> {
             pub const fn new() -> $name<K, V, M, F> {
                 $name {
-                    r#type: &[0i32; $t as usize],
+                    r#type: ::core::ptr::null(),
                     key: ::core::ptr::null(),
                     value: ::core::ptr::null(),
-                    max_entries: &[0i32; M],
-                    map_flags: &[0i32; F],
+                    max_entries: ::core::ptr::null(),
+                    map_flags: ::core::ptr::null(),
                     _anon: $crate::btf_maps::AyaBtfMapMarker::new(),
                 }
             }
