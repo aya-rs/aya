@@ -219,18 +219,18 @@ pub(crate) fn run(opts: Options) -> Result<()> {
             // We need tools to build the initramfs; we use gen_init_cpio from the Linux repository,
             // taking care to cache it.
             //
-            // Then we iterate the kernel images, using the `file` program to guess the target
+            // We iterate the kernel images, using the `file` program to guess the target
             // architecture. We then build the init program and our test binaries for that
             // architecture, and use gen_init_cpio to build an initramfs containing the test
-            // binaries. We're almost ready to run the VM.
+            // binaries. We're ready to run the VM.
             //
-            // We consult our OS, our architecture, and the target architecture to determine if
-            // hardware acceleration is available, and then start QEMU with the provided kernel
-            // image and the initramfs we built.
+            // We start QEMU with the provided kernel image and the initramfs we built.
             //
             // We consume the output of QEMU, looking for the output of our init program. This is
             // the only way to distinguish success from failure. We batch up the errors across all
-            // VM images and report to the user. The end.
+            // VM images and report to the user.
+            //
+            // The end.
 
             create_dir_all(&cache_dir).context("failed to create cache dir")?;
 
