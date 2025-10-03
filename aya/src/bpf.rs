@@ -435,7 +435,7 @@ impl<'a> EbpfLoader<'a> {
                             }
                         }
 
-                        warn!("Object BTF couldn't be loaded in the kernel: {err}");
+                        warn!("object BTF couldn't be loaded in the kernel: {err}");
 
                         None
                     }

@@ -73,7 +73,7 @@ use crate::{
 ///     let mut guard = poll.readable();
 ///     let ring_buf = guard.inner_mut();
 ///     while let Some(item) = ring_buf.next() {
-///         println!("Received: {:?}", item);
+///         println!("received: {:?}", item);
 ///     }
 ///     guard.clear_ready();
 /// }
