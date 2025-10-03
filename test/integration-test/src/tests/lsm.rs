@@ -1,18 +1,14 @@
-use std::{
-    fs::{File, OpenOptions},
-    io::{ErrorKind, Write as _},
-    net::TcpListener,
-    path::Path,
-};
+use std::{io::ErrorKind, net::TcpListener};
 
 use aya::{
     Btf, Ebpf,
     programs::{Lsm, lsm_cgroup::LsmCgroup},
     sys::is_program_supported,
-    util::KernelVersion,
 };
 
-fn check_sys_lsm_enabled() -> bool {
+use crate::utils::Cgroup;
+
+fn is_lsm_bpf_enabled() -> bool {
     std::fs::read_to_string("/sys/kernel/security/lsm")
         .unwrap()
         .contains("bpf")
@@ -20,14 +16,7 @@ fn check_sys_lsm_enabled() -> bool {
 
 #[test]
 fn lsm_cgroup() {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(6, 0, 0) {
-        eprintln!("skipping lsm_cgroup test on kernel {kernel_version:?}");
-        return;
-    }
-
-    if !(is_program_supported(aya::programs::ProgramType::Lsm).unwrap()) || !check_sys_lsm_enabled()
-    {
+    if !(is_program_supported(aya::programs::ProgramType::Lsm).unwrap() && is_lsm_bpf_enabled()) {
         eprintln!("LSM programs are not supported");
         return;
     }
@@ -43,46 +32,32 @@ fn lsm_cgroup() {
 
     assert_matches::assert_matches!(TcpListener::bind("127.0.0.1:12345"), Ok(_));
 
-    let pid = std::process::id();
+    let root = Cgroup::root();
+    let cgroup = root.create_child("aya-test-lsm-cgroup");
+    let fd = cgroup.fd();
 
-    let cgroup_dir = Path::new("/sys/fs/cgroup/lsm_cgroup_test");
-    std::fs::create_dir_all(cgroup_dir).expect("could not create cgroup dir");
-    let _guard = scopeguard::guard((), |()| {
-        std::fs::remove_dir(cgroup_dir).unwrap();
-    });
-
-    let link_id = prog.attach(File::open(cgroup_dir).unwrap()).unwrap();
+    let link_id = prog.attach(&fd).unwrap();
     let _guard = scopeguard::guard((), |()| {
         prog.detach(link_id).unwrap();
     });
 
-    assert_matches::assert_matches!(TcpListener::bind("127.0.0.1:12345"), Ok(_));
-    let proc_path = cgroup_dir.join("cgroup.procs");
+    let pid = std::process::id();
 
-    let mut procfs = OpenOptions::new().append(true).open(proc_path).unwrap();
-    write!(procfs, "{pid}").expect("could not write into procs file");
-    let _guard = scopeguard::guard((), |()| {
-        let mut file = OpenOptions::new()
-            .append(true)
-            .open("/sys/fs/cgroup/cgroup.procs")
-            .unwrap();
-        write!(file, "{pid}").expect("could not write into procs file");
-    });
+    assert_matches::assert_matches!(TcpListener::bind("127.0.0.1:12345"), Ok(_));
+
+    cgroup.into_cgroup().write_pid(pid);
 
     assert_matches::assert_matches!(TcpListener::bind("127.0.0.1:12345"), Err(e) => assert_eq!(
         e.kind(), ErrorKind::PermissionDenied));
+
+    root.write_pid(pid);
+
+    assert_matches::assert_matches!(TcpListener::bind("127.0.0.1:12345"), Ok(_));
 }
 
 #[test]
 fn lsm() {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 7, 0) {
-        eprintln!("skipping lsm test on kernel {kernel_version:?}");
-        return;
-    }
-
-    if !(is_program_supported(aya::programs::ProgramType::Lsm).unwrap()) || !check_sys_lsm_enabled()
-    {
+    if !(is_program_supported(aya::programs::ProgramType::Lsm).unwrap() && is_lsm_bpf_enabled()) {
         eprintln!("LSM programs are not supported");
         return;
     }
