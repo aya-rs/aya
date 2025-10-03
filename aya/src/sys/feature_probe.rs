@@ -28,7 +28,7 @@ use crate::{
 /// match is_program_supported(ProgramType::Xdp) {
 ///     Ok(true) => println!("XDP supported :)"),
 ///     Ok(false) => println!("XDP not supported :("),
-///     Err(err) => println!("Uh oh! Unexpected error while probing: {:?}", err),
+///     Err(err) => println!("unexpected error while probing: {:?}", err),
 /// }
 /// ```
 ///
@@ -169,7 +169,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
 /// match is_map_supported(MapType::HashOfMaps) {
 ///     Ok(true) => println!("hash_of_maps supported :)"),
 ///     Ok(false) => println!("hash_of_maps not supported :("),
-///     Err(err) => println!("Uh oh! Unexpected error while probing: {:?}", err),
+///     Err(err) => println!("unexpected error while probing: {:?}", err),
 /// }
 /// ```
 ///

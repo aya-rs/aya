@@ -24,18 +24,17 @@ impl NetNsGuard {
         let pid = process::id();
         let name = format!("aya-test-{pid}-{}", COUNTER.fetch_add(1, Ordering::Relaxed));
 
-        // Create and enter netns
-        let ns = NetNs::new(&name).unwrap_or_else(|e| panic!("Failed to create netns {name}: {e}"));
-        let netns = Self {
+        let ns = NetNs::new(&name).unwrap_or_else(|e| panic!("failed to create netns {name}: {e}"));
+
+        ns.enter()
+            .unwrap_or_else(|e| panic!("failed to enter network namespace {name}: {e}"));
+        println!("entered network namespace {name}");
+
+        let ns = Self {
             old_ns,
             ns: Some(ns),
             name,
         };
-
-        let ns = netns.ns.as_ref().unwrap();
-        ns.enter()
-            .unwrap_or_else(|e| panic!("Failed to enter network namespace {}: {e}", netns.name));
-        println!("Entered network namespace {}", netns.name);
 
         // By default, the loopback in a new netns is down. Set it up.
         let lo = CString::new("lo").unwrap();
@@ -43,31 +42,32 @@ impl NetNsGuard {
             let idx = if_nametoindex(lo.as_ptr());
             if idx == 0 {
                 panic!(
-                    "Interface `lo` not found in netns {}: {}",
-                    netns.name,
+                    "interface `lo` not found in netns {}: {}",
+                    ns.name,
                     io::Error::last_os_error()
                 );
             }
             netlink_set_link_up(idx as i32)
-                .unwrap_or_else(|e| panic!("Failed to set `lo` up in netns {}: {e}", netns.name));
+                .unwrap_or_else(|e| panic!("failed to set `lo` up in netns {}: {e}", ns.name));
         }
 
-        netns
+        ns
     }
 }
 
 impl Drop for NetNsGuard {
     fn drop(&mut self) {
-        // Avoid panic in panic
-        if let Err(e) = self.old_ns.enter() {
-            eprintln!("Failed to return to original netns: {e}");
+        let Self { old_ns, ns, name } = self;
+        // Avoid panic in panic.
+        if let Err(e) = old_ns.enter() {
+            eprintln!("failed to return to original netns: {e}");
         }
-        if let Some(ns) = self.ns.take() {
+        if let Some(ns) = ns.take() {
             if let Err(e) = ns.remove() {
-                eprintln!("Failed to remove netns {}: {e}", self.name);
+                eprintln!("failed to remove netns {name}: {e}");
             }
         }
-        println!("Exited network namespace {}", self.name);
+        println!("exited network namespace {name}");
     }
 }
 

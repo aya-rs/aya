@@ -1209,7 +1209,7 @@ impl_info!(
 ///
 /// for info in loaded_links() {
 ///    if let Ok(info) = info {
-///        println!("Loaded link: {}", info.id());
+///        println!("loaded link: {}", info.id());
 ///    }
 /// }
 /// ```
