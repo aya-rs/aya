@@ -8,13 +8,18 @@
     html_logo_url = "https://aya-rs.dev/assets/images/crabby.svg",
     html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
 )]
-// TODO(https://github.com/rust-lang/rust/issues/141492): reenable this.
 #![cfg_attr(
     generic_const_exprs,
     expect(incomplete_features),
+    expect(unstable_features),
     feature(generic_const_exprs)
 )]
-#![cfg_attr(target_arch = "bpf", feature(asm_experimental_arch))]
+#![cfg_attr(
+    target_arch = "bpf",
+    expect(unused_crate_dependencies, reason = "compiler_builtins"),
+    expect(unstable_features),
+    feature(asm_experimental_arch)
+)]
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
 #![no_std]
 
@@ -65,7 +70,6 @@ pub trait EbpfContext {
     }
 }
 
-#[cfg_attr(target_arch = "bpf", expect(clippy::missing_safety_doc))]
 mod intrinsics {
     use super::cty::c_int;
 

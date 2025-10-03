@@ -1,18 +1,7 @@
-use std::env;
-
 fn main() {
-    check_rust_version();
     println!("cargo:rerun-if-env-changed=CARGO_CFG_BPF_TARGET_ARCH");
-    if let Ok(arch) = env::var("CARGO_CFG_BPF_TARGET_ARCH") {
-        println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
-    } else {
-        let arch = env::var("HOST").unwrap();
-        let mut arch = arch.split_once('-').map_or(&*arch, |x| x.0);
-        if arch.starts_with("riscv64") {
-            arch = "riscv64";
-        }
-        println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
-    }
+    println!("cargo:rerun-if-env-changed=HOST");
+
     print!("cargo::rustc-check-cfg=cfg(bpf_target_arch, values(");
     for arch in [
         "aarch64",
@@ -28,7 +17,20 @@ fn main() {
     }
     println!("))");
 
+    if let Some(arch) = std::env::var_os("CARGO_CFG_BPF_TARGET_ARCH") {
+        let arch = arch.to_str().unwrap();
+        println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
+    } else if let Some(host) = std::env::var_os("HOST") {
+        let host = host.to_str().unwrap();
+        let mut arch = host.split_once('-').map_or(host, |(arch, _rest)| arch);
+        if arch.starts_with("riscv64") {
+            arch = "riscv64";
+        }
+        println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
+    }
+
     println!("cargo::rustc-check-cfg=cfg(generic_const_exprs)");
+    check_rust_version();
 }
 
 #[rustversion::nightly]

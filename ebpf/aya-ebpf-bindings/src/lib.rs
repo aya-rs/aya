@@ -1,3 +1,7 @@
+#![cfg_attr(
+    target_arch = "bpf",
+    expect(unused_crate_dependencies, reason = "compiler_builtins")
+)]
 #![expect(
     clippy::all,
     clippy::cast_lossless,
