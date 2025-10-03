@@ -4,24 +4,18 @@
 
 use aya_ebpf::{
     bindings::{bpf_ret_code, xdp_action},
-    macros::{flow_dissector, kprobe, kretprobe, tracepoint, uprobe, uretprobe, xdp},
+    macros::{flow_dissector, kprobe, kretprobe, lsm, tracepoint, uprobe, uretprobe, xdp},
     programs::{
-        FlowDissectorContext, ProbeContext, RetProbeContext, TracePointContext, XdpContext,
+        FlowDissectorContext, LsmContext, ProbeContext, RetProbeContext, TracePointContext,
+        XdpContext,
     },
 };
 #[cfg(not(test))]
 extern crate ebpf_panic;
 
 #[xdp]
-fn pass(ctx: XdpContext) -> u32 {
-    match unsafe { try_pass(ctx) } {
-        Ok(ret) => ret,
-        Err(_) => xdp_action::XDP_ABORTED,
-    }
-}
-
-unsafe fn try_pass(_ctx: XdpContext) -> Result<u32, u32> {
-    Ok(xdp_action::XDP_PASS)
+fn pass(_ctx: XdpContext) -> u32 {
+    xdp_action::XDP_PASS
 }
 
 #[kprobe]
@@ -54,4 +48,9 @@ fn test_flow(_ctx: FlowDissectorContext) -> u32 {
     // TODO: write an actual flow dissector. See tools/testing/selftests/bpf/progs/bpf_flow.c in the
     // Linux kernel for inspiration.
     bpf_ret_code::BPF_FLOW_DISSECTOR_CONTINUE
+}
+
+#[lsm(hook = "file_open")]
+fn test_file_open(_ctx: LsmContext) -> i32 {
+    1 // Disallow.
 }
