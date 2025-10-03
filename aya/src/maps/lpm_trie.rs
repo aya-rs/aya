@@ -1,4 +1,5 @@
 //! A LPM Trie.
+
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
