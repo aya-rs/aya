@@ -13,7 +13,9 @@ use crate::utils::kernel_assert;
 
 #[test_log::test]
 fn probe_supported_programs() {
+    let current = aya::util::KernelVersion::current().unwrap();
     let kernel_config = kernel_config().unwrap_or_default();
+
     macro_rules! is_supported {
         ($prog_type:expr) => {
             is_program_supported($prog_type).unwrap()
@@ -61,22 +63,25 @@ fn probe_supported_programs() {
     let kern_version = KernelVersion::new(4, 18, 0);
     kernel_assert!(is_supported!(ProgramType::LwtSeg6local), kern_version);
 
-    // `lirc_mode2` requires CONFIG_BPF_LIRC_MODE2=y
-    let lirc_mode2_config = matches!(
-        kernel_config.get("CONFIG_BPF_LIRC_MODE2"),
-        Some(procfs::ConfigSetting::Yes)
-    );
-    let lirc_mode2 = is_supported!(ProgramType::LircMode2);
-    kernel_assert!(
-        if aya::util::KernelVersion::current().unwrap() >= kern_version {
-            lirc_mode2 == lirc_mode2_config
-        } else {
-            lirc_mode2
-        },
-        kern_version
-    );
-    if !lirc_mode2_config {
-        eprintln!("CONFIG_BPF_LIRC_MODE2 required for lirc_mode2 program type");
+    if current >= kern_version {
+        // `lirc_mode2` requires CONFIG_BPF_LIRC_MODE2=y
+        let lirc_mode2_config = matches!(
+            kernel_config.get("CONFIG_BPF_LIRC_MODE2"),
+            Some(procfs::ConfigSetting::Yes)
+        );
+        assert_eq!(
+            is_supported!(ProgramType::LircMode2),
+            lirc_mode2_config,
+            "current={current}"
+        );
+        if !lirc_mode2_config {
+            eprintln!("CONFIG_BPF_LIRC_MODE2 required for lirc_mode2 program type");
+        }
+    } else {
+        assert!(
+            !is_supported!(ProgramType::LircMode2),
+            "{current} < {kern_version}"
+        );
     }
 
     let kern_version = KernelVersion::new(4, 19, 0);
@@ -106,24 +111,27 @@ fn probe_supported_programs() {
     // `lsm` requires `CONFIG_DEBUG_INFO_BTF=y` & `CONFIG_BPF_LSM=y`
     // Ways to check if `CONFIG_BPF_LSM` is enabled:
     // - kernel config has `CONFIG_BPF_LSM=y`, but config is not always exposed.
-    // - an LSM hooks is present in BTF, e.g. `bpf_lsm_bpf`. hooks are found in `bpf_lsm.c`
-    let lsm_enabled = matches!(
-        kernel_config.get("CONFIG_BPF_LSM"),
-        Some(procfs::ConfigSetting::Yes)
-    ) || Btf::from_sys_fs()
-        .and_then(|btf| btf.id_by_type_name_kind("bpf_lsm_bpf", aya_obj::btf::BtfKind::Func))
-        .is_ok();
-    let lsm = is_supported!(ProgramType::Lsm);
-    kernel_assert!(
-        if aya::util::KernelVersion::current().unwrap() >= kern_version {
-            lsm == lsm_enabled
-        } else {
-            lsm
-        },
-        kern_version
-    );
-    if !lsm_enabled {
-        eprintln!("CONFIG_BPF_LSM required for lsm program type");
+    // - an LSM hook is present in BTF, e.g. `bpf_lsm_bpf`. hooks are found in `bpf_lsm.c`
+    if current >= kern_version {
+        let lsm_enabled = matches!(
+            kernel_config.get("CONFIG_BPF_LSM"),
+            Some(procfs::ConfigSetting::Yes)
+        ) || Btf::from_sys_fs()
+            .and_then(|btf| btf.id_by_type_name_kind("bpf_lsm_bpf", aya_obj::btf::BtfKind::Func))
+            .is_ok();
+        assert_eq!(
+            is_supported!(ProgramType::Lsm),
+            lsm_enabled,
+            "current={current}"
+        );
+        if !lsm_enabled {
+            eprintln!("CONFIG_BPF_LSM required for lsm program type");
+        }
+    } else {
+        assert!(
+            !is_supported!(ProgramType::Lsm),
+            "{current} < {kern_version}"
+        );
     }
 
     let kern_version = KernelVersion::new(5, 9, 0);
