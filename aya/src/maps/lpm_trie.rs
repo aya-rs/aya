@@ -3,13 +3,11 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
-    os::fd::AsFd as _,
 };
 
 use crate::{
     Pod,
-    maps::{IterableMap, MapData, MapError, MapIter, MapKeys, check_kv_size},
-    sys::{SyscallError, bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
+    maps::{IterableMap, MapData, MapError, MapIter, MapKeys, check_kv_size, hash_map},
 };
 
 /// A Longest Prefix Match Trie.
@@ -120,12 +118,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
 
     /// Returns a copy of the value associated with the longest prefix matching key in the LpmTrie.
     pub fn get(&self, key: &Key<K>, flags: u64) -> Result<V, MapError> {
-        let fd = self.inner.borrow().fd().as_fd();
-        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|io_error| SyscallError {
-            call: "bpf_map_lookup_elem",
-            io_error,
-        })?;
-        value.ok_or(MapError::KeyNotFound)
+        hash_map::get(self.inner.borrow(), key, flags)
     }
 
     /// An iterator visiting all key-value pairs. The
@@ -149,26 +142,14 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
         value: impl Borrow<V>,
         flags: u64,
     ) -> Result<(), MapError> {
-        let fd = self.inner.borrow().fd().as_fd();
-        bpf_map_update_elem(fd, Some(key), value.borrow(), flags)
-            .map_err(|io_error| SyscallError {
-                call: "bpf_map_update_elem",
-                io_error,
-            })
-            .map_err(Into::into)
+        hash_map::insert(self.inner.borrow_mut(), key, value.borrow(), flags)
     }
 
     /// Removes an element from the map.
     ///
     /// Both the prefix and data must match exactly - this method does not do a longest prefix match.
     pub fn remove(&mut self, key: &Key<K>) -> Result<(), MapError> {
-        let fd = self.inner.borrow().fd().as_fd();
-        bpf_map_delete_elem(fd, key)
-            .map_err(|io_error| SyscallError {
-                call: "bpf_map_delete_elem",
-                io_error,
-            })
-            .map_err(Into::into)
+        hash_map::remove(self.inner.borrow_mut(), key)
     }
 }
 
@@ -199,7 +180,7 @@ mod tests {
             Map,
             test_utils::{self, new_map},
         },
-        sys::{SysResult, Syscall, override_syscall},
+        sys::{SysResult, Syscall, SyscallError, override_syscall},
     };
 
     fn new_obj_map() -> aya_obj::Map {

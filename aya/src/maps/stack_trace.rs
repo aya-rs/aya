@@ -11,8 +11,8 @@ use std::{
 };
 
 use crate::{
-    maps::{IterableMap, MapData, MapError, MapIter, MapKeys},
-    sys::{SyscallError, bpf_map_delete_elem, bpf_map_lookup_elem_ptr},
+    maps::{IterableMap, MapData, MapError, MapIter, MapKeys, hash_map},
+    sys::{SyscallError, bpf_map_lookup_elem_ptr},
 };
 
 /// A hash map of kernel or user space stack traces.
@@ -167,13 +167,7 @@ impl<'a, T: Borrow<MapData>> IntoIterator for &'a StackTraceMap<T> {
 impl<T: BorrowMut<MapData>> StackTraceMap<T> {
     /// Removes the stack trace with the given stack_id.
     pub fn remove(&mut self, stack_id: &u32) -> Result<(), MapError> {
-        let fd = self.inner.borrow().fd().as_fd();
-        bpf_map_delete_elem(fd, stack_id)
-            .map_err(|io_error| SyscallError {
-                call: "bpf_map_delete_elem",
-                io_error,
-            })
-            .map_err(Into::into)
+        hash_map::remove(self.inner.borrow_mut(), stack_id)
     }
 }
 

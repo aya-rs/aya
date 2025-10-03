@@ -1,7 +1,7 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
-    os::fd::{AsFd as _, AsRawFd, RawFd},
+    os::fd::{AsRawFd, RawFd},
 };
 
 use crate::{
@@ -10,7 +10,6 @@ use crate::{
         IterableMap, MapData, MapError, MapFd, MapIter, MapKeys, check_kv_size, hash_map,
         sock::SockMapFd,
     },
-    sys::{SyscallError, bpf_map_lookup_elem},
 };
 
 /// A hash map of TCP or UDP sockets.
@@ -82,12 +81,7 @@ impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
 
     /// Returns the fd of the socket stored at the given key.
     pub fn get(&self, key: &K, flags: u64) -> Result<RawFd, MapError> {
-        let fd = self.inner.borrow().fd().as_fd();
-        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|io_error| SyscallError {
-            call: "bpf_map_lookup_elem",
-            io_error,
-        })?;
-        value.ok_or(MapError::KeyNotFound)
+        hash_map::get(self.inner.borrow(), key, flags)
     }
 
     /// An iterator visiting all key-value pairs in arbitrary order. The

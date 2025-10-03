@@ -1,13 +1,11 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
-    os::fd::AsFd as _,
 };
 
 use crate::{
     Pod,
     maps::{IterableMap, MapData, MapError, MapIter, MapKeys, check_kv_size, hash_map},
-    sys::{SyscallError, bpf_map_lookup_elem},
 };
 
 /// A hash map that can be shared between eBPF programs and user space.
@@ -53,12 +51,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
 
     /// Returns a copy of the value associated with the key.
     pub fn get(&self, key: &K, flags: u64) -> Result<V, MapError> {
-        let fd = self.inner.borrow().fd().as_fd();
-        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|io_error| SyscallError {
-            call: "bpf_map_lookup_elem",
-            io_error,
-        })?;
-        value.ok_or(MapError::KeyNotFound)
+        hash_map::get(self.inner.borrow(), key, flags)
     }
 
     /// An iterator visiting all key-value pairs in arbitrary order. The
@@ -118,7 +111,7 @@ mod tests {
             Map,
             test_utils::{self, new_map},
         },
-        sys::{SysResult, Syscall, override_syscall},
+        sys::{SysResult, Syscall, SyscallError, override_syscall},
     };
 
     fn new_obj_map() -> aya_obj::Map {

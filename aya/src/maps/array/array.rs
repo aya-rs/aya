@@ -1,13 +1,11 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
-    os::fd::AsFd as _,
 };
 
 use crate::{
     Pod,
-    maps::{IterableMap, MapData, MapError, check_bounds, check_kv_size},
-    sys::{SyscallError, bpf_map_lookup_elem, bpf_map_update_elem},
+    maps::{IterableMap, MapData, MapError, check_bounds, check_kv_size, hash_map},
 };
 
 /// A fixed-size array.
@@ -63,13 +61,7 @@ impl<T: Borrow<MapData>, V: Pod> Array<T, V> {
     pub fn get(&self, index: &u32, flags: u64) -> Result<V, MapError> {
         let data = self.inner.borrow();
         check_bounds(data, *index)?;
-        let fd = data.fd().as_fd();
-
-        let value = bpf_map_lookup_elem(fd, index, flags).map_err(|io_error| SyscallError {
-            call: "bpf_map_lookup_elem",
-            io_error,
-        })?;
-        value.ok_or(MapError::KeyNotFound)
+        hash_map::get(data, index, flags)
     }
 
     /// An iterator over the elements of the array. The iterator item type is `Result<V,
@@ -89,14 +81,7 @@ impl<T: BorrowMut<MapData>, V: Pod> Array<T, V> {
     pub fn set(&mut self, index: u32, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
-        let fd = data.fd().as_fd();
-        bpf_map_update_elem(fd, Some(&index), value.borrow(), flags).map_err(|io_error| {
-            SyscallError {
-                call: "bpf_map_update_elem",
-                io_error,
-            }
-        })?;
-        Ok(())
+        hash_map::insert(data, &index, value.borrow(), flags)
     }
 }
 
