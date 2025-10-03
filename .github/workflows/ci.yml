@@ -282,6 +282,19 @@ jobs:
         with:
           tool: bpf-linker,cargo-hack
 
+      - name: Check ring-buffer reservations with the next trait solver
+        env:
+          # Suppressing warnings must not hide the probe's solver fallback.
+          RUSTFLAGS: -Znext-solver=globally -Awarnings --cap-lints=allow
+          RUSTDOCFLAGS: -Znext-solver=globally -Awarnings --cap-lints=allow
+        run: cargo +nightly test --locked --doc --package aya-ebpf maps::ring_buf::RingBuf
+
+      - name: Check compile-time ring-buffer alignment bounds
+        env:
+          RUSTFLAGS: -Znext-solver=coherence
+          RUSTDOCFLAGS: -Znext-solver=coherence
+        run: cargo +nightly test --locked --doc --package aya-ebpf maps::ring_buf::RingBuf -- --include-ignored
+
       - name: Build & test for all BPF architectures
         env:
           RUST_BACKTRACE: full

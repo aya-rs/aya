@@ -15,6 +15,33 @@ use crate::{
     maps::{MapDef, PinningType},
 };
 
+/// An eBPF ring buffer.
+///
+/// ```no_run
+/// use aya_ebpf::maps::RingBuf;
+///
+/// let ring = RingBuf::with_byte_size(4096, 0);
+/// if let Some(mut entry) = ring.reserve::<u64>(0) {
+///     entry.write(42);
+///     entry.submit(0);
+/// }
+/// ```
+///
+/// Reservations require a type aligned to at most 8 bytes. Builds whose compiler
+/// supports `generic_const_exprs` reject larger alignments at compile time; other
+/// configurations check alignment at runtime. This example is ignored by default;
+/// run it on a compatible nightly with `--include-ignored`. See
+/// <https://github.com/rust-lang/rust/issues/160895> for trait-solver compatibility.
+///
+/// ```compile_fail,E0277,ignore
+/// use aya_ebpf::maps::RingBuf;
+///
+/// #[repr(align(16))]
+/// struct Event;
+///
+/// let ring = RingBuf::with_byte_size(4096, 0);
+/// let _entry = ring.reserve::<Event>(0);
+/// ```
 #[repr(transparent)]
 pub struct RingBuf {
     def: MapDef,
@@ -153,9 +180,13 @@ impl RingBuf {
     ///
     /// Returns `None` if the ring buffer is full.
     #[cfg(generic_const_exprs)]
+    #[expect(
+        private_bounds,
+        reason = "the bound only checks alignment at compile time"
+    )]
     pub fn reserve<T: 'static>(&self, flags: u64) -> Option<RingBufEntry<T>>
     where
-        Assert<{ 8 % mem::align_of::<T>() == 0 }>: IsTrue,
+        Assert<{ 8 % align_of::<T>() == 0 }>: IsTrue,
     {
         self.reserve_impl(flags)
     }

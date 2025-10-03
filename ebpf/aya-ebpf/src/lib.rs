@@ -14,19 +14,15 @@
         incomplete_features,
         reason = "generic_const_exprs requires incomplete features"
     ),
-    expect(
-        unstable_features,
-        reason = "generic_const_exprs requires unstable features"
-    ),
     feature(generic_const_exprs)
 )]
+#![cfg_attr(target_arch = "bpf", feature(asm_experimental_arch))]
 #![cfg_attr(
-    target_arch = "bpf",
+    any(generic_const_exprs, target_arch = "bpf"),
     expect(
         unstable_features,
-        reason = "asm_experimental_arch requires unstable features"
-    ),
-    feature(asm_experimental_arch)
+        reason = "generic_const_exprs and asm_experimental_arch require unstable features"
+    )
 )]
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
 #![no_std]
