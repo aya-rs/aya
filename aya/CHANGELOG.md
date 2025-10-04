@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Remove `AsyncPerfEventArray` and `AsyncPerfEventArrayBuffer` These types have been removed to
    avoid maintaining support for multiple async runtimes. Use `PerfEventArrayBuffer`, which
    implements `As{,Raw}Fd` for integration with async executors.
+ - Rename `EbpfLoader::map_pin_path` to `EbpfLoader::default_map_ping_directory`.
 
 ## 0.13.1 (2024-11-01)
 
