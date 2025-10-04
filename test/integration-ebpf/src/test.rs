@@ -52,5 +52,5 @@ fn test_flow(_ctx: FlowDissectorContext) -> u32 {
 
 #[lsm(hook = "file_open")]
 fn test_file_open(_ctx: LsmContext) -> i32 {
-    1 // Disallow.
+    -1 // Disallow.
 }
