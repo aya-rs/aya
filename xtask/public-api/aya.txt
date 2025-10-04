@@ -10239,10 +10239,10 @@ pub struct aya::EbpfLoader<'a>
 impl<'a> aya::EbpfLoader<'a>
 pub fn aya::EbpfLoader<'a>::allow_unsupported_maps(&mut self) -> &mut Self
 pub fn aya::EbpfLoader<'a>::btf(&mut self, btf: core::option::Option<&'a aya_obj::btf::btf::Btf>) -> &mut Self
+pub fn aya::EbpfLoader<'a>::default_map_pin_directory<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> &mut Self
 pub fn aya::EbpfLoader<'a>::extension(&mut self, name: &'a str) -> &mut Self
 pub fn aya::EbpfLoader<'a>::load(&mut self, data: &[u8]) -> core::result::Result<aya::Ebpf, aya::EbpfError>
 pub fn aya::EbpfLoader<'a>::load_file<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<aya::Ebpf, aya::EbpfError>
-pub fn aya::EbpfLoader<'a>::map_pin_path<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> &mut Self
 pub fn aya::EbpfLoader<'a>::new() -> Self
 pub fn aya::EbpfLoader<'a>::set_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T, must_exist: bool) -> &mut Self
 pub fn aya::EbpfLoader<'a>::set_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self
