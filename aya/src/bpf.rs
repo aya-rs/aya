@@ -110,7 +110,7 @@ pub fn features() -> &'static Features {
 ///     // load the BTF data from /sys/kernel/btf/vmlinux
 ///     .btf(Btf::from_sys_fs().ok().as_ref())
 ///     // load pinned maps from /sys/fs/bpf/my-program
-///     .map_pin_path("/sys/fs/bpf/my-program")
+///     .default_map_pin_directory("/sys/fs/bpf/my-program")
 ///     // finally load the code
 ///     .load_file("file.o")?;
 /// # Ok::<(), aya::EbpfError>(())
@@ -118,8 +118,10 @@ pub fn features() -> &'static Features {
 #[derive(Debug)]
 pub struct EbpfLoader<'a> {
     btf: Option<Cow<'a, Btf>>,
-    map_pin_path: Option<PathBuf>,
+    default_map_pin_directory: Option<PathBuf>,
     globals: HashMap<&'a str, (&'a [u8], bool)>,
+    // Max entries overrides the max_entries field of the map that matches the provided name
+    // before the map is created.
     max_entries: HashMap<&'a str, u32>,
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
@@ -156,7 +158,7 @@ impl<'a> EbpfLoader<'a> {
     pub fn new() -> Self {
         Self {
             btf: Btf::from_sys_fs().ok().map(Cow::Owned),
-            map_pin_path: None,
+            default_map_pin_directory: None,
             globals: HashMap::new(),
             max_entries: HashMap::new(),
             extensions: HashSet::new(),
@@ -222,13 +224,13 @@ impl<'a> EbpfLoader<'a> {
     /// use aya::EbpfLoader;
     ///
     /// let bpf = EbpfLoader::new()
-    ///     .map_pin_path("/sys/fs/bpf/my-program")
+    ///     .default_map_pin_directory("/sys/fs/bpf/my-program")
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn map_pin_path<P: AsRef<Path>>(&mut self, path: P) -> &mut Self {
-        self.map_pin_path = Some(path.as_ref().to_owned());
+    pub fn default_map_pin_directory<P: AsRef<Path>>(&mut self, path: P) -> &mut Self {
+        self.default_map_pin_directory = Some(path.as_ref().to_owned());
         self
     }
 
@@ -379,7 +381,7 @@ impl<'a> EbpfLoader<'a> {
     pub fn load(&mut self, data: &[u8]) -> Result<Ebpf, EbpfError> {
         let Self {
             btf,
-            map_pin_path,
+            default_map_pin_directory,
             globals,
             max_entries,
             extensions,
@@ -494,7 +496,7 @@ impl<'a> EbpfLoader<'a> {
                 PinningType::ByName => {
                     // pin maps in /sys/fs/bpf by default to align with libbpf
                     // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
-                    let path = map_pin_path
+                    let path = default_map_pin_directory
                         .as_deref()
                         .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
 
