@@ -30,7 +30,7 @@ treatment buildTestAya()
         memory=150,
         storage=800,
         containers=[
-            |container("aarch64", 6000, 1000, 8000, |amd64(), [], "rust:1.90-bookworm", _)
+            |container("aarch64", 6000, 1000, 8000, |amd64(), [], "ghcr.io/cross-rs/aarch64-unknown-linux-gnu" /*"rust:1.90-bookworm"*/, _)
         ]
     )
 
@@ -55,10 +55,10 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine](short: s
         name = |format("prepare_{short}", |entry("short", short)),
         executor_name = |wrap<string>(short),
         commands = |raw_commands([
-            |format("rustup target add {arch}", |entry("arch", arch)),
-            //"cargo install cargo-hack",
-            ${bash -c "curl https://raw.githubusercontent.com/taiki-e/install-action/refs/heads/cargo-hack/main.sh | bash -"},
-            ${bash -c "curl https://raw.githubusercontent.com/taiki-e/setup-cross-toolchain-action/refs/tags/v1/main.sh | bash -"}
+            //|format("rustup target add {arch}", |entry("arch", arch)),
+            "cargo binstall cargo-hack" //,
+            //${bash -c "curl https://raw.githubusercontent.com/taiki-e/install-action/refs/heads/cargo-hack/main.sh | bash -"},
+            //${bash -c "curl https://raw.githubusercontent.com/taiki-e/setup-cross-toolchain-action/refs/tags/v1/main.sh | bash -"}
         ]),
         environment = |wrap<Environment>(
             |environment(
@@ -78,7 +78,7 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine](short: s
         executor_name = |wrap<string>(short),
         commands = |raw_commands([
             "git config --global url.https://.insteadOf  git://",
-            |format("git clone --branch {repository_clone_ref} --depth 1 {repository_clone_url} aya",
+            |format("git clone --branch {repository_clone_ref} --depth 1 {repository_clone_url} /root/aya",
                 |map([
                     |entry("repository_clone_ref", repository_clone_ref),
                     |entry("repository_clone_url", repository_clone_url)
@@ -106,7 +106,7 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine](short: s
                     |entry("RUST_BACKTRACE", "full"),
                     |entry("CARGO_BUILD_TARGET", arch)
                 ]),
-                "aya", // working_directory
+                "/root/aya", // working_directory
                 false, // expand_variables
                 false // clear_env
             )
