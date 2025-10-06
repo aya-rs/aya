@@ -24,6 +24,7 @@ use std/flow/concentrate::concentrateBlock
 use std/flow/concentrate::concentrated
 use std/flow::trigger
 use std/ops/option::|wrap
+use std/text/compose::|format
 
 treatment buildTestAyaAll[logger: Logger](
         var github_contexts: string
@@ -85,16 +86,21 @@ treatment buildTestAya[logger: Logger](
     prepareContexts[contexts = contexts](
         github_contexts = github_contexts
     )
-    step0: checkout[contexts = contexts, logger = logger]()
+    step0: checkout[contexts = contexts, logger = logger](
+        path = |format("/tmp/{arch}", |entry("arch", target_arch))
+    )
     step1: RefStablerustToolchain[contexts = contexts, logger = logger](
         targets = target_arch
     )
-    step2: rustCache[contexts = contexts, logger = logger]()
+    step2: rustCache[contexts = contexts, logger = logger](
+        workspaces = |format("/tmp/{arch}", |entry("arch", target_arch))
+    )
     step3: RefCargoHackinstallAction[contexts = contexts, logger = logger]()
     step4: setupCrossToolchainAction[contexts = contexts, logger = logger](
         target = target_arch
     )
     build: runAction[contexts = contexts, logger = logger](
+        working_directory = |format("/tmp/{arch}", |entry("arch", target_arch)),
         commands = ${
 set -euxo pipefail
 cargo hack build --all-targets --feature-powerset \
@@ -109,6 +115,7 @@ cargo hack build --all-targets --feature-powerset \
         name = "build"
     )
     test: runAction[contexts = contexts, logger = logger](
+        working_directory = |format("/tmp/{arch}", |entry("arch", target_arch)),
         commands = ${set -euxo pipefail
 cargo hack test --all-targets --feature-powerset \
   --exclude aya-ebpf \
@@ -131,6 +138,7 @@ cargo hack test --all-targets --feature-powerset \
         name = "test"
     )
     doctests: runAction[contexts = contexts, logger = logger](
+        working_directory = |format("/tmp/{arch}", |entry("arch", target_arch)),
         commands = ${
 set -euxo pipefail
 cargo hack test --doc --feature-powerset \
