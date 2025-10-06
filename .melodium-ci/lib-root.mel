@@ -78,7 +78,7 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine](short: s
         executor_name = |wrap<string>(short),
         commands = |raw_commands([
             "git config --global url.https://.insteadOf  git://",
-            |format("git clone --branch {repository_clone_ref} --depth 1 {repository_clone_url} .",
+            |format("git clone --branch {repository_clone_ref} --depth 1 {repository_clone_url} aya",
                 |map([
                     |entry("repository_clone_ref", repository_clone_ref),
                     |entry("repository_clone_url", repository_clone_url)
@@ -106,7 +106,7 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine](short: s
                     |entry("RUST_BACKTRACE", "full"),
                     |entry("CARGO_BUILD_TARGET", arch)
                 ]),
-                _, // working_directory
+                "aya", // working_directory
                 false, // expand_variables
                 false // clear_env
             )
