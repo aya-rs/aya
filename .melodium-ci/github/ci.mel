@@ -87,20 +87,20 @@ treatment buildTestAya[logger: Logger](
         github_contexts = github_contexts
     )
     step0: checkout[contexts = contexts, logger = logger](
-        path = |format("/tmp/{arch}", |entry("arch", target_arch))
+        path = |format("${{{{ github.workspace }}}}/{arch}", |entry("arch", target_arch))
     )
     step1: RefStablerustToolchain[contexts = contexts, logger = logger](
         targets = target_arch
     )
     step2: rustCache[contexts = contexts, logger = logger](
-        workspaces = |format("/tmp/{arch}", |entry("arch", target_arch))
+        workspaces = |format("${{{{ github.workspace }}}}/{arch}", |entry("arch", target_arch))
     )
     step3: RefCargoHackinstallAction[contexts = contexts, logger = logger]()
     step4: setupCrossToolchainAction[contexts = contexts, logger = logger](
         target = target_arch
     )
     build: runAction[contexts = contexts, logger = logger](
-        working_directory = |wrap<string>(|format("/tmp/{arch}", |entry("arch", target_arch))),
+        working_directory = |wrap<string>(|format("${{{{ github.workspace }}}}/{arch}", |entry("arch", target_arch))),
         commands = ${
 set -euxo pipefail
 cargo hack build --all-targets --feature-powerset \
@@ -115,7 +115,7 @@ cargo hack build --all-targets --feature-powerset \
         name = "build"
     )
     test: runAction[contexts = contexts, logger = logger](
-        working_directory = |wrap<string>(|format("/tmp/{arch}", |entry("arch", target_arch))),
+        working_directory = |wrap<string>(|format("${{{{ github.workspace }}}}/{arch}", |entry("arch", target_arch))),
         commands = ${set -euxo pipefail
 cargo hack test --all-targets --feature-powerset \
   --exclude aya-ebpf \
@@ -138,7 +138,7 @@ cargo hack test --all-targets --feature-powerset \
         name = "test"
     )
     doctests: runAction[contexts = contexts, logger = logger](
-        working_directory = |wrap<string>(|format("/tmp/{arch}", |entry("arch", target_arch))),
+        working_directory = |wrap<string>(|format("${{{{ github.workspace }}}}/{arch}", |entry("arch", target_arch))),
         commands = ${
 set -euxo pipefail
 cargo hack test --doc --feature-powerset \
