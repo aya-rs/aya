@@ -100,7 +100,7 @@ treatment buildTestAya[logger: Logger](
         target = target_arch
     )
     build: runAction[contexts = contexts, logger = logger](
-        working_directory = |format("/tmp/{arch}", |entry("arch", target_arch)),
+        working_directory = |wrap<string>(|format("/tmp/{arch}", |entry("arch", target_arch))),
         commands = ${
 set -euxo pipefail
 cargo hack build --all-targets --feature-powerset \
@@ -115,7 +115,7 @@ cargo hack build --all-targets --feature-powerset \
         name = "build"
     )
     test: runAction[contexts = contexts, logger = logger](
-        working_directory = |format("/tmp/{arch}", |entry("arch", target_arch)),
+        working_directory = |wrap<string>(|format("/tmp/{arch}", |entry("arch", target_arch))),
         commands = ${set -euxo pipefail
 cargo hack test --all-targets --feature-powerset \
   --exclude aya-ebpf \
@@ -138,7 +138,7 @@ cargo hack test --all-targets --feature-powerset \
         name = "test"
     )
     doctests: runAction[contexts = contexts, logger = logger](
-        working_directory = |format("/tmp/{arch}", |entry("arch", target_arch)),
+        working_directory = |wrap<string>(|format("/tmp/{arch}", |entry("arch", target_arch))),
         commands = ${
 set -euxo pipefail
 cargo hack test --doc --feature-powerset \
