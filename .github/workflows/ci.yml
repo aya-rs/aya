@@ -13,7 +13,7 @@ env:
 
 jobs:
   buildTestAya:
-    uses: melodium-tech/github-actions/.github/workflows/melodium-local-distrib.yml@v0.9
+    uses: melodium-tech/github-actions/.github/workflows/melodium-local-distrib.yml@v0.9.0
     with:
       command: run .melodium-ci/Compo.toml buildTestAya
       artifact-path: 'logs/'
