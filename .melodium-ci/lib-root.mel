@@ -30,7 +30,7 @@ treatment buildTestAya()
         memory=150,
         storage=800,
         containers=[
-            |container("aarch64", 6000, 1000, 8000, |amd64(), [], "ghcr.io/cross-rs/aarch64-unknown-linux-gnu" /*"rust:1.90-bookworm"*/, _)
+            |container("aarch64", 6000, 1000, 8000, |amd64(), [], "rust:1.90-bookworm", _)
         ]
     )
 
@@ -55,16 +55,18 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine](short: s
         name = |format("prepare_{short}", |entry("short", short)),
         executor_name = |wrap<string>(short),
         commands = |raw_commands([
-            //|format("rustup target add {arch}", |entry("arch", arch)),
-            "cross binstall cargo-hack" //,
+            |format("rustup target add {arch}", |entry("arch", arch)),
+            "cargo binstall cargo-hack",
             //${bash -c "curl https://raw.githubusercontent.com/taiki-e/install-action/refs/heads/cargo-hack/main.sh | bash -"},
-            //${bash -c "curl https://raw.githubusercontent.com/taiki-e/setup-cross-toolchain-action/refs/tags/v1/main.sh | bash -"}
+            ${bash -c "curl https://raw.githubusercontent.com/taiki-e/setup-cross-toolchain-action/refs/tags/v1/main.sh | bash -"},
+            "cat /tmp/github.env"
         ]),
         environment = |wrap<Environment>(
             |environment(
                 |map([
                     |entry("INPUT_TOOL", "cargo-hack"),
-                    |entry("INPUT_TARGET", arch)
+                    |entry("INPUT_TARGET", arch),
+                    |entry("GITHUB_ENV", "/tmp/github.env")
                 ]),
                 _, // working_directory
                 false, // expand_variables
@@ -94,17 +96,17 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine](short: s
         executor_name = |wrap<string>(short),
         commands = |raw_commands([
             // Build
-            "cross hack build --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude xtask --workspace",
+            "cargo hack build --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude xtask --workspace",
             // Test
-            "cross hack test --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace",
+            "cargo hack test --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace",
             // Doc
-            "cross hack test --doc --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace"
+            "cargo hack test --doc --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace"
         ]),
         environment = |wrap<Environment>(
             |environment(
                 |map([
-                    |entry("RUST_BACKTRACE", "full")/*,
-                    |entry("CARGO_BUILD_TARGET", arch)*/
+                    |entry("RUST_BACKTRACE", "full"),
+                    |entry("CARGO_BUILD_TARGET", arch)
                 ]),
                 "/root/aya", // working_directory
                 false, // expand_variables
