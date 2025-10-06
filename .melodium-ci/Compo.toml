@@ -15,7 +15,5 @@ std = "^0.9.0"
 work = "^0.9.0"
 
 [entrypoints]
-buildTestAya = "ci/workflows::buildTestAyaEntrypoint"
-#ciUbuntuLatest = "ci/workflows::ciUbuntuLatestEntrypoint"
-#cimatrixOs = "ci/workflows::cimatrixOsEntrypoint"
-#gen = "ci/workflows::genEntrypoint"
+buildTestAya = "ci::buildTestAya"
+
