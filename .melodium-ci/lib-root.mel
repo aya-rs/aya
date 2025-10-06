@@ -52,7 +52,7 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine](short: s
   output finished: Block<void>
 {
     prepare: stepOn[logger=logger, runner=runner](
-        name = |format("prepare_{short}", |entry("short", short)),
+        name = "Prepare",//|format("prepare_{short}", |entry("short", short)),
         executor_name = |wrap<string>(short),
         commands = |raw_commands([
             |format("rustup target add {arch}", |entry("arch", arch)),
@@ -97,11 +97,17 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine](short: s
         executor_name = |wrap<string>(short),
         commands = |raw_commands([
             // Build
-            "cargo hack build --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude xtask --workspace",
+            ${bash -c "set -o allexport && source /tmp/github.env && set +o allexport
+                cargo hack build --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude xtask --workspace"
+            },
             // Test
-            "cargo hack test --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace",
+            ${bash -c "set -o allexport && source /tmp/github.env && set +o allexport
+                cargo hack test --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace"
+            },
             // Doc
-            "cargo hack test --doc --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace"
+            ${bash -c "set -o allexport && source /tmp/github.env && set +o allexport
+                cargo hack test --doc --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace"
+            }
         ]),
         environment = |wrap<Environment>(
             |environment(
