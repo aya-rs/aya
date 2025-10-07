@@ -1,4 +1,4 @@
-use core::{marker::PhantomData, mem, ptr};
+use core::{borrow::Borrow, marker::PhantomData, mem, ptr};
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_STACK},
@@ -43,11 +43,11 @@ impl<T> Stack<T> {
         }
     }
 
-    pub fn push(&self, value: &T, flags: u64) -> Result<(), i64> {
+    pub fn push(&self, value: impl Borrow<T>, flags: u64) -> Result<(), i64> {
         let ret = unsafe {
             bpf_map_push_elem(
                 ptr::from_ref(&self.def).cast_mut().cast(),
-                ptr::from_ref(value).cast(),
+                ptr::from_ref(value.borrow()).cast(),
                 flags,
             )
         };
