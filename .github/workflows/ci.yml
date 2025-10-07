@@ -253,7 +253,6 @@ jobs:
           # Dependencies are tracked in `Brewfile`.
           brew bundle
           echo $(brew --prefix curl)/bin >> $GITHUB_PATH
-          echo $(brew --prefix gnu-tar)/libexec/gnubin >> $GITHUB_PATH
           echo $(brew --prefix llvm)/bin >> $GITHUB_PATH
 
           # https://github.com/actions/setup-python/issues/577
@@ -316,17 +315,6 @@ jobs:
           set -euxo pipefail
           rm -rf test/.tmp/boot test/.tmp/lib
 
-      - name: Extract debian kernels
-        run: |
-          set -euxo pipefail
-          # The wildcard '**/boot/*' extracts kernel images and config.
-          # The wildcard '**/modules/*' extracts kernel modules.
-          # Modules are required since not all parts of the kernel we want to
-          # test are built-in.
-          find test/.tmp -name '*.deb' -print0 | xargs -t -0 -I {} \
-            sh -c "dpkg --fsys-tarfile {} | tar -C test/.tmp \
-              --wildcards --extract '**/boot/*' '**/modules/*' --file -"
-
       - name: Run local integration tests
         if: runner.os == 'Linux'
         run: cargo xtask integration-test local
@@ -341,9 +329,9 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm || true # kvm is not available on arm64.
 
-          .github/scripts/find_kernels.py | xargs -t -0 \
-          cargo xtask integration-test vm --cache-dir test/.tmp \
-            --github-api-token ${{ secrets.GITHUB_TOKEN }} \
+          find test/.tmp -name '*.deb' -print0 | xargs -t -0 \
+            cargo xtask integration-test vm --cache-dir test/.tmp \
+              --github-api-token ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run virtualized integration tests
         if: runner.os == 'macOS'
@@ -352,9 +340,9 @@ jobs:
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: x86_64-linux-musl-gcc
         run: |
           set -euxo pipefail
-          .github/scripts/find_kernels.py | xargs -t -0 \
-          cargo xtask integration-test vm --cache-dir test/.tmp \
-            --github-api-token ${{ secrets.GITHUB_TOKEN }} \
+          find test/.tmp -name '*.deb' -print0 | xargs -t -0 \
+            cargo xtask integration-test vm --cache-dir test/.tmp \
+              --github-api-token ${{ secrets.GITHUB_TOKEN }}
 
   # Provides a single status check for the entire build workflow.
   # This is used for merge automation, like Mergify, since GH actions

@@ -27,5 +27,6 @@ quote = { workspace = true }
 rustdoc-json = { workspace = true }
 rustup-toolchain = { workspace = true }
 syn = { workspace = true }
+tar = { workspace = true }
 tempfile = { workspace = true }
 walkdir = { workspace = true }
