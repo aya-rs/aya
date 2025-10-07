@@ -1,4 +1,9 @@
-use core::{borrow::Borrow, cell::UnsafeCell, marker::PhantomData, mem, ptr};
+use core::{
+    borrow::{Borrow, BorrowMut},
+    cell::UnsafeCell,
+    marker::PhantomData,
+    mem, ptr,
+};
 
 use crate::{
     EbpfContext as _,
@@ -51,35 +56,50 @@ impl<K> SockHash<K> {
         }
     }
 
-    pub fn update(&self, key: &mut K, sk_ops: &mut bpf_sock_ops, flags: u64) -> Result<(), i64> {
+    pub fn update(
+        &self,
+        mut key: impl BorrowMut<K>,
+        mut sk_ops: impl BorrowMut<bpf_sock_ops>,
+        flags: u64,
+    ) -> Result<(), i64> {
         let ret = unsafe {
             bpf_sock_hash_update(
-                ptr::from_mut(sk_ops),
+                ptr::from_mut(sk_ops.borrow_mut()),
                 self.def.get().cast(),
-                ptr::from_mut(key).cast(),
+                ptr::from_mut(key.borrow_mut()).cast(),
                 flags,
             )
         };
         (ret == 0).then_some(()).ok_or(ret)
     }
 
-    pub fn redirect_msg(&self, ctx: &SkMsgContext, key: &mut K, flags: u64) -> i64 {
+    pub fn redirect_msg(
+        &self,
+        ctx: impl Borrow<SkMsgContext>,
+        mut key: impl BorrowMut<K>,
+        flags: u64,
+    ) -> i64 {
         unsafe {
             bpf_msg_redirect_hash(
-                ctx.msg,
+                ctx.borrow().msg,
                 self.def.get().cast(),
-                ptr::from_mut(key).cast(),
+                ptr::from_mut(key.borrow_mut()).cast(),
                 flags,
             )
         }
     }
 
-    pub fn redirect_skb(&self, ctx: &SkBuffContext, key: &mut K, flags: u64) -> i64 {
+    pub fn redirect_skb(
+        &self,
+        ctx: impl Borrow<SkBuffContext>,
+        mut key: impl BorrowMut<K>,
+        flags: u64,
+    ) -> i64 {
         unsafe {
             bpf_sk_redirect_hash(
-                ctx.skb.skb,
+                ctx.borrow().skb.skb,
                 self.def.get().cast(),
-                ptr::from_mut(key).cast(),
+                ptr::from_mut(key.borrow_mut()).cast(),
                 flags,
             )
         }
@@ -87,12 +107,12 @@ impl<K> SockHash<K> {
 
     pub fn redirect_sk_lookup(
         &mut self,
-        ctx: &SkLookupContext,
+        ctx: impl Borrow<SkLookupContext>,
         key: impl Borrow<K>,
         flags: u64,
     ) -> Result<(), u32> {
         let sk = lookup(self.def.get().cast(), key.borrow()).ok_or(1u32)?;
-        let ret = unsafe { bpf_sk_assign(ctx.as_ptr().cast(), sk.as_ptr(), flags) };
+        let ret = unsafe { bpf_sk_assign(ctx.borrow().as_ptr().cast(), sk.as_ptr(), flags) };
         unsafe { bpf_sk_release(sk.as_ptr()) };
         match ret {
             0 => Ok(()),

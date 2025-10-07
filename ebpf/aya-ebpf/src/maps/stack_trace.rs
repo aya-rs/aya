@@ -1,4 +1,4 @@
-use core::{cell::UnsafeCell, mem};
+use core::{borrow::Borrow, cell::UnsafeCell, mem};
 
 use crate::{
     EbpfContext,
@@ -46,8 +46,12 @@ impl StackTrace {
     }
 
     #[expect(clippy::missing_safety_doc)]
-    pub unsafe fn get_stackid<C: EbpfContext>(&self, ctx: &C, flags: u64) -> Result<i64, i64> {
-        let ret = unsafe { bpf_get_stackid(ctx.as_ptr(), self.def.get().cast(), flags) };
+    pub unsafe fn get_stackid<C: EbpfContext>(
+        &self,
+        ctx: impl Borrow<C>,
+        flags: u64,
+    ) -> Result<i64, i64> {
+        let ret = unsafe { bpf_get_stackid(ctx.borrow().as_ptr(), self.def.get().cast(), flags) };
         if ret < 0 { Err(ret) } else { Ok(ret) }
     }
 }

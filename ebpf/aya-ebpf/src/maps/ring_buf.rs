@@ -1,4 +1,5 @@
 use core::{
+    borrow::Borrow,
     cell::UnsafeCell,
     mem,
     mem::MaybeUninit,
@@ -205,7 +206,8 @@ impl RingBuf {
     ///
     /// [`reserve`]: RingBuf::reserve
     /// [`submit`]: RingBufEntry::submit
-    pub fn output<T: ?Sized>(&self, data: &T, flags: u64) -> Result<(), i64> {
+    pub fn output<T: ?Sized>(&self, data: impl Borrow<T>, flags: u64) -> Result<(), i64> {
+        let data = data.borrow();
         assert_eq!(8 % mem::align_of_val(data), 0);
         let ret = unsafe {
             bpf_ringbuf_output(
