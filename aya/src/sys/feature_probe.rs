@@ -1,6 +1,10 @@
 //! Probes and identifies available eBPF features supported by the host kernel.
 
-use std::{mem, os::fd::AsRawFd as _, ptr};
+use std::{
+    mem,
+    os::fd::{AsFd as _, AsRawFd as _},
+    ptr,
+};
 
 use aya_obj::{
     btf::{Btf, BtfKind},
@@ -10,7 +14,10 @@ use aya_obj::{
 };
 use libc::{E2BIG, EBADF, EINVAL};
 
-use super::{SyscallError, bpf_prog_load, fd_sys_bpf, unit_sys_bpf, with_trivial_prog};
+use super::{
+    SyscallError, bpf_prog_load, bpf_raw_tracepoint_open, fd_sys_bpf, unit_sys_bpf,
+    with_trivial_prog,
+};
 use crate::{
     MockableFd,
     maps::MapType,
@@ -85,7 +92,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
             .unwrap_or(0)
     });
 
-    let error = match with_trivial_prog(program_type, |attr| {
+    with_trivial_prog(program_type, |attr| {
         // SAFETY: union access
         let u = unsafe { &mut attr.__bindgen_anon_3 };
 
@@ -100,22 +107,11 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
             u.log_size = verifier_log.len() as u32;
         }
 
-        bpf_prog_load(attr).err().map(|io_error| {
-            ProgramError::SyscallError(SyscallError {
-                call: "bpf_prog_load",
-                io_error,
-            })
-        })
-    }) {
-        Some(err) => err,
-        None => return Ok(true),
-    };
-
-    // Loading may fail for some types (namely tracing, extension, lsm, & struct_ops), so we
-    // perform additional examination on the OS error and/or verifier logs.
-    match &error {
-        ProgramError::SyscallError(err) => {
-            match err.io_error.raw_os_error() {
+        match bpf_prog_load(attr) {
+            Err(io_error) => match io_error.raw_os_error() {
+                // Loading may fail for some types (namely tracing, extension, lsm, & struct_ops), so we
+                // perform additional examination on the OS error and/or verifier logs.
+                //
                 // For most types, `EINVAL` typically indicates it is not supported.
                 // However, further examination is required for tracing, extension, and lsm.
                 Some(EINVAL) => {
@@ -152,11 +148,34 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
                 //
                 // [0] https://elixir.bootlin.com/linux/v5.6/source/kernel/bpf/verifier.c#L9740
                 Some(524) if program_type == ProgramType::StructOps => Ok(true),
-                _ => Err(error),
+                _ => Err(ProgramError::SyscallError(SyscallError {
+                    call: "bpf_prog_load",
+                    io_error,
+                })),
+            },
+            Ok(prog_fd) => {
+                // Some arm64 kernels (notably < 6.4) can load LSM programs but cannot attach them:
+                // `bpf_raw_tracepoint_open` fails with `-ENOTSUPP`. Probe attach support
+                // explicitly.
+                //
+                // h/t to https://www.exein.io/blog/exploring-bpf-lsm-support-on-aarch64-with-ftrace.
+                if program_type != ProgramType::Lsm {
+                    Ok(true)
+                } else {
+                    match bpf_raw_tracepoint_open(None, prog_fd.as_fd()) {
+                        Ok(_) => Ok(true),
+                        Err(io_error) => match io_error.raw_os_error() {
+                            Some(524) => Ok(false),
+                            _ => Err(ProgramError::SyscallError(SyscallError {
+                                call: "bpf_raw_tracepoint_open",
+                                io_error,
+                            })),
+                        },
+                    }
+                }
             }
         }
-        _ => Err(error),
-    }
+    })
 }
 
 /// Whether the host kernel supports the [`MapType`].
