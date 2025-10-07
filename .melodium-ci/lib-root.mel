@@ -30,7 +30,7 @@ treatment buildTestAya(const github_contexts: string = "{}")
   model github_contexts: JavaScriptEngine()
 {
     startup()
-    prepareContexts[contexts=github_contexts](github_contexts=github_contexts)
+    //prepareContexts[contexts=github_contexts](github_contexts=github_contexts)
     manageLogs[logger=logger](output_directory="logs/")
     setupRunner[logger=logger, dispatcher=dispatcher, runner=runner](
         name="buildTestAya",
@@ -51,7 +51,7 @@ treatment buildTestAya(const github_contexts: string = "{}")
 
     stopRunner[runner=runner]()
 
-    startup.trigger -> prepareContexts.trigger,ready -> setupRunner.trigger,ready -> buildTestAyaForArch.trigger,finished -> manageLogs.stop
+    startup.trigger -> /*prepareContexts.trigger,ready ->*/ setupRunner.trigger,ready -> buildTestAyaForArch.trigger,finished -> manageLogs.stop
     buildTestAyaForArch.finished -> stopRunner.trigger
 }
 
