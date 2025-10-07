@@ -1,4 +1,4 @@
-use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr};
+use core::{borrow::Borrow, cell::UnsafeCell, marker::PhantomData, mem, ptr};
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_QUEUE},
@@ -45,9 +45,14 @@ impl<T> Queue<T> {
         }
     }
 
-    pub fn push(&self, value: &T, flags: u64) -> Result<(), i64> {
-        let ret =
-            unsafe { bpf_map_push_elem(self.def.get().cast(), ptr::from_ref(value).cast(), flags) };
+    pub fn push(&self, value: impl Borrow<T>, flags: u64) -> Result<(), i64> {
+        let ret = unsafe {
+            bpf_map_push_elem(
+                self.def.get().cast(),
+                ptr::from_ref(value.borrow()).cast(),
+                flags,
+            )
+        };
         (ret == 0).then_some(()).ok_or(ret)
     }
 
