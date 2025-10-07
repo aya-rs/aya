@@ -94,18 +94,18 @@ where
     F: FnOnce(&mut Command) -> &mut Command,
 {
     // Always use rust-lld in case we're cross-compiling.
-    let mut cmd = Command::new("cargo");
-    cmd.args(["build", "--message-format=json"]);
+    let mut cargo = Command::new("cargo");
+    cargo.args(["build", "--message-format=json"]);
     if let Some(target) = target {
-        cmd.args(["--target", target]);
+        cargo.args(["--target", target]);
     }
-    f(&mut cmd);
+    f(&mut cargo);
 
-    let mut child = cmd
+    let mut cargo_child = cargo
         .stdout(Stdio::piped())
         .spawn()
-        .with_context(|| format!("failed to spawn {cmd:?}"))?;
-    let Child { stdout, .. } = &mut child;
+        .with_context(|| format!("failed to spawn {cargo:?}"))?;
+    let Child { stdout, .. } = &mut cargo_child;
 
     let stdout = stdout.take().unwrap();
     let stdout = BufReader::new(stdout);
@@ -134,11 +134,11 @@ where
         }
     }
 
-    let status = child
+    let status = cargo_child
         .wait()
-        .with_context(|| format!("failed to wait for {cmd:?}"))?;
+        .with_context(|| format!("failed to wait for {cargo:?}"))?;
     if status.code() != Some(0) {
-        bail!("{cmd:?} failed: {status:?}")
+        bail!("{cargo:?} failed: {status:?}")
     }
     Ok(executables)
 }
@@ -323,15 +323,15 @@ pub(crate) fn run(opts: Options) -> Result<()> {
             let mut errors = Vec::new();
             for (kernel_image, modules_dir) in image_and_modules {
                 // Guess the guest architecture.
-                let mut cmd = Command::new("file");
-                let output = cmd
+                let mut file = Command::new("file");
+                let output = file
                     .arg("--brief")
                     .arg(&kernel_image)
                     .output()
-                    .with_context(|| format!("failed to run {cmd:?}"))?;
+                    .with_context(|| format!("failed to run {file:?}"))?;
                 let Output { status, .. } = &output;
                 if status.code() != Some(0) {
-                    bail!("{cmd:?} failed: {output:?}")
+                    bail!("{file:?} failed: {output:?}")
                 }
                 let Output { stdout, .. } = output;
 
@@ -342,13 +342,13 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 // - Linux kernel x86 boot executable bzImage, version 6.1.0-10-cloud-amd64 [..]
 
                 let stdout = String::from_utf8(stdout)
-                    .with_context(|| format!("invalid UTF-8 in {cmd:?} stdout"))?;
+                    .with_context(|| format!("invalid UTF-8 in {file:?} stdout"))?;
                 let (_, stdout) = stdout
                     .split_once("Linux kernel")
-                    .ok_or_else(|| anyhow!("failed to parse {cmd:?} stdout: {stdout}"))?;
+                    .ok_or_else(|| anyhow!("failed to parse {file:?} stdout: {stdout}"))?;
                 let (guest_arch, _) = stdout
                     .split_once("boot executable")
-                    .ok_or_else(|| anyhow!("failed to parse {cmd:?} stdout: {stdout}"))?;
+                    .ok_or_else(|| anyhow!("failed to parse {file:?} stdout: {stdout}"))?;
                 let guest_arch = guest_arch.trim();
 
                 let (guest_arch, machine, cpu, console) = match guest_arch {
