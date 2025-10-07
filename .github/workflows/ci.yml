@@ -15,7 +15,8 @@ jobs:
   buildTestAya:
     uses: melodium-tech/github-actions/.github/workflows/melodium-local-distrib.yml@v0.9.0
     with:
-      command: run .melodium-ci/Compo.toml buildTestAya
+      command: |
+        run .melodium-ci/Compo.toml buildTestAya --github_contexts='$''{{{{ { "github": ${{ toJSON(github) }}, "vars": ${{ toJSON(vars) }}, "secrets": { "GITHUB_TOKEN": "'"$GITHUB_TOKEN"'" } } }}}}'
       artifact-path: 'logs/'
     secrets:
         token: ${{ secrets.GITHUB_TOKEN }}

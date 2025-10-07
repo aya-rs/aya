@@ -1,9 +1,15 @@
-use cicd/steps::stepOn
 use cicd/logging::manageLogs
 use cicd/runners::CicdDispatchEngine
 use cicd/runners::CicdRunnerEngine
 use cicd/runners::setupRunner
 use cicd/runners::stopRunner
+use cicd/services/github::prepareContexts
+use cicd/services/github::postGithubStateContext
+use cicd/services/github::|pending
+use cicd/services/github::|success
+use cicd/services/github::|error
+use cicd/steps::stepOn
+use javascript::JavaScriptEngine
 use log/logger::Logger
 use process/command::|raw_commands
 use process/environment::Environment
@@ -17,12 +23,14 @@ use std/text/compose::|format
 use work/resources::|container
 use work/resources/arch::|amd64
 
-treatment buildTestAya()
+treatment buildTestAya(const github_contexts: string = "{}")
   model logger: Logger()
   model dispatcher: CicdDispatchEngine(location="compose", api_token="")
   model runner: CicdRunnerEngine()
+  model github_contexts: JavaScriptEngine()
 {
     startup()
+    prepareContexts[contexts=github_contexts](github_contexts=github_contexts)
     manageLogs[logger=logger](output_directory="logs/")
     setupRunner[logger=logger, dispatcher=dispatcher, runner=runner](
         name="buildTestAya",
@@ -34,7 +42,7 @@ treatment buildTestAya()
         ]
     )
 
-    buildTestAyaForArch[logger=logger, runner=runner](
+    buildTestAyaForArch[logger=logger, runner=runner, github_contexts=github_contexts](
         short="aarch64",
         arch="aarch64-unknown-linux-gnu",
         repository_clone_ref="melodium_ci",
@@ -43,11 +51,11 @@ treatment buildTestAya()
 
     stopRunner[runner=runner]()
 
-    startup.trigger -> setupRunner.trigger,ready -> buildTestAyaForArch.trigger,finished -> manageLogs.stop
+    startup.trigger -> prepareContexts.trigger,ready -> setupRunner.trigger,ready -> buildTestAyaForArch.trigger,finished -> manageLogs.stop
     buildTestAyaForArch.finished -> stopRunner.trigger
 }
 
-treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine](short: string, arch: string, repository_clone_ref: string, repository_clone_url: string)
+treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_contexts: JavaScriptEngine](short: string, arch: string, repository_clone_ref: string, repository_clone_url: string)
   input trigger: Block<void>
   output finished: Block<void>
 {
@@ -125,6 +133,14 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine](short: s
 
     Self.trigger -> prepare.trigger,completed --> ready.a,awaited -> build.trigger,finished -> Self.finished
     Self.trigger -> checkout.trigger,completed -> ready.b
+
+    pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = arch, description = "Build and Test Aya on arch")
+    successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = arch, description = "Build and Test Aya on arch")
+    errorState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(), name = arch, description = "Build and Test Aya on arch")
+
+    Self.trigger -> pendingState.trigger
+    build.completed -> successState.trigger
+    build.failed -> errorState.trigger
 }
 
 /*
