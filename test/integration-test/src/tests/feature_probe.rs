@@ -107,31 +107,39 @@ fn probe_supported_programs() {
     kernel_assert!(is_supported!(ProgramType::StructOps), kern_version);
     kernel_assert!(is_supported!(ProgramType::Extension), kern_version);
 
-    let kern_version = KernelVersion::new(5, 7, 0);
-    // `lsm` requires `CONFIG_DEBUG_INFO_BTF=y` & `CONFIG_BPF_LSM=y`
-    // Ways to check if `CONFIG_BPF_LSM` is enabled:
-    // - kernel config has `CONFIG_BPF_LSM=y`, but config is not always exposed.
-    // - an LSM hook is present in BTF, e.g. `bpf_lsm_bpf`. hooks are found in `bpf_lsm.c`
-    if current >= kern_version {
-        let lsm_enabled = matches!(
-            kernel_config.get("CONFIG_BPF_LSM"),
-            Some(procfs::ConfigSetting::Yes)
-        ) || Btf::from_sys_fs()
-            .and_then(|btf| btf.id_by_type_name_kind("bpf_lsm_bpf", aya_obj::btf::BtfKind::Func))
-            .is_ok();
-        assert_eq!(
-            is_supported!(ProgramType::Lsm),
-            lsm_enabled,
-            "current={current}"
-        );
-        if !lsm_enabled {
-            eprintln!("CONFIG_BPF_LSM required for lsm program type");
+    {
+        let kern_version = if cfg!(target_arch = "aarch64") {
+            KernelVersion::new(6, 4, 0)
+        } else {
+            KernelVersion::new(5, 7, 0)
+        };
+        // `lsm` requires `CONFIG_DEBUG_INFO_BTF=y` & `CONFIG_BPF_LSM=y`
+        // Ways to check if `CONFIG_BPF_LSM` is enabled:
+        // - kernel config has `CONFIG_BPF_LSM=y`, but config is not always exposed.
+        // - an LSM hook is present in BTF, e.g. `bpf_lsm_bpf`. hooks are found in `bpf_lsm.c`
+        if current >= kern_version {
+            let lsm_enabled = matches!(
+                kernel_config.get("CONFIG_BPF_LSM"),
+                Some(procfs::ConfigSetting::Yes)
+            ) || Btf::from_sys_fs()
+                .and_then(|btf| {
+                    btf.id_by_type_name_kind("bpf_lsm_bpf", aya_obj::btf::BtfKind::Func)
+                })
+                .is_ok();
+            assert_eq!(
+                is_supported!(ProgramType::Lsm),
+                lsm_enabled,
+                "current={current}"
+            );
+            if !lsm_enabled {
+                eprintln!("CONFIG_BPF_LSM required for lsm program type");
+            }
+        } else {
+            assert!(
+                !is_supported!(ProgramType::Lsm),
+                "{current} < {kern_version}"
+            );
         }
-    } else {
-        assert!(
-            !is_supported!(ProgramType::Lsm),
-            "{current} < {kern_version}"
-        );
     }
 
     let kern_version = KernelVersion::new(5, 9, 0);
