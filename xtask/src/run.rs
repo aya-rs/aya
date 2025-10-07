@@ -13,6 +13,7 @@ use std::{
 use anyhow::{Context as _, Result, anyhow, bail};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
+use tar::Archive;
 use walkdir::WalkDir;
 use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors};
 
@@ -38,46 +39,10 @@ enum Environment {
         #[clap(long)]
         github_api_token: Option<String>,
 
-        /// The kernel image and modules to use.
-        ///
-        /// Format: </path/to/image/vmlinuz>:</path/to/lib/modules>
-        ///
-        /// You can download some images with:
-        ///
-        /// wget --accept-regex '.*/linux-image-[0-9\.-]+-cloud-.*-unsigned*' \
-        ///   --recursive http://ftp.us.debian.org/debian/pool/main/l/linux/
-        ///
-        /// You can then extract the images and kernel modules with:
-        ///
-        /// find . -name '*.deb' -print0 \
-        /// | xargs -0 -I {} sh -c "dpkg --fsys-tarfile {} \
-        ///   | tar --wildcards --extract '**/boot/*' '**/modules/*' --file -"
-        ///
-        /// `**/boot/*` is used to extract the kernel image and config.
-        ///
-        /// `**/modules/*` is used to extract the kernel modules.
-        ///
-        /// Modules are required since not all parts of the kernel we want to
-        /// test are built-in.
-        #[clap(required = true, value_parser=parse_image_and_modules)]
-        image_and_modules: Vec<(PathBuf, PathBuf)>,
+        /// Debian kernel archives (.deb) to boot in the VM.
+        #[clap(required = true)]
+        kernel_archives: Vec<PathBuf>,
     },
-}
-
-pub(crate) fn parse_image_and_modules(s: &str) -> Result<(PathBuf, PathBuf), std::io::Error> {
-    let mut parts = s.split(':');
-    let image = parts
-        .next()
-        .ok_or(std::io::ErrorKind::InvalidInput)
-        .map(PathBuf::from)?;
-    let modules = parts
-        .next()
-        .ok_or(std::io::ErrorKind::InvalidInput)
-        .map(PathBuf::from)?;
-    if parts.next().is_some() {
-        return Err(std::io::ErrorKind::InvalidInput.into());
-    }
-    Ok((image, modules))
 }
 
 #[derive(Parser)]
@@ -212,7 +177,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
         Environment::VM {
             cache_dir,
             github_api_token,
-            image_and_modules,
+            kernel_archives,
         } => {
             // The user has asked us to run the tests on a VM. This is involved; strap in.
             //
@@ -320,13 +285,106 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 }
             }
 
+            let extraction_root = tempfile::tempdir().context("tempdir failed")?;
             let mut errors = Vec::new();
-            for (kernel_image, modules_dir) in image_and_modules {
+            for (index, archive) in kernel_archives.iter().enumerate() {
+                let archive_dir = extraction_root
+                    .path()
+                    .join(format!("kernel-archive-{index}"));
+                fs::create_dir_all(&archive_dir)
+                    .with_context(|| format!("failed to create {}", archive_dir.display()))?;
+
+                let mut dpkg = Command::new("dpkg-deb");
+                dpkg.arg("--fsys-tarfile")
+                    .arg(archive)
+                    .stdout(Stdio::piped());
+                let mut dpkg_child = dpkg
+                    .spawn()
+                    .with_context(|| format!("failed to spawn {dpkg:?}"))?;
+                let Child { stdout, .. } = &mut dpkg_child;
+                let stdout = stdout.take().unwrap();
+                let mut archive_reader = Archive::new(stdout);
+                archive_reader.unpack(&archive_dir).with_context(|| {
+                    format!(
+                        "failed to unpack archive {} to {}",
+                        archive.display(),
+                        archive_dir.display()
+                    )
+                })?;
+                let status = dpkg_child
+                    .wait()
+                    .with_context(|| format!("failed to wait for {dpkg:?}"))?;
+                if !status.success() {
+                    bail!("{dpkg:?} exited with {status}");
+                }
+
+                let mut kernel_images = Vec::new();
+                for entry in WalkDir::new(archive_dir.join("boot")) {
+                    let entry = entry.context("read_dir failed")?;
+                    if !entry.file_type().is_file() {
+                        continue;
+                    }
+                    let path = entry.into_path();
+                    if let Some(file_name) = path.file_name() {
+                        match file_name.as_encoded_bytes() {
+                            // "vmlinuz-"
+                            [b'v', b'm', b'l', b'i', b'n', b'u', b'z', b'-', ..] => {
+                                kernel_images.push(path)
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                let kernel_image = match kernel_images.as_slice() {
+                    [kernel_image] => kernel_image,
+                    kernel_images => bail!(
+                        "multiple kernel images in {}: {:?}",
+                        archive.display(),
+                        kernel_images
+                    ),
+                };
+
+                let mut modules_dirs = Vec::new();
+                for prefix in ["usr/lib/modules", "lib/modules"] {
+                    let base = archive_dir.join(prefix);
+                    let entries = match fs::read_dir(&base) {
+                        Ok(entries) => entries,
+                        Err(e) => match e.kind() {
+                            std::io::ErrorKind::NotFound => continue,
+                            _kind => {
+                                return Err(e)
+                                    .with_context(|| format!("failed to read {}", base.display()));
+                            }
+                        },
+                    };
+                    for entry in entries {
+                        let entry = entry.with_context(|| {
+                            format!("failed to read entry in {}", base.display())
+                        })?;
+                        let path = entry.path();
+                        let file_type = entry.file_type().with_context(|| {
+                            format!("failed to get file type for {}", path.display())
+                        })?;
+                        if !file_type.is_dir() {
+                            continue;
+                        }
+                        modules_dirs.push(path);
+                    }
+                }
+                let modules_dir = match modules_dirs.as_slice() {
+                    [modules_dir] => modules_dir,
+                    modules_dirs => bail!(
+                        "multiple modules directories in {}: {:?}",
+                        archive.display(),
+                        modules_dirs
+                    ),
+                };
+
                 // Guess the guest architecture.
                 let mut file = Command::new("file");
                 let output = file
                     .arg("--brief")
-                    .arg(&kernel_image)
+                    .arg(kernel_image)
                     .output()
                     .with_context(|| format!("failed to run {file:?}"))?;
                 let Output { status, .. } = &output;
@@ -359,8 +417,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
 
                 let target = format!("{guest_arch}-unknown-linux-musl");
 
-                let test_distro_args =
-                    ["--package", "test-distro", "--release", "--features", "xz2"];
+                let test_distro_args = ["--package", "test-distro", "--release"];
                 let test_distro: Vec<(String, PathBuf)> =
                     build(Some(&target), |cmd| cmd.args(test_distro_args))
                         .context("building test-distro package failed")?;
@@ -440,19 +497,19 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                     .arg("run")
                     .args(test_distro_args)
                     .args(["--bin", "depmod", "--", "-b"])
-                    .arg(&modules_dir)
+                    .arg(modules_dir)
                     .status()
                     .context("failed to run depmod")?;
 
                 // Now our modules.alias file is built, we can recursively
                 // walk the modules directory and add all the files to the
                 // initramfs.
-                for entry in WalkDir::new(&modules_dir) {
+                for entry in WalkDir::new(modules_dir) {
                     let entry = entry.context("read_dir failed")?;
                     let path = entry.path();
                     let metadata = entry.metadata().context("metadata failed")?;
                     let out_path = Path::new("/lib/modules").join(
-                        path.strip_prefix(&modules_dir).with_context(|| {
+                        path.strip_prefix(modules_dir).with_context(|| {
                             format!(
                                 "strip prefix {} failed for {}",
                                 path.display(),
@@ -523,7 +580,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                     .arg("-append")
                     .arg(kernel_args)
                     .arg("-kernel")
-                    .arg(&kernel_image)
+                    .arg(kernel_image)
                     .arg("-initrd")
                     .arg(&initrd_image);
                 let mut qemu_child = qemu

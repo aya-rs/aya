@@ -2,7 +2,6 @@
 
 brew "curl"
 brew "dpkg"
-brew "gnu-tar"
 brew "llvm"
 brew "lynx"
 brew "pkg-config"
