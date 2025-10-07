@@ -318,6 +318,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 }
 
                 let mut kernel_images = Vec::new();
+                let mut configs = Vec::new();
                 for entry in WalkDir::new(&archive_dir) {
                     let entry = entry.with_context(|| {
                         format!("failed to read entry in {}", archive_dir.display())
@@ -345,6 +346,10 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                                         .to_os_string();
                                 kernel_images.push((path, kernel_version))
                             }
+                            // "config-"
+                            [b'c', b'o', b'n', b'f', b'i', b'g', b'-', ..] => {
+                                configs.push(path);
+                            }
                             _ => {}
                         }
                     }
@@ -357,6 +362,10 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                         archive.display(),
                         kernel_images
                     ),
+                };
+                let config = match configs.as_slice() {
+                    [config] => config,
+                    configs => bail!("multiple configs in {}: {:?}", archive.display(), configs),
                 };
 
                 let mut modules_dirs = Vec::new();
@@ -487,8 +496,14 @@ pub(crate) fn run(opts: Options) -> Result<()> {
 
                 write_dir(Path::new("/bin"));
                 write_dir(Path::new("/sbin"));
+                write_dir(Path::new("/boot"));
                 write_dir(Path::new("/lib"));
                 write_dir(Path::new("/lib/modules"));
+
+                write_file(Path::new("/boot/config"), config, "644 0 0");
+                if let Some(name) = config.file_name() {
+                    write_file(&Path::new("/boot").join(name), config, "644 0 0");
+                }
 
                 test_distro.iter().for_each(|(name, path)| {
                     if name == "init" {
