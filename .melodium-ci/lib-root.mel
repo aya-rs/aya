@@ -134,13 +134,13 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
     Self.trigger -> prepare.trigger,completed --> ready.a,awaited -> build.trigger,finished -> Self.finished
     Self.trigger -> checkout.trigger,completed -> ready.b
 
-    pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = arch, description = "Build and Test Aya on arch", log_response = true)
+    /*pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = arch, description = "Build and Test Aya on arch", log_response = true)
     successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = arch, description = "Build and Test Aya on arch", log_response = true)
     errorState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(), name = arch, description = "Build and Test Aya on arch", log_response = true)
 
     Self.trigger -> pendingState.trigger
     build.completed -> successState.trigger
-    build.failed -> errorState.trigger
+    build.failed -> errorState.trigger*/
 }
 
 /*
