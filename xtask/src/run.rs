@@ -1,7 +1,7 @@
 use std::{
     ffi::OsString,
     fmt::Write as _,
-    fs::{OpenOptions, copy, create_dir_all},
+    fs::{self, OpenOptions},
     io::{BufRead as _, BufReader, Write as _},
     ops::Deref as _,
     path::{Path, PathBuf},
@@ -232,7 +232,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
             //
             // The end.
 
-            create_dir_all(&cache_dir).context("failed to create cache dir")?;
+            fs::create_dir_all(&cache_dir).context("failed to create cache dir")?;
 
             let gen_init_cpio = cache_dir.join("gen_init_cpio");
             {
@@ -471,7 +471,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                     for (name, binary) in binaries {
                         let name = format!("{profile}-{name}");
                         let path = tmp_dir.path().join(&name);
-                        copy(&binary, &path).with_context(|| {
+                        fs::copy(&binary, &path).with_context(|| {
                             format!("copy({}, {}) failed", binary.display(), path.display())
                         })?;
                         let out_path = Path::new("/bin").join(&name);
