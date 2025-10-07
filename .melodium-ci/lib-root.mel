@@ -30,7 +30,7 @@ treatment buildTestAya(const github_contexts: string = "{}")
   model github_contexts: JavaScriptEngine()
 {
     startup()
-    //prepareContexts[contexts=github_contexts](github_contexts=github_contexts)
+    prepareContexts[contexts=github_contexts](github_contexts=github_contexts)
     manageLogs[logger=logger](output_directory="logs/")
     setupRunner[logger=logger, dispatcher=dispatcher, runner=runner](
         name="buildTestAya",
@@ -51,7 +51,7 @@ treatment buildTestAya(const github_contexts: string = "{}")
 
     stopRunner[runner=runner]()
 
-    startup.trigger -> /*prepareContexts.trigger,ready ->*/ setupRunner.trigger,ready -> buildTestAyaForArch.trigger,finished -> manageLogs.stop
+    startup.trigger -> prepareContexts.trigger,ready -> setupRunner.trigger,ready -> buildTestAyaForArch.trigger,finished -> manageLogs.stop
     buildTestAyaForArch.finished -> stopRunner.trigger
 }
 
@@ -134,13 +134,13 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
     Self.trigger -> prepare.trigger,completed --> ready.a,awaited -> build.trigger,finished -> Self.finished
     Self.trigger -> checkout.trigger,completed -> ready.b
 
-    pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = arch, description = "Build and Test Aya on arch")
+    /*pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = arch, description = "Build and Test Aya on arch")
     successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = arch, description = "Build and Test Aya on arch")
     errorState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(), name = arch, description = "Build and Test Aya on arch")
 
     Self.trigger -> pendingState.trigger
     build.completed -> successState.trigger
-    build.failed -> errorState.trigger
+    build.failed -> errorState.trigger*/
 }
 
 /*
