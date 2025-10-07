@@ -1,4 +1,4 @@
-use core::{cell::UnsafeCell, ptr::NonNull};
+use core::{borrow::Borrow, cell::UnsafeCell, ptr::NonNull};
 
 use crate::{bindings::bpf_map_type::BPF_MAP_TYPE_ARRAY, btf_map_def, cty::c_long, insert, lookup};
 
@@ -51,7 +51,7 @@ impl<T, const M: usize, const F: usize> Array<T, M, F> {
 
     /// Sets the value of the element at the given index.
     #[inline(always)]
-    pub fn set(&self, index: u32, value: &T, flags: u64) -> Result<(), c_long> {
-        insert(self.0.get().cast(), &index, value, flags)
+    pub fn set(&self, index: u32, value: impl Borrow<T>, flags: u64) -> Result<(), c_long> {
+        insert(self.0.get().cast(), &index, value.borrow(), flags)
     }
 }

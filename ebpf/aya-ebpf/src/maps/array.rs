@@ -1,4 +1,4 @@
-use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr::NonNull};
+use core::{borrow::Borrow, cell::UnsafeCell, marker::PhantomData, mem, ptr::NonNull};
 
 use aya_ebpf_cty::c_long;
 
@@ -69,7 +69,7 @@ impl<T> Array<T> {
 
     /// Sets the value of the element at the given index.
     #[inline(always)]
-    pub fn set(&self, index: u32, value: &T, flags: u64) -> Result<(), c_long> {
-        insert(self.def.get().cast(), &index, value, flags)
+    pub fn set(&self, index: u32, value: impl Borrow<T>, flags: u64) -> Result<(), c_long> {
+        insert(self.def.get().cast(), &index, value.borrow(), flags)
     }
 }
