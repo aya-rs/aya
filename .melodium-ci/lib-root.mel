@@ -138,7 +138,7 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
     successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = arch, description = "Build and Test Aya on arch", log_response = true)
     errorState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(), name = arch, description = "Build and Test Aya on arch", log_response = true)
 
-    prepare.started -> pendingState.trigger
+    Self.trigger -> pendingState.trigger
     build.completed -> successState.trigger
     build.failed -> errorState.trigger
 }
