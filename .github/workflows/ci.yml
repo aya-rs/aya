@@ -338,6 +338,12 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           set -euxo pipefail
+
+          # https://github.blog/changelog/2023-02-23-hardware-accelerated-android-virtualization-on-actions-windows-and-linux-larger-hosted-runners/
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true # kvm is not available on arm64.
+
           .github/scripts/find_kernels.py | xargs -t -0 \
           cargo xtask integration-test vm --cache-dir test/.tmp \
             --github-api-token ${{ secrets.GITHUB_TOKEN }} \
