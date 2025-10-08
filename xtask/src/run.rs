@@ -436,13 +436,18 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 // At this point we need to make a slight detour!
                 // Preparing the `modules.alias` file inside the VM as part of
                 // `/init` is slow. It's faster to prepare it here.
-                Command::new("cargo")
+                let mut cargo = Command::new("cargo");
+                let output = cargo
                     .arg("run")
                     .args(test_distro_args)
                     .args(["--bin", "depmod", "--", "-b"])
                     .arg(&modules_dir)
-                    .status()
-                    .context("failed to run depmod")?;
+                    .output()
+                    .with_context(|| format!("failed to run {cargo:?}"))?;
+                let Output { status, .. } = &output;
+                if status.code() != Some(0) {
+                    bail!("{cargo:?} failed: {output:?}")
+                }
 
                 // Now our modules.alias file is built, we can recursively
                 // walk the modules directory and add all the files to the
