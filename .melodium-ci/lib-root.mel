@@ -38,7 +38,7 @@ treatment buildTestAya(const github_contexts: string = "{}")
         memory=150,
         storage=800,
         containers=[
-            |container("aarch64", 6000, 1000, 8000, |amd64(), [], "rust:1.90-bookworm", _)
+            |container("aarch64", 6000, 1000, 8000, |amd64(), [], "rust:1.90-trixie", _)
         ]
     )
 
