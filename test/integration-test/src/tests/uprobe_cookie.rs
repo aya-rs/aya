@@ -1,7 +1,14 @@
-use aya::{EbpfLoader, maps::ring_buf::RingBuf, programs::UProbe};
+use aya::{EbpfLoader, maps::ring_buf::RingBuf, programs::UProbe, util::KernelVersion};
 
 #[test_log::test]
 fn test_uprobe_cookie() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 15, 0) {
+        eprintln!(
+            "skipping test on kernel {kernel_version:?}, bpf_get_attach_cookie was added in 5.15"
+        );
+        return;
+    }
     const RING_BUF_BYTE_SIZE: u32 = 512; // arbitrary, but big enough
 
     let mut bpf = EbpfLoader::new()
