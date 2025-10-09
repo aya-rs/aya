@@ -11,6 +11,7 @@ use cicd/services/github::|error
 use cicd/steps::stepOn
 use javascript::JavaScriptEngine
 use log/logger::Logger
+use log/log::logErrorMessage
 use process/command::|raw_commands
 use process/environment::Environment
 use process/environment::|environment
@@ -18,6 +19,7 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/engine/util::startup
 use std/flow::waitBlock
+use std/flow::one
 use std/ops/option::|wrap
 use std/text/compose::|format
 use work/resources::|container
@@ -49,10 +51,14 @@ treatment buildTestAya(const github_contexts: string = "{}")
         repository_clone_url="https://github.com/qvignaud/aya.git"
     )
 
+    stop: one<void>()
     stopRunner[runner=runner]()
 
-    startup.trigger -> prepareContexts.trigger,ready -> setupRunner.trigger,ready -> buildTestAyaForArch.trigger,finished -> manageLogs.stop
-    buildTestAyaForArch.finished -> stopRunner.trigger
+    startup.trigger -> prepareContexts.trigger,ready -> setupRunner.trigger,ready -> buildTestAyaForArch.trigger,finished -> stop.a,value -> manageLogs.stop
+    stop.value -> stopRunner.trigger
+
+    logRunnerFailure: logErrorMessage[logger=logger](message="Runner failed")
+    setupRunner.failed -> logRunnerFailure.trigger,ended -> stop.b
 }
 
 treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_contexts: JavaScriptEngine](short: string, arch: string, repository_clone_ref: string, repository_clone_url: string)

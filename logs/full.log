@@ -1,0 +1,19 @@
+[2025-10-09T09:16:10.211Z] info: buildTestAya: Dispatch requested
+[2025-10-09T09:16:13.380Z] error: buildTestAya: API 401 error: Unauthorized
+[2025-10-09T09:16:13.538Z] error: GitHub API: relative URL without a base
+[2025-10-09T09:16:13.862Z] debug: buildTestAya: info: downloading component 'rust-std' for 'aarch64-unknown-linux-gnu'
+[2025-10-09T09:16:13.863Z] debug: buildTestAya: error: failed to download file error=Reqwest(reqwest::Error { kind: Request, url: "https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-aarch64-unknown-linux-gnu.tar.xz", source: hyper_util::client::legacy::Error(Connect, ConnectError("dns error", Custom { kind: Uncategorized, error: "failed to lookup address information: Temporary failure in name resolution" })) })
+[2025-10-09T09:16:13.910Z] debug: buildTestAya: Cloning into '/root/aya'...
+[2025-10-09T09:16:18.869Z] debug: buildTestAya: info: retrying download for 'https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-aarch64-unknown-linux-gnu.tar.xz'
+[2025-10-09T09:16:18.871Z] debug: buildTestAya: error: failed to download file error=Reqwest(reqwest::Error { kind: Request, url: "https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-aarch64-unknown-linux-gnu.tar.xz", source: hyper_util::client::legacy::Error(Connect, ConnectError("dns error", Custom { kind: Uncategorized, error: "failed to lookup address information: Temporary failure in name resolution" })) })
+[2025-10-09T09:13:53.986Z] debug: buildTestAya: info: retrying download for 'https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-aarch64-unknown-linux-gnu.tar.xz'
+[2025-10-09T09:13:58.992Z] debug: buildTestAya: error: failed to download file error=Reqwest(reqwest::Error { kind: Request, url: "https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-aarch64-unknown-linux-gnu.tar.xz", source: hyper_util::client::legacy::Error(Connect, ConnectError("dns error", Custom { kind: Uncategorized, error: "failed to lookup address information: Temporary failure in name resolution" })) })
+[2025-10-09T09:13:58.992Z] debug: buildTestAya: info: retrying download for 'https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-aarch64-unknown-linux-gnu.tar.xz'
+[2025-10-09T09:13:58.995Z] debug: buildTestAya: error: failed to download file error=Reqwest(reqwest::Error { kind: Request, url: "https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-aarch64-unknown-linux-gnu.tar.xz", source: hyper_util::client::legacy::Error(Connect, ConnectError("dns error", Custom { kind: Uncategorized, error: "failed to lookup address information: Temporary failure in name resolution" })) })
+[2025-10-09T09:13:59.099Z] debug: buildTestAya: fatal: unable to access 'https://github.com/qvignaud/aya.git/': Could not resolve host: github.com
+[2025-10-09T09:13:58.995Z] debug: buildTestAya: info: retrying download for 'https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-aarch64-unknown-linux-gnu.tar.xz'
+[2025-10-09T09:13:59.194Z] debug: buildTestAya: Reading package lists...
+[2025-10-09T09:13:59.200Z] debug: buildTestAya: Building dependency tree...
+[2025-10-09T09:13:59.200Z] debug: buildTestAya: Reading state information...
+[2025-10-09T09:13:59.211Z] debug: buildTestAya: liblzma-dev is already the newest version (5.8.1-1).
+[2025-10-09T09:13:59.369Z] debug: buildTestAya: error: component download failed for rust-std-aarch64-unknown-linux-gnu: could not download file from 'https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-aarch64-unknown-linux-gnu.tar.xz' to '/usr/local/rustup/downloads/4952abb7d9d3ed7cea4f7ea44dcb23dc67631fae4ac44a5f059b90a4b5e9223f.partial': error downloading file: error sending request for url (https://static.rust-lang.org/dist/2025-09-18/rust-std-1.90.0-aarch64-unknown-linux-gnu.tar.xz): client error (Connect): dns error: failed to lookup address information: Temporary failure in name resolution: failed to lookup
