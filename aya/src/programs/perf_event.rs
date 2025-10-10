@@ -3,7 +3,9 @@
 use std::os::fd::AsFd as _;
 
 use aya_obj::generated::{
-    bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT, perf_hw_cache_id, perf_hw_cache_op_id,
+    HW_BREAKPOINT_LEN_1, HW_BREAKPOINT_LEN_2, HW_BREAKPOINT_LEN_4, HW_BREAKPOINT_LEN_8,
+    HW_BREAKPOINT_R, HW_BREAKPOINT_RW, HW_BREAKPOINT_W, bpf_link_type,
+    bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT, perf_hw_cache_id, perf_hw_cache_op_id,
     perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids, perf_type_id,
 };
 
@@ -11,8 +13,8 @@ use crate::{
     programs::{
         FdLink, LinkError, ProgramData, ProgramError, ProgramType, impl_try_into_fdlink,
         links::define_link_wrapper,
-        load_program, perf_attach,
-        perf_attach::{PerfLinkIdInner, PerfLinkInner},
+        load_program,
+        perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
     },
     sys::{SyscallError, bpf_link_get_info_by_fd, perf_event_open},
 };
@@ -52,12 +54,8 @@ pub enum PerfEventConfig {
         event_id: u64,
     },
     /// A hardware breakpoint.
-    ///
-    /// Note: this variant is not fully implemented at the moment.
-    // TODO: Variant not fully implemented due to additional `perf_event_attr` fields like
-    //       `bp_type`, `bp_addr`, etc.
     #[doc(alias = "PERF_TYPE_BREAKPOINT")]
-    Breakpoint,
+    Breakpoint(BreakpointConfig),
     /// The dynamic PMU (Performance Monitor Unit) event to report.
     ///
     /// Available PMU's may be found under `/sys/bus/event_source/devices`.
@@ -276,6 +274,74 @@ impl HwCacheResult {
     }
 }
 
+/// The breakpoint type.
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
+pub enum PerfBreakpointType {
+    /// HW_BREAKPOINT_R, trigger when we read the memory location.
+    #[doc(alias = "HW_BREAKPOINT_R")]
+    Read = HW_BREAKPOINT_R,
+    /// HW_BREAKPOINT_W, trigger when we write the memory location.
+    #[doc(alias = "HW_BREAKPOINT_W")]
+    Write = HW_BREAKPOINT_W,
+    /// HW_BREAKPOINT_RW, trigger when we read or write the memory location.
+    #[doc(alias = "HW_BREAKPOINT_RW")]
+    ReadWrite = HW_BREAKPOINT_RW,
+}
+
+impl PerfBreakpointType {
+    pub(crate) const fn into_primitive(self) -> u32 {
+        const _: [(); 4] = [(); std::mem::size_of::<PerfBreakpointType>()];
+        self as u32
+    }
+}
+
+/// The number of bytes covered by a data breakpoint.
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
+pub enum PerfBreakpointLength {
+    /// HW_BREAKPOINT_LEN_1
+    #[doc(alias = "HW_BREAKPOINT_LEN_1")]
+    Len1 = HW_BREAKPOINT_LEN_1,
+    /// HW_BREAKPOINT_LEN_2
+    #[doc(alias = "HW_BREAKPOINT_LEN_2")]
+    Len2 = HW_BREAKPOINT_LEN_2,
+    /// HW_BREAKPOINT_LEN_4
+    #[doc(alias = "HW_BREAKPOINT_LEN_4")]
+    Len4 = HW_BREAKPOINT_LEN_4,
+    /// HW_BREAKPOINT_LEN_8
+    #[doc(alias = "HW_BREAKPOINT_LEN_8")]
+    Len8 = HW_BREAKPOINT_LEN_8,
+}
+
+impl PerfBreakpointLength {
+    pub(crate) const fn into_primitive(self) -> u32 {
+        const _: [(); 4] = [(); std::mem::size_of::<PerfBreakpointLength>()];
+        self as u32
+    }
+}
+
+/// Type of hardware breakpoint, determines if we break on read, write, or
+/// execute, or if there should be no breakpoint on the given address.
+#[derive(Debug, Clone, Copy)]
+pub enum BreakpointConfig {
+    /// A memory access breakpoint.
+    Data {
+        /// The type of the breakpoint.
+        r#type: PerfBreakpointType,
+        /// The address of the breakpoint.
+        address: u64,
+        /// The contiguous byte window to monitor starting at `address`.
+        length: PerfBreakpointLength,
+    },
+    /// A code execution breakpoint.
+    #[doc(alias = "HW_BREAKPOINT_X")]
+    Instruction {
+        /// The address of the breakpoint.
+        address: u64,
+    },
+}
+
 /// Sample Policy
 #[derive(Debug, Clone, Copy)]
 pub enum SamplePolicy {
@@ -306,7 +372,7 @@ pub enum PerfEventScope {
     /// one process
     OneProcess {
         /// process id
-        pid: i32,
+        pid: u32,
         /// cpu id or any cpu if None
         cpu: Option<u32>,
     },
@@ -376,13 +442,10 @@ impl PerfEvent {
 
     /// Attaches to the given perf event.
     ///
-    /// [`perf_type`](PerfEventConfig) defines the event `type` and `config` of interest.
+    /// If `inherit` is `true`, any new processes spawned by those processes
+    /// will also automatically be sampled.
     ///
-    /// [`scope`](PerfEventScope) determines which processes are sampled. If `inherit` is
-    /// `true`, any new processes spawned by those processes will also automatically be
-    /// sampled.
-    ///
-    /// The returned value can be used to detach, see [PerfEvent::detach].
+    /// The returned value can be used to detach, see [`Self::detach`].
     pub fn attach(
         &mut self,
         config: PerfEventConfig,
