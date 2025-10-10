@@ -8057,24 +8057,38 @@ pub const aya_obj::generated::BTF_KIND_VOLATILE: aya_obj::generated::_bindgen_ty
 pub const aya_obj::generated::BTF_VAR_GLOBAL_ALLOCATED: aya_obj::generated::_bindgen_ty_43
 pub const aya_obj::generated::BTF_VAR_GLOBAL_EXTERN: aya_obj::generated::_bindgen_ty_43
 pub const aya_obj::generated::BTF_VAR_STATIC: aya_obj::generated::_bindgen_ty_43
-pub const aya_obj::generated::IFLA_XDP_ATTACHED: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_DRV_PROG_ID: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_EXPECTED_FD: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_FD: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_FLAGS: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_HW_PROG_ID: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_PROG_ID: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_SKB_PROG_ID: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_UNSPEC: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::NFPROTO_ARP: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_BRIDGE: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_DECNET: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_INET: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_IPV4: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_IPV6: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_NETDEV: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_NUMPROTO: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_UNSPEC: aya_obj::generated::_bindgen_ty_99
+pub const aya_obj::generated::HW_BREAKPOINT_EMPTY: aya_obj::generated::_bindgen_ty_45
+pub const aya_obj::generated::HW_BREAKPOINT_INVALID: aya_obj::generated::_bindgen_ty_45
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_1: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_2: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_3: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_4: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_5: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_6: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_7: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_8: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_R: aya_obj::generated::_bindgen_ty_45
+pub const aya_obj::generated::HW_BREAKPOINT_RW: aya_obj::generated::_bindgen_ty_45
+pub const aya_obj::generated::HW_BREAKPOINT_W: aya_obj::generated::_bindgen_ty_45
+pub const aya_obj::generated::HW_BREAKPOINT_X: aya_obj::generated::_bindgen_ty_45
+pub const aya_obj::generated::IFLA_XDP_ATTACHED: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_DRV_PROG_ID: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_EXPECTED_FD: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_FD: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_FLAGS: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_HW_PROG_ID: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_PROG_ID: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_SKB_PROG_ID: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_UNSPEC: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::NFPROTO_ARP: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_BRIDGE: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_DECNET: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_INET: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_IPV4: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_IPV6: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_NETDEV: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_NUMPROTO: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_UNSPEC: aya_obj::generated::_bindgen_ty_101
 pub const aya_obj::generated::NLMSG_ALIGNTO: u32
 pub const aya_obj::generated::NR_BTF_KINDS: aya_obj::generated::_bindgen_ty_42
 pub const aya_obj::generated::PERF_EVENT_IOC_DISABLE: u32
@@ -8097,36 +8111,36 @@ pub const aya_obj::generated::PERF_MAX_CONTEXTS_PER_STACK: u32
 pub const aya_obj::generated::PERF_MAX_STACK_DEPTH: u32
 pub const aya_obj::generated::SO_ATTACH_BPF: u32
 pub const aya_obj::generated::SO_DETACH_BPF: u32
-pub const aya_obj::generated::TCA_BPF_ACT: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_CLASSID: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_FD: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_FLAGS: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_FLAGS_GEN: aya_obj::generated::_bindgen_ty_154
+pub const aya_obj::generated::TCA_BPF_ACT: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_CLASSID: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_FD: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_FLAGS: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_FLAGS_GEN: aya_obj::generated::_bindgen_ty_156
 pub const aya_obj::generated::TCA_BPF_FLAG_ACT_DIRECT: u32
-pub const aya_obj::generated::TCA_BPF_ID: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_NAME: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_OPS: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_OPS_LEN: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_POLICE: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_TAG: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_UNSPEC: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_CHAIN: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_DUMP_FLAGS: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_DUMP_INVISIBLE: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_EGRESS_BLOCK: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_EXT_WARN_MSG: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_FCNT: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_HW_OFFLOAD: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_INGRESS_BLOCK: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_KIND: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_OPTIONS: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_PAD: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_RATE: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_STAB: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_STATS: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_STATS2: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_UNSPEC: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_XSTATS: aya_obj::generated::_bindgen_ty_174
+pub const aya_obj::generated::TCA_BPF_ID: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_NAME: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_OPS: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_OPS_LEN: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_POLICE: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_TAG: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_UNSPEC: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_CHAIN: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_DUMP_FLAGS: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_DUMP_INVISIBLE: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_EGRESS_BLOCK: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_EXT_WARN_MSG: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_FCNT: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_HW_OFFLOAD: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_INGRESS_BLOCK: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_KIND: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_OPTIONS: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_PAD: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_RATE: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_STAB: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_STATS: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_STATS2: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_UNSPEC: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_XSTATS: aya_obj::generated::_bindgen_ty_176
 pub const aya_obj::generated::TC_H_CLSACT: u32
 pub const aya_obj::generated::TC_H_INGRESS: u32
 pub const aya_obj::generated::TC_H_MAJ_MASK: u32
@@ -8143,10 +8157,10 @@ pub const aya_obj::generated::XDP_FLAGS_MODES: u32
 pub const aya_obj::generated::XDP_FLAGS_REPLACE: u32
 pub const aya_obj::generated::XDP_FLAGS_SKB_MODE: u32
 pub const aya_obj::generated::XDP_FLAGS_UPDATE_IF_NOEXIST: u32
-pub const aya_obj::generated::__IFLA_XDP_MAX: aya_obj::generated::_bindgen_ty_92
+pub const aya_obj::generated::__IFLA_XDP_MAX: aya_obj::generated::_bindgen_ty_94
 pub const aya_obj::generated::__MAX_BPF_REG: aya_obj::generated::_bindgen_ty_1
-pub const aya_obj::generated::__TCA_BPF_MAX: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::__TCA_MAX: aya_obj::generated::_bindgen_ty_174
+pub const aya_obj::generated::__TCA_BPF_MAX: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::__TCA_MAX: aya_obj::generated::_bindgen_ty_176
 pub type aya_obj::generated::__s16 = core::ffi::primitives::c_short
 pub type aya_obj::generated::__s32 = core::ffi::primitives::c_int
 pub type aya_obj::generated::__s64 = core::ffi::primitives::c_longlong
@@ -8155,14 +8169,15 @@ pub type aya_obj::generated::__u32 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::__u64 = core::ffi::primitives::c_ulonglong
 pub type aya_obj::generated::__u8 = core::ffi::primitives::c_uchar
 pub type aya_obj::generated::_bindgen_ty_10 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_101 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_11 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_12 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_13 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_14 = core::ffi::primitives::c_ulong
 pub type aya_obj::generated::_bindgen_ty_15 = core::ffi::primitives::c_int
-pub type aya_obj::generated::_bindgen_ty_154 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_156 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_17 = core::ffi::primitives::c_uint
-pub type aya_obj::generated::_bindgen_ty_174 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_176 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_19 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_2 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_21 = core::ffi::primitives::c_uint
@@ -8174,13 +8189,14 @@ pub type aya_obj::generated::_bindgen_ty_4 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_41 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_42 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_43 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_44 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_45 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_5 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_6 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_7 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_8 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_9 = core::ffi::primitives::c_uint
-pub type aya_obj::generated::_bindgen_ty_92 = core::ffi::primitives::c_uint
-pub type aya_obj::generated::_bindgen_ty_99 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_94 = core::ffi::primitives::c_uint
 pub mod aya_obj::links
 pub mod aya_obj::maps
 pub enum aya_obj::maps::Map

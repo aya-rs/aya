@@ -46,6 +46,7 @@ bpf_file!(
     MEMMOVE_TEST => "memmove_test",
     NAME_TEST => "name_test",
     PASS => "pass",
+    PERF_EVENT_BP => "perf_event_bp",
     RAW_TRACEPOINT => "raw_tracepoint",
     REDIRECT => "redirect",
     RELOCATIONS => "relocations",
