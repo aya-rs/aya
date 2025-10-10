@@ -1,6 +1,7 @@
 use std::{
-    ffi::OsString,
-    fmt::Write as _,
+    collections::BTreeMap,
+    ffi::{OsStr, OsString},
+    fmt::{Debug, Write as _},
     fs::{self, File, OpenOptions},
     io::{BufRead as _, BufReader, Write as _},
     ops::Deref as _,
@@ -112,13 +113,18 @@ enum Disposition<T> {
     Unpack(T),
 }
 
+enum ControlFlow {
+    Continue,
+    Break,
+}
+
 fn with_deb<S, F>(archive: &Path, dest: &Path, mut state: S, mut select: F) -> Result<S>
 where
     F: for<'state> FnMut(
         &'state mut S,
         &Path,
         tar::EntryType,
-    ) -> Disposition<Option<&'state mut Vec<PathBuf>>>,
+    ) -> Disposition<(Option<&'state mut Vec<PathBuf>>, ControlFlow)>,
 {
     fs::create_dir_all(dest).with_context(|| format!("failed to create {}", dest.display()))?;
 
@@ -154,9 +160,9 @@ where
                 )
             })?;
             let entry_type = entry.header().entry_type();
-            let selected = match select(&mut state, path.as_ref(), entry_type) {
+            let (selected, control_flow) = match select(&mut state, path.as_ref(), entry_type) {
                 Disposition::Skip => continue,
-                Disposition::Unpack(selected) => selected,
+                Disposition::Unpack(unpack) => unpack,
             };
             if let Some(selected) = selected {
                 println!(
@@ -180,11 +186,23 @@ where
                 archive.display(),
                 dest.display(),
             );
+            match control_flow {
+                ControlFlow::Continue => continue,
+                ControlFlow::Break => break,
+            }
         }
     }
     println!("{} in {:?}", archive.display(), start.elapsed());
     assert_eq!(data_tar_xz_entries, 1);
     Ok(state)
+}
+
+fn one<T: Debug>(slice: &[T]) -> Result<&T> {
+    if let [item] = slice {
+        Ok(item)
+    } else {
+        bail!("expected [{}], got {slice:?}", std::any::type_name::<T>())
+    }
 }
 
 /// Build and run the project.
@@ -372,13 +390,63 @@ pub(crate) fn run(opts: Options) -> Result<()> {
             }
 
             let extraction_root = tempfile::tempdir().context("tempdir failed")?;
+
+            #[derive(Eq, PartialEq, Ord, PartialOrd)]
+            struct KernelPackageKey<'a> {
+                base: &'a [u8],
+            }
+
+            #[derive(Default)]
+            struct KernelPackageGroup<'a> {
+                kernel: Vec<&'a Path>,
+                debug: Vec<&'a Path>,
+            }
+
+            let mut package_groups = BTreeMap::new();
+            for archive in &kernel_archives {
+                let file_name = archive.file_name().ok_or_else(|| {
+                    anyhow!("archive path missing filename: {}", archive.display())
+                })?;
+                let file_name = file_name.as_encoded_bytes();
+                // TODO(https://github.com/rust-lang/rust/issues/112811): use split_once when stable.
+                let package_name = file_name
+                    .split(|&byte| byte == b'_')
+                    .next()
+                    .ok_or_else(|| anyhow!("unexpected archive filename: {}", archive.display()))?;
+                let (base, is_debug) = if let Some(base) = package_name.strip_suffix(b"-dbg") {
+                    (base, true)
+                } else if let Some(base) = package_name.strip_suffix(b"-dbgsym") {
+                    (base, true)
+                } else if let Some(base) = package_name.strip_suffix(b"-unsigned") {
+                    (base, false)
+                } else {
+                    bail!("unexpected archive filename: {}", archive.display())
+                };
+                let KernelPackageGroup { kernel, debug } =
+                    package_groups.entry(KernelPackageKey { base }).or_default();
+                let dst = if is_debug { debug } else { kernel };
+                dst.push(archive.as_path());
+            }
+
             let mut errors = Vec::new();
-            for (index, archive) in kernel_archives.iter().enumerate() {
+            for (index, (KernelPackageKey { base }, KernelPackageGroup { kernel, debug })) in
+                package_groups.into_iter().enumerate()
+            {
+                let base = {
+                    use std::os::unix::ffi::OsStrExt as _;
+                    OsStr::from_bytes(base)
+                };
+
+                let kernel_archive = one(kernel.as_slice())
+                    .with_context(|| format!("kernel archive for {}", base.display()))?;
+                let debug_archive = one(debug.as_slice())
+                    .with_context(|| format!("debug archive for {}", base.display()))?;
+
                 let (kernel_images, configs, modules_dirs) = with_deb(
-                    archive,
+                    kernel_archive,
                     &extraction_root
                         .path()
-                        .join(format!("kernel-archive-{index}")),
+                        .join(format!("kernel-archive-{index}-image")),
                     (Vec::new(), Vec::new(), Vec::new()),
                     |(kernel_images, configs, modules_dirs), path, entry_type| {
                         if let Some(path) = ["./lib/modules/", "./usr/lib/modules/"]
@@ -393,9 +461,10 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                                 }
                             })
                         {
-                            return Disposition::Unpack(
+                            return Disposition::Unpack((
                                 (path.iter().count() == 1).then_some(modules_dirs),
-                            );
+                                ControlFlow::Continue,
+                            ));
                         }
                         if !entry_type.is_file() {
                             return Disposition::Skip;
@@ -414,37 +483,59 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                         };
                         let name = name.as_encoded_bytes();
                         if name.starts_with(b"vmlinuz-") {
-                            Disposition::Unpack(Some(kernel_images))
+                            Disposition::Unpack((Some(kernel_images), ControlFlow::Continue))
                         } else if name.starts_with(b"config-") {
-                            Disposition::Unpack(Some(configs))
+                            Disposition::Unpack((Some(configs), ControlFlow::Continue))
                         } else {
                             Disposition::Skip
                         }
                     },
                 )?;
-                let kernel_image = match kernel_images.as_slice() {
-                    [kernel_image] => kernel_image,
-                    [] => bail!("no kernel images in {}", archive.display()),
-                    kernel_images => bail!(
-                        "multiple kernel images in {}: {:?}",
-                        archive.display(),
-                        kernel_images
-                    ),
-                };
-                let config = match configs.as_slice() {
-                    [config] => config,
-                    [] => bail!("no configs in {}", archive.display()),
-                    configs => bail!("multiple configs in {}: {:?}", archive.display(), configs),
-                };
-                let modules_dir = match modules_dirs.as_slice() {
-                    [modules_dir] => modules_dir,
-                    [] => bail!("no modules directories in {}", archive.display()),
-                    modules_dirs => bail!(
-                        "multiple modules directories in {}: {:?}",
-                        archive.display(),
-                        modules_dirs
-                    ),
-                };
+                let kernel_image = one(kernel_images.as_slice())
+                    .with_context(|| format!("kernel image in {}", kernel_archive.display()))?;
+                let config = one(configs.as_slice())
+                    .with_context(|| format!("config in {}", kernel_archive.display()))?;
+                let modules_dir = one(modules_dirs.as_slice()).with_context(|| {
+                    format!("modules directory in {}", kernel_archive.display())
+                })?;
+
+                let system_maps = with_deb(
+                    debug_archive,
+                    &extraction_root
+                        .path()
+                        .join(format!("kernel-archive-{index}-debug")),
+                    Vec::new(),
+                    |system_maps: &mut Vec<PathBuf>, path, entry_type| {
+                        if entry_type != tar::EntryType::Regular {
+                            return Disposition::Skip;
+                        }
+                        let name = match path.strip_prefix("./usr/lib/debug/boot/") {
+                            Ok(path) => {
+                                if let Some(path::Component::Normal(name)) =
+                                    path.components().next()
+                                {
+                                    name
+                                } else {
+                                    return Disposition::Skip;
+                                }
+                            }
+                            Err(path::StripPrefixError { .. }) => {
+                                return Disposition::Skip;
+                            }
+                        };
+                        if name.as_encoded_bytes().starts_with(b"System.map-") {
+                            // We only expect one System.map in the debug archive; ordinarily
+                            // we'd walk the whole archive to assert this fact but it turns out
+                            // that doing so takes around 10 seconds while stopping early takes
+                            // around 1ms.
+                            Disposition::Unpack((Some(system_maps), ControlFlow::Break))
+                        } else {
+                            Disposition::Skip
+                        }
+                    },
+                )?;
+                let system_map = one(system_maps.as_slice())
+                    .with_context(|| format!("System.map in {}", debug_archive.display()))?;
 
                 // Guess the guest architecture.
                 let mut file = Command::new("file");
@@ -578,6 +669,11 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 write_file(Path::new("/boot/config"), config, "644 0 0");
                 if let Some(name) = config.file_name() {
                     write_file(&Path::new("/boot").join(name), config, "644 0 0");
+                }
+
+                write_file(Path::new("/boot/System.map"), system_map, "644 0 0");
+                if let Some(name) = system_map.file_name() {
+                    write_file(&Path::new("/boot").join(name), system_map, "644 0 0");
                 }
 
                 test_distro.iter().for_each(|(name, path)| {
