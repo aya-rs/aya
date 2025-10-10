@@ -1,11 +1,12 @@
 use std::{
-    ffi::{CString, OsStr, c_int},
+    ffi::{CString, OsStr, c_int, c_long, c_uint},
     io, mem,
     os::fd::{BorrowedFd, FromRawFd as _},
 };
 
 use aya_obj::generated::{
-    PERF_FLAG_FD_CLOEXEC, perf_event_attr,
+    HW_BREAKPOINT_LEN_1, HW_BREAKPOINT_LEN_2, HW_BREAKPOINT_LEN_4, HW_BREAKPOINT_LEN_8,
+    HW_BREAKPOINT_X, PERF_FLAG_FD_CLOEXEC, perf_event_attr,
     perf_event_sample_format::PERF_SAMPLE_RAW,
     perf_type_id::{
         PERF_TYPE_BREAKPOINT, PERF_TYPE_HARDWARE, PERF_TYPE_HW_CACHE, PERF_TYPE_RAW,
@@ -16,7 +17,8 @@ use libc::pid_t;
 
 use super::{PerfEventIoctlRequest, Syscall, syscall};
 use crate::programs::perf_event::{
-    PerfEventConfig, PerfEventScope, SamplePolicy, SoftwareEvent, WakeupPolicy, perf_type_id_to_u32,
+    BreakpointConfig, PerfEventConfig, PerfEventScope, SamplePolicy, SoftwareEvent, WakeupPolicy,
+    perf_type_id_to_u32,
 };
 
 pub(crate) fn perf_event_open(
@@ -53,7 +55,42 @@ pub(crate) fn perf_event_open(
                 | (u64::from(result.into_primitive()) << 16),
         ),
         PerfEventConfig::Raw { event_id } => (perf_type_id_to_u32(PERF_TYPE_RAW), event_id),
-        PerfEventConfig::Breakpoint => (perf_type_id_to_u32(PERF_TYPE_BREAKPOINT), 0),
+        PerfEventConfig::Breakpoint(breakpoint) => {
+            let (type_, address, length) = match breakpoint {
+                BreakpointConfig::Data {
+                    r#type,
+                    address,
+                    length,
+                } => (
+                    r#type.into_primitive(),
+                    address,
+                    u64::from(length.into_primitive()),
+                ),
+                BreakpointConfig::Instruction { address } => {
+                    const fn length(size: usize) -> c_uint {
+                        match size {
+                            1 => HW_BREAKPOINT_LEN_1,
+                            2 => HW_BREAKPOINT_LEN_2,
+                            4 => HW_BREAKPOINT_LEN_4,
+                            8 => HW_BREAKPOINT_LEN_8,
+                            // NB: cannot emit the value because:
+                            //
+                            // error[E0015]: cannot call non-const formatting macro in constant functions
+                            _ => panic!("invalid hardware breakpoint size"),
+                        }
+                    }
+                    const LENGTH: c_uint = length(std::mem::size_of::<c_long>());
+                    (HW_BREAKPOINT_X, address, u64::from(LENGTH))
+                }
+            };
+
+            attr.bp_type = type_;
+            attr.__bindgen_anon_3.bp_addr = address;
+            attr.__bindgen_anon_4.bp_len = length;
+            attr.set_precise_ip(2);
+
+            (perf_type_id_to_u32(PERF_TYPE_BREAKPOINT), 0)
+        }
     };
 
     attr.config = config;

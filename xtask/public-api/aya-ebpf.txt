@@ -1723,8 +1723,9 @@ impl<T> core::convert::From<T> for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::from(t: T) -> T
 pub mod aya_ebpf::programs::perf_event
 pub struct aya_ebpf::programs::perf_event::PerfEventContext
+pub aya_ebpf::programs::perf_event::PerfEventContext::ctx: *mut aya_ebpf_bindings::x86_64::bindings::bpf_perf_event_data
 impl aya_ebpf::programs::perf_event::PerfEventContext
-pub fn aya_ebpf::programs::perf_event::PerfEventContext::new(ctx: *mut core::ffi::c_void) -> Self
+pub fn aya_ebpf::programs::perf_event::PerfEventContext::new(ctx: *mut aya_ebpf_bindings::x86_64::bindings::bpf_perf_event_data) -> Self
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::perf_event::PerfEventContext
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::perf_event::PerfEventContext
@@ -2461,8 +2462,9 @@ pub fn aya_ebpf::programs::lsm::LsmContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::from(t: T) -> T
 pub struct aya_ebpf::programs::PerfEventContext
+pub aya_ebpf::programs::PerfEventContext::ctx: *mut aya_ebpf_bindings::x86_64::bindings::bpf_perf_event_data
 impl aya_ebpf::programs::perf_event::PerfEventContext
-pub fn aya_ebpf::programs::perf_event::PerfEventContext::new(ctx: *mut core::ffi::c_void) -> Self
+pub fn aya_ebpf::programs::perf_event::PerfEventContext::new(ctx: *mut aya_ebpf_bindings::x86_64::bindings::bpf_perf_event_data) -> Self
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::perf_event::PerfEventContext
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::perf_event::PerfEventContext
