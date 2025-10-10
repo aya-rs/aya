@@ -67,6 +67,8 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
             .constified_enum("IFLA_.*")
             .constified_enum("TCA_.*")
             .constified_enum("BPF_RINGBUF_.*")
+            // PERF
+            .constified_enum("HW_BREAKPOINT_.*")
             // NETFILTER
             .constified_enum("NFPROTO_.*");
 
@@ -141,6 +143,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
             "PERF_FLAG_.*",
             "PERF_EVENT_.*",
             "PERF_MAX_.*",
+            "HW_BREAKPOINT_.*",
             // NETLINK
             "NLMSG_ALIGNTO",
             "IFLA_XDP_FD",

@@ -3,7 +3,10 @@
 use std::os::fd::AsFd as _;
 
 use aya_obj::generated::{
-    bpf_link_type,
+    HW_BREAKPOINT_EMPTY, HW_BREAKPOINT_INVALID, HW_BREAKPOINT_LEN_1, HW_BREAKPOINT_LEN_2,
+    HW_BREAKPOINT_LEN_3, HW_BREAKPOINT_LEN_4, HW_BREAKPOINT_LEN_5, HW_BREAKPOINT_LEN_6,
+    HW_BREAKPOINT_LEN_7, HW_BREAKPOINT_LEN_8, HW_BREAKPOINT_R, HW_BREAKPOINT_RW, HW_BREAKPOINT_W,
+    HW_BREAKPOINT_X, bpf_link_type,
     bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT,
     perf_type_id::{
         PERF_TYPE_BREAKPOINT, PERF_TYPE_HARDWARE, PERF_TYPE_HW_CACHE, PERF_TYPE_RAW,
@@ -18,7 +21,7 @@ use crate::{
     programs::{
         FdLink, LinkError, ProgramData, ProgramError, ProgramType, impl_try_into_fdlink,
         links::define_link_wrapper,
-        load_program, perf_attach,
+        load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
     },
     sys::{SyscallError, bpf_link_get_info_by_fd, perf_event_open},
@@ -26,7 +29,7 @@ use crate::{
 
 /// The type of perf event
 #[repr(u32)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum PerfTypeId {
     /// PERF_TYPE_HARDWARE
     Hardware = PERF_TYPE_HARDWARE as u32,
@@ -40,6 +43,58 @@ pub enum PerfTypeId {
     Raw = PERF_TYPE_RAW as u32,
     /// PERF_TYPE_BREAKPOINT
     Breakpoint = PERF_TYPE_BREAKPOINT as u32,
+}
+/// A hardware breakpoint configuration
+#[derive(Debug, Clone)]
+pub struct PerfBreakpoint {
+    /// The address to set the breakpoint on
+    pub address: u64,
+    /// The breakpoint size. For HwBreakpointX this must be sizeof(long). For
+    /// all other types it should be one of HwBreakpointLen1, HwBreakpointLen2,,
+    /// HwBreakpointLen4 or HwBreakpointLen8.
+    pub length: PerfBreakpointSize,
+    /// The breakpoint type, one of HW_BREAKPOINT_{R,W,RW,X}
+    pub type_: PerfBreakpointType,
+}
+
+/// Type of hardware breakpoint, determines if we break on read, write, or execute.
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
+pub enum PerfBreakpointType {
+    /// HW_BREAKPOINT_EMPTY
+    HwBreakpointEmpty = HW_BREAKPOINT_EMPTY,
+    /// HW_BREAKPOINT_R
+    HwBreakpointR = HW_BREAKPOINT_R,
+    /// HW_BREAKPOINT_W
+    HwBreakpointW = HW_BREAKPOINT_W,
+    /// HW_BREAKPOINT_RW
+    HwBreakpointRW = HW_BREAKPOINT_RW,
+    /// HW_BREAKPOINT_X
+    HwBreakpointX = HW_BREAKPOINT_X,
+    /// HW_BREAKPOINT_INVALID
+    HwBreakpointInvalid = HW_BREAKPOINT_INVALID,
+}
+
+/// The size of the breakpoint being measured
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
+pub enum PerfBreakpointSize {
+    /// HW_BREAKPOINT_LEN_1
+    HwBreakpointLen1 = HW_BREAKPOINT_LEN_1,
+    /// HW_BREAKPOINT_LEN_2
+    HwBreakpointLen2 = HW_BREAKPOINT_LEN_2,
+    /// HW_BREAKPOINT_LEN_3
+    HwBreakpointLen3 = HW_BREAKPOINT_LEN_3,
+    /// HW_BREAKPOINT_LEN_4
+    HwBreakpointLen4 = HW_BREAKPOINT_LEN_4,
+    /// HW_BREAKPOINT_LEN_5
+    HwBreakpointLen5 = HW_BREAKPOINT_LEN_5,
+    /// HW_BREAKPOINT_LEN_6
+    HwBreakpointLen6 = HW_BREAKPOINT_LEN_6,
+    /// HW_BREAKPOINT_LEN_7
+    HwBreakpointLen7 = HW_BREAKPOINT_LEN_7,
+    /// HW_BREAKPOINT_LEN_8
+    HwBreakpointLen8 = HW_BREAKPOINT_LEN_8,
 }
 
 /// Sample Policy
@@ -116,6 +171,7 @@ pub enum PerfEventScope {
 ///         PerfEventScope::AllProcessesOneCpu { cpu },
 ///         SamplePolicy::Period(1000000),
 ///         true,
+///         None
 ///     )?;
 /// }
 /// # Ok::<(), Error>(())
@@ -141,9 +197,11 @@ impl PerfEvent {
     /// `perf_type`. See `perf_sw_ids`, `perf_hw_id`, `perf_hw_cache_id`,
     /// `perf_hw_cache_op_id` and `perf_hw_cache_op_result_id`.
     ///
-    /// The `scope` argument determines which processes are sampled. If `inherit`
-    /// is true, any new processes spawned by those processes will also
-    /// automatically get sampled.
+    /// The `bp` option must be specified if `perf_type` is `Breakpoint`.
+    ///
+    /// The `scope` argument determines which processes are sampled. If
+    /// `inherit` is true, any new processes spawned by those processes will
+    /// also automatically get sampled.
     ///
     /// The returned value can be used to detach, see [PerfEvent::detach].
     pub fn attach(
@@ -153,7 +211,11 @@ impl PerfEvent {
         scope: PerfEventScope,
         sample_policy: SamplePolicy,
         inherit: bool,
+        bp: Option<PerfBreakpoint>,
     ) -> Result<PerfEventLinkId, ProgramError> {
+        if matches!(perf_type, PerfTypeId::Breakpoint) && bp.is_none() {
+            return Err(ProgramError::IncompleteBreakpoint);
+        }
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let (sample_period, sample_frequency) = match sample_policy {
@@ -174,16 +236,17 @@ impl PerfEvent {
             cpu,
             sample_period,
             sample_frequency,
-            false,
+            matches!(perf_type, PerfTypeId::Breakpoint),
             inherit,
             0,
+            bp,
         )
         .map_err(|io_error| SyscallError {
             call: "perf_event_open",
             io_error,
         })?;
 
-        let link = perf_attach(prog_fd, fd, None /* cookie */)?;
+        let link = crate::programs::perf_attach(prog_fd, fd, None /* cookie */)?;
         self.data.links.insert(PerfEventLink::new(link))
     }
 }

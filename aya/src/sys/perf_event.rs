@@ -13,6 +13,7 @@ use aya_obj::generated::{
 use libc::pid_t;
 
 use super::{PerfEventIoctlRequest, Syscall, syscall};
+use crate::programs::{PerfTypeId, perf_event::PerfBreakpoint};
 
 #[expect(clippy::too_many_arguments)]
 pub(crate) fn perf_event_open(
@@ -25,6 +26,7 @@ pub(crate) fn perf_event_open(
     wakeup: bool,
     inherit: bool,
     flags: u32,
+    bp: Option<PerfBreakpoint>,
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
@@ -42,6 +44,20 @@ pub(crate) fn perf_event_open(
         attr.__bindgen_anon_1.sample_period = sample_period;
     }
 
+    if perf_type == (PerfTypeId::Breakpoint as u32) {
+        if let Some(bp) = bp {
+            attr.bp_type = bp.type_ as u32;
+            attr.__bindgen_anon_3.bp_addr = bp.address;
+            attr.__bindgen_anon_4.bp_len = bp.length as u64;
+            attr.set_precise_ip(2);
+        } else {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "perf_type Breakpoint requires a PerfBreakpoint",
+            ));
+        }
+    }
+
     perf_event_sys(attr, pid, cpu, flags)
 }
 
@@ -56,6 +72,7 @@ pub(crate) fn perf_event_open_bpf(cpu: c_int) -> io::Result<crate::MockableFd> {
         true,
         false,
         PERF_FLAG_FD_CLOEXEC,
+        None,
     )
 }
 
