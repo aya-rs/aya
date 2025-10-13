@@ -195,6 +195,10 @@ fn main() {
         }
     }
     let how = nix::sys::reboot::RebootMode::RB_POWER_OFF;
-    let _: std::convert::Infallible = nix::sys::reboot::reboot(how)
-        .unwrap_or_else(|err| panic!("reboot({how:?}) failed: {err:?}"));
+    match nix::sys::reboot::reboot(how) {
+        Ok(infallible) => match infallible {},
+        Err(err) => {
+            panic!("reboot({how:?}) failed: {err:?}")
+        }
+    }
 }
