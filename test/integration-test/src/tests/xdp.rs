@@ -42,7 +42,16 @@ fn af_xdp() {
 
     let mut iface = IfInfo::invalid();
     iface.from_name(c"lo").unwrap();
-    let sock = Socket::with_shared(&iface, &umem).unwrap();
+    let sock = match Socket::with_shared(&iface, &umem) {
+        Ok(sock) => sock,
+        Err(err) => {
+            if err.get_raw() == libc::ENOPROTOOPT {
+                eprintln!("skipping test - AF_XDP sockets not available: {err}");
+                return;
+            }
+            panic!("failed to create AF_XDP socket: {err} {}", err.get_raw());
+        }
+    };
 
     let mut fq_cq = umem.fq_cq(&sock).unwrap(); // Fill Queue / Completion Queue
 
