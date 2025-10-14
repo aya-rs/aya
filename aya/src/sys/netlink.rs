@@ -697,12 +697,6 @@ pub(crate) enum NlAttrError {
     InvalidHeaderLength(usize),
 }
 
-impl From<NlAttrError> for io::Error {
-    fn from(err: NlAttrError) -> Self {
-        Self::other(err)
-    }
-}
-
 unsafe fn request_attributes<T>(req: &mut T, msg_len: usize) -> &mut [u8] {
     let req: *mut _ = req;
     let req: *mut u8 = req.cast();
