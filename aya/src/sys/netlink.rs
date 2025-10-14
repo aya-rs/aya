@@ -40,8 +40,6 @@ pub(crate) enum NetlinkErrorInternal {
     #[error(transparent)]
     IoError(#[from] io::Error),
     #[error(transparent)]
-    NulError(#[from] std::ffi::NulError),
-    #[error(transparent)]
     NlAttrError(#[from] NlAttrError),
 }
 
