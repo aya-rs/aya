@@ -1,9 +1,11 @@
 use std::{net::UdpSocket, num::NonZeroU32, time::Duration};
 
+use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::{Array, CpuMap, XskMap},
-    programs::{Xdp, XdpFlags},
+    programs::{ProgramError, Xdp, XdpError, XdpFlags, xdp::XdpLinkId},
+    util::KernelVersion,
 };
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
@@ -177,7 +179,21 @@ fn cpumap_chain() {
     // Load the main program
     let xdp: &mut Xdp = bpf.program_mut("redirect_cpu").unwrap().try_into().unwrap();
     xdp.load().unwrap();
-    xdp.attach("lo", XdpFlags::default()).unwrap();
+    let result = xdp.attach("lo", XdpFlags::default());
+    // Generic devices did not support cpumap XDP programs until 5.15.
+    //
+    // See https://github.com/torvalds/linux/commit/11941f8a85362f612df61f4aaab0e41b64d2111d.
+    if KernelVersion::current().unwrap() < KernelVersion::new(5, 15, 0) {
+        assert_matches!(result, Err(ProgramError::XdpError(XdpError::NetlinkError(err))) => {
+            assert_eq!(err.raw_os_error(), Some(libc::EINVAL))
+        });
+        eprintln!(
+            "skipping test - cpumap attachment not supported on generic (loopback) interface"
+        );
+        return;
+    } else {
+        let _: XdpLinkId = result.unwrap();
+    };
 
     const PAYLOAD: &str = "hello cpumap";
 
