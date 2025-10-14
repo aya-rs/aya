@@ -1,6 +1,7 @@
 {
   "rust-analyzer.check.allTargets": true,
   "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.cargo.target": "x86_64-unknown-linux-gnu",
   "search.exclude": {
     "/xtask/public-api/*.txt": true
   },
