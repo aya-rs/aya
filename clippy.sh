@@ -2,15 +2,6 @@
 
 set -eux
 
-cargo +nightly hack clippy \
-  --target bpfel-unknown-none -Zbuild-std=core \
-  --package aya-ebpf-bindings \
-  --package aya-ebpf \
-  --package aya-log-ebpf \
-  --package integration-ebpf \
-  --feature-powerset \
-  -- --deny warnings
-
 # `-C panic=abort` because "unwinding panics are not supported without std"; integration-ebpf
 # contains `#[no_std]` binaries.
 # 
@@ -26,3 +17,12 @@ cargo +nightly hack clippy "$@" \
   -- --deny warnings \
   -C panic=abort \
   -Zpanic_abort_tests
+
+cargo +nightly hack clippy \
+  --target bpfel-unknown-none -Zbuild-std=core \
+  --package aya-ebpf-bindings \
+  --package aya-ebpf \
+  --package aya-log-ebpf \
+  --package integration-ebpf \
+  --feature-powerset \
+  -- --deny warnings
