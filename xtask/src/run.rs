@@ -208,7 +208,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 let etag_path_exists = etag_path.try_exists().with_context(|| {
                     format!("failed to check existence of {}", etag_path.display())
                 })?;
-                if !dest_path_exists && etag_path_exists {
+                if dest_path_exists != etag_path_exists {
                     println!(
                         "cargo:warning=({}).exists()={} != ({})={} (mismatch)",
                         dest_path.display(),
@@ -237,7 +237,14 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                     .with_context(|| format!("failed to run {curl:?}"))?;
                 let Output { status, .. } = &output;
                 if status.code() != Some(0) {
-                    bail!("{curl:?} failed: {output:?}")
+                    if dest_path_exists {
+                        println!(
+                            "cargo:warning={curl:?} failed ({status:?}); using cached {}",
+                            dest_path.display()
+                        );
+                    } else {
+                        bail!("{curl:?} failed: {output:?}")
+                    }
                 }
 
                 let mut patch = Command::new("patch");
