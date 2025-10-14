@@ -48,6 +48,20 @@ pub(crate) enum NetlinkErrorInternal {
 #[error(transparent)]
 pub struct NetlinkError(#[from] NetlinkErrorInternal);
 
+impl NetlinkError {
+    pub fn raw_os_error(&self) -> Option<i32> {
+        let Self(inner) = self;
+        match inner {
+            NetlinkErrorInternal::Error { source, .. } => source.raw_os_error(),
+            NetlinkErrorInternal::IoError(err) => err.raw_os_error(),
+            NetlinkErrorInternal::NlAttrError(err) => match err {
+                NlAttrError::InvalidBufferLength { .. }
+                | NlAttrError::InvalidHeaderLength { .. } => None,
+            },
+        }
+    }
+}
+
 // Safety: marking this as unsafe overall because of all the pointer math required to comply with
 // netlink alignments
 pub(crate) unsafe fn netlink_set_xdp_fd(
