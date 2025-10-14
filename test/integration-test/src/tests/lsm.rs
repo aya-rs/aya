@@ -3,6 +3,7 @@ use aya::{
     Btf, Ebpf,
     programs::{Lsm, LsmAttachType, LsmCgroup, ProgramError, ProgramType},
     sys::{SyscallError, is_program_supported},
+    util::KernelVersion,
 };
 
 use crate::utils::Cgroup;
@@ -57,7 +58,19 @@ fn lsm_cgroup() {
     let prog = bpf.program_mut("test_lsm_cgroup").unwrap();
     let prog: &mut LsmCgroup = prog.try_into().unwrap();
     let btf = Btf::from_sys_fs().expect("could not get btf from sys");
-    prog.load("socket_bind", &btf).unwrap();
+    match prog.load("socket_bind", &btf) {
+        Ok(()) => {}
+        Err(err) => match err {
+            ProgramError::LoadError { io_error, .. }
+                if !is_program_supported(ProgramType::Lsm(LsmAttachType::Cgroup)).unwrap() =>
+            {
+                assert_eq!(io_error.raw_os_error(), Some(libc::EINVAL));
+                eprintln!("skipping test - LSM cgroup programs not supported at load");
+                return;
+            }
+            err => panic!("unexpected error loading LSM cgroup program: {err}"),
+        },
+    }
 
     assert_matches!(std::net::TcpListener::bind("127.0.0.1:0"), Ok(_));
 
@@ -68,12 +81,15 @@ fn lsm_cgroup() {
     let link_id = {
         let result = prog.attach(cgroup.fd());
 
-        if !is_program_supported(ProgramType::Lsm(LsmAttachType::Cgroup)).unwrap() {
+        // See https://www.exein.io/blog/exploring-bpf-lsm-support-on-aarch64-with-ftrace.
+        if cfg!(target_arch = "aarch64")
+            && KernelVersion::current().unwrap() < KernelVersion::new(6, 4, 0)
+        {
             assert_matches!(result, Err(ProgramError::SyscallError(SyscallError { call, io_error })) => {
                 assert_eq!(call, "bpf_link_create");
                 assert_eq!(io_error.raw_os_error(), Some(524));
             });
-            eprintln!("skipping test - LSM programs not supported");
+            eprintln!("skipping test - LSM cgroup programs not supported at attach");
             return;
         }
         result.unwrap()
