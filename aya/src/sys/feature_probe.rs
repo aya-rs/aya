@@ -21,7 +21,7 @@ use super::{
 use crate::{
     MockableFd,
     maps::MapType,
-    programs::{ProgramError, ProgramType},
+    programs::{LsmAttachType, ProgramError, ProgramType},
     util::page_size,
 };
 
@@ -159,7 +159,10 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
                 // explicitly.
                 //
                 // h/t to https://www.exein.io/blog/exploring-bpf-lsm-support-on-aarch64-with-ftrace.
-                if !matches!(program_type, ProgramType::Lsm(_)) {
+                //
+                // The same test for cGroup LSM programs would require attaching to a real cgroup,
+                // which is more involved and not possible in the general case.
+                if !matches!(program_type, ProgramType::Lsm(LsmAttachType::Mac)) {
                     Ok(true)
                 } else {
                     match bpf_raw_tracepoint_open(None, prog_fd.as_fd()) {
