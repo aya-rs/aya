@@ -1,5 +1,6 @@
 use std::{convert::TryInto as _, fs::remove_file, path::Path, thread, time::Duration};
 
+use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::Array,
@@ -245,12 +246,23 @@ fn unload_xdp() {
 
     let program_name = "pass";
     let attach = |prog: &mut P| prog.attach("lo", XdpFlags::default()).unwrap();
-    run_unload_program_test(crate::TEST, program_name, attach);
+    run_unload_program_test(
+        crate::TEST,
+        program_name,
+        attach,
+        /* expect_fd_link: */
+        true, // xdp fallback is automatic, minimum version unclear.
+    );
 }
 
-fn run_unload_program_test<P>(bpf_image: &[u8], program_name: &str, attach: fn(&mut P) -> P::LinkId)
-where
+fn run_unload_program_test<P>(
+    bpf_image: &[u8],
+    program_name: &str,
+    attach: fn(&mut P) -> P::LinkId,
+    expect_fd_link: bool,
+) where
     P: UnloadProgramOps,
+    P::OwnedLink: TryInto<FdLink, Error = LinkError>,
     for<'a> &'a mut Program: TryInto<&'a mut P, Error = ProgramError>,
 {
     let mut bpf = Ebpf::load(bpf_image).unwrap();
@@ -258,10 +270,24 @@ where
     prog.load().unwrap();
     assert_loaded(program_name);
     let link = attach(prog);
-    {
-        let _link_owned: P::OwnedLink = prog.take_link(link).unwrap();
-        prog.unload().unwrap();
-        assert_loaded_and_linked(program_name);
+    let owned_link: P::OwnedLink = prog.take_link(link).unwrap();
+    match owned_link.try_into() {
+        Ok(_fd_link) => {
+            assert!(
+                expect_fd_link,
+                "{program_name}: unexpectedly obtained an fd-backed link",
+            );
+            prog.unload().unwrap();
+            assert_loaded_and_linked(program_name);
+        }
+        Err(err) => {
+            assert_matches!(err, LinkError::InvalidLink);
+            assert!(
+                !expect_fd_link,
+                "{program_name}: expected to obtain an fd-backed link on this kernel"
+            );
+            prog.unload().unwrap();
+        }
     }
 
     assert_unloaded(program_name);
@@ -282,7 +308,12 @@ fn unload_kprobe() {
 
     let program_name = "test_kprobe";
     let attach = |prog: &mut P| prog.attach("try_to_wake_up", 0).unwrap();
-    run_unload_program_test(crate::TEST, program_name, attach);
+    run_unload_program_test(
+        crate::TEST,
+        program_name,
+        attach,
+        aya::features().bpf_perf_link(), // probe uses perf_attach.
+    );
 }
 
 #[test_log::test]
@@ -291,7 +322,12 @@ fn basic_tracepoint() {
 
     let program_name = "test_tracepoint";
     let attach = |prog: &mut P| prog.attach("syscalls", "sys_enter_kill").unwrap();
-    run_unload_program_test(crate::TEST, program_name, attach);
+    run_unload_program_test(
+        crate::TEST,
+        program_name,
+        attach,
+        aya::features().bpf_perf_link(), // tracepoint uses perf_attach.
+    );
 }
 
 #[test_log::test]
@@ -303,7 +339,12 @@ fn basic_uprobe() {
         prog.attach("uprobe_function", "/proc/self/exe", None, None)
             .unwrap()
     };
-    run_unload_program_test(crate::TEST, program_name, attach);
+    run_unload_program_test(
+        crate::TEST,
+        program_name,
+        attach,
+        aya::features().bpf_perf_link(), // probe uses perf_attach.
+    );
 }
 
 #[test_log::test]
@@ -315,7 +356,12 @@ fn basic_flow_dissector() {
         let net_ns = std::fs::File::open("/proc/self/ns/net").unwrap();
         prog.attach(net_ns).unwrap()
     };
-    run_unload_program_test(crate::TEST, program_name, attach);
+    run_unload_program_test(
+        crate::TEST,
+        program_name,
+        attach,
+        KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0), // See FlowDissector::attach.
+    );
 }
 
 #[test_log::test]
@@ -324,12 +370,6 @@ fn pin_link() {
 
     let program_name = "pass";
     let attach = |prog: &mut P| prog.attach("lo", XdpFlags::default()).unwrap();
-
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 9, 0) {
-        eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
-        return;
-    }
 
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
@@ -405,9 +445,12 @@ fn pin_lifecycle() {
         Some(|prog: &mut P, pinned: FdLink| {
             prog.attach_to_link(pinned.try_into().unwrap()).unwrap()
         }),
+        /* expect_fd_link: */
+        true, // xdp fallback is automatic, minimum version unclear.
     );
 }
 
+#[expect(clippy::too_many_arguments, reason = "let's see you do better")]
 fn run_pin_program_lifecycle_test<P>(
     bpf_image: &[u8],
     program_name: &str,
@@ -416,6 +459,7 @@ fn run_pin_program_lifecycle_test<P>(
     from_pin: fn(&str) -> P,
     attach: fn(&mut P) -> P::LinkId,
     attach_to_link: Option<fn(&mut P, FdLink) -> P::LinkId>,
+    expect_fd_link: bool,
 ) where
     P: UnloadProgramOps + PinProgramOps,
     P::OwnedLink: TryInto<FdLink, Error = LinkError>,
@@ -445,26 +489,44 @@ fn run_pin_program_lifecycle_test<P>(
         let mut prog = from_pin(program_pin);
         let link_id = attach(&mut prog);
         let link = prog.take_link(link_id).unwrap();
-        let fd_link: FdLink = link.try_into().unwrap();
-        fd_link.pin(link_pin).unwrap();
+        match link.try_into() {
+            Ok(fd_link) => {
+                assert!(
+                    expect_fd_link,
+                    "{program_name}: unexpectedly obtained an fd-backed link when perf-link support is unavailable"
+                );
+                fd_link.pin(link_pin).unwrap();
 
-        // Unpin the program. It will stay attached since its links were pinned.
-        prog.unpin().unwrap();
-    }
+                // Unpin the program. It will stay attached since its links were pinned.
+                prog.unpin().unwrap();
 
-    // should still be loaded since link was pinned
-    assert_loaded_and_linked(program_name);
+                // should still be loaded since link was pinned
+                assert_loaded_and_linked(program_name);
 
-    // 4. Load a new version of the program, unpin link, and atomically replace old program
-    {
-        let link = PinnedLink::from_pin(link_pin).unwrap().unpin().unwrap();
-        if let Some(attach_to_link) = attach_to_link {
-            let mut bpf = Ebpf::load(bpf_image).unwrap();
-            let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
-            prog.load().unwrap();
-            attach_to_link(prog, link);
-            assert_loaded(program_name);
-        }
+                // 4. Load a new version of the program, unpin link, and atomically replace old program
+                {
+                    let link = PinnedLink::from_pin(link_pin).unwrap().unpin().unwrap();
+                    if let Some(attach_to_link) = attach_to_link {
+                        let mut bpf = Ebpf::load(bpf_image).unwrap();
+                        let prog: &mut P =
+                            bpf.program_mut(program_name).unwrap().try_into().unwrap();
+                        prog.load().unwrap();
+                        attach_to_link(prog, link);
+                        assert_loaded(program_name);
+                    }
+                }
+            }
+            Err(err) => {
+                assert_matches!(err, LinkError::InvalidLink);
+                assert!(
+                    !expect_fd_link,
+                    "{program_name}: expected an fd-backed link on this kernel"
+                );
+
+                // Unpin the program. It will be unloaded since its link was not pinned.
+                prog.unpin().unwrap();
+            }
+        };
     }
 
     // program should be unloaded
@@ -488,6 +550,7 @@ fn pin_lifecycle_tracepoint() {
         from_pin,
         attach,
         None,
+        aya::features().bpf_perf_link(), // tracepoint uses perf_attach.
     );
 }
 
@@ -508,6 +571,7 @@ fn pin_lifecycle_kprobe() {
         from_pin,
         attach,
         None,
+        aya::features().bpf_perf_link(), // probe uses perf_attach.
     );
 }
 
@@ -537,6 +601,7 @@ fn pin_lifecycle_uprobe() {
         from_pin,
         attach,
         None,
+        aya::features().bpf_perf_link(), // probe uses perf_attach.
     );
 
     // Make sure the function isn't optimized out.
