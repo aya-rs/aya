@@ -4,9 +4,14 @@ use aya::{
     Ebpf,
     maps::Array,
     programs::{
-        FlowDissector, KProbe, TracePoint, UProbe, Xdp, XdpFlags,
+        FlowDissector, KProbe, Program, ProgramError, TracePoint, UProbe, Xdp, XdpFlags,
+        flow_dissector::{FlowDissectorLink, FlowDissectorLinkId},
+        kprobe::{KProbeLink, KProbeLinkId},
         links::{FdLink, PinnedLink},
         loaded_links, loaded_programs,
+        trace_point::{TracePointLink, TracePointLinkId},
+        uprobe::{UProbeLink, UProbeLinkId},
+        xdp::{XdpLink, XdpLinkId},
     },
     util::KernelVersion,
 };
@@ -197,20 +202,63 @@ fn assert_unloaded(name: &str) {
     )
 }
 
+trait UnloadProgramOps {
+    type LinkId;
+    type OwnedLink;
+
+    fn load(&mut self) -> Result<(), ProgramError>;
+    fn unload(&mut self) -> Result<(), ProgramError>;
+    fn take_link(&mut self, id: Self::LinkId) -> Result<Self::OwnedLink, ProgramError>;
+}
+
+macro_rules! impl_unload_program_ops {
+    ($program:ty, $link_id:ty, $link:ty) => {
+        impl UnloadProgramOps for $program {
+            type LinkId = $link_id;
+            type OwnedLink = $link;
+
+            fn load(&mut self) -> Result<(), ProgramError> {
+                <$program>::load(self)
+            }
+
+            fn unload(&mut self) -> Result<(), ProgramError> {
+                <$program>::unload(self)
+            }
+
+            fn take_link(&mut self, id: Self::LinkId) -> Result<Self::OwnedLink, ProgramError> {
+                <$program>::take_link(self, id)
+            }
+        }
+    };
+}
+
+impl_unload_program_ops!(Xdp, XdpLinkId, XdpLink);
+impl_unload_program_ops!(KProbe, KProbeLinkId, KProbeLink);
+impl_unload_program_ops!(TracePoint, TracePointLinkId, TracePointLink);
+impl_unload_program_ops!(UProbe, UProbeLinkId, UProbeLink);
+impl_unload_program_ops!(FlowDissector, FlowDissectorLinkId, FlowDissectorLink);
+
 #[test_log::test]
 fn unload_xdp() {
     type P = Xdp;
 
     let program_name = "pass";
     let attach = |prog: &mut P| prog.attach("lo", XdpFlags::default()).unwrap();
+    run_unload_program_test(crate::TEST, program_name, attach);
+}
 
-    let mut bpf = Ebpf::load(crate::TEST).unwrap();
+fn run_unload_program_test<P>(bpf_image: &[u8], program_name: &str, attach: fn(&mut P) -> P::LinkId)
+where
+    P: UnloadProgramOps,
+    for<'a> &'a mut Program: TryInto<&'a mut P, Error = ProgramError>,
+{
+    let mut bpf = Ebpf::load(bpf_image).unwrap();
     let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
     assert_loaded(program_name);
     let link = attach(prog);
     {
-        let _link_owned = prog.take_link(link).unwrap();
+        let _link_owned: P::OwnedLink = prog.take_link(link).unwrap();
         prog.unload().unwrap();
         assert_loaded_and_linked(program_name);
     }
@@ -233,28 +281,7 @@ fn unload_kprobe() {
 
     let program_name = "test_kprobe";
     let attach = |prog: &mut P| prog.attach("try_to_wake_up", 0).unwrap();
-
-    let mut bpf = Ebpf::load(crate::TEST).unwrap();
-    let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
-    prog.load().unwrap();
-    assert_loaded(program_name);
-    let link = attach(prog);
-    {
-        let _link_owned = prog.take_link(link).unwrap();
-        prog.unload().unwrap();
-        assert_loaded_and_linked(program_name);
-    }
-
-    assert_unloaded(program_name);
-    prog.load().unwrap();
-
-    assert_loaded(program_name);
-    attach(prog);
-
-    assert_loaded(program_name);
-    prog.unload().unwrap();
-
-    assert_unloaded(program_name);
+    run_unload_program_test(crate::TEST, program_name, attach);
 }
 
 #[test_log::test]
@@ -263,30 +290,7 @@ fn basic_tracepoint() {
 
     let program_name = "test_tracepoint";
     let attach = |prog: &mut P| prog.attach("syscalls", "sys_enter_kill").unwrap();
-
-    let mut bpf = Ebpf::load(crate::TEST).unwrap();
-    let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
-
-    prog.load().unwrap();
-    assert_loaded(program_name);
-    let link = attach(prog);
-
-    {
-        let _link_owned = prog.take_link(link).unwrap();
-        prog.unload().unwrap();
-        assert_loaded_and_linked(program_name);
-    }
-
-    assert_unloaded(program_name);
-    prog.load().unwrap();
-
-    assert_loaded(program_name);
-    attach(prog);
-
-    assert_loaded(program_name);
-    prog.unload().unwrap();
-
-    assert_unloaded(program_name);
+    run_unload_program_test(crate::TEST, program_name, attach);
 }
 
 #[test_log::test]
@@ -298,30 +302,7 @@ fn basic_uprobe() {
         prog.attach("uprobe_function", "/proc/self/exe", None, None)
             .unwrap()
     };
-
-    let mut bpf = Ebpf::load(crate::TEST).unwrap();
-    let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
-
-    prog.load().unwrap();
-    assert_loaded(program_name);
-    let link = attach(prog);
-
-    {
-        let _link_owned = prog.take_link(link).unwrap();
-        prog.unload().unwrap();
-        assert_loaded_and_linked(program_name);
-    }
-
-    assert_unloaded(program_name);
-    prog.load().unwrap();
-
-    assert_loaded(program_name);
-    attach(prog);
-
-    assert_loaded(program_name);
-    prog.unload().unwrap();
-
-    assert_unloaded(program_name);
+    run_unload_program_test(crate::TEST, program_name, attach);
 }
 
 #[test_log::test]
@@ -333,30 +314,7 @@ fn basic_flow_dissector() {
         let net_ns = std::fs::File::open("/proc/self/ns/net").unwrap();
         prog.attach(net_ns).unwrap()
     };
-
-    let mut bpf = Ebpf::load(crate::TEST).unwrap();
-    let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
-
-    prog.load().unwrap();
-    assert_loaded(program_name);
-
-    let link = attach(prog);
-    {
-        let _link_owned = prog.take_link(link).unwrap();
-        prog.unload().unwrap();
-        assert_loaded_and_linked(program_name);
-    }
-
-    assert_unloaded(program_name);
-    prog.load().unwrap();
-
-    assert_loaded(program_name);
-    attach(prog);
-
-    assert_loaded(program_name);
-    prog.unload().unwrap();
-
-    assert_unloaded(program_name);
+    run_unload_program_test(crate::TEST, program_name, attach);
 }
 
 #[test_log::test]
