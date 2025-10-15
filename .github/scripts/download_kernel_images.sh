@@ -25,6 +25,23 @@ for VERSION in "${VERSIONS[@]}"; do
     exit 1
   }
   FILES+=("$match")
+
+  # The debug package contains the actual System.map. Debian has transitioned
+  # between -dbg and -dbgsym suffixes, so try both.
+  DEBUG_REGEX_BASE="linux-image-${VERSION//./\\.}\\.[0-9]+(-[0-9]+)?(\+bpo|\+deb[0-9]+)?-cloud-${ARCHITECTURE}-"
+  debug_match=""
+  for debug_suffix in dbg dbgsym; do
+    regex="${DEBUG_REGEX_BASE}${debug_suffix}_.*\\.deb"
+    debug_match=$(printf '%s\n' "$URLS" | grep -E "$regex" | sort -V | tail -n1 || true)
+    if [[ -n "$debug_match" ]]; then
+      break
+    fi
+  done
+  if [[ -z "$debug_match" ]]; then
+    printf 'Failed to locate debug package for VERSION=%s (tried dbg/dbgsym)\n' "$VERSION" >&2
+    exit 1
+  fi
+  FILES+=("$debug_match")
 done
 
 # Note: `--etag-{compare,save}` are not idempotent until curl 8.9.0 which included

@@ -1,4 +1,5 @@
 use std::{
+    collections::BTreeMap,
     ffi::{OsStr, OsString},
     fmt::Write as _,
     fs::{self, OpenOptions},
@@ -17,6 +18,42 @@ use walkdir::WalkDir;
 use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors};
 
 const GEN_INIT_CPIO_PATCH: &str = include_str!("../patches/gen_init_cpio.c.macos.diff");
+
+#[derive(Default)]
+struct KernelPackageGroup {
+    kernel: Option<PathBuf>,
+    debug: Option<PathBuf>,
+}
+
+fn extract_deb(archive: &Path, dest: &Path) -> Result<()> {
+    fs::create_dir_all(dest).with_context(|| format!("failed to create {}", dest.display()))?;
+
+    let mut dpkg = Command::new("dpkg-deb");
+    dpkg.arg("--fsys-tarfile")
+        .arg(archive)
+        .stdout(Stdio::piped());
+    let mut dpkg_child = dpkg
+        .spawn()
+        .with_context(|| format!("failed to spawn {dpkg:?}"))?;
+    let Child { stdout, .. } = &mut dpkg_child;
+    let stdout = stdout.take().unwrap();
+    let mut archive_reader = tar::Archive::new(stdout);
+    archive_reader.unpack(dest).with_context(|| {
+        format!(
+            "failed to unpack archive {} to {}",
+            archive.display(),
+            dest.display()
+        )
+    })?;
+    let status = dpkg_child
+        .wait()
+        .with_context(|| format!("failed to wait for {dpkg:?}"))?;
+    if !status.success() {
+        bail!("{dpkg:?} exited with {status}");
+    }
+
+    Ok(())
+}
 
 #[derive(Parser)]
 enum Environment {
@@ -285,40 +322,88 @@ pub(crate) fn run(opts: Options) -> Result<()> {
             }
 
             let extraction_root = tempfile::tempdir().context("tempdir failed")?;
+
+            let mut package_groups: BTreeMap<OsString, KernelPackageGroup> = BTreeMap::new();
+            for archive in &kernel_archives {
+                let file_name = archive.file_name().ok_or_else(|| {
+                    anyhow!("archive path missing filename: {}", archive.display())
+                })?;
+                let file_name = file_name.to_string_lossy();
+                let (package_name, _) = file_name
+                    .split_once('_')
+                    .ok_or_else(|| anyhow!("unexpected archive filename: {file_name}"))?;
+                let (base, is_debug) = if let Some(base) = package_name.strip_suffix("-dbg") {
+                    (base, true)
+                } else if let Some(base) = package_name.strip_suffix("-dbgsym") {
+                    (base, true)
+                } else if let Some(base) = package_name.strip_suffix("-unsigned") {
+                    (base, false)
+                } else {
+                    (package_name, false)
+                };
+                let entry = package_groups.entry(OsString::from(base)).or_default();
+                if is_debug {
+                    entry.debug = Some(archive.clone());
+                } else {
+                    entry.kernel = Some(archive.clone());
+                }
+            }
+
             let mut errors = Vec::new();
-            for (index, archive) in kernel_archives.iter().enumerate() {
+            for (index, (base, group)) in package_groups.into_iter().enumerate() {
+                let KernelPackageGroup { kernel, debug } = group;
+                let base_display = base.to_string_lossy();
+                let kernel_archive =
+                    kernel.ok_or_else(|| anyhow!("missing kernel package for {base_display}"))?;
+
                 let archive_dir = extraction_root
                     .path()
-                    .join(format!("kernel-archive-{index}"));
-                fs::create_dir_all(&archive_dir)
-                    .with_context(|| format!("failed to create {}", archive_dir.display()))?;
+                    .join(format!("kernel-archive-{index}-image"));
+                extract_deb(&kernel_archive, &archive_dir)?;
 
-                let mut dpkg = Command::new("dpkg-deb");
-                dpkg.arg("--fsys-tarfile")
-                    .arg(archive)
-                    .stdout(Stdio::piped());
-                let mut dpkg_child = dpkg
-                    .spawn()
-                    .with_context(|| format!("failed to spawn {dpkg:?}"))?;
-                let Child { stdout, .. } = &mut dpkg_child;
-                let stdout = stdout.take().unwrap();
-                let mut archive_reader = tar::Archive::new(stdout);
-                archive_reader.unpack(&archive_dir).with_context(|| {
-                    format!(
-                        "failed to unpack archive {} to {}",
-                        archive.display(),
-                        archive_dir.display()
-                    )
-                })?;
-                let status = dpkg_child
-                    .wait()
-                    .with_context(|| format!("failed to wait for {dpkg:?}"))?;
-                if !status.success() {
-                    bail!("{dpkg:?} exited with {status}");
-                }
+                let debug_maps = if let Some(debug_archive) = debug {
+                    let debug_dir = extraction_root
+                        .path()
+                        .join(format!("kernel-archive-{index}-debug"));
+                    extract_deb(&debug_archive, &debug_dir)?;
+                    WalkDir::new(&debug_dir)
+                        .into_iter()
+                        .filter_map(|entry| entry.ok())
+                        .filter(|entry| entry.file_type().is_file())
+                        .filter_map(|entry| {
+                            let path = entry.into_path();
+                            let is_system_map = path
+                                .file_name()
+                                .map(|file_name| {
+                                    matches!(
+                                        file_name.as_encoded_bytes(),
+                                        [
+                                            b'S',
+                                            b'y',
+                                            b's',
+                                            b't',
+                                            b'e',
+                                            b'm',
+                                            b'.',
+                                            b'm',
+                                            b'a',
+                                            b'p',
+                                            b'-',
+                                            ..
+                                        ]
+                                    )
+                                })
+                                .unwrap_or(false);
+                            if is_system_map { Some(path) } else { None }
+                        })
+                        .collect::<Vec<_>>()
+                } else {
+                    Vec::new()
+                };
 
                 let mut kernel_images = Vec::new();
                 let mut configs = Vec::new();
+                let mut kernel_maps = Vec::new();
                 for entry in WalkDir::new(&archive_dir) {
                     let entry = entry.with_context(|| {
                         format!("failed to read entry in {}", archive_dir.display())
@@ -350,22 +435,59 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                             [b'c', b'o', b'n', b'f', b'i', b'g', b'-', ..] => {
                                 configs.push(path);
                             }
+                            // "System.map-"
+                            [
+                                b'S',
+                                b'y',
+                                b's',
+                                b't',
+                                b'e',
+                                b'm',
+                                b'.',
+                                b'm',
+                                b'a',
+                                b'p',
+                                b'-',
+                                ..,
+                            ] => {
+                                kernel_maps.push(path);
+                            }
                             _ => {}
                         }
                     }
                 }
                 let (kernel_image, kernel_version) = match kernel_images.as_slice() {
                     [kernel_image] => kernel_image,
-                    [] => bail!("no kernel images in {}", archive.display()),
+                    [] => bail!("no kernel images in {}", kernel_archive.display()),
                     kernel_images => bail!(
                         "multiple kernel images in {}: {:?}",
-                        archive.display(),
+                        kernel_archive.display(),
                         kernel_images
                     ),
                 };
                 let config = match configs.as_slice() {
                     [config] => config,
-                    configs => bail!("multiple configs in {}: {:?}", archive.display(), configs),
+                    configs => bail!(
+                        "multiple configs in {}: {:?}",
+                        kernel_archive.display(),
+                        configs
+                    ),
+                };
+                let system_map = match debug_maps.as_slice() {
+                    [system_map] => system_map,
+                    [] => match kernel_maps.as_slice() {
+                        [system_map] => system_map,
+                        kernel_maps => bail!(
+                            "multiple kernel System.maps in {}: {:?}",
+                            kernel_archive.display(),
+                            kernel_maps
+                        ),
+                    },
+                    system_maps => bail!(
+                        "multiple debug System.maps in {}: {:?}",
+                        kernel_archive.display(),
+                        system_maps
+                    ),
                 };
 
                 let mut modules_dirs = Vec::new();
@@ -388,10 +510,10 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 }
                 let modules_dir = match modules_dirs.as_slice() {
                     [modules_dir] => modules_dir,
-                    [] => bail!("no modules directories in {}", archive.display()),
+                    [] => bail!("no modules directories in {}", kernel_archive.display()),
                     modules_dirs => bail!(
                         "multiple modules directories in {}: {:?}",
-                        archive.display(),
+                        kernel_archive.display(),
                         modules_dirs
                     ),
                 };
@@ -503,6 +625,11 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 write_file(Path::new("/boot/config"), config, "644 0 0");
                 if let Some(name) = config.file_name() {
                     write_file(&Path::new("/boot").join(name), config, "644 0 0");
+                }
+
+                write_file(Path::new("/boot/System.map"), system_map, "644 0 0");
+                if let Some(name) = system_map.file_name() {
+                    write_file(&Path::new("/boot").join(name), system_map, "644 0 0");
                 }
 
                 test_distro.iter().for_each(|(name, path)| {
