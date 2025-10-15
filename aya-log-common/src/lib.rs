@@ -71,6 +71,9 @@ impl_formatter_for_types!(
 
 impl<const N: usize> LowerHexFormatter for &[u8; N] {}
 
+impl<T> LowerHexFormatter for *const T {}
+impl<T> LowerHexFormatter for *mut T {}
+
 pub trait UpperHexFormatter {}
 impl_formatter_for_types!(
     UpperHexFormatter: {
@@ -81,6 +84,9 @@ impl_formatter_for_types!(
 );
 
 impl<const N: usize> UpperHexFormatter for &[u8; N] {}
+
+impl<T> UpperHexFormatter for *const T {}
+impl<T> UpperHexFormatter for *mut T {}
 
 pub trait IpFormatter {}
 impl IpFormatter for IpAddr {}
@@ -144,6 +150,8 @@ pub enum ArgumentKind {
 
     Bytes,
     Str,
+
+    Pointer,
 }
 
 /// All display hints
@@ -279,6 +287,20 @@ impl Argument for DisplayHint {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
         let v: u8 = (*self).into();
         (ArgumentKind::DisplayHint, v.to_ne_bytes())
+    }
+}
+
+impl<T> sealed::Sealed for *const T {}
+impl<T> Argument for *const T {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        (ArgumentKind::Pointer, (*self as usize).to_ne_bytes())
+    }
+}
+
+impl<T> sealed::Sealed for *mut T {}
+impl<T> Argument for *mut T {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        (ArgumentKind::Pointer, (*self as usize).to_ne_bytes())
     }
 }
 

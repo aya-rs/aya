@@ -732,6 +732,16 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                 }
                 Err(e) => error!("received invalid utf8 string: {e}"),
             },
+            ArgumentKind::Pointer => {
+                full_log_msg.push_str(
+                    &usize::from_ne_bytes(
+                        value
+                            .try_into()
+                            .map_err(|std::array::TryFromSliceError { .. }| ())?,
+                    )
+                    .format(last_hint.take())?,
+                );
+            }
         }
 
         buf = rest;
