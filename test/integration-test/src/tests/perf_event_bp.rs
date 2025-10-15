@@ -6,10 +6,10 @@ use std::{
 use aya::{
     Ebpf,
     programs::{
-        PerfEventScope, PerfTypeId, SamplePolicy,
+        PerfEventScope, SamplePolicy,
         perf_event::{
-            PerfBreakpoint, PerfBreakpointSize::HwBreakpointLen1,
-            PerfBreakpointType::HwBreakpointRW,
+            PerfBreakpointSize::HwBreakpointLen1, PerfBreakpointType::HwBreakpointRW,
+            PerfEventConfig,
         },
     },
     util::online_cpus,
@@ -95,16 +95,14 @@ fn perf_event_bp() {
     for cpu in online_cpus().unwrap() {
         info!("attaching to cpu {cpu}");
         prog.attach(
-            PerfTypeId::Breakpoint,
-            0u64,
-            PerfEventScope::AllProcessesOneCpu { cpu },
-            SamplePolicy::Period(1),
-            true,
-            Some(PerfBreakpoint {
+            PerfEventConfig::Breakpoint {
                 address: attach_addr,
                 length: HwBreakpointLen1,
                 type_: HwBreakpointRW,
-            }),
+            },
+            PerfEventScope::AllProcessesOneCpu { cpu },
+            SamplePolicy::Period(1),
+            true,
         )
         .unwrap();
     }

@@ -13,7 +13,7 @@ use aya_obj::generated::{
 use libc::pid_t;
 
 use super::{PerfEventIoctlRequest, Syscall, syscall};
-use crate::programs::{PerfTypeId, perf_event::PerfBreakpoint};
+use crate::programs::perf_event::PerfEventConfig;
 
 #[expect(clippy::too_many_arguments)]
 pub(crate) fn perf_event_open(
@@ -26,7 +26,7 @@ pub(crate) fn perf_event_open(
     wakeup: bool,
     inherit: bool,
     flags: u32,
-    bp: Option<PerfBreakpoint>,
+    perf_config: Option<PerfEventConfig>,
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
@@ -44,18 +44,16 @@ pub(crate) fn perf_event_open(
         attr.__bindgen_anon_1.sample_period = sample_period;
     }
 
-    if perf_type == (PerfTypeId::Breakpoint as u32) {
-        if let Some(bp) = bp {
-            attr.bp_type = bp.type_ as u32;
-            attr.__bindgen_anon_3.bp_addr = bp.address;
-            attr.__bindgen_anon_4.bp_len = bp.length as u64;
-            attr.set_precise_ip(2);
-        } else {
-            return Err(io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "perf_type Breakpoint requires a PerfBreakpoint",
-            ));
-        }
+    if let Some(PerfEventConfig::Breakpoint {
+        address,
+        length,
+        type_,
+    }) = perf_config
+    {
+        attr.bp_type = type_.into_primitive();
+        attr.__bindgen_anon_3.bp_addr = address;
+        attr.__bindgen_anon_4.bp_len = length.into_primitive();
+        attr.set_precise_ip(2);
     }
 
     perf_event_sys(attr, pid, cpu, flags)
