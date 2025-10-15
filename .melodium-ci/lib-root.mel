@@ -58,7 +58,8 @@ treatment buildTestAya(const github_contexts: string = "{}")
     stop.value -> stopRunner.trigger
 
     logRunnerFailure: logErrorMessage[logger=logger](message="Runner failed")
-    setupRunner.failed -> logRunnerFailure.trigger,ended -> stop.b
+    setupRunner.failed -> logRunnerFailure.trigger
+    setupRunner.failed -> stop.b
 }
 
 treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_contexts: JavaScriptEngine](short: string, arch: string, repository_clone_ref: string, repository_clone_url: string)
