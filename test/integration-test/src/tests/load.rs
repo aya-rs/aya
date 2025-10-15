@@ -200,12 +200,13 @@ fn assert_unloaded(name: &str) {
 #[test_log::test]
 fn unload_xdp() {
     let program_name = "pass";
+    let attach = |prog: &mut Xdp| prog.attach("lo", XdpFlags::default()).unwrap();
 
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
     assert_loaded(program_name);
-    let link = prog.attach("lo", XdpFlags::default()).unwrap();
+    let link = attach(prog);
     {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
@@ -216,7 +217,7 @@ fn unload_xdp() {
     prog.load().unwrap();
 
     assert_loaded(program_name);
-    prog.attach("lo", XdpFlags::default()).unwrap();
+    attach(prog);
 
     assert_loaded(program_name);
     prog.unload().unwrap();
@@ -227,12 +228,13 @@ fn unload_xdp() {
 #[test_log::test]
 fn unload_kprobe() {
     let program_name = "test_kprobe";
+    let attach = |prog: &mut KProbe| prog.attach("try_to_wake_up", 0).unwrap();
 
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut KProbe = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
     assert_loaded(program_name);
-    let link = prog.attach("try_to_wake_up", 0).unwrap();
+    let link = attach(prog);
     {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
@@ -243,7 +245,7 @@ fn unload_kprobe() {
     prog.load().unwrap();
 
     assert_loaded(program_name);
-    prog.attach("try_to_wake_up", 0).unwrap();
+    attach(prog);
 
     assert_loaded(program_name);
     prog.unload().unwrap();
@@ -254,13 +256,14 @@ fn unload_kprobe() {
 #[test_log::test]
 fn basic_tracepoint() {
     let program_name = "test_tracepoint";
+    let attach = |prog: &mut TracePoint| prog.attach("syscalls", "sys_enter_kill").unwrap();
 
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut TracePoint = bpf.program_mut(program_name).unwrap().try_into().unwrap();
 
     prog.load().unwrap();
     assert_loaded(program_name);
-    let link = prog.attach("syscalls", "sys_enter_kill").unwrap();
+    let link = attach(prog);
 
     {
         let _link_owned = prog.take_link(link).unwrap();
@@ -272,7 +275,7 @@ fn basic_tracepoint() {
     prog.load().unwrap();
 
     assert_loaded(program_name);
-    prog.attach("syscalls", "sys_enter_kill").unwrap();
+    attach(prog);
 
     assert_loaded(program_name);
     prog.unload().unwrap();
@@ -283,15 +286,17 @@ fn basic_tracepoint() {
 #[test_log::test]
 fn basic_uprobe() {
     let program_name = "test_uprobe";
+    let attach = |prog: &mut UProbe| {
+        prog.attach("uprobe_function", "/proc/self/exe", None, None)
+            .unwrap()
+    };
 
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut UProbe = bpf.program_mut(program_name).unwrap().try_into().unwrap();
 
     prog.load().unwrap();
     assert_loaded(program_name);
-    let link = prog
-        .attach("uprobe_function", "/proc/self/exe", None, None)
-        .unwrap();
+    let link = attach(prog);
 
     {
         let _link_owned = prog.take_link(link).unwrap();
@@ -303,8 +308,7 @@ fn basic_uprobe() {
     prog.load().unwrap();
 
     assert_loaded(program_name);
-    prog.attach("uprobe_function", "/proc/self/exe", None, None)
-        .unwrap();
+    attach(prog);
 
     assert_loaded(program_name);
     prog.unload().unwrap();
@@ -315,6 +319,10 @@ fn basic_uprobe() {
 #[test_log::test]
 fn basic_flow_dissector() {
     let program_name = "test_flow";
+    let attach = |prog: &mut FlowDissector| {
+        let net_ns = std::fs::File::open("/proc/self/ns/net").unwrap();
+        prog.attach(net_ns).unwrap()
+    };
 
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut FlowDissector = bpf.program_mut(program_name).unwrap().try_into().unwrap();
@@ -322,8 +330,7 @@ fn basic_flow_dissector() {
     prog.load().unwrap();
     assert_loaded(program_name);
 
-    let net_ns = std::fs::File::open("/proc/self/ns/net").unwrap();
-    let link = prog.attach(net_ns.try_clone().unwrap()).unwrap();
+    let link = attach(prog);
     {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
@@ -334,7 +341,7 @@ fn basic_flow_dissector() {
     prog.load().unwrap();
 
     assert_loaded(program_name);
-    prog.attach(net_ns).unwrap();
+    attach(prog);
 
     assert_loaded(program_name);
     prog.unload().unwrap();
@@ -345,6 +352,7 @@ fn basic_flow_dissector() {
 #[test_log::test]
 fn pin_link() {
     let program_name = "pass";
+    let attach = |prog: &mut Xdp| prog.attach("lo", XdpFlags::default()).unwrap();
 
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 9, 0) {
@@ -355,7 +363,7 @@ fn pin_link() {
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
-    let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
+    let link_id = attach(prog);
     let link = prog.take_link(link_id).unwrap();
     assert_loaded(program_name);
 
@@ -378,6 +386,7 @@ fn pin_link() {
 #[test_log::test]
 fn pin_lifecycle() {
     let program_name = "pass";
+    let attach = |prog: &mut Xdp| prog.attach("lo", XdpFlags::default()).unwrap();
 
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 18, 0) {
@@ -410,7 +419,7 @@ fn pin_lifecycle() {
     {
         let mut prog =
             Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog", XdpAttachType::Interface).unwrap();
-        let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
+        let link_id = attach(&mut prog);
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();
         fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
@@ -443,6 +452,7 @@ fn pin_lifecycle() {
 #[test_log::test]
 fn pin_lifecycle_tracepoint() {
     let program_name = "test_tracepoint";
+    let attach = |prog: &mut TracePoint| prog.attach("syscalls", "sys_enter_kill").unwrap();
 
     // 1. Load Program and Pin
     {
@@ -466,7 +476,7 @@ fn pin_lifecycle_tracepoint() {
     // 3. Load program from bpffs and attach
     {
         let mut prog = TracePoint::from_pin("/sys/fs/bpf/aya-tracepoint-test-prog").unwrap();
-        let link_id = prog.attach("syscalls", "sys_enter_kill").unwrap();
+        let link_id = attach(&mut prog);
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();
         fd_link
@@ -495,6 +505,7 @@ fn pin_lifecycle_tracepoint() {
 #[test_log::test]
 fn pin_lifecycle_kprobe() {
     let program_name = "test_kprobe";
+    let attach = |prog: &mut KProbe| prog.attach("try_to_wake_up", 0).unwrap();
 
     // 1. Load Program and Pin
     {
@@ -526,7 +537,7 @@ fn pin_lifecycle_kprobe() {
             aya::programs::ProbeKind::KProbe,
         )
         .unwrap();
-        let link_id = prog.attach("try_to_wake_up", 0).unwrap();
+        let link_id = attach(&mut prog);
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();
         fd_link
@@ -561,6 +572,10 @@ extern "C" fn uprobe_function() {
 #[test_log::test]
 fn pin_lifecycle_uprobe() {
     let program_name = "test_uprobe";
+    let attach = |prog: &mut UProbe| {
+        prog.attach("uprobe_function", "/proc/self/exe", None, None)
+            .unwrap()
+    };
 
     const FIRST_PIN_PATH: &str = "/sys/fs/bpf/aya-uprobe-test-prog-1";
     const SECOND_PIN_PATH: &str = "/sys/fs/bpf/aya-uprobe-test-prog-2";
@@ -587,9 +602,7 @@ fn pin_lifecycle_uprobe() {
     // 3. Load program from bpffs and attach
     {
         let mut prog = UProbe::from_pin(FIRST_PIN_PATH, aya::programs::ProbeKind::UProbe).unwrap();
-        let link_id = prog
-            .attach("uprobe_function", "/proc/self/exe", None, None)
-            .unwrap();
+        let link_id = attach(&mut prog);
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();
         fd_link.pin(SECOND_PIN_PATH).unwrap();
