@@ -60,6 +60,7 @@
 #![cfg_attr(test, expect(unused_crate_dependencies, reason = "used in doctests"))]
 
 use std::{
+    ffi::c_void,
     fmt::{LowerHex, UpperHex},
     mem,
     net::{Ipv4Addr, Ipv6Addr},
@@ -284,6 +285,19 @@ impl Formatter<[u8; 6]> for UpperMacFormatter {
     }
 }
 
+pub struct PointerFormatter;
+impl<T> Formatter<*const T> for PointerFormatter {
+    fn format(v: *const T) -> String {
+        format!("{v:p}")
+    }
+}
+
+impl<T> Formatter<*mut T> for PointerFormatter {
+    fn format(v: *mut T) -> String {
+        format!("{v:p}")
+    }
+}
+
 trait Format {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()>;
 }
@@ -307,6 +321,7 @@ impl Format for u32 {
             Some(DisplayHint::Ip) => Ok(Ipv4Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Ok(DefaultFormatter::format(self)),
         }
     }
@@ -321,6 +336,7 @@ impl Format for Ipv4Addr {
             Some(DisplayHint::Ip) => Ok(Ipv4Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Ok(Ipv4Formatter::format(*self)),
         }
     }
@@ -335,6 +351,7 @@ impl Format for Ipv6Addr {
             Some(DisplayHint::Ip) => Ok(Ipv6Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Ok(Ipv6Formatter::format(*self)),
         }
     }
@@ -349,6 +366,7 @@ impl Format for [u8; 4] {
             Some(DisplayHint::Ip) => Ok(Ipv4Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Ok(Ipv4Formatter::format(*self)),
         }
     }
@@ -363,6 +381,7 @@ impl Format for [u8; 6] {
             Some(DisplayHint::Ip) => Err(()),
             Some(DisplayHint::LowerMac) => Ok(LowerMacFormatter::format(*self)),
             Some(DisplayHint::UpperMac) => Ok(UpperMacFormatter::format(*self)),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Err(()),
         }
     }
@@ -377,6 +396,7 @@ impl Format for [u8; 16] {
             Some(DisplayHint::Ip) => Ok(Ipv6Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Err(()),
         }
     }
@@ -391,6 +411,7 @@ impl Format for [u16; 8] {
             Some(DisplayHint::Ip) => Ok(Ipv6Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Err(()),
         }
     }
@@ -407,6 +428,7 @@ macro_rules! impl_format {
                     Some(DisplayHint::Ip) => Err(()),
                     Some(DisplayHint::LowerMac) => Err(()),
                     Some(DisplayHint::UpperMac) => Err(()),
+                    Some(DisplayHint::Pointer) => Err(()),
                     None => Ok(DefaultFormatter::format(self)),
                 }
             }
@@ -436,6 +458,7 @@ macro_rules! impl_format_float {
                     Some(DisplayHint::Ip) => Err(()),
                     Some(DisplayHint::LowerMac) => Err(()),
                     Some(DisplayHint::UpperMac) => Err(()),
+                    Some(DisplayHint::Pointer) => Err(()),
                     None => Ok(DefaultFormatter::format(self)),
                 }
             }
@@ -445,6 +468,24 @@ macro_rules! impl_format_float {
 
 impl_format_float!(f32);
 impl_format_float!(f64);
+
+impl<T> Format for *const T {
+    fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
+            Some(DisplayHint::Pointer) => Ok(PointerFormatter::format(*self)),
+            _ => Err(()),
+        }
+    }
+}
+
+impl<T> Format for *mut T {
+    fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
+            Some(DisplayHint::Pointer) => Ok(PointerFormatter::format(*self)),
+            _ => Err(()),
+        }
+    }
+}
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -732,6 +773,13 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                 }
                 Err(e) => error!("received invalid utf8 string: {e}"),
             },
+            ArgumentKind::Pointer => {
+                let value = value
+                    .try_into()
+                    .map_err(|std::array::TryFromSliceError { .. }| ())?;
+                let ptr = usize::from_ne_bytes(value) as *const c_void;
+                full_log_msg.push_str(&ptr.format(last_hint.take())?);
+            }
         }
 
         buf = rest;

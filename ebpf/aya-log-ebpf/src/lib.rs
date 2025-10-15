@@ -14,7 +14,8 @@ pub mod macro_support {
     use aya_ebpf::maps::RingBuf;
     pub use aya_log_common::{
         Argument, DefaultFormatter, DisplayHint, Field, Header, IpFormatter, Level, LogValueLength,
-        LowerHexFormatter, LowerMacFormatter, UpperHexFormatter, UpperMacFormatter,
+        LowerHexFormatter, LowerMacFormatter, PointerFormatter, UpperHexFormatter,
+        UpperMacFormatter,
     };
 
     // This cfg_attr prevents compilation failures on macOS where the generated section name doesn't
