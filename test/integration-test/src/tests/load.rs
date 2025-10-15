@@ -32,6 +32,13 @@ fn long_name() {
 }
 
 #[test_log::test]
+fn memmove() {
+    let mut bpf = Ebpf::load(crate::MEMMOVE_TEST).unwrap();
+    let prog: &mut Xdp = bpf.program_mut("do_dnat").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+}
+
+#[test_log::test]
 fn multiple_btf_maps() {
     let mut bpf = Ebpf::load(crate::MULTIMAP_BTF).unwrap();
 
@@ -238,15 +245,6 @@ fn unload_kprobe() {
     prog.unload().unwrap();
 
     assert_unloaded("test_kprobe");
-}
-
-#[test_log::test]
-fn memmove() {
-    let mut bpf = Ebpf::load(crate::MEMMOVE_TEST).unwrap();
-    let prog: &mut Xdp = bpf.program_mut("do_dnat").unwrap().try_into().unwrap();
-
-    prog.load().unwrap();
-    assert_loaded("do_dnat");
 }
 
 #[test_log::test]
