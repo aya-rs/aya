@@ -506,6 +506,7 @@ pub fn aya_obj::btf::BtfExt::from(t: T) -> T
 pub struct aya_obj::btf::BtfFeatures
 impl aya_obj::btf::BtfFeatures
 pub fn aya_obj::btf::BtfFeatures::btf_datasec(&self) -> bool
+pub fn aya_obj::btf::BtfFeatures::btf_datasec_zero(&self) -> bool
 pub fn aya_obj::btf::BtfFeatures::btf_decl_tag(&self) -> bool
 pub fn aya_obj::btf::BtfFeatures::btf_enum64(&self) -> bool
 pub fn aya_obj::btf::BtfFeatures::btf_float(&self) -> bool

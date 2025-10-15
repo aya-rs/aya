@@ -1103,6 +1103,15 @@ pub(crate) fn is_btf_datasec_supported() -> bool {
     bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
 }
 
+pub(crate) fn is_btf_datasec_zero_supported() -> bool {
+    let mut btf = Btf::new();
+    let name_offset = btf.add_string(".empty");
+    let datasec_type = BtfType::DataSec(DataSec::new(name_offset, Vec::new(), 0));
+    btf.add_type(datasec_type);
+
+    bpf_load_btf(btf.to_bytes().as_slice(), &mut [], Default::default()).is_ok()
+}
+
 pub(crate) fn is_btf_enum64_supported() -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("enum64");
