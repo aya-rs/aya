@@ -942,8 +942,8 @@ impl BtfExt {
         self.info_data(self.header.line_info_off, self.header.line_info_len)
     }
 
-    pub(crate) fn relocations(&self) -> impl Iterator<Item = &(u32, Vec<Relocation>)> {
-        self.relocations.iter()
+    pub(crate) fn relocations(&self) -> &[(u32, Vec<Relocation>)] {
+        self.relocations.as_slice()
     }
 
     pub(crate) fn func_info_rec_size(&self) -> usize {

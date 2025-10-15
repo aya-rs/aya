@@ -529,6 +529,13 @@ impl Object {
         }
     }
 
+    /// Returns true if this object contains CO-RE relocations.
+    pub fn has_btf_relocations(&self) -> bool {
+        self.btf_ext
+            .as_ref()
+            .is_some_and(|ext| !ext.relocations().is_empty())
+    }
+
     /// Patches map data
     pub fn patch_map_data(
         &mut self,
