@@ -89,6 +89,8 @@ fn test_log(ctx: ProbeContext) {
         &ctx,
         "{} {} {} {} {} {} {}", header, tmp, kind, value, size, op, buf
     );
+    let ptr = 0xdeadbeef as *const u8;
+    debug!(&ctx, "ptr: {:p}, hex lc: {:x}, hex uc: {:X}", ptr, ptr, ptr);
 
     // Testing compilation only.
     if false {

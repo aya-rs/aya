@@ -190,6 +190,15 @@ fn log() {
     assert_eq!(
         records.next(),
         Some(&CapturedLog {
+            body: "ptr: deadbeef, hex lc: deadbeef, hex uc: DEADBEEF".into(),
+            level: Level::Debug,
+            target: "log".into(),
+        })
+    );
+
+    assert_eq!(
+        records.next(),
+        Some(&CapturedLog {
             body: "variable length buffer: ffffff".into(),
             level: Level::Info,
             target: "log".into(),
