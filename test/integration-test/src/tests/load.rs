@@ -211,7 +211,7 @@ fn unload_xdp() {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
         assert_loaded_and_linked(program_name);
-    };
+    }
 
     assert_unloaded(program_name);
     prog.load().unwrap();
@@ -239,7 +239,7 @@ fn unload_kprobe() {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
         assert_loaded_and_linked(program_name);
-    };
+    }
 
     assert_unloaded(program_name);
     prog.load().unwrap();
@@ -269,7 +269,7 @@ fn basic_tracepoint() {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
         assert_loaded_and_linked(program_name);
-    };
+    }
 
     assert_unloaded(program_name);
     prog.load().unwrap();
@@ -302,7 +302,7 @@ fn basic_uprobe() {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
         assert_loaded_and_linked(program_name);
-    };
+    }
 
     assert_unloaded(program_name);
     prog.load().unwrap();
@@ -335,7 +335,7 @@ fn basic_flow_dissector() {
         let _link_owned = prog.take_link(link).unwrap();
         prog.unload().unwrap();
         assert_loaded_and_linked(program_name);
-    };
+    }
 
     assert_unloaded(program_name);
     prog.load().unwrap();
