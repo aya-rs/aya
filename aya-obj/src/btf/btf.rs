@@ -6,6 +6,7 @@ use alloc::{
     vec::Vec,
 };
 use core::{
+    cell::OnceCell,
     ffi::{CStr, FromBytesUntilNulError},
     mem, ptr,
 };
@@ -17,8 +18,8 @@ use object::{Endianness, SectionIndex};
 use crate::{
     Object,
     btf::{
-        Array, BtfEnum, BtfKind, BtfMember, BtfType, Const, Enum, FuncInfo, FuncLinkage, Int,
-        IntEncoding, LineInfo, Struct, Typedef, Union, VarLinkage,
+        Array, BtfEnum, BtfKind, BtfMember, BtfType, Const, DataSec, DataSecEntry, Enum, Enum64,
+        FuncInfo, FuncLinkage, Int, IntEncoding, LineInfo, Struct, Typedef, Union, Var, VarLinkage,
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
     },
@@ -170,6 +171,7 @@ pub struct BtfFeatures {
     btf_func: bool,
     btf_func_global: bool,
     btf_datasec: bool,
+    btf_datasec_zero: bool,
     btf_float: bool,
     btf_decl_tag: bool,
     btf_type_tag: bool,
@@ -178,10 +180,12 @@ pub struct BtfFeatures {
 
 impl BtfFeatures {
     #[doc(hidden)]
+    #[expect(clippy::too_many_arguments, reason = "this interface is terrible")]
     pub fn new(
         btf_func: bool,
         btf_func_global: bool,
         btf_datasec: bool,
+        btf_datasec_zero: bool,
         btf_float: bool,
         btf_decl_tag: bool,
         btf_type_tag: bool,
@@ -191,6 +195,7 @@ impl BtfFeatures {
             btf_func,
             btf_func_global,
             btf_datasec,
+            btf_datasec_zero,
             btf_float,
             btf_decl_tag,
             btf_type_tag,
@@ -211,6 +216,11 @@ impl BtfFeatures {
     /// Returns true if the BTF_TYPE_DATASEC is supported.
     pub fn btf_datasec(&self) -> bool {
         self.btf_datasec
+    }
+
+    /// Returns true if zero-length DATASec entries are accepted.
+    pub fn btf_datasec_zero(&self) -> bool {
+        self.btf_datasec_zero
     }
 
     /// Returns true if the BTF_FLOAT is supported.
@@ -255,6 +265,15 @@ pub struct Btf {
     _endianness: Endianness,
 }
 
+fn add_type(header: &mut btf_header, types: &mut BtfTypes, btf_type: BtfType) -> u32 {
+    let size = btf_type.type_info_size() as u32;
+    let type_id = types.len();
+    types.push(btf_type);
+    header.type_len += size;
+    header.str_off += size;
+    type_id as u32
+}
+
 impl Btf {
     /// Creates a new empty instance with its header initialized
     pub fn new() -> Self {
@@ -295,12 +314,7 @@ impl Btf {
 
     /// Adds a type to BTF metadata, returning a type id
     pub fn add_type(&mut self, btf_type: BtfType) -> u32 {
-        let size = btf_type.type_info_size() as u32;
-        let type_id = self.types.len();
-        self.types.push(btf_type);
-        self.header.type_len += size;
-        self.header.str_off += size;
-        type_id as u32
+        add_type(&mut self.header, &mut self.types, btf_type)
     }
 
     /// Loads BTF metadata from `/sys/kernel/btf/vmlinux`.
@@ -486,19 +500,8 @@ impl Btf {
         symbol_offsets: &HashMap<String, u64>,
         features: &BtfFeatures,
     ) -> Result<(), BtfError> {
-        // ENUM64 placeholder type needs to be added before we take ownership of
-        // self.types to ensure that the offsets in the BtfHeader are correct.
-        let placeholder_name = self.add_string("enum64_placeholder");
-        let enum64_placeholder_id = (!features.btf_enum64
-            && self.types().any(|t| t.kind() == BtfKind::Enum64))
-        .then(|| {
-            self.add_type(BtfType::Int(Int::new(
-                placeholder_name,
-                1,
-                IntEncoding::None,
-                0,
-            )))
-        });
+        let enum64_placeholder_id = OnceCell::new();
+        let filler_var_id = OnceCell::new();
         let mut types = mem::take(&mut self.types);
         for i in 0..types.types.len() {
             let t = &mut types.types[i];
@@ -586,8 +589,51 @@ impl Btf {
                         // we need to get the offset from the ELF file.
                         // This was also cached during initial parsing and
                         // we can query by name in symbol_offsets.
+                        let old_size = d.type_info_size();
                         let mut entries = mem::take(&mut d.entries);
-                        let mut fixed_section = d.clone();
+                        let mut section_size = d.size;
+                        let name_offset = d.name_offset;
+
+                        // Kernels before 5.12 reject zero-length DATASEC. See
+                        // https://github.com/torvalds/linux/commit/13ca51d5eb358edcb673afccb48c3440b9fda21b.
+                        if entries.is_empty() && !features.btf_datasec_zero {
+                            let filler_var_id = *filler_var_id.get_or_init(|| {
+                                let filler_type_name = self.add_string("__aya_datasec_filler_type");
+                                let filler_type_id = add_type(
+                                    &mut self.header,
+                                    &mut types,
+                                    BtfType::Int(Int::new(
+                                        filler_type_name,
+                                        1,
+                                        IntEncoding::None,
+                                        0,
+                                    )),
+                                );
+
+                                let filler_var_name = self.add_string("__aya_datasec_filler");
+                                add_type(
+                                    &mut self.header,
+                                    &mut types,
+                                    BtfType::Var(Var::new(
+                                        filler_var_name,
+                                        filler_type_id,
+                                        VarLinkage::Static,
+                                    )),
+                                )
+                            });
+                            let filler_len = section_size.max(1);
+                            debug!(
+                                "{kind} {name}: injecting filler entry for zero-length DATASEC (len={filler_len})"
+                            );
+                            entries.push(DataSecEntry {
+                                btf_type: filler_var_id,
+                                offset: 0,
+                                size: filler_len,
+                            });
+                            if section_size == 0 {
+                                section_size = filler_len;
+                            }
+                        }
 
                         for e in entries.iter_mut() {
                             if let BtfType::Var(var) = types.type_by_id(e.btf_type)? {
@@ -611,9 +657,15 @@ impl Btf {
                                 return Err(BtfError::InvalidDatasec);
                             }
                         }
-                        fixed_section.entries = entries;
+                        let fixed_section = DataSec::new(name_offset, entries, section_size);
+                        let new_size = fixed_section.type_info_size();
+                        if new_size != old_size {
+                            self.header.type_len =
+                                self.header.type_len - old_size as u32 + new_size as u32;
+                            self.header.str_off = self.header.type_len;
+                        }
 
-                        // Must reborrow here because we borrow `types` immutably above.
+                        // Must reborrow here because we borrow `types` above.
                         let t = &mut types.types[i];
                         *t = BtfType::DataSec(fixed_section);
                     }
@@ -691,20 +743,44 @@ impl Btf {
                     ty.set_signed(false);
                 }
                 // Sanitize ENUM64.
-                BtfType::Enum64(ty) if !features.btf_enum64 => {
-                    debug!("{kind}: not supported. replacing with UNION");
-                    let placeholder_id =
-                        enum64_placeholder_id.expect("enum64_placeholder_id must be set");
-                    let members: Vec<BtfMember> = ty
-                        .variants
-                        .iter()
-                        .map(|v| BtfMember {
-                            name_offset: v.name_offset,
-                            btf_type: placeholder_id,
-                            offset: 0,
-                        })
-                        .collect();
-                    *t = BtfType::Union(Union::new(ty.name_offset, members.len() as u32, members));
+                BtfType::Enum64(ty) => {
+                    // Kernels before 6.0 do not support ENUM64. See
+                    // https://github.com/torvalds/linux/commit/6089fb325cf737eeb2c4d236c94697112ca860da.
+                    if !features.btf_enum64 {
+                        debug!("{kind}: not supported. replacing with UNION");
+
+                        // `ty` is borrowed from `types` and we use that borrow
+                        // below, so we must not borrow it again in the
+                        // get_or_init closure.
+                        let Enum64 {
+                            name_offset,
+                            size,
+                            variants,
+                            ..
+                        } = ty;
+                        let (name_offset, size, variants) =
+                            (*name_offset, *size, mem::take(variants));
+                        let placeholder_id = enum64_placeholder_id.get_or_init(|| {
+                            let placeholder_name = self.add_string("enum64_placeholder");
+                            add_type(
+                                &mut self.header,
+                                &mut types,
+                                BtfType::Int(Int::new(placeholder_name, 1, IntEncoding::None, 0)),
+                            )
+                        });
+                        let members: Vec<BtfMember> = variants
+                            .iter()
+                            .map(|v| BtfMember {
+                                name_offset: v.name_offset,
+                                btf_type: *placeholder_id,
+                                offset: 0,
+                            })
+                            .collect();
+
+                        // Must reborrow here because we borrow `types` above.
+                        let t = &mut types.types[i];
+                        *t = BtfType::Union(Union::new(name_offset, size, members));
+                    }
                 }
                 // The type does not need fixing up or sanitization.
                 _ => {}
