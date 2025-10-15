@@ -67,7 +67,7 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
   output finished: Block<void>
 {
     prepare: stepOn[logger=logger, runner=runner](
-        name = "Prepare",//|format("prepare_{short}", |entry("short", short)),
+        name = |format("prepare_{short}", |entry("short", short)),
         executor_name = |wrap<string>(short),
         commands = |raw_commands([
             |format("rustup target add {arch}", |entry("arch", arch)),
