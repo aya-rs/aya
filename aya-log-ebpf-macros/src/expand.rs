@@ -127,6 +127,9 @@ pub(crate) fn log(args: LogArgs, level_expr: Option<TokenStream>) -> Result<Toke
                     DisplayHint::UpperMac => {
                         (quote!(DisplayHint::UpperMac), quote!(UpperMacFormatter))
                     }
+                    DisplayHint::Pointer => {
+                        (quote!(DisplayHint::Pointer), quote!(PointerFormatter))
+                    }
                 };
                 let hint = quote!(::aya_log_ebpf::macro_support::#hint);
                 let arg = quote!(

@@ -223,6 +223,33 @@ impl<T> core::borrow::BorrowMut<T> for aya_log::LowerMacFormatter where T: ?core
 pub fn aya_log::LowerMacFormatter::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_log::LowerMacFormatter
 pub fn aya_log::LowerMacFormatter::from(t: T) -> T
+pub struct aya_log::PointerFormatter
+impl<T> aya_log::Formatter<*const T> for aya_log::PointerFormatter
+pub fn aya_log::PointerFormatter::format(v: *const T) -> alloc::string::String
+impl<T> aya_log::Formatter<*mut T> for aya_log::PointerFormatter
+pub fn aya_log::PointerFormatter::format(v: *mut T) -> alloc::string::String
+impl core::marker::Freeze for aya_log::PointerFormatter
+impl core::marker::Send for aya_log::PointerFormatter
+impl core::marker::Sync for aya_log::PointerFormatter
+impl core::marker::Unpin for aya_log::PointerFormatter
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log::PointerFormatter
+impl core::panic::unwind_safe::UnwindSafe for aya_log::PointerFormatter
+impl<T, U> core::convert::Into<U> for aya_log::PointerFormatter where U: core::convert::From<T>
+pub fn aya_log::PointerFormatter::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log::PointerFormatter where U: core::convert::Into<T>
+pub type aya_log::PointerFormatter::Error = core::convert::Infallible
+pub fn aya_log::PointerFormatter::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log::PointerFormatter where U: core::convert::TryFrom<T>
+pub type aya_log::PointerFormatter::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log::PointerFormatter::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log::PointerFormatter where T: 'static + ?core::marker::Sized
+pub fn aya_log::PointerFormatter::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log::PointerFormatter where T: ?core::marker::Sized
+pub fn aya_log::PointerFormatter::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log::PointerFormatter where T: ?core::marker::Sized
+pub fn aya_log::PointerFormatter::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_log::PointerFormatter
+pub fn aya_log::PointerFormatter::from(t: T) -> T
 pub struct aya_log::UpperHexBytesFormatter
 impl aya_log::Formatter<&[u8]> for aya_log::UpperHexBytesFormatter
 pub fn aya_log::UpperHexBytesFormatter::format(v: &[u8]) -> alloc::string::String
@@ -309,6 +336,10 @@ impl aya_log::Formatter<[u8; 6]> for aya_log::LowerMacFormatter
 pub fn aya_log::LowerMacFormatter::format(v: [u8; 6]) -> alloc::string::String
 impl aya_log::Formatter<[u8; 6]> for aya_log::UpperMacFormatter
 pub fn aya_log::UpperMacFormatter::format(v: [u8; 6]) -> alloc::string::String
+impl<T> aya_log::Formatter<*const T> for aya_log::PointerFormatter
+pub fn aya_log::PointerFormatter::format(v: *const T) -> alloc::string::String
+impl<T> aya_log::Formatter<*mut T> for aya_log::PointerFormatter
+pub fn aya_log::PointerFormatter::format(v: *mut T) -> alloc::string::String
 impl<T> aya_log::Formatter<T> for aya_log::DefaultFormatter where T: alloc::string::ToString
 pub fn aya_log::DefaultFormatter::format(v: T) -> alloc::string::String
 impl<T> aya_log::Formatter<T> for aya_log::Ipv4Formatter where T: core::convert::Into<core::net::ip_addr::Ipv4Addr>
