@@ -13,8 +13,8 @@ use object::SectionIndex;
 use crate::{
     Function, Object,
     btf::{
-        Array, Btf, BtfError, BtfMember, BtfType, IntEncoding, MAX_SPEC_LEN, Struct, Union,
-        fields_are_compatible, types_are_compatible,
+        Array, Btf, BtfError, BtfKind, BtfMember, BtfType, IntEncoding, MAX_SPEC_LEN, Struct,
+        Union, fields_are_compatible, types_are_compatible,
     },
     generated::{
         BPF_ALU, BPF_ALU64, BPF_B, BPF_CALL, BPF_DW, BPF_H, BPF_JMP, BPF_K, BPF_LD, BPF_LDX,
@@ -409,10 +409,26 @@ fn find_candidates<'target>(
 ) -> Result<Vec<Candidate<'target>>, BtfError> {
     let mut candidates = Vec::new();
     let local_name = flavorless_name(local_name);
-    for (type_id, ty) in target_btf.types().enumerate() {
-        if local_ty.kind() != ty.kind() {
-            continue;
-        }
+    let local_kind = local_ty.kind();
+
+    // When we downgrade an ENUM64 to a UNION we still want to match the enum
+    // definition recorded in the target BTF. If the sanitized type has a
+    // fallback, allow ENUM64 candidates through the kind check.
+    //
+    // Note that we do not sanitize the target BTF so the kinds will not
+    // naturally match!
+    let allow_enum_match = matches!(
+        local_ty,
+        BtfType::Union(Union {
+            enum64_fallback: Some(_),
+            ..
+        })
+    );
+
+    for (type_id, ty) in target_btf.types().enumerate().filter(|(_, ty)| {
+        let candidate_kind = ty.kind();
+        candidate_kind == local_kind || (allow_enum_match && candidate_kind == BtfKind::Enum64)
+    }) {
         let name = &*target_btf.type_name(ty)?;
         if local_name != flavorless_name(name) {
             continue;
@@ -487,6 +503,14 @@ fn match_candidate<'target>(
                 }
                 BtfType::Enum64(en) => {
                     match_enum(&mut en.variants.iter().map(|member| member.name_offset))
+                }
+                BtfType::Union(Union {
+                    enum64_fallback: Some(fallback),
+                    ..
+                }) => {
+                    // Local ENUM64 types become UNIONs during sanitisation; the fallback retains
+                    // their original variant names so we can line them up with target enums.
+                    match_enum(&mut fallback.variants.iter().map(|variant| variant.name_offset))
                 }
                 _ => Ok(None),
             }
@@ -708,6 +732,17 @@ impl<'a> AccessSpec<'a> {
                             index,
                         )
                     }
+                    BtfType::Union(Union {
+                        enum64_fallback: Some(fallback),
+                        ..
+                    }) => {
+                        let index = index()?;
+                        (
+                            fallback.variants.len(),
+                            fallback.variants.get(index).map(|v| v.name_offset),
+                            index,
+                        )
+                    }
                     _ => {
                         return Err(RelocationError::InvalidRelocationKindForType {
                             relocation_number: relocation.number,
@@ -861,7 +896,7 @@ struct ComputedRelocation {
     target: Option<ComputedRelocationValue>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 struct ComputedRelocationValue {
     value: u64,
     size: u32,
@@ -1058,6 +1093,17 @@ impl ComputedRelocation {
                     BtfType::Enum64(en) => {
                         let variant = &en.variants[accessor.index];
                         (u64::from(variant.value_high) << 32) | u64::from(variant.value_low)
+                    }
+                    BtfType::Union(Union {
+                        enum64_fallback: Some(fallback),
+                        ..
+                    }) => {
+                        let variant = &fallback.variants[accessor.index];
+                        if fallback.signed {
+                            (variant.value as i64) as u64
+                        } else {
+                            variant.value
+                        }
                     }
                     // candidate selection ensures that rel_kind == local_kind == target_kind
                     _ => unreachable!(),
