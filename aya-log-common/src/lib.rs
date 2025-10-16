@@ -97,6 +97,10 @@ impl LowerMacFormatter for [u8; 6] {}
 pub trait UpperMacFormatter {}
 impl UpperMacFormatter for [u8; 6] {}
 
+pub trait PointerFormatter {}
+impl<T> PointerFormatter for *const T {}
+impl<T> PointerFormatter for *mut T {}
+
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, IntoPrimitive)]
 pub enum RecordFieldKind {
@@ -144,6 +148,8 @@ pub enum ArgumentKind {
 
     Bytes,
     Str,
+
+    Pointer,
 }
 
 /// All display hints
@@ -162,6 +168,8 @@ pub enum DisplayHint {
     LowerMac,
     /// `:MAC`
     UpperMac,
+    /// `:p`
+    Pointer,
 }
 
 mod sealed {
@@ -279,6 +287,20 @@ impl Argument for DisplayHint {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
         let v: u8 = (*self).into();
         (ArgumentKind::DisplayHint, v.to_ne_bytes())
+    }
+}
+
+impl<T> sealed::Sealed for *const T {}
+impl<T> Argument for *const T {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        (ArgumentKind::Pointer, (*self as usize).to_ne_bytes())
+    }
+}
+
+impl<T> sealed::Sealed for *mut T {}
+impl<T> Argument for *mut T {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        (ArgumentKind::Pointer, (*self as usize).to_ne_bytes())
     }
 }
 

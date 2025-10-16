@@ -3,10 +3,16 @@ use std::{convert::TryInto as _, fs::remove_file, path::Path, thread, time::Dura
 use aya::{
     Ebpf,
     maps::Array,
+    pin::PinError,
     programs::{
-        FlowDissector, KProbe, TracePoint, UProbe, Xdp, XdpFlags,
-        links::{FdLink, PinnedLink},
+        FlowDissector, KProbe, ProbeKind, Program, ProgramError, TracePoint, UProbe, Xdp, XdpFlags,
+        flow_dissector::{FlowDissectorLink, FlowDissectorLinkId},
+        kprobe::{KProbeLink, KProbeLinkId},
+        links::{FdLink, LinkError, PinnedLink},
         loaded_links, loaded_programs,
+        trace_point::{TracePointLink, TracePointLinkId},
+        uprobe::{UProbeLink, UProbeLinkId},
+        xdp::{XdpLink, XdpLinkId},
     },
     util::KernelVersion,
 };
@@ -29,6 +35,13 @@ fn long_name() {
     // We used to be able to assert with bpftool that the program name was short.
     // It seem though that it now uses the name from the ELF symbol table instead.
     // Therefore, as long as we were able to load the program, this is good enough.
+}
+
+#[test_log::test]
+fn memmove() {
+    let mut bpf = Ebpf::load(crate::MEMMOVE_TEST).unwrap();
+    let prog: &mut Xdp = bpf.program_mut("do_dnat").unwrap().try_into().unwrap();
+    prog.load().unwrap();
 }
 
 #[test_log::test]
@@ -190,156 +203,128 @@ fn assert_unloaded(name: &str) {
     )
 }
 
+trait UnloadProgramOps {
+    type LinkId;
+    type OwnedLink;
+
+    fn load(&mut self) -> Result<(), ProgramError>;
+    fn unload(&mut self) -> Result<(), ProgramError>;
+    fn take_link(&mut self, id: Self::LinkId) -> Result<Self::OwnedLink, ProgramError>;
+}
+
+macro_rules! impl_unload_program_ops {
+    ($program:ty, $link_id:ty, $link:ty) => {
+        impl UnloadProgramOps for $program {
+            type LinkId = $link_id;
+            type OwnedLink = $link;
+
+            fn load(&mut self) -> Result<(), ProgramError> {
+                <$program>::load(self)
+            }
+
+            fn unload(&mut self) -> Result<(), ProgramError> {
+                <$program>::unload(self)
+            }
+
+            fn take_link(&mut self, id: Self::LinkId) -> Result<Self::OwnedLink, ProgramError> {
+                <$program>::take_link(self, id)
+            }
+        }
+    };
+}
+
+impl_unload_program_ops!(Xdp, XdpLinkId, XdpLink);
+impl_unload_program_ops!(KProbe, KProbeLinkId, KProbeLink);
+impl_unload_program_ops!(TracePoint, TracePointLinkId, TracePointLink);
+impl_unload_program_ops!(UProbe, UProbeLinkId, UProbeLink);
+impl_unload_program_ops!(FlowDissector, FlowDissectorLinkId, FlowDissectorLink);
+
 #[test_log::test]
 fn unload_xdp() {
-    let mut bpf = Ebpf::load(crate::TEST).unwrap();
-    let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+    type P = Xdp;
+
+    let program_name = "pass";
+    let attach = |prog: &mut P| prog.attach("lo", XdpFlags::default()).unwrap();
+    run_unload_program_test(crate::TEST, program_name, attach);
+}
+
+fn run_unload_program_test<P>(bpf_image: &[u8], program_name: &str, attach: fn(&mut P) -> P::LinkId)
+where
+    P: UnloadProgramOps,
+    for<'a> &'a mut Program: TryInto<&'a mut P, Error = ProgramError>,
+{
+    let mut bpf = Ebpf::load(bpf_image).unwrap();
+    let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
-    assert_loaded("pass");
-    let link = prog.attach("lo", XdpFlags::default()).unwrap();
+    assert_loaded(program_name);
+    let link = attach(prog);
     {
-        let _link_owned = prog.take_link(link).unwrap();
+        let _link_owned: P::OwnedLink = prog.take_link(link).unwrap();
         prog.unload().unwrap();
-        assert_loaded_and_linked("pass");
-    };
+        assert_loaded_and_linked(program_name);
+    }
 
-    assert_unloaded("pass");
+    assert_unloaded(program_name);
     prog.load().unwrap();
 
-    assert_loaded("pass");
-    prog.attach("lo", XdpFlags::default()).unwrap();
+    assert_loaded(program_name);
+    attach(prog);
 
-    assert_loaded("pass");
+    assert_loaded(program_name);
     prog.unload().unwrap();
 
-    assert_unloaded("pass");
+    assert_unloaded(program_name);
 }
 
 #[test_log::test]
 fn unload_kprobe() {
-    let mut bpf = Ebpf::load(crate::TEST).unwrap();
-    let prog: &mut KProbe = bpf.program_mut("test_kprobe").unwrap().try_into().unwrap();
-    prog.load().unwrap();
-    assert_loaded("test_kprobe");
-    let link = prog.attach("try_to_wake_up", 0).unwrap();
-    {
-        let _link_owned = prog.take_link(link).unwrap();
-        prog.unload().unwrap();
-        assert_loaded_and_linked("test_kprobe");
-    };
+    type P = KProbe;
 
-    assert_unloaded("test_kprobe");
-    prog.load().unwrap();
-
-    assert_loaded("test_kprobe");
-    prog.attach("try_to_wake_up", 0).unwrap();
-
-    assert_loaded("test_kprobe");
-    prog.unload().unwrap();
-
-    assert_unloaded("test_kprobe");
-}
-
-#[test_log::test]
-fn memmove() {
-    let mut bpf = Ebpf::load(crate::MEMMOVE_TEST).unwrap();
-    let prog: &mut Xdp = bpf.program_mut("do_dnat").unwrap().try_into().unwrap();
-
-    prog.load().unwrap();
-    assert_loaded("do_dnat");
+    let program_name = "test_kprobe";
+    let attach = |prog: &mut P| prog.attach("try_to_wake_up", 0).unwrap();
+    run_unload_program_test(crate::TEST, program_name, attach);
 }
 
 #[test_log::test]
 fn basic_tracepoint() {
-    let mut bpf = Ebpf::load(crate::TEST).unwrap();
-    let prog: &mut TracePoint = bpf
-        .program_mut("test_tracepoint")
-        .unwrap()
-        .try_into()
-        .unwrap();
+    type P = TracePoint;
 
-    prog.load().unwrap();
-    assert_loaded("test_tracepoint");
-    let link = prog.attach("syscalls", "sys_enter_kill").unwrap();
-
-    {
-        let _link_owned = prog.take_link(link).unwrap();
-        prog.unload().unwrap();
-        assert_loaded_and_linked("test_tracepoint");
-    };
-
-    assert_unloaded("test_tracepoint");
-    prog.load().unwrap();
-
-    assert_loaded("test_tracepoint");
-    prog.attach("syscalls", "sys_enter_kill").unwrap();
-
-    assert_loaded("test_tracepoint");
-    prog.unload().unwrap();
-
-    assert_unloaded("test_tracepoint");
+    let program_name = "test_tracepoint";
+    let attach = |prog: &mut P| prog.attach("syscalls", "sys_enter_kill").unwrap();
+    run_unload_program_test(crate::TEST, program_name, attach);
 }
 
 #[test_log::test]
 fn basic_uprobe() {
-    let mut bpf = Ebpf::load(crate::TEST).unwrap();
-    let prog: &mut UProbe = bpf.program_mut("test_uprobe").unwrap().try_into().unwrap();
+    type P = UProbe;
 
-    prog.load().unwrap();
-    assert_loaded("test_uprobe");
-    let link = prog
-        .attach("uprobe_function", "/proc/self/exe", None, None)
-        .unwrap();
-
-    {
-        let _link_owned = prog.take_link(link).unwrap();
-        prog.unload().unwrap();
-        assert_loaded_and_linked("test_uprobe");
+    let program_name = "test_uprobe";
+    let attach = |prog: &mut P| {
+        prog.attach("uprobe_function", "/proc/self/exe", None, None)
+            .unwrap()
     };
-
-    assert_unloaded("test_uprobe");
-    prog.load().unwrap();
-
-    assert_loaded("test_uprobe");
-    prog.attach("uprobe_function", "/proc/self/exe", None, None)
-        .unwrap();
-
-    assert_loaded("test_uprobe");
-    prog.unload().unwrap();
-
-    assert_unloaded("test_uprobe");
+    run_unload_program_test(crate::TEST, program_name, attach);
 }
 
 #[test_log::test]
 fn basic_flow_dissector() {
-    let mut bpf = Ebpf::load(crate::TEST).unwrap();
-    let prog: &mut FlowDissector = bpf.program_mut("test_flow").unwrap().try_into().unwrap();
+    type P = FlowDissector;
 
-    prog.load().unwrap();
-    assert_loaded("test_flow");
-
-    let net_ns = std::fs::File::open("/proc/self/ns/net").unwrap();
-    let link = prog.attach(net_ns.try_clone().unwrap()).unwrap();
-    {
-        let _link_owned = prog.take_link(link).unwrap();
-        prog.unload().unwrap();
-        assert_loaded_and_linked("test_flow");
+    let program_name = "test_flow";
+    let attach = |prog: &mut P| {
+        let net_ns = std::fs::File::open("/proc/self/ns/net").unwrap();
+        prog.attach(net_ns).unwrap()
     };
-
-    assert_unloaded("test_flow");
-    prog.load().unwrap();
-
-    assert_loaded("test_flow");
-    prog.attach(net_ns).unwrap();
-
-    assert_loaded("test_flow");
-    prog.unload().unwrap();
-
-    assert_unloaded("test_flow");
+    run_unload_program_test(crate::TEST, program_name, attach);
 }
 
 #[test_log::test]
 fn pin_link() {
+    type P = Xdp;
+
+    let program_name = "pass";
+    let attach = |prog: &mut P| prog.attach("lo", XdpFlags::default()).unwrap();
+
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 9, 0) {
         eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
@@ -347,30 +332,62 @@ fn pin_link() {
     }
 
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
-    let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+    let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
-    let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
+    let link_id = attach(prog);
     let link = prog.take_link(link_id).unwrap();
-    assert_loaded("pass");
+    assert_loaded(program_name);
 
     let fd_link: FdLink = link.try_into().unwrap();
     let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
 
     // because of the pin, the program is still attached
     prog.unload().unwrap();
-    assert_loaded("pass");
+    assert_loaded(program_name);
 
     // delete the pin, but the program is still attached
     let new_link = pinned.unpin().unwrap();
-    assert_loaded("pass");
+    assert_loaded(program_name);
 
     // finally when new_link is dropped we're detached
     drop(new_link);
-    assert_unloaded("pass");
+    assert_unloaded(program_name);
 }
+
+trait PinProgramOps {
+    fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError>;
+    fn unpin(self) -> Result<(), std::io::Error>;
+}
+
+macro_rules! impl_pin_program_ops {
+    ($program:ty) => {
+        impl PinProgramOps for $program {
+            fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
+                <$program>::pin(self, path)
+            }
+
+            fn unpin(self) -> Result<(), std::io::Error> {
+                <$program>::unpin(self)
+            }
+        }
+    };
+}
+
+impl_pin_program_ops!(Xdp);
+impl_pin_program_ops!(KProbe);
+impl_pin_program_ops!(TracePoint);
+impl_pin_program_ops!(UProbe);
 
 #[test_log::test]
 fn pin_lifecycle() {
+    type P = Xdp;
+
+    let program_name = "pass";
+    let attach = |prog: &mut P| prog.attach("lo", XdpFlags::default()).unwrap();
+    let program_pin = "/sys/fs/bpf/aya-xdp-test-prog";
+    let link_pin = "/sys/fs/bpf/aya-xdp-test-lo";
+    let from_pin = |program_pin: &str| P::from_pin(program_pin, XdpAttachType::Interface).unwrap();
+
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 18, 0) {
         eprintln!(
@@ -378,170 +395,120 @@ fn pin_lifecycle() {
         );
         return;
     }
+    run_pin_program_lifecycle_test(
+        crate::PASS,
+        program_name,
+        program_pin,
+        link_pin,
+        from_pin,
+        attach,
+        Some(|prog: &mut P, pinned: FdLink| {
+            prog.attach_to_link(pinned.try_into().unwrap()).unwrap()
+        }),
+    );
+}
 
+fn run_pin_program_lifecycle_test<P>(
+    bpf_image: &[u8],
+    program_name: &str,
+    program_pin: &str,
+    link_pin: &str,
+    from_pin: fn(&str) -> P,
+    attach: fn(&mut P) -> P::LinkId,
+    attach_to_link: Option<fn(&mut P, FdLink) -> P::LinkId>,
+) where
+    P: UnloadProgramOps + PinProgramOps,
+    P::OwnedLink: TryInto<FdLink, Error = LinkError>,
+    for<'a> &'a mut Program: TryInto<&'a mut P, Error = ProgramError>,
+{
     // 1. Load Program and Pin
     {
-        let mut bpf = Ebpf::load(crate::PASS).unwrap();
-        let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+        let mut bpf = Ebpf::load(bpf_image).unwrap();
+        let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
         prog.load().unwrap();
-        prog.pin("/sys/fs/bpf/aya-xdp-test-prog").unwrap();
+        prog.pin(program_pin).unwrap();
     }
 
     // should still be loaded since prog was pinned
-    assert_loaded("pass");
+    assert_loaded(program_name);
 
     // 2. Load program from bpffs but don't attach it
     {
-        let _ = Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog", XdpAttachType::Interface).unwrap();
+        let _: P = from_pin(program_pin);
     }
 
     // should still be loaded since prog was pinned
-    assert_loaded("pass");
+    assert_loaded(program_name);
 
     // 3. Load program from bpffs and attach
     {
-        let mut prog =
-            Xdp::from_pin("/sys/fs/bpf/aya-xdp-test-prog", XdpAttachType::Interface).unwrap();
-        let link_id = prog.attach("lo", XdpFlags::default()).unwrap();
+        let mut prog = from_pin(program_pin);
+        let link_id = attach(&mut prog);
         let link = prog.take_link(link_id).unwrap();
         let fd_link: FdLink = link.try_into().unwrap();
-        fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
+        fd_link.pin(link_pin).unwrap();
 
         // Unpin the program. It will stay attached since its links were pinned.
         prog.unpin().unwrap();
     }
 
     // should still be loaded since link was pinned
-    assert_loaded_and_linked("pass");
+    assert_loaded_and_linked(program_name);
 
     // 4. Load a new version of the program, unpin link, and atomically replace old program
     {
-        let mut bpf = Ebpf::load(crate::PASS).unwrap();
-        let prog: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-        prog.load().unwrap();
-
-        let link = PinnedLink::from_pin("/sys/fs/bpf/aya-xdp-test-lo")
-            .unwrap()
-            .unpin()
-            .unwrap();
-        prog.attach_to_link(link.try_into().unwrap()).unwrap();
-        assert_loaded("pass");
+        let link = PinnedLink::from_pin(link_pin).unwrap().unpin().unwrap();
+        if let Some(attach_to_link) = attach_to_link {
+            let mut bpf = Ebpf::load(bpf_image).unwrap();
+            let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
+            prog.load().unwrap();
+            attach_to_link(prog, link);
+            assert_loaded(program_name);
+        }
     }
 
     // program should be unloaded
-    assert_unloaded("pass");
+    assert_unloaded(program_name);
 }
 
 #[test_log::test]
 fn pin_lifecycle_tracepoint() {
-    // 1. Load Program and Pin
-    {
-        let mut bpf = Ebpf::load(crate::TEST).unwrap();
-        let prog: &mut TracePoint = bpf
-            .program_mut("test_tracepoint")
-            .unwrap()
-            .try_into()
-            .unwrap();
-        prog.load().unwrap();
-        prog.pin("/sys/fs/bpf/aya-tracepoint-test-prog").unwrap();
-    }
+    type P = TracePoint;
 
-    // should still be loaded since prog was pinned
-    assert_loaded("test_tracepoint");
-
-    // 2. Load program from bpffs but don't attach it
-    {
-        let _ = TracePoint::from_pin("/sys/fs/bpf/aya-tracepoint-test-prog").unwrap();
-    }
-
-    // should still be loaded since prog was pinned
-    assert_loaded("test_tracepoint");
-
-    // 3. Load program from bpffs and attach
-    {
-        let mut prog = TracePoint::from_pin("/sys/fs/bpf/aya-tracepoint-test-prog").unwrap();
-        let link_id = prog.attach("syscalls", "sys_enter_kill").unwrap();
-        let link = prog.take_link(link_id).unwrap();
-        let fd_link: FdLink = link.try_into().unwrap();
-        fd_link
-            .pin("/sys/fs/bpf/aya-tracepoint-test-sys-enter-kill")
-            .unwrap();
-
-        // Unpin the program. It will stay attached since its links were pinned.
-        prog.unpin().unwrap();
-    }
-
-    // should still be loaded since link was pinned
-    assert_loaded_and_linked("test_tracepoint");
-
-    // 4. unpin link, and make sure everything is unloaded
-    {
-        PinnedLink::from_pin("/sys/fs/bpf/aya-tracepoint-test-sys-enter-kill")
-            .unwrap()
-            .unpin()
-            .unwrap();
-    }
-
-    // program should be unloaded
-    assert_unloaded("test_tracepoint");
+    let program_name = "test_tracepoint";
+    let attach = |prog: &mut P| prog.attach("syscalls", "sys_enter_kill").unwrap();
+    let program_pin = "/sys/fs/bpf/aya-tracepoint-test-prog";
+    let link_pin = "/sys/fs/bpf/aya-tracepoint-test-sys-enter-kill";
+    let from_pin = |program_pin: &str| P::from_pin(program_pin).unwrap();
+    run_pin_program_lifecycle_test(
+        crate::TEST,
+        program_name,
+        program_pin,
+        link_pin,
+        from_pin,
+        attach,
+        None,
+    );
 }
 
 #[test_log::test]
 fn pin_lifecycle_kprobe() {
-    // 1. Load Program and Pin
-    {
-        let mut bpf = Ebpf::load(crate::TEST).unwrap();
-        let prog: &mut KProbe = bpf.program_mut("test_kprobe").unwrap().try_into().unwrap();
-        prog.load().unwrap();
-        prog.pin("/sys/fs/bpf/aya-kprobe-test-prog").unwrap();
-    }
+    type P = KProbe;
 
-    // should still be loaded since prog was pinned
-    assert_loaded("test_kprobe");
-
-    // 2. Load program from bpffs but don't attach it
-    {
-        let _ = KProbe::from_pin(
-            "/sys/fs/bpf/aya-kprobe-test-prog",
-            aya::programs::ProbeKind::KProbe,
-        )
-        .unwrap();
-    }
-
-    // should still be loaded since prog was pinned
-    assert_loaded("test_kprobe");
-
-    // 3. Load program from bpffs and attach
-    {
-        let mut prog = KProbe::from_pin(
-            "/sys/fs/bpf/aya-kprobe-test-prog",
-            aya::programs::ProbeKind::KProbe,
-        )
-        .unwrap();
-        let link_id = prog.attach("try_to_wake_up", 0).unwrap();
-        let link = prog.take_link(link_id).unwrap();
-        let fd_link: FdLink = link.try_into().unwrap();
-        fd_link
-            .pin("/sys/fs/bpf/aya-kprobe-test-try-to-wake-up")
-            .unwrap();
-
-        // Unpin the program. It will stay attached since its links were pinned.
-        prog.unpin().unwrap();
-    }
-
-    // should still be loaded since link was pinned
-    assert_loaded_and_linked("test_kprobe");
-
-    // 4. unpin link, and make sure everything is unloaded
-    {
-        PinnedLink::from_pin("/sys/fs/bpf/aya-kprobe-test-try-to-wake-up")
-            .unwrap()
-            .unpin()
-            .unwrap();
-    }
-
-    // program should be unloaded
-    assert_unloaded("test_kprobe");
+    let program_name = "test_kprobe";
+    let attach = |prog: &mut P| prog.attach("try_to_wake_up", 0).unwrap();
+    let program_pin = "/sys/fs/bpf/aya-kprobe-test-prog";
+    let link_pin = "/sys/fs/bpf/aya-kprobe-test-try-to-wake-up";
+    let from_pin = |program_pin: &str| P::from_pin(program_pin, ProbeKind::KProbe).unwrap();
+    run_pin_program_lifecycle_test(
+        crate::TEST,
+        program_name,
+        program_pin,
+        link_pin,
+        from_pin,
+        attach,
+        None,
+    );
 }
 
 #[unsafe(no_mangle)]
@@ -552,55 +519,25 @@ extern "C" fn uprobe_function() {
 
 #[test_log::test]
 fn pin_lifecycle_uprobe() {
-    const FIRST_PIN_PATH: &str = "/sys/fs/bpf/aya-uprobe-test-prog-1";
-    const SECOND_PIN_PATH: &str = "/sys/fs/bpf/aya-uprobe-test-prog-2";
+    type P = UProbe;
 
-    // 1. Load Program and Pin
-    {
-        let mut bpf = Ebpf::load(crate::TEST).unwrap();
-        let prog: &mut UProbe = bpf.program_mut("test_uprobe").unwrap().try_into().unwrap();
-        prog.load().unwrap();
-        prog.pin(FIRST_PIN_PATH).unwrap();
-    }
-
-    // should still be loaded since prog was pinned
-    assert_loaded("test_uprobe");
-
-    // 2. Load program from bpffs but don't attach it
-    {
-        let _ = UProbe::from_pin(FIRST_PIN_PATH, aya::programs::ProbeKind::UProbe).unwrap();
-    }
-
-    // should still be loaded since prog was pinned
-    assert_loaded("test_uprobe");
-
-    // 3. Load program from bpffs and attach
-    {
-        let mut prog = UProbe::from_pin(FIRST_PIN_PATH, aya::programs::ProbeKind::UProbe).unwrap();
-        let link_id = prog
-            .attach("uprobe_function", "/proc/self/exe", None, None)
-            .unwrap();
-        let link = prog.take_link(link_id).unwrap();
-        let fd_link: FdLink = link.try_into().unwrap();
-        fd_link.pin(SECOND_PIN_PATH).unwrap();
-
-        // Unpin the program. It will stay attached since its links were pinned.
-        prog.unpin().unwrap();
-    }
-
-    // should still be loaded since link was pinned
-    assert_loaded_and_linked("test_uprobe");
-
-    // 4. unpin link, and make sure everything is unloaded
-    {
-        PinnedLink::from_pin(SECOND_PIN_PATH)
+    let program_name = "test_uprobe";
+    let attach = |prog: &mut P| {
+        prog.attach("uprobe_function", "/proc/self/exe", None, None)
             .unwrap()
-            .unpin()
-            .unwrap();
-    }
-
-    // program should be unloaded
-    assert_unloaded("test_uprobe");
+    };
+    let program_pin = "/sys/fs/bpf/aya-uprobe-test-prog";
+    let link_pin = "/sys/fs/bpf/aya-uprobe-test-uprobe-function";
+    let from_pin = |program_pin: &str| P::from_pin(program_pin, ProbeKind::UProbe).unwrap();
+    run_pin_program_lifecycle_test(
+        crate::TEST,
+        program_name,
+        program_pin,
+        link_pin,
+        from_pin,
+        attach,
+        None,
+    );
 
     // Make sure the function isn't optimized out.
     uprobe_function();

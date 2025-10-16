@@ -40,8 +40,6 @@ pub(crate) enum NetlinkErrorInternal {
     #[error(transparent)]
     IoError(#[from] io::Error),
     #[error(transparent)]
-    NulError(#[from] std::ffi::NulError),
-    #[error(transparent)]
     NlAttrError(#[from] NlAttrError),
 }
 
@@ -697,12 +695,6 @@ pub(crate) enum NlAttrError {
 
     #[error("invalid nlattr header length `{0}`")]
     InvalidHeaderLength(usize),
-}
-
-impl From<NlAttrError> for io::Error {
-    fn from(err: NlAttrError) -> Self {
-        Self::other(err)
-    }
 }
 
 unsafe fn request_attributes<T>(req: &mut T, msg_len: usize) -> &mut [u8] {

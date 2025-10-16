@@ -15,6 +15,7 @@ pub aya_log_common::ArgumentKind::I8
 pub aya_log_common::ArgumentKind::Ipv4Addr
 pub aya_log_common::ArgumentKind::Ipv6Addr
 pub aya_log_common::ArgumentKind::Isize
+pub aya_log_common::ArgumentKind::Pointer
 pub aya_log_common::ArgumentKind::Str
 pub aya_log_common::ArgumentKind::U16
 pub aya_log_common::ArgumentKind::U32
@@ -57,6 +58,7 @@ pub aya_log_common::DisplayHint::Default = 1
 pub aya_log_common::DisplayHint::Ip
 pub aya_log_common::DisplayHint::LowerHex
 pub aya_log_common::DisplayHint::LowerMac
+pub aya_log_common::DisplayHint::Pointer
 pub aya_log_common::DisplayHint::UpperHex
 pub aya_log_common::DisplayHint::UpperMac
 impl aya_log_common::Argument for aya_log_common::DisplayHint
@@ -215,6 +217,10 @@ impl aya_log_common::Argument for u8
 pub fn u8::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 impl aya_log_common::Argument for usize
 pub fn usize::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl<T> aya_log_common::Argument for *const T
+pub fn *const T::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl<T> aya_log_common::Argument for *mut T
+pub fn *mut T::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 impl<const N: usize> aya_log_common::Argument for [u8; N]
 pub fn [u8; N]::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 pub trait aya_log_common::DefaultFormatter
@@ -260,6 +266,9 @@ impl aya_log_common::LowerHexFormatter for usize
 impl<const N: usize> aya_log_common::LowerHexFormatter for &[u8; N]
 pub trait aya_log_common::LowerMacFormatter
 impl aya_log_common::LowerMacFormatter for [u8; 6]
+pub trait aya_log_common::PointerFormatter
+impl<T> aya_log_common::PointerFormatter for *const T
+impl<T> aya_log_common::PointerFormatter for *mut T
 pub trait aya_log_common::UpperHexFormatter
 impl aya_log_common::UpperHexFormatter for &[u8]
 impl aya_log_common::UpperHexFormatter for i16

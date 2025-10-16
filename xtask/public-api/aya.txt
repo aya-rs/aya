@@ -3828,6 +3828,9 @@ pub fn aya::programs::flow_dissector::FlowDissectorLink::id(&self) -> Self::Id
 impl core::cmp::Eq for aya::programs::flow_dissector::FlowDissectorLink
 impl core::cmp::PartialEq for aya::programs::flow_dissector::FlowDissectorLink
 pub fn aya::programs::flow_dissector::FlowDissectorLink::eq(&self, other: &Self) -> bool
+impl core::convert::TryFrom<aya::programs::flow_dissector::FlowDissectorLink> for aya::programs::links::FdLink
+pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
+pub fn aya::programs::links::FdLink::try_from(value: aya::programs::flow_dissector::FlowDissectorLink) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::programs::flow_dissector::FlowDissectorLink
 pub fn aya::programs::flow_dissector::FlowDissectorLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::flow_dissector::FlowDissectorLink
@@ -4416,6 +4419,9 @@ pub fn aya::programs::links::FdLink::try_from(value: aya::programs::cgroup_sock:
 impl core::convert::TryFrom<aya::programs::cgroup_sock_addr::CgroupSockAddrLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<aya::programs::flow_dissector::FlowDissectorLink> for aya::programs::links::FdLink
+pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
+pub fn aya::programs::links::FdLink::try_from(value: aya::programs::flow_dissector::FlowDissectorLink) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<aya::programs::iter::IterLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(value: aya::programs::iter::IterLink) -> core::result::Result<Self, Self::Error>
