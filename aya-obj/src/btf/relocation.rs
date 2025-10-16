@@ -703,60 +703,64 @@ impl<'a> AccessSpec<'a> {
                     bit_offset: 0,
                 }
             }
-            RelocationKind::EnumVariantExists | RelocationKind::EnumVariantValue => match ty {
-                BtfType::Enum(_) | BtfType::Enum64(_) => {
-                    if parts.len() != 1 {
-                        return Err(RelocationError::InvalidAccessString {
-                            access_str: spec.to_string(),
-                        });
-                    }
-                    let index = parts[0];
+            RelocationKind::EnumVariantExists | RelocationKind::EnumVariantValue => {
+                let index = || match parts.as_slice() {
+                    [index] => Ok(*index),
+                    _ => Err(RelocationError::InvalidAccessString {
+                        access_str: spec.to_string(),
+                    }),
+                };
 
-                    let (n_variants, name_offset) = match ty {
-                        BtfType::Enum(en) => (
+                let (n_variants, name_offset, index) = match ty {
+                    BtfType::Enum(en) => {
+                        let index = index()?;
+                        (
                             en.variants.len(),
                             en.variants.get(index).map(|v| v.name_offset),
-                        ),
-                        BtfType::Enum64(en) => (
-                            en.variants.len(),
-                            en.variants.get(index).map(|v| v.name_offset),
-                        ),
-                        _ => unreachable!(),
-                    };
-
-                    if name_offset.is_none() {
-                        return Err(RelocationError::InvalidAccessIndex {
-                            type_name: btf.err_type_name(ty),
-                            spec: spec.to_string(),
                             index,
-                            max_index: n_variants,
-                            error: "tried to access nonexistant enum variant",
+                        )
+                    }
+                    BtfType::Enum64(en) => {
+                        let index = index()?;
+                        (
+                            en.variants.len(),
+                            en.variants.get(index).map(|v| v.name_offset),
+                            index,
+                        )
+                    }
+                    _ => {
+                        return Err(RelocationError::InvalidRelocationKindForType {
+                            relocation_number: relocation.number,
+                            relocation_kind: format!("{:?}", relocation.kind),
+                            type_kind: format!("{:?}", ty.kind()),
+                            error: "enum relocation on non-enum type",
                         });
                     }
-                    let accessors = vec![Accessor {
-                        type_id,
+                };
+                let name_offset =
+                    name_offset.ok_or_else(|| RelocationError::InvalidAccessIndex {
+                        type_name: btf.err_type_name(ty),
+                        spec: spec.to_string(),
                         index,
-                        name: Some(btf.string_at(name_offset.unwrap())?.to_string()),
-                    }];
+                        max_index: n_variants,
+                        error: "tried to access nonexistant enum variant",
+                    })?;
+                let name = btf.string_at(name_offset)?;
+                let accessors = vec![Accessor {
+                    type_id,
+                    index,
+                    name: Some(name.to_string()),
+                }];
 
-                    AccessSpec {
-                        btf,
-                        root_type_id,
-                        relocation,
-                        parts,
-                        accessors,
-                        bit_offset: 0,
-                    }
+                AccessSpec {
+                    btf,
+                    root_type_id,
+                    relocation,
+                    parts,
+                    accessors,
+                    bit_offset: 0,
                 }
-                _ => {
-                    return Err(RelocationError::InvalidRelocationKindForType {
-                        relocation_number: relocation.number,
-                        relocation_kind: format!("{:?}", relocation.kind),
-                        type_kind: format!("{:?}", ty.kind()),
-                        error: "enum relocation on non-enum type",
-                    });
-                }
-            },
+            }
 
             RelocationKind::FieldByteOffset
             | RelocationKind::FieldByteSize
