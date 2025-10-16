@@ -460,18 +460,12 @@ fn match_candidate<'target>(
         }
         RelocationKind::EnumVariantExists | RelocationKind::EnumVariantValue => {
             let target_id = candidate.btf.resolve_type(candidate.type_id)?;
-            let target_ty = candidate.btf.type_by_id(target_id)?;
-            // the first accessor is guaranteed to have a name by construction
-            let local_variant_name = local_spec.accessors[0].name.as_ref().unwrap();
 
-            fn match_enum<'a>(
-                iterator: impl Iterator<Item = (usize, u32)>,
-                candidate: &Candidate<'_>,
-                local_variant_name: &str,
-                target_id: u32,
-                mut target_spec: AccessSpec<'a>,
-            ) -> Result<Option<AccessSpec<'a>>, RelocationError> {
-                for (index, name_offset) in iterator {
+            let match_enum = |iterator: &mut dyn Iterator<Item = u32>| {
+                // the first accessor is guaranteed to have a name by construction
+                let local_variant_name = local_spec.accessors[0].name.as_ref().unwrap();
+
+                for (index, name_offset) in iterator.enumerate() {
                     let target_variant_name = candidate.btf.string_at(name_offset)?;
                     if flavorless_name(local_variant_name) == flavorless_name(&target_variant_name)
                     {
@@ -485,29 +479,15 @@ fn match_candidate<'target>(
                     }
                 }
                 Ok(None)
-            }
+            };
 
-            match target_ty {
-                BtfType::Enum(en) => match_enum(
-                    en.variants
-                        .iter()
-                        .map(|member| member.name_offset)
-                        .enumerate(),
-                    candidate,
-                    local_variant_name,
-                    target_id,
-                    target_spec,
-                ),
-                BtfType::Enum64(en) => match_enum(
-                    en.variants
-                        .iter()
-                        .map(|member| member.name_offset)
-                        .enumerate(),
-                    candidate,
-                    local_variant_name,
-                    target_id,
-                    target_spec,
-                ),
+            match candidate.btf.type_by_id(target_id)? {
+                BtfType::Enum(en) => {
+                    match_enum(&mut en.variants.iter().map(|member| member.name_offset))
+                }
+                BtfType::Enum64(en) => {
+                    match_enum(&mut en.variants.iter().map(|member| member.name_offset))
+                }
                 _ => Ok(None),
             }
         }
