@@ -1,7 +1,7 @@
 use assert_matches::assert_matches;
 use aya::{
     Btf, Ebpf,
-    programs::{Lsm, LsmCgroup, ProgramError, ProgramType},
+    programs::{Lsm, LsmAttachType, LsmCgroup, ProgramError, ProgramType},
     sys::{SyscallError, is_program_supported},
 };
 
@@ -33,7 +33,7 @@ fn lsm() {
 
     let link_id = {
         let result = prog.attach();
-        if !is_program_supported(ProgramType::Lsm).unwrap() {
+        if !is_program_supported(ProgramType::Lsm(LsmAttachType::Mac)).unwrap() {
             assert_matches!(result, Err(ProgramError::SyscallError(SyscallError { call, io_error })) => {
                 assert_eq!(call, "bpf_raw_tracepoint_open");
                 assert_eq!(io_error.raw_os_error(), Some(524));
@@ -68,7 +68,7 @@ fn lsm_cgroup() {
     let link_id = {
         let result = prog.attach(cgroup.fd());
 
-        if !is_program_supported(ProgramType::Lsm).unwrap() {
+        if !is_program_supported(ProgramType::Lsm(LsmAttachType::Cgroup)).unwrap() {
             assert_matches!(result, Err(ProgramError::SyscallError(SyscallError { call, io_error })) => {
                 assert_eq!(call, "bpf_link_create");
                 assert_eq!(io_error.raw_os_error(), Some(524));

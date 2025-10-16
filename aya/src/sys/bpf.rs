@@ -32,7 +32,7 @@ use log::warn;
 use crate::{
     Btf, Pod, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
-    programs::{ProgramType, links::LinkRef},
+    programs::{LsmAttachType, ProgramType, links::LinkRef},
     sys::{Syscall, SyscallError, syscall},
     util::KernelVersion,
 };
@@ -820,7 +820,10 @@ where
         ProgramType::CgroupSysctl => Some(bpf_attach_type::BPF_CGROUP_SYSCTL),
         ProgramType::CgroupSockopt => Some(bpf_attach_type::BPF_CGROUP_GETSOCKOPT),
         ProgramType::Tracing => Some(bpf_attach_type::BPF_TRACE_FENTRY),
-        ProgramType::Lsm => Some(bpf_attach_type::BPF_LSM_MAC),
+        ProgramType::Lsm(lsm_attach_type) => match lsm_attach_type {
+            LsmAttachType::Mac => Some(bpf_attach_type::BPF_LSM_MAC),
+            LsmAttachType::Cgroup => Some(bpf_attach_type::BPF_LSM_CGROUP),
+        },
         ProgramType::SkLookup => Some(bpf_attach_type::BPF_SK_LOOKUP),
         ProgramType::Netfilter => Some(bpf_attach_type::BPF_NETFILTER),
         // Program types below v4.17, or do not accept `expected_attach_type`, should leave the
@@ -863,6 +866,7 @@ where
         _ => {}
     }
 
+    let program_type: bpf_prog_type = program_type.into();
     u.prog_type = program_type as u32;
     if let Some(expected_attach_type) = expected_attach_type {
         u.expected_attach_type = expected_attach_type as u32;
