@@ -473,7 +473,7 @@ impl Enum {
 }
 
 #[repr(C)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct BtfEnum64 {
     pub(crate) name_offset: u32,
     pub(crate) value_low: u32,
@@ -651,6 +651,22 @@ impl Struct {
     }
 }
 
+/// Snapshot of a single `ENUM64` variant so we can recover its 64-bit constant
+/// after the type is rewritten into a UNION.
+#[derive(Clone, Debug)]
+pub(crate) struct Enum64VariantFallback {
+    pub(crate) name_offset: u32,
+    pub(crate) value: u64,
+}
+
+/// Aggregate of the metadata we need to faithfully reconstruct a downgraded
+/// `ENUM64` during CO-RE relocation.
+#[derive(Clone, Debug)]
+pub(crate) struct Enum64Fallback {
+    pub(crate) signed: bool,
+    pub(crate) variants: Vec<Enum64VariantFallback>,
+}
+
 #[repr(C)]
 #[derive(Clone, Debug)]
 pub struct Union {
@@ -658,10 +674,16 @@ pub struct Union {
     info: u32,
     pub(crate) size: u32,
     pub(crate) members: Vec<BtfMember>,
+    pub(crate) enum64_fallback: Option<Enum64Fallback>,
 }
 
 impl Union {
-    pub(crate) fn new(name_offset: u32, size: u32, members: Vec<BtfMember>) -> Self {
+    pub(crate) fn new(
+        name_offset: u32,
+        size: u32,
+        members: Vec<BtfMember>,
+        enum64_fallback: Option<Enum64Fallback>,
+    ) -> Self {
         let mut info = (BtfKind::Union as u32) << 24;
         info |= (members.len() as u32) & 0xFFFF;
         Self {
@@ -669,6 +691,7 @@ impl Union {
             info,
             size,
             members,
+            enum64_fallback,
         }
     }
 
@@ -678,6 +701,7 @@ impl Union {
             info,
             size,
             members,
+            enum64_fallback: _,
         } = self;
         [
             bytes_of::<u32>(name_offset),
@@ -1224,6 +1248,7 @@ impl BtfType {
                 info: ty[1],
                 size: ty[2],
                 members: unsafe { read_array::<BtfMember>(data, vlen)? },
+                enum64_fallback: None,
             }),
             BtfKind::FuncProto => Self::FuncProto(FuncProto {
                 name_offset: ty[0],
@@ -1566,6 +1591,8 @@ pub(crate) fn fields_are_compatible(
 
 fn bytes_of<T>(val: &T) -> &[u8] {
     // Safety: all btf types are POD
+    //
+    // TODO: this is bullshit. We should stop doing this.
     unsafe { crate::util::bytes_of(val) }
 }
 #[cfg(test)]
@@ -1635,7 +1662,7 @@ mod tests {
             btf_type: 0x68,
             offset: 0,
         }];
-        let bpf_type = BtfType::Union(Union::new(0, 4, members));
+        let bpf_type = BtfType::Union(Union::new(0, 4, members, None));
         let data: &[u8] = &bpf_type.to_bytes();
         assert_matches!(unsafe { BtfType::read(data, endianness) }.unwrap(), BtfType::Union(got) => {
             assert_eq!(got.to_bytes(), data);
