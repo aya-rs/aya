@@ -38,15 +38,15 @@ fn simple_prog(_ctx: SkBuffContext) -> i64 {
 
 #[uprobe]
 fn simple_prog_mut(_ctx: ProbeContext) -> i64 {
-    if let Some(foo) = FOO.get_ptr_mut(0) {
+    if let Some(array_value) = FOO.get_ptr_mut(0) {
         unsafe {
-            *foo += 1;
+            *array_value += 1;
         }
     }
 
-    if let Some(baz) = BAZ.get_ptr_mut(0) {
+    if let Some(map_value) = BAZ.get_ptr_mut(0) {
         unsafe {
-            *baz += 1;
+            *map_value += 1;
         }
     }
 
