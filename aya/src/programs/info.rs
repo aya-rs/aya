@@ -40,10 +40,8 @@ impl ProgramInfo {
     /// The type of program.
     ///
     /// Introduced in kernel v4.13.
-    pub fn program_type(&self) -> Result<ProgramType, ProgramError> {
-        bpf_prog_type::try_from(self.0.type_)
-            .unwrap_or(bpf_prog_type::__MAX_BPF_PROG_TYPE)
-            .try_into()
+    pub fn program_type(&self) -> bpf_prog_type {
+        bpf_prog_type::try_from(self.0.type_).unwrap_or(bpf_prog_type::__MAX_BPF_PROG_TYPE)
     }
 
     /// The unique ID for this program.
@@ -295,236 +293,242 @@ pub fn loaded_programs() -> impl Iterator<Item = Result<ProgramInfo, ProgramErro
         .map(|result| result.map(ProgramInfo).map_err(Into::into))
 }
 
+/// The type of LSM program.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum LsmAttachType {
+    /// A MAC (Mandatory Access Control) LSM program.
+    Mac,
+    /// A cGroup LSM program.
+    Cgroup,
+}
+
 /// The type of eBPF program.
 #[non_exhaustive]
 #[doc(alias = "bpf_prog_type")]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ProgramType {
     /// An unspecified program type.
-    Unspecified = bpf_prog_type::BPF_PROG_TYPE_UNSPEC as isize,
+    #[doc(alias = "BPF_PROG_TYPE_UNSPEC")]
+    Unspecified,
     /// A Socket Filter program type. See [`SocketFilter`](super::socket_filter::SocketFilter)
     /// for the program implementation.
     ///
     /// Introduced in kernel v3.19.
     #[doc(alias = "BPF_PROG_TYPE_SOCKET_FILTER")]
-    SocketFilter = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as isize,
+    SocketFilter,
     /// A Kernel Probe program type. See [`KProbe`](super::kprobe::KProbe) and
     /// [`UProbe`](super::uprobe::UProbe) for the program implementations.
     ///
     /// Introduced in kernel v4.1.
     #[doc(alias = "BPF_PROG_TYPE_KPROBE")]
-    KProbe = bpf_prog_type::BPF_PROG_TYPE_KPROBE as isize,
+    KProbe,
     /// A Traffic Control (TC) Classifier program type. See
     /// [`SchedClassifier`](super::tc::SchedClassifier) for the program implementation.
     ///
     /// Introduced in kernel v4.1.
     #[doc(alias = "BPF_PROG_TYPE_SCHED_CLS")]
-    SchedClassifier = bpf_prog_type::BPF_PROG_TYPE_SCHED_CLS as isize,
+    SchedClassifier,
     /// A Traffic Control (TC) Action program type.
     ///
     /// Introduced in kernel v4.1.
     #[doc(alias = "BPF_PROG_TYPE_SCHED_ACT")]
-    SchedAction = bpf_prog_type::BPF_PROG_TYPE_SCHED_ACT as isize,
+    SchedAction,
     /// A Tracepoint program type. See [`TracePoint`](super::trace_point::TracePoint) for the
     /// program implementation.
     ///
     /// Introduced in kernel v4.7.
     #[doc(alias = "BPF_PROG_TYPE_TRACEPOINT")]
-    TracePoint = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as isize,
+    TracePoint,
     /// An Express Data Path (XDP) program type. See [`Xdp`](super::xdp::Xdp) for the program
     /// implementation.
     ///
     /// Introduced in kernel v4.8.
     #[doc(alias = "BPF_PROG_TYPE_XDP")]
-    Xdp = bpf_prog_type::BPF_PROG_TYPE_XDP as isize,
+    Xdp,
     /// A Perf Event program type. See [`PerfEvent`](super::perf_event::PerfEvent) for the program
     /// implementation.
     ///
     /// Introduced in kernel v4.9.
     #[doc(alias = "BPF_PROG_TYPE_PERF_EVENT")]
-    PerfEvent = bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT as isize,
+    PerfEvent,
     /// A cGroup Socket Buffer program type. See [`CgroupSkb`](super::cgroup_skb::CgroupSkb) for
     /// the program implementation.
     ///
     /// Introduced in kernel v4.10.
     #[doc(alias = "BPF_PROG_TYPE_CGROUP_SKB")]
-    CgroupSkb = bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB as isize,
+    CgroupSkb,
     /// A cGroup Socket program type. See [`CgroupSock`](super::cgroup_sock::CgroupSock) for the
     /// program implementation.
     ///
     /// Introduced in kernel v4.10.
     #[doc(alias = "BPF_PROG_TYPE_CGROUP_SOCK")]
-    CgroupSock = bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK as isize,
+    CgroupSock,
     /// A Lightweight Tunnel (LWT) Input program type.
     ///
     /// Introduced in kernel v4.10.
     #[doc(alias = "BPF_PROG_TYPE_LWT_IN")]
-    LwtInput = bpf_prog_type::BPF_PROG_TYPE_LWT_IN as isize,
+    LwtInput,
     /// A Lightweight Tunnel (LWT) Output program type.
     ///
     /// Introduced in kernel v4.10.
     #[doc(alias = "BPF_PROG_TYPE_LWT_OUT")]
-    LwtOutput = bpf_prog_type::BPF_PROG_TYPE_LWT_OUT as isize,
+    LwtOutput,
     /// A Lightweight Tunnel (LWT) Transmit program type.
     ///
     /// Introduced in kernel v4.10.
     #[doc(alias = "BPF_PROG_TYPE_LWT_XMIT")]
-    LwtXmit = bpf_prog_type::BPF_PROG_TYPE_LWT_XMIT as isize,
+    LwtXmit,
     /// A Socket Operation program type. See [`SockOps`](super::sock_ops::SockOps) for the program
     /// implementation.
     ///
     /// Introduced in kernel v4.13.
     #[doc(alias = "BPF_PROG_TYPE_SOCK_OPS")]
-    SockOps = bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS as isize,
+    SockOps,
     /// A Socket-to-Socket Buffer program type. See [`SkSkb`](super::sk_skb::SkSkb) for the program
     /// implementation.
     ///
     /// Introduced in kernel v4.14.
     #[doc(alias = "BPF_PROG_TYPE_SK_SKB")]
-    SkSkb = bpf_prog_type::BPF_PROG_TYPE_SK_SKB as isize,
+    SkSkb,
     /// A cGroup Device program type. See [`CgroupDevice`](super::cgroup_device::CgroupDevice)
     /// for the program implementation.
     ///
     /// Introduced in kernel v4.15.
     #[doc(alias = "BPF_PROG_TYPE_CGROUP_DEVICE")]
-    CgroupDevice = bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE as isize,
+    CgroupDevice,
     /// A Socket Message program type. See [`SkMsg`](super::sk_msg::SkMsg) for the program
     /// implementation.
     ///
     /// Introduced in kernel v4.17.
     #[doc(alias = "BPF_PROG_TYPE_SK_MSG")]
-    SkMsg = bpf_prog_type::BPF_PROG_TYPE_SK_MSG as isize,
+    SkMsg,
     /// A Raw Tracepoint program type. See [`RawTracePoint`](super::raw_trace_point::RawTracePoint)
     /// for the program implementation.
     ///
     /// Introduced in kernel v4.17.
     #[doc(alias = "BPF_PROG_TYPE_RAW_TRACEPOINT")]
-    RawTracePoint = bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT as isize,
+    RawTracePoint,
     /// A cGroup Socket Address program type. See
     /// [`CgroupSockAddr`](super::cgroup_sock_addr::CgroupSockAddr) for the program implementation.
     ///
     /// Introduced in kernel v4.17.
     #[doc(alias = "BPF_PROG_TYPE_CGROUP_SOCK_ADDR")]
-    CgroupSockAddr = bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK_ADDR as isize,
+    CgroupSockAddr,
     /// A Lightweight Tunnel (LWT) Seg6local program type.
     ///
     /// Introduced in kernel v4.18.
     #[doc(alias = "BPF_PROG_TYPE_LWT_SEG6LOCAL")]
-    LwtSeg6local = bpf_prog_type::BPF_PROG_TYPE_LWT_SEG6LOCAL as isize,
+    LwtSeg6local,
     /// A Linux Infrared Remote Control (LIRC) Mode2 program type. See
     /// [`LircMode2`](super::lirc_mode2::LircMode2) for the program implementation.
     ///
     /// Introduced in kernel v4.18.
     #[doc(alias = "BPF_PROG_TYPE_LIRC_MODE2")]
-    LircMode2 = bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2 as isize,
+    LircMode2,
     /// A Socket Reuseport program type.
     ///
     /// Introduced in kernel v4.19.
     #[doc(alias = "BPF_PROG_TYPE_SK_REUSEPORT")]
-    SkReuseport = bpf_prog_type::BPF_PROG_TYPE_SK_REUSEPORT as isize,
+    SkReuseport,
     /// A Flow Dissector program type.
     ///
     /// Introduced in kernel v4.20.
     #[doc(alias = "BPF_PROG_TYPE_FLOW_DISSECTOR")]
-    FlowDissector = bpf_prog_type::BPF_PROG_TYPE_FLOW_DISSECTOR as isize,
+    FlowDissector,
     /// A cGroup Sysctl program type. See [`CgroupSysctl`](super::cgroup_sysctl::CgroupSysctl) for
     /// the program implementation.
     ///
     /// Introduced in kernel v5.2.
     #[doc(alias = "BPF_PROG_TYPE_CGROUP_SYSCTL")]
-    CgroupSysctl = bpf_prog_type::BPF_PROG_TYPE_CGROUP_SYSCTL as isize,
+    CgroupSysctl,
     /// A Writable Raw Tracepoint program type.
     ///
     /// Introduced in kernel v5.2.
     #[doc(alias = "BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE")]
-    RawTracePointWritable = bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE as isize,
+    RawTracePointWritable,
     /// A cGroup Socket Option program type. See [`CgroupSockopt`](super::cgroup_sockopt::CgroupSockopt)
     /// for the program implementation.
     ///
     /// Introduced in kernel v5.3.
     #[doc(alias = "BPF_PROG_TYPE_CGROUP_SOCKOPT")]
-    CgroupSockopt = bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCKOPT as isize,
+    CgroupSockopt,
     /// A Tracing program type. See [`FEntry`](super::fentry::FEntry), [`FExit`](super::fexit::FExit),
     /// and [`BtfTracePoint`](super::tp_btf::BtfTracePoint) for the program implementations.
     ///
     /// Introduced in kernel v5.5.
     #[doc(alias = "BPF_PROG_TYPE_TRACING")]
-    Tracing = bpf_prog_type::BPF_PROG_TYPE_TRACING as isize,
+    Tracing,
     /// A Struct Ops program type.
     ///
     /// Introduced in kernel v5.6.
     #[doc(alias = "BPF_PROG_TYPE_STRUCT_OPS")]
-    StructOps = bpf_prog_type::BPF_PROG_TYPE_STRUCT_OPS as isize,
+    StructOps,
     /// A Extension program type. See [`Extension`](super::extension::Extension) for the program
     /// implementation.
     ///
     /// Introduced in kernel v5.6.
     #[doc(alias = "BPF_PROG_TYPE_EXT")]
-    Extension = bpf_prog_type::BPF_PROG_TYPE_EXT as isize,
+    Extension,
     /// A Linux Security Module (LSM) program type. See [`Lsm`](super::lsm::Lsm) for the program
     /// implementation.
     ///
     /// Introduced in kernel v5.7.
     #[doc(alias = "BPF_PROG_TYPE_LSM")]
-    Lsm = bpf_prog_type::BPF_PROG_TYPE_LSM as isize,
+    Lsm(LsmAttachType),
     /// A Socket Lookup program type. See [`SkLookup`](super::sk_lookup::SkLookup) for the program
     /// implementation.
     ///
     /// Introduced in kernel v5.9.
     #[doc(alias = "BPF_PROG_TYPE_SK_LOOKUP")]
-    SkLookup = bpf_prog_type::BPF_PROG_TYPE_SK_LOOKUP as isize,
+    SkLookup,
     /// A Syscall program type.
     ///
     /// Introduced in kernel v5.14.
     #[doc(alias = "BPF_PROG_TYPE_SYSCALL")]
-    Syscall = bpf_prog_type::BPF_PROG_TYPE_SYSCALL as isize,
+    Syscall,
     /// A Netfilter program type.
     ///
     /// Introduced in kernel v6.4.
     #[doc(alias = "BPF_PROG_TYPE_NETFILTER")]
-    Netfilter = bpf_prog_type::BPF_PROG_TYPE_NETFILTER as isize,
+    Netfilter,
 }
 
-impl TryFrom<bpf_prog_type> for ProgramType {
-    type Error = ProgramError;
-
-    fn try_from(prog_type: bpf_prog_type) -> Result<Self, Self::Error> {
-        use bpf_prog_type::*;
-        Ok(match prog_type {
-            BPF_PROG_TYPE_UNSPEC => Self::Unspecified,
-            BPF_PROG_TYPE_SOCKET_FILTER => Self::SocketFilter,
-            BPF_PROG_TYPE_KPROBE => Self::KProbe,
-            BPF_PROG_TYPE_SCHED_CLS => Self::SchedClassifier,
-            BPF_PROG_TYPE_SCHED_ACT => Self::SchedAction,
-            BPF_PROG_TYPE_TRACEPOINT => Self::TracePoint,
-            BPF_PROG_TYPE_XDP => Self::Xdp,
-            BPF_PROG_TYPE_PERF_EVENT => Self::PerfEvent,
-            BPF_PROG_TYPE_CGROUP_SKB => Self::CgroupSkb,
-            BPF_PROG_TYPE_CGROUP_SOCK => Self::CgroupSock,
-            BPF_PROG_TYPE_LWT_IN => Self::LwtInput,
-            BPF_PROG_TYPE_LWT_OUT => Self::LwtOutput,
-            BPF_PROG_TYPE_LWT_XMIT => Self::LwtXmit,
-            BPF_PROG_TYPE_SOCK_OPS => Self::SockOps,
-            BPF_PROG_TYPE_SK_SKB => Self::SkSkb,
-            BPF_PROG_TYPE_CGROUP_DEVICE => Self::CgroupDevice,
-            BPF_PROG_TYPE_SK_MSG => Self::SkMsg,
-            BPF_PROG_TYPE_RAW_TRACEPOINT => Self::RawTracePoint,
-            BPF_PROG_TYPE_CGROUP_SOCK_ADDR => Self::CgroupSockAddr,
-            BPF_PROG_TYPE_LWT_SEG6LOCAL => Self::LwtSeg6local,
-            BPF_PROG_TYPE_LIRC_MODE2 => Self::LircMode2,
-            BPF_PROG_TYPE_SK_REUSEPORT => Self::SkReuseport,
-            BPF_PROG_TYPE_FLOW_DISSECTOR => Self::FlowDissector,
-            BPF_PROG_TYPE_CGROUP_SYSCTL => Self::CgroupSysctl,
-            BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE => Self::RawTracePointWritable,
-            BPF_PROG_TYPE_CGROUP_SOCKOPT => Self::CgroupSockopt,
-            BPF_PROG_TYPE_TRACING => Self::Tracing,
-            BPF_PROG_TYPE_STRUCT_OPS => Self::StructOps,
-            BPF_PROG_TYPE_EXT => Self::Extension,
-            BPF_PROG_TYPE_LSM => Self::Lsm,
-            BPF_PROG_TYPE_SK_LOOKUP => Self::SkLookup,
-            BPF_PROG_TYPE_SYSCALL => Self::Syscall,
-            BPF_PROG_TYPE_NETFILTER => Self::Netfilter,
-            __MAX_BPF_PROG_TYPE => return Err(ProgramError::UnexpectedProgramType),
-        })
+impl From<ProgramType> for bpf_prog_type {
+    fn from(value: ProgramType) -> Self {
+        match value {
+            ProgramType::Unspecified => Self::BPF_PROG_TYPE_UNSPEC,
+            ProgramType::SocketFilter => Self::BPF_PROG_TYPE_SOCKET_FILTER,
+            ProgramType::KProbe => Self::BPF_PROG_TYPE_KPROBE,
+            ProgramType::SchedClassifier => Self::BPF_PROG_TYPE_SCHED_CLS,
+            ProgramType::SchedAction => Self::BPF_PROG_TYPE_SCHED_ACT,
+            ProgramType::TracePoint => Self::BPF_PROG_TYPE_TRACEPOINT,
+            ProgramType::Xdp => Self::BPF_PROG_TYPE_XDP,
+            ProgramType::PerfEvent => Self::BPF_PROG_TYPE_PERF_EVENT,
+            ProgramType::CgroupSkb => Self::BPF_PROG_TYPE_CGROUP_SKB,
+            ProgramType::CgroupSock => Self::BPF_PROG_TYPE_CGROUP_SOCK,
+            ProgramType::LwtInput => Self::BPF_PROG_TYPE_LWT_IN,
+            ProgramType::LwtOutput => Self::BPF_PROG_TYPE_LWT_OUT,
+            ProgramType::LwtXmit => Self::BPF_PROG_TYPE_LWT_XMIT,
+            ProgramType::SockOps => Self::BPF_PROG_TYPE_SOCK_OPS,
+            ProgramType::SkSkb => Self::BPF_PROG_TYPE_SK_SKB,
+            ProgramType::CgroupDevice => Self::BPF_PROG_TYPE_CGROUP_DEVICE,
+            ProgramType::SkMsg => Self::BPF_PROG_TYPE_SK_MSG,
+            ProgramType::RawTracePoint => Self::BPF_PROG_TYPE_RAW_TRACEPOINT,
+            ProgramType::CgroupSockAddr => Self::BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
+            ProgramType::LwtSeg6local => Self::BPF_PROG_TYPE_LWT_SEG6LOCAL,
+            ProgramType::LircMode2 => Self::BPF_PROG_TYPE_LIRC_MODE2,
+            ProgramType::SkReuseport => Self::BPF_PROG_TYPE_SK_REUSEPORT,
+            ProgramType::FlowDissector => Self::BPF_PROG_TYPE_FLOW_DISSECTOR,
+            ProgramType::CgroupSysctl => Self::BPF_PROG_TYPE_CGROUP_SYSCTL,
+            ProgramType::RawTracePointWritable => Self::BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE,
+            ProgramType::CgroupSockopt => Self::BPF_PROG_TYPE_CGROUP_SOCKOPT,
+            ProgramType::Tracing => Self::BPF_PROG_TYPE_TRACING,
+            ProgramType::StructOps => Self::BPF_PROG_TYPE_STRUCT_OPS,
+            ProgramType::Extension => Self::BPF_PROG_TYPE_EXT,
+            ProgramType::Lsm(_) => Self::BPF_PROG_TYPE_LSM,
+            ProgramType::SkLookup => Self::BPF_PROG_TYPE_SK_LOOKUP,
+            ProgramType::Syscall => Self::BPF_PROG_TYPE_SYSCALL,
+            ProgramType::Netfilter => Self::BPF_PROG_TYPE_NETFILTER,
+        }
     }
 }

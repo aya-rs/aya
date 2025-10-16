@@ -3,7 +3,7 @@
 use aya::{
     Btf,
     maps::MapType,
-    programs::ProgramType,
+    programs::{LsmAttachType, ProgramType},
     sys::{is_map_supported, is_program_supported},
     util::KernelVersion,
 };
@@ -127,7 +127,7 @@ fn probe_supported_programs() {
                 })
                 .is_ok();
             assert_eq!(
-                is_supported!(ProgramType::Lsm),
+                is_supported!(ProgramType::Lsm(LsmAttachType::Mac)),
                 lsm_enabled,
                 "current={current}"
             );
@@ -136,7 +136,7 @@ fn probe_supported_programs() {
             }
         } else {
             assert!(
-                !is_supported!(ProgramType::Lsm),
+                !is_supported!(ProgramType::Lsm(LsmAttachType::Mac)),
                 "{current} < {kern_version}"
             );
         }
