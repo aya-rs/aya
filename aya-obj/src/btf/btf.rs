@@ -18,8 +18,9 @@ use object::{Endianness, SectionIndex};
 use crate::{
     Object,
     btf::{
-        Array, BtfEnum, BtfKind, BtfMember, BtfType, Const, DataSec, DataSecEntry, Enum, Enum64,
-        FuncInfo, FuncLinkage, Int, IntEncoding, LineInfo, Struct, Typedef, Union, Var, VarLinkage,
+        Array, BtfEnum, BtfEnum64, BtfKind, BtfMember, BtfType, Const, DataSec, DataSecEntry, Enum,
+        Enum64, Enum64Fallback, Enum64VariantFallback, FuncInfo, FuncLinkage, Int, IntEncoding,
+        LineInfo, Struct, Typedef, Union, Var, VarLinkage,
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
     },
@@ -752,6 +753,7 @@ impl Btf {
                         // `ty` is borrowed from `types` and we use that borrow
                         // below, so we must not borrow it again in the
                         // get_or_init closure.
+                        let is_signed = ty.is_signed();
                         let Enum64 {
                             name_offset,
                             size,
@@ -760,6 +762,27 @@ impl Btf {
                         } = ty;
                         let (name_offset, size, variants) =
                             (*name_offset, *size, mem::take(variants));
+
+                        let fallback = Enum64Fallback {
+                            signed: is_signed,
+                            variants: variants
+                                .iter()
+                                .copied()
+                                .map(
+                                    |BtfEnum64 {
+                                         name_offset,
+                                         value_high,
+                                         value_low,
+                                     }| Enum64VariantFallback {
+                                        name_offset,
+                                        value: (u64::from(value_high) << 32) | u64::from(value_low),
+                                    },
+                                )
+                                .collect(),
+                        };
+
+                        // The rewritten UNION still needs a concrete member type. Share a single
+                        // synthetic INT placeholder between every downgraded ENUM64.
                         let placeholder_id = enum64_placeholder_id.get_or_init(|| {
                             let placeholder_name = self.add_string("enum64_placeholder");
                             add_type(
@@ -779,7 +802,7 @@ impl Btf {
 
                         // Must reborrow here because we borrow `types` above.
                         let t = &mut types.types[i];
-                        *t = BtfType::Union(Union::new(name_offset, size, members));
+                        *t = BtfType::Union(Union::new(name_offset, size, members, Some(fallback)));
                     }
                 }
                 // The type does not need fixing up or sanitization.

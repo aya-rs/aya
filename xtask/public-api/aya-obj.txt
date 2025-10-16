@@ -442,6 +442,7 @@ impl core::clone::Clone for aya_obj::btf::BtfEnum64
 pub fn aya_obj::btf::BtfEnum64::clone(&self) -> aya_obj::btf::BtfEnum64
 impl core::fmt::Debug for aya_obj::btf::BtfEnum64
 pub fn aya_obj::btf::BtfEnum64::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::btf::BtfEnum64
 impl core::marker::Freeze for aya_obj::btf::BtfEnum64
 impl core::marker::Send for aya_obj::btf::BtfEnum64
 impl core::marker::Sync for aya_obj::btf::BtfEnum64
