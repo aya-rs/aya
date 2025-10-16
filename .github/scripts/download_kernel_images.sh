@@ -27,20 +27,22 @@ for VERSION in "${VERSIONS[@]}"; do
   FILES+=("$match")
 
   # The debug package contains the actual System.map. Debian has transitioned
-  # between -dbg and -dbgsym suffixes, so try both.
-  DEBUG_REGEX_BASE="linux-image-${VERSION//./\\.}\\.[0-9]+(-[0-9]+)?(\+bpo|\+deb[0-9]+)?-cloud-${ARCHITECTURE}-"
-  debug_match=""
-  for debug_suffix in dbg dbgsym; do
-    regex="${DEBUG_REGEX_BASE}${debug_suffix}_.*\\.deb"
-    debug_match=$(printf '%s\n' "$URLS" | grep -E "$regex" | sort -V | tail -n1 || true)
-    if [[ -n "$debug_match" ]]; then
-      break
-    fi
-  done
-  if [[ -z "$debug_match" ]]; then
-    printf 'Failed to locate debug package for VERSION=%s (tried dbg/dbgsym)\n' "$VERSION" >&2
+  # between -dbg and -dbgsym suffixes, so match either for the specific kernel
+  # we just selected.
+  kernel_basename=$(basename "$match")
+  kernel_prefix=${kernel_basename%%_*}
+  kernel_suffix=${kernel_basename#${kernel_prefix}_}
+  base_prefix=${kernel_prefix%-unsigned}
+
+  base_prefix_regex=$(printf '%s\n' "$base_prefix" | sed 's/[][(){}.^$*+?|\\-]/\\&/g')
+  kernel_suffix_regex=$(printf '%s\n' "$kernel_suffix" | sed 's/[][(){}.^$*+?|\\-]/\\&/g')
+
+  DEBUG_REGEX="${base_prefix_regex}-dbg(sym)?_${kernel_suffix_regex}"
+  debug_match=$(printf '%s\n' "$URLS" | grep -E "$DEBUG_REGEX" | sort -V | tail -n1) || {
+    printf 'Failed to locate debug package matching %s\n%s\nVERSION=%s\nREGEX=%s\n' \
+      "$kernel_basename" "$URLS" "$VERSION" "$DEBUG_REGEX" >&2
     exit 1
-  fi
+  }
   FILES+=("$debug_match")
 done
 

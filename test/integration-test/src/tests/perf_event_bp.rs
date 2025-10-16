@@ -7,10 +7,7 @@ use aya::{
     Ebpf,
     programs::{
         PerfEventScope, SamplePolicy,
-        perf_event::{
-            PerfBreakpointSize::HwBreakpointLen1, PerfBreakpointType::HwBreakpointRW,
-            PerfEventConfig,
-        },
+        perf_event::{BreakpointConfig, PerfBreakpointSize::HwBreakpointLen1, PerfEventConfig},
     },
     util::online_cpus,
 };
@@ -72,6 +69,10 @@ fn find_kallsyms_symbol(sym: &str) -> Option<u64> {
 #[test_log::test]
 fn perf_event_bp() {
     let mut bpf = Ebpf::load(crate::PERF_EVENT_BP).unwrap();
+
+    // Search for the address of modprobe_path. Prefer to grab it directly from
+    // kallsyms, but if it's not there we can grab it from System.map and apply
+    // the kaslr offset.
     let attach_addr = if let Some(addr) = find_kallsyms_symbol("modprobe_path") {
         addr
     } else {
@@ -91,15 +92,13 @@ fn perf_event_bp() {
         .unwrap();
     prog.load().unwrap();
 
-    // attach hardware breakpoint to modprobe_path global
     for cpu in online_cpus().unwrap() {
         info!("attaching to cpu {cpu}");
         prog.attach(
-            PerfEventConfig::Breakpoint {
+            PerfEventConfig::Breakpoint(BreakpointConfig::ReadWrite {
                 address: attach_addr,
-                length: HwBreakpointLen1,
-                type_: HwBreakpointRW,
-            },
+                size: HwBreakpointLen1,
+            }),
             PerfEventScope::AllProcessesOneCpu { cpu },
             SamplePolicy::Period(1),
             true,
@@ -107,10 +106,14 @@ fn perf_event_bp() {
         .unwrap();
     }
 
-    // trigger hardware breakpoint by reading modprobe_path via procfs
-    let _ = fs::read_to_string("/proc/sys/kernel/modprobe");
+    // Trigger the hardware breakpoint by reading /proc/sys/kernel/modprobe, the
+    // sysctl connected to modprobe_path.
+    //
+    // See: https://elixir.bootlin.com/linux/v6.1.155/source/kernel/sysctl.c#L1770
+    fs::read_to_string("/proc/sys/kernel/modprobe").expect("failed to read modprobe");
 
-    // assert that the map contains an entry for this process
+    // Assert that the map contains an entry for this process, and that we read
+    // the address we expected to.
     let map: aya::maps::HashMap<_, u32, u64> =
         aya::maps::HashMap::try_from(bpf.map_mut("READERS").unwrap()).unwrap();
     let tgid = std::process::id();

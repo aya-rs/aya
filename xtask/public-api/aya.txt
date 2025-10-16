@@ -5299,6 +5299,54 @@ pub fn aya::programs::perf_attach::PerfLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::perf_attach::PerfLinkId
 pub fn aya::programs::perf_attach::PerfLinkId::from(t: T) -> T
 pub mod aya::programs::perf_event
+pub enum aya::programs::perf_event::BreakpointConfig
+pub aya::programs::perf_event::BreakpointConfig::Empty
+pub aya::programs::perf_event::BreakpointConfig::Empty::address: u64
+pub aya::programs::perf_event::BreakpointConfig::Empty::size: aya::programs::perf_event::PerfBreakpointSize
+pub aya::programs::perf_event::BreakpointConfig::Execute
+pub aya::programs::perf_event::BreakpointConfig::Execute::address: u64
+pub aya::programs::perf_event::BreakpointConfig::Read
+pub aya::programs::perf_event::BreakpointConfig::Read::address: u64
+pub aya::programs::perf_event::BreakpointConfig::Read::size: aya::programs::perf_event::PerfBreakpointSize
+pub aya::programs::perf_event::BreakpointConfig::ReadWrite
+pub aya::programs::perf_event::BreakpointConfig::ReadWrite::address: u64
+pub aya::programs::perf_event::BreakpointConfig::ReadWrite::size: aya::programs::perf_event::PerfBreakpointSize
+pub aya::programs::perf_event::BreakpointConfig::Write
+pub aya::programs::perf_event::BreakpointConfig::Write::address: u64
+pub aya::programs::perf_event::BreakpointConfig::Write::size: aya::programs::perf_event::PerfBreakpointSize
+impl core::clone::Clone for aya::programs::perf_event::BreakpointConfig
+pub fn aya::programs::perf_event::BreakpointConfig::clone(&self) -> aya::programs::perf_event::BreakpointConfig
+impl core::fmt::Debug for aya::programs::perf_event::BreakpointConfig
+pub fn aya::programs::perf_event::BreakpointConfig::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::perf_event::BreakpointConfig
+impl core::marker::Freeze for aya::programs::perf_event::BreakpointConfig
+impl core::marker::Send for aya::programs::perf_event::BreakpointConfig
+impl core::marker::Sync for aya::programs::perf_event::BreakpointConfig
+impl core::marker::Unpin for aya::programs::perf_event::BreakpointConfig
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::BreakpointConfig
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::BreakpointConfig
+impl<T, U> core::convert::Into<U> for aya::programs::perf_event::BreakpointConfig where U: core::convert::From<T>
+pub fn aya::programs::perf_event::BreakpointConfig::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_event::BreakpointConfig where U: core::convert::Into<T>
+pub type aya::programs::perf_event::BreakpointConfig::Error = core::convert::Infallible
+pub fn aya::programs::perf_event::BreakpointConfig::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::perf_event::BreakpointConfig where U: core::convert::TryFrom<T>
+pub type aya::programs::perf_event::BreakpointConfig::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::perf_event::BreakpointConfig::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::programs::perf_event::BreakpointConfig where T: core::clone::Clone
+pub type aya::programs::perf_event::BreakpointConfig::Owned = T
+pub fn aya::programs::perf_event::BreakpointConfig::clone_into(&self, target: &mut T)
+pub fn aya::programs::perf_event::BreakpointConfig::to_owned(&self) -> T
+impl<T> core::any::Any for aya::programs::perf_event::BreakpointConfig where T: 'static + ?core::marker::Sized
+pub fn aya::programs::perf_event::BreakpointConfig::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::perf_event::BreakpointConfig where T: ?core::marker::Sized
+pub fn aya::programs::perf_event::BreakpointConfig::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::BreakpointConfig where T: ?core::marker::Sized
+pub fn aya::programs::perf_event::BreakpointConfig::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya::programs::perf_event::BreakpointConfig where T: core::clone::Clone
+pub unsafe fn aya::programs::perf_event::BreakpointConfig::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya::programs::perf_event::BreakpointConfig
+pub fn aya::programs::perf_event::BreakpointConfig::from(t: T) -> T
 #[repr(u32)] pub enum aya::programs::perf_event::HardwareEvent
 pub aya::programs::perf_event::HardwareEvent::BranchInstructions = 4
 pub aya::programs::perf_event::HardwareEvent::BranchMisses = 5
@@ -5460,11 +5508,7 @@ pub fn aya::programs::perf_event::HwCacheResult::from(t: T) -> T
 #[repr(u64)] pub enum aya::programs::perf_event::PerfBreakpointSize
 pub aya::programs::perf_event::PerfBreakpointSize::HwBreakpointLen1 = 1
 pub aya::programs::perf_event::PerfBreakpointSize::HwBreakpointLen2 = 2
-pub aya::programs::perf_event::PerfBreakpointSize::HwBreakpointLen3 = 3
 pub aya::programs::perf_event::PerfBreakpointSize::HwBreakpointLen4 = 4
-pub aya::programs::perf_event::PerfBreakpointSize::HwBreakpointLen5 = 5
-pub aya::programs::perf_event::PerfBreakpointSize::HwBreakpointLen6 = 6
-pub aya::programs::perf_event::PerfBreakpointSize::HwBreakpointLen7 = 7
 pub aya::programs::perf_event::PerfBreakpointSize::HwBreakpointLen8 = 8
 impl core::clone::Clone for aya::programs::perf_event::PerfBreakpointSize
 pub fn aya::programs::perf_event::PerfBreakpointSize::clone(&self) -> aya::programs::perf_event::PerfBreakpointSize
@@ -5499,51 +5543,8 @@ impl<T> core::clone::CloneToUninit for aya::programs::perf_event::PerfBreakpoint
 pub unsafe fn aya::programs::perf_event::PerfBreakpointSize::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::perf_event::PerfBreakpointSize
 pub fn aya::programs::perf_event::PerfBreakpointSize::from(t: T) -> T
-#[repr(u32)] pub enum aya::programs::perf_event::PerfBreakpointType
-pub aya::programs::perf_event::PerfBreakpointType::HwBreakpointEmpty = 0
-pub aya::programs::perf_event::PerfBreakpointType::HwBreakpointInvalid = 7
-pub aya::programs::perf_event::PerfBreakpointType::HwBreakpointR = 1
-pub aya::programs::perf_event::PerfBreakpointType::HwBreakpointRW = 3
-pub aya::programs::perf_event::PerfBreakpointType::HwBreakpointW = 2
-pub aya::programs::perf_event::PerfBreakpointType::HwBreakpointX = 4
-impl core::clone::Clone for aya::programs::perf_event::PerfBreakpointType
-pub fn aya::programs::perf_event::PerfBreakpointType::clone(&self) -> aya::programs::perf_event::PerfBreakpointType
-impl core::fmt::Debug for aya::programs::perf_event::PerfBreakpointType
-pub fn aya::programs::perf_event::PerfBreakpointType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for aya::programs::perf_event::PerfBreakpointType
-impl core::marker::Freeze for aya::programs::perf_event::PerfBreakpointType
-impl core::marker::Send for aya::programs::perf_event::PerfBreakpointType
-impl core::marker::Sync for aya::programs::perf_event::PerfBreakpointType
-impl core::marker::Unpin for aya::programs::perf_event::PerfBreakpointType
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfBreakpointType
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfBreakpointType
-impl<T, U> core::convert::Into<U> for aya::programs::perf_event::PerfBreakpointType where U: core::convert::From<T>
-pub fn aya::programs::perf_event::PerfBreakpointType::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_event::PerfBreakpointType where U: core::convert::Into<T>
-pub type aya::programs::perf_event::PerfBreakpointType::Error = core::convert::Infallible
-pub fn aya::programs::perf_event::PerfBreakpointType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::perf_event::PerfBreakpointType where U: core::convert::TryFrom<T>
-pub type aya::programs::perf_event::PerfBreakpointType::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::perf_event::PerfBreakpointType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for aya::programs::perf_event::PerfBreakpointType where T: core::clone::Clone
-pub type aya::programs::perf_event::PerfBreakpointType::Owned = T
-pub fn aya::programs::perf_event::PerfBreakpointType::clone_into(&self, target: &mut T)
-pub fn aya::programs::perf_event::PerfBreakpointType::to_owned(&self) -> T
-impl<T> core::any::Any for aya::programs::perf_event::PerfBreakpointType where T: 'static + ?core::marker::Sized
-pub fn aya::programs::perf_event::PerfBreakpointType::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::perf_event::PerfBreakpointType where T: ?core::marker::Sized
-pub fn aya::programs::perf_event::PerfBreakpointType::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::PerfBreakpointType where T: ?core::marker::Sized
-pub fn aya::programs::perf_event::PerfBreakpointType::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for aya::programs::perf_event::PerfBreakpointType where T: core::clone::Clone
-pub unsafe fn aya::programs::perf_event::PerfBreakpointType::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for aya::programs::perf_event::PerfBreakpointType
-pub fn aya::programs::perf_event::PerfBreakpointType::from(t: T) -> T
 pub enum aya::programs::perf_event::PerfEventConfig
-pub aya::programs::perf_event::PerfEventConfig::Breakpoint
-pub aya::programs::perf_event::PerfEventConfig::Breakpoint::address: u64
-pub aya::programs::perf_event::PerfEventConfig::Breakpoint::length: aya::programs::perf_event::PerfBreakpointSize
-pub aya::programs::perf_event::PerfEventConfig::Breakpoint::type_: aya::programs::perf_event::PerfBreakpointType
+pub aya::programs::perf_event::PerfEventConfig::Breakpoint(aya::programs::perf_event::BreakpointConfig)
 pub aya::programs::perf_event::PerfEventConfig::Hardware(aya::programs::perf_event::HardwareEvent)
 pub aya::programs::perf_event::PerfEventConfig::HwCache
 pub aya::programs::perf_event::PerfEventConfig::HwCache::event: aya::programs::perf_event::HwCacheEvent
@@ -8297,7 +8298,6 @@ pub aya::programs::ProgramError::AttachCookieNotSupported
 pub aya::programs::ProgramError::Btf(aya_obj::btf::btf::BtfError)
 pub aya::programs::ProgramError::ExtensionError(aya::programs::extension::ExtensionError)
 pub aya::programs::ProgramError::IOError(std::io::error::Error)
-pub aya::programs::ProgramError::IncompleteBreakpoint
 pub aya::programs::ProgramError::InvalidName
 pub aya::programs::ProgramError::InvalidName::name: alloc::string::String
 pub aya::programs::ProgramError::KProbeError(aya::programs::kprobe::KProbeError)

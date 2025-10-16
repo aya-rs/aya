@@ -236,10 +236,6 @@ pub enum ProgramError {
     /// An error occurred while working with Netlink.
     #[error(transparent)]
     NetlinkError(#[from] NetlinkError),
-
-    /// The perf event breakpoint is underspecified
-    #[error("the breakpoint description is missing or incomplete")]
-    IncompleteBreakpoint,
 }
 
 /// A [`Program`] file descriptor.

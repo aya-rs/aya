@@ -5,6 +5,7 @@ use std::{
 };
 
 use aya_obj::generated::{
+    HW_BREAKPOINT_EMPTY, HW_BREAKPOINT_R, HW_BREAKPOINT_RW, HW_BREAKPOINT_W, HW_BREAKPOINT_X,
     PERF_FLAG_FD_CLOEXEC, perf_event_attr,
     perf_event_sample_format::PERF_SAMPLE_RAW,
     perf_sw_ids::PERF_COUNT_SW_BPF_OUTPUT,
@@ -13,7 +14,7 @@ use aya_obj::generated::{
 use libc::pid_t;
 
 use super::{PerfEventIoctlRequest, Syscall, syscall};
-use crate::programs::perf_event::PerfEventConfig;
+use crate::programs::perf_event::{BreakpointConfig, PerfBreakpointSize};
 
 #[expect(clippy::too_many_arguments)]
 pub(crate) fn perf_event_open(
@@ -23,10 +24,9 @@ pub(crate) fn perf_event_open(
     cpu: c_int,
     sample_period: u64,
     sample_frequency: Option<u64>,
-    wakeup: bool,
     inherit: bool,
     flags: u32,
-    perf_config: Option<PerfEventConfig>,
+    breakpoint: Option<BreakpointConfig>,
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
@@ -35,7 +35,6 @@ pub(crate) fn perf_event_open(
     attr.type_ = perf_type;
     attr.sample_type = PERF_SAMPLE_RAW as u64;
     attr.set_inherit(if inherit { 1 } else { 0 });
-    attr.__bindgen_anon_2.wakeup_events = u32::from(wakeup);
 
     if let Some(frequency) = sample_frequency {
         attr.set_freq(1);
@@ -44,16 +43,25 @@ pub(crate) fn perf_event_open(
         attr.__bindgen_anon_1.sample_period = sample_period;
     }
 
-    if let Some(PerfEventConfig::Breakpoint {
-        address,
-        length,
-        type_,
-    }) = perf_config
-    {
-        attr.bp_type = type_.into_primitive();
+    if let Some(bp) = breakpoint {
+        let (type_, length, address) = match bp {
+            BreakpointConfig::Empty { size, address } => (HW_BREAKPOINT_EMPTY, size, address),
+            BreakpointConfig::Read { size, address } => (HW_BREAKPOINT_R, size, address),
+            BreakpointConfig::Write { size, address } => (HW_BREAKPOINT_W, size, address),
+            BreakpointConfig::ReadWrite { size, address } => (HW_BREAKPOINT_RW, size, address),
+            BreakpointConfig::Execute { address } => (
+                HW_BREAKPOINT_X,
+                PerfBreakpointSize::from_primitive(std::mem::size_of::<libc::c_long>() as u64),
+                address,
+            ),
+        };
+        attr.bp_type = type_;
         attr.__bindgen_anon_3.bp_addr = address;
         attr.__bindgen_anon_4.bp_len = length.into_primitive();
         attr.set_precise_ip(2);
+        attr.__bindgen_anon_2.wakeup_events = u32::from(true);
+    } else {
+        attr.__bindgen_anon_2.wakeup_events = u32::from(false);
     }
 
     perf_event_sys(attr, pid, cpu, flags)
@@ -68,7 +76,6 @@ pub(crate) fn perf_event_open_bpf(cpu: c_int) -> io::Result<crate::MockableFd> {
         1,
         None,
         true,
-        false,
         PERF_FLAG_FD_CLOEXEC,
         None,
     )
