@@ -10,6 +10,7 @@ mod load;
 mod log;
 mod lsm;
 mod map_pin;
+mod maps_disjoint;
 mod raw_tracepoint;
 mod rbpf;
 mod relocations;
