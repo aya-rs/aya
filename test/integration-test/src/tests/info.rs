@@ -15,6 +15,7 @@ use aya::{
     sys::{is_map_supported, is_program_supported},
     util::KernelVersion,
 };
+use aya_obj::generated::bpf_prog_type;
 use libc::EINVAL;
 
 use crate::utils::{kernel_assert, kernel_assert_eq};
@@ -89,8 +90,8 @@ fn test_program_info() {
 
     // Test `bpf_prog_info` fields.
     kernel_assert_eq!(
-        ProgramType::SocketFilter,
-        test_prog.program_type().unwrap_or(ProgramType::Unspecified),
+        bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER,
+        test_prog.program_type(),
         KernelVersion::new(4, 13, 0),
     );
     kernel_assert!(test_prog.id() > 0, KernelVersion::new(4, 13, 0));

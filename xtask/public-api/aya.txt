@@ -7904,6 +7904,45 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::kprobe::KProbeError where 
 pub fn aya::programs::kprobe::KProbeError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::kprobe::KProbeError
 pub fn aya::programs::kprobe::KProbeError::from(t: T) -> T
+pub enum aya::programs::LsmAttachType
+pub aya::programs::LsmAttachType::Cgroup
+pub aya::programs::LsmAttachType::Mac
+impl core::clone::Clone for aya::programs::LsmAttachType
+pub fn aya::programs::LsmAttachType::clone(&self) -> aya::programs::LsmAttachType
+impl core::cmp::PartialEq for aya::programs::LsmAttachType
+pub fn aya::programs::LsmAttachType::eq(&self, other: &aya::programs::LsmAttachType) -> bool
+impl core::fmt::Debug for aya::programs::LsmAttachType
+pub fn aya::programs::LsmAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::LsmAttachType
+impl core::marker::StructuralPartialEq for aya::programs::LsmAttachType
+impl core::marker::Freeze for aya::programs::LsmAttachType
+impl core::marker::Send for aya::programs::LsmAttachType
+impl core::marker::Sync for aya::programs::LsmAttachType
+impl core::marker::Unpin for aya::programs::LsmAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::LsmAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::LsmAttachType
+impl<T, U> core::convert::Into<U> for aya::programs::LsmAttachType where U: core::convert::From<T>
+pub fn aya::programs::LsmAttachType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::LsmAttachType where U: core::convert::Into<T>
+pub type aya::programs::LsmAttachType::Error = core::convert::Infallible
+pub fn aya::programs::LsmAttachType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::LsmAttachType where U: core::convert::TryFrom<T>
+pub type aya::programs::LsmAttachType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::LsmAttachType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::programs::LsmAttachType where T: core::clone::Clone
+pub type aya::programs::LsmAttachType::Owned = T
+pub fn aya::programs::LsmAttachType::clone_into(&self, target: &mut T)
+pub fn aya::programs::LsmAttachType::to_owned(&self) -> T
+impl<T> core::any::Any for aya::programs::LsmAttachType where T: 'static + ?core::marker::Sized
+pub fn aya::programs::LsmAttachType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::LsmAttachType where T: ?core::marker::Sized
+pub fn aya::programs::LsmAttachType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::LsmAttachType where T: ?core::marker::Sized
+pub fn aya::programs::LsmAttachType::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya::programs::LsmAttachType where T: core::clone::Clone
+pub unsafe fn aya::programs::LsmAttachType::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya::programs::LsmAttachType
+pub fn aya::programs::LsmAttachType::from(t: T) -> T
 pub enum aya::programs::PerfEventScope
 pub aya::programs::PerfEventScope::AllProcessesOneCpu
 pub aya::programs::PerfEventScope::AllProcessesOneCpu::cpu: u32
@@ -8286,46 +8325,45 @@ pub fn aya::programs::ProgramError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(t: T) -> T
 #[non_exhaustive] pub enum aya::programs::ProgramType
-pub aya::programs::ProgramType::CgroupDevice = 15
-pub aya::programs::ProgramType::CgroupSkb = 8
-pub aya::programs::ProgramType::CgroupSock = 9
-pub aya::programs::ProgramType::CgroupSockAddr = 18
-pub aya::programs::ProgramType::CgroupSockopt = 25
-pub aya::programs::ProgramType::CgroupSysctl = 23
-pub aya::programs::ProgramType::Extension = 28
-pub aya::programs::ProgramType::FlowDissector = 22
-pub aya::programs::ProgramType::KProbe = 2
-pub aya::programs::ProgramType::LircMode2 = 20
-pub aya::programs::ProgramType::Lsm = 29
-pub aya::programs::ProgramType::LwtInput = 10
-pub aya::programs::ProgramType::LwtOutput = 11
-pub aya::programs::ProgramType::LwtSeg6local = 19
-pub aya::programs::ProgramType::LwtXmit = 12
-pub aya::programs::ProgramType::Netfilter = 32
-pub aya::programs::ProgramType::PerfEvent = 7
-pub aya::programs::ProgramType::RawTracePoint = 17
-pub aya::programs::ProgramType::RawTracePointWritable = 24
-pub aya::programs::ProgramType::SchedAction = 4
-pub aya::programs::ProgramType::SchedClassifier = 3
-pub aya::programs::ProgramType::SkLookup = 30
-pub aya::programs::ProgramType::SkMsg = 16
-pub aya::programs::ProgramType::SkReuseport = 21
-pub aya::programs::ProgramType::SkSkb = 14
-pub aya::programs::ProgramType::SockOps = 13
-pub aya::programs::ProgramType::SocketFilter = 1
-pub aya::programs::ProgramType::StructOps = 27
-pub aya::programs::ProgramType::Syscall = 31
-pub aya::programs::ProgramType::TracePoint = 5
-pub aya::programs::ProgramType::Tracing = 26
-pub aya::programs::ProgramType::Unspecified = 0
-pub aya::programs::ProgramType::Xdp = 6
+pub aya::programs::ProgramType::CgroupDevice
+pub aya::programs::ProgramType::CgroupSkb
+pub aya::programs::ProgramType::CgroupSock
+pub aya::programs::ProgramType::CgroupSockAddr
+pub aya::programs::ProgramType::CgroupSockopt
+pub aya::programs::ProgramType::CgroupSysctl
+pub aya::programs::ProgramType::Extension
+pub aya::programs::ProgramType::FlowDissector
+pub aya::programs::ProgramType::KProbe
+pub aya::programs::ProgramType::LircMode2
+pub aya::programs::ProgramType::Lsm(aya::programs::LsmAttachType)
+pub aya::programs::ProgramType::LwtInput
+pub aya::programs::ProgramType::LwtOutput
+pub aya::programs::ProgramType::LwtSeg6local
+pub aya::programs::ProgramType::LwtXmit
+pub aya::programs::ProgramType::Netfilter
+pub aya::programs::ProgramType::PerfEvent
+pub aya::programs::ProgramType::RawTracePoint
+pub aya::programs::ProgramType::RawTracePointWritable
+pub aya::programs::ProgramType::SchedAction
+pub aya::programs::ProgramType::SchedClassifier
+pub aya::programs::ProgramType::SkLookup
+pub aya::programs::ProgramType::SkMsg
+pub aya::programs::ProgramType::SkReuseport
+pub aya::programs::ProgramType::SkSkb
+pub aya::programs::ProgramType::SockOps
+pub aya::programs::ProgramType::SocketFilter
+pub aya::programs::ProgramType::StructOps
+pub aya::programs::ProgramType::Syscall
+pub aya::programs::ProgramType::TracePoint
+pub aya::programs::ProgramType::Tracing
+pub aya::programs::ProgramType::Unspecified
+pub aya::programs::ProgramType::Xdp
 impl core::clone::Clone for aya::programs::ProgramType
 pub fn aya::programs::ProgramType::clone(&self) -> aya::programs::ProgramType
 impl core::cmp::PartialEq for aya::programs::ProgramType
 pub fn aya::programs::ProgramType::eq(&self, other: &aya::programs::ProgramType) -> bool
-impl core::convert::TryFrom<aya_obj::generated::linux_bindings_x86_64::bpf_prog_type> for aya::programs::ProgramType
-pub type aya::programs::ProgramType::Error = aya::programs::ProgramError
-pub fn aya::programs::ProgramType::try_from(prog_type: aya_obj::generated::linux_bindings_x86_64::bpf_prog_type) -> core::result::Result<Self, Self::Error>
+impl core::convert::From<aya::programs::ProgramType> for aya_obj::generated::linux_bindings_x86_64::bpf_prog_type
+pub fn aya_obj::generated::linux_bindings_x86_64::bpf_prog_type::from(value: aya::programs::ProgramType) -> Self
 impl core::fmt::Debug for aya::programs::ProgramType
 pub fn aya::programs::ProgramType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::ProgramType
@@ -9661,7 +9699,7 @@ pub fn aya::programs::ProgramInfo::map_ids(&self) -> core::result::Result<core::
 pub fn aya::programs::ProgramInfo::memory_locked(&self) -> core::result::Result<u32, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::name(&self) -> &[u8]
 pub fn aya::programs::ProgramInfo::name_as_str(&self) -> core::option::Option<&str>
-pub fn aya::programs::ProgramInfo::program_type(&self) -> core::result::Result<aya::programs::ProgramType, aya::programs::ProgramError>
+pub fn aya::programs::ProgramInfo::program_type(&self) -> aya_obj::generated::linux_bindings_x86_64::bpf_prog_type
 pub fn aya::programs::ProgramInfo::run_count(&self) -> u64
 pub fn aya::programs::ProgramInfo::run_time(&self) -> core::time::Duration
 pub fn aya::programs::ProgramInfo::size_jitted(&self) -> u32

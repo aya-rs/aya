@@ -88,7 +88,7 @@ use aya_obj::{
     programs::XdpAttachType,
 };
 use info::impl_info;
-pub use info::{ProgramInfo, ProgramType, loaded_programs};
+pub use info::{LsmAttachType, ProgramInfo, ProgramType, loaded_programs};
 use libc::ENOSPC;
 use tc::SchedClassifierLink;
 use thiserror::Error;
@@ -349,8 +349,8 @@ impl Program {
             Self::LircMode2(_) => ProgramType::LircMode2,
             Self::PerfEvent(_) => ProgramType::PerfEvent,
             Self::RawTracePoint(_) => ProgramType::RawTracePoint,
-            Self::Lsm(_) => ProgramType::Lsm,
-            Self::LsmCgroup(_) => ProgramType::Lsm,
+            Self::Lsm(_) => ProgramType::Lsm(LsmAttachType::Mac),
+            Self::LsmCgroup(_) => ProgramType::Lsm(LsmAttachType::Cgroup),
             // The following program types are a subset of `TRACING` programs:
             //
             // - `BPF_TRACE_RAW_TP` (`BtfTracePoint`)
@@ -1042,7 +1042,7 @@ macro_rules! impl_from_prog_info {
                 name: Cow<'static, str>,
                 $($var: $var_ty,)?
             ) -> Result<Self, ProgramError> {
-                if info.program_type()? != Self::PROGRAM_TYPE {
+                if info.program_type() != Self::PROGRAM_TYPE.into() {
                     return Err(ProgramError::UnexpectedProgramType {});
                 }
                 let ProgramInfo(bpf_progam_info) = info;
