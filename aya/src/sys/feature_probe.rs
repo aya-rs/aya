@@ -64,7 +64,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
     // [0] https://elixir.bootlin.com/linux/v5.5/source/kernel/bpf/verifier.c#L9535
     let mut verifier_log = matches!(
         program_type,
-        ProgramType::Tracing | ProgramType::Extension | ProgramType::Lsm
+        ProgramType::Tracing | ProgramType::Extension | ProgramType::Lsm(_)
     )
     .then_some([0_u8; 256]);
 
@@ -83,7 +83,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
         // `bpf_lsm_bpf` symbol from:
         // - https://elixir.bootlin.com/linux/v5.7/source/include/linux/lsm_hook_defs.h#L364
         // - or https://elixir.bootlin.com/linux/v5.11/source/kernel/bpf/bpf_lsm.c#L135 on later versions
-        ProgramType::Lsm => Some("bpf_lsm_bpf"),
+        ProgramType::Lsm(_) => Some("bpf_lsm_bpf"),
         _ => None,
     }
     .map(|func_name| {
@@ -159,7 +159,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
                 // explicitly.
                 //
                 // h/t to https://www.exein.io/blog/exploring-bpf-lsm-support-on-aarch64-with-ftrace.
-                if program_type != ProgramType::Lsm {
+                if !matches!(program_type, ProgramType::Lsm(_)) {
                     Ok(true)
                 } else {
                     match bpf_raw_tracepoint_open(None, prog_fd.as_fd()) {
