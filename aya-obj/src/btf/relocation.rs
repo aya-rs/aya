@@ -809,7 +809,7 @@ impl<'a> AccessSpec<'a> {
                                 let parent = accessors.last().unwrap();
                                 let parent_ty = btf.type_by_id(parent.type_id)?;
                                 match parent_ty {
-                                    BtfType::Struct(s) => index == s.members.len() - 1,
+                                    BtfType::Struct(s) => parent.index == s.members.len() - 1,
                                     _ => false,
                                 }
                             };
