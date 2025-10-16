@@ -1,14 +1,18 @@
-use aya::{Btf, EbpfLoader, Endianness, maps::Array, programs::UProbe, util::KernelVersion};
+use aya::{EbpfLoader, Endianness, maps::Array, programs::UProbe};
+use aya_obj::btf::Btf;
 use test_case::test_case;
 
-#[test_case(crate::ENUM_SIGNED_32_RELOC_BPF, None, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7AAAAAAAi32 as u64)]
-#[test_case(crate::ENUM_SIGNED_32_RELOC_BPF, Some(crate::ENUM_SIGNED_32_RELOC_BTF), Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7BBBBBBBi32 as u64)]
-#[test_case(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BPF, None, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7AAAAAAAi32 as u64)]
-#[test_case(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BPF, Some(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BTF), Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0x7BBBBBBBi32 as u64)]
-#[test_case(crate::ENUM_SIGNED_64_RELOC_BPF, None, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xAAAAAAABBBBBBBBi64 as u64)]
-#[test_case(crate::ENUM_SIGNED_64_RELOC_BPF, Some(crate::ENUM_SIGNED_64_RELOC_BTF), Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xCCCCCCCDDDDDDDDi64 as u64)]
-#[test_case(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BPF, None, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xAAAAAAABBBBBBBi64 as u64)]
-#[test_case(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BPF, Some(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BTF), Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), -0xCCCCCCCDDDDDDDi64 as u64)]
+#[derive(Debug)]
+enum Requirements {}
+
+#[test_case(crate::ENUM_SIGNED_32_RELOC_BPF, None, None,-0x7AAAAAAAi32 as u64)]
+#[test_case(crate::ENUM_SIGNED_32_RELOC_BPF, Some(crate::ENUM_SIGNED_32_RELOC_BTF),  None, -0x7BBBBBBBi32 as u64)]
+#[test_case(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BPF, None, None,-0x7AAAAAAAi32 as u64)]
+#[test_case(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BPF, Some(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BTF),  None, -0x7BBBBBBBi32 as u64)]
+#[test_case(crate::ENUM_SIGNED_64_RELOC_BPF, None, None,-0xAAAAAAABBBBBBBBi64 as u64)]
+#[test_case(crate::ENUM_SIGNED_64_RELOC_BPF, Some(crate::ENUM_SIGNED_64_RELOC_BTF),  None, -0xCCCCCCCDDDDDDDDi64 as u64)]
+#[test_case(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BPF, None, None,-0xAAAAAAABBBBBBBi64 as u64)]
+#[test_case(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BPF, Some(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BTF),  None, -0xCCCCCCCDDDDDDDi64 as u64)]
 #[test_case(crate::ENUM_UNSIGNED_32_RELOC_BPF, None, None, 0xAAAAAAAA)]
 #[test_case(
     crate::ENUM_UNSIGNED_32_RELOC_BPF,
@@ -28,10 +32,25 @@ use test_case::test_case;
     None,
     0xBBBBBBBB
 )]
-#[test_case(crate::ENUM_UNSIGNED_64_RELOC_BPF, None, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xAAAAAAAABBBBBBBB)]
-#[test_case(crate::ENUM_UNSIGNED_64_RELOC_BPF, Some(crate::ENUM_UNSIGNED_64_RELOC_BTF), Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xCCCCCCCCDDDDDDDD)]
-#[test_case(crate::ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BPF, None, Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xAAAAAAAABBBBBBBB)]
-#[test_case(crate::ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BPF, Some(crate::ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BTF), Some((KernelVersion::new(6, 0, 0), "https://github.com/torvalds/linux/commit/6089fb3")), 0xCCCCCCCCDDDDDDDD)]
+#[test_case(crate::ENUM_UNSIGNED_64_RELOC_BPF, None, None, 0xAAAAAAAABBBBBBBB)]
+#[test_case(
+    crate::ENUM_UNSIGNED_64_RELOC_BPF,
+    Some(crate::ENUM_UNSIGNED_64_RELOC_BTF),
+    None,
+    0xCCCCCCCCDDDDDDDD
+)]
+#[test_case(
+    crate::ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BPF,
+    None,
+    None,
+    0xAAAAAAAABBBBBBBB
+)]
+#[test_case(
+    crate::ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BPF,
+    Some(crate::ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BTF),
+    None,
+    0xCCCCCCCCDDDDDDDD
+)]
 #[test_case(crate::FIELD_RELOC_BPF, None, None, 2)]
 #[test_case(crate::FIELD_RELOC_BPF, Some(crate::FIELD_RELOC_BTF), None, 1)]
 #[test_case(crate::POINTER_RELOC_BPF, None, None, 42)]
@@ -47,25 +66,27 @@ use test_case::test_case;
 fn relocation_tests(
     bpf: &[u8],
     btf: Option<&[u8]>,
-    required_kernel_version: Option<(KernelVersion, &str)>,
+    requirements: Option<Requirements>,
     expected: u64,
 ) {
-    if let Some((required_kernel_version, commit)) = required_kernel_version {
-        let current_kernel_version = KernelVersion::current().unwrap();
-        if current_kernel_version < required_kernel_version {
-            eprintln!(
-                "skipping test on kernel {current_kernel_version:?}, support was added in {required_kernel_version:?}; see {commit}"
-            );
-            return;
+    let features = aya::features();
+
+    let btf = btf.map(|btf| Btf::parse(btf, Endianness::default()).unwrap());
+
+    let mut bpf = match EbpfLoader::new().btf(btf.as_ref()).load(bpf) {
+        Ok(bpf) => {
+            if let Some(requirements) = requirements {
+                // We'll want to panic here if we expect some feature we don't have.
+                match requirements {}
+            }
+            bpf
         }
-    }
-    let mut bpf = EbpfLoader::new()
-        .btf(
-            btf.map(|btf| Btf::parse(btf, Endianness::default()).unwrap())
-                .as_ref(),
-        )
-        .load(bpf)
-        .unwrap();
+        Err(err) => panic!(
+            "err={err:?} requirements={requirements:?} features={:?}",
+            features.btf()
+        ),
+    };
+
     let program: &mut UProbe = bpf.program_mut("program").unwrap().try_into().unwrap();
     program.load().unwrap();
     program
