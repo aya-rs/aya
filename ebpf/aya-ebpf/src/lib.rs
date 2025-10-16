@@ -114,9 +114,13 @@ mod intrinsics {
     }
 }
 
-// A reimplementation of the BPF_F_ADJ_ROOM_ENCAP_L2(len) macro of the kernel, to use to construct
-// flags to pass to bpf_skb_adjust_room.
-// https://elixir.bootlin.com/linux/v6.16.4/source/include/uapi/linux/bpf.h#L6149
+/// Builds a flag for [`SkBuffContext::adjust_room`] that defines L2 encapsulation,
+/// using `len` as the inner MAC header length.
+///
+/// Equivalent to the [`BPF_F_ADJ_ROOM_ENCAP_L2`][uapi-bpf-adj-room-encap-l2] macro
+/// in the Linux user-space API.
+///
+/// [uapi-bpf-adj-room-encap-l2]: https://elixir.bootlin.com/linux/v6.16.4/source/include/uapi/linux/bpf.h#L6149
 #[inline(always)]
 #[allow(non_snake_case)]
 pub fn BPF_F_ADJ_ROOM_ENCAP_L2(len: u64) -> u64 {
