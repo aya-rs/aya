@@ -64,7 +64,7 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
         executor_name = |wrap<string>(short),
         commands = |raw_commands([
             |format("rustup target add {arch}", |entry("arch", arch)),
-            "apt-get install -y liblzma-dev",
+            "apt-get install -y lzma-dev",
             ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash -"},
             "cargo binstall cargo-hack",
             //${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/taiki-e/install-action/refs/heads/cargo-hack/main.sh | bash -"},

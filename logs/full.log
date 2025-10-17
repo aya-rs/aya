@@ -1,0 +1,26 @@
+[2025-10-16T13:35:14.204Z] info: buildTestAya: Dispatch requested
+[2025-10-16T13:35:16.748Z] error: buildTestAya: API 401 error: Unauthorized
+[2025-10-16T13:35:16.865Z] error: GitHub API: relative URL without a base
+[2025-10-16T13:35:17.533Z] debug: buildTestAya: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+[2025-10-16T13:35:17.533Z] debug: buildTestAya: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+[2025-10-16T13:35:18.149Z] debug: buildTestAya: Error: unable to connect to Podman socket: Get "http://d/v5.6.1/libpod/_ping": dial unix /run/podman/podman.sock: connect: connection refused
+[2025-10-16T13:35:18.149Z] debug: buildTestAya: Error: unable to connect to Podman socket: Get "http://d/v5.6.1/libpod/_ping": dial unix /run/podman/podman.sock: connect: connection refused
+[2025-10-16T13:35:18.149Z] debug: buildTestAya: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+[2025-10-16T13:35:18.153Z] debug: buildTestAya: Error: unable to connect to Podman socket: Get "http://d/v5.6.1/libpod/_ping": dial unix /run/podman/podman.sock: connect: connection refused
+[2025-10-16T13:35:18.149Z] debug: buildTestAya: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+[2025-10-16T13:35:18.765Z] debug: buildTestAya: Error: unable to connect to Podman socket: Get "http://d/v5.6.1/libpod/_ping": dial unix /run/podman/podman.sock: connect: connection refused
+[2025-10-16T13:35:18.765Z] debug: buildTestAya: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+[2025-10-16T13:35:19.379Z] debug: buildTestAya: Error: unable to connect to Podman socket: Get "http://d/v5.6.1/libpod/_ping": dial unix /run/podman/podman.sock: connect: connection refused
+[2025-10-16T13:35:19.379Z] debug: buildTestAya: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+[2025-10-16T13:35:19.995Z] debug: buildTestAya: Error: unable to connect to Podman socket: Get "http://d/v5.6.1/libpod/_ping": dial unix /run/podman/podman.sock: connect: connection refused
+[2025-10-16T13:35:19.995Z] debug: buildTestAya: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+[2025-10-16T13:35:20.605Z] debug: buildTestAya: Error: unable to connect to Podman socket: Get "http://d/v5.6.1/libpod/_ping": dial unix /run/podman/podman.sock: connect: connection refused
+[2025-10-16T13:35:20.605Z] debug: buildTestAya: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+[2025-10-16T13:35:20.605Z] debug: buildTestAya: Error: unable to connect to Podman socket: Get "http://d/v5.6.1/libpod/_ping": dial unix /run/podman/podman.sock: connect: connection refused
+[2025-10-16T13:35:21.266Z] debug: buildTestAya: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+[2025-10-16T13:35:21.883Z] debug: buildTestAya: Error: unable to connect to Podman socket: Get "http://d/v5.6.1/libpod/_ping": dial unix /run/podman/podman.sock: connect: connection refused
+[2025-10-16T13:35:21.883Z] debug: buildTestAya: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+[2025-10-16T13:35:22.500Z] debug: buildTestAya: Error: unable to connect to Podman socket: Get "http://d/v5.6.1/libpod/_ping": dial unix /run/podman/podman.sock: connect: connection refused
+[2025-10-16T13:35:22.500Z] debug: buildTestAya: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+[2025-10-16T13:35:22.503Z] debug: buildTestAya: Error: unable to connect to Podman socket: Get "http://d/v5.6.1/libpod/_ping": dial unix /run/podman/podman.sock: connect: connection refused
+[2025-10-16T13:35:22.506Z] error: GitHub API: relative URL without a base
