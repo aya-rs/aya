@@ -38,7 +38,7 @@ treatment buildTestAya(const github_contexts: string = "{}")
         memory=150,
         storage=800,
         containers=[
-            |container("aarch64", 6000, 1000, 8000, |amd64(), [], "rust:1.90-bookworm", _)
+            |container("aarch64", 6000, 1000, 8000, |amd64(), [], "rust:1.90-trixie", _)
         ]
     )
 
@@ -64,7 +64,7 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
         executor_name = |wrap<string>(short),
         commands = |raw_commands([
             |format("rustup target add {arch}", |entry("arch", arch)),
-            "apt-get install -y lzma-dev",
+            "apt-get install -y liblzma-dev:arm64",
             ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash -"},
             "cargo binstall cargo-hack",
             //${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/taiki-e/install-action/refs/heads/cargo-hack/main.sh | bash -"},
