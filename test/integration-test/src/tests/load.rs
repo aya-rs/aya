@@ -396,7 +396,7 @@ fn pin_link() {
 
 trait PinProgramOps {
     fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError>;
-    fn unpin(self) -> Result<(), std::io::Error>;
+    fn unpin(&mut self) -> Result<(), std::io::Error>;
 }
 
 macro_rules! impl_pin_program_ops {
@@ -406,7 +406,7 @@ macro_rules! impl_pin_program_ops {
                 <$program>::pin(self, path)
             }
 
-            fn unpin(self) -> Result<(), std::io::Error> {
+            fn unpin(&mut self) -> Result<(), std::io::Error> {
                 <$program>::unpin(self)
             }
         }
@@ -465,29 +465,24 @@ fn run_pin_program_lifecycle_test<P>(
     P::OwnedLink: TryInto<FdLink, Error = LinkError>,
     for<'a> &'a mut Program: TryInto<&'a mut P, Error = ProgramError>,
 {
-    // 1. Load Program and Pin
-    {
+    let mut prog = {
+        // 1. Load Program and Pin
         let mut bpf = Ebpf::load(bpf_image).unwrap();
         let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
         prog.load().unwrap();
         prog.pin(program_pin).unwrap();
-    }
 
-    // should still be loaded since prog was pinned
-    assert_loaded(program_name);
-
-    // 2. Load program from bpffs but don't attach it
-    {
-        let _: P = from_pin(program_pin);
-    }
+        // 2. Load program from bpffs but don't attach it
+        let prog = from_pin(program_pin);
+        scopeguard::guard(prog, |mut prog| prog.unpin().unwrap())
+    };
 
     // should still be loaded since prog was pinned
     assert_loaded(program_name);
 
     // 3. Load program from bpffs and attach
     {
-        let mut prog = from_pin(program_pin);
-        let link_id = attach(&mut prog);
+        let link_id = attach(&mut *prog);
         let link = prog.take_link(link_id).unwrap();
         match link.try_into() {
             Ok(fd_link) => {
@@ -498,7 +493,7 @@ fn run_pin_program_lifecycle_test<P>(
                 fd_link.pin(link_pin).unwrap();
 
                 // Unpin the program. It will stay attached since its links were pinned.
-                prog.unpin().unwrap();
+                drop(prog);
 
                 // should still be loaded since link was pinned
                 assert_loaded_and_linked(program_name);
@@ -524,7 +519,7 @@ fn run_pin_program_lifecycle_test<P>(
                 );
 
                 // Unpin the program. It will be unloaded since its link was not pinned.
-                prog.unpin().unwrap();
+                drop(prog);
             }
         };
     }
