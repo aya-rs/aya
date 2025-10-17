@@ -327,7 +327,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm || true # kvm is not available on arm64.
 
-          find test/.tmp -name '*.deb' -print0 | xargs -t -0 \
+          find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
             cargo xtask integration-test vm --cache-dir test/.tmp \
               --github-api-token ${{ secrets.GITHUB_TOKEN }}
 
@@ -338,7 +338,7 @@ jobs:
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: x86_64-linux-musl-gcc
         run: |
           set -euxo pipefail
-          find test/.tmp -name '*.deb' -print0 | xargs -t -0 \
+          find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
             cargo xtask integration-test vm --cache-dir test/.tmp \
               --github-api-token ${{ secrets.GITHUB_TOKEN }}
 
