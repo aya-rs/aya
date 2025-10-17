@@ -64,6 +64,7 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
         executor_name = |wrap<string>(short),
         commands = |raw_commands([
             |format("rustup target add {arch}", |entry("arch", arch)),
+            "dpkg --add-architecture arm64",
             "apt-get install -y liblzma-dev:arm64",
             ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash -"},
             "cargo binstall cargo-hack",
