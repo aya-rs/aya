@@ -3,9 +3,9 @@
 #![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use aya_ebpf::{
-    macros::{map, socket_filter},
+    macros::{map, socket_filter, uprobe},
     maps::{Array, HashMap},
-    programs::SkBuffContext,
+    programs::{ProbeContext, SkBuffContext},
 };
 #[cfg(not(test))]
 extern crate ebpf_panic;
@@ -32,6 +32,23 @@ fn simple_prog(_ctx: SkBuffContext) -> i64 {
     // `.rodata` map will be associated with the program.
     let i = 0;
     BAZ.get_ptr(i);
+
+    0
+}
+
+#[uprobe]
+fn simple_prog_mut(_ctx: ProbeContext) -> i64 {
+    if let Some(array_value) = FOO.get_ptr_mut(0) {
+        unsafe {
+            *array_value += 1;
+        }
+    }
+
+    if let Some(map_value) = BAZ.get_ptr_mut(0) {
+        unsafe {
+            *map_value += 1;
+        }
+    }
 
     0
 }
