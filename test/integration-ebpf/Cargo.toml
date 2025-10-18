@@ -103,3 +103,7 @@ path = "src/xdp_sec.rs"
 [[bin]]
 name = "uprobe_cookie"
 path = "src/uprobe_cookie.rs"
+
+[[bin]]
+name = "perf_event_bp"
+path = "src/perf_event_bp.rs"

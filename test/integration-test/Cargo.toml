@@ -23,6 +23,7 @@ aya-log = { path = "../../aya-log", version = "^0.2.1", default-features = false
 aya-obj = { path = "../../aya-obj", version = "^0.2.1", default-features = false }
 epoll = { workspace = true }
 futures = { workspace = true, features = ["alloc"] }
+glob = { workspace = true }
 integration-common = { path = "../integration-common", features = ["user"] }
 libc = { workspace = true }
 log = { workspace = true }
