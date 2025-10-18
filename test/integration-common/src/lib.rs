@@ -20,6 +20,10 @@ pub mod bpf_probe_read {
     unsafe impl aya::Pod for TestResult {}
 }
 
+pub mod hash_map {
+    pub const GET_INDEX: u32 = 0;
+}
+
 pub mod log {
     pub const BUF_LEN: usize = 1024;
 
