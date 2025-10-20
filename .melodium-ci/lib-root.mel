@@ -8,6 +8,7 @@ use cicd/services/github::postGithubStateContext
 use cicd/services/github::|pending
 use cicd/services/github::|success
 use cicd/services/github::|error
+use cicd/services/github::|failure
 use cicd/steps::stepOn
 use javascript::JavaScriptEngine
 use log/logger::Logger
@@ -139,10 +140,12 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
     pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = arch, description = "Build and Test Aya on arch", log_response = true)
     successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = arch, description = "Build and Test Aya on arch", log_response = true)
     errorState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(), name = arch, description = "Build and Test Aya on arch", log_response = true)
+    failureState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |failure(), name = arch, description = "Build and Test Aya on arch", log_response = true)
 
     Self.trigger -> pendingState.trigger
-    build.completed -> successState.trigger
-    build.failed -> errorState.trigger
+    build.success -> successState.trigger
+    build.error -> errorState.trigger
+    build.failed -> failureState.trigger
 }
 
 /*
