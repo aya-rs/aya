@@ -67,7 +67,7 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
             |format("rustup target add {arch}", |entry("arch", arch)),
             "dpkg --add-architecture arm64",
             "apt-get update",
-            "apt-get install -y liblzma-dev:arm64",
+            "apt-get install -y liblzma-dev:arm64 qemu-utils qemu-efi-aarch64 qemu-system-arm",
             ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash -"},
             "cargo binstall cargo-hack",
             //${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/taiki-e/install-action/refs/heads/cargo-hack/main.sh | bash -"},
