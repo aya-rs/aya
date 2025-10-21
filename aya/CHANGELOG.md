@@ -13,7 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    avoid maintaining support for multiple async runtimes. Use `PerfEventArrayBuffer`, which
    implements `As{,Raw}Fd` for integration with async executors.
  - Rename `EbpfLoader::map_pin_path` to `EbpfLoader::default_map_pin_directory`.
+ - Rename `EbpfLoader::set_global` to `EbpfLoader::override_global`.
+ - Rename `EbpfLoader::set_max_entries` to `EbpfLoader::map_max_entries`.
 
+### Other
+
+ - Provide deprecated aliases to ease migration, these will be removed in a future release;
+    - `EbpfLoader::set_global` calls `EbpfLoader::override_global`, and
+    - `EbpfLoader::set_max_entries` calls `EbpfLoader::map_max_entries`.
+ 
 ## 0.13.1 (2024-11-01)
 
 ### Chore

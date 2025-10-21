@@ -242,7 +242,7 @@ impl<'a> EbpfLoader<'a> {
         self
     }
 
-    /// Sets the value of a global variable.
+    /// Override the value of a global variable.
     ///
     /// If the `must_exist` argument is `true`, [`EbpfLoader::load`] will fail with [`ParseError::SymbolNotFound`] if the loaded object code does not contain the variable.
     ///
@@ -275,13 +275,13 @@ impl<'a> EbpfLoader<'a> {
     /// use aya::EbpfLoader;
     ///
     /// let bpf = EbpfLoader::new()
-    ///     .set_global("VERSION", &2, true)
-    ///     .set_global("PIDS", &[1234u16, 5678], true)
+    ///     .override_global("VERSION", &2, true)
+    ///     .override_global("PIDS", &[1234u16, 5678], true)
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn set_global<T: Into<GlobalData<'a>>>(
+    pub fn override_global<T: Into<GlobalData<'a>>>(
         &mut self,
         name: &'a str,
         value: T,
@@ -289,6 +289,12 @@ impl<'a> EbpfLoader<'a> {
     ) -> &mut Self {
         self.globals.insert(name, (value.into().bytes, must_exist));
         self
+    }
+
+    /// Override the value of a global variable.
+    #[deprecated(since = "0.13.2", note = "please use `override_global` instead")]
+    pub fn set_global<T: Into<GlobalData<'a>>>(&mut self, name: &'a str, value: T) -> &mut Self {
+        self.override_global(name, value, false)
     }
 
     /// Set the max_entries for specified map.
@@ -302,14 +308,20 @@ impl<'a> EbpfLoader<'a> {
     /// use aya::EbpfLoader;
     ///
     /// let bpf = EbpfLoader::new()
-    ///     .set_max_entries("map", 64)
+    ///     .map_max_entries("map", 64)
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn set_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self {
+    pub fn map_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self {
         self.max_entries.insert(name, size);
         self
+    }
+
+    /// Set the max_entries for specified map.
+    #[deprecated(since = "0.13.2", note = "please use `map_max_entries` instead")]
+    pub fn set_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self {
+        self.map_max_entries(name, size)
     }
 
     /// Set the pin path for the map that matches the provided name.
@@ -1189,7 +1201,7 @@ fn load_btf(
 /// Global data that can be exported to eBPF programs before they are loaded.
 ///
 /// Valid global data includes `Pod` types and slices of `Pod` types. See also
-/// [EbpfLoader::set_global].
+/// [EbpfLoader::override_global].
 pub struct GlobalData<'a> {
     bytes: &'a [u8],
 }

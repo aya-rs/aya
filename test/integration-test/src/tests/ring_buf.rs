@@ -52,7 +52,7 @@ impl RingBufTest {
 
         // Use the loader API to control the size of the ring_buf.
         let mut loader = EbpfLoader::new();
-        loader.set_max_entries("RING_BUF", RING_BUF_BYTE_SIZE);
+        loader.map_max_entries("RING_BUF", RING_BUF_BYTE_SIZE);
         loader_fn(&mut loader);
         let mut bpf = loader.load(crate::RING_BUF).unwrap();
         bpf_fn(&mut bpf);

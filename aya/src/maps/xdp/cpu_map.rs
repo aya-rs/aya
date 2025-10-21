@@ -33,7 +33,7 @@ use crate::{
 ///
 /// let nr_cpus = nr_cpus().unwrap() as u32;
 /// let mut bpf = aya::EbpfLoader::new()
-///     .set_max_entries("CPUS", nr_cpus)
+///     .map_max_entries("CPUS", nr_cpus)
 ///     .load(elf_bytes)
 ///     .unwrap();
 /// let mut cpumap = CpuMap::try_from(bpf.map_mut("CPUS").unwrap())?;

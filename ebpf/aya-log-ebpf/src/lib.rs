@@ -32,7 +32,7 @@ pub mod macro_support {
 
     /// Global log level controlling which log statements are active.
     ///
-    /// Userspace may patch this symbol before load via `EbpfLoader::set_global`.
+    /// Userspace may patch this symbol before load via `EbpfLoader::override_global`.
     #[unsafe(no_mangle)]
     pub static AYA_LOG_LEVEL: u8 = 0xff;
 
