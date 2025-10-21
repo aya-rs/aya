@@ -12,7 +12,7 @@ fn test_uprobe_cookie() {
     const RING_BUF_BYTE_SIZE: u32 = 512; // arbitrary, but big enough
 
     let mut bpf = EbpfLoader::new()
-        .set_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
+        .map_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
         .load(crate::UPROBE_COOKIE)
         .unwrap();
     let ring_buf = bpf.take_map("RING_BUF").unwrap();

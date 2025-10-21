@@ -230,7 +230,7 @@ fn log() {
 fn log_level_only_error_warn() {
     let level = aya_log::Level::Warn as u8;
     let mut bpf = EbpfLoader::new()
-        .set_global(aya_log::LEVEL, &level, true /* must_exist */)
+        .override_global(aya_log::LEVEL, &level, true /* must_exist */)
         .load(crate::LOG)
         .unwrap();
 
@@ -281,7 +281,7 @@ fn log_level_only_error_warn() {
 fn log_level_prevents_verif_fail() {
     let level = aya_log::Level::Warn as u8;
     let mut bpf = EbpfLoader::new()
-        .set_global(aya_log::LEVEL, &level, true /* must_exist */)
+        .override_global(aya_log::LEVEL, &level, true /* must_exist */)
         .load(crate::LOG)
         .unwrap();
 
