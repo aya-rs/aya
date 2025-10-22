@@ -12,6 +12,11 @@ bpf_file!(
     MAIN => "main.bpf.o",
     MULTIMAP_BTF => "multimap-btf.bpf.o",
     RINGBUF_BTF => "ringbuf-btf.bpf.o",
+    KSYMS => "ksyms.bpf.o",
+    KSYMS_STRONG => "ksyms_strong.bpf.o",
+    KSYMS_TYPED_MISSING_VAR => "ksyms_typed_missing_var.bpf.o",
+    KSYMS_TYPED_MISSING_KFUNC => "ksyms_typed_missing_kfunc.bpf.o",
+    KSYMS_TYPELESS_MISSING => "ksyms_typeless_missing.bpf.o",
 
     ENUM_SIGNED_32_RELOC_BPF => "enum_signed_32_reloc.bpf.o",
     ENUM_SIGNED_32_RELOC_BTF => "enum_signed_32_reloc.bpf.target.o",
