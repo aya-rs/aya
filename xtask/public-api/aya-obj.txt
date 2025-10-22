@@ -38,6 +38,8 @@ pub aya_obj::btf::BtfError::UnknownBtfTypeName
 pub aya_obj::btf::BtfError::UnknownBtfTypeName::type_name: alloc::string::String
 pub aya_obj::btf::BtfError::UnknownSectionSize
 pub aya_obj::btf::BtfError::UnknownSectionSize::section_name: alloc::string::String
+impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::KsymsError
+pub fn aya_obj::KsymsError::from(source: aya_obj::btf::BtfError) -> Self
 impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::ParseError
 pub fn aya_obj::ParseError::from(source: aya_obj::btf::BtfError) -> Self
 impl core::error::Error for aya_obj::btf::BtfError
@@ -4829,7 +4831,10 @@ impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, target_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+pub fn aya_obj::Object::relocate_externs(&mut self) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+impl aya_obj::Object
+pub fn aya_obj::Object::resolve_externs(&mut self, kernel_btf: core::option::Option<&aya_obj::btf::Btf>) -> core::result::Result<(), aya_obj::KsymsError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object
@@ -5140,6 +5145,8 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::xdp::XdpAtta
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::xdp::XdpAttachType
 pub mod aya_obj::relocation
 pub enum aya_obj::relocation::RelocationError
+pub aya_obj::relocation::RelocationError::ExternNotFound
+pub aya_obj::relocation::RelocationError::ExternNotFound::name: alloc::string::String
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::offset: u64
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::relocation_number: usize
@@ -5155,6 +5162,8 @@ pub aya_obj::relocation::RelocationError::UnknownProgram::address: u64
 pub aya_obj::relocation::RelocationError::UnknownProgram::section_index: usize
 pub aya_obj::relocation::RelocationError::UnknownSymbol
 pub aya_obj::relocation::RelocationError::UnknownSymbol::index: usize
+pub aya_obj::relocation::RelocationError::UnresolvableSymbol
+pub aya_obj::relocation::RelocationError::UnresolvableSymbol::name: alloc::string::String
 impl core::error::Error for aya_obj::relocation::RelocationError
 impl core::fmt::Debug for aya_obj::relocation::RelocationError
 pub fn aya_obj::relocation::RelocationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -5210,6 +5219,44 @@ impl core::marker::Unpin for aya_obj::EbpfSectionKind
 impl core::marker::UnsafeUnpin for aya_obj::EbpfSectionKind
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::EbpfSectionKind
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::EbpfSectionKind
+pub enum aya_obj::KsymsError
+pub aya_obj::KsymsError::AmbiguousResolution
+pub aya_obj::KsymsError::AmbiguousResolution::first_addr: u64
+pub aya_obj::KsymsError::AmbiguousResolution::name: alloc::string::String
+pub aya_obj::KsymsError::AmbiguousResolution::second_addr: u64
+pub aya_obj::KsymsError::BtfError(aya_obj::btf::BtfError)
+pub aya_obj::KsymsError::FunctionNotFound
+pub aya_obj::KsymsError::FunctionNotFound::name: alloc::string::String
+pub aya_obj::KsymsError::IncompatibleFunctionSignature
+pub aya_obj::KsymsError::IncompatibleFunctionSignature::name: alloc::string::String
+pub aya_obj::KsymsError::IncompatibleVariableType
+pub aya_obj::KsymsError::IncompatibleVariableType::name: alloc::string::String
+pub aya_obj::KsymsError::InvalidExternType
+pub aya_obj::KsymsError::InvalidExternType::name: alloc::string::String
+pub aya_obj::KsymsError::KallsymsParseError(alloc::string::String)
+pub aya_obj::KsymsError::KallsymsReadError(std::io::error::Error)
+pub aya_obj::KsymsError::TypedKsymRequiresKernelBtf
+pub aya_obj::KsymsError::TypelessKsymRequiresResolver
+pub aya_obj::KsymsError::TypelessKsymRequiresResolver::name: alloc::string::String
+pub aya_obj::KsymsError::VariableNotFound
+pub aya_obj::KsymsError::VariableNotFound::name: alloc::string::String
+impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::KsymsError
+pub fn aya_obj::KsymsError::from(source: aya_obj::btf::BtfError) -> Self
+impl core::convert::From<std::io::error::Error> for aya_obj::KsymsError
+pub fn aya_obj::KsymsError::from(source: std::io::error::Error) -> Self
+impl core::error::Error for aya_obj::KsymsError
+pub fn aya_obj::KsymsError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya_obj::KsymsError
+pub fn aya_obj::KsymsError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya_obj::KsymsError
+pub fn aya_obj::KsymsError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya_obj::KsymsError
+impl core::marker::Send for aya_obj::KsymsError
+impl core::marker::Sync for aya_obj::KsymsError
+impl core::marker::Unpin for aya_obj::KsymsError
+impl core::marker::UnsafeUnpin for aya_obj::KsymsError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::KsymsError
+impl !core::panic::unwind_safe::UnwindSafe for aya_obj::KsymsError
 pub enum aya_obj::Map
 pub aya_obj::Map::Btf(aya_obj::maps::BtfMap)
 pub aya_obj::Map::Legacy(aya_obj::maps::LegacyMap)
@@ -5424,7 +5471,10 @@ impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, target_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+pub fn aya_obj::Object::relocate_externs(&mut self) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+impl aya_obj::Object
+pub fn aya_obj::Object::resolve_externs(&mut self, kernel_btf: core::option::Option<&aya_obj::btf::Btf>) -> core::result::Result<(), aya_obj::KsymsError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object
