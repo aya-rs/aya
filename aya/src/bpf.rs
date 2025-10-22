@@ -94,6 +94,22 @@ pub fn features() -> &'static Features {
     &FEATURES
 }
 
+pub(crate) static KERNEL_BTF: LazyLock<Option<Btf>> = LazyLock::new(|| match Btf::from_sys_fs() {
+    Ok(btf) => {
+        debug!("Loaded kernel BTF");
+        Some(btf)
+    }
+    Err(e) => {
+        debug!("Failed to load kernel BTF: {}", e);
+        None
+    }
+});
+
+/// Returns a reference to the kernel BTF if available.
+pub fn kernel_btf() -> Option<&'static Btf> {
+    KERNEL_BTF.as_ref()
+}
+
 /// Builder style API for advanced loading of eBPF programs.
 ///
 /// Loading eBPF code involves a few steps, including loading maps and applying
@@ -506,6 +522,11 @@ impl<'a> EbpfLoader<'a> {
         if let Some(btf) = &btf {
             obj.relocate_btf(btf)?;
         }
+
+        if let Some(kernel_btf) = kernel_btf() {
+            obj.resolve_extern_ksyms(kernel_btf)?;
+        }
+
         let mut maps = HashMap::new();
         for (name, mut obj) in obj.maps.drain() {
             if let (false, EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata) =
@@ -571,6 +592,7 @@ impl<'a> EbpfLoader<'a> {
                 .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
             &text_sections,
         )?;
+        obj.relocate_externs()?;
         obj.relocate_calls(&text_sections)?;
         obj.sanitize_functions(&FEATURES);
 
@@ -1167,6 +1189,14 @@ pub enum EbpfError {
     /// Error performing relocations
     #[error("error relocating section")]
     BtfRelocationError(#[from] BtfRelocationError),
+
+    /// Error resolving extern kernel symbols (functions and variables)
+    #[error("kernel symbol resolution error: {0}")]
+    KsymResolve(#[from] aya_obj::KsymResolveError),
+
+    /// Error patching extern kernel symbol instructions
+    #[error("kernel symbol instruction patching error: {0}")]
+    KsymPatch(#[from] aya_obj::KsymPatchError),
 
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]
