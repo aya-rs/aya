@@ -5,6 +5,7 @@ mod elf;
 mod feature_probe;
 mod info;
 mod iter;
+mod ksyms;
 mod linear_data_structures;
 mod load;
 mod log;
