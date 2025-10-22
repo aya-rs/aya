@@ -7,6 +7,7 @@ use object::{SectionIndex, SymbolKind};
 
 use crate::{
     EbpfSectionKind,
+    extern_types::ExternDesc,
     generated::{
         BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
         BPF_PSEUDO_MAP_VALUE, bpf_insn,
@@ -22,6 +23,8 @@ type RawFd = std::os::fd::RawFd;
 type RawFd = core::ffi::c_int;
 
 pub(crate) const INS_SIZE: usize = size_of::<bpf_insn>();
+pub(crate) const BPF_PSEUDO_KFUNC_CALL: u32 = 2;
+pub(crate) const BPF_PSEUDO_BTF_ID: u32 = 3;
 
 /// The error type returned by [`Object::relocate_maps`] and [`Object::relocate_calls`]
 #[derive(thiserror::Error, Debug)]
@@ -84,6 +87,20 @@ pub enum RelocationError {
         /// The relocation number
         relocation_number: usize,
     },
+
+    /// Extern not found.
+    #[error("extern `{name}` not found")]
+    ExternNotFound {
+        /// Name of the extern symbol.
+        name: String,
+    },
+
+    /// Strong symbol not found anywhere (neither BTF nor kallsyms).
+    #[error("strong extern `{name}` not resolvable (not in kernel BTF or kallsyms)")]
+    UnresolvableSymbol {
+        /// Name of the extern symbol
+        name: String,
+    },
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -104,6 +121,17 @@ pub(crate) struct Symbol {
     pub(crate) size: u64,
     pub(crate) is_definition: bool,
     pub(crate) kind: SymbolKind,
+    pub(crate) is_weak: bool,
+}
+
+impl Symbol {
+    /// Returns true if this symbol is an extern (undefined) symbol
+    pub(crate) fn is_extern(&self) -> bool {
+        self.section_index.is_none()
+            && self.name.is_some()
+            && !self.is_definition
+            && self.kind == SymbolKind::Unknown
+    }
 }
 
 impl Object {
@@ -136,6 +164,35 @@ impl Object {
                     function: function.name.clone(),
                     error,
                 })?;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Relocates extern ksym references after BTF resolution.
+    pub fn relocate_externs(&mut self) -> Result<(), EbpfRelocationError> {
+        if let Some(obj_btf) = self.btf.as_mut() {
+            for (name, extern_desc) in &obj_btf.externs.externs {
+                debug!(
+                    "extern '{}': resolved={}, btf_id={:?}",
+                    name, extern_desc.is_resolved, extern_desc.kernel_btf_id
+                );
+            }
+
+            for function in self.functions.values_mut() {
+                if let Some(relocations) = self.relocations.get(&function.section_index) {
+                    relocate_externs(
+                        function,
+                        relocations.values(),
+                        &obj_btf.externs.externs,
+                        &self.symbol_table,
+                    )
+                    .map_err(|error| EbpfRelocationError {
+                        function: function.name.clone(),
+                        error,
+                    })?;
+                }
             }
         }
 
@@ -178,6 +235,106 @@ impl Object {
 
         Ok(())
     }
+}
+
+fn relocate_externs<'a, I: Iterator<Item = &'a Relocation>>(
+    fun: &mut Function,
+    relocations: I,
+    externs: &HashMap<String, ExternDesc>,
+    symbol_table: &HashMap<usize, Symbol>,
+) -> Result<(), RelocationError> {
+    let section_offset = fun.section_offset;
+    let instructions = &mut fun.instructions;
+    let function_size = instructions.len() * INS_SIZE;
+
+    for (rel_n, rel) in relocations.enumerate() {
+        let rel_offset = rel.offset as usize;
+        if rel_offset < section_offset || rel_offset >= section_offset + function_size {
+            continue;
+        }
+
+        let ins_offset = rel_offset - section_offset;
+        if !ins_offset.is_multiple_of(INS_SIZE) {
+            return Err(RelocationError::InvalidRelocationOffset {
+                offset: rel.offset,
+                relocation_number: rel_n,
+            });
+        }
+        let ins_index = ins_offset / INS_SIZE;
+
+        let sym = symbol_table
+            .get(&rel.symbol_index)
+            .ok_or(RelocationError::UnknownSymbol {
+                index: rel.symbol_index,
+            })?;
+
+        // Only process extern symbols
+        if !sym.is_extern() {
+            continue;
+        }
+
+        let extern_name = sym.name.as_ref().unwrap();
+        let extern_desc =
+            externs
+                .get(extern_name)
+                .ok_or_else(|| RelocationError::ExternNotFound {
+                    name: extern_name.clone(),
+                })?;
+
+        let ins = &mut instructions[ins_index];
+        let is_call = insn_is_call(*ins);
+
+        if is_call {
+            ins.set_src_reg(BPF_PSEUDO_KFUNC_CALL as u8);
+            if extern_desc.is_resolved {
+                let kernel_btf_id = extern_desc.kernel_btf_id.unwrap();
+                ins.imm = kernel_btf_id as i32;
+                ins.off = 0; // btf_fd_idx, typically 0 for vmlinux
+            } else {
+                // Unresolved weak kfunc call
+                poison_kfunc_call(ins, rel.symbol_index);
+            }
+        } else {
+            match (extern_desc.kernel_btf_id, extern_desc.ksym_addr) {
+                // symbol found in kernel BTF
+                (Some(btf_id), _) => {
+                    ins.set_src_reg(BPF_PSEUDO_BTF_ID as u8);
+                    ins.imm = btf_id as i32;
+                    instructions[ins_index + 1].imm = 0; // vmlinux
+                }
+                // fallback to kallsyms (BTF missing but address found)
+                (None, Some(addr)) => {
+                    ins.set_src_reg(0); // Standard 64-bit absolute load
+                    ins.imm = (addr & 0xFFFFFFFF) as i32;
+                    instructions[ins_index + 1].imm = (addr >> 32) as i32;
+                }
+                // weak symbol not found, null-patch
+                (None, None) if extern_desc.is_weak => {
+                    ins.set_src_reg(0);
+                    ins.imm = 0;
+                    instructions[ins_index + 1].imm = 0;
+                }
+                // strong symbol not found anywhere
+                _ => {
+                    return Err(RelocationError::UnresolvableSymbol {
+                        name: extern_name.clone(),
+                    });
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+const POISON_CALL_KFUNC_BASE: i32 = 2002000000;
+
+fn poison_kfunc_call(ins: &mut bpf_insn, ext_idx: usize) {
+    ins.code = (BPF_JMP | BPF_CALL) as u8;
+    ins.set_dst_reg(0);
+    ins.set_src_reg(0);
+    ins.off = 0;
+    ins.imm = POISON_CALL_KFUNC_BASE + ext_idx as i32;
 }
 
 fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
@@ -368,8 +525,9 @@ impl<'a> FunctionLinker<'a> {
                         .map(|sym| (rel, sym))
                 })
                 .filter(|(_rel, sym)| {
-                    // only consider text relocations, data relocations are
-                    // relocated in relocate_maps()
+                    if sym.is_extern() {
+                        return false;
+                    }
                     sym.kind == SymbolKind::Text
                         || sym.section_index.is_some_and(|section_index| {
                             self.text_sections.contains(&section_index)
@@ -509,6 +667,7 @@ mod test {
             size,
             is_definition: false,
             kind: SymbolKind::Data,
+            is_weak: false,
         }
     }
 
