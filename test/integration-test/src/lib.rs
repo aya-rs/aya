@@ -11,6 +11,8 @@ bpf_file!(
     ITER_TASK => "iter.bpf.o",
     MAIN => "main.bpf.o",
     MULTIMAP_BTF => "multimap-btf.bpf.o",
+    KSYMS => "ksyms.bpf.o",
+    KSYMS_STRONG => "ksyms_strong.bpf.o",
 
     ENUM_SIGNED_32_RELOC_BPF => "enum_signed_32_reloc.bpf.o",
     ENUM_SIGNED_32_RELOC_BTF => "enum_signed_32_reloc.bpf.target.o",
@@ -59,6 +61,7 @@ bpf_file!(
     TWO_PROGS => "two_progs",
     XDP_SEC => "xdp_sec",
     UPROBE_COOKIE => "uprobe_cookie",
+    KSYMS_RS => "ksyms",
 );
 
 #[cfg(test)]
