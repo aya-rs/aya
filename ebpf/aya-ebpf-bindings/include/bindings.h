@@ -6,6 +6,7 @@ typedef __u32 __bitwise __wsum;
 
 #include <bpf/bpf_helpers.h>
 #include <linux/bpf.h>
+#include <linux/bpf_perf_event.h>
 // needed for TC_ACT_*
 #include <linux/pkt_cls.h>
 #include <linux/ptrace.h>
