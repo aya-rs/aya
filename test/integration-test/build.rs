@@ -93,6 +93,11 @@ fn main() -> Result<()> {
         ("struct_flavors_reloc.bpf.c", true),
         ("text_64_64_reloc.c", false),
         ("variables_reloc.bpf.c", false),
+        ("ksyms.bpf.c", true),
+        ("ksyms_strong.bpf.c", true),
+        ("ksyms_typed_missing_var.bpf.c", true),
+        ("ksyms_typed_missing_kfunc.bpf.c", true),
+        ("ksyms_typeless_missing.bpf.c", true),
     ];
     const C_BPF_HEADERS: &[&str] = &["reloc.h", "struct_with_scalars.h"];
 
