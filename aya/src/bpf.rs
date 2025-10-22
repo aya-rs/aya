@@ -8,7 +8,7 @@ use std::{
 };
 
 use aya_obj::{
-    EbpfSectionKind, Features, Object, ParseError, ProgramSection,
+    EbpfSectionKind, Features, KsymsError, Object, ParseError, ProgramSection,
     btf::{Btf, BtfError, BtfFeatures, BtfRelocationError},
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
@@ -495,6 +495,9 @@ impl<'a> EbpfLoader<'a> {
         if let Some(btf) = &btf {
             obj.relocate_btf(btf)?;
         }
+
+        obj.resolve_externs(self.btf.as_deref())?;
+
         let mut maps = HashMap::new();
         for (name, mut obj) in obj.maps.drain() {
             if let (false, EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata) =
@@ -554,6 +557,9 @@ impl<'a> EbpfLoader<'a> {
                 .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
             &text_sections,
         )?;
+
+        obj.relocate_externs()?;
+
         obj.relocate_calls(&text_sections)?;
         obj.sanitize_functions(&FEATURES);
 
@@ -1187,6 +1193,10 @@ pub enum EbpfError {
     /// Error performing relocations
     #[error("error relocating section")]
     BtfRelocationError(#[from] BtfRelocationError),
+
+    /// Error resolving extern kernel symbols.
+    #[error("kernel symbol error: {0}")]
+    KsymsError(#[from] KsymsError),
 
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]
