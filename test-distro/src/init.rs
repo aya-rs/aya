@@ -3,7 +3,40 @@
 //! This implementation creates the minimal mounts required to run BPF programs, runs all binaries
 //! in /bin, prints a final message ("init: success|failure"), and powers off the machine.
 
+use std::io::{BufRead, BufReader};
+
 use anyhow::Context as _;
+
+/// Dump kernel configuration and kallsyms info relevant to ksym tests.
+/// This helps diagnose failures related to CONFIG_KALLSYMS_ALL.
+fn dump_kernel_debug_info() {
+    println!("=== Kernel Debug Info ===");
+
+    // Dump KALLSYMS-related kernel config
+    if let Ok(file) = std::fs::File::open("/boot/config") {
+        println!("Kernel config (KALLSYMS):");
+        for line in BufReader::new(file).lines().map_while(Result::ok) {
+            if line.contains("KALLSYMS") {
+                println!("  {}", line);
+            }
+        }
+    } else {
+        println!("  /boot/config not available");
+    }
+
+    // Check if bpf_prog_active is in kallsyms (needed for typed ksym tests)
+    if let Ok(file) = std::fs::File::open("/proc/kallsyms") {
+        let found = BufReader::new(file)
+            .lines()
+            .map_while(Result::ok)
+            .any(|line| line.contains("bpf_prog_active"));
+        println!("bpf_prog_active in /proc/kallsyms: {}", found);
+    } else {
+        println!("/proc/kallsyms not available");
+    }
+
+    println!("=========================");
+}
 
 #[derive(Debug)]
 struct Errors(Vec<anyhow::Error>);
@@ -135,6 +168,9 @@ fn run() -> anyhow::Result<()> {
             format!("mount({source}, {target}, {fstype}, {flags:?}, {data:?}) failed")
         })?;
     }
+
+    // Dump kernel debug info before running tests (helps diagnose ksym failures)
+    dump_kernel_debug_info();
 
     // By contract we run everything in /bin and assume they're rust test binaries.
     //
