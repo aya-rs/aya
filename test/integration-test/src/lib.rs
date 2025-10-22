@@ -11,6 +11,7 @@ bpf_file!(
     ITER_TASK => "iter.bpf.o",
     MAIN => "main.bpf.o",
     MULTIMAP_BTF => "multimap-btf.bpf.o",
+    KSYMS => "ksyms.bpf.o",
 
     ENUM_SIGNED_32_RELOC_BPF => "enum_signed_32_reloc.bpf.o",
     ENUM_SIGNED_32_RELOC_BTF => "enum_signed_32_reloc.bpf.target.o",
