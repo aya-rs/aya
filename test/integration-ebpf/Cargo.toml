@@ -65,6 +65,10 @@ name = "redirect"
 path = "src/redirect.rs"
 
 [[bin]]
+name = "ksyms"
+path = "src/ksyms.rs"
+
+[[bin]]
 name = "relocations"
 path = "src/relocations.rs"
 
