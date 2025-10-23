@@ -1,8 +1,8 @@
 use std::{
     ffi::{OsStr, OsString},
     fmt::Write as _,
-    fs::{self, OpenOptions},
-    io::{BufRead as _, BufReader, Write as _},
+    fs::{self, File, OpenOptions},
+    io::{BufRead as _, BufReader, Cursor, Read as _, Write as _},
     ops::Deref as _,
     path::{self, Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
@@ -300,29 +300,43 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 fs::create_dir_all(&archive_dir)
                     .with_context(|| format!("failed to create {}", archive_dir.display()))?;
 
-                let mut dpkg = Command::new("dpkg-deb");
-                dpkg.arg("--fsys-tarfile")
-                    .arg(archive)
-                    .stdout(Stdio::piped());
-                let mut dpkg_child = dpkg
-                    .spawn()
-                    .with_context(|| format!("failed to spawn {dpkg:?}"))?;
-                let Child { stdout, .. } = &mut dpkg_child;
-                let stdout = stdout.take().unwrap();
-                let mut archive_reader = tar::Archive::new(stdout);
-                archive_reader.unpack(&archive_dir).with_context(|| {
+                let archive_reader = File::open(archive).with_context(|| {
+                    format!("failed to open the deb package {}", archive.display())
+                })?;
+                let mut archive_reader = ar::Archive::new(archive_reader);
+                // This would've been easier if `ar` crate was providing some iterator
+                // over entries...
+                // https://github.com/mdsteele/rust-ar/issues/15
+                let mut inner_archive = None;
+                while let Some(entry) = archive_reader.next_entry() {
+                    let mut entry = entry.with_context(|| {
+                        format!(
+                            "failed to read an entry of the deb package {}",
+                            archive.display()
+                        )
+                    })?;
+                    if entry.header().identifier() == b"data.tar.xz" {
+                        let mut buf = Vec::with_capacity(entry.header().size() as usize);
+                        let _bytes_read = entry.read_to_end(&mut buf)?;
+                        inner_archive = Some(buf);
+                        break;
+                    }
+                }
+                let Some(inner_archive) = inner_archive else {
+                    bail!(
+                        "cound not find the `data.tar.xz` archive inside the deb package {}",
+                        archive.display()
+                    );
+                };
+                let inner_archive_reader = xz2::read::XzDecoder::new(Cursor::new(inner_archive));
+                let mut inner_archive_reader = tar::Archive::new(inner_archive_reader);
+                inner_archive_reader.unpack(&archive_dir).with_context(|| {
                     format!(
                         "failed to unpack archive {} to {}",
                         archive.display(),
                         archive_dir.display()
                     )
                 })?;
-                let status = dpkg_child
-                    .wait()
-                    .with_context(|| format!("failed to wait for {dpkg:?}"))?;
-                if !status.success() {
-                    bail!("{dpkg:?} exited with {status}");
-                }
 
                 let mut kernel_images = Vec::new();
                 let mut configs = Vec::new();
