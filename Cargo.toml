@@ -62,6 +62,7 @@ rust-version = "1.85.0"
 # them to do that, but in the meantime we need to be careful.
 [workspace.dependencies]
 anyhow = { version = "1", default-features = false }
+ar = { version = "0.9", default-features = false }
 assert_matches = { version = "1.5.0", default-features = false }
 base64 = { version = "0.22.1", default-features = false }
 bindgen = { version = "0.72", default-features = false }
