@@ -1,7 +1,6 @@
 # Keep this congruent with `.github/workflows/ci.yml`.
 
 brew "curl"
-brew "dpkg"
 brew "llvm"
 brew "lynx"
 brew "pkg-config"
