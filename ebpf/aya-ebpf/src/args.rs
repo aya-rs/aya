@@ -162,6 +162,21 @@ impl<T> FromPtRegs for *const T {
     }
 }
 
+#[cfg(bpf_target_arch = "loongarch64")]
+impl<T> FromPtRegs for *const T {
+    fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+        if n <= 7 {
+            unsafe { bpf_probe_read(&ctx.regs[4 + n]).map(|v| v as *const _).ok() }
+        } else {
+            None
+        }
+    }
+
+    fn from_retval(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.regs[4]).map(|v| v as *const _).ok() }
+    }
+}
+
 #[cfg(bpf_target_arch = "riscv64")]
 impl<T> FromPtRegs for *const T {
     fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
@@ -275,6 +290,21 @@ impl<T> FromPtRegs for *mut T {
 
     fn from_retval(ctx: &pt_regs) -> Option<Self> {
         unsafe { bpf_probe_read(&ctx.regs[0]).map(|v| v as *mut _).ok() }
+    }
+}
+
+#[cfg(bpf_target_arch = "loongarch64")]
+impl<T> FromPtRegs for *mut T {
+    fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+        if n <= 7 {
+            unsafe { bpf_probe_read(&ctx.regs[4 + n]).map(|v| v as *mut _).ok() }
+        } else {
+            None
+        }
+    }
+
+    fn from_retval(ctx: &pt_regs) -> Option<Self> {
+        unsafe { bpf_probe_read(&ctx.regs[4]).map(|v| v as *mut _).ok() }
     }
 }
 
@@ -394,6 +424,21 @@ macro_rules! impl_from_pt_regs {
 
             fn from_retval(ctx: &pt_regs) -> Option<Self> {
                 Some(ctx.regs[0] as *const $type as _)
+            }
+        }
+
+        #[cfg(bpf_target_arch = "loongarch64")]
+        impl FromPtRegs for $type {
+            fn from_argument(ctx: &pt_regs, n: usize) -> Option<Self> {
+                if n <= 7 {
+                    Some(ctx.regs[4 + n] as *const $type as _)
+                } else {
+                    None
+                }
+            }
+
+            fn from_retval(ctx: &pt_regs) -> Option<Self> {
+                Some(ctx.regs[4] as *const $type as _)
             }
         }
 
