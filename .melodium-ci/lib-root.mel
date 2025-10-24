@@ -19,69 +19,113 @@ use std/data/string_map::|entry
 use std/data/string_map::|map
 use std/engine/util::startup
 use std/flow::waitBlock
+use std/flow::trigger
+use std/flow/concentrate::Concentrator
+use std/flow/concentrate::concentrateBlock
+use std/flow/concentrate::concentrated
 use std/ops/option::|wrap
 use std/text/compose::|format
 use work/resources::|container
 use work/resources/arch::|amd64
 
-treatment buildTestAya(const github_contexts: string = "{}")
+treatment buildTestAya(const github_contexts: string = "{}", repository_clone_url: string, repository_clone_ref: string)
   model logger: Logger()
   model dispatcher: CicdDispatchEngine(location="compose", api_token="")
-  model runner: CicdRunnerEngine()
+  model finish_concentrator: Concentrator()
   model github_contexts: JavaScriptEngine()
 {
     startup()
     prepareContexts[contexts=github_contexts](github_contexts=github_contexts)
     manageLogs[logger=logger](output_directory="logs/")
+    concentratedFinish: concentrated<void>[concentrator=finish_concentrator]()
+    triggerFinish: trigger<void>()
+    startup.trigger -> prepareContexts.trigger,ready -> concentratedFinish.trigger,data -> triggerFinish.stream,end -> manageLogs.stop
+    
+    build_aarch64: buildTestAyaForArch[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        short_rust_arch="aarch64",
+        full_rust_arch="aarch64-unknown-linux-gnu",
+        ubuntu_arch="arm64",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+    build_armv7: buildTestAyaForArch[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        short_rust_arch="armv7",
+        full_rust_arch="armv7-unknown-linux-gnueabi",
+        ubuntu_arch="armhf",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+    build_powerpc64le: buildTestAyaForArch[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        short_rust_arch="powerpc64le",
+        full_rust_arch="powerpc64le-unknown-linux-gnu",
+        ubuntu_arch="ppc64le",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+    build_riscv64gc: buildTestAyaForArch[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        short_rust_arch="riscv64gc",
+        full_rust_arch="riscv64gc-unknown-linux-gnu",
+        ubuntu_arch="riscv64",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+    build_s390x: buildTestAyaForArch[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        short_rust_arch="s390x",
+        full_rust_arch="s390x-unknown-linux-gnu",
+        ubuntu_arch="s390x",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+    build_x86_64: buildTestAyaForArch[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        short_rust_arch="x86_64",
+        full_rust_arch="x86_64-unknown-linux-gnu",
+        ubuntu_arch="amd64",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+
+    prepareContexts.ready -> build_aarch64.trigger
+    prepareContexts.ready -> build_armv7.trigger
+    prepareContexts.ready -> build_powerpc64le.trigger
+    prepareContexts.ready -> build_riscv64gc.trigger
+    prepareContexts.ready -> build_s390x.trigger
+    prepareContexts.ready -> build_x86_64.trigger
+}
+
+treatment buildTestAyaForArch[logger: Logger, dispatcher: CicdDispatchEngine, github_contexts: JavaScriptEngine, finish_concentrator: Concentrator](short_rust_arch: string, full_rust_arch: string, ubuntu_arch: string, repository_clone_ref: string, repository_clone_url: string)
+  model runner: CicdRunnerEngine()
+  input trigger: Block<void>
+  output finished: Block<void>
+{
     setupRunner[logger=logger, dispatcher=dispatcher, runner=runner](
         name="buildTestAya",
         cpu=100,
         memory=150,
         storage=800,
         containers=[
-            |container("aarch64", 6000, 1000, 8000, |amd64(), [], "rust:1.90-trixie", _)
+            |container("rust", 6000, 1000, 8000, |amd64(), [], "rust:1.90-trixie", _)
         ]
     )
-
-    buildTestAyaForArch[logger=logger, runner=runner, github_contexts=github_contexts](
-        short="aarch64",
-        arch="aarch64-unknown-linux-gnu",
-        repository_clone_ref="melodium_ci",
-        repository_clone_url="https://github.com/qvignaud/aya.git"
-    )
-
     stopRunner[runner=runner]()
+    concentrateFinish: concentrateBlock<void>[concentrator=finish_concentrator]()
+    Self.trigger -> setupRunner.trigger
+    build.finished -> stopRunner.trigger
+    build.finished -> concentrateFinish.data
 
-    startup.trigger -> prepareContexts.trigger,ready -> setupRunner.trigger,ready -> buildTestAyaForArch.trigger,finished -> manageLogs.stop
-    buildTestAyaForArch.finished -> stopRunner.trigger
-}
-
-treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_contexts: JavaScriptEngine](short: string, arch: string, repository_clone_ref: string, repository_clone_url: string)
-  input trigger: Block<void>
-  output finished: Block<void>
-{
-    prepare: stepOn[logger=logger, runner=runner](
-        name = |format("prepare_{short}", |entry("short", short)),
-        executor_name = |wrap<string>(short),
+    prepareSystem: stepOn[logger=logger, runner=runner](
+        name = |format("prepare_{short}", |entry("short", short_rust_arch)),
+        executor_name = "rust",
         commands = |raw_commands([
-            |format("rustup target add {arch}", |entry("arch", arch)),
-            "dpkg --add-architecture arm64",
+            |format("dpkg --add-architecture {arch}", |entry("arch", ubuntu_arch)),
             "apt-get update",
-            "apt-get install -y liblzma-dev:arm64 qemu-user tree",
-            ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash -"},
-            "cargo binstall cargo-hack",
-            //${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/taiki-e/install-action/refs/heads/cargo-hack/main.sh | bash -"},
+            |format("apt-get install -y liblzma-dev:{arch} qemu-user", |entry("arch", ubuntu_arch)),
             ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/taiki-e/setup-cross-toolchain-action/refs/tags/v1/main.sh | bash -"},
-            "cat /tmp/github.env",
-            "echo Printenv:",
-            "printenv",
-            "tree /usr"
+            "cat /tmp/github.env"
         ]),
         environment = |wrap<Environment>(
             |environment(
                 |map([
-                    |entry("INPUT_TOOL", "cargo-hack"),
-                    |entry("INPUT_TARGET", arch),
+                    |entry("INPUT_TARGET", full_rust_arch),
                     |entry("GITHUB_ENV", "/tmp/github.env")
                 ]),
                 _, // working_directory
@@ -91,9 +135,23 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
         )
     )
 
+    prepareRust: stepOn[logger=logger, runner=runner](
+        name = |format("prepare_{short}", |entry("short", short_rust_arch)),
+        executor_name = "rust",
+        commands = |raw_commands([
+            |format("rustup target add {arch}", |entry("arch", full_rust_arch)),
+            ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash -"},
+            "cargo binstall cargo-hack"
+        ])
+    )
+
+    prepare: waitBlock<void>()
+    setupRunner.ready -> prepareSystem.trigger,success -> prepare.a
+    setupRunner.ready -> prepareRust.trigger,success ---> prepare.b
+
     checkout: stepOn[logger=logger, runner=runner](
-        name = |format("checkout_{short}", |entry("short", short)),
-        executor_name = |wrap<string>(short),
+        name = |format("checkout_{short}", |entry("short", short_rust_arch)),
+        executor_name = "rust",
         commands = |raw_commands([
             "git config --global url.https://.insteadOf  git://",
             |format("git clone --branch {repository_clone_ref} --depth 1 {repository_clone_url} /root/aya",
@@ -106,10 +164,12 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
     )
 
     ready: waitBlock<void>()
+    setupRunner.ready -> checkout.trigger,success -> ready.a
+    prepare.awaited -------------------------------> ready.b
 
     build: stepOn[logger=logger, runner=runner](
-        name = |format("build_{short}", |entry("short", short)),
-        executor_name = |wrap<string>(short),
+        name = |format("build_{short}", |entry("short", short_rust_arch)),
+        executor_name = "rust",
         commands = |raw_commands([
             // Build
             ${bash -c "set -o allexport && source /tmp/github.env && set +o allexport
@@ -128,7 +188,7 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
             |environment(
                 |map([
                     |entry("RUST_BACKTRACE", "full"),
-                    |entry("CARGO_BUILD_TARGET", arch)
+                    |entry("CARGO_BUILD_TARGET", full_rust_arch)
                 ]),
                 "/root/aya", // working_directory
                 false, // expand_variables
@@ -137,18 +197,17 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
         )
     )
 
-    Self.trigger -> prepare.trigger,completed --> ready.a,awaited -> build.trigger,finished -> Self.finished
-    Self.trigger -> checkout.trigger,completed -> ready.b
+    ready.awaited -> build.trigger,finished -> Self.finished
 
-    pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = arch, description = "Build and Test Aya on arch", log_response = true)
-    successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = arch, description = "Build and Test Aya on arch", log_response = true)
-    errorState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(), name = arch, description = "Build and Test Aya on arch", log_response = true)
-    failureState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |failure(), name = arch, description = "Build and Test Aya on arch", log_response = true)
+    pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
+    successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
+    errorState:   postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(),   name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
+    failureState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |failure(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
 
-    Self.trigger -> pendingState.trigger
+    Self.trigger --> pendingState.trigger
     build.success -> successState.trigger
-    build.error -> errorState.trigger
-    build.failed -> failureState.trigger
+    build.error ---> errorState.trigger
+    build.failed --> failureState.trigger
 }
 
 /*
