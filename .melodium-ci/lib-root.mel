@@ -61,13 +61,13 @@ treatment buildTestAyaForArch[logger: Logger, runner: CicdRunnerEngine, github_c
   output finished: Block<void>
 {
     prepare: stepOn[logger=logger, runner=runner](
-        name = "Prepare",//|format("prepare_{short}", |entry("short", short)),
+        name = |format("prepare_{short}", |entry("short", short)),
         executor_name = |wrap<string>(short),
         commands = |raw_commands([
             |format("rustup target add {arch}", |entry("arch", arch)),
             "dpkg --add-architecture arm64",
             "apt-get update",
-            "apt-get install -y liblzma-dev:arm64 tree",
+            "apt-get install -y liblzma-dev:arm64 qemu-user tree",
             ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash -"},
             "cargo binstall cargo-hack",
             //${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/taiki-e/install-action/refs/heads/cargo-hack/main.sh | bash -"},
