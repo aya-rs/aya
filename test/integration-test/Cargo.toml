@@ -26,7 +26,7 @@ futures = { workspace = true, features = ["alloc"] }
 integration-common = { path = "../integration-common", features = ["user"] }
 libc = { workspace = true }
 log = { workspace = true }
-netns-rs = { workspace = true }
+nix = { workspace = true, features = ["mount", "sched"] }
 object = { workspace = true, features = ["elf", "read_core", "std"] }
 procfs = { workspace = true, features = ["flate2"] }
 rand = { workspace = true, features = ["thread_rng"] }
