@@ -144,21 +144,6 @@ jobs:
             --workspace
 
   build-test-aya-ebpf:
-    strategy:
-      fail-fast: false
-      matrix:
-        bpf_target_arch:
-          - aarch64
-          - arm
-          - loongarch64
-          - mips
-          - powerpc64
-          - riscv64
-          - s390x
-          - x86_64
-        target:
-          - bpfel-unknown-none
-          - bpfeb-unknown-none
     runs-on: ubuntu-latest
 
     steps:
@@ -177,30 +162,45 @@ jobs:
 
       - uses: taiki-e/install-action@cargo-hack
 
-      - name: Build
+      - name: Build & test for all BPF architectures
         env:
-          CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.bpf_target_arch }}
-        run: |
-          set -euxo pipefail
-          cargo +nightly hack build \
-            --target ${{ matrix.target }} \
-            -Z build-std=core \
-            --package aya-ebpf \
-            --package aya-log-ebpf \
-            --feature-powerset
-
-      - name: Test
-        env:
-          CARGO_CFG_BPF_TARGET_ARCH: ${{ matrix.bpf_target_arch }}
           RUST_BACKTRACE: full
         run: |
-          set -euxo pipefail
-          cargo hack test \
-            --doc \
-            --package aya-ebpf \
-            --package aya-log-ebpf \
-            --feature-powerset
+          set -euo pipefail
 
+          failures=()
+
+          for arch in aarch64 arm loongarch64 mips powerpc64 riscv64 s390x x86_64; do
+            for target in bpfeb-unknown-none bpfel-unknown-none; do
+              echo "::group::Build and test for $arch / $target"
+              if ! (
+                export CARGO_CFG_BPF_TARGET_ARCH="$arch"
+
+                cargo +nightly hack build \
+                  --target "$target" \
+                  -Z build-std=core \
+                  --package aya-ebpf \
+                  --package aya-log-ebpf \
+                  --feature-powerset
+
+                cargo hack test \
+                  --doc \
+                  --package aya-ebpf \
+                  --package aya-log-ebpf \
+                  --feature-powerset
+              ); then
+                echo "FAILED: $arch / $target"
+                failures+=("$arch/$target")
+              fi
+              echo "::endgroup::"
+            done
+          done
+
+          if ((${#failures[@]})); then
+            echo "::error::Some builds/tests failed:"
+            printf '  %s\n' "${failures[@]}"
+            exit 1
+          fi
   run-integration-test:
     strategy:
       fail-fast: false
