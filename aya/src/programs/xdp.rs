@@ -262,7 +262,8 @@ impl Link for NlLink {
         };
         // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
         let prog_fd = unsafe { BorrowedFd::borrow_raw(self.prog_fd) };
-        let _ = unsafe { netlink_set_xdp_fd(self.if_index, None, Some(prog_fd), flags) };
+        let _: Result<(), NetlinkError> =
+            unsafe { netlink_set_xdp_fd(self.if_index, None, Some(prog_fd), flags) };
         Ok(())
     }
 }

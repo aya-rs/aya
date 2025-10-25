@@ -788,7 +788,7 @@ macro_rules! impl_program_unload {
 
             impl Drop for $struct_name {
                 fn drop(&mut self) {
-                    let _ = self.unload();
+                    let _: Result<(), ProgramError> = self.unload();
                 }
             }
         )+
