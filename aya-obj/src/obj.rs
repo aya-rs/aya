@@ -10,7 +10,7 @@ use alloc::{
 };
 use core::{ffi::CStr, mem, ptr, slice::from_raw_parts_mut, str::FromStr};
 
-use log::debug;
+use log::{debug, info};
 use object::{
     Endianness, ObjectSymbol as _, ObjectSymbolTable as _, RelocationTarget, SectionIndex,
     SectionKind, SymbolKind,
@@ -19,8 +19,10 @@ use object::{
 
 use crate::{
     btf::{
-        Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,
+        Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSec, DataSecEntry, FuncSecInfo,
+        LineSecInfo,
     },
+    extern_types::{ExternCollection, ExternDesc, ExternType},
     generated::{
         BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K, bpf_func_id::*, bpf_insn, bpf_map_info,
         bpf_map_type::BPF_MAP_TYPE_ARRAY,
@@ -141,6 +143,9 @@ pub struct Object {
     pub(crate) symbol_table: HashMap<usize, Symbol>,
     pub(crate) symbols_by_section: HashMap<SectionIndex, Vec<usize>>,
     pub(crate) section_infos: HashMap<String, (SectionIndex, u64)>,
+    /// Extern functions parsed from ksyms section
+    pub(crate) externs: ExternCollection,
+
     // symbol_offset_by_name caches symbols that could be referenced from a
     // BTF VAR type so the offsets can be fixed up
     pub(crate) symbol_offset_by_name: HashMap<String, u64>,
@@ -473,6 +478,7 @@ impl Object {
                     size: symbol.size(),
                     is_definition: symbol.is_definition(),
                     kind: symbol.kind(),
+                    is_weak: symbol.is_weak(),
                 };
                 bpf_obj.symbol_table.insert(symbol.index().0, sym);
                 if let Some(section_idx) = symbol.section().index() {
@@ -493,6 +499,8 @@ impl Object {
         // when parsing program sections
         if let Some(s) = obj.section_by_name(".BTF") {
             bpf_obj.parse_section(Section::try_from(&s)?)?;
+
+            bpf_obj.collect_ksyms_from_btf()?;
             if let Some(s) = obj.section_by_name(".BTF.ext") {
                 bpf_obj.parse_section(Section::try_from(&s)?)?;
             }
@@ -526,6 +534,7 @@ impl Object {
             symbols_by_section: HashMap::new(),
             section_infos: HashMap::new(),
             symbol_offset_by_name: HashMap::new(),
+            externs: ExternCollection::new(),
         }
     }
 
@@ -831,6 +840,196 @@ impl Object {
         Ok(())
     }
 
+    fn create_dummy_ksym_var(&mut self) -> Result<u32, ParseError> {
+        let btf = self.btf.as_mut().ok_or(ParseError::NoBTF)?;
+
+        let int_type_id = {
+            let mut found_id = None;
+            for (idx, t) in btf.types().enumerate() {
+                if let BtfType::Int(int) = t {
+                    if int.size == 4 {
+                        found_id = Some((idx) as u32);
+                        break;
+                    }
+                }
+            }
+            found_id
+        };
+
+        // Create int type if not found
+        let int_type_id = if let Some(id) = int_type_id {
+            id
+        } else {
+            let name_offset = btf.add_string("int");
+            btf.add_type(BtfType::Int(crate::btf::Int::new(
+                name_offset,
+                4,
+                crate::btf::IntEncoding::Signed,
+                0,
+            )))
+        };
+
+        info!("Found/created int type_id: {}", int_type_id);
+        if let Ok(BtfType::Int(int)) = btf.type_by_id(int_type_id) {
+            info!(
+                "Int type size: {}, encoding: {:?}",
+                int.size,
+                int.encoding()
+            );
+        }
+
+        // Create dummy_ksym variable
+        let name_offset = btf.add_string("dummy_ksym");
+        let dummy_var_id = btf.add_type(BtfType::Var(crate::btf::Var::new(
+            name_offset,
+            int_type_id,
+            crate::btf::VarLinkage::Global,
+        )));
+
+        // After creating dummy_var
+        info!("Created dummy_var type_id: {}", dummy_var_id);
+        if let Ok(BtfType::Var(var)) = btf.type_by_id(dummy_var_id) {
+            info!("Dummy var points to type_id: {}", var.btf_type);
+        }
+
+        Ok(dummy_var_id)
+    }
+
+    /// Collect extern kernel symbols from BTF DATASEC entries
+    fn collect_ksyms_from_btf(&mut self) -> Result<(), ParseError> {
+        // Find .ksyms DATASEC
+        let Some((datasec_id, datasec)) = self.find_ksyms_datasec()? else {
+            return Ok(()); // No .ksyms, nothing to do
+        };
+
+        // Create dummy var if needed (before we borrow btf immutably again)
+        if Self::datasec_has_functions(self.btf.as_ref().unwrap(), &datasec) {
+            let dummy_var_id = self.create_dummy_ksym_var()?;
+            self.externs.set_dummy_var_id(dummy_var_id);
+        }
+
+        // Collect all extern info
+        let collected = self.collect_extern_entries(&datasec)?;
+
+        // Store in ExternCollection
+        for extern_desc in collected {
+            self.externs.insert(extern_desc.name.clone(), extern_desc);
+        }
+
+        // Apply BTF fixups
+        if !self.externs.is_empty() {
+            self.fixup_ksyms_btf(datasec_id)?;
+        }
+
+        Ok(())
+    }
+
+    /// Find .ksyms DATASEC in BTF, returns (id, datasec) if found
+    fn find_ksyms_datasec(&self) -> Result<Option<(u32, DataSec)>, ParseError> {
+        let Some(btf) = self.btf.as_ref() else {
+            return Ok(None);
+        };
+
+        for (idx, btf_type) in btf.types().enumerate() {
+            if let BtfType::DataSec(datasec) = btf_type {
+                let name = btf.type_name(btf_type).map_err(|_| ParseError::NoBTF)?;
+                if name == ".ksyms" {
+                    return Ok(Some((idx as u32, datasec.clone())));
+                }
+            }
+        }
+
+        Ok(None)
+    }
+
+    /// Check if datasec contains any functions
+    fn datasec_has_functions(btf: &Btf, datasec: &DataSec) -> bool {
+        datasec.entries.iter().any(|entry| {
+            btf.type_by_id(entry.btf_type)
+                .map(|t| matches!(t, BtfType::Func(_)))
+                .unwrap_or(false)
+        })
+    }
+
+    /// Collect extern descriptors from datasec entries
+    fn collect_extern_entries(&self, datasec: &DataSec) -> Result<Vec<ExternDesc>, ParseError> {
+        let btf = self.btf.as_ref().ok_or(ParseError::NoBTF)?;
+        let mut result = Vec::new();
+
+        for entry in &datasec.entries {
+            let Some(extern_desc) = self.process_datasec_entry(btf, entry)? else {
+                continue; // Skip non-extern entries
+            };
+
+            result.push(extern_desc);
+        }
+
+        Ok(result)
+    }
+
+    /// Process a single datasec entry, returning ExternDesc if it's an extern
+    fn process_datasec_entry(
+        &self,
+        btf: &Btf,
+        entry: &DataSecEntry,
+    ) -> Result<Option<ExternDesc>, ParseError> {
+        let btf_type = btf.type_by_id(entry.btf_type)?;
+
+        // Extract extern info based on type
+        let (name, is_func, resolved_type_id) = match btf_type {
+            BtfType::Func(func) => {
+                let name = btf.string_at(func.name_offset)?.into_owned();
+                let resolved_type = btf.resolve_type(func.btf_type)?;
+                (name, true, Some(resolved_type))
+            }
+            BtfType::Var(var) => {
+                let name = btf.string_at(var.name_offset)?.into_owned();
+                let resolved_type = btf.resolve_type(var.btf_type).ok();
+                (name, false, resolved_type)
+            }
+            _ => return Ok(None), // Not func or var
+        };
+
+        // Look up symbol
+        let symbol = self
+            .find_symbol_by_name(&name)
+            .ok_or(ParseError::SymbolNotFound { name: name.clone() })?;
+
+        // Validate weak functions
+        if is_func && symbol.is_weak {
+            return Err(ParseError::WeakFuncNotSupported { name });
+        }
+
+        // Create descriptor
+        let mut extern_desc = ExternDesc::new(
+            name,
+            ExternType::Ksym,
+            entry.btf_type,
+            symbol.is_weak,
+            is_func,
+        );
+
+        extern_desc.type_id = resolved_type_id;
+
+        Ok(Some(extern_desc))
+    }
+
+    /// Apply BTF fixups for .ksyms DATASEC
+    fn fixup_ksyms_btf(&mut self, datasec_id: u32) -> Result<(), ParseError> {
+        let btf = self.btf.as_mut().ok_or(ParseError::NoBTF)?;
+        let dummy_var_id = self.externs.dummy_ksym_var_id;
+
+        btf.fixup_ksyms_datasec(datasec_id, dummy_var_id)
+            .map_err(ParseError::BtfError)
+    }
+
+    /// Helper to find symbol by name
+    fn find_symbol_by_name(&self, name: &str) -> Option<&Symbol> {
+        self.symbol_table
+            .values()
+            .find(|sym| sym.name.as_deref() == Some(name))
+    }
+
     fn parse_section(&mut self, section: Section<'_>) -> Result<(), ParseError> {
         self.section_infos
             .insert(section.name.to_owned(), (section.index, section.size));
@@ -998,6 +1197,23 @@ pub enum ParseError {
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]
     NoBTF,
+
+    /// Extern weak function not supported
+    #[error("extern weak function '{name}' is not supported in this implementation")]
+    WeakFuncNotSupported { name: String },
+
+    /// Extern function in kconfig section not supported  
+    #[error(
+        "extern function '{name}' cannot be used in {section} section (only variables allowed)"
+    )]
+    FuncInKconfig { name: String, section: String },
+
+    #[error("duplicate extern symbol '{name}' found in extern section")]
+    DuplicateExtern { name: String },
+
+    /// Invalid kconfig variable size
+    #[error("extern kconfig variable '{name}' has invalid or zero size")]
+    InvalidKconfigSize { name: String },
 }
 
 /// Invalid bindings to the bpf type from the parsed/received value.
@@ -1084,6 +1300,7 @@ impl<'a> TryFrom<&'a ObjSection<'_, '_>> for Section<'a> {
             error,
         };
         let name = section.name().map_err(map_err)?;
+        //println!("Section name altug got: {}", name);
         let kind = match EbpfSectionKind::from_name(name) {
             EbpfSectionKind::Undefined => {
                 if section.kind() == SectionKind::Text && section.size() > 0 {
@@ -1509,6 +1726,7 @@ mod tests {
                 size,
                 is_definition: false,
                 kind: SymbolKind::Text,
+                is_weak: false,
             },
         );
         obj.symbols_by_section
@@ -2666,6 +2884,7 @@ mod tests {
                 size: 3,
                 is_definition: true,
                 kind: SymbolKind::Data,
+                is_weak: false,
             },
         );
 

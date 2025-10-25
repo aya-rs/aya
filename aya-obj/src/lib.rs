@@ -76,6 +76,8 @@ extern crate alloc;
 extern crate std;
 
 pub mod btf;
+/// ksym implementation
+pub mod extern_types;
 #[expect(
     clippy::all,
     clippy::cast_lossless,
@@ -97,6 +99,7 @@ pub mod programs;
 pub mod relocation;
 mod util;
 
+pub use extern_types::{KsymPatchError, KsymResolveError};
 pub use maps::Map;
 pub use obj::*;
 
