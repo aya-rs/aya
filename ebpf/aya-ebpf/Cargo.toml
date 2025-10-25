@@ -19,4 +19,5 @@ aya-ebpf-cty = { version = "^0.2.2", path = "../aya-ebpf-cty" }
 aya-ebpf-macros = { version = "^0.1.1", path = "../../aya-ebpf-macros" }
 
 [build-dependencies]
+aya-build = { version = "^0.1.2", path = "../../aya-build" }
 rustversion = { workspace = true }

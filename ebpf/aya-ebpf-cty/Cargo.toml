@@ -14,3 +14,6 @@ rust-version.workspace = true
 
 [lints]
 workspace = true
+
+[build-dependencies]
+aya-build = { version = "^0.1.2", path = "../../aya-build" }

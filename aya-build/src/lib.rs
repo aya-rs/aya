@@ -186,3 +186,36 @@ impl<'a> Toolchain<'a> {
         }
     }
 }
+
+/// Emit cfg flags that describe the desired BPF target architecture.
+pub fn emit_bpf_target_arch_cfg() {
+    println!("cargo:rerun-if-env-changed=CARGO_CFG_BPF_TARGET_ARCH");
+    let bpf_target_arch = env::var_os("CARGO_CFG_BPF_TARGET_ARCH");
+    let target_arch = env::var_os("CARGO_CFG_TARGET_ARCH");
+    let arch = if let Some(bpf_target_arch) = bpf_target_arch.as_ref() {
+        bpf_target_arch.to_str().unwrap()
+    } else {
+        let target_arch = target_arch.as_ref().unwrap().to_str().unwrap();
+        if target_arch.starts_with("riscv64") {
+            "riscv64"
+        } else {
+            target_arch
+        }
+    };
+    println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
+
+    print!("cargo::rustc-check-cfg=cfg(bpf_target_arch, values(");
+    for value in [
+        "aarch64",
+        "arm",
+        "loongarch64",
+        "mips",
+        "powerpc64",
+        "riscv64",
+        "s390x",
+        "x86_64",
+    ] {
+        print!("\"{value}\",");
+    }
+    println!("))");
+}
