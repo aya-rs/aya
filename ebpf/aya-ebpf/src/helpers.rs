@@ -52,13 +52,15 @@ use crate::{
 #[inline]
 pub unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, c_long> {
     let mut v: MaybeUninit<T> = MaybeUninit::uninit();
-    let ret = generated::bpf_probe_read(
-        v.as_mut_ptr().cast(),
-        mem::size_of::<T>() as u32,
-        src.cast(),
-    );
+    let ret = unsafe {
+        generated::bpf_probe_read(
+            v.as_mut_ptr().cast(),
+            mem::size_of::<T>() as u32,
+            src.cast(),
+        )
+    };
     if ret == 0 {
-        Ok(v.assume_init())
+        Ok(unsafe { v.assume_init() })
     } else {
         Err(ret)
     }
@@ -88,7 +90,8 @@ pub unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, c_long> {
 /// On failure, this function returns a negative value wrapped in an `Err`.
 #[inline]
 pub unsafe fn bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c_long> {
-    let ret = generated::bpf_probe_read(dst.as_mut_ptr().cast(), dst.len() as u32, src.cast());
+    let ret =
+        unsafe { generated::bpf_probe_read(dst.as_mut_ptr().cast(), dst.len() as u32, src.cast()) };
     if ret == 0 { Ok(()) } else { Err(ret) }
 }
 
@@ -117,13 +120,15 @@ pub unsafe fn bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c
 #[inline]
 pub unsafe fn bpf_probe_read_user<T>(src: *const T) -> Result<T, c_long> {
     let mut v: MaybeUninit<T> = MaybeUninit::uninit();
-    let ret = generated::bpf_probe_read_user(
-        v.as_mut_ptr().cast(),
-        mem::size_of::<T>() as u32,
-        src.cast(),
-    );
+    let ret = unsafe {
+        generated::bpf_probe_read_user(
+            v.as_mut_ptr().cast(),
+            mem::size_of::<T>() as u32,
+            src.cast(),
+        )
+    };
     if ret == 0 {
-        Ok(v.assume_init())
+        Ok(unsafe { v.assume_init() })
     } else {
         Err(ret)
     }
@@ -151,7 +156,9 @@ pub unsafe fn bpf_probe_read_user<T>(src: *const T) -> Result<T, c_long> {
 /// On failure, this function returns a negative value wrapped in an `Err`.
 #[inline]
 pub unsafe fn bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c_long> {
-    let ret = generated::bpf_probe_read_user(dst.as_mut_ptr().cast(), dst.len() as u32, src.cast());
+    let ret = unsafe {
+        generated::bpf_probe_read_user(dst.as_mut_ptr().cast(), dst.len() as u32, src.cast())
+    };
     if ret == 0 { Ok(()) } else { Err(ret) }
 }
 
@@ -180,13 +187,15 @@ pub unsafe fn bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> Result<
 #[inline]
 pub unsafe fn bpf_probe_read_kernel<T>(src: *const T) -> Result<T, c_long> {
     let mut v: MaybeUninit<T> = MaybeUninit::uninit();
-    let ret = generated::bpf_probe_read_kernel(
-        v.as_mut_ptr().cast(),
-        mem::size_of::<T>() as u32,
-        src.cast(),
-    );
+    let ret = unsafe {
+        generated::bpf_probe_read_kernel(
+            v.as_mut_ptr().cast(),
+            mem::size_of::<T>() as u32,
+            src.cast(),
+        )
+    };
     if ret == 0 {
-        Ok(v.assume_init())
+        Ok(unsafe { v.assume_init() })
     } else {
         Err(ret)
     }
@@ -214,8 +223,9 @@ pub unsafe fn bpf_probe_read_kernel<T>(src: *const T) -> Result<T, c_long> {
 /// On failure, this function returns a negative value wrapped in an `Err`.
 #[inline]
 pub unsafe fn bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c_long> {
-    let ret =
-        generated::bpf_probe_read_kernel(dst.as_mut_ptr().cast(), dst.len() as u32, src.cast());
+    let ret = unsafe {
+        generated::bpf_probe_read_kernel(dst.as_mut_ptr().cast(), dst.len() as u32, src.cast())
+    };
     if ret == 0 { Ok(()) } else { Err(ret) }
 }
 
@@ -250,8 +260,9 @@ pub unsafe fn bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> Resul
 )]
 #[inline]
 pub unsafe fn bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> Result<usize, c_long> {
-    let len =
-        generated::bpf_probe_read_str(dest.as_mut_ptr().cast(), dest.len() as u32, src.cast());
+    let len = unsafe {
+        generated::bpf_probe_read_str(dest.as_mut_ptr().cast(), dest.len() as u32, src.cast())
+    };
     let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
     // this can never happen, it's needed to tell the verifier that len is bounded.
     Ok(len.min(dest.len()))
@@ -283,8 +294,9 @@ pub unsafe fn bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> Result<usiz
 #[deprecated(note = "Use `bpf_probe_read_user_str_bytes` instead")]
 #[inline]
 pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result<usize, c_long> {
-    let len =
-        generated::bpf_probe_read_user_str(dest.as_mut_ptr().cast(), dest.len() as u32, src.cast());
+    let len = unsafe {
+        generated::bpf_probe_read_user_str(dest.as_mut_ptr().cast(), dest.len() as u32, src.cast())
+    };
     let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
     // this can never happen, it's needed to tell the verifier that len is bounded.
     Ok(len.min(dest.len()))
@@ -377,8 +389,9 @@ pub unsafe fn bpf_probe_read_user_str_bytes(
     src: *const u8,
     dest: &mut [u8],
 ) -> Result<&[u8], c_long> {
-    let len =
-        generated::bpf_probe_read_user_str(dest.as_mut_ptr().cast(), dest.len() as u32, src.cast());
+    let len = unsafe {
+        generated::bpf_probe_read_user_str(dest.as_mut_ptr().cast(), dest.len() as u32, src.cast())
+    };
 
     read_str_bytes(len, dest)
 }
@@ -426,11 +439,13 @@ fn read_str_bytes(len: i64, dest: &[u8]) -> Result<&[u8], c_long> {
 #[deprecated(note = "Use bpf_probe_read_kernel_str_bytes instead")]
 #[inline]
 pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Result<usize, c_long> {
-    let len = generated::bpf_probe_read_kernel_str(
-        dest.as_mut_ptr().cast(),
-        dest.len() as u32,
-        src.cast(),
-    );
+    let len = unsafe {
+        generated::bpf_probe_read_kernel_str(
+            dest.as_mut_ptr().cast(),
+            dest.len() as u32,
+            src.cast(),
+        )
+    };
     let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
     // this can never happen, it's needed to tell the verifier that len is bounded.
     Ok(len.min(dest.len()))
@@ -523,11 +538,13 @@ pub unsafe fn bpf_probe_read_kernel_str_bytes(
     src: *const u8,
     dest: &mut [u8],
 ) -> Result<&[u8], c_long> {
-    let len = generated::bpf_probe_read_kernel_str(
-        dest.as_mut_ptr().cast(),
-        dest.len() as u32,
-        src.cast(),
-    );
+    let len = unsafe {
+        generated::bpf_probe_read_kernel_str(
+            dest.as_mut_ptr().cast(),
+            dest.len() as u32,
+            src.cast(),
+        )
+    };
 
     read_str_bytes(len, dest)
 }
@@ -558,7 +575,9 @@ pub unsafe fn bpf_probe_read_kernel_str_bytes(
 /// On failure, this function returns a negative value wrapped in an `Err`.
 #[inline]
 pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), c_long> {
-    let ret = generated::bpf_probe_write_user(dst.cast(), src.cast(), mem::size_of::<T>() as u32);
+    let ret = unsafe {
+        generated::bpf_probe_write_user(dst.cast(), src.cast(), mem::size_of::<T>() as u32)
+    };
     if ret == 0 { Ok(()) } else { Err(ret) }
 }
 
@@ -784,8 +803,8 @@ pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
     // arguments. We also can't turn the definitions in `helpers.rs` into
     // `const`s because MIRI believes casting arbitrary integers to function
     // pointers to be an error.
-    let printk: unsafe extern "C" fn(fmt: *const c_char, fmt_size: u32, ...) -> c_long =
-        mem::transmute(6usize);
+    let printk: extern "C" fn(fmt: *const c_char, fmt_size: u32, ...) -> c_long =
+        unsafe { mem::transmute(6usize) };
 
     let fmt_ptr = fmt.as_ptr().cast();
     let fmt_size = fmt.len() as u32;
@@ -795,12 +814,14 @@ pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
         1 => printk(fmt_ptr, fmt_size, args[0]),
         2 => printk(fmt_ptr, fmt_size, args[0], args[1]),
         3 => printk(fmt_ptr, fmt_size, args[0], args[1], args[2]),
-        _ => generated::bpf_trace_vprintk(
-            fmt_ptr,
-            fmt_size,
-            args.as_ptr().cast(),
-            (NUM_ARGS * 8) as _,
-        ),
+        _ => unsafe {
+            generated::bpf_trace_vprintk(
+                fmt_ptr,
+                fmt_size,
+                args.as_ptr().cast(),
+                (NUM_ARGS * 8) as _,
+            )
+        },
     }
 }
 

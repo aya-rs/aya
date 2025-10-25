@@ -28,7 +28,7 @@ pub use aya_ebpf_bindings::bindings;
 mod args;
 pub use args::Argument;
 pub mod btf_maps;
-#[expect(clippy::missing_safety_doc, unsafe_op_in_unsafe_fn)]
+#[expect(clippy::missing_safety_doc)]
 pub mod helpers;
 pub mod maps;
 pub mod programs;
