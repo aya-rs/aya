@@ -12,7 +12,7 @@ use std::{
 };
 
 use anyhow::{Context as _, Ok, Result, anyhow};
-use aya_build::cargo_metadata::{Metadata, MetadataCommand, Package, Target, TargetKind};
+use cargo_metadata::{Metadata, MetadataCommand, Package, Target, TargetKind};
 use xtask::{AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR, exec, install_libbpf_headers_cmd};
 
 /// This file, along with the xtask crate, allows analysis tools such as `cargo check`, `cargo
@@ -208,6 +208,18 @@ fn main() -> Result<()> {
             }
         }
 
+        let Package {
+            name,
+            manifest_path,
+            ..
+        } = integration_ebpf_package;
+        let integration_ebpf_package = aya_build::Package {
+            name: name.as_str(),
+            root_dir: manifest_path
+                .parent()
+                .ok_or_else(|| anyhow!("no parent for {manifest_path}"))?
+                .as_str(),
+        };
         aya_build::build_ebpf([integration_ebpf_package], aya_build::Toolchain::default())?;
     } else {
         for (src, build_btf) in C_BPF {

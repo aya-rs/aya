@@ -6,9 +6,12 @@ use std::{
 };
 
 use anyhow::{Context as _, Result, anyhow};
-// Re-export `cargo_metadata` to having to encode the version downstream and risk mismatches.
-pub use cargo_metadata;
-use cargo_metadata::{Artifact, CompilerMessage, Message, Package, Target};
+use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
+
+pub struct Package<'a> {
+    pub name: &'a str,
+    pub root_dir: &'a str,
+}
 
 /// Build binary artifacts produced by `packages`.
 ///
@@ -22,9 +25,9 @@ use cargo_metadata::{Artifact, CompilerMessage, Message, Package, Target};
 /// prevent their use for the time being.
 ///
 /// [bindeps]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html?highlight=feature#artifact-dependencies
-pub fn build_ebpf(
-    packages: impl IntoIterator<Item = Package>,
-    toolchain: Toolchain<'_>,
+pub fn build_ebpf<'a>(
+    packages: impl IntoIterator<Item = Package<'a>>,
+    toolchain: Toolchain<'a>,
 ) -> Result<()> {
     let out_dir = env::var_os("OUT_DIR").ok_or(anyhow!("OUT_DIR not set"))?;
     let out_dir = PathBuf::from(out_dir);
@@ -44,21 +47,12 @@ pub fn build_ebpf(
 
     let target = format!("{target}-unknown-none");
 
-    for Package {
-        name,
-        manifest_path,
-        ..
-    } in packages
-    {
-        let dir = manifest_path
-            .parent()
-            .ok_or(anyhow!("no parent for {manifest_path}"))?;
-
+    for Package { name, root_dir } in packages {
         // We have a build-dependency on `name`, so cargo will automatically rebuild us if `name`'s
         // *library* target or any of its dependencies change. Since we depend on `name`'s *binary*
         // targets, that only gets us half of the way. This stanza ensures cargo will rebuild us on
         // changes to the binaries too, which gets us the rest of the way.
-        println!("cargo:rerun-if-changed={dir}");
+        println!("cargo:rerun-if-changed={root_dir}");
 
         let mut cmd = Command::new("rustup");
         cmd.args([
@@ -67,7 +61,7 @@ pub fn build_ebpf(
             "cargo",
             "build",
             "--package",
-            &name,
+            name,
             "-Z",
             "build-std=core",
             "--bins",
@@ -98,7 +92,7 @@ pub fn build_ebpf(
         }
 
         // Workaround for https://github.com/rust-lang/cargo/issues/6412 where cargo flocks itself.
-        let target_dir = out_dir.join(name.as_str());
+        let target_dir = out_dir.join(name);
         cmd.arg("--target-dir").arg(&target_dir);
 
         let mut child = cmd

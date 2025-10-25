@@ -1,5 +1,4 @@
 pub mod aya_build
-pub use aya_build::cargo_metadata
 pub enum aya_build::Toolchain<'a>
 pub aya_build::Toolchain::Custom(&'a str)
 pub aya_build::Toolchain::Nightly
@@ -27,5 +26,30 @@ impl<T> core::borrow::BorrowMut<T> for aya_build::Toolchain<'a> where T: ?core::
 pub fn aya_build::Toolchain<'a>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_build::Toolchain<'a>
 pub fn aya_build::Toolchain<'a>::from(t: T) -> T
-pub fn aya_build::build_ebpf(packages: impl core::iter::traits::collect::IntoIterator<Item = cargo_metadata::Package>, toolchain: aya_build::Toolchain<'_>) -> anyhow::Result<()>
+pub struct aya_build::Package<'a>
+pub aya_build::Package::name: &'a str
+pub aya_build::Package::root_dir: &'a str
+impl<'a> core::marker::Freeze for aya_build::Package<'a>
+impl<'a> core::marker::Send for aya_build::Package<'a>
+impl<'a> core::marker::Sync for aya_build::Package<'a>
+impl<'a> core::marker::Unpin for aya_build::Package<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya_build::Package<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya_build::Package<'a>
+impl<T, U> core::convert::Into<U> for aya_build::Package<'a> where U: core::convert::From<T>
+pub fn aya_build::Package<'a>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_build::Package<'a> where U: core::convert::Into<T>
+pub type aya_build::Package<'a>::Error = core::convert::Infallible
+pub fn aya_build::Package<'a>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_build::Package<'a> where U: core::convert::TryFrom<T>
+pub type aya_build::Package<'a>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_build::Package<'a>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_build::Package<'a> where T: 'static + ?core::marker::Sized
+pub fn aya_build::Package<'a>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_build::Package<'a> where T: ?core::marker::Sized
+pub fn aya_build::Package<'a>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_build::Package<'a> where T: ?core::marker::Sized
+pub fn aya_build::Package<'a>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_build::Package<'a>
+pub fn aya_build::Package<'a>::from(t: T) -> T
+pub fn aya_build::build_ebpf<'a>(packages: impl core::iter::traits::collect::IntoIterator<Item = aya_build::Package<'a>>, toolchain: aya_build::Toolchain<'a>) -> anyhow::Result<()>
 pub fn aya_build::emit_bpf_target_arch_cfg()
