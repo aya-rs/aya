@@ -18,11 +18,17 @@ cargo +nightly hack clippy "$@" \
   -C panic=abort \
   -Zpanic_abort_tests
 
-cargo +nightly hack clippy \
-  --target bpfel-unknown-none -Zbuild-std=core \
-  --package aya-ebpf-bindings \
-  --package aya-ebpf \
-  --package aya-log-ebpf \
-  --package integration-ebpf \
-  --feature-powerset \
-  -- --deny warnings
+
+for arch in aarch64 arm loongarch64 mips powerpc64 riscv64 s390x x86_64; do
+  for target in bpfeb-unknown-none bpfel-unknown-none; do
+    CARGO_CFG_BPF_TARGET_ARCH="$arch" cargo +nightly hack clippy \
+      --target "$target" \
+      -Zbuild-std=core \
+      --package aya-ebpf-bindings \
+      --package aya-ebpf \
+      --package aya-log-ebpf \
+      --package integration-ebpf \
+      --feature-powerset \
+      -- --deny warnings
+    done
+done
