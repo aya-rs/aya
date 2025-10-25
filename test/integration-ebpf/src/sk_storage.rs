@@ -33,7 +33,7 @@ pub(crate) fn sk_storage_connect4(ctx: SockAddrContext) -> i32 {
         }
     }
 
-    sk_action::SK_PASS as _
+    sk_action::SK_PASS as i32
 }
 
 #[cgroup_sock_addr(connect6)]
@@ -74,5 +74,5 @@ pub(crate) fn sk_storage_connect6(ctx: SockAddrContext) -> i32 {
         }
     }
 
-    sk_action::SK_PASS as _
+    sk_action::SK_PASS as i32
 }

@@ -113,7 +113,7 @@ xz2 = { version = "0.1.7", default-features = false }
 [workspace.lints.clippy]
 all = "warn"
 as_ptr_cast_mut = "warn"
-#as_underscore = "warn"
+as_underscore = "warn"
 cast_lossless = "warn"
 #cast_possible_truncation = "warn"
 #cast_possible_wrap = "warn"

@@ -819,7 +819,7 @@ pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
                 fmt_ptr,
                 fmt_size,
                 args.as_ptr().cast(),
-                (NUM_ARGS * 8) as _,
+                (NUM_ARGS * 8) as u32,
             )
         },
     }

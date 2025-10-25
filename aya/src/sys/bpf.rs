@@ -192,7 +192,7 @@ pub(crate) fn bpf_load_program(
         u.log_size = log_buf.len() as u32;
     }
     if let Some(v) = aya_attr.attach_btf_obj_fd {
-        u.__bindgen_anon_1.attach_btf_obj_fd = v.as_raw_fd() as _;
+        u.__bindgen_anon_1.attach_btf_obj_fd = v.as_raw_fd() as u32;
     }
     if let Some(v) = aya_attr.attach_prog_fd {
         u.__bindgen_anon_1.attach_prog_fd = v.as_raw_fd() as u32;
@@ -598,8 +598,8 @@ pub(crate) fn bpf_prog_get_info_by_fd(
     // extra space is not all-zero bytes.
     bpf_obj_get_info_by_fd(fd, |info: &mut bpf_prog_info| {
         if !map_ids.is_empty() {
-            info.nr_map_ids = map_ids.len() as _;
-            info.map_ids = map_ids.as_mut_ptr() as _;
+            info.nr_map_ids = map_ids.len() as u32;
+            info.map_ids = map_ids.as_mut_ptr() as u64;
         }
     })
 }
@@ -645,8 +645,8 @@ pub(crate) fn btf_obj_get_info_by_fd(
     buf: &mut [u8],
 ) -> Result<bpf_btf_info, SyscallError> {
     bpf_obj_get_info_by_fd(fd, |info: &mut bpf_btf_info| {
-        info.btf = buf.as_mut_ptr() as _;
-        info.btf_size = buf.len() as _;
+        info.btf = buf.as_mut_ptr() as u64;
+        info.btf_size = buf.len() as u32;
     })
 }
 
@@ -800,8 +800,8 @@ where
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
-    let mov64_imm = (BPF_ALU64 | BPF_MOV | BPF_K) as _;
-    let exit = (BPF_JMP | BPF_EXIT) as _;
+    let mov64_imm = (BPF_ALU64 | BPF_MOV | BPF_K) as u8;
+    let exit = (BPF_JMP | BPF_EXIT) as u8;
     let insns = [new_insn(mov64_imm, 0, 0, 0, 0), new_insn(exit, 0, 0, 0, 0)];
 
     let gpl = c"GPL";
@@ -879,17 +879,17 @@ pub(crate) fn is_probe_read_kernel_supported() -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
-    let mov64_reg = (BPF_ALU64 | BPF_MOV | BPF_X) as _;
-    let add64_imm = (BPF_ALU64 | BPF_ADD | BPF_K) as _;
-    let mov64_imm = (BPF_ALU64 | BPF_MOV | BPF_K) as _;
-    let call = (BPF_JMP | BPF_CALL) as _;
-    let exit = (BPF_JMP | BPF_EXIT) as _;
+    let mov64_reg = (BPF_ALU64 | BPF_MOV | BPF_X) as u8;
+    let add64_imm = (BPF_ALU64 | BPF_ADD | BPF_K) as u8;
+    let mov64_imm = (BPF_ALU64 | BPF_MOV | BPF_K) as u8;
+    let call = (BPF_JMP | BPF_CALL) as u8;
+    let exit = (BPF_JMP | BPF_EXIT) as u8;
     let insns = [
         new_insn(mov64_reg, 1, 10, 0, 0),
         new_insn(add64_imm, 1, 0, 0, -8),
         new_insn(mov64_imm, 2, 0, 0, 8),
         new_insn(mov64_imm, 3, 0, 0, 0),
-        new_insn(call, 0, 0, 0, BPF_FUNC_probe_read_kernel as _),
+        new_insn(call, 0, 0, 0, BPF_FUNC_probe_read_kernel as i32),
         new_insn(exit, 0, 0, 0, 0),
     ];
 
@@ -946,12 +946,12 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
     );
 
     if let Ok(map) = map {
-        let ld_map_value = (BPF_LD | BPF_DW | BPF_IMM) as _;
-        let pseudo_map_value = BPF_PSEUDO_MAP_VALUE as _;
+        let ld_map_value = (BPF_LD | BPF_DW | BPF_IMM) as u8;
+        let pseudo_map_value = BPF_PSEUDO_MAP_VALUE as u8;
         let fd = map.fd().as_fd().as_raw_fd();
-        let st_mem = (BPF_ST | BPF_DW | BPF_MEM) as _;
-        let mov64_imm = (BPF_ALU64 | BPF_MOV | BPF_K) as _;
-        let exit = (BPF_JMP | BPF_EXIT) as _;
+        let st_mem = (BPF_ST | BPF_DW | BPF_MEM) as u8;
+        let mov64_imm = (BPF_ALU64 | BPF_MOV | BPF_K) as u8;
+        let exit = (BPF_JMP | BPF_EXIT) as u8;
         let insns = [
             new_insn(ld_map_value, 1, pseudo_map_value, 0, fd),
             new_insn(0, 0, 0, 0, 0),
@@ -976,10 +976,10 @@ pub(crate) fn is_bpf_cookie_supported() -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
-    let call = (BPF_JMP | BPF_CALL) as _;
-    let exit = (BPF_JMP | BPF_EXIT) as _;
+    let call = (BPF_JMP | BPF_CALL) as u8;
+    let exit = (BPF_JMP | BPF_EXIT) as u8;
     let insns = [
-        new_insn(call, 0, 0, 0, BPF_FUNC_get_attach_cookie as _),
+        new_insn(call, 0, 0, 0, BPF_FUNC_get_attach_cookie as i32),
         new_insn(exit, 0, 0, 0, 0),
     ];
 
