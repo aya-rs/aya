@@ -15,7 +15,7 @@ use crate::bindings::pt_regs;
 use crate::bindings::user_pt_regs as pt_regs;
 #[cfg(bpf_target_arch = "riscv64")]
 use crate::bindings::user_regs_struct as pt_regs;
-use crate::{EbpfContext, args::FromPtRegs};
+use crate::{Argument, EbpfContext, args::arg};
 
 pub struct ProbeContext {
     pub regs: *mut pt_regs,
@@ -47,8 +47,8 @@ impl ProbeContext {
     ///     Ok(0)
     /// }
     /// ```
-    pub fn arg<T: FromPtRegs>(&self, n: usize) -> Option<T> {
-        T::from_argument(unsafe { &*self.regs }, n)
+    pub fn arg<T: Argument>(&self, n: usize) -> Option<T> {
+        arg(unsafe { &*self.regs }, n)
     }
 }
 

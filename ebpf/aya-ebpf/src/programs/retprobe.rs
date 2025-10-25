@@ -15,7 +15,7 @@ use crate::bindings::pt_regs;
 use crate::bindings::user_pt_regs as pt_regs;
 #[cfg(bpf_target_arch = "riscv64")]
 use crate::bindings::user_regs_struct as pt_regs;
-use crate::{EbpfContext, args::FromPtRegs};
+use crate::{Argument, EbpfContext, args::ret};
 
 pub struct RetProbeContext {
     pub regs: *mut pt_regs,
@@ -34,15 +34,15 @@ impl RetProbeContext {
     /// # #![expect(dead_code)]
     /// # use aya_ebpf::{programs::RetProbeContext, cty::c_int};
     /// unsafe fn try_kretprobe_try_to_wake_up(ctx: RetProbeContext) -> Result<u32, u32> {
-    ///     let retval: c_int = ctx.ret().ok_or(1u32)?;
+    ///     let retval: c_int = ctx.ret();
     ///
     ///     // Do something with retval
     ///
     ///     Ok(0)
     /// }
     /// ```
-    pub fn ret<T: FromPtRegs>(&self) -> Option<T> {
-        T::from_retval(unsafe { &*self.regs })
+    pub fn ret<T: Argument>(&self) -> T {
+        ret(unsafe { &*self.regs })
     }
 }
 

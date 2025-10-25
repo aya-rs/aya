@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{EbpfContext, args::FromBtfArgument};
+use crate::{Argument, EbpfContext, args::btf_arg};
 
 pub struct FExitContext {
     ctx: *mut c_void,
@@ -31,9 +31,8 @@ impl FExitContext {
     ///     Ok(0)
     /// }
     /// ```
-    #[expect(clippy::missing_safety_doc)]
-    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> T {
-        unsafe { T::from_argument(self.ctx.cast(), n) }
+    pub fn arg<T: Argument>(&self, n: usize) -> T {
+        btf_arg(self, n)
     }
 }
 
