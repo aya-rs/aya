@@ -14,3 +14,6 @@ workspace = true
 
 [dependencies]
 aya-ebpf-cty = { version = "^0.2.2", path = "../aya-ebpf-cty" }
+
+[build-dependencies]
+aya-build = { version = "^0.1.2", path = "../../aya-build" }

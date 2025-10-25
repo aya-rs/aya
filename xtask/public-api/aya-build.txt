@@ -28,3 +28,4 @@ pub fn aya_build::Toolchain<'a>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_build::Toolchain<'a>
 pub fn aya_build::Toolchain<'a>::from(t: T) -> T
 pub fn aya_build::build_ebpf(packages: impl core::iter::traits::collect::IntoIterator<Item = cargo_metadata::Package>, toolchain: aya_build::Toolchain<'_>) -> anyhow::Result<()>
+pub fn aya_build::emit_bpf_target_arch_cfg()
