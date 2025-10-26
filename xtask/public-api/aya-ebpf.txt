@@ -1,7 +1,9 @@
 pub mod aya_ebpf
-pub use aya_ebpf::bindings
 pub use aya_ebpf::cty
 pub use aya_ebpf::macros
+pub mod aya_ebpf::bindings
+pub use aya_ebpf::bindings::<<aya_ebpf_bindings::bindings::*>>
+pub use aya_ebpf::bindings::pt_regs
 pub mod aya_ebpf::btf_maps
 pub mod aya_ebpf::btf_maps::array
 #[repr(transparent)] pub struct aya_ebpf::btf_maps::array::Array<T, const M: usize, const F: usize>(_)

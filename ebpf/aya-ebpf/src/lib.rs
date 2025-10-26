@@ -23,9 +23,8 @@
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
 #![no_std]
 
-pub use aya_ebpf_bindings::bindings;
-
 mod args;
+pub mod bindings;
 pub use args::Argument;
 pub mod btf_maps;
 #[expect(clippy::missing_safety_doc)]
