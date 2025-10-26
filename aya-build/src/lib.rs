@@ -1,5 +1,8 @@
 use std::{
-    env, fs,
+    borrow::Cow,
+    env,
+    ffi::OsString,
+    fs,
     io::{BufRead as _, BufReader},
     path::PathBuf,
     process::{Child, Command, Stdio},
@@ -11,6 +14,19 @@ use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 pub struct Package<'a> {
     pub name: &'a str,
     pub root_dir: &'a str,
+}
+
+fn target_arch() -> Cow<'static, str> {
+    const TARGET_ARCH: &str = "CARGO_CFG_TARGET_ARCH";
+    let target_arch = env::var_os(TARGET_ARCH).unwrap_or_else(|| panic!("{TARGET_ARCH} not set"));
+    let target_arch = target_arch.into_encoded_bytes();
+    let target_arch = String::from_utf8(target_arch)
+        .unwrap_or_else(|err| panic!("String::from_utf8({TARGET_ARCH}): {err:?}"));
+    if target_arch.starts_with("riscv64") {
+        "riscv64".into()
+    } else {
+        target_arch.into()
+    }
 }
 
 /// Build binary artifacts produced by `packages`.
@@ -42,9 +58,7 @@ pub fn build_ebpf<'a>(
         return Err(anyhow!("unsupported endian={endian:?}"));
     };
 
-    let arch =
-        env::var_os("CARGO_CFG_TARGET_ARCH").ok_or(anyhow!("CARGO_CFG_TARGET_ARCH not set"))?;
-
+    let arch = target_arch();
     let target = format!("{target}-unknown-none");
 
     for Package { name, root_dir } in packages {
@@ -71,20 +85,25 @@ pub fn build_ebpf<'a>(
             &target,
         ]);
 
-        cmd.env("CARGO_CFG_BPF_TARGET_ARCH", &arch);
-        cmd.env(
-            "CARGO_ENCODED_RUSTFLAGS",
-            ["debuginfo=2", "link-arg=--btf"]
-                .into_iter()
-                .flat_map(|flag| ["-C", flag])
-                .fold(String::new(), |mut acc, flag| {
-                    if !acc.is_empty() {
-                        acc.push('\x1f');
-                    }
-                    acc.push_str(flag);
-                    acc
-                }),
-        );
+        {
+            const SEPARATOR: &str = "\x1f";
+
+            let mut rustflags = OsString::new();
+
+            for s in [
+                "--cfg=bpf_target_arch=\"",
+                &arch,
+                "\"",
+                SEPARATOR,
+                "-Cdebuginfo=2",
+                SEPARATOR,
+                "-Clink-arg=--btf",
+            ] {
+                rustflags.push(s);
+            }
+
+            cmd.env("CARGO_ENCODED_RUSTFLAGS", rustflags);
+        }
 
         // Workaround to make sure that the correct toolchain is used.
         for key in ["RUSTC", "RUSTC_WORKSPACE_WRAPPER"] {
@@ -183,20 +202,17 @@ impl<'a> Toolchain<'a> {
 
 /// Emit cfg flags that describe the desired BPF target architecture.
 pub fn emit_bpf_target_arch_cfg() {
-    println!("cargo:rerun-if-env-changed=CARGO_CFG_BPF_TARGET_ARCH");
-    let bpf_target_arch = env::var_os("CARGO_CFG_BPF_TARGET_ARCH");
-    let target_arch = env::var_os("CARGO_CFG_TARGET_ARCH");
-    let arch = if let Some(bpf_target_arch) = bpf_target_arch.as_ref() {
-        bpf_target_arch.to_str().unwrap()
-    } else {
-        let target_arch = target_arch.as_ref().unwrap().to_str().unwrap();
-        if target_arch.starts_with("riscv64") {
-            "riscv64"
-        } else {
-            target_arch
-        }
-    };
-    println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
+    const RUSTFLAGS: &str = "CARGO_ENCODED_RUSTFLAGS";
+
+    println!("cargo:rerun-if-env-changed={RUSTFLAGS}");
+    let rustc_cfgs = std::env::var_os(RUSTFLAGS).unwrap_or_else(|| panic!("{RUSTFLAGS} not set"));
+    let rustc_cfgs = rustc_cfgs
+        .to_str()
+        .unwrap_or_else(|| panic!("{RUSTFLAGS}={rustc_cfgs:?} not unicode"));
+    if !rustc_cfgs.contains("bpf_target_arch") {
+        let arch = target_arch();
+        println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
+    }
 
     print!("cargo::rustc-check-cfg=cfg(bpf_target_arch, values(");
     for value in [
