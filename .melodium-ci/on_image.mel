@@ -99,8 +99,8 @@ treatment buildTestAyaForArch[logger: Logger, github_contexts: JavaScriptEngine,
         ]),
         variables = |wrap<StringMap>(
             |map([
-                |entry("INPUT_TARGET", full_rust_arch),
-                |entry("GITHUB_ENV", |format("cat /tmp/{short}/github.env", |entry("short", short_rust_arch)))
+                |entry("INPUT_TARGET", full_rust_arch)/*,
+                |entry("GITHUB_ENV", |format("cat /tmp/{short}/github.env", |entry("short", short_rust_arch)))*/
             ])
         )
     )
