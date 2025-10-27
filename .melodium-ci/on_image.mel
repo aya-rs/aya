@@ -99,10 +99,7 @@ treatment buildTestAyaForArch[logger: Logger, github_contexts: JavaScriptEngine,
             |map([
                 |entry("INPUT_TARGET", full_rust_arch),
                 |entry("GITHUB_ENV", |format("cat /tmp/{short}/github.env", |entry("short", short_rust_arch)))
-            ]),
-            _, // working_directory
-            false, // expand_variables
-            false // clear_env
+            ])
         )
     )
 
@@ -139,10 +136,7 @@ treatment buildTestAyaForArch[logger: Logger, github_contexts: JavaScriptEngine,
             |map([
                 |entry("RUST_BACKTRACE", "full"),
                 |entry("CARGO_BUILD_TARGET", full_rust_arch)
-            ]),
-            "/root/aya", // working_directory
-            false, // expand_variables
-            false // clear_env
+            ])
         )
     )
 
