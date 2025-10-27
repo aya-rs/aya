@@ -48,14 +48,14 @@ treatment buildTestAya(const github_contexts: string = "{}", repository_clone_ur
         repository_clone_ref=repository_clone_ref,
         repository_clone_url=repository_clone_url
     )
-    build_armv7: buildTestAyaForArch[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+    /*build_armv7: buildTestAyaForArch[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
         short_rust_arch="armv7",
         full_rust_arch="armv7-unknown-linux-gnueabi",
         ubuntu_arch="armhf",
         repository_clone_ref=repository_clone_ref,
         repository_clone_url=repository_clone_url
     )
-    /*build_powerpc64le: buildTestAyaForArch[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+    build_powerpc64le: buildTestAyaForArch[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
         short_rust_arch="powerpc64le",
         full_rust_arch="powerpc64le-unknown-linux-gnu",
         ubuntu_arch="ppc64le",
@@ -85,8 +85,8 @@ treatment buildTestAya(const github_contexts: string = "{}", repository_clone_ur
     )*/
 
     prepareContexts.ready -> build_aarch64.trigger
-    prepareContexts.ready -> build_armv7.trigger
-    /*prepareContexts.ready -> build_powerpc64le.trigger
+    /*prepareContexts.ready -> build_armv7.trigger
+    prepareContexts.ready -> build_powerpc64le.trigger
     prepareContexts.ready -> build_riscv64gc.trigger
     prepareContexts.ready -> build_s390x.trigger
     prepareContexts.ready -> build_x86_64.trigger*/
