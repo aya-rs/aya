@@ -94,7 +94,7 @@ treatment buildTestAyaForArch[logger: Logger, github_contexts: JavaScriptEngine,
         commands = |raw_commands([
             //|format("mkdir /tmp/{short}", |entry("short", short_rust_arch)),
             //|format("touch /tmp/{short}/github.env", |entry("short", short_rust_arch)),
-            ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/taiki-e/setup-cross-toolchain-action/refs/tags/v1/main.sh | bash -"} //,
+            ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/taiki-e/setup-cross-toolchain-action/refs/tags/v1/main.sh | bash -"},
             |format("cat /tmp/{short}/github.env", |entry("short", short_rust_arch))
         ]),
         variables = |wrap<StringMap>(
