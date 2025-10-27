@@ -16,4 +16,5 @@ work = "^0.9.0"
 
 [entrypoints]
 buildTestAya = "ci::buildTestAya"
+buildTestAyaDirect = "ci/on_image::buildTestAya"
 
