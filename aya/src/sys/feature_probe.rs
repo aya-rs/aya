@@ -1,6 +1,10 @@
 //! Probes and identifies available eBPF features supported by the host kernel.
 
-use std::{mem, os::fd::AsRawFd as _};
+use std::{
+    mem,
+    os::fd::{AsFd as _, AsRawFd as _},
+    ptr,
+};
 
 use aya_obj::{
     btf::{Btf, BtfKind},
@@ -10,11 +14,14 @@ use aya_obj::{
 };
 use libc::{E2BIG, EBADF, EINVAL};
 
-use super::{SyscallError, bpf_prog_load, fd_sys_bpf, unit_sys_bpf, with_trivial_prog};
+use super::{
+    SyscallError, bpf_map_create, bpf_prog_load, bpf_raw_tracepoint_open, unit_sys_bpf,
+    with_trivial_prog,
+};
 use crate::{
     MockableFd,
     maps::MapType,
-    programs::{ProgramError, ProgramType},
+    programs::{LsmAttachType, ProgramError, ProgramType},
     util::page_size,
 };
 
@@ -28,7 +35,7 @@ use crate::{
 /// match is_program_supported(ProgramType::Xdp) {
 ///     Ok(true) => println!("XDP supported :)"),
 ///     Ok(false) => println!("XDP not supported :("),
-///     Err(err) => println!("Uh oh! Unexpected error while probing: {:?}", err),
+///     Err(err) => println!("unexpected error while probing: {:?}", err),
 /// }
 /// ```
 ///
@@ -57,7 +64,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
     // [0] https://elixir.bootlin.com/linux/v5.5/source/kernel/bpf/verifier.c#L9535
     let mut verifier_log = matches!(
         program_type,
-        ProgramType::Tracing | ProgramType::Extension | ProgramType::Lsm
+        ProgramType::Tracing | ProgramType::Extension | ProgramType::Lsm(_)
     )
     .then_some([0_u8; 256]);
 
@@ -76,7 +83,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
         // `bpf_lsm_bpf` symbol from:
         // - https://elixir.bootlin.com/linux/v5.7/source/include/linux/lsm_hook_defs.h#L364
         // - or https://elixir.bootlin.com/linux/v5.11/source/kernel/bpf/bpf_lsm.c#L135 on later versions
-        ProgramType::Lsm => Some("bpf_lsm_bpf"),
+        ProgramType::Lsm(_) => Some("bpf_lsm_bpf"),
         _ => None,
     }
     .map(|func_name| {
@@ -85,7 +92,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
             .unwrap_or(0)
     });
 
-    let error = match with_trivial_prog(program_type, |attr| {
+    with_trivial_prog(program_type, |attr| {
         // SAFETY: union access
         let u = unsafe { &mut attr.__bindgen_anon_3 };
 
@@ -100,22 +107,11 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
             u.log_size = verifier_log.len() as u32;
         }
 
-        bpf_prog_load(attr).err().map(|io_error| {
-            ProgramError::SyscallError(SyscallError {
-                call: "bpf_prog_load",
-                io_error,
-            })
-        })
-    }) {
-        Some(err) => err,
-        None => return Ok(true),
-    };
-
-    // Loading may fail for some types (namely tracing, extension, lsm, & struct_ops), so we
-    // perform additional examination on the OS error and/or verifier logs.
-    match &error {
-        ProgramError::SyscallError(err) => {
-            match err.io_error.raw_os_error() {
+        match bpf_prog_load(attr) {
+            Err(io_error) => match io_error.raw_os_error() {
+                // Loading may fail for some types (namely tracing, extension, lsm, & struct_ops), so we
+                // perform additional examination on the OS error and/or verifier logs.
+                //
                 // For most types, `EINVAL` typically indicates it is not supported.
                 // However, further examination is required for tracing, extension, and lsm.
                 Some(EINVAL) => {
@@ -152,11 +148,37 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
                 //
                 // [0] https://elixir.bootlin.com/linux/v5.6/source/kernel/bpf/verifier.c#L9740
                 Some(524) if program_type == ProgramType::StructOps => Ok(true),
-                _ => Err(error),
+                _ => Err(ProgramError::SyscallError(SyscallError {
+                    call: "bpf_prog_load",
+                    io_error,
+                })),
+            },
+            Ok(prog_fd) => {
+                // Some arm64 kernels (notably < 6.4) can load LSM programs but cannot attach them:
+                // `bpf_raw_tracepoint_open` fails with `-ENOTSUPP`. Probe attach support
+                // explicitly.
+                //
+                // h/t to https://www.exein.io/blog/exploring-bpf-lsm-support-on-aarch64-with-ftrace.
+                //
+                // The same test for cGroup LSM programs would require attaching to a real cgroup,
+                // which is more involved and not possible in the general case.
+                if !matches!(program_type, ProgramType::Lsm(LsmAttachType::Mac)) {
+                    Ok(true)
+                } else {
+                    match bpf_raw_tracepoint_open(None, prog_fd.as_fd()) {
+                        Ok(_) => Ok(true),
+                        Err(io_error) => match io_error.raw_os_error() {
+                            Some(524) => Ok(false),
+                            _ => Err(ProgramError::SyscallError(SyscallError {
+                                call: "bpf_raw_tracepoint_open",
+                                io_error,
+                            })),
+                        },
+                    }
+                }
             }
         }
-        _ => Err(error),
-    }
+    })
 }
 
 /// Whether the host kernel supports the [`MapType`].
@@ -169,7 +191,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
 /// match is_map_supported(MapType::HashOfMaps) {
 ///     Ok(true) => println!("hash_of_maps supported :)"),
 ///     Ok(false) => println!("hash_of_maps not supported :("),
-///     Err(err) => println!("Uh oh! Unexpected error while probing: {:?}", err),
+///     Err(err) => println!("unexpected error while probing: {:?}", err),
 /// }
 /// ```
 ///
@@ -278,13 +300,10 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
             u_map.key_size = 1;
             u_map.value_size = 1;
             u_map.max_entries = 1;
-            // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
-            inner_map_fd = unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr_map) }.map_err(
-                |io_error| SyscallError {
-                    call: "bpf_map_create",
-                    io_error,
-                },
-            )?;
+            inner_map_fd = bpf_map_create(&mut attr_map).map_err(|io_error| SyscallError {
+                call: "bpf_map_create",
+                io_error,
+            })?;
 
             u.inner_map_fd = inner_map_fd.as_raw_fd() as u32;
         }
@@ -299,8 +318,8 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
     }
 
     // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
-    let io_error = match unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, &mut attr) } {
-        Ok(_) => return Ok(true),
+    let io_error = match bpf_map_create(&mut attr) {
+        Ok(_fd) => return Ok(true),
         Err(io_error) => io_error,
     };
 
@@ -395,7 +414,7 @@ fn probe_bpf_info<T>(fd: MockableFd, info: T) -> Result<bool, SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     attr.info.bpf_fd = fd.as_raw_fd() as u32;
     attr.info.info_len = mem::size_of_val(&info) as u32;
-    attr.info.info = &info as *const _ as u64;
+    attr.info.info = ptr::from_ref(&info) as u64;
 
     let io_error = match unit_sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
         Ok(()) => return Ok(true),

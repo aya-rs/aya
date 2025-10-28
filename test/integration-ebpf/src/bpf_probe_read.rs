@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use aya_ebpf::{
     helpers::{bpf_probe_read_kernel_str_bytes, bpf_probe_read_user_str_bytes},
@@ -54,7 +55,7 @@ static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);
 static KERNEL_BUFFER: Array<[u8; RESULT_BUF_LEN]> = Array::with_max_entries(1, 0);
 
 #[uprobe]
-pub fn test_bpf_probe_read_user_str_bytes(ctx: ProbeContext) {
+fn test_bpf_probe_read_user_str_bytes(ctx: ProbeContext) {
     read_str_bytes(
         bpf_probe_read_user_str_bytes,
         ctx.arg::<*const u8>(0),
@@ -63,7 +64,7 @@ pub fn test_bpf_probe_read_user_str_bytes(ctx: ProbeContext) {
 }
 
 #[uprobe]
-pub fn test_bpf_probe_read_kernel_str_bytes(ctx: ProbeContext) {
+fn test_bpf_probe_read_kernel_str_bytes(ctx: ProbeContext) {
     read_str_bytes(
         bpf_probe_read_kernel_str_bytes,
         KERNEL_BUFFER

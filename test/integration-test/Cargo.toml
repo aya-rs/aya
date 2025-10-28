@@ -14,18 +14,19 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+aya = { path = "../../aya", version = "^0.13.1", default-features = false }
+
+[dev-dependencies]
 anyhow = { workspace = true, features = ["std"] }
 assert_matches = { workspace = true }
-aya = { path = "../../aya", version = "^0.13.1", default-features = false }
 aya-log = { path = "../../aya-log", version = "^0.2.1", default-features = false }
 aya-obj = { path = "../../aya-obj", version = "^0.2.1", default-features = false }
-env_logger = { workspace = true }
 epoll = { workspace = true }
 futures = { workspace = true, features = ["alloc"] }
 integration-common = { path = "../integration-common", features = ["user"] }
 libc = { workspace = true }
 log = { workspace = true }
-netns-rs = { workspace = true }
+nix = { workspace = true, features = ["mount", "sched"] }
 object = { workspace = true, features = ["elf", "read_core", "std"] }
 procfs = { workspace = true, features = ["flate2"] }
 rand = { workspace = true, features = ["thread_rng"] }
@@ -44,6 +45,7 @@ xdpilone = { workspace = true }
 [build-dependencies]
 anyhow = { workspace = true }
 aya-build = { path = "../../aya-build" }
+cargo_metadata = { workspace = true }
 # TODO(https://github.com/rust-lang/cargo/issues/12375): this should be an artifact dependency, but
 # it's not possible to tell cargo to use `-Z build-std` to build it. We cargo-in-cargo in the build
 # script to build this, but we want to teach cargo about the dependecy so that cache invalidation

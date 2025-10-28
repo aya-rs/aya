@@ -1,9 +1,11 @@
 use std::{net::UdpSocket, num::NonZeroU32, time::Duration};
 
+use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::{Array, CpuMap, XskMap},
-    programs::{Xdp, XdpFlags},
+    programs::{ProgramError, Xdp, XdpError, XdpFlags, xdp::XdpLinkId},
+    util::KernelVersion,
 };
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
@@ -42,7 +44,16 @@ fn af_xdp() {
 
     let mut iface = IfInfo::invalid();
     iface.from_name(c"lo").unwrap();
-    let sock = Socket::with_shared(&iface, &umem).unwrap();
+    let sock = match Socket::with_shared(&iface, &umem) {
+        Ok(sock) => sock,
+        Err(err) => {
+            if err.get_raw() == libc::ENOPROTOOPT {
+                eprintln!("skipping test - AF_XDP sockets not available: {err}");
+                return;
+            }
+            panic!("failed to create AF_XDP socket: {err} {}", err.get_raw());
+        }
+    };
 
     let mut fq_cq = umem.fq_cq(&sock).unwrap(); // Fill Queue / Completion Queue
 
@@ -110,7 +121,7 @@ fn prog_sections() {
 }
 
 #[track_caller]
-fn ensure_symbol(obj_file: &object::File, sec_name: &str, sym_name: &str) {
+fn ensure_symbol(obj_file: &object::File<'_>, sec_name: &str, sym_name: &str) {
     let sec = obj_file.section_by_name(sec_name).unwrap_or_else(|| {
         let secs = obj_file
             .sections()
@@ -168,7 +179,21 @@ fn cpumap_chain() {
     // Load the main program
     let xdp: &mut Xdp = bpf.program_mut("redirect_cpu").unwrap().try_into().unwrap();
     xdp.load().unwrap();
-    xdp.attach("lo", XdpFlags::default()).unwrap();
+    let result = xdp.attach("lo", XdpFlags::default());
+    // Generic devices did not support cpumap XDP programs until 5.15.
+    //
+    // See https://github.com/torvalds/linux/commit/11941f8a85362f612df61f4aaab0e41b64d2111d.
+    if KernelVersion::current().unwrap() < KernelVersion::new(5, 15, 0) {
+        assert_matches!(result, Err(ProgramError::XdpError(XdpError::NetlinkError(err))) => {
+            assert_eq!(err.raw_os_error(), Some(libc::EINVAL))
+        });
+        eprintln!(
+            "skipping test - cpumap attachment not supported on generic (loopback) interface"
+        );
+        return;
+    } else {
+        let _: XdpLinkId = result.unwrap();
+    };
 
     const PAYLOAD: &str = "hello cpumap";
 

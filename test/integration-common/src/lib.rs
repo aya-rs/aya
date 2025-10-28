@@ -66,8 +66,8 @@ pub mod ring_buf {
         }
     }
 
-    impl<'a> core::iter::Sum<&'a Registers> for Registers {
-        fn sum<I: Iterator<Item = &'a Registers>>(iter: I) -> Self {
+    impl<'a> core::iter::Sum<&'a Self> for Registers {
+        fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
             iter.fold(Default::default(), |a, b| a + *b)
         }
     }
@@ -88,4 +88,27 @@ pub mod strncmp {
 pub mod linear_data_structures {
     pub const PEEK_INDEX: u32 = 0;
     pub const POP_INDEX: u32 = 1;
+}
+
+pub mod sk_storage {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[repr(C)]
+    pub enum Ip {
+        V4(u32),
+        V6([u32; 4]),
+    }
+
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[repr(C)]
+    pub struct Value {
+        pub user_family: u32,
+        pub user_ip: Ip,
+        pub user_port: u32,
+        pub family: u32,
+        pub type_: u32,
+        pub protocol: u32,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for Value {}
 }

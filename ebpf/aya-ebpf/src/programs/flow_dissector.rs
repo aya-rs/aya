@@ -11,9 +11,9 @@ pub struct FlowDissectorContext {
 }
 
 impl FlowDissectorContext {
-    pub fn new(skb: *mut __sk_buff) -> FlowDissectorContext {
+    pub fn new(skb: *mut __sk_buff) -> Self {
         let skb = SkBuff { skb };
-        FlowDissectorContext { skb }
+        Self { skb }
     }
 
     #[inline]

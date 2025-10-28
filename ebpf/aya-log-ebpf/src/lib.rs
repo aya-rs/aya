@@ -1,3 +1,7 @@
+#![cfg_attr(
+    target_arch = "bpf",
+    expect(unused_crate_dependencies, reason = "compiler_builtins")
+)]
 #![no_std]
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
 
@@ -10,7 +14,8 @@ pub mod macro_support {
     use aya_ebpf::maps::RingBuf;
     pub use aya_log_common::{
         Argument, DefaultFormatter, DisplayHint, Field, Header, IpFormatter, Level, LogValueLength,
-        LowerHexFormatter, LowerMacFormatter, UpperHexFormatter, UpperMacFormatter,
+        LowerHexFormatter, LowerMacFormatter, PointerFormatter, UpperHexFormatter,
+        UpperMacFormatter,
     };
 
     // This cfg_attr prevents compilation failures on macOS where the generated section name doesn't
@@ -27,7 +32,7 @@ pub mod macro_support {
 
     /// Global log level controlling which log statements are active.
     ///
-    /// Userspace may patch this symbol before load via `EbpfLoader::set_global`.
+    /// Userspace may patch this symbol before load via `EbpfLoader::override_global`.
     #[unsafe(no_mangle)]
     pub static AYA_LOG_LEVEL: u8 = 0xff;
 

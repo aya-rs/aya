@@ -24,15 +24,15 @@ use crate::{
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe,
-        LircMode2, Lsm, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
-        SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter, TracePoint,
-        UProbe, Xdp,
+        LircMode2, Lsm, LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError,
+        RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter,
+        TracePoint, UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
-        is_btf_datasec_supported, is_btf_decl_tag_supported, is_btf_enum64_supported,
-        is_btf_float_supported, is_btf_func_global_supported, is_btf_func_supported,
-        is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
+        is_btf_datasec_supported, is_btf_datasec_zero_supported, is_btf_decl_tag_supported,
+        is_btf_enum64_supported, is_btf_float_supported, is_btf_func_global_supported,
+        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
         is_probe_read_kernel_supported, is_prog_id_supported, is_prog_name_supported,
         retry_with_verifier_logs,
     },
@@ -66,6 +66,7 @@ fn detect_features() -> Features {
             is_btf_func_supported(),
             is_btf_func_global_supported(),
             is_btf_datasec_supported(),
+            is_btf_datasec_zero_supported(),
             is_btf_float_supported(),
             is_btf_decl_tag_supported(),
             is_btf_type_tag_supported(),
@@ -109,7 +110,7 @@ pub fn features() -> &'static Features {
 ///     // load the BTF data from /sys/kernel/btf/vmlinux
 ///     .btf(Btf::from_sys_fs().ok().as_ref())
 ///     // load pinned maps from /sys/fs/bpf/my-program
-///     .map_pin_path("/sys/fs/bpf/my-program")
+///     .default_map_pin_directory("/sys/fs/bpf/my-program")
 ///     // finally load the code
 ///     .load_file("file.o")?;
 /// # Ok::<(), aya::EbpfError>(())
@@ -117,9 +118,15 @@ pub fn features() -> &'static Features {
 #[derive(Debug)]
 pub struct EbpfLoader<'a> {
     btf: Option<Cow<'a, Btf>>,
-    map_pin_path: Option<PathBuf>,
+    default_map_pin_directory: Option<PathBuf>,
     globals: HashMap<&'a str, (&'a [u8], bool)>,
+    // Max entries overrides the max_entries field of the map that matches the provided name
+    // before the map is created.
     max_entries: HashMap<&'a str, u32>,
+    // Map pin path overrides the pin path of the map that matches the provided name before
+    // it is created.
+    map_pin_path_by_name: HashMap<&'a str, std::borrow::Cow<'a, Path>>,
+
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
     allow_unsupported_maps: bool,
@@ -155,9 +162,10 @@ impl<'a> EbpfLoader<'a> {
     pub fn new() -> Self {
         Self {
             btf: Btf::from_sys_fs().ok().map(Cow::Owned),
-            map_pin_path: None,
+            default_map_pin_directory: None,
             globals: HashMap::new(),
             max_entries: HashMap::new(),
+            map_pin_path_by_name: HashMap::new(),
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
             allow_unsupported_maps: false,
@@ -215,23 +223,26 @@ impl<'a> EbpfLoader<'a> {
     /// Pinned maps will be loaded from `path/MAP_NAME`.
     /// The caller is responsible for ensuring the directory exists.
     ///
+    /// Note that if a path is provided for a specific map via [`EbpfLoader::map_pin_path`],
+    /// it will take precedence over this path.
+    ///
     /// # Example
     ///
     /// ```no_run
     /// use aya::EbpfLoader;
     ///
     /// let bpf = EbpfLoader::new()
-    ///     .map_pin_path("/sys/fs/bpf/my-program")
+    ///     .default_map_pin_directory("/sys/fs/bpf/my-program")
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn map_pin_path<P: AsRef<Path>>(&mut self, path: P) -> &mut Self {
-        self.map_pin_path = Some(path.as_ref().to_owned());
+    pub fn default_map_pin_directory<P: AsRef<Path>>(&mut self, path: P) -> &mut Self {
+        self.default_map_pin_directory = Some(path.as_ref().to_owned());
         self
     }
 
-    /// Sets the value of a global variable.
+    /// Override the value of a global variable.
     ///
     /// If the `must_exist` argument is `true`, [`EbpfLoader::load`] will fail with [`ParseError::SymbolNotFound`] if the loaded object code does not contain the variable.
     ///
@@ -264,13 +275,13 @@ impl<'a> EbpfLoader<'a> {
     /// use aya::EbpfLoader;
     ///
     /// let bpf = EbpfLoader::new()
-    ///     .set_global("VERSION", &2, true)
-    ///     .set_global("PIDS", &[1234u16, 5678], true)
+    ///     .override_global("VERSION", &2, true)
+    ///     .override_global("PIDS", &[1234u16, 5678], true)
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn set_global<T: Into<GlobalData<'a>>>(
+    pub fn override_global<T: Into<GlobalData<'a>>>(
         &mut self,
         name: &'a str,
         value: T,
@@ -278,6 +289,12 @@ impl<'a> EbpfLoader<'a> {
     ) -> &mut Self {
         self.globals.insert(name, (value.into().bytes, must_exist));
         self
+    }
+
+    /// Override the value of a global variable.
+    #[deprecated(since = "0.13.2", note = "please use `override_global` instead")]
+    pub fn set_global<T: Into<GlobalData<'a>>>(&mut self, name: &'a str, value: T) -> &mut Self {
+        self.override_global(name, value, false)
     }
 
     /// Set the max_entries for specified map.
@@ -291,13 +308,46 @@ impl<'a> EbpfLoader<'a> {
     /// use aya::EbpfLoader;
     ///
     /// let bpf = EbpfLoader::new()
-    ///     .set_max_entries("map", 64)
+    ///     .map_max_entries("map", 64)
     ///     .load_file("file.o")?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn set_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self {
+    pub fn map_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self {
         self.max_entries.insert(name, size);
+        self
+    }
+
+    /// Set the max_entries for specified map.
+    #[deprecated(since = "0.13.2", note = "please use `map_max_entries` instead")]
+    pub fn set_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self {
+        self.map_max_entries(name, size)
+    }
+
+    /// Set the pin path for the map that matches the provided name.
+    ///
+    /// Note that this is an absolute path to the pinned map; it is not a prefix
+    /// to be combined with the map name, and it is not relative to the
+    /// configured base directory for pinned maps.
+    ///
+    /// Each call to this function with the same name overwrites the path to the
+    /// pinned map; last one wins.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use std::path::Path;
+    ///
+    /// # let mut loader = aya::EbpfLoader::new();
+    /// # let pin_path = Path::new("/sys/fs/bpf/my-pinned-map");
+    /// let bpf = loader
+    ///     .map_pin_path("map", pin_path)
+    ///     .load_file("file.o")?;
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    ///
+    pub fn map_pin_path<P: Into<Cow<'a, Path>>>(&mut self, name: &'a str, path: P) -> &mut Self {
+        self.map_pin_path_by_name.insert(name, path.into());
         self
     }
 
@@ -378,12 +428,13 @@ impl<'a> EbpfLoader<'a> {
     pub fn load(&mut self, data: &[u8]) -> Result<Ebpf, EbpfError> {
         let Self {
             btf,
-            map_pin_path,
+            default_map_pin_directory,
             globals,
             max_entries,
             extensions,
             verifier_log_level,
             allow_unsupported_maps,
+            map_pin_path_by_name,
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
@@ -400,6 +451,7 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::FEntry { sleepable: _ }
                                 | ProgramSection::FExit { sleepable: _ }
                                 | ProgramSection::Lsm { sleepable: _ }
+                                | ProgramSection::LsmCgroup
                                 | ProgramSection::BtfTracePoint
                                 | ProgramSection::Iter { sleepable: _ } => {
                                     return Err(EbpfError::BtfError(err));
@@ -435,7 +487,11 @@ impl<'a> EbpfLoader<'a> {
                             }
                         }
 
-                        warn!("Object BTF couldn't be loaded in the kernel: {err}");
+                        if obj.has_btf_relocations() {
+                            return Err(EbpfError::BtfError(err));
+                        }
+
+                        warn!("object BTF couldn't be loaded in the kernel: {err}");
 
                         None
                     }
@@ -483,16 +539,21 @@ impl<'a> EbpfLoader<'a> {
                 _ => (),
             }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
-            let mut map = match obj.pinning() {
-                PinningType::None => MapData::create(obj, &name, btf_fd)?,
-                PinningType::ByName => {
-                    // pin maps in /sys/fs/bpf by default to align with libbpf
-                    // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
-                    let path = map_pin_path
-                        .as_deref()
-                        .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
+            let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
+                MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd)?
+            } else {
+                match obj.pinning() {
+                    PinningType::None => MapData::create(obj, &name, btf_fd)?,
+                    PinningType::ByName => {
+                        // pin maps in /sys/fs/bpf by default to align with libbpf
+                        // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
+                        let path = default_map_pin_directory
+                            .as_deref()
+                            .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
+                        let path = path.join(&name);
 
-                    MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
+                        MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
+                    }
                 }
             };
             map.finalize()?;
@@ -642,6 +703,9 @@ impl<'a> EbpfLoader<'a> {
                             }
                             Program::Lsm(Lsm { data })
                         }
+                        ProgramSection::LsmCgroup => Program::LsmCgroup(LsmCgroup {
+                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
+                        }),
                         ProgramSection::BtfTracePoint => Program::BtfTracePoint(BtfTracePoint {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),
@@ -728,6 +792,7 @@ fn parse_map(
         BPF_MAP_TYPE_DEVMAP => Map::DevMap(map),
         BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
         BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
+        BPF_MAP_TYPE_SK_STORAGE => Map::SkStorage(map),
         m_type => {
             if allow_unsupported_maps {
                 Map::Unsupported(map)
@@ -1136,7 +1201,7 @@ fn load_btf(
 /// Global data that can be exported to eBPF programs before they are loaded.
 ///
 /// Valid global data includes `Pod` types and slices of `Pod` types. See also
-/// [EbpfLoader::set_global].
+/// [EbpfLoader::override_global].
 pub struct GlobalData<'a> {
     bytes: &'a [u8],
 }
@@ -1153,7 +1218,7 @@ impl<'a, T: Pod> From<&'a T> for GlobalData<'a> {
     fn from(v: &'a T) -> Self {
         GlobalData {
             // Safety: v is Pod
-            bytes: unsafe { bytes_of(v) },
+            bytes: bytes_of(v),
         }
     }
 }

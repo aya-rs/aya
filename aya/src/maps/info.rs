@@ -143,7 +143,7 @@ impl MapInfo {
 /// for m in loaded_maps() {
 ///     match m {
 ///         Ok(map) => println!("{:?}", map.name_as_str()),
-///         Err(e) => println!("Error iterating maps: {:?}", e),
+///         Err(e) => println!("error iterating maps: {:?}", e),
 ///     }
 /// }
 /// ```

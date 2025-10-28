@@ -41,7 +41,7 @@ impl FuncSecInfo {
         rec_size: usize,
         func_info_data: &[u8],
         endianness: Endianness,
-    ) -> FuncSecInfo {
+    ) -> Self {
         let func_info = func_info_data
             .chunks(rec_size)
             .map(|data| {
@@ -65,7 +65,7 @@ impl FuncSecInfo {
             })
             .collect();
 
-        FuncSecInfo {
+        Self {
             _sec_name_offset: sec_name_offset,
             num_info,
             func_info,
@@ -101,8 +101,8 @@ pub struct FuncInfo {
 }
 
 impl FuncInfo {
-    pub(crate) fn new() -> FuncInfo {
-        FuncInfo {
+    pub(crate) fn new() -> Self {
+        Self {
             data: HashMap::new(),
         }
     }
@@ -138,7 +138,7 @@ impl LineSecInfo {
         rec_size: usize,
         func_info_data: &[u8],
         endianness: Endianness,
-    ) -> LineSecInfo {
+    ) -> Self {
         let line_info = func_info_data
             .chunks(rec_size)
             .map(|data| {
@@ -171,7 +171,7 @@ impl LineSecInfo {
             })
             .collect();
 
-        LineSecInfo {
+        Self {
             _sec_name_offset: sec_name_offset,
             num_info,
             line_info,
@@ -201,8 +201,8 @@ pub(crate) struct LineInfo {
 }
 
 impl LineInfo {
-    pub(crate) fn new() -> LineInfo {
-        LineInfo {
+    pub(crate) fn new() -> Self {
+        Self {
             data: HashMap::new(),
         }
     }

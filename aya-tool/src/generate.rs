@@ -2,7 +2,7 @@ use std::{
     fs::{self, File},
     io::{self, Write as _},
     path::{Path, PathBuf},
-    process::Command,
+    process::{Command, Output},
     str,
 };
 
@@ -14,14 +14,14 @@ pub enum Error {
     #[error("error executing bpftool")]
     BpfTool(#[source] io::Error),
 
-    #[error("{stderr}\nbpftool failed with exit code {code}")]
-    BpfToolExit { code: i32, stderr: String },
+    #[error("bpftool failed: {0:?}")]
+    BpfToolExit(Output),
 
     #[error("bindgen failed")]
     Bindgen(#[source] io::Error),
 
-    #[error("{stderr}\nbindgen failed with exit code {code}")]
-    BindgenExit { code: i32, stderr: String },
+    #[error("bindgen failed: {0:?}")]
+    BindgenExit(Output),
 
     #[error("error reading header file")]
     ReadHeaderFile(#[source] io::Error),
@@ -74,14 +74,13 @@ pub fn generate<T: AsRef<str>>(
         .output()
         .map_err(Error::Bindgen)?;
 
-    if !output.status.success() {
-        return Err(Error::BindgenExit {
-            code: output.status.code().unwrap(),
-            stderr: str::from_utf8(&output.stderr).unwrap().to_owned(),
-        });
+    let Output { status, .. } = &output;
+    if !status.success() {
+        return Err(Error::BindgenExit(output));
     }
+    let Output { stdout, .. } = output;
 
-    Ok(str::from_utf8(&output.stdout).unwrap().to_owned())
+    Ok(String::from_utf8(stdout).unwrap())
 }
 
 fn c_header_from_btf(path: &Path) -> Result<String, Error> {
@@ -92,14 +91,13 @@ fn c_header_from_btf(path: &Path) -> Result<String, Error> {
         .output()
         .map_err(Error::BpfTool)?;
 
-    if !output.status.success() {
-        return Err(Error::BpfToolExit {
-            code: output.status.code().unwrap(),
-            stderr: str::from_utf8(&output.stderr).unwrap().to_owned(),
-        });
+    let Output { status, .. } = &output;
+    if !status.success() {
+        return Err(Error::BpfToolExit(output));
     }
+    let Output { stdout, .. } = output;
 
-    Ok(str::from_utf8(&output.stdout).unwrap().to_owned())
+    Ok(String::from_utf8(stdout).unwrap())
 }
 
 fn extract_ctypes_prefix(s: &[String]) -> (Vec<String>, Option<String>) {

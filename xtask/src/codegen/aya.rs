@@ -8,7 +8,7 @@ use aya_tool::bindgen;
 
 use crate::codegen::{Architecture, SysrootOptions};
 
-pub fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
+pub(crate) fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
     codegen_internal_btf_bindings(libbpf_dir)?;
     codegen_bindings(opts, libbpf_dir)
 }

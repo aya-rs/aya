@@ -1,6 +1,6 @@
 //! Socket filter programs.
 use std::{
-    io, mem,
+    io,
     os::fd::{AsFd, AsRawFd as _, RawFd},
 };
 
@@ -87,8 +87,8 @@ impl SocketFilter {
                 socket,
                 SOL_SOCKET,
                 SO_ATTACH_BPF as i32,
-                &prog_fd as *const _ as *const _,
-                mem::size_of::<RawFd>() as u32,
+                std::ptr::from_ref(&prog_fd).cast(),
+                std::mem::size_of_val(&prog_fd) as u32,
             )
         };
         if ret < 0 {
@@ -144,8 +144,8 @@ impl Link for SocketFilterLink {
                 self.socket,
                 SOL_SOCKET,
                 SO_DETACH_BPF as i32,
-                &self.prog_fd as *const _ as *const _,
-                mem::size_of::<RawFd>() as u32,
+                std::ptr::from_ref(&self.prog_fd).cast(),
+                std::mem::size_of_val(&self.prog_fd) as u32,
             );
         }
         Ok(())

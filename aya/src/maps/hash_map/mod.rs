@@ -4,7 +4,7 @@ use std::os::fd::AsFd as _;
 use crate::{
     Pod,
     maps::MapError,
-    sys::{SyscallError, bpf_map_delete_elem, bpf_map_update_elem},
+    sys::{SyscallError, bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
 #[expect(clippy::module_inception)]
@@ -15,6 +15,15 @@ pub use hash_map::*;
 pub use per_cpu_hash_map::*;
 
 use super::MapData;
+
+pub(crate) fn get<K: Pod, V: Pod>(map: &MapData, key: &K, flags: u64) -> Result<V, MapError> {
+    let fd = map.fd().as_fd();
+    let value = bpf_map_lookup_elem(fd, key, flags).map_err(|io_error| SyscallError {
+        call: "bpf_map_lookup_elem",
+        io_error,
+    })?;
+    value.ok_or(MapError::KeyNotFound)
+}
 
 pub(crate) fn insert<K: Pod, V: Pod>(
     map: &MapData,

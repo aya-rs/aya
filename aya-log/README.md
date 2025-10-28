@@ -82,7 +82,7 @@ By default all bits are set (all logging enabled). To disable all logging:
 
 ```rust
 let mut bpf = aya::EbpfLoader::new()
-    .set_global(aya_log::LEVEL, &0, false /* must_exist */)
+    .override_global(aya_log::LEVEL, &0, false /* must_exist */)
     .load_file("prog.bpf.o")?;
 # Ok::<(), aya::EbpfError>(())
 ```
@@ -92,7 +92,7 @@ Enable only Error and Warn:
 ```rust
 let level = aya_log::Level::Warn as u8;
 let mut bpf = EbpfLoader::new()
-    .set_global(aya_log::LEVEL, &level, false /* must_exist */)
+    .override_global(aya_log::LEVEL, &level, false /* must_exist */)
     .load_file("prog.bpf.o")?;
 ```
 

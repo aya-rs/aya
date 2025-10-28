@@ -15,8 +15,8 @@ pub struct PerfEventByteArray {
 unsafe impl Sync for PerfEventByteArray {}
 
 impl PerfEventByteArray {
-    pub const fn new(flags: u32) -> PerfEventByteArray {
-        PerfEventByteArray {
+    pub const fn new(flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
@@ -29,8 +29,8 @@ impl PerfEventByteArray {
         }
     }
 
-    pub const fn pinned(flags: u32) -> PerfEventByteArray {
-        PerfEventByteArray {
+    pub const fn pinned(flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
@@ -52,9 +52,9 @@ impl PerfEventByteArray {
         unsafe {
             bpf_perf_event_output(
                 ctx.as_ptr(),
-                self.def.get() as *mut _,
+                self.def.get().cast(),
                 flags,
-                data.as_ptr() as *mut _,
+                data.as_ptr().cast_mut().cast(),
                 data.len() as u64,
             );
         }

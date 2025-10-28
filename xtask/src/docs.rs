@@ -5,7 +5,7 @@ use cargo_metadata::Metadata;
 use indoc::{indoc, writedoc};
 use xtask::exec;
 
-pub fn docs(metadata: Metadata) -> Result<()> {
+pub(crate) fn docs(metadata: Metadata) -> Result<()> {
     const PACKAGE_TO_DESCRIPTION: &[(&str, &str)] = &[
         ("aya", "User-space BPF program loading and manipulation"),
         (

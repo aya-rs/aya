@@ -7,13 +7,13 @@ pub struct SkLookupContext {
 }
 
 impl SkLookupContext {
-    pub fn new(lookup: *mut bpf_sk_lookup) -> SkLookupContext {
-        SkLookupContext { lookup }
+    pub fn new(lookup: *mut bpf_sk_lookup) -> Self {
+        Self { lookup }
     }
 }
 
 impl EbpfContext for SkLookupContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.lookup as *mut _
+        self.lookup.cast()
     }
 }

@@ -63,6 +63,6 @@ fn load_and_attach(name: &str, bytes: &[u8]) -> Ebpf {
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn trigger_relocations_program() {
+extern "C" fn trigger_relocations_program() {
     core::hint::black_box(trigger_relocations_program);
 }

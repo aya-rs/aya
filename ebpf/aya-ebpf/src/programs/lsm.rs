@@ -1,14 +1,14 @@
 use core::ffi::c_void;
 
-use crate::{EbpfContext, args::FromBtfArgument};
+use crate::{Argument, EbpfContext, args::btf_arg};
 
 pub struct LsmContext {
     ctx: *mut c_void,
 }
 
 impl LsmContext {
-    pub fn new(ctx: *mut c_void) -> LsmContext {
-        LsmContext { ctx }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { ctx }
     }
 
     /// Returns the `n`th argument passed to the LSM hook, starting from 0.
@@ -21,12 +21,6 @@ impl LsmContext {
     /// which provides the return value of the previous LSM program that was called on
     /// this code path, or 0 if this is the first LSM program to be called. This phony
     /// argument is always last in the argument list.
-    ///
-    /// # Safety
-    ///
-    /// This function is deeply unsafe, as we are reading raw pointers into kernel memory.
-    /// In particular, the value of `n` must not exceed the number of function arguments.
-    /// Luckily, the BPF verifier will catch this for us.
     ///
     /// # Examples
     ///
@@ -52,8 +46,8 @@ impl LsmContext {
     /// ```
     ///
     /// [1]: https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hook_defs.h
-    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> T {
-        unsafe { T::from_argument(self.ctx.cast(), n) }
+    pub fn arg<T: Argument>(&self, n: usize) -> T {
+        btf_arg(self, n)
     }
 }
 

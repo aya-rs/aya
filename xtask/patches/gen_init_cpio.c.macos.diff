@@ -1,0 +1,32 @@
+diff --git a/gen_init_cpio.c b/gen_init_cpio.c
+index 75e9561b..406c4d0a 100644
+--- a/gen_init_cpio.c
++++ b/gen_init_cpio.c
+@@ -453,6 +453,7 @@ static int cpio_mkfile(const char *name, const char *location,
+ 		    push_pad(namepadlen ? namepadlen : padlen(offset, 4)) < 0)
+ 			goto error;
+ 
++#ifdef __linux__
+ 		if (size) {
+ 			this_read = copy_file_range(file, NULL, outfd, NULL, size, 0);
+ 			if (this_read > 0) {
+@@ -463,6 +464,7 @@ static int cpio_mkfile(const char *name, const char *location,
+ 			}
+ 			/* short or failed copy falls back to read/write... */
+ 		}
++#endif
+ 
+ 		while (size) {
+ 			unsigned char filebuf[65536];
+@@ -671,7 +673,10 @@ int main (int argc, char *argv[])
+ 			break;
+ 		case 'o':
+ 			outfd = open(optarg,
+-				     O_WRONLY | O_CREAT | O_LARGEFILE | O_TRUNC,
++#ifdef O_LARGEFILE
++				     O_LARGEFILE |
++#endif
++				     O_WRONLY | O_CREAT | O_TRUNC,
+ 				     0600);
+ 			if (outfd < 0) {
+ 				fprintf(stderr, "failed to open %s\n", optarg);

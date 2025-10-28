@@ -7,8 +7,8 @@ pub struct PerfEventContext {
 }
 
 impl PerfEventContext {
-    pub fn new(ctx: *mut c_void) -> PerfEventContext {
-        PerfEventContext { ctx }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { ctx }
     }
 }
 

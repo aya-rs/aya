@@ -37,36 +37,7 @@
     html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![deny(
-    clippy::all,
-    clippy::use_self,
-    absolute_paths_not_starting_with_crate,
-    deprecated_in_future,
-    elided_lifetimes_in_paths,
-    explicit_outlives_requirements,
-    ffi_unwind_calls,
-    keyword_idents,
-    //let_underscore_drop,
-    macro_use_extern_crate,
-    meta_variable_misuse,
-    missing_abi,
-    //missing_copy_implementations,
-    missing_docs,
-    non_ascii_idents,
-    noop_method_call,
-    single_use_lifetimes,
-    trivial_numeric_casts,
-    unreachable_pub,
-    //unsafe_op_in_unsafe_fn,
-    unstable_features,
-    unused_crate_dependencies,
-    unused_extern_crates,
-    unused_import_braces,
-    unused_lifetimes,
-    unused_macro_rules,
-    //unused_qualifications, https://github.com/rust-lang/rust/commit/9ccc7b7 added size_of to the prelude, but we need to continue to qualify it so that we build on older compilers.
-    //unused_results,
-)]
+#![deny(missing_docs)]
 
 mod bpf;
 pub mod maps;
