@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use aya_ebpf::{
     macros::{map, uprobe},
@@ -21,7 +22,7 @@ static RING_BUF: RingBuf = RingBuf::with_byte_size(0, 0);
 static REGISTERS: PerCpuArray<Registers> = PerCpuArray::with_max_entries(1, 0);
 
 #[uprobe]
-pub fn ring_buf_test(ctx: ProbeContext) {
+fn ring_buf_test(ctx: ProbeContext) {
     let Registers { dropped, rejected } = match REGISTERS.get_ptr_mut(0) {
         Some(regs) => unsafe { &mut *regs },
         None => return,

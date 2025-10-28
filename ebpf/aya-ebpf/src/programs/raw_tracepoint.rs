@@ -1,19 +1,18 @@
 use core::ffi::c_void;
 
-use crate::{EbpfContext, args::FromRawTracepointArgs, bindings::bpf_raw_tracepoint_args};
+use crate::{Argument, EbpfContext, args::raw_tracepoint_arg, bindings::bpf_raw_tracepoint_args};
 
 pub struct RawTracePointContext {
     ctx: *mut bpf_raw_tracepoint_args,
 }
 
 impl RawTracePointContext {
-    pub fn new(ctx: *mut c_void) -> RawTracePointContext {
-        RawTracePointContext { ctx: ctx.cast() }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { ctx: ctx.cast() }
     }
 
-    #[expect(clippy::missing_safety_doc)]
-    pub unsafe fn arg<T: FromRawTracepointArgs>(&self, n: usize) -> T {
-        unsafe { T::from_argument(&*self.ctx, n) }
+    pub fn arg<T: Argument>(&self, n: usize) -> T {
+        raw_tracepoint_arg(unsafe { &*self.ctx }, n)
     }
 }
 

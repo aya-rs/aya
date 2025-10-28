@@ -1,26 +1,20 @@
 use core::ffi::c_void;
 
-use crate::{EbpfContext, args::FromBtfArgument};
+use crate::{Argument, EbpfContext, args::btf_arg};
 
 pub struct BtfTracePointContext {
     ctx: *mut c_void,
 }
 
 impl BtfTracePointContext {
-    pub fn new(ctx: *mut c_void) -> BtfTracePointContext {
-        BtfTracePointContext { ctx }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { ctx }
     }
 
     /// Returns the `n`th argument of the BTF tracepoint, starting from 0.
     ///
     /// You can use the tplist tool provided by bcc to get a list of tracepoints and their
     /// arguments. TODO: document this better, possibly add a tplist alternative to aya.
-    ///
-    /// # Safety
-    ///
-    /// This function is deeply unsafe, as we are reading raw pointers into kernel memory.
-    /// In particular, the value of `n` must not exceed the number of function arguments.
-    /// Luckily, the BPF verifier will catch this for us.
     ///
     /// # Examples
     ///
@@ -42,8 +36,8 @@ impl BtfTracePointContext {
     /// ```
     ///
     /// [1]: https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hook_defs.h
-    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> T {
-        unsafe { T::from_argument(self.ctx.cast(), n) }
+    pub fn arg<T: Argument>(&self, n: usize) -> T {
+        btf_arg(self, n)
     }
 }
 

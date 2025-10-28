@@ -50,7 +50,7 @@
 use std::{
     borrow::Borrow,
     ffi::CString,
-    fmt, io,
+    io,
     marker::PhantomData,
     mem,
     ops::Deref,
@@ -60,8 +60,6 @@ use std::{
 };
 
 use aya_obj::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type, parse_map_info};
-use libc::{RLIM_INFINITY, RLIMIT_MEMLOCK, getrlimit, rlim_t, rlimit};
-use log::warn;
 use thiserror::Error;
 
 use crate::{
@@ -71,7 +69,7 @@ use crate::{
         SyscallError, bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
         bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object,
     },
-    util::{KernelVersion, nr_cpus},
+    util::nr_cpus,
 };
 
 pub mod array;
@@ -82,6 +80,7 @@ pub mod lpm_trie;
 pub mod perf;
 pub mod queue;
 pub mod ring_buf;
+pub mod sk_storage;
 pub mod sock;
 pub mod stack;
 pub mod stack_trace;
@@ -95,6 +94,7 @@ pub use lpm_trie::LpmTrie;
 pub use perf::PerfEventArray;
 pub use queue::Queue;
 pub use ring_buf::RingBuf;
+pub use sk_storage::SkStorage;
 pub use sock::{SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
@@ -232,40 +232,6 @@ impl AsFd for MapFd {
     }
 }
 
-/// Raises a warning about rlimit. Should be used only if creating a map was not
-/// successful.
-fn maybe_warn_rlimit() {
-    let mut limit = mem::MaybeUninit::<rlimit>::uninit();
-    let ret = unsafe { getrlimit(RLIMIT_MEMLOCK, limit.as_mut_ptr()) };
-    if ret == 0 {
-        let limit = unsafe { limit.assume_init() };
-
-        if limit.rlim_cur == RLIM_INFINITY {
-            return;
-        }
-        struct HumanSize(rlim_t);
-
-        impl fmt::Display for HumanSize {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                let &Self(size) = self;
-                if size < 1024 {
-                    write!(f, "{size} bytes")
-                } else if size < 1024 * 1024 {
-                    write!(f, "{} KiB", size / 1024)
-                } else {
-                    write!(f, "{} MiB", size / 1024 / 1024)
-                }
-            }
-        }
-        warn!(
-            "RLIMIT_MEMLOCK value is {}, not RLIM_INFINITY; if experiencing problems with creating \
-            maps, try raising RLIMIT_MEMLOCK either to RLIM_INFINITY or to a higher value sufficient \
-            for the size of your maps",
-            HumanSize(limit.rlim_cur)
-        );
-    }
-}
-
 /// eBPF map types.
 #[derive(Debug)]
 pub enum Map {
@@ -303,6 +269,8 @@ pub enum Map {
     SockHash(MapData),
     /// A [`SockMap`] map.
     SockMap(MapData),
+    /// A [`SkStorage`] map.
+    SkStorage(MapData),
     /// A [`Stack`] map.
     Stack(MapData),
     /// A [`StackTraceMap`] map.
@@ -334,6 +302,7 @@ impl Map {
             Self::RingBuf(map) => map.obj.map_type(),
             Self::SockHash(map) => map.obj.map_type(),
             Self::SockMap(map) => map.obj.map_type(),
+            Self::SkStorage(map) => map.obj.map_type(),
             Self::Stack(map) => map.obj.map_type(),
             Self::StackTraceMap(map) => map.obj.map_type(),
             Self::Unsupported(map) => map.obj.map_type(),
@@ -364,6 +333,7 @@ impl Map {
             Self::RingBuf(map) => map.pin(path),
             Self::SockHash(map) => map.pin(path),
             Self::SockMap(map) => map.pin(path),
+            Self::SkStorage(map) => map.pin(path),
             Self::Stack(map) => map.pin(path),
             Self::StackTraceMap(map) => map.pin(path),
             Self::Unsupported(map) => map.pin(path),
@@ -409,7 +379,7 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::Unsupported(map_data),
-            bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Self::SkStorage(map_data),
             bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_TASK_STORAGE => Self::Unsupported(map_data),
@@ -468,6 +438,7 @@ impl_map_pin!((V) {
     SockHash,
     BloomFilter,
     Queue,
+    SkStorage,
     Stack,
 });
 
@@ -546,6 +517,7 @@ impl_try_from_map!((V) {
     PerCpuArray,
     Queue,
     SockHash,
+    SkStorage,
     Stack,
 });
 
@@ -624,16 +596,11 @@ impl MapData {
             }
         };
 
-        let fd = bpf_create_map(&c_name, &obj, btf_fd).map_err(|io_error| {
-            if !KernelVersion::at_least(5, 11, 0) {
-                maybe_warn_rlimit();
-            }
-
-            MapError::CreateError {
+        let fd =
+            bpf_create_map(&c_name, &obj, btf_fd).map_err(|io_error| MapError::CreateError {
                 name: name.into(),
                 io_error,
-            }
-        })?;
+            })?;
         Ok(Self {
             obj,
             fd: MapFd::from_fd(fd),
@@ -649,13 +616,16 @@ impl MapData {
         use std::os::unix::ffi::OsStrExt as _;
 
         // try to open map in case it's already pinned
-        let path = path.as_ref().join(name);
+        let path = path.as_ref();
         let path_string = match CString::new(path.as_os_str().as_bytes()) {
             Ok(path) => path,
             Err(error) => {
                 return Err(MapError::PinError {
                     name: Some(name.into()),
-                    error: PinError::InvalidPinPath { path, error },
+                    error: PinError::InvalidPinPath {
+                        path: path.to_path_buf(),
+                        error,
+                    },
                 });
             }
         };
@@ -669,7 +639,7 @@ impl MapData {
             }),
             Err(_) => {
                 let map = Self::create(obj, name, btf_fd)?;
-                map.pin(&path).map_err(|error| MapError::PinError {
+                map.pin(path).map_err(|error| MapError::PinError {
                     name: Some(name.into()),
                     error,
                 })?;
@@ -681,7 +651,7 @@ impl MapData {
     pub(crate) fn finalize(&mut self) -> Result<(), MapError> {
         let Self { obj, fd } = self;
         if !obj.data().is_empty() {
-            bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
+            bpf_map_update_elem_ptr(fd.as_fd(), &0, obj.data_mut().as_mut_ptr(), 0)
                 .map_err(|io_error| SyscallError {
                     call: "bpf_map_update_elem",
                     io_error,

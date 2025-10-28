@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 #[cfg(not(test))]
 extern crate ebpf_panic;
@@ -34,29 +35,27 @@ macro_rules! define_linear_ds_test {
         static $map_ident: $Type<u64> = $Type::with_max_entries(10, 0);
 
         #[uprobe]
-        pub fn $push_fn(ctx: ProbeContext) -> Result<(), c_long> {
+        fn $push_fn(ctx: ProbeContext) -> Result<(), c_long> {
             let value = ctx.arg(0).ok_or(-1)?;
             $map_ident.push(&value, 0)?;
             Ok(())
         }
 
         #[uprobe]
-        pub fn $pop_fn(_: ProbeContext) -> Result<(), c_long> {
+        fn $pop_fn(_: ProbeContext) -> Result<(), c_long> {
             let value = $map_ident.pop().ok_or(-1)?;
             result_set(POP_INDEX, value)?;
             Ok(())
         }
 
         #[uprobe]
-        pub fn $peek_fn(_: ProbeContext) -> Result<(), c_long> {
+        fn $peek_fn(_: ProbeContext) -> Result<(), c_long> {
             let value = $map_ident.peek().ok_or(-1)?;
             result_set(PEEK_INDEX, value)?;
             Ok(())
         }
     };
 }
-
-use define_linear_ds_test;
 
 define_linear_ds_test!(Stack, TEST_STACK,
     push_fn: test_stack_push,

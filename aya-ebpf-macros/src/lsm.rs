@@ -44,10 +44,10 @@ impl Lsm {
         } else {
             section_prefix.into()
         };
+        let fn_name = &sig.ident;
         // LSM probes need to return an integer corresponding to the correct
         // policy decision. Therefore we do not simply default to a return value
         // of 0 as in other program types.
-        let fn_name = &sig.ident;
         quote! {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = #section_name)]

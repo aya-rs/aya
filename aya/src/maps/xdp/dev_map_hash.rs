@@ -1,4 +1,4 @@
-//! An hashmap of network devices.
+//! A hashmap of network devices.
 
 use std::{
     borrow::{Borrow, BorrowMut},

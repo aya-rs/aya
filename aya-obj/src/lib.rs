@@ -49,7 +49,7 @@
 //! let instructions = &function.instructions;
 //! let data = unsafe {
 //!     core::slice::from_raw_parts(
-//!         instructions.as_ptr() as *const u8,
+//!         instructions.as_ptr().cast(),
 //!         instructions.len() * core::mem::size_of::<bpf_insn>(),
 //!     )
 //! };
@@ -65,7 +65,11 @@
     html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![deny(clippy::all, missing_docs)]
+#![deny(missing_docs)]
+#![cfg_attr(
+    any(feature = "std", test),
+    expect(unused_crate_dependencies, reason = "used in doctests")
+)]
 
 extern crate alloc;
 #[cfg(feature = "std")]
@@ -74,9 +78,15 @@ extern crate std;
 pub mod btf;
 #[expect(
     clippy::all,
+    clippy::cast_lossless,
+    clippy::ptr_as_ptr,
+    clippy::ref_as_ptr,
+    clippy::use_self,
     missing_docs,
     non_camel_case_types,
     non_snake_case,
+    trivial_numeric_casts,
+    unreachable_pub,
     unsafe_op_in_unsafe_fn
 )]
 pub mod generated;

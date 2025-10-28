@@ -1,12 +1,13 @@
 #![no_std]
 #![no_main]
+#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use aya_ebpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
 #[cfg(not(test))]
 extern crate ebpf_panic;
 
 #[xdp]
-pub fn ihaveaverylongname(ctx: XdpContext) -> u32 {
+fn ihaveaverylongname(ctx: XdpContext) -> u32 {
     match unsafe { try_pass(ctx) } {
         Ok(ret) => ret,
         Err(_) => xdp_action::XDP_ABORTED,

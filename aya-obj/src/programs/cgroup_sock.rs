@@ -16,12 +16,12 @@ pub enum CgroupSockAttachType {
 }
 
 impl From<CgroupSockAttachType> for bpf_attach_type {
-    fn from(s: CgroupSockAttachType) -> bpf_attach_type {
+    fn from(s: CgroupSockAttachType) -> Self {
         match s {
-            CgroupSockAttachType::PostBind4 => bpf_attach_type::BPF_CGROUP_INET4_POST_BIND,
-            CgroupSockAttachType::PostBind6 => bpf_attach_type::BPF_CGROUP_INET6_POST_BIND,
-            CgroupSockAttachType::SockCreate => bpf_attach_type::BPF_CGROUP_INET_SOCK_CREATE,
-            CgroupSockAttachType::SockRelease => bpf_attach_type::BPF_CGROUP_INET_SOCK_RELEASE,
+            CgroupSockAttachType::PostBind4 => Self::BPF_CGROUP_INET4_POST_BIND,
+            CgroupSockAttachType::PostBind6 => Self::BPF_CGROUP_INET6_POST_BIND,
+            CgroupSockAttachType::SockCreate => Self::BPF_CGROUP_INET_SOCK_CREATE,
+            CgroupSockAttachType::SockRelease => Self::BPF_CGROUP_INET_SOCK_RELEASE,
         }
     }
 }

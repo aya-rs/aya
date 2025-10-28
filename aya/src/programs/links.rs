@@ -107,7 +107,7 @@ impl<T: Link> Links<T> {
 
 impl<T: Link> Drop for Links<T> {
     fn drop(&mut self) {
-        let _ = self.remove_all();
+        let _: Result<(), ProgramError> = self.remove_all();
     }
 }
 
@@ -510,7 +510,7 @@ macro_rules! define_link_wrapper {
                 use $crate::programs::links::Link as _;
 
                 if let Some(base) = self.0.take() {
-                    let _ = base.detach();
+                    let _: Result<(), ProgramError> = base.detach();
                 }
             }
         }

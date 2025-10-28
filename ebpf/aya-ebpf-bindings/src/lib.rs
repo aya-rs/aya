@@ -1,8 +1,17 @@
+#![cfg_attr(
+    target_arch = "bpf",
+    expect(unused_crate_dependencies, reason = "compiler_builtins")
+)]
 #![expect(
     clippy::all,
+    clippy::cast_lossless,
+    clippy::ptr_as_ptr,
+    clippy::ref_as_ptr,
+    clippy::use_self,
     non_camel_case_types,
     non_snake_case,
     non_upper_case_globals,
+    unreachable_pub,
     unsafe_op_in_unsafe_fn
 )]
 #![no_std]

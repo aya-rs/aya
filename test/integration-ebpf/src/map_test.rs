@@ -1,8 +1,6 @@
-// Socket Filter program for testing with an arbitrary program with maps.
-// This is mainly used in tests with consideration for old kernels.
-
 #![no_std]
 #![no_main]
+#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use aya_ebpf::{
     macros::{map, socket_filter},
@@ -27,13 +25,13 @@ static MAP_WITH_LOOOONG_NAAAAAAAAME: HashMap<u32, u8> = HashMap::<u32, u8>::with
 
 // Introduced in kernel v3.19.
 #[socket_filter]
-pub fn simple_prog(_ctx: SkBuffContext) -> i64 {
+fn simple_prog(_ctx: SkBuffContext) -> i64 {
     // So that these maps show up under the `map_ids` field.
     FOO.get(0);
     // If we use the literal value `0` instead of the local variable `i`, then an additional
     // `.rodata` map will be associated with the program.
     let i = 0;
-    BAZ.get_ptr(&i);
+    BAZ.get_ptr(i);
 
     0
 }

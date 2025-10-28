@@ -1,14 +1,33 @@
 use std::{
-    env, fs,
+    borrow::Cow,
+    env,
+    ffi::OsString,
+    fs,
     io::{BufRead as _, BufReader},
     path::PathBuf,
     process::{Child, Command, Stdio},
 };
 
 use anyhow::{Context as _, Result, anyhow};
-// Re-export `cargo_metadata` to having to encode the version downstream and risk mismatches.
-pub use cargo_metadata;
-use cargo_metadata::{Artifact, CompilerMessage, Message, Package, Target};
+use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
+
+pub struct Package<'a> {
+    pub name: &'a str,
+    pub root_dir: &'a str,
+}
+
+fn target_arch() -> Cow<'static, str> {
+    const TARGET_ARCH: &str = "CARGO_CFG_TARGET_ARCH";
+    let target_arch = env::var_os(TARGET_ARCH).unwrap_or_else(|| panic!("{TARGET_ARCH} not set"));
+    let target_arch = target_arch.into_encoded_bytes();
+    let target_arch = String::from_utf8(target_arch)
+        .unwrap_or_else(|err| panic!("String::from_utf8({TARGET_ARCH}): {err:?}"));
+    if target_arch.starts_with("riscv64") {
+        "riscv64".into()
+    } else {
+        target_arch.into()
+    }
+}
 
 /// Build binary artifacts produced by `packages`.
 ///
@@ -22,7 +41,10 @@ use cargo_metadata::{Artifact, CompilerMessage, Message, Package, Target};
 /// prevent their use for the time being.
 ///
 /// [bindeps]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html?highlight=feature#artifact-dependencies
-pub fn build_ebpf(packages: impl IntoIterator<Item = Package>, toolchain: Toolchain) -> Result<()> {
+pub fn build_ebpf<'a>(
+    packages: impl IntoIterator<Item = Package<'a>>,
+    toolchain: Toolchain<'a>,
+) -> Result<()> {
     let out_dir = env::var_os("OUT_DIR").ok_or(anyhow!("OUT_DIR not set"))?;
     let out_dir = PathBuf::from(out_dir);
 
@@ -36,26 +58,15 @@ pub fn build_ebpf(packages: impl IntoIterator<Item = Package>, toolchain: Toolch
         return Err(anyhow!("unsupported endian={endian:?}"));
     };
 
-    let arch =
-        env::var_os("CARGO_CFG_TARGET_ARCH").ok_or(anyhow!("CARGO_CFG_TARGET_ARCH not set"))?;
-
+    let arch = target_arch();
     let target = format!("{target}-unknown-none");
 
-    for Package {
-        name,
-        manifest_path,
-        ..
-    } in packages
-    {
-        let dir = manifest_path
-            .parent()
-            .ok_or(anyhow!("no parent for {manifest_path}"))?;
-
+    for Package { name, root_dir } in packages {
         // We have a build-dependency on `name`, so cargo will automatically rebuild us if `name`'s
         // *library* target or any of its dependencies change. Since we depend on `name`'s *binary*
         // targets, that only gets us half of the way. This stanza ensures cargo will rebuild us on
         // changes to the binaries too, which gets us the rest of the way.
-        println!("cargo:rerun-if-changed={dir}");
+        println!("cargo:rerun-if-changed={root_dir}");
 
         let mut cmd = Command::new("rustup");
         cmd.args([
@@ -64,7 +75,7 @@ pub fn build_ebpf(packages: impl IntoIterator<Item = Package>, toolchain: Toolch
             "cargo",
             "build",
             "--package",
-            &name,
+            name,
             "-Z",
             "build-std=core",
             "--bins",
@@ -74,20 +85,25 @@ pub fn build_ebpf(packages: impl IntoIterator<Item = Package>, toolchain: Toolch
             &target,
         ]);
 
-        cmd.env("CARGO_CFG_BPF_TARGET_ARCH", &arch);
-        cmd.env(
-            "CARGO_ENCODED_RUSTFLAGS",
-            ["debuginfo=2", "link-arg=--btf"]
-                .into_iter()
-                .flat_map(|flag| ["-C", flag])
-                .fold(String::new(), |mut acc, flag| {
-                    if !acc.is_empty() {
-                        acc.push('\x1f');
-                    }
-                    acc.push_str(flag);
-                    acc
-                }),
-        );
+        {
+            const SEPARATOR: &str = "\x1f";
+
+            let mut rustflags = OsString::new();
+
+            for s in [
+                "--cfg=bpf_target_arch=\"",
+                &arch,
+                "\"",
+                SEPARATOR,
+                "-Cdebuginfo=2",
+                SEPARATOR,
+                "-Clink-arg=--btf",
+            ] {
+                rustflags.push(s);
+            }
+
+            cmd.env("CARGO_ENCODED_RUSTFLAGS", rustflags);
+        }
 
         // Workaround to make sure that the correct toolchain is used.
         for key in ["RUSTC", "RUSTC_WORKSPACE_WRAPPER"] {
@@ -95,7 +111,7 @@ pub fn build_ebpf(packages: impl IntoIterator<Item = Package>, toolchain: Toolch
         }
 
         // Workaround for https://github.com/rust-lang/cargo/issues/6412 where cargo flocks itself.
-        let target_dir = out_dir.join(name.as_str());
+        let target_dir = out_dir.join(name);
         cmd.arg("--target-dir").arg(&target_dir);
 
         let mut child = cmd
@@ -182,4 +198,34 @@ impl<'a> Toolchain<'a> {
             Toolchain::Custom(toolchain) => toolchain,
         }
     }
+}
+
+/// Emit cfg flags that describe the desired BPF target architecture.
+pub fn emit_bpf_target_arch_cfg() {
+    const RUSTFLAGS: &str = "CARGO_ENCODED_RUSTFLAGS";
+
+    println!("cargo:rerun-if-env-changed={RUSTFLAGS}");
+    let rustc_cfgs = std::env::var_os(RUSTFLAGS).unwrap_or_else(|| panic!("{RUSTFLAGS} not set"));
+    let rustc_cfgs = rustc_cfgs
+        .to_str()
+        .unwrap_or_else(|| panic!("{RUSTFLAGS}={rustc_cfgs:?} not unicode"));
+    if !rustc_cfgs.contains("bpf_target_arch") {
+        let arch = target_arch();
+        println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
+    }
+
+    print!("cargo::rustc-check-cfg=cfg(bpf_target_arch, values(");
+    for value in [
+        "aarch64",
+        "arm",
+        "loongarch64",
+        "mips",
+        "powerpc64",
+        "riscv64",
+        "s390x",
+        "x86_64",
+    ] {
+        print!("\"{value}\",");
+    }
+    println!("))");
 }

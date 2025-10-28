@@ -7,8 +7,8 @@ pub struct TracePointContext {
 }
 
 impl TracePointContext {
-    pub fn new(ctx: *mut c_void) -> TracePointContext {
-        TracePointContext { ctx }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { ctx }
     }
 
     #[expect(clippy::missing_safety_doc)]

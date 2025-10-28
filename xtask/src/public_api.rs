@@ -13,7 +13,7 @@ use diff::{Result as Diff, lines};
 use xtask::Errors;
 
 #[derive(Debug, Parser)]
-pub struct Options {
+pub(crate) struct Options {
     /// Bless new API changes.
     #[clap(long)]
     pub bless: bool,
@@ -23,7 +23,7 @@ pub struct Options {
     pub target: Option<String>,
 }
 
-pub fn public_api(options: Options, metadata: Metadata) -> Result<()> {
+pub(crate) fn public_api(options: Options, metadata: Metadata) -> Result<()> {
     let toolchain = "nightly";
     let Options { bless, target } = options;
 

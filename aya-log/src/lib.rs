@@ -56,7 +56,9 @@
 //! [env_logger]: https://docs.rs/env_logger
 //! [Log]: https://docs.rs/log/0.4.14/log/trait.Log.html
 //! [log]: https://docs.rs/log
-//!
+
+#![cfg_attr(test, expect(unused_crate_dependencies, reason = "used in doctests"))]
+
 use std::{
     fmt::{LowerHex, UpperHex},
     mem,
@@ -174,7 +176,7 @@ impl<T: Log> EbpfLogger<T> {
     fn new(map: Map, logger: T) -> Result<Self, Error> {
         let ring_buf: RingBuf<_> = map.try_into()?;
 
-        Ok(EbpfLogger { ring_buf, logger })
+        Ok(Self { ring_buf, logger })
     }
 
     /// Reads log records from eBPF and writes them to the logger.
@@ -282,6 +284,19 @@ impl Formatter<[u8; 6]> for UpperMacFormatter {
     }
 }
 
+pub struct PointerFormatter;
+impl<T> Formatter<*const T> for PointerFormatter {
+    fn format(v: *const T) -> String {
+        format!("{v:p}")
+    }
+}
+
+impl<T> Formatter<*mut T> for PointerFormatter {
+    fn format(v: *mut T) -> String {
+        format!("{v:p}")
+    }
+}
+
 trait Format {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()>;
 }
@@ -305,6 +320,7 @@ impl Format for u32 {
             Some(DisplayHint::Ip) => Ok(Ipv4Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Ok(DefaultFormatter::format(self)),
         }
     }
@@ -319,6 +335,7 @@ impl Format for Ipv4Addr {
             Some(DisplayHint::Ip) => Ok(Ipv4Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Ok(Ipv4Formatter::format(*self)),
         }
     }
@@ -333,6 +350,7 @@ impl Format for Ipv6Addr {
             Some(DisplayHint::Ip) => Ok(Ipv6Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Ok(Ipv6Formatter::format(*self)),
         }
     }
@@ -347,6 +365,7 @@ impl Format for [u8; 4] {
             Some(DisplayHint::Ip) => Ok(Ipv4Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Ok(Ipv4Formatter::format(*self)),
         }
     }
@@ -361,6 +380,7 @@ impl Format for [u8; 6] {
             Some(DisplayHint::Ip) => Err(()),
             Some(DisplayHint::LowerMac) => Ok(LowerMacFormatter::format(*self)),
             Some(DisplayHint::UpperMac) => Ok(UpperMacFormatter::format(*self)),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Err(()),
         }
     }
@@ -375,6 +395,7 @@ impl Format for [u8; 16] {
             Some(DisplayHint::Ip) => Ok(Ipv6Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Err(()),
         }
     }
@@ -389,6 +410,7 @@ impl Format for [u16; 8] {
             Some(DisplayHint::Ip) => Ok(Ipv6Formatter::format(*self)),
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
+            Some(DisplayHint::Pointer) => Err(()),
             None => Err(()),
         }
     }
@@ -405,6 +427,7 @@ macro_rules! impl_format {
                     Some(DisplayHint::Ip) => Err(()),
                     Some(DisplayHint::LowerMac) => Err(()),
                     Some(DisplayHint::UpperMac) => Err(()),
+                    Some(DisplayHint::Pointer) => Err(()),
                     None => Ok(DefaultFormatter::format(self)),
                 }
             }
@@ -434,6 +457,7 @@ macro_rules! impl_format_float {
                     Some(DisplayHint::Ip) => Err(()),
                     Some(DisplayHint::LowerMac) => Err(()),
                     Some(DisplayHint::UpperMac) => Err(()),
+                    Some(DisplayHint::Pointer) => Err(()),
                     None => Ok(DefaultFormatter::format(self)),
                 }
             }
@@ -443,6 +467,24 @@ macro_rules! impl_format_float {
 
 impl_format_float!(f32);
 impl_format_float!(f64);
+
+impl<T> Format for *const T {
+    fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
+            Some(DisplayHint::Pointer) => Ok(PointerFormatter::format(*self)),
+            _ => Err(()),
+        }
+    }
+}
+
+impl<T> Format for *mut T {
+    fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
+        match last_hint.map(|DisplayHintWrapper(dh)| dh) {
+            Some(DisplayHint::Pointer) => Ok(PointerFormatter::format(*self)),
+            _ => Err(()),
+        }
+    }
+}
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -495,7 +537,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
             }
             RecordFieldKind::Level => {
                 let level = level.replace({
-                    let level = unsafe { ptr::read_unaligned(value.as_ptr() as *const _) };
+                    let level = unsafe { ptr::read_unaligned(value.as_ptr().cast()) };
                     match level {
                         Level::Error => log::Level::Error,
                         Level::Warn => log::Level::Warn,
@@ -557,7 +599,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
 
         match tag {
             ArgumentKind::DisplayHint => {
-                last_hint = Some(unsafe { ptr::read_unaligned(value.as_ptr() as *const _) });
+                last_hint = Some(unsafe { ptr::read_unaligned(value.as_ptr().cast()) });
             }
             ArgumentKind::I8 => {
                 full_log_msg.push_str(
@@ -717,7 +759,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                     .map_err(|std::array::TryFromSliceError { .. }| ())?;
                 let mut value: [u16; 8] = Default::default();
                 for (i, s) in data.chunks_exact(2).enumerate() {
-                    value[i] = ((s[1] as u16) << 8) | s[0] as u16;
+                    value[i] = (u16::from(s[1]) << 8) | u16::from(s[0]);
                 }
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
@@ -730,6 +772,13 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                 }
                 Err(e) => error!("received invalid utf8 string: {e}"),
             },
+            ArgumentKind::Pointer => {
+                let value = value
+                    .try_into()
+                    .map_err(|std::array::TryFromSliceError { .. }| ())?;
+                let ptr = usize::from_ne_bytes(value) as *const ();
+                full_log_msg.push_str(&ptr.format(last_hint.take())?);
+            }
         }
 
         buf = rest;
@@ -754,7 +803,7 @@ fn try_read<T: Pod>(mut buf: &[u8]) -> Result<(T, &[u8], &[u8]), ()> {
         return Err(());
     }
 
-    let tag = unsafe { ptr::read_unaligned(buf.as_ptr() as *const T) };
+    let tag = unsafe { ptr::read_unaligned(buf.as_ptr().cast::<T>()) };
     buf = &buf[mem::size_of::<T>()..];
 
     let len =

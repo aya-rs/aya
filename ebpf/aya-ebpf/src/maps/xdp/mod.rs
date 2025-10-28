@@ -25,7 +25,7 @@ fn try_redirect_map(def: &UnsafeCell<bpf_map_def>, key: u32, flags: u64) -> Resu
     // Return XDP_REDIRECT on success, or the value of the two lower bits of the flags argument on
     // error. Thus I have no idea why it returns a long (i64) instead of something saner, hence the
     // unsigned_abs.
-    let ret = unsafe { bpf_redirect_map(def.get() as *mut _, key.into(), flags) };
+    let ret = unsafe { bpf_redirect_map(def.get().cast(), key.into(), flags) };
     match ret.unsigned_abs() as u32 {
         XDP_REDIRECT => Ok(XDP_REDIRECT),
         ret => Err(ret),

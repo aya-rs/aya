@@ -89,6 +89,22 @@ fn run() -> anyhow::Result<()> {
             data: None,
             target_mode: None,
         },
+        Mount {
+            source: "cgroup2",
+            target: "/sys/fs/cgroup",
+            fstype: "cgroup2",
+            flags: nix::mount::MsFlags::empty(),
+            data: None,
+            target_mode: None,
+        },
+        Mount {
+            source: "securityfs",
+            target: "/sys/kernel/security",
+            fstype: "securityfs",
+            flags: nix::mount::MsFlags::empty(),
+            data: None,
+            target_mode: None,
+        },
     ] {
         match target_mode {
             None => {
@@ -179,6 +195,10 @@ fn main() {
         }
     }
     let how = nix::sys::reboot::RebootMode::RB_POWER_OFF;
-    let _: std::convert::Infallible = nix::sys::reboot::reboot(how)
-        .unwrap_or_else(|err| panic!("reboot({how:?}) failed: {err:?}"));
+    match nix::sys::reboot::reboot(how) {
+        Ok(infallible) => match infallible {},
+        Err(err) => {
+            panic!("reboot({how:?}) failed: {err:?}")
+        }
+    }
 }

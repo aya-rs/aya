@@ -13,7 +13,7 @@ impl FlowDissector {
             return Err(attrs.span().error("unexpected attribute"));
         }
         let item = syn::parse2(item)?;
-        Ok(FlowDissector { item })
+        Ok(Self { item })
     }
 
     pub(crate) fn expand(&self) -> TokenStream {

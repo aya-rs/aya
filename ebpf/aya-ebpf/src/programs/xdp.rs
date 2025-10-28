@@ -7,8 +7,8 @@ pub struct XdpContext {
 }
 
 impl XdpContext {
-    pub fn new(ctx: *mut xdp_md) -> XdpContext {
-        XdpContext { ctx }
+    pub fn new(ctx: *mut xdp_md) -> Self {
+        Self { ctx }
     }
 
     #[inline]
@@ -48,6 +48,6 @@ impl XdpContext {
 
 impl EbpfContext for XdpContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.ctx as *mut _
+        self.ctx.cast()
     }
 }

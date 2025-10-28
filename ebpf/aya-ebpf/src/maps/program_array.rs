@@ -39,8 +39,8 @@ pub struct ProgramArray {
 unsafe impl Sync for ProgramArray {}
 
 impl ProgramArray {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> ProgramArray {
-        ProgramArray {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_PROG_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
@@ -53,8 +53,8 @@ impl ProgramArray {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> ProgramArray {
-        ProgramArray {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_PROG_ARRAY,
                 key_size: mem::size_of::<u32>() as u32,
@@ -80,31 +80,11 @@ impl ProgramArray {
     ///
     /// On success, this function **does not return** into the original program.
     /// On failure, a negative error is returned, wrapped in `Err()`.
-    #[cfg(not(unstable))]
-    pub unsafe fn tail_call<C: EbpfContext>(&self, ctx: &C, index: u32) -> Result<(), c_long> {
-        let res = unsafe { bpf_tail_call(ctx.as_ptr(), self.def.get().cast(), index) };
-        if res != 0 {
-            Err(res)
-        } else {
-            unsafe { unreachable_unchecked() }
-        }
-    }
-
-    /// Perform a tail call into a program indexed by this map.
-    ///
-    /// # Safety
-    ///
-    /// This function is inherently unsafe, since it causes control flow to jump into
-    /// another eBPF program. This can have side effects, such as drop methods not being
-    /// called. Note that tail calling into an eBPF program is not the same thing as
-    /// a function call -- control flow never returns to the caller.
-    ///
-    /// # Return Value
-    ///
-    /// On success, this function **does not return** into the original program.
-    /// On failure, a negative error is returned, wrapped in `Err()`.
-    #[cfg(unstable)]
-    pub unsafe fn tail_call<C: EbpfContext>(&self, ctx: &C, index: u32) -> Result<!, c_long> {
+    pub unsafe fn tail_call<C: EbpfContext>(
+        &self,
+        ctx: &C,
+        index: u32,
+    ) -> Result<core::convert::Infallible, c_long> {
         let res = unsafe { bpf_tail_call(ctx.as_ptr(), self.def.get().cast(), index) };
         if res != 0 {
             Err(res)

@@ -7,13 +7,13 @@ pub struct SockContext {
 }
 
 impl SockContext {
-    pub fn new(sock: *mut bpf_sock) -> SockContext {
-        SockContext { sock }
+    pub fn new(sock: *mut bpf_sock) -> Self {
+        Self { sock }
     }
 }
 
 impl EbpfContext for SockContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.sock as *mut _
+        self.sock.cast()
     }
 }

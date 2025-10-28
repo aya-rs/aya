@@ -95,7 +95,7 @@ pub(crate) fn perf_event_open_trace_point(
 
     attr.size = mem::size_of::<perf_event_attr>() as u32;
     attr.type_ = PERF_TYPE_TRACEPOINT as u32;
-    attr.config = id as u64;
+    attr.config = u64::from(id);
 
     let cpu = if pid.is_some() { -1 } else { 0 };
     let pid = pid.unwrap_or(-1);

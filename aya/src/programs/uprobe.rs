@@ -1,7 +1,7 @@
 //! User space probes.
 use std::{
     error::Error,
-    ffi::{CStr, OsStr, OsString, c_char},
+    ffi::{CStr, OsStr, OsString},
     fs,
     io::{self, BufRead as _, Cursor, Read as _},
     mem,
@@ -549,12 +549,8 @@ impl LdSoCache {
                 let read_str = |pos| {
                     use std::os::unix::ffi::OsStrExt as _;
                     OsStr::from_bytes(
-                        unsafe {
-                            CStr::from_ptr(
-                                cursor.get_ref()[offset + pos..].as_ptr() as *const c_char
-                            )
-                        }
-                        .to_bytes(),
+                        unsafe { CStr::from_ptr(cursor.get_ref()[offset + pos..].as_ptr().cast()) }
+                            .to_bytes(),
                     )
                     .to_owned()
                 };

@@ -59,11 +59,12 @@ fn parse_param(input: &str) -> Result<Parameter, String> {
     let hint = match input.strip_prefix(":") {
         Some(input) => match input {
             "" => return Err("malformed format string (missing display hint after ':')".into()),
-            "p" | "x" => DisplayHint::LowerHex,
+            "x" => DisplayHint::LowerHex,
             "X" => DisplayHint::UpperHex,
             "i" => DisplayHint::Ip,
             "mac" => DisplayHint::LowerMac,
             "MAC" => DisplayHint::UpperMac,
+            "p" => DisplayHint::Pointer,
             input => return Err(format!("unknown display hint: {input:?}")),
         },
         None => {
@@ -155,7 +156,7 @@ mod test {
                 }),
                 Fragment::Literal(" lmao {} {something} ".into()),
                 Fragment::Parameter(Parameter {
-                    hint: DisplayHint::LowerHex
+                    hint: DisplayHint::Pointer
                 }),
             ])
         );

@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use core::{
     hint::black_box,
@@ -24,7 +25,7 @@ const FOUR_KB_ARRAY: [u8; 4096] = [0u8; 4096];
 const EIGHT_KB_ARRAY: [u8; 8192] = [0u8; 8192];
 
 #[uprobe]
-pub fn test_log(ctx: ProbeContext) {
+fn test_log(ctx: ProbeContext) {
     debug!(&ctx, "Hello from eBPF!");
     error!(
         &ctx,
@@ -88,6 +89,8 @@ pub fn test_log(ctx: ProbeContext) {
         &ctx,
         "{} {} {} {} {} {} {}", header, tmp, kind, value, size, op, buf
     );
+    let ptr = 0xdeadbeef as *const u8;
+    debug!(&ctx, "ptr: {:p}", ptr);
 
     // Testing compilation only.
     if false {
@@ -119,7 +122,7 @@ pub fn test_log(ctx: ProbeContext) {
 }
 
 #[uprobe]
-pub fn test_log_omission(ctx: ProbeContext) {
+fn test_log_omission(ctx: ProbeContext) {
     debug!(
         &ctx,
         "This is the last u32: {}",

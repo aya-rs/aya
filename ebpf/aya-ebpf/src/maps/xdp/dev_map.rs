@@ -48,8 +48,8 @@ impl DevMap {
     /// #[map]
     /// static MAP: DevMap = DevMap::with_max_entries(8, 0);
     /// ```
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> DevMap {
-        DevMap {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_DEVMAP,
                 key_size: mem::size_of::<u32>() as u32,
@@ -73,8 +73,8 @@ impl DevMap {
     /// #[map]
     /// static MAP: DevMap = DevMap::pinned(8, 0);
     /// ```
-    pub const fn pinned(max_entries: u32, flags: u32) -> DevMap {
-        DevMap {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_DEVMAP,
                 key_size: mem::size_of::<u32>() as u32,

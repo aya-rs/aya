@@ -6,8 +6,8 @@ use aya_obj::{
 };
 
 use crate::programs::{
-    FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper, load_program,
-    utils::attach_raw_tracepoint,
+    FdLink, FdLinkId, LsmAttachType, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+    load_program, utils::attach_raw_tracepoint,
 };
 
 /// A program that attaches to Linux LSM hooks. Used to implement security policy and
@@ -18,7 +18,7 @@ use crate::programs::{
 ///
 /// LSM probes require a kernel compiled with `CONFIG_BPF_LSM=y` and `CONFIG_DEBUG_INFO_BTF=y`.
 /// In order for the probes to fire, you also need the BPF LSM to be enabled through your
-/// kernel's boot paramters (like `lsm=lockdown,yama,bpf`).
+/// kernel's boot parameters (like `lsm=lockdown,yama,bpf`).
 ///
 /// # Minimum kernel version
 ///
@@ -55,7 +55,7 @@ pub struct Lsm {
 
 impl Lsm {
     /// The type of the program according to the kernel.
-    pub const PROGRAM_TYPE: ProgramType = ProgramType::Lsm;
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::Lsm(LsmAttachType::Mac);
 
     /// Loads the program inside the kernel.
     ///

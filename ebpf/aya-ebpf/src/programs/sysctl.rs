@@ -7,13 +7,13 @@ pub struct SysctlContext {
 }
 
 impl SysctlContext {
-    pub fn new(sysctl: *mut bpf_sysctl) -> SysctlContext {
-        SysctlContext { sysctl }
+    pub fn new(sysctl: *mut bpf_sysctl) -> Self {
+        Self { sysctl }
     }
 }
 
 impl EbpfContext for SysctlContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.sysctl as *mut _
+        self.sysctl.cast()
     }
 }

@@ -1,6 +1,4 @@
-use core::{marker::PhantomData, mem};
-
-use aya_ebpf_cty::c_void;
+use core::{borrow::Borrow, marker::PhantomData, mem, ptr};
 
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER},
@@ -15,8 +13,8 @@ pub struct BloomFilter<T> {
 }
 
 impl<T> BloomFilter<T> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> BloomFilter<T> {
-        BloomFilter {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: build_def::<T>(
                 BPF_MAP_TYPE_BLOOM_FILTER,
                 max_entries,
@@ -27,8 +25,8 @@ impl<T> BloomFilter<T> {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> BloomFilter<T> {
-        BloomFilter {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: build_def::<T>(
                 BPF_MAP_TYPE_BLOOM_FILTER,
                 max_entries,
@@ -40,22 +38,22 @@ impl<T> BloomFilter<T> {
     }
 
     #[inline]
-    pub fn contains(&mut self, value: &T) -> Result<(), i64> {
+    pub fn contains(&mut self, value: impl Borrow<T>) -> Result<(), i64> {
         let ret = unsafe {
             bpf_map_peek_elem(
-                &mut self.def as *mut _ as *mut _,
-                value as *const _ as *mut c_void,
+                ptr::from_ref(&self.def).cast_mut().cast(),
+                ptr::from_ref(value.borrow()).cast_mut().cast(),
             )
         };
         (ret == 0).then_some(()).ok_or(ret)
     }
 
     #[inline]
-    pub fn insert(&mut self, value: &T, flags: u64) -> Result<(), i64> {
+    pub fn insert(&mut self, value: impl Borrow<T>, flags: u64) -> Result<(), i64> {
         let ret = unsafe {
             bpf_map_push_elem(
-                &mut self.def as *mut _ as *mut _,
-                value as *const _ as *const _,
+                ptr::from_ref(&self.def).cast_mut().cast(),
+                ptr::from_ref(value.borrow()).cast(),
                 flags,
             )
         };

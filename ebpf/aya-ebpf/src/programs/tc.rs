@@ -7,9 +7,9 @@ pub struct TcContext {
 }
 
 impl TcContext {
-    pub fn new(skb: *mut __sk_buff) -> TcContext {
+    pub fn new(skb: *mut __sk_buff) -> Self {
         let skb = SkBuff { skb };
-        TcContext { skb }
+        Self { skb }
     }
 
     #[expect(clippy::len_without_is_empty)]

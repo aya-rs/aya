@@ -14,7 +14,6 @@ use aya_obj::{
     },
     programs::XdpAttachType,
 };
-use libc::if_nametoindex;
 use thiserror::Error;
 
 use crate::{
@@ -102,14 +101,12 @@ impl Xdp {
     /// If the given `interface` does not exist
     /// [`ProgramError::UnknownInterface`] is returned.
     ///
-    /// When attaching fails, [`ProgramError::SyscallError`] is returned for
-    /// kernels `>= 5.9.0`, and instead
-    /// [`XdpError::NetlinkError`] is returned for older
-    /// kernels.
+    /// When `bpf_link_create` is unavailable or rejects the request, the call
+    /// transparently falls back to the legacy netlink-based attach path.
     pub fn attach(&mut self, interface: &str, flags: XdpFlags) -> Result<XdpLinkId, ProgramError> {
         // TODO: avoid this unwrap by adding a new error variant.
         let c_interface = CString::new(interface).unwrap();
-        let if_index = unsafe { if_nametoindex(c_interface.as_ptr()) };
+        let if_index = unsafe { libc::if_nametoindex(c_interface.as_ptr()) };
         if if_index == 0 {
             return Err(ProgramError::UnknownInterface {
                 name: interface.to_string(),
@@ -124,10 +121,8 @@ impl Xdp {
     ///
     /// # Errors
     ///
-    /// When attaching fails, [`ProgramError::SyscallError`] is returned for
-    /// kernels `>= 5.9.0`, and instead
-    /// [`XdpError::NetlinkError`] is returned for older
-    /// kernels.
+    /// When `bpf_link_create` is unavailable or rejects the request, the call
+    /// transparently falls back to the legacy netlink-based attach path.
     pub fn attach_to_if_index(
         &mut self,
         if_index: u32,
@@ -136,43 +131,45 @@ impl Xdp {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
 
-        if KernelVersion::at_least(5, 9, 0) {
-            // Unwrap safety: the function starts with `self.fd()?` that will succeed if and only
-            // if the program has been loaded, i.e. there is an fd. We get one by:
-            // - Using `Xdp::from_pin` that sets `expected_attach_type`
-            // - Calling `Xdp::attach` that sets `expected_attach_type`, as geting an `Xdp`
-            //   instance through `Xdp:try_from(Program)` does not set any fd.
-            // So, in all cases where we have an fd, we have an expected_attach_type. Thus, if we
-            // reach this point, expected_attach_type is guaranteed to be Some(_).
-            let attach_type = self.data.expected_attach_type.unwrap();
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::IfIndex(if_index),
-                attach_type,
-                flags.bits(),
-                None,
-            )
-            .map_err(|io_error| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
-            self.data
-                .links
-                .insert(XdpLink::new(XdpLinkInner::Fd(FdLink::new(link_fd))))
-        } else {
-            let if_index = if_index as i32;
-            unsafe { netlink_set_xdp_fd(if_index, Some(prog_fd), None, flags.bits()) }
-                .map_err(XdpError::NetlinkError)?;
+        // Unwrap safety: the function starts with `self.fd()?` that will succeed if and only
+        // if the program has been loaded, i.e. there is an fd. We get one by:
+        // - Using `Xdp::from_pin` that sets `expected_attach_type`
+        // - Calling `Xdp::attach` that sets `expected_attach_type`, as geting an `Xdp`
+        //   instance through `Xdp:try_from(Program)` does not set any fd.
+        // So, in all cases where we have an fd, we have an expected_attach_type. Thus, if we
+        // reach this point, expected_attach_type is guaranteed to be Some(_).
+        let attach_type = self.data.expected_attach_type.unwrap();
+        let link = match bpf_link_create(
+            prog_fd,
+            LinkTarget::IfIndex(if_index),
+            attach_type,
+            flags.bits(),
+            None,
+        ) {
+            Ok(link_fd) => XdpLinkInner::Fd(FdLink::new(link_fd)),
+            Err(io_error) => {
+                if io_error.raw_os_error() != Some(libc::EINVAL) {
+                    return Err(ProgramError::SyscallError(SyscallError {
+                        call: "bpf_link_create",
+                        io_error,
+                    }));
+                }
 
-            let prog_fd = prog_fd.as_raw_fd();
-            self.data
-                .links
-                .insert(XdpLink::new(XdpLinkInner::NlLink(NlLink {
+                // Fall back to netlink-based attachment.
+
+                let if_index = if_index as i32;
+                unsafe { netlink_set_xdp_fd(if_index, Some(prog_fd), None, flags.bits()) }
+                    .map_err(XdpError::NetlinkError)?;
+
+                let prog_fd = prog_fd.as_raw_fd();
+                XdpLinkInner::NlLink(NlLink {
                     if_index,
                     prog_fd,
                     flags,
-                })))
-        }
+                })
+            }
+        };
+        self.data.links.insert(XdpLink::new(link))
     }
 
     /// Creates a program from a pinned entry on a bpffs.
@@ -265,7 +262,8 @@ impl Link for NlLink {
         };
         // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
         let prog_fd = unsafe { BorrowedFd::borrow_raw(self.prog_fd) };
-        let _ = unsafe { netlink_set_xdp_fd(self.if_index, None, Some(prog_fd), flags) };
+        let _: Result<(), NetlinkError> =
+            unsafe { netlink_set_xdp_fd(self.if_index, None, Some(prog_fd), flags) };
         Ok(())
     }
 }

@@ -9,8 +9,8 @@ pub struct SockOpsContext {
 }
 
 impl SockOpsContext {
-    pub fn new(ops: *mut bpf_sock_ops) -> SockOpsContext {
-        SockOpsContext { ops }
+    pub fn new(ops: *mut bpf_sock_ops) -> Self {
+        Self { ops }
     }
 
     pub fn op(&self) -> u32 {
@@ -65,6 +65,6 @@ impl SockOpsContext {
 
 impl EbpfContext for SockOpsContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.ops as *mut _
+        self.ops.cast()
     }
 }

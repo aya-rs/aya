@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use core::hint;
 
@@ -15,7 +16,7 @@ extern crate ebpf_panic;
 static RESULTS: Array<u64> = Array::with_max_entries(3, 0);
 
 #[uprobe]
-pub fn test_64_32_call_relocs(_ctx: ProbeContext) {
+fn test_64_32_call_relocs(_ctx: ProbeContext) {
     // this will link set_result and do a forward call
     set_result(0, hint::black_box(1));
 

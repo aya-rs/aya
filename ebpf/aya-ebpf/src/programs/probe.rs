@@ -1,29 +1,14 @@
 use core::ffi::c_void;
 
-#[cfg(any(
-    bpf_target_arch = "x86_64",
-    bpf_target_arch = "arm",
-    bpf_target_arch = "powerpc64",
-    bpf_target_arch = "mips"
-))]
-use crate::bindings::pt_regs;
-// aarch64 uses user_pt_regs instead of pt_regs
-#[cfg(any(bpf_target_arch = "aarch64", bpf_target_arch = "s390x"))]
-use crate::bindings::user_pt_regs as pt_regs;
-// riscv64 uses user_regs_struct instead of pt_regs
-#[cfg(bpf_target_arch = "riscv64")]
-use crate::bindings::user_regs_struct as pt_regs;
-use crate::{EbpfContext, args::FromPtRegs};
+use crate::{Argument, EbpfContext, args::arg, bindings::pt_regs};
 
 pub struct ProbeContext {
     pub regs: *mut pt_regs,
 }
 
 impl ProbeContext {
-    pub fn new(ctx: *mut c_void) -> ProbeContext {
-        ProbeContext {
-            regs: ctx as *mut pt_regs,
-        }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { regs: ctx.cast() }
     }
 
     /// Returns the `n`th argument to passed to the probe function, starting from 0.
@@ -47,13 +32,13 @@ impl ProbeContext {
     ///     Ok(0)
     /// }
     /// ```
-    pub fn arg<T: FromPtRegs>(&self, n: usize) -> Option<T> {
-        T::from_argument(unsafe { &*self.regs }, n)
+    pub fn arg<T: Argument>(&self, n: usize) -> Option<T> {
+        arg(unsafe { &*self.regs }, n)
     }
 }
 
 impl EbpfContext for ProbeContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.regs as *mut c_void
+        self.regs.cast()
     }
 }

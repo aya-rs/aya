@@ -19,7 +19,7 @@ pub(crate) struct Args {
 }
 
 impl Parse for Args {
-    fn parse(input: ParseStream) -> Result<Args> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let args = Punctuated::<Arg, Token![,]>::parse_terminated_with(input, |input| {
             let ident = input.parse::<Ident>()?;
             let lookahead = input.lookahead1();
@@ -42,7 +42,7 @@ impl Parse for Args {
         })
         .collect();
 
-        Ok(Args { args })
+        Ok(Self { args })
     }
 }
 
