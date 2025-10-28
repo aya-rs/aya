@@ -12,24 +12,22 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  buildTestAyaDirect:
-    uses: melodium-tech/github-actions/.github/workflows/melodium-ubuntu.yml@v0.9.1
+  #buildTestAyaDirect:
+  #  uses: melodium-tech/github-actions/.github/workflows/melodium-ubuntu.yml@v0.9.1
+  #  with:
+  #    command: |
+  #      run .melodium-ci/Compo.toml buildTestAyaDirect --github_contexts='$''{{{{ { "github": ${{ toJSON(github) }}, "vars": ${{ toJSON(vars) }}, "secrets": { "GITHUB_TOKEN": "'"$GITHUB_TOKEN"'" } } }}}}'
+  #    artifact-path: 'logs/'
+  #  secrets:
+  #      token: ${{ secrets.GITHUB_TOKEN }}
+  buildTestAya:
+    uses: melodium-tech/github-actions/.github/workflows/melodium-local-distrib.yml@v0.9.1
     with:
       command: |
-        run .melodium-ci/Compo.toml buildTestAyaDirect --github_contexts='$''{{{{ { "github": ${{ toJSON(github) }}, "vars": ${{ toJSON(vars) }}, "secrets": { "GITHUB_TOKEN": "'"$GITHUB_TOKEN"'" } } }}}}'
+        run .melodium-ci/Compo.toml buildTestAya --repository_clone_url='"${{ github.repositoryUrl }}"' --repository_clone_ref='"${{ github.ref_name }}"' --github_contexts='$''{{{{ { "github": ${{ toJSON(github) }}, "vars": ${{ toJSON(vars) }}, "secrets": { "GITHUB_TOKEN": "'"$GITHUB_TOKEN"'" } } }}}}'
       artifact-path: 'logs/'
     secrets:
         token: ${{ secrets.GITHUB_TOKEN }}
-  #buildTestAya:
-    #uses: melodium-tech/github-actions/.github/workflows/melodium-local-distrib.yml@v0.9.0
-    #with:
-    #  version: 0.9.1
-    #  command: |
-    #    run .melodium-ci/Compo.toml buildTestAya --repository_clone_url='"${{ github.repositoryUrl }}"' --repository_clone_ref='"${{ github.ref_name }}"' --github_contexts='$''{{{{ { "github": ${{ toJSON(github) }}, "vars": ${{ toJSON(vars) }}, "secrets": { "GITHUB_TOKEN": "'"$GITHUB_TOKEN"'" } } }}}}'
-    #  artifact-path: 'logs/'
-    #  melodium_images_pull_source: registry.gitlab.com/melodium/containers
-    #secrets:
-    #    token: ${{ secrets.GITHUB_TOKEN }}
     #runs-on: ubuntu-latest
     #steps:
     #  - uses: actions/checkout@v5
