@@ -10750,7 +10750,7 @@ pub fn aya::EbpfLoader<'a>::map_max_entries(&mut self, name: &'a str, size: u32)
 pub fn aya::EbpfLoader<'a>::map_pin_path<P: core::convert::Into<alloc::borrow::Cow<'a, std::path::Path>>>(&mut self, name: &'a str, path: P) -> &mut Self
 pub fn aya::EbpfLoader<'a>::new() -> Self
 pub fn aya::EbpfLoader<'a>::override_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T, must_exist: bool) -> &mut Self
-pub fn aya::EbpfLoader<'a>::set_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T) -> &mut Self
+pub fn aya::EbpfLoader<'a>::set_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T, must_exist: bool) -> &mut Self
 pub fn aya::EbpfLoader<'a>::set_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self
 pub fn aya::EbpfLoader<'a>::verifier_log_level(&mut self, level: aya::VerifierLogLevel) -> &mut Self
 impl core::default::Default for aya::EbpfLoader<'_>
