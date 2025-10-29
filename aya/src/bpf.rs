@@ -293,8 +293,13 @@ impl<'a> EbpfLoader<'a> {
 
     /// Override the value of a global variable.
     #[deprecated(since = "0.13.2", note = "please use `override_global` instead")]
-    pub fn set_global<T: Into<GlobalData<'a>>>(&mut self, name: &'a str, value: T) -> &mut Self {
-        self.override_global(name, value, false)
+    pub fn set_global<T: Into<GlobalData<'a>>>(
+        &mut self,
+        name: &'a str,
+        value: T,
+        must_exist: bool,
+    ) -> &mut Self {
+        self.override_global(name, value, must_exist)
     }
 
     /// Set the max_entries for specified map.
