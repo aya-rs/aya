@@ -19,9 +19,9 @@ pub struct Package<'a> {
 fn target_arch() -> Cow<'static, str> {
     const TARGET_ARCH: &str = "CARGO_CFG_TARGET_ARCH";
     let target_arch = env::var_os(TARGET_ARCH).unwrap_or_else(|| panic!("{TARGET_ARCH} not set"));
-    let target_arch = target_arch.into_encoded_bytes();
-    let target_arch = String::from_utf8(target_arch)
-        .unwrap_or_else(|err| panic!("String::from_utf8({TARGET_ARCH}): {err:?}"));
+    let target_arch = target_arch
+        .into_string()
+        .unwrap_or_else(|err| panic!("OsString::into_string({TARGET_ARCH}): {err:?}"));
     if target_arch.starts_with("riscv64") {
         "riscv64".into()
     } else {
