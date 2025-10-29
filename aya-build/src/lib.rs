@@ -16,16 +16,11 @@ pub struct Package<'a> {
     pub root_dir: &'a str,
 }
 
-fn target_arch() -> Cow<'static, str> {
-    const TARGET_ARCH: &str = "CARGO_CFG_TARGET_ARCH";
-    let target_arch = env::var_os(TARGET_ARCH).unwrap_or_else(|| panic!("{TARGET_ARCH} not set"));
-    let target_arch = target_arch
-        .into_string()
-        .unwrap_or_else(|err| panic!("OsString::into_string({TARGET_ARCH}): {err:?}"));
+fn target_arch_fixup(target_arch: Cow<'_, str>) -> Cow<'_, str> {
     if target_arch.starts_with("riscv64") {
         "riscv64".into()
     } else {
-        target_arch.into()
+        target_arch
     }
 }
 
@@ -58,7 +53,13 @@ pub fn build_ebpf<'a>(
         return Err(anyhow!("unsupported endian={endian:?}"));
     };
 
-    let bpf_target_arch = target_arch();
+    const TARGET_ARCH: &str = "CARGO_CFG_TARGET_ARCH";
+    let bpf_target_arch =
+        env::var_os(TARGET_ARCH).unwrap_or_else(|| panic!("{TARGET_ARCH} not set"));
+    let bpf_target_arch = bpf_target_arch
+        .into_string()
+        .unwrap_or_else(|err| panic!("OsString::into_string({TARGET_ARCH}): {err:?}"));
+    let bpf_target_arch = target_arch_fixup(bpf_target_arch.into());
     let target = format!("{target}-unknown-none");
 
     for Package { name, root_dir } in packages {
@@ -216,7 +217,16 @@ pub fn emit_bpf_target_arch_cfg() {
     const AYA_BPF_TARGET_ARCH: &str = "AYA_BPF_TARGET_ARCH";
     println!("cargo:rerun-if-env-changed={AYA_BPF_TARGET_ARCH}");
 
+    const HOST: &str = "HOST";
+    println!("cargo:rerun-if-env-changed={HOST}");
+
     if std::env::var_os(BPF_TARGET_ARCH).is_none() {
+        let host = std::env::var_os(HOST).unwrap_or_else(|| panic!("{HOST} not set"));
+        let host = host
+            .into_string()
+            .unwrap_or_else(|err| panic!("OsString::into_string({HOST}): {err:?}"));
+        let host = host.as_str();
+
         let bpf_target_arch = if let Some(bpf_target_arch) = std::env::var_os(AYA_BPF_TARGET_ARCH) {
             bpf_target_arch
                 .into_string()
@@ -225,7 +235,11 @@ pub fn emit_bpf_target_arch_cfg() {
                 })
                 .into()
         } else {
-            target_arch()
+            target_arch_fixup(
+                host.split_once('-')
+                    .map_or(host, |(arch, _rest)| arch)
+                    .into(),
+            )
         };
         println!("cargo:rustc-cfg=bpf_target_arch=\"{bpf_target_arch}\"");
     }
