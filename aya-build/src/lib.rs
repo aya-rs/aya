@@ -208,8 +208,25 @@ pub fn emit_bpf_target_arch_cfg() {
     // is set by cargo.
     const BPF_TARGET_ARCH: &str = "CARGO_CFG_BPF_TARGET_ARCH";
     println!("cargo:rerun-if-env-changed={BPF_TARGET_ARCH}");
+
+    // Users may directly set this environment variable in situations where
+    // using RUSTFLAGS to set `--cfg bpf_target_arch="..."` is not possible or
+    // not ergonomic. In contrast to RUSTFLAGS this mechanism reuses the target
+    // cache for all values, producing many more invalidations.
+    const AYA_BPF_TARGET_ARCH: &str = "AYA_BPF_TARGET_ARCH";
+    println!("cargo:rerun-if-env-changed={AYA_BPF_TARGET_ARCH}");
+
     if std::env::var_os(BPF_TARGET_ARCH).is_none() {
-        let bpf_target_arch = target_arch();
+        let bpf_target_arch = if let Some(bpf_target_arch) = std::env::var_os(AYA_BPF_TARGET_ARCH) {
+            bpf_target_arch
+                .into_string()
+                .unwrap_or_else(|err| {
+                    panic!("OsString::into_string({AYA_BPF_TARGET_ARCH}): {err:?}")
+                })
+                .into()
+        } else {
+            target_arch()
+        };
         println!("cargo:rustc-cfg=bpf_target_arch=\"{bpf_target_arch}\"");
     }
 
