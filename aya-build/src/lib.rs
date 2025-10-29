@@ -58,7 +58,7 @@ pub fn build_ebpf<'a>(
         return Err(anyhow!("unsupported endian={endian:?}"));
     };
 
-    let arch = target_arch();
+    let bpf_target_arch = target_arch();
     let target = format!("{target}-unknown-none");
 
     for Package { name, root_dir } in packages {
@@ -92,7 +92,7 @@ pub fn build_ebpf<'a>(
 
             for s in [
                 "--cfg=bpf_target_arch=\"",
-                &arch,
+                &bpf_target_arch,
                 "\"",
                 SEPARATOR,
                 "-Cdebuginfo=2",
@@ -210,8 +210,8 @@ pub fn emit_bpf_target_arch_cfg() {
         .to_str()
         .unwrap_or_else(|| panic!("{RUSTFLAGS}={rustc_cfgs:?} not unicode"));
     if !rustc_cfgs.contains("bpf_target_arch") {
-        let arch = target_arch();
-        println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
+        let bpf_target_arch = target_arch();
+        println!("cargo:rustc-cfg=bpf_target_arch=\"{bpf_target_arch}\"");
     }
 
     print!("cargo::rustc-check-cfg=cfg(bpf_target_arch, values(");
