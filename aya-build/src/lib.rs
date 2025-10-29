@@ -202,14 +202,13 @@ impl<'a> Toolchain<'a> {
 
 /// Emit cfg flags that describe the desired BPF target architecture.
 pub fn emit_bpf_target_arch_cfg() {
-    const RUSTFLAGS: &str = "CARGO_ENCODED_RUSTFLAGS";
-
-    println!("cargo:rerun-if-env-changed={RUSTFLAGS}");
-    let rustc_cfgs = std::env::var_os(RUSTFLAGS).unwrap_or_else(|| panic!("{RUSTFLAGS} not set"));
-    let rustc_cfgs = rustc_cfgs
-        .to_str()
-        .unwrap_or_else(|| panic!("{RUSTFLAGS}={rustc_cfgs:?} not unicode"));
-    if !rustc_cfgs.contains("bpf_target_arch") {
+    // The presence of this environment variable indicates that `--cfg
+    // bpf_target_arch="..."` was passed to the compiler, so we don't need to
+    // emit it again. Note that we cannot *set* this environment variable - it
+    // is set by cargo.
+    const BPF_TARGET_ARCH: &str = "CARGO_CFG_BPF_TARGET_ARCH";
+    println!("cargo:rerun-if-env-changed={BPF_TARGET_ARCH}");
+    if std::env::var_os(BPF_TARGET_ARCH).is_none() {
         let bpf_target_arch = target_arch();
         println!("cargo:rustc-cfg=bpf_target_arch=\"{bpf_target_arch}\"");
     }
