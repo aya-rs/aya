@@ -22,10 +22,14 @@ fn target_arch() -> Cow<'static, str> {
     let target_arch = target_arch
         .into_string()
         .unwrap_or_else(|err| panic!("OsString::into_string({TARGET_ARCH}): {err:?}"));
+    target_arch_fixup(target_arch.into())
+}
+
+fn target_arch_fixup(target_arch: Cow<'_, str>) -> Cow<'_, str> {
     if target_arch.starts_with("riscv64") {
         "riscv64".into()
     } else {
-        target_arch.into()
+        target_arch
     }
 }
 
@@ -216,6 +220,17 @@ pub fn emit_bpf_target_arch_cfg() {
     const AYA_BPF_TARGET_ARCH: &str = "AYA_BPF_TARGET_ARCH";
     println!("cargo:rerun-if-env-changed={AYA_BPF_TARGET_ARCH}");
 
+    const HOST: &str = "HOST";
+    println!("cargo:rerun-if-env-changed={HOST}");
+
+    let host = std::env::var_os(HOST).map(|host| {
+        host.into_string()
+            .unwrap_or_else(|err| panic!("OsString::into_string({HOST}): {err:?}"))
+    });
+    let host_arch = host
+        .as_ref()
+        .and_then(|host| host.split_once('-').map(|(arch, _rest)| arch));
+
     if std::env::var_os(BPF_TARGET_ARCH).is_none() {
         let bpf_target_arch = if let Some(bpf_target_arch) = std::env::var_os(AYA_BPF_TARGET_ARCH) {
             bpf_target_arch
@@ -224,6 +239,8 @@ pub fn emit_bpf_target_arch_cfg() {
                     panic!("OsString::into_string({AYA_BPF_TARGET_ARCH}): {err:?}")
                 })
                 .into()
+        } else if let Some(host_arch) = host_arch {
+            target_arch_fixup(host_arch.into())
         } else {
             target_arch()
         };
