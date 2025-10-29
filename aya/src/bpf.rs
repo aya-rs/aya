@@ -1055,6 +1055,35 @@ impl Ebpf {
         self.maps.iter_mut().map(|(name, map)| (name.as_str(), map))
     }
 
+    /// Attempts to get mutable references to `N` maps at once.
+    ///
+    /// Returns an array of length `N` with the results of each query, in the same order
+    /// as the requested map names. For soundness, at most one mutable reference will be
+    /// returned to any map. `None` will be used if a map with the given name is missing.
+    ///
+    /// This method performs a check to ensure that there are no duplicate map names,
+    /// which currently has a time-complexity of *O(n²)*. Be careful when passing a large
+    /// number of names.
+    ///
+    /// # Panics
+    ///
+    /// Panics if any names are duplicated.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # let mut bpf = aya::Ebpf::load(&[])?;
+    /// match bpf.maps_many_mut(["MAP1", "MAP2"]) {
+    ///     [Some(m1), Some(m2)] => println!("Got MAP1 and MAP2"),
+    ///     [Some(m1), None] => println!("Got only MAP1"),
+    ///     [None, Some(m2)] => println!("Got only MAP2"),
+    ///     [None, None] => println!("No maps"),
+    /// }
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    pub fn maps_many_mut<const N: usize>(&mut self, names: [&str; N]) -> [Option<&mut Map>; N] {
+        self.maps.get_disjoint_mut(names)
+    }
+
     /// Returns a reference to the program with the given name.
     ///
     /// You can use this to inspect a program and its properties. To load and attach a program, use
