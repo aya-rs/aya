@@ -14,6 +14,7 @@ use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 pub struct Package<'a> {
     pub name: &'a str,
     pub root_dir: &'a str,
+    pub enabled_features: Vec<&'a str>,
 }
 
 fn target_arch_fixup(target_arch: Cow<'_, str>) -> Cow<'_, str> {
@@ -62,7 +63,12 @@ pub fn build_ebpf<'a>(
     let bpf_target_arch = target_arch_fixup(bpf_target_arch.into());
     let target = format!("{target}-unknown-none");
 
-    for Package { name, root_dir } in packages {
+    for Package {
+        name,
+        root_dir,
+        enabled_features,
+    } in packages
+    {
         // We have a build-dependency on `name`, so cargo will automatically rebuild us if `name`'s
         // *library* target or any of its dependencies change. Since we depend on `name`'s *binary*
         // targets, that only gets us half of the way. This stanza ensures cargo will rebuild us on
@@ -85,6 +91,12 @@ pub fn build_ebpf<'a>(
             "--target",
             &target,
         ]);
+        if !enabled_features.is_empty() {
+            cmd.args([
+                "--features",
+                &enabled_features.join(","),
+            ]);
+        }
 
         {
             const SEPARATOR: &str = "\x1f";
@@ -166,10 +178,7 @@ pub fn build_ebpf<'a>(
             return Err(anyhow!("{cmd:?} failed: {status:?}"));
         }
 
-        match stderr.join().map_err(std::panic::resume_unwind) {
-            Ok(()) => {}
-            Err(err) => match err {},
-        }
+        stderr.join().map_err(std::panic::resume_unwind).unwrap();
 
         for (name, binary) in executables {
             let dst = out_dir.join(name);
