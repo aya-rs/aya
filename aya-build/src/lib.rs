@@ -11,9 +11,12 @@ use std::{
 use anyhow::{Context as _, Result, anyhow};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 
+#[derive(Default)]
 pub struct Package<'a> {
     pub name: &'a str,
     pub root_dir: &'a str,
+    pub no_default_features: bool,
+    pub features: &'a [&'a str],
 }
 
 fn target_arch_fixup(target_arch: Cow<'_, str>) -> Cow<'_, str> {
@@ -62,7 +65,13 @@ pub fn build_ebpf<'a>(
     let bpf_target_arch = target_arch_fixup(bpf_target_arch.into());
     let target = format!("{target}-unknown-none");
 
-    for Package { name, root_dir } in packages {
+    for Package {
+        name,
+        root_dir,
+        no_default_features,
+        features,
+    } in packages
+    {
         // We have a build-dependency on `name`, so cargo will automatically rebuild us if `name`'s
         // *library* target or any of its dependencies change. Since we depend on `name`'s *binary*
         // targets, that only gets us half of the way. This stanza ensures cargo will rebuild us on
@@ -85,6 +94,10 @@ pub fn build_ebpf<'a>(
             "--target",
             &target,
         ]);
+        if no_default_features {
+            cmd.arg("--no-default-features");
+        }
+        cmd.args(["--features", &features.join(",")]);
 
         {
             const SEPARATOR: &str = "\x1f";
