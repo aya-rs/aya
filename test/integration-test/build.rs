@@ -219,6 +219,7 @@ fn main() -> Result<()> {
                 .parent()
                 .ok_or_else(|| anyhow!("no parent for {manifest_path}"))?
                 .as_str(),
+            ..Default::default()
         };
         aya_build::build_ebpf([integration_ebpf_package], aya_build::Toolchain::default())?;
     } else {
