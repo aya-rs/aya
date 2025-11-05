@@ -8,10 +8,13 @@ use alloc::{
 use core::{
     cell::OnceCell,
     ffi::{CStr, FromBytesUntilNulError},
+    fmt::Write as _,
+    hash::{BuildHasher as _, Hasher as _},
     mem, ptr,
 };
 
 use bytes::BufMut as _;
+use foldhash::fast::FixedState;
 use log::debug;
 use object::{Endianness, SectionIndex};
 
@@ -273,6 +276,45 @@ fn add_type(header: &mut btf_header, types: &mut BtfTypes, btf_type: BtfType) ->
     header.type_len += size;
     header.str_off += size;
     type_id as u32
+}
+
+/// Maximum length of a type name accepted by the [Linux kernel][name-limit]
+/// according to the [`KSYM_NAME_LEN` variable][ksym-name-len]. That variable
+/// got increased in [kernel 6.1][ksym-name-len-bump], but we keep the old value
+/// for backwards compatibility.
+/// Ker
+/// KSYM_NAME_LEN from Linux kernel intentionally set to the lowest value found
+/// across versions to ensure backward compatibility.
+///
+/// [name-limit]: https://github.com/torvalds/linux/blob/v4.20/kernel/bpf/btf.c#L442-L449
+/// [ksym-name-len]: https://github.com/torvalds/linux/blob/v4.20/include/linux/kallsyms.h#L17
+/// [ksym-name-len-bump]: https://github.com/torvalds/linux/commit/b8a94bfb33952bb17fbc65f8903d242a721c533d
+const MAX_NAME_LEN: usize = 128;
+
+// Sanitize Rust type names to be valid C type names. Kernel does not accept
+// other characters like `<`, `>` that Rust emits.
+fn sanitize_type_name(name: &str) -> String {
+    let mut sanitized = String::with_capacity(name.len());
+    for byte in name.bytes() {
+        // Characters which are valid in C type names (alphanumeric and `_`).
+        if matches!(byte, b'0'..=b'9' | b'A'..=b'Z' | b'a'..=b'z' | b'_') {
+            sanitized.push(byte as char);
+        } else {
+            write!(&mut sanitized, "_{:X}_", byte).unwrap();
+        }
+    }
+
+    if sanitized.len() > MAX_NAME_LEN {
+        let mut hasher = FixedState::default().build_hasher();
+        hasher.write(sanitized.as_bytes());
+        let hash = hasher.finish();
+        // leave space for underscore
+        let trim = MAX_NAME_LEN - 2 * size_of_val(&hash) - 1;
+        sanitized.truncate(trim);
+        write!(&mut sanitized, "_{:x}", hash).unwrap();
+    }
+
+    sanitized
 }
 
 impl Btf {
@@ -695,8 +737,14 @@ impl Btf {
                 }
                 // Sanitize FUNC.
                 BtfType::Func(ty) => {
+                    // Sanitize the name.
                     let name = self.string_at(ty.name_offset)?;
-                    // Sanitize FUNC.
+                    let fixed_name = sanitize_type_name(&name);
+                    if fixed_name != name {
+                        ty.name_offset = self.add_string(&fixed_name);
+                    }
+                    // Adjust type and linkage according to features.
+                    let name = self.string_at(ty.name_offset)?;
                     if !features.btf_func {
                         debug!("{kind}: not supported. replacing with TYPEDEF");
                         *t = BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
@@ -803,6 +851,15 @@ impl Btf {
                         // Must reborrow here because we borrow `types` above.
                         let t = &mut types.types[i];
                         *t = BtfType::Union(Union::new(name_offset, size, members, Some(fallback)));
+                    }
+                }
+                // Sanitize STRUCT.
+                BtfType::Struct(ty) => {
+                    // Sanitize the name.
+                    let name = self.string_at(ty.name_offset)?;
+                    let fixed_name = sanitize_type_name(&name);
+                    if fixed_name != name {
+                        ty.name_offset = self.add_string(&fixed_name);
                     }
                 }
                 // The type does not need fixing up or sanitization.
@@ -1415,6 +1472,57 @@ mod tests {
         let btf = Btf::parse(raw_btf, Endianness::default()).unwrap();
         assert_eq!(btf.string_at(1).unwrap(), "int");
         assert_eq!(btf.string_at(5).unwrap(), "widget");
+    }
+
+    #[test]
+    fn test_sanitize_type_name() {
+        let name = "MyStruct<u64>";
+        assert_eq!(sanitize_type_name(name), "MyStruct_3C_u64_3E_");
+
+        let name = "MyStruct<u64, u64>";
+        assert_eq!(sanitize_type_name(name), "MyStruct_3C_u64_2C__20_u64_3E_");
+
+        let name = "my_function<aya_bpf::BpfContext>";
+        assert_eq!(
+            sanitize_type_name(name),
+            "my_function_3C_aya_bpf_3A__3A_BpfContext_3E_"
+        );
+
+        let name = "my_function<aya_bpf::BpfContext, aya_log_ebpf::WriteToBuf>";
+        assert_eq!(
+            sanitize_type_name(name),
+            "my_function_3C_aya_bpf_3A__3A_BpfContext_2C__20_aya_log_ebpf_3A__3A_WriteToBuf_3E_"
+        );
+
+        let name = "PerfEventArray<[u8; 32]>";
+        assert_eq!(
+            sanitize_type_name(name),
+            "PerfEventArray_3C__5B_u8_3B__20_32_5D__3E_"
+        );
+
+        let name = "my_function<aya_bpf::this::is::a::very::long::namespace::BpfContext, aya_log_ebpf::this::is::a::very::long::namespace::WriteToBuf>";
+        let san = sanitize_type_name(name);
+
+        #[cfg(any(
+            target_arch = "aarch64",
+            target_arch = "loongarch64",
+            target_arch = "powerpc64",
+            target_arch = "riscv64",
+            target_arch = "x86_64"
+        ))]
+        let expected_hash = "f6a9dc7f4a53c91d";
+        #[cfg(target_arch = "arm")]
+        let expected_hash = "a14ff8f0f097a5fe";
+        #[cfg(target_arch = "s390x")]
+        let expected_hash = "6609fba3a8753dce";
+
+        assert_eq!(san.len(), 128);
+        assert_eq!(
+            san,
+            format!(
+                "my_function_3C_aya_bpf_3A__3A_this_3A__3A_is_3A__3A_a_3A__3A_very_3A__3A_long_3A__3A_namespace_3A__3A_BpfContex_{expected_hash}"
+            )
+        );
     }
 
     #[test]
