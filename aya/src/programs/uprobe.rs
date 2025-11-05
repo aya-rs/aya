@@ -425,6 +425,7 @@ impl<T: AsRef<[u8]>> ProcMap<T> {
 
         data.as_ref()
             .split(|&b| b == b'\n')
+            .filter(|line| !line.is_empty())
             .map(ProcMapEntry::parse)
     }
 
@@ -1018,5 +1019,31 @@ mod tests {
             proc_map_libs.find_library_path_by_name(Path::new("ld-linux-x86-64.so.2")),
             Ok(Some(path)) if path == Path::new("/usr/lib64/ld-linux-x86-64.so.2")
         );
+    }
+
+    #[test]
+    fn test_proc_map_ignores_trailing_empty_line() {
+        let proc_map_libs = ProcMap {
+            pid: 0xdead,
+            data: b"7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libcrypto.so.3.0.9\n",
+        };
+
+        assert_matches!(
+            proc_map_libs.find_library_path_by_name(Path::new("libcrypto.so.3.0.9")),
+            Ok(Some(path)) if path == Path::new("/usr/lib64/libcrypto.so.3.0.9")
+        );
+    }
+
+    #[test]
+    fn test_resolve_attach_path_absolute_fallback() {
+        let proc_map_libs = ProcMap {
+            pid: 0xbeef,
+            data:
+                b"7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libother.so.1\n",
+        };
+        let target = Path::new("/home/bin/ghostscope");
+
+        let resolved = resolve_attach_path(target, Some(&proc_map_libs)).unwrap();
+        assert_eq!(resolved, target);
     }
 }
