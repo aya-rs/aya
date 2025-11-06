@@ -208,6 +208,19 @@ fn test_resolve_attach_path() {
         Some(libc_path) if libc_path.contains("libc"),
         "libc_path: {}", libc_path.display()
     );
+
+    // If we pass an absolute path that doesn't match anything in /proc/<pid>/maps, we should fall
+    // back to the provided path instead of erroring out. Using a synthetic absolute path keeps the
+    // test hermetic.
+    let synthetic_absolute = Path::new("/tmp/.aya-test-resolve-attach-absolute");
+    let absolute_path =
+        resolve_attach_path(synthetic_absolute, Some(&proc_map)).unwrap_or_else(|err| {
+            match err.source() {
+                Some(source) => panic!("{err}: {source}"),
+                None => panic!("{err}"),
+            }
+        });
+    assert_eq!(absolute_path, synthetic_absolute);
 }
 
 define_link_wrapper!(
@@ -425,6 +438,8 @@ impl<T: AsRef<[u8]>> ProcMap<T> {
 
         data.as_ref()
             .split(|&b| b == b'\n')
+            // /proc/<pid>/maps ends with '\n', so split() yields a trailing empty slice.
+            .filter(|line| !line.is_empty())
             .map(ProcMapEntry::parse)
     }
 
@@ -1010,8 +1025,7 @@ mod tests {
 7f372288f000-7f3722899000	r--p	00027000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
 7f3722899000-7f372289b000	r--p	00030000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
 7f372289b000-7f372289d000	rw-p	00032000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
-"#
-            .trim_ascii(),
+"#,
         };
 
         assert_matches!(
