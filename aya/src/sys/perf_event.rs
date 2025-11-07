@@ -7,53 +7,97 @@ use std::{
 use aya_obj::generated::{
     PERF_FLAG_FD_CLOEXEC, perf_event_attr,
     perf_event_sample_format::PERF_SAMPLE_RAW,
-    perf_sw_ids::PERF_COUNT_SW_BPF_OUTPUT,
-    perf_type_id::{PERF_TYPE_SOFTWARE, PERF_TYPE_TRACEPOINT},
+    perf_type_id::{
+        PERF_TYPE_BREAKPOINT, PERF_TYPE_HARDWARE, PERF_TYPE_HW_CACHE, PERF_TYPE_RAW,
+        PERF_TYPE_SOFTWARE, PERF_TYPE_TRACEPOINT,
+    },
 };
 use libc::pid_t;
 
 use super::{PerfEventIoctlRequest, Syscall, syscall};
+use crate::programs::perf_event::{
+    PerfEventConfig, PerfEventScope, SamplePolicy, SoftwareEvent, WakeupPolicy, perf_type_id_to_u32,
+};
 
-#[expect(clippy::too_many_arguments)]
 pub(crate) fn perf_event_open(
-    perf_type: u32,
-    config: u64,
-    pid: pid_t,
-    cpu: c_int,
-    sample_period: u64,
-    sample_frequency: Option<u64>,
-    wakeup: bool,
+    config: PerfEventConfig,
+    scope: PerfEventScope,
+    sample_policy: SamplePolicy,
+    wakeup_policy: WakeupPolicy,
     inherit: bool,
     flags: u32,
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
+
+    let (perf_type, config) = match config {
+        PerfEventConfig::Pmu { pmu_type, config } => (pmu_type, config),
+        PerfEventConfig::Hardware(hw_event) => (
+            perf_type_id_to_u32(PERF_TYPE_HARDWARE),
+            u64::from(hw_event.into_primitive()),
+        ),
+        PerfEventConfig::Software(sw_event) => (
+            perf_type_id_to_u32(PERF_TYPE_SOFTWARE),
+            u64::from(sw_event.into_primitive()),
+        ),
+        PerfEventConfig::TracePoint { event_id } => {
+            (perf_type_id_to_u32(PERF_TYPE_TRACEPOINT), event_id)
+        }
+        PerfEventConfig::HwCache {
+            event,
+            operation,
+            result,
+        } => (
+            perf_type_id_to_u32(PERF_TYPE_HW_CACHE),
+            u64::from(event.into_primitive())
+                | (u64::from(operation.into_primitive()) << 8)
+                | (u64::from(result.into_primitive()) << 16),
+        ),
+        PerfEventConfig::Raw { event_id } => (perf_type_id_to_u32(PERF_TYPE_RAW), event_id),
+        PerfEventConfig::Breakpoint => (perf_type_id_to_u32(PERF_TYPE_BREAKPOINT), 0),
+    };
 
     attr.config = config;
     attr.size = mem::size_of::<perf_event_attr>() as u32;
     attr.type_ = perf_type;
     attr.sample_type = PERF_SAMPLE_RAW as u64;
     attr.set_inherit(if inherit { 1 } else { 0 });
-    attr.__bindgen_anon_2.wakeup_events = u32::from(wakeup);
 
-    if let Some(frequency) = sample_frequency {
-        attr.set_freq(1);
-        attr.__bindgen_anon_1.sample_freq = frequency;
-    } else {
-        attr.__bindgen_anon_1.sample_period = sample_period;
+    match sample_policy {
+        SamplePolicy::Period(period) => {
+            attr.__bindgen_anon_1.sample_period = period;
+        }
+        SamplePolicy::Frequency(frequency) => {
+            attr.set_freq(1);
+            attr.__bindgen_anon_1.sample_freq = frequency;
+        }
     }
+
+    match wakeup_policy {
+        WakeupPolicy::Events(events) => {
+            attr.__bindgen_anon_2.wakeup_events = events;
+        }
+        WakeupPolicy::Watermark(watermark) => {
+            attr.set_watermark(1);
+            attr.__bindgen_anon_2.wakeup_watermark = watermark;
+        }
+    }
+
+    let (pid, cpu) = match scope {
+        PerfEventScope::CallingProcess { cpu } => (0, cpu.map_or(-1, |cpu| cpu as i32)),
+        PerfEventScope::OneProcess { pid, cpu } => (pid, cpu.map_or(-1, |cpu| cpu as i32)),
+        PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
+    };
 
     perf_event_sys(attr, pid, cpu, flags)
 }
 
 pub(crate) fn perf_event_open_bpf(cpu: c_int) -> io::Result<crate::MockableFd> {
+    let cpu = cpu as u32;
     perf_event_open(
-        PERF_TYPE_SOFTWARE as u32,
-        PERF_COUNT_SW_BPF_OUTPUT as u64,
-        -1,
-        cpu,
-        1,
-        None,
-        true,
+        PerfEventConfig::Software(SoftwareEvent::BpfOutput),
+        PerfEventScope::AllProcessesOneCpu { cpu },
+        SamplePolicy::Period(1),
+        WakeupPolicy::Events(1),
         false,
         PERF_FLAG_FD_CLOEXEC,
     )

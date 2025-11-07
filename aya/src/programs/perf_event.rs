@@ -3,14 +3,8 @@
 use std::os::fd::AsFd as _;
 
 use aya_obj::generated::{
-    bpf_link_type,
-    bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT,
-    perf_hw_cache_id, perf_hw_cache_op_id, perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids,
-    perf_type_id,
-    perf_type_id::{
-        PERF_TYPE_BREAKPOINT, PERF_TYPE_HARDWARE, PERF_TYPE_HW_CACHE, PERF_TYPE_RAW,
-        PERF_TYPE_SOFTWARE, PERF_TYPE_TRACEPOINT,
-    },
+    bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT, perf_hw_cache_id, perf_hw_cache_op_id,
+    perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids, perf_type_id,
 };
 
 use crate::{
@@ -84,7 +78,7 @@ pub enum PerfEventConfig {
 
 macro_rules! impl_to_u32 {
     ($($t:ty, $fn:ident),*) => {
-        $(const fn $fn(id: $t) -> u32 {
+        $(pub(crate) const fn $fn(id: $t) -> u32 {
             const _: [(); 4] = [(); std::mem::size_of::<$t>()];
             id as u32
         })*
@@ -144,7 +138,7 @@ pub enum HardwareEvent {
 }
 
 impl HardwareEvent {
-    const fn into_primitive(self) -> u32 {
+    pub(crate) const fn into_primitive(self) -> u32 {
         const _: [(); 4] = [(); std::mem::size_of::<HardwareEvent>()];
         self as u32
     }
@@ -194,7 +188,7 @@ pub enum SoftwareEvent {
 }
 
 impl SoftwareEvent {
-    const fn into_primitive(self) -> u32 {
+    pub(crate) const fn into_primitive(self) -> u32 {
         const _: [(); 4] = [(); std::mem::size_of::<SoftwareEvent>()];
         self as u32
     }
@@ -229,7 +223,7 @@ pub enum HwCacheEvent {
 }
 
 impl HwCacheEvent {
-    const fn into_primitive(self) -> u32 {
+    pub(crate) const fn into_primitive(self) -> u32 {
         const _: [(); 4] = [(); std::mem::size_of::<HwCacheEvent>()];
         self as u32
     }
@@ -252,7 +246,7 @@ pub enum HwCacheOp {
 }
 
 impl HwCacheOp {
-    const fn into_primitive(self) -> u32 {
+    pub(crate) const fn into_primitive(self) -> u32 {
         const _: [(); 4] = [(); std::mem::size_of::<HwCacheOp>()];
         self as u32
     }
@@ -276,14 +270,14 @@ pub enum HwCacheResult {
 }
 
 impl HwCacheResult {
-    const fn into_primitive(self) -> u32 {
+    pub(crate) const fn into_primitive(self) -> u32 {
         const _: [(); 4] = [(); std::mem::size_of::<HwCacheResult>()];
         self as u32
     }
 }
 
 /// Sample Policy
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum SamplePolicy {
     /// Period
     Period(u64),
@@ -291,8 +285,17 @@ pub enum SamplePolicy {
     Frequency(u64),
 }
 
+/// Wakeup Policy
+#[derive(Debug, Clone, Copy)]
+pub enum WakeupPolicy {
+    /// Every N events
+    Events(u32),
+    /// Every N bytes
+    Watermark(u32),
+}
+
 /// The scope of a PerfEvent
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum PerfEventScope {
     /// calling process
     CallingProcess {
@@ -381,7 +384,7 @@ impl PerfEvent {
     /// The returned value can be used to detach, see [PerfEvent::detach].
     pub fn attach(
         &mut self,
-        perf_type: PerfEventConfig,
+        config: PerfEventConfig,
         scope: PerfEventScope,
         sample_policy: SamplePolicy,
         inherit: bool,
@@ -389,49 +392,11 @@ impl PerfEvent {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
 
-        let (perf_type, config) = match perf_type {
-            PerfEventConfig::Pmu { pmu_type, config } => (pmu_type, config),
-            PerfEventConfig::Hardware(hw_event) => (
-                perf_type_id_to_u32(PERF_TYPE_HARDWARE),
-                u64::from(hw_event.into_primitive()),
-            ),
-            PerfEventConfig::Software(sw_event) => (
-                perf_type_id_to_u32(PERF_TYPE_SOFTWARE),
-                u64::from(sw_event.into_primitive()),
-            ),
-            PerfEventConfig::TracePoint { event_id } => {
-                (perf_type_id_to_u32(PERF_TYPE_TRACEPOINT), event_id)
-            }
-            PerfEventConfig::HwCache {
-                event,
-                operation,
-                result,
-            } => (
-                perf_type_id_to_u32(PERF_TYPE_HW_CACHE),
-                u64::from(event.into_primitive())
-                    | (u64::from(operation.into_primitive()) << 8)
-                    | (u64::from(result.into_primitive()) << 16),
-            ),
-            PerfEventConfig::Raw { event_id } => (perf_type_id_to_u32(PERF_TYPE_RAW), event_id),
-            PerfEventConfig::Breakpoint => (perf_type_id_to_u32(PERF_TYPE_BREAKPOINT), 0),
-        };
-        let (sample_period, sample_frequency) = match sample_policy {
-            SamplePolicy::Period(period) => (period, None),
-            SamplePolicy::Frequency(frequency) => (0, Some(frequency)),
-        };
-        let (pid, cpu) = match scope {
-            PerfEventScope::CallingProcess { cpu } => (0, cpu.map_or(-1, |cpu| cpu as i32)),
-            PerfEventScope::OneProcess { pid, cpu } => (pid, cpu.map_or(-1, |cpu| cpu as i32)),
-            PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
-        };
         let fd = perf_event_open(
-            perf_type,
             config,
-            pid,
-            cpu,
-            sample_period,
-            sample_frequency,
-            false,
+            scope,
+            sample_policy,
+            WakeupPolicy::Events(1),
             inherit,
             0,
         )
