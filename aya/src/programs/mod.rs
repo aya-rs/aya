@@ -111,7 +111,7 @@ pub use crate::programs::{
     lirc_mode2::LircMode2,
     lsm::Lsm,
     lsm_cgroup::LsmCgroup,
-    perf_event::{PerfEvent, PerfEventScope, SamplePolicy},
+    perf_event::PerfEvent,
     probe::ProbeKind,
     raw_trace_point::RawTracePoint,
     sk_lookup::SkLookup,
