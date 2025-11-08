@@ -1,5 +1,5 @@
 use std::{
-    ffi::{OsStr, OsString},
+    ffi::OsString,
     fmt::Write as _,
     fs::{self, File, OpenOptions},
     io::{BufRead as _, BufReader, Write as _},
@@ -105,6 +105,86 @@ where
         bail!("{cargo:?} failed: {status:?}")
     }
     Ok(executables)
+}
+
+enum Disposition<T> {
+    Skip,
+    Unpack(T),
+}
+
+fn with_deb<S, F>(archive: &Path, dest: &Path, mut state: S, mut select: F) -> Result<S>
+where
+    F: for<'state> FnMut(
+        &'state mut S,
+        &Path,
+        tar::EntryType,
+    ) -> Disposition<Option<&'state mut Vec<PathBuf>>>,
+{
+    fs::create_dir_all(dest).with_context(|| format!("failed to create {}", dest.display()))?;
+
+    let archive_reader = File::open(archive)
+        .with_context(|| format!("failed to open the deb package {}", archive.display()))?;
+    let mut archive_reader = ar::Archive::new(archive_reader);
+    // `ar` entries are borrowed from the reader, so the reader
+    // cannot implement `Iterator` (because `Iterator::Item` is not
+    // a GAT).
+    //
+    // https://github.com/mdsteele/rust-ar/issues/15
+    let mut data_tar_xz_entries = 0;
+    let start = std::time::Instant::now();
+    while let Some(entry) = archive_reader.next_entry() {
+        let entry = entry.with_context(|| format!("({}).next_entry()", archive.display()))?;
+        const DATA_TAR_XZ: &str = "data.tar.xz";
+        if entry.header().identifier() != DATA_TAR_XZ.as_bytes() {
+            continue;
+        }
+        data_tar_xz_entries += 1;
+        let entry_reader = xz2::read::XzDecoder::new(entry);
+        let mut entry_reader = tar::Archive::new(entry_reader);
+        let entries = entry_reader
+            .entries()
+            .with_context(|| format!("({}/{DATA_TAR_XZ}).entries()", archive.display()))?;
+        for (i, entry) in entries.enumerate() {
+            let mut entry = entry
+                .with_context(|| format!("({}/{DATA_TAR_XZ}).entries()[{i}]", archive.display()))?;
+            let path = entry.path().with_context(|| {
+                format!(
+                    "({}/{DATA_TAR_XZ}).entries()[{i}].path()",
+                    archive.display()
+                )
+            })?;
+            let entry_type = entry.header().entry_type();
+            let selected = match select(&mut state, path.as_ref(), entry_type) {
+                Disposition::Skip => continue,
+                Disposition::Unpack(selected) => selected,
+            };
+            if let Some(selected) = selected {
+                println!(
+                    "{}[{}] in {:?}",
+                    archive.display(),
+                    path.display(),
+                    start.elapsed()
+                );
+                selected.push(dest.join(path));
+            }
+            let unpacked = entry.unpack_in(dest).with_context(|| {
+                format!(
+                    "({}/{DATA_TAR_XZ})[{i}].unpack_in({})",
+                    archive.display(),
+                    dest.display(),
+                )
+            })?;
+            assert!(
+                unpacked,
+                "({}/{DATA_TAR_XZ})[{i}].unpack_in({})",
+                archive.display(),
+                dest.display(),
+            );
+        }
+    }
+    println!("{} in {:?}", archive.display(), start.elapsed());
+    assert_eq!(data_tar_xz_entries, 1);
+    Ok(state)
 }
 
 /// Build and run the project.
@@ -294,82 +374,55 @@ pub(crate) fn run(opts: Options) -> Result<()> {
             let extraction_root = tempfile::tempdir().context("tempdir failed")?;
             let mut errors = Vec::new();
             for (index, archive) in kernel_archives.iter().enumerate() {
-                let archive_dir = extraction_root
-                    .path()
-                    .join(format!("kernel-archive-{index}"));
-                fs::create_dir_all(&archive_dir)
-                    .with_context(|| format!("failed to create {}", archive_dir.display()))?;
-
-                let archive_reader = File::open(archive).with_context(|| {
-                    format!("failed to open the deb package {}", archive.display())
-                })?;
-                let mut archive_reader = ar::Archive::new(archive_reader);
-                // `ar` entries are borrowed from the reader, so the reader
-                // cannot implement `Iterator` (because `Iterator::Item` is not
-                // a GAT).
-                //
-                // https://github.com/mdsteele/rust-ar/issues/15
-                let mut entries = 0;
-                while let Some(entry) = archive_reader.next_entry() {
-                    let entry = entry.with_context(|| {
-                        format!(
-                            "failed to read an entry of the deb package {}",
-                            archive.display()
-                        )
-                    })?;
-                    if entry.header().identifier() == b"data.tar.xz" {
-                        let entry_reader = xz2::read::XzDecoder::new(entry);
-                        let mut entry_reader = tar::Archive::new(entry_reader);
-                        entry_reader.unpack(&archive_dir).with_context(|| {
-                            format!(
-                                "failed to unpack archive {} to {}",
-                                archive.display(),
-                                archive_dir.display()
-                            )
-                        })?;
-                        entries += 1;
-                    }
-                }
-                assert_eq!(entries, 1);
-
-                let mut kernel_images = Vec::new();
-                let mut configs = Vec::new();
-                for entry in WalkDir::new(&archive_dir) {
-                    let entry = entry.with_context(|| {
-                        format!("failed to read entry in {}", archive_dir.display())
-                    })?;
-                    if !entry.file_type().is_file() {
-                        continue;
-                    }
-                    let path = entry.into_path();
-                    if let Some(file_name) = path.file_name() {
-                        match file_name.as_encoded_bytes() {
-                            // "vmlinuz-"
-                            [
-                                b'v',
-                                b'm',
-                                b'l',
-                                b'i',
-                                b'n',
-                                b'u',
-                                b'z',
-                                b'-',
-                                kernel_version @ ..,
-                            ] => {
-                                let kernel_version =
-                                    unsafe { OsStr::from_encoded_bytes_unchecked(kernel_version) }
-                                        .to_os_string();
-                                kernel_images.push((path, kernel_version))
-                            }
-                            // "config-"
-                            [b'c', b'o', b'n', b'f', b'i', b'g', b'-', ..] => {
-                                configs.push(path);
-                            }
-                            _ => {}
+                let (kernel_images, configs, modules_dirs) = with_deb(
+                    archive,
+                    &extraction_root
+                        .path()
+                        .join(format!("kernel-archive-{index}")),
+                    (Vec::new(), Vec::new(), Vec::new()),
+                    |(kernel_images, configs, modules_dirs), path, entry_type| {
+                        if let Some(path) = ["./lib/modules/", "./usr/lib/modules/"]
+                            .into_iter()
+                            .find_map(|modules_dir| {
+                                // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this
+                                // allowance when the lint behaves more sensibly.
+                                #[expect(clippy::manual_ok_err)]
+                                match path.strip_prefix(modules_dir) {
+                                    Ok(path) => Some(path),
+                                    Err(path::StripPrefixError { .. }) => None,
+                                }
+                            })
+                        {
+                            return Disposition::Unpack(
+                                (path.iter().count() == 1).then_some(modules_dirs),
+                            );
                         }
-                    }
-                }
-                let (kernel_image, kernel_version) = match kernel_images.as_slice() {
+                        if !entry_type.is_file() {
+                            return Disposition::Skip;
+                        }
+                        let name = match path.strip_prefix("./boot/") {
+                            Ok(path) => {
+                                if let Some(path::Component::Normal(name)) =
+                                    path.components().next()
+                                {
+                                    name
+                                } else {
+                                    return Disposition::Skip;
+                                }
+                            }
+                            Err(path::StripPrefixError { .. }) => return Disposition::Skip,
+                        };
+                        let name = name.as_encoded_bytes();
+                        if name.starts_with(b"vmlinuz-") {
+                            Disposition::Unpack(Some(kernel_images))
+                        } else if name.starts_with(b"config-") {
+                            Disposition::Unpack(Some(configs))
+                        } else {
+                            Disposition::Skip
+                        }
+                    },
+                )?;
+                let kernel_image = match kernel_images.as_slice() {
                     [kernel_image] => kernel_image,
                     [] => bail!("no kernel images in {}", archive.display()),
                     kernel_images => bail!(
@@ -380,27 +433,9 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 };
                 let config = match configs.as_slice() {
                     [config] => config,
+                    [] => bail!("no configs in {}", archive.display()),
                     configs => bail!("multiple configs in {}: {:?}", archive.display(), configs),
                 };
-
-                let mut modules_dirs = Vec::new();
-                for entry in WalkDir::new(&archive_dir) {
-                    let entry = entry.with_context(|| {
-                        format!("failed to read entry in {}", archive_dir.display())
-                    })?;
-                    if !entry.file_type().is_dir() {
-                        continue;
-                    }
-                    let path = entry.into_path();
-                    let mut components = path.components().rev();
-                    if components.next() != Some(path::Component::Normal(kernel_version)) {
-                        continue;
-                    }
-                    if components.next() != Some(path::Component::Normal(OsStr::new("modules"))) {
-                        continue;
-                    }
-                    modules_dirs.push(path);
-                }
                 let modules_dir = match modules_dirs.as_slice() {
                     [modules_dir] => modules_dir,
                     [] => bail!("no modules directories in {}", archive.display()),
