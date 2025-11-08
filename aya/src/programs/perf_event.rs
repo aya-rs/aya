@@ -294,24 +294,17 @@ pub enum SamplePolicy {
 /// The scope of a PerfEvent
 #[derive(Debug, Clone)]
 pub enum PerfEventScope {
-    /// Calling process, any cpu
-    CallingProcessAnyCpu,
-    /// calling process, one cpu
-    CallingProcessOneCpu {
-        /// cpu id
-        cpu: u32,
+    /// calling process
+    CallingProcess {
+        /// cpu id or any cpu if None
+        cpu: Option<u32>,
     },
-    /// one process, any cpu
-    OneProcessAnyCpu {
+    /// one process
+    OneProcess {
         /// process id
-        pid: u32,
-    },
-    /// one process, one cpu
-    OneProcessOneCpu {
-        /// cpu id
-        cpu: u32,
-        /// process id
-        pid: u32,
+        pid: i32,
+        /// cpu id or any cpu if None
+        cpu: Option<u32>,
     },
     /// all processes, one cpu
     AllProcessesOneCpu {
@@ -427,10 +420,8 @@ impl PerfEvent {
             SamplePolicy::Frequency(frequency) => (0, Some(frequency)),
         };
         let (pid, cpu) = match scope {
-            PerfEventScope::CallingProcessAnyCpu => (0, -1),
-            PerfEventScope::CallingProcessOneCpu { cpu } => (0, cpu as i32),
-            PerfEventScope::OneProcessAnyCpu { pid } => (pid as i32, -1),
-            PerfEventScope::OneProcessOneCpu { cpu, pid } => (pid as i32, cpu as i32),
+            PerfEventScope::CallingProcess { cpu } => (0, cpu.map_or(-1, |cpu| cpu as i32)),
+            PerfEventScope::OneProcess { pid, cpu } => (pid, cpu.map_or(-1, |cpu| cpu as i32)),
             PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
         };
         let fd = perf_event_open(

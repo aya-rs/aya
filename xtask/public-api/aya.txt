@@ -5508,14 +5508,11 @@ pub fn aya::programs::perf_event::PerfEventConfig::from(t: T) -> T
 pub enum aya::programs::perf_event::PerfEventScope
 pub aya::programs::perf_event::PerfEventScope::AllProcessesOneCpu
 pub aya::programs::perf_event::PerfEventScope::AllProcessesOneCpu::cpu: u32
-pub aya::programs::perf_event::PerfEventScope::CallingProcessAnyCpu
-pub aya::programs::perf_event::PerfEventScope::CallingProcessOneCpu
-pub aya::programs::perf_event::PerfEventScope::CallingProcessOneCpu::cpu: u32
-pub aya::programs::perf_event::PerfEventScope::OneProcessAnyCpu
-pub aya::programs::perf_event::PerfEventScope::OneProcessAnyCpu::pid: u32
-pub aya::programs::perf_event::PerfEventScope::OneProcessOneCpu
-pub aya::programs::perf_event::PerfEventScope::OneProcessOneCpu::cpu: u32
-pub aya::programs::perf_event::PerfEventScope::OneProcessOneCpu::pid: u32
+pub aya::programs::perf_event::PerfEventScope::CallingProcess
+pub aya::programs::perf_event::PerfEventScope::CallingProcess::cpu: core::option::Option<u32>
+pub aya::programs::perf_event::PerfEventScope::OneProcess
+pub aya::programs::perf_event::PerfEventScope::OneProcess::cpu: core::option::Option<u32>
+pub aya::programs::perf_event::PerfEventScope::OneProcess::pid: i32
 impl core::clone::Clone for aya::programs::perf_event::PerfEventScope
 pub fn aya::programs::perf_event::PerfEventScope::clone(&self) -> aya::programs::perf_event::PerfEventScope
 impl core::fmt::Debug for aya::programs::perf_event::PerfEventScope
@@ -7946,14 +7943,11 @@ pub fn aya::programs::LsmAttachType::from(t: T) -> T
 pub enum aya::programs::PerfEventScope
 pub aya::programs::PerfEventScope::AllProcessesOneCpu
 pub aya::programs::PerfEventScope::AllProcessesOneCpu::cpu: u32
-pub aya::programs::PerfEventScope::CallingProcessAnyCpu
-pub aya::programs::PerfEventScope::CallingProcessOneCpu
-pub aya::programs::PerfEventScope::CallingProcessOneCpu::cpu: u32
-pub aya::programs::PerfEventScope::OneProcessAnyCpu
-pub aya::programs::PerfEventScope::OneProcessAnyCpu::pid: u32
-pub aya::programs::PerfEventScope::OneProcessOneCpu
-pub aya::programs::PerfEventScope::OneProcessOneCpu::cpu: u32
-pub aya::programs::PerfEventScope::OneProcessOneCpu::pid: u32
+pub aya::programs::PerfEventScope::CallingProcess
+pub aya::programs::PerfEventScope::CallingProcess::cpu: core::option::Option<u32>
+pub aya::programs::PerfEventScope::OneProcess
+pub aya::programs::PerfEventScope::OneProcess::cpu: core::option::Option<u32>
+pub aya::programs::PerfEventScope::OneProcess::pid: i32
 impl core::clone::Clone for aya::programs::perf_event::PerfEventScope
 pub fn aya::programs::perf_event::PerfEventScope::clone(&self) -> aya::programs::perf_event::PerfEventScope
 impl core::fmt::Debug for aya::programs::perf_event::PerfEventScope
