@@ -87,8 +87,8 @@ where
                 }
             }
             Message::CompilerMessage(CompilerMessage { message, .. }) => {
-                for line in message.rendered.unwrap_or_default().split('\n') {
-                    println!("cargo:warning={line}");
+                if let Some(rendered) = message.rendered {
+                    print!("{rendered}");
                 }
             }
             Message::TextLine(line) => {
@@ -210,7 +210,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 })?;
                 if dest_path_exists != etag_path_exists {
                     println!(
-                        "cargo:warning=({}).exists()={} != ({})={} (mismatch)",
+                        "({}).exists()={} != ({})={} (mismatch)",
                         dest_path.display(),
                         dest_path_exists,
                         etag_path.display(),
@@ -239,7 +239,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 if status.code() != Some(0) {
                     if dest_path_exists {
                         println!(
-                            "cargo:warning={curl:?} failed ({status:?}); using cached {}",
+                            "{curl:?} failed ({status:?}); using cached {}",
                             dest_path.display()
                         );
                     } else {
