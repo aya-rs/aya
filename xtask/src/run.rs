@@ -442,7 +442,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
 
                 let (guest_arch, machine, cpu, console) = match guest_arch {
                     "ARM64" => ("aarch64", Some("virt"), Some("max"), "ttyAMA0"),
-                    "x86" => ("x86_64", None, None, "ttyS0"),
+                    "x86" => ("x86_64", None, Some("host"), "ttyS0"),
                     guest_arch => (guest_arch, None, None, "ttyS0"),
                 };
 
