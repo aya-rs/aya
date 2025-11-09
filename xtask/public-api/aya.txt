@@ -10708,7 +10708,7 @@ pub fn aya::Ebpf::load_file<P: core::convert::AsRef<std::path::Path>>(path: P) -
 pub fn aya::Ebpf::map(&self, name: &str) -> core::option::Option<&aya::maps::Map>
 pub fn aya::Ebpf::map_mut(&mut self, name: &str) -> core::option::Option<&mut aya::maps::Map>
 pub fn aya::Ebpf::maps(&self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &aya::maps::Map)>
-pub fn aya::Ebpf::maps_many_mut<const N: usize>(&mut self, names: [&str; N]) -> [core::option::Option<&mut aya::maps::Map>; N]
+pub fn aya::Ebpf::maps_disjoint_mut<const N: usize>(&mut self, names: [&str; N]) -> [core::option::Option<&mut aya::maps::Map>; N]
 pub fn aya::Ebpf::maps_mut(&mut self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &mut aya::maps::Map)>
 pub fn aya::Ebpf::program(&self, name: &str) -> core::option::Option<&aya::programs::Program>
 pub fn aya::Ebpf::program_mut(&mut self, name: &str) -> core::option::Option<&mut aya::programs::Program>

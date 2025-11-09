@@ -28,7 +28,7 @@ fn test_maps_many() {
     )
     .unwrap();
 
-    let [foo, bar, baz] = bpf.maps_many_mut(["FOO", "BAR", "BAZ"]);
+    let [foo, bar, baz] = bpf.maps_disjoint_mut(["FOO", "BAR", "BAZ"]);
     assert!(foo.is_some());
     assert!(bar.is_some());
     assert!(baz.is_none());

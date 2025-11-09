@@ -1072,7 +1072,7 @@ impl Ebpf {
     /// # Examples
     /// ```no_run
     /// # let mut bpf = aya::Ebpf::load(&[])?;
-    /// match bpf.maps_many_mut(["MAP1", "MAP2"]) {
+    /// match bpf.maps_disjoint_mut(["MAP1", "MAP2"]) {
     ///     [Some(m1), Some(m2)] => println!("Got MAP1 and MAP2"),
     ///     [Some(m1), None] => println!("Got only MAP1"),
     ///     [None, Some(m2)] => println!("Got only MAP2"),
@@ -1080,7 +1080,7 @@ impl Ebpf {
     /// }
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
-    pub fn maps_many_mut<const N: usize>(&mut self, names: [&str; N]) -> [Option<&mut Map>; N] {
+    pub fn maps_disjoint_mut<const N: usize>(&mut self, names: [&str; N]) -> [Option<&mut Map>; N] {
         self.maps.get_disjoint_mut(names)
     }
 
