@@ -57,7 +57,7 @@ edition = "2024"
 homepage = "https://aya-rs.dev"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/aya-rs/aya"
-rust-version = "1.85.0"
+rust-version = "1.87.0"
 
 # NOTE(vadorovsky): Neither cargo-udeps nor cargo-machete are able to detect
 # unused crates defined in this section. It would be nice to teach either of

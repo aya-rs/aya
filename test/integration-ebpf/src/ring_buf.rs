@@ -40,7 +40,7 @@ fn ring_buf_test(ctx: ProbeContext) {
         Some(arg) => arg,
         None => return,
     };
-    if arg % 2 == 0 {
+    if arg.is_multiple_of(2) {
         entry.write(arg);
         entry.submit(0);
     } else {

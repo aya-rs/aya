@@ -202,7 +202,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
 
         // make sure that the relocation offset is properly aligned
         let ins_offset = rel_offset - section_offset;
-        if ins_offset % INS_SIZE != 0 {
+        if !ins_offset.is_multiple_of(INS_SIZE) {
             return Err(RelocationError::InvalidRelocationOffset {
                 offset: rel.offset,
                 relocation_number: rel_n,
