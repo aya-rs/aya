@@ -119,29 +119,26 @@ jobs:
           RUST_BACKTRACE: full
         run: |
           set -euxo pipefail
-          cargo hack test --all-targets --feature-powerset \
+          cargo hack test --all-targets \
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
             --exclude integration-ebpf \
             --exclude integration-test \
-            --exclude xtask \
-            --workspace
+            --feature-powerset
 
       - name: Doctests
         env:
           RUST_BACKTRACE: full
         run: |
           set -euxo pipefail
-          cargo hack test --doc --feature-powerset \
+          cargo hack test --doc \
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
-            --exclude init \
             --exclude integration-ebpf \
             --exclude integration-test \
-            --exclude xtask \
-            --workspace
+            --feature-powerset
 
   build-test-aya-ebpf:
     runs-on: ubuntu-latest
@@ -175,28 +172,36 @@ jobs:
           # to the overhead of setting up the job - so this saves a bunch of
           # machine time.
           for arch in aarch64 arm loongarch64 mips powerpc64 riscv64 s390x x86_64; do
+            echo "::group::arch=$arch"
+            export RUSTFLAGS="--cfg bpf_target_arch=\"$arch\""
             for target in bpfeb-unknown-none bpfel-unknown-none; do
-              echo "::group::Build and test for $arch / $target"
+              echo "::group::target=$target"
               if ! (
-
-                RUSTFLAGS="--cfg bpf_target_arch=\"$arch\"" cargo +nightly hack build \
+                cargo +nightly hack build \
+                  --release \
                   --target "$target" \
                   -Z build-std=core \
                   --package aya-ebpf \
+                  --package aya-ebpf-bindings \
                   --package aya-log-ebpf \
-                  --feature-powerset
-
-                cargo hack test \
-                  --doc \
-                  --package aya-ebpf \
-                  --package aya-log-ebpf \
+                  --package integration-ebpf \
                   --feature-powerset
               ); then
-                echo "FAILED: $arch / $target"
-                failures+=("$arch/$target")
+                failures+=("build: $arch/$target")
               fi
               echo "::endgroup::"
             done
+            if ! (
+              RUSTDOCFLAGS=$RUSTFLAGS cargo +nightly hack test --doc \
+                --package aya-ebpf \
+                --package aya-ebpf-bindings \
+                --package aya-log-ebpf \
+                --package integration-ebpf \
+                --feature-powerset
+            ); then
+              failures+=("doctests: $arch")
+            fi
+            echo "::endgroup::"
           done
 
           if ((${#failures[@]})); then
@@ -204,6 +209,7 @@ jobs:
             printf '  %s\n' "${failures[@]}"
             exit 1
           fi
+
   run-integration-test:
     strategy:
       fail-fast: false

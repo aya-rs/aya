@@ -19,7 +19,6 @@ impl BtfTracePointContext {
     /// # Examples
     ///
     /// ```no_run
-    /// # #![expect(dead_code)]
     /// # use aya_ebpf::{programs::BtfTracePointContext, cty::{c_int, c_ulong, c_char}};
     /// unsafe fn try_tp_btf_sched_process_fork(ctx: BtfTracePointContext) -> Result<u32, u32> {
     ///     // Grab arguments

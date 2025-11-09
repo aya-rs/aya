@@ -1229,9 +1229,8 @@ impl_info!(
 /// use aya::programs::loaded_links;
 ///
 /// for info in loaded_links() {
-///    if let Ok(info) = info {
-///        println!("loaded link: {}", info.id());
-///    }
+///    let info = info.unwrap();
+///    println!("loaded link: {}", info.id());
 /// }
 /// ```
 pub fn loaded_links() -> impl Iterator<Item = Result<LinkInfo, LinkError>> {

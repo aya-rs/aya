@@ -115,10 +115,10 @@ fn test_log(ctx: ProbeContext) {
     let buf = &buf[..core::cmp::min(len, buf.len())];
     info!(&ctx, "variable length buffer: {:x}", buf);
 
-    info!(&ctx, "2KiB array: {:x}", &TWO_KB_ARRAY);
-    info!(&ctx, "4KiB array: {:x}", &FOUR_KB_ARRAY);
+    info!(&ctx, "2KiB array: {:x}", TWO_KB_ARRAY.as_slice());
+    info!(&ctx, "4KiB array: {:x}", FOUR_KB_ARRAY.as_slice());
     // This one is too big and should be dropped.
-    info!(&ctx, "8KiB array: {:x}", &EIGHT_KB_ARRAY);
+    info!(&ctx, "8KiB array: {:x}", EIGHT_KB_ARRAY.as_slice());
 }
 
 #[uprobe]

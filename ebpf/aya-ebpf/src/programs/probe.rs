@@ -16,16 +16,18 @@ impl ProbeContext {
     /// # Examples
     ///
     /// ```no_run
-    /// # #![expect(non_camel_case_types)]
-    /// # #![expect(dead_code)]
     /// # use aya_ebpf::{programs::ProbeContext, cty::c_int, helpers::bpf_probe_read};
+    /// # #[expect(non_camel_case_types)]
     /// # type pid_t = c_int;
+    /// # #[expect(non_camel_case_types)]
     /// # struct task_struct {
     /// #     pid: pid_t,
     /// # }
     /// unsafe fn try_kprobe_try_to_wake_up(ctx: ProbeContext) -> Result<u32, u32> {
     ///     let tp: *const task_struct = ctx.arg(0).ok_or(1u32)?;
-    ///     let pid = bpf_probe_read(&(*tp).pid as *const pid_t).map_err(|_| 1u32)?;
+    ///     let pid = unsafe {
+    ///         bpf_probe_read(core::ptr::addr_of!((*tp).pid))
+    ///     }.map_err(|err| err as u32)?;
     ///
     ///     // Do something with pid or something else with tp
     ///
