@@ -1,6 +1,6 @@
 //! Program links.
 use std::{
-    ffi::CString,
+    ffi::{CString, NulError},
     io,
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
     path::{Path, PathBuf},
@@ -349,8 +349,12 @@ impl PinnedLink {
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, LinkError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|source| {
+            LinkError::InvalidPath {
+                path: path.as_ref().to_path_buf(),
+                source,
+            }
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| {
             LinkError::SyscallError(SyscallError {
                 call: "BPF_OBJ_GET",
@@ -593,6 +597,16 @@ pub enum LinkError {
     /// Please open an issue on GitHub if you encounter this error.
     #[error("unknown link type {0}")]
     UnknownLinkType(u32),
+
+    /// Invalid path.
+    #[error("invalid path: {path}")]
+    InvalidPath {
+        /// path
+        path: PathBuf,
+        /// source error
+        #[source]
+        source: NulError,
+    },
 
     /// Syscall failed.
     #[error(transparent)]

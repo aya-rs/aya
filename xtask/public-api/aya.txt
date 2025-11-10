@@ -1333,6 +1333,10 @@ pub aya::maps::MapError::InvalidMapType
 pub aya::maps::MapError::InvalidMapType::map_type: u32
 pub aya::maps::MapError::InvalidName
 pub aya::maps::MapError::InvalidName::name: alloc::string::String
+pub aya::maps::MapError::InvalidName::source: alloc::ffi::c_str::NulError
+pub aya::maps::MapError::InvalidPath
+pub aya::maps::MapError::InvalidPath::path: std::path::PathBuf
+pub aya::maps::MapError::InvalidPath::source: alloc::ffi::c_str::NulError
 pub aya::maps::MapError::InvalidValueSize
 pub aya::maps::MapError::InvalidValueSize::expected: usize
 pub aya::maps::MapError::InvalidValueSize::size: usize
@@ -4277,6 +4281,9 @@ impl<T> core::convert::From<T> for aya::programs::links::CgroupAttachMode
 pub fn aya::programs::links::CgroupAttachMode::from(t: T) -> T
 pub enum aya::programs::links::LinkError
 pub aya::programs::links::LinkError::InvalidLink
+pub aya::programs::links::LinkError::InvalidPath
+pub aya::programs::links::LinkError::InvalidPath::path: std::path::PathBuf
+pub aya::programs::links::LinkError::InvalidPath::source: alloc::ffi::c_str::NulError
 pub aya::programs::links::LinkError::SyscallError(aya::sys::SyscallError)
 pub aya::programs::links::LinkError::UnknownLinkType(u32)
 impl core::convert::From<aya::sys::SyscallError> for aya::programs::links::LinkError
@@ -8207,8 +8214,15 @@ pub aya::programs::ProgramError::AttachCookieNotSupported
 pub aya::programs::ProgramError::Btf(aya_obj::btf::btf::BtfError)
 pub aya::programs::ProgramError::ExtensionError(aya::programs::extension::ExtensionError)
 pub aya::programs::ProgramError::IOError(std::io::error::Error)
+pub aya::programs::ProgramError::InvalidInterfaceName
+pub aya::programs::ProgramError::InvalidInterfaceName::name: alloc::string::String
+pub aya::programs::ProgramError::InvalidInterfaceName::source: alloc::ffi::c_str::NulError
 pub aya::programs::ProgramError::InvalidName
 pub aya::programs::ProgramError::InvalidName::name: alloc::string::String
+pub aya::programs::ProgramError::InvalidName::source: alloc::ffi::c_str::NulError
+pub aya::programs::ProgramError::InvalidPath
+pub aya::programs::ProgramError::InvalidPath::path: std::path::PathBuf
+pub aya::programs::ProgramError::InvalidPath::source: alloc::ffi::c_str::NulError
 pub aya::programs::ProgramError::KProbeError(aya::programs::kprobe::KProbeError)
 pub aya::programs::ProgramError::LoadError
 pub aya::programs::ProgramError::LoadError::io_error: std::io::error::Error

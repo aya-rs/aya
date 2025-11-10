@@ -9225,6 +9225,9 @@ pub aya_obj::relocation::RelocationError::UnknownProgram::address: u64
 pub aya_obj::relocation::RelocationError::UnknownProgram::section_index: usize
 pub aya_obj::relocation::RelocationError::UnknownSymbol
 pub aya_obj::relocation::RelocationError::UnknownSymbol::index: usize
+pub aya_obj::relocation::RelocationError::UnsupportedRelocationTarget
+pub aya_obj::relocation::RelocationError::UnsupportedRelocationTarget::relocation_number: u64
+pub aya_obj::relocation::RelocationError::UnsupportedRelocationTarget::symbol_kind: object::common::SymbolKind
 impl core::error::Error for aya_obj::relocation::RelocationError
 impl core::fmt::Debug for aya_obj::relocation::RelocationError
 pub fn aya_obj::relocation::RelocationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
