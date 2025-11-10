@@ -214,23 +214,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # We don't have a fast solution for running virtualized integration
+        # tests on arm64 because:
+        # - Github broke nested virtualization on macos-15-intel (see below).
+        # - Github arm64 runners don't support nested virtualization (see
+        #   https://github.com/orgs/community/discussions/148648#discussioncomment-11863547).
+        # - Unlike HVF, KVM doesn't emulate CPUs.
+        #
+        # So we spin a runner for every arm64 kernel to avoid waiting 20 minutes
+        # for CI. We use arm64 runners to avoid cross-compilation.
+        os:
+          - ubuntu-24.04-arm
+        download-kernel-images:
+          - arm64 5.10
+          - arm64 6.1
+          - arm64 6.12
         include:
           # TODO(https://github.com/actions/runner-images/issues/13277): Reenable when fixed.
-          # - target: x86_64-apple-darwin
-            # macos-15 is arm64[0] which doesn't support nested
-            # virtualization[1].
-            #
-            # [0] https://github.com/actions/runner-images#available-images
-            #
-            # [1] https://docs.github.com/en/actions/reference/runners/github-hosted-runners#limitations-for-arm64-macos-runners
-            #
-            # os: macos-15-intel
+          # macos-15 is arm64[0] which doesn't support nested
+          # virtualization[1].
+          #
+          # [0] https://github.com/actions/runner-images#available-images
+          #
+          # [1] https://docs.github.com/en/actions/reference/runners/github-hosted-runners#limitations-for-arm64-macos-runners
+          #
+          # - os: macos-15-intel
 
           # We don't use ubuntu-latest because we care about the apt packages available.
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-24.04
-          - target: aarch64-unknown-linux-gnu
-            os: ubuntu-24.04-arm
+          - os: ubuntu-24.04
+            download-kernel-images: amd64 5.10 6.1 6.12
+          - os: ubuntu-24.04-arm
+            # download-kernel-images is intentionally omitted, arm runners don't
+            # support nested virtualization so running them here would be slow.
+
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
@@ -241,6 +257,12 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           set -euxo pipefail
+
+          # https://github.blog/changelog/2023-02-23-hardware-accelerated-android-virtualization-on-actions-windows-and-linux-larger-hosted-runners/
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true # kvm is not available on arm64.
+
           sudo apt update
           sudo apt -y install \
             liblzma-dev \
@@ -287,7 +309,31 @@ jobs:
             --header 'content-type: application/json' \
             | jq -r '.sha')
           mkdir -p /tmp/rustc-llvm
-          curl -sfSL https://ci-artifacts.rust-lang.org/rustc-builds/$rustc_sha/rust-dev-nightly-${{ matrix.target }}.tar.xz | \
+          case "${{ runner.arch }}" in
+            ARM64)
+              arch=aarch64
+              ;;
+            X64)
+              arch=x86_64
+              ;;
+            *)
+              echo "::error::Unsupported runner architecture: ${{ runner.arch }}"
+              exit 1
+              ;;
+          esac
+          case "${{ runner.os }}" in
+            Linux)
+              target=${arch}-unknown-linux-gnu
+              ;;
+            macOS)
+              target=${arch}-apple-darwin
+              ;;
+            *)
+              echo "::error::Unsupported runner OS: ${{ runner.os }}"
+              exit 1
+              ;;
+          esac
+          curl -sfSL https://ci-artifacts.rust-lang.org/rustc-builds/$rustc_sha/rust-dev-nightly-${target}.tar.xz | \
             tar -xJ --strip-components 2 -C /tmp/rustc-llvm
           echo /tmp/rustc-llvm/bin >> $GITHUB_PATH
 
@@ -300,44 +346,24 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: test/.tmp
-          key: ${{ runner.arch }}-${{ runner.os }}-test-cache
+          key: ${{ runner.arch }}-${{ runner.os }}-test-cache-${{ matrix.download-kernel-images != null && matrix.download-kernel-images || 'local' }}
 
       - name: Download debian kernels
-        if: runner.arch == 'ARM64'
-        run: .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels/arm64 arm64 5.10 6.1 6.12
-
-      - name: Download debian kernels
-        if: runner.arch == 'X64'
-        run: .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels/amd64 amd64 5.10 6.1 6.12
-
-      - name: Cleanup stale kernels and modules
+        if: matrix.download-kernel-images != null
         run: |
           set -euxo pipefail
-          rm -rf test/.tmp/boot test/.tmp/lib
+
+          .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels ${{ matrix.download-kernel-images }}
+
+      - name: Cleanup stale kernels and modules
+        run: rm -rf test/.tmp/boot test/.tmp/lib
 
       - name: Run local integration tests
-        if: runner.os == 'Linux'
+        if: runner.os == 'Linux' && matrix.download-kernel-images == null
         run: cargo xtask integration-test local
 
       - name: Run virtualized integration tests
-        if: runner.os == 'Linux'
-        run: |
-          set -euxo pipefail
-
-          # https://github.blog/changelog/2023-02-23-hardware-accelerated-android-virtualization-on-actions-windows-and-linux-larger-hosted-runners/
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm || true # kvm is not available on arm64.
-
-          find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
-            cargo xtask integration-test vm --cache-dir test/.tmp \
-              --github-api-token ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Run virtualized integration tests
-        if: runner.os == 'macOS'
-        env:
-          # This sets the linker to the one installed by FiloSottile/musl-cross.
-          CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: x86_64-linux-musl-gcc
+        if: matrix.download-kernel-images != null
         run: |
           set -euxo pipefail
           find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
