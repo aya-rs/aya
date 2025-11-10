@@ -215,14 +215,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - target: x86_64-apple-darwin
+          # TODO(https://github.com/actions/runner-images/issues/13277): Reenable when fixed.
+          # - target: x86_64-apple-darwin
             # macos-15 is arm64[0] which doesn't support nested
             # virtualization[1].
             #
             # [0] https://github.com/actions/runner-images#available-images
             #
             # [1] https://docs.github.com/en/actions/reference/runners/github-hosted-runners#limitations-for-arm64-macos-runners
-            os: macos-15-intel
+            #
+            # os: macos-15-intel
 
           # We don't use ubuntu-latest because we care about the apt packages available.
           - target: x86_64-unknown-linux-gnu
