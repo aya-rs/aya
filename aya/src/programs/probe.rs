@@ -130,8 +130,6 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
 }
 
 pub(crate) fn detach_debug_fs(event: ProbeEvent) -> Result<(), ProgramError> {
-    use ProbeKind::*;
-
     let tracefs = find_tracefs_path()?;
 
     let ProbeEvent {
@@ -142,8 +140,12 @@ pub(crate) fn detach_debug_fs(event: ProbeEvent) -> Result<(), ProgramError> {
     let result = delete_probe_event(tracefs, event);
 
     result.map_err(|(filename, io_error)| match kind {
-        KProbe | KRetProbe => KProbeError::FileError { filename, io_error }.into(),
-        UProbe | URetProbe => UProbeError::FileError { filename, io_error }.into(),
+        ProbeKind::KProbe | ProbeKind::KRetProbe => {
+            KProbeError::FileError { filename, io_error }.into()
+        }
+        ProbeKind::UProbe | ProbeKind::URetProbe => {
+            UProbeError::FileError { filename, io_error }.into()
+        }
     })
 }
 
@@ -153,25 +155,23 @@ fn create_as_probe(
     offset: u64,
     pid: Option<u32>,
 ) -> Result<crate::MockableFd, ProgramError> {
-    use ProbeKind::*;
-
     let perf_ty = match kind {
-        KProbe | KRetProbe => read_sys_fs_perf_type(kind.pmu())
+        ProbeKind::KProbe | ProbeKind::KRetProbe => read_sys_fs_perf_type(kind.pmu())
             .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
-        UProbe | URetProbe => read_sys_fs_perf_type(kind.pmu())
+        ProbeKind::UProbe | ProbeKind::URetProbe => read_sys_fs_perf_type(kind.pmu())
             .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
     };
 
     let ret_bit = match kind {
-        KRetProbe => Some(
+        ProbeKind::KRetProbe => Some(
             read_sys_fs_perf_ret_probe(kind.pmu())
                 .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
         ),
-        URetProbe => Some(
+        ProbeKind::URetProbe => Some(
             read_sys_fs_perf_ret_probe(kind.pmu())
                 .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
         ),
-        _ => None,
+        ProbeKind::UProbe | ProbeKind::KProbe => None,
     };
 
     perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid)
@@ -188,14 +188,12 @@ fn create_as_trace_point(
     offset: u64,
     pid: Option<u32>,
 ) -> Result<(crate::MockableFd, OsString), ProgramError> {
-    use ProbeKind::*;
-
     let tracefs = find_tracefs_path()?;
 
     let event_alias = match kind {
-        KProbe | KRetProbe => create_probe_event(tracefs, kind, name, offset)
+        ProbeKind::KProbe | ProbeKind::KRetProbe => create_probe_event(tracefs, kind, name, offset)
             .map_err(|(filename, io_error)| KProbeError::FileError { filename, io_error })?,
-        UProbe | URetProbe => create_probe_event(tracefs, kind, name, offset)
+        ProbeKind::UProbe | ProbeKind::URetProbe => create_probe_event(tracefs, kind, name, offset)
             .map_err(|(filename, io_error)| UProbeError::FileError { filename, io_error })?,
     };
 
@@ -217,12 +215,9 @@ fn create_probe_event(
 ) -> Result<OsString, (PathBuf, io::Error)> {
     use std::os::unix::ffi::OsStrExt as _;
 
-    use ProbeKind::*;
-
-    let events_file_name = tracefs.join(format!("{}_events", kind.pmu()));
     let probe_type_prefix = match kind {
-        KProbe | UProbe => 'p',
-        KRetProbe | URetProbe => 'r',
+        ProbeKind::KProbe | ProbeKind::UProbe => 'p',
+        ProbeKind::KRetProbe | ProbeKind::URetProbe => 'r',
     };
 
     let mut event_alias = OsString::new();
@@ -254,12 +249,13 @@ fn create_probe_event(
     probe.push(" ");
     probe.push(fn_name);
     match kind {
-        KProbe => write!(&mut probe, "+{offset}").unwrap(),
-        UProbe | URetProbe => write!(&mut probe, ":{offset:#x}").unwrap(),
-        _ => {}
+        ProbeKind::KProbe => write!(&mut probe, "+{offset}").unwrap(),
+        ProbeKind::UProbe | ProbeKind::URetProbe => write!(&mut probe, ":{offset:#x}").unwrap(),
+        ProbeKind::KRetProbe => {}
     };
     probe.push("\n");
 
+    let events_file_name = tracefs.join(format!("{}_events", kind.pmu()));
     OpenOptions::new()
         .append(true)
         .open(&events_file_name)
