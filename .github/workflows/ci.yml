@@ -314,24 +314,19 @@ jobs:
           key: ${{ runner.arch }}-${{ runner.os }}-test-cache
 
       - name: Download debian kernels
-        if: runner.arch == 'ARM64'
-        run: .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels/arm64 arm64 5.10 6.1 6.12
-
-      - name: Download debian kernels
         if: runner.arch == 'X64'
-        run: .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels/amd64 amd64 5.10 6.1 6.12
-
-      - name: Cleanup stale kernels and modules
         run: |
           set -euxo pipefail
-          rm -rf test/.tmp/boot test/.tmp/lib
+          for arch in amd64 arm64; do
+            .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels/$arch $arch 5.10 6.1 6.12
+          done
 
       - name: Run local integration tests
         if: runner.os == 'Linux'
         run: cargo xtask integration-test local
 
       - name: Run virtualized integration tests
-        if: runner.os == 'Linux'
+        if: runner.arch == 'X64' && runner.os == 'Linux'
         run: |
           set -euxo pipefail
 
@@ -345,7 +340,7 @@ jobs:
               --github-api-token ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run virtualized integration tests
-        if: runner.os == 'macOS'
+        if: runner.arch == 'X64' && runner.os == 'macOS'
         env:
           # This sets the linker to the one installed by FiloSottile/musl-cross.
           CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER: x86_64-linux-musl-gcc
