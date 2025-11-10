@@ -1,5 +1,5 @@
 use std::{
-    ffi::{CString, OsStr, c_int, c_long, c_uint},
+    ffi::{CString, OsStr, c_long, c_uint},
     io, mem,
     os::fd::{BorrowedFd, FromRawFd as _},
 };
@@ -17,7 +17,7 @@ use libc::pid_t;
 
 use super::{PerfEventIoctlRequest, Syscall, syscall};
 use crate::programs::perf_event::{
-    BreakpointConfig, PerfEventConfig, PerfEventScope, SamplePolicy, SoftwareEvent, WakeupPolicy,
+    BreakpointConfig, PerfEventConfig, PerfEventScope, SamplePolicy, WakeupPolicy,
     perf_type_id_to_u32,
 };
 
@@ -126,18 +126,6 @@ pub(crate) fn perf_event_open(
     };
 
     perf_event_sys(attr, pid, cpu, flags)
-}
-
-pub(crate) fn perf_event_open_bpf(cpu: c_int) -> io::Result<crate::MockableFd> {
-    let cpu = cpu as u32;
-    perf_event_open(
-        PerfEventConfig::Software(SoftwareEvent::BpfOutput),
-        PerfEventScope::AllProcessesOneCpu { cpu },
-        SamplePolicy::Period(1),
-        WakeupPolicy::Events(1),
-        false,
-        PERF_FLAG_FD_CLOEXEC,
-    )
 }
 
 pub(crate) fn perf_event_open_probe(
