@@ -85,6 +85,17 @@ pub enum RelocationError {
         /// The relocation number
         relocation_number: usize,
     },
+
+    /// Unsupported relocation
+    #[error(
+        "unsupported relocation target: symbol kind `{symbol_kind:?}` at symbol address {address:#x}"
+    )]
+    UnsupportedRelocationTarget {
+        /// The symbol kind
+        symbol_kind: SymbolKind,
+        /// The relocation address
+        address: u64,
+    },
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -392,7 +403,12 @@ impl<'a> FunctionLinker<'a> {
                     }
                     // R_BPF_64_64 this is a ld_imm64 text relocation
                     SymbolKind::Section if rel.size == 64 => sym.address + ins.imm as u64,
-                    _ => todo!(), // FIXME: return an error here,
+                    symbol_kind => {
+                        return Err(RelocationError::UnsupportedRelocationTarget {
+                            symbol_kind,
+                            address: sym.address,
+                        });
+                    }
                 };
                 (sym.section_index.unwrap(), address)
             } else {
