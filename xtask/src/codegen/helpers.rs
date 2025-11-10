@@ -1,12 +1,12 @@
 use proc_macro2::TokenStream;
-use quote::{quote, TokenStreamExt};
+use quote::{TokenStreamExt as _, quote};
 use syn::{
-    punctuated::Punctuated, AngleBracketedGenericArguments, BareFnArg, ForeignItem,
-    ForeignItemStatic, GenericArgument, Ident, Item, Path, PathArguments, ReturnType, Token, Type,
-    TypeBareFn, TypePath,
+    AngleBracketedGenericArguments, BareFnArg, ForeignItem, ForeignItemStatic, GenericArgument,
+    Ident, Item, Path, PathArguments, ReturnType, Token, Type, TypeBareFn, TypePath,
+    punctuated::Punctuated,
 };
 
-pub fn extract_helpers(items: &[Item]) -> (Vec<usize>, Vec<Helper<'_>>) {
+pub(crate) fn extract_helpers(items: &[Item]) -> (Vec<usize>, Vec<Helper<'_>>) {
     let mut helpers = Vec::new();
     let mut indexes = Vec::new();
     for (item_index, item) in items.iter().enumerate() {
@@ -29,7 +29,7 @@ pub fn extract_helpers(items: &[Item]) -> (Vec<usize>, Vec<Helper<'_>>) {
     (indexes, helpers)
 }
 
-pub fn helper_from_item(item: &ForeignItemStatic, call_index: usize) -> Option<Helper<'_>> {
+pub(crate) fn helper_from_item(item: &ForeignItemStatic, call_index: usize) -> Option<Helper<'_>> {
     if let Type::Path(TypePath {
         path: Path { segments, .. },
         ..
@@ -55,7 +55,7 @@ pub fn helper_from_item(item: &ForeignItemStatic, call_index: usize) -> Option<H
     None
 }
 
-pub fn expand_helpers(helpers: &[Helper<'_>]) -> TokenStream {
+pub(crate) fn expand_helpers(helpers: &[Helper<'_>]) -> TokenStream {
     let mut tokens = TokenStream::new();
     tokens.append_all(
         helpers
@@ -67,7 +67,7 @@ pub fn expand_helpers(helpers: &[Helper<'_>]) -> TokenStream {
     tokens
 }
 
-pub fn expand_helper(helper: &Helper<'_>) -> TokenStream {
+pub(crate) fn expand_helper(helper: &Helper<'_>) -> TokenStream {
     let Helper {
         ident,
         ty,
@@ -91,7 +91,7 @@ pub fn expand_helper(helper: &Helper<'_>) -> TokenStream {
     helper
 }
 
-pub struct Helper<'a> {
+pub(crate) struct Helper<'a> {
     ident: &'a Ident,
     ty: &'a Type,
     inputs: &'a Punctuated<BareFnArg, Token![,]>,

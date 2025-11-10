@@ -1,10 +1,16 @@
 //! Lirc programs.
-use std::os::fd::{AsFd, AsRawFd as _, OwnedFd, RawFd};
+use std::os::fd::{AsFd, AsRawFd as _, RawFd};
+
+use aya_obj::generated::{
+    bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2,
+};
 
 use crate::{
-    generated::{bpf_attach_type::BPF_LIRC_MODE2, bpf_prog_type::BPF_PROG_TYPE_LIRC_MODE2},
-    programs::{load_program, query, Link, ProgramData, ProgramError, ProgramFd, ProgramInfo},
-    sys::{bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id},
+    programs::{
+        CgroupAttachMode, Link, ProgramData, ProgramError, ProgramFd, ProgramInfo, ProgramType,
+        id_as_key, load_program, query,
+    },
+    sys::{ProgQueryTarget, bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id},
 };
 
 /// A program used to decode IR into key events for a lirc device.
@@ -50,6 +56,9 @@ pub struct LircMode2 {
 }
 
 impl LircMode2 {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::LircMode2;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_LIRC_MODE2, &mut self.data)
@@ -67,37 +76,44 @@ impl LircMode2 {
         // descriptor is closed at drop in case it fails to attach.
         let prog_fd = prog_fd.try_clone()?;
         let lircdev_fd = lircdev.as_fd().try_clone_to_owned()?;
+        let lircdev_fd = crate::MockableFd::from_fd(lircdev_fd);
 
-        bpf_prog_attach(prog_fd.as_fd(), lircdev_fd.as_fd(), BPF_LIRC_MODE2)?;
+        bpf_prog_attach(
+            prog_fd.as_fd(),
+            lircdev_fd.as_fd(),
+            BPF_LIRC_MODE2,
+            CgroupAttachMode::Single.into(),
+        )?;
 
         self.data.links.insert(LircLink::new(prog_fd, lircdev_fd))
     }
 
     /// Detaches the program.
     ///
-    /// See [LircMode2::attach].
+    /// See [`Self::attach`].
     pub fn detach(&mut self, link_id: LircLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
 
-    /// Takes ownership of the link referenced by the provided link_id.
+    /// Takes ownership of the link referenced by the provided `link_id`.
     ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
+    /// The caller takes the responsibility of managing the lifetime of the link. When the returned
+    /// [`LircLink`] is dropped, the link is detached.
     pub fn take_link(&mut self, link_id: LircLinkId) -> Result<LircLink, ProgramError> {
-        self.data.take_link(link_id)
+        self.data.links.forget(link_id)
     }
 
     /// Queries the lirc device for attached programs.
     pub fn query<T: AsFd>(target_fd: T) -> Result<Vec<LircLink>, ProgramError> {
         let target_fd = target_fd.as_fd();
-        let prog_ids = query(target_fd, BPF_LIRC_MODE2, 0, &mut None)?;
+        let (_, prog_ids) = query(ProgQueryTarget::Fd(target_fd), BPF_LIRC_MODE2, 0, &mut None)?;
 
         prog_ids
             .into_iter()
             .map(|prog_id| {
                 let prog_fd = bpf_prog_get_fd_by_id(prog_id)?;
                 let target_fd = target_fd.try_clone_to_owned()?;
+                let target_fd = crate::MockableFd::from_fd(target_fd);
                 let prog_fd = ProgramFd(prog_fd);
                 Ok(LircLink::new(prog_fd, target_fd))
             })
@@ -105,7 +121,7 @@ impl LircMode2 {
     }
 }
 
-/// The type returned by [LircMode2::attach]. Can be passed to [LircMode2::detach].
+/// The type returned by [`LircMode2::attach`]. Can be passed to [`LircMode2::detach`].
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct LircLinkId(RawFd, RawFd);
 
@@ -113,11 +129,11 @@ pub struct LircLinkId(RawFd, RawFd);
 /// An LircMode2 Link
 pub struct LircLink {
     prog_fd: ProgramFd,
-    target_fd: OwnedFd,
+    target_fd: crate::MockableFd,
 }
 
 impl LircLink {
-    pub(crate) fn new(prog_fd: ProgramFd, target_fd: OwnedFd) -> Self {
+    pub(crate) fn new(prog_fd: ProgramFd, target_fd: crate::MockableFd) -> Self {
         Self { prog_fd, target_fd }
     }
 
@@ -143,3 +159,5 @@ impl Link for LircLink {
             .map_err(Into::into)
     }
 }
+
+id_as_key!(LircLink, LircLinkId);

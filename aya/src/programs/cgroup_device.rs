@@ -2,13 +2,16 @@
 
 use std::os::fd::AsFd;
 
+use aya_obj::generated::{
+    bpf_attach_type::BPF_CGROUP_DEVICE, bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE,
+};
+
 use crate::{
-    generated::{bpf_attach_type::BPF_CGROUP_DEVICE, bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE},
     programs::{
-        bpf_prog_get_fd_by_id, define_link_wrapper, load_program, query, FdLink, Link,
-        ProgAttachLink, ProgramData, ProgramError, ProgramFd,
+        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramFd,
+        ProgramType, bpf_prog_get_fd_by_id, define_link_wrapper, id_as_key, load_program, query,
     },
-    sys::{bpf_link_create, LinkTarget, SyscallError},
+    sys::{LinkTarget, ProgQueryTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
 };
 
@@ -38,12 +41,12 @@ use crate::{
 /// #     Ebpf(#[from] aya::EbpfError)
 /// # }
 /// # let mut bpf = aya::Ebpf::load(&[])?;
-/// use aya::programs::CgroupDevice;
+/// use aya::programs::{CgroupAttachMode, CgroupDevice};
 ///
 /// let cgroup = std::fs::File::open("/sys/fs/cgroup/unified")?;
 /// let program: &mut CgroupDevice = bpf.program_mut("cgroup_dev").unwrap().try_into()?;
 /// program.load()?;
-/// program.attach(cgroup)?;
+/// program.attach(cgroup, CgroupAttachMode::Single)?;
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
@@ -53,6 +56,9 @@ pub struct CgroupDevice {
 }
 
 impl CgroupDevice {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::CgroupDevice;
+
     /// Loads the program inside the kernel
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_CGROUP_DEVICE, &mut self.data)
@@ -61,20 +67,24 @@ impl CgroupDevice {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupDevice::detach]
-    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<CgroupDeviceLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(
+        &mut self,
+        cgroup: T,
+        mode: CgroupAttachMode,
+    ) -> Result<CgroupDeviceLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
 
-        if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
+        if KernelVersion::at_least(5, 7, 0) {
             let link_fd = bpf_link_create(
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),
                 BPF_CGROUP_DEVICE,
+                mode.into(),
                 None,
-                0,
             )
-            .map_err(|(_, io_error)| SyscallError {
+            .map_err(|io_error| SyscallError {
                 call: "bpf_link_create",
                 io_error,
             })?;
@@ -84,7 +94,7 @@ impl CgroupDevice {
                     FdLink::new(link_fd),
                 )))
         } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE)?;
+            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE, mode)?;
 
             self.data
                 .links
@@ -94,34 +104,22 @@ impl CgroupDevice {
         }
     }
 
-    /// Takes ownership of the link referenced by the provided link_id.
-    ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
-    pub fn take_link(
-        &mut self,
-        link_id: CgroupDeviceLinkId,
-    ) -> Result<CgroupDeviceLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
-
-    /// Detaches the program
-    ///
-    /// See [CgroupDevice::attach].
-    pub fn detach(&mut self, link_id: CgroupDeviceLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
     /// Queries the cgroup for attached programs.
     pub fn query<T: AsFd>(target_fd: T) -> Result<Vec<CgroupDeviceLink>, ProgramError> {
         let target_fd = target_fd.as_fd();
-        let prog_ids = query(target_fd, BPF_CGROUP_DEVICE, 0, &mut None)?;
+        let (_, prog_ids) = query(
+            ProgQueryTarget::Fd(target_fd),
+            BPF_CGROUP_DEVICE,
+            0,
+            &mut None,
+        )?;
 
         prog_ids
             .into_iter()
             .map(|prog_id| {
                 let prog_fd = bpf_prog_get_fd_by_id(prog_id)?;
                 let target_fd = target_fd.try_clone_to_owned()?;
+                let target_fd = crate::MockableFd::from_fd(target_fd);
                 let prog_fd = ProgramFd(prog_fd);
                 Ok(CgroupDeviceLink::new(CgroupDeviceLinkInner::ProgAttach(
                     ProgAttachLink::new(prog_fd, target_fd, BPF_CGROUP_DEVICE),
@@ -161,11 +159,12 @@ impl Link for CgroupDeviceLinkInner {
     }
 }
 
+id_as_key!(CgroupDeviceLinkInner, CgroupDeviceLinkIdInner);
+
 define_link_wrapper!(
-    /// The link used by [CgroupDevice] programs.
     CgroupDeviceLink,
-    /// The type returned by [CgroupDevice::attach]. Can be passed to [CgroupDevice::detach].
     CgroupDeviceLinkId,
     CgroupDeviceLinkInner,
-    CgroupDeviceLinkIdInner
+    CgroupDeviceLinkIdInner,
+    CgroupDevice,
 );

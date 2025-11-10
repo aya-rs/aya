@@ -1,19 +1,22 @@
 use std::{
-    env::consts::{ARCH, OS},
     ffi::OsString,
     fmt::Write as _,
-    fs::{copy, create_dir_all, OpenOptions},
-    io::{BufRead as _, BufReader, ErrorKind, Write as _},
-    path::{Path, PathBuf},
+    fs::{self, File, OpenOptions},
+    io::{BufRead as _, BufReader, Write as _},
+    ops::Deref as _,
+    path::{self, Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
     sync::{Arc, Mutex},
     thread,
 };
 
-use anyhow::{anyhow, bail, Context as _, Result};
+use anyhow::{Context as _, Result, anyhow, bail};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
-use xtask::{exec, Errors, AYA_BUILD_INTEGRATION_BPF};
+use walkdir::WalkDir;
+use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors};
+
+const GEN_INIT_CPIO_PATCH: &str = include_str!("../patches/gen_init_cpio.c.macos.diff");
 
 #[derive(Parser)]
 enum Environment {
@@ -25,25 +28,24 @@ enum Environment {
     },
     /// Runs the integration tests in a VM.
     VM {
-        /// The kernel images to use.
+        /// The cache directory in which to store intermediate artifacts.
+        #[clap(long)]
+        cache_dir: PathBuf,
+
+        /// The Github API token to use if network requests to Github are made.
         ///
-        /// You can download some images with:
-        ///
-        /// wget --accept-regex '.*/linux-image-[0-9\.-]+-cloud-.*-unsigned*' \
-        ///   --recursive ftp://ftp.us.debian.org/debian/pool/main/l/linux/
-        ///
-        /// You can then extract them with:
-        ///
-        /// find . -name '*.deb' -print0 \
-        /// | xargs -0 -I {} sh -c "dpkg --fsys-tarfile {} \
-        ///   | tar --wildcards --extract '*vmlinuz*' --file -"
+        /// This may be required if Github rate limits are exceeded.
+        #[clap(long)]
+        github_api_token: Option<String>,
+
+        /// Debian kernel archives (.deb) to boot in the VM.
         #[clap(required = true)]
-        kernel_image: Vec<PathBuf>,
+        kernel_archives: Vec<PathBuf>,
     },
 }
 
 #[derive(Parser)]
-pub struct Options {
+pub(crate) struct Options {
     #[clap(subcommand)]
     environment: Environment,
     /// Arguments to pass to your application.
@@ -51,30 +53,29 @@ pub struct Options {
     run_args: Vec<OsString>,
 }
 
-pub fn build<F>(target: Option<&str>, f: F) -> Result<Vec<(String, PathBuf)>>
+pub(crate) fn build<F>(target: Option<&str>, f: F) -> Result<Vec<(String, PathBuf)>>
 where
     F: FnOnce(&mut Command) -> &mut Command,
 {
-    // Always use rust-lld and -Zbuild-std in case we're cross-compiling.
-    let mut cmd = Command::new("cargo");
-    cmd.args(["build", "--message-format=json"]);
+    // Always use rust-lld in case we're cross-compiling.
+    let mut cargo = Command::new("cargo");
+    cargo.args(["build", "--message-format=json"]);
     if let Some(target) = target {
-        let config = format!("target.{target}.linker = \"rust-lld\"");
-        cmd.args(["--target", target, "--config", &config]);
+        cargo.args(["--target", target]);
     }
-    f(&mut cmd);
+    f(&mut cargo);
 
-    let mut child = cmd
+    let mut cargo_child = cargo
         .stdout(Stdio::piped())
         .spawn()
-        .with_context(|| format!("failed to spawn {cmd:?}"))?;
-    let Child { stdout, .. } = &mut child;
+        .with_context(|| format!("failed to spawn {cargo:?}"))?;
+    let Child { stdout, .. } = &mut cargo_child;
 
     let stdout = stdout.take().unwrap();
     let stdout = BufReader::new(stdout);
     let mut executables = Vec::new();
     for message in Message::parse_stream(stdout) {
-        #[allow(clippy::collapsible_match)]
+        #[expect(clippy::collapsible_match)]
         match message.context("valid JSON")? {
             Message::CompilerArtifact(Artifact {
                 executable,
@@ -86,8 +87,8 @@ where
                 }
             }
             Message::CompilerMessage(CompilerMessage { message, .. }) => {
-                for line in message.rendered.unwrap_or_default().split('\n') {
-                    println!("cargo:warning={line}");
+                if let Some(rendered) = message.rendered {
+                    print!("{rendered}");
                 }
             }
             Message::TextLine(line) => {
@@ -97,17 +98,97 @@ where
         }
     }
 
-    let status = child
+    let status = cargo_child
         .wait()
-        .with_context(|| format!("failed to wait for {cmd:?}"))?;
+        .with_context(|| format!("failed to wait for {cargo:?}"))?;
     if status.code() != Some(0) {
-        bail!("{cmd:?} failed: {status:?}")
+        bail!("{cargo:?} failed: {status:?}")
     }
     Ok(executables)
 }
 
+enum Disposition<T> {
+    Skip,
+    Unpack(T),
+}
+
+fn with_deb<S, F>(archive: &Path, dest: &Path, mut state: S, mut select: F) -> Result<S>
+where
+    F: for<'state> FnMut(
+        &'state mut S,
+        &Path,
+        tar::EntryType,
+    ) -> Disposition<Option<&'state mut Vec<PathBuf>>>,
+{
+    fs::create_dir_all(dest).with_context(|| format!("failed to create {}", dest.display()))?;
+
+    let archive_reader = File::open(archive)
+        .with_context(|| format!("failed to open the deb package {}", archive.display()))?;
+    let mut archive_reader = ar::Archive::new(archive_reader);
+    // `ar` entries are borrowed from the reader, so the reader
+    // cannot implement `Iterator` (because `Iterator::Item` is not
+    // a GAT).
+    //
+    // https://github.com/mdsteele/rust-ar/issues/15
+    let mut data_tar_xz_entries = 0;
+    let start = std::time::Instant::now();
+    while let Some(entry) = archive_reader.next_entry() {
+        let entry = entry.with_context(|| format!("({}).next_entry()", archive.display()))?;
+        const DATA_TAR_XZ: &str = "data.tar.xz";
+        if entry.header().identifier() != DATA_TAR_XZ.as_bytes() {
+            continue;
+        }
+        data_tar_xz_entries += 1;
+        let entry_reader = xz2::read::XzDecoder::new(entry);
+        let mut entry_reader = tar::Archive::new(entry_reader);
+        let entries = entry_reader
+            .entries()
+            .with_context(|| format!("({}/{DATA_TAR_XZ}).entries()", archive.display()))?;
+        for (i, entry) in entries.enumerate() {
+            let mut entry = entry
+                .with_context(|| format!("({}/{DATA_TAR_XZ}).entries()[{i}]", archive.display()))?;
+            let path = entry.path().with_context(|| {
+                format!(
+                    "({}/{DATA_TAR_XZ}).entries()[{i}].path()",
+                    archive.display()
+                )
+            })?;
+            let entry_type = entry.header().entry_type();
+            let selected = match select(&mut state, path.as_ref(), entry_type) {
+                Disposition::Skip => continue,
+                Disposition::Unpack(selected) => selected,
+            };
+            if let Some(selected) = selected {
+                println!(
+                    "{}[{}] in {:?}",
+                    archive.display(),
+                    path.display(),
+                    start.elapsed()
+                );
+                selected.push(dest.join(path));
+            }
+            let unpacked = entry.unpack_in(dest).with_context(|| {
+                format!(
+                    "({}/{DATA_TAR_XZ})[{i}].unpack_in({})",
+                    archive.display(),
+                    dest.display(),
+                )
+            })?;
+            assert!(
+                unpacked,
+                "({}/{DATA_TAR_XZ})[{i}].unpack_in({})",
+                archive.display(),
+                dest.display(),
+            );
+        }
+    }
+    println!("{} in {:?}", archive.display(), start.elapsed());
+    assert_eq!(data_tar_xz_entries, 1);
+    Ok(state)
+}
+
 /// Build and run the project.
-pub fn run(opts: Options) -> Result<()> {
+pub(crate) fn run(opts: Options) -> Result<()> {
     let Options {
         environment,
         run_args,
@@ -149,7 +230,11 @@ pub fn run(opts: Options) -> Result<()> {
             for (profile, binaries) in binaries {
                 for (name, binary) in binaries {
                     let mut cmd = Command::new(runner);
-                    let cmd = cmd.args(args.iter()).arg(binary).args(run_args.clone());
+                    cmd.args(args.iter())
+                        .arg(binary)
+                        .args(run_args.clone())
+                        .env("RUST_BACKTRACE", "1")
+                        .env("RUST_LOG", "debug");
 
                     println!("{profile}:{name} running {cmd:?}");
 
@@ -168,76 +253,209 @@ pub fn run(opts: Options) -> Result<()> {
                 Err(anyhow!("failures:\n{}", failures))
             }
         }
-        Environment::VM { kernel_image } => {
+        Environment::VM {
+            cache_dir,
+            github_api_token,
+            kernel_archives,
+        } => {
             // The user has asked us to run the tests on a VM. This is involved; strap in.
             //
             // We need tools to build the initramfs; we use gen_init_cpio from the Linux repository,
             // taking care to cache it.
             //
-            // Then we iterate the kernel images, using the `file` program to guess the target
+            // We iterate the kernel images, using the `file` program to guess the target
             // architecture. We then build the init program and our test binaries for that
             // architecture, and use gen_init_cpio to build an initramfs containing the test
-            // binaries. We're almost ready to run the VM.
+            // binaries. We're ready to run the VM.
             //
-            // We consult our OS, our architecture, and the target architecture to determine if
-            // hardware acceleration is available, and then start QEMU with the provided kernel
-            // image and the initramfs we built.
+            // We start QEMU with the provided kernel image and the initramfs we built.
             //
             // We consume the output of QEMU, looking for the output of our init program. This is
             // the only way to distinguish success from failure. We batch up the errors across all
-            // VM images and report to the user. The end.
-            let cache_dir = Path::new("test/.tmp");
-            create_dir_all(cache_dir).context("failed to create cache dir")?;
+            // VM images and report to the user.
+            //
+            // The end.
+
+            fs::create_dir_all(&cache_dir).context("failed to create cache dir")?;
+
             let gen_init_cpio = cache_dir.join("gen_init_cpio");
-            if !gen_init_cpio
-                .try_exists()
-                .context("failed to check existence of gen_init_cpio")?
             {
+                let dest_path = cache_dir.join("gen_init_cpio.c");
+                let etag_path = cache_dir.join("gen_init_cpio.etag");
+                let dest_path_exists = dest_path.try_exists().with_context(|| {
+                    format!("failed to check existence of {}", dest_path.display())
+                })?;
+                let etag_path_exists = etag_path.try_exists().with_context(|| {
+                    format!("failed to check existence of {}", etag_path.display())
+                })?;
+                if dest_path_exists != etag_path_exists {
+                    println!(
+                        "({}).exists()={} != ({})={} (mismatch)",
+                        dest_path.display(),
+                        dest_path_exists,
+                        etag_path.display(),
+                        etag_path_exists,
+                    )
+                }
+
+                // Currently unused. Can be used for authenticated requests if needed in the future.
+                drop(github_api_token);
+
                 let mut curl = Command::new("curl");
                 curl.args([
                     "-sfSL",
                     "https://raw.githubusercontent.com/torvalds/linux/master/usr/gen_init_cpio.c",
-                ]);
-                let mut curl_child = curl
-                    .stdout(Stdio::piped())
-                    .spawn()
-                    .with_context(|| format!("failed to spawn {curl:?}"))?;
-                let Child { stdout, .. } = &mut curl_child;
-                let curl_stdout = stdout.take().unwrap();
-
-                let mut clang = Command::new("clang");
-                let clang = exec(
-                    clang
-                        .args(["-g", "-O2", "-x", "c", "-", "-o"])
-                        .arg(&gen_init_cpio)
-                        .stdin(curl_stdout),
-                );
-
-                let output = curl_child
-                    .wait_with_output()
-                    .with_context(|| format!("failed to wait for {curl:?}"))?;
-                let Output { status, .. } = &output;
-                if status.code() != Some(0) {
-                    bail!("{curl:?} failed: {output:?}")
+                    "--output",
+                ])
+                .arg(&dest_path);
+                for arg in ["--etag-compare", "--etag-save"] {
+                    curl.arg(arg).arg(&etag_path);
                 }
 
-                // Check the result of clang *after* checking curl; in case the download failed,
-                // only curl's output will be useful.
-                clang?;
-            }
-
-            let mut errors = Vec::new();
-            for kernel_image in kernel_image {
-                // Guess the guest architecture.
-                let mut cmd = Command::new("file");
-                let output = cmd
-                    .arg("--brief")
-                    .arg(&kernel_image)
+                let output = curl
                     .output()
-                    .with_context(|| format!("failed to run {cmd:?}"))?;
+                    .with_context(|| format!("failed to run {curl:?}"))?;
                 let Output { status, .. } = &output;
                 if status.code() != Some(0) {
-                    bail!("{cmd:?} failed: {output:?}")
+                    if dest_path_exists {
+                        println!(
+                            "{curl:?} failed ({status:?}); using cached {}",
+                            dest_path.display()
+                        );
+                    } else {
+                        bail!("{curl:?} failed: {output:?}")
+                    }
+                }
+
+                let mut patch = Command::new("patch");
+                patch
+                    .current_dir(&cache_dir)
+                    .args(["--quiet", "--forward", "--output", "-"])
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped());
+                let mut patch_child = patch
+                    .spawn()
+                    .with_context(|| format!("failed to spawn {patch:?}"))?;
+
+                let Child { stdin, stdout, .. } = &mut patch_child;
+                let mut stdin = stdin.take().unwrap();
+                stdin
+                    .write_all(GEN_INIT_CPIO_PATCH.as_bytes())
+                    .with_context(|| format!("failed to write to {patch:?} stdin"))?;
+                drop(stdin); // Must explicitly close to signal EOF.
+                let stdout = stdout.take().unwrap();
+
+                let mut clang = Command::new("clang");
+                clang
+                    .args(["-g", "-O2", "-x", "c", "-", "-o"])
+                    .arg(&gen_init_cpio)
+                    .stdin(stdout);
+                let clang_child = clang
+                    .spawn()
+                    .with_context(|| format!("failed to spawn {clang:?}"))?;
+
+                let output = patch_child
+                    .wait_with_output()
+                    .with_context(|| format!("failed to wait for {patch:?}"))?;
+                let Output { status, .. } = &output;
+                if status.code() != Some(0) {
+                    bail!("{patch:?} failed: {output:?}")
+                }
+
+                let output = clang_child
+                    .wait_with_output()
+                    .with_context(|| format!("failed to wait for {clang:?}"))?;
+                let Output { status, .. } = &output;
+                if status.code() != Some(0) {
+                    bail!("{clang:?} failed: {output:?}")
+                }
+            }
+
+            let extraction_root = tempfile::tempdir().context("tempdir failed")?;
+            let mut errors = Vec::new();
+            for (index, archive) in kernel_archives.iter().enumerate() {
+                let (kernel_images, configs, modules_dirs) = with_deb(
+                    archive,
+                    &extraction_root
+                        .path()
+                        .join(format!("kernel-archive-{index}")),
+                    (Vec::new(), Vec::new(), Vec::new()),
+                    |(kernel_images, configs, modules_dirs), path, entry_type| {
+                        if let Some(path) = ["./lib/modules/", "./usr/lib/modules/"]
+                            .into_iter()
+                            .find_map(|modules_dir| {
+                                // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this
+                                // allowance when the lint behaves more sensibly.
+                                #[expect(clippy::manual_ok_err)]
+                                match path.strip_prefix(modules_dir) {
+                                    Ok(path) => Some(path),
+                                    Err(path::StripPrefixError { .. }) => None,
+                                }
+                            })
+                        {
+                            return Disposition::Unpack(
+                                (path.iter().count() == 1).then_some(modules_dirs),
+                            );
+                        }
+                        if !entry_type.is_file() {
+                            return Disposition::Skip;
+                        }
+                        let name = match path.strip_prefix("./boot/") {
+                            Ok(path) => {
+                                if let Some(path::Component::Normal(name)) =
+                                    path.components().next()
+                                {
+                                    name
+                                } else {
+                                    return Disposition::Skip;
+                                }
+                            }
+                            Err(path::StripPrefixError { .. }) => return Disposition::Skip,
+                        };
+                        let name = name.as_encoded_bytes();
+                        if name.starts_with(b"vmlinuz-") {
+                            Disposition::Unpack(Some(kernel_images))
+                        } else if name.starts_with(b"config-") {
+                            Disposition::Unpack(Some(configs))
+                        } else {
+                            Disposition::Skip
+                        }
+                    },
+                )?;
+                let kernel_image = match kernel_images.as_slice() {
+                    [kernel_image] => kernel_image,
+                    [] => bail!("no kernel images in {}", archive.display()),
+                    kernel_images => bail!(
+                        "multiple kernel images in {}: {:?}",
+                        archive.display(),
+                        kernel_images
+                    ),
+                };
+                let config = match configs.as_slice() {
+                    [config] => config,
+                    [] => bail!("no configs in {}", archive.display()),
+                    configs => bail!("multiple configs in {}: {:?}", archive.display(), configs),
+                };
+                let modules_dir = match modules_dirs.as_slice() {
+                    [modules_dir] => modules_dir,
+                    [] => bail!("no modules directories in {}", archive.display()),
+                    modules_dirs => bail!(
+                        "multiple modules directories in {}: {:?}",
+                        archive.display(),
+                        modules_dirs
+                    ),
+                };
+
+                // Guess the guest architecture.
+                let mut file = Command::new("file");
+                let output = file
+                    .arg("--brief")
+                    .arg(kernel_image)
+                    .output()
+                    .with_context(|| format!("failed to run {file:?}"))?;
+                let Output { status, .. } = &output;
+                if status.code() != Some(0) {
+                    bail!("{file:?} failed: {output:?}")
                 }
                 let Output { stdout, .. } = output;
 
@@ -248,38 +466,28 @@ pub fn run(opts: Options) -> Result<()> {
                 // - Linux kernel x86 boot executable bzImage, version 6.1.0-10-cloud-amd64 [..]
 
                 let stdout = String::from_utf8(stdout)
-                    .with_context(|| format!("invalid UTF-8 in {cmd:?} stdout"))?;
+                    .with_context(|| format!("invalid UTF-8 in {file:?} stdout"))?;
                 let (_, stdout) = stdout
                     .split_once("Linux kernel")
-                    .ok_or_else(|| anyhow!("failed to parse {cmd:?} stdout: {stdout}"))?;
+                    .ok_or_else(|| anyhow!("failed to parse {file:?} stdout: {stdout}"))?;
                 let (guest_arch, _) = stdout
                     .split_once("boot executable")
-                    .ok_or_else(|| anyhow!("failed to parse {cmd:?} stdout: {stdout}"))?;
+                    .ok_or_else(|| anyhow!("failed to parse {file:?} stdout: {stdout}"))?;
                 let guest_arch = guest_arch.trim();
 
-                let (guest_arch, machine, cpu) = match guest_arch {
-                    "ARM64" => ("aarch64", Some("virt"), Some("cortex-a57")),
-                    "x86" => ("x86_64", Some("q35"), Some("qemu64")),
-                    guest_arch => (guest_arch, None, None),
+                let (guest_arch, machine, cpu, console) = match guest_arch {
+                    "ARM64" => ("aarch64", Some("virt"), Some("max"), "ttyAMA0"),
+                    "x86" => ("x86_64", None, Some("host"), "ttyS0"),
+                    guest_arch => (guest_arch, None, None, "ttyS0"),
                 };
 
                 let target = format!("{guest_arch}-unknown-linux-musl");
 
-                // Build our init program. The contract is that it will run anything it finds in /bin.
-                let init = build(Some(&target), |cmd| {
-                    cmd.args(["--package", "init", "--profile", "release"])
-                })
-                .context("building init program failed")?;
-
-                let init = match &*init {
-                    [(name, init)] => {
-                        if name != "init" {
-                            bail!("expected init program to be named init, found {name}")
-                        }
-                        init
-                    }
-                    init => bail!("expected exactly one init program, found {init:?}"),
-                };
+                let test_distro_args =
+                    ["--package", "test-distro", "--release", "--features", "xz2"];
+                let test_distro: Vec<(String, PathBuf)> =
+                    build(Some(&target), |cmd| cmd.args(test_distro_args))
+                        .context("building test-distro package failed")?;
 
                 let binaries = binaries(Some(&target))?;
 
@@ -302,44 +510,110 @@ pub fn run(opts: Options) -> Result<()> {
                     .spawn()
                     .with_context(|| format!("failed to spawn {gen_init_cpio:?}"))?;
                 let Child { stdin, .. } = &mut gen_init_cpio_child;
-                let mut stdin = stdin.take().unwrap();
-
+                let stdin = Arc::new(stdin.take().unwrap());
                 use std::os::unix::ffi::OsStrExt as _;
 
-                // Send input into gen_init_cpio which looks something like
+                // Send input into gen_init_cpio for directories
                 //
-                // file /init    path-to-init 0755 0 0
-                // dir  /bin                  0755 0 0
-                // file /bin/foo path-to-foo  0755 0 0
-                // file /bin/bar path-to-bar  0755 0 0
+                // dir  /bin                  755 0 0
+                let write_dir = |out_path: &Path| {
+                    for bytes in [
+                        "dir ".as_bytes(),
+                        out_path.as_os_str().as_bytes(),
+                        " ".as_bytes(),
+                        "755 0 0\n".as_bytes(),
+                    ] {
+                        stdin.deref().write_all(bytes).expect("write");
+                    }
+                };
 
-                for bytes in [
-                    "file /init ".as_bytes(),
-                    init.as_os_str().as_bytes(),
-                    " 0755 0 0\n".as_bytes(),
-                    "dir /bin 0755 0 0\n".as_bytes(),
-                ] {
-                    stdin.write_all(bytes).expect("write");
+                // Send input into gen_init_cpio for files
+                //
+                // file /init    path-to-init 755 0 0
+                let write_file = |out_path: &Path, in_path: &Path, mode: &str| {
+                    for bytes in [
+                        "file ".as_bytes(),
+                        out_path.as_os_str().as_bytes(),
+                        " ".as_bytes(),
+                        in_path.as_os_str().as_bytes(),
+                        " ".as_bytes(),
+                        mode.as_bytes(),
+                        "\n".as_bytes(),
+                    ] {
+                        stdin.deref().write_all(bytes).expect("write");
+                    }
+                };
+
+                write_dir(Path::new("/bin"));
+                write_dir(Path::new("/sbin"));
+                write_dir(Path::new("/boot"));
+                write_dir(Path::new("/lib"));
+                write_dir(Path::new("/lib/modules"));
+
+                write_file(Path::new("/boot/config"), config, "644 0 0");
+                if let Some(name) = config.file_name() {
+                    write_file(&Path::new("/boot").join(name), config, "644 0 0");
+                }
+
+                test_distro.iter().for_each(|(name, path)| {
+                    if name == "init" {
+                        write_file(Path::new("/init"), path, "755 0 0");
+                    } else {
+                        write_file(&Path::new("/sbin").join(name), path, "755 0 0");
+                    }
+                });
+
+                // At this point we need to make a slight detour!
+                // Preparing the `modules.alias` file inside the VM as part of
+                // `/init` is slow. It's faster to prepare it here.
+                let mut cargo = Command::new("cargo");
+                let output = cargo
+                    .arg("run")
+                    .args(test_distro_args)
+                    .args(["--bin", "depmod", "--", "-b"])
+                    .arg(modules_dir)
+                    .output()
+                    .with_context(|| format!("failed to run {cargo:?}"))?;
+                let Output { status, .. } = &output;
+                if status.code() != Some(0) {
+                    bail!("{cargo:?} failed: {output:?}")
+                }
+
+                // Now our modules.alias file is built, we can recursively
+                // walk the modules directory and add all the files to the
+                // initramfs.
+                for entry in WalkDir::new(modules_dir) {
+                    let entry = entry.context("read_dir failed")?;
+                    let path = entry.path();
+                    let metadata = entry.metadata().context("metadata failed")?;
+                    let out_path = Path::new("/lib/modules").join(
+                        path.strip_prefix(modules_dir).with_context(|| {
+                            format!(
+                                "strip prefix {} failed for {}",
+                                path.display(),
+                                modules_dir.display()
+                            )
+                        })?,
+                    );
+                    if metadata.file_type().is_dir() {
+                        write_dir(&out_path);
+                    } else if metadata.file_type().is_file() {
+                        write_file(&out_path, path, "644 0 0");
+                    }
                 }
 
                 for (profile, binaries) in binaries {
                     for (name, binary) in binaries {
-                        let name = format!("{}-{}", profile, name);
+                        let name = format!("{profile}-{name}");
                         let path = tmp_dir.path().join(&name);
-                        copy(&binary, &path).with_context(|| {
+                        fs::copy(&binary, &path).with_context(|| {
                             format!("copy({}, {}) failed", binary.display(), path.display())
                         })?;
-                        for bytes in [
-                            "file /bin/".as_bytes(),
-                            name.as_bytes(),
-                            " ".as_bytes(),
-                            path.as_os_str().as_bytes(),
-                            " 0755 0 0\n".as_bytes(),
-                        ] {
-                            stdin.write_all(bytes).expect("write");
-                        }
+                        let out_path = Path::new("/bin").join(&name);
+                        write_file(&out_path, &path, "755 0 0");
                     }
                 }
+
                 // Must explicitly close to signal EOF.
                 drop(stdin);
 
@@ -355,32 +629,13 @@ pub fn run(opts: Options) -> Result<()> {
                 if let Some(machine) = machine {
                     qemu.args(["-machine", machine]);
                 }
-                if guest_arch == ARCH {
-                    match OS {
-                        "linux" => {
-                            const KVM: &str = "/dev/kvm";
-                            match OpenOptions::new().read(true).write(true).open(KVM) {
-                                Ok(_file) => {
-                                    qemu.args(["-accel", "kvm"]);
-                                }
-                                Err(error) => match error.kind() {
-                                    ErrorKind::NotFound | ErrorKind::PermissionDenied => {}
-                                    _kind => {
-                                        return Err(error)
-                                            .with_context(|| format!("failed to open {KVM}"));
-                                    }
-                                },
-                            }
-                        }
-                        "macos" => {
-                            qemu.args(["-accel", "hvf"]);
-                        }
-                        os => bail!("unsupported OS: {os}"),
-                    }
-                } else if let Some(cpu) = cpu {
+                if let Some(cpu) = cpu {
                     qemu.args(["-cpu", cpu]);
                 }
-                let console = OsString::from("ttyS0");
+                for accel in ["kvm", "hvf", "tcg"] {
+                    qemu.args(["-accel", accel]);
+                }
+                let console = OsString::from(console);
                 let mut kernel_args = std::iter::once(("console", &console))
                     .chain(run_args.clone().map(|run_arg| ("init.arg", run_arg)))
                     .enumerate()
@@ -399,52 +654,13 @@ pub fn run(opts: Options) -> Result<()> {
                 //
                 // Heed the advice and boot with noapic. We don't know why this happens.
                 kernel_args.push(" noapic");
-                qemu.args(["-no-reboot", "-nographic", "-m", "512M", "-smp", "2"])
+                qemu.args(["-no-reboot", "-nographic", "-m", "1024M", "-smp", "2"])
                     .arg("-append")
                     .arg(kernel_args)
                     .arg("-kernel")
-                    .arg(&kernel_image)
+                    .arg(kernel_image)
                     .arg("-initrd")
                     .arg(&initrd_image);
-                if guest_arch == "aarch64" {
-                    match OS {
-                        "linux" => {
-                            let mut cmd = Command::new("locate");
-                            let output = cmd
-                                .arg("QEMU_EFI.fd")
-                                .output()
-                                .with_context(|| format!("failed to run {cmd:?}"))?;
-                            let Output { status, .. } = &output;
-                            if status.code() != Some(0) {
-                                bail!("{qemu:?} failed: {output:?}")
-                            }
-                            let Output { stdout, .. } = output;
-                            let bios = String::from_utf8(stdout)
-                                .with_context(|| format!("failed to parse output of {cmd:?}"))?;
-                            qemu.args(["-bios", bios.trim()]);
-                        }
-                        "macos" => {
-                            let mut cmd = Command::new("brew");
-                            let output = cmd
-                                .args(["list", "qemu", "-1", "-v"])
-                                .output()
-                                .with_context(|| format!("failed to run {cmd:?}"))?;
-                            let Output { status, .. } = &output;
-                            if status.code() != Some(0) {
-                                bail!("{qemu:?} failed: {output:?}")
-                            }
-                            let Output { stdout, .. } = output;
-                            let output = String::from_utf8(stdout)
-                                .with_context(|| format!("failed to parse output of {cmd:?}"))?;
-                            const NAME: &str = "edk2-aarch64-code.fd";
-                            let bios = output.lines().find(|line| line.contains(NAME)).ok_or_else(
-                                || anyhow!("failed to find {NAME} in output of {cmd:?}: {output}"),
-                            )?;
-                            qemu.args(["-bios", bios.trim()]);
-                        }
-                        os => bail!("unsupported OS: {os}"),
-                    };
-                }
                 let mut qemu_child = qemu
                     .stdin(Stdio::piped())
                     .stdout(Stdio::piped())
@@ -498,7 +714,7 @@ pub fn run(opts: Options) -> Result<()> {
                         .spawn(move || {
                             for line in stderr.lines() {
                                 let line = line.context("failed to read line from stderr")?;
-                                eprintln!("{}", line);
+                                eprintln!("{line}");
                                 terminate_if_kernel_hang(&line, &stdin)?;
                             }
                             anyhow::Ok(())
@@ -509,7 +725,7 @@ pub fn run(opts: Options) -> Result<()> {
                 let mut outcome = None;
                 for line in stdout.lines() {
                     let line = line.context("failed to read line from stdout")?;
-                    println!("{}", line);
+                    println!("{line}");
                     terminate_if_kernel_hang(&line, &stdin)?;
                     // The init program will print "init: success" or "init: failure" to indicate
                     // the outcome of running the binaries it found in /bin.

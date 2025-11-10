@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::{err_on_unknown_args, pop_string_arg, Args};
+use crate::args::{Args, err_on_unknown_args, pop_string_arg};
 
 pub(crate) struct BtfTracePoint {
     item: ItemFn,
@@ -18,28 +18,33 @@ impl BtfTracePoint {
         let function = pop_string_arg(&mut args, "function");
         err_on_unknown_args(&args)?;
 
-        Ok(BtfTracePoint { item, function })
+        Ok(Self { item, function })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let section_name: Cow<'_, _> = if let Some(function) = &self.function {
-            format!("tp_btf/{}", function).into()
+    pub(crate) fn expand(&self) -> TokenStream {
+        let Self { item, function } = self;
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
+        let section_name: Cow<'_, _> = if let Some(function) = function {
+            format!("tp_btf/{function}").into()
         } else {
             "tp_btf".into()
         };
-        let fn_vis = &self.item.vis;
-        let fn_name = self.item.sig.ident.clone();
-        let item = &self.item;
-        Ok(quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
+        let fn_name = &sig.ident;
+        quote! {
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
+            #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = #fn_name(::aya_ebpf::programs::BtfTracePointContext::new(ctx));
                 return 0;
 
                 #item
             }
-        })
+        }
     }
 }
 
@@ -60,10 +65,10 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote!(
-            #[no_mangle]
-            #[link_section = "tp_btf"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "tp_btf")]
             fn foo(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = foo(::aya_ebpf::programs::BtfTracePointContext::new(ctx));
                 return 0;
@@ -87,10 +92,10 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote!(
-            #[no_mangle]
-            #[link_section = "tp_btf/some_func"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "tp_btf/some_func")]
             fn foo(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = foo(::aya_ebpf::programs::BtfTracePointContext::new(ctx));
                 return 0;

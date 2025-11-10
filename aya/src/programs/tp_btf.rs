@@ -1,12 +1,13 @@
 //! BTF-enabled raw tracepoints.
 
-use crate::{
+use aya_obj::{
+    btf::{Btf, BtfKind},
     generated::{bpf_attach_type::BPF_TRACE_RAW_TP, bpf_prog_type::BPF_PROG_TYPE_TRACING},
-    obj::btf::{Btf, BtfKind},
-    programs::{
-        define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
-        ProgramData, ProgramError,
-    },
+};
+
+use crate::programs::{
+    FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper, load_program,
+    utils::attach_raw_tracepoint,
 };
 
 /// Marks a function as a [BTF-enabled raw tracepoint][1] eBPF program that can be attached at
@@ -51,6 +52,9 @@ pub struct BtfTracePoint {
 }
 
 impl BtfTracePoint {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::Tracing;
+
     /// Loads the program inside the kernel.
     ///
     /// # Arguments
@@ -71,31 +75,12 @@ impl BtfTracePoint {
     pub fn attach(&mut self) -> Result<BtfTracePointLinkId, ProgramError> {
         attach_raw_tracepoint(&mut self.data, None)
     }
-
-    /// Detaches the program.
-    ///
-    /// See [BtfTracePoint::attach].
-    pub fn detach(&mut self, link_id: BtfTracePointLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided link_id.
-    ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
-    pub fn take_link(
-        &mut self,
-        link_id: BtfTracePointLinkId,
-    ) -> Result<BtfTracePointLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
 }
 
 define_link_wrapper!(
-    /// The link used by [BtfTracePoint] programs.
     BtfTracePointLink,
-    /// The type returned by [BtfTracePoint::attach]. Can be passed to [BtfTracePoint::detach].
     BtfTracePointLinkId,
     FdLink,
-    FdLinkId
+    FdLinkId,
+    BtfTracePoint,
 );

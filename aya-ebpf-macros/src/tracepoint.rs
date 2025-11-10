@@ -1,52 +1,64 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro_error::abort;
+use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{ItemFn, Result};
+use syn::{ItemFn, spanned::Spanned as _};
 
 use crate::args::{err_on_unknown_args, pop_string_arg};
 
 pub(crate) struct TracePoint {
     item: ItemFn,
-    category: Option<String>,
-    name: Option<String>,
+    name_and_category: Option<(String, String)>,
 }
 
 impl TracePoint {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<TracePoint> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self, Diagnostic> {
         let item = syn::parse2(item)?;
+        let span = attrs.span();
         let mut args = syn::parse2(attrs)?;
         let name = pop_string_arg(&mut args, "name");
         let category = pop_string_arg(&mut args, "category");
         err_on_unknown_args(&args)?;
-        Ok(TracePoint {
-            item,
-            category,
-            name,
-        })
+        match (name, category) {
+            (None, None) => Ok(Self {
+                item,
+                name_and_category: None,
+            }),
+            (Some(name), Some(category)) => Ok(Self {
+                item,
+                name_and_category: Some((name, category)),
+            }),
+            _ => Err(span.error("expected `name` and `category` arguments")),
+        }
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let section_name: Cow<'_, _> = match (&self.category, &self.name) {
-            (Some(category), Some(name)) => format!("tracepoint/{}/{}", category, name).into(),
-            (Some(_), None) => abort!(self.item, "expected `name` and `category` arguments"),
-            (None, Some(_)) => abort!(self.item, "expected `name` and `category` arguments"),
-            _ => "tracepoint".into(),
+    pub(crate) fn expand(&self) -> TokenStream {
+        let Self {
+            item,
+            name_and_category,
+        } = self;
+        let section_name: Cow<'_, _> = match name_and_category {
+            Some((name, category)) => format!("tracepoint/{category}/{name}").into(),
+            None => "tracepoint".into(),
         };
-        let fn_vis = &self.item.vis;
-        let fn_name = self.item.sig.ident.clone();
-        let item = &self.item;
-        Ok(quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
+        let fn_name = &sig.ident;
+        quote! {
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
+            #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
                let _ = #fn_name(::aya_ebpf::programs::TracePointContext::new(ctx));
                return 0;
 
                #item
             }
-        })
+        }
     }
 }
 
@@ -67,10 +79,10 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "tracepoint/syscalls/sys_enter_bind"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "tracepoint/syscalls/sys_enter_bind")]
             fn prog(ctx: *mut ::core::ffi::c_void) -> u32 {
                let _ = prog(::aya_ebpf::programs::TracePointContext::new(ctx));
                return 0;

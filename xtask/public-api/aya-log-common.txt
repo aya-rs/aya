@@ -1,61 +1,68 @@
 pub mod aya_log_common
-#[repr(u8)] pub enum aya_log_common::Argument
-pub aya_log_common::Argument::ArrU16Len8
-pub aya_log_common::Argument::ArrU8Len16
-pub aya_log_common::Argument::ArrU8Len6
-pub aya_log_common::Argument::Bytes
-pub aya_log_common::Argument::DisplayHint
-pub aya_log_common::Argument::F32
-pub aya_log_common::Argument::F64
-pub aya_log_common::Argument::I16
-pub aya_log_common::Argument::I32
-pub aya_log_common::Argument::I64
-pub aya_log_common::Argument::I8
-pub aya_log_common::Argument::Isize
-pub aya_log_common::Argument::Str
-pub aya_log_common::Argument::U16
-pub aya_log_common::Argument::U32
-pub aya_log_common::Argument::U64
-pub aya_log_common::Argument::U8
-pub aya_log_common::Argument::Usize
-impl core::clone::Clone for aya_log_common::Argument
-pub fn aya_log_common::Argument::clone(&self) -> aya_log_common::Argument
-impl core::convert::From<aya_log_common::Argument> for u8
-pub fn u8::from(enum_value: aya_log_common::Argument) -> Self
-impl core::fmt::Debug for aya_log_common::Argument
-pub fn aya_log_common::Argument::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for aya_log_common::Argument
-impl core::marker::Freeze for aya_log_common::Argument
-impl core::marker::Send for aya_log_common::Argument
-impl core::marker::Sync for aya_log_common::Argument
-impl core::marker::Unpin for aya_log_common::Argument
-impl core::panic::unwind_safe::RefUnwindSafe for aya_log_common::Argument
-impl core::panic::unwind_safe::UnwindSafe for aya_log_common::Argument
-impl<T, U> core::convert::Into<U> for aya_log_common::Argument where U: core::convert::From<T>
-pub fn aya_log_common::Argument::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya_log_common::Argument where U: core::convert::Into<T>
-pub type aya_log_common::Argument::Error = core::convert::Infallible
-pub fn aya_log_common::Argument::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya_log_common::Argument where U: core::convert::TryFrom<T>
-pub type aya_log_common::Argument::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya_log_common::Argument::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_log_common::Argument where T: 'static + core::marker::Sized
-pub fn aya_log_common::Argument::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_log_common::Argument where T: core::marker::Sized
-pub fn aya_log_common::Argument::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_log_common::Argument where T: core::marker::Sized
-pub fn aya_log_common::Argument::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya_log_common::Argument
-pub fn aya_log_common::Argument::from(t: T) -> T
+#[repr(u8)] pub enum aya_log_common::ArgumentKind
+pub aya_log_common::ArgumentKind::ArrU16Len8
+pub aya_log_common::ArgumentKind::ArrU8Len16
+pub aya_log_common::ArgumentKind::ArrU8Len4
+pub aya_log_common::ArgumentKind::ArrU8Len6
+pub aya_log_common::ArgumentKind::Bytes
+pub aya_log_common::ArgumentKind::DisplayHint
+pub aya_log_common::ArgumentKind::F32
+pub aya_log_common::ArgumentKind::F64
+pub aya_log_common::ArgumentKind::I16
+pub aya_log_common::ArgumentKind::I32
+pub aya_log_common::ArgumentKind::I64
+pub aya_log_common::ArgumentKind::I8
+pub aya_log_common::ArgumentKind::Ipv4Addr
+pub aya_log_common::ArgumentKind::Ipv6Addr
+pub aya_log_common::ArgumentKind::Isize
+pub aya_log_common::ArgumentKind::Pointer
+pub aya_log_common::ArgumentKind::Str
+pub aya_log_common::ArgumentKind::U16
+pub aya_log_common::ArgumentKind::U32
+pub aya_log_common::ArgumentKind::U64
+pub aya_log_common::ArgumentKind::U8
+pub aya_log_common::ArgumentKind::Usize
+impl core::clone::Clone for aya_log_common::ArgumentKind
+pub fn aya_log_common::ArgumentKind::clone(&self) -> aya_log_common::ArgumentKind
+impl core::convert::From<aya_log_common::ArgumentKind> for u8
+pub fn u8::from(enum_value: aya_log_common::ArgumentKind) -> Self
+impl core::fmt::Debug for aya_log_common::ArgumentKind
+pub fn aya_log_common::ArgumentKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_log_common::ArgumentKind
+impl core::marker::Freeze for aya_log_common::ArgumentKind
+impl core::marker::Send for aya_log_common::ArgumentKind
+impl core::marker::Sync for aya_log_common::ArgumentKind
+impl core::marker::Unpin for aya_log_common::ArgumentKind
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log_common::ArgumentKind
+impl core::panic::unwind_safe::UnwindSafe for aya_log_common::ArgumentKind
+impl<T, U> core::convert::Into<U> for aya_log_common::ArgumentKind where U: core::convert::From<T>
+pub fn aya_log_common::ArgumentKind::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log_common::ArgumentKind where U: core::convert::Into<T>
+pub type aya_log_common::ArgumentKind::Error = core::convert::Infallible
+pub fn aya_log_common::ArgumentKind::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log_common::ArgumentKind where U: core::convert::TryFrom<T>
+pub type aya_log_common::ArgumentKind::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log_common::ArgumentKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log_common::ArgumentKind where T: 'static + ?core::marker::Sized
+pub fn aya_log_common::ArgumentKind::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log_common::ArgumentKind where T: ?core::marker::Sized
+pub fn aya_log_common::ArgumentKind::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log_common::ArgumentKind where T: ?core::marker::Sized
+pub fn aya_log_common::ArgumentKind::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_log_common::ArgumentKind where T: core::clone::Clone
+pub unsafe fn aya_log_common::ArgumentKind::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_log_common::ArgumentKind
+pub fn aya_log_common::ArgumentKind::from(t: T) -> T
 #[repr(u8)] pub enum aya_log_common::DisplayHint
 pub aya_log_common::DisplayHint::Default = 1
 pub aya_log_common::DisplayHint::Ip
 pub aya_log_common::DisplayHint::LowerHex
 pub aya_log_common::DisplayHint::LowerMac
+pub aya_log_common::DisplayHint::Pointer
 pub aya_log_common::DisplayHint::UpperHex
 pub aya_log_common::DisplayHint::UpperMac
-impl aya_log_common::WriteToBuf for aya_log_common::DisplayHint
-pub fn aya_log_common::DisplayHint::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
+impl aya_log_common::Argument for aya_log_common::DisplayHint
+pub fn aya_log_common::DisplayHint::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 impl core::clone::Clone for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::clone(&self) -> aya_log_common::DisplayHint
 impl core::cmp::Eq for aya_log_common::DisplayHint
@@ -81,12 +88,14 @@ pub fn aya_log_common::DisplayHint::try_from(value: U) -> core::result::Result<T
 impl<T, U> core::convert::TryInto<U> for aya_log_common::DisplayHint where U: core::convert::TryFrom<T>
 pub type aya_log_common::DisplayHint::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_log_common::DisplayHint::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_log_common::DisplayHint where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_log_common::DisplayHint where T: 'static + ?core::marker::Sized
 pub fn aya_log_common::DisplayHint::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_log_common::DisplayHint where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_log_common::DisplayHint where T: ?core::marker::Sized
 pub fn aya_log_common::DisplayHint::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_log_common::DisplayHint where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_log_common::DisplayHint where T: ?core::marker::Sized
 pub fn aya_log_common::DisplayHint::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_log_common::DisplayHint where T: core::clone::Clone
+pub unsafe fn aya_log_common::DisplayHint::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::from(t: T) -> T
 #[repr(u8)] pub enum aya_log_common::Level
@@ -122,56 +131,105 @@ pub fn aya_log_common::Level::try_from(value: U) -> core::result::Result<T, <T a
 impl<T, U> core::convert::TryInto<U> for aya_log_common::Level where U: core::convert::TryFrom<T>
 pub type aya_log_common::Level::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_log_common::Level::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_log_common::Level where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_log_common::Level where T: 'static + ?core::marker::Sized
 pub fn aya_log_common::Level::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_log_common::Level where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_log_common::Level where T: ?core::marker::Sized
 pub fn aya_log_common::Level::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_log_common::Level where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_log_common::Level where T: ?core::marker::Sized
 pub fn aya_log_common::Level::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_log_common::Level where T: core::clone::Clone
+pub unsafe fn aya_log_common::Level::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_log_common::Level
 pub fn aya_log_common::Level::from(t: T) -> T
-#[repr(u8)] pub enum aya_log_common::RecordField
-pub aya_log_common::RecordField::File
-pub aya_log_common::RecordField::Level
-pub aya_log_common::RecordField::Line
-pub aya_log_common::RecordField::Module
-pub aya_log_common::RecordField::NumArgs
-pub aya_log_common::RecordField::Target = 1
-impl core::clone::Clone for aya_log_common::RecordField
-pub fn aya_log_common::RecordField::clone(&self) -> aya_log_common::RecordField
-impl core::convert::From<aya_log_common::RecordField> for u8
-pub fn u8::from(enum_value: aya_log_common::RecordField) -> Self
-impl core::fmt::Debug for aya_log_common::RecordField
-pub fn aya_log_common::RecordField::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for aya_log_common::RecordField
-impl core::marker::Freeze for aya_log_common::RecordField
-impl core::marker::Send for aya_log_common::RecordField
-impl core::marker::Sync for aya_log_common::RecordField
-impl core::marker::Unpin for aya_log_common::RecordField
-impl core::panic::unwind_safe::RefUnwindSafe for aya_log_common::RecordField
-impl core::panic::unwind_safe::UnwindSafe for aya_log_common::RecordField
-impl<T, U> core::convert::Into<U> for aya_log_common::RecordField where U: core::convert::From<T>
-pub fn aya_log_common::RecordField::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya_log_common::RecordField where U: core::convert::Into<T>
-pub type aya_log_common::RecordField::Error = core::convert::Infallible
-pub fn aya_log_common::RecordField::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya_log_common::RecordField where U: core::convert::TryFrom<T>
-pub type aya_log_common::RecordField::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya_log_common::RecordField::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya_log_common::RecordField where T: 'static + core::marker::Sized
-pub fn aya_log_common::RecordField::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_log_common::RecordField where T: core::marker::Sized
-pub fn aya_log_common::RecordField::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_log_common::RecordField where T: core::marker::Sized
-pub fn aya_log_common::RecordField::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya_log_common::RecordField
-pub fn aya_log_common::RecordField::from(t: T) -> T
-pub const aya_log_common::LOG_BUF_CAPACITY: usize = 8_192usize
-pub const aya_log_common::LOG_FIELDS: usize = 6usize
+#[repr(u8)] pub enum aya_log_common::RecordFieldKind
+pub aya_log_common::RecordFieldKind::File
+pub aya_log_common::RecordFieldKind::Level
+pub aya_log_common::RecordFieldKind::Line
+pub aya_log_common::RecordFieldKind::Module
+pub aya_log_common::RecordFieldKind::NumArgs
+pub aya_log_common::RecordFieldKind::Target
+impl core::clone::Clone for aya_log_common::RecordFieldKind
+pub fn aya_log_common::RecordFieldKind::clone(&self) -> aya_log_common::RecordFieldKind
+impl core::convert::From<aya_log_common::RecordFieldKind> for u8
+pub fn u8::from(enum_value: aya_log_common::RecordFieldKind) -> Self
+impl core::fmt::Debug for aya_log_common::RecordFieldKind
+pub fn aya_log_common::RecordFieldKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_log_common::RecordFieldKind
+impl core::marker::Freeze for aya_log_common::RecordFieldKind
+impl core::marker::Send for aya_log_common::RecordFieldKind
+impl core::marker::Sync for aya_log_common::RecordFieldKind
+impl core::marker::Unpin for aya_log_common::RecordFieldKind
+impl core::panic::unwind_safe::RefUnwindSafe for aya_log_common::RecordFieldKind
+impl core::panic::unwind_safe::UnwindSafe for aya_log_common::RecordFieldKind
+impl<T, U> core::convert::Into<U> for aya_log_common::RecordFieldKind where U: core::convert::From<T>
+pub fn aya_log_common::RecordFieldKind::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_log_common::RecordFieldKind where U: core::convert::Into<T>
+pub type aya_log_common::RecordFieldKind::Error = core::convert::Infallible
+pub fn aya_log_common::RecordFieldKind::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_log_common::RecordFieldKind where U: core::convert::TryFrom<T>
+pub type aya_log_common::RecordFieldKind::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_log_common::RecordFieldKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_log_common::RecordFieldKind where T: 'static + ?core::marker::Sized
+pub fn aya_log_common::RecordFieldKind::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_log_common::RecordFieldKind where T: ?core::marker::Sized
+pub fn aya_log_common::RecordFieldKind::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_log_common::RecordFieldKind where T: ?core::marker::Sized
+pub fn aya_log_common::RecordFieldKind::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_log_common::RecordFieldKind where T: core::clone::Clone
+pub unsafe fn aya_log_common::RecordFieldKind::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_log_common::RecordFieldKind
+pub fn aya_log_common::RecordFieldKind::from(t: T) -> T
+pub trait aya_log_common::Argument: aya_log_common::sealed::Sealed
+pub fn aya_log_common::Argument::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for &[u8]
+pub fn &[u8]::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for &str
+pub fn &str::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for aya_log_common::DisplayHint
+pub fn aya_log_common::DisplayHint::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for core::net::ip_addr::IpAddr
+pub fn core::net::ip_addr::IpAddr::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for core::net::ip_addr::Ipv4Addr
+pub fn core::net::ip_addr::Ipv4Addr::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for core::net::ip_addr::Ipv6Addr
+pub fn core::net::ip_addr::Ipv6Addr::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for f32
+pub fn f32::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for f64
+pub fn f64::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for i16
+pub fn i16::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for i32
+pub fn i32::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for i64
+pub fn i64::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for i8
+pub fn i8::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for isize
+pub fn isize::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for u16
+pub fn u16::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for u32
+pub fn u32::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for u64
+pub fn u64::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for u8
+pub fn u8::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for usize
+pub fn usize::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl<T> aya_log_common::Argument for *const T
+pub fn *const T::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl<T> aya_log_common::Argument for *mut T
+pub fn *mut T::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl<const N: usize> aya_log_common::Argument for [u8; N]
+pub fn [u8; N]::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 pub trait aya_log_common::DefaultFormatter
 impl aya_log_common::DefaultFormatter for &str
 impl aya_log_common::DefaultFormatter for bool
 impl aya_log_common::DefaultFormatter for char
+impl aya_log_common::DefaultFormatter for core::net::ip_addr::IpAddr
+impl aya_log_common::DefaultFormatter for core::net::ip_addr::Ipv4Addr
+impl aya_log_common::DefaultFormatter for core::net::ip_addr::Ipv6Addr
 impl aya_log_common::DefaultFormatter for f32
 impl aya_log_common::DefaultFormatter for f64
 impl aya_log_common::DefaultFormatter for i16
@@ -188,6 +246,10 @@ impl aya_log_common::DefaultFormatter for usize
 pub trait aya_log_common::IpFormatter
 impl aya_log_common::IpFormatter for [u16; 8]
 impl aya_log_common::IpFormatter for [u8; 16]
+impl aya_log_common::IpFormatter for [u8; 4]
+impl aya_log_common::IpFormatter for core::net::ip_addr::IpAddr
+impl aya_log_common::IpFormatter for core::net::ip_addr::Ipv4Addr
+impl aya_log_common::IpFormatter for core::net::ip_addr::Ipv6Addr
 impl aya_log_common::IpFormatter for u32
 pub trait aya_log_common::LowerHexFormatter
 impl aya_log_common::LowerHexFormatter for &[u8]
@@ -201,8 +263,12 @@ impl aya_log_common::LowerHexFormatter for u32
 impl aya_log_common::LowerHexFormatter for u64
 impl aya_log_common::LowerHexFormatter for u8
 impl aya_log_common::LowerHexFormatter for usize
+impl<const N: usize> aya_log_common::LowerHexFormatter for &[u8; N]
 pub trait aya_log_common::LowerMacFormatter
 impl aya_log_common::LowerMacFormatter for [u8; 6]
+pub trait aya_log_common::PointerFormatter
+impl<T> aya_log_common::PointerFormatter for *const T
+impl<T> aya_log_common::PointerFormatter for *mut T
 pub trait aya_log_common::UpperHexFormatter
 impl aya_log_common::UpperHexFormatter for &[u8]
 impl aya_log_common::UpperHexFormatter for i16
@@ -215,44 +281,7 @@ impl aya_log_common::UpperHexFormatter for u32
 impl aya_log_common::UpperHexFormatter for u64
 impl aya_log_common::UpperHexFormatter for u8
 impl aya_log_common::UpperHexFormatter for usize
+impl<const N: usize> aya_log_common::UpperHexFormatter for &[u8; N]
 pub trait aya_log_common::UpperMacFormatter
 impl aya_log_common::UpperMacFormatter for [u8; 6]
-pub trait aya_log_common::WriteToBuf
-pub fn aya_log_common::WriteToBuf::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for &[u8]
-pub fn &[u8]::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for &str
-pub fn &str::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for [u16; 8]
-pub fn [u16; 8]::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for [u8; 16]
-pub fn [u8; 16]::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for [u8; 6]
-pub fn [u8; 6]::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for aya_log_common::DisplayHint
-pub fn aya_log_common::DisplayHint::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for f32
-pub fn f32::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for f64
-pub fn f64::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for i16
-pub fn i16::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for i32
-pub fn i32::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for i64
-pub fn i64::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for i8
-pub fn i8::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for isize
-pub fn isize::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for u16
-pub fn u16::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for u32
-pub fn u32::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for u64
-pub fn u64::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for u8
-pub fn u8::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
-impl aya_log_common::WriteToBuf for usize
-pub fn usize::write(self, buf: &mut [u8]) -> core::option::Option<core::num::nonzero::NonZeroUsize>
 pub type aya_log_common::LogValueLength = u16

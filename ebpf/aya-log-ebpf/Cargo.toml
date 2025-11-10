@@ -1,17 +1,19 @@
 [package]
-name = "aya-log-ebpf"
-version = "0.1.0"
 description = "Logging for eBPF programs"
+name = "aya-log-ebpf"
+version = "0.1.1"
+
 authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
-edition.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
 
 [dependencies]
-aya-ebpf = { version = "^0.1.0", path = "../aya-ebpf" }
-aya-log-common = { version = "0.1.14", path = "../../aya-log-common" }
+aya-ebpf = { version = "^0.1.1", path = "../aya-ebpf" }
+aya-log-common = { version = "^0.1.15", path = "../../aya-log-common" }
 aya-log-ebpf-macros = { version = "^0.1.0", path = "../../aya-log-ebpf-macros" }
-
-[lib]
-path = "src/lib.rs"

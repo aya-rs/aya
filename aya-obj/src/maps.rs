@@ -3,18 +3,10 @@
 use alloc::vec::Vec;
 use core::mem;
 
-#[cfg(not(feature = "std"))]
-use crate::std;
-use crate::EbpfSectionKind;
-
-/// Invalid map type encontered
-pub struct InvalidMapTypeError {
-    /// The map type
-    pub map_type: u32,
-}
+use crate::{EbpfSectionKind, InvalidTypeBinding};
 
 impl TryFrom<u32> for crate::generated::bpf_map_type {
-    type Error = InvalidMapTypeError;
+    type Error = InvalidTypeBinding<u32>;
 
     fn try_from(map_type: u32) -> Result<Self, Self::Error> {
         use crate::generated::bpf_map_type::*;
@@ -31,7 +23,6 @@ impl TryFrom<u32> for crate::generated::bpf_map_type {
             x if x == BPF_MAP_TYPE_LRU_HASH as u32 => BPF_MAP_TYPE_LRU_HASH,
             x if x == BPF_MAP_TYPE_LRU_PERCPU_HASH as u32 => BPF_MAP_TYPE_LRU_PERCPU_HASH,
             x if x == BPF_MAP_TYPE_LPM_TRIE as u32 => BPF_MAP_TYPE_LPM_TRIE,
-            x if x == BPF_MAP_TYPE_BLOOM_FILTER as u32 => BPF_MAP_TYPE_BLOOM_FILTER,
             x if x == BPF_MAP_TYPE_ARRAY_OF_MAPS as u32 => BPF_MAP_TYPE_ARRAY_OF_MAPS,
             x if x == BPF_MAP_TYPE_HASH_OF_MAPS as u32 => BPF_MAP_TYPE_HASH_OF_MAPS,
             x if x == BPF_MAP_TYPE_DEVMAP as u32 => BPF_MAP_TYPE_DEVMAP,
@@ -42,7 +33,6 @@ impl TryFrom<u32> for crate::generated::bpf_map_type {
             x if x == BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED as u32 => {
                 BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED
             }
-            x if x == BPF_MAP_TYPE_CGRP_STORAGE as u32 => BPF_MAP_TYPE_CGRP_STORAGE,
             x if x == BPF_MAP_TYPE_REUSEPORT_SOCKARRAY as u32 => BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
             x if x == BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED as u32 => {
                 BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED
@@ -58,7 +48,8 @@ impl TryFrom<u32> for crate::generated::bpf_map_type {
             x if x == BPF_MAP_TYPE_BLOOM_FILTER as u32 => BPF_MAP_TYPE_BLOOM_FILTER,
             x if x == BPF_MAP_TYPE_USER_RINGBUF as u32 => BPF_MAP_TYPE_USER_RINGBUF,
             x if x == BPF_MAP_TYPE_CGRP_STORAGE as u32 => BPF_MAP_TYPE_CGRP_STORAGE,
-            _ => return Err(InvalidMapTypeError { map_type }),
+            x if x == BPF_MAP_TYPE_ARENA as u32 => BPF_MAP_TYPE_ARENA,
+            _ => return Err(InvalidTypeBinding { value: map_type }),
         })
     }
 }
@@ -108,15 +99,14 @@ impl TryFrom<u32> for PinningType {
 
     fn try_from(value: u32) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(PinningType::None),
-            1 => Ok(PinningType::ByName),
+            0 => Ok(Self::None),
+            1 => Ok(Self::ByName),
             pinning_type => Err(PinningError::Unsupported { pinning_type }),
         }
     }
 }
 
 /// Map definition in legacy BPF map declaration style
-#[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub struct bpf_map_def {
@@ -154,96 +144,96 @@ impl Map {
     /// Returns the map type
     pub fn map_type(&self) -> u32 {
         match self {
-            Map::Legacy(m) => m.def.map_type,
-            Map::Btf(m) => m.def.map_type,
+            Self::Legacy(m) => m.def.map_type,
+            Self::Btf(m) => m.def.map_type,
         }
     }
 
     /// Returns the key size in bytes
     pub fn key_size(&self) -> u32 {
         match self {
-            Map::Legacy(m) => m.def.key_size,
-            Map::Btf(m) => m.def.key_size,
+            Self::Legacy(m) => m.def.key_size,
+            Self::Btf(m) => m.def.key_size,
         }
     }
 
     /// Returns the value size in bytes
     pub fn value_size(&self) -> u32 {
         match self {
-            Map::Legacy(m) => m.def.value_size,
-            Map::Btf(m) => m.def.value_size,
+            Self::Legacy(m) => m.def.value_size,
+            Self::Btf(m) => m.def.value_size,
         }
     }
 
     /// Set the value size in bytes
     pub fn set_value_size(&mut self, size: u32) {
         match self {
-            Map::Legacy(m) => m.def.value_size = size,
-            Map::Btf(m) => m.def.value_size = size,
+            Self::Legacy(m) => m.def.value_size = size,
+            Self::Btf(m) => m.def.value_size = size,
         }
     }
 
     /// Returns the max entry number
     pub fn max_entries(&self) -> u32 {
         match self {
-            Map::Legacy(m) => m.def.max_entries,
-            Map::Btf(m) => m.def.max_entries,
+            Self::Legacy(m) => m.def.max_entries,
+            Self::Btf(m) => m.def.max_entries,
         }
     }
 
     /// Sets the max entry number
     pub fn set_max_entries(&mut self, v: u32) {
         match self {
-            Map::Legacy(m) => m.def.max_entries = v,
-            Map::Btf(m) => m.def.max_entries = v,
+            Self::Legacy(m) => m.def.max_entries = v,
+            Self::Btf(m) => m.def.max_entries = v,
         }
     }
 
     /// Returns the map flags
     pub fn map_flags(&self) -> u32 {
         match self {
-            Map::Legacy(m) => m.def.map_flags,
-            Map::Btf(m) => m.def.map_flags,
+            Self::Legacy(m) => m.def.map_flags,
+            Self::Btf(m) => m.def.map_flags,
         }
     }
 
     /// Returns the pinning type of the map
     pub fn pinning(&self) -> PinningType {
         match self {
-            Map::Legacy(m) => m.def.pinning,
-            Map::Btf(m) => m.def.pinning,
+            Self::Legacy(m) => m.def.pinning,
+            Self::Btf(m) => m.def.pinning,
         }
     }
 
     /// Returns the map data
     pub fn data(&self) -> &[u8] {
         match self {
-            Map::Legacy(m) => &m.data,
-            Map::Btf(m) => &m.data,
+            Self::Legacy(m) => &m.data,
+            Self::Btf(m) => &m.data,
         }
     }
 
     /// Returns the map data as mutable
     pub fn data_mut(&mut self) -> &mut Vec<u8> {
         match self {
-            Map::Legacy(m) => m.data.as_mut(),
-            Map::Btf(m) => m.data.as_mut(),
+            Self::Legacy(m) => m.data.as_mut(),
+            Self::Btf(m) => m.data.as_mut(),
         }
     }
 
     /// Returns the section index
     pub fn section_index(&self) -> usize {
         match self {
-            Map::Legacy(m) => m.section_index,
-            Map::Btf(m) => m.section_index,
+            Self::Legacy(m) => m.section_index,
+            Self::Btf(m) => m.section_index,
         }
     }
 
     /// Returns the section kind.
     pub fn section_kind(&self) -> EbpfSectionKind {
         match self {
-            Map::Legacy(m) => m.section_kind,
-            Map::Btf(_) => EbpfSectionKind::BtfMaps,
+            Self::Legacy(m) => m.section_kind,
+            Self::Btf(_) => EbpfSectionKind::BtfMaps,
         }
     }
 
@@ -253,8 +243,8 @@ impl Map {
     /// need symbols in order to be relocated.
     pub fn symbol_index(&self) -> Option<usize> {
         match self {
-            Map::Legacy(m) => m.symbol_index,
-            Map::Btf(m) => Some(m.symbol_index),
+            Self::Legacy(m) => m.symbol_index,
+            Self::Btf(m) => Some(m.symbol_index),
         }
     }
 }

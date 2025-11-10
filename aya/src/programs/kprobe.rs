@@ -6,18 +6,18 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE};
 use thiserror::Error;
 
 use crate::{
-    generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE},
+    VerifierLogLevel,
     programs::{
-        define_link_wrapper, load_program,
+        FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+        impl_try_into_fdlink, load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
-        probe::{attach, ProbeKind},
-        FdLink, LinkError, ProgramData, ProgramError,
+        probe::{ProbeKind, attach},
     },
     sys::bpf_link_get_info_by_fd,
-    VerifierLogLevel,
 };
 
 /// A kernel probe.
@@ -51,6 +51,9 @@ pub struct KProbe {
 }
 
 impl KProbe {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::KProbe;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
@@ -78,22 +81,14 @@ impl KProbe {
         fn_name: T,
         offset: u64,
     ) -> Result<KProbeLinkId, ProgramError> {
-        attach(&mut self.data, self.kind, fn_name.as_ref(), offset, None)
-    }
-
-    /// Detaches the program.
-    ///
-    /// See [KProbe::attach].
-    pub fn detach(&mut self, link_id: KProbeLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided link_id.
-    ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: KProbeLinkId) -> Result<KProbeLink, ProgramError> {
-        self.data.take_link(link_id)
+        attach(
+            &mut self.data,
+            self.kind,
+            fn_name.as_ref(),
+            offset,
+            None, // pid
+            None, // cookie
+        )
     }
 
     /// Creates a program from a pinned entry on a bpffs.
@@ -109,12 +104,11 @@ impl KProbe {
 }
 
 define_link_wrapper!(
-    /// The link used by [KProbe] programs.
     KProbeLink,
-    /// The type returned by [KProbe::attach]. Can be passed to [KProbe::detach].
     KProbeLinkId,
     PerfLinkInner,
-    PerfLinkIdInner
+    PerfLinkIdInner,
+    KProbe,
 );
 
 /// The type returned when attaching a [`KProbe`] fails.
@@ -131,17 +125,7 @@ pub enum KProbeError {
     },
 }
 
-impl TryFrom<KProbeLink> for FdLink {
-    type Error = LinkError;
-
-    fn try_from(value: KProbeLink) -> Result<Self, Self::Error> {
-        if let PerfLinkInner::FdLink(fd) = value.into_inner() {
-            Ok(fd)
-        } else {
-            Err(LinkError::InvalidLink)
-        }
-    }
-}
+impl_try_into_fdlink!(KProbeLink, PerfLinkInner);
 
 impl TryFrom<FdLink> for KProbeLink {
     type Error = LinkError;
@@ -149,7 +133,7 @@ impl TryFrom<FdLink> for KProbeLink {
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
         let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_KPROBE_MULTI as u32) {
-            return Ok(Self::new(PerfLinkInner::FdLink(fd_link)));
+            return Ok(Self::new(PerfLinkInner::Fd(fd_link)));
         }
         Err(LinkError::InvalidLink)
     }

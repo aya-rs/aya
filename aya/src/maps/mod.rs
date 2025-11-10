@@ -50,7 +50,7 @@
 use std::{
     borrow::Borrow,
     ffi::CString,
-    fmt, io,
+    io,
     marker::PhantomData,
     mem,
     ops::Deref,
@@ -59,31 +59,28 @@ use std::{
     ptr,
 };
 
-use libc::{getrlimit, rlim_t, rlimit, RLIMIT_MEMLOCK, RLIM_INFINITY};
-use log::warn;
-use obj::maps::InvalidMapTypeError;
+use aya_obj::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type, parse_map_info};
 use thiserror::Error;
 
 use crate::{
-    generated::bpf_map_info,
-    obj::{self, parse_map_info, EbpfSectionKind},
+    PinningType, Pod,
     pin::PinError,
     sys::{
-        bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
-        bpf_map_get_info_by_fd, bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object,
-        iter_map_ids, SyscallError,
+        SyscallError, bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
+        bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object,
     },
-    util::{bytes_of_bpf_name, nr_cpus, KernelVersion},
-    PinningType, Pod,
+    util::nr_cpus,
 };
 
 pub mod array;
 pub mod bloom_filter;
 pub mod hash_map;
+mod info;
 pub mod lpm_trie;
 pub mod perf;
 pub mod queue;
 pub mod ring_buf;
+pub mod sk_storage;
 pub mod sock;
 pub mod stack;
 pub mod stack_trace;
@@ -92,13 +89,12 @@ pub mod xdp;
 pub use array::{Array, PerCpuArray, ProgramArray};
 pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, PerCpuHashMap};
+pub use info::{MapInfo, MapType, loaded_maps};
 pub use lpm_trie::LpmTrie;
-#[cfg(any(feature = "async_tokio", feature = "async_std"))]
-#[cfg_attr(docsrs, doc(cfg(any(feature = "async_tokio", feature = "async_std"))))]
-pub use perf::AsyncPerfEventArray;
 pub use perf::PerfEventArray;
 pub use queue::Queue;
 pub use ring_buf::RingBuf;
+pub use sk_storage::SkStorage;
 pub use sock::{SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
@@ -122,12 +118,10 @@ pub enum MapError {
     },
 
     /// Failed to create map
-    #[error("failed to create map `{name}` with code {code}")]
+    #[error("failed to create map `{name}`")]
     CreateError {
         /// Map name
         name: String,
-        /// Error code
-        code: i64,
         #[source]
         /// Original io::Error
         io_error: io::Error,
@@ -172,6 +166,10 @@ pub enum MapError {
     #[error("the program is not loaded")]
     ProgramNotLoaded,
 
+    /// An IO error occurred
+    #[error(transparent)]
+    IoError(#[from] io::Error),
+
     /// Syscall failed
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
@@ -191,20 +189,21 @@ pub enum MapError {
     ProgIdNotSupported,
 
     /// Unsupported Map type
-    #[error("Unsupported map type found {map_type}")]
+    #[error(
+        "type of {name} ({map_type:?}) is unsupported; see `EbpfLoader::allow_unsupported_maps`"
+    )]
     Unsupported {
+        /// Map name
+        name: String,
         /// The map type
-        map_type: u32,
+        map_type: bpf_map_type,
     },
 }
 
-// Note that this is not just derived using #[from] because InvalidMapTypeError cannot implement
-// Error due the the fact that aya-obj is no_std and error_in_core is not stabilized
-// (https://github.com/rust-lang/rust/issues/103765).
-impl From<InvalidMapTypeError> for MapError {
-    fn from(e: InvalidMapTypeError) -> Self {
-        let InvalidMapTypeError { map_type } = e;
-        Self::InvalidMapType { map_type }
+impl From<InvalidTypeBinding<u32>> for MapError {
+    fn from(e: InvalidTypeBinding<u32>) -> Self {
+        let InvalidTypeBinding { value } = e;
+        Self::InvalidMapType { map_type: value }
     }
 }
 
@@ -215,8 +214,7 @@ pub struct MapFd {
 }
 
 impl MapFd {
-    fn from_fd(fd: OwnedFd) -> Self {
-        let fd = crate::MockableFd::from_fd(fd);
+    fn from_fd(fd: crate::MockableFd) -> Self {
         Self { fd }
     }
 
@@ -231,40 +229,6 @@ impl AsFd for MapFd {
     fn as_fd(&self) -> BorrowedFd<'_> {
         let Self { fd } = self;
         fd.as_fd()
-    }
-}
-
-/// Raises a warning about rlimit. Should be used only if creating a map was not
-/// successful.
-fn maybe_warn_rlimit() {
-    let mut limit = mem::MaybeUninit::<rlimit>::uninit();
-    let ret = unsafe { getrlimit(RLIMIT_MEMLOCK, limit.as_mut_ptr()) };
-    if ret == 0 {
-        let limit = unsafe { limit.assume_init() };
-
-        if limit.rlim_cur == RLIM_INFINITY {
-            return;
-        }
-        struct HumanSize(rlim_t);
-
-        impl fmt::Display for HumanSize {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                let &Self(size) = self;
-                if size < 1024 {
-                    write!(f, "{} bytes", size)
-                } else if size < 1024 * 1024 {
-                    write!(f, "{} KiB", size / 1024)
-                } else {
-                    write!(f, "{} MiB", size / 1024 / 1024)
-                }
-            }
-        }
-        warn!(
-            "RLIMIT_MEMLOCK value is {}, not RLIM_INFINITY; if experiencing problems with creating \
-            maps, try raising RLIMIT_MEMLOCK either to RLIM_INFINITY or to a higher value sufficient \
-            for the size of your maps",
-            HumanSize(limit.rlim_cur)
-        );
     }
 }
 
@@ -305,6 +269,8 @@ pub enum Map {
     SockHash(MapData),
     /// A [`SockMap`] map.
     SockMap(MapData),
+    /// A [`SkStorage`] map.
+    SkStorage(MapData),
     /// A [`Stack`] map.
     Stack(MapData),
     /// A [`StackTraceMap`] map.
@@ -336,6 +302,7 @@ impl Map {
             Self::RingBuf(map) => map.obj.map_type(),
             Self::SockHash(map) => map.obj.map_type(),
             Self::SockMap(map) => map.obj.map_type(),
+            Self::SkStorage(map) => map.obj.map_type(),
             Self::Stack(map) => map.obj.map_type(),
             Self::StackTraceMap(map) => map.obj.map_type(),
             Self::Unsupported(map) => map.obj.map_type(),
@@ -366,11 +333,66 @@ impl Map {
             Self::RingBuf(map) => map.pin(path),
             Self::SockHash(map) => map.pin(path),
             Self::SockMap(map) => map.pin(path),
+            Self::SkStorage(map) => map.pin(path),
             Self::Stack(map) => map.pin(path),
             Self::StackTraceMap(map) => map.pin(path),
             Self::Unsupported(map) => map.pin(path),
             Self::XskMap(map) => map.pin(path),
         }
+    }
+
+    /// Constructs a [`Map`] enum variant directly from a [`MapData`] instance. This allows creating
+    /// a user-space handle to a pinned BPF map.
+    ///
+    /// # Arguments
+    ///
+    /// * `map_data` - The map data obtained from [`MapData::from_pin`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the map type is not supported.
+    pub fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
+        let map_type = map_data.obj.map_type();
+        let map = match bpf_map_type::try_from(map_type)? {
+            bpf_map_type::BPF_MAP_TYPE_HASH => Self::HashMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_ARRAY => Self::Array(map_data),
+            bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY => Self::ProgramArray(map_data),
+            bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY => Self::PerfEventArray(map_data),
+            bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH => Self::PerCpuHashMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY => Self::PerCpuArray(map_data),
+            bpf_map_type::BPF_MAP_TYPE_STACK_TRACE => Self::StackTraceMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_LRU_HASH => Self::LruHashMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_LRU_PERCPU_HASH => Self::PerCpuLruHashMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_LPM_TRIE => Self::LpmTrie(map_data),
+            bpf_map_type::BPF_MAP_TYPE_DEVMAP => Self::DevMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_SOCKMAP => Self::SockMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_CPUMAP => Self::CpuMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_XSKMAP => Self::XskMap(map_data),
+            bpf_map_type::BPF_MAP_TYPE_SOCKHASH => Self::SockHash(map_data),
+            bpf_map_type::BPF_MAP_TYPE_QUEUE => Self::Queue(map_data),
+            bpf_map_type::BPF_MAP_TYPE_STACK => Self::Stack(map_data),
+            bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => Self::DevMapHash(map_data),
+            bpf_map_type::BPF_MAP_TYPE_RINGBUF => Self::RingBuf(map_data),
+            bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER => Self::BloomFilter(map_data),
+            bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Self::SkStorage(map_data),
+            bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_TASK_STORAGE => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_CGRP_STORAGE => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_ARENA => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED => {
+                Self::Unsupported(map_data)
+            }
+            bpf_map_type::BPF_MAP_TYPE_UNSPEC => return Err(MapError::InvalidMapType { map_type }),
+            bpf_map_type::__MAX_BPF_MAP_TYPE => return Err(MapError::InvalidMapType { map_type }),
+        };
+        Ok(map)
     }
 }
 
@@ -416,6 +438,7 @@ impl_map_pin!((V) {
     SockHash,
     BloomFilter,
     Queue,
+    SkStorage,
     Stack,
 });
 
@@ -435,28 +458,30 @@ macro_rules! impl_try_from_map {
     // rather than the repeated idents used later because the macro language does not allow one
     // repetition to be pasted inside another.
     ($ty_param:tt {
-        $($ty:ident $(from $($variant:ident)|+)?),+ $(,)?
+        $($(#[$meta:meta])* $ty:ident $(from $($variant:ident)|+)?),+ $(,)?
     }) => {
-        $(impl_try_from_map!(<$ty_param> $ty $(from $($variant)|+)?);)+
+        $(impl_try_from_map!($(#[$meta])* <$ty_param> $ty $(from $($variant)|+)?);)+
     };
     // Add the "from $variant" using $ty as the default if it is missing.
-    (<$ty_param:tt> $ty:ident) => {
-        impl_try_from_map!(<$ty_param> $ty from $ty);
+    ($(#[$meta:meta])* <$ty_param:tt> $ty:ident) => {
+        impl_try_from_map!($(#[$meta])* <$ty_param> $ty from $ty);
     };
     // Dispatch for each of the lifetimes.
     (
-        <($($ty_param:ident),*)> $ty:ident from $($variant:ident)|+
+        $(#[$meta:meta])* <($($ty_param:ident),*)> $ty:ident from $($variant:ident)|+
     ) => {
-        impl_try_from_map!(<'a> ($($ty_param),*) $ty from $($variant)|+);
-        impl_try_from_map!(<'a mut> ($($ty_param),*) $ty from $($variant)|+);
-        impl_try_from_map!(<> ($($ty_param),*) $ty from $($variant)|+);
+        impl_try_from_map!($(#[$meta])* <'a> ($($ty_param),*) $ty from $($variant)|+);
+        impl_try_from_map!($(#[$meta])* <'a mut> ($($ty_param),*) $ty from $($variant)|+);
+        impl_try_from_map!($(#[$meta])* <> ($($ty_param),*) $ty from $($variant)|+);
     };
     // An individual impl.
     (
+        $(#[$meta:meta])*
         <$($l:lifetime $($m:ident)?)?>
         ($($ty_param:ident),*)
         $ty:ident from $($variant:ident)|+
     ) => {
+        $(#[$meta])*
         impl<$($l,)? $($ty_param: Pod),*> TryFrom<$(&$l $($m)?)? Map>
             for $ty<$(&$l $($m)?)? MapData, $($ty_param),*>
         {
@@ -486,18 +511,13 @@ impl_try_from_map!(() {
     XskMap,
 });
 
-#[cfg(any(feature = "async_tokio", feature = "async_std"))]
-#[cfg_attr(docsrs, doc(cfg(any(feature = "async_tokio", feature = "async_std"))))]
-impl_try_from_map!(() {
-    AsyncPerfEventArray from PerfEventArray,
-});
-
 impl_try_from_map!((V) {
     Array,
     BloomFilter,
     PerCpuArray,
     Queue,
     SockHash,
+    SkStorage,
     Stack,
 });
 
@@ -544,34 +564,42 @@ pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 /// You should never need to use this unless you're implementing a new map type.
 #[derive(Debug)]
 pub struct MapData {
-    obj: obj::Map,
+    obj: aya_obj::Map,
     fd: MapFd,
 }
 
 impl MapData {
     /// Creates a new map with the provided `name`
     pub fn create(
-        obj: obj::Map,
+        mut obj: aya_obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
-        let c_name = CString::new(name).map_err(|_| MapError::InvalidName { name: name.into() })?;
+        let c_name = CString::new(name)
+            .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
 
-        #[cfg(not(test))]
-        let kernel_version = KernelVersion::current().unwrap();
-        #[cfg(test)]
-        let kernel_version = KernelVersion::new(0xff, 0xff, 0xff);
+        // BPF_MAP_TYPE_PERF_EVENT_ARRAY's max_entries should not exceed the number of
+        // CPUs.
+        //
+        // By default, the newest versions of Aya, libbpf and cilium/ebpf define `max_entries` of
+        // `PerfEventArray` as `0`, with an intention to get it replaced with a correct value
+        // by the loader.
+        //
+        // We allow custom values (potentially coming either from older versions of aya-ebpf or
+        // programs written in C) as long as they don't exceed the number of CPUs.
+        //
+        // Otherwise, when the value is `0` or too large, we set it to the number of CPUs.
+        if obj.map_type() == bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 {
+            let nr_cpus = nr_cpus().map_err(|(_, error)| MapError::IoError(error))? as u32;
+            if obj.max_entries() == 0 || obj.max_entries() > nr_cpus {
+                obj.set_max_entries(nr_cpus);
+            }
+        };
+
         let fd =
-            bpf_create_map(&c_name, &obj, btf_fd, kernel_version).map_err(|(code, io_error)| {
-                if kernel_version < KernelVersion::new(5, 11, 0) {
-                    maybe_warn_rlimit();
-                }
-
-                MapError::CreateError {
-                    name: name.into(),
-                    code,
-                    io_error,
-                }
+            bpf_create_map(&c_name, &obj, btf_fd).map_err(|io_error| MapError::CreateError {
+                name: name.into(),
+                io_error,
             })?;
         Ok(Self {
             obj,
@@ -581,24 +609,27 @@ impl MapData {
 
     pub(crate) fn create_pinned_by_name<P: AsRef<Path>>(
         path: P,
-        obj: obj::Map,
+        obj: aya_obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
         use std::os::unix::ffi::OsStrExt as _;
 
         // try to open map in case it's already pinned
-        let path = path.as_ref().join(name);
+        let path = path.as_ref();
         let path_string = match CString::new(path.as_os_str().as_bytes()) {
             Ok(path) => path,
             Err(error) => {
                 return Err(MapError::PinError {
                     name: Some(name.into()),
-                    error: PinError::InvalidPinPath { path, error },
+                    error: PinError::InvalidPinPath {
+                        path: path.to_path_buf(),
+                        error,
+                    },
                 });
             }
         };
-        match bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
+        match bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
         }) {
@@ -608,7 +639,7 @@ impl MapData {
             }),
             Err(_) => {
                 let map = Self::create(obj, name, btf_fd)?;
-                map.pin(&path).map_err(|error| MapError::PinError {
+                map.pin(path).map_err(|error| MapError::PinError {
                     name: Some(name.into()),
                     error,
                 })?;
@@ -619,9 +650,9 @@ impl MapData {
 
     pub(crate) fn finalize(&mut self) -> Result<(), MapError> {
         let Self { obj, fd } = self;
-        if !obj.data().is_empty() && obj.section_kind() != EbpfSectionKind::Bss {
-            bpf_map_update_elem_ptr(fd.as_fd(), &0 as *const _, obj.data_mut().as_mut_ptr(), 0)
-                .map_err(|(_, io_error)| SyscallError {
+        if !obj.data().is_empty() {
+            bpf_map_update_elem_ptr(fd.as_fd(), &0, obj.data_mut().as_mut_ptr(), 0)
+                .map_err(|io_error| SyscallError {
                     call: "bpf_map_update_elem",
                     io_error,
                 })
@@ -629,7 +660,7 @@ impl MapData {
         }
         if obj.section_kind() == EbpfSectionKind::Rodata {
             bpf_map_freeze(fd.as_fd())
-                .map_err(|(_, io_error)| SyscallError {
+                .map_err(|io_error| SyscallError {
                     call: "bpf_map_freeze",
                     io_error,
                 })
@@ -652,18 +683,26 @@ impl MapData {
                 },
             })?;
 
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
+        let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
         })?;
 
-        Self::from_fd(fd)
+        Self::from_fd_inner(fd)
     }
 
     /// Loads a map from a map id.
     pub fn from_id(id: u32) -> Result<Self, MapError> {
         let fd = bpf_map_get_fd_by_id(id)?;
-        Self::from_fd(fd)
+        Self::from_fd_inner(fd)
+    }
+
+    fn from_fd_inner(fd: crate::MockableFd) -> Result<Self, MapError> {
+        let MapInfo(info) = MapInfo::new_from_fd(fd.as_fd())?;
+        Ok(Self {
+            obj: parse_map_info(info, PinningType::None),
+            fd: MapFd::from_fd(fd),
+        })
     }
 
     /// Loads a map from a file descriptor.
@@ -672,11 +711,8 @@ impl MapData {
     /// This API is intended for cases where you have received a valid BPF FD from some other means.
     /// For example, you received an FD over Unix Domain Socket.
     pub fn from_fd(fd: OwnedFd) -> Result<Self, MapError> {
-        let MapInfo(info) = MapInfo::new_from_fd(fd.as_fd())?;
-        Ok(Self {
-            obj: parse_map_info(info, PinningType::None),
-            fd: MapFd::from_fd(fd),
-        })
+        let fd = crate::MockableFd::from_fd(fd);
+        Self::from_fd_inner(fd)
     }
 
     /// Allows the map to be pinned to the provided path.
@@ -714,7 +750,7 @@ impl MapData {
                 error,
             }
         })?;
-        bpf_pin_object(fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
+        bpf_pin_object(fd.as_fd(), &path_string).map_err(|io_error| SyscallError {
             call: "BPF_OBJ_PIN",
             io_error,
         })?;
@@ -727,7 +763,7 @@ impl MapData {
         fd
     }
 
-    pub(crate) fn obj(&self) -> &obj::Map {
+    pub(crate) fn obj(&self) -> &aya_obj::Map {
         let Self { obj, fd: _ } = self;
         obj
     }
@@ -773,11 +809,10 @@ impl<K: Pod> Iterator for MapKeys<'_, K> {
         }
 
         let fd = self.map.fd().as_fd();
-        let key =
-            bpf_map_get_next_key(fd, self.key.as_ref()).map_err(|(_, io_error)| SyscallError {
-                call: "bpf_map_get_next_key",
-                io_error,
-            });
+        let key = bpf_map_get_next_key(fd, self.key.as_ref()).map_err(|io_error| SyscallError {
+            call: "bpf_map_get_next_key",
+            io_error,
+        });
         match key {
             Err(err) => {
                 self.err = true;
@@ -856,7 +891,8 @@ impl PerCpuKernelMem {
 /// use aya::maps::PerCpuValues;
 /// use aya::util::nr_cpus;
 ///
-/// let values = PerCpuValues::try_from(vec![42u32; nr_cpus()?])?;
+/// let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
+/// let values = PerCpuValues::try_from(vec![42u32; nr_cpus])?;
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
@@ -868,7 +904,7 @@ impl<T: Pod> TryFrom<Vec<T>> for PerCpuValues<T> {
     type Error = io::Error;
 
     fn try_from(values: Vec<T>) -> Result<Self, Self::Error> {
-        let nr_cpus = nr_cpus()?;
+        let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
         if values.len() != nr_cpus {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
@@ -884,19 +920,19 @@ impl<T: Pod> TryFrom<Vec<T>> for PerCpuValues<T> {
 impl<T: Pod> PerCpuValues<T> {
     pub(crate) fn alloc_kernel_mem() -> Result<PerCpuKernelMem, io::Error> {
         let value_size = (mem::size_of::<T>() + 7) & !7;
+        let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
         Ok(PerCpuKernelMem {
-            bytes: vec![0u8; nr_cpus()? * value_size],
+            bytes: vec![0u8; nr_cpus * value_size],
         })
     }
 
     pub(crate) unsafe fn from_kernel_mem(mem: PerCpuKernelMem) -> Self {
-        let mem_ptr = mem.bytes.as_ptr() as usize;
-        let value_size = (mem::size_of::<T>() + 7) & !7;
+        let stride = (mem::size_of::<T>() + 7) & !7;
         let mut values = Vec::new();
         let mut offset = 0;
         while offset < mem.bytes.len() {
-            values.push(ptr::read_unaligned((mem_ptr + offset) as *const _));
-            offset += value_size;
+            values.push(unsafe { ptr::read_unaligned(mem.bytes.as_ptr().add(offset).cast()) });
+            offset += stride;
         }
 
         Self {
@@ -906,10 +942,10 @@ impl<T: Pod> PerCpuValues<T> {
 
     pub(crate) fn build_kernel_mem(&self) -> Result<PerCpuKernelMem, io::Error> {
         let mut mem = Self::alloc_kernel_mem()?;
-        let mem_ptr = mem.as_mut_ptr() as usize;
+        let mem_ptr = mem.as_mut_ptr();
         let value_size = (mem::size_of::<T>() + 7) & !7;
-        for i in 0..self.values.len() {
-            unsafe { ptr::write_unaligned((mem_ptr + i * value_size) as *mut _, self.values[i]) };
+        for (i, value) in self.values.iter().enumerate() {
+            unsafe { ptr::write_unaligned(mem_ptr.byte_add(i * value_size).cast(), *value) };
         }
 
         Ok(mem)
@@ -924,142 +960,33 @@ impl<T: Pod> Deref for PerCpuValues<T> {
     }
 }
 
-/// Provides information about a loaded map, like name, id and size.
-#[derive(Debug)]
-pub struct MapInfo(bpf_map_info);
-
-impl MapInfo {
-    fn new_from_fd(fd: BorrowedFd<'_>) -> Result<Self, MapError> {
-        let info = bpf_map_get_info_by_fd(fd.as_fd())?;
-        Ok(Self(info))
-    }
-
-    /// Loads map info from a map id.
-    pub fn from_id(id: u32) -> Result<Self, MapError> {
-        bpf_map_get_fd_by_id(id)
-            .map_err(MapError::from)
-            .and_then(|fd| Self::new_from_fd(fd.as_fd()))
-    }
-
-    /// The name of the map, limited to 16 bytes.
-    pub fn name(&self) -> &[u8] {
-        bytes_of_bpf_name(&self.0.name)
-    }
-
-    /// The name of the map as a &str. If the name is not valid unicode, None is returned.
-    pub fn name_as_str(&self) -> Option<&str> {
-        std::str::from_utf8(self.name()).ok()
-    }
-
-    /// The id for this map. Each map has a unique id.
-    pub fn id(&self) -> u32 {
-        self.0.id
-    }
-
-    /// The map type as defined by the linux kernel enum
-    /// [`bpf_map_type`](https://elixir.bootlin.com/linux/v6.4.4/source/include/uapi/linux/bpf.h#L905).
-    pub fn map_type(&self) -> u32 {
-        self.0.type_
-    }
-
-    /// The key size for this map.
-    pub fn key_size(&self) -> u32 {
-        self.0.key_size
-    }
-
-    /// The value size for this map.
-    pub fn value_size(&self) -> u32 {
-        self.0.value_size
-    }
-
-    /// The maximum number of entries in this map.
-    pub fn max_entries(&self) -> u32 {
-        self.0.max_entries
-    }
-
-    /// The flags for this map.
-    pub fn map_flags(&self) -> u32 {
-        self.0.map_flags
-    }
-
-    /// Returns a file descriptor referencing the map.
-    ///
-    /// The returned file descriptor can be closed at any time and doing so does
-    /// not influence the life cycle of the map.
-    pub fn fd(&self) -> Result<MapFd, MapError> {
-        let Self(info) = self;
-        let fd = bpf_map_get_fd_by_id(info.id)?;
-        Ok(MapFd::from_fd(fd))
-    }
-
-    /// Loads a map from a pinned path in bpffs.
-    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, MapError> {
-        use std::os::unix::ffi::OsStrExt as _;
-
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
-            call: "BPF_OBJ_GET",
-            io_error,
-        })?;
-
-        Self::new_from_fd(fd.as_fd())
-    }
-}
-
-/// Returns an iterator over all loaded bpf maps.
-///
-/// This differs from [`crate::Ebpf::maps`] since it will return all maps
-/// listed on the host system and not only maps for a specific [`crate::Ebpf`] instance.
-///
-/// # Example
-/// ```
-/// # use aya::maps::loaded_maps;
-///
-/// for m in loaded_maps() {
-///     match m {
-///         Ok(map) => println!("{:?}", map.name_as_str()),
-///         Err(e) => println!("Error iterating maps: {:?}", e),
-///     }
-/// }
-/// ```
-///
-/// # Errors
-///
-/// Returns [`MapError::SyscallError`] if any of the syscalls required to either get
-/// next map id, get the map fd, or the [`MapInfo`] fail. In cases where
-/// iteration can't be performed, for example the caller does not have the necessary privileges,
-/// a single item will be yielded containing the error that occurred.
-pub fn loaded_maps() -> impl Iterator<Item = Result<MapInfo, MapError>> {
-    iter_map_ids().map(|id| {
-        let id = id?;
-        MapInfo::from_id(id)
-    })
-}
-
 #[cfg(test)]
 mod test_utils {
-    use crate::{
-        bpf_map_def,
+    use aya_obj::{
+        EbpfSectionKind,
         generated::{bpf_cmd, bpf_map_type},
-        maps::MapData,
-        obj::{self, maps::LegacyMap, EbpfSectionKind},
-        sys::{override_syscall, Syscall},
+        maps::LegacyMap,
     };
 
-    pub(super) fn new_map(obj: obj::Map) -> MapData {
+    use crate::{
+        bpf_map_def,
+        maps::MapData,
+        sys::{Syscall, override_syscall},
+    };
+
+    pub(super) fn new_map(obj: aya_obj::Map) -> MapData {
         override_syscall(|call| match call {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_CREATE,
                 ..
             } => Ok(crate::MockableFd::mock_signed_fd().into()),
-            call => panic!("unexpected syscall {:?}", call),
+            call => panic!("unexpected syscall {call:?}"),
         });
         MapData::create(obj, "foo", None).unwrap()
     }
 
-    pub(super) fn new_obj_map<K>(map_type: bpf_map_type) -> obj::Map {
-        obj::Map::Legacy(LegacyMap {
+    pub(super) fn new_obj_map<K>(map_type: bpf_map_type) -> aya_obj::Map {
+        aya_obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: map_type as u32,
                 key_size: std::mem::size_of::<K>() as u32,
@@ -1073,24 +1000,41 @@ mod test_utils {
             symbol_index: None,
         })
     }
+
+    pub(super) fn new_obj_map_with_max_entries<K>(
+        map_type: bpf_map_type,
+        max_entries: u32,
+    ) -> aya_obj::Map {
+        aya_obj::Map::Legacy(LegacyMap {
+            def: bpf_map_def {
+                map_type: map_type as u32,
+                key_size: std::mem::size_of::<K>() as u32,
+                value_size: 4,
+                max_entries,
+                ..Default::default()
+            },
+            section_index: 0,
+            section_kind: EbpfSectionKind::Maps,
+            data: Vec::new(),
+            symbol_index: None,
+        })
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::os::fd::AsRawFd as _;
+    use std::{ffi::c_char, os::fd::AsRawFd as _};
 
     use assert_matches::assert_matches;
-    use libc::{c_char, EFAULT};
-
-    fn new_obj_map() -> obj::Map {
-        test_utils::new_obj_map::<u32>(crate::generated::bpf_map_type::BPF_MAP_TYPE_HASH)
-    }
+    use aya_obj::generated::{bpf_cmd, bpf_map_info, bpf_map_type};
+    use libc::EFAULT;
 
     use super::*;
-    use crate::{
-        generated::bpf_cmd,
-        sys::{override_syscall, Syscall},
-    };
+    use crate::sys::{Syscall, override_syscall};
+
+    fn new_obj_map() -> aya_obj::Map {
+        test_utils::new_obj_map::<u32>(bpf_map_type::BPF_MAP_TYPE_HASH)
+    }
 
     #[test]
     fn test_from_map_id() {
@@ -1147,13 +1091,65 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(
-        miri,
-        ignore = "`let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) }` is trying to retag from <wildcard> for Unique permission, but no exposed tags have suitable permission in the borrow stack for this location"
-    )]
-    fn test_name() {
-        use crate::generated::bpf_map_info;
+    fn test_create_perf_event_array() {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                ..
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
+        });
 
+        let nr_cpus = nr_cpus().unwrap();
+
+        // Create with max_entries > nr_cpus is clamped to nr_cpus
+        assert_matches!(
+            MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
+                bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                65535,
+            ), "foo", None),
+            Ok(MapData {
+                obj,
+                fd,
+            }) => {
+                assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
+                assert_eq!(obj.max_entries(), nr_cpus as u32)
+            }
+        );
+
+        // Create with max_entries = 0 is set to nr_cpus
+        assert_matches!(
+            MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
+                bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                0,
+            ), "foo", None),
+            Ok(MapData {
+                obj,
+                fd,
+            }) => {
+                assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
+                assert_eq!(obj.max_entries(), nr_cpus as u32)
+            }
+        );
+
+        // Create with max_entries < nr_cpus is unchanged
+        assert_matches!(
+            MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
+                bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                1,
+            ), "foo", None),
+            Ok(MapData {
+                obj,
+                fd,
+            }) => {
+                assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
+                assert_eq!(obj.max_entries(), 1)
+            }
+        );
+    }
+
+    #[test]
+    fn test_name() {
         const TEST_NAME: &str = "foo";
 
         override_syscall(|call| match call {
@@ -1169,10 +1165,15 @@ mod tests {
                     unsafe { attr.info.info_len },
                     mem::size_of::<bpf_map_info>() as u32
                 );
-                let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) };
-                map_info.name[..TEST_NAME.len()].copy_from_slice(unsafe {
-                    mem::transmute::<&[u8], &[c_char]>(TEST_NAME.as_bytes())
-                });
+                unsafe {
+                    let name_bytes = mem::transmute::<&[u8], &[c_char]>(TEST_NAME.as_bytes());
+                    let map_info = attr.info.info as *mut bpf_map_info;
+                    map_info.write({
+                        let mut map_info = map_info.read();
+                        map_info.name[..name_bytes.len()].copy_from_slice(name_bytes);
+                        map_info
+                    })
+                }
                 Ok(0)
             }
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
@@ -1183,13 +1184,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(
-        miri,
-        ignore = "`let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) }` is trying to retag from <wildcard> for Unique permission, but no exposed tags have suitable permission in the borrow stack for this location"
-    )]
     fn test_loaded_maps() {
-        use crate::generated::bpf_map_info;
-
         override_syscall(|call| match call {
             Syscall::Ebpf {
                 cmd: bpf_cmd::BPF_MAP_GET_NEXT_ID,
@@ -1213,12 +1208,19 @@ mod tests {
                 cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
                 attr,
             } => {
-                let map_info = unsafe { &mut *(attr.info.info as *mut bpf_map_info) };
-                map_info.id = unsafe { attr.info.bpf_fd } - crate::MockableFd::mock_unsigned_fd();
-                map_info.key_size = 32;
-                map_info.value_size = 64;
-                map_info.map_flags = 1234;
-                map_info.max_entries = 99;
+                unsafe {
+                    let info = attr.info;
+                    let map_info = info.info as *mut bpf_map_info;
+                    map_info.write({
+                        let mut map_info = map_info.read();
+                        map_info.id = info.bpf_fd - crate::MockableFd::mock_unsigned_fd();
+                        map_info.key_size = 32;
+                        map_info.value_size = 64;
+                        map_info.map_flags = 1234;
+                        map_info.max_entries = 99;
+                        map_info
+                    });
+                }
                 Ok(0)
             }
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
@@ -1253,13 +1255,12 @@ mod tests {
 
     #[test]
     fn test_create_failed() {
-        override_syscall(|_| Err((-42, io::Error::from_raw_os_error(EFAULT))));
+        override_syscall(|_| Err((-1, io::Error::from_raw_os_error(EFAULT))));
 
         assert_matches!(
             MapData::create(new_obj_map(), "foo", None),
-            Err(MapError::CreateError { name, code, io_error }) => {
+            Err(MapError::CreateError { name, io_error }) => {
                 assert_eq!(name, "foo");
-                assert_eq!(code, -42);
                 assert_eq!(io_error.raw_os_error(), Some(EFAULT));
             }
         );

@@ -1,18 +1,21 @@
 //! Extension programs.
 
-use std::os::fd::{AsFd as _, BorrowedFd, OwnedFd};
+use std::os::fd::{AsFd as _, BorrowedFd};
 
+use aya_obj::{
+    btf::BtfKind,
+    generated::{bpf_attach_type::BPF_CGROUP_INET_INGRESS, bpf_prog_type::BPF_PROG_TYPE_EXT},
+};
 use object::Endianness;
 use thiserror::Error;
 
 use crate::{
-    generated::{bpf_attach_type::BPF_CGROUP_INET_INGRESS, bpf_prog_type::BPF_PROG_TYPE_EXT},
-    obj::btf::BtfKind,
-    programs::{
-        define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd,
-    },
-    sys::{self, bpf_link_create, LinkTarget, SyscallError},
     Btf,
+    programs::{
+        FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd, ProgramType, define_link_wrapper,
+        load_program,
+    },
+    sys::{self, BpfLinkCreateArgs, LinkTarget, SyscallError, bpf_link_create},
 };
 
 /// The type returned when loading or attaching an [`Extension`] fails.
@@ -56,6 +59,9 @@ pub struct Extension {
 }
 
 impl Extension {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::Extension;
+
     /// Loads the extension inside the kernel.
     ///
     /// Prepares the code included in the extension to replace the code of the function
@@ -101,10 +107,10 @@ impl Extension {
             prog_fd,
             LinkTarget::Fd(target_fd),
             BPF_CGROUP_INET_INGRESS,
-            Some(btf_id),
             0,
+            Some(BpfLinkCreateArgs::TargetBtfId(btf_id)),
         )
-        .map_err(|(_, io_error)| SyscallError {
+        .map_err(|io_error| SyscallError {
             call: "bpf_link_create",
             io_error,
         })?;
@@ -138,10 +144,10 @@ impl Extension {
             prog_fd,
             LinkTarget::Fd(target_fd),
             BPF_CGROUP_INET_INGRESS,
-            Some(btf_id),
             0,
+            Some(BpfLinkCreateArgs::TargetBtfId(btf_id)),
         )
-        .map_err(|(_, io_error)| SyscallError {
+        .map_err(|io_error| SyscallError {
             call: "bpf_link_create",
             io_error,
         })?;
@@ -149,27 +155,14 @@ impl Extension {
             .links
             .insert(ExtensionLink::new(FdLink::new(link_fd)))
     }
-
-    /// Detaches the extension.
-    ///
-    /// Detaching restores the original code overridden by the extension program.
-    /// See [Extension::attach].
-    pub fn detach(&mut self, link_id: ExtensionLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided link_id.
-    ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: ExtensionLinkId) -> Result<ExtensionLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
 }
 
 /// Retrieves the FD of the BTF object for the provided `prog_fd` and the BTF ID of the function
 /// with the name `func_name` within that BTF object.
-fn get_btf_info(prog_fd: BorrowedFd<'_>, func_name: &str) -> Result<(OwnedFd, u32), ProgramError> {
+fn get_btf_info(
+    prog_fd: BorrowedFd<'_>,
+    func_name: &str,
+) -> Result<(crate::MockableFd, u32), ProgramError> {
     // retrieve program information
     let info = sys::bpf_prog_get_info_by_fd(prog_fd, &mut [])?;
 
@@ -204,11 +197,4 @@ fn get_btf_info(prog_fd: BorrowedFd<'_>, func_name: &str) -> Result<(OwnedFd, u3
     Ok((btf_fd, btf_id))
 }
 
-define_link_wrapper!(
-    /// The link used by [Extension] programs.
-    ExtensionLink,
-    /// The type returned by [Extension::attach]. Can be passed to [Extension::detach].
-    ExtensionLinkId,
-    FdLink,
-    FdLinkId
-);
+define_link_wrapper!(ExtensionLink, ExtensionLinkId, FdLink, FdLinkId, Extension);

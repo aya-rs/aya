@@ -3,17 +3,17 @@
 use std::{
     borrow::{Borrow, BorrowMut},
     num::NonZeroU32,
-    os::fd::{AsFd, AsRawFd},
+    os::fd::{AsFd as _, AsRawFd as _},
 };
 
 use aya_obj::generated::bpf_cpumap_val;
 
 use super::XdpMapError;
 use crate::{
-    maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError},
+    FEATURES, Pod,
+    maps::{IterableMap, MapData, MapError, check_bounds, check_kv_size},
     programs::ProgramFd,
-    sys::{bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
-    Pod, FEATURES,
+    sys::{SyscallError, bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
 /// An array of available CPUs.
@@ -29,16 +29,17 @@ use crate::{
 /// ```no_run
 /// # let elf_bytes = &[];
 /// use aya::maps::xdp::CpuMap;
+/// use aya::util::nr_cpus;
 ///
-/// let ncpus = aya::util::nr_cpus().unwrap() as u32;
+/// let nr_cpus = nr_cpus().unwrap() as u32;
 /// let mut bpf = aya::EbpfLoader::new()
-///     .set_max_entries("CPUS", ncpus)
+///     .map_max_entries("CPUS", nr_cpus)
 ///     .load(elf_bytes)
 ///     .unwrap();
 /// let mut cpumap = CpuMap::try_from(bpf.map_mut("CPUS").unwrap())?;
 /// let flags = 0;
 /// let queue_size = 2048;
-/// for i in 0..ncpus {
+/// for i in 0..nr_cpus {
 ///     cpumap.set(i, queue_size, None, flags);
 /// }
 ///
@@ -69,6 +70,7 @@ impl<T: Borrow<MapData>> CpuMap<T> {
     /// Returns the number of elements in the array.
     ///
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
+    #[expect(clippy::len_without_is_empty)]
     pub fn len(&self) -> u32 {
         self.inner.borrow().obj.max_entries()
     }
@@ -102,7 +104,7 @@ impl<T: Borrow<MapData>> CpuMap<T> {
             })
         };
         value
-            .map_err(|(_, io_error)| SyscallError {
+            .map_err(|io_error| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?
@@ -162,13 +164,13 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
             bpf_map_update_elem(fd, Some(&cpu_index), &queue_size, flags)
         };
 
-        res.map_err(|(_, io_error)| {
+        res.map_err(|io_error| {
             MapError::from(SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,
             })
-        })?;
-        Ok(())
+        })
+        .map_err(Into::into)
     }
 }
 

@@ -52,8 +52,8 @@ impl CpuMap {
     /// #[map]
     /// static MAP: CpuMap = CpuMap::with_max_entries(8, 0);
     /// ```
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> CpuMap {
-        CpuMap {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_CPUMAP,
                 key_size: mem::size_of::<u32>() as u32,
@@ -79,8 +79,8 @@ impl CpuMap {
     /// #[map]
     /// static MAP: CpuMap = CpuMap::pinned(8, 0);
     /// ```
-    pub const fn pinned(max_entries: u32, flags: u32) -> CpuMap {
-        CpuMap {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_CPUMAP,
                 key_size: mem::size_of::<u32>() as u32,

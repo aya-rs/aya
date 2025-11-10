@@ -1,7 +1,10 @@
-use aya::{programs::UProbe, util::KernelVersion, Ebpf};
-use test_log::test;
+use aya::{
+    Ebpf,
+    programs::{UProbe, Xdp},
+    util::KernelVersion,
+};
 
-#[test]
+#[test_log::test]
 fn relocations() {
     let bpf = load_and_attach("test_64_32_call_relocs", crate::RELOCATIONS);
 
@@ -13,11 +16,13 @@ fn relocations() {
     assert_eq!(m.get(&2, 0).unwrap(), 3);
 }
 
-#[test]
+#[test_log::test]
 fn text_64_64_reloc() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 13, 0) {
-        eprintln!("skipping test on kernel {kernel_version:?}, support for bpf_for_each_map_elem was added in 5.13.0; see https://github.com/torvalds/linux/commit/69c087b");
+        eprintln!(
+            "skipping test on kernel {kernel_version:?}, support for bpf_for_each_map_elem was added in 5.13.0; see https://github.com/torvalds/linux/commit/69c087b"
+        );
         return;
     }
 
@@ -33,25 +38,31 @@ fn text_64_64_reloc() {
     assert_eq!(m.get(&1, 0).unwrap(), 3);
 }
 
+#[test_log::test]
+fn variables_reloc() {
+    let mut bpf = Ebpf::load(crate::VARIABLES_RELOC).unwrap();
+    let prog: &mut Xdp = bpf
+        .program_mut("variables_reloc")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+}
+
 fn load_and_attach(name: &str, bytes: &[u8]) -> Ebpf {
     let mut bpf = Ebpf::load(bytes).unwrap();
 
     let prog: &mut UProbe = bpf.program_mut(name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
-    prog.attach(
-        Some("trigger_relocations_program"),
-        0,
-        "/proc/self/exe",
-        None,
-    )
-    .unwrap();
+    prog.attach("trigger_relocations_program", "/proc/self/exe", None, None)
+        .unwrap();
 
     bpf
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn trigger_relocations_program() {
+extern "C" fn trigger_relocations_program() {
     core::hint::black_box(trigger_relocations_program);
 }

@@ -1,35 +1,40 @@
 use proc_macro2::TokenStream;
-use proc_macro_error::abort;
+use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{ItemFn, Result};
+use syn::{ItemFn, spanned::Spanned as _};
 
 pub(crate) struct PerfEvent {
     item: ItemFn,
 }
 
 impl PerfEvent {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self, Diagnostic> {
         if !attrs.is_empty() {
-            abort!(attrs, "unexpected attribute")
+            return Err(attrs.span().error("unexpected attribute"));
         }
         let item = syn::parse2(item)?;
-        Ok(PerfEvent { item })
+        Ok(Self { item })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let fn_vis = &self.item.vis;
-        let fn_name = self.item.sig.ident.clone();
-        let item = &self.item;
-        Ok(quote! {
-            #[no_mangle]
-            #[link_section = "perf_event"]
-            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
+    pub(crate) fn expand(&self) -> TokenStream {
+        let Self { item } = self;
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
+        let fn_name = &sig.ident;
+        quote! {
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "perf_event")]
+            #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
                let _ = #fn_name(::aya_ebpf::programs::PerfEventContext::new(ctx));
                return 0;
 
                #item
             }
-        })
+        }
     }
 }
 
@@ -50,10 +55,10 @@ mod tests {
             ),
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "perf_event"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "perf_event")]
             fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
                let _ = foo(::aya_ebpf::programs::PerfEventContext::new(ctx));
                return 0;

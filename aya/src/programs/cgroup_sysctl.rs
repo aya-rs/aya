@@ -2,12 +2,16 @@
 
 use std::{hash::Hash, os::fd::AsFd};
 
+use aya_obj::generated::{
+    bpf_attach_type::BPF_CGROUP_SYSCTL, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SYSCTL,
+};
+
 use crate::{
-    generated::{bpf_attach_type::BPF_CGROUP_SYSCTL, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SYSCTL},
     programs::{
-        define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
+        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, id_as_key, load_program,
     },
-    sys::{bpf_link_create, LinkTarget, SyscallError},
+    sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
 };
 
@@ -36,12 +40,12 @@ use crate::{
 /// # }
 /// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use std::fs::File;
-/// use aya::programs::CgroupSysctl;
+/// use aya::programs::{CgroupAttachMode, CgroupSysctl};
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
 /// let program: &mut CgroupSysctl = bpf.program_mut("cgroup_sysctl").unwrap().try_into()?;
 /// program.load()?;
-/// program.attach(file)?;
+/// program.attach(file, CgroupAttachMode::Single)?;
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
@@ -51,6 +55,9 @@ pub struct CgroupSysctl {
 }
 
 impl CgroupSysctl {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::CgroupSysctl;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_CGROUP_SYSCTL, &mut self.data)
@@ -59,20 +66,24 @@ impl CgroupSysctl {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupSysctl::detach].
-    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<CgroupSysctlLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(
+        &mut self,
+        cgroup: T,
+        mode: CgroupAttachMode,
+    ) -> Result<CgroupSysctlLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
 
-        if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
+        if KernelVersion::at_least(5, 7, 0) {
             let link_fd = bpf_link_create(
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),
                 BPF_CGROUP_SYSCTL,
+                mode.into(),
                 None,
-                0,
             )
-            .map_err(|(_, io_error)| SyscallError {
+            .map_err(|io_error| SyscallError {
                 call: "bpf_link_create",
                 io_error,
             })?;
@@ -82,7 +93,7 @@ impl CgroupSysctl {
                     FdLink::new(link_fd),
                 )))
         } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL)?;
+            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL, mode)?;
 
             self.data
                 .links
@@ -90,24 +101,6 @@ impl CgroupSysctl {
                     link,
                 )))
         }
-    }
-
-    /// Takes ownership of the link referenced by the provided link_id.
-    ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
-    pub fn take_link(
-        &mut self,
-        link_id: CgroupSysctlLinkId,
-    ) -> Result<CgroupSysctlLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
-
-    /// Detaches the program.
-    ///
-    /// See [CgroupSysctl::attach].
-    pub fn detach(&mut self, link_id: CgroupSysctlLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
     }
 }
 
@@ -141,11 +134,12 @@ impl Link for CgroupSysctlLinkInner {
     }
 }
 
+id_as_key!(CgroupSysctlLinkInner, CgroupSysctlLinkIdInner);
+
 define_link_wrapper!(
-    /// The link used by [CgroupSysctl] programs.
     CgroupSysctlLink,
-    /// The type returned by [CgroupSysctl::attach]. Can be passed to [CgroupSysctl::detach].
     CgroupSysctlLinkId,
     CgroupSysctlLinkInner,
-    CgroupSysctlLinkIdInner
+    CgroupSysctlLinkIdInner,
+    CgroupSysctl,
 );

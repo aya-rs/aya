@@ -1,24 +1,13 @@
-use aya::{maps::Array, programs::UProbe, Ebpf};
-use test_log::test;
+use aya::{Ebpf, maps::Array, programs::UProbe};
+use integration_common::bpf_probe_read::{RESULT_BUF_LEN, TestResult};
 
-const RESULT_BUF_LEN: usize = 1024;
-
-#[derive(Copy, Clone)]
-#[repr(C)]
-struct TestResult {
-    buf: [u8; RESULT_BUF_LEN],
-    len: Option<Result<usize, i64>>,
-}
-
-unsafe impl aya::Pod for TestResult {}
-
-#[test]
+#[test_log::test]
 fn bpf_probe_read_user_str_bytes() {
     let bpf = set_user_buffer(b"foo\0", RESULT_BUF_LEN);
     assert_eq!(result_bytes(&bpf), b"foo");
 }
 
-#[test]
+#[test_log::test]
 fn bpf_probe_read_user_str_bytes_truncate() {
     let s = vec![b'a'; RESULT_BUF_LEN];
     let bpf = set_user_buffer(&s, RESULT_BUF_LEN);
@@ -26,25 +15,25 @@ fn bpf_probe_read_user_str_bytes_truncate() {
     assert_eq!(result_bytes(&bpf), &s[..RESULT_BUF_LEN - 1]);
 }
 
-#[test]
+#[test_log::test]
 fn bpf_probe_read_user_str_bytes_empty_string() {
     let bpf = set_user_buffer(b"\0", RESULT_BUF_LEN);
     assert_eq!(result_bytes(&bpf), b"");
 }
 
-#[test]
+#[test_log::test]
 fn bpf_probe_read_user_str_bytes_empty_dest() {
     let bpf = set_user_buffer(b"foo\0", 0);
     assert_eq!(result_bytes(&bpf), b"");
 }
 
-#[test]
+#[test_log::test]
 fn bpf_probe_read_kernel_str_bytes() {
     let bpf = set_kernel_buffer(b"foo\0", RESULT_BUF_LEN);
     assert_eq!(result_bytes(&bpf), b"foo");
 }
 
-#[test]
+#[test_log::test]
 fn bpf_probe_read_kernel_str_bytes_truncate() {
     let s = vec![b'a'; RESULT_BUF_LEN];
     let bpf = set_kernel_buffer(&s, RESULT_BUF_LEN);
@@ -52,13 +41,13 @@ fn bpf_probe_read_kernel_str_bytes_truncate() {
     assert_eq!(result_bytes(&bpf), &s[..RESULT_BUF_LEN - 1]);
 }
 
-#[test]
+#[test_log::test]
 fn bpf_probe_read_kernel_str_bytes_empty_string() {
     let bpf = set_kernel_buffer(b"\0", RESULT_BUF_LEN);
     assert_eq!(result_bytes(&bpf), b"");
 }
 
-#[test]
+#[test_log::test]
 fn bpf_probe_read_kernel_str_bytes_empty_dest() {
     let bpf = set_kernel_buffer(b"foo\0", 0);
     assert_eq!(result_bytes(&bpf), b"");
@@ -110,20 +99,20 @@ fn load_and_attach_uprobe(prog_name: &str, func_name: &str, bytes: &[u8]) -> Ebp
     let prog: &mut UProbe = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
-    prog.attach(Some(func_name), 0, "/proc/self/exe", None)
+    prog.attach(func_name, "/proc/self/exe", None, None)
         .unwrap();
 
     bpf
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn trigger_bpf_probe_read_user(string: *const u8, len: usize) {
+extern "C" fn trigger_bpf_probe_read_user(string: *const u8, len: usize) {
     core::hint::black_box((string, len));
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn trigger_bpf_probe_read_kernel(len: usize) {
+extern "C" fn trigger_bpf_probe_read_kernel(len: usize) {
     core::hint::black_box(len);
 }

@@ -2,15 +2,16 @@
 use std::{
     ffi::CStr,
     fs::File,
-    io::{self, BufRead, BufReader},
+    io::{self, BufRead as _, BufReader},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd},
     path::Path,
+    sync::LazyLock,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 use crate::{
     programs::{FdLink, Link, ProgramData, ProgramError},
-    sys::{bpf_raw_tracepoint_open, SyscallError},
+    sys::{SyscallError, bpf_raw_tracepoint_open},
 };
 
 /// Attaches the program to a raw tracepoint.
@@ -20,42 +21,41 @@ pub(crate) fn attach_raw_tracepoint<T: Link + From<FdLink>>(
 ) -> Result<T::Id, ProgramError> {
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
-    let pfd =
-        bpf_raw_tracepoint_open(tp_name, prog_fd).map_err(|(_code, io_error)| SyscallError {
-            call: "bpf_raw_tracepoint_open",
-            io_error,
-        })?;
+    let pfd = bpf_raw_tracepoint_open(tp_name, prog_fd).map_err(|io_error| SyscallError {
+        call: "bpf_raw_tracepoint_open",
+        io_error,
+    })?;
 
     program_data.links.insert(FdLink::new(pfd).into())
 }
 
 /// Find tracefs filesystem path.
 pub(crate) fn find_tracefs_path() -> Result<&'static Path, ProgramError> {
-    lazy_static::lazy_static! {
-        static ref TRACE_FS: Option<&'static Path> = {
-            let known_mounts = [
-                Path::new("/sys/kernel/tracing"),
-                Path::new("/sys/kernel/debug/tracing"),
-            ];
-
-            for mount in known_mounts {
-                // Check that the mount point exists and is not empty
-                // Documented here: (https://www.kernel.org/doc/Documentation/trace/ftrace.txt)
-                // In some cases, tracefs will only mount at /sys/kernel/debug/tracing
-                // but, the kernel will still create the directory /sys/kernel/tracing.
-                // The user may be expected to manually mount the directory in order for it to
-                // exist in /sys/kernel/tracing according to the documentation.
-                if mount.exists() && mount.read_dir().ok()?.next().is_some() {
-                    return Some(mount);
+    static TRACE_FS: LazyLock<Option<&'static Path>> = LazyLock::new(|| {
+        [
+            Path::new("/sys/kernel/tracing"),
+            Path::new("/sys/kernel/debug/tracing"),
+        ]
+        .into_iter()
+        .find(|&mount| {
+            // Check that the mount point exists and is not empty
+            // Documented here: (https://www.kernel.org/doc/Documentation/trace/ftrace.txt)
+            // In some cases, tracefs will only mount at /sys/kernel/debug/tracing
+            // but, the kernel will still create the directory /sys/kernel/tracing.
+            // The user may be expected to manually mount the directory in order for it to
+            // exist in /sys/kernel/tracing according to the documentation.
+            mount.exists()
+                && match mount.read_dir() {
+                    Ok(mut entries) => entries.next().is_some(),
+                    Err(io::Error { .. }) => false,
                 }
-            }
-            None
-        };
-    }
+        })
+    });
 
     TRACE_FS
         .as_deref()
-        .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "tracefs not found").into())
+        .ok_or_else(|| io::Error::other("tracefs not found"))
+        .map_err(Into::into)
 }
 
 /// The time at which the system is booted.
@@ -65,8 +65,7 @@ pub(crate) fn boot_time() -> SystemTime {
         assert_eq!(
             unsafe { libc::clock_gettime(clock_id, &mut time) },
             0,
-            "clock_gettime({}, _)",
-            clock_id
+            "clock_gettime({clock_id}, _)"
         );
         let libc::timespec { tv_sec, tv_nsec } = time;
 

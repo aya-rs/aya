@@ -1,27 +1,31 @@
 [package]
-name = "aya-log"
-version = "0.2.0"
 description = "A logging library for eBPF programs."
-keywords = ["bpf", "ebpf", "log", "logging"]
-readme = "README.md"
 documentation = "https://docs.rs/aya-log"
+keywords = ["bpf", "ebpf", "log", "logging"]
+name = "aya-log"
+readme = "README.md"
+version = "0.2.1"
+
 authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
-edition.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
 
 [dependencies]
-aya = { path = "../aya", version = "^0.12.0", features = ["async_tokio"] }
-aya-log-common = { path = "../aya-log-common", version = "^0.1.14", default-features = false }
-bytes = { workspace = true }
+aya = { path = "../aya", version = "^0.13.1", default-features = false }
+aya-log-common = { path = "../aya-log-common", version = "^0.1.15", default-features = false }
 log = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true, features = ["rt"] }
 
 [dev-dependencies]
 env_logger = { workspace = true }
 testing_logger = { workspace = true }
+tokio = { workspace = true, features = ["net", "rt"] }
 
 [lib]
 path = "src/lib.rs"

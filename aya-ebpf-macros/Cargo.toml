@@ -1,21 +1,26 @@
 [package]
-name = "aya-ebpf-macros"
-version = "0.1.0"
 description = "Proc macros used by aya-ebpf"
+name = "aya-ebpf-macros"
+version = "0.1.1"
+
 authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
-edition.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
 
 [lib]
 proc-macro = true
 
 [dependencies]
 proc-macro2 = { workspace = true }
-proc-macro-error = { workspace = true }
+proc-macro2-diagnostics = { workspace = true }
 quote = { workspace = true }
 syn = { workspace = true, default-features = true, features = ["full"] }
 
 [dev-dependencies]
-aya-ebpf = { path = "../ebpf/aya-ebpf", version = "^0.1.0", default-features = false }
+aya-ebpf = { path = "../ebpf/aya-ebpf", default-features = false }

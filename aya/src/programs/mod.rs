@@ -37,6 +37,7 @@
 //! [`maps`]: crate::maps
 
 // modules we don't export
+mod info;
 mod probe;
 mod utils;
 
@@ -50,10 +51,13 @@ pub mod cgroup_sysctl;
 pub mod extension;
 pub mod fentry;
 pub mod fexit;
+pub mod flow_dissector;
+pub mod iter;
 pub mod kprobe;
 pub mod links;
 pub mod lirc_mode2;
 pub mod lsm;
+pub mod lsm_cgroup;
 pub mod perf_attach;
 pub mod perf_event;
 pub mod raw_trace_point;
@@ -69,16 +73,24 @@ pub mod uprobe;
 pub mod xdp;
 
 use std::{
+    borrow::Cow,
     ffi::CString,
     io,
-    num::NonZeroU32,
-    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd},
+    os::fd::{AsFd, BorrowedFd},
     path::{Path, PathBuf},
     sync::Arc,
-    time::{Duration, SystemTime},
 };
 
+use aya_obj::{
+    VerifierLog,
+    btf::BtfError,
+    generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
+    programs::XdpAttachType,
+};
+use info::impl_info;
+pub use info::{LsmAttachType, ProgramInfo, ProgramType, loaded_programs};
 use libc::ENOSPC;
+use tc::SchedClassifierLink;
 use thiserror::Error;
 
 // re-export the main items needed to load and attach
@@ -92,11 +104,14 @@ pub use crate::programs::{
     extension::{Extension, ExtensionError},
     fentry::FEntry,
     fexit::FExit,
+    flow_dissector::FlowDissector,
+    iter::Iter,
     kprobe::{KProbe, KProbeError},
-    links::Link,
+    links::{CgroupAttachMode, Link, LinkOrder},
     lirc_mode2::LircMode2,
     lsm::Lsm,
-    perf_event::{PerfEvent, PerfEventScope, PerfTypeId, SamplePolicy},
+    lsm_cgroup::LsmCgroup,
+    perf_event::PerfEvent,
     probe::ProbeKind,
     raw_trace_point::RawTracePoint,
     sk_lookup::SkLookup,
@@ -111,23 +126,16 @@ pub use crate::programs::{
     xdp::{Xdp, XdpError, XdpFlags},
 };
 use crate::{
-    generated::{bpf_attach_type, bpf_link_info, bpf_prog_info, bpf_prog_type},
-    maps::MapError,
-    obj::{self, btf::BtfError, VerifierLog},
-    pin::PinError,
-    programs::{
-        links::*,
-        perf_attach::*,
-        utils::{boot_time, get_fdinfo},
-    },
-    sys::{
-        bpf_btf_get_fd_by_id, bpf_get_object, bpf_link_get_fd_by_id, bpf_link_get_info_by_fd,
-        bpf_load_program, bpf_pin_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
-        bpf_prog_query, iter_link_ids, iter_prog_ids, retry_with_verifier_logs,
-        EbpfLoadProgramAttrs, SyscallError,
-    },
-    util::{bytes_of_bpf_name, KernelVersion},
     VerifierLogLevel,
+    maps::MapError,
+    pin::PinError,
+    programs::{links::*, perf_attach::*},
+    sys::{
+        EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget, SyscallError, bpf_btf_get_fd_by_id,
+        bpf_get_object, bpf_link_get_fd_by_id, bpf_load_program, bpf_pin_object,
+        bpf_prog_get_fd_by_id, bpf_prog_query, iter_link_ids, retry_with_verifier_logs,
+    },
+    util::KernelVersion,
 };
 
 /// Error type returned when working with programs.
@@ -150,7 +158,7 @@ pub enum ProgramError {
     NotAttached,
 
     /// Loading the program failed.
-    #[error("the BPF_PROG_LOAD syscall failed. Verifier output: {verifier_log}")]
+    #[error("the BPF_PROG_LOAD syscall returned {io_error}. Verifier output: {verifier_log}")]
     LoadError {
         /// The [`io::Error`] returned by the `BPF_PROG_LOAD` syscall.
         #[source]
@@ -220,11 +228,19 @@ pub enum ProgramError {
     /// An error occurred while working with IO.
     #[error(transparent)]
     IOError(#[from] io::Error),
+
+    /// Providing an attach cookie is not supported.
+    #[error("providing an attach cookie is not supported")]
+    AttachCookieNotSupported,
+
+    /// An error occurred while working with Netlink.
+    #[error(transparent)]
+    NetlinkError(#[from] NetlinkError),
 }
 
 /// A [`Program`] file descriptor.
 #[derive(Debug)]
-pub struct ProgramFd(OwnedFd);
+pub struct ProgramFd(crate::MockableFd);
 
 impl ProgramFd {
     /// Creates a new instance that shares the same underlying file description as [`self`].
@@ -239,6 +255,20 @@ impl AsFd for ProgramFd {
     fn as_fd(&self) -> BorrowedFd<'_> {
         let Self(fd) = self;
         fd.as_fd()
+    }
+}
+
+/// A [`Program`] identifier.
+pub struct ProgramId(u32);
+
+impl ProgramId {
+    /// Create a new program id.  
+    ///  
+    /// This method is unsafe since it doesn't check that the given `id` is a
+    /// valid program id.
+    #[expect(clippy::missing_safety_doc)]
+    pub unsafe fn new(id: u32) -> Self {
+        Self(id)
     }
 }
 
@@ -279,12 +309,16 @@ pub enum Program {
     RawTracePoint(RawTracePoint),
     /// A [`Lsm`] program
     Lsm(Lsm),
+    /// A [`LsmCgroup`] program
+    LsmCgroup(LsmCgroup),
     /// A [`BtfTracePoint`] program
     BtfTracePoint(BtfTracePoint),
     /// A [`FEntry`] program
     FEntry(FEntry),
     /// A [`FExit`] program
     FExit(FExit),
+    /// A [`FlowDissector`] program
+    FlowDissector(FlowDissector),
     /// A [`Extension`] program
     Extension(Extension),
     /// A [`SkLookup`] program
@@ -293,37 +327,48 @@ pub enum Program {
     CgroupSock(CgroupSock),
     /// A [`CgroupDevice`] program
     CgroupDevice(CgroupDevice),
+    /// An [`Iter`] program
+    Iter(Iter),
 }
 
 impl Program {
-    /// Returns the low level program type.
-    pub fn prog_type(&self) -> bpf_prog_type {
-        use crate::generated::bpf_prog_type::*;
+    /// Returns the program type.
+    pub fn prog_type(&self) -> ProgramType {
         match self {
-            Self::KProbe(_) => BPF_PROG_TYPE_KPROBE,
-            Self::UProbe(_) => BPF_PROG_TYPE_KPROBE,
-            Self::TracePoint(_) => BPF_PROG_TYPE_TRACEPOINT,
-            Self::SocketFilter(_) => BPF_PROG_TYPE_SOCKET_FILTER,
-            Self::Xdp(_) => BPF_PROG_TYPE_XDP,
-            Self::SkMsg(_) => BPF_PROG_TYPE_SK_MSG,
-            Self::SkSkb(_) => BPF_PROG_TYPE_SK_SKB,
-            Self::SockOps(_) => BPF_PROG_TYPE_SOCK_OPS,
-            Self::SchedClassifier(_) => BPF_PROG_TYPE_SCHED_CLS,
-            Self::CgroupSkb(_) => BPF_PROG_TYPE_CGROUP_SKB,
-            Self::CgroupSysctl(_) => BPF_PROG_TYPE_CGROUP_SYSCTL,
-            Self::CgroupSockopt(_) => BPF_PROG_TYPE_CGROUP_SOCKOPT,
-            Self::LircMode2(_) => BPF_PROG_TYPE_LIRC_MODE2,
-            Self::PerfEvent(_) => BPF_PROG_TYPE_PERF_EVENT,
-            Self::RawTracePoint(_) => BPF_PROG_TYPE_RAW_TRACEPOINT,
-            Self::Lsm(_) => BPF_PROG_TYPE_LSM,
-            Self::BtfTracePoint(_) => BPF_PROG_TYPE_TRACING,
-            Self::FEntry(_) => BPF_PROG_TYPE_TRACING,
-            Self::FExit(_) => BPF_PROG_TYPE_TRACING,
-            Self::Extension(_) => BPF_PROG_TYPE_EXT,
-            Self::CgroupSockAddr(_) => BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
-            Self::SkLookup(_) => BPF_PROG_TYPE_SK_LOOKUP,
-            Self::CgroupSock(_) => BPF_PROG_TYPE_CGROUP_SOCK,
-            Self::CgroupDevice(_) => BPF_PROG_TYPE_CGROUP_DEVICE,
+            Self::KProbe(_) | Self::UProbe(_) => ProgramType::KProbe,
+            Self::TracePoint(_) => ProgramType::TracePoint,
+            Self::SocketFilter(_) => ProgramType::SocketFilter,
+            Self::Xdp(_) => ProgramType::Xdp,
+            Self::SkMsg(_) => ProgramType::SkMsg,
+            Self::SkSkb(_) => ProgramType::SkSkb,
+            Self::SockOps(_) => ProgramType::SockOps,
+            Self::SchedClassifier(_) => ProgramType::SchedClassifier,
+            Self::CgroupSkb(_) => ProgramType::CgroupSkb,
+            Self::CgroupSysctl(_) => ProgramType::CgroupSysctl,
+            Self::CgroupSockopt(_) => ProgramType::CgroupSockopt,
+            Self::LircMode2(_) => ProgramType::LircMode2,
+            Self::PerfEvent(_) => ProgramType::PerfEvent,
+            Self::RawTracePoint(_) => ProgramType::RawTracePoint,
+            Self::Lsm(_) => ProgramType::Lsm(LsmAttachType::Mac),
+            Self::LsmCgroup(_) => ProgramType::Lsm(LsmAttachType::Cgroup),
+            // The following program types are a subset of `TRACING` programs:
+            //
+            // - `BPF_TRACE_RAW_TP` (`BtfTracePoint`)
+            // - `BTF_TRACE_FENTRY` (`FEntry`)
+            // - `BPF_MODIFY_RETURN` (not supported yet in Aya)
+            // - `BPF_TRACE_FEXIT` (`FExit`)
+            // - `BPF_TRACE_ITER` (`Iter`)
+            //
+            // https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/syscall.c#L3935-L3940
+            Self::BtfTracePoint(_) | Self::FEntry(_) | Self::FExit(_) | Self::Iter(_) => {
+                ProgramType::Tracing
+            }
+            Self::Extension(_) => ProgramType::Extension,
+            Self::CgroupSockAddr(_) => ProgramType::CgroupSockAddr,
+            Self::SkLookup(_) => ProgramType::SkLookup,
+            Self::CgroupSock(_) => ProgramType::CgroupSock,
+            Self::CgroupDevice(_) => ProgramType::CgroupDevice,
+            Self::FlowDissector(_) => ProgramType::FlowDissector,
         }
     }
 
@@ -346,14 +391,17 @@ impl Program {
             Self::PerfEvent(p) => p.pin(path),
             Self::RawTracePoint(p) => p.pin(path),
             Self::Lsm(p) => p.pin(path),
+            Self::LsmCgroup(p) => p.pin(path),
             Self::BtfTracePoint(p) => p.pin(path),
             Self::FEntry(p) => p.pin(path),
             Self::FExit(p) => p.pin(path),
+            Self::FlowDissector(p) => p.pin(path),
             Self::Extension(p) => p.pin(path),
             Self::CgroupSockAddr(p) => p.pin(path),
             Self::SkLookup(p) => p.pin(path),
             Self::CgroupSock(p) => p.pin(path),
             Self::CgroupDevice(p) => p.pin(path),
+            Self::Iter(p) => p.pin(path),
         }
     }
 
@@ -376,14 +424,17 @@ impl Program {
             Self::PerfEvent(mut p) => p.unload(),
             Self::RawTracePoint(mut p) => p.unload(),
             Self::Lsm(mut p) => p.unload(),
+            Self::LsmCgroup(mut p) => p.unload(),
             Self::BtfTracePoint(mut p) => p.unload(),
             Self::FEntry(mut p) => p.unload(),
             Self::FExit(mut p) => p.unload(),
+            Self::FlowDissector(mut p) => p.unload(),
             Self::Extension(mut p) => p.unload(),
             Self::CgroupSockAddr(mut p) => p.unload(),
             Self::SkLookup(mut p) => p.unload(),
             Self::CgroupSock(mut p) => p.unload(),
             Self::CgroupDevice(mut p) => p.unload(),
+            Self::Iter(mut p) => p.unload(),
         }
     }
 
@@ -408,14 +459,17 @@ impl Program {
             Self::PerfEvent(p) => p.fd(),
             Self::RawTracePoint(p) => p.fd(),
             Self::Lsm(p) => p.fd(),
+            Self::LsmCgroup(p) => p.fd(),
             Self::BtfTracePoint(p) => p.fd(),
             Self::FEntry(p) => p.fd(),
             Self::FExit(p) => p.fd(),
+            Self::FlowDissector(p) => p.fd(),
             Self::Extension(p) => p.fd(),
             Self::CgroupSockAddr(p) => p.fd(),
             Self::SkLookup(p) => p.fd(),
             Self::CgroupSock(p) => p.fd(),
             Self::CgroupDevice(p) => p.fd(),
+            Self::Iter(p) => p.fd(),
         }
     }
 
@@ -441,29 +495,32 @@ impl Program {
             Self::PerfEvent(p) => p.info(),
             Self::RawTracePoint(p) => p.info(),
             Self::Lsm(p) => p.info(),
+            Self::LsmCgroup(p) => p.info(),
             Self::BtfTracePoint(p) => p.info(),
             Self::FEntry(p) => p.info(),
             Self::FExit(p) => p.info(),
+            Self::FlowDissector(p) => p.info(),
             Self::Extension(p) => p.info(),
             Self::CgroupSockAddr(p) => p.info(),
             Self::SkLookup(p) => p.info(),
             Self::CgroupSock(p) => p.info(),
             Self::CgroupDevice(p) => p.info(),
+            Self::Iter(p) => p.info(),
         }
     }
 }
 
 #[derive(Debug)]
 pub(crate) struct ProgramData<T: Link> {
-    pub(crate) name: Option<String>,
-    pub(crate) obj: Option<(obj::Program, obj::Function)>,
+    pub(crate) name: Option<Cow<'static, str>>,
+    pub(crate) obj: Option<(aya_obj::Program, aya_obj::Function)>,
     pub(crate) fd: Option<ProgramFd>,
-    pub(crate) links: LinkMap<T>,
+    pub(crate) links: Links<T>,
     pub(crate) expected_attach_type: Option<bpf_attach_type>,
-    pub(crate) attach_btf_obj_fd: Option<OwnedFd>,
+    pub(crate) attach_btf_obj_fd: Option<crate::MockableFd>,
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<ProgramFd>,
-    pub(crate) btf_fd: Option<Arc<OwnedFd>>,
+    pub(crate) btf_fd: Option<Arc<crate::MockableFd>>,
     pub(crate) verifier_log_level: VerifierLogLevel,
     pub(crate) path: Option<PathBuf>,
     pub(crate) flags: u32,
@@ -471,16 +528,16 @@ pub(crate) struct ProgramData<T: Link> {
 
 impl<T: Link> ProgramData<T> {
     pub(crate) fn new(
-        name: Option<String>,
-        obj: (obj::Program, obj::Function),
-        btf_fd: Option<Arc<OwnedFd>>,
+        name: Option<Cow<'static, str>>,
+        obj: (aya_obj::Program, aya_obj::Function),
+        btf_fd: Option<Arc<crate::MockableFd>>,
         verifier_log_level: VerifierLogLevel,
     ) -> Self {
         Self {
             name,
             obj: Some(obj),
             fd: None,
-            links: LinkMap::new(),
+            links: Links::new(),
             expected_attach_type: None,
             attach_btf_obj_fd: None,
             attach_btf_id: None,
@@ -493,8 +550,8 @@ impl<T: Link> ProgramData<T> {
     }
 
     pub(crate) fn from_bpf_prog_info(
-        name: Option<String>,
-        fd: OwnedFd,
+        name: Option<Cow<'static, str>>,
+        fd: crate::MockableFd,
         path: &Path,
         info: bpf_prog_info,
         verifier_log_level: VerifierLogLevel,
@@ -512,7 +569,7 @@ impl<T: Link> ProgramData<T> {
             name,
             obj: None,
             fd: Some(ProgramFd(fd)),
-            links: LinkMap::new(),
+            links: Links::new(),
             expected_attach_type: None,
             attach_btf_obj_fd,
             attach_btf_id,
@@ -532,13 +589,13 @@ impl<T: Link> ProgramData<T> {
 
         // TODO: avoid this unwrap by adding a new error variant.
         let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
+        let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "bpf_obj_get",
             io_error,
         })?;
 
         let info = ProgramInfo::new_from_fd(fd.as_fd())?;
-        let name = info.name_as_str().map(|s| s.to_string());
+        let name = info.name_as_str().map(ToOwned::to_owned).map(Into::into);
         Self::from_bpf_prog_info(name, fd, path.as_ref(), info.0, verifier_log_level)
     }
 }
@@ -546,10 +603,6 @@ impl<T: Link> ProgramData<T> {
 impl<T: Link> ProgramData<T> {
     fn fd(&self) -> Result<&ProgramFd, ProgramError> {
         self.fd.as_ref().ok_or(ProgramError::NotLoaded)
-    }
-
-    pub(crate) fn take_link(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
-        self.links.forget(link_id)
     }
 }
 
@@ -577,7 +630,7 @@ fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Resul
             path: path.into(),
             error,
         })?;
-    bpf_pin_object(fd.as_fd(), &path_string).map_err(|(_, io_error)| SyscallError {
+    bpf_pin_object(fd.as_fd(), &path_string).map_err(|io_error| SyscallError {
         call: "BPF_OBJ_PIN",
         io_error,
     })?;
@@ -611,12 +664,12 @@ fn load_program<T: Link>(
     }
     let obj = obj.as_ref().unwrap();
     let (
-        obj::Program {
+        aya_obj::Program {
             license,
             kernel_version,
             ..
         },
-        obj::Function {
+        aya_obj::Function {
             instructions,
             func_info,
             line_info,
@@ -626,16 +679,18 @@ fn load_program<T: Link>(
         },
     ) = obj;
 
-    let target_kernel_version =
-        kernel_version.unwrap_or_else(|| KernelVersion::current().unwrap().code());
+    let target_kernel_version = kernel_version.unwrap_or_else(|| {
+        KernelVersion::current()
+            .map(KernelVersion::code)
+            .unwrap_or(0)
+    });
 
-    let prog_name = if let Some(name) = name {
-        let mut name = name.clone();
-        if name.len() > 15 {
-            name.truncate(15);
-        }
-        let prog_name = CString::new(name.clone())
-            .map_err(|_| ProgramError::InvalidName { name: name.clone() })?;
+    let prog_name = if let Some(name) = name.as_deref() {
+        let prog_name = CString::new(name).map_err(|err @ std::ffi::NulError { .. }| {
+            let name = err.into_vec();
+            let name = unsafe { String::from_utf8_unchecked(name) };
+            ProgramError::InvalidName { name }
+        })?;
         Some(prog_name)
     } else {
         None
@@ -668,7 +723,7 @@ fn load_program<T: Link>(
             *fd = Some(ProgramFd(prog_fd));
             Ok(())
         }
-        Err((_, io_error)) => Err(ProgramError::LoadError {
+        Err(io_error) => Err(ProgramError::LoadError {
             io_error,
             verifier_log,
         }),
@@ -676,30 +731,32 @@ fn load_program<T: Link>(
 }
 
 pub(crate) fn query(
-    target_fd: BorrowedFd<'_>,
+    target: ProgQueryTarget<'_>,
     attach_type: bpf_attach_type,
     query_flags: u32,
     attach_flags: &mut Option<u32>,
-) -> Result<Vec<u32>, ProgramError> {
+) -> Result<(u64, Vec<u32>), ProgramError> {
     let mut prog_ids = vec![0u32; 64];
     let mut prog_cnt = prog_ids.len() as u32;
+    let mut revision = 0;
 
     let mut retries = 0;
 
     loop {
         match bpf_prog_query(
-            target_fd.as_fd().as_raw_fd(),
+            &target,
             attach_type,
             query_flags,
             attach_flags.as_mut(),
             &mut prog_ids,
             &mut prog_cnt,
+            &mut revision,
         ) {
-            Ok(_) => {
+            Ok(()) => {
                 prog_ids.resize(prog_cnt as usize, 0);
-                return Ok(prog_ids);
+                return Ok((revision, prog_ids));
             }
-            Err((_, io_error)) => {
+            Err(io_error) => {
                 if retries == 0 && io_error.raw_os_error() == Some(ENOSPC) {
                     prog_ids.resize(prog_cnt as usize, 0);
                     retries += 1;
@@ -731,7 +788,7 @@ macro_rules! impl_program_unload {
 
             impl Drop for $struct_name {
                 fn drop(&mut self) {
-                    let _ = self.unload();
+                    let _: Result<(), ProgramError> = self.unload();
                 }
             }
         )+
@@ -753,16 +810,19 @@ impl_program_unload!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
     FExit,
+    FlowDissector,
     Extension,
     CgroupSockAddr,
     SkLookup,
     SockOps,
     CgroupSock,
     CgroupDevice,
+    Iter,
 );
 
 macro_rules! impl_fd {
@@ -793,17 +853,71 @@ impl_fd!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
     FExit,
+    FlowDissector,
     Extension,
     CgroupSockAddr,
     SkLookup,
     SockOps,
     CgroupSock,
     CgroupDevice,
+    Iter,
 );
+
+/// Trait implemented by the [`Program`] types which support the kernel's
+/// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f235dc3f69d13375b32f4209228e1cb96).
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.6.0.
+pub trait MultiProgram {
+    /// Borrows the file descriptor.
+    fn fd(&self) -> Result<BorrowedFd<'_>, ProgramError>;
+}
+
+macro_rules! impl_multiprog_fd {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl MultiProgram for $struct_name {
+                fn fd(&self) -> Result<BorrowedFd<'_>, ProgramError> {
+                    Ok(self.fd()?.as_fd())
+                }
+            }
+        )+
+    }
+}
+
+impl_multiprog_fd!(SchedClassifier);
+
+/// Trait implemented by the [`Link`] types which support the kernel's
+/// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f235dc3f69d13375b32f4209228e1cb96).
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.6.0.
+pub trait MultiProgLink {
+    /// Borrows the file descriptor.
+    fn fd(&self) -> Result<BorrowedFd<'_>, LinkError>;
+}
+
+macro_rules! impl_multiproglink_fd {
+    ($($struct_name:ident),+ $(,)?) => {
+        $(
+            impl MultiProgLink for $struct_name {
+                fn fd(&self) -> Result<BorrowedFd<'_>, LinkError> {
+                    let link: &FdLink = self.try_into()?;
+                    Ok(link.fd.as_fd())
+                }
+            }
+        )+
+    }
+}
+
+impl_multiproglink_fd!(SchedClassifierLink);
 
 macro_rules! impl_program_pin{
     ($($struct_name:ident),+ $(,)?) => {
@@ -821,7 +935,7 @@ macro_rules! impl_program_pin{
                 }
 
                 /// Removes the pinned link from the filesystem.
-                pub fn unpin(mut self) -> Result<(), io::Error> {
+                pub fn unpin(&mut self) -> Result<(), io::Error> {
                     if let Some(path) = self.data.path.take() {
                         std::fs::remove_file(path)?;
                     }
@@ -847,16 +961,19 @@ impl_program_pin!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
     FExit,
+    FlowDissector,
     Extension,
     CgroupSockAddr,
     SkLookup,
     SockOps,
     CgroupSock,
     CgroupDevice,
+    Iter,
 );
 
 macro_rules! impl_from_pin {
@@ -885,16 +1002,126 @@ impl_from_pin!(
     SkMsg,
     CgroupSysctl,
     LircMode2,
-    PerfEvent,
     Lsm,
+    PerfEvent,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
     FExit,
+    FlowDissector,
     Extension,
     SkLookup,
     SockOps,
     CgroupDevice,
+    Iter,
+);
+
+macro_rules! impl_from_prog_info {
+    (
+        $(#[$doc:meta])*
+        @safety
+            [$($safety:tt)?]
+        @rest
+            $struct_name:ident $($var:ident : $var_ty:ty)?
+    ) => {
+        impl $struct_name {
+            /// Constructs an instance of a [`Self`] from a [`ProgramInfo`].
+            ///
+            /// This allows the caller to get a handle to an already loaded
+            /// program from the kernel without having to load it again.
+            ///
+            /// # Errors
+            ///
+            /// - If the program type reported by the kernel does not match
+            ///   [`Self::PROGRAM_TYPE`].
+            /// - If the file descriptor of the program cannot be cloned.
+            $(#[$doc])*
+            pub $($safety)?
+            fn from_program_info(
+                info: ProgramInfo,
+                name: Cow<'static, str>,
+                $($var: $var_ty,)?
+            ) -> Result<Self, ProgramError> {
+                if info.program_type() != Self::PROGRAM_TYPE.into() {
+                    return Err(ProgramError::UnexpectedProgramType {});
+                }
+                let ProgramInfo(bpf_progam_info) = info;
+                let fd = info.fd()?;
+                let fd = fd.as_fd().try_clone_to_owned()?;
+
+                Ok(Self {
+                    data: ProgramData::from_bpf_prog_info(
+                        Some(name),
+                        crate::MockableFd::from_fd(fd),
+                        Path::new(""),
+                        bpf_progam_info,
+                        VerifierLogLevel::default(),
+                    )?,
+                    $($var,)?
+                })
+            }
+        }
+    };
+
+    // Handle unsafe cases and pass a safety doc section
+    (
+        unsafe $struct_name:ident $($var:ident : $var_ty:ty)? $(, $($rest:tt)*)?
+    ) => {
+        impl_from_prog_info! {
+            ///
+            /// # Safety
+            ///
+            /// The runtime type of this program, as used by the kernel, is
+            /// overloaded. We assert the program type matches the runtime type
+            /// but we're unable to perform further checks. Therefore, the caller
+            /// must ensure that the program type is correct or the behavior is
+            /// undefined.
+            @safety [unsafe]
+            @rest $struct_name $($var : $var_ty)?
+        }
+        $( impl_from_prog_info!($($rest)*); )?
+    };
+
+    // Handle non-unsafe cases and omit safety doc section
+    (
+        $struct_name:ident $($var:ident : $var_ty:ty)? $(, $($rest:tt)*)?
+    ) => {
+        impl_from_prog_info! {
+            @safety []
+            @rest $struct_name $($var : $var_ty)?
+        }
+        $( impl_from_prog_info!($($rest)*); )?
+    };
+
+    // Handle trailing comma
+    (
+        $(,)?
+    ) => {};
+}
+
+impl_from_prog_info!(
+    unsafe KProbe kind : ProbeKind,
+    unsafe UProbe kind : ProbeKind,
+    TracePoint,
+    Xdp attach_type : XdpAttachType,
+    SkMsg,
+    SkSkb kind : SkSkbKind,
+    SockOps,
+    SchedClassifier,
+    CgroupSkb attach_type : Option<CgroupSkbAttachType>,
+    CgroupSysctl,
+    CgroupSockopt attach_type : CgroupSockoptAttachType,
+    LircMode2,
+    PerfEvent,
+    Lsm,
+    RawTracePoint,
+    unsafe BtfTracePoint,
+    unsafe FEntry,
+    unsafe FExit,
+    Extension,
+    SkLookup,
+    CgroupDevice,
+    Iter,
 );
 
 macro_rules! impl_try_from_program {
@@ -941,36 +1168,19 @@ impl_try_from_program!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
     FExit,
+    FlowDissector,
     Extension,
     CgroupSockAddr,
     SkLookup,
     CgroupSock,
     CgroupDevice,
+    Iter,
 );
-
-/// Returns information about a loaded program with the [`ProgramInfo`] structure.
-///
-/// This information is populated at load time by the kernel and can be used
-/// to correlate a given [`Program`] to it's corresponding [`ProgramInfo`]
-/// metadata.
-macro_rules! impl_info {
-    ($($struct_name:ident),+ $(,)?) => {
-        $(
-            impl $struct_name {
-                /// Returns the file descriptor of this Program.
-                pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
-                    let ProgramFd(fd) = self.fd()?;
-
-                    ProgramInfo::new_from_fd(fd.as_fd())
-                }
-            }
-        )+
-    }
-}
 
 impl_info!(
     KProbe,
@@ -987,174 +1197,43 @@ impl_info!(
     LircMode2,
     PerfEvent,
     Lsm,
+    LsmCgroup,
     RawTracePoint,
     BtfTracePoint,
     FEntry,
     FExit,
+    FlowDissector,
     Extension,
     CgroupSockAddr,
     SkLookup,
     SockOps,
     CgroupSock,
     CgroupDevice,
+    Iter,
 );
 
-/// Provides information about a loaded program, like name, id and statistics
-#[derive(Debug)]
-pub struct ProgramInfo(bpf_prog_info);
-
-impl ProgramInfo {
-    fn new_from_fd(fd: BorrowedFd<'_>) -> Result<Self, ProgramError> {
-        let info = bpf_prog_get_info_by_fd(fd, &mut [])?;
-        Ok(Self(info))
-    }
-
-    /// The name of the program as was provided when it was load. This is limited to 16 bytes
-    pub fn name(&self) -> &[u8] {
-        bytes_of_bpf_name(&self.0.name)
-    }
-
-    /// The name of the program as a &str. If the name was not valid unicode, None is returned.
-    pub fn name_as_str(&self) -> Option<&str> {
-        std::str::from_utf8(self.name()).ok()
-    }
-
-    /// The id for this program. Each program has a unique id.
-    pub fn id(&self) -> u32 {
-        self.0.id
-    }
-
-    /// The program tag.
-    ///
-    /// The program tag is a SHA sum of the program's instructions which be used as an alternative to
-    /// [`Self::id()`]". A program's id can vary every time it's loaded or unloaded, but the tag
-    /// will remain the same.
-    pub fn tag(&self) -> u64 {
-        u64::from_be_bytes(self.0.tag)
-    }
-
-    /// The program type as defined by the linux kernel enum
-    /// [`bpf_prog_type`](https://elixir.bootlin.com/linux/v6.4.4/source/include/uapi/linux/bpf.h#L948).
-    pub fn program_type(&self) -> u32 {
-        self.0.type_
-    }
-
-    /// Returns true if the program is defined with a GPL-compatible license.
-    pub fn gpl_compatible(&self) -> bool {
-        self.0.gpl_compatible() != 0
-    }
-
-    /// The ids of the maps used by the program.
-    pub fn map_ids(&self) -> Result<Vec<u32>, ProgramError> {
-        let ProgramFd(fd) = self.fd()?;
-        let mut map_ids = vec![0u32; self.0.nr_map_ids as usize];
-
-        bpf_prog_get_info_by_fd(fd.as_fd(), &mut map_ids)?;
-
-        Ok(map_ids)
-    }
-
-    /// The btf id for the program.
-    pub fn btf_id(&self) -> Option<NonZeroU32> {
-        NonZeroU32::new(self.0.btf_id)
-    }
-
-    /// The size in bytes of the program's translated eBPF bytecode, which is
-    /// the bytecode after it has been passed though the verifier where it was
-    /// possibly modified by the kernel.
-    pub fn size_translated(&self) -> u32 {
-        self.0.xlated_prog_len
-    }
-
-    /// The size in bytes of the program's JIT-compiled machine code.
-    pub fn size_jitted(&self) -> u32 {
-        self.0.jited_prog_len
-    }
-
-    /// How much memory in bytes has been allocated and locked for the program.
-    pub fn memory_locked(&self) -> Result<u32, ProgramError> {
-        get_fdinfo(self.fd()?.as_fd(), "memlock")
-    }
-
-    /// The number of verified instructions in the program.
-    ///
-    /// This may be less than the total number of instructions in the compiled
-    /// program due to dead code elimination in the verifier.
-    pub fn verified_instruction_count(&self) -> u32 {
-        self.0.verified_insns
-    }
-
-    /// The time the program was loaded.
-    pub fn loaded_at(&self) -> SystemTime {
-        boot_time() + Duration::from_nanos(self.0.load_time)
-    }
-
-    /// Returns a file descriptor referencing the program.
-    ///
-    /// The returned file descriptor can be closed at any time and doing so does
-    /// not influence the life cycle of the program.
-    pub fn fd(&self) -> Result<ProgramFd, ProgramError> {
-        let Self(info) = self;
-        let fd = bpf_prog_get_fd_by_id(info.id)?;
-        Ok(ProgramFd(fd))
-    }
-
-    /// Loads a program from a pinned path in bpffs.
-    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
-        use std::os::unix::ffi::OsStrExt as _;
-
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
-        let fd = bpf_get_object(&path_string).map_err(|(_, io_error)| SyscallError {
-            call: "BPF_OBJ_GET",
-            io_error,
-        })?;
-
-        let info = bpf_prog_get_info_by_fd(fd.as_fd(), &mut [])?;
-        Ok(Self(info))
-    }
-}
-
-/// Returns an iterator over all loaded bpf programs.
+/// Returns an iterator over all loaded links.
 ///
-/// This differs from [`crate::Ebpf::programs`] since it will return all programs
-/// listed on the host system and not only programs a specific [`crate::Ebpf`] instance.
-///
-/// # Example
-/// ```
-/// # use aya::programs::loaded_programs;
-///
-/// for p in loaded_programs() {
-///     match p {
-///         Ok(program) => println!("{}", String::from_utf8_lossy(program.name())),
-///         Err(e) => println!("Error iterating programs: {:?}", e),
-///     }
-/// }
-/// ```
+/// This function is useful for debugging and inspecting the state of
+/// loaded links in the kernel. It can be used to check which links are
+/// currently active and to gather information about them.
 ///
 /// # Errors
 ///
-/// Returns [`ProgramError::SyscallError`] if any of the syscalls required to either get
-/// next program id, get the program fd, or the [`ProgramInfo`] fail. In cases where
-/// iteration can't be performed, for example the caller does not have the necessary privileges,
-/// a single item will be yielded containing the error that occurred.
-pub fn loaded_programs() -> impl Iterator<Item = Result<ProgramInfo, ProgramError>> {
-    iter_prog_ids()
-        .map(|id| {
-            let id = id?;
-            bpf_prog_get_fd_by_id(id)
-        })
-        .map(|fd| {
-            let fd = fd?;
-            bpf_prog_get_info_by_fd(fd.as_fd(), &mut [])
-        })
-        .map(|result| result.map(ProgramInfo).map_err(Into::into))
-}
-
-// TODO(https://github.com/aya-rs/aya/issues/645): this API is currently used in tests. Stabilize
-// and remove doc(hidden).
-#[doc(hidden)]
-pub fn loaded_links() -> impl Iterator<Item = Result<bpf_link_info, ProgramError>> {
+/// The returned iterator may yield an error if link information cannot be
+/// retrieved from the kernel.
+///
+/// # Example
+///
+/// ```no_run
+/// use aya::programs::loaded_links;
+///
+/// for info in loaded_links() {
+///    let info = info.unwrap();
+///    println!("loaded link: {}", info.id());
+/// }
+/// ```
+pub fn loaded_links() -> impl Iterator<Item = Result<LinkInfo, LinkError>> {
     iter_link_ids()
         .map(|id| {
             let id = id?;
@@ -1162,7 +1241,6 @@ pub fn loaded_links() -> impl Iterator<Item = Result<bpf_link_info, ProgramError
         })
         .map(|fd| {
             let fd = fd?;
-            bpf_link_get_info_by_fd(fd.as_fd())
+            LinkInfo::new_from_fd(fd.as_fd())
         })
-        .map(|result| result.map_err(Into::into))
 }

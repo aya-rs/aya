@@ -6,11 +6,11 @@ use std::{
 };
 
 use crate::{
-    maps::{
-        check_kv_size, hash_map, IterableMap, MapData, MapError, MapIter, MapKeys, PerCpuValues,
-    },
-    sys::{bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu, SyscallError},
     Pod,
+    maps::{
+        IterableMap, MapData, MapError, MapIter, MapKeys, PerCpuValues, check_kv_size, hash_map,
+    },
+    sys::{SyscallError, bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu},
 };
 
 /// Similar to [`HashMap`](crate::maps::HashMap) but each CPU holds a separate value for a given key. Typically used to
@@ -64,7 +64,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     pub fn get(&self, key: &K, flags: u64) -> Result<PerCpuValues<V>, MapError> {
         let fd = self.inner.borrow().fd().as_fd();
         let values =
-            bpf_map_lookup_elem_per_cpu(fd, key, flags).map_err(|(_, io_error)| SyscallError {
+            bpf_map_lookup_elem_per_cpu(fd, key, flags).map_err(|io_error| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?;
@@ -105,10 +105,11 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     ///
     /// const RETRIES: u8 = 1;
     ///
+    /// let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
     /// let mut hm = PerCpuHashMap::<_, u8, u32>::try_from(bpf.map_mut("PER_CPU_STORAGE").unwrap())?;
     /// hm.insert(
     ///     RETRIES,
-    ///     PerCpuValues::try_from(vec![3u32; nr_cpus()?])?,
+    ///     PerCpuValues::try_from(vec![3u32; nr_cpus])?,
     ///     0,
     /// )?;
     /// # Ok::<(), Error>(())
@@ -120,14 +121,12 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
         flags: u64,
     ) -> Result<(), MapError> {
         let fd = self.inner.borrow_mut().fd().as_fd();
-        bpf_map_update_elem_per_cpu(fd, key.borrow(), &values, flags).map_err(
-            |(_, io_error)| SyscallError {
+        bpf_map_update_elem_per_cpu(fd, key.borrow(), &values, flags)
+            .map_err(|io_error| SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,
-            },
-        )?;
-
-        Ok(())
+            })
+            .map_err(Into::into)
     }
 
     /// Removes a key from the map.
@@ -150,26 +149,49 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, PerCpuValues<V>>
 
 #[cfg(test)]
 mod tests {
+    use std::io;
+
+    use assert_matches::assert_matches;
+    use aya_obj::generated::bpf_map_type::{
+        BPF_MAP_TYPE_LRU_PERCPU_HASH, BPF_MAP_TYPE_PERCPU_HASH,
+    };
+    use libc::ENOENT;
+
     use super::*;
     use crate::{
-        generated::bpf_map_type::{BPF_MAP_TYPE_LRU_PERCPU_HASH, BPF_MAP_TYPE_PERCPU_HASH},
-        maps::{test_utils, Map},
+        maps::{Map, test_utils},
+        sys::{SysResult, override_syscall},
     };
+
+    fn sys_error(value: i32) -> SysResult {
+        Err((-1, io::Error::from_raw_os_error(value)))
+    }
 
     #[test]
     fn test_try_from_ok() {
         let map = Map::PerCpuHashMap(test_utils::new_map(test_utils::new_obj_map::<u32>(
             BPF_MAP_TYPE_PERCPU_HASH,
         )));
-        assert!(PerCpuHashMap::<_, u32, u32>::try_from(&map).is_ok())
+        let _: PerCpuHashMap<_, u32, u32> = map.try_into().unwrap();
     }
     #[test]
     fn test_try_from_ok_lru() {
         let map_data =
             || test_utils::new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_LRU_PERCPU_HASH));
         let map = Map::PerCpuHashMap(map_data());
-        assert!(PerCpuHashMap::<_, u32, u32>::try_from(&map).is_ok());
+        let _: PerCpuHashMap<_, u32, u32> = map.try_into().unwrap();
         let map = Map::PerCpuLruHashMap(map_data());
-        assert!(PerCpuHashMap::<_, u32, u32>::try_from(&map).is_ok())
+        let _: PerCpuHashMap<_, u32, u32> = map.try_into().unwrap();
+    }
+    #[test]
+    fn test_get_not_found() {
+        let map_data =
+            || test_utils::new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_LRU_PERCPU_HASH));
+        let map = Map::PerCpuHashMap(map_data());
+        let map = PerCpuHashMap::<_, u32, u32>::try_from(&map).unwrap();
+
+        override_syscall(|_| sys_error(ENOENT));
+
+        assert_matches!(map.get(&1, 0), Err(MapError::KeyNotFound));
     }
 }

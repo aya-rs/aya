@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use aya_ebpf::{
     helpers::{bpf_probe_read_kernel_str_bytes, bpf_probe_read_user_str_bytes},
@@ -7,8 +8,9 @@ use aya_ebpf::{
     maps::Array,
     programs::ProbeContext,
 };
-
-const RESULT_BUF_LEN: usize = 1024;
+use integration_common::bpf_probe_read::{RESULT_BUF_LEN, TestResult};
+#[cfg(not(test))]
+extern crate ebpf_panic;
 
 fn read_str_bytes(
     fun: unsafe fn(*const u8, &mut [u8]) -> Result<&[u8], i64>,
@@ -30,9 +32,8 @@ fn read_str_bytes(
     };
     *len = None;
 
-    // len comes from ctx.arg(1) so it's dynamic and the verifier
-    // doesn't see any bounds. We do len.min(RESULT_BUF_LEN) here to
-    // ensure that the verifier can see the upper bound, or you get:
+    // len comes from ctx.arg(1) so it's dynamic and the verifier doesn't see any bounds. We slice
+    // here to ensure that the verifier can see the upper bound, or you get:
     //
     // 18: (79) r7 = *(u64 *)(r7 +8)         ; R7_w=scalar()
     // [snip]
@@ -47,12 +48,6 @@ fn read_str_bytes(
     *len = Some(unsafe { fun(iptr, buf) }.map(<[_]>::len));
 }
 
-#[repr(C)]
-struct TestResult {
-    buf: [u8; RESULT_BUF_LEN],
-    len: Option<Result<usize, i64>>,
-}
-
 #[map]
 static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);
 
@@ -60,7 +55,7 @@ static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);
 static KERNEL_BUFFER: Array<[u8; RESULT_BUF_LEN]> = Array::with_max_entries(1, 0);
 
 #[uprobe]
-pub fn test_bpf_probe_read_user_str_bytes(ctx: ProbeContext) {
+fn test_bpf_probe_read_user_str_bytes(ctx: ProbeContext) {
     read_str_bytes(
         bpf_probe_read_user_str_bytes,
         ctx.arg::<*const u8>(0),
@@ -69,7 +64,7 @@ pub fn test_bpf_probe_read_user_str_bytes(ctx: ProbeContext) {
 }
 
 #[uprobe]
-pub fn test_bpf_probe_read_kernel_str_bytes(ctx: ProbeContext) {
+fn test_bpf_probe_read_kernel_str_bytes(ctx: ProbeContext) {
     read_str_bytes(
         bpf_probe_read_kernel_str_bytes,
         KERNEL_BUFFER
@@ -78,10 +73,4 @@ pub fn test_bpf_probe_read_kernel_str_bytes(ctx: ProbeContext) {
             .map(|buf| buf.as_ptr()),
         ctx.arg::<usize>(0),
     );
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
-    loop {}
 }

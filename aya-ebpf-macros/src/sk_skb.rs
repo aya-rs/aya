@@ -1,11 +1,10 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro_error::abort;
+use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
-use syn::{ItemFn, Result};
+use syn::{ItemFn, spanned::Spanned as _};
 
-#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Copy, Clone)]
 pub(crate) enum SkSkbKind {
     StreamVerdict,
@@ -28,29 +27,37 @@ pub(crate) struct SkSkb {
 }
 
 impl SkSkb {
-    pub(crate) fn parse(kind: SkSkbKind, attrs: TokenStream, item: TokenStream) -> Result<SkSkb> {
+    pub(crate) fn parse(
+        kind: SkSkbKind,
+        attrs: TokenStream,
+        item: TokenStream,
+    ) -> Result<Self, Diagnostic> {
         if !attrs.is_empty() {
-            abort!(attrs, "unexpected attribute");
+            return Err(attrs.span().error("unexpected attribute"));
         }
         let item = syn::parse2(item)?;
-        Ok(SkSkb { item, kind })
+        Ok(Self { item, kind })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let kind = &self.kind;
+    pub(crate) fn expand(&self) -> TokenStream {
+        let Self { kind, item } = self;
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
         let section_name: Cow<'_, _> = format!("sk_skb/{kind}").into();
-        let fn_name = self.item.sig.ident.clone();
-        let fn_vis = &self.item.vis;
-        let item = &self.item;
-        Ok(quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
+        let fn_name = &sig.ident;
+        quote! {
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
+            #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
                 return #fn_name(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 #item
             }
-        })
+        }
     }
 }
 
@@ -72,10 +79,10 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "sk_skb/stream_parser"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "sk_skb/stream_parser")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
                 return prog(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
@@ -99,10 +106,10 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "sk_skb/stream_verdict"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "sk_skb/stream_verdict")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
                 return prog(::aya_ebpf::programs::SkBuffContext::new(ctx));
 

@@ -1,14 +1,14 @@
 use core::ffi::c_void;
 
-use crate::{bindings::xdp_md, EbpfContext};
+use crate::{EbpfContext, bindings::xdp_md};
 
 pub struct XdpContext {
     pub ctx: *mut xdp_md,
 }
 
 impl XdpContext {
-    pub fn new(ctx: *mut xdp_md) -> XdpContext {
-        XdpContext { ctx }
+    pub fn new(ctx: *mut xdp_md) -> Self {
+        Self { ctx }
     }
 
     #[inline]
@@ -32,10 +32,22 @@ impl XdpContext {
     pub fn metadata_end(&self) -> usize {
         self.data()
     }
+
+    /// Return the index of the ingress interface.
+    #[inline]
+    pub fn ingress_ifindex(&self) -> usize {
+        unsafe { (*self.ctx).ingress_ifindex as usize }
+    }
+
+    /// Return the index of the receive queue.
+    #[inline]
+    pub fn rx_queue_index(&self) -> u32 {
+        unsafe { (*self.ctx).rx_queue_index }
+    }
 }
 
 impl EbpfContext for XdpContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.ctx as *mut _
+        self.ctx.cast()
     }
 }

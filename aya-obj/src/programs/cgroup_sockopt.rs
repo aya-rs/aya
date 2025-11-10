@@ -11,10 +11,10 @@ pub enum CgroupSockoptAttachType {
 }
 
 impl From<CgroupSockoptAttachType> for bpf_attach_type {
-    fn from(s: CgroupSockoptAttachType) -> bpf_attach_type {
+    fn from(s: CgroupSockoptAttachType) -> Self {
         match s {
-            CgroupSockoptAttachType::Get => bpf_attach_type::BPF_CGROUP_GETSOCKOPT,
-            CgroupSockoptAttachType::Set => bpf_attach_type::BPF_CGROUP_SETSOCKOPT,
+            CgroupSockoptAttachType::Get => Self::BPF_CGROUP_GETSOCKOPT,
+            CgroupSockoptAttachType::Set => Self::BPF_CGROUP_SETSOCKOPT,
         }
     }
 }

@@ -1,23 +1,26 @@
 //! Program relocation handling.
 
-use alloc::{borrow::ToOwned, collections::BTreeMap, string::String};
+use alloc::{borrow::ToOwned as _, collections::BTreeMap, string::String};
 use core::mem;
 
 use log::debug;
 use object::{SectionIndex, SymbolKind};
 
-#[cfg(not(feature = "std"))]
-use crate::std;
 use crate::{
+    EbpfSectionKind,
     generated::{
-        bpf_insn, BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
-        BPF_PSEUDO_MAP_VALUE,
+        BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
+        BPF_PSEUDO_MAP_VALUE, bpf_insn,
     },
     maps::Map,
     obj::{Function, Object},
     util::{HashMap, HashSet},
-    EbpfSectionKind,
 };
+
+#[cfg(feature = "std")]
+type RawFd = std::os::fd::RawFd;
+#[cfg(not(feature = "std"))]
+type RawFd = core::ffi::c_int;
 
 pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
 
@@ -64,7 +67,9 @@ pub enum RelocationError {
     },
 
     /// Unknown function
-    #[error("program at section {section_index} and address {address:#x} was not found while relocating")]
+    #[error(
+        "program at section {section_index} and address {address:#x} was not found while relocating"
+    )]
     UnknownProgram {
         /// The function section index
         section_index: usize,
@@ -104,7 +109,7 @@ pub(crate) struct Symbol {
 
 impl Object {
     /// Relocates the map references
-    pub fn relocate_maps<'a, I: Iterator<Item = (&'a str, std::os::fd::RawFd, &'a Map)>>(
+    pub fn relocate_maps<'a, I: Iterator<Item = (&'a str, RawFd, &'a Map)>>(
         &mut self,
         maps: I,
         text_sections: &HashSet<usize>,
@@ -179,8 +184,8 @@ impl Object {
 fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
     fun: &mut Function,
     relocations: I,
-    maps_by_section: &HashMap<usize, (&str, std::os::fd::RawFd, &Map)>,
-    maps_by_symbol: &HashMap<usize, (&str, std::os::fd::RawFd, &Map)>,
+    maps_by_section: &HashMap<usize, (&str, RawFd, &Map)>,
+    maps_by_symbol: &HashMap<usize, (&str, RawFd, &Map)>,
     symbol_table: &HashMap<usize, Symbol>,
     text_sections: &HashSet<usize>,
 ) -> Result<(), RelocationError> {
@@ -197,7 +202,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
 
         // make sure that the relocation offset is properly aligned
         let ins_offset = rel_offset - section_offset;
-        if ins_offset % INS_SIZE != 0 {
+        if !ins_offset.is_multiple_of(INS_SIZE) {
             return Err(RelocationError::InvalidRelocationOffset {
                 offset: rel.offset,
                 relocation_number: rel_n,
@@ -234,7 +239,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             m
         } else {
             let Some(m) = maps_by_section.get(&section_index) else {
-                debug!("failed relocating map by section index {}", section_index);
+                debug!("failed relocating map by section index {section_index}");
                 return Err(RelocationError::SectionNotFound {
                     symbol_index: rel.symbol_index,
                     symbol_name: sym.name.clone(),
@@ -284,8 +289,8 @@ impl<'a> FunctionLinker<'a> {
         relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
         symbol_table: &'a HashMap<usize, Symbol>,
         text_sections: &'a HashSet<usize>,
-    ) -> FunctionLinker<'a> {
-        FunctionLinker {
+    ) -> Self {
+        Self {
             functions,
             linked_functions: HashMap::new(),
             relocations,
@@ -398,7 +403,7 @@ impl<'a> FunctionLinker<'a> {
                     fun.section_index.0,
                     (fun.section_offset as i64
                         + ((ins_index - start_ins) as i64) * ins_size
-                        + (ins.imm + 1) as i64 * ins_size) as u64,
+                        + i64::from(ins.imm + 1) * ins_size) as u64,
                 )
             };
 
@@ -483,21 +488,21 @@ impl<'a> FunctionLinker<'a> {
 }
 
 fn insn_is_call(ins: &bpf_insn) -> bool {
-    let klass = (ins.code & 0x07) as u32;
-    let op = (ins.code & 0xF0) as u32;
-    let src = (ins.code & 0x08) as u32;
+    let klass = u32::from(ins.code & 0x07);
+    let op = u32::from(ins.code & 0xF0);
+    let src = u32::from(ins.code & 0x08);
 
     klass == BPF_JMP
         && op == BPF_CALL
         && src == BPF_K
-        && ins.src_reg() as u32 == BPF_PSEUDO_CALL
+        && u32::from(ins.src_reg()) == BPF_PSEUDO_CALL
         && ins.dst_reg() == 0
         && ins.off == 0
 }
 
 #[cfg(test)]
 mod test {
-    use alloc::{string::ToString, vec, vec::Vec};
+    use alloc::{string::ToString as _, vec, vec::Vec};
 
     use super::*;
     use crate::maps::{BtfMap, LegacyMap};
@@ -515,7 +520,7 @@ mod test {
     }
 
     fn ins(bytes: &[u8]) -> bpf_insn {
-        unsafe { core::ptr::read_unaligned(bytes.as_ptr() as *const _) }
+        unsafe { core::ptr::read_unaligned(bytes.as_ptr().cast()) }
     }
 
     fn fake_legacy_map(symbol_index: usize) -> Map {

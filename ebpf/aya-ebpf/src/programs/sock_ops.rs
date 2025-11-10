@@ -2,15 +2,15 @@ use core::ffi::c_void;
 
 use aya_ebpf_bindings::helpers::bpf_sock_ops_cb_flags_set;
 
-use crate::{bindings::bpf_sock_ops, EbpfContext};
+use crate::{EbpfContext, bindings::bpf_sock_ops};
 
 pub struct SockOpsContext {
     pub ops: *mut bpf_sock_ops,
 }
 
 impl SockOpsContext {
-    pub fn new(ops: *mut bpf_sock_ops) -> SockOpsContext {
-        SockOpsContext { ops }
+    pub fn new(ops: *mut bpf_sock_ops) -> Self {
+        Self { ops }
     }
 
     pub fn op(&self) -> u32 {
@@ -27,11 +27,7 @@ impl SockOpsContext {
 
     pub fn set_cb_flags(&self, flags: i32) -> Result<(), i64> {
         let ret = unsafe { bpf_sock_ops_cb_flags_set(self.ops, flags) };
-        if ret == 0 {
-            Ok(())
-        } else {
-            Err(ret)
-        }
+        if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
     pub fn remote_ip4(&self) -> u32 {
@@ -61,10 +57,14 @@ impl SockOpsContext {
     pub fn arg(&self, n: usize) -> u32 {
         unsafe { (*self.ops).__bindgen_anon_1.args[n] }
     }
+
+    pub fn set_reply(&mut self, reply: u32) {
+        unsafe { (*self.ops).__bindgen_anon_1.reply = reply }
+    }
 }
 
 impl EbpfContext for SockOpsContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.ops as *mut _
+        self.ops.cast()
     }
 }

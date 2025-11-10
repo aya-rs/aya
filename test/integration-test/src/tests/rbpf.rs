@@ -1,11 +1,10 @@
-use core::{mem::size_of, ptr::null_mut, slice::from_raw_parts};
+use core::{mem::size_of, ptr, slice::from_raw_parts};
 use std::collections::HashMap;
 
 use assert_matches::assert_matches;
-use aya_obj::{generated::bpf_insn, programs::XdpAttachType, Object, ProgramSection};
-use test_log::test;
+use aya_obj::{Object, ProgramSection, generated::bpf_insn, programs::XdpAttachType};
 
-#[test]
+#[test_log::test]
 fn run_with_rbpf() {
     let object = Object::parse(crate::PASS).unwrap();
 
@@ -25,7 +24,7 @@ fn run_with_rbpf() {
         .instructions;
     let data = unsafe {
         from_raw_parts(
-            instructions.as_ptr() as *const u8,
+            instructions.as_ptr().cast(),
             instructions.len() * size_of::<bpf_insn>(),
         )
     };
@@ -35,9 +34,9 @@ fn run_with_rbpf() {
     assert_eq!(vm.execute_program().unwrap(), XDP_PASS);
 }
 
-static mut MULTIMAP_MAPS: [*mut Vec<u64>; 3] = [null_mut(); 3];
+static mut MULTIMAP_MAPS: [*mut Vec<u64>; 3] = [ptr::null_mut(); 3];
 
-#[test]
+#[test_log::test]
 fn use_map_with_rbpf() {
     let mut object = Object::parse(crate::MULTIMAP_BTF).unwrap();
 
@@ -53,6 +52,9 @@ fn use_map_with_rbpf() {
     //   so we keeps the pointers to our maps in MULTIMAP_MAPS, to be used in helpers.
     let mut maps = HashMap::new();
     let mut map_instances = vec![vec![0u64], vec![0u64], vec![0u64]];
+    unsafe {
+        MULTIMAP_MAPS = [ptr::null_mut(); 3];
+    }
     for (name, map) in object.maps.iter() {
         assert_eq!(map.key_size(), size_of::<u32>() as u32);
         assert_eq!(map.value_size(), size_of::<u64>() as u32);
@@ -65,14 +67,14 @@ fn use_map_with_rbpf() {
             "map_1" => 0,
             "map_2" => 1,
             "map_pin_by_name" => 2,
-            n => panic!("Unexpected map: {n}"),
+            n => panic!("unexpected map: {n}"),
         };
 
         let fd = map_id as i32 | 0xCAFE00;
         maps.insert(name.to_owned(), (fd, map.clone()));
 
         unsafe {
-            MULTIMAP_MAPS[map_id] = &mut map_instances[map_id] as *mut _;
+            MULTIMAP_MAPS[map_id] = ptr::from_mut(&mut map_instances[map_id]);
         }
     }
 
@@ -100,7 +102,7 @@ fn use_map_with_rbpf() {
         .instructions;
     let data = unsafe {
         from_raw_parts(
-            instructions.as_ptr() as *const u8,
+            instructions.as_ptr().cast(),
             instructions.len() * size_of::<bpf_insn>(),
         )
     };
@@ -110,10 +112,6 @@ fn use_map_with_rbpf() {
     assert_eq!(vm.execute_program().unwrap(), 0);
 
     assert_eq!(map_instances, [[24], [42], [44]]);
-
-    unsafe {
-        MULTIMAP_MAPS.iter_mut().for_each(|v| *v = null_mut());
-    }
 }
 
 #[track_caller]

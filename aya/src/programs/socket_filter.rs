@@ -1,16 +1,16 @@
 //! Socket filter programs.
 use std::{
-    io, mem,
-    os::fd::{AsFd, AsRawFd, RawFd},
+    io,
+    os::fd::{AsFd, AsRawFd as _, RawFd},
 };
 
-use libc::{setsockopt, SOL_SOCKET};
+use aya_obj::generated::{
+    SO_ATTACH_BPF, SO_DETACH_BPF, bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER,
+};
+use libc::{SOL_SOCKET, setsockopt};
 use thiserror::Error;
 
-use crate::{
-    generated::{bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER, SO_ATTACH_BPF, SO_DETACH_BPF},
-    programs::{load_program, Link, ProgramData, ProgramError},
-};
+use crate::programs::{Link, ProgramData, ProgramError, ProgramType, id_as_key, load_program};
 
 /// The type returned when attaching a [`SocketFilter`] fails.
 #[derive(Debug, Error)]
@@ -64,6 +64,9 @@ pub struct SocketFilter {
 }
 
 impl SocketFilter {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::SocketFilter;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SOCKET_FILTER, &mut self.data)
@@ -84,8 +87,8 @@ impl SocketFilter {
                 socket,
                 SOL_SOCKET,
                 SO_ATTACH_BPF as i32,
-                &prog_fd as *const _ as *const _,
-                mem::size_of::<RawFd>() as u32,
+                std::ptr::from_ref(&prog_fd).cast(),
+                std::mem::size_of_val(&prog_fd) as u32,
             )
         };
         if ret < 0 {
@@ -100,24 +103,24 @@ impl SocketFilter {
 
     /// Detaches the program.
     ///
-    /// See [SocketFilter::attach].
+    /// See [`Self::attach``].
     pub fn detach(&mut self, link_id: SocketFilterLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
 
-    /// Takes ownership of the link referenced by the provided link_id.
+    /// Takes ownership of the link referenced by the provided `link_id`.
     ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
+    /// The caller takes the responsibility of managing the lifetime of the link. When the returned
+    /// [`SocketFilterLink`] is dropped, the link is detached.
     pub fn take_link(
         &mut self,
         link_id: SocketFilterLinkId,
     ) -> Result<SocketFilterLink, ProgramError> {
-        self.data.take_link(link_id)
+        self.data.links.forget(link_id)
     }
 }
 
-/// The type returned by [SocketFilter::attach]. Can be passed to [SocketFilter::detach].
+/// The type returned by [`SocketFilter::attach`]. Can be passed to [`SocketFilter::detach`].
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct SocketFilterLinkId(RawFd, RawFd);
 
@@ -141,10 +144,12 @@ impl Link for SocketFilterLink {
                 self.socket,
                 SOL_SOCKET,
                 SO_DETACH_BPF as i32,
-                &self.prog_fd as *const _ as *const _,
-                mem::size_of::<RawFd>() as u32,
+                std::ptr::from_ref(&self.prog_fd).cast(),
+                std::mem::size_of_val(&self.prog_fd) as u32,
             );
         }
         Ok(())
     }
 }
+
+id_as_key!(SocketFilterLink, SocketFilterLinkId);

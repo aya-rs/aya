@@ -5,9 +5,9 @@ use std::{
 };
 
 use crate::{
-    maps::{check_bounds, check_kv_size, IterableMap, MapData, MapError, PerCpuValues},
-    sys::{bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu, SyscallError},
     Pod,
+    maps::{IterableMap, MapData, MapError, PerCpuValues, check_bounds, check_kv_size},
+    sys::{SyscallError, bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu},
 };
 
 /// A per-CPU fixed-size array.
@@ -37,7 +37,7 @@ use crate::{
 /// let mut array = PerCpuArray::try_from(bpf.map_mut("ARRAY").unwrap())?;
 ///
 /// // set array[1] = 42 for all cpus
-/// let nr_cpus = nr_cpus()?;
+/// let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
 /// array.set(1, PerCpuValues::try_from(vec![42u32; nr_cpus])?, 0)?;
 ///
 /// // retrieve the values at index 1 for all cpus
@@ -68,6 +68,7 @@ impl<T: Borrow<MapData>, V: Pod> PerCpuArray<T, V> {
     /// Returns the number of elements in the array.
     ///
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
+    #[expect(clippy::len_without_is_empty)]
     pub fn len(&self) -> u32 {
         self.inner.borrow().obj.max_entries()
     }
@@ -83,12 +84,11 @@ impl<T: Borrow<MapData>, V: Pod> PerCpuArray<T, V> {
         check_bounds(data, *index)?;
         let fd = data.fd().as_fd();
 
-        let value = bpf_map_lookup_elem_per_cpu(fd, index, flags).map_err(|(_, io_error)| {
-            SyscallError {
+        let value =
+            bpf_map_lookup_elem_per_cpu(fd, index, flags).map_err(|io_error| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
-            }
-        })?;
+            })?;
         value.ok_or(MapError::KeyNotFound)
     }
 
@@ -111,7 +111,7 @@ impl<T: BorrowMut<MapData>, V: Pod> PerCpuArray<T, V> {
         check_bounds(data, index)?;
         let fd = data.fd().as_fd();
 
-        bpf_map_update_elem_per_cpu(fd, &index, &values, flags).map_err(|(_, io_error)| {
+        bpf_map_update_elem_per_cpu(fd, &index, &values, flags).map_err(|io_error| {
             SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,

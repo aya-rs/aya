@@ -1,29 +1,29 @@
 use std::{
     fmt::Write as _,
-    fs::{read_to_string, File},
+    fs::{File, read_to_string},
     io::Write as _,
     path::Path,
 };
 
-use anyhow::{bail, Context as _, Result};
+use anyhow::{Context as _, Result, bail};
 use cargo_metadata::{Metadata, Package, Target};
 use clap::Parser;
-use dialoguer::{theme::ColorfulTheme, Confirm};
-use diff::{lines, Result as Diff};
+use dialoguer::{Confirm, theme::ColorfulTheme};
+use diff::{Result as Diff, lines};
 use xtask::Errors;
 
 #[derive(Debug, Parser)]
-pub struct Options {
+pub(crate) struct Options {
     /// Bless new API changes.
     #[clap(long)]
     pub bless: bool,
 
-    /// Bless new API changes.
+    /// Build for the target triple.
     #[clap(long)]
     pub target: Option<String>,
 }
 
-pub fn public_api(options: Options, metadata: Metadata) -> Result<()> {
+pub(crate) fn public_api(options: Options, metadata: Metadata) -> Result<()> {
     let toolchain = "nightly";
     let Options { bless, target } = options;
 
@@ -56,16 +56,13 @@ pub fn public_api(options: Options, metadata: Metadata) -> Result<()> {
                 if matches!(publish, Some(publish) if publish.is_empty()) {
                     Ok(())
                 } else {
-                    let target = target.as_ref().and_then(|target| {
-                        let proc_macro = targets.iter().any(|Target { kind, .. }| {
-                            kind.iter().any(|kind| kind == "proc-macro")
-                        });
-                        (!proc_macro).then_some(target)
-                    });
+                    let target = (!targets.iter().any(Target::is_proc_macro))
+                        .then(|| target.clone())
+                        .flatten();
                     let diff = check_package_api(
                         &name,
                         toolchain,
-                        target.cloned(),
+                        target,
                         bless,
                         workspace_root.as_std_path(),
                     )
@@ -80,9 +77,14 @@ pub fn public_api(options: Options, metadata: Metadata) -> Result<()> {
                 }
             },
         )
-        .filter_map(|result| match result {
-            Ok(()) => None,
-            Err(err) => Some(err),
+        .filter_map(|result| {
+            // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this allowance
+            // when the lint behaves more sensibly.
+            #[expect(clippy::manual_ok_err)]
+            match result {
+                Ok(()) => None,
+                Err(err) => Some(err),
+            }
         })
         .collect();
 
@@ -115,8 +117,7 @@ fn check_package_api(
     }
     let rustdoc_json = builder.build().with_context(|| {
         format!(
-            "rustdoc_json::Builder::default().toolchain({}).package({}).build()",
-            toolchain, package
+            "rustdoc_json::Builder::default().toolchain({toolchain}).package({package}).build()"
         )
     })?;
 
@@ -132,7 +133,7 @@ fn check_package_api(
     if bless {
         let mut output =
             File::create(&path).with_context(|| format!("error creating {}", path.display()))?;
-        write!(&mut output, "{}", public_api)
+        write!(&mut output, "{public_api}")
             .with_context(|| format!("error writing {}", path.display()))?;
     }
     let current_api =
@@ -143,8 +144,8 @@ fn check_package_api(
         .fold(String::new(), |mut buf, diff| {
             match diff {
                 Diff::Both(..) => (),
-                Diff::Right(line) => writeln!(&mut buf, "-{}", line).unwrap(),
-                Diff::Left(line) => writeln!(&mut buf, "+{}", line).unwrap(),
+                Diff::Right(line) => writeln!(&mut buf, "-{line}").unwrap(),
+                Diff::Left(line) => writeln!(&mut buf, "+{line}").unwrap(),
             };
             buf
         }))

@@ -6,9 +6,8 @@ use std::{
 };
 
 use crate::{
-    maps::{check_bounds, check_kv_size, MapData, MapError, MapKeys},
+    maps::{MapData, MapError, MapKeys, check_bounds, check_kv_size, hash_map},
     programs::ProgramFd,
-    sys::{bpf_map_delete_elem, bpf_map_update_elem, SyscallError},
 };
 
 /// An array of eBPF program file descriptors used as a jump table.
@@ -37,13 +36,13 @@ use crate::{
 /// let flags = 0;
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 0) will jump to prog_0
-/// prog_array.set(0, &prog_0_fd, flags);
+/// prog_array.set(0, prog_0_fd, flags);
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 1) will jump to prog_1
-/// prog_array.set(1, &prog_1_fd, flags);
+/// prog_array.set(1, prog_1_fd, flags);
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 2) will jump to prog_2
-/// prog_array.set(2, &prog_2_fd, flags);
+/// prog_array.set(2, prog_2_fd, flags);
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_PROG_ARRAY")]
@@ -74,17 +73,7 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
     pub fn set(&mut self, index: u32, program: &ProgramFd, flags: u64) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
-        let fd = data.fd().as_fd();
-        let prog_fd = program.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
-
-        bpf_map_update_elem(fd, Some(&index), &prog_fd, flags).map_err(|(_, io_error)| {
-            SyscallError {
-                call: "bpf_map_update_elem",
-                io_error,
-            }
-        })?;
-        Ok(())
+        hash_map::insert(data, &index, &program.as_fd().as_raw_fd(), flags)
     }
 
     /// Clears the value at index in the jump table.
@@ -94,16 +83,6 @@ impl<T: BorrowMut<MapData>> ProgramArray<T> {
     pub fn clear_index(&mut self, index: &u32) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, *index)?;
-        let fd = data.fd().as_fd();
-
-        bpf_map_delete_elem(fd, index)
-            .map(|_| ())
-            .map_err(|(_, io_error)| {
-                SyscallError {
-                    call: "bpf_map_delete_elem",
-                    io_error,
-                }
-                .into()
-            })
+        hash_map::remove(data, index)
     }
 }

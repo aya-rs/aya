@@ -3,12 +3,12 @@ mod docs;
 mod public_api;
 mod run;
 
-use std::process::Command;
+use std::process::{Command, Output};
 
-use anyhow::{Context as _, Result};
+use anyhow::{Context as _, Result, bail};
 use cargo_metadata::{Metadata, MetadataCommand};
 use clap::Parser;
-use xtask::{exec, LIBBPF_DIR};
+use xtask::{LIBBPF_DIR, exec};
 
 #[derive(Parser)]
 pub struct XtaskOptions {
@@ -33,12 +33,29 @@ fn main() -> Result<()> {
         .context("failed to run cargo metadata")?;
     let Metadata { workspace_root, .. } = &metadata;
 
-    // Initialize the submodules.
-    exec(Command::new("git").arg("-C").arg(workspace_root).args([
-        "submodule",
-        "update",
-        "--init",
-    ]))?;
+    let mut libbpf_submodule_status = Command::new("git");
+    let output = libbpf_submodule_status
+        .arg("-C")
+        .arg(workspace_root)
+        .arg("submodule")
+        .arg("status")
+        .arg(LIBBPF_DIR)
+        .output()
+        .with_context(|| format!("failed to run {libbpf_submodule_status:?}"))?;
+    let Output { status, .. } = &output;
+    if !status.success() {
+        bail!("{libbpf_submodule_status:?} failed: {output:?}")
+    }
+    let Output { stdout, .. } = output;
+    if !stdout.starts_with(b" ") {
+        // Initialize the submodules.
+        exec(Command::new("git").arg("-C").arg(workspace_root).args([
+            "submodule",
+            "update",
+            "--init",
+        ]))?;
+    }
+
     let libbpf_dir = workspace_root.join(LIBBPF_DIR);
     let libbpf_dir = libbpf_dir.as_std_path();
 

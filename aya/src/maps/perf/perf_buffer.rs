@@ -1,22 +1,21 @@
 use std::{
-    ffi::c_void,
     io, mem,
     os::fd::{AsFd, BorrowedFd},
     ptr, slice,
-    sync::atomic::{self, AtomicPtr, Ordering},
+    sync::atomic::{self, Ordering},
 };
 
+use aya_obj::generated::{
+    perf_event_header, perf_event_mmap_page,
+    perf_event_type::{PERF_RECORD_LOST, PERF_RECORD_SAMPLE},
+};
 use bytes::BytesMut;
-use libc::{munmap, MAP_FAILED, MAP_SHARED, PROT_READ, PROT_WRITE};
+use libc::{MAP_SHARED, PROT_READ, PROT_WRITE};
 use thiserror::Error;
 
 use crate::{
-    generated::{
-        perf_event_header, perf_event_mmap_page,
-        perf_event_type::{PERF_RECORD_LOST, PERF_RECORD_SAMPLE},
-    },
-    sys::{mmap, perf_event_ioctl, perf_event_open_bpf, SysResult},
-    PERF_EVENT_IOC_DISABLE, PERF_EVENT_IOC_ENABLE,
+    sys::{PerfEventIoctlRequest, SyscallError, perf_event_ioctl, perf_event_open_bpf},
+    util::MMap,
 };
 
 /// Perf buffer error.
@@ -83,9 +82,9 @@ pub struct Events {
     pub lost: usize,
 }
 
-#[derive(Debug)]
+#[cfg_attr(test, derive(Debug))]
 pub(crate) struct PerfBuffer {
-    buf: AtomicPtr<perf_event_mmap_page>,
+    mmap: MMap,
     size: usize,
     page_size: usize,
     fd: crate::MockableFd,
@@ -102,40 +101,36 @@ impl PerfBuffer {
         }
 
         let fd = perf_event_open_bpf(cpu_id as i32)
-            .map_err(|(_, io_error)| PerfBufferError::OpenError { io_error })?;
+            .map_err(|io_error| PerfBufferError::OpenError { io_error })?;
         let size = page_size * page_count;
-        let buf = unsafe {
-            mmap(
-                ptr::null_mut(),
-                size + page_size,
-                PROT_READ | PROT_WRITE,
-                MAP_SHARED,
-                fd.as_fd(),
-                0,
-            )
-        };
-        if buf == MAP_FAILED {
-            return Err(PerfBufferError::MMapError {
-                io_error: io::Error::last_os_error(),
-            });
-        }
+        let mmap = MMap::new(
+            fd.as_fd(),
+            size + page_size,
+            PROT_READ | PROT_WRITE,
+            MAP_SHARED,
+            0,
+        )
+        .map_err(|SyscallError { call: _, io_error }| PerfBufferError::MMapError { io_error })?;
 
-        let fd = crate::MockableFd::from_fd(fd);
         let perf_buf = Self {
-            buf: AtomicPtr::new(buf as *mut perf_event_mmap_page),
+            mmap,
             size,
             page_size,
             fd,
         };
 
-        perf_event_ioctl(perf_buf.fd.as_fd(), PERF_EVENT_IOC_ENABLE, 0)
-            .map_err(|(_, io_error)| PerfBufferError::PerfEventEnableError { io_error })?;
+        perf_event_ioctl(perf_buf.fd.as_fd(), PerfEventIoctlRequest::Enable)
+            .map_err(|io_error| PerfBufferError::PerfEventEnableError { io_error })?;
 
         Ok(perf_buf)
     }
 
+    fn buf(&self) -> ptr::NonNull<perf_event_mmap_page> {
+        self.mmap.ptr().cast()
+    }
+
     pub(crate) fn readable(&self) -> bool {
-        let header = self.buf.load(Ordering::SeqCst);
+        let header = self.buf().as_ptr();
         let head = unsafe { (*header).data_head } as usize;
         let tail = unsafe { (*header).data_tail } as usize;
         head != tail
@@ -148,29 +143,25 @@ impl PerfBuffer {
         if buffers.is_empty() {
             return Err(PerfBufferError::NoBuffers);
         }
-        let header = self.buf.load(Ordering::SeqCst);
-        let base = header as usize + self.page_size;
+        let header = self.buf().as_ptr();
+        let base = unsafe { header.byte_add(self.page_size) };
 
         let mut events = Events { read: 0, lost: 0 };
         let mut buf_n = 0;
 
-        let fill_buf = |start_off, base, mmap_size, out_buf: &mut [u8]| {
+        let fill_buf = |start_off, base: *const u8, mmap_size, out_buf: &mut [u8]| {
             let len = out_buf.len();
 
             let end = (start_off + len) % mmap_size;
             let start = start_off % mmap_size;
 
             if start < end {
-                out_buf.copy_from_slice(unsafe {
-                    slice::from_raw_parts((base + start) as *const u8, len)
-                });
+                out_buf.copy_from_slice(unsafe { slice::from_raw_parts(base.add(start), len) });
             } else {
                 let size = mmap_size - start;
                 unsafe {
-                    out_buf[..size]
-                        .copy_from_slice(slice::from_raw_parts((base + start) as *const u8, size));
-                    out_buf[size..]
-                        .copy_from_slice(slice::from_raw_parts(base as *const u8, len - size));
+                    out_buf[..size].copy_from_slice(slice::from_raw_parts(base.add(start), size));
+                    out_buf[size..].copy_from_slice(slice::from_raw_parts(base, len - size));
                 }
             }
         };
@@ -231,11 +222,11 @@ impl PerfBuffer {
             let buf = &mut buffers[buf_n];
 
             let event_start = tail % self.size;
-            let event =
-                unsafe { ptr::read_unaligned((base + event_start) as *const perf_event_header) };
+            let event: perf_event_header =
+                unsafe { ptr::read_unaligned(base.byte_add(event_start).cast()) };
             let event_size = event.size as usize;
 
-            match read_event(event_start, event.type_, base, buf) {
+            match read_event(event_start, event.type_, base.cast(), buf) {
                 Ok(Some((read, lost))) => {
                     if read > 0 {
                         buf_n += 1;
@@ -268,13 +259,7 @@ impl AsFd for PerfBuffer {
 
 impl Drop for PerfBuffer {
     fn drop(&mut self) {
-        unsafe {
-            let _: SysResult<_> = perf_event_ioctl(self.fd.as_fd(), PERF_EVENT_IOC_DISABLE, 0);
-            munmap(
-                self.buf.load(Ordering::SeqCst) as *mut c_void,
-                self.size + self.page_size,
-            );
-        }
+        let _: io::Result<()> = perf_event_ioctl(self.fd.as_fd(), PerfEventIoctlRequest::Disable);
     }
 }
 
@@ -285,7 +270,7 @@ mod tests {
     use assert_matches::assert_matches;
 
     use super::*;
-    use crate::sys::{override_syscall, Syscall, TEST_MMAP_RET};
+    use crate::sys::{Syscall, TEST_MMAP_RET, override_syscall};
 
     #[repr(C)]
     #[derive(Debug)]
@@ -300,14 +285,14 @@ mod tests {
         data: [u8; PAGE_SIZE * 2],
     }
 
-    fn fake_mmap(buf: &MMappedBuf) {
+    fn fake_mmap(buf: &mut MMappedBuf) {
+        let buf: *mut _ = buf;
         override_syscall(|call| match call {
-            Syscall::PerfEventOpen { .. } | Syscall::PerfEventIoctl { .. } => {
-                Ok(crate::MockableFd::mock_signed_fd().into())
-            }
-            call => panic!("unexpected syscall: {:?}", call),
+            Syscall::PerfEventOpen { .. } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            Syscall::PerfEventIoctl { .. } => Ok(0),
+            call => panic!("unexpected syscall: {call:?}"),
         });
-        TEST_MMAP_RET.with(|ret| *ret.borrow_mut() = buf as *const _ as *mut _);
+        TEST_MMAP_RET.with(|ret| *ret.borrow_mut() = buf.cast());
     }
 
     #[test]
@@ -328,27 +313,25 @@ mod tests {
 
     #[test]
     fn test_no_out_bufs() {
-        let mmapped_buf = MMappedBuf {
+        let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mmapped_buf);
 
+        fake_mmap(&mut mmapped_buf);
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
+
         assert_matches!(buf.read_events(&mut []), Err(PerfBufferError::NoBuffers))
     }
 
     #[test]
-    #[cfg_attr(
-        miri,
-        ignore = "`unsafe { (*header).data_tail = tail as u64 };` is attempting a write access using using a tag that only grants SharedReadOnly permission"
-    )]
     fn test_no_events() {
-        let mmapped_buf = MMappedBuf {
+        let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mmapped_buf);
 
+        fake_mmap(&mut mmapped_buf);
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
+
         let out_buf = BytesMut::with_capacity(4);
         assert_eq!(
             buf.read_events(&mut [out_buf]).unwrap(),
@@ -356,17 +339,18 @@ mod tests {
         );
     }
 
-    #[test]
-    #[cfg_attr(
-        miri,
-        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
-    )]
-    fn test_read_first_lost() {
-        let mut mmapped_buf = MMappedBuf {
-            data: [0; PAGE_SIZE * 2],
-        };
-        fake_mmap(&mmapped_buf);
+    fn write<T: Debug>(mmapped_buf: &mut MMappedBuf, offset: usize, value: T) -> usize {
+        let dst: *mut _ = mmapped_buf;
+        let head = offset + mem::size_of::<T>();
+        unsafe {
+            ptr::write_unaligned(dst.byte_add(PAGE_SIZE + offset).cast(), value);
+            mmapped_buf.mmap_page.data_head = head as u64;
+        }
+        head
+    }
 
+    #[test]
+    fn test_read_first_lost() {
         #[repr(C)]
         #[derive(Debug)]
         struct LostSamples {
@@ -375,18 +359,27 @@ mod tests {
             count: u64,
         }
 
-        let evt = LostSamples {
-            header: perf_event_header {
-                type_: PERF_RECORD_LOST as u32,
-                misc: 0,
-                size: mem::size_of::<LostSamples>() as u16,
-            },
-            id: 1,
-            count: 0xCAFEBABE,
+        let mut mmapped_buf = MMappedBuf {
+            data: [0; PAGE_SIZE * 2],
         };
-        write(&mut mmapped_buf, 0, evt);
 
+        write(
+            &mut mmapped_buf,
+            0,
+            LostSamples {
+                header: perf_event_header {
+                    type_: PERF_RECORD_LOST as u32,
+                    misc: 0,
+                    size: mem::size_of::<LostSamples>() as u16,
+                },
+                id: 1,
+                count: 0xCAFEBABE,
+            },
+        );
+
+        fake_mmap(&mut mmapped_buf);
         let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
+
         let out_buf = BytesMut::with_capacity(0);
         let events = buf.read_events(&mut [out_buf]).unwrap();
         assert_eq!(events.lost, 0xCAFEBABE);
@@ -399,29 +392,22 @@ mod tests {
         value: T,
     }
 
-    fn write<T: Debug>(mmapped_buf: &mut MMappedBuf, offset: usize, value: T) -> usize {
-        let dst = (mmapped_buf as *const _ as usize + PAGE_SIZE + offset) as *const PerfSample<T>
-            as *mut T;
-        unsafe {
-            ptr::write_unaligned(dst, value);
-            mmapped_buf.mmap_page.data_head = (offset + mem::size_of::<T>()) as u64;
-            mmapped_buf.mmap_page.data_head as usize
-        }
-    }
-
     fn write_sample<T: Debug>(mmapped_buf: &mut MMappedBuf, offset: usize, value: T) -> usize {
-        let sample = PerfSample {
-            s_hdr: Sample {
-                header: perf_event_header {
-                    type_: PERF_RECORD_SAMPLE as u32,
-                    misc: 0,
-                    size: mem::size_of::<PerfSample<T>>() as u16,
+        write(
+            mmapped_buf,
+            offset,
+            PerfSample {
+                s_hdr: Sample {
+                    header: perf_event_header {
+                        type_: PERF_RECORD_SAMPLE as u32,
+                        misc: 0,
+                        size: mem::size_of::<PerfSample<T>>() as u16,
+                    },
+                    size: mem::size_of::<T>() as u32,
                 },
-                size: mem::size_of::<T>() as u32,
+                value,
             },
-            value,
-        };
-        write(mmapped_buf, offset, sample)
+        )
     }
 
     fn u32_from_buf(buf: &[u8]) -> u32 {
@@ -433,18 +419,15 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(
-        miri,
-        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
-    )]
     fn test_read_first_sample() {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mmapped_buf);
-        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         write_sample(&mut mmapped_buf, 0, 0xCAFEBABEu32);
+
+        fake_mmap(&mut mmapped_buf);
+        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let mut out_bufs = [BytesMut::with_capacity(4)];
 
@@ -454,19 +437,16 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(
-        miri,
-        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
-    )]
     fn test_read_many_with_many_reads() {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mmapped_buf);
-        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let next = write_sample(&mut mmapped_buf, 0, 0xCAFEBABEu32);
         write_sample(&mut mmapped_buf, next, 0xBADCAFEu32);
+
+        fake_mmap(&mut mmapped_buf);
+        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let mut out_bufs = [BytesMut::with_capacity(4)];
 
@@ -480,23 +460,18 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(
-        miri,
-        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
-    )]
     fn test_read_many_with_one_read() {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mmapped_buf);
-        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let next = write_sample(&mut mmapped_buf, 0, 0xCAFEBABEu32);
         write_sample(&mut mmapped_buf, next, 0xBADCAFEu32);
 
-        let mut out_bufs = (0..3)
-            .map(|_| BytesMut::with_capacity(4))
-            .collect::<Vec<_>>();
+        fake_mmap(&mut mmapped_buf);
+        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
+
+        let mut out_bufs = std::iter::repeat_n(BytesMut::with_capacity(4), 3).collect::<Vec<_>>();
 
         let events = buf.read_events(&mut out_bufs).unwrap();
         assert_eq!(events, Events { lost: 0, read: 2 });
@@ -505,20 +480,17 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(
-        miri,
-        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
-    )]
     fn test_read_last_sample() {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mmapped_buf);
-        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let offset = PAGE_SIZE - mem::size_of::<PerfSample<u32>>();
-        mmapped_buf.mmap_page.data_tail = offset as u64;
         write_sample(&mut mmapped_buf, offset, 0xCAFEBABEu32);
+        mmapped_buf.mmap_page.data_tail = offset as u64;
+
+        fake_mmap(&mut mmapped_buf);
+        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let mut out_bufs = [BytesMut::with_capacity(4)];
 
@@ -528,29 +500,34 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(
-        miri,
-        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
-    )]
     fn test_read_wrapping_sample_size() {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mmapped_buf);
-        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
-
-        let header = perf_event_header {
-            type_: PERF_RECORD_SAMPLE as u32,
-            misc: 0,
-            size: mem::size_of::<PerfSample<u64>>() as u16,
-        };
 
         let offset = PAGE_SIZE - mem::size_of::<perf_event_header>() - 2;
+        write(
+            &mut mmapped_buf,
+            offset,
+            perf_event_header {
+                type_: PERF_RECORD_SAMPLE as u32,
+                misc: 0,
+                size: mem::size_of::<PerfSample<u64>>() as u16,
+            },
+        );
         mmapped_buf.mmap_page.data_tail = offset as u64;
-        write(&mut mmapped_buf, offset, header);
-        write(&mut mmapped_buf, PAGE_SIZE - 2, 0x0004u16);
-        write(&mut mmapped_buf, 0, 0x0000u16);
+
+        let (left, right) = if cfg!(target_endian = "little") {
+            (0x0004u16, 0x0000u16)
+        } else {
+            (0x0000u16, 0x0004u16)
+        };
+        write(&mut mmapped_buf, PAGE_SIZE - 2, left);
+        write(&mut mmapped_buf, 0, right);
         write(&mut mmapped_buf, 2, 0xBAADCAFEu32);
+
+        fake_mmap(&mut mmapped_buf);
+        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let mut out_bufs = [BytesMut::with_capacity(8)];
 
@@ -560,33 +537,38 @@ mod tests {
     }
 
     #[test]
-    #[cfg_attr(
-        miri,
-        ignore = "`ptr::write_unaligned(dst, value)` is attempting a write access but no exposed tags have suitable permission in the borrow stack for this location"
-    )]
     fn test_read_wrapping_value() {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };
-        fake_mmap(&mmapped_buf);
-        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
-        let sample = PerfSample {
-            s_hdr: Sample {
-                header: perf_event_header {
-                    type_: PERF_RECORD_SAMPLE as u32,
-                    misc: 0,
-                    size: mem::size_of::<PerfSample<u64>>() as u16,
-                },
-                size: mem::size_of::<u64>() as u32,
-            },
-            value: 0xCAFEBABEu32,
+        let (left, right) = if cfg!(target_endian = "little") {
+            (0xCAFEBABEu32, 0xBAADCAFEu32)
+        } else {
+            (0xBAADCAFEu32, 0xCAFEBABEu32)
         };
 
         let offset = PAGE_SIZE - mem::size_of::<PerfSample<u32>>();
+        write(
+            &mut mmapped_buf,
+            offset,
+            PerfSample {
+                s_hdr: Sample {
+                    header: perf_event_header {
+                        type_: PERF_RECORD_SAMPLE as u32,
+                        misc: 0,
+                        size: mem::size_of::<PerfSample<u64>>() as u16,
+                    },
+                    size: mem::size_of::<u64>() as u32,
+                },
+                value: left,
+            },
+        );
+        write(&mut mmapped_buf, 0, right);
         mmapped_buf.mmap_page.data_tail = offset as u64;
-        write(&mut mmapped_buf, offset, sample);
-        write(&mut mmapped_buf, 0, 0xBAADCAFEu32);
+
+        fake_mmap(&mut mmapped_buf);
+        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
 
         let mut out_bufs = [BytesMut::with_capacity(8)];
 

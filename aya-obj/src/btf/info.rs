@@ -1,12 +1,12 @@
 use alloc::{string::String, vec, vec::Vec};
 
-use bytes::BufMut;
+use bytes::BufMut as _;
 use object::Endianness;
 
 use crate::{
     generated::{bpf_func_info, bpf_line_info},
     relocation::INS_SIZE,
-    util::{bytes_of, HashMap},
+    util::{HashMap, bytes_of},
 };
 
 /* The func_info subsection layout:
@@ -41,7 +41,7 @@ impl FuncSecInfo {
         rec_size: usize,
         func_info_data: &[u8],
         endianness: Endianness,
-    ) -> FuncSecInfo {
+    ) -> Self {
         let func_info = func_info_data
             .chunks(rec_size)
             .map(|data| {
@@ -65,7 +65,7 @@ impl FuncSecInfo {
             })
             .collect();
 
-        FuncSecInfo {
+        Self {
             _sec_name_offset: sec_name_offset,
             num_info,
             func_info,
@@ -83,6 +83,7 @@ impl FuncSecInfo {
     }
 
     /// Returns the number of [bpf_func_info] entries.
+    #[expect(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.func_info.len()
     }
@@ -100,8 +101,8 @@ pub struct FuncInfo {
 }
 
 impl FuncInfo {
-    pub(crate) fn new() -> FuncInfo {
-        FuncInfo {
+    pub(crate) fn new() -> Self {
+        Self {
             data: HashMap::new(),
         }
     }
@@ -137,7 +138,7 @@ impl LineSecInfo {
         rec_size: usize,
         func_info_data: &[u8],
         endianness: Endianness,
-    ) -> LineSecInfo {
+    ) -> Self {
         let line_info = func_info_data
             .chunks(rec_size)
             .map(|data| {
@@ -170,7 +171,7 @@ impl LineSecInfo {
             })
             .collect();
 
-        LineSecInfo {
+        Self {
             _sec_name_offset: sec_name_offset,
             num_info,
             line_info,
@@ -188,6 +189,7 @@ impl LineSecInfo {
     }
 
     /// Returns the number of entries.
+    #[expect(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.line_info.len()
     }
@@ -199,8 +201,8 @@ pub(crate) struct LineInfo {
 }
 
 impl LineInfo {
-    pub(crate) fn new() -> LineInfo {
-        LineInfo {
+    pub(crate) fn new() -> Self {
+        Self {
             data: HashMap::new(),
         }
     }

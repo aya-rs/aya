@@ -1,12 +1,17 @@
 [package]
+description = "Proc macros used by aya-log-ebpf"
 name = "aya-log-ebpf-macros"
 version = "0.1.0"
-description = "Proc macros used by aya-log-ebpf"
+
 authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
-edition.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
 
 [dependencies]
 aya-log-common = { path = "../aya-log-common", version = "^0.1.14", default-features = false }

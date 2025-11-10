@@ -1,26 +1,20 @@
+#![expect(
+    unused_crate_dependencies,
+    reason = "integration-ebpf library target; see below"
+)]
+
 use std::{
     env,
     ffi::OsString,
     fs,
-    io::{BufRead as _, BufReader},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::{Child, Command, Output, Stdio},
 };
 
-use cargo_metadata::{
-    Artifact, CompilerMessage, Message, Metadata, MetadataCommand, Package, Target,
-};
-use xtask::{exec, AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR};
+use anyhow::{Context as _, Ok, Result, anyhow};
+use cargo_metadata::{Metadata, MetadataCommand, Package, Target, TargetKind};
+use xtask::{AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR, exec, install_libbpf_headers_cmd};
 
-/// This crate has a runtime dependency on artifacts produced by the `integration-ebpf` crate. This
-/// would be better expressed as one or more [artifact-dependencies][bindeps] but issues such as:
-///
-/// * https://github.com/rust-lang/cargo/issues/12374
-/// * https://github.com/rust-lang/cargo/issues/12375
-/// * https://github.com/rust-lang/cargo/issues/12385
-///
-/// prevent their use for the time being.
-///
 /// This file, along with the xtask crate, allows analysis tools such as `cargo check`, `cargo
 /// clippy`, and even `cargo build` to work as users expect. Prior to this file's existence, this
 /// crate's undeclared dependency on artifacts from `integration-ebpf` would cause build (and `cargo check`,
@@ -34,76 +28,91 @@ use xtask::{exec, AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR};
 /// occur on metadata-only actions such as `cargo check` or `cargo clippy` of this crate. This means
 /// that naively attempting to `cargo test --no-run` this crate will produce binaries that fail at
 /// runtime because the stubs are inadequate for actually running the tests.
-///
-/// [bindeps]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html?highlight=feature#artifact-dependencies
+fn main() -> Result<()> {
+    println!("cargo:rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
 
-fn main() {
-    println!("cargo:rerun-if-env-changed={}", AYA_BUILD_INTEGRATION_BPF);
-
-    let build_integration_bpf = env::var(AYA_BUILD_INTEGRATION_BPF)
-        .as_deref()
-        .map(str::parse)
-        .map(Result::unwrap)
+    // TODO(https://github.com/rust-lang/cargo/issues/4001): generalize this and move it to
+    // aya-build if we can determine that we're in a check build.
+    let build_integration_bpf = env::var_os(AYA_BUILD_INTEGRATION_BPF)
+        .map(|build_integration_bpf| {
+            let build_integration_bpf = std::str::from_utf8(
+                build_integration_bpf.as_encoded_bytes(),
+            )
+            .with_context(|| format!("{AYA_BUILD_INTEGRATION_BPF}={build_integration_bpf:?}"))?;
+            let build_integration_bpf = build_integration_bpf
+                .parse()
+                .with_context(|| format!("{AYA_BUILD_INTEGRATION_BPF}={build_integration_bpf}"))?;
+            Ok(build_integration_bpf)
+        })
+        .transpose()?
         .unwrap_or_default();
 
-    let Metadata { packages, .. } = MetadataCommand::new().no_deps().exec().unwrap();
+    let Metadata {
+        packages,
+        workspace_root,
+        ..
+    } = MetadataCommand::new()
+        .no_deps()
+        .exec()
+        .context("MetadataCommand::exec")?;
     let integration_ebpf_package = packages
         .into_iter()
-        .find(|Package { name, .. }| name == "integration-ebpf")
-        .unwrap();
+        .find(|Package { name, .. }| name.as_str() == "integration-ebpf")
+        .ok_or_else(|| anyhow!("integration-ebpf package not found"))?;
 
-    let manifest_dir = env::var_os("CARGO_MANIFEST_DIR").unwrap();
+    let manifest_dir =
+        env::var_os("CARGO_MANIFEST_DIR").ok_or(anyhow!("CARGO_MANIFEST_DIR not set"))?;
     let manifest_dir = PathBuf::from(manifest_dir);
-    let out_dir = env::var_os("OUT_DIR").unwrap();
+    let out_dir = env::var_os("OUT_DIR").ok_or(anyhow!("OUT_DIR not set"))?;
     let out_dir = PathBuf::from(out_dir);
-
-    let endian = env::var_os("CARGO_CFG_TARGET_ENDIAN").unwrap();
-    let target = if endian == "big" {
-        "bpfeb"
-    } else if endian == "little" {
-        "bpfel"
-    } else {
-        panic!("unsupported endian={:?}", endian)
-    };
 
     const C_BPF: &[(&str, bool)] = &[
         ("ext.bpf.c", false),
+        ("iter.bpf.c", true),
         ("main.bpf.c", false),
         ("multimap-btf.bpf.c", false),
-        ("reloc.bpf.c", true),
+        ("enum_signed_32_checked_variants_reloc.bpf.c", true),
+        ("enum_signed_32_reloc.bpf.c", true),
+        ("enum_signed_64_checked_variants_reloc.bpf.c", true),
+        ("enum_signed_64_reloc.bpf.c", true),
+        ("enum_unsigned_32_checked_variants_reloc.bpf.c", true),
+        ("enum_unsigned_32_reloc.bpf.c", true),
+        ("enum_unsigned_64_checked_variants_reloc.bpf.c", true),
+        ("enum_unsigned_64_reloc.bpf.c", true),
+        ("field_reloc.bpf.c", true),
+        ("pointer_reloc.bpf.c", true),
+        ("struct_flavors_reloc.bpf.c", true),
         ("text_64_64_reloc.c", false),
+        ("variables_reloc.bpf.c", false),
     ];
+    const C_BPF_HEADERS: &[&str] = &["reloc.h", "struct_with_scalars.h"];
 
     if build_integration_bpf {
-        let libbpf_dir = manifest_dir
-            .parent()
-            .unwrap()
-            .parent()
-            .unwrap()
-            .join(LIBBPF_DIR);
-        println!("cargo:rerun-if-changed={}", libbpf_dir.to_str().unwrap());
+        let endian = env::var_os("CARGO_CFG_TARGET_ENDIAN")
+            .ok_or(anyhow!("CARGO_CFG_TARGET_ENDIAN not set"))?;
+        let target = if endian == "big" {
+            "bpfeb"
+        } else if endian == "little" {
+            "bpfel"
+        } else {
+            return Err(anyhow!("unsupported endian={endian:?}"));
+        };
+
+        let libbpf_dir = workspace_root.join(LIBBPF_DIR);
+        println!("cargo:rerun-if-changed={libbpf_dir}");
 
         let libbpf_headers_dir = out_dir.join("libbpf_headers");
-
-        let mut includedir = OsString::new();
-        includedir.push("INCLUDEDIR=");
-        includedir.push(&libbpf_headers_dir);
-
-        exec(
-            Command::new("make")
-                .arg("-C")
-                .arg(libbpf_dir.join("src"))
-                .arg(includedir)
-                .arg("install_headers"),
-        )
-        .unwrap();
+        let mut cmd = install_libbpf_headers_cmd(&libbpf_dir, &libbpf_headers_dir);
+        cmd.stdout(Stdio::null());
+        exec(&mut cmd)?;
 
         let bpf_dir = manifest_dir.join("bpf");
 
         let mut target_arch = OsString::new();
         target_arch.push("-D__TARGET_ARCH_");
 
-        let arch = env::var_os("CARGO_CFG_TARGET_ARCH").unwrap();
+        let arch =
+            env::var_os("CARGO_CFG_TARGET_ARCH").ok_or(anyhow!("CARGO_CFG_TARGET_ARCH not set"))?;
         if arch == "x86_64" {
             target_arch.push("x86");
         } else if arch == "aarch64" {
@@ -133,12 +142,33 @@ fn main() {
             cmd
         };
 
+        let rerun_if_changed = |path: &Path| {
+            use std::{io::Write as _, os::unix::ffi::OsStrExt as _};
+
+            let mut stdout = std::io::stdout().lock();
+            stdout.write_all("cargo:rerun-if-changed=".as_bytes())?;
+            stdout.write_all(path.as_os_str().as_bytes())?;
+            stdout.write_all("\n".as_bytes())?;
+
+            Ok(())
+        };
+
+        for hdr in C_BPF_HEADERS {
+            let hdr = bpf_dir.join(hdr);
+            let exists = hdr
+                .try_exists()
+                .with_context(|| format!("{}", hdr.display()))?;
+            anyhow::ensure!(exists, "{}", hdr.display());
+            rerun_if_changed(&hdr).with_context(|| format!("{}", hdr.display()))?;
+        }
+
         for (src, build_btf) in C_BPF {
             let dst = out_dir.join(src).with_extension("o");
             let src = bpf_dir.join(src);
-            println!("cargo:rerun-if-changed={}", src.to_str().unwrap());
 
-            exec(clang().arg(&src).arg("-o").arg(&dst)).unwrap();
+            rerun_if_changed(&src).with_context(|| format!("{}", src.display()))?;
+
+            exec(clang().arg(&src).arg("-o").arg(&dst))?;
 
             if *build_btf {
                 let mut cmd = clang();
@@ -148,10 +178,10 @@ fn main() {
                     .args(["-o", "-"])
                     .stdout(Stdio::piped())
                     .spawn()
-                    .unwrap_or_else(|err| panic!("failed to spawn {cmd:?}: {err}"));
+                    .with_context(|| format!("failed to spawn {cmd:?}"))?;
 
                 let Child { stdout, .. } = &mut child;
-                let stdout = stdout.take().unwrap();
+                let stdout = stdout.take().expect("stdout");
 
                 let dst = dst.with_extension("target.o");
 
@@ -160,131 +190,57 @@ fn main() {
                 output.push(dst);
                 exec(
                     // NB: objcopy doesn't support reading from stdin, so we have to use llvm-objcopy.
-                    Command::new("llvm-objcopy")
+                    Command::new(env::var_os("LLVM_OBJCOPY").unwrap_or("llvm-objcopy".into()))
                         .arg("--dump-section")
                         .arg(output)
                         .arg("-")
-                        .stdin(stdout),
-                )
-                .unwrap();
+                        .stdin(stdout)
+                        .stdout(Stdio::null()),
+                )?;
 
                 let output = child
                     .wait_with_output()
-                    .unwrap_or_else(|err| panic!("failed to wait for {cmd:?}: {err}"));
+                    .with_context(|| format!("failed to wait for {cmd:?}"))?;
                 let Output { status, .. } = &output;
-                assert_eq!(status.code(), Some(0), "{cmd:?} failed: {output:?}");
+                if !status.success() {
+                    return Err(anyhow!("{cmd:?} failed: {status:?}"));
+                }
             }
         }
 
-        let target = format!("{target}-unknown-none");
-
-        let Package { manifest_path, .. } = integration_ebpf_package;
-        let integration_ebpf_dir = manifest_path.parent().unwrap();
-
-        // We have a build-dependency on `integration-ebpf`, so cargo will automatically rebuild us
-        // if `integration-ebpf`'s *library* target or any of its dependencies change. Since we
-        // depend on `integration-ebpf`'s *binary* targets, that only gets us half of the way. This
-        // stanza ensures cargo will rebuild us on changes to the binaries too, which gets us the
-        // rest of the way.
-        println!("cargo:rerun-if-changed={}", integration_ebpf_dir.as_str());
-
-        let mut cmd = Command::new("cargo");
-        cmd.args([
-            "build",
-            "-Z",
-            "build-std=core",
-            "--bins",
-            "--message-format=json",
-            "--release",
-            "--target",
-            &target,
-        ]);
-
-        cmd.env("CARGO_CFG_BPF_TARGET_ARCH", arch);
-
-        // Workaround to make sure that the rust-toolchain.toml is respected.
-        for key in ["RUSTUP_TOOLCHAIN", "RUSTC"] {
-            cmd.env_remove(key);
-        }
-        cmd.current_dir(integration_ebpf_dir);
-
-        // Workaround for https://github.com/rust-lang/cargo/issues/6412 where cargo flocks itself.
-        let ebpf_target_dir = out_dir.join("integration-ebpf");
-        cmd.arg("--target-dir").arg(&ebpf_target_dir);
-
-        let mut child = cmd
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .unwrap_or_else(|err| panic!("failed to spawn {cmd:?}: {err}"));
-        let Child { stdout, stderr, .. } = &mut child;
-
-        // Trampoline stdout to cargo warnings.
-        let stderr = stderr.take().unwrap();
-        let stderr = BufReader::new(stderr);
-        let stderr = std::thread::spawn(move || {
-            for line in stderr.lines() {
-                let line = line.unwrap();
-                println!("cargo:warning={line}");
-            }
-        });
-
-        let stdout = stdout.take().unwrap();
-        let stdout = BufReader::new(stdout);
-        let mut executables = Vec::new();
-        for message in Message::parse_stream(stdout) {
-            #[allow(clippy::collapsible_match)]
-            match message.expect("valid JSON") {
-                Message::CompilerArtifact(Artifact {
-                    executable,
-                    target: Target { name, .. },
-                    ..
-                }) => {
-                    if let Some(executable) = executable {
-                        executables.push((name, executable.into_std_path_buf()));
-                    }
-                }
-                Message::CompilerMessage(CompilerMessage { message, .. }) => {
-                    for line in message.rendered.unwrap_or_default().split('\n') {
-                        println!("cargo:warning={line}");
-                    }
-                }
-                Message::TextLine(line) => {
-                    println!("cargo:warning={line}");
-                }
-                _ => {}
-            }
-        }
-
-        let status = child
-            .wait()
-            .unwrap_or_else(|err| panic!("failed to wait for {cmd:?}: {err}"));
-        assert_eq!(status.code(), Some(0), "{cmd:?} failed: {status:?}");
-
-        stderr.join().map_err(std::panic::resume_unwind).unwrap();
-
-        for (name, binary) in executables {
-            let dst = out_dir.join(name);
-            let _: u64 = fs::copy(&binary, &dst)
-                .unwrap_or_else(|err| panic!("failed to copy {binary:?} to {dst:?}: {err}"));
-        }
+        let Package {
+            name,
+            manifest_path,
+            ..
+        } = integration_ebpf_package;
+        let integration_ebpf_package = aya_build::Package {
+            name: name.as_str(),
+            root_dir: manifest_path
+                .parent()
+                .ok_or_else(|| anyhow!("no parent for {manifest_path}"))?
+                .as_str(),
+            ..Default::default()
+        };
+        aya_build::build_ebpf([integration_ebpf_package], aya_build::Toolchain::default())?;
     } else {
         for (src, build_btf) in C_BPF {
             let dst = out_dir.join(src).with_extension("o");
-            fs::write(&dst, []).unwrap_or_else(|err| panic!("failed to create {dst:?}: {err}"));
+            fs::write(&dst, []).with_context(|| format!("failed to create {}", dst.display()))?;
             if *build_btf {
                 let dst = dst.with_extension("target.o");
-                fs::write(&dst, []).unwrap_or_else(|err| panic!("failed to create {dst:?}: {err}"));
+                fs::write(&dst, [])
+                    .with_context(|| format!("failed to create {}", dst.display()))?;
             }
         }
 
         let Package { targets, .. } = integration_ebpf_package;
         for Target { name, kind, .. } in targets {
-            if *kind != ["bin"] {
+            if *kind != [TargetKind::Bin] {
                 continue;
             }
             let dst = out_dir.join(name);
-            fs::write(&dst, []).unwrap_or_else(|err| panic!("failed to create {dst:?}: {err}"));
+            fs::write(&dst, []).with_context(|| format!("failed to create {}", dst.display()))?;
         }
     }
+    Ok(())
 }

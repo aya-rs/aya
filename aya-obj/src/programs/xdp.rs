@@ -16,9 +16,9 @@ pub enum XdpAttachType {
 impl From<XdpAttachType> for bpf_attach_type {
     fn from(value: XdpAttachType) -> Self {
         match value {
-            XdpAttachType::Interface => bpf_attach_type::BPF_XDP,
-            XdpAttachType::CpuMap => bpf_attach_type::BPF_XDP_CPUMAP,
-            XdpAttachType::DevMap => bpf_attach_type::BPF_XDP_DEVMAP,
+            XdpAttachType::Interface => Self::BPF_XDP,
+            XdpAttachType::CpuMap => Self::BPF_XDP_CPUMAP,
+            XdpAttachType::DevMap => Self::BPF_XDP_DEVMAP,
         }
     }
 }

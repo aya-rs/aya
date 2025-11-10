@@ -2,17 +2,19 @@
 
 use std::{hash::Hash, os::fd::AsFd, path::Path};
 
+use aya_obj::generated::{
+    bpf_attach_type::{BPF_CGROUP_INET_EGRESS, BPF_CGROUP_INET_INGRESS},
+    bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB,
+};
+
 use crate::{
-    generated::{
-        bpf_attach_type::{BPF_CGROUP_INET_EGRESS, BPF_CGROUP_INET_INGRESS},
-        bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB,
-    },
-    programs::{
-        define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
-    },
-    sys::{bpf_link_create, LinkTarget, SyscallError},
-    util::KernelVersion,
     VerifierLogLevel,
+    programs::{
+        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program,
+    },
+    sys::{LinkTarget, SyscallError, bpf_link_create},
+    util::KernelVersion,
 };
 
 /// A program used to inspect or filter network activity for a given cgroup.
@@ -43,30 +45,31 @@ use crate::{
 /// # }
 /// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use std::fs::File;
-/// use aya::programs::{CgroupSkb, CgroupSkbAttachType};
+/// use aya::programs::{CgroupAttachMode, CgroupSkb, CgroupSkbAttachType};
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
 /// let egress: &mut CgroupSkb = bpf.program_mut("egress_filter").unwrap().try_into()?;
 /// egress.load()?;
-/// egress.attach(file, CgroupSkbAttachType::Egress)?;
+/// egress.attach(file, CgroupSkbAttachType::Egress, CgroupAttachMode::Single)?;
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_CGROUP_SKB")]
 pub struct CgroupSkb {
     pub(crate) data: ProgramData<CgroupSkbLink>,
-    pub(crate) expected_attach_type: Option<CgroupSkbAttachType>,
+    pub(crate) attach_type: Option<CgroupSkbAttachType>,
 }
 
 impl CgroupSkb {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::CgroupSkb;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        self.data.expected_attach_type =
-            self.expected_attach_type
-                .map(|attach_type| match attach_type {
-                    CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
-                    CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
-                });
+        self.data.expected_attach_type = self.attach_type.map(|attach_type| match attach_type {
+            CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
+            CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
+        });
         load_program(BPF_PROG_TYPE_CGROUP_SKB, &mut self.data)
     }
 
@@ -77,7 +80,7 @@ impl CgroupSkb {
     /// method returns `None` for programs defined with the generic section
     /// `cgroup/skb`.
     pub fn expected_attach_type(&self) -> &Option<CgroupSkbAttachType> {
-        &self.expected_attach_type
+        &self.attach_type
     }
 
     /// Attaches the program to the given cgroup.
@@ -87,6 +90,7 @@ impl CgroupSkb {
         &mut self,
         cgroup: T,
         attach_type: CgroupSkbAttachType,
+        mode: CgroupAttachMode,
     ) -> Result<CgroupSkbLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
@@ -96,39 +100,30 @@ impl CgroupSkb {
             CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
             CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
         };
-        if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(cgroup_fd), attach_type, None, 0)
-                .map_err(|(_, io_error)| SyscallError {
-                    call: "bpf_link_create",
-                    io_error,
-                })?;
+        if KernelVersion::at_least(5, 7, 0) {
+            let link_fd = bpf_link_create(
+                prog_fd,
+                LinkTarget::Fd(cgroup_fd),
+                attach_type,
+                mode.into(),
+                None,
+            )
+            .map_err(|io_error| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
             self.data
                 .links
                 .insert(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(
                     link_fd,
                 ))))
         } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type)?;
+            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
 
             self.data
                 .links
                 .insert(CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(link)))
         }
-    }
-
-    /// Takes ownership of the link referenced by the provided link_id.
-    ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: CgroupSkbLinkId) -> Result<CgroupSkbLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
-
-    /// Detaches the program.
-    ///
-    /// See [CgroupSkb::attach].
-    pub fn detach(&mut self, link_id: CgroupSkbLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
     }
 
     /// Creates a program from a pinned entry on a bpffs.
@@ -144,7 +139,7 @@ impl CgroupSkb {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self {
             data,
-            expected_attach_type: Some(expected_attach_type),
+            attach_type: Some(expected_attach_type),
         })
     }
 }
@@ -179,14 +174,17 @@ impl Link for CgroupSkbLinkInner {
     }
 }
 
+id_as_key!(CgroupSkbLinkInner, CgroupSkbLinkIdInner);
+
 define_link_wrapper!(
-    /// The link used by [CgroupSkb] programs.
     CgroupSkbLink,
-    /// The type returned by [CgroupSkb::attach]. Can be passed to [CgroupSkb::detach].
     CgroupSkbLinkId,
     CgroupSkbLinkInner,
-    CgroupSkbLinkIdInner
+    CgroupSkbLinkIdInner,
+    CgroupSkb,
 );
+
+impl_try_into_fdlink!(CgroupSkbLink, CgroupSkbLinkInner);
 
 /// Defines where to attach a [`CgroupSkb`] program.
 #[derive(Copy, Clone, Debug)]

@@ -1,62 +1,61 @@
 name: codegen
 
-on: workflow_dispatch
+on:
+  push:
+    branches-ignore:
+      - 'create-pull-request/**'
+
+  schedule:
+    - cron: 00 4 * * *
+
+  workflow_dispatch:
 
 jobs:
   codegen:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
 
-      - name: update libbpf
-        working-directory: xtask/libbpf
-        run: |
-          set -e
-          git fetch origin
-          git checkout origin/HEAD
-          echo "LIBBPF_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
-      - uses: dtolnay/rust-toolchain@master
+      - uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
 
       - name: Install headers
         run: |
+          set -euxo pipefail
           sudo apt -y update
-          sudo apt -y install libc6-dev libc6-dev-{arm64,armel,riscv64}-cross
+          sudo apt -y install libelf-dev libc6-dev libc6-dev-{arm64,armel,loong64,riscv64,ppc64el,s390x,mips}-cross
 
-      - name: Run codegen
-        run: |
-          cargo xtask codegen
+      - run: cargo xtask codegen
+      # aya-ebpf-bindings aren't emitted directly from bindgen and so aren't formatted.
+      - run: cargo fmt --all
+      - run: cargo xtask public-api --bless
 
-      - name: Check for changes
-        run: |
-          git diff --quiet || echo "COMMIT_CHANGES=1" >> $GITHUB_ENV
+      - id: libbpf
+        working-directory: xtask/libbpf
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Commit Changes
-        id: commit
-        if: env.COMMIT_CHANGES == 1
-        uses: devops-infra/action-commit-push@master
+      - uses: peter-evans/create-pull-request@v7
+        if: ${{ github.repository == 'aya-rs/aya' }}
         with:
-          github_token: "${{ secrets.CRABBY_GITHUB_TOKEN }}"
-          commit_prefix: "[codegen] Update libbpf to ${{ env.LIBBPF_SHA }}"
-          commit_message: "Update libbpf to ${{ env.LIBBPF_SHA }}"
-          target_branch: codegen
-          force: true
+          # GitHub actions aren't allowed to trigger other actions to prevent
+          # abuse; the canonical workaround is to use a sufficiently authorized
+          # token.
+          #
+          # See https://github.com/peter-evans/create-pull-request/issues/48.
+          token: ${{ secrets.CRABBY_GITHUB_TOKEN }}
+          branch: create-pull-request/codegen
+          commit-message: |
+            aya-obj, aya-ebpf-bindings: regenerate
 
-      - name: Create pull request
-        if: steps.commit.outputs.files_changed != ''
-        uses: devops-infra/action-pull-request@master
-        with:
-          github_token: ${{ secrets.CRABBY_GITHUB_TOKEN }}
-          body: "**Automated pull request**<br><br>Update libbpf to ${{ env.LIBBPF_SHA }}"
-          title: Update libbpf to ${{ env.LIBBPF_SHA }}
-          source_branch: codegen
-          target_branch: main
-          get_diff: true
+            libbpf commit: ${{ steps.libbpf.outputs.sha }}
+          title: 'aya-obj, aya-ebpf-bindings: regenerate'
+          body: |
+            **Automated changes**
+
+            libbpf commit: ${{ steps.libbpf.outputs.sha}}

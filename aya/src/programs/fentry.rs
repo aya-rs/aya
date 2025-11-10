@@ -1,12 +1,13 @@
 //! Fentry programs.
 
-use crate::{
+use aya_obj::{
+    btf::{Btf, BtfKind},
     generated::{bpf_attach_type::BPF_TRACE_FENTRY, bpf_prog_type::BPF_PROG_TYPE_TRACING},
-    obj::btf::{Btf, BtfKind},
-    programs::{
-        define_link_wrapper, load_program, utils::attach_raw_tracepoint, FdLink, FdLinkId,
-        ProgramData, ProgramError,
-    },
+};
+
+use crate::programs::{
+    FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper, load_program,
+    utils::attach_raw_tracepoint,
 };
 
 /// A program that can be attached to the entry point of (almost) any kernel
@@ -50,6 +51,9 @@ pub struct FEntry {
 }
 
 impl FEntry {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::Tracing;
+
     /// Loads the program inside the kernel.
     ///
     /// Loads the program so it's executed when the kernel function `fn_name`
@@ -67,28 +71,6 @@ impl FEntry {
     pub fn attach(&mut self) -> Result<FEntryLinkId, ProgramError> {
         attach_raw_tracepoint(&mut self.data, None)
     }
-
-    /// Detaches the program.
-    ///
-    /// See [FEntry::attach].
-    pub fn detach(&mut self, link_id: FEntryLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided link_id.
-    ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: FEntryLinkId) -> Result<FEntryLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
 }
 
-define_link_wrapper!(
-    /// The link used by [FEntry] programs.
-    FEntryLink,
-    /// The type returned by [FEntry::attach]. Can be passed to [FEntry::detach].
-    FEntryLinkId,
-    FdLink,
-    FdLinkId
-);
+define_link_wrapper!(FEntryLink, FEntryLinkId, FdLink, FdLinkId, FEntry);

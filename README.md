@@ -4,6 +4,7 @@
 ![License][license-badge]
 [![Build status][build-badge]][build-url]
 [![Book][book-badge]][book-url]
+[![Gurubase][gurubase-badge]][gurubase-url]
 
 [crates-badge]: https://img.shields.io/crates/v/aya.svg?style=for-the-badge&logo=rust
 [crates-url]: https://crates.io/crates/aya
@@ -12,6 +13,8 @@
 [build-url]: https://github.com/aya-rs/aya/actions/workflows/ci.yml
 [book-badge]: https://img.shields.io/badge/read%20the-book-9cf.svg?style=for-the-badge&logo=mdbook
 [book-url]: https://aya-rs.dev/book
+[gurubase-badge]: https://img.shields.io/badge/Gurubase-Ask%20Aya%20Guru-006BFF?style=for-the-badge
+[gurubase-url]: https://gurubase.io/g/aya
 
 ## API Documentation
 
@@ -75,7 +78,7 @@ use a `BPF_PROG_TYPE_CGROUP_SKB` program with aya:
 ```rust
 use std::fs::File;
 use aya::Ebpf;
-use aya::programs::{CgroupSkb, CgroupSkbAttachType};
+use aya::programs::{CgroupSkb, CgroupSkbAttachType, CgroupAttachMode};
 
 // load the BPF code
 let mut ebpf = Ebpf::load_file("ebpf.o")?;
@@ -89,7 +92,7 @@ ingress.load()?;
 // attach the program to the root cgroup. `ingress_filter` will be called for all
 // incoming packets.
 let cgroup = File::open("/sys/fs/cgroup/unified")?;
-ingress.attach(cgroup, CgroupSkbAttachType::Ingress)?;
+ingress.attach(cgroup, CgroupSkbAttachType::Ingress, CgroupAttachMode::AllowOverride)?;
 ```
 
 ## Contributing

@@ -1,12 +1,17 @@
 //! Socket option programs.
 use std::os::fd::AsFd;
 
+use aya_obj::generated::{
+    bpf_attach_type::BPF_CGROUP_SOCK_OPS, bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS,
+};
+
 use crate::{
-    generated::{bpf_attach_type::BPF_CGROUP_SOCK_OPS, bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS},
     programs::{
-        define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
-        ProgramError,
+        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program,
     },
+    sys::{LinkTarget, SyscallError, bpf_link_create},
+    util::KernelVersion,
 };
 
 /// A program used to work with sockets.
@@ -35,12 +40,12 @@ use crate::{
 /// # }
 /// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use std::fs::File;
-/// use aya::programs::SockOps;
+/// use aya::programs::{CgroupAttachMode, SockOps};
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
 /// let prog: &mut SockOps = bpf.program_mut("intercept_active_sockets").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach(file)?;
+/// prog.attach(file, CgroupAttachMode::Single)?;
 /// # Ok::<(), Error>(())
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_SOCK_OPS")]
@@ -49,6 +54,9 @@ pub struct SockOps {
 }
 
 impl SockOps {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::SkSkb;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SOCK_OPS, &mut self.data)
@@ -57,34 +65,78 @@ impl SockOps {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [SockOps::detach].
-    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<SockOpsLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(
+        &mut self,
+        cgroup: T,
+        mode: CgroupAttachMode,
+    ) -> Result<SockOpsLinkId, ProgramError> {
         let prog_fd = self.fd()?;
+        let prog_fd = prog_fd.as_fd();
+        let cgroup_fd = cgroup.as_fd();
+        let attach_type = BPF_CGROUP_SOCK_OPS;
+        if KernelVersion::at_least(5, 7, 0) {
+            let link_fd = bpf_link_create(
+                prog_fd,
+                LinkTarget::Fd(cgroup_fd),
+                attach_type,
+                mode.into(),
+                None,
+            )
+            .map_err(|io_error| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
+            self.data
+                .links
+                .insert(SockOpsLink::new(SockOpsLinkInner::Fd(FdLink::new(link_fd))))
+        } else {
+            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
 
-        let link = ProgAttachLink::attach(prog_fd.as_fd(), cgroup.as_fd(), BPF_CGROUP_SOCK_OPS)?;
-        self.data.links.insert(SockOpsLink::new(link))
-    }
-
-    /// Detaches the program.
-    ///
-    /// See [SockOps::attach].
-    pub fn detach(&mut self, link_id: SockOpsLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided link_id.
-    ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: SockOpsLinkId) -> Result<SockOpsLink, ProgramError> {
-        self.data.take_link(link_id)
+            self.data
+                .links
+                .insert(SockOpsLink::new(SockOpsLinkInner::ProgAttach(link)))
+        }
     }
 }
 
+#[derive(Debug, Hash, Eq, PartialEq)]
+enum SockOpsLinkIdInner {
+    Fd(<FdLink as Link>::Id),
+    ProgAttach(<ProgAttachLink as Link>::Id),
+}
+
+#[derive(Debug)]
+enum SockOpsLinkInner {
+    Fd(FdLink),
+    ProgAttach(ProgAttachLink),
+}
+
+impl Link for SockOpsLinkInner {
+    type Id = SockOpsLinkIdInner;
+
+    fn id(&self) -> Self::Id {
+        match self {
+            Self::Fd(fd) => SockOpsLinkIdInner::Fd(fd.id()),
+            Self::ProgAttach(p) => SockOpsLinkIdInner::ProgAttach(p.id()),
+        }
+    }
+
+    fn detach(self) -> Result<(), ProgramError> {
+        match self {
+            Self::Fd(fd) => fd.detach(),
+            Self::ProgAttach(p) => p.detach(),
+        }
+    }
+}
+
+id_as_key!(SockOpsLinkInner, SockOpsLinkIdInner);
+
 define_link_wrapper!(
-    /// The link used by [SockOps] programs.
     SockOpsLink,
-    /// The type returned by [SockOps::attach]. Can be passed to [SockOps::detach].
     SockOpsLinkId,
-    ProgAttachLink,
-    ProgAttachLinkId
+    SockOpsLinkInner,
+    SockOpsLinkIdInner,
+    SockOps,
 );
+
+impl_try_into_fdlink!(SockOpsLink, SockOpsLinkInner);

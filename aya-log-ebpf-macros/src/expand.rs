@@ -1,11 +1,11 @@
 use aya_log_common::DisplayHint;
-use aya_log_parser::{parse, Fragment};
+use aya_log_parser::{Fragment, Parameter, parse};
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use syn::{
+    Error, Expr, LitStr, Result, Token,
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
-    Error, Expr, LitStr, Result, Token,
 };
 
 pub(crate) struct LogArgs {
@@ -21,7 +21,7 @@ mod kw {
 }
 
 impl Parse for LogArgs {
-    fn parse(input: ParseStream) -> Result<Self> {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
         let ctx: Expr = input.parse()?;
         input.parse::<Token![,]>()?;
 
@@ -68,23 +68,28 @@ impl Parse for LogArgs {
     }
 }
 
-pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStream> {
-    let ctx = args.ctx;
-    let target = match args.target {
+pub(crate) fn log(args: LogArgs, level_expr: Option<TokenStream>) -> Result<TokenStream> {
+    let LogArgs {
+        ctx,
+        target,
+        level,
+        format_string,
+        formatting_args,
+    } = args;
+    let target = match target {
         Some(t) => quote! { #t },
         None => quote! { module_path!() },
     };
-    let lvl: TokenStream = if let Some(l) = level {
-        l
-    } else if let Some(l) = args.level {
-        quote! { #l }
-    } else {
-        return Err(Error::new(
-            args.format_string.span(),
-            "missing `level` argument: try passing an `aya_log_ebpf::Level` value",
-        ));
+    let level_expr = match level_expr {
+        Some(level_expr) => level_expr,
+        None => {
+            let level_expr = level.ok_or(Error::new(
+                format_string.span(),
+                "missing `level` argument: try passing an `aya_log_ebpf::Level` value",
+            ))?;
+            quote! { #level_expr }
+        }
     };
-    let format_string = args.format_string;
 
     let format_string_val = format_string.value();
     let fragments = parse(&format_string_val).map_err(|e| {
@@ -100,12 +105,12 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
     for fragment in fragments {
         match fragment {
             Fragment::Literal(s) => values.push(quote!(#s)),
-            Fragment::Parameter(p) => {
-                let arg = match args.formatting_args {
-                    Some(ref args) => args[arg_i].clone(),
+            Fragment::Parameter(Parameter { hint }) => {
+                let arg = match &formatting_args {
+                    Some(args) => &args[arg_i],
                     None => return Err(Error::new(format_string.span(), "no arguments provided")),
                 };
-                let (hint, formatter) = match p.hint {
+                let (hint, formatter) = match hint {
                     DisplayHint::Default => {
                         (quote!(DisplayHint::Default), quote!(DefaultFormatter))
                     }
@@ -121,6 +126,9 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
                     }
                     DisplayHint::UpperMac => {
                         (quote!(DisplayHint::UpperMac), quote!(UpperMacFormatter))
+                    }
+                    DisplayHint::Pointer => {
+                        (quote!(DisplayHint::Pointer), quote!(PointerFormatter))
                     }
                 };
                 let hint = quote!(::aya_log_ebpf::macro_support::#hint);
@@ -139,34 +147,96 @@ pub(crate) fn log(args: LogArgs, level: Option<TokenStream>) -> Result<TokenStre
         }
     }
 
+    let idents: Vec<_> = (0..values.len())
+        .map(|arg_i| quote::format_ident!("__arg{arg_i}"))
+        .collect();
+
     let num_args = values.len();
-    let values_iter = values.iter();
-    let size = Ident::new("size", Span::mixed_site());
-    let len = Ident::new("len", Span::mixed_site());
-    let slice = Ident::new("slice", Span::mixed_site());
-    let record = Ident::new("record", Span::mixed_site());
+    let num_args = u32::try_from(num_args).map_err(|core::num::TryFromIntError { .. }| {
+        Error::new(
+            Span::call_site(),
+            format!("too many arguments: {num_args} overflows u32"),
+        )
+    })?;
+    let level = Ident::new("level", Span::mixed_site());
+    let header = Ident::new("__header", Span::call_site());
+    let tmp = Ident::new("__tmp", Span::call_site());
+    let kind = Ident::new("__kind", Span::call_site());
+    let value = Ident::new("__value", Span::call_site());
+    let size = Ident::new("__size", Span::call_site());
+    let capacity = Ident::new("__capacity", Span::call_site());
+    let pos = Ident::new("__pos", Span::call_site());
+    let op = Ident::new("__op", Span::call_site());
+    let buf = Ident::new("__buf", Span::call_site());
     Ok(quote! {
-        match unsafe { &mut ::aya_log_ebpf::AYA_LOG_BUF }.get_ptr_mut(0).and_then(|ptr| unsafe { ptr.as_mut() }) {
-            None => {},
-            Some(::aya_log_ebpf::LogBuf { buf }) => {
+        {
+            let #level = #level_expr;
+            if ::aya_log_ebpf::macro_support::level_enabled(#level) {
+                // Silence unused variable warning; we may need ctx in the future.
+                let _ = #ctx;
                 let _: Option<()> = (|| {
-                    let #size = ::aya_log_ebpf::write_record_header(
-                        buf,
-                        #target,
-                        #lvl,
-                        module_path!(),
-                        file!(),
-                        line!(),
-                        #num_args,
-                    )?;
-                    let mut #size = #size.get();
+                    use ::aya_log_ebpf::macro_support::{Header, Field, Argument, AYA_LOGS};
+
+                    let #header = Header::new(
+                                        #target,
+                                        #level,
+                                        module_path!(),
+                                        file!(),
+                                        line!(),
+                                        #num_args,
+                                    )?;
+
                     #(
-                        let #slice = buf.get_mut(#size..)?;
-                        let #len = ::aya_log_ebpf::WriteToBuf::write(#values_iter, #slice)?;
-                        #size += #len.get();
+                        let #tmp = #values;
+                        let (#kind, #value) = #tmp.as_argument();
+                        let #idents = Field::new(#kind, #value)?;
                     )*
-                    let #record = buf.get(..#size)?;
-                    unsafe { &mut ::aya_log_ebpf::AYA_LOGS }.output(#ctx, #record, 0);
+
+                    let mut #size = size_of::<::aya_log_ebpf::macro_support::LogValueLength>(); // For the size field itself.
+                    let mut #op = |slice: &[u8]| {
+                        #size += slice.len();
+                        Some(())
+                    };
+                    #header.with_bytes(&mut #op)?;
+                    #(
+                        #idents.with_bytes(&mut #op)?;
+                    )*
+
+                    let #size = match ::aya_log_ebpf::macro_support::LogValueLength::try_from(#size) {
+                        Ok(#size) => #size,
+                        Err(core::num::TryFromIntError { .. }) => return None,
+                    };
+                    let #size = core::hint::black_box(#size);
+                    let mut #capacity = 64;
+                    while #capacity < #size {
+                        #capacity <<= 1;
+                        if #capacity > 8192 {
+                            // The size is too large to log.
+                            return None;
+                        }
+                    }
+                    let mut #buf = core::hint::black_box(AYA_LOGS.reserve_bytes(#capacity.into(), 0)?);
+
+                    match (|| {
+                        let mut #pos = 0;
+                        let mut #op = |slice: &[u8]| {
+                            let #buf = #buf.get_mut(#pos..)?;
+                            let #buf = #buf.get_mut(..slice.len())?;
+                            #buf.copy_from_slice(slice);
+                            #pos += slice.len();
+                            Some(())
+                        };
+                        #op(#size.to_ne_bytes().as_ref())?;
+                        #header.with_bytes(&mut #op)?;
+                        #(
+                            #idents.with_bytes(&mut #op)?;
+                        )*
+                        Some(())
+                    })() {
+                        Some(()) => #buf.submit(0),
+                        None => #buf.discard(0),
+                    }
+
                     Some(())
                 })();
             }

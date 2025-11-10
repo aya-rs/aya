@@ -1,6 +1,8 @@
+#![expect(unused_crate_dependencies, reason = "used in lib")]
+
 use std::{path::PathBuf, process::exit};
 
-use aya_tool::generate::{generate, InputFile};
+use aya_tool::generate::{InputFile, generate};
 use clap::Parser;
 
 #[derive(Parser)]

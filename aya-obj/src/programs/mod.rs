@@ -3,6 +3,7 @@
 pub mod cgroup_sock;
 pub mod cgroup_sock_addr;
 pub mod cgroup_sockopt;
+mod types;
 pub mod xdp;
 
 pub use cgroup_sock::CgroupSockAttachType;

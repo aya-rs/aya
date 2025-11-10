@@ -1,7 +1,9 @@
 {
-    "rust-analyzer.check.allTargets": true,
-    "rust-analyzer.check.command": "clippy",
-    "search.exclude": {
-        "/xtask/public-api/*.txt": true,
-    },
+  "rust-analyzer.check.allTargets": true,
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.cargo.target": "x86_64-unknown-linux-musl",
+  "search.exclude": {
+    "/xtask/public-api/*.txt": true
+  },
+  "yaml.format.singleQuote": true
 }

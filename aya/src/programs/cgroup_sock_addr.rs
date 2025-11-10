@@ -2,16 +2,17 @@
 
 use std::{hash::Hash, os::fd::AsFd, path::Path};
 
+use aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK_ADDR;
 pub use aya_obj::programs::CgroupSockAddrAttachType;
 
 use crate::{
-    generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK_ADDR,
-    programs::{
-        define_link_wrapper, load_program, FdLink, Link, ProgAttachLink, ProgramData, ProgramError,
-    },
-    sys::{bpf_link_create, LinkTarget, SyscallError},
-    util::KernelVersion,
     VerifierLogLevel,
+    programs::{
+        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program,
+    },
+    sys::{LinkTarget, SyscallError, bpf_link_create},
+    util::KernelVersion,
 };
 
 /// A program that can be used to inspect or modify socket addresses (`struct sockaddr`).
@@ -42,12 +43,12 @@ use crate::{
 /// # }
 /// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use std::fs::File;
-/// use aya::programs::{CgroupSockAddr, CgroupSockAddrAttachType};
+/// use aya::programs::{CgroupAttachMode, CgroupSockAddr, CgroupSockAddrAttachType};
 ///
 /// let file = File::open("/sys/fs/cgroup/unified")?;
 /// let egress: &mut CgroupSockAddr = bpf.program_mut("connect4").unwrap().try_into()?;
 /// egress.load()?;
-/// egress.attach(file)?;
+/// egress.attach(file, CgroupAttachMode::Single)?;
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
@@ -58,6 +59,9 @@ pub struct CgroupSockAddr {
 }
 
 impl CgroupSockAddr {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::CgroupSockAddr;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(self.attach_type.into());
@@ -67,47 +71,39 @@ impl CgroupSockAddr {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupSockAddr::detach].
-    pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<CgroupSockAddrLinkId, ProgramError> {
+    pub fn attach<T: AsFd>(
+        &mut self,
+        cgroup: T,
+        mode: CgroupAttachMode,
+    ) -> Result<CgroupSockAddrLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
         let attach_type = self.data.expected_attach_type.unwrap();
-        if KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0) {
-            let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(cgroup_fd), attach_type, None, 0)
-                .map_err(|(_, io_error)| SyscallError {
-                    call: "bpf_link_create",
-                    io_error,
-                })?;
+        if KernelVersion::at_least(5, 7, 0) {
+            let link_fd = bpf_link_create(
+                prog_fd,
+                LinkTarget::Fd(cgroup_fd),
+                attach_type,
+                mode.into(),
+                None,
+            )
+            .map_err(|io_error| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
             self.data
                 .links
                 .insert(CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type)?;
+            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
 
             self.data.links.insert(CgroupSockAddrLink::new(
                 CgroupSockAddrLinkInner::ProgAttach(link),
             ))
         }
-    }
-
-    /// Takes ownership of the link referenced by the provided link_id.
-    ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
-    pub fn take_link(
-        &mut self,
-        link_id: CgroupSockAddrLinkId,
-    ) -> Result<CgroupSockAddrLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
-
-    /// Detaches the program.
-    ///
-    /// See [CgroupSockAddr::attach].
-    pub fn detach(&mut self, link_id: CgroupSockAddrLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
     }
 
     /// Creates a program from a pinned entry on a bpffs.
@@ -155,11 +151,14 @@ impl Link for CgroupSockAddrLinkInner {
     }
 }
 
+id_as_key!(CgroupSockAddrLinkInner, CgroupSockAddrLinkIdInner);
+
 define_link_wrapper!(
-    /// The link used by [CgroupSockAddr] programs.
     CgroupSockAddrLink,
-    /// The type returned by [CgroupSockAddr::attach]. Can be passed to [CgroupSockAddr::detach].
     CgroupSockAddrLinkId,
     CgroupSockAddrLinkInner,
-    CgroupSockAddrLinkIdInner
+    CgroupSockAddrLinkIdInner,
+    CgroupSockAddr,
 );
+
+impl_try_into_fdlink!(CgroupSockAddrLink, CgroupSockAddrLinkInner);

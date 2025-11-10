@@ -2,17 +2,18 @@
 
 use std::{os::fd::AsFd as _, path::Path};
 
+use aya_obj::generated::{
+    bpf_attach_type::{BPF_SK_SKB_STREAM_PARSER, BPF_SK_SKB_STREAM_VERDICT},
+    bpf_prog_type::BPF_PROG_TYPE_SK_SKB,
+};
+
 use crate::{
-    generated::{
-        bpf_attach_type::{BPF_SK_SKB_STREAM_PARSER, BPF_SK_SKB_STREAM_VERDICT},
-        bpf_prog_type::BPF_PROG_TYPE_SK_SKB,
-    },
+    VerifierLogLevel,
     maps::sock::SockMapFd,
     programs::{
-        define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
-        ProgramError,
+        CgroupAttachMode, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, load_program,
     },
-    VerifierLogLevel,
 };
 
 /// The kind of [`SkSkb`] program.
@@ -73,6 +74,9 @@ pub struct SkSkb {
 }
 
 impl SkSkb {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::SkSkb;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SK_SKB, &mut self.data)
@@ -90,24 +94,10 @@ impl SkSkb {
             SkSkbKind::StreamVerdict => BPF_SK_SKB_STREAM_VERDICT,
         };
 
-        let link = ProgAttachLink::attach(prog_fd, map.as_fd(), attach_type)?;
+        let link =
+            ProgAttachLink::attach(prog_fd, map.as_fd(), attach_type, CgroupAttachMode::Single)?;
 
         self.data.links.insert(SkSkbLink::new(link))
-    }
-
-    /// Detaches the program.
-    ///
-    /// See [SkSkb::attach].
-    pub fn detach(&mut self, link_id: SkSkbLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided link_id.
-    ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: SkSkbLinkId) -> Result<SkSkbLink, ProgramError> {
-        self.data.take_link(link_id)
     }
 
     /// Creates a program from a pinned entry on a bpffs.
@@ -123,10 +113,9 @@ impl SkSkb {
 }
 
 define_link_wrapper!(
-    /// The link used by [SkSkb] programs.
     SkSkbLink,
-    /// The type returned by [SkSkb::attach]. Can be passed to [SkSkb::detach].
     SkSkbLinkId,
     ProgAttachLink,
-    ProgAttachLinkId
+    ProgAttachLinkId,
+    SkSkb,
 );

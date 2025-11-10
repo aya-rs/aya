@@ -1,22 +1,14 @@
-use std::env;
-
 fn main() {
+    println!("cargo::rustc-check-cfg=cfg(generic_const_exprs)");
     check_rust_version();
-    println!("cargo:rerun-if-env-changed=CARGO_CFG_BPF_TARGET_ARCH");
-    if let Ok(arch) = env::var("CARGO_CFG_BPF_TARGET_ARCH") {
-        println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
-    } else {
-        let arch = env::var("HOST").unwrap();
-        let arch = arch.split_once('-').map_or(&*arch, |x| x.0);
-        println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
-    }
-    println!("cargo::rustc-check-cfg=cfg(bpf_target_arch, values(\"x86_64\",\"arm\",\"aarch64\",\"riscv64\"))");
-    println!("cargo::rustc-check-cfg=cfg(unstable)");
+
+    aya_build::emit_bpf_target_arch_cfg()
 }
 
 #[rustversion::nightly]
 fn check_rust_version() {
-    println!("cargo:rustc-cfg=unstable");
+    // TODO(https://github.com/rust-lang/rust/issues/141492): restore this.
+    // println!("cargo:rustc-cfg=generic_const_exprs");
 }
 
 #[rustversion::not(nightly)]

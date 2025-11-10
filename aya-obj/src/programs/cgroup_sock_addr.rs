@@ -31,20 +31,20 @@ pub enum CgroupSockAddrAttachType {
 }
 
 impl From<CgroupSockAddrAttachType> for bpf_attach_type {
-    fn from(s: CgroupSockAddrAttachType) -> bpf_attach_type {
+    fn from(s: CgroupSockAddrAttachType) -> Self {
         match s {
-            CgroupSockAddrAttachType::Bind4 => bpf_attach_type::BPF_CGROUP_INET4_BIND,
-            CgroupSockAddrAttachType::Bind6 => bpf_attach_type::BPF_CGROUP_INET6_BIND,
-            CgroupSockAddrAttachType::Connect4 => bpf_attach_type::BPF_CGROUP_INET4_CONNECT,
-            CgroupSockAddrAttachType::Connect6 => bpf_attach_type::BPF_CGROUP_INET6_CONNECT,
-            CgroupSockAddrAttachType::GetPeerName4 => bpf_attach_type::BPF_CGROUP_INET4_GETPEERNAME,
-            CgroupSockAddrAttachType::GetPeerName6 => bpf_attach_type::BPF_CGROUP_INET6_GETPEERNAME,
-            CgroupSockAddrAttachType::GetSockName4 => bpf_attach_type::BPF_CGROUP_INET4_GETSOCKNAME,
-            CgroupSockAddrAttachType::GetSockName6 => bpf_attach_type::BPF_CGROUP_INET6_GETSOCKNAME,
-            CgroupSockAddrAttachType::UDPSendMsg4 => bpf_attach_type::BPF_CGROUP_UDP4_SENDMSG,
-            CgroupSockAddrAttachType::UDPSendMsg6 => bpf_attach_type::BPF_CGROUP_UDP6_SENDMSG,
-            CgroupSockAddrAttachType::UDPRecvMsg4 => bpf_attach_type::BPF_CGROUP_UDP4_RECVMSG,
-            CgroupSockAddrAttachType::UDPRecvMsg6 => bpf_attach_type::BPF_CGROUP_UDP6_RECVMSG,
+            CgroupSockAddrAttachType::Bind4 => Self::BPF_CGROUP_INET4_BIND,
+            CgroupSockAddrAttachType::Bind6 => Self::BPF_CGROUP_INET6_BIND,
+            CgroupSockAddrAttachType::Connect4 => Self::BPF_CGROUP_INET4_CONNECT,
+            CgroupSockAddrAttachType::Connect6 => Self::BPF_CGROUP_INET6_CONNECT,
+            CgroupSockAddrAttachType::GetPeerName4 => Self::BPF_CGROUP_INET4_GETPEERNAME,
+            CgroupSockAddrAttachType::GetPeerName6 => Self::BPF_CGROUP_INET6_GETPEERNAME,
+            CgroupSockAddrAttachType::GetSockName4 => Self::BPF_CGROUP_INET4_GETSOCKNAME,
+            CgroupSockAddrAttachType::GetSockName6 => Self::BPF_CGROUP_INET6_GETSOCKNAME,
+            CgroupSockAddrAttachType::UDPSendMsg4 => Self::BPF_CGROUP_UDP4_SENDMSG,
+            CgroupSockAddrAttachType::UDPSendMsg6 => Self::BPF_CGROUP_UDP6_SENDMSG,
+            CgroupSockAddrAttachType::UDPRecvMsg4 => Self::BPF_CGROUP_UDP4_RECVMSG,
+            CgroupSockAddrAttachType::UDPRecvMsg6 => Self::BPF_CGROUP_UDP6_RECVMSG,
         }
     }
 }

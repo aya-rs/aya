@@ -1,14 +1,14 @@
 use core::ffi::c_void;
 
-use crate::{args::FromBtfArgument, EbpfContext};
+use crate::{Argument, EbpfContext, args::btf_arg};
 
 pub struct FExitContext {
     ctx: *mut c_void,
 }
 
 impl FExitContext {
-    pub fn new(ctx: *mut c_void) -> FExitContext {
-        FExitContext { ctx }
+    pub fn new(ctx: *mut c_void) -> Self {
+        Self { ctx }
     }
 
     /// Returns the `n`th argument to passed to the probe function, starting from 0.
@@ -16,10 +16,10 @@ impl FExitContext {
     /// # Examples
     ///
     /// ```no_run
-    /// # #![allow(non_camel_case_types)]
-    /// # #![allow(dead_code)]
     /// # use aya_ebpf::{cty::c_int, programs::FExitContext};
+    /// # #[expect(non_camel_case_types)]
     /// # type pid_t = c_int;
+    /// # #[expect(non_camel_case_types)]
     /// # struct task_struct {
     /// #     pid: pid_t,
     /// # }
@@ -31,8 +31,8 @@ impl FExitContext {
     ///     Ok(0)
     /// }
     /// ```
-    pub unsafe fn arg<T: FromBtfArgument>(&self, n: usize) -> T {
-        T::from_argument(self.ctx as *const _, n)
+    pub fn arg<T: Argument>(&self, n: usize) -> T {
+        btf_arg(self, n)
     }
 }
 

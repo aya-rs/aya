@@ -1,14 +1,19 @@
 [package]
-name = "aya-log-common"
-version = "0.1.14"
 description = "A logging library for eBPF programs."
-keywords = ["bpf", "ebpf", "log", "logging"]
 documentation = "https://docs.rs/aya-log"
+keywords = ["bpf", "ebpf", "log", "logging"]
+name = "aya-log-common"
+version = "0.1.15"
+
 authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
-edition.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
 
 [dependencies]
 num_enum = { workspace = true }

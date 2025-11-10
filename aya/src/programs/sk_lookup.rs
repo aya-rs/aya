@@ -1,11 +1,14 @@
 //! Programmable socket lookup.
 use std::os::fd::AsFd;
 
+use aya_obj::generated::{bpf_attach_type::BPF_SK_LOOKUP, bpf_prog_type::BPF_PROG_TYPE_SK_LOOKUP};
+
 use super::links::FdLink;
 use crate::{
-    generated::{bpf_attach_type::BPF_SK_LOOKUP, bpf_prog_type::BPF_PROG_TYPE_SK_LOOKUP},
-    programs::{define_link_wrapper, load_program, FdLinkId, ProgramData, ProgramError},
-    sys::{bpf_link_create, LinkTarget, SyscallError},
+    programs::{
+        FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper, load_program,
+    },
+    sys::{LinkTarget, SyscallError, bpf_link_create},
 };
 
 /// A program used to redirect incoming packets to a local socket.
@@ -51,6 +54,9 @@ pub struct SkLookup {
 }
 
 impl SkLookup {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::SkLookup;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         self.data.expected_attach_type = Some(BPF_SK_LOOKUP);
@@ -65,8 +71,8 @@ impl SkLookup {
         let prog_fd = prog_fd.as_fd();
         let netns_fd = netns.as_fd();
 
-        let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(netns_fd), BPF_SK_LOOKUP, None, 0)
-            .map_err(|(_, io_error)| SyscallError {
+        let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(netns_fd), BPF_SK_LOOKUP, 0, None)
+            .map_err(|io_error| SyscallError {
                 call: "bpf_link_create",
                 io_error,
             })?;
@@ -74,28 +80,6 @@ impl SkLookup {
             .links
             .insert(SkLookupLink::new(FdLink::new(link_fd)))
     }
-
-    /// Takes ownership of the link referenced by the provided link_id.
-    ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: SkLookupLinkId) -> Result<SkLookupLink, ProgramError> {
-        self.data.take_link(link_id)
-    }
-
-    /// Detaches the program.
-    ///
-    /// See [SkLookup::attach].
-    pub fn detach(&mut self, link_id: SkLookupLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
 }
 
-define_link_wrapper!(
-    /// The link used by [SkLookup] programs.
-    SkLookupLink,
-    /// The type returned by [SkLookup::attach]. Can be passed to [SkLookup::detach].
-    SkLookupLinkId,
-    FdLink,
-    FdLinkId
-);
+define_link_wrapper!(SkLookupLink, SkLookupLinkId, FdLink, FdLinkId, SkLookup);

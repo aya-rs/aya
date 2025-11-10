@@ -1,12 +1,15 @@
+#![cfg_attr(
+    target_arch = "bpf",
+    expect(unused_crate_dependencies, reason = "compiler_builtins")
+)]
 #![no_std]
 
-use core::num::{NonZeroUsize, TryFromIntError};
+use core::{
+    net::{IpAddr, Ipv4Addr, Ipv6Addr},
+    num::TryFromIntError,
+};
 
 use num_enum::IntoPrimitive;
-
-pub const LOG_BUF_CAPACITY: usize = 8192;
-
-pub const LOG_FIELDS: usize = 6;
 
 pub type LogValueLength = u16;
 
@@ -52,7 +55,8 @@ impl_formatter_for_types!(
         f32, f64,
         char,
         str,
-        &str
+        &str,
+        IpAddr, Ipv4Addr, Ipv6Addr
     }
 );
 
@@ -65,6 +69,8 @@ impl_formatter_for_types!(
     }
 );
 
+impl<const N: usize> LowerHexFormatter for &[u8; N] {}
+
 pub trait UpperHexFormatter {}
 impl_formatter_for_types!(
     UpperHexFormatter: {
@@ -74,8 +80,14 @@ impl_formatter_for_types!(
     }
 );
 
+impl<const N: usize> UpperHexFormatter for &[u8; N] {}
+
 pub trait IpFormatter {}
+impl IpFormatter for IpAddr {}
+impl IpFormatter for Ipv4Addr {}
+impl IpFormatter for Ipv6Addr {}
 impl IpFormatter for u32 {}
+impl IpFormatter for [u8; 4] {}
 impl IpFormatter for [u8; 16] {}
 impl IpFormatter for [u16; 8] {}
 
@@ -85,10 +97,14 @@ impl LowerMacFormatter for [u8; 6] {}
 pub trait UpperMacFormatter {}
 impl UpperMacFormatter for [u8; 6] {}
 
+pub trait PointerFormatter {}
+impl<T> PointerFormatter for *const T {}
+impl<T> PointerFormatter for *mut T {}
+
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, IntoPrimitive)]
-pub enum RecordField {
-    Target = 1,
+pub enum RecordFieldKind {
+    Target,
     Level,
     Module,
     File,
@@ -100,7 +116,7 @@ pub enum RecordField {
 /// programs to userspace.
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, IntoPrimitive)]
-pub enum Argument {
+pub enum ArgumentKind {
     DisplayHint,
 
     I8,
@@ -118,6 +134,11 @@ pub enum Argument {
     F32,
     F64,
 
+    Ipv4Addr,
+    Ipv6Addr,
+
+    /// `[u8; 4]` array which represents an IPv4 address.
+    ArrU8Len4,
     /// `[u8; 6]` array which represents a MAC address.
     ArrU8Len6,
     /// `[u8; 16]` array which represents an IPv6 address.
@@ -127,6 +148,8 @@ pub enum Argument {
 
     Bytes,
     Str,
+
+    Pointer,
 }
 
 /// All display hints
@@ -145,162 +168,225 @@ pub enum DisplayHint {
     LowerMac,
     /// `:MAC`
     UpperMac,
+    /// `:p`
+    Pointer,
 }
 
-// Must be inlined, else the BPF backend emits:
-//
-// llvm: <unknown>:0:0: in function _ZN14aya_log_common5write17hc9ed05433e23a663E { i64, i64 } (i8, ptr, i64, ptr, i64): only integer returns supported
-#[inline(always)]
-pub(crate) fn write(tag: u8, value: &[u8], buf: &mut [u8]) -> Option<NonZeroUsize> {
-    let wire_len: LogValueLength = match value.len().try_into() {
-        Ok(wire_len) => Some(wire_len),
-        Err(TryFromIntError { .. }) => None,
-    }?;
-    let mut size = 0;
-    macro_rules! copy_from_slice {
-        ($value:expr) => {{
-            let buf = buf.get_mut(size..)?;
-            let buf = buf.get_mut(..$value.len())?;
-            buf.copy_from_slice($value);
-            size += $value.len();
-        }};
-    }
-    copy_from_slice!(&[tag]);
-    copy_from_slice!(&wire_len.to_ne_bytes());
-    copy_from_slice!(value);
-    NonZeroUsize::new(size)
+mod sealed {
+    pub trait Sealed {}
 }
 
-pub trait WriteToBuf {
-    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize>;
+pub trait Argument: sealed::Sealed {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>);
 }
 
-macro_rules! impl_write_to_buf {
-    ($type:ident, $arg_type:expr) => {
-        impl WriteToBuf for $type {
-            // This need not be inlined because the return value is Option<N> where N is
-            // mem::size_of<$type>, which is a compile-time constant.
-            #[inline(never)]
-            fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
-                write($arg_type.into(), &self.to_ne_bytes(), buf)
+macro_rules! impl_argument {
+    ($self:ident, $arg_type:expr) => {
+        impl sealed::Sealed for $self {}
+
+        impl Argument for $self {
+            fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+                ($arg_type, self.to_ne_bytes())
             }
         }
     };
 }
 
-impl_write_to_buf!(i8, Argument::I8);
-impl_write_to_buf!(i16, Argument::I16);
-impl_write_to_buf!(i32, Argument::I32);
-impl_write_to_buf!(i64, Argument::I64);
-impl_write_to_buf!(isize, Argument::Isize);
+impl_argument!(i8, ArgumentKind::I8);
+impl_argument!(i16, ArgumentKind::I16);
+impl_argument!(i32, ArgumentKind::I32);
+impl_argument!(i64, ArgumentKind::I64);
+impl_argument!(isize, ArgumentKind::Isize);
 
-impl_write_to_buf!(u8, Argument::U8);
-impl_write_to_buf!(u16, Argument::U16);
-impl_write_to_buf!(u32, Argument::U32);
-impl_write_to_buf!(u64, Argument::U64);
-impl_write_to_buf!(usize, Argument::Usize);
+impl_argument!(u8, ArgumentKind::U8);
+impl_argument!(u16, ArgumentKind::U16);
+impl_argument!(u32, ArgumentKind::U32);
+impl_argument!(u64, ArgumentKind::U64);
+impl_argument!(usize, ArgumentKind::Usize);
 
-impl_write_to_buf!(f32, Argument::F32);
-impl_write_to_buf!(f64, Argument::F64);
+impl_argument!(f32, ArgumentKind::F32);
+impl_argument!(f64, ArgumentKind::F64);
 
-impl WriteToBuf for [u8; 16] {
-    // This need not be inlined because the return value is Option<N> where N is 16, which is a
-    // compile-time constant.
-    #[inline(never)]
-    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
-        write(Argument::ArrU8Len16.into(), &self, buf)
+enum Either<L, R> {
+    Left(L),
+    Right(R),
+}
+
+impl<L, R> AsRef<[u8]> for Either<L, R>
+where
+    L: AsRef<[u8]>,
+    R: AsRef<[u8]>,
+{
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            Self::Left(l) => l.as_ref(),
+            Self::Right(r) => r.as_ref(),
+        }
     }
 }
 
-impl WriteToBuf for [u16; 8] {
-    // This need not be inlined because the return value is Option<N> where N is 16, which is a
-    // compile-time constant.
-    #[inline(never)]
-    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
-        let bytes = unsafe { core::mem::transmute::<[u16; 8], [u8; 16]>(self) };
-        write(Argument::ArrU16Len8.into(), &bytes, buf)
+impl sealed::Sealed for IpAddr {}
+impl Argument for IpAddr {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        match self {
+            Self::V4(ipv4_addr) => {
+                let (kind, value) = ipv4_addr.as_argument();
+                (kind, Either::Left(value))
+            }
+            Self::V6(ipv6_addr) => {
+                let (kind, value) = ipv6_addr.as_argument();
+                (kind, Either::Right(value))
+            }
+        }
     }
 }
 
-impl WriteToBuf for [u8; 6] {
-    // This need not be inlined because the return value is Option<N> where N is 6, which is a
-    // compile-time constant.
-    #[inline(never)]
-    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
-        write(Argument::ArrU8Len6.into(), &self, buf)
+impl sealed::Sealed for Ipv4Addr {}
+impl Argument for Ipv4Addr {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        (ArgumentKind::Ipv4Addr, self.octets())
     }
 }
 
-impl WriteToBuf for &[u8] {
-    // Must be inlined, else the BPF backend emits:
-    //
-    // llvm: <unknown>:0:0: in function _ZN63_$LT$$RF$$u5b$u8$u5d$$u20$as$u20$aya_log_common..WriteToBuf$GT$5write17h08f30a45f7b9f09dE { i64, i64 } (ptr, i64, ptr, i64): only integer returns supported
-    #[inline(always)]
-    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
-        write(Argument::Bytes.into(), self, buf)
+impl sealed::Sealed for Ipv6Addr {}
+impl Argument for Ipv6Addr {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        (ArgumentKind::Ipv6Addr, self.octets())
     }
 }
 
-impl WriteToBuf for &str {
-    // Must be inlined, else the BPF backend emits:
-    //
-    // llvm: <unknown>:0:0: in function _ZN54_$LT$$RF$str$u20$as$u20$aya_log_common..WriteToBuf$GT$5write17h7e2d1ccaa758e2b5E { i64, i64 } (ptr, i64, ptr, i64): only integer returns supported
-    #[inline(always)]
-    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
-        write(Argument::Str.into(), self.as_bytes(), buf)
+impl<const N: usize> sealed::Sealed for [u8; N] {}
+impl<const N: usize> Argument for [u8; N] {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        let kind = match N {
+            4 => ArgumentKind::ArrU8Len4,
+            6 => ArgumentKind::ArrU8Len6,
+            16 => ArgumentKind::ArrU8Len16,
+            _ => ArgumentKind::Bytes,
+        };
+        (kind, *self)
     }
 }
 
-impl WriteToBuf for DisplayHint {
-    // This need not be inlined because the return value is Option<N> where N is 1, which is a
-    // compile-time constant.
-    #[inline(never)]
-    fn write(self, buf: &mut [u8]) -> Option<NonZeroUsize> {
-        let v: u8 = self.into();
-        write(Argument::DisplayHint.into(), &v.to_ne_bytes(), buf)
+impl sealed::Sealed for &[u8] {}
+impl Argument for &[u8] {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        (ArgumentKind::Bytes, *self)
+    }
+}
+
+impl sealed::Sealed for &str {}
+impl Argument for &str {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        (ArgumentKind::Str, self.as_bytes())
+    }
+}
+
+impl sealed::Sealed for DisplayHint {}
+impl Argument for DisplayHint {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        let v: u8 = (*self).into();
+        (ArgumentKind::DisplayHint, v.to_ne_bytes())
+    }
+}
+
+impl<T> sealed::Sealed for *const T {}
+impl<T> Argument for *const T {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        (ArgumentKind::Pointer, (*self as usize).to_ne_bytes())
+    }
+}
+
+impl<T> sealed::Sealed for *mut T {}
+impl<T> Argument for *mut T {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        (ArgumentKind::Pointer, (*self as usize).to_ne_bytes())
+    }
+}
+
+fn wire_len(value: &[u8]) -> Option<[u8; 2]> {
+    match LogValueLength::try_from(value.len()) {
+        Ok(wire_len) => Some(wire_len.to_ne_bytes()),
+        Err(TryFromIntError { .. }) => None,
     }
 }
 
 #[doc(hidden)]
-#[inline(always)] // This function takes too many arguments to not be inlined.
-pub fn write_record_header(
-    buf: &mut [u8],
-    target: &str,
-    level: Level,
-    module: &str,
-    file: &str,
-    line: u32,
-    num_args: usize,
-) -> Option<NonZeroUsize> {
-    let level: u8 = level.into();
-    let mut size = 0;
-    macro_rules! write {
-        ($tag:expr, $value:expr) => {{
-            let buf = buf.get_mut(size..)?;
-            let len = write($tag.into(), $value, buf)?;
-            size += len.get();
-        }};
+pub struct Field<T>([u8; 1], [u8; 2], T);
+
+impl<T: AsRef<[u8]>> Field<T> {
+    pub fn new(kind: impl Into<u8>, value: T) -> Option<Self> {
+        let wire_len = wire_len(value.as_ref())?;
+        Some(Self([kind.into()], wire_len, value))
     }
-    write!(RecordField::Target, target.as_bytes());
-    write!(RecordField::Level, &level.to_ne_bytes());
-    write!(RecordField::Module, module.as_bytes());
-    write!(RecordField::File, file.as_bytes());
-    write!(RecordField::Line, &line.to_ne_bytes());
-    write!(RecordField::NumArgs, &num_args.to_ne_bytes());
-    NonZeroUsize::new(size)
+
+    pub fn with_bytes(&self, op: &mut impl FnMut(&[u8]) -> Option<()>) -> Option<()> {
+        let Self(kind, wire_len, value) = self;
+        op(&kind[..])?;
+        op(&wire_len[..])?;
+        op(value.as_ref())?;
+        Some(())
+    }
 }
 
-#[cfg(test)]
-mod test {
-    use super::*;
+#[doc(hidden)]
+pub struct Header<'a> {
+    target: Field<&'a [u8]>,
+    level: Field<[u8; 1]>,
+    module: Field<&'a [u8]>,
+    file: Field<&'a [u8]>,
+    line: Field<[u8; 4]>,
+    num_args: Field<[u8; 4]>,
+}
 
-    #[test]
-    fn log_value_length_sufficient() {
-        assert!(
-            LOG_BUF_CAPACITY <= LogValueLength::MAX.into(),
-            "{} > {}",
-            LOG_BUF_CAPACITY,
-            LogValueLength::MAX
-        );
+impl<'a> Header<'a> {
+    pub fn new(
+        target: &'a str,
+        level: Level,
+        module: &'a str,
+        file: &'a str,
+        line: u32,
+        num_args: u32,
+    ) -> Option<Self> {
+        let target = target.as_bytes();
+        let level: u8 = level.into();
+        let level = level.to_ne_bytes();
+        let module = module.as_bytes();
+        let file = file.as_bytes();
+        let line = line.to_ne_bytes();
+        let num_args = num_args.to_ne_bytes();
+        let target = Field::new(RecordFieldKind::Target, target)?;
+        let level = Field::new(RecordFieldKind::Level, level)?;
+        let module = Field::new(RecordFieldKind::Module, module)?;
+        let file = Field::new(RecordFieldKind::File, file)?;
+        let line = Field::new(RecordFieldKind::Line, line)?;
+        let num_args = Field::new(RecordFieldKind::NumArgs, num_args)?;
+
+        Some(Self {
+            target,
+            level,
+            module,
+            file,
+            line,
+            num_args,
+        })
+    }
+
+    pub fn with_bytes(&self, op: &mut impl FnMut(&[u8]) -> Option<()>) -> Option<()> {
+        let Self {
+            target,
+            level,
+            module,
+            file,
+            line,
+            num_args,
+        } = self;
+        target.with_bytes(op)?;
+        level.with_bytes(op)?;
+        module.with_bytes(op)?;
+        file.with_bytes(op)?;
+        line.with_bytes(op)?;
+        num_args.with_bytes(op)?;
+        Some(())
     }
 }

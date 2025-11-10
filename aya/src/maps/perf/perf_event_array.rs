@@ -1,9 +1,10 @@
 //! A map that can be used to receive events from eBPF programs using the linux [`perf`] API
 //!
 //! [`perf`]: https://perf.wiki.kernel.org/index.php/Main_Page.
+
 use std::{
     borrow::{Borrow, BorrowMut},
-    ops::Deref,
+    ops::Deref as _,
     os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
     path::Path,
     sync::Arc,
@@ -13,8 +14,8 @@ use bytes::BytesMut;
 
 use crate::{
     maps::{
-        perf::{Events, PerfBuffer, PerfBufferError},
         MapData, MapError, PinError,
+        perf::{Events, PerfBuffer, PerfBufferError},
     },
     sys::bpf_map_update_elem,
     util::page_size,
@@ -64,7 +65,7 @@ impl<T: BorrowMut<MapData>> AsFd for PerfEventArrayBuffer<T> {
 
 impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
     fn as_raw_fd(&self) -> RawFd {
-        self.buf.as_fd().as_raw_fd()
+        self.as_fd().as_raw_fd()
     }
 }
 
@@ -122,7 +123,7 @@ impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 /// // eBPF programs are going to write to the EVENTS perf array, using the id of the CPU they're
 /// // running on as the array index.
 /// let mut perf_buffers = Vec::new();
-/// for cpu_id in online_cpus()? {
+/// for cpu_id in online_cpus().map_err(|(_, error)| error)? {
 ///     // this perf buffer will receive events generated on the CPU with id cpu_id
 ///     perf_buffers.push(perf_array.open(cpu_id, None)?);
 /// }
@@ -151,16 +152,9 @@ impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 /// amounts of data, in order not to lose events you might want to process each
 /// [`PerfEventArrayBuffer`] on a different thread.
 ///
-/// # Async
-///
-/// If you are using [tokio] or [async-std], you should use `AsyncPerfEventArray` which
-/// efficiently integrates with those and provides a nicer `Future` based API.
-///
 /// [`perf`]: https://perf.wiki.kernel.org/index.php/Main_Page
 /// [epoll]: https://docs.rs/epoll
 /// [mio]: https://docs.rs/mio
-/// [tokio]: https://docs.rs/tokio
-/// [async-std]: https://docs.rs/async-std
 #[doc(alias = "BPF_MAP_TYPE_PERF_EVENT_ARRAY")]
 pub struct PerfEventArray<T> {
     map: Arc<T>,
@@ -199,8 +193,7 @@ impl<T: BorrowMut<MapData>> PerfEventArray<T> {
         let map_data: &MapData = self.map.deref().borrow();
         let map_fd = map_data.fd().as_fd();
         let buf = PerfBuffer::open(index, self.page_size, page_count.unwrap_or(2))?;
-        bpf_map_update_elem(map_fd, Some(&index), &buf.as_fd().as_raw_fd(), 0)
-            .map_err(|(_, io_error)| io_error)?;
+        bpf_map_update_elem(map_fd, Some(&index), &buf.as_fd().as_raw_fd(), 0)?;
 
         Ok(PerfEventArrayBuffer {
             buf,

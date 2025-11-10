@@ -1,12 +1,19 @@
 [package]
-name = "aya-ebpf-bindings"
-version = "0.1.0"
 description = "Bindings for Linux Kernel eBPF types and helpers"
+name = "aya-ebpf-bindings"
+version = "0.1.1"
+
 authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
-edition.workspace = true
+
+[lints]
+workspace = true
 
 [dependencies]
-aya-ebpf-cty = { version = "0.2.1", path = "../aya-ebpf-cty" }
+aya-ebpf-cty = { version = "^0.2.2", path = "../aya-ebpf-cty" }
+
+[build-dependencies]
+aya-build = { version = "^0.1.2", path = "../../aya-build" }

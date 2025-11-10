@@ -1,46 +1,58 @@
 [package]
 name = "integration-test"
-version = "0.1.0"
 publish = false
+version = "0.1.0"
+
 authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
-edition.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
 
 [dependencies]
+aya = { path = "../../aya", version = "^0.13.1", default-features = false }
+
+[dev-dependencies]
 anyhow = { workspace = true, features = ["std"] }
 assert_matches = { workspace = true }
-aya = { path = "../../aya", version = "^0.12.0", default-features = false }
-aya-log = { path = "../../aya-log", version = "^0.2.0", default-features = false }
-aya-obj = { path = "../../aya-obj", version = "^0.1.0", default-features = false }
-env_logger = { workspace = true }
+aya-log = { path = "../../aya-log", version = "^0.2.1", default-features = false }
+aya-obj = { path = "../../aya-obj", version = "^0.2.1", default-features = false }
 epoll = { workspace = true }
-futures = { workspace = true, features = ["std"] }
+futures = { workspace = true, features = ["alloc"] }
+integration-common = { path = "../integration-common", features = ["user"] }
 libc = { workspace = true }
 log = { workspace = true }
-netns-rs = { workspace = true }
+nix = { workspace = true, features = ["mount", "sched"] }
 object = { workspace = true, features = ["elf", "read_core", "std"] }
-rand = { workspace = true, features = ["std", "std_rng"] }
+procfs = { workspace = true, features = ["flate2"] }
+rand = { workspace = true, features = ["thread_rng"] }
 rbpf = { workspace = true }
+scopeguard = { workspace = true }
 test-case = { workspace = true }
 test-log = { workspace = true, features = ["log"] }
-tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
+tokio = { workspace = true, features = [
+    "macros",
+    "net",
+    "rt-multi-thread",
+    "time",
+] }
 xdpilone = { workspace = true }
 
 [build-dependencies]
+anyhow = { workspace = true }
+aya-build = { path = "../../aya-build" }
 cargo_metadata = { workspace = true }
 # TODO(https://github.com/rust-lang/cargo/issues/12375): this should be an artifact dependency, but
 # it's not possible to tell cargo to use `-Z build-std` to build it. We cargo-in-cargo in the build
 # script to build this, but we want to teach cargo about the dependecy so that cache invalidation
 # works properly.
 #
-# Note also that https://github.com/rust-lang/cargo/issues/10593 occurs when `target = ...` is added
-# to an artifact dependency; it seems possible to work around that by setting `resolver = "1"` in
-# Cargo.toml in the workspace root.
-#
 # Finally note that *any* usage of `artifact = ...` in *any* Cargo.toml in the workspace breaks
 # workflows with stable cargo; stable cargo outright refuses to load manifests that use unstable
 # features.
 integration-ebpf = { path = "../integration-ebpf" }
-xtask = { workspace = true }
+xtask = { path = "../../xtask" }

@@ -1,17 +1,18 @@
-use std::{ffi::CStr, mem::MaybeUninit, net::UdpSocket, num::NonZeroU32, time::Duration};
+use std::{net::UdpSocket, num::NonZeroU32, time::Duration};
 
+use assert_matches::assert_matches;
 use aya::{
-    maps::{Array, CpuMap, XskMap},
-    programs::{Xdp, XdpFlags},
     Ebpf,
+    maps::{Array, CpuMap, XskMap},
+    programs::{ProgramError, Xdp, XdpError, XdpFlags, xdp::XdpLinkId},
+    util::KernelVersion,
 };
-use object::{Object, ObjectSection, ObjectSymbol, SymbolSection};
-use test_log::test;
+use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
 use crate::utils::NetNsGuard;
 
-#[test]
+#[test_log::test]
 fn af_xdp() {
     let _netns = NetNsGuard::new();
 
@@ -26,25 +27,33 @@ fn af_xdp() {
     xdp.load().unwrap();
     xdp.attach("lo", XdpFlags::default()).unwrap();
 
+    const SIZE: usize = 2 * 4096;
+
     // So this needs to be page aligned. Pages are 4k on all mainstream architectures except for
     // Apple Silicon which uses 16k pages. So let's align on that for tests to run natively there.
     #[repr(C, align(16384))]
-    struct PacketMap(MaybeUninit<[u8; 4096]>);
+    struct PageAligned([u8; SIZE]);
 
-    // Safety: don't access alloc down the line.
-    let mut alloc = Box::new(PacketMap(MaybeUninit::uninit()));
+    let mut alloc = Box::new(PageAligned([0; SIZE]));
     let umem = {
-        // Safety: this is a shared buffer between the kernel and us, uninitialized memory is valid.
-        let mem = unsafe { alloc.0.assume_init_mut() }.as_mut().into();
+        let PageAligned(mem) = alloc.as_mut();
+        let mem = mem.as_mut().into();
         // Safety: we cannot access `mem` further down the line because it falls out of scope.
         unsafe { Umem::new(UmemConfig::default(), mem).unwrap() }
     };
 
     let mut iface = IfInfo::invalid();
-    iface
-        .from_name(CStr::from_bytes_with_nul(b"lo\0").unwrap())
-        .unwrap();
-    let sock = Socket::with_shared(&iface, &umem).unwrap();
+    iface.from_name(c"lo").unwrap();
+    let sock = match Socket::with_shared(&iface, &umem) {
+        Ok(sock) => sock,
+        Err(err) => {
+            if err.get_raw() == libc::ENOPROTOOPT {
+                eprintln!("skipping test - AF_XDP sockets not available: {err}");
+                return;
+            }
+            panic!("failed to create AF_XDP socket: {err} {}", err.get_raw());
+        }
+    };
 
     let mut fq_cq = umem.fq_cq(&sock).unwrap(); // Fill Queue / Completion Queue
 
@@ -60,10 +69,12 @@ fn af_xdp() {
     socks.set(0, rx.as_raw_fd(), 0).unwrap();
 
     let frame = umem.frame(BufIdx(0)).unwrap();
+    let frame1 = umem.frame(BufIdx(1)).unwrap();
 
-    // Produce a frame to be filled by the kernel
-    let mut writer = fq_cq.fill(1);
+    // Produce two frames to be filled by the kernel
+    let mut writer = fq_cq.fill(2);
     writer.insert_once(frame.offset);
+    writer.insert_once(frame1.offset);
     writer.commit();
 
     let sock = UdpSocket::bind("127.0.0.1:0").unwrap();
@@ -84,9 +95,20 @@ fn af_xdp() {
     assert_eq!(&udp[0..2], port.to_be_bytes().as_slice()); // Source
     assert_eq!(&udp[2..4], 1777u16.to_be_bytes().as_slice()); // Dest
     assert_eq!(payload, b"hello AF_XDP");
+
+    assert_eq!(rx.available(), 1);
+    // Removes socket from map, no more packets will be redirected.
+    socks.unset(0).unwrap();
+    assert_eq!(rx.available(), 1);
+    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    assert_eq!(rx.available(), 1);
+    // Adds socket to map again, packets will be redirected again.
+    socks.set(0, rx.as_raw_fd(), 0).unwrap();
+    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    assert_eq!(rx.available(), 2);
 }
 
-#[test]
+#[test_log::test]
 fn prog_sections() {
     let obj_file = object::File::parse(crate::XDP_SEC).unwrap();
 
@@ -99,7 +121,7 @@ fn prog_sections() {
 }
 
 #[track_caller]
-fn ensure_symbol(obj_file: &object::File, sec_name: &str, sym_name: &str) {
+fn ensure_symbol(obj_file: &object::File<'_>, sec_name: &str, sym_name: &str) {
     let sec = obj_file.section_by_name(sec_name).unwrap_or_else(|| {
         let secs = obj_file
             .sections()
@@ -120,7 +142,7 @@ fn ensure_symbol(obj_file: &object::File, sec_name: &str, sym_name: &str) {
     );
 }
 
-#[test]
+#[test_log::test]
 fn map_load() {
     let bpf = Ebpf::load(crate::XDP_SEC).unwrap();
 
@@ -132,7 +154,7 @@ fn map_load() {
     bpf.program("xdp_frags_devmap").unwrap();
 }
 
-#[test]
+#[test_log::test]
 fn cpumap_chain() {
     let _netns = NetNsGuard::new();
 
@@ -157,7 +179,21 @@ fn cpumap_chain() {
     // Load the main program
     let xdp: &mut Xdp = bpf.program_mut("redirect_cpu").unwrap().try_into().unwrap();
     xdp.load().unwrap();
-    xdp.attach("lo", XdpFlags::default()).unwrap();
+    let result = xdp.attach("lo", XdpFlags::default());
+    // Generic devices did not support cpumap XDP programs until 5.15.
+    //
+    // See https://github.com/torvalds/linux/commit/11941f8a85362f612df61f4aaab0e41b64d2111d.
+    if KernelVersion::current().unwrap() < KernelVersion::new(5, 15, 0) {
+        assert_matches!(result, Err(ProgramError::XdpError(XdpError::NetlinkError(err))) => {
+            assert_eq!(err.raw_os_error(), Some(libc::EINVAL))
+        });
+        eprintln!(
+            "skipping test - cpumap attachment not supported on generic (loopback) interface"
+        );
+        return;
+    } else {
+        let _: XdpLinkId = result.unwrap();
+    };
 
     const PAYLOAD: &str = "hello cpumap";
 

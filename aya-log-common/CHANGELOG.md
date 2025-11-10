@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 0.1.15 (2024-10-09)
+
+<csr-id-a75fc2f7691dad21822c2eff35281abd3c4b5d23/>
+
+### Other
+
+ - <csr-id-a75fc2f7691dad21822c2eff35281abd3c4b5d23/> Allow logging `core::net::Ipv4Addr` and `core::net::Ipv6Addr`
+   IP address types are available in `core`, so they can be used also in
+   eBPF programs. This change adds support of these types in aya-log.
+   
+   * Add implementation of `WriteTuBuf` to these types.
+   * Support these types in `Ipv4Formatter` and `Ipv6Formatter`.
+   * Support them with `DisplayHint::Ip`.
+   * Add support for formatting `[u8; 4]`, to be able to handle
+     `Ipv4Addr::octets`.
+
+### Chore
+
+ - <csr-id-c3f0c7dc3fb285da091454426eeda0723389f0f1/> Prepare for aya-log-ebpf release
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 3 commits contributed to the release.
+ - 223 days passed between releases.
+ - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Prepare for aya-log-ebpf release ([`c3f0c7d`](https://github.com/aya-rs/aya/commit/c3f0c7dc3fb285da091454426eeda0723389f0f1))
+    - Allow logging `core::net::Ipv4Addr` and `core::net::Ipv6Addr` ([`a75fc2f`](https://github.com/aya-rs/aya/commit/a75fc2f7691dad21822c2eff35281abd3c4b5d23))
+    - Appease clippy ([`09442c2`](https://github.com/aya-rs/aya/commit/09442c2cbe9513365dfc1df8d4f7cf6f808a67ed))
+</details>
+
 ## v0.1.14 (2024-02-28)
 
 <csr-id-b3e7ef741c5b8d09fc7dc8302576f8174be75ff4/>
@@ -190,7 +231,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 37 commits contributed to the release over the course of 469 calendar days.
+ - 38 commits contributed to the release.
  - 469 days passed between releases.
  - 18 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -202,6 +243,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release aya-log-common v0.1.14, aya-log v0.2.0 ([`b6a84b6`](https://github.com/aya-rs/aya/commit/b6a84b658ae00f23d0f1721c30d11f2e57f99eab))
     - Add CHANGELOG ([`4f0f095`](https://github.com/aya-rs/aya/commit/4f0f0957758362296c2d0a4749d354edd8dc181e))
     - Release aya-log-common v0.1.14, aya-log v0.2.0 ([`c22a696`](https://github.com/aya-rs/aya/commit/c22a6963d44befb5591d4b21c09767c43935cb54))
     - Merge pull request #882 from dave-tucker/metadata ([`0fadd69`](https://github.com/aya-rs/aya/commit/0fadd695377b8a3f0d9a3af3bc8140f0f1bed8d2))
@@ -276,7 +318,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 12 commits contributed to the release over the course of 110 calendar days.
+ - 12 commits contributed to the release.
  - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 

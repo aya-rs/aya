@@ -1,60 +1,103 @@
 use std::{
-    ffi::{c_int, CString, OsStr},
+    ffi::{CString, OsStr, c_int},
     io, mem,
-    os::fd::{BorrowedFd, FromRawFd as _, OwnedFd},
+    os::fd::{BorrowedFd, FromRawFd as _},
 };
 
+use aya_obj::generated::{
+    PERF_FLAG_FD_CLOEXEC, perf_event_attr,
+    perf_event_sample_format::PERF_SAMPLE_RAW,
+    perf_type_id::{
+        PERF_TYPE_BREAKPOINT, PERF_TYPE_HARDWARE, PERF_TYPE_HW_CACHE, PERF_TYPE_RAW,
+        PERF_TYPE_SOFTWARE, PERF_TYPE_TRACEPOINT,
+    },
+};
 use libc::pid_t;
 
-use super::{syscall, SysResult, Syscall};
-use crate::generated::{
-    perf_event_attr,
-    perf_event_sample_format::PERF_SAMPLE_RAW,
-    perf_sw_ids::PERF_COUNT_SW_BPF_OUTPUT,
-    perf_type_id::{PERF_TYPE_SOFTWARE, PERF_TYPE_TRACEPOINT},
-    PERF_FLAG_FD_CLOEXEC,
+use super::{PerfEventIoctlRequest, Syscall, syscall};
+use crate::programs::perf_event::{
+    PerfEventConfig, PerfEventScope, SamplePolicy, SoftwareEvent, WakeupPolicy, perf_type_id_to_u32,
 };
 
-#[allow(clippy::too_many_arguments)]
 pub(crate) fn perf_event_open(
-    perf_type: u32,
-    config: u64,
-    pid: pid_t,
-    cpu: c_int,
-    sample_period: u64,
-    sample_frequency: Option<u64>,
-    wakeup: bool,
+    config: PerfEventConfig,
+    scope: PerfEventScope,
+    sample_policy: SamplePolicy,
+    wakeup_policy: WakeupPolicy,
     inherit: bool,
     flags: u32,
-) -> SysResult<OwnedFd> {
+) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
+
+    let (perf_type, config) = match config {
+        PerfEventConfig::Pmu { pmu_type, config } => (pmu_type, config),
+        PerfEventConfig::Hardware(hw_event) => (
+            perf_type_id_to_u32(PERF_TYPE_HARDWARE),
+            u64::from(hw_event.into_primitive()),
+        ),
+        PerfEventConfig::Software(sw_event) => (
+            perf_type_id_to_u32(PERF_TYPE_SOFTWARE),
+            u64::from(sw_event.into_primitive()),
+        ),
+        PerfEventConfig::TracePoint { event_id } => {
+            (perf_type_id_to_u32(PERF_TYPE_TRACEPOINT), event_id)
+        }
+        PerfEventConfig::HwCache {
+            event,
+            operation,
+            result,
+        } => (
+            perf_type_id_to_u32(PERF_TYPE_HW_CACHE),
+            u64::from(event.into_primitive())
+                | (u64::from(operation.into_primitive()) << 8)
+                | (u64::from(result.into_primitive()) << 16),
+        ),
+        PerfEventConfig::Raw { event_id } => (perf_type_id_to_u32(PERF_TYPE_RAW), event_id),
+        PerfEventConfig::Breakpoint => (perf_type_id_to_u32(PERF_TYPE_BREAKPOINT), 0),
+    };
 
     attr.config = config;
     attr.size = mem::size_of::<perf_event_attr>() as u32;
     attr.type_ = perf_type;
     attr.sample_type = PERF_SAMPLE_RAW as u64;
     attr.set_inherit(if inherit { 1 } else { 0 });
-    attr.__bindgen_anon_2.wakeup_events = u32::from(wakeup);
 
-    if let Some(frequency) = sample_frequency {
-        attr.set_freq(1);
-        attr.__bindgen_anon_1.sample_freq = frequency;
-    } else {
-        attr.__bindgen_anon_1.sample_period = sample_period;
+    match sample_policy {
+        SamplePolicy::Period(period) => {
+            attr.__bindgen_anon_1.sample_period = period;
+        }
+        SamplePolicy::Frequency(frequency) => {
+            attr.set_freq(1);
+            attr.__bindgen_anon_1.sample_freq = frequency;
+        }
     }
+
+    match wakeup_policy {
+        WakeupPolicy::Events(events) => {
+            attr.__bindgen_anon_2.wakeup_events = events;
+        }
+        WakeupPolicy::Watermark(watermark) => {
+            attr.set_watermark(1);
+            attr.__bindgen_anon_2.wakeup_watermark = watermark;
+        }
+    }
+
+    let (pid, cpu) = match scope {
+        PerfEventScope::CallingProcess { cpu } => (0, cpu.map_or(-1, |cpu| cpu as i32)),
+        PerfEventScope::OneProcess { pid, cpu } => (pid, cpu.map_or(-1, |cpu| cpu as i32)),
+        PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
+    };
 
     perf_event_sys(attr, pid, cpu, flags)
 }
 
-pub(crate) fn perf_event_open_bpf(cpu: c_int) -> SysResult<OwnedFd> {
+pub(crate) fn perf_event_open_bpf(cpu: c_int) -> io::Result<crate::MockableFd> {
+    let cpu = cpu as u32;
     perf_event_open(
-        PERF_TYPE_SOFTWARE as u32,
-        PERF_COUNT_SW_BPF_OUTPUT as u64,
-        -1,
-        cpu,
-        1,
-        None,
-        true,
+        PerfEventConfig::Software(SoftwareEvent::BpfOutput),
+        PerfEventScope::AllProcessesOneCpu { cpu },
+        SamplePolicy::Period(1),
+        WakeupPolicy::Events(1),
         false,
         PERF_FLAG_FD_CLOEXEC,
     )
@@ -66,7 +109,7 @@ pub(crate) fn perf_event_open_probe(
     name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
-) -> SysResult<OwnedFd> {
+) -> io::Result<crate::MockableFd> {
     use std::os::unix::ffi::OsStrExt as _;
 
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
@@ -88,12 +131,15 @@ pub(crate) fn perf_event_open_probe(
     perf_event_sys(attr, pid, cpu, PERF_FLAG_FD_CLOEXEC)
 }
 
-pub(crate) fn perf_event_open_trace_point(id: u32, pid: Option<pid_t>) -> SysResult<OwnedFd> {
+pub(crate) fn perf_event_open_trace_point(
+    id: u32,
+    pid: Option<pid_t>,
+) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
 
     attr.size = mem::size_of::<perf_event_attr>() as u32;
     attr.type_ = PERF_TYPE_TRACEPOINT as u32;
-    attr.config = id as u64;
+    attr.config = u64::from(id);
 
     let cpu = if pid.is_some() { -1 } else { 0 };
     let pid = pid.unwrap_or(-1);
@@ -101,36 +147,47 @@ pub(crate) fn perf_event_open_trace_point(id: u32, pid: Option<pid_t>) -> SysRes
     perf_event_sys(attr, pid, cpu, PERF_FLAG_FD_CLOEXEC)
 }
 
-pub(crate) fn perf_event_ioctl(fd: BorrowedFd<'_>, request: c_int, arg: c_int) -> SysResult<i64> {
-    let call = Syscall::PerfEventIoctl { fd, request, arg };
-    #[cfg(not(test))]
-    return syscall(call);
-
-    #[cfg(test)]
-    return crate::sys::TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) });
+pub(crate) fn perf_event_ioctl(
+    fd: BorrowedFd<'_>,
+    request: PerfEventIoctlRequest<'_>,
+) -> io::Result<()> {
+    syscall(Syscall::PerfEventIoctl { fd, request })
+        .map(|code| {
+            assert_eq!(code, 0);
+        })
+        .map_err(|(code, io_error)| {
+            assert_eq!(code, -1);
+            io_error
+        })
 }
 
-fn perf_event_sys(attr: perf_event_attr, pid: pid_t, cpu: i32, flags: u32) -> SysResult<OwnedFd> {
+fn perf_event_sys(
+    attr: perf_event_attr,
+    pid: pid_t,
+    cpu: i32,
+    flags: u32,
+) -> io::Result<crate::MockableFd> {
     let fd = syscall(Syscall::PerfEventOpen {
         attr,
         pid,
         cpu,
         group: -1,
         flags,
+    })
+    .map_err(|(code, io_error)| {
+        assert_eq!(code, -1);
+        io_error
     })?;
 
-    let fd = fd.try_into().map_err(|_| {
-        (
-            fd,
-            io::Error::new(
-                io::ErrorKind::InvalidData,
-                format!("perf_event_open: invalid fd returned: {fd}"),
-            ),
+    let fd = fd.try_into().map_err(|std::num::TryFromIntError { .. }| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("perf_event_open: invalid fd returned: {fd}"),
         )
     })?;
 
     // SAFETY: perf_event_open returns a new file descriptor on success.
-    unsafe { Ok(OwnedFd::from_raw_fd(fd)) }
+    unsafe { Ok(crate::MockableFd::from_raw_fd(fd)) }
 }
 
 /*

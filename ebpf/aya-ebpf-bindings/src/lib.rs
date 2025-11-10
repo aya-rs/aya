@@ -1,45 +1,97 @@
-#![allow(non_camel_case_types, non_upper_case_globals, non_snake_case)]
-#![deny(warnings)]
+#![cfg_attr(
+    target_arch = "bpf",
+    expect(unused_crate_dependencies, reason = "compiler_builtins")
+)]
+#![expect(
+    clippy::all,
+    clippy::cast_lossless,
+    clippy::ptr_as_ptr,
+    clippy::ref_as_ptr,
+    clippy::use_self,
+    non_camel_case_types,
+    non_snake_case,
+    non_upper_case_globals,
+    unreachable_pub,
+    unsafe_op_in_unsafe_fn
+)]
 #![no_std]
 
-#[cfg(bpf_target_arch = "x86_64")]
-mod x86_64;
-
-#[cfg(bpf_target_arch = "arm")]
-mod armv7;
-
 #[cfg(bpf_target_arch = "aarch64")]
-mod aarch64;
-
+mod aarch64 {
+    pub mod bindings;
+    pub mod helpers;
+}
+#[cfg(bpf_target_arch = "arm")]
+mod armv7 {
+    pub mod bindings;
+    pub mod helpers;
+}
+#[cfg(bpf_target_arch = "loongarch64")]
+mod loongarch64 {
+    pub mod bindings;
+    pub mod helpers;
+}
+#[cfg(bpf_target_arch = "mips")]
+mod mips {
+    pub mod bindings;
+    pub mod helpers;
+}
+#[cfg(bpf_target_arch = "powerpc64")]
+mod powerpc64 {
+    pub mod bindings;
+    pub mod helpers;
+}
 #[cfg(bpf_target_arch = "riscv64")]
-mod riscv64;
+mod riscv64 {
+    pub mod bindings;
+    pub mod helpers;
+}
+#[cfg(bpf_target_arch = "s390x")]
+mod s390x {
+    pub mod bindings;
+    pub mod helpers;
+}
+#[cfg(bpf_target_arch = "x86_64")]
+mod x86_64 {
+    pub mod bindings;
+    pub mod helpers;
+}
 
-mod gen {
+mod generated {
     #[cfg(bpf_target_arch = "aarch64")]
     pub use super::aarch64::*;
     #[cfg(bpf_target_arch = "arm")]
     pub use super::armv7::*;
+    #[cfg(bpf_target_arch = "loongarch64")]
+    pub use super::loongarch64::*;
+    #[cfg(bpf_target_arch = "mips")]
+    pub use super::mips::*;
+    #[cfg(bpf_target_arch = "powerpc64")]
+    pub use super::powerpc64::*;
     #[cfg(bpf_target_arch = "riscv64")]
     pub use super::riscv64::*;
+    #[cfg(bpf_target_arch = "s390x")]
+    pub use super::s390x::*;
     #[cfg(bpf_target_arch = "x86_64")]
     pub use super::x86_64::*;
 }
-pub use gen::helpers;
+
+pub use generated::helpers;
 
 pub mod bindings {
-    pub use crate::gen::bindings::*;
+    pub use crate::generated::bindings::*;
 
-    pub const TC_ACT_OK: i32 = crate::gen::bindings::TC_ACT_OK as i32;
-    pub const TC_ACT_RECLASSIFY: i32 = crate::gen::bindings::TC_ACT_RECLASSIFY as i32;
-    pub const TC_ACT_SHOT: i32 = crate::gen::bindings::TC_ACT_SHOT as i32;
-    pub const TC_ACT_PIPE: i32 = crate::gen::bindings::TC_ACT_PIPE as i32;
-    pub const TC_ACT_STOLEN: i32 = crate::gen::bindings::TC_ACT_STOLEN as i32;
-    pub const TC_ACT_QUEUED: i32 = crate::gen::bindings::TC_ACT_QUEUED as i32;
-    pub const TC_ACT_REPEAT: i32 = crate::gen::bindings::TC_ACT_REPEAT as i32;
-    pub const TC_ACT_REDIRECT: i32 = crate::gen::bindings::TC_ACT_REDIRECT as i32;
-    pub const TC_ACT_TRAP: i32 = crate::gen::bindings::TC_ACT_TRAP as i32;
-    pub const TC_ACT_VALUE_MAX: i32 = crate::gen::bindings::TC_ACT_VALUE_MAX as i32;
-    pub const TC_ACT_EXT_VAL_MASK: i32 = 268435455;
+    pub const TC_ACT_OK: i32 = crate::generated::bindings::TC_ACT_OK as i32;
+    pub const TC_ACT_RECLASSIFY: i32 = crate::generated::bindings::TC_ACT_RECLASSIFY as i32;
+    pub const TC_ACT_SHOT: i32 = crate::generated::bindings::TC_ACT_SHOT as i32;
+    pub const TC_ACT_PIPE: i32 = crate::generated::bindings::TC_ACT_PIPE as i32;
+    pub const TC_ACT_STOLEN: i32 = crate::generated::bindings::TC_ACT_STOLEN as i32;
+    pub const TC_ACT_QUEUED: i32 = crate::generated::bindings::TC_ACT_QUEUED as i32;
+    pub const TC_ACT_REPEAT: i32 = crate::generated::bindings::TC_ACT_REPEAT as i32;
+    pub const TC_ACT_REDIRECT: i32 = crate::generated::bindings::TC_ACT_REDIRECT as i32;
+    pub const TC_ACT_TRAP: i32 = crate::generated::bindings::TC_ACT_TRAP as i32;
+    pub const TC_ACT_VALUE_MAX: i32 = crate::generated::bindings::TC_ACT_VALUE_MAX as i32;
+    pub const TC_ACT_EXT_VAL_MASK: i32 = crate::generated::bindings::TC_ACT_EXT_VAL_MASK as i32;
 
     #[repr(C)]
     #[derive(Debug, Copy, Clone)]

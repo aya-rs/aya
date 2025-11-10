@@ -1,18 +1,31 @@
 use aya::{
-    maps::loaded_maps,
-    programs::{loaded_programs, Extension, TracePoint, Xdp, XdpFlags},
-    util::KernelVersion,
     Ebpf, EbpfLoader,
+    programs::{Extension, TracePoint, Xdp, XdpFlags, tc},
+    util::KernelVersion,
 };
-use test_log::test;
 
 use crate::utils::NetNsGuard;
 
-#[test]
+#[test_log::test]
+fn modprobe() {
+    // This very simple looking test is actually quite complex.
+    // The call to tc::qdisc_add_clsact() causes the linux kernel to call into
+    // `__request_module()`, which via the usermodehelper calls out into the
+    // `/sbin/modprobe` to load the required kernel module.
+    // In order for this test to pass, all of that machinery must work
+    // correctly within the test environment.
+    let _netns = NetNsGuard::new();
+
+    tc::qdisc_add_clsact("lo").unwrap();
+}
+
+#[test_log::test]
 fn xdp() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 18, 0) {
-        eprintln!("skipping test on kernel {kernel_version:?}, support for BPF_F_XDP_HAS_FRAGS was added in 5.18.0; see https://github.com/torvalds/linux/commit/c2f2cdb");
+        eprintln!(
+            "skipping test on kernel {kernel_version:?}, support for BPF_F_XDP_HAS_FRAGS was added in 5.18.0; see https://github.com/torvalds/linux/commit/c2f2cdb"
+        );
         return;
     }
 
@@ -24,7 +37,7 @@ fn xdp() {
     dispatcher.attach("lo", XdpFlags::default()).unwrap();
 }
 
-#[test]
+#[test_log::test]
 fn two_progs() {
     let mut bpf = Ebpf::load(crate::TWO_PROGS).unwrap();
 
@@ -46,7 +59,7 @@ fn two_progs() {
     prog_two.attach("sched", "sched_switch").unwrap();
 }
 
-#[test]
+#[test_log::test]
 fn extension() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 9, 0) {
@@ -69,58 +82,4 @@ fn extension() {
     drop_
         .load(pass.fd().unwrap().try_clone().unwrap(), "xdp_pass")
         .unwrap();
-}
-
-#[test]
-fn list_loaded_programs() {
-    // Load a program.
-    let mut bpf = Ebpf::load(crate::PASS).unwrap();
-    let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-    dispatcher.load().unwrap();
-    dispatcher.attach("lo", XdpFlags::default()).unwrap();
-
-    // Ensure the loaded_programs() api doesn't panic.
-    let prog = loaded_programs()
-        .map(|p| p.unwrap())
-        .find(|p| p.name_as_str().unwrap() == "pass")
-        .unwrap();
-
-    // Ensure all relevant helper functions don't panic.
-    prog.name();
-    prog.id();
-    prog.tag();
-    prog.program_type();
-    prog.gpl_compatible();
-    prog.map_ids().unwrap();
-    prog.btf_id();
-    prog.size_translated();
-    prog.memory_locked().unwrap();
-    prog.verified_instruction_count();
-    prog.loaded_at();
-    prog.fd().unwrap();
-}
-
-#[test]
-fn list_loaded_maps() {
-    // Load a program with maps.
-    let mut bpf = Ebpf::load(crate::MAP_TEST).unwrap();
-    let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-    dispatcher.load().unwrap();
-    dispatcher.attach("lo", XdpFlags::default()).unwrap();
-
-    // Ensure the loaded_maps() api doesn't panic and retrieve a map.
-    let map = loaded_maps()
-        .map(|m| m.unwrap())
-        .find(|m| m.name_as_str().unwrap() == "FOO")
-        .unwrap();
-
-    // Ensure all relevant helper functions don't panic.
-    map.name();
-    map.id();
-    map.map_type();
-    map.key_size();
-    map.value_size();
-    map.max_entries();
-    map.map_flags();
-    map.fd().unwrap();
 }

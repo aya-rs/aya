@@ -1,32 +1,31 @@
 //! Object file loading, parsing, and relocation.
 
 use alloc::{
-    borrow::ToOwned,
+    borrow::ToOwned as _,
     collections::BTreeMap,
     ffi::CString,
-    string::{String, ToString},
+    string::{String, ToString as _},
+    vec,
     vec::Vec,
 };
 use core::{ffi::CStr, mem, ptr, slice::from_raw_parts_mut, str::FromStr};
 
 use log::debug;
 use object::{
-    read::{Object as ElfObject, ObjectSection, Section as ObjSection},
-    Endianness, ObjectSymbol, ObjectSymbolTable, RelocationTarget, SectionIndex, SectionKind,
-    SymbolKind,
+    Endianness, ObjectSymbol as _, ObjectSymbolTable as _, RelocationTarget, SectionIndex,
+    SectionKind, SymbolKind,
+    read::{Object as _, ObjectSection as _, Section as ObjSection},
 };
 
-#[cfg(not(feature = "std"))]
-use crate::std;
 use crate::{
     btf::{
         Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,
     },
     generated::{
-        bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_CALL, BPF_F_RDONLY_PROG,
-        BPF_JMP, BPF_K,
+        BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K, bpf_func_id::*, bpf_insn, bpf_map_info,
+        bpf_map_type::BPF_MAP_TYPE_ARRAY,
     },
-    maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map, PinningType, MINIMUM_MAP_SIZE},
+    maps::{BtfMap, BtfMapDef, LegacyMap, MINIMUM_MAP_SIZE, Map, PinningType, bpf_map_def},
     programs::{
         CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType, XdpAttachType,
     },
@@ -38,7 +37,6 @@ const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
 
 /// Features implements BPF and BTF feature detection
 #[derive(Default, Debug)]
-#[allow(missing_docs)]
 pub struct Features {
     bpf_name: bool,
     bpf_probe_read_kernel: bool,
@@ -52,7 +50,7 @@ pub struct Features {
 
 impl Features {
     #[doc(hidden)]
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         bpf_name: bool,
         bpf_probe_read_kernel: bool,
@@ -75,7 +73,10 @@ impl Features {
         }
     }
 
-    /// Returns whether BPF program names are supported.
+    /// Returns whether BPF program names and map names are supported.
+    ///
+    /// Although the feature probe performs the check for program name, we can use this to also
+    /// detect if map name is supported since they were both introduced in the same commit.
     pub fn bpf_name(&self) -> bool {
         self.bpf_name
     }
@@ -220,7 +221,7 @@ pub struct Function {
 /// - `fmod_ret+`, `fmod_ret.s+`
 /// - `iter+`, `iter.s+`
 #[derive(Debug, Clone)]
-#[allow(missing_docs)]
+#[expect(missing_docs)]
 pub enum ProgramSection {
     KRetProbe,
     KProbe,
@@ -257,6 +258,7 @@ pub enum ProgramSection {
     Lsm {
         sleepable: bool,
     },
+    LsmCgroup,
     BtfTracePoint,
     FEntry {
         sleepable: bool,
@@ -264,20 +266,22 @@ pub enum ProgramSection {
     FExit {
         sleepable: bool,
     },
+    FlowDissector,
     Extension,
     SkLookup,
     CgroupSock {
         attach_type: CgroupSockAttachType,
     },
     CgroupDevice,
+    Iter {
+        sleepable: bool,
+    },
 }
 
 impl FromStr for ProgramSection {
     type Err = ParseError;
 
-    fn from_str(section: &str) -> Result<ProgramSection, ParseError> {
-        use ProgramSection::*;
-
+    fn from_str(section: &str) -> Result<Self, ParseError> {
         // parse the common case, eg "xdp/program_name" or
         // "sk_skb/stream_verdict/program_name"
         let mut pieces = section.split('/');
@@ -291,13 +295,13 @@ impl FromStr for ProgramSection {
         let kind = next()?;
 
         Ok(match kind {
-            "kprobe" => KProbe,
-            "kretprobe" => KRetProbe,
-            "uprobe" => UProbe { sleepable: false },
-            "uprobe.s" => UProbe { sleepable: true },
-            "uretprobe" => URetProbe { sleepable: false },
-            "uretprobe.s" => URetProbe { sleepable: true },
-            "xdp" | "xdp.frags" => Xdp {
+            "kprobe" => Self::KProbe,
+            "kretprobe" => Self::KRetProbe,
+            "uprobe" => Self::UProbe { sleepable: false },
+            "uprobe.s" => Self::UProbe { sleepable: true },
+            "uretprobe" => Self::URetProbe { sleepable: false },
+            "uretprobe.s" => Self::URetProbe { sleepable: true },
+            "xdp" | "xdp.frags" => Self::Xdp {
                 frags: kind == "xdp.frags",
                 attach_type: match pieces.next() {
                     None => XdpAttachType::Interface,
@@ -306,101 +310,101 @@ impl FromStr for ProgramSection {
                     Some(_) => {
                         return Err(ParseError::InvalidProgramSection {
                             section: section.to_owned(),
-                        })
+                        });
                     }
                 },
             },
-            "tp_btf" => BtfTracePoint,
-            "tracepoint" | "tp" => TracePoint,
-            "socket" => SocketFilter,
-            "sk_msg" => SkMsg,
+            "tp_btf" => Self::BtfTracePoint,
+            "tracepoint" | "tp" => Self::TracePoint,
+            "socket" => Self::SocketFilter,
+            "sk_msg" => Self::SkMsg,
             "sk_skb" => {
                 let name = next()?;
                 match name {
-                    "stream_parser" => SkSkbStreamParser,
-                    "stream_verdict" => SkSkbStreamVerdict,
+                    "stream_parser" => Self::SkSkbStreamParser,
+                    "stream_verdict" => Self::SkSkbStreamVerdict,
                     _ => {
                         return Err(ParseError::InvalidProgramSection {
                             section: section.to_owned(),
-                        })
+                        });
                     }
                 }
             }
-            "sockops" => SockOps,
-            "classifier" => SchedClassifier,
+            "sockops" => Self::SockOps,
+            "classifier" => Self::SchedClassifier,
             "cgroup_skb" => {
                 let name = next()?;
                 match name {
-                    "ingress" => CgroupSkbIngress,
-                    "egress" => CgroupSkbEgress,
+                    "ingress" => Self::CgroupSkbIngress,
+                    "egress" => Self::CgroupSkbEgress,
                     _ => {
                         return Err(ParseError::InvalidProgramSection {
                             section: section.to_owned(),
-                        })
+                        });
                     }
                 }
             }
             "cgroup" => {
                 let name = next()?;
                 match name {
-                    "skb" => CgroupSkb,
-                    "sysctl" => CgroupSysctl,
-                    "dev" => CgroupDevice,
-                    "getsockopt" => CgroupSockopt {
+                    "skb" => Self::CgroupSkb,
+                    "sysctl" => Self::CgroupSysctl,
+                    "dev" => Self::CgroupDevice,
+                    "getsockopt" => Self::CgroupSockopt {
                         attach_type: CgroupSockoptAttachType::Get,
                     },
-                    "setsockopt" => CgroupSockopt {
+                    "setsockopt" => Self::CgroupSockopt {
                         attach_type: CgroupSockoptAttachType::Set,
                     },
-                    "sock" => CgroupSock {
+                    "sock" => Self::CgroupSock {
                         attach_type: CgroupSockAttachType::default(),
                     },
-                    "post_bind4" => CgroupSock {
+                    "post_bind4" => Self::CgroupSock {
                         attach_type: CgroupSockAttachType::PostBind4,
                     },
-                    "post_bind6" => CgroupSock {
+                    "post_bind6" => Self::CgroupSock {
                         attach_type: CgroupSockAttachType::PostBind6,
                     },
-                    "sock_create" => CgroupSock {
+                    "sock_create" => Self::CgroupSock {
                         attach_type: CgroupSockAttachType::SockCreate,
                     },
-                    "sock_release" => CgroupSock {
+                    "sock_release" => Self::CgroupSock {
                         attach_type: CgroupSockAttachType::SockRelease,
                     },
-                    "bind4" => CgroupSockAddr {
+                    "bind4" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::Bind4,
                     },
-                    "bind6" => CgroupSockAddr {
+                    "bind6" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::Bind6,
                     },
-                    "connect4" => CgroupSockAddr {
+                    "connect4" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::Connect4,
                     },
-                    "connect6" => CgroupSockAddr {
+                    "connect6" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::Connect6,
                     },
-                    "getpeername4" => CgroupSockAddr {
+                    "getpeername4" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::GetPeerName4,
                     },
-                    "getpeername6" => CgroupSockAddr {
+                    "getpeername6" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::GetPeerName6,
                     },
-                    "getsockname4" => CgroupSockAddr {
+                    "getsockname4" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::GetSockName4,
                     },
-                    "getsockname6" => CgroupSockAddr {
+                    "getsockname6" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::GetSockName6,
                     },
-                    "sendmsg4" => CgroupSockAddr {
+                    "sendmsg4" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::UDPSendMsg4,
                     },
-                    "sendmsg6" => CgroupSockAddr {
+                    "sendmsg6" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::UDPSendMsg6,
                     },
-                    "recvmsg4" => CgroupSockAddr {
+                    "recvmsg4" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::UDPRecvMsg4,
                     },
-                    "recvmsg6" => CgroupSockAddr {
+                    "recvmsg6" => Self::CgroupSockAddr {
                         attach_type: CgroupSockAddrAttachType::UDPRecvMsg6,
                     },
                     _ => {
@@ -410,21 +414,25 @@ impl FromStr for ProgramSection {
                     }
                 }
             }
-            "lirc_mode2" => LircMode2,
-            "perf_event" => PerfEvent,
-            "raw_tp" | "raw_tracepoint" => RawTracePoint,
-            "lsm" => Lsm { sleepable: false },
-            "lsm.s" => Lsm { sleepable: true },
-            "fentry" => FEntry { sleepable: false },
-            "fentry.s" => FEntry { sleepable: true },
-            "fexit" => FExit { sleepable: false },
-            "fexit.s" => FExit { sleepable: true },
-            "freplace" => Extension,
-            "sk_lookup" => SkLookup,
+            "lirc_mode2" => Self::LircMode2,
+            "perf_event" => Self::PerfEvent,
+            "raw_tp" | "raw_tracepoint" => Self::RawTracePoint,
+            "lsm" => Self::Lsm { sleepable: false },
+            "lsm.s" => Self::Lsm { sleepable: true },
+            "lsm_cgroup" => Self::LsmCgroup,
+            "fentry" => Self::FEntry { sleepable: false },
+            "fentry.s" => Self::FEntry { sleepable: true },
+            "fexit" => Self::FExit { sleepable: false },
+            "fexit.s" => Self::FExit { sleepable: true },
+            "flow_dissector" => Self::FlowDissector,
+            "freplace" => Self::Extension,
+            "sk_lookup" => Self::SkLookup,
+            "iter" => Self::Iter { sleepable: false },
+            "iter.s" => Self::Iter { sleepable: true },
             _ => {
                 return Err(ParseError::InvalidProgramSection {
                     section: section.to_owned(),
-                })
+                });
             }
         })
     }
@@ -432,7 +440,7 @@ impl FromStr for ProgramSection {
 
 impl Object {
     /// Parses the binary data as an object file into an [Object]
-    pub fn parse(data: &[u8]) -> Result<Object, ParseError> {
+    pub fn parse(data: &[u8]) -> Result<Self, ParseError> {
         let obj = object::read::File::parse(data).map_err(ParseError::ElfError)?;
         let endianness = obj.endianness();
 
@@ -448,7 +456,7 @@ impl Object {
             None
         };
 
-        let mut bpf_obj = Object::new(endianness, license, kernel_version);
+        let mut bpf_obj = Self::new(endianness, license, kernel_version);
 
         if let Some(symbol_table) = obj.symbol_table() {
             for symbol in symbol_table.symbols() {
@@ -503,8 +511,8 @@ impl Object {
         Ok(bpf_obj)
     }
 
-    fn new(endianness: Endianness, license: CString, kernel_version: Option<u32>) -> Object {
-        Object {
+    fn new(endianness: Endianness, license: CString, kernel_version: Option<u32>) -> Self {
+        Self {
             endianness,
             license,
             kernel_version,
@@ -519,6 +527,13 @@ impl Object {
             section_infos: HashMap::new(),
             symbol_offset_by_name: HashMap::new(),
         }
+    }
+
+    /// Returns true if this object contains CO-RE relocations.
+    pub fn has_btf_relocations(&self) -> bool {
+        self.btf_ext
+            .as_ref()
+            .is_some_and(|ext| !ext.relocations().is_empty())
     }
 
     /// Patches map data
@@ -570,13 +585,13 @@ impl Object {
         Ok(())
     }
 
-    fn parse_btf(&mut self, section: &Section) -> Result<(), BtfError> {
+    fn parse_btf(&mut self, section: &Section<'_>) -> Result<(), BtfError> {
         self.btf = Some(Btf::parse(section.data, self.endianness)?);
 
         Ok(())
     }
 
-    fn parse_btf_ext(&mut self, section: &Section) -> Result<(), BtfError> {
+    fn parse_btf_ext(&mut self, section: &Section<'_>) -> Result<(), BtfError> {
         self.btf_ext = Some(BtfExt::parse(
             section.data,
             self.endianness,
@@ -585,7 +600,7 @@ impl Object {
         Ok(())
     }
 
-    fn parse_programs(&mut self, section: &Section) -> Result<(), ParseError> {
+    fn parse_programs(&mut self, section: &Section<'_>) -> Result<(), ParseError> {
         let program_section = ProgramSection::from_str(section.name)?;
         let syms =
             self.symbols_by_section
@@ -616,7 +631,7 @@ impl Object {
 
     fn parse_program(
         &self,
-        section: &Section,
+        section: &Section<'_>,
         program_section: ProgramSection,
         name: String,
         symbol: &Symbol,
@@ -652,7 +667,7 @@ impl Object {
         ))
     }
 
-    fn parse_text_section(&mut self, section: Section) -> Result<(), ParseError> {
+    fn parse_text_section(&mut self, section: Section<'_>) -> Result<(), ParseError> {
         let mut symbols_by_address = HashMap::new();
 
         for sym in self.symbol_table.values() {
@@ -723,7 +738,7 @@ impl Object {
         Ok(())
     }
 
-    fn parse_btf_maps(&mut self, section: &Section) -> Result<(), ParseError> {
+    fn parse_btf_maps(&mut self, section: &Section<'_>) -> Result<(), ParseError> {
         if self.btf.is_none() {
             return Err(ParseError::NoBTF);
         }
@@ -778,7 +793,7 @@ impl Object {
     fn parse_maps_section<'a, I: Iterator<Item = &'a usize>>(
         &self,
         maps: &mut HashMap<String, Map>,
-        section: &Section,
+        section: &Section<'_>,
         symbols: I,
     ) -> Result<(), ParseError> {
         let mut have_symbols = false;
@@ -816,7 +831,7 @@ impl Object {
         Ok(())
     }
 
-    fn parse_section(&mut self, section: Section) -> Result<(), ParseError> {
+    fn parse_section(&mut self, section: Section<'_>) -> Result<(), ParseError> {
         self.section_infos
             .insert(section.name.to_owned(), (section.index, section.size));
         match section.kind {
@@ -878,19 +893,12 @@ impl Object {
 }
 
 fn insn_is_helper_call(ins: &bpf_insn) -> bool {
-    let klass = (ins.code & 0x07) as u32;
-    let op = (ins.code & 0xF0) as u32;
-    let src = (ins.code & 0x08) as u32;
+    let klass = u32::from(ins.code & 0x07);
+    let op = u32::from(ins.code & 0xF0);
+    let src = u32::from(ins.code & 0x08);
 
     klass == BPF_JMP && op == BPF_CALL && src == BPF_K && ins.src_reg() == 0 && ins.dst_reg() == 0
 }
-
-const BPF_FUNC_PROBE_READ: i32 = 4;
-const BPF_FUNC_PROBE_READ_STR: i32 = 45;
-const BPF_FUNC_PROBE_READ_USER: i32 = 112;
-const BPF_FUNC_PROBE_READ_KERNEL: i32 = 113;
-const BPF_FUNC_PROBE_READ_USER_STR: i32 = 114;
-const BPF_FUNC_PROBE_READ_KERNEL_STR: i32 = 115;
 
 impl Function {
     fn sanitize(&mut self, features: &Features) {
@@ -899,18 +907,23 @@ impl Function {
                 continue;
             }
 
-            match inst.imm {
-                BPF_FUNC_PROBE_READ_USER | BPF_FUNC_PROBE_READ_KERNEL
-                    if !features.bpf_probe_read_kernel =>
-                {
-                    inst.imm = BPF_FUNC_PROBE_READ;
+            if !features.bpf_probe_read_kernel {
+                const BPF_FUNC_PROBE_READ_KERNEL: i32 = BPF_FUNC_probe_read_kernel as i32;
+                const BPF_FUNC_PROBE_READ_USER: i32 = BPF_FUNC_probe_read_user as i32;
+                const BPF_FUNC_PROBE_READ: i32 = BPF_FUNC_probe_read as i32;
+                const BPF_FUNC_PROBE_READ_KERNEL_STR: i32 = BPF_FUNC_probe_read_kernel_str as i32;
+                const BPF_FUNC_PROBE_READ_USER_STR: i32 = BPF_FUNC_probe_read_user_str as i32;
+                const BPF_FUNC_PROBE_READ_STR: i32 = BPF_FUNC_probe_read_str as i32;
+
+                match inst.imm {
+                    BPF_FUNC_PROBE_READ_KERNEL | BPF_FUNC_PROBE_READ_USER => {
+                        inst.imm = BPF_FUNC_PROBE_READ;
+                    }
+                    BPF_FUNC_PROBE_READ_KERNEL_STR | BPF_FUNC_PROBE_READ_USER_STR => {
+                        inst.imm = BPF_FUNC_PROBE_READ_STR;
+                    }
+                    _ => {}
                 }
-                BPF_FUNC_PROBE_READ_USER_STR | BPF_FUNC_PROBE_READ_KERNEL_STR
-                    if !features.bpf_probe_read_kernel =>
-                {
-                    inst.imm = BPF_FUNC_PROBE_READ_STR;
-                }
-                _ => {}
             }
         }
     }
@@ -918,7 +931,7 @@ impl Function {
 
 /// Errors caught during parsing the object file
 #[derive(Debug, thiserror::Error)]
-#[allow(missing_docs)]
+#[expect(missing_docs)]
 pub enum ParseError {
     #[error("error parsing ELF data")]
     ElfError(object::read::Error),
@@ -987,6 +1000,12 @@ pub enum ParseError {
     NoBTF,
 }
 
+/// Invalid bindings to the bpf type from the parsed/received value.
+pub struct InvalidTypeBinding<T> {
+    /// The value parsed/received.
+    pub value: T,
+}
+
 /// The kind of an ELF section.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum EbpfSectionKind {
@@ -1017,29 +1036,29 @@ pub enum EbpfSectionKind {
 }
 
 impl EbpfSectionKind {
-    fn from_name(name: &str) -> EbpfSectionKind {
+    fn from_name(name: &str) -> Self {
         if name.starts_with("license") {
-            EbpfSectionKind::License
+            Self::License
         } else if name.starts_with("version") {
-            EbpfSectionKind::Version
+            Self::Version
         } else if name.starts_with("maps") {
-            EbpfSectionKind::Maps
+            Self::Maps
         } else if name.starts_with(".maps") {
-            EbpfSectionKind::BtfMaps
+            Self::BtfMaps
         } else if name.starts_with(".text") {
-            EbpfSectionKind::Text
+            Self::Text
         } else if name.starts_with(".bss") {
-            EbpfSectionKind::Bss
+            Self::Bss
         } else if name.starts_with(".data") {
-            EbpfSectionKind::Data
+            Self::Data
         } else if name.starts_with(".rodata") {
-            EbpfSectionKind::Rodata
+            Self::Rodata
         } else if name == ".BTF" {
-            EbpfSectionKind::Btf
+            Self::Btf
         } else if name == ".BTF.ext" {
-            EbpfSectionKind::BtfExt
+            Self::BtfExt
         } else {
-            EbpfSectionKind::Undefined
+            Self::Undefined
         }
     }
 }
@@ -1055,10 +1074,10 @@ struct Section<'a> {
     relocations: Vec<Relocation>,
 }
 
-impl<'data, 'file, 'a> TryFrom<&'a ObjSection<'data, 'file>> for Section<'a> {
+impl<'a> TryFrom<&'a ObjSection<'_, '_>> for Section<'a> {
     type Error = ParseError;
 
-    fn try_from(section: &'a ObjSection) -> Result<Section<'a>, ParseError> {
+    fn try_from(section: &'a ObjSection<'_, '_>) -> Result<Self, ParseError> {
         let index = section.index();
         let map_err = |error| ParseError::SectionError {
             index: index.0,
@@ -1124,7 +1143,7 @@ fn parse_version(data: &[u8], endianness: object::Endianness) -> Result<Option<u
         _ => {
             return Err(ParseError::InvalidKernelVersion {
                 data: data.to_vec(),
-            })
+            });
         }
     };
 
@@ -1149,16 +1168,15 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
         other => {
             return Err(BtfError::UnexpectedBtfType {
                 type_id: other.btf_type().unwrap_or(0),
-            })
+            });
         }
     };
-    // Safety: union
     let arr = match &btf.type_by_id(pty.btf_type)? {
         BtfType::Array(Array { array, .. }) => array,
         other => {
             return Err(BtfError::UnexpectedBtfType {
                 type_id: other.btf_type().unwrap_or(0),
-            })
+            });
         }
     };
     Ok(arr.len)
@@ -1166,9 +1184,9 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
 
 // Parsed '.bss' '.data' and '.rodata' sections. These sections are arrays of
 // bytes and are relocated based on their section index.
-fn parse_data_map_section(section: &Section) -> Result<Map, ParseError> {
+fn parse_data_map_section(section: &Section<'_>) -> Result<Map, ParseError> {
     let (def, data) = match section.kind {
-        EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata => {
+        EbpfSectionKind::Data | EbpfSectionKind::Rodata => {
             let def = bpf_map_def {
                 map_type: BPF_MAP_TYPE_ARRAY as u32,
                 key_size: mem::size_of::<u32>() as u32,
@@ -1184,6 +1202,17 @@ fn parse_data_map_section(section: &Section) -> Result<Map, ParseError> {
                 ..Default::default()
             };
             (def, section.data.to_vec())
+        }
+        EbpfSectionKind::Bss => {
+            let def = bpf_map_def {
+                map_type: BPF_MAP_TYPE_ARRAY as u32,
+                key_size: mem::size_of::<u32>() as u32,
+                value_size: section.size as u32,
+                max_entries: 1,
+                map_flags: 0,
+                ..Default::default()
+            };
+            (def, vec![0; section.size as usize])
         }
         _ => unreachable!(),
     };
@@ -1207,13 +1236,12 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     if data.len() < mem::size_of::<bpf_map_def>() {
         let mut map_def = bpf_map_def::default();
         unsafe {
-            let map_def_ptr =
-                from_raw_parts_mut(&mut map_def as *mut bpf_map_def as *mut u8, data.len());
+            let map_def_ptr = from_raw_parts_mut(ptr::from_mut(&mut map_def).cast(), data.len());
             map_def_ptr.copy_from_slice(data);
         }
         Ok(map_def)
     } else {
-        Ok(unsafe { ptr::read_unaligned(data.as_ptr() as *const bpf_map_def) })
+        Ok(unsafe { ptr::read_unaligned(data.as_ptr().cast()) })
     }
 }
 
@@ -1223,22 +1251,64 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         other => {
             return Err(BtfError::UnexpectedBtfType {
                 type_id: other.btf_type().unwrap_or(0),
-            })
+            });
         }
     };
     let map_name = btf.string_at(ty.name_offset)?;
     let mut map_def = BtfMapDef::default();
 
-    // Safety: union
     let root_type = btf.resolve_type(ty.btf_type)?;
     let s = match btf.type_by_id(root_type)? {
         BtfType::Struct(s) => s,
         other => {
             return Err(BtfError::UnexpectedBtfType {
                 type_id: other.btf_type().unwrap_or(0),
-            })
+            });
         }
     };
+
+    // In aya-ebpf, the BTF map definition types are not used directly in the
+    // map variables. Instead, they are wrapped in two nested types:
+    //
+    // * A struct representing the map type (e.g., `Array`, `HashMap`) that
+    //   provides methods for interacting with the map type (e.g.
+    //   `HashMap::get`, `RingBuf::reserve`).
+    //   * It has a single field with name `__0`.
+    // * An `UnsafeCell`, which informs the Rust compiler that the type is
+    //   thread-safe and can be safely mutated even as a global variable. The
+    //   kernel guarantees map operation safety.
+    //   * It has a single field with name `value`.
+    //
+    // Therefore, the traversal to the actual map definition looks like:
+    //
+    //   HashMap -> __0 -> value
+    let mut s = s;
+    for (index, expected_field_name) in ["__0", "value"].into_iter().enumerate() {
+        match s.members.as_slice() {
+            [m] => {
+                let field_name = btf.string_at(m.name_offset)?;
+                if field_name.as_ref() != expected_field_name {
+                    return Err(BtfError::UnexpectedBtfMapWrapperLayout(s.clone()));
+                }
+                s = match btf.type_by_id(m.btf_type)? {
+                    BtfType::Struct(s) => s,
+                    _ => {
+                        return Err(BtfError::UnexpectedBtfType {
+                            type_id: m.btf_type,
+                        });
+                    }
+                };
+            }
+            // If the first wrapper level is missing, use the original struct.
+            _ => {
+                if index == 0 {
+                    break;
+                } else {
+                    return Err(BtfError::UnexpectedBtfMapWrapperLayout(s.clone()));
+                }
+            }
+        }
+    }
 
     for m in &s.members {
         match btf.string_at(m.name_offset)?.as_ref() {
@@ -1247,7 +1317,6 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
             }
             "key" => {
                 if let BtfType::Ptr(pty) = btf.type_by_id(m.btf_type)? {
-                    // Safety: union
                     let t = pty.btf_type;
                     map_def.key_size = btf.type_size(t)? as u32;
                     map_def.btf_key_type_id = t;
@@ -1283,12 +1352,12 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
             "pinning" => {
                 let pinning = get_map_field(btf, m.btf_type)?;
                 map_def.pinning = PinningType::try_from(pinning).unwrap_or_else(|_| {
-                    debug!("{} is not a valid pin type. using PIN_NONE", pinning);
+                    debug!("{pinning} is not a valid pin type. using PIN_NONE");
                     PinningType::None
                 });
             }
             other => {
-                debug!("skipping unknown map section: {}", other);
+                debug!("skipping unknown map section: {other}");
                 continue;
             }
         }
@@ -1335,12 +1404,12 @@ pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
 
 /// Copies a block of eBPF instructions
 pub fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
-    if data.len() % mem::size_of::<bpf_insn>() > 0 {
+    if !data.len().is_multiple_of(mem::size_of::<bpf_insn>()) {
         return Err(ParseError::InvalidProgramCode);
     }
     let instructions = data
         .chunks_exact(mem::size_of::<bpf_insn>())
-        .map(|d| unsafe { ptr::read_unaligned(d.as_ptr() as *const bpf_insn) })
+        .map(|d| unsafe { ptr::read_unaligned(d.as_ptr().cast()) })
         .collect::<Vec<_>>();
     Ok(instructions)
 }
@@ -1348,7 +1417,7 @@ pub fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
 fn get_func_and_line_info(
     btf_ext: Option<&BtfExt>,
     symbol: &Symbol,
-    section: &Section,
+    section: &Section<'_>,
     offset: usize,
     rewrite_insn_off: bool,
 ) -> (FuncSecInfo, LineSecInfo, usize, usize) {
@@ -1396,6 +1465,7 @@ mod tests {
     use assert_matches::assert_matches;
 
     use super::*;
+    use crate::generated::btf_ext_header;
 
     const FAKE_INS_LEN: u64 = 8;
 
@@ -1552,7 +1622,7 @@ mod tests {
             pinning: PinningType::ByName,
         };
         let mut buf = [0u8; 128];
-        unsafe { ptr::write_unaligned(buf.as_mut_ptr() as *mut _, def) };
+        unsafe { ptr::write_unaligned(buf.as_mut_ptr().cast(), def) };
 
         assert_eq!(parse_map_def("foo", &buf).unwrap(), def);
     }
@@ -1594,22 +1664,32 @@ mod tests {
     #[test]
     fn sanitizes_empty_btf_files_to_none() {
         let mut obj = fake_obj();
-        obj.parse_section(fake_section(
-            EbpfSectionKind::Btf,
-            ".BTF",
-            &[
-                159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
-            ],
-            None,
-        ))
-        .unwrap();
+
+        let btf = Btf::new();
+        let btf_bytes = btf.to_bytes();
+        obj.parse_section(fake_section(EbpfSectionKind::Btf, ".BTF", &btf_bytes, None))
+            .unwrap();
+
+        const FUNC_INFO_LEN: u32 = 4;
+        const LINE_INFO_LEN: u32 = 4;
+        const CORE_RELO_LEN: u32 = 16;
+        let ext_header = btf_ext_header {
+            magic: 0xeb9f,
+            version: 1,
+            flags: 0,
+            hdr_len: 24,
+            func_info_off: 0,
+            func_info_len: FUNC_INFO_LEN,
+            line_info_off: FUNC_INFO_LEN,
+            line_info_len: LINE_INFO_LEN,
+            core_relo_off: FUNC_INFO_LEN + LINE_INFO_LEN,
+            core_relo_len: CORE_RELO_LEN,
+        };
+        let btf_ext_bytes = bytes_of::<btf_ext_header>(&ext_header).to_vec();
         obj.parse_section(fake_section(
             EbpfSectionKind::BtfExt,
             ".BTF.ext",
-            &[
-                159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 8, 0,
-                0, 0, 16, 0, 0, 0,
-            ],
+            &btf_ext_bytes,
             None,
         ))
         .unwrap();
@@ -1628,7 +1708,7 @@ mod tests {
                 "kprobe/foo",
                 &42u32.to_ne_bytes(),
                 None,
-            ),),
+            )),
             Err(ParseError::InvalidProgramCode)
         );
     }
@@ -1651,7 +1731,7 @@ mod tests {
         assert_matches!(prog_foo, Program {
             license,
             kernel_version: None,
-            section: ProgramSection::KProbe { .. },
+            section: ProgramSection::KProbe,
             ..
         } => assert_eq!(license.to_str().unwrap(), "GPL"));
 
@@ -1715,7 +1795,7 @@ mod tests {
         assert_matches!(prog_foo, Program {
             license,
             kernel_version: None,
-            section: ProgramSection::KProbe { .. },
+            section: ProgramSection::KProbe,
             ..
         } => assert_eq!(license.to_str().unwrap(), "GPL"));
         assert_matches!(
@@ -1733,7 +1813,7 @@ mod tests {
         assert_matches!(prog_bar, Program {
             license,
             kernel_version: None,
-            section: ProgramSection::KProbe { .. },
+            section: ProgramSection::KProbe ,
             ..
         } => assert_eq!(license.to_str().unwrap(), "GPL"));
         assert_matches!(
@@ -1865,7 +1945,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::KProbe { .. },
+                section: ProgramSection::KProbe,
                 ..
             })
         );
@@ -1987,7 +2067,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::TracePoint { .. },
+                section: ProgramSection::TracePoint,
                 ..
             })
         );
@@ -2004,7 +2084,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("bar"),
             Some(Program {
-                section: ProgramSection::TracePoint { .. },
+                section: ProgramSection::TracePoint,
                 ..
             })
         );
@@ -2027,7 +2107,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::SocketFilter { .. },
+                section: ProgramSection::SocketFilter,
                 ..
             })
         );
@@ -2097,7 +2177,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::RawTracePoint { .. },
+                section: ProgramSection::RawTracePoint,
                 ..
             })
         );
@@ -2114,7 +2194,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("bar"),
             Some(Program {
-                section: ProgramSection::RawTracePoint { .. },
+                section: ProgramSection::RawTracePoint,
                 ..
             })
         );
@@ -2137,10 +2217,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::Lsm {
-                    sleepable: false,
-                    ..
-                },
+                section: ProgramSection::Lsm { sleepable: false },
                 ..
             })
         );
@@ -2173,6 +2250,29 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_section_lsm_cgroup() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                "lsm_cgroup/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::LsmCgroup,
+                ..
+            })
+        );
+    }
+
+    #[test]
     fn test_parse_section_btf_tracepoint() {
         let mut obj = fake_obj();
         fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
@@ -2189,7 +2289,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::BtfTracePoint { .. },
+                section: ProgramSection::BtfTracePoint,
                 ..
             })
         );
@@ -2212,7 +2312,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("stream_parser"),
             Some(Program {
-                section: ProgramSection::SkSkbStreamParser { .. },
+                section: ProgramSection::SkSkbStreamParser,
                 ..
             })
         );
@@ -2235,7 +2335,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("my_parser"),
             Some(Program {
-                section: ProgramSection::SkSkbStreamParser { .. },
+                section: ProgramSection::SkSkbStreamParser,
                 ..
             })
         );
@@ -2356,7 +2456,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("ingress"),
             Some(Program {
-                section: ProgramSection::CgroupSkbIngress { .. },
+                section: ProgramSection::CgroupSkbIngress,
                 ..
             })
         );
@@ -2379,7 +2479,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::CgroupSkbIngress { .. },
+                section: ProgramSection::CgroupSkbIngress,
                 ..
             })
         );
@@ -2402,7 +2502,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("skb"),
             Some(Program {
-                section: ProgramSection::CgroupSkb { .. },
+                section: ProgramSection::CgroupSkb,
                 ..
             })
         );
@@ -2425,7 +2525,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::CgroupSkb { .. },
+                section: ProgramSection::CgroupSkb,
                 ..
             })
         );
@@ -2588,78 +2688,153 @@ mod tests {
         // generated from:
         // objcopy --dump-section .BTF=test.btf ./target/bpfel-unknown-none/debug/multimap-btf.bpf.o
         // hexdump -v  -e '7/1 "0x%02X, " 1/1  " 0x%02X,\n"' test.btf
-        let data: &[u8] = &[
-            0x9F, 0xEB, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x01,
-            0x00, 0x00, 0xF0, 0x01, 0x00, 0x00, 0xCC, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x02, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x04, 0x00,
-            0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-            0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x02, 0x06, 0x00, 0x00, 0x00, 0x19, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08,
-            0x07, 0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x04, 0x00,
-            0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
-            0x09, 0x00, 0x00, 0x00, 0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x0A, 0x00,
-            0x00, 0x00, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x08, 0x00, 0x00, 0x00,
-            0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x0C, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
-            0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x04, 0x00, 0x00, 0x04, 0x20, 0x00, 0x00, 0x00, 0x45, 0x00, 0x00, 0x00,
-            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4A, 0x00, 0x00, 0x00, 0x05, 0x00,
-            0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x4E, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
-            0x80, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00, 0xC0, 0x00,
-            0x00, 0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x0D, 0x00, 0x00, 0x00,
-            0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x04, 0x20, 0x00,
-            0x00, 0x00, 0x45, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x4A, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x4E, 0x00,
-            0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00,
-            0x0B, 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x00, 0x66, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x0E, 0x0F, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
-            0x00, 0x0D, 0x02, 0x00, 0x00, 0x00, 0x6C, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00,
-            0x70, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0C, 0x12, 0x00, 0x00, 0x00, 0xB0, 0x01,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x01,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00,
-            0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xB5, 0x01, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x0E, 0x15, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0xBE, 0x01,
-            0x00, 0x00, 0x02, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0xC4, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0F,
-            0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00,
-            0x00, 0x00, 0x00, 0x69, 0x6E, 0x74, 0x00, 0x5F, 0x5F, 0x41, 0x52, 0x52, 0x41, 0x59,
-            0x5F, 0x53, 0x49, 0x5A, 0x45, 0x5F, 0x54, 0x59, 0x50, 0x45, 0x5F, 0x5F, 0x00, 0x5F,
-            0x5F, 0x75, 0x33, 0x32, 0x00, 0x75, 0x6E, 0x73, 0x69, 0x67, 0x6E, 0x65, 0x64, 0x20,
-            0x69, 0x6E, 0x74, 0x00, 0x5F, 0x5F, 0x75, 0x36, 0x34, 0x00, 0x75, 0x6E, 0x73, 0x69,
-            0x67, 0x6E, 0x65, 0x64, 0x20, 0x6C, 0x6F, 0x6E, 0x67, 0x20, 0x6C, 0x6F, 0x6E, 0x67,
-            0x00, 0x74, 0x79, 0x70, 0x65, 0x00, 0x6B, 0x65, 0x79, 0x00, 0x76, 0x61, 0x6C, 0x75,
-            0x65, 0x00, 0x6D, 0x61, 0x78, 0x5F, 0x65, 0x6E, 0x74, 0x72, 0x69, 0x65, 0x73, 0x00,
-            0x6D, 0x61, 0x70, 0x5F, 0x31, 0x00, 0x6D, 0x61, 0x70, 0x5F, 0x32, 0x00, 0x63, 0x74,
-            0x78, 0x00, 0x62, 0x70, 0x66, 0x5F, 0x70, 0x72, 0x6F, 0x67, 0x00, 0x74, 0x72, 0x61,
-            0x63, 0x65, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x00, 0x2F, 0x76, 0x61, 0x72, 0x2F, 0x68,
-            0x6F, 0x6D, 0x65, 0x2F, 0x64, 0x61, 0x76, 0x65, 0x2F, 0x64, 0x65, 0x76, 0x2F, 0x61,
-            0x79, 0x61, 0x2D, 0x72, 0x73, 0x2F, 0x61, 0x79, 0x61, 0x2F, 0x74, 0x65, 0x73, 0x74,
-            0x2F, 0x69, 0x6E, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x2D, 0x65,
-            0x62, 0x70, 0x66, 0x2F, 0x73, 0x72, 0x63, 0x2F, 0x62, 0x70, 0x66, 0x2F, 0x6D, 0x75,
-            0x6C, 0x74, 0x69, 0x6D, 0x61, 0x70, 0x2D, 0x62, 0x74, 0x66, 0x2E, 0x62, 0x70, 0x66,
-            0x2E, 0x63, 0x00, 0x69, 0x6E, 0x74, 0x20, 0x62, 0x70, 0x66, 0x5F, 0x70, 0x72, 0x6F,
-            0x67, 0x28, 0x76, 0x6F, 0x69, 0x64, 0x20, 0x2A, 0x63, 0x74, 0x78, 0x29, 0x00, 0x09,
-            0x5F, 0x5F, 0x75, 0x33, 0x32, 0x20, 0x6B, 0x65, 0x79, 0x20, 0x3D, 0x20, 0x30, 0x3B,
-            0x00, 0x09, 0x5F, 0x5F, 0x75, 0x36, 0x34, 0x20, 0x74, 0x77, 0x65, 0x6E, 0x74, 0x79,
-            0x5F, 0x66, 0x6F, 0x75, 0x72, 0x20, 0x3D, 0x20, 0x32, 0x34, 0x3B, 0x00, 0x09, 0x5F,
-            0x5F, 0x75, 0x36, 0x34, 0x20, 0x66, 0x6F, 0x72, 0x74, 0x79, 0x5F, 0x74, 0x77, 0x6F,
-            0x20, 0x3D, 0x20, 0x34, 0x32, 0x3B, 0x00, 0x20, 0x20, 0x20, 0x20, 0x62, 0x70, 0x66,
-            0x5F, 0x6D, 0x61, 0x70, 0x5F, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x5F, 0x65, 0x6C,
-            0x65, 0x6D, 0x28, 0x26, 0x6D, 0x61, 0x70, 0x5F, 0x31, 0x2C, 0x20, 0x26, 0x6B, 0x65,
-            0x79, 0x2C, 0x20, 0x26, 0x74, 0x77, 0x65, 0x6E, 0x74, 0x79, 0x5F, 0x66, 0x6F, 0x75,
-            0x72, 0x2C, 0x20, 0x42, 0x50, 0x46, 0x5F, 0x41, 0x4E, 0x59, 0x29, 0x3B, 0x00, 0x20,
-            0x20, 0x20, 0x20, 0x62, 0x70, 0x66, 0x5F, 0x6D, 0x61, 0x70, 0x5F, 0x75, 0x70, 0x64,
-            0x61, 0x74, 0x65, 0x5F, 0x65, 0x6C, 0x65, 0x6D, 0x28, 0x26, 0x6D, 0x61, 0x70, 0x5F,
-            0x32, 0x2C, 0x20, 0x26, 0x6B, 0x65, 0x79, 0x2C, 0x20, 0x26, 0x66, 0x6F, 0x72, 0x74,
-            0x79, 0x5F, 0x74, 0x77, 0x6F, 0x2C, 0x20, 0x42, 0x50, 0x46, 0x5F, 0x41, 0x4E, 0x59,
-            0x29, 0x3B, 0x00, 0x09, 0x72, 0x65, 0x74, 0x75, 0x72, 0x6E, 0x20, 0x30, 0x3B, 0x00,
-            0x63, 0x68, 0x61, 0x72, 0x00, 0x5F, 0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x00,
-            0x2E, 0x6D, 0x61, 0x70, 0x73, 0x00, 0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x00,
-        ];
+        let data: &[u8] = if cfg!(target_endian = "little") {
+            &[
+                0x9F, 0xEB, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0, 0x01,
+                0x00, 0x00, 0xF0, 0x01, 0x00, 0x00, 0xCC, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x02, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x04, 0x00,
+                0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+                0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x02, 0x06, 0x00, 0x00, 0x00, 0x19, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08,
+                0x07, 0x00, 0x00, 0x00, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x04, 0x00,
+                0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+                0x09, 0x00, 0x00, 0x00, 0x2C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x0A, 0x00,
+                0x00, 0x00, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x08, 0x00, 0x00, 0x00,
+                0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x0C, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
+                0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x04, 0x00, 0x00, 0x04, 0x20, 0x00, 0x00, 0x00, 0x45, 0x00, 0x00, 0x00,
+                0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4A, 0x00, 0x00, 0x00, 0x05, 0x00,
+                0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x4E, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+                0x80, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00, 0xC0, 0x00,
+                0x00, 0x00, 0x60, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x0D, 0x00, 0x00, 0x00,
+                0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x04, 0x20, 0x00,
+                0x00, 0x00, 0x45, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x4A, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x4E, 0x00,
+                0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00,
+                0x0B, 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x00, 0x66, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x0E, 0x0F, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
+                0x00, 0x0D, 0x02, 0x00, 0x00, 0x00, 0x6C, 0x00, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00,
+                0x70, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0C, 0x12, 0x00, 0x00, 0x00, 0xB0, 0x01,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x01,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00,
+                0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xB5, 0x01, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x0E, 0x15, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0xBE, 0x01,
+                0x00, 0x00, 0x02, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x0E, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0xC4, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0F,
+                0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00,
+                0x00, 0x00, 0x00, 0x69, 0x6E, 0x74, 0x00, 0x5F, 0x5F, 0x41, 0x52, 0x52, 0x41, 0x59,
+                0x5F, 0x53, 0x49, 0x5A, 0x45, 0x5F, 0x54, 0x59, 0x50, 0x45, 0x5F, 0x5F, 0x00, 0x5F,
+                0x5F, 0x75, 0x33, 0x32, 0x00, 0x75, 0x6E, 0x73, 0x69, 0x67, 0x6E, 0x65, 0x64, 0x20,
+                0x69, 0x6E, 0x74, 0x00, 0x5F, 0x5F, 0x75, 0x36, 0x34, 0x00, 0x75, 0x6E, 0x73, 0x69,
+                0x67, 0x6E, 0x65, 0x64, 0x20, 0x6C, 0x6F, 0x6E, 0x67, 0x20, 0x6C, 0x6F, 0x6E, 0x67,
+                0x00, 0x74, 0x79, 0x70, 0x65, 0x00, 0x6B, 0x65, 0x79, 0x00, 0x76, 0x61, 0x6C, 0x75,
+                0x65, 0x00, 0x6D, 0x61, 0x78, 0x5F, 0x65, 0x6E, 0x74, 0x72, 0x69, 0x65, 0x73, 0x00,
+                0x6D, 0x61, 0x70, 0x5F, 0x31, 0x00, 0x6D, 0x61, 0x70, 0x5F, 0x32, 0x00, 0x63, 0x74,
+                0x78, 0x00, 0x62, 0x70, 0x66, 0x5F, 0x70, 0x72, 0x6F, 0x67, 0x00, 0x74, 0x72, 0x61,
+                0x63, 0x65, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x00, 0x2F, 0x76, 0x61, 0x72, 0x2F, 0x68,
+                0x6F, 0x6D, 0x65, 0x2F, 0x64, 0x61, 0x76, 0x65, 0x2F, 0x64, 0x65, 0x76, 0x2F, 0x61,
+                0x79, 0x61, 0x2D, 0x72, 0x73, 0x2F, 0x61, 0x79, 0x61, 0x2F, 0x74, 0x65, 0x73, 0x74,
+                0x2F, 0x69, 0x6E, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x2D, 0x65,
+                0x62, 0x70, 0x66, 0x2F, 0x73, 0x72, 0x63, 0x2F, 0x62, 0x70, 0x66, 0x2F, 0x6D, 0x75,
+                0x6C, 0x74, 0x69, 0x6D, 0x61, 0x70, 0x2D, 0x62, 0x74, 0x66, 0x2E, 0x62, 0x70, 0x66,
+                0x2E, 0x63, 0x00, 0x69, 0x6E, 0x74, 0x20, 0x62, 0x70, 0x66, 0x5F, 0x70, 0x72, 0x6F,
+                0x67, 0x28, 0x76, 0x6F, 0x69, 0x64, 0x20, 0x2A, 0x63, 0x74, 0x78, 0x29, 0x00, 0x09,
+                0x5F, 0x5F, 0x75, 0x33, 0x32, 0x20, 0x6B, 0x65, 0x79, 0x20, 0x3D, 0x20, 0x30, 0x3B,
+                0x00, 0x09, 0x5F, 0x5F, 0x75, 0x36, 0x34, 0x20, 0x74, 0x77, 0x65, 0x6E, 0x74, 0x79,
+                0x5F, 0x66, 0x6F, 0x75, 0x72, 0x20, 0x3D, 0x20, 0x32, 0x34, 0x3B, 0x00, 0x09, 0x5F,
+                0x5F, 0x75, 0x36, 0x34, 0x20, 0x66, 0x6F, 0x72, 0x74, 0x79, 0x5F, 0x74, 0x77, 0x6F,
+                0x20, 0x3D, 0x20, 0x34, 0x32, 0x3B, 0x00, 0x20, 0x20, 0x20, 0x20, 0x62, 0x70, 0x66,
+                0x5F, 0x6D, 0x61, 0x70, 0x5F, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x5F, 0x65, 0x6C,
+                0x65, 0x6D, 0x28, 0x26, 0x6D, 0x61, 0x70, 0x5F, 0x31, 0x2C, 0x20, 0x26, 0x6B, 0x65,
+                0x79, 0x2C, 0x20, 0x26, 0x74, 0x77, 0x65, 0x6E, 0x74, 0x79, 0x5F, 0x66, 0x6F, 0x75,
+                0x72, 0x2C, 0x20, 0x42, 0x50, 0x46, 0x5F, 0x41, 0x4E, 0x59, 0x29, 0x3B, 0x00, 0x20,
+                0x20, 0x20, 0x20, 0x62, 0x70, 0x66, 0x5F, 0x6D, 0x61, 0x70, 0x5F, 0x75, 0x70, 0x64,
+                0x61, 0x74, 0x65, 0x5F, 0x65, 0x6C, 0x65, 0x6D, 0x28, 0x26, 0x6D, 0x61, 0x70, 0x5F,
+                0x32, 0x2C, 0x20, 0x26, 0x6B, 0x65, 0x79, 0x2C, 0x20, 0x26, 0x66, 0x6F, 0x72, 0x74,
+                0x79, 0x5F, 0x74, 0x77, 0x6F, 0x2C, 0x20, 0x42, 0x50, 0x46, 0x5F, 0x41, 0x4E, 0x59,
+                0x29, 0x3B, 0x00, 0x09, 0x72, 0x65, 0x74, 0x75, 0x72, 0x6E, 0x20, 0x30, 0x3B, 0x00,
+                0x63, 0x68, 0x61, 0x72, 0x00, 0x5F, 0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x00,
+                0x2E, 0x6D, 0x61, 0x70, 0x73, 0x00, 0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x00,
+            ]
+        } else {
+            &[
+                0xEB, 0x9F, 0x01, 0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x01, 0xF0, 0x00, 0x00, 0x01, 0xF0, 0x00, 0x00, 0x01, 0xCC, 0x00, 0x00, 0x00, 0x00,
+                0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x01, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00,
+                0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00,
+                0x00, 0x04, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x05, 0x01, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x19, 0x08, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x1F, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x2C, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x0A, 0x00, 0x00, 0x00, 0x32, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08,
+                0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+                0x00, 0x00, 0x04, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x45,
+                0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4A, 0x00, 0x00,
+                0x00, 0x05, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x4E, 0x00, 0x00, 0x00, 0x08,
+                0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00, 0x0B, 0x00, 0x00,
+                0x00, 0xC0, 0x00, 0x00, 0x00, 0x60, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0D,
+                0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x04, 0x00, 0x00,
+                0x00, 0x20, 0x00, 0x00, 0x00, 0x45, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x4A, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00,
+                0x00, 0x4E, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x54,
+                0x00, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x00, 0x66, 0x0E, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x0F, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+                0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0D, 0x00,
+                0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x6C, 0x00, 0x00, 0x00, 0x11,
+                0x00, 0x00, 0x00, 0x70, 0x0C, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00,
+                0x01, 0xB0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x08,
+                0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x14, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x01, 0xB5,
+                0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+                0x01, 0xBE, 0x0F, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0E,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x01, 0xC4, 0x0F, 0x00, 0x00, 0x01,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x04, 0x00, 0x69, 0x6E, 0x74, 0x00, 0x5F, 0x5F, 0x41, 0x52, 0x52, 0x41, 0x59,
+                0x5F, 0x53, 0x49, 0x5A, 0x45, 0x5F, 0x54, 0x59, 0x50, 0x45, 0x5F, 0x5F, 0x00, 0x5F,
+                0x5F, 0x75, 0x33, 0x32, 0x00, 0x75, 0x6E, 0x73, 0x69, 0x67, 0x6E, 0x65, 0x64, 0x20,
+                0x69, 0x6E, 0x74, 0x00, 0x5F, 0x5F, 0x75, 0x36, 0x34, 0x00, 0x75, 0x6E, 0x73, 0x69,
+                0x67, 0x6E, 0x65, 0x64, 0x20, 0x6C, 0x6F, 0x6E, 0x67, 0x20, 0x6C, 0x6F, 0x6E, 0x67,
+                0x00, 0x74, 0x79, 0x70, 0x65, 0x00, 0x6B, 0x65, 0x79, 0x00, 0x76, 0x61, 0x6C, 0x75,
+                0x65, 0x00, 0x6D, 0x61, 0x78, 0x5F, 0x65, 0x6E, 0x74, 0x72, 0x69, 0x65, 0x73, 0x00,
+                0x6D, 0x61, 0x70, 0x5F, 0x31, 0x00, 0x6D, 0x61, 0x70, 0x5F, 0x32, 0x00, 0x63, 0x74,
+                0x78, 0x00, 0x62, 0x70, 0x66, 0x5F, 0x70, 0x72, 0x6F, 0x67, 0x00, 0x74, 0x72, 0x61,
+                0x63, 0x65, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x00, 0x2F, 0x76, 0x61, 0x72, 0x2F, 0x68,
+                0x6F, 0x6D, 0x65, 0x2F, 0x64, 0x61, 0x76, 0x65, 0x2F, 0x64, 0x65, 0x76, 0x2F, 0x61,
+                0x79, 0x61, 0x2D, 0x72, 0x73, 0x2F, 0x61, 0x79, 0x61, 0x2F, 0x74, 0x65, 0x73, 0x74,
+                0x2F, 0x69, 0x6E, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x2D, 0x65,
+                0x62, 0x70, 0x66, 0x2F, 0x73, 0x72, 0x63, 0x2F, 0x62, 0x70, 0x66, 0x2F, 0x6D, 0x75,
+                0x6C, 0x74, 0x69, 0x6D, 0x61, 0x70, 0x2D, 0x62, 0x74, 0x66, 0x2E, 0x62, 0x70, 0x66,
+                0x2E, 0x63, 0x00, 0x69, 0x6E, 0x74, 0x20, 0x62, 0x70, 0x66, 0x5F, 0x70, 0x72, 0x6F,
+                0x67, 0x28, 0x76, 0x6F, 0x69, 0x64, 0x20, 0x2A, 0x63, 0x74, 0x78, 0x29, 0x00, 0x09,
+                0x5F, 0x5F, 0x75, 0x33, 0x32, 0x20, 0x6B, 0x65, 0x79, 0x20, 0x3D, 0x20, 0x30, 0x3B,
+                0x00, 0x09, 0x5F, 0x5F, 0x75, 0x36, 0x34, 0x20, 0x74, 0x77, 0x65, 0x6E, 0x74, 0x79,
+                0x5F, 0x66, 0x6F, 0x75, 0x72, 0x20, 0x3D, 0x20, 0x32, 0x34, 0x3B, 0x00, 0x09, 0x5F,
+                0x5F, 0x75, 0x36, 0x34, 0x20, 0x66, 0x6F, 0x72, 0x74, 0x79, 0x5F, 0x74, 0x77, 0x6F,
+                0x20, 0x3D, 0x20, 0x34, 0x32, 0x3B, 0x00, 0x20, 0x20, 0x20, 0x20, 0x62, 0x70, 0x66,
+                0x5F, 0x6D, 0x61, 0x70, 0x5F, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x5F, 0x65, 0x6C,
+                0x65, 0x6D, 0x28, 0x26, 0x6D, 0x61, 0x70, 0x5F, 0x31, 0x2C, 0x20, 0x26, 0x6B, 0x65,
+                0x79, 0x2C, 0x20, 0x26, 0x74, 0x77, 0x65, 0x6E, 0x74, 0x79, 0x5F, 0x66, 0x6F, 0x75,
+                0x72, 0x2C, 0x20, 0x42, 0x50, 0x46, 0x5F, 0x41, 0x4E, 0x59, 0x29, 0x3B, 0x00, 0x20,
+                0x20, 0x20, 0x20, 0x62, 0x70, 0x66, 0x5F, 0x6D, 0x61, 0x70, 0x5F, 0x75, 0x70, 0x64,
+                0x61, 0x74, 0x65, 0x5F, 0x65, 0x6C, 0x65, 0x6D, 0x28, 0x26, 0x6D, 0x61, 0x70, 0x5F,
+                0x32, 0x2C, 0x20, 0x26, 0x6B, 0x65, 0x79, 0x2C, 0x20, 0x26, 0x66, 0x6F, 0x72, 0x74,
+                0x79, 0x5F, 0x74, 0x77, 0x6F, 0x2C, 0x20, 0x42, 0x50, 0x46, 0x5F, 0x41, 0x4E, 0x59,
+                0x29, 0x3B, 0x00, 0x09, 0x72, 0x65, 0x74, 0x75, 0x72, 0x6E, 0x20, 0x30, 0x3B, 0x00,
+                0x63, 0x68, 0x61, 0x72, 0x00, 0x5F, 0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x00,
+                0x2E, 0x6D, 0x61, 0x70, 0x73, 0x00, 0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x00,
+            ]
+        };
 
         let btf_section = fake_section(EbpfSectionKind::Btf, ".BTF", data, None);
         obj.parse_section(btf_section).unwrap();

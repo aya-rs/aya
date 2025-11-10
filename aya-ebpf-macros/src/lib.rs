@@ -1,4 +1,7 @@
+#![cfg_attr(test, expect(unused_crate_dependencies, reason = "used in doctests"))]
+
 pub(crate) mod args;
+mod btf_map;
 mod btf_tracepoint;
 mod cgroup_device;
 mod cgroup_skb;
@@ -8,8 +11,10 @@ mod cgroup_sockopt;
 mod cgroup_sysctl;
 mod fentry;
 mod fexit;
+mod flow_dissector;
 mod kprobe;
 mod lsm;
+mod lsm_cgroup;
 mod map;
 mod perf_event;
 mod raw_tracepoint;
@@ -23,6 +28,7 @@ mod tracepoint;
 mod uprobe;
 mod xdp;
 
+use btf_map::BtfMap;
 use btf_tracepoint::BtfTracePoint;
 use cgroup_device::CgroupDevice;
 use cgroup_skb::CgroupSkb;
@@ -32,12 +38,13 @@ use cgroup_sockopt::CgroupSockopt;
 use cgroup_sysctl::CgroupSysctl;
 use fentry::FEntry;
 use fexit::FExit;
+use flow_dissector::FlowDissector;
 use kprobe::{KProbe, KProbeKind};
 use lsm::Lsm;
+use lsm_cgroup::LsmCgroup;
 use map::Map;
 use perf_event::PerfEvent;
 use proc_macro::TokenStream;
-use proc_macro_error::{abort, proc_macro_error};
 use raw_tracepoint::RawTracePoint;
 use sk_lookup::SkLookup;
 use sk_msg::SkMsg;
@@ -48,83 +55,78 @@ use tc::SchedClassifier;
 use tracepoint::TracePoint;
 use uprobe::{UProbe, UProbeKind};
 use xdp::Xdp;
-#[proc_macro_error]
+
+#[proc_macro_attribute]
+pub fn btf_map(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match BtfMap::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
+    }
+    .into()
+}
+
 #[proc_macro_attribute]
 pub fn map(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match Map::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
     }
+    .into()
 }
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn kprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match KProbe::parse(KProbeKind::KProbe, attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn kretprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match KProbe::parse(KProbeKind::KRetProbe, attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn uprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match UProbe::parse(UProbeKind::UProbe, attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => match prog.expand() {
+            Ok(tokens) => tokens,
+            Err(err) => err.emit_as_expr_tokens(),
+        },
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn uretprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match UProbe::parse(UProbeKind::URetProbe, attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => match prog.expand() {
+            Ok(tokens) => tokens,
+            Err(err) => err.emit_as_expr_tokens(),
+        },
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn sock_ops(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SockOps::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
 
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn sk_msg(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SkMsg::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
 
 /// Marks a function as an eBPF XDP program that can be attached to a network interface.
@@ -149,60 +151,46 @@ pub fn sk_msg(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///     XDP_PASS
 /// }
 /// ```
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn xdp(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match Xdp::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn classifier(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SchedClassifier::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
 
 #[proc_macro_attribute]
 pub fn cgroup_sysctl(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match CgroupSysctl::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn cgroup_sockopt(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match CgroupSockopt::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn cgroup_skb(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match CgroupSkb::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
 
 /// Marks a function as a [`CgroupSockAddr`] eBPF program.
@@ -228,62 +216,47 @@ pub fn cgroup_skb(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// pub fn connect4(ctx: SockAddrContext) -> i32 {
 ///     match try_connect4(ctx) {
 ///         Ok(ret) => ret,
-///         Err(ret) => match ret.try_into() {
-///             Ok(rt) => rt,
-///             Err(_) => 1,
-///         },
+///         Err(ret) => ret,
 ///     }
 /// }
 ///
-/// fn try_connect4(ctx: SockAddrContext) -> Result<i32, i64> {
+/// fn try_connect4(ctx: SockAddrContext) -> Result<i32, i32> {
 ///     Ok(0)
 /// }
 /// ```
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn cgroup_sock_addr(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match CgroupSockAddr::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn cgroup_sock(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match CgroupSock::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
 
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match TracePoint::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
 
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn perf_event(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match PerfEvent::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
 
 /// Marks a function as a raw tracepoint eBPF program that can be attached at a
@@ -314,16 +287,13 @@ pub fn perf_event(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///     Ok(0)
 /// }
 /// ```
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn raw_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match RawTracePoint::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
     }
+    .into()
 }
 
 /// Marks a function as an LSM program that can be attached to Linux LSM hooks.
@@ -338,7 +308,7 @@ pub fn raw_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// LSM probes require a kernel compiled with `CONFIG_BPF_LSM=y` and `CONFIG_DEBUG_INFO_BTF=y`.
 /// In order for the probes to fire, you also need the BPF LSM to be enabled through your
-/// kernel's boot paramters (like `lsm=lockdown,yama,bpf`).
+/// kernel's boot parameters (like `lsm=lockdown,yama,bpf`).
 ///
 /// # Minimum kernel version
 ///
@@ -361,16 +331,56 @@ pub fn raw_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///     Ok(0)
 /// }
 /// ```
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn lsm(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match Lsm::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
     }
+    .into()
+}
+
+/// Marks a function as an LSM program that can be attached to cgroups.
+/// This program will only trigger for workloads in the attached cgroups.
+/// Used to implement security policy and audit logging.
+///
+/// The hook name is the first and only argument to the macro.
+///
+/// LSM probes can be attached to the kernel's security hooks to implement mandatory
+/// access control policy and security auditing.
+///
+/// LSM probes require a kernel compiled with `CONFIG_BPF_LSM=y` and `CONFIG_DEBUG_INFO_BTF=y`.
+/// In order for the probes to fire, you also need the BPF LSM to be enabled through your
+/// kernel's boot parameters (like `lsm=lockdown,yama,bpf`).
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.0.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_ebpf::{macros::lsm_cgroup, programs::LsmContext};
+///
+/// #[lsm_cgroup(hook = "file_open")]
+/// pub fn file_open(ctx: LsmContext) -> i32 {
+///     match unsafe { try_file_open(ctx) } {
+///         Ok(ret) => ret,
+///         Err(ret) => ret,
+///     }
+/// }
+///
+/// unsafe fn try_file_open(_ctx: LsmContext) -> Result<i32, i32> {
+///     Err(0)
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn lsm_cgroup(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match LsmCgroup::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
+    }
+    .into()
 }
 
 /// Marks a function as a [BTF-enabled raw tracepoint][1] eBPF program that can be attached at
@@ -403,16 +413,13 @@ pub fn lsm(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 ///
 /// [1]: https://github.com/torvalds/linux/commit/9e15db66136a14cde3f35691f1d839d950118826
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn btf_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match BtfTracePoint::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
     }
+    .into()
 }
 
 /// Marks a function as a SK_SKB Stream Parser eBPF program that can be attached
@@ -430,7 +437,7 @@ pub fn btf_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///
 ///#[stream_parser]
 ///fn stream_parser(ctx: SkBuffContext) -> u32 {
-///    match { try_stream_parser(ctx) } {
+///    match try_stream_parser(ctx) {
 ///        Ok(ret) => ret,
 ///        Err(ret) => ret,
 ///    }
@@ -440,7 +447,6 @@ pub fn btf_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///    Ok(ctx.len())
 ///}
 /// ```
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn stream_parser(attrs: TokenStream, item: TokenStream) -> TokenStream {
     sk_skb(SkSkbKind::StreamParser, attrs, item)
@@ -461,7 +467,7 @@ pub fn stream_parser(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///
 ///#[stream_verdict]
 ///fn stream_verdict(ctx: SkBuffContext) -> u32 {
-///    match { try_stream_verdict(ctx) } {
+///    match try_stream_verdict(ctx) {
 ///        Ok(ret) => ret,
 ///        Err(ret) => ret,
 ///    }
@@ -471,7 +477,6 @@ pub fn stream_parser(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///    Ok(sk_action::SK_PASS)
 ///}
 /// ```
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn stream_verdict(attrs: TokenStream, item: TokenStream) -> TokenStream {
     sk_skb(SkSkbKind::StreamVerdict, attrs, item)
@@ -479,12 +484,10 @@ pub fn stream_verdict(attrs: TokenStream, item: TokenStream) -> TokenStream {
 
 fn sk_skb(kind: SkSkbKind, attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SkSkb::parse(kind, attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
 
 /// Marks a function as a eBPF Socket Filter program that can be attached to
@@ -501,19 +504,16 @@ fn sk_skb(kind: SkSkbKind, attrs: TokenStream, item: TokenStream) -> TokenStream
 ///
 /// #[socket_filter]
 /// pub fn accept_all(_ctx: SkBuffContext) -> i64 {
-///     return 0
+///     0
 /// }
 /// ```
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SocketFilter::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
 
 /// Marks a function as a fentry eBPF program that can be attached to almost
@@ -528,9 +528,10 @@ pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// # #![allow(non_camel_case_types)]
 /// use aya_ebpf::{macros::fentry, programs::FEntryContext};
+/// # #[expect(non_camel_case_types)]
 /// # type filename = u32;
+/// # #[expect(non_camel_case_types)]
 /// # type path = u32;
 ///
 /// #[fentry(function = "filename_lookup")]
@@ -548,16 +549,13 @@ pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///     Ok(0)
 /// }
 /// ```
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match FEntry::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
     }
+    .into()
 }
 
 /// Marks a function as a fexit eBPF program that can be attached to almost
@@ -573,9 +571,10 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// # #![allow(non_camel_case_types)]
 /// use aya_ebpf::{macros::fexit, programs::FExitContext};
+/// # #[expect(non_camel_case_types)]
 /// # type filename = u32;
+/// # #[expect(non_camel_case_types)]
 /// # type path = u32;
 ///
 /// #[fexit(function = "filename_lookup")]
@@ -593,16 +592,54 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///     Ok(0)
 /// }
 /// ```
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn fexit(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match FExit::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
     }
+    .into()
+}
+
+/// Marks a function as an eBPF Flow Dissector program.
+///
+/// Flow dissector is a program type that parses metadata out of the packets.
+///
+/// BPF flow dissectors can be attached per network namespace. These programs
+/// are given a packet and expected to populate the fields of
+/// `FlowDissectorContext::flow_keys`. The return code of the BPF program is
+/// either [`BPF_OK`] to indicate successful dissection, [`BPF_DROP`] to
+/// indicate parsing error, or [`BPF_FLOW_DISSECTOR_CONTINUE`] to indicate that
+/// no custom dissection was performed, and fallback to standard dissector is
+/// requested.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.20.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya_ebpf::{bindings::bpf_ret_code, macros::flow_dissector, programs::FlowDissectorContext};
+///
+/// #[flow_dissector]
+/// pub fn dissect(_ctx: FlowDissectorContext) -> u32 {
+///     // TODO: do something useful here.
+///     bpf_ret_code::BPF_FLOW_DISSECTOR_CONTINUE
+/// }
+/// ```
+///
+/// [`FlowDissectorContext::flow_keys`]: ../aya_ebpf/programs/flow_dissector/struct.FlowDissectorContext.html#method.flow_keys
+/// [`BPF_OK`]: ../aya_ebpf/bindings/bpf_ret_code/constant.bpf_ok
+/// [`BPF_DROP`]: ../aya_ebpf/bindings/bpf_ret_code/constant.bpf_drop
+/// [`BPF_FLOW_DISSECTOR_CONTINUE`]: ../aya_ebpf/bindings/bpf_ret_code/constant.bpf_flow_dissector_continue
+#[proc_macro_attribute]
+pub fn flow_dissector(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match FlowDissector::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
+    }
+    .into()
 }
 
 /// Marks a function as an eBPF Socket Lookup program that can be attached to
@@ -620,19 +657,16 @@ pub fn fexit(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// #[sk_lookup]
 /// pub fn accept_all(_ctx: SkLookupContext) -> u32 {
 ///     // use sk_assign to redirect
-///     return 0
+///     0
 /// }
 /// ```
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SkLookup::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }
 
 /// Marks a function as a cgroup device eBPF program that can be attached to a
@@ -653,17 +687,14 @@ pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// #[cgroup_device]
 /// pub fn cgroup_dev(ctx: DeviceContext) -> i32 {
 ///     // Reject all device access
-///     return 0;
+///     0
 /// }
 /// ```
-#[proc_macro_error]
 #[proc_macro_attribute]
 pub fn cgroup_device(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match CgroupDevice::parse(attrs.into(), item.into()) {
-        Ok(prog) => prog
-            .expand()
-            .unwrap_or_else(|err| abort!(err.span(), "{}", err))
-            .into(),
-        Err(err) => abort!(err.span(), "{}", err),
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
     }
+    .into()
 }

@@ -2,12 +2,15 @@
 
 use std::os::fd::AsFd as _;
 
+use aya_obj::generated::{
+    bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG,
+};
+
 use crate::{
-    generated::{bpf_attach_type::BPF_SK_MSG_VERDICT, bpf_prog_type::BPF_PROG_TYPE_SK_MSG},
     maps::sock::SockMapFd,
     programs::{
-        define_link_wrapper, load_program, ProgAttachLink, ProgAttachLinkId, ProgramData,
-        ProgramError,
+        CgroupAttachMode, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, load_program,
     },
 };
 
@@ -69,6 +72,9 @@ pub struct SkMsg {
 }
 
 impl SkMsg {
+    /// The type of the program according to the kernel.
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::SkLookup;
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         load_program(BPF_PROG_TYPE_SK_MSG, &mut self.data)
@@ -80,32 +86,21 @@ impl SkMsg {
     pub fn attach(&mut self, map: &SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let link = ProgAttachLink::attach(prog_fd, map.as_fd(), BPF_SK_MSG_VERDICT)?;
+        let link = ProgAttachLink::attach(
+            prog_fd,
+            map.as_fd(),
+            BPF_SK_MSG_VERDICT,
+            CgroupAttachMode::Single,
+        )?;
 
         self.data.links.insert(SkMsgLink::new(link))
-    }
-
-    /// Detaches the program from a sockmap.
-    ///
-    /// See [SkMsg::attach].
-    pub fn detach(&mut self, link_id: SkMsgLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided link_id.
-    ///
-    /// The link will be detached on `Drop` and the caller is now responsible
-    /// for managing its lifetime.
-    pub fn take_link(&mut self, link_id: SkMsgLinkId) -> Result<SkMsgLink, ProgramError> {
-        self.data.take_link(link_id)
     }
 }
 
 define_link_wrapper!(
-    /// The link used by [SkMsg] programs.
     SkMsgLink,
-    /// The type returned by [SkMsg::attach]. Can be passed to [SkMsg::detach].
     SkMsgLinkId,
     ProgAttachLink,
-    ProgAttachLinkId
+    ProgAttachLinkId,
+    SkMsg,
 );

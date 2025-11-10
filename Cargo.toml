@@ -1,12 +1,15 @@
 [workspace]
 members = [
     "aya",
+    "aya-build",
     "aya-log",
     "aya-log-common",
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
-    "init",
+    "ebpf-panic",
+    "test-distro",
+    "test/integration-common",
     "test/integration-test",
     "xtask",
 
@@ -25,12 +28,15 @@ resolver = "2"
 
 default-members = [
     "aya",
+    "aya-build",
     "aya-log",
     "aya-log-common",
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
-    "init",
+    "ebpf-panic",
+    "test-distro",
+    "test/integration-common",
     # test/integration-test is omitted; including it in this list causes `cargo test` to run its
     # tests, and that doesn't work unless they've been built with `cargo xtask`.
     "xtask",
@@ -39,72 +45,119 @@ default-members = [
     "aya-log-ebpf-macros",
 
     # ebpf crates are omitted; they must be built with:
+    #
+    # RUSTFLAGS="--cfg bpf_target_arch={aarch64,arm,loongarch64,mips,powerpc64,riscv64,s390x,x86_64}"
+    # ...
     # --target bpfe{b,l}-unknown-none
-    # CARGO_CFG_BPF_TARGET_ARCH={x86_64,aarch64,arm,riscv64}
 ]
 
 [workspace.package]
 authors = ["Aya Contributors"]
+edition = "2024"
+homepage = "https://aya-rs.dev"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/aya-rs/aya"
-homepage = "https://aya-rs.dev"
-edition = "2021"
+rust-version = "1.87.0"
 
 # NOTE(vadorovsky): Neither cargo-udeps nor cargo-machete are able to detect
 # unused crates defined in this section. It would be nice to teach either of
 # them to do that, but in the meantime we need to be careful.
 [workspace.dependencies]
 anyhow = { version = "1", default-features = false }
+ar = { version = "0.9", default-features = false }
 assert_matches = { version = "1.5.0", default-features = false }
-async-io = { version = "2.0", default-features = false }
-bindgen = { version = "0.69", default-features = false }
+base64 = { version = "0.22.1", default-features = false }
+bindgen = { version = "0.72", default-features = false }
 bitflags = { version = "2.2.1", default-features = false }
 bytes = { version = "1", default-features = false }
-cargo_metadata = { version = "0.18.0", default-features = false }
+cargo_metadata = { version = "0.23.0", default-features = false }
 clap = { version = "4", default-features = false }
 const-assert = { version = "1.0.1", default-features = false }
-core-error = { version = "0.0.0", default-features = false }
-dialoguer = { version = "0.11", default-features = false }
+dialoguer = { version = "0.12", default-features = false }
 diff = { version = "0.1.13", default-features = false }
 env_logger = { version = "0.11", default-features = false }
 epoll = { version = "4.3.3", default-features = false }
 futures = { version = "0.3.28", default-features = false }
-hashbrown = { version = "0.14.3", default-features = false }
+glob = { version = "0.3.0", default-features = false }
+hashbrown = { version = "0.16.0", default-features = false }
 indoc = { version = "2.0", default-features = false }
-integration-ebpf = { path = "test/integration-ebpf", default-features = false }
-lazy_static = { version = "1", default-features = false }
 libc = { version = "0.2.105", default-features = false }
 log = { version = "0.4", default-features = false }
-netns-rs = { version = "0.1", default-features = false }
-nix = { version = "0.29.0", default-features = false }
+network-types = { version = "0.1.0", default-features = false }
+nix = { version = "0.30.1", default-features = false }
 num_enum = { version = "0.7", default-features = false }
-object = { version = "0.36", default-features = false }
-proc-macro-error = { version = "1.0", default-features = false }
+object = { version = "0.37", default-features = false }
+once_cell = { version = "1.20.1", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
-public-api = { version = "0.35.0", default-features = false }
+proc-macro2-diagnostics = { version = "0.10.1", default-features = false }
+procfs = { version = "0.18.0", default-features = false }
+public-api = { version = "0.50.0", default-features = false }
 quote = { version = "1", default-features = false }
-rand = { version = "0.8", default-features = false }
-rbpf = { version = "0.2.0", default-features = false }
+rand = { version = "0.9", default-features = false }
+rbpf = { version = "0.3.0", default-features = false }
 rustdoc-json = { version = "0.9.0", default-features = false }
 rustup-toolchain = { version = "0.1.5", default-features = false }
 rustversion = { version = "1.0.0", default-features = false }
+scopeguard = { version = "1.2.0", default-features = false }
 syn = { version = "2", default-features = false }
+tar = { version = "0.4.44", default-features = false }
 tempfile = { version = "3", default-features = false }
 test-case = { version = "3.1.0", default-features = false }
 test-log = { version = "0.2.13", default-features = false }
 testing_logger = { version = "0.1.1", default-features = false }
-thiserror = { version = "1", default-features = false }
+thiserror = { version = "2.0.3", default-features = false }
 tokio = { version = "1.24.0", default-features = false }
-which = { version = "6.0.0", default-features = false }
-xdpilone = { version = "1.0", default-features = false }
-xtask = { path = "xtask", default-features = false }
+walkdir = { version = "2", default-features = false }
+which = { version = "8.0.0", default-features = false }
+xdpilone = { version = "1.0.5", default-features = false }
+xz2 = { version = "0.1.7", default-features = false }
 
-[profile.dev]
-panic = "abort"
+[workspace.lints.clippy]
+all = "warn"
+as_ptr_cast_mut = "warn"
+as_underscore = "warn"
+cast_lossless = "warn"
+#cast_possible_truncation = "warn"
+#cast_possible_wrap = "warn"
+cast_precision_loss = "warn"
+#cast_sign_loss = "warn"
+char_lit_as_u8 = "warn"
+fn_to_numeric_cast = "warn"
+fn_to_numeric_cast_with_truncation = "warn"
+mut_mut = "warn"
+needless_bitwise_bool = "warn"
+needless_lifetimes = "warn"
+no_mangle_with_rust_abi = "warn"
+ptr_as_ptr = "warn"
+ptr_cast_constness = "warn"
+ref_as_ptr = "warn"
+unnecessary_cast = "warn"
+unused_trait_names = "warn"
+use_self = "warn"
 
-[profile.release]
-panic = "abort"
-
-[profile.release.package.integration-ebpf]
-debug = 2
-codegen-units = 1
+[workspace.lints.rust]
+absolute_paths_not_starting_with_crate = "warn"
+deprecated_in_future = "warn"
+elided_lifetimes_in_paths = "warn"
+explicit_outlives_requirements = "warn"
+ffi_unwind_calls = "warn"
+keyword_idents = "warn"
+#let_underscore_drop = "warn"
+macro_use_extern_crate = "warn"
+meta_variable_misuse = "warn"
+missing_abi = "warn"
+#missing_copy_implementations = "warn"
+non_ascii_idents = "warn"
+noop_method_call = "warn"
+single_use_lifetimes = "warn"
+trivial_numeric_casts = "warn"
+unreachable_pub = "warn"
+unsafe_op_in_unsafe_fn = "warn"
+unstable_features = "warn"
+unused_crate_dependencies = "warn"
+unused_extern_crates = "warn"
+unused_import_braces = "warn"
+unused_lifetimes = "warn"
+unused_macro_rules = "warn"
+#unused_qualifications = "warn" # https://github.com/rust-lang/rust/commit/9ccc7b7 added size_of to the prelude, but we need to continue to qualify it so that we build on older compilers.
+#unused_results = "warn"

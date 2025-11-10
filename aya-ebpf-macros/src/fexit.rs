@@ -13,39 +13,48 @@ pub(crate) struct FExit {
 }
 
 impl FExit {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<FExit> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self> {
         let item = syn::parse2(item)?;
         let mut args = syn::parse2(attrs)?;
         let function = pop_string_arg(&mut args, "function");
         let sleepable = pop_bool_arg(&mut args, "sleepable");
         err_on_unknown_args(&args)?;
-        Ok(FExit {
+        Ok(Self {
             item,
             function,
             sleepable,
         })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream> {
-        let section_prefix = if self.sleepable { "fexit.s" } else { "fexit" };
-        let section_name: Cow<'_, _> = if let Some(function) = &self.function {
-            format!("{}/{}", section_prefix, function).into()
+    pub(crate) fn expand(&self) -> TokenStream {
+        let Self {
+            item,
+            function,
+            sleepable,
+        } = self;
+        let ItemFn {
+            attrs: _,
+            vis,
+            sig,
+            block: _,
+        } = item;
+        let section_prefix = if *sleepable { "fexit.s" } else { "fexit" };
+        let section_name: Cow<'_, _> = if let Some(function) = function {
+            format!("{section_prefix}/{function}").into()
         } else {
             section_prefix.into()
         };
-        let fn_vis = &self.item.vis;
-        let fn_name = self.item.sig.ident.clone();
-        let item = &self.item;
-        Ok(quote! {
-            #[no_mangle]
-            #[link_section = #section_name]
-            #fn_vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
+        let fn_name = &sig.ident;
+        quote! {
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = #section_name)]
+            #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = #fn_name(::aya_ebpf::programs::FExitContext::new(ctx));
                 return 0;
 
                 #item
             }
-        })
+        }
     }
 }
 
@@ -66,10 +75,10 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "fexit"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "fexit")]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = sys_clone(::aya_ebpf::programs::FExitContext::new(ctx));
                 return 0;
@@ -95,10 +104,10 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "fexit/sys_clone"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "fexit/sys_clone")]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = sys_clone(::aya_ebpf::programs::FExitContext::new(ctx));
                 return 0;
@@ -124,10 +133,10 @@ mod tests {
             },
         )
         .unwrap();
-        let expanded = prog.expand().unwrap();
+        let expanded = prog.expand();
         let expected = quote! {
-            #[no_mangle]
-            #[link_section = "fexit.s/sys_clone"]
+            #[unsafe(no_mangle)]
+            #[unsafe(link_section = "fexit.s/sys_clone")]
             fn sys_clone(ctx: *mut ::core::ffi::c_void) -> i32 {
                 let _ = sys_clone(::aya_ebpf::programs::FExitContext::new(ctx));
                 return 0;

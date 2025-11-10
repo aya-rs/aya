@@ -1,18 +1,18 @@
 use aya_ebpf_cty::{c_long, c_void};
 
-use crate::{bindings::__sk_buff, programs::sk_buff::SkBuff, EbpfContext};
+use crate::{EbpfContext, bindings::__sk_buff, programs::sk_buff::SkBuff};
 
 pub struct TcContext {
     pub skb: SkBuff,
 }
 
 impl TcContext {
-    pub fn new(skb: *mut __sk_buff) -> TcContext {
+    pub fn new(skb: *mut __sk_buff) -> Self {
         let skb = SkBuff { skb };
-        TcContext { skb }
+        Self { skb }
     }
 
-    #[allow(clippy::len_without_is_empty)]
+    #[expect(clippy::len_without_is_empty)]
     #[inline]
     pub fn len(&self) -> u32 {
         self.skb.len()
@@ -68,11 +68,11 @@ impl TcContext {
     /// use core::mem;
     ///
     /// use aya_ebpf::{bindings::TC_ACT_PIPE, macros::map, maps::PerCpuArray, programs::TcContext};
-    /// # #[allow(non_camel_case_types)]
+    /// # #[expect(non_camel_case_types)]
     /// # struct ethhdr {};
-    /// # #[allow(non_camel_case_types)]
+    /// # #[expect(non_camel_case_types)]
     /// # struct iphdr {};
-    /// # #[allow(non_camel_case_types)]
+    /// # #[expect(non_camel_case_types)]
     /// # struct tcphdr {};
     ///
     /// const ETH_HDR_LEN: usize = mem::size_of::<ethhdr>();
@@ -85,7 +85,7 @@ impl TcContext {
     /// }
     ///
     /// #[map]
-    /// pub static mut BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
+    /// pub static BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
     ///
     /// fn try_classifier(ctx: TcContext) -> Result<i32, i32> {
     ///     let buf = unsafe {
@@ -162,11 +162,11 @@ impl TcContext {
     ///
     /// ```no_run
     /// use aya_ebpf::programs::TcContext;
-    /// # #[allow(non_camel_case_types)]
+    /// # #[expect(non_camel_case_types)]
     /// # struct ethhdr {};
-    /// # #[allow(non_camel_case_types)]
+    /// # #[expect(non_camel_case_types)]
     /// # struct iphdr {};
-    /// # #[allow(non_camel_case_types)]
+    /// # #[expect(non_camel_case_types)]
     /// # struct udphdr {};
     ///
     /// const ETH_HLEN: usize = core::mem::size_of::<ethhdr>();
@@ -176,8 +176,8 @@ impl TcContext {
     /// fn try_classifier(ctx: TcContext) -> Result<i32, i32> {
     ///     let len = ETH_HLEN + IP_HLEN + UDP_HLEN;
     ///     match ctx.pull_data(len as u32) {
-    ///         Ok(_) => return Ok(0),
-    ///         Err(ret) => return Err(ret as i32),
+    ///         Ok(()) => Ok(0),
+    ///         Err(ret) => Err(ret as i32),
     ///     }
     /// }
     /// ```

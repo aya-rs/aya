@@ -1,19 +1,19 @@
-//! An hashmap of network devices.
+//! A hashmap of network devices.
 
 use std::{
     borrow::{Borrow, BorrowMut},
     num::NonZeroU32,
-    os::fd::{AsFd, AsRawFd},
+    os::fd::{AsFd as _, AsRawFd as _},
 };
 
 use aya_obj::generated::bpf_devmap_val;
 
-use super::{dev_map::DevMapValue, XdpMapError};
+use super::{XdpMapError, dev_map::DevMapValue};
 use crate::{
-    maps::{check_kv_size, hash_map, IterableMap, MapData, MapError, MapIter, MapKeys},
-    programs::ProgramFd,
-    sys::{bpf_map_lookup_elem, SyscallError},
     FEATURES,
+    maps::{IterableMap, MapData, MapError, MapIter, MapKeys, check_kv_size, hash_map},
+    programs::ProgramFd,
+    sys::{SyscallError, bpf_map_lookup_elem},
 };
 
 /// An hashmap of network devices.
@@ -84,7 +84,7 @@ impl<T: Borrow<MapData>> DevMapHash<T> {
             })
         };
         value
-            .map_err(|(_, io_error)| SyscallError {
+            .map_err(|io_error| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?

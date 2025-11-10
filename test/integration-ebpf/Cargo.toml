@@ -1,20 +1,40 @@
 [package]
 name = "integration-ebpf"
-version = "0.1.0"
 publish = false
+version = "0.1.0"
+
 authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
-edition.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
 
 [dependencies]
 aya-ebpf = { path = "../../ebpf/aya-ebpf" }
 aya-log-ebpf = { path = "../../ebpf/aya-log-ebpf" }
+ebpf-panic = { path = "../../ebpf-panic" }
+integration-common = { path = "../integration-common" }
+network-types = { workspace = true }
 
 [build-dependencies]
-which = { workspace = true }
+which = { workspace = true, features = ["real-sys"] }
 xtask = { path = "../../xtask" }
+
+[[bin]]
+name = "array"
+path = "src/array.rs"
+
+[[bin]]
+name = "bpf_probe_read"
+path = "src/bpf_probe_read.rs"
+
+[[bin]]
+name = "linear_data_structures"
+path = "src/linear_data_structures.rs"
 
 [[bin]]
 name = "log"
@@ -25,6 +45,10 @@ name = "map_test"
 path = "src/map_test.rs"
 
 [[bin]]
+name = "memmove_test"
+path = "src/memmove_test.rs"
+
+[[bin]]
 name = "name_test"
 path = "src/name_test.rs"
 
@@ -33,29 +57,49 @@ name = "pass"
 path = "src/pass.rs"
 
 [[bin]]
-name = "test"
-path = "src/test.rs"
-
-[[bin]]
-name = "relocations"
-path = "src/relocations.rs"
-
-[[bin]]
-name = "bpf_probe_read"
-path = "src/bpf_probe_read.rs"
-
-[[bin]]
-name = "two_progs"
-path = "src/two_progs.rs"
+name = "raw_tracepoint"
+path = "src/raw_tracepoint.rs"
 
 [[bin]]
 name = "redirect"
 path = "src/redirect.rs"
 
 [[bin]]
-name = "xdp_sec"
-path = "src/xdp_sec.rs"
+name = "relocations"
+path = "src/relocations.rs"
 
 [[bin]]
 name = "ring_buf"
 path = "src/ring_buf.rs"
+
+[[bin]]
+name = "sk_storage"
+path = "src/sk_storage.rs"
+
+[[bin]]
+name = "simple_prog"
+path = "src/simple_prog.rs"
+
+[[bin]]
+name = "strncmp"
+path = "src/strncmp.rs"
+
+[[bin]]
+name = "tcx"
+path = "src/tcx.rs"
+
+[[bin]]
+name = "test"
+path = "src/test.rs"
+
+[[bin]]
+name = "two_progs"
+path = "src/two_progs.rs"
+
+[[bin]]
+name = "xdp_sec"
+path = "src/xdp_sec.rs"
+
+[[bin]]
+name = "uprobe_cookie"
+path = "src/uprobe_cookie.rs"

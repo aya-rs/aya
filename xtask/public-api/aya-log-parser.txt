@@ -28,12 +28,14 @@ impl<T> alloc::borrow::ToOwned for aya_log_parser::Fragment where T: core::clone
 pub type aya_log_parser::Fragment::Owned = T
 pub fn aya_log_parser::Fragment::clone_into(&self, target: &mut T)
 pub fn aya_log_parser::Fragment::to_owned(&self) -> T
-impl<T> core::any::Any for aya_log_parser::Fragment where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_log_parser::Fragment where T: 'static + ?core::marker::Sized
 pub fn aya_log_parser::Fragment::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_log_parser::Fragment where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_log_parser::Fragment where T: ?core::marker::Sized
 pub fn aya_log_parser::Fragment::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_log_parser::Fragment where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_log_parser::Fragment where T: ?core::marker::Sized
 pub fn aya_log_parser::Fragment::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_log_parser::Fragment where T: core::clone::Clone
+pub unsafe fn aya_log_parser::Fragment::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_log_parser::Fragment
 pub fn aya_log_parser::Fragment::from(t: T) -> T
 pub struct aya_log_parser::Parameter
@@ -64,12 +66,14 @@ impl<T> alloc::borrow::ToOwned for aya_log_parser::Parameter where T: core::clon
 pub type aya_log_parser::Parameter::Owned = T
 pub fn aya_log_parser::Parameter::clone_into(&self, target: &mut T)
 pub fn aya_log_parser::Parameter::to_owned(&self) -> T
-impl<T> core::any::Any for aya_log_parser::Parameter where T: 'static + core::marker::Sized
+impl<T> core::any::Any for aya_log_parser::Parameter where T: 'static + ?core::marker::Sized
 pub fn aya_log_parser::Parameter::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya_log_parser::Parameter where T: core::marker::Sized
+impl<T> core::borrow::Borrow<T> for aya_log_parser::Parameter where T: ?core::marker::Sized
 pub fn aya_log_parser::Parameter::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya_log_parser::Parameter where T: core::marker::Sized
+impl<T> core::borrow::BorrowMut<T> for aya_log_parser::Parameter where T: ?core::marker::Sized
 pub fn aya_log_parser::Parameter::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_log_parser::Parameter where T: core::clone::Clone
+pub unsafe fn aya_log_parser::Parameter::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_log_parser::Parameter
 pub fn aya_log_parser::Parameter::from(t: T) -> T
 pub fn aya_log_parser::parse(format_string: &str) -> core::result::Result<alloc::vec::Vec<aya_log_parser::Fragment>, alloc::string::String>

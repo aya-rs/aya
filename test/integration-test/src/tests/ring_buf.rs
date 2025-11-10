@@ -1,53 +1,27 @@
 use std::{
     mem,
     os::fd::AsRawFd as _,
+    path::Path,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc,
+        atomic::{AtomicBool, Ordering},
     },
     thread,
+    time::Duration,
 };
 
 use anyhow::Context as _;
 use assert_matches::assert_matches;
 use aya::{
-    maps::{array::PerCpuArray, ring_buf::RingBuf, MapData},
+    Ebpf, EbpfLoader,
+    maps::{MapData, array::PerCpuArray, ring_buf::RingBuf},
     programs::UProbe,
-    Ebpf, EbpfLoader, Pod,
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
+use integration_common::ring_buf::Registers;
 use rand::Rng as _;
-use test_log::test;
-use tokio::{
-    io::unix::AsyncFd,
-    time::{sleep, Duration},
-};
-
-// This structure's definition is duplicated in the probe.
-#[repr(C)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Default)]
-struct Registers {
-    dropped: u64,
-    rejected: u64,
-}
-
-impl std::ops::Add for Registers {
-    type Output = Self;
-    fn add(self, rhs: Self) -> Self::Output {
-        Self {
-            dropped: self.dropped + rhs.dropped,
-            rejected: self.rejected + rhs.rejected,
-        }
-    }
-}
-
-impl<'a> std::iter::Sum<&'a Registers> for Registers {
-    fn sum<I: Iterator<Item = &'a Registers>>(iter: I) -> Self {
-        iter.fold(Default::default(), |a, b| a + *b)
-    }
-}
-
-unsafe impl Pod for Registers {}
+use scopeguard::defer;
+use tokio::io::{Interest, unix::AsyncFd};
 
 struct RingBufTest {
     _bpf: Ebpf,
@@ -63,14 +37,25 @@ const RING_BUF_MAX_ENTRIES: usize = 512;
 
 impl RingBufTest {
     fn new() -> Self {
+        Self::new_with_mutators(|_loader| {}, |_bpf| {})
+    }
+
+    // Allows the test to mutate the EbpfLoader before it loads the object file from disk, and to
+    // mutate the loaded Ebpf object after it has been loaded from disk but before it is loaded
+    // into the kernel.
+    fn new_with_mutators<'loader>(
+        loader_fn: impl FnOnce(&mut EbpfLoader<'loader>),
+        bpf_fn: impl FnOnce(&mut Ebpf),
+    ) -> Self {
         const RING_BUF_BYTE_SIZE: u32 =
             (RING_BUF_MAX_ENTRIES * (mem::size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
 
         // Use the loader API to control the size of the ring_buf.
-        let mut bpf = EbpfLoader::new()
-            .set_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
-            .load(crate::RING_BUF)
-            .unwrap();
+        let mut loader = EbpfLoader::new();
+        loader.map_max_entries("RING_BUF", RING_BUF_BYTE_SIZE);
+        loader_fn(&mut loader);
+        let mut bpf = loader.load(crate::RING_BUF).unwrap();
+        bpf_fn(&mut bpf);
         let ring_buf = bpf.take_map("RING_BUF").unwrap();
         let ring_buf = RingBuf::try_from(ring_buf).unwrap();
         let regs = bpf.take_map("REGISTERS").unwrap();
@@ -82,9 +67,9 @@ impl RingBufTest {
             .unwrap();
         prog.load().unwrap();
         prog.attach(
-            Some("ring_buf_trigger_ebpf_program"),
-            0,
+            "ring_buf_trigger_ebpf_program",
             "/proc/self/exe",
+            None,
             None,
         )
         .unwrap();
@@ -102,8 +87,8 @@ struct WithData(RingBufTest, Vec<u64>);
 impl WithData {
     fn new(n: usize) -> Self {
         Self(RingBufTest::new(), {
-            let mut rng = rand::thread_rng();
-            std::iter::repeat_with(|| rng.gen()).take(n).collect()
+            let mut rng = rand::rng();
+            std::iter::repeat_with(|| rng.random()).take(n).collect()
         })
     }
 }
@@ -166,9 +151,9 @@ fn ring_buf(n: usize) {
     assert_eq!(rejected, expected_rejected);
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[inline(never)]
-pub extern "C" fn ring_buf_trigger_ebpf_program(arg: u64) {
+extern "C" fn ring_buf_trigger_ebpf_program(arg: u64) {
     std::hint::black_box(arg);
 }
 
@@ -176,7 +161,8 @@ pub extern "C" fn ring_buf_trigger_ebpf_program(arg: u64) {
 // to fill the ring_buf. We just ensure that the number of events we see is sane given
 // what the producer sees, and that the logic does not hang. This exercises interleaving
 // discards, successful commits, and drops due to the ring_buf being full.
-#[test(tokio::test(flavor = "multi_thread"))]
+#[tokio::test(flavor = "multi_thread")]
+#[test_log::test]
 async fn ring_buf_async_with_drops() {
     let WithData(
         RingBufTest {
@@ -187,7 +173,7 @@ async fn ring_buf_async_with_drops() {
         data,
     ) = WithData::new(RING_BUF_MAX_ENTRIES * 8);
 
-    let mut async_fd = AsyncFd::new(ring_buf).unwrap();
+    let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
 
     // Spawn the writer which internally will spawn many parallel writers.
     // Construct an AsyncFd from the RingBuf in order to receive readiness notifications.
@@ -203,49 +189,42 @@ async fn ring_buf_async_with_drops() {
             seen += 1;
         }
     };
-    use futures::future::{
-        select,
-        Either::{Left, Right},
-    };
-    let writer = futures::future::try_join_all(data.chunks(8).map(ToOwned::to_owned).map(|v| {
-        tokio::spawn(async {
-            for value in v {
-                ring_buf_trigger_ebpf_program(value);
-            }
-        })
-    }));
-    let readable = {
-        let mut writer = writer;
-        loop {
-            let readable = Box::pin(async_fd.readable_mut());
-            writer = match select(readable, writer).await {
-                Left((guard, writer)) => {
-                    let mut guard = guard.unwrap();
-                    process_ring_buf(guard.get_inner_mut());
-                    guard.clear_ready();
-                    writer
+    let mut writer =
+        futures::future::try_join_all(data.chunks(8).map(ToOwned::to_owned).map(|v| {
+            tokio::spawn(async {
+                for value in v {
+                    ring_buf_trigger_ebpf_program(value);
                 }
-                Right((writer, readable)) => {
-                    writer.unwrap();
-                    break readable;
-                }
+            })
+        }));
+    loop {
+        let readable = async_fd.readable_mut();
+        futures::pin_mut!(readable);
+        match futures::future::select(readable, &mut writer).await {
+            futures::future::Either::Left((guard, _writer)) => {
+                let mut guard = guard.unwrap();
+                process_ring_buf(guard.get_inner_mut());
+                guard.clear_ready();
             }
-        }
-    };
+            futures::future::Either::Right((writer, readable)) => {
+                writer.unwrap();
 
-    // If there's more to read, we should receive a readiness notification in a timely manner.
-    // If we don't then, then assert that there's nothing else to read. Note that it's important
-    // to wait some time before attempting to read, otherwise we may catch up with the producer
-    // before epoll has an opportunity to send a notification; our consumer thread can race
-    // with the kernel epoll check.
-    let sleep_fut = sleep(Duration::from_millis(10));
-    tokio::pin!(sleep_fut);
-    match select(sleep_fut, readable).await {
-        Left(((), _)) => {}
-        Right((guard, _)) => {
-            let mut guard = guard.unwrap();
-            process_ring_buf(guard.get_inner_mut());
-            guard.clear_ready();
+                // If there's more to read, we should receive a readiness notification in a timely
+                // manner.  If we don't then, then assert that there's nothing else to read. Note
+                // that it's important to wait some time before attempting to read, otherwise we may
+                // catch up with the producer before epoll has an opportunity to send a
+                // notification; our consumer thread can race with the kernel epoll check.
+                match tokio::time::timeout(Duration::from_millis(10), readable).await {
+                    Err(tokio::time::error::Elapsed { .. }) => (),
+                    Ok(guard) => {
+                        let mut guard = guard.unwrap();
+                        process_ring_buf(guard.get_inner_mut());
+                        guard.clear_ready();
+                    }
+                }
+
+                break;
+            }
         }
     }
 
@@ -268,7 +247,7 @@ async fn ring_buf_async_with_drops() {
         "seen={seen}, rejected={rejected}, dropped={dropped}, total={total}, max_seen={max_seen}, \
         max_rejected={max_rejected}, max_dropped={max_dropped}",
     );
-    assert_eq!(seen + rejected + dropped, total, "{facts}",);
+    assert_eq!(seen + rejected + dropped, total, "{facts}");
     assert!(
         (0u64..=max_dropped).contains(&dropped),
         "dropped={dropped} not in 0..={max_dropped}; {facts}",
@@ -283,7 +262,8 @@ async fn ring_buf_async_with_drops() {
     );
 }
 
-#[test(tokio::test(flavor = "multi_thread"))]
+#[tokio::test(flavor = "multi_thread")]
+#[test_log::test]
 async fn ring_buf_async_no_drop() {
     let WithData(
         RingBufTest {
@@ -295,20 +275,24 @@ async fn ring_buf_async_no_drop() {
     ) = WithData::new(RING_BUF_MAX_ENTRIES * 3);
 
     let writer = {
-        let data = data.to_owned();
+        let mut rng = rand::rng();
+        let data: Vec<_> = data
+            .iter()
+            .copied()
+            .map(|value| (value, Duration::from_nanos(rng.random_range(0..10))))
+            .collect();
         tokio::spawn(async move {
-            for value in data {
+            for (value, duration) in data {
                 // Sleep a tad so we feel confident that the consumer will keep up
                 // and no messages will be dropped.
-                let dur = Duration::from_nanos(rand::thread_rng().gen_range(0..10));
-                sleep(dur).await;
+                tokio::time::sleep(duration).await;
                 ring_buf_trigger_ebpf_program(value);
             }
         })
     };
 
     // Construct an AsyncFd from the RingBuf in order to receive readiness notifications.
-    let mut async_fd = AsyncFd::new(ring_buf).unwrap();
+    let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
     // Note that unlike in the synchronous case where all of the entries are written before any of
     // them are read, in this case we expect all of the entries to make their way to userspace
     // because entries are being consumed as they are produced.
@@ -347,7 +331,7 @@ async fn ring_buf_async_no_drop() {
 // This test reproduces a bug where the ring buffer would not be notified of new entries if the
 // state was not properly synchronized between the producer and consumer. This would result in the
 // consumer never being woken up and the test hanging.
-#[test]
+#[test_log::test]
 fn ring_buf_epoll_wakeup() {
     let RingBufTest {
         mut ring_buf,
@@ -381,7 +365,8 @@ fn ring_buf_epoll_wakeup() {
 }
 
 // This test is like the above test but uses tokio and AsyncFd instead of raw epoll.
-#[test(tokio::test)]
+#[tokio::test]
+#[test_log::test]
 async fn ring_buf_asyncfd_events() {
     let RingBufTest {
         ring_buf,
@@ -389,7 +374,7 @@ async fn ring_buf_asyncfd_events() {
         _bpf,
     } = RingBufTest::new();
 
-    let mut async_fd = AsyncFd::new(ring_buf).unwrap();
+    let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
     let mut total_events = 0;
     let writer = WriterThread::spawn();
     while total_events < WriterThread::NUM_MESSAGES {
@@ -439,4 +424,71 @@ impl WriterThread {
         done.store(true, Ordering::Relaxed);
         thread.join().unwrap();
     }
+}
+
+// This tests that a ring buffer can be pinned and then re-opened and attached to a subsequent
+// program. It ensures that the producer position is properly synchronized between the two
+// programs, and that no unread data is lost.
+#[tokio::test(flavor = "multi_thread")]
+#[test_log::test]
+async fn ring_buf_pinned() {
+    let pin_path =
+        Path::new("/sys/fs/bpf/").join(format!("ring_buf_{}", rand::rng().random::<u64>()));
+
+    let RingBufTest {
+        mut ring_buf,
+        regs: _,
+        _bpf,
+    } = RingBufTest::new_with_mutators(
+        |_loader| {},
+        |bpf| {
+            let ring_buf = bpf.map_mut("RING_BUF").unwrap();
+            ring_buf.pin(&pin_path).unwrap();
+        },
+    );
+    defer! { std::fs::remove_file(&pin_path).unwrap() }
+
+    // Write a few items to the ring buffer.
+    let to_write_before_reopen = [2, 4, 6, 8];
+    for v in to_write_before_reopen {
+        ring_buf_trigger_ebpf_program(v);
+    }
+    let (to_read_before_reopen, to_read_after_reopen) = to_write_before_reopen.split_at(2);
+    for v in to_read_before_reopen {
+        let item = ring_buf.next().unwrap();
+        let item: [u8; 8] = item.as_ref().try_into().unwrap();
+        assert_eq!(item, v.to_ne_bytes());
+    }
+    drop(ring_buf);
+    drop(_bpf);
+
+    // Reopen the ring buffer using the pinned map.
+    let RingBufTest {
+        mut ring_buf,
+        regs: _,
+        _bpf,
+    } = RingBufTest::new_with_mutators(
+        |loader| {
+            loader.map_pin_path("RING_BUF", &pin_path);
+        },
+        |_bpf| {},
+    );
+    let to_write_after_reopen = [10, 12];
+
+    // Write some more data.
+    for v in to_write_after_reopen {
+        ring_buf_trigger_ebpf_program(v);
+    }
+    // Read both the data that was written before the ring buffer was reopened and the data that
+    // was written after it was reopened.
+    for v in to_read_after_reopen
+        .iter()
+        .chain(to_write_after_reopen.iter())
+    {
+        let item = ring_buf.next().unwrap();
+        let item: [u8; 8] = item.as_ref().try_into().unwrap();
+        assert_eq!(item, v.to_ne_bytes());
+    }
+    // Make sure there is nothing else in the ring buffer.
+    assert_matches!(ring_buf.next(), None);
 }

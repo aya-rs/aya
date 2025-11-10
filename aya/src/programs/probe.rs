@@ -2,8 +2,8 @@ use std::{
     ffi::{OsStr, OsString},
     fmt::Write as _,
     fs::{self, OpenOptions},
-    io::{self, Write},
-    os::fd::{AsFd as _, OwnedFd},
+    io::{self, Write as _},
+    os::fd::AsFd as _,
     path::{Path, PathBuf},
     process,
     sync::atomic::{AtomicUsize, Ordering},
@@ -13,11 +13,11 @@ use libc::pid_t;
 
 use crate::{
     programs::{
-        kprobe::KProbeError, perf_attach, perf_attach::PerfLinkInner, perf_attach_debugfs,
-        trace_point::read_sys_fs_trace_point_id, uprobe::UProbeError, utils::find_tracefs_path,
-        Link, ProgramData, ProgramError,
+        Link, ProgramData, ProgramError, kprobe::KProbeError, perf_attach,
+        perf_attach::PerfLinkInner, perf_attach_debugfs, trace_point::read_sys_fs_trace_point_id,
+        uprobe::UProbeError, utils::find_tracefs_path,
     },
-    sys::{perf_event_open_probe, perf_event_open_trace_point, SyscallError},
+    sys::{SyscallError, perf_event_open_probe, perf_event_open_trace_point},
     util::KernelVersion,
 };
 
@@ -62,7 +62,7 @@ pub(crate) fn lines(bytes: &[u8]) -> impl Iterator<Item = &OsStr> {
 
 pub(crate) trait OsStringExt {
     fn starts_with(&self, needle: &OsStr) -> bool;
-    #[allow(dead_code)] // Would be odd to have the others without this one.
+    #[expect(dead_code)] // Would be odd to have the others without this one.
     fn ends_with(&self, needle: &OsStr) -> bool;
     fn strip_prefix(&self, prefix: &OsStr) -> Option<&OsStr>;
     fn strip_suffix(&self, suffix: &OsStr) -> Option<&OsStr>;
@@ -112,17 +112,21 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     fn_name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
+    cookie: Option<u64>,
 ) -> Result<T::Id, ProgramError> {
     // https://github.com/torvalds/linux/commit/e12f03d7031a977356e3d7b75a68c2185ff8d155
     // Use debugfs to create probe
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
-    let link = if KernelVersion::current().unwrap() < KernelVersion::new(4, 17, 0) {
+    let link = if !KernelVersion::at_least(4, 17, 0) {
+        if cookie.is_some() {
+            return Err(ProgramError::AttachCookieNotSupported);
+        }
         let (fd, event_alias) = create_as_trace_point(kind, fn_name, offset, pid)?;
         perf_attach_debugfs(prog_fd, fd, ProbeEvent { kind, event_alias })
     } else {
         let fd = create_as_probe(kind, fn_name, offset, pid)?;
-        perf_attach(prog_fd, fd)
+        perf_attach(prog_fd, fd, cookie)
     }?;
     program_data.links.insert(T::from(link))
 }
@@ -150,7 +154,7 @@ fn create_as_probe(
     fn_name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
-) -> Result<OwnedFd, ProgramError> {
+) -> Result<crate::MockableFd, ProgramError> {
     use ProbeKind::*;
 
     let perf_ty = match kind {
@@ -172,13 +176,12 @@ fn create_as_probe(
         _ => None,
     };
 
-    perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid).map_err(|(_code, io_error)| {
-        SyscallError {
+    perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid)
+        .map_err(|io_error| SyscallError {
             call: "perf_event_open",
             io_error,
-        }
-        .into()
-    })
+        })
+        .map_err(Into::into)
 }
 
 fn create_as_trace_point(
@@ -186,7 +189,7 @@ fn create_as_trace_point(
     name: &OsStr,
     offset: u64,
     pid: Option<pid_t>,
-) -> Result<(OwnedFd, OsString), ProgramError> {
+) -> Result<(crate::MockableFd, OsString), ProgramError> {
     use ProbeKind::*;
 
     let tracefs = find_tracefs_path()?;
@@ -200,7 +203,7 @@ fn create_as_trace_point(
 
     let category = format!("{}s", kind.pmu());
     let tpid = read_sys_fs_trace_point_id(tracefs, &category, event_alias.as_ref())?;
-    let fd = perf_event_open_trace_point(tpid, pid).map_err(|(_code, io_error)| SyscallError {
+    let fd = perf_event_open_trace_point(tpid, pid).map_err(|io_error| SyscallError {
         call: "perf_event_open",
         io_error,
     })?;
@@ -248,7 +251,7 @@ fn create_probe_event(
     .unwrap();
 
     let mut probe = OsString::new();
-    write!(&mut probe, "{}:{}s/", probe_type_prefix, kind.pmu(),).unwrap();
+    write!(&mut probe, "{}:{}s/", probe_type_prefix, kind.pmu()).unwrap();
     probe.push(&event_alias);
     probe.push(" ");
     probe.push(fn_name);
@@ -321,12 +324,7 @@ fn read_sys_fs_perf_type(pmu: &str) -> Result<u32, (PathBuf, io::Error)> {
         .join("type");
 
     fs::read_to_string(&file)
-        .and_then(|perf_ty| {
-            perf_ty
-                .trim()
-                .parse::<u32>()
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
-        })
+        .and_then(|perf_ty| perf_ty.trim().parse::<u32>().map_err(io::Error::other))
         .map_err(|e| (file, e))
 }
 
@@ -340,11 +338,9 @@ fn read_sys_fs_perf_ret_probe(pmu: &str) -> Result<u32, (PathBuf, io::Error)> {
             let mut parts = data.trim().splitn(2, ':').skip(1);
             let config = parts
                 .next()
-                .ok_or_else(|| io::Error::new(io::ErrorKind::Other, "invalid format"))?;
+                .ok_or_else(|| io::Error::other("invalid format"))?;
 
-            config
-                .parse::<u32>()
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+            config.parse::<u32>().map_err(io::Error::other)
         })
         .map_err(|e| (file, e))
 }

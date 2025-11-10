@@ -5,27 +5,30 @@ use alloc::{
     vec,
     vec::Vec,
 };
-use core::{ffi::CStr, mem, ptr};
+use core::{
+    cell::OnceCell,
+    ffi::{CStr, FromBytesUntilNulError},
+    mem, ptr,
+};
 
-use bytes::BufMut;
+use bytes::BufMut as _;
 use log::debug;
 use object::{Endianness, SectionIndex};
 
-#[cfg(not(feature = "std"))]
-use crate::std;
 use crate::{
+    Object,
     btf::{
+        Array, BtfEnum, BtfEnum64, BtfKind, BtfMember, BtfType, Const, DataSec, DataSecEntry, Enum,
+        Enum64, Enum64Fallback, Enum64VariantFallback, FuncInfo, FuncLinkage, Int, IntEncoding,
+        LineInfo, Struct, Typedef, Union, Var, VarLinkage,
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
-        Array, BtfEnum, BtfKind, BtfMember, BtfType, Const, Enum, FuncInfo, FuncLinkage, Int,
-        IntEncoding, LineInfo, Struct, Typedef, Union, VarLinkage,
     },
     generated::{btf_ext_header, btf_header},
-    util::{bytes_of, HashMap},
-    Object,
+    util::{HashMap, bytes_of},
 };
 
-pub(crate) const MAX_RESOLVE_DEPTH: u8 = 32;
+pub(crate) const MAX_RESOLVE_DEPTH: usize = 32;
 pub(crate) const MAX_SPEC_LEN: usize = 64;
 
 /// The error type returned when `BTF` operations fail.
@@ -98,21 +101,21 @@ pub enum BtfError {
     },
 
     /// unknown BTF type id
-    #[error("Unknown BTF type id `{type_id}`")]
+    #[error("unknown BTF type id `{type_id}`")]
     UnknownBtfType {
         /// type id
         type_id: u32,
     },
 
     /// unexpected btf type id
-    #[error("Unexpected BTF type id `{type_id}`")]
+    #[error("unexpected BTF type id `{type_id}`")]
     UnexpectedBtfType {
         /// type id
         type_id: u32,
     },
 
     /// unknown BTF type
-    #[error("Unknown BTF type `{type_name}`")]
+    #[error("unknown BTF type `{type_name}`")]
     UnknownBtfTypeName {
         /// type name
         type_name: String,
@@ -127,7 +130,7 @@ pub enum BtfError {
 
     #[cfg(feature = "std")]
     /// Loading the btf failed
-    #[error("the BPF_BTF_LOAD syscall failed. Verifier output: {verifier_log}")]
+    #[error("the BPF_BTF_LOAD syscall returned {io_error}. Verifier output: {verifier_log}")]
     LoadError {
         /// The [`std::io::Error`] returned by the `BPF_BTF_LOAD` syscall.
         #[source]
@@ -157,15 +160,19 @@ pub enum BtfError {
     /// unable to get symbol name
     #[error("Unable to get symbol name")]
     InvalidSymbolName,
+
+    /// BTF map wrapper's layout is unexpected
+    #[error("BTF map wrapper's layout is unexpected: {0:?}")]
+    UnexpectedBtfMapWrapperLayout(Struct),
 }
 
 /// Available BTF features
 #[derive(Default, Debug)]
-#[allow(missing_docs)]
 pub struct BtfFeatures {
     btf_func: bool,
     btf_func_global: bool,
     btf_datasec: bool,
+    btf_datasec_zero: bool,
     btf_float: bool,
     btf_decl_tag: bool,
     btf_type_tag: bool,
@@ -174,19 +181,22 @@ pub struct BtfFeatures {
 
 impl BtfFeatures {
     #[doc(hidden)]
+    #[expect(clippy::too_many_arguments, reason = "this interface is terrible")]
     pub fn new(
         btf_func: bool,
         btf_func_global: bool,
         btf_datasec: bool,
+        btf_datasec_zero: bool,
         btf_float: bool,
         btf_decl_tag: bool,
         btf_type_tag: bool,
         btf_enum64: bool,
     ) -> Self {
-        BtfFeatures {
+        Self {
             btf_func,
             btf_func_global,
             btf_datasec,
+            btf_datasec_zero,
             btf_float,
             btf_decl_tag,
             btf_type_tag,
@@ -207,6 +217,11 @@ impl BtfFeatures {
     /// Returns true if the BTF_TYPE_DATASEC is supported.
     pub fn btf_datasec(&self) -> bool {
         self.btf_datasec
+    }
+
+    /// Returns true if zero-length DATASec entries are accepted.
+    pub fn btf_datasec_zero(&self) -> bool {
+        self.btf_datasec_zero
     }
 
     /// Returns true if the BTF_FLOAT is supported.
@@ -251,10 +266,19 @@ pub struct Btf {
     _endianness: Endianness,
 }
 
+fn add_type(header: &mut btf_header, types: &mut BtfTypes, btf_type: BtfType) -> u32 {
+    let size = btf_type.type_info_size() as u32;
+    let type_id = types.len();
+    types.push(btf_type);
+    header.type_len += size;
+    header.str_off += size;
+    type_id as u32
+}
+
 impl Btf {
     /// Creates a new empty instance with its header initialized
-    pub fn new() -> Btf {
-        Btf {
+    pub fn new() -> Self {
+        Self {
             header: btf_header {
                 magic: 0xeb9f,
                 version: 0x01,
@@ -282,7 +306,7 @@ impl Btf {
 
     /// Adds a string to BTF metadata, returning an offset
     pub fn add_string(&mut self, name: &str) -> u32 {
-        let str = name.bytes().chain(std::iter::once(0));
+        let str = name.bytes().chain(core::iter::once(0));
         let name_offset = self.strings.len();
         self.strings.extend(str);
         self.header.str_len = self.strings.len() as u32;
@@ -291,18 +315,13 @@ impl Btf {
 
     /// Adds a type to BTF metadata, returning a type id
     pub fn add_type(&mut self, btf_type: BtfType) -> u32 {
-        let size = btf_type.type_info_size() as u32;
-        let type_id = self.types.len();
-        self.types.push(btf_type);
-        self.header.type_len += size;
-        self.header.str_off += size;
-        type_id as u32
+        add_type(&mut self.header, &mut self.types, btf_type)
     }
 
     /// Loads BTF metadata from `/sys/kernel/btf/vmlinux`.
     #[cfg(feature = "std")]
-    pub fn from_sys_fs() -> Result<Btf, BtfError> {
-        Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())
+    pub fn from_sys_fs() -> Result<Self, BtfError> {
+        Self::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())
     }
 
     /// Loads BTF metadata from the given `path`.
@@ -310,10 +329,10 @@ impl Btf {
     pub fn parse_file<P: AsRef<std::path::Path>>(
         path: P,
         endianness: Endianness,
-    ) -> Result<Btf, BtfError> {
-        use std::{borrow::ToOwned, fs};
+    ) -> Result<Self, BtfError> {
+        use std::{borrow::ToOwned as _, fs};
         let path = path.as_ref();
-        Btf::parse(
+        Self::parse(
             &fs::read(path).map_err(|error| BtfError::FileError {
                 path: path.to_owned(),
                 error,
@@ -323,7 +342,7 @@ impl Btf {
     }
 
     /// Parses BTF from binary data of the given endianness
-    pub fn parse(data: &[u8], endianness: Endianness) -> Result<Btf, BtfError> {
+    pub fn parse(data: &[u8], endianness: Endianness) -> Result<Self, BtfError> {
         if data.len() < mem::size_of::<btf_header>() {
             return Err(BtfError::InvalidHeader);
         }
@@ -338,9 +357,9 @@ impl Btf {
         }
 
         let strings = data[str_off..str_off + str_len].to_vec();
-        let types = Btf::read_type_info(&header, data, endianness)?;
+        let types = Self::read_type_info(&header, data, endianness)?;
 
-        Ok(Btf {
+        Ok(Self {
             header,
             strings,
             types,
@@ -389,13 +408,9 @@ impl Btf {
         }
 
         let offset = offset as usize;
-        let nul = self.strings[offset..]
-            .iter()
-            .position(|c| *c == 0u8)
-            .ok_or(BtfError::InvalidStringOffset { offset })?;
 
-        let s = CStr::from_bytes_with_nul(&self.strings[offset..=offset + nul])
-            .map_err(|_| BtfError::InvalidStringOffset { offset })?;
+        let s = CStr::from_bytes_until_nul(&self.strings[offset..])
+            .map_err(|FromBytesUntilNulError { .. }| BtfError::InvalidStringOffset { offset })?;
 
         Ok(s.to_string_lossy())
     }
@@ -436,7 +451,7 @@ impl Btf {
     pub(crate) fn type_size(&self, root_type_id: u32) -> Result<usize, BtfError> {
         let mut type_id = root_type_id;
         let mut n_elems = 1;
-        for _ in 0..MAX_RESOLVE_DEPTH {
+        for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
             let ty = self.types.type_by_id(type_id)?;
             let size = match ty {
                 BtfType::Array(Array { array, .. }) => {
@@ -467,7 +482,6 @@ impl Btf {
     pub fn to_bytes(&self) -> Vec<u8> {
         // Safety: btf_header is POD
         let mut buf = unsafe { bytes_of::<btf_header>(&self.header).to_vec() };
-        // Skip the first type since it's always BtfType::Unknown for type_by_id to work
         buf.extend(self.types.to_bytes());
         buf.put(self.strings.as_slice());
         buf
@@ -487,19 +501,8 @@ impl Btf {
         symbol_offsets: &HashMap<String, u64>,
         features: &BtfFeatures,
     ) -> Result<(), BtfError> {
-        // ENUM64 placeholder type needs to be added before we take ownership of
-        // self.types to ensure that the offsets in the BtfHeader are correct.
-        let placeholder_name = self.add_string("enum64_placeholder");
-        let enum64_placeholder_id = (!features.btf_enum64
-            && self.types().any(|t| t.kind() == BtfKind::Enum64))
-        .then(|| {
-            self.add_type(BtfType::Int(Int::new(
-                placeholder_name,
-                1,
-                IntEncoding::None,
-                0,
-            )))
-        });
+        let enum64_placeholder_id = OnceCell::new();
+        let filler_var_id = OnceCell::new();
         let mut types = mem::take(&mut self.types);
         for i in 0..types.types.len() {
             let t = &mut types.types[i];
@@ -519,7 +522,7 @@ impl Btf {
                 }
                 // Sanitize DATASEC if they are not supported.
                 BtfType::DataSec(d) if !features.btf_datasec => {
-                    debug!("{}: not supported. replacing with STRUCT", kind);
+                    debug!("{kind}: not supported. replacing with STRUCT");
 
                     // STRUCT aren't allowed to have "." in their name, fixup this if needed.
                     let mut name_offset = d.name_offset;
@@ -532,7 +535,7 @@ impl Btf {
                         name_offset = self.add_string(&fixed_name);
                     }
 
-                    let entries = std::mem::take(&mut d.entries);
+                    let entries = core::mem::take(&mut d.entries);
 
                     let members = entries
                         .iter()
@@ -568,7 +571,7 @@ impl Btf {
 
                     // There are some cases when the compiler does indeed populate the size.
                     if d.size > 0 {
-                        debug!("{} {}: size fixup not required", kind, name);
+                        debug!("{kind} {name}: size fixup not required");
                     } else {
                         // We need to get the size of the section from the ELF file.
                         // Fortunately, we cached these when parsing it initially
@@ -579,7 +582,7 @@ impl Btf {
                                 return Err(BtfError::UnknownSectionSize { section_name: name });
                             }
                         };
-                        debug!("{} {}: fixup size to {}", kind, name, size);
+                        debug!("{kind} {name}: fixup size to {size}");
                         d.size = *size as u32;
 
                         // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
@@ -587,17 +590,57 @@ impl Btf {
                         // we need to get the offset from the ELF file.
                         // This was also cached during initial parsing and
                         // we can query by name in symbol_offsets.
+                        let old_size = d.type_info_size();
                         let mut entries = mem::take(&mut d.entries);
-                        let mut fixed_section = d.clone();
+                        let mut section_size = d.size;
+                        let name_offset = d.name_offset;
+
+                        // Kernels before 5.12 reject zero-length DATASEC. See
+                        // https://github.com/torvalds/linux/commit/13ca51d5eb358edcb673afccb48c3440b9fda21b.
+                        if entries.is_empty() && !features.btf_datasec_zero {
+                            let filler_var_id = *filler_var_id.get_or_init(|| {
+                                let filler_type_name = self.add_string("__aya_datasec_filler_type");
+                                let filler_type_id = add_type(
+                                    &mut self.header,
+                                    &mut types,
+                                    BtfType::Int(Int::new(
+                                        filler_type_name,
+                                        1,
+                                        IntEncoding::None,
+                                        0,
+                                    )),
+                                );
+
+                                let filler_var_name = self.add_string("__aya_datasec_filler");
+                                add_type(
+                                    &mut self.header,
+                                    &mut types,
+                                    BtfType::Var(Var::new(
+                                        filler_var_name,
+                                        filler_type_id,
+                                        VarLinkage::Static,
+                                    )),
+                                )
+                            });
+                            let filler_len = section_size.max(1);
+                            debug!(
+                                "{kind} {name}: injecting filler entry for zero-length DATASEC (len={filler_len})"
+                            );
+                            entries.push(DataSecEntry {
+                                btf_type: filler_var_id,
+                                offset: 0,
+                                size: filler_len,
+                            });
+                            if section_size == 0 {
+                                section_size = filler_len;
+                            }
+                        }
 
                         for e in entries.iter_mut() {
                             if let BtfType::Var(var) = types.type_by_id(e.btf_type)? {
                                 let var_name = self.string_at(var.name_offset)?;
                                 if var.linkage == VarLinkage::Static {
-                                    debug!(
-                                        "{} {}: VAR {}: fixup not required",
-                                        kind, name, var_name
-                                    );
+                                    debug!("{kind} {name}: VAR {var_name}: fixup not required");
                                     continue;
                                 }
 
@@ -610,17 +653,20 @@ impl Btf {
                                     }
                                 };
                                 e.offset = *offset as u32;
-                                debug!(
-                                    "{} {}: VAR {}: fixup offset {}",
-                                    kind, name, var_name, offset
-                                );
+                                debug!("{kind} {name}: VAR {var_name}: fixup offset {offset}");
                             } else {
                                 return Err(BtfError::InvalidDatasec);
                             }
                         }
-                        fixed_section.entries = entries;
+                        let fixed_section = DataSec::new(name_offset, entries, section_size);
+                        let new_size = fixed_section.type_info_size();
+                        if new_size != old_size {
+                            self.header.type_len =
+                                self.header.type_len - old_size as u32 + new_size as u32;
+                            self.header.str_off = self.header.type_len;
+                        }
 
-                        // Must reborrow here because we borrow `types` immutably above.
+                        // Must reborrow here because we borrow `types` above.
                         let t = &mut types.types[i];
                         *t = BtfType::DataSec(fixed_section);
                     }
@@ -635,7 +681,7 @@ impl Btf {
                 }
                 // Sanitize FUNC_PROTO.
                 BtfType::FuncProto(ty) if !features.btf_func => {
-                    debug!("{}: not supported. replacing with ENUM", kind);
+                    debug!("{kind}: not supported. replacing with ENUM");
                     let members: Vec<BtfEnum> = ty
                         .params
                         .iter()
@@ -652,7 +698,7 @@ impl Btf {
                     let name = self.string_at(ty.name_offset)?;
                     // Sanitize FUNC.
                     if !features.btf_func {
-                        debug!("{}: not supported. replacing with TYPEDEF", kind);
+                        debug!("{kind}: not supported. replacing with TYPEDEF");
                         *t = BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
                     } else if !features.btf_func_global
                         || name == "memset"
@@ -668,8 +714,7 @@ impl Btf {
                         if ty.linkage() == FuncLinkage::Global {
                             if !features.btf_func_global {
                                 debug!(
-                                    "{}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
-                                    kind
+                                    "{kind}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
                                 );
                             } else {
                                 debug!("changing FUNC {name} linkage to BTF_FUNC_STATIC");
@@ -680,39 +725,85 @@ impl Btf {
                 }
                 // Sanitize FLOAT.
                 BtfType::Float(ty) if !features.btf_float => {
-                    debug!("{}: not supported. replacing with STRUCT", kind);
+                    debug!("{kind}: not supported. replacing with STRUCT");
                     *t = BtfType::Struct(Struct::new(0, vec![], ty.size));
                 }
                 // Sanitize DECL_TAG.
                 BtfType::DeclTag(ty) if !features.btf_decl_tag => {
-                    debug!("{}: not supported. replacing with INT", kind);
+                    debug!("{kind}: not supported. replacing with INT");
                     *t = BtfType::Int(Int::new(ty.name_offset, 1, IntEncoding::None, 0));
                 }
                 // Sanitize TYPE_TAG.
                 BtfType::TypeTag(ty) if !features.btf_type_tag => {
-                    debug!("{}: not supported. replacing with CONST", kind);
+                    debug!("{kind}: not supported. replacing with CONST");
                     *t = BtfType::Const(Const::new(ty.btf_type));
                 }
                 // Sanitize Signed ENUMs.
                 BtfType::Enum(ty) if !features.btf_enum64 && ty.is_signed() => {
-                    debug!("{}: signed ENUMs not supported. Marking as unsigned", kind);
+                    debug!("{kind}: signed ENUMs not supported. Marking as unsigned");
                     ty.set_signed(false);
                 }
                 // Sanitize ENUM64.
-                BtfType::Enum64(ty) if !features.btf_enum64 => {
-                    debug!("{}: not supported. replacing with UNION", kind);
-                    let placeholder_id =
-                        enum64_placeholder_id.expect("enum64_placeholder_id must be set");
-                    let members: Vec<BtfMember> = ty
-                        .variants
-                        .iter()
-                        .map(|v| BtfMember {
-                            name_offset: v.name_offset,
-                            btf_type: placeholder_id,
-                            offset: 0,
-                        })
-                        .collect();
-                    *t = BtfType::Union(Union::new(ty.name_offset, members.len() as u32, members));
+                BtfType::Enum64(ty) => {
+                    // Kernels before 6.0 do not support ENUM64. See
+                    // https://github.com/torvalds/linux/commit/6089fb325cf737eeb2c4d236c94697112ca860da.
+                    if !features.btf_enum64 {
+                        debug!("{kind}: not supported. replacing with UNION");
+
+                        // `ty` is borrowed from `types` and we use that borrow
+                        // below, so we must not borrow it again in the
+                        // get_or_init closure.
+                        let is_signed = ty.is_signed();
+                        let Enum64 {
+                            name_offset,
+                            size,
+                            variants,
+                            ..
+                        } = ty;
+                        let (name_offset, size, variants) =
+                            (*name_offset, *size, mem::take(variants));
+
+                        let fallback = Enum64Fallback {
+                            signed: is_signed,
+                            variants: variants
+                                .iter()
+                                .copied()
+                                .map(
+                                    |BtfEnum64 {
+                                         name_offset,
+                                         value_high,
+                                         value_low,
+                                     }| Enum64VariantFallback {
+                                        name_offset,
+                                        value: (u64::from(value_high) << 32) | u64::from(value_low),
+                                    },
+                                )
+                                .collect(),
+                        };
+
+                        // The rewritten UNION still needs a concrete member type. Share a single
+                        // synthetic INT placeholder between every downgraded ENUM64.
+                        let placeholder_id = enum64_placeholder_id.get_or_init(|| {
+                            let placeholder_name = self.add_string("enum64_placeholder");
+                            add_type(
+                                &mut self.header,
+                                &mut types,
+                                BtfType::Int(Int::new(placeholder_name, 1, IntEncoding::None, 0)),
+                            )
+                        });
+                        let members: Vec<BtfMember> = variants
+                            .iter()
+                            .map(|v| BtfMember {
+                                name_offset: v.name_offset,
+                                btf_type: *placeholder_id,
+                                offset: 0,
+                            })
+                            .collect();
+
+                        // Must reborrow here because we borrow `types` above.
+                        let t = &mut types.types[i];
+                        *t = BtfType::Union(Union::new(name_offset, size, members, Some(fallback)));
+                    }
                 }
                 // The type does not need fixing up or sanitization.
                 _ => {}
@@ -737,7 +828,7 @@ impl Object {
         &mut self,
         features: &BtfFeatures,
     ) -> Result<Option<&Btf>, BtfError> {
-        if let Some(ref mut obj_btf) = &mut self.btf {
+        if let Some(obj_btf) = &mut self.btf {
             if obj_btf.is_empty() {
                 return Ok(None);
             }
@@ -755,8 +846,8 @@ impl Object {
 }
 
 unsafe fn read_btf_header(data: &[u8]) -> btf_header {
-    // safety: btf_header is POD so read_unaligned is safe
-    ptr::read_unaligned(data.as_ptr() as *const btf_header)
+    // Safety: Btf_header is POD so read_unaligned is safe
+    unsafe { ptr::read_unaligned(data.as_ptr().cast()) }
 }
 
 /// Data in the `.BTF.ext` section
@@ -774,11 +865,7 @@ pub struct BtfExt {
 }
 
 impl BtfExt {
-    pub(crate) fn parse(
-        data: &[u8],
-        endianness: Endianness,
-        btf: &Btf,
-    ) -> Result<BtfExt, BtfError> {
+    pub(crate) fn parse(data: &[u8], endianness: Endianness, btf: &Btf) -> Result<Self, BtfError> {
         #[repr(C)]
         #[derive(Debug, Copy, Clone)]
         struct MinimalHeader {
@@ -788,7 +875,7 @@ impl BtfExt {
             pub hdr_len: u32,
         }
 
-        if data.len() < std::mem::size_of::<MinimalHeader>() {
+        if data.len() < core::mem::size_of::<MinimalHeader>() {
             return Err(BtfError::InvalidHeader);
         }
 
@@ -796,7 +883,7 @@ impl BtfExt {
             // first find the actual size of the header by converting into the minimal valid header
             // Safety: MinimalHeader is POD so read_unaligned is safe
             let minimal_header = unsafe {
-                ptr::read_unaligned::<MinimalHeader>(data.as_ptr() as *const MinimalHeader)
+                ptr::read_unaligned::<MinimalHeader>(data.as_ptr().cast::<MinimalHeader>())
             };
 
             let len_to_read = minimal_header.hdr_len as usize;
@@ -809,18 +896,18 @@ impl BtfExt {
             // forwards compatibility: if newer headers are bigger
             // than the pre-generated btf_ext_header we should only
             // read up to btf_ext_header
-            let len_to_read = len_to_read.min(std::mem::size_of::<btf_ext_header>());
+            let len_to_read = len_to_read.min(core::mem::size_of::<btf_ext_header>());
 
             // now create our full-fledge header; but start with it
             // zeroed out so unavailable fields stay as zero on older
             // BTF.ext sections
-            let mut header = std::mem::MaybeUninit::<btf_ext_header>::zeroed();
+            let mut header = core::mem::MaybeUninit::<btf_ext_header>::zeroed();
             // Safety: we have checked that len_to_read is less than
             // size_of::<btf_ext_header> and less than
             // data.len(). Additionally, we know that the header has
             // been initialized so it's safe to call for assume_init.
             unsafe {
-                std::ptr::copy(data.as_ptr(), header.as_mut_ptr() as *mut u8, len_to_read);
+                core::ptr::copy(data.as_ptr(), header.as_mut_ptr().cast::<u8>(), len_to_read);
                 header.assume_init()
             }
         };
@@ -859,7 +946,7 @@ impl BtfExt {
             })
         };
 
-        let mut ext = BtfExt {
+        let mut ext = Self {
             header,
             relocations: Vec::new(),
             func_info: FuncInfo::new(),
@@ -954,8 +1041,8 @@ impl BtfExt {
         self.info_data(self.header.line_info_off, self.header.line_info_len)
     }
 
-    pub(crate) fn relocations(&self) -> impl Iterator<Item = &(u32, Vec<Relocation>)> {
-        self.relocations.iter()
+    pub(crate) fn relocations(&self) -> &[(u32, Vec<Relocation>)] {
+        self.relocations.as_slice()
     }
 
     pub(crate) fn func_info_rec_size(&self) -> usize {
@@ -1056,7 +1143,7 @@ impl BtfTypes {
 
     pub(crate) fn resolve_type(&self, root_type_id: u32) -> Result<u32, BtfError> {
         let mut type_id = root_type_id;
-        for _ in 0..MAX_RESOLVE_DEPTH {
+        for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
             let ty = self.type_by_id(type_id)?;
 
             use BtfType::*;
@@ -1110,11 +1197,18 @@ mod tests {
 
     #[test]
     fn test_parse_header() {
-        let data: &[u8] = &[
-            0x9f, 0xeb, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x64, 0x54,
-            0x2a, 0x00, 0x64, 0x54, 0x2a, 0x00, 0x10, 0x64, 0x1c, 0x00,
-        ];
-        let header = unsafe { read_btf_header(data) };
+        let header = btf_header {
+            magic: 0xeb9f,
+            version: 0x01,
+            flags: 0x00,
+            hdr_len: 0x18,
+            type_off: 0x00,
+            type_len: 0x2a5464,
+            str_off: 0x2a5464,
+            str_len: 0x1c6410,
+        };
+        let data = unsafe { bytes_of::<btf_header>(&header).to_vec() };
+        let header = unsafe { read_btf_header(&data) };
         assert_eq!(header.magic, 0xeb9f);
         assert_eq!(header.version, 0x01);
         assert_eq!(header.flags, 0x00);
@@ -1129,74 +1223,175 @@ mod tests {
     fn test_parse_btf() {
         // this generated BTF data is from an XDP program that simply returns XDP_PASS
         // compiled using clang
-        let data: &[u8] = &[
-            0x9f, 0xeb, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x01,
-            0x00, 0x00, 0x0c, 0x01, 0x00, 0x00, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x02, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x06, 0x00,
-            0x00, 0x04, 0x18, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x20, 0x00,
-            0x00, 0x00, 0x16, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00,
-            0x20, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x60, 0x00, 0x00, 0x00, 0x30, 0x00,
-            0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x3f, 0x00, 0x00, 0x00,
-            0x03, 0x00, 0x00, 0x00, 0xa0, 0x00, 0x00, 0x00, 0x4e, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x08, 0x04, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-            0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
-            0x00, 0x0d, 0x06, 0x00, 0x00, 0x00, 0x61, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-            0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x20, 0x00,
-            0x00, 0x01, 0x69, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0c, 0x05, 0x00, 0x00, 0x00,
-            0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00,
-            0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
-            0x08, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xbc, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
-            0xd0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x09, 0x00, 0x00, 0x00, 0x01, 0x00,
-            0x00, 0x00, 0xd9, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00,
-            0x0b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x78,
-            0x64, 0x70, 0x5f, 0x6d, 0x64, 0x00, 0x64, 0x61, 0x74, 0x61, 0x00, 0x64, 0x61, 0x74,
-            0x61, 0x5f, 0x65, 0x6e, 0x64, 0x00, 0x64, 0x61, 0x74, 0x61, 0x5f, 0x6d, 0x65, 0x74,
-            0x61, 0x00, 0x69, 0x6e, 0x67, 0x72, 0x65, 0x73, 0x73, 0x5f, 0x69, 0x66, 0x69, 0x6e,
-            0x64, 0x65, 0x78, 0x00, 0x72, 0x78, 0x5f, 0x71, 0x75, 0x65, 0x75, 0x65, 0x5f, 0x69,
-            0x6e, 0x64, 0x65, 0x78, 0x00, 0x65, 0x67, 0x72, 0x65, 0x73, 0x73, 0x5f, 0x69, 0x66,
-            0x69, 0x6e, 0x64, 0x65, 0x78, 0x00, 0x5f, 0x5f, 0x75, 0x33, 0x32, 0x00, 0x75, 0x6e,
-            0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x20, 0x69, 0x6e, 0x74, 0x00, 0x63, 0x74, 0x78,
-            0x00, 0x69, 0x6e, 0x74, 0x00, 0x78, 0x64, 0x70, 0x5f, 0x70, 0x61, 0x73, 0x73, 0x00,
-            0x78, 0x64, 0x70, 0x2f, 0x70, 0x61, 0x73, 0x73, 0x00, 0x2f, 0x68, 0x6f, 0x6d, 0x65,
-            0x2f, 0x64, 0x61, 0x76, 0x65, 0x2f, 0x64, 0x65, 0x76, 0x2f, 0x62, 0x70, 0x66, 0x64,
-            0x2f, 0x62, 0x70, 0x66, 0x2f, 0x78, 0x64, 0x70, 0x5f, 0x70, 0x61, 0x73, 0x73, 0x2e,
-            0x62, 0x70, 0x66, 0x2e, 0x63, 0x00, 0x20, 0x20, 0x20, 0x20, 0x72, 0x65, 0x74, 0x75,
-            0x72, 0x6e, 0x20, 0x58, 0x44, 0x50, 0x5f, 0x50, 0x41, 0x53, 0x53, 0x3b, 0x00, 0x63,
-            0x68, 0x61, 0x72, 0x00, 0x5f, 0x5f, 0x41, 0x52, 0x52, 0x41, 0x59, 0x5f, 0x53, 0x49,
-            0x5a, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x5f, 0x00, 0x5f, 0x6c, 0x69, 0x63,
-            0x65, 0x6e, 0x73, 0x65, 0x00, 0x6c, 0x69, 0x63, 0x65, 0x6e, 0x73, 0x65, 0x00,
-        ];
+        let data: &[u8] = if cfg!(target_endian = "little") {
+            &[
+                0x9f, 0xeb, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x01,
+                0x00, 0x00, 0x0c, 0x01, 0x00, 0x00, 0xe1, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x02, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x06, 0x00,
+                0x00, 0x04, 0x18, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x20, 0x00,
+                0x00, 0x00, 0x16, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00,
+                0x20, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x60, 0x00, 0x00, 0x00, 0x30, 0x00,
+                0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x3f, 0x00, 0x00, 0x00,
+                0x03, 0x00, 0x00, 0x00, 0xa0, 0x00, 0x00, 0x00, 0x4e, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x08, 0x04, 0x00, 0x00, 0x00, 0x54, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+                0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
+                0x00, 0x0d, 0x06, 0x00, 0x00, 0x00, 0x61, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+                0x65, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x20, 0x00,
+                0x00, 0x01, 0x69, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0c, 0x05, 0x00, 0x00, 0x00,
+                0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x08, 0x00,
+                0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
+                0x08, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xbc, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00,
+                0xd0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x09, 0x00, 0x00, 0x00, 0x01, 0x00,
+                0x00, 0x00, 0xd9, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00,
+                0x0b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x78,
+                0x64, 0x70, 0x5f, 0x6d, 0x64, 0x00, 0x64, 0x61, 0x74, 0x61, 0x00, 0x64, 0x61, 0x74,
+                0x61, 0x5f, 0x65, 0x6e, 0x64, 0x00, 0x64, 0x61, 0x74, 0x61, 0x5f, 0x6d, 0x65, 0x74,
+                0x61, 0x00, 0x69, 0x6e, 0x67, 0x72, 0x65, 0x73, 0x73, 0x5f, 0x69, 0x66, 0x69, 0x6e,
+                0x64, 0x65, 0x78, 0x00, 0x72, 0x78, 0x5f, 0x71, 0x75, 0x65, 0x75, 0x65, 0x5f, 0x69,
+                0x6e, 0x64, 0x65, 0x78, 0x00, 0x65, 0x67, 0x72, 0x65, 0x73, 0x73, 0x5f, 0x69, 0x66,
+                0x69, 0x6e, 0x64, 0x65, 0x78, 0x00, 0x5f, 0x5f, 0x75, 0x33, 0x32, 0x00, 0x75, 0x6e,
+                0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x20, 0x69, 0x6e, 0x74, 0x00, 0x63, 0x74, 0x78,
+                0x00, 0x69, 0x6e, 0x74, 0x00, 0x78, 0x64, 0x70, 0x5f, 0x70, 0x61, 0x73, 0x73, 0x00,
+                0x78, 0x64, 0x70, 0x2f, 0x70, 0x61, 0x73, 0x73, 0x00, 0x2f, 0x68, 0x6f, 0x6d, 0x65,
+                0x2f, 0x64, 0x61, 0x76, 0x65, 0x2f, 0x64, 0x65, 0x76, 0x2f, 0x62, 0x70, 0x66, 0x64,
+                0x2f, 0x62, 0x70, 0x66, 0x2f, 0x78, 0x64, 0x70, 0x5f, 0x70, 0x61, 0x73, 0x73, 0x2e,
+                0x62, 0x70, 0x66, 0x2e, 0x63, 0x00, 0x20, 0x20, 0x20, 0x20, 0x72, 0x65, 0x74, 0x75,
+                0x72, 0x6e, 0x20, 0x58, 0x44, 0x50, 0x5f, 0x50, 0x41, 0x53, 0x53, 0x3b, 0x00, 0x63,
+                0x68, 0x61, 0x72, 0x00, 0x5f, 0x5f, 0x41, 0x52, 0x52, 0x41, 0x59, 0x5f, 0x53, 0x49,
+                0x5a, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x5f, 0x00, 0x5f, 0x6c, 0x69, 0x63,
+                0x65, 0x6e, 0x73, 0x65, 0x00, 0x6c, 0x69, 0x63, 0x65, 0x6e, 0x73, 0x65, 0x00,
+            ]
+        } else {
+            &[
+                0xeb, 0x9f, 0x01, 0x00, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x01, 0x0c, 0x00, 0x00, 0x01, 0x0c, 0x00, 0x00, 0x00, 0xe1, 0x00, 0x00, 0x00, 0x00,
+                0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x04, 0x00,
+                0x00, 0x06, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x03,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00,
+                0x00, 0x20, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x40,
+                0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x60, 0x00, 0x00,
+                0x00, 0x30, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x3f,
+                0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00, 0xa0, 0x00, 0x00, 0x00, 0x4e, 0x08, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x54, 0x01, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x0d, 0x00,
+                0x00, 0x01, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x61, 0x00, 0x00, 0x00, 0x01,
+                0x00, 0x00, 0x00, 0x65, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x01, 0x00,
+                0x00, 0x20, 0x00, 0x00, 0x00, 0x69, 0x0c, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x05,
+                0x00, 0x00, 0x00, 0xb7, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00,
+                0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x0a, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00,
+                0x00, 0xbc, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x20,
+                0x00, 0x00, 0x00, 0xd0, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x09, 0x00, 0x00,
+                0x00, 0x01, 0x00, 0x00, 0x00, 0xd9, 0x0f, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x78,
+                0x64, 0x70, 0x5f, 0x6d, 0x64, 0x00, 0x64, 0x61, 0x74, 0x61, 0x00, 0x64, 0x61, 0x74,
+                0x61, 0x5f, 0x65, 0x6e, 0x64, 0x00, 0x64, 0x61, 0x74, 0x61, 0x5f, 0x6d, 0x65, 0x74,
+                0x61, 0x00, 0x69, 0x6e, 0x67, 0x72, 0x65, 0x73, 0x73, 0x5f, 0x69, 0x66, 0x69, 0x6e,
+                0x64, 0x65, 0x78, 0x00, 0x72, 0x78, 0x5f, 0x71, 0x75, 0x65, 0x75, 0x65, 0x5f, 0x69,
+                0x6e, 0x64, 0x65, 0x78, 0x00, 0x65, 0x67, 0x72, 0x65, 0x73, 0x73, 0x5f, 0x69, 0x66,
+                0x69, 0x6e, 0x64, 0x65, 0x78, 0x00, 0x5f, 0x5f, 0x75, 0x33, 0x32, 0x00, 0x75, 0x6e,
+                0x73, 0x69, 0x67, 0x6e, 0x65, 0x64, 0x20, 0x69, 0x6e, 0x74, 0x00, 0x63, 0x74, 0x78,
+                0x00, 0x69, 0x6e, 0x74, 0x00, 0x78, 0x64, 0x70, 0x5f, 0x70, 0x61, 0x73, 0x73, 0x00,
+                0x78, 0x64, 0x70, 0x2f, 0x70, 0x61, 0x73, 0x73, 0x00, 0x2f, 0x68, 0x6f, 0x6d, 0x65,
+                0x2f, 0x64, 0x61, 0x76, 0x65, 0x2f, 0x64, 0x65, 0x76, 0x2f, 0x62, 0x70, 0x66, 0x64,
+                0x2f, 0x62, 0x70, 0x66, 0x2f, 0x78, 0x64, 0x70, 0x5f, 0x70, 0x61, 0x73, 0x73, 0x2e,
+                0x62, 0x70, 0x66, 0x2e, 0x63, 0x00, 0x20, 0x20, 0x20, 0x20, 0x72, 0x65, 0x74, 0x75,
+                0x72, 0x6e, 0x20, 0x58, 0x44, 0x50, 0x5f, 0x50, 0x41, 0x53, 0x53, 0x3b, 0x00, 0x63,
+                0x68, 0x61, 0x72, 0x00, 0x5f, 0x5f, 0x41, 0x52, 0x52, 0x41, 0x59, 0x5f, 0x53, 0x49,
+                0x5a, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x5f, 0x00, 0x5f, 0x6c, 0x69, 0x63,
+                0x65, 0x6e, 0x73, 0x65, 0x00, 0x6c, 0x69, 0x63, 0x65, 0x6e, 0x73, 0x65, 0x00,
+            ]
+        };
         assert_eq!(data.len(), 517);
-        let btf = Btf::parse(data, Endianness::default()).unwrap_or_else(|e| panic!("{}", e));
+        let btf = Btf::parse(data, Endianness::default()).unwrap();
         let data2 = btf.to_bytes();
         assert_eq!(data2.len(), 517);
         assert_eq!(data, data2);
 
-        let ext_data: &[u8] = &[
-            0x9f, 0xeb, 0x01, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x14, 0x00,
-            0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x1c, 0x00, 0x00, 0x00, 0x30, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x72, 0x00, 0x00, 0x00, 0x01, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00,
-            0x72, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7b, 0x00,
-            0x00, 0x00, 0xa2, 0x00, 0x00, 0x00, 0x05, 0x2c, 0x00, 0x00,
-        ];
+        const FUNC_LEN: u32 = 0x14;
+        const LINE_INFO_LEN: u32 = 0x1c;
+        const CORE_RELO_LEN: u32 = 0;
+        const DATA_LEN: u32 = (FUNC_LEN + LINE_INFO_LEN + CORE_RELO_LEN) / 4;
+        struct TestStruct {
+            _header: btf_ext_header,
+            _data: [u32; DATA_LEN as usize],
+        }
+        let test_data = TestStruct {
+            _header: btf_ext_header {
+                magic: 0xeb9f,
+                version: 1,
+                flags: 0,
+                hdr_len: 0x20,
+                func_info_off: 0,
+                func_info_len: FUNC_LEN,
+                line_info_off: FUNC_LEN,
+                line_info_len: LINE_INFO_LEN,
+                core_relo_off: FUNC_LEN + LINE_INFO_LEN,
+                core_relo_len: CORE_RELO_LEN,
+            },
+            _data: [
+                0x00000008u32,
+                0x00000072u32,
+                0x00000001u32,
+                0x00000000u32,
+                0x00000007u32,
+                0x00000010u32,
+                0x00000072u32,
+                0x00000001u32,
+                0x00000000u32,
+                0x0000007bu32,
+                0x000000a2u32,
+                0x00002c05u32,
+            ],
+        };
+        let ext_data = unsafe { bytes_of::<TestStruct>(&test_data).to_vec() };
 
         assert_eq!(ext_data.len(), 80);
-        let _: BtfExt = BtfExt::parse(ext_data, Endianness::default(), &btf)
-            .unwrap_or_else(|e| panic!("{}", e));
+        let _: BtfExt = BtfExt::parse(&ext_data, Endianness::default(), &btf).unwrap();
     }
 
     #[test]
     fn parsing_older_ext_data() {
-        let btf_data = [
-            159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
-        ];
-        let btf_ext_data = [
-            159, 235, 1, 0, 24, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 8, 0, 0,
-            0, 16, 0, 0, 0,
-        ];
+        const TYPE_LEN: u32 = 0;
+        const STR_LEN: u32 = 1;
+        struct BtfTestStruct {
+            _header: btf_header,
+            _data: [u8; (TYPE_LEN + STR_LEN) as usize],
+        }
+        let btf_test_data = BtfTestStruct {
+            _header: btf_header {
+                magic: 0xeb9f,
+                version: 0x01,
+                flags: 0x00,
+                hdr_len: 24,
+                type_off: 0,
+                type_len: TYPE_LEN,
+                str_off: TYPE_LEN,
+                str_len: TYPE_LEN + STR_LEN,
+            },
+            _data: [0x00u8],
+        };
+        let btf_data = unsafe { bytes_of::<BtfTestStruct>(&btf_test_data).to_vec() };
+
+        const FUNC_INFO_LEN: u32 = 4;
+        const LINE_INFO_LEN: u32 = 4;
+        const CORE_RELO_LEN: u32 = 16;
+        let ext_header = btf_ext_header {
+            magic: 0xeb9f,
+            version: 1,
+            flags: 0,
+            hdr_len: 24,
+            func_info_off: 0,
+            func_info_len: FUNC_INFO_LEN,
+            line_info_off: FUNC_INFO_LEN,
+            line_info_len: LINE_INFO_LEN,
+            core_relo_off: FUNC_INFO_LEN + LINE_INFO_LEN,
+            core_relo_len: CORE_RELO_LEN,
+        };
+        let btf_ext_data = unsafe { bytes_of::<btf_ext_header>(&ext_header).to_vec() };
+
         let btf = Btf::parse(&btf_data, Endianness::default()).unwrap();
         let btf_ext = BtfExt::parse(&btf_ext_data, Endianness::default(), &btf).unwrap();
         assert_eq!(btf_ext.func_info_rec_size(), 8);
@@ -1217,7 +1412,7 @@ mod tests {
         let btf_bytes = btf.to_bytes();
         let raw_btf = btf_bytes.as_slice();
 
-        let btf = Btf::parse(raw_btf, Endianness::default()).unwrap_or_else(|e| panic!("{}", e));
+        let btf = Btf::parse(raw_btf, Endianness::default()).unwrap();
         assert_eq!(btf.string_at(1).unwrap(), "int");
         assert_eq!(btf.string_at(5).unwrap(), "widget");
     }
@@ -1704,6 +1899,10 @@ mod tests {
     #[test]
     #[cfg(feature = "std")]
     #[cfg_attr(miri, ignore = "`open` not available when isolation is enabled")]
+    #[cfg_attr(
+        target_endian = "big",
+        ignore = "Not possible to emulate \"/sys/kernel/btf/vmlinux\" as big endian"
+    )]
     fn test_read_btf_from_sys_fs() {
         let btf = Btf::parse_file("/sys/kernel/btf/vmlinux", Endianness::default()).unwrap();
         let task_struct_id = btf

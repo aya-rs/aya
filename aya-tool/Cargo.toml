@@ -1,17 +1,22 @@
 [package]
-name = "aya-tool"
-version = "0.1.0"
-publish = false
 description = "A tool for generating bindings for Linux Kernel types"
+name = "aya-tool"
+publish = false
+version = "0.1.0"
+
 authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
 license.workspace = true
 repository.workspace = true
-homepage.workspace = true
-edition.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
 
 [dependencies]
+anyhow = { workspace = true, default-features = true }
 bindgen = { workspace = true, default-features = true }
 clap = { workspace = true, default-features = true, features = ["derive"] }
-anyhow = { workspace = true, default-features = true }
-thiserror = { workspace = true }
 tempfile = { workspace = true }
+thiserror = { workspace = true }

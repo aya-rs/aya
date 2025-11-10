@@ -1,12 +1,11 @@
-use core::{cell::UnsafeCell, mem, ptr::NonNull};
+use core::{cell::UnsafeCell, mem};
 
 use aya_ebpf_bindings::bindings::bpf_xdp_sock;
-use aya_ebpf_cty::c_void;
 
 use super::try_redirect_map;
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_XSKMAP},
-    helpers::bpf_map_lookup_elem,
+    lookup,
     maps::PinningType,
 };
 
@@ -70,8 +69,8 @@ impl XskMap {
     /// #[map]
     /// static SOCKS: XskMap =  XskMap::with_max_entries(8, 0);
     /// ```
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> XskMap {
-        XskMap {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_XSKMAP,
                 key_size: mem::size_of::<u32>() as u32,
@@ -95,8 +94,8 @@ impl XskMap {
     /// #[map]
     /// static SOCKS: XskMap = XskMap::pinned(8, 0);
     /// ```
-    pub const fn pinned(max_entries: u32, flags: u32) -> XskMap {
-        XskMap {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_XSKMAP,
                 key_size: mem::size_of::<u32>() as u32,
@@ -125,13 +124,9 @@ impl XskMap {
     /// ```
     #[inline(always)]
     pub fn get(&self, index: u32) -> Option<u32> {
-        unsafe {
-            let value = bpf_map_lookup_elem(
-                self.def.get() as *mut _,
-                &index as *const _ as *const c_void,
-            );
-            NonNull::new(value as *mut bpf_xdp_sock).map(|p| p.as_ref().queue_id)
-        }
+        let value = lookup(self.def.get().cast(), &index)?;
+        let value: &bpf_xdp_sock = unsafe { value.as_ref() };
+        Some(value.queue_id)
     }
 
     /// Redirects the current packet to the AF_XDP socket at `index`.

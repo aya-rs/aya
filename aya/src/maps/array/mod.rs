@@ -1,5 +1,6 @@
 //! Array types.
-#[allow(clippy::module_inception)]
+
+#[expect(clippy::module_inception)]
 mod array;
 mod per_cpu_array;
 mod program_array;

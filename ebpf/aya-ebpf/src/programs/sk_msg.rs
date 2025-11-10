@@ -1,9 +1,9 @@
 use core::ffi::c_void;
 
 use crate::{
+    EbpfContext,
     bindings::sk_msg_md,
     helpers::{bpf_msg_pop_data, bpf_msg_push_data},
-    EbpfContext,
 };
 
 pub struct SkMsgContext {
@@ -11,8 +11,8 @@ pub struct SkMsgContext {
 }
 
 impl SkMsgContext {
-    pub fn new(msg: *mut sk_msg_md) -> SkMsgContext {
-        SkMsgContext { msg }
+    pub fn new(msg: *mut sk_msg_md) -> Self {
+        Self { msg }
     }
 
     pub fn size(&self) -> u32 {
@@ -29,25 +29,17 @@ impl SkMsgContext {
 
     pub fn push_data(&self, start: u32, len: u32, flags: u64) -> Result<(), i64> {
         let ret = unsafe { bpf_msg_push_data(self.msg, start, len, flags) };
-        if ret == 0 {
-            Ok(())
-        } else {
-            Err(ret)
-        }
+        if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
     pub fn pop_data(&self, start: u32, len: u32, flags: u64) -> Result<(), i64> {
         let ret = unsafe { bpf_msg_pop_data(self.msg, start, len, flags) };
-        if ret == 0 {
-            Ok(())
-        } else {
-            Err(ret)
-        }
+        if ret == 0 { Ok(()) } else { Err(ret) }
     }
 }
 
 impl EbpfContext for SkMsgContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.msg as *mut _
+        self.msg.cast()
     }
 }
