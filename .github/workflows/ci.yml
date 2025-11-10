@@ -250,15 +250,6 @@ jobs:
 
       - name: Install prerequisites
         if: runner.os == 'macOS'
-        # The curl shipped on macOS doesn't contain
-        # https://github.com/curl/curl/commit/85efbb92b8e6679705e122cee45ce76c56414a3e which is
-        # needed for proper handling of `--etag-{compare,save}`.
-        #
-        # The clang shipped on macOS doesn't support BPF, so we need LLVM from brew.
-        #
-        # We need a musl C toolchain to compile our `test-distro` since some of
-        # our dependencies have build scripts that compile C code (i.e xz2).
-        # This is provided by `brew install filosottile/musl-cross/musl-cross`.
         run: |
           set -euxo pipefail
           # Dependencies are tracked in `Brewfile`.
