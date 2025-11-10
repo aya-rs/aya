@@ -349,11 +349,12 @@ impl PinnedLink {
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, LinkError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        let path_string =
-            CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|e| LinkError::InvalidPath {
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|e| {
+            LinkError::InvalidPath {
                 path: path.as_ref().display().to_string(),
                 source: e,
-            })?;
+            }
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| {
             LinkError::SyscallError(SyscallError {
                 call: "BPF_OBJ_GET",

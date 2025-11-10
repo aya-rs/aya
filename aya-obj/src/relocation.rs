@@ -87,7 +87,9 @@ pub enum RelocationError {
     },
 
     /// Unsupported relocation
-    #[error("unsupported relocation target: symbol kind `{symbol_kind:?}` with relocation size {size}")]
+    #[error(
+        "unsupported relocation target: symbol kind `{symbol_kind:?}` with relocation size {size}"
+    )]
     UnsupportedRelocationTarget {
         /// The symbol kind
         symbol_kind: SymbolKind,
@@ -405,7 +407,7 @@ impl<'a> FunctionLinker<'a> {
                         return Err(RelocationError::UnsupportedRelocationTarget {
                             symbol_kind: sym.kind,
                             size: rel.size,
-                        })
+                        });
                     }
                 };
                 (sym.section_index.unwrap(), address)

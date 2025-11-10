@@ -706,10 +706,7 @@ fn load_program<T: Link>(
         let prog_name = CString::new(name).map_err(|err @ std::ffi::NulError { .. }| {
             let name = err.into_vec();
             let name = unsafe { String::from_utf8_unchecked(name) };
-            ProgramError::InvalidName {
-                name,
-                source: None,
-            }
+            ProgramError::InvalidName { name, source: None }
         })?;
         Some(prog_name)
     } else {
