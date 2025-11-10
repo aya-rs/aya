@@ -178,6 +178,16 @@ pub enum ProgramError {
         name: String,
     },
 
+    /// The network interface name is invalid.
+    #[error("invalid network interface name {name}")]
+    InvalidInterfaceName {
+        /// interface name
+        name: String,
+        /// source error
+        #[source]
+        source: std::ffi::NulError,
+    },
+
     /// The program is not of the expected type.
     #[error("unexpected program type")]
     UnexpectedProgramType,
@@ -223,6 +233,9 @@ pub enum ProgramError {
     InvalidName {
         /// program name
         name: String,
+        /// source error
+        #[source]
+        source: Option<std::ffi::NulError>,
     },
 
     /// An error occurred while working with IO.
@@ -587,8 +600,12 @@ impl<T: Link> ProgramData<T> {
     ) -> Result<Self, ProgramError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|e| {
+            ProgramError::InvalidName {
+                name: path.as_ref().display().to_string(),
+                source: Some(e),
+            }
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "bpf_obj_get",
             io_error,
@@ -689,7 +706,10 @@ fn load_program<T: Link>(
         let prog_name = CString::new(name).map_err(|err @ std::ffi::NulError { .. }| {
             let name = err.into_vec();
             let name = unsafe { String::from_utf8_unchecked(name) };
-            ProgramError::InvalidName { name }
+            ProgramError::InvalidName {
+                name,
+                source: None,
+            }
         })?;
         Some(prog_name)
     } else {
