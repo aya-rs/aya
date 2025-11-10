@@ -476,8 +476,22 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 let guest_arch = guest_arch.trim();
 
                 let (guest_arch, machine, cpu, console) = match guest_arch {
-                    "ARM64" => ("aarch64", Some("virt"), Some("max"), "ttyAMA0"),
-                    "x86" => ("x86_64", None, Some("host"), "ttyS0"),
+                    "ARM64" => (
+                        "aarch64",
+                        Some("virt"),
+                        Some(if cfg!(target_arch = "aarch64") {
+                            "host"
+                        } else {
+                            "max"
+                        }),
+                        "ttyAMA0",
+                    ),
+                    "x86" => (
+                        "x86_64",
+                        None,
+                        cfg!(target_arch = "x86_64").then_some("host"),
+                        "ttyS0",
+                    ),
                     guest_arch => (guest_arch, None, None, "ttyS0"),
                 };
 
