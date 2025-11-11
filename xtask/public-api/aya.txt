@@ -4781,10 +4781,6 @@ impl aya::programs::links::Link for aya::programs::lsm_cgroup::LsmLink
 pub type aya::programs::lsm_cgroup::LsmLink::Id = aya::programs::lsm_cgroup::LsmLinkId
 pub fn aya::programs::lsm_cgroup::LsmLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::lsm_cgroup::LsmLink::id(&self) -> Self::Id
-impl aya::programs::links::Link for aya::programs::perf_attach::PerfLink
-pub type aya::programs::perf_attach::PerfLink::Id = aya::programs::perf_attach::PerfLinkId
-pub fn aya::programs::perf_attach::PerfLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::perf_attach::PerfLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::perf_event::PerfEventLink
 pub type aya::programs::perf_event::PerfEventLink::Id = aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -5225,44 +5221,6 @@ pub fn aya::programs::lsm_cgroup::LsmLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::lsm_cgroup::LsmLinkId
 pub fn aya::programs::lsm_cgroup::LsmLinkId::from(t: T) -> T
 pub mod aya::programs::perf_attach
-pub struct aya::programs::perf_attach::PerfLink
-impl aya::programs::links::Link for aya::programs::perf_attach::PerfLink
-pub type aya::programs::perf_attach::PerfLink::Id = aya::programs::perf_attach::PerfLinkId
-pub fn aya::programs::perf_attach::PerfLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::perf_attach::PerfLink::id(&self) -> Self::Id
-impl core::cmp::Eq for aya::programs::perf_attach::PerfLink
-impl core::cmp::PartialEq for aya::programs::perf_attach::PerfLink
-pub fn aya::programs::perf_attach::PerfLink::eq(&self, other: &Self) -> bool
-impl core::fmt::Debug for aya::programs::perf_attach::PerfLink
-pub fn aya::programs::perf_attach::PerfLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for aya::programs::perf_attach::PerfLink
-pub fn aya::programs::perf_attach::PerfLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
-impl equivalent::Equivalent<aya::programs::perf_attach::PerfLink> for aya::programs::perf_attach::PerfLinkId
-pub fn aya::programs::perf_attach::PerfLinkId::equivalent(&self, key: &aya::programs::perf_attach::PerfLink) -> bool
-impl core::marker::Freeze for aya::programs::perf_attach::PerfLink
-impl core::marker::Send for aya::programs::perf_attach::PerfLink
-impl core::marker::Sync for aya::programs::perf_attach::PerfLink
-impl core::marker::Unpin for aya::programs::perf_attach::PerfLink
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_attach::PerfLink
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_attach::PerfLink
-impl<Q, K> equivalent::Equivalent<K> for aya::programs::perf_attach::PerfLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
-pub fn aya::programs::perf_attach::PerfLink::equivalent(&self, key: &K) -> bool
-impl<T, U> core::convert::Into<U> for aya::programs::perf_attach::PerfLink where U: core::convert::From<T>
-pub fn aya::programs::perf_attach::PerfLink::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_attach::PerfLink where U: core::convert::Into<T>
-pub type aya::programs::perf_attach::PerfLink::Error = core::convert::Infallible
-pub fn aya::programs::perf_attach::PerfLink::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::perf_attach::PerfLink where U: core::convert::TryFrom<T>
-pub type aya::programs::perf_attach::PerfLink::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::perf_attach::PerfLink::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya::programs::perf_attach::PerfLink where T: 'static + ?core::marker::Sized
-pub fn aya::programs::perf_attach::PerfLink::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::perf_attach::PerfLink where T: ?core::marker::Sized
-pub fn aya::programs::perf_attach::PerfLink::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_attach::PerfLink where T: ?core::marker::Sized
-pub fn aya::programs::perf_attach::PerfLink::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::programs::perf_attach::PerfLink
-pub fn aya::programs::perf_attach::PerfLink::from(t: T) -> T
 pub struct aya::programs::perf_attach::PerfLinkId(_)
 impl core::cmp::Eq for aya::programs::perf_attach::PerfLinkId
 impl core::cmp::PartialEq for aya::programs::perf_attach::PerfLinkId
@@ -5272,8 +5230,6 @@ pub fn aya::programs::perf_attach::PerfLinkId::fmt(&self, f: &mut core::fmt::For
 impl core::hash::Hash for aya::programs::perf_attach::PerfLinkId
 pub fn aya::programs::perf_attach::PerfLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::perf_attach::PerfLinkId
-impl equivalent::Equivalent<aya::programs::perf_attach::PerfLink> for aya::programs::perf_attach::PerfLinkId
-pub fn aya::programs::perf_attach::PerfLinkId::equivalent(&self, key: &aya::programs::perf_attach::PerfLink) -> bool
 impl core::marker::Freeze for aya::programs::perf_attach::PerfLinkId
 impl core::marker::Send for aya::programs::perf_attach::PerfLinkId
 impl core::marker::Sync for aya::programs::perf_attach::PerfLinkId
@@ -10482,10 +10438,6 @@ impl aya::programs::links::Link for aya::programs::lsm_cgroup::LsmLink
 pub type aya::programs::lsm_cgroup::LsmLink::Id = aya::programs::lsm_cgroup::LsmLinkId
 pub fn aya::programs::lsm_cgroup::LsmLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::lsm_cgroup::LsmLink::id(&self) -> Self::Id
-impl aya::programs::links::Link for aya::programs::perf_attach::PerfLink
-pub type aya::programs::perf_attach::PerfLink::Id = aya::programs::perf_attach::PerfLinkId
-pub fn aya::programs::perf_attach::PerfLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::perf_attach::PerfLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::perf_event::PerfEventLink
 pub type aya::programs::perf_event::PerfEventLink::Id = aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>

@@ -56,7 +56,7 @@ pub struct PerfLinkId(RawFd);
 
 /// The attachment type of PerfEvent programs.
 #[derive(Debug)]
-pub struct PerfLink {
+pub(crate) struct PerfLink {
     perf_fd: crate::MockableFd,
     event: Option<ProbeEvent>,
 }
