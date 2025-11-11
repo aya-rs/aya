@@ -11,6 +11,8 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+permissions: {}
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -212,7 +214,6 @@ jobs:
           fi
 
   run-integration-test:
-    permissions: {}
     strategy:
       fail-fast: false
       matrix:
