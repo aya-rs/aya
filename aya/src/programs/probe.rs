@@ -324,7 +324,7 @@ fn read_sys_fs_perf_type(pmu: &str) -> Result<u32, (PathBuf, io::Error)> {
         .join("type");
 
     fs::read_to_string(&file)
-        .and_then(|perf_ty| perf_ty.trim().parse::<u32>().map_err(io::Error::other))
+        .and_then(|perf_ty| perf_ty.trim().parse().map_err(io::Error::other))
         .map_err(|e| (file, e))
 }
 
@@ -340,7 +340,7 @@ fn read_sys_fs_perf_ret_probe(pmu: &str) -> Result<u32, (PathBuf, io::Error)> {
                 .next()
                 .ok_or_else(|| io::Error::other("invalid format"))?;
 
-            config.parse::<u32>().map_err(io::Error::other)
+            config.parse().map_err(io::Error::other)
         })
         .map_err(|e| (file, e))
 }

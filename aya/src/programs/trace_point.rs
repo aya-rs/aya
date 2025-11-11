@@ -122,7 +122,7 @@ pub(crate) fn read_sys_fs_trace_point_id(
         Ok(id) => id,
         Err(io_error) => return Err(TracePointError::FileError { filename, io_error }),
     };
-    let id = match id.trim().parse::<u32>() {
+    let id = match id.trim().parse() {
         Ok(id) => id,
         Err(error) => {
             return Err(TracePointError::FileError {
