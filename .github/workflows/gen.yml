@@ -47,8 +47,9 @@ jobs:
           # abuse; the canonical workaround is to use a sufficiently authorized
           # token.
           #
-          # See https://github.com/peter-evans/create-pull-request/issues/48.
+          # See https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#workarounds-to-trigger-further-workflow-runs.
           token: ${{ secrets.CRABBY_GITHUB_TOKEN }}
+          push-to-fork: crabby-the-crab/aya
           branch: create-pull-request/codegen
           commit-message: |
             aya-obj, aya-ebpf-bindings: regenerate
