@@ -212,6 +212,7 @@ jobs:
           fi
 
   run-integration-test:
+    permissions: {}
     strategy:
       fail-fast: false
       matrix:
