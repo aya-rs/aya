@@ -15,10 +15,9 @@ pub(crate) enum UProbeKind {
 
 impl std::fmt::Display for UProbeKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use UProbeKind::*;
         match self {
-            UProbe => write!(f, "uprobe"),
-            URetProbe => write!(f, "uretprobe"),
+            Self::UProbe => write!(f, "uprobe"),
+            Self::URetProbe => write!(f, "uretprobe"),
         }
     }
 }
