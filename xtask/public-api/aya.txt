@@ -8014,10 +8014,8 @@ pub unsafe fn aya::programs::LsmAttachType::clone_to_uninit(&self, dest: *mut u8
 impl<T> core::convert::From<T> for aya::programs::LsmAttachType
 pub fn aya::programs::LsmAttachType::from(t: T) -> T
 pub enum aya::programs::ProbeKind
-pub aya::programs::ProbeKind::KProbe
-pub aya::programs::ProbeKind::KRetProbe
-pub aya::programs::ProbeKind::UProbe
-pub aya::programs::ProbeKind::URetProbe
+pub aya::programs::ProbeKind::Entry
+pub aya::programs::ProbeKind::Return
 impl core::clone::Clone for aya::programs::ProbeKind
 pub fn aya::programs::ProbeKind::clone(&self) -> aya::programs::ProbeKind
 impl core::fmt::Debug for aya::programs::ProbeKind

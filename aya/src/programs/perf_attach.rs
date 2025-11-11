@@ -8,10 +8,7 @@ use aya_obj::generated::bpf_attach_type::BPF_PERF_EVENT;
 
 use crate::{
     FEATURES,
-    programs::{
-        FdLink, Link, ProgramError, id_as_key,
-        probe::{ProbeEvent, detach_debug_fs},
-    },
+    programs::{FdLink, Link, ProgramError, id_as_key, probe::ProbeEvent},
     sys::{
         BpfLinkCreateArgs, LinkTarget, PerfEventIoctlRequest, SyscallError, bpf_link_create,
         is_bpf_cookie_supported, perf_event_ioctl,
@@ -72,7 +69,7 @@ impl Link for PerfLink {
         let Self { perf_fd, event } = self;
         let _: io::Result<()> = perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::Disable);
         if let Some(event) = event {
-            let _: Result<_, _> = detach_debug_fs(event);
+            let _: Result<(), ProgramError> = event.detach();
         }
 
         Ok(())

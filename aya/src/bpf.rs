@@ -598,11 +598,11 @@ impl<'a> EbpfLoader<'a> {
                     match &section {
                         ProgramSection::KProbe => Program::KProbe(KProbe {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            kind: ProbeKind::KProbe,
+                            kind: ProbeKind::Entry,
                         }),
                         ProgramSection::KRetProbe => Program::KProbe(KProbe {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            kind: ProbeKind::KRetProbe,
+                            kind: ProbeKind::Return,
                         }),
                         ProgramSection::UProbe { sleepable } => {
                             let mut data =
@@ -612,7 +612,7 @@ impl<'a> EbpfLoader<'a> {
                             }
                             Program::UProbe(UProbe {
                                 data,
-                                kind: ProbeKind::UProbe,
+                                kind: ProbeKind::Entry,
                             })
                         }
                         ProgramSection::URetProbe { sleepable } => {
@@ -623,7 +623,7 @@ impl<'a> EbpfLoader<'a> {
                             }
                             Program::UProbe(UProbe {
                                 data,
-                                kind: ProbeKind::URetProbe,
+                                kind: ProbeKind::Return,
                             })
                         }
                         ProgramSection::TracePoint => Program::TracePoint(TracePoint {

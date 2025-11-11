@@ -2,6 +2,7 @@
 use std::{
     error::Error,
     ffi::{CStr, OsStr, OsString},
+    fmt::{self, Write},
     fs,
     io::{self, BufRead as _, Cursor, Read as _},
     mem,
@@ -20,7 +21,7 @@ use crate::{
         FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
         impl_try_into_fdlink, load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
-        probe::{OsStringExt as _, ProbeKind, attach},
+        probe::{OsStringExt as _, Probe, ProbeKind, attach},
     },
     sys::bpf_link_get_info_by_fd,
     util::MMap,
@@ -80,8 +81,8 @@ impl UProbe {
         load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
     }
 
-    /// Returns `UProbe` if the program is a `uprobe`, or `URetProbe` if the
-    /// program is a `uretprobe`.
+    /// Returns [`ProbeKind::Entry`] if the program is a `uprobe`, or
+    /// [`ProbeKind::Return`] if the program is a `uretprobe`.
     pub fn kind(&self) -> ProbeKind {
         self.kind
     }
@@ -129,8 +130,9 @@ impl UProbe {
             offset
         };
 
+        let Self { data, kind } = self;
         let path = path.as_os_str();
-        attach(&mut self.data, self.kind, path, offset, pid, cookie)
+        attach::<Self, _>(data, *kind, path, offset, pid, cookie)
     }
 
     /// Creates a program from a pinned entry on a bpffs.
@@ -142,6 +144,20 @@ impl UProbe {
     pub fn from_pin<P: AsRef<Path>>(path: P, kind: ProbeKind) -> Result<Self, ProgramError> {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data, kind })
+    }
+}
+
+impl Probe for UProbe {
+    const PMU: &'static str = "uprobe";
+
+    type Error = UProbeError;
+
+    fn file_error(filename: PathBuf, io_error: io::Error) -> Self::Error {
+        UProbeError::FileError { filename, io_error }
+    }
+
+    fn write_offset<W: Write>(w: &mut W, _: ProbeKind, offset: u64) -> fmt::Result {
+        write!(w, ":{offset:#x}")
     }
 }
 

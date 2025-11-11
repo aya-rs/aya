@@ -557,7 +557,7 @@ fn pin_lifecycle_kprobe() {
     let attach = |prog: &mut P| prog.attach("try_to_wake_up", 0).unwrap();
     let program_pin = "/sys/fs/bpf/aya-kprobe-test-prog";
     let link_pin = "/sys/fs/bpf/aya-kprobe-test-try-to-wake-up";
-    let from_pin = |program_pin: &str| P::from_pin(program_pin, ProbeKind::KProbe).unwrap();
+    let from_pin = |program_pin: &str| P::from_pin(program_pin, ProbeKind::Entry).unwrap();
     run_pin_program_lifecycle_test(
         crate::TEST,
         program_name,
@@ -587,7 +587,7 @@ fn pin_lifecycle_uprobe() {
     };
     let program_pin = "/sys/fs/bpf/aya-uprobe-test-prog";
     let link_pin = "/sys/fs/bpf/aya-uprobe-test-uprobe-function";
-    let from_pin = |program_pin: &str| P::from_pin(program_pin, ProbeKind::UProbe).unwrap();
+    let from_pin = |program_pin: &str| P::from_pin(program_pin, ProbeKind::Entry).unwrap();
     run_pin_program_lifecycle_test(
         crate::TEST,
         program_name,
