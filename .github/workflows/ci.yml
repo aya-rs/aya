@@ -374,11 +374,8 @@ jobs:
             cargo xtask integration-test vm --cache-dir test/.tmp \
               --github-api-token ${{ secrets.GITHUB_TOKEN }}
 
-  # Provides a single status check for the entire build workflow.
-  # This is used for merge automation, like Mergify, since GH actions
-  # has no concept of "when all status checks pass".
-  # https://docs.mergify.com/conditions/#validating-all-status-checks
-  build-workflow-complete:
+  check:
+    if: always()
     needs:
       - lint
       - build-test-aya
@@ -386,4 +383,6 @@ jobs:
       - run-integration-test
     runs-on: ubuntu-latest
     steps:
-      - run: echo 'Build Complete'
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
