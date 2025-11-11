@@ -10,6 +10,8 @@ on:
 
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   codegen:
     runs-on: ubuntu-latest
