@@ -9,8 +9,6 @@ use std::{
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-use libc::pid_t;
-
 use crate::{
     programs::{
         Link, ProgramData, ProgramError, kprobe::KProbeError, perf_attach,
@@ -111,7 +109,7 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
     // separate argument.
     fn_name: &OsStr,
     offset: u64,
-    pid: Option<pid_t>,
+    pid: Option<u32>,
     cookie: Option<u64>,
 ) -> Result<T::Id, ProgramError> {
     // https://github.com/torvalds/linux/commit/e12f03d7031a977356e3d7b75a68c2185ff8d155
@@ -153,7 +151,7 @@ fn create_as_probe(
     kind: ProbeKind,
     fn_name: &OsStr,
     offset: u64,
-    pid: Option<pid_t>,
+    pid: Option<u32>,
 ) -> Result<crate::MockableFd, ProgramError> {
     use ProbeKind::*;
 
@@ -188,7 +186,7 @@ fn create_as_trace_point(
     kind: ProbeKind,
     name: &OsStr,
     offset: u64,
-    pid: Option<pid_t>,
+    pid: Option<u32>,
 ) -> Result<(crate::MockableFd, OsString), ProgramError> {
     use ProbeKind::*;
 

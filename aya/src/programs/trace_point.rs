@@ -115,7 +115,7 @@ pub(crate) fn read_sys_fs_trace_point_id(
     tracefs: &Path,
     category: &str,
     name: &Path,
-) -> Result<u32, TracePointError> {
+) -> Result<u64, TracePointError> {
     let filename = tracefs.join("events").join(category).join(name).join("id");
 
     let id = match fs::read_to_string(&filename) {

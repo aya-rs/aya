@@ -7374,7 +7374,7 @@ pub aya::programs::uprobe::UProbeError::InvalidLdSoCache::io_error: &'static std
 pub aya::programs::uprobe::UProbeError::InvalidTarget
 pub aya::programs::uprobe::UProbeError::InvalidTarget::path: std::path::PathBuf
 pub aya::programs::uprobe::UProbeError::ProcMap
-pub aya::programs::uprobe::UProbeError::ProcMap::pid: i32
+pub aya::programs::uprobe::UProbeError::ProcMap::pid: u32
 pub aya::programs::uprobe::UProbeError::ProcMap::source: aya::programs::uprobe::ProcMapError
 pub aya::programs::uprobe::UProbeError::SymbolError
 pub aya::programs::uprobe::UProbeError::SymbolError::error: alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync)>
@@ -7414,7 +7414,7 @@ pub fn aya::programs::uprobe::UProbeError::from(t: T) -> T
 pub struct aya::programs::uprobe::UProbe
 impl aya::programs::uprobe::UProbe
 pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::uprobe::UProbe::attach<'loc, T: core::convert::AsRef<std::path::Path>, Loc: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'loc>>>(&mut self, location: Loc, target: T, pid: core::option::Option<libc::unix::pid_t>, cookie: core::option::Option<u64>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
+pub fn aya::programs::uprobe::UProbe::attach<'loc, T: core::convert::AsRef<std::path::Path>, Loc: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'loc>>>(&mut self, location: Loc, target: T, pid: core::option::Option<u32>, cookie: core::option::Option<u64>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -8627,7 +8627,7 @@ pub aya::programs::UProbeError::InvalidLdSoCache::io_error: &'static std::io::er
 pub aya::programs::UProbeError::InvalidTarget
 pub aya::programs::UProbeError::InvalidTarget::path: std::path::PathBuf
 pub aya::programs::UProbeError::ProcMap
-pub aya::programs::UProbeError::ProcMap::pid: i32
+pub aya::programs::UProbeError::ProcMap::pid: u32
 pub aya::programs::UProbeError::ProcMap::source: aya::programs::uprobe::ProcMapError
 pub aya::programs::UProbeError::SymbolError
 pub aya::programs::UProbeError::SymbolError::error: alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync)>
@@ -10149,7 +10149,7 @@ pub fn aya::programs::trace_point::TracePoint::from(t: T) -> T
 pub struct aya::programs::UProbe
 impl aya::programs::uprobe::UProbe
 pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::uprobe::UProbe::attach<'loc, T: core::convert::AsRef<std::path::Path>, Loc: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'loc>>>(&mut self, location: Loc, target: T, pid: core::option::Option<libc::unix::pid_t>, cookie: core::option::Option<u64>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
+pub fn aya::programs::uprobe::UProbe::attach<'loc, T: core::convert::AsRef<std::path::Path>, Loc: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'loc>>>(&mut self, location: Loc, target: T, pid: core::option::Option<u32>, cookie: core::option::Option<u64>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>

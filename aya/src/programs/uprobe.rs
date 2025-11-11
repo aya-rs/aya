@@ -11,7 +11,6 @@ use std::{
 };
 
 use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE};
-use libc::pid_t;
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, Symbol};
 use thiserror::Error;
 
@@ -109,7 +108,7 @@ impl UProbe {
         &mut self,
         location: Loc,
         target: T,
-        pid: Option<pid_t>,
+        pid: Option<u32>,
         cookie: Option<u64>,
     ) -> Result<UProbeLinkId, ProgramError> {
         let proc_map = pid.map(ProcMap::new).transpose()?;
@@ -159,9 +158,10 @@ where
         .and_then(|proc_map| {
             proc_map
                 .find_library_path_by_name(target)
-                .map_err(|source| UProbeError::ProcMap {
-                    pid: proc_map.pid,
-                    source,
+                .map_err(|source| {
+                    let ProcMap { pid, data: _ } = proc_map;
+                    let pid = *pid;
+                    UProbeError::ProcMap { pid, source }
                 })
                 .transpose()
         })
@@ -190,7 +190,7 @@ where
 )]
 fn test_resolve_attach_path() {
     // Look up the current process's pid.
-    let pid = std::process::id().try_into().unwrap();
+    let pid = std::process::id();
     let proc_map = ProcMap::new(pid).unwrap();
 
     // Now let's resolve the path to libc. It should exist in the current process's memory map and
@@ -287,7 +287,7 @@ pub enum UProbeError {
     #[error("error fetching libs for {pid}")]
     ProcMap {
         /// The pid.
-        pid: i32,
+        pid: u32,
         /// The [`ProcMapError`] that caused the error.
         #[source]
         source: ProcMapError,
@@ -419,12 +419,12 @@ impl<'a> ProcMapEntry<'a> {
 ///
 /// The information here may be used to resolve addresses to paths.
 struct ProcMap<T> {
-    pid: pid_t,
+    pid: u32,
     data: T,
 }
 
 impl ProcMap<Vec<u8>> {
-    fn new(pid: pid_t) -> Result<Self, UProbeError> {
+    fn new(pid: u32) -> Result<Self, UProbeError> {
         let filename = PathBuf::from(format!("/proc/{pid}/maps"));
         let data = fs::read(&filename)
             .map_err(|io_error| UProbeError::FileError { filename, io_error })?;

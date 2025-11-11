@@ -133,7 +133,7 @@ pub(crate) fn perf_event_open_probe(
     ret_bit: Option<u32>,
     name: &OsStr,
     offset: u64,
-    pid: Option<pid_t>,
+    pid: Option<u32>,
 ) -> io::Result<crate::MockableFd> {
     use std::os::unix::ffi::OsStrExt as _;
 
@@ -150,26 +150,30 @@ pub(crate) fn perf_event_open_probe(
     attr.__bindgen_anon_3.config1 = c_name.as_ptr() as u64;
     attr.__bindgen_anon_4.config2 = offset;
 
-    let cpu = if pid.is_some() { -1 } else { 0 };
-    let pid = pid.unwrap_or(-1);
+    let (pid, cpu) = match pid {
+        Some(pid) => (pid as i32, -1),
+        None => (-1, 0),
+    };
 
     perf_event_sys(attr, pid, cpu, PERF_FLAG_FD_CLOEXEC)
 }
 
 pub(crate) fn perf_event_open_trace_point(
-    id: u32,
-    pid: Option<pid_t>,
+    event_id: u64,
+    pid: Option<u32>,
 ) -> io::Result<crate::MockableFd> {
-    let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
-
-    attr.size = mem::size_of::<perf_event_attr>() as u32;
-    attr.type_ = PERF_TYPE_TRACEPOINT as u32;
-    attr.config = u64::from(id);
-
-    let cpu = if pid.is_some() { -1 } else { 0 };
-    let pid = pid.unwrap_or(-1);
-
-    perf_event_sys(attr, pid, cpu, PERF_FLAG_FD_CLOEXEC)
+    let scope = match pid {
+        Some(pid) => PerfEventScope::OneProcess { pid, cpu: None },
+        None => PerfEventScope::AllProcessesOneCpu { cpu: 0 },
+    };
+    perf_event_open(
+        PerfEventConfig::TracePoint { event_id },
+        scope,
+        SamplePolicy::Period(0),
+        WakeupPolicy::Events(1),
+        false,
+        PERF_FLAG_FD_CLOEXEC,
+    )
 }
 
 pub(crate) fn perf_event_ioctl(
