@@ -456,7 +456,7 @@ impl PerfEvent {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
 
-        let fd = perf_event_open(
+        let perf_fd = perf_event_open(
             config,
             scope,
             sample_policy,
@@ -469,7 +469,7 @@ impl PerfEvent {
             io_error,
         })?;
 
-        let link = perf_attach(prog_fd, fd, None /* cookie */)?;
+        let link = perf_attach(prog_fd, perf_fd, None /* cookie */)?;
         self.data.links.insert(PerfEventLink::new(link))
     }
 }

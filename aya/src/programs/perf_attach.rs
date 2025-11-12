@@ -83,7 +83,7 @@ id_as_key!(PerfLink, PerfLinkId);
 
 pub(crate) fn perf_attach(
     prog_fd: BorrowedFd<'_>,
-    fd: crate::MockableFd,
+    perf_fd: crate::MockableFd,
     cookie: Option<u64>,
 ) -> Result<PerfLinkInner, ProgramError> {
     if cookie.is_some() && (!is_bpf_cookie_supported() || !FEATURES.bpf_perf_link()) {
@@ -92,7 +92,7 @@ pub(crate) fn perf_attach(
     if FEATURES.bpf_perf_link() {
         let link_fd = bpf_link_create(
             prog_fd,
-            LinkTarget::Fd(fd.as_fd()),
+            LinkTarget::Fd(perf_fd.as_fd()),
             BPF_PERF_EVENT,
             0,
             cookie.map(|bpf_cookie| BpfLinkCreateArgs::PerfEvent { bpf_cookie }),
@@ -103,35 +103,35 @@ pub(crate) fn perf_attach(
         })?;
         Ok(PerfLinkInner::Fd(FdLink::new(link_fd)))
     } else {
-        perf_attach_either(prog_fd, fd, None)
+        perf_attach_either(prog_fd, perf_fd, None)
     }
 }
 
 pub(crate) fn perf_attach_debugfs(
     prog_fd: BorrowedFd<'_>,
-    fd: crate::MockableFd,
+    perf_fd: crate::MockableFd,
     event: ProbeEvent,
 ) -> Result<PerfLinkInner, ProgramError> {
-    perf_attach_either(prog_fd, fd, Some(event))
+    perf_attach_either(prog_fd, perf_fd, Some(event))
 }
 
 fn perf_attach_either(
     prog_fd: BorrowedFd<'_>,
-    fd: crate::MockableFd,
+    perf_fd: crate::MockableFd,
     event: Option<ProbeEvent>,
 ) -> Result<PerfLinkInner, ProgramError> {
-    perf_event_ioctl(fd.as_fd(), PerfEventIoctlRequest::SetBpf(prog_fd)).map_err(|io_error| {
-        SyscallError {
+    perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::SetBpf(prog_fd)).map_err(
+        |io_error| SyscallError {
             call: "PERF_EVENT_IOC_SET_BPF",
             io_error,
-        }
-    })?;
-    perf_event_ioctl(fd.as_fd(), PerfEventIoctlRequest::Enable).map_err(|io_error| {
+        },
+    )?;
+    perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::Enable).map_err(|io_error| {
         SyscallError {
             call: "PERF_EVENT_IOC_ENABLE",
             io_error,
         }
     })?;
 
-    Ok(PerfLinkInner::PerfLink(PerfLink { perf_fd: fd, event }))
+    Ok(PerfLinkInner::PerfLink(PerfLink { perf_fd, event }))
 }

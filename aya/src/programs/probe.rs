@@ -122,11 +122,11 @@ pub(crate) fn attach<T: Link + From<PerfLinkInner>>(
         if cookie.is_some() {
             return Err(ProgramError::AttachCookieNotSupported);
         }
-        let (fd, event_alias) = create_as_trace_point(kind, fn_name, offset, pid)?;
-        perf_attach_debugfs(prog_fd, fd, ProbeEvent { kind, event_alias })
+        let (perf_fd, event_alias) = create_as_trace_point(kind, fn_name, offset, pid)?;
+        perf_attach_debugfs(prog_fd, perf_fd, ProbeEvent { kind, event_alias })
     } else {
-        let fd = create_as_probe(kind, fn_name, offset, pid)?;
-        perf_attach(prog_fd, fd, cookie)
+        let perf_fd = create_as_probe(kind, fn_name, offset, pid)?;
+        perf_attach(prog_fd, perf_fd, cookie)
     }?;
     program_data.links.insert(T::from(link))
 }
@@ -203,12 +203,12 @@ fn create_as_trace_point(
 
     let category = format!("{}s", kind.pmu());
     let tpid = read_sys_fs_trace_point_id(tracefs, &category, event_alias.as_ref())?;
-    let fd = perf_event_open_trace_point(tpid, pid).map_err(|io_error| SyscallError {
+    let perf_fd = perf_event_open_trace_point(tpid, pid).map_err(|io_error| SyscallError {
         call: "perf_event_open",
         io_error,
     })?;
 
-    Ok((fd, event_alias))
+    Ok((perf_fd, event_alias))
 }
 
 fn create_probe_event(
