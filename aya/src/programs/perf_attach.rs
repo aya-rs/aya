@@ -115,7 +115,7 @@ pub(crate) fn perf_attach_debugfs(
 fn perf_attach_either(
     prog_fd: BorrowedFd<'_>,
     perf_fd: crate::MockableFd,
-    event: Option<ProbeEvent>,
+    mut event: Option<ProbeEvent>,
 ) -> Result<PerfLinkInner, ProgramError> {
     perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::SetBpf(prog_fd)).map_err(
         |io_error| SyscallError {
@@ -129,6 +129,10 @@ fn perf_attach_either(
             io_error,
         }
     })?;
+
+    if let Some(event) = event.as_mut() {
+        event.disarm();
+    }
 
     Ok(PerfLinkInner::PerfLink(PerfLink { perf_fd, event }))
 }

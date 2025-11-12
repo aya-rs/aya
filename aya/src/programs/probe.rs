@@ -88,19 +88,49 @@ impl OsStringExt for OsStr {
     }
 }
 
+type DetachDebugFs = fn(&OsStr) -> Result<(), ProgramError>;
+
 #[derive(Debug)]
 pub(crate) struct ProbeEvent {
     event_alias: OsString,
-    detach_debug_fs: fn(&OsStr) -> Result<(), ProgramError>,
+    detach_debug_fs: Option<(DetachDebugFs, bool)>,
 }
 
 impl ProbeEvent {
-    pub(crate) fn detach(self) -> Result<(), ProgramError> {
+    pub(crate) fn disarm(&mut self) {
+        let Self {
+            event_alias: _,
+            detach_debug_fs,
+        } = self;
+        if let Some((_detach_debug_fs, is_guard)) = detach_debug_fs {
+            *is_guard = false;
+        }
+    }
+
+    pub(crate) fn detach(mut self) -> Result<(), ProgramError> {
+        let Self {
+            event_alias,
+            detach_debug_fs,
+        } = &mut self;
+        detach_debug_fs
+            .take()
+            .map(|(detach_debug_fs, _is_guard)| detach_debug_fs(event_alias))
+            .transpose()?;
+        Ok(())
+    }
+}
+
+impl Drop for ProbeEvent {
+    fn drop(&mut self) {
         let Self {
             event_alias,
             detach_debug_fs,
         } = self;
-        detach_debug_fs(&event_alias)
+        if let Some((detach_debug_fs, is_guard)) = detach_debug_fs {
+            if *is_guard {
+                let _: Result<(), ProgramError> = detach_debug_fs(event_alias);
+            }
+        }
     }
 }
 
@@ -126,15 +156,8 @@ pub(crate) fn attach<P: Probe, T: Link + From<PerfLinkInner>>(
         if cookie.is_some() {
             return Err(ProgramError::AttachCookieNotSupported);
         }
-        let (perf_fd, event_alias) = create_as_trace_point::<P>(kind, fn_name, offset, pid)?;
-        perf_attach_debugfs(
-            prog_fd,
-            perf_fd,
-            ProbeEvent {
-                event_alias,
-                detach_debug_fs: detach_debug_fs::<P>,
-            },
-        )
+        let (perf_fd, event) = create_as_trace_point::<P>(kind, fn_name, offset, pid)?;
+        perf_attach_debugfs(prog_fd, perf_fd, event)
     } else {
         let perf_fd = create_as_probe::<P>(kind, fn_name, offset, pid)?;
         perf_attach(prog_fd, perf_fd, cookie)
@@ -179,12 +202,16 @@ fn create_as_trace_point<P: Probe>(
     name: &OsStr,
     offset: u64,
     pid: Option<u32>,
-) -> Result<(crate::MockableFd, OsString), ProgramError> {
+) -> Result<(crate::MockableFd, ProbeEvent), ProgramError> {
     let tracefs = find_tracefs_path()?;
 
-    let event_alias = create_probe_event::<P>(tracefs, kind, name, offset)
+    let event = create_probe_event::<P>(tracefs, kind, name, offset)
         .map_err(|(filename, io_error)| P::file_error(filename, io_error).into())?;
 
+    let ProbeEvent {
+        event_alias,
+        detach_debug_fs: _,
+    } = &event;
     let category = format!("{}s", P::PMU);
     let tpid = read_sys_fs_trace_point_id(tracefs, &category, event_alias.as_ref())?;
     let perf_fd = perf_event_open_trace_point(tpid, pid).map_err(|io_error| SyscallError {
@@ -192,7 +219,7 @@ fn create_as_trace_point<P: Probe>(
         io_error,
     })?;
 
-    Ok((perf_fd, event_alias))
+    Ok((perf_fd, event))
 }
 
 fn create_probe_event<P: Probe>(
@@ -200,7 +227,7 @@ fn create_probe_event<P: Probe>(
     kind: ProbeKind,
     fn_name: &OsStr,
     offset: u64,
-) -> Result<OsString, (PathBuf, io::Error)> {
+) -> Result<ProbeEvent, (PathBuf, io::Error)> {
     use std::os::unix::ffi::OsStrExt as _;
 
     let probe_type_prefix = match kind {
@@ -246,7 +273,10 @@ fn create_probe_event<P: Probe>(
         .and_then(|mut events_file| events_file.write_all(probe.as_bytes()))
         .map_err(|e| (events_file_name, e))?;
 
-    Ok(event_alias)
+    Ok(ProbeEvent {
+        event_alias,
+        detach_debug_fs: Some((detach_debug_fs::<P>, true)),
+    })
 }
 
 fn delete_probe_event(
