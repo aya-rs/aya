@@ -2991,4 +2991,5 @@ impl aya_ebpf::EbpfContext for aya_ebpf::programs::tracepoint::TracePointContext
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::as_ptr(&self) -> *mut core::ffi::c_void
+pub const fn aya_ebpf::bpf_f_adj_room_encap_l2(len: u64) -> u64
 pub fn aya_ebpf::check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool
