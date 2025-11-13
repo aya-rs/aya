@@ -18,6 +18,10 @@ workspace = true
 
 [dependencies]
 bytes = { workspace = true }
+# hashbrown uses foldhash for its `DefaultHasher` implementation. However,
+# hashbrown doesn't expose any API allowing to create hashers with fixed seed,
+# so we need to use `foldhash::FixedState` directly.
+foldhash = { workspace = true }
 hashbrown = { workspace = true, features = ["default-hasher", "equivalent"] }
 log = { workspace = true }
 object = { workspace = true, features = ["elf", "read_core"] }
