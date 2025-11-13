@@ -122,8 +122,7 @@ mod intrinsics {
 ///
 /// [uapi-bpf-adj-room-encap-l2]: https://elixir.bootlin.com/linux/v6.16.4/source/include/uapi/linux/bpf.h#L6149
 #[inline(always)]
-#[allow(non_snake_case)]
-pub fn BPF_F_ADJ_ROOM_ENCAP_L2(len: u64) -> u64 {
+pub fn bpf_f_adj_room_encap_l2(len: u64) -> u64 {
     (len & u64::from(bindings::BPF_ADJ_ROOM_ENCAP_L2_MASK)) << bindings::BPF_ADJ_ROOM_ENCAP_L2_SHIFT
 }
 
