@@ -1,7 +1,8 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    fs, io,
+    fs::{self, File},
+    io::{self, Read as _},
     os::fd::{AsFd as _, AsRawFd as _},
     path::{Path, PathBuf},
     sync::{Arc, LazyLock},
@@ -16,6 +17,7 @@ use aya_obj::{
     },
     relocation::EbpfRelocationError,
 };
+use flate2::read::GzDecoder;
 use log::{debug, warn};
 use thiserror::Error;
 
@@ -29,14 +31,14 @@ use crate::{
         TracePoint, UProbe, Xdp,
     },
     sys::{
-        bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
-        is_btf_datasec_supported, is_btf_datasec_zero_supported, is_btf_decl_tag_supported,
-        is_btf_enum64_supported, is_btf_float_supported, is_btf_func_global_supported,
-        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
-        is_probe_read_kernel_supported, is_prog_id_supported, is_prog_name_supported,
-        retry_with_verifier_logs,
+        self, bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
+        is_bpf_syscall_wrapper_supported, is_btf_datasec_supported, is_btf_datasec_zero_supported,
+        is_btf_decl_tag_supported, is_btf_enum64_supported, is_btf_float_supported,
+        is_btf_func_global_supported, is_btf_func_supported, is_btf_supported,
+        is_btf_type_tag_supported, is_perf_link_supported, is_probe_read_kernel_supported,
+        is_prog_id_supported, is_prog_name_supported, retry_with_verifier_logs,
     },
-    util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
+    util::{KernelVersion, bytes_of, bytes_of_slice, nr_cpus, page_size},
 };
 
 /// Marker trait for types that can safely be converted to and from byte slices.
@@ -59,6 +61,46 @@ unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
 pub use aya_obj::maps::{PinningType, bpf_map_def};
 
 pub(crate) static FEATURES: LazyLock<Features> = LazyLock::new(detect_features);
+
+/// Kernel configuration data for eBPF extern variables.
+///
+/// This type holds kernel configuration values that can be used to patch extern variables
+/// in eBPF programs. It includes both kernel version information and CONFIG_* values from
+/// the kernel configuration.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya::{EbpfLoader, KConfig};
+///
+/// // Load kconfig from the system
+/// let kconfig = KConfig::from_system();
+/// let bpf = EbpfLoader::new()
+///     .kconfig(kconfig)
+///     .load_file("file.o")?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+#[derive(Debug, Clone)]
+pub struct KConfig {
+    data: HashMap<String, Vec<u8>>,
+}
+
+impl KConfig {
+    /// Creates a new `KConfig` by reading kernel configuration from the system.
+    ///
+    /// This will attempt to read `/proc/config.gz` or `/boot/config-<release>` and
+    /// populate the configuration with kernel version and feature detection information.
+    pub fn from_system() -> Self {
+        Self {
+            data: compute_kconfig_definition(&FEATURES),
+        }
+    }
+
+    /// Returns a reference to the underlying configuration data.
+    pub(crate) fn as_map(&self) -> &HashMap<String, Vec<u8>> {
+        &self.data
+    }
+}
 
 fn detect_features() -> Features {
     let btf = if is_btf_supported() {
@@ -83,6 +125,7 @@ fn detect_features() -> Features {
         is_bpf_cookie_supported(),
         is_prog_id_supported(BPF_MAP_TYPE_CPUMAP),
         is_prog_id_supported(BPF_MAP_TYPE_DEVMAP),
+        is_bpf_syscall_wrapper_supported(),
         btf,
     );
     debug!("BPF Feature Detection: {f:#?}");
@@ -92,6 +135,132 @@ fn detect_features() -> Features {
 /// Returns a reference to the detected BPF features.
 pub fn features() -> &'static Features {
     &FEATURES
+}
+
+fn compute_kconfig_definition(features: &Features) -> HashMap<String, Vec<u8>> {
+    let mut result = HashMap::new();
+
+    if let Ok(KernelVersion {
+        major,
+        minor,
+        patch,
+    }) = KernelVersion::current()
+    {
+        result.insert(
+            "LINUX_KERNEL_VERSION".to_string(),
+            {
+                let value = (u64::from(major) << 16) + (u64::from(minor) << 8) + u64::from(patch);
+                value.to_ne_bytes()
+            }
+            .to_vec(),
+        );
+    }
+
+    let bpf_cookie = if features.bpf_cookie() { 1u64 } else { 0u64 };
+    let bpf_syscall_wrapper = if features.bpf_syscall_wrapper() {
+        1u64
+    } else {
+        0u64
+    };
+
+    result.insert(
+        "LINUX_HAS_BPF_COOKIE".to_string(),
+        bpf_cookie.to_ne_bytes().to_vec(),
+    );
+
+    result.insert(
+        "LINUX_HAS_SYSCALL_WRAPPER".to_string(),
+        bpf_syscall_wrapper.to_ne_bytes().to_vec(),
+    );
+
+    if let Some(raw_config) = read_kconfig() {
+        for line in raw_config.lines() {
+            if !line.starts_with("CONFIG_") {
+                continue;
+            }
+
+            let parts = line.split_once('=');
+            let (key, raw_value) = match parts {
+                Some((key, value)) => (key, value),
+                _ => continue,
+            };
+
+            let value = match raw_value.chars().next() {
+                Some('n') => 0_u64.to_ne_bytes().to_vec(),
+                Some('y') => 1_u64.to_ne_bytes().to_vec(),
+                Some('m') => 2_u64.to_ne_bytes().to_vec(),
+                Some('"') => {
+                    if raw_value.len() < 2 || !raw_value.ends_with('"') {
+                        continue;
+                    }
+
+                    let raw_value = &raw_value[1..raw_value.len() - 1];
+                    raw_value
+                        .as_bytes()
+                        .iter()
+                        .chain([0].iter())
+                        .copied()
+                        .collect()
+                }
+                Some(_) => {
+                    if let Ok(value) = raw_value.parse::<u64>() {
+                        value.to_ne_bytes().to_vec()
+                    } else {
+                        continue;
+                    }
+                }
+                None => continue,
+            };
+
+            result.insert(key.to_string(), value);
+        }
+    }
+
+    result
+}
+
+fn read_kconfig() -> Option<String> {
+    let config_path = PathBuf::from("/proc/config.gz");
+    if config_path.exists() {
+        debug!("Found kernel config at {}", config_path.to_string_lossy());
+        return read_kconfig_file(&config_path, true);
+    }
+
+    let Ok(release) = sys::kernel_release() else {
+        return None;
+    };
+
+    let config_path = PathBuf::from("/boot").join(format!("config-{}", release));
+    if config_path.exists() {
+        debug!("Found kernel config at {}", config_path.to_string_lossy());
+        return read_kconfig_file(&config_path, false);
+    }
+
+    None
+}
+
+fn read_kconfig_file(path: &PathBuf, gzip: bool) -> Option<String> {
+    let mut output = String::new();
+
+    let res = if gzip {
+        File::open(path)
+            .map(GzDecoder::new)
+            .and_then(|mut file| file.read_to_string(&mut output))
+    } else {
+        File::open(path).and_then(|mut file| file.read_to_string(&mut output))
+    };
+
+    match res {
+        Ok(_) => Some(output),
+        Err(e) => {
+            warn!(
+                "Unable to read kernel config {}: {:?}",
+                path.to_string_lossy(),
+                e
+            );
+            None
+        }
+    }
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -130,6 +299,7 @@ pub struct EbpfLoader<'a> {
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
     allow_unsupported_maps: bool,
+    kconfig: Option<KConfig>,
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -169,7 +339,29 @@ impl<'a> EbpfLoader<'a> {
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
             allow_unsupported_maps: false,
+            kconfig: None,
         }
+    }
+
+    /// Sets the kernel configuration data for extern variables.
+    ///
+    /// This allows you to provide kernel configuration values that will be used to patch
+    /// extern variables in eBPF programs. If not set, extern variables will not be patched.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use aya::{EbpfLoader, KConfig};
+    ///
+    /// let kconfig = KConfig::from_system();
+    /// let bpf = EbpfLoader::new()
+    ///     .kconfig(kconfig)
+    ///     .load_file("file.o")?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn kconfig(mut self, kconfig: KConfig) -> Self {
+        self.kconfig = Some(kconfig);
+        self
     }
 
     /// Sets the target [BTF](Btf) info.
@@ -440,9 +632,13 @@ impl<'a> EbpfLoader<'a> {
             verifier_log_level,
             allow_unsupported_maps,
             map_pin_path_by_name,
+            kconfig,
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
+        if let Some(kconfig) = &kconfig {
+            obj.patch_extern_data(kconfig.as_map())?;
+        }
 
         let btf_fd = if let Some(features) = &FEATURES.btf() {
             if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
