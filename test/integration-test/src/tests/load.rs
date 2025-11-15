@@ -6,11 +6,13 @@ use aya::{
     maps::Array,
     pin::PinError,
     programs::{
-        FlowDissector, KProbe, ProbeKind, Program, ProgramError, TracePoint, UProbe, Xdp, XdpFlags,
+        FlowDissector, KProbe, LinkOrder, ProbeKind, Program, ProgramError, SchedClassifier,
+        TcAttachType, TracePoint, UProbe, Xdp, XdpFlags,
         flow_dissector::{FlowDissectorLink, FlowDissectorLinkId},
         kprobe::{KProbeLink, KProbeLinkId},
         links::{FdLink, LinkError, PinnedLink},
         loaded_links, loaded_programs,
+        tc::TcAttachOptions,
         trace_point::{TracePointLink, TracePointLinkId},
         uprobe::{UProbeLink, UProbeLinkId},
         xdp::{XdpLink, XdpLinkId},
@@ -391,6 +393,58 @@ fn pin_link() {
 
     // finally when new_link is dropped we're detached
     drop(new_link);
+    assert_unloaded(program_name);
+}
+
+#[test_log::test]
+fn pin_tcx_link() {
+    // TCX links require kernel >= 6.6
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(6, 6, 0) {
+        eprintln!("skipping pin_tcx_link test on kernel {kernel_version:?}");
+        return;
+    }
+
+    use crate::utils::NetNsGuard;
+    let _netns = NetNsGuard::new();
+
+    let program_name = "tcx_next";
+    let pin_path = "/sys/fs/bpf/aya-tcx-test-lo";
+    let mut bpf = Ebpf::load(crate::TCX).unwrap();
+    let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let link_id = prog
+        .attach_with_options(
+            "lo",
+            TcAttachType::Ingress,
+            TcAttachOptions::TcxOrder(LinkOrder::default()),
+        )
+        .unwrap();
+    let link = prog.take_link(link_id).unwrap();
+    assert_loaded(program_name);
+
+    let fd_link: FdLink = link.try_into().unwrap();
+    fd_link.pin(pin_path).unwrap();
+
+    // Because of the pin, the program is still attached
+    prog.unload().unwrap();
+    assert_loaded(program_name);
+
+    // Load a new program and atomically replace the old one using attach_to_link
+    let mut bpf = Ebpf::load(crate::TCX).unwrap();
+    let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let old_link = PinnedLink::from_pin(pin_path).unwrap();
+    let link = FdLink::from(old_link).try_into().unwrap();
+    let _link_id = prog.attach_to_link(link).unwrap();
+
+    assert_loaded(program_name);
+
+    // Clean up: remove the stale pin file and drop the bpf instance (which drops the program and link)
+    remove_file(pin_path).unwrap();
+    drop(bpf);
     assert_unloaded(program_name);
 }
 
