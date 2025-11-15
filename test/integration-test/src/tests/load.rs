@@ -6,11 +6,13 @@ use aya::{
     maps::Array,
     pin::PinError,
     programs::{
-        FlowDissector, KProbe, ProbeKind, Program, ProgramError, TracePoint, UProbe, Xdp, XdpFlags,
+        FlowDissector, KProbe, LinkOrder, ProbeKind, Program, ProgramError, SchedClassifier,
+        TcAttachType, TracePoint, UProbe, Xdp, XdpFlags,
         flow_dissector::{FlowDissectorLink, FlowDissectorLinkId},
         kprobe::{KProbeLink, KProbeLinkId},
         links::{FdLink, LinkError, PinnedLink},
         loaded_links, loaded_programs,
+        tc::TcAttachOptions,
         trace_point::{TracePointLink, TracePointLinkId},
         uprobe::{UProbeLink, UProbeLinkId},
         xdp::{XdpLink, XdpLinkId},
@@ -380,6 +382,49 @@ fn pin_link() {
 
     let fd_link: FdLink = link.try_into().unwrap();
     let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
+
+    // because of the pin, the program is still attached
+    prog.unload().unwrap();
+    assert_loaded(program_name);
+
+    // delete the pin, but the program is still attached
+    let new_link = pinned.unpin().unwrap();
+    assert_loaded(program_name);
+
+    // finally when new_link is dropped we're detached
+    drop(new_link);
+    assert_unloaded(program_name);
+}
+
+#[test_log::test]
+fn pin_tcx_link() {
+    // TCX links require kernel >= 6.6
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(6, 6, 0) {
+        eprintln!("skipping pin_tc_link test on kernel {kernel_version:?}");
+        return;
+    }
+
+    use crate::utils::NetNsGuard;
+    let _netns = NetNsGuard::new();
+
+    let program_name = "tcx_next";
+    let mut bpf = Ebpf::load(crate::TCX).unwrap();
+    let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let link_id = prog
+        .attach_with_options(
+            "lo",
+            TcAttachType::Ingress,
+            TcAttachOptions::TcxOrder(LinkOrder::default()),
+        )
+        .unwrap();
+    let link = prog.take_link(link_id).unwrap();
+    assert_loaded(program_name);
+
+    let fd_link: FdLink = link.try_into().unwrap();
+    let pinned = fd_link.pin("/sys/fs/bpf/aya-tcx-test-lo").unwrap();
 
     // because of the pin, the program is still attached
     prog.unload().unwrap();

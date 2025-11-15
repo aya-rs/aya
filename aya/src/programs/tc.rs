@@ -205,12 +205,37 @@ impl SchedClassifier {
     ///
     /// The returned value can be used to detach, see [SchedClassifier::detach].
     ///
+    /// # Link Pinning (TCX mode, kernel >= 6.6)
+    ///
+    /// Links can be pinned to bpffs for atomic replacement across process restarts.
+    ///
+    /// ```no_run
+    /// # use std::path::Path;
+    /// # use aya::programs::{tc, SchedClassifier, TcAttachType, tc::TcAttachOptions, LinkOrder, links::{FdLink, PinnedLink}};
+    /// # let mut bpf = aya::Ebpf::load(&[])?;
+    /// # let prog: &mut SchedClassifier = bpf.program_mut("prog").unwrap().try_into()?;
+    /// # prog.load()?;
+    /// let pin_path = "/sys/fs/bpf/my_link";
+    ///
+    /// let link_id = if Path::new(pin_path).exists() {
+    ///     let old = PinnedLink::from_pin(pin_path)?;
+    ///     prog.attach_to_link(FdLink::from(old).try_into()?)?  // atomic replacement
+    /// } else {
+    ///     prog.attach_with_options("eth0", TcAttachType::Ingress,
+    ///                               TcAttachOptions::TcxOrder(LinkOrder::default()))?
+    /// };
+    ///
+    /// let link = prog.take_link(link_id)?;
+    /// let fd_link: FdLink = link.try_into()?;
+    /// fd_link.pin(pin_path)?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    ///
     /// # Errors
     ///
     /// [`TcError::NetlinkError`] is returned if attaching fails. A common cause
     /// of failure is not having added the `clsact` qdisc to the given
-    /// interface, see [`qdisc_add_clsact`]
-    ///
+    /// interface, see [`qdisc_add_clsact`]
     pub fn attach_with_options(
         &mut self,
         interface: &str,
