@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Improvements
+
+ - <csr-id-1bf6a386197d019c0a548fdf488c9edf6c67c7e1/> Simplified the parser’s parameter handling so formatting errors are surfaced earlier and with clearer context.
+ - <csr-id-a98b638fa95fd8edb8c015ee03154d2f03ecffc8/> Added raw-pointer format support to stay in sync with the new logging capabilities.
+
+### Maintenance
+
+ - <csr-id-f0a9f19ddc7f02143a02dcc2bf6be88fa2d84063/>, <csr-id-41706d74e44f2c3589c28a7149beb4db185594f2/> Bumped the edition and refreshed lint/formatting settings alongside the rest of the workspace.
+
 ## v0.1.13 (2024-04-12)
 
 <csr-id-13b1fc63ef2ae083ba03ce9de24cb4f31f989d21/>

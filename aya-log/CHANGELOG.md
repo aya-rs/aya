@@ -7,19 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### New Features
-
-- Add eBPF-side log level `AYA_LOG_LEVEL` allowing selective disabling of log
-  levels at load-time. Disabled levels are eliminated by the verifier, reducing
-  instruction count and avoiding program size limits when extensive logging is
-  present.
-
 ### Breaking Changes
 
-- The implementation is now backed by a ring buffer rather than a perf event array. This should
-  improve performance but increases the minimum supported kernel version to 5.8.
+ - <csr-id-9be2d723ce5d7bf5f85d69d54aa5fd7f60d48edc/> Host-side logging now rides on a ring buffer instead of a perf array. This improves throughput but requires Linux ≥ 5.8.
+ - <csr-id-61376c4608ebd2c10f05f3e917833832158d7c87/> Dropped the built-in `tokio` dependency. Consumers must bring their own async runtime when forwarding log records.
 
-- Drop the built-in `tokio` dependency. Users must now BYOR (bring your own runtime).
+### New Features
+
+ - <csr-id-b36cbc3eb8413d4fba4f2d820fec8176751457ac/> Added the `AYA_LOG_LEVEL` mask so unwanted log levels can be disabled at load time and optimised away by the verifier.
+ - <csr-id-44ec978bd35c5af484b73c273b5bd18886033b5a/> `EbpfLogger` now implements `AsFd`, simplifying integration with selectors and event loops.
+ - <csr-id-a98b638fa95fd8edb8c015ee03154d2f03ecffc8/> Added support for logging raw pointer types, which unlocks richer debugging output from probes.
 
 ## v0.2.1 (2024-10-09)
 

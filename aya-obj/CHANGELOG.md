@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### New Features
+
+ - <csr-id-77b1c6194c8f9bb69ffc6a60c3b8189b73e00e8f/> Updated the loader to understand Flow Dissector programs so objects containing those sections can now be parsed and attached.
+ - <csr-id-3ff60911375a6044bbf9060bef25aa5e9d3747ae/>, <csr-id-6252b4c9722c7c2ee2458741ae328dcc0c3c5234/> Regenerated libbpf bindings, bringing in MIPS and LoongArch64 support.
+ - <csr-id-94c85726b3860787152b0ab9929f3d69f777e7a3/>, <csr-id-658ae0fbd27b481780dc8df0c9ff4021777fe94c/> Switched to generated constants and helper APIs (e.g. `CStr::from_bytes_until_nul`) for safer symbol handling.
+
+### Bug Fixes
+
+ - <csr-id-7224efcad8726439e9ac9ccdc28e19116bf00606/>, <csr-id-8e9404ec3cc0564cafad6a733cb138ed1421d462/> Fixed BTF relocations involving zero-sized sections and 64-bit enums so objects built with newer clang/jit toolchains load correctly.
+ - <csr-id-3ade19b869dd3aa746d17e52bb3c7b683859e413/>, <csr-id-f76fdf9da51852f5e13011b2d3ba6f9204943de7/> Promoted BTF loading failures (and diagnostic output) to proper errors instead of panics/unreachable paths.
+
+### Maintenance
+
+ - <csr-id-23bc5b5836c3b8383f2f8a78bd3902e193a7a176/>, <csr-id-9a47495227a03400fa2549b07fe8af131f21e759/> Cached feature-probed info fields and preserved pointer provenance, plus the usual lint/edition updates to stay aligned with the workspace.
+
 ## 0.2.1 (2024-11-01)
 
 ### New Features

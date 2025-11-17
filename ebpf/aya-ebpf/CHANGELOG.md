@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Breaking Changes
+
+ - <csr-id-3569c9afc3dc7babb6b44aa071828df7c8864834/> Map helper functions now take `*mut c_void`, matching the kernel’s prototypes. Any out-of-tree helpers should update their signatures accordingly.
+
+### New Features
+
+ - <csr-id-0b58d3eb6d399c812181d2d64de32cde1b44f6eb/> Added a `bpf_strncmp` helper binding.
+ - <csr-id-f34d355d7d70f8f9ef0f0a01a4338e50cf0080b4/> Raw tracepoints now expose their arguments so programs no longer need to guess register layouts.
+ - <csr-id-1ccac3c135f280eead50ff18cd4c4340001018c6/>, <csr-id-6252b4c9722c7c2ee2458741ae328dcc0c3c5234/> Added mips/loongarch register helpers so those targets can implement `FromPtRegs`.
+ - <csr-id-dc543ae44aab09ea9ab550b164ca0711293e87fe/> `XdpContext` exposes the interface index, simplifying multi-interface programs.
+ - <csr-id-2fb19f3ee2c95a34382b33762e9fb8841ec8c048/> Added `Array::set()` to update array contents from eBPF code.
+ - <csr-id-77b1c6194c8f9bb69ffc6a60c3b8189b73e00e8f/> Introduced Flow Dissector program support on the eBPF side.
+ - <csr-id-3f60168d4bab042d26094f7962b96f0772b52ae7/> Added `RingBufBytes` so probes can emit raw byte slices efficiently.
+ - <csr-id-0b2a544ddd9df74ebcdb46128b6bcc48336b2762/>, <csr-id-53ec6164114bba84be145dc9659aaac917dd7a15/> Added BTF array definitions plus `Queue`/`Stack::peek()` helpers for safer data-structure inspection.
+
+### Bug Fixes
+
+ - <csr-id-1fe12b99907dda6553a6069fa462d6241d3fa171/> Fixed riscv64 builds by updating the generated bindings.
+ - <csr-id-f537dc66845e70bc3af2dbb9944562cf38117bcb/> Cleaned up ring-buffer code to avoid reliance on `as` casts, preventing UB on strict architectures.
+ - <csr-id-6004fcdb0fb5a6157ba5416f439e5807567c87a7/> Guarded the libc `mem*` shims behind `cfg(target_arch = "bpf")`, ensuring CPU builds stay well-defined.
+
+### Maintenance
+
+ - <csr-id-4f654865e9e592a93e11feb8558a461c4b6865b5/>, <csr-id-4b4b9f83bd6c1762a5366d2d89353adf4364f76e/> Added configuration flags for `generic_const_exprs` and the loongarch target, plus the usual lint/documentation refresh.
+
 ## v0.1.1 (2024-10-09)
 
 ### New Features

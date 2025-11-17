@@ -5,6 +5,14 @@ This project adheres to $[Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### New Features
+
+ - <csr-id-2eaae09c31add79103331aa551e8f74de86cd037/>, <csr-id-6252b4c9722c7c2ee2458741ae328dcc0c3c5234/> Added the missing MIPS and LoongArch definitions so the cty shim covers every architecture supported by Aya.
+
+### Maintenance
+
+ - <csr-id-1fe12b99907dda6553a6069fa462d6241d3fa171/>, <csr-id-09eefd366f7410c2f4744bb2bae533d9ce92ae20/> Tidied the crate (removing the abandoned Travis setup) and refreshed the bindings so downstream riscv64 builds stay green.
+
 ## [v0.2.1] - 2019-11-16
 
 ### Added
