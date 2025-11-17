@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Breaking Changes
+
+ - <csr-id-9be2d723ce5d7bf5f85d69d54aa5fd7f60d48edc/> Logging from eBPF programs now writes into a ring buffer to match the host transport, requiring Linux 5.8 or later.
+
+### New Features
+
+ - <csr-id-b36cbc3eb8413d4fba4f2d820fec8176751457ac/>, <csr-id-f6606473af43090190337dd42f593df2f907ac0a/> Added a load-time log level mask and improved verifier hints so disabled log levels are optimised out entirely.
+ - <csr-id-353b83383dccc430619f3c6d95e17edd6ca8a96c/> Logging paths now use zero-copy writes into the ring buffer, lowering instruction counts inside probes.
+ - <csr-id-a98b638fa95fd8edb8c015ee03154d2f03ecffc8/> Added raw-pointer formatting so eBPF logs can mirror the new host-side diagnostics.
+
+### Maintenance
+
+ - <csr-id-f0a9f19ddc7f02143a02dcc2bf6be88fa2d84063/>, <csr-id-8fb19264da203ae3b6089b1b09b7cee13d235b09/> Kept the crate in sync with the workspace edition/lint settings and tidied the macro support helpers.
+
 ## 0.1.1 (2024-10-09)
 
 Maintenance release. Update to latest aya-ebpf version v0.1.1.
