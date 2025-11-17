@@ -28,10 +28,12 @@ it.
 git checkout -b my-release-branch
 cargo smart-release \
   aya \
+  aya-build \
   aya-ebpf \
-  aya-log-ebpf \
   aya-log \
+  aya-log-ebpf \
   --execute \
+  --no-changelog-github-release \
   --signoff
 ```
 
