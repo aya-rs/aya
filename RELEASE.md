@@ -32,6 +32,7 @@ cargo smart-release \
   aya-log-ebpf \
   aya-log \
   --execute \
+  --no-changelog-github-release \
   --signoff
 ```
 
