@@ -26,7 +26,7 @@ jobs:
     uses: melodium-tech/github-actions/.github/workflows/melodium-local-distrib.yml@v0.9.1
     with:
       command: |
-        run .melodium-ci/Compo.toml buildTestAya --repository_clone_url='"${{ github.repositoryUrl }}"' --repository_clone_ref='"${{ github.ref_name }}"' --github_contexts='$''{{{{ { "github": ${{ toJSON(github) }}, "vars": ${{ toJSON(vars) }}, "secrets": { "GITHUB_TOKEN": "'"$GITHUB_TOKEN"'" } } }}}}'
+        run .melodium-ci/Compo.toml buildTestAya --repository_clone_url='"${{ github.repositoryUrl }}"' --repository_clone_ref='"${{ github.ref_name }}"' --github_contexts='$''{{{{ { "github": { "api_url": ${{ toJSON(github.api_url) }}, "repository": ${{ toJSON(github.repository) }}, "sha": ${{ toJSON(github.sha) }} }, "secrets": { "GITHUB_TOKEN": "'"$GITHUB_TOKEN"'" } } }}}}'
       artifact-path: 'logs/'
     secrets:
         token: ${{ secrets.GITHUB_TOKEN }}
@@ -34,7 +34,7 @@ jobs:
     uses: melodium-tech/github-actions/.github/workflows/melodium-local-distrib.yml@v0.9.1
     with:
       command: |
-        run .melodium-ci/Compo.toml buildTestAyaEbpf --repository_clone_url='"${{ github.repositoryUrl }}"' --repository_clone_ref='"${{ github.ref_name }}"' --github_contexts='$''{{{{ { "github": ${{ toJSON(github) }}, "vars": ${{ toJSON(vars) }}, "secrets": { "GITHUB_TOKEN": "'"$GITHUB_TOKEN"'" } } }}}}'
+        run .melodium-ci/Compo.toml buildTestAyaEbpf --repository_clone_url='"${{ github.repositoryUrl }}"' --repository_clone_ref='"${{ github.ref_name }}"' --github_contexts='$''{{{{ { "github": { "api_url": ${{ toJSON(github.api_url) }}, "repository": ${{ toJSON(github.repository) }}, "sha": ${{ toJSON(github.sha) }} }, "secrets": { "GITHUB_TOKEN": "'"$GITHUB_TOKEN"'" } } }}}}'
       artifact-path: 'logs/'
     secrets:
         token: ${{ secrets.GITHUB_TOKEN }}
