@@ -14,6 +14,7 @@ use javascript::JavaScriptEngine
 use log/logger::Logger
 use log/log::logErrorMessage
 use process/command::|raw_commands
+use process/command::|command
 use process/environment::Environment
 use process/environment::|environment
 use std/data/string_map::|entry
@@ -93,6 +94,28 @@ treatment buildTestAya(const github_contexts: string = "{}", repository_clone_ur
     prepareContexts.ready -> build_x86_64.trigger*/
 }
 
+treatment checkout[logger: Logger, runner: CicdRunnerEngine](label: string, executor_name: string = "rust", repository_clone_url: string, repository_clone_ref: string)
+  input trigger: Block<void>
+  output success: Block<void>
+  output error: Block<void>
+{
+    stepOn[logger=logger, runner=runner](
+        name = label,
+        executor_name = |wrap<string>(executor_name),
+        commands = |raw_commands([
+            "git config --global url.https://.insteadOf  git://",
+            |format("git clone --branch {repository_clone_ref} --depth 1 {repository_clone_url} /root/aya",
+                |map([
+                    |entry("repository_clone_ref", repository_clone_ref),
+                    |entry("repository_clone_url", repository_clone_url)
+                ])
+            )
+        ])
+    )
+    Self.trigger -> stepOn.trigger,success -> Self.success
+                    stepOn.error -----------> Self.error
+}
+
 treatment buildTestAyaForArch[logger: Logger, dispatcher: CicdDispatchEngine, github_contexts: JavaScriptEngine, finish_concentrator: Concentrator](short_rust_arch: string, full_rust_arch: string, ubuntu_arch: string, repository_clone_ref: string, repository_clone_url: string)
   model runner: CicdRunnerEngine()
   input trigger: Block<void>
@@ -151,18 +174,10 @@ treatment buildTestAyaForArch[logger: Logger, dispatcher: CicdDispatchEngine, gi
     setupRunner.ready -> prepareSystem.trigger,success -> prepare.a
     setupRunner.ready -> prepareRust.trigger,success ---> prepare.b
 
-    checkout: stepOn[logger=logger, runner=runner](
-        name = |format("checkout_{short}", |entry("short", short_rust_arch)),
-        executor_name = "rust",
-        commands = |raw_commands([
-            "git config --global url.https://.insteadOf  git://",
-            |format("git clone --branch {repository_clone_ref} --depth 1 {repository_clone_url} /root/aya",
-                |map([
-                    |entry("repository_clone_ref", repository_clone_ref),
-                    |entry("repository_clone_url", repository_clone_url)
-                ])
-            )
-        ])
+    checkout[logger=logger, runner=runner](
+        label = |format("checkout_{short}", |entry("short", short_rust_arch)),
+        repository_clone_url = repository_clone_url,
+        repository_clone_ref = repository_clone_ref
     )
 
     ready: waitBlock<void>()
@@ -205,6 +220,168 @@ treatment buildTestAyaForArch[logger: Logger, dispatcher: CicdDispatchEngine, gi
     successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
     errorState:   postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(),   name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
     failureState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |failure(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
+
+    Self.trigger --> pendingState.trigger
+    build.success -> successState.trigger
+    build.error ---> errorState.trigger
+    build.failed --> failureState.trigger
+}
+
+treatment buildTestAyaEbpfEntrypoint(const github_contexts: string = "{}", repository_clone_url: string, repository_clone_ref: string)
+  model logger: Logger()
+  model dispatcher: CicdDispatchEngine(location="compose", api_token="")
+  model github_contexts: JavaScriptEngine()
+{
+    startup()
+    prepareContexts[contexts=github_contexts](github_contexts=github_contexts)
+    manageLogs[logger=logger](output_directory="logs/")
+    startup.trigger -> prepareContexts.trigger,ready -> buildTestAyaEbpf.trigger,finished -> manageLogs.stop
+    
+    buildTestAyaEbpf[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts](
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+    
+}
+
+treatment buildTestAyaEbpf[logger: Logger, dispatcher: CicdDispatchEngine, github_contexts: JavaScriptEngine](repository_clone_ref: string, repository_clone_url: string)
+  model runner: CicdRunnerEngine()
+  input trigger: Block<void>
+  output finished: Block<void>
+{
+    setupRunner[logger=logger, dispatcher=dispatcher, runner=runner](
+        name="buildTestAya",
+        cpu=100,
+        memory=150,
+        storage=800,
+        containers=[
+            |container("rust", 6000, 1000, 8000, |amd64(), [], "rust:1.90-trixie", _)
+        ]
+    )
+    stopRunner[runner=runner]()
+    Self.trigger -> setupRunner.trigger
+    build.finished -> stopRunner.trigger
+
+    prepareSystem: stepOn[logger=logger, runner=runner](
+        name = "prepare_system",
+        executor_name = "rust",
+        commands = |raw_commands([
+            //|format("dpkg --add-architecture {arch}", |entry("arch", ubuntu_arch)),
+            "systemctl mask docker.service docker.socket",
+            "apt-get update"/*,
+            |format("apt-get install -y liblzma-dev:{arch} qemu-user", |entry("arch", ubuntu_arch)),
+            ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/taiki-e/setup-cross-toolchain-action/refs/tags/v1/main.sh | bash -"},
+            "cat /tmp/github.env"*/
+        ]),
+        environment = |wrap<Environment>(
+            |environment(
+                |map([
+                    //|entry("INPUT_TARGET", full_rust_arch),
+                    |entry("GITHUB_ENV", "/tmp/github.env")
+                ]),
+                _, // working_directory
+                false, // expand_variables
+                false // clear_env
+            )
+        )
+    )
+
+    prepareRust: stepOn[logger=logger, runner=runner](
+        name = "prepare_rust",
+        executor_name = "rust",
+        commands = |raw_commands([
+            "rustup toolchain install nightly",
+            "rustup +nightly component install rust-src",
+            "cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker --features llvm-21",
+            ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash -"},
+            "cargo binstall cargo-hack"
+        ])
+    )
+
+    prepare: waitBlock<void>()
+    setupRunner.ready -> prepareSystem.trigger,success -> prepare.a
+    setupRunner.ready -> prepareRust.trigger,success ---> prepare.b
+
+    checkout[logger=logger, runner=runner](
+        label = "checkout",
+        repository_clone_url = repository_clone_url,
+        repository_clone_ref = repository_clone_ref
+    )
+
+    ready: waitBlock<void>()
+    setupRunner.ready -> checkout.trigger,success -> ready.a
+    prepare.awaited -------------------------------> ready.b
+
+    build: stepOn[logger=logger, runner=runner](
+        name = "build",
+        executor_name = "rust",
+        commands = [|command("bash", ["-c", ${{{
+          set -euo pipefail
+
+          failures=()
+
+          # NB: this hand-rolled shell script is used instead of a matrix
+          # because the time spent doing useful work per target is about equal
+          # to the overhead of setting up the job - so this saves a bunch of
+          # machine time.
+          for arch in aarch64 arm loongarch64 mips powerpc64 riscv64 s390x x86_64; do
+            echo "::group::arch=$arch"
+            export RUSTFLAGS="--cfg bpf_target_arch=\"$arch\""
+            for target in bpfeb-unknown-none bpfel-unknown-none; do
+              echo "::group::target=$target"
+              if ! (
+                cargo +nightly hack build \
+                  --release \
+                  --target "$target" \
+                  -Z build-std=core \
+                  --package aya-ebpf \
+                  --package aya-ebpf-bindings \
+                  --package aya-log-ebpf \
+                  --package integration-ebpf \
+                  --feature-powerset
+              ); then
+                failures+=("build: $arch/$target")
+              fi
+              echo "::endgroup::"
+            done
+            if ! (
+              RUSTDOCFLAGS=$RUSTFLAGS cargo +nightly hack test --doc \
+                --package aya-ebpf \
+                --package aya-ebpf-bindings \
+                --package aya-log-ebpf \
+                --package integration-ebpf \
+                --feature-powerset
+            ); then
+              failures+=("doctests: $arch")
+            fi
+            echo "::endgroup::"
+          done
+
+          if ((${#failures[@]})); then
+            echo "::error::Some builds/tests failed:"
+            printf '  %s\n' "${failures[@]}"
+            exit 1
+          fi
+            }}}
+        ])],
+        environment = |wrap<Environment>(
+            |environment(
+                |map([
+                    |entry("RUST_BACKTRACE", "full")
+                ]),
+                "/root/aya", // working_directory
+                false, // expand_variables
+                false // clear_env
+            )
+        )
+    )
+
+    ready.awaited -> build.trigger,finished -> Self.finished
+
+    pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = "All BPF", description = "Build & test for all BPF architectures", log_response = true)
+    successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = "All BPF", description = "Build & test for all BPF architectures", log_response = true)
+    errorState:   postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(),   name = "All BPF", description = "Build & test for all BPF architectures", log_response = true)
+    failureState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |failure(), name = "All BPF", description = "Build & test for all BPF architectures", log_response = true)
 
     Self.trigger --> pendingState.trigger
     build.success -> successState.trigger
