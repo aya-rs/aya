@@ -1404,7 +1404,7 @@ pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
 
 /// Copies a block of eBPF instructions
 pub fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
-    if data.len() % mem::size_of::<bpf_insn>() > 0 {
+    if !data.len().is_multiple_of(mem::size_of::<bpf_insn>()) {
         return Err(ParseError::InvalidProgramCode);
     }
     let instructions = data

@@ -11,21 +11,19 @@ use std::{
 use anyhow::{Context as _, Result, anyhow};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 
+#[derive(Default)]
 pub struct Package<'a> {
     pub name: &'a str,
     pub root_dir: &'a str,
+    pub no_default_features: bool,
+    pub features: &'a [&'a str],
 }
 
-fn target_arch() -> Cow<'static, str> {
-    const TARGET_ARCH: &str = "CARGO_CFG_TARGET_ARCH";
-    let target_arch = env::var_os(TARGET_ARCH).unwrap_or_else(|| panic!("{TARGET_ARCH} not set"));
-    let target_arch = target_arch.into_encoded_bytes();
-    let target_arch = String::from_utf8(target_arch)
-        .unwrap_or_else(|err| panic!("String::from_utf8({TARGET_ARCH}): {err:?}"));
+fn target_arch_fixup(target_arch: Cow<'_, str>) -> Cow<'_, str> {
     if target_arch.starts_with("riscv64") {
         "riscv64".into()
     } else {
-        target_arch.into()
+        target_arch
     }
 }
 
@@ -58,10 +56,22 @@ pub fn build_ebpf<'a>(
         return Err(anyhow!("unsupported endian={endian:?}"));
     };
 
-    let arch = target_arch();
+    const TARGET_ARCH: &str = "CARGO_CFG_TARGET_ARCH";
+    let bpf_target_arch =
+        env::var_os(TARGET_ARCH).unwrap_or_else(|| panic!("{TARGET_ARCH} not set"));
+    let bpf_target_arch = bpf_target_arch
+        .into_string()
+        .unwrap_or_else(|err| panic!("OsString::into_string({TARGET_ARCH}): {err:?}"));
+    let bpf_target_arch = target_arch_fixup(bpf_target_arch.into());
     let target = format!("{target}-unknown-none");
 
-    for Package { name, root_dir } in packages {
+    for Package {
+        name,
+        root_dir,
+        no_default_features,
+        features,
+    } in packages
+    {
         // We have a build-dependency on `name`, so cargo will automatically rebuild us if `name`'s
         // *library* target or any of its dependencies change. Since we depend on `name`'s *binary*
         // targets, that only gets us half of the way. This stanza ensures cargo will rebuild us on
@@ -84,6 +94,10 @@ pub fn build_ebpf<'a>(
             "--target",
             &target,
         ]);
+        if no_default_features {
+            cmd.arg("--no-default-features");
+        }
+        cmd.args(["--features", &features.join(",")]);
 
         {
             const SEPARATOR: &str = "\x1f";
@@ -92,7 +106,7 @@ pub fn build_ebpf<'a>(
 
             for s in [
                 "--cfg=bpf_target_arch=\"",
-                &arch,
+                &bpf_target_arch,
                 "\"",
                 SEPARATOR,
                 "-Cdebuginfo=2",
@@ -202,16 +216,45 @@ impl<'a> Toolchain<'a> {
 
 /// Emit cfg flags that describe the desired BPF target architecture.
 pub fn emit_bpf_target_arch_cfg() {
-    const RUSTFLAGS: &str = "CARGO_ENCODED_RUSTFLAGS";
+    // The presence of this environment variable indicates that `--cfg
+    // bpf_target_arch="..."` was passed to the compiler, so we don't need to
+    // emit it again. Note that we cannot *set* this environment variable - it
+    // is set by cargo.
+    const BPF_TARGET_ARCH: &str = "CARGO_CFG_BPF_TARGET_ARCH";
+    println!("cargo:rerun-if-env-changed={BPF_TARGET_ARCH}");
 
-    println!("cargo:rerun-if-env-changed={RUSTFLAGS}");
-    let rustc_cfgs = std::env::var_os(RUSTFLAGS).unwrap_or_else(|| panic!("{RUSTFLAGS} not set"));
-    let rustc_cfgs = rustc_cfgs
-        .to_str()
-        .unwrap_or_else(|| panic!("{RUSTFLAGS}={rustc_cfgs:?} not unicode"));
-    if !rustc_cfgs.contains("bpf_target_arch") {
-        let arch = target_arch();
-        println!("cargo:rustc-cfg=bpf_target_arch=\"{arch}\"");
+    // Users may directly set this environment variable in situations where
+    // using RUSTFLAGS to set `--cfg bpf_target_arch="..."` is not possible or
+    // not ergonomic. In contrast to RUSTFLAGS this mechanism reuses the target
+    // cache for all values, producing many more invalidations.
+    const AYA_BPF_TARGET_ARCH: &str = "AYA_BPF_TARGET_ARCH";
+    println!("cargo:rerun-if-env-changed={AYA_BPF_TARGET_ARCH}");
+
+    const HOST: &str = "HOST";
+    println!("cargo:rerun-if-env-changed={HOST}");
+
+    if std::env::var_os(BPF_TARGET_ARCH).is_none() {
+        let host = std::env::var_os(HOST).unwrap_or_else(|| panic!("{HOST} not set"));
+        let host = host
+            .into_string()
+            .unwrap_or_else(|err| panic!("OsString::into_string({HOST}): {err:?}"));
+        let host = host.as_str();
+
+        let bpf_target_arch = if let Some(bpf_target_arch) = std::env::var_os(AYA_BPF_TARGET_ARCH) {
+            bpf_target_arch
+                .into_string()
+                .unwrap_or_else(|err| {
+                    panic!("OsString::into_string({AYA_BPF_TARGET_ARCH}): {err:?}")
+                })
+                .into()
+        } else {
+            target_arch_fixup(
+                host.split_once('-')
+                    .map_or(host, |(arch, _rest)| arch)
+                    .into(),
+            )
+        };
+        println!("cargo:rustc-cfg=bpf_target_arch=\"{bpf_target_arch}\"");
     }
 
     print!("cargo::rustc-check-cfg=cfg(bpf_target_arch, values(");

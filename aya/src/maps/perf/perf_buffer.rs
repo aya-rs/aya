@@ -6,7 +6,7 @@ use std::{
 };
 
 use aya_obj::generated::{
-    perf_event_header, perf_event_mmap_page,
+    PERF_FLAG_FD_CLOEXEC, perf_event_header, perf_event_mmap_page,
     perf_event_type::{PERF_RECORD_LOST, PERF_RECORD_SAMPLE},
 };
 use bytes::BytesMut;
@@ -14,7 +14,10 @@ use libc::{MAP_SHARED, PROT_READ, PROT_WRITE};
 use thiserror::Error;
 
 use crate::{
-    sys::{PerfEventIoctlRequest, SyscallError, perf_event_ioctl, perf_event_open_bpf},
+    programs::perf_event::{
+        PerfEventConfig, PerfEventScope, SamplePolicy, SoftwareEvent, WakeupPolicy,
+    },
+    sys::{PerfEventIoctlRequest, SyscallError, perf_event_ioctl, perf_event_open},
     util::MMap,
 };
 
@@ -92,7 +95,7 @@ pub(crate) struct PerfBuffer {
 
 impl PerfBuffer {
     pub(crate) fn open(
-        cpu_id: u32,
+        cpu: u32,
         page_size: usize,
         page_count: usize,
     ) -> Result<Self, PerfBufferError> {
@@ -100,8 +103,15 @@ impl PerfBuffer {
             return Err(PerfBufferError::InvalidPageCount { page_count });
         }
 
-        let fd = perf_event_open_bpf(cpu_id as i32)
-            .map_err(|io_error| PerfBufferError::OpenError { io_error })?;
+        let fd = perf_event_open(
+            PerfEventConfig::Software(SoftwareEvent::BpfOutput),
+            PerfEventScope::AllProcessesOneCpu { cpu },
+            SamplePolicy::Period(1),
+            WakeupPolicy::Events(1),
+            false,
+            PERF_FLAG_FD_CLOEXEC,
+        )
+        .map_err(|io_error| PerfBufferError::OpenError { io_error })?;
         let size = page_size * page_count;
         let mmap = MMap::new(
             fd.as_fd(),

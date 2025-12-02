@@ -216,14 +216,11 @@ pub fn cgroup_skb(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// pub fn connect4(ctx: SockAddrContext) -> i32 {
 ///     match try_connect4(ctx) {
 ///         Ok(ret) => ret,
-///         Err(ret) => match ret.try_into() {
-///             Ok(rt) => rt,
-///             Err(_) => 1,
-///         },
+///         Err(ret) => ret,
 ///     }
 /// }
 ///
-/// fn try_connect4(ctx: SockAddrContext) -> Result<i32, i64> {
+/// fn try_connect4(ctx: SockAddrContext) -> Result<i32, i32> {
 ///     Ok(0)
 /// }
 /// ```
@@ -440,7 +437,7 @@ pub fn btf_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///
 ///#[stream_parser]
 ///fn stream_parser(ctx: SkBuffContext) -> u32 {
-///    match { try_stream_parser(ctx) } {
+///    match try_stream_parser(ctx) {
 ///        Ok(ret) => ret,
 ///        Err(ret) => ret,
 ///    }
@@ -470,7 +467,7 @@ pub fn stream_parser(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///
 ///#[stream_verdict]
 ///fn stream_verdict(ctx: SkBuffContext) -> u32 {
-///    match { try_stream_verdict(ctx) } {
+///    match try_stream_verdict(ctx) {
 ///        Ok(ret) => ret,
 ///        Err(ret) => ret,
 ///    }
@@ -507,7 +504,7 @@ fn sk_skb(kind: SkSkbKind, attrs: TokenStream, item: TokenStream) -> TokenStream
 ///
 /// #[socket_filter]
 /// pub fn accept_all(_ctx: SkBuffContext) -> i64 {
-///     return 0
+///     0
 /// }
 /// ```
 #[proc_macro_attribute]
@@ -531,9 +528,10 @@ pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// # #![expect(non_camel_case_types)]
 /// use aya_ebpf::{macros::fentry, programs::FEntryContext};
+/// # #[expect(non_camel_case_types)]
 /// # type filename = u32;
+/// # #[expect(non_camel_case_types)]
 /// # type path = u32;
 ///
 /// #[fentry(function = "filename_lookup")]
@@ -573,9 +571,10 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// # Examples
 ///
 /// ```no_run
-/// # #![expect(non_camel_case_types)]
 /// use aya_ebpf::{macros::fexit, programs::FExitContext};
+/// # #[expect(non_camel_case_types)]
 /// # type filename = u32;
+/// # #[expect(non_camel_case_types)]
 /// # type path = u32;
 ///
 /// #[fexit(function = "filename_lookup")]
@@ -658,7 +657,7 @@ pub fn flow_dissector(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// #[sk_lookup]
 /// pub fn accept_all(_ctx: SkLookupContext) -> u32 {
 ///     // use sk_assign to redirect
-///     return 0
+///     0
 /// }
 /// ```
 #[proc_macro_attribute]
@@ -688,7 +687,7 @@ pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// #[cgroup_device]
 /// pub fn cgroup_dev(ctx: DeviceContext) -> i32 {
 ///     // Reject all device access
-///     return 0;
+///     0
 /// }
 /// ```
 #[proc_macro_attribute]

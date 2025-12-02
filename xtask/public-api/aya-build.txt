@@ -27,8 +27,12 @@ pub fn aya_build::Toolchain<'a>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_build::Toolchain<'a>
 pub fn aya_build::Toolchain<'a>::from(t: T) -> T
 pub struct aya_build::Package<'a>
+pub aya_build::Package::features: &'a [&'a str]
 pub aya_build::Package::name: &'a str
+pub aya_build::Package::no_default_features: bool
 pub aya_build::Package::root_dir: &'a str
+impl<'a> core::default::Default for aya_build::Package<'a>
+pub fn aya_build::Package<'a>::default() -> aya_build::Package<'a>
 impl<'a> core::marker::Freeze for aya_build::Package<'a>
 impl<'a> core::marker::Send for aya_build::Package<'a>
 impl<'a> core::marker::Sync for aya_build::Package<'a>

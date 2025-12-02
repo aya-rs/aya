@@ -323,7 +323,9 @@ fn parse_kernel_symbols(reader: impl BufRead) -> Result<BTreeMap<u64, String>, i
 /// # Example
 ///
 /// ```no_run
+/// # #[expect(deprecated)]
 /// use aya::util::syscall_prefix;
+/// # #[expect(deprecated)]
 /// let prefix = syscall_prefix().unwrap();
 /// let syscall_fname = format!("{prefix}exec");
 /// ```

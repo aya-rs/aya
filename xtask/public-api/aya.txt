@@ -4781,10 +4781,6 @@ impl aya::programs::links::Link for aya::programs::lsm_cgroup::LsmLink
 pub type aya::programs::lsm_cgroup::LsmLink::Id = aya::programs::lsm_cgroup::LsmLinkId
 pub fn aya::programs::lsm_cgroup::LsmLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::lsm_cgroup::LsmLink::id(&self) -> Self::Id
-impl aya::programs::links::Link for aya::programs::perf_attach::PerfLink
-pub type aya::programs::perf_attach::PerfLink::Id = aya::programs::perf_attach::PerfLinkId
-pub fn aya::programs::perf_attach::PerfLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::perf_attach::PerfLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::perf_event::PerfEventLink
 pub type aya::programs::perf_event::PerfEventLink::Id = aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -5225,44 +5221,6 @@ pub fn aya::programs::lsm_cgroup::LsmLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::lsm_cgroup::LsmLinkId
 pub fn aya::programs::lsm_cgroup::LsmLinkId::from(t: T) -> T
 pub mod aya::programs::perf_attach
-pub struct aya::programs::perf_attach::PerfLink
-impl aya::programs::links::Link for aya::programs::perf_attach::PerfLink
-pub type aya::programs::perf_attach::PerfLink::Id = aya::programs::perf_attach::PerfLinkId
-pub fn aya::programs::perf_attach::PerfLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::perf_attach::PerfLink::id(&self) -> Self::Id
-impl core::cmp::Eq for aya::programs::perf_attach::PerfLink
-impl core::cmp::PartialEq for aya::programs::perf_attach::PerfLink
-pub fn aya::programs::perf_attach::PerfLink::eq(&self, other: &Self) -> bool
-impl core::fmt::Debug for aya::programs::perf_attach::PerfLink
-pub fn aya::programs::perf_attach::PerfLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::hash::Hash for aya::programs::perf_attach::PerfLink
-pub fn aya::programs::perf_attach::PerfLink::hash<H: core::hash::Hasher>(&self, state: &mut H)
-impl equivalent::Equivalent<aya::programs::perf_attach::PerfLink> for aya::programs::perf_attach::PerfLinkId
-pub fn aya::programs::perf_attach::PerfLinkId::equivalent(&self, key: &aya::programs::perf_attach::PerfLink) -> bool
-impl core::marker::Freeze for aya::programs::perf_attach::PerfLink
-impl core::marker::Send for aya::programs::perf_attach::PerfLink
-impl core::marker::Sync for aya::programs::perf_attach::PerfLink
-impl core::marker::Unpin for aya::programs::perf_attach::PerfLink
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_attach::PerfLink
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_attach::PerfLink
-impl<Q, K> equivalent::Equivalent<K> for aya::programs::perf_attach::PerfLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
-pub fn aya::programs::perf_attach::PerfLink::equivalent(&self, key: &K) -> bool
-impl<T, U> core::convert::Into<U> for aya::programs::perf_attach::PerfLink where U: core::convert::From<T>
-pub fn aya::programs::perf_attach::PerfLink::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_attach::PerfLink where U: core::convert::Into<T>
-pub type aya::programs::perf_attach::PerfLink::Error = core::convert::Infallible
-pub fn aya::programs::perf_attach::PerfLink::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::perf_attach::PerfLink where U: core::convert::TryFrom<T>
-pub type aya::programs::perf_attach::PerfLink::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::perf_attach::PerfLink::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for aya::programs::perf_attach::PerfLink where T: 'static + ?core::marker::Sized
-pub fn aya::programs::perf_attach::PerfLink::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::perf_attach::PerfLink where T: ?core::marker::Sized
-pub fn aya::programs::perf_attach::PerfLink::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_attach::PerfLink where T: ?core::marker::Sized
-pub fn aya::programs::perf_attach::PerfLink::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for aya::programs::perf_attach::PerfLink
-pub fn aya::programs::perf_attach::PerfLink::from(t: T) -> T
 pub struct aya::programs::perf_attach::PerfLinkId(_)
 impl core::cmp::Eq for aya::programs::perf_attach::PerfLinkId
 impl core::cmp::PartialEq for aya::programs::perf_attach::PerfLinkId
@@ -5272,8 +5230,6 @@ pub fn aya::programs::perf_attach::PerfLinkId::fmt(&self, f: &mut core::fmt::For
 impl core::hash::Hash for aya::programs::perf_attach::PerfLinkId
 pub fn aya::programs::perf_attach::PerfLinkId::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::StructuralPartialEq for aya::programs::perf_attach::PerfLinkId
-impl equivalent::Equivalent<aya::programs::perf_attach::PerfLink> for aya::programs::perf_attach::PerfLinkId
-pub fn aya::programs::perf_attach::PerfLinkId::equivalent(&self, key: &aya::programs::perf_attach::PerfLink) -> bool
 impl core::marker::Freeze for aya::programs::perf_attach::PerfLinkId
 impl core::marker::Send for aya::programs::perf_attach::PerfLinkId
 impl core::marker::Sync for aya::programs::perf_attach::PerfLinkId
@@ -5299,6 +5255,46 @@ pub fn aya::programs::perf_attach::PerfLinkId::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::perf_attach::PerfLinkId
 pub fn aya::programs::perf_attach::PerfLinkId::from(t: T) -> T
 pub mod aya::programs::perf_event
+pub enum aya::programs::perf_event::BreakpointConfig
+pub aya::programs::perf_event::BreakpointConfig::Data
+pub aya::programs::perf_event::BreakpointConfig::Data::address: u64
+pub aya::programs::perf_event::BreakpointConfig::Data::length: aya::programs::perf_event::PerfBreakpointLength
+pub aya::programs::perf_event::BreakpointConfig::Data::type: aya::programs::perf_event::PerfBreakpointType
+pub aya::programs::perf_event::BreakpointConfig::Instruction
+pub aya::programs::perf_event::BreakpointConfig::Instruction::address: u64
+impl core::clone::Clone for aya::programs::perf_event::BreakpointConfig
+pub fn aya::programs::perf_event::BreakpointConfig::clone(&self) -> aya::programs::perf_event::BreakpointConfig
+impl core::fmt::Debug for aya::programs::perf_event::BreakpointConfig
+pub fn aya::programs::perf_event::BreakpointConfig::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::perf_event::BreakpointConfig
+impl core::marker::Freeze for aya::programs::perf_event::BreakpointConfig
+impl core::marker::Send for aya::programs::perf_event::BreakpointConfig
+impl core::marker::Sync for aya::programs::perf_event::BreakpointConfig
+impl core::marker::Unpin for aya::programs::perf_event::BreakpointConfig
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::BreakpointConfig
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::BreakpointConfig
+impl<T, U> core::convert::Into<U> for aya::programs::perf_event::BreakpointConfig where U: core::convert::From<T>
+pub fn aya::programs::perf_event::BreakpointConfig::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_event::BreakpointConfig where U: core::convert::Into<T>
+pub type aya::programs::perf_event::BreakpointConfig::Error = core::convert::Infallible
+pub fn aya::programs::perf_event::BreakpointConfig::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::perf_event::BreakpointConfig where U: core::convert::TryFrom<T>
+pub type aya::programs::perf_event::BreakpointConfig::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::perf_event::BreakpointConfig::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::programs::perf_event::BreakpointConfig where T: core::clone::Clone
+pub type aya::programs::perf_event::BreakpointConfig::Owned = T
+pub fn aya::programs::perf_event::BreakpointConfig::clone_into(&self, target: &mut T)
+pub fn aya::programs::perf_event::BreakpointConfig::to_owned(&self) -> T
+impl<T> core::any::Any for aya::programs::perf_event::BreakpointConfig where T: 'static + ?core::marker::Sized
+pub fn aya::programs::perf_event::BreakpointConfig::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::perf_event::BreakpointConfig where T: ?core::marker::Sized
+pub fn aya::programs::perf_event::BreakpointConfig::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::BreakpointConfig where T: ?core::marker::Sized
+pub fn aya::programs::perf_event::BreakpointConfig::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya::programs::perf_event::BreakpointConfig where T: core::clone::Clone
+pub unsafe fn aya::programs::perf_event::BreakpointConfig::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya::programs::perf_event::BreakpointConfig
+pub fn aya::programs::perf_event::BreakpointConfig::from(t: T) -> T
 #[repr(u32)] pub enum aya::programs::perf_event::HardwareEvent
 pub aya::programs::perf_event::HardwareEvent::BranchInstructions = 4
 pub aya::programs::perf_event::HardwareEvent::BranchMisses = 5
@@ -5457,8 +5453,83 @@ impl<T> core::clone::CloneToUninit for aya::programs::perf_event::HwCacheResult 
 pub unsafe fn aya::programs::perf_event::HwCacheResult::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::perf_event::HwCacheResult
 pub fn aya::programs::perf_event::HwCacheResult::from(t: T) -> T
+#[repr(u32)] pub enum aya::programs::perf_event::PerfBreakpointLength
+pub aya::programs::perf_event::PerfBreakpointLength::Len1 = 1
+pub aya::programs::perf_event::PerfBreakpointLength::Len2 = 2
+pub aya::programs::perf_event::PerfBreakpointLength::Len4 = 4
+pub aya::programs::perf_event::PerfBreakpointLength::Len8 = 8
+impl core::clone::Clone for aya::programs::perf_event::PerfBreakpointLength
+pub fn aya::programs::perf_event::PerfBreakpointLength::clone(&self) -> aya::programs::perf_event::PerfBreakpointLength
+impl core::fmt::Debug for aya::programs::perf_event::PerfBreakpointLength
+pub fn aya::programs::perf_event::PerfBreakpointLength::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::perf_event::PerfBreakpointLength
+impl core::marker::Freeze for aya::programs::perf_event::PerfBreakpointLength
+impl core::marker::Send for aya::programs::perf_event::PerfBreakpointLength
+impl core::marker::Sync for aya::programs::perf_event::PerfBreakpointLength
+impl core::marker::Unpin for aya::programs::perf_event::PerfBreakpointLength
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfBreakpointLength
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfBreakpointLength
+impl<T, U> core::convert::Into<U> for aya::programs::perf_event::PerfBreakpointLength where U: core::convert::From<T>
+pub fn aya::programs::perf_event::PerfBreakpointLength::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_event::PerfBreakpointLength where U: core::convert::Into<T>
+pub type aya::programs::perf_event::PerfBreakpointLength::Error = core::convert::Infallible
+pub fn aya::programs::perf_event::PerfBreakpointLength::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::perf_event::PerfBreakpointLength where U: core::convert::TryFrom<T>
+pub type aya::programs::perf_event::PerfBreakpointLength::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::perf_event::PerfBreakpointLength::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::programs::perf_event::PerfBreakpointLength where T: core::clone::Clone
+pub type aya::programs::perf_event::PerfBreakpointLength::Owned = T
+pub fn aya::programs::perf_event::PerfBreakpointLength::clone_into(&self, target: &mut T)
+pub fn aya::programs::perf_event::PerfBreakpointLength::to_owned(&self) -> T
+impl<T> core::any::Any for aya::programs::perf_event::PerfBreakpointLength where T: 'static + ?core::marker::Sized
+pub fn aya::programs::perf_event::PerfBreakpointLength::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::perf_event::PerfBreakpointLength where T: ?core::marker::Sized
+pub fn aya::programs::perf_event::PerfBreakpointLength::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::PerfBreakpointLength where T: ?core::marker::Sized
+pub fn aya::programs::perf_event::PerfBreakpointLength::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya::programs::perf_event::PerfBreakpointLength where T: core::clone::Clone
+pub unsafe fn aya::programs::perf_event::PerfBreakpointLength::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya::programs::perf_event::PerfBreakpointLength
+pub fn aya::programs::perf_event::PerfBreakpointLength::from(t: T) -> T
+#[repr(u32)] pub enum aya::programs::perf_event::PerfBreakpointType
+pub aya::programs::perf_event::PerfBreakpointType::Read = 1
+pub aya::programs::perf_event::PerfBreakpointType::ReadWrite = 3
+pub aya::programs::perf_event::PerfBreakpointType::Write = 2
+impl core::clone::Clone for aya::programs::perf_event::PerfBreakpointType
+pub fn aya::programs::perf_event::PerfBreakpointType::clone(&self) -> aya::programs::perf_event::PerfBreakpointType
+impl core::fmt::Debug for aya::programs::perf_event::PerfBreakpointType
+pub fn aya::programs::perf_event::PerfBreakpointType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::perf_event::PerfBreakpointType
+impl core::marker::Freeze for aya::programs::perf_event::PerfBreakpointType
+impl core::marker::Send for aya::programs::perf_event::PerfBreakpointType
+impl core::marker::Sync for aya::programs::perf_event::PerfBreakpointType
+impl core::marker::Unpin for aya::programs::perf_event::PerfBreakpointType
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfBreakpointType
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfBreakpointType
+impl<T, U> core::convert::Into<U> for aya::programs::perf_event::PerfBreakpointType where U: core::convert::From<T>
+pub fn aya::programs::perf_event::PerfBreakpointType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_event::PerfBreakpointType where U: core::convert::Into<T>
+pub type aya::programs::perf_event::PerfBreakpointType::Error = core::convert::Infallible
+pub fn aya::programs::perf_event::PerfBreakpointType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::perf_event::PerfBreakpointType where U: core::convert::TryFrom<T>
+pub type aya::programs::perf_event::PerfBreakpointType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::perf_event::PerfBreakpointType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::programs::perf_event::PerfBreakpointType where T: core::clone::Clone
+pub type aya::programs::perf_event::PerfBreakpointType::Owned = T
+pub fn aya::programs::perf_event::PerfBreakpointType::clone_into(&self, target: &mut T)
+pub fn aya::programs::perf_event::PerfBreakpointType::to_owned(&self) -> T
+impl<T> core::any::Any for aya::programs::perf_event::PerfBreakpointType where T: 'static + ?core::marker::Sized
+pub fn aya::programs::perf_event::PerfBreakpointType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::perf_event::PerfBreakpointType where T: ?core::marker::Sized
+pub fn aya::programs::perf_event::PerfBreakpointType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::PerfBreakpointType where T: ?core::marker::Sized
+pub fn aya::programs::perf_event::PerfBreakpointType::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya::programs::perf_event::PerfBreakpointType where T: core::clone::Clone
+pub unsafe fn aya::programs::perf_event::PerfBreakpointType::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya::programs::perf_event::PerfBreakpointType
+pub fn aya::programs::perf_event::PerfBreakpointType::from(t: T) -> T
 pub enum aya::programs::perf_event::PerfEventConfig
-pub aya::programs::perf_event::PerfEventConfig::Breakpoint
+pub aya::programs::perf_event::PerfEventConfig::Breakpoint(aya::programs::perf_event::BreakpointConfig)
 pub aya::programs::perf_event::PerfEventConfig::Hardware(aya::programs::perf_event::HardwareEvent)
 pub aya::programs::perf_event::PerfEventConfig::HwCache
 pub aya::programs::perf_event::PerfEventConfig::HwCache::event: aya::programs::perf_event::HwCacheEvent
@@ -5508,18 +5579,16 @@ pub fn aya::programs::perf_event::PerfEventConfig::from(t: T) -> T
 pub enum aya::programs::perf_event::PerfEventScope
 pub aya::programs::perf_event::PerfEventScope::AllProcessesOneCpu
 pub aya::programs::perf_event::PerfEventScope::AllProcessesOneCpu::cpu: u32
-pub aya::programs::perf_event::PerfEventScope::CallingProcessAnyCpu
-pub aya::programs::perf_event::PerfEventScope::CallingProcessOneCpu
-pub aya::programs::perf_event::PerfEventScope::CallingProcessOneCpu::cpu: u32
-pub aya::programs::perf_event::PerfEventScope::OneProcessAnyCpu
-pub aya::programs::perf_event::PerfEventScope::OneProcessAnyCpu::pid: u32
-pub aya::programs::perf_event::PerfEventScope::OneProcessOneCpu
-pub aya::programs::perf_event::PerfEventScope::OneProcessOneCpu::cpu: u32
-pub aya::programs::perf_event::PerfEventScope::OneProcessOneCpu::pid: u32
+pub aya::programs::perf_event::PerfEventScope::CallingProcess
+pub aya::programs::perf_event::PerfEventScope::CallingProcess::cpu: core::option::Option<u32>
+pub aya::programs::perf_event::PerfEventScope::OneProcess
+pub aya::programs::perf_event::PerfEventScope::OneProcess::cpu: core::option::Option<u32>
+pub aya::programs::perf_event::PerfEventScope::OneProcess::pid: u32
 impl core::clone::Clone for aya::programs::perf_event::PerfEventScope
 pub fn aya::programs::perf_event::PerfEventScope::clone(&self) -> aya::programs::perf_event::PerfEventScope
 impl core::fmt::Debug for aya::programs::perf_event::PerfEventScope
 pub fn aya::programs::perf_event::PerfEventScope::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::perf_event::PerfEventScope
 impl core::marker::Freeze for aya::programs::perf_event::PerfEventScope
 impl core::marker::Send for aya::programs::perf_event::PerfEventScope
 impl core::marker::Sync for aya::programs::perf_event::PerfEventScope
@@ -5555,6 +5624,7 @@ impl core::clone::Clone for aya::programs::perf_event::SamplePolicy
 pub fn aya::programs::perf_event::SamplePolicy::clone(&self) -> aya::programs::perf_event::SamplePolicy
 impl core::fmt::Debug for aya::programs::perf_event::SamplePolicy
 pub fn aya::programs::perf_event::SamplePolicy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::perf_event::SamplePolicy
 impl core::marker::Freeze for aya::programs::perf_event::SamplePolicy
 impl core::marker::Send for aya::programs::perf_event::SamplePolicy
 impl core::marker::Sync for aya::programs::perf_event::SamplePolicy
@@ -5632,7 +5702,7 @@ pub fn aya::programs::perf_event::SoftwareEvent::from(t: T) -> T
 pub struct aya::programs::perf_event::PerfEvent
 impl aya::programs::perf_event::PerfEvent
 pub const aya::programs::perf_event::PerfEvent::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::perf_event::PerfEvent::attach(&mut self, perf_type: aya::programs::perf_event::PerfEventConfig, scope: aya::programs::perf_event::PerfEventScope, sample_policy: aya::programs::perf_event::SamplePolicy, inherit: bool) -> core::result::Result<aya::programs::perf_event::PerfEventLinkId, aya::programs::ProgramError>
+pub fn aya::programs::perf_event::PerfEvent::attach(&mut self, config: aya::programs::perf_event::PerfEventConfig, scope: aya::programs::perf_event::PerfEventScope, sample_policy: aya::programs::perf_event::SamplePolicy, inherit: bool) -> core::result::Result<aya::programs::perf_event::PerfEventLinkId, aya::programs::ProgramError>
 pub fn aya::programs::perf_event::PerfEvent::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::detach(&mut self, link_id: aya::programs::perf_event::PerfEventLinkId) -> core::result::Result<(), aya::programs::ProgramError>
@@ -7304,7 +7374,7 @@ pub aya::programs::uprobe::UProbeError::InvalidLdSoCache::io_error: &'static std
 pub aya::programs::uprobe::UProbeError::InvalidTarget
 pub aya::programs::uprobe::UProbeError::InvalidTarget::path: std::path::PathBuf
 pub aya::programs::uprobe::UProbeError::ProcMap
-pub aya::programs::uprobe::UProbeError::ProcMap::pid: i32
+pub aya::programs::uprobe::UProbeError::ProcMap::pid: u32
 pub aya::programs::uprobe::UProbeError::ProcMap::source: aya::programs::uprobe::ProcMapError
 pub aya::programs::uprobe::UProbeError::SymbolError
 pub aya::programs::uprobe::UProbeError::SymbolError::error: alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync)>
@@ -7344,7 +7414,7 @@ pub fn aya::programs::uprobe::UProbeError::from(t: T) -> T
 pub struct aya::programs::uprobe::UProbe
 impl aya::programs::uprobe::UProbe
 pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::uprobe::UProbe::attach<'loc, T: core::convert::AsRef<std::path::Path>, Loc: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'loc>>>(&mut self, location: Loc, target: T, pid: core::option::Option<libc::unix::pid_t>, cookie: core::option::Option<u64>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
+pub fn aya::programs::uprobe::UProbe::attach<'loc, T: core::convert::AsRef<std::path::Path>, Loc: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'loc>>>(&mut self, location: Loc, target: T, pid: core::option::Option<u32>, cookie: core::option::Option<u64>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -7943,54 +8013,9 @@ impl<T> core::clone::CloneToUninit for aya::programs::LsmAttachType where T: cor
 pub unsafe fn aya::programs::LsmAttachType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::LsmAttachType
 pub fn aya::programs::LsmAttachType::from(t: T) -> T
-pub enum aya::programs::PerfEventScope
-pub aya::programs::PerfEventScope::AllProcessesOneCpu
-pub aya::programs::PerfEventScope::AllProcessesOneCpu::cpu: u32
-pub aya::programs::PerfEventScope::CallingProcessAnyCpu
-pub aya::programs::PerfEventScope::CallingProcessOneCpu
-pub aya::programs::PerfEventScope::CallingProcessOneCpu::cpu: u32
-pub aya::programs::PerfEventScope::OneProcessAnyCpu
-pub aya::programs::PerfEventScope::OneProcessAnyCpu::pid: u32
-pub aya::programs::PerfEventScope::OneProcessOneCpu
-pub aya::programs::PerfEventScope::OneProcessOneCpu::cpu: u32
-pub aya::programs::PerfEventScope::OneProcessOneCpu::pid: u32
-impl core::clone::Clone for aya::programs::perf_event::PerfEventScope
-pub fn aya::programs::perf_event::PerfEventScope::clone(&self) -> aya::programs::perf_event::PerfEventScope
-impl core::fmt::Debug for aya::programs::perf_event::PerfEventScope
-pub fn aya::programs::perf_event::PerfEventScope::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for aya::programs::perf_event::PerfEventScope
-impl core::marker::Send for aya::programs::perf_event::PerfEventScope
-impl core::marker::Sync for aya::programs::perf_event::PerfEventScope
-impl core::marker::Unpin for aya::programs::perf_event::PerfEventScope
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEventScope
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEventScope
-impl<T, U> core::convert::Into<U> for aya::programs::perf_event::PerfEventScope where U: core::convert::From<T>
-pub fn aya::programs::perf_event::PerfEventScope::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_event::PerfEventScope where U: core::convert::Into<T>
-pub type aya::programs::perf_event::PerfEventScope::Error = core::convert::Infallible
-pub fn aya::programs::perf_event::PerfEventScope::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::perf_event::PerfEventScope where U: core::convert::TryFrom<T>
-pub type aya::programs::perf_event::PerfEventScope::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::perf_event::PerfEventScope::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for aya::programs::perf_event::PerfEventScope where T: core::clone::Clone
-pub type aya::programs::perf_event::PerfEventScope::Owned = T
-pub fn aya::programs::perf_event::PerfEventScope::clone_into(&self, target: &mut T)
-pub fn aya::programs::perf_event::PerfEventScope::to_owned(&self) -> T
-impl<T> core::any::Any for aya::programs::perf_event::PerfEventScope where T: 'static + ?core::marker::Sized
-pub fn aya::programs::perf_event::PerfEventScope::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::perf_event::PerfEventScope where T: ?core::marker::Sized
-pub fn aya::programs::perf_event::PerfEventScope::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::PerfEventScope where T: ?core::marker::Sized
-pub fn aya::programs::perf_event::PerfEventScope::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for aya::programs::perf_event::PerfEventScope where T: core::clone::Clone
-pub unsafe fn aya::programs::perf_event::PerfEventScope::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for aya::programs::perf_event::PerfEventScope
-pub fn aya::programs::perf_event::PerfEventScope::from(t: T) -> T
 pub enum aya::programs::ProbeKind
-pub aya::programs::ProbeKind::KProbe
-pub aya::programs::ProbeKind::KRetProbe
-pub aya::programs::ProbeKind::UProbe
-pub aya::programs::ProbeKind::URetProbe
+pub aya::programs::ProbeKind::Entry
+pub aya::programs::ProbeKind::Return
 impl core::clone::Clone for aya::programs::ProbeKind
 pub fn aya::programs::ProbeKind::clone(&self) -> aya::programs::ProbeKind
 impl core::fmt::Debug for aya::programs::ProbeKind
@@ -8396,41 +8421,6 @@ impl<T> core::clone::CloneToUninit for aya::programs::ProgramType where T: core:
 pub unsafe fn aya::programs::ProgramType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::programs::ProgramType
 pub fn aya::programs::ProgramType::from(t: T) -> T
-pub enum aya::programs::SamplePolicy
-pub aya::programs::SamplePolicy::Frequency(u64)
-pub aya::programs::SamplePolicy::Period(u64)
-impl core::clone::Clone for aya::programs::perf_event::SamplePolicy
-pub fn aya::programs::perf_event::SamplePolicy::clone(&self) -> aya::programs::perf_event::SamplePolicy
-impl core::fmt::Debug for aya::programs::perf_event::SamplePolicy
-pub fn aya::programs::perf_event::SamplePolicy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for aya::programs::perf_event::SamplePolicy
-impl core::marker::Send for aya::programs::perf_event::SamplePolicy
-impl core::marker::Sync for aya::programs::perf_event::SamplePolicy
-impl core::marker::Unpin for aya::programs::perf_event::SamplePolicy
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::SamplePolicy
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::SamplePolicy
-impl<T, U> core::convert::Into<U> for aya::programs::perf_event::SamplePolicy where U: core::convert::From<T>
-pub fn aya::programs::perf_event::SamplePolicy::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for aya::programs::perf_event::SamplePolicy where U: core::convert::Into<T>
-pub type aya::programs::perf_event::SamplePolicy::Error = core::convert::Infallible
-pub fn aya::programs::perf_event::SamplePolicy::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for aya::programs::perf_event::SamplePolicy where U: core::convert::TryFrom<T>
-pub type aya::programs::perf_event::SamplePolicy::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn aya::programs::perf_event::SamplePolicy::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for aya::programs::perf_event::SamplePolicy where T: core::clone::Clone
-pub type aya::programs::perf_event::SamplePolicy::Owned = T
-pub fn aya::programs::perf_event::SamplePolicy::clone_into(&self, target: &mut T)
-pub fn aya::programs::perf_event::SamplePolicy::to_owned(&self) -> T
-impl<T> core::any::Any for aya::programs::perf_event::SamplePolicy where T: 'static + ?core::marker::Sized
-pub fn aya::programs::perf_event::SamplePolicy::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for aya::programs::perf_event::SamplePolicy where T: ?core::marker::Sized
-pub fn aya::programs::perf_event::SamplePolicy::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for aya::programs::perf_event::SamplePolicy where T: ?core::marker::Sized
-pub fn aya::programs::perf_event::SamplePolicy::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for aya::programs::perf_event::SamplePolicy where T: core::clone::Clone
-pub unsafe fn aya::programs::perf_event::SamplePolicy::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for aya::programs::perf_event::SamplePolicy
-pub fn aya::programs::perf_event::SamplePolicy::from(t: T) -> T
 pub enum aya::programs::SkSkbKind
 pub aya::programs::SkSkbKind::StreamParser
 pub aya::programs::SkSkbKind::StreamVerdict
@@ -8635,7 +8625,7 @@ pub aya::programs::UProbeError::InvalidLdSoCache::io_error: &'static std::io::er
 pub aya::programs::UProbeError::InvalidTarget
 pub aya::programs::UProbeError::InvalidTarget::path: std::path::PathBuf
 pub aya::programs::UProbeError::ProcMap
-pub aya::programs::UProbeError::ProcMap::pid: i32
+pub aya::programs::UProbeError::ProcMap::pid: u32
 pub aya::programs::UProbeError::ProcMap::source: aya::programs::uprobe::ProcMapError
 pub aya::programs::UProbeError::SymbolError
 pub aya::programs::UProbeError::SymbolError::error: alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync)>
@@ -9582,7 +9572,7 @@ pub fn aya::programs::lsm_cgroup::LsmCgroup::from(t: T) -> T
 pub struct aya::programs::PerfEvent
 impl aya::programs::perf_event::PerfEvent
 pub const aya::programs::perf_event::PerfEvent::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::perf_event::PerfEvent::attach(&mut self, perf_type: aya::programs::perf_event::PerfEventConfig, scope: aya::programs::perf_event::PerfEventScope, sample_policy: aya::programs::perf_event::SamplePolicy, inherit: bool) -> core::result::Result<aya::programs::perf_event::PerfEventLinkId, aya::programs::ProgramError>
+pub fn aya::programs::perf_event::PerfEvent::attach(&mut self, config: aya::programs::perf_event::PerfEventConfig, scope: aya::programs::perf_event::PerfEventScope, sample_policy: aya::programs::perf_event::SamplePolicy, inherit: bool) -> core::result::Result<aya::programs::perf_event::PerfEventLinkId, aya::programs::ProgramError>
 pub fn aya::programs::perf_event::PerfEvent::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::detach(&mut self, link_id: aya::programs::perf_event::PerfEventLinkId) -> core::result::Result<(), aya::programs::ProgramError>
@@ -10157,7 +10147,7 @@ pub fn aya::programs::trace_point::TracePoint::from(t: T) -> T
 pub struct aya::programs::UProbe
 impl aya::programs::uprobe::UProbe
 pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::uprobe::UProbe::attach<'loc, T: core::convert::AsRef<std::path::Path>, Loc: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'loc>>>(&mut self, location: Loc, target: T, pid: core::option::Option<libc::unix::pid_t>, cookie: core::option::Option<u64>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
+pub fn aya::programs::uprobe::UProbe::attach<'loc, T: core::convert::AsRef<std::path::Path>, Loc: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'loc>>>(&mut self, location: Loc, target: T, pid: core::option::Option<u32>, cookie: core::option::Option<u64>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -10446,10 +10436,6 @@ impl aya::programs::links::Link for aya::programs::lsm_cgroup::LsmLink
 pub type aya::programs::lsm_cgroup::LsmLink::Id = aya::programs::lsm_cgroup::LsmLinkId
 pub fn aya::programs::lsm_cgroup::LsmLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::lsm_cgroup::LsmLink::id(&self) -> Self::Id
-impl aya::programs::links::Link for aya::programs::perf_attach::PerfLink
-pub type aya::programs::perf_attach::PerfLink::Id = aya::programs::perf_attach::PerfLinkId
-pub fn aya::programs::perf_attach::PerfLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::perf_attach::PerfLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::perf_event::PerfEventLink
 pub type aya::programs::perf_event::PerfEventLink::Id = aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -10708,6 +10694,7 @@ pub fn aya::Ebpf::load_file<P: core::convert::AsRef<std::path::Path>>(path: P) -
 pub fn aya::Ebpf::map(&self, name: &str) -> core::option::Option<&aya::maps::Map>
 pub fn aya::Ebpf::map_mut(&mut self, name: &str) -> core::option::Option<&mut aya::maps::Map>
 pub fn aya::Ebpf::maps(&self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &aya::maps::Map)>
+pub fn aya::Ebpf::maps_disjoint_mut<const N: usize>(&mut self, names: [&str; N]) -> [core::option::Option<&mut aya::maps::Map>; N]
 pub fn aya::Ebpf::maps_mut(&mut self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &mut aya::maps::Map)>
 pub fn aya::Ebpf::program(&self, name: &str) -> core::option::Option<&aya::programs::Program>
 pub fn aya::Ebpf::program_mut(&mut self, name: &str) -> core::option::Option<&mut aya::programs::Program>
@@ -10750,7 +10737,7 @@ pub fn aya::EbpfLoader<'a>::map_max_entries(&mut self, name: &'a str, size: u32)
 pub fn aya::EbpfLoader<'a>::map_pin_path<P: core::convert::Into<alloc::borrow::Cow<'a, std::path::Path>>>(&mut self, name: &'a str, path: P) -> &mut Self
 pub fn aya::EbpfLoader<'a>::new() -> Self
 pub fn aya::EbpfLoader<'a>::override_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T, must_exist: bool) -> &mut Self
-pub fn aya::EbpfLoader<'a>::set_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T) -> &mut Self
+pub fn aya::EbpfLoader<'a>::set_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T, must_exist: bool) -> &mut Self
 pub fn aya::EbpfLoader<'a>::set_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self
 pub fn aya::EbpfLoader<'a>::verifier_log_level(&mut self, level: aya::VerifierLogLevel) -> &mut Self
 impl core::default::Default for aya::EbpfLoader<'_>

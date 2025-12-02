@@ -25,7 +25,6 @@ impl LsmContext {
     /// # Examples
     ///
     /// ```no_run
-    /// # #![expect(dead_code)]
     /// # use aya_ebpf::{programs::LsmContext, cty::{c_int, c_ulong}};
     /// unsafe fn try_lsm_mmap_addr(ctx: LsmContext) -> Result<i32, i32> {
     ///     // In the kernel, this hook is defined as:

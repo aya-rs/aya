@@ -2,6 +2,7 @@
 use std::{
     error::Error,
     ffi::{CStr, OsStr, OsString},
+    fmt::{self, Write},
     fs,
     io::{self, BufRead as _, Cursor, Read as _},
     mem,
@@ -11,7 +12,6 @@ use std::{
 };
 
 use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE};
-use libc::pid_t;
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, Symbol};
 use thiserror::Error;
 
@@ -21,7 +21,7 @@ use crate::{
         FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
         impl_try_into_fdlink, load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
-        probe::{OsStringExt as _, ProbeKind, attach},
+        probe::{OsStringExt as _, Probe, ProbeKind, attach},
     },
     sys::bpf_link_get_info_by_fd,
     util::MMap,
@@ -81,8 +81,8 @@ impl UProbe {
         load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
     }
 
-    /// Returns `UProbe` if the program is a `uprobe`, or `URetProbe` if the
-    /// program is a `uretprobe`.
+    /// Returns [`ProbeKind::Entry`] if the program is a `uprobe`, or
+    /// [`ProbeKind::Return`] if the program is a `uretprobe`.
     pub fn kind(&self) -> ProbeKind {
         self.kind
     }
@@ -109,7 +109,7 @@ impl UProbe {
         &mut self,
         location: Loc,
         target: T,
-        pid: Option<pid_t>,
+        pid: Option<u32>,
         cookie: Option<u64>,
     ) -> Result<UProbeLinkId, ProgramError> {
         let proc_map = pid.map(ProcMap::new).transpose()?;
@@ -130,8 +130,9 @@ impl UProbe {
             offset
         };
 
+        let Self { data, kind } = self;
         let path = path.as_os_str();
-        attach(&mut self.data, self.kind, path, offset, pid, cookie)
+        attach::<Self, _>(data, *kind, path, offset, pid, cookie)
     }
 
     /// Creates a program from a pinned entry on a bpffs.
@@ -143,6 +144,20 @@ impl UProbe {
     pub fn from_pin<P: AsRef<Path>>(path: P, kind: ProbeKind) -> Result<Self, ProgramError> {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data, kind })
+    }
+}
+
+impl Probe for UProbe {
+    const PMU: &'static str = "uprobe";
+
+    type Error = UProbeError;
+
+    fn file_error(filename: PathBuf, io_error: io::Error) -> Self::Error {
+        UProbeError::FileError { filename, io_error }
+    }
+
+    fn write_offset<W: Write>(w: &mut W, _: ProbeKind, offset: u64) -> fmt::Result {
+        write!(w, ":{offset:#x}")
     }
 }
 
@@ -159,9 +174,10 @@ where
         .and_then(|proc_map| {
             proc_map
                 .find_library_path_by_name(target)
-                .map_err(|source| UProbeError::ProcMap {
-                    pid: proc_map.pid,
-                    source,
+                .map_err(|source| {
+                    let ProcMap { pid, data: _ } = proc_map;
+                    let pid = *pid;
+                    UProbeError::ProcMap { pid, source }
                 })
                 .transpose()
         })
@@ -190,7 +206,7 @@ where
 )]
 fn test_resolve_attach_path() {
     // Look up the current process's pid.
-    let pid = std::process::id().try_into().unwrap();
+    let pid = std::process::id();
     let proc_map = ProcMap::new(pid).unwrap();
 
     // Now let's resolve the path to libc. It should exist in the current process's memory map and
@@ -208,6 +224,19 @@ fn test_resolve_attach_path() {
         Some(libc_path) if libc_path.contains("libc"),
         "libc_path: {}", libc_path.display()
     );
+
+    // If we pass an absolute path that doesn't match anything in /proc/<pid>/maps, we should fall
+    // back to the provided path instead of erroring out. Using a synthetic absolute path keeps the
+    // test hermetic.
+    let synthetic_absolute = Path::new("/tmp/.aya-test-resolve-attach-absolute");
+    let absolute_path =
+        resolve_attach_path(synthetic_absolute, Some(&proc_map)).unwrap_or_else(|err| {
+            match err.source() {
+                Some(source) => panic!("{err}: {source}"),
+                None => panic!("{err}"),
+            }
+        });
+    assert_eq!(absolute_path, synthetic_absolute);
 }
 
 define_link_wrapper!(
@@ -274,7 +303,7 @@ pub enum UProbeError {
     #[error("error fetching libs for {pid}")]
     ProcMap {
         /// The pid.
-        pid: i32,
+        pid: u32,
         /// The [`ProcMapError`] that caused the error.
         #[source]
         source: ProcMapError,
@@ -406,12 +435,12 @@ impl<'a> ProcMapEntry<'a> {
 ///
 /// The information here may be used to resolve addresses to paths.
 struct ProcMap<T> {
-    pid: pid_t,
+    pid: u32,
     data: T,
 }
 
 impl ProcMap<Vec<u8>> {
-    fn new(pid: pid_t) -> Result<Self, UProbeError> {
+    fn new(pid: u32) -> Result<Self, UProbeError> {
         let filename = PathBuf::from(format!("/proc/{pid}/maps"));
         let data = fs::read(&filename)
             .map_err(|io_error| UProbeError::FileError { filename, io_error })?;
@@ -425,6 +454,8 @@ impl<T: AsRef<[u8]>> ProcMap<T> {
 
         data.as_ref()
             .split(|&b| b == b'\n')
+            // /proc/<pid>/maps ends with '\n', so split() yields a trailing empty slice.
+            .filter(|line| !line.is_empty())
             .map(ProcMapEntry::parse)
     }
 
@@ -1010,8 +1041,7 @@ mod tests {
 7f372288f000-7f3722899000	r--p	00027000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
 7f3722899000-7f372289b000	r--p	00030000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
 7f372289b000-7f372289d000	rw-p	00032000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
-"#
-            .trim_ascii(),
+"#,
         };
 
         assert_matches!(

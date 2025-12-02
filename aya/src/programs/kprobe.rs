@@ -1,6 +1,7 @@
 //! Kernel space probes.
 use std::{
     ffi::OsStr,
+    fmt::{self, Write},
     io,
     os::fd::AsFd as _,
     path::{Path, PathBuf},
@@ -15,7 +16,7 @@ use crate::{
         FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
         impl_try_into_fdlink, load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
-        probe::{ProbeKind, attach},
+        probe::{Probe, ProbeKind, attach},
     },
     sys::bpf_link_get_info_by_fd,
 };
@@ -59,8 +60,8 @@ impl KProbe {
         load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
     }
 
-    /// Returns `KProbe` if the program is a `kprobe`, or `KRetProbe` if the
-    /// program is a `kretprobe`.
+    /// Returns [`ProbeKind::Entry`] if the program is a `kprobe`, or
+    /// [`ProbeKind::Return`] if the program is a `kretprobe`.
     pub fn kind(&self) -> ProbeKind {
         self.kind
     }
@@ -81,9 +82,10 @@ impl KProbe {
         fn_name: T,
         offset: u64,
     ) -> Result<KProbeLinkId, ProgramError> {
-        attach(
-            &mut self.data,
-            self.kind,
+        let Self { data, kind } = self;
+        attach::<Self, _>(
+            data,
+            *kind,
             fn_name.as_ref(),
             offset,
             None, // pid
@@ -100,6 +102,23 @@ impl KProbe {
     pub fn from_pin<P: AsRef<Path>>(path: P, kind: ProbeKind) -> Result<Self, ProgramError> {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data, kind })
+    }
+}
+
+impl Probe for KProbe {
+    const PMU: &'static str = "kprobe";
+
+    type Error = KProbeError;
+
+    fn file_error(filename: PathBuf, io_error: io::Error) -> Self::Error {
+        KProbeError::FileError { filename, io_error }
+    }
+
+    fn write_offset<W: Write>(w: &mut W, kind: ProbeKind, offset: u64) -> fmt::Result {
+        match kind {
+            ProbeKind::Entry => write!(w, "+{offset}"),
+            ProbeKind::Return => Ok(()),
+        }
     }
 }
 

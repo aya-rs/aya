@@ -79,12 +79,12 @@ impl TracePoint {
         let prog_fd = prog_fd.as_fd();
         let tracefs = find_tracefs_path()?;
         let id = read_sys_fs_trace_point_id(tracefs, category, name.as_ref())?;
-        let fd = perf_event_open_trace_point(id, None).map_err(|io_error| SyscallError {
+        let perf_fd = perf_event_open_trace_point(id, None).map_err(|io_error| SyscallError {
             call: "perf_event_open_trace_point",
             io_error,
         })?;
 
-        let link = perf_attach(prog_fd, fd, None /* cookie */)?;
+        let link = perf_attach(prog_fd, perf_fd, None /* cookie */)?;
         self.data.links.insert(TracePointLink::new(link))
     }
 }
@@ -115,14 +115,14 @@ pub(crate) fn read_sys_fs_trace_point_id(
     tracefs: &Path,
     category: &str,
     name: &Path,
-) -> Result<u32, TracePointError> {
+) -> Result<u64, TracePointError> {
     let filename = tracefs.join("events").join(category).join(name).join("id");
 
     let id = match fs::read_to_string(&filename) {
         Ok(id) => id,
         Err(io_error) => return Err(TracePointError::FileError { filename, io_error }),
     };
-    let id = match id.trim().parse::<u32>() {
+    let id = match id.trim().parse() {
         Ok(id) => id,
         Err(error) => {
             return Err(TracePointError::FileError {

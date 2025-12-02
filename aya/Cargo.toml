@@ -4,7 +4,7 @@ documentation = "https://docs.rs/aya"
 keywords = ["bpf", "ebpf", "kernel", "linux"]
 name = "aya"
 readme = "README.md"
-version = "0.13.1"
+version = "0.13.2"
 
 authors.workspace = true
 edition.workspace = true
@@ -18,7 +18,7 @@ workspace = true
 
 [dependencies]
 assert_matches = { workspace = true }
-aya-obj = { path = "../aya-obj", version = "^0.2.1", features = ["std"] }
+aya-obj = { path = "../aya-obj", version = "^0.2.2", features = ["std"] }
 bitflags = { workspace = true }
 bytes = { workspace = true }
 hashbrown = { workspace = true }

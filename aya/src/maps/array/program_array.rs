@@ -36,13 +36,13 @@ use crate::{
 /// let flags = 0;
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 0) will jump to prog_0
-/// prog_array.set(0, &prog_0_fd, flags);
+/// prog_array.set(0, prog_0_fd, flags);
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 1) will jump to prog_1
-/// prog_array.set(1, &prog_1_fd, flags);
+/// prog_array.set(1, prog_1_fd, flags);
 ///
 /// // bpf_tail_call(ctx, JUMP_TABLE, 2) will jump to prog_2
-/// prog_array.set(2, &prog_2_fd, flags);
+/// prog_array.set(2, prog_2_fd, flags);
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_PROG_ARRAY")]

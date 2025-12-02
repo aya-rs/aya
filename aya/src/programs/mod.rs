@@ -111,7 +111,7 @@ pub use crate::programs::{
     lirc_mode2::LircMode2,
     lsm::Lsm,
     lsm_cgroup::LsmCgroup,
-    perf_event::{PerfEvent, PerfEventScope, SamplePolicy},
+    perf_event::PerfEvent,
     probe::ProbeKind,
     raw_trace_point::RawTracePoint,
     sk_lookup::SkLookup,
@@ -1229,9 +1229,8 @@ impl_info!(
 /// use aya::programs::loaded_links;
 ///
 /// for info in loaded_links() {
-///    if let Ok(info) = info {
-///        println!("loaded link: {}", info.id());
-///    }
+///    let info = info.unwrap();
+///    println!("loaded link: {}", info.id());
 /// }
 /// ```
 pub fn loaded_links() -> impl Iterator<Item = Result<LinkInfo, LinkError>> {

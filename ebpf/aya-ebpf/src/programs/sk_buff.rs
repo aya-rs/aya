@@ -384,8 +384,8 @@ impl SkBuffContext {
     /// fn try_cgroup_skb(ctx: SkBuffContext) -> Result<i32, i32> {
     ///     let len = ETH_HLEN + IP_HLEN + UDP_HLEN;
     ///     match ctx.pull_data(len as u32) {
-    ///         Ok(()) => return Ok(0),
-    ///         Err(ret) => return Err(ret as i32),
+    ///         Ok(()) => Ok(0),
+    ///         Err(ret) => Err(ret as i32),
     ///     }
     /// }
     /// ```

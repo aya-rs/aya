@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## v0.1.16 (2025-11-17)
+
+### Breaking Changes
+
+ - <csr-id-9be2d723ce5d7bf5f85d69d54aa5fd7f60d48edc/> Updated the shared types for the new ring-buffer transport used by `aya-log`, aligning the user- and eBPF-side structures.
+ - <csr-id-214fe3c3673b182606c14d5e43f7f4ac512e47a7/> Sealed the `Argument` trait so downstream crates can no longer implement log argument types.
+
+### New Features
+
+ - <csr-id-a98b638fa95fd8edb8c015ee03154d2f03ecffc8/> Added support for logging raw pointer values, mirroring the new host-side formatting capabilities.
+
+### Maintenance
+
+ - <csr-id-0429ed2fa299636428b65573456cffe0aac2beca/>, <csr-id-5f5305c2a8ca0a739219093599dd57182d440ac1/> General lint, edition, and formatting cleanups to keep the crate in line with the workspace standards.
+
 ## 0.1.15 (2024-10-09)
 
 <csr-id-a75fc2f7691dad21822c2eff35281abd3c4b5d23/>

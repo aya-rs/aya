@@ -15,10 +15,9 @@ pub(crate) enum KProbeKind {
 
 impl std::fmt::Display for KProbeKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use KProbeKind::*;
         match self {
-            KProbe => write!(f, "kprobe"),
-            KRetProbe => write!(f, "kretprobe"),
+            Self::KProbe => write!(f, "kprobe"),
+            Self::KRetProbe => write!(f, "kretprobe"),
         }
     }
 }

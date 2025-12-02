@@ -3,22 +3,18 @@
 use std::os::fd::AsFd as _;
 
 use aya_obj::generated::{
-    bpf_link_type,
-    bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT,
-    perf_hw_cache_id, perf_hw_cache_op_id, perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids,
-    perf_type_id,
-    perf_type_id::{
-        PERF_TYPE_BREAKPOINT, PERF_TYPE_HARDWARE, PERF_TYPE_HW_CACHE, PERF_TYPE_RAW,
-        PERF_TYPE_SOFTWARE, PERF_TYPE_TRACEPOINT,
-    },
+    HW_BREAKPOINT_LEN_1, HW_BREAKPOINT_LEN_2, HW_BREAKPOINT_LEN_4, HW_BREAKPOINT_LEN_8,
+    HW_BREAKPOINT_R, HW_BREAKPOINT_RW, HW_BREAKPOINT_W, bpf_link_type,
+    bpf_prog_type::BPF_PROG_TYPE_PERF_EVENT, perf_hw_cache_id, perf_hw_cache_op_id,
+    perf_hw_cache_op_result_id, perf_hw_id, perf_sw_ids, perf_type_id,
 };
 
 use crate::{
     programs::{
         FdLink, LinkError, ProgramData, ProgramError, ProgramType, impl_try_into_fdlink,
         links::define_link_wrapper,
-        load_program, perf_attach,
-        perf_attach::{PerfLinkIdInner, PerfLinkInner},
+        load_program,
+        perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
     },
     sys::{SyscallError, bpf_link_get_info_by_fd, perf_event_open},
 };
@@ -58,12 +54,8 @@ pub enum PerfEventConfig {
         event_id: u64,
     },
     /// A hardware breakpoint.
-    ///
-    /// Note: this variant is not fully implemented at the moment.
-    // TODO: Variant not fully implemented due to additional `perf_event_attr` fields like
-    //       `bp_type`, `bp_addr`, etc.
     #[doc(alias = "PERF_TYPE_BREAKPOINT")]
-    Breakpoint,
+    Breakpoint(BreakpointConfig),
     /// The dynamic PMU (Performance Monitor Unit) event to report.
     ///
     /// Available PMU's may be found under `/sys/bus/event_source/devices`.
@@ -84,7 +76,7 @@ pub enum PerfEventConfig {
 
 macro_rules! impl_to_u32 {
     ($($t:ty, $fn:ident),*) => {
-        $(const fn $fn(id: $t) -> u32 {
+        $(pub(crate) const fn $fn(id: $t) -> u32 {
             const _: [(); 4] = [(); std::mem::size_of::<$t>()];
             id as u32
         })*
@@ -144,7 +136,7 @@ pub enum HardwareEvent {
 }
 
 impl HardwareEvent {
-    const fn into_primitive(self) -> u32 {
+    pub(crate) const fn into_primitive(self) -> u32 {
         const _: [(); 4] = [(); std::mem::size_of::<HardwareEvent>()];
         self as u32
     }
@@ -194,7 +186,7 @@ pub enum SoftwareEvent {
 }
 
 impl SoftwareEvent {
-    const fn into_primitive(self) -> u32 {
+    pub(crate) const fn into_primitive(self) -> u32 {
         const _: [(); 4] = [(); std::mem::size_of::<SoftwareEvent>()];
         self as u32
     }
@@ -229,7 +221,7 @@ pub enum HwCacheEvent {
 }
 
 impl HwCacheEvent {
-    const fn into_primitive(self) -> u32 {
+    pub(crate) const fn into_primitive(self) -> u32 {
         const _: [(); 4] = [(); std::mem::size_of::<HwCacheEvent>()];
         self as u32
     }
@@ -252,7 +244,7 @@ pub enum HwCacheOp {
 }
 
 impl HwCacheOp {
-    const fn into_primitive(self) -> u32 {
+    pub(crate) const fn into_primitive(self) -> u32 {
         const _: [(); 4] = [(); std::mem::size_of::<HwCacheOp>()];
         self as u32
     }
@@ -276,14 +268,82 @@ pub enum HwCacheResult {
 }
 
 impl HwCacheResult {
-    const fn into_primitive(self) -> u32 {
+    pub(crate) const fn into_primitive(self) -> u32 {
         const _: [(); 4] = [(); std::mem::size_of::<HwCacheResult>()];
         self as u32
     }
 }
 
+/// The breakpoint type.
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
+pub enum PerfBreakpointType {
+    /// HW_BREAKPOINT_R, trigger when we read the memory location.
+    #[doc(alias = "HW_BREAKPOINT_R")]
+    Read = HW_BREAKPOINT_R,
+    /// HW_BREAKPOINT_W, trigger when we write the memory location.
+    #[doc(alias = "HW_BREAKPOINT_W")]
+    Write = HW_BREAKPOINT_W,
+    /// HW_BREAKPOINT_RW, trigger when we read or write the memory location.
+    #[doc(alias = "HW_BREAKPOINT_RW")]
+    ReadWrite = HW_BREAKPOINT_RW,
+}
+
+impl PerfBreakpointType {
+    pub(crate) const fn into_primitive(self) -> u32 {
+        const _: [(); 4] = [(); std::mem::size_of::<PerfBreakpointType>()];
+        self as u32
+    }
+}
+
+/// The number of bytes covered by a data breakpoint.
+#[repr(u32)]
+#[derive(Debug, Clone, Copy)]
+pub enum PerfBreakpointLength {
+    /// HW_BREAKPOINT_LEN_1
+    #[doc(alias = "HW_BREAKPOINT_LEN_1")]
+    Len1 = HW_BREAKPOINT_LEN_1,
+    /// HW_BREAKPOINT_LEN_2
+    #[doc(alias = "HW_BREAKPOINT_LEN_2")]
+    Len2 = HW_BREAKPOINT_LEN_2,
+    /// HW_BREAKPOINT_LEN_4
+    #[doc(alias = "HW_BREAKPOINT_LEN_4")]
+    Len4 = HW_BREAKPOINT_LEN_4,
+    /// HW_BREAKPOINT_LEN_8
+    #[doc(alias = "HW_BREAKPOINT_LEN_8")]
+    Len8 = HW_BREAKPOINT_LEN_8,
+}
+
+impl PerfBreakpointLength {
+    pub(crate) const fn into_primitive(self) -> u32 {
+        const _: [(); 4] = [(); std::mem::size_of::<PerfBreakpointLength>()];
+        self as u32
+    }
+}
+
+/// Type of hardware breakpoint, determines if we break on read, write, or
+/// execute, or if there should be no breakpoint on the given address.
+#[derive(Debug, Clone, Copy)]
+pub enum BreakpointConfig {
+    /// A memory access breakpoint.
+    Data {
+        /// The type of the breakpoint.
+        r#type: PerfBreakpointType,
+        /// The address of the breakpoint.
+        address: u64,
+        /// The contiguous byte window to monitor starting at `address`.
+        length: PerfBreakpointLength,
+    },
+    /// A code execution breakpoint.
+    #[doc(alias = "HW_BREAKPOINT_X")]
+    Instruction {
+        /// The address of the breakpoint.
+        address: u64,
+    },
+}
+
 /// Sample Policy
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum SamplePolicy {
     /// Period
     Period(u64),
@@ -291,27 +351,30 @@ pub enum SamplePolicy {
     Frequency(u64),
 }
 
+/// Wakeup Policy
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum WakeupPolicy {
+    /// Every N events
+    Events(u32),
+    /// Every N bytes
+    #[expect(dead_code)]
+    Watermark(u32),
+}
+
 /// The scope of a PerfEvent
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum PerfEventScope {
-    /// Calling process, any cpu
-    CallingProcessAnyCpu,
-    /// calling process, one cpu
-    CallingProcessOneCpu {
-        /// cpu id
-        cpu: u32,
+    /// calling process
+    CallingProcess {
+        /// cpu id or any cpu if None
+        cpu: Option<u32>,
     },
-    /// one process, any cpu
-    OneProcessAnyCpu {
+    /// one process
+    OneProcess {
         /// process id
         pid: u32,
-    },
-    /// one process, one cpu
-    OneProcessOneCpu {
-        /// cpu id
-        cpu: u32,
-        /// process id
-        pid: u32,
+        /// cpu id or any cpu if None
+        cpu: Option<u32>,
     },
     /// all processes, one cpu
     AllProcessesOneCpu {
@@ -379,16 +442,13 @@ impl PerfEvent {
 
     /// Attaches to the given perf event.
     ///
-    /// [`perf_type`](PerfEventConfig) defines the event `type` and `config` of interest.
+    /// If `inherit` is `true`, any new processes spawned by those processes
+    /// will also automatically be sampled.
     ///
-    /// [`scope`](PerfEventScope) determines which processes are sampled. If `inherit` is
-    /// `true`, any new processes spawned by those processes will also automatically be
-    /// sampled.
-    ///
-    /// The returned value can be used to detach, see [PerfEvent::detach].
+    /// The returned value can be used to detach, see [`Self::detach`].
     pub fn attach(
         &mut self,
-        perf_type: PerfEventConfig,
+        config: PerfEventConfig,
         scope: PerfEventScope,
         sample_policy: SamplePolicy,
         inherit: bool,
@@ -396,51 +456,11 @@ impl PerfEvent {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
 
-        let (perf_type, config) = match perf_type {
-            PerfEventConfig::Pmu { pmu_type, config } => (pmu_type, config),
-            PerfEventConfig::Hardware(hw_event) => (
-                perf_type_id_to_u32(PERF_TYPE_HARDWARE),
-                u64::from(hw_event.into_primitive()),
-            ),
-            PerfEventConfig::Software(sw_event) => (
-                perf_type_id_to_u32(PERF_TYPE_SOFTWARE),
-                u64::from(sw_event.into_primitive()),
-            ),
-            PerfEventConfig::TracePoint { event_id } => {
-                (perf_type_id_to_u32(PERF_TYPE_TRACEPOINT), event_id)
-            }
-            PerfEventConfig::HwCache {
-                event,
-                operation,
-                result,
-            } => (
-                perf_type_id_to_u32(PERF_TYPE_HW_CACHE),
-                u64::from(event.into_primitive())
-                    | (u64::from(operation.into_primitive()) << 8)
-                    | (u64::from(result.into_primitive()) << 16),
-            ),
-            PerfEventConfig::Raw { event_id } => (perf_type_id_to_u32(PERF_TYPE_RAW), event_id),
-            PerfEventConfig::Breakpoint => (perf_type_id_to_u32(PERF_TYPE_BREAKPOINT), 0),
-        };
-        let (sample_period, sample_frequency) = match sample_policy {
-            SamplePolicy::Period(period) => (period, None),
-            SamplePolicy::Frequency(frequency) => (0, Some(frequency)),
-        };
-        let (pid, cpu) = match scope {
-            PerfEventScope::CallingProcessAnyCpu => (0, -1),
-            PerfEventScope::CallingProcessOneCpu { cpu } => (0, cpu as i32),
-            PerfEventScope::OneProcessAnyCpu { pid } => (pid as i32, -1),
-            PerfEventScope::OneProcessOneCpu { cpu, pid } => (pid as i32, cpu as i32),
-            PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
-        };
-        let fd = perf_event_open(
-            perf_type,
+        let perf_fd = perf_event_open(
             config,
-            pid,
-            cpu,
-            sample_period,
-            sample_frequency,
-            false,
+            scope,
+            sample_policy,
+            WakeupPolicy::Events(1),
             inherit,
             0,
         )
@@ -449,7 +469,7 @@ impl PerfEvent {
             io_error,
         })?;
 
-        let link = perf_attach(prog_fd, fd, None /* cookie */)?;
+        let link = perf_attach(prog_fd, perf_fd, None /* cookie */)?;
         self.data.links.insert(PerfEventLink::new(link))
     }
 }

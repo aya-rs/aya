@@ -11,6 +11,8 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+permissions: {}
+
 jobs:
   #buildTestAyaDirect:
   #  uses: melodium-tech/github-actions/.github/workflows/melodium-ubuntu.yml@v0.9.1
@@ -28,6 +30,14 @@ jobs:
       artifact-path: 'logs/'
     secrets:
         token: ${{ secrets.GITHUB_TOKEN }}
+  buildTestAyaEbpf:
+    uses: melodium-tech/github-actions/.github/workflows/melodium-local-distrib.yml@v0.9.1
+    with:
+      command: |
+        run .melodium-ci/Compo.toml buildTestAyaEbpf --repository_clone_url='"${{ github.repositoryUrl }}"' --repository_clone_ref='"${{ github.ref_name }}"' --github_contexts='$''{{{{ { "github": ${{ toJSON(github) }}, "vars": ${{ toJSON(vars) }}, "secrets": { "GITHUB_TOKEN": "'"$GITHUB_TOKEN"'" } } }}}}'
+      artifact-path: 'logs/'
+    secrets:
+        token: ${{ secrets.GITHUB_TOKEN }}
     #runs-on: ubuntu-latest
     #steps:
     #  - uses: actions/checkout@v5
@@ -41,3 +51,372 @@ jobs:
     #   artifact-path: logs/
     # secrets:
     #   token: "${{ secrets.GITHUB_TOKEN }}"
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy,miri,rustfmt,rust-src
+
+      # Installed *after* nightly so it is the default.
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-hack,taplo-cli
+
+      - run: git ls-files -- '*.c' '*.h' | xargs clang-format --dry-run --Werror
+
+      - uses: DavidAnson/markdownlint-cli2-action@v21
+
+      - run: taplo fmt --check
+
+      - run: cargo +nightly fmt --all -- --check
+
+      - run: ./clippy.sh
+
+      # On the `aya-rs/aya` repository, regenerate the public API on a schedule.
+      #
+      # On all other events and repositories assert the public API is up to date.
+      - run: cargo xtask public-api
+        if: ${{ !(github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
+      - run: cargo xtask public-api --bless
+        if: ${{ (github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
+      - uses: peter-evans/create-pull-request@v7
+        if: ${{ (github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
+        with:
+          # GitHub actions aren't allowed to trigger other actions to prevent
+          # abuse; the canonical workaround is to use a sufficiently authorized
+          # token.
+          #
+          # See https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#workarounds-to-trigger-further-workflow-runs.
+          token: ${{ secrets.CRABBY_GITHUB_TOKEN }}
+          branch: create-pull-request/public-api
+          commit-message: 'public-api: regenerate'
+          title: 'public-api: regenerate'
+          body: |
+            **Automated changes**
+
+      - name: Run miri
+        run: |
+          set -euxo pipefail
+          cargo +nightly hack miri test --all-targets --feature-powerset \
+            --exclude aya-ebpf \
+            --exclude aya-ebpf-bindings \
+            --exclude aya-log-ebpf \
+            --exclude integration-ebpf \
+            --exclude integration-test \
+            --workspace
+
+  build-test-aya:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - aarch64-unknown-linux-gnu
+          - armv7-unknown-linux-gnueabi
+          - loongarch64-unknown-linux-gnu
+          - powerpc64le-unknown-linux-gnu
+          - riscv64gc-unknown-linux-gnu
+          - s390x-unknown-linux-gnu
+          - x86_64-unknown-linux-gnu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.arch }}
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: taiki-e/install-action@cargo-hack
+
+      # This is magic, it sets `$CARGO_BUILD_TARGET`.
+      - uses: taiki-e/setup-cross-toolchain-action@v1
+        with:
+          target: ${{ matrix.arch }}
+
+      - name: Build
+        run: |
+          set -euxo pipefail
+          cargo hack build --all-targets --feature-powerset \
+            --exclude aya-ebpf \
+            --exclude aya-ebpf-bindings \
+            --exclude aya-log-ebpf \
+            --exclude integration-ebpf \
+            --exclude xtask \
+            --workspace
+
+      - name: Test
+        env:
+          RUST_BACKTRACE: full
+        run: |
+          set -euxo pipefail
+          cargo hack test --all-targets \
+            --exclude aya-ebpf \
+            --exclude aya-ebpf-bindings \
+            --exclude aya-log-ebpf \
+            --exclude integration-ebpf \
+            --exclude integration-test \
+            --feature-powerset
+
+      - name: Doctests
+        env:
+          RUST_BACKTRACE: full
+        run: |
+          set -euxo pipefail
+          cargo hack test --doc \
+            --exclude aya-ebpf \
+            --exclude aya-ebpf-bindings \
+            --exclude aya-log-ebpf \
+            --exclude integration-ebpf \
+            --exclude integration-test \
+            --feature-powerset
+
+  build-test-aya-ebpf:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
+
+      # Installed *after* nightly so it is the default.
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker --features llvm-21
+
+      - uses: taiki-e/install-action@cargo-hack
+
+      - name: Build & test for all BPF architectures
+        env:
+          RUST_BACKTRACE: full
+        run: |
+          set -euo pipefail
+
+          failures=()
+
+          # NB: this hand-rolled shell script is used instead of a matrix
+          # because the time spent doing useful work per target is about equal
+          # to the overhead of setting up the job - so this saves a bunch of
+          # machine time.
+          for arch in aarch64 arm loongarch64 mips powerpc64 riscv64 s390x x86_64; do
+            echo "::group::arch=$arch"
+            export RUSTFLAGS="--cfg bpf_target_arch=\"$arch\""
+            for target in bpfeb-unknown-none bpfel-unknown-none; do
+              echo "::group::target=$target"
+              if ! (
+                cargo +nightly hack build \
+                  --release \
+                  --target "$target" \
+                  -Z build-std=core \
+                  --package aya-ebpf \
+                  --package aya-ebpf-bindings \
+                  --package aya-log-ebpf \
+                  --package integration-ebpf \
+                  --feature-powerset
+              ); then
+                failures+=("build: $arch/$target")
+              fi
+              echo "::endgroup::"
+            done
+            if ! (
+              RUSTDOCFLAGS=$RUSTFLAGS cargo +nightly hack test --doc \
+                --package aya-ebpf \
+                --package aya-ebpf-bindings \
+                --package aya-log-ebpf \
+                --package integration-ebpf \
+                --feature-powerset
+            ); then
+              failures+=("doctests: $arch")
+            fi
+            echo "::endgroup::"
+          done
+
+          if ((${#failures[@]})); then
+            echo "::error::Some builds/tests failed:"
+            printf '  %s\n' "${failures[@]}"
+            exit 1
+          fi
+
+  run-integration-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        # We don't have a fast solution for running virtualized integration
+        # tests on arm64 because:
+        # - GitHub Ubuntu arm64 runners don't support nested virtualization (see
+        #   https://github.com/orgs/community/discussions/148648#discussioncomment-11863547).
+        # - GitHub macOS arm64 runners don't support nested virtualization (see
+        #   https://docs.github.com/en/actions/reference/runners/github-hosted-runners#limitations-for-arm64-macos-runners).
+        #
+        # So we spin a runner for every arm64 kernel to avoid waiting 20 minutes
+        # for CI. We use arm64 runners to avoid cross-compilation.
+        os:
+          - ubuntu-24.04-arm
+        download-kernel-images:
+          - arm64 5.10
+          - arm64 6.1
+          - arm64 6.12
+        skip-local:
+          - true
+        include:
+          - os: macos-latest
+            # Just one kernel to keep things fast. We just want to keep things from rotting on
+            # macOS. We use amd64 because otherwise qemu tries to use HVF and hits a hard error:
+            # qemu-system-aarch64: -accel hvf: Error: ret = HV_UNSUPPORTED (0xfae9400f, at ../target/arm/hvf/hvf.c:956)
+            download-kernel-images: amd64 5.10
+
+          # We don't use ubuntu-latest because we care about the apt packages available.
+          - os: ubuntu-24.04
+            download-kernel-images: amd64 5.10 6.1 6.12
+          - os: ubuntu-24.04-arm
+            # Native arm runner for local tests only; arm runners don't support
+            # nested virtualization so running them here would be slow.
+            download-kernel-images: local
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install prerequisites
+        if: runner.os == 'Linux'
+        run: |
+          set -euxo pipefail
+
+          # https://github.blog/changelog/2023-02-23-hardware-accelerated-android-virtualization-on-actions-windows-and-linux-larger-hosted-runners/
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm || true # kvm is not available on arm64.
+
+          sudo apt update
+          sudo apt -y install \
+            liblzma-dev \
+            lynx \
+            musl-tools \
+            qemu-system-{arm,x86}
+
+      - name: Install prerequisites
+        if: runner.os == 'macOS'
+        run: |
+          set -euxo pipefail
+          # Dependencies are tracked in `Brewfile`.
+          brew bundle
+          echo $(brew --prefix curl)/bin >> $GITHUB_PATH
+          echo $(brew --prefix llvm)/bin >> $GITHUB_PATH
+
+          # https://github.com/actions/setup-python/issues/577
+          find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
+          | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
+
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-src
+
+      # Installed *after* nightly so it is the default.
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install libLLVM
+        # Download libLLVM from Rust CI to ensure that the libLLVM version
+        # matches exactly with the version used by the current Rust nightly. A
+        # mismatch between libLLVM (used by bpf-linker) and Rust's LLVM version
+        # can lead to linking issues.
+        run: |
+          set -euxo pipefail
+          # Get the partial SHA from Rust nightly.
+          rustc_sha=$(rustc +nightly --version | grep -oE '[a-f0-9]{7,40}')
+          # Get the full SHA from GitHub.
+          rustc_sha=$(curl -sfSL https://api.github.com/repos/rust-lang/rust/commits/$rustc_sha \
+            --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+            --header 'content-type: application/json' \
+            | jq -r '.sha')
+          mkdir -p /tmp/rustc-llvm
+          case "${{ runner.arch }}" in
+            ARM64)
+              arch=aarch64
+              ;;
+            X64)
+              arch=x86_64
+              ;;
+            *)
+              echo "::error::Unsupported runner architecture: ${{ runner.arch }}"
+              exit 1
+              ;;
+          esac
+          case "${{ runner.os }}" in
+            Linux)
+              target=${arch}-unknown-linux-gnu
+              ;;
+            macOS)
+              target=${arch}-apple-darwin
+              ;;
+            *)
+              echo "::error::Unsupported runner OS: ${{ runner.os }}"
+              exit 1
+              ;;
+          esac
+          curl -sfSL https://ci-artifacts.rust-lang.org/rustc-builds/$rustc_sha/rust-dev-nightly-${target}.tar.xz | \
+            tar -xJ --strip-components 2 -C /tmp/rustc-llvm
+          echo /tmp/rustc-llvm/bin >> $GITHUB_PATH
+
+      # NB: rustc doesn't ship libLLVM.so on macOS, so disable proxying (default feature). We also
+      # --force so that bpf-linker gets always relinked against the latest LLVM downloaded above.
+      #
+      # Do this on all system (not just macOS) to avoid relying on rustc-provided libLLVM.so.
+      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker --no-default-features --features llvm-21 --force
+
+      - uses: actions/cache@v4
+        with:
+          path: test/.tmp
+          key: ${{ runner.arch }}-${{ runner.os }}-test-cache-${{ matrix.download-kernel-images }}
+
+      - name: Download debian kernels
+        if: matrix.download-kernel-images != 'local'
+        run: |
+          set -euxo pipefail
+
+          .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels ${{ matrix.download-kernel-images }}
+
+      - name: Cleanup stale kernels and modules
+        run: rm -rf test/.tmp/boot test/.tmp/lib
+
+      - name: Run local integration tests
+        if: runner.os == 'Linux' && matrix.skip-local != true
+        run: cargo xtask integration-test local
+
+      - name: Run virtualized integration tests
+        if: matrix.download-kernel-images != 'local'
+        run: |
+          set -euxo pipefail
+          find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
+            cargo xtask integration-test vm --cache-dir test/.tmp \
+              --github-api-token ${{ secrets.GITHUB_TOKEN }}
+
+  check:
+    if: always()
+    needs:
+      - lint
+      - build-test-aya
+      - build-test-aya-ebpf
+      - run-integration-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}

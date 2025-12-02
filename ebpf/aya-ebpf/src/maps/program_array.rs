@@ -14,7 +14,6 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// # #![expect(dead_code)]
 /// use aya_ebpf::{macros::map, maps::ProgramArray, cty::c_long};
 /// # use aya_ebpf::{programs::LsmContext};
 ///
@@ -24,8 +23,8 @@ use crate::{
 /// # unsafe fn try_test(ctx: &LsmContext) -> Result<(), c_long> {
 /// let index: u32 = 13;
 ///
-/// if let Err(e) = JUMP_TABLE.tail_call(ctx, index) {
-///     return Err(e);
+/// unsafe {
+///     JUMP_TABLE.tail_call(ctx, index)?;
 /// }
 ///
 /// # Err(-1)

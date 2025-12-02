@@ -293,8 +293,13 @@ impl<'a> EbpfLoader<'a> {
 
     /// Override the value of a global variable.
     #[deprecated(since = "0.13.2", note = "please use `override_global` instead")]
-    pub fn set_global<T: Into<GlobalData<'a>>>(&mut self, name: &'a str, value: T) -> &mut Self {
-        self.override_global(name, value, false)
+    pub fn set_global<T: Into<GlobalData<'a>>>(
+        &mut self,
+        name: &'a str,
+        value: T,
+        must_exist: bool,
+    ) -> &mut Self {
+        self.override_global(name, value, must_exist)
     }
 
     /// Set the max_entries for specified map.
@@ -593,11 +598,11 @@ impl<'a> EbpfLoader<'a> {
                     match &section {
                         ProgramSection::KProbe => Program::KProbe(KProbe {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            kind: ProbeKind::KProbe,
+                            kind: ProbeKind::Entry,
                         }),
                         ProgramSection::KRetProbe => Program::KProbe(KProbe {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            kind: ProbeKind::KRetProbe,
+                            kind: ProbeKind::Return,
                         }),
                         ProgramSection::UProbe { sleepable } => {
                             let mut data =
@@ -607,7 +612,7 @@ impl<'a> EbpfLoader<'a> {
                             }
                             Program::UProbe(UProbe {
                                 data,
-                                kind: ProbeKind::UProbe,
+                                kind: ProbeKind::Entry,
                             })
                         }
                         ProgramSection::URetProbe { sleepable } => {
@@ -618,7 +623,7 @@ impl<'a> EbpfLoader<'a> {
                             }
                             Program::UProbe(UProbe {
                                 data,
-                                kind: ProbeKind::URetProbe,
+                                kind: ProbeKind::Return,
                             })
                         }
                         ProgramSection::TracePoint => Program::TracePoint(TracePoint {
@@ -1048,6 +1053,35 @@ impl Ebpf {
     /// ```
     pub fn maps_mut(&mut self) -> impl Iterator<Item = (&str, &mut Map)> {
         self.maps.iter_mut().map(|(name, map)| (name.as_str(), map))
+    }
+
+    /// Attempts to get mutable references to `N` maps at once.
+    ///
+    /// Returns an array of length `N` with the results of each query, in the same order
+    /// as the requested map names. For soundness, at most one mutable reference will be
+    /// returned to any map. `None` will be used if a map with the given name is missing.
+    ///
+    /// This method performs a check to ensure that there are no duplicate map names,
+    /// which currently has a time-complexity of *O(n²)*. Be careful when passing a large
+    /// number of names.
+    ///
+    /// # Panics
+    ///
+    /// Panics if any names are duplicated.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// # let mut bpf = aya::Ebpf::load(&[])?;
+    /// match bpf.maps_disjoint_mut(["MAP1", "MAP2"]) {
+    ///     [Some(m1), Some(m2)] => println!("Got MAP1 and MAP2"),
+    ///     [Some(m1), None] => println!("Got only MAP1"),
+    ///     [None, Some(m2)] => println!("Got only MAP2"),
+    ///     [None, None] => println!("No maps"),
+    /// }
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    pub fn maps_disjoint_mut<const N: usize>(&mut self, names: [&str; N]) -> [Option<&mut Map>; N] {
+        self.maps.get_disjoint_mut(names)
     }
 
     /// Returns a reference to the program with the given name.

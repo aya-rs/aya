@@ -60,7 +60,7 @@ fn test_loaded_programs() {
         .unwrap();
 
     let mut p: UProbe = unsafe {
-        UProbe::from_program_info(info, "test_uprobe".into(), aya::programs::ProbeKind::UProbe)
+        UProbe::from_program_info(info, "test_uprobe".into(), aya::programs::ProbeKind::Entry)
             .unwrap()
     };
 

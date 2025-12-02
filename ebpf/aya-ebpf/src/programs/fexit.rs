@@ -16,10 +16,10 @@ impl FExitContext {
     /// # Examples
     ///
     /// ```no_run
-    /// # #![expect(non_camel_case_types)]
-    /// # #![expect(dead_code)]
     /// # use aya_ebpf::{cty::c_int, programs::FExitContext};
+    /// # #[expect(non_camel_case_types)]
     /// # type pid_t = c_int;
+    /// # #[expect(non_camel_case_types)]
     /// # struct task_struct {
     /// #     pid: pid_t,
     /// # }
