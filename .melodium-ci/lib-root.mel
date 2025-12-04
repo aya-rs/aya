@@ -200,6 +200,7 @@ treatment buildTestAyaForArch[logger: Logger, dispatcher: CicdDispatchEngine, gi
             ${bash -c "set -o allexport && source /tmp/github.env && set +o allexport
                 cargo hack test --doc --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace"
             },
+            "echo Build done",
             "sleep 1"
         ]),
         environment = |wrap<Environment>(
