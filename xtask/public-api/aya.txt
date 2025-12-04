@@ -4240,6 +4240,8 @@ pub aya::programs::links::CgroupAttachMode::AllowOverride
 pub aya::programs::links::CgroupAttachMode::Single
 impl core::clone::Clone for aya::programs::links::CgroupAttachMode
 pub fn aya::programs::links::CgroupAttachMode::clone(&self) -> aya::programs::links::CgroupAttachMode
+impl core::cmp::PartialEq for aya::programs::links::CgroupAttachMode
+pub fn aya::programs::links::CgroupAttachMode::eq(&self, other: &aya::programs::links::CgroupAttachMode) -> bool
 impl core::convert::From<aya::programs::links::CgroupAttachMode> for u32
 pub fn u32::from(mode: aya::programs::links::CgroupAttachMode) -> Self
 impl core::default::Default for aya::programs::links::CgroupAttachMode
@@ -4247,6 +4249,7 @@ pub fn aya::programs::links::CgroupAttachMode::default() -> aya::programs::links
 impl core::fmt::Debug for aya::programs::links::CgroupAttachMode
 pub fn aya::programs::links::CgroupAttachMode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::links::CgroupAttachMode
+impl core::marker::StructuralPartialEq for aya::programs::links::CgroupAttachMode
 impl core::marker::Freeze for aya::programs::links::CgroupAttachMode
 impl core::marker::Send for aya::programs::links::CgroupAttachMode
 impl core::marker::Sync for aya::programs::links::CgroupAttachMode
@@ -7834,6 +7837,8 @@ pub aya::programs::CgroupAttachMode::AllowOverride
 pub aya::programs::CgroupAttachMode::Single
 impl core::clone::Clone for aya::programs::links::CgroupAttachMode
 pub fn aya::programs::links::CgroupAttachMode::clone(&self) -> aya::programs::links::CgroupAttachMode
+impl core::cmp::PartialEq for aya::programs::links::CgroupAttachMode
+pub fn aya::programs::links::CgroupAttachMode::eq(&self, other: &aya::programs::links::CgroupAttachMode) -> bool
 impl core::convert::From<aya::programs::links::CgroupAttachMode> for u32
 pub fn u32::from(mode: aya::programs::links::CgroupAttachMode) -> Self
 impl core::default::Default for aya::programs::links::CgroupAttachMode
@@ -7841,6 +7846,7 @@ pub fn aya::programs::links::CgroupAttachMode::default() -> aya::programs::links
 impl core::fmt::Debug for aya::programs::links::CgroupAttachMode
 pub fn aya::programs::links::CgroupAttachMode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::links::CgroupAttachMode
+impl core::marker::StructuralPartialEq for aya::programs::links::CgroupAttachMode
 impl core::marker::Freeze for aya::programs::links::CgroupAttachMode
 impl core::marker::Send for aya::programs::links::CgroupAttachMode
 impl core::marker::Sync for aya::programs::links::CgroupAttachMode

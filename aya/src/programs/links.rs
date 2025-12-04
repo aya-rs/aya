@@ -38,7 +38,7 @@ pub trait Link: std::fmt::Debug + Eq + std::hash::Hash + 'static {
 }
 
 /// Program attachment mode.
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub enum CgroupAttachMode {
     /// Allows only one BPF program in the cgroup subtree.
     #[default]
