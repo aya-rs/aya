@@ -199,7 +199,8 @@ treatment buildTestAyaForArch[logger: Logger, dispatcher: CicdDispatchEngine, gi
             // Doc
             ${bash -c "set -o allexport && source /tmp/github.env && set +o allexport
                 cargo hack test --doc --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace"
-            }
+            },
+            "sleep 1"
         ]),
         environment = |wrap<Environment>(
             |environment(
@@ -360,6 +361,7 @@ treatment buildTestAyaEbpf[logger: Logger, dispatcher: CicdDispatchEngine, githu
           if ((${#failures[@]})); then
             echo "::error::Some builds/tests failed:"
             printf '  %s\n' "${failures[@]}"
+            sleep 1
             exit 1
           fi
             }}}
