@@ -31,6 +31,8 @@ jobs:
       artifact-name: 'mel_buildTestAya'
     secrets:
         token: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      statuses: write
   buildTestAyaEbpf:
     uses: melodium-tech/github-actions/.github/workflows/melodium-local-distrib.yml@v0.9.1
     with:
@@ -40,6 +42,8 @@ jobs:
       artifact-name: 'mel_buildTestAyaEbpf'
     secrets:
         token: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      statuses: write
     #runs-on: ubuntu-latest
     #steps:
     #  - uses: actions/checkout@v5
