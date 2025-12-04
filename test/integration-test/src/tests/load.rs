@@ -409,6 +409,7 @@ fn pin_tcx_link() {
     let _netns = NetNsGuard::new();
 
     let program_name = "tcx_next";
+    let pin_path = "/sys/fs/bpf/aya-tcx-test-lo";
     let mut bpf = Ebpf::load(crate::TCX).unwrap();
     let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
@@ -424,18 +425,28 @@ fn pin_tcx_link() {
     assert_loaded(program_name);
 
     let fd_link: FdLink = link.try_into().unwrap();
-    let pinned = fd_link.pin("/sys/fs/bpf/aya-tcx-test-lo").unwrap();
+    fd_link.pin(pin_path).unwrap();
 
-    // because of the pin, the program is still attached
+    // Because of the pin, the program is still attached
     prog.unload().unwrap();
     assert_loaded(program_name);
 
-    // delete the pin, but the program is still attached
-    let new_link = pinned.unpin().unwrap();
+    // Load a new program and atomically replace the old one using attach_to_link
+    let mut bpf = Ebpf::load(crate::TCX).unwrap();
+    let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let old_link = PinnedLink::from_pin(pin_path).unwrap();
+    let link = FdLink::from(old_link).try_into().unwrap();
+    let link_id = prog.attach_to_link(link).unwrap();
+
     assert_loaded(program_name);
 
-    // finally when new_link is dropped we're detached
-    drop(new_link);
+    // Clean up
+    let link = prog.take_link(link_id).unwrap();
+    let fd_link: FdLink = link.try_into().unwrap();
+    fd_link.unpin().unwrap();
+    drop(fd_link);
     assert_unloaded(program_name);
 }
 
