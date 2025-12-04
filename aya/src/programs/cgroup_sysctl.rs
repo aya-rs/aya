@@ -5,6 +5,7 @@ use std::{hash::Hash, os::fd::AsFd};
 use aya_obj::generated::{
     bpf_attach_type::BPF_CGROUP_SYSCTL, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SYSCTL,
 };
+use log::warn;
 
 use crate::{
     programs::{
@@ -66,6 +67,10 @@ impl CgroupSysctl {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupSysctl::detach].
+    ///
+    /// # Warning
+    ///
+    /// On kernels 5.7.0 and later, attach modes other than CgroupAttachMode::default() are not passed to bpf_link_create.
     pub fn attach<T: AsFd>(
         &mut self,
         cgroup: T,
@@ -76,11 +81,17 @@ impl CgroupSysctl {
         let cgroup_fd = cgroup.as_fd();
 
         if KernelVersion::at_least(5, 7, 0) {
+            if mode != CgroupAttachMode::default() {
+                warn!(
+                    "CgroupAttachMode {:?} will not be passed on to bpf_link_create",
+                    mode
+                );
+            }
             let link_fd = bpf_link_create(
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),
                 BPF_CGROUP_SYSCTL,
-                mode.into(),
+                0,
                 None,
             )
             .map_err(|io_error| SyscallError {

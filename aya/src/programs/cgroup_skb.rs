@@ -6,6 +6,7 @@ use aya_obj::generated::{
     bpf_attach_type::{BPF_CGROUP_INET_EGRESS, BPF_CGROUP_INET_INGRESS},
     bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB,
 };
+use log::warn;
 
 use crate::{
     VerifierLogLevel,
@@ -86,6 +87,10 @@ impl CgroupSkb {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupSkb::detach].
+    ///
+    /// # Warning
+    ///
+    /// On kernels 5.7.0 and later, attach modes other than CgroupAttachMode::default() are not passed to bpf_link_create.
     pub fn attach<T: AsFd>(
         &mut self,
         cgroup: T,
@@ -101,17 +106,17 @@ impl CgroupSkb {
             CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
         };
         if KernelVersion::at_least(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(cgroup_fd),
-                attach_type,
-                mode.into(),
-                None,
-            )
-            .map_err(|io_error| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+            if mode != CgroupAttachMode::default() {
+                warn!(
+                    "CgroupAttachMode {:?} will not be passed on to bpf_link_create",
+                    mode
+                );
+            }
+            let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(cgroup_fd), attach_type, 0, None)
+                .map_err(|io_error| SyscallError {
+                    call: "bpf_link_create",
+                    io_error,
+                })?;
             self.data
                 .links
                 .insert(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(
