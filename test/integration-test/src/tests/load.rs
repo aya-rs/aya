@@ -515,7 +515,9 @@ fn pin_cgroup_link() {
     let prog: &mut CgroupSockAddr = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
-    let link_id = prog.attach(&cgroup_fd, CgroupAttachMode::Single).unwrap();
+    let link_id = prog
+        .attach(&cgroup_fd, CgroupAttachMode::AllowMultiple)
+        .unwrap();
     let link = prog.take_link(link_id).unwrap();
     assert_loaded(program_name);
 
