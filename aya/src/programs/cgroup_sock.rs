@@ -1,5 +1,6 @@
 //! Cgroup socket programs.
 
+use log::warn;
 use std::{hash::Hash, os::fd::AsFd, path::Path};
 
 use aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK;
@@ -70,6 +71,10 @@ impl CgroupSock {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupSock::detach].
+    ///
+    /// # Warning
+    ///
+    /// attach modes other than CgroupAttachMode::default() may not be passed on to kernel BPF APIs
     pub fn attach<T: AsFd>(
         &mut self,
         cgroup: T,
@@ -80,17 +85,17 @@ impl CgroupSock {
         let cgroup_fd = cgroup.as_fd();
         let attach_type = self.data.expected_attach_type.unwrap();
         if KernelVersion::at_least(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(cgroup_fd),
-                attach_type,
-                mode.into(),
-                None,
-            )
-            .map_err(|io_error| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+            if mode != CgroupAttachMode::default() {
+                warn!(
+                    "CgroupAttachMode {:?} will not be passed on to bpf_link_create",
+                    mode
+                );
+            }
+            let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(cgroup_fd), attach_type, 0, None)
+                .map_err(|io_error| SyscallError {
+                    call: "bpf_link_create",
+                    io_error,
+                })?;
             self.data
                 .links
                 .insert(CgroupSockLink::new(CgroupSockLinkInner::Fd(FdLink::new(
