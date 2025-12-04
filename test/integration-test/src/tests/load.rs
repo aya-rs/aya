@@ -438,15 +438,13 @@ fn pin_tcx_link() {
 
     let old_link = PinnedLink::from_pin(pin_path).unwrap();
     let link = FdLink::from(old_link).try_into().unwrap();
-    let link_id = prog.attach_to_link(link).unwrap();
+    let _link_id = prog.attach_to_link(link).unwrap();
 
     assert_loaded(program_name);
 
-    // Clean up
-    let link = prog.take_link(link_id).unwrap();
-    let fd_link: FdLink = link.try_into().unwrap();
-    fd_link.unpin().unwrap();
-    drop(fd_link);
+    // Clean up: remove the stale pin file and drop the bpf instance (which drops the program and link)
+    remove_file(pin_path).unwrap();
+    drop(bpf);
     assert_unloaded(program_name);
 }
 
