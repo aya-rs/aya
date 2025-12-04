@@ -4,6 +4,7 @@ use std::{hash::Hash, os::fd::AsFd, path::Path};
 
 use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK_ADDR};
 pub use aya_obj::programs::CgroupSockAddrAttachType;
+use log::warn;
 
 use crate::{
     VerifierLogLevel,
@@ -72,6 +73,12 @@ impl CgroupSockAddr {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [`CgroupSockAddr::detach`].
+    ///
+    /// # Warning
+    ///
+    /// On kernels 5.7.0 and later, programs are attached with `bpf_link_create`, which always uses
+    /// multi-attach semantics (equivalent to `CgroupAttachMode::AllowMultiple`); other modes are
+    /// not honored. On older kernels (using `bpf_prog_attach`), the attach mode is honored.
     pub fn attach<T: AsFd>(
         &mut self,
         cgroup: T,
@@ -82,17 +89,18 @@ impl CgroupSockAddr {
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
         if KernelVersion::at_least(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(cgroup_fd),
-                *attach_type,
-                mode.into(),
-                None,
-            )
-            .map_err(|io_error| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+            if mode != CgroupAttachMode::AllowMultiple {
+                warn!(
+                    "CgroupAttachMode {mode:?} is ignored by bpf_link_create; the program is \
+                     attached with multi-attach semantics"
+                );
+            }
+            let link_fd =
+                bpf_link_create(prog_fd, LinkTarget::Fd(cgroup_fd), *attach_type, 0, None)
+                    .map_err(|io_error| SyscallError {
+                        call: "bpf_link_create",
+                        io_error,
+                    })?;
             data.links
                 .insert(CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(
                     FdLink::new(link_fd),
