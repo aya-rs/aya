@@ -24,9 +24,6 @@ jobs:
         with:
           components: clippy,miri,rustfmt,rust-src
 
-      # Installed *after* nightly so it is the default.
-      - uses: dtolnay/rust-toolchain@stable
-
       - uses: Swatinem/rust-cache@v2
 
       - uses: taiki-e/install-action@v2
