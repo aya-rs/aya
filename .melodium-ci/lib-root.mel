@@ -311,7 +311,7 @@ treatment buildTestAyaForArchUsingImage[logger: Logger, dispatcher: CicdDispatch
         )
     )
 
-    /*ready.awaited*/ checkout.success -> build.trigger,finished -> Self.finished
+    /*ready.awaited*/ checkout.finished -> build.trigger,finished -> Self.finished
 
     pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
     successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
