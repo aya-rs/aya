@@ -137,7 +137,7 @@ treatment buildTestAyaForArch[logger: Logger, dispatcher: CicdDispatchEngine, gi
     build.finished -> concentrateFinish.data
 
     prepareSystem: stepOn[logger=logger, runner=runner](
-        name = |format("prepare_{short}", |entry("short", short_rust_arch)),
+        name = |format("prepare_system_{short}", |entry("short", short_rust_arch)),
         executor_name = "rust",
         commands = |raw_commands([
             |format("dpkg --add-architecture {arch}", |entry("arch", ubuntu_arch)),
@@ -161,7 +161,7 @@ treatment buildTestAyaForArch[logger: Logger, dispatcher: CicdDispatchEngine, gi
     )
 
     prepareRust: stepOn[logger=logger, runner=runner](
-        name = |format("prepare_{short}", |entry("short", short_rust_arch)),
+        name = |format("prepare_rust_{short}", |entry("short", short_rust_arch)),
         executor_name = "rust",
         commands = |raw_commands([
             |format("rustup target add {arch}", |entry("arch", full_rust_arch)),
