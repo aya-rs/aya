@@ -284,16 +284,13 @@ treatment buildTestAyaForArchUsingImage[logger: Logger, dispatcher: CicdDispatch
         executor_name = "rust",
         commands = |raw_commands([
             // Build
-            ${bash -c "set -o allexport && source /tmp/github.env && set +o allexport
-                cargo hack build --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude xtask --workspace"
+            ${bash -c "cargo hack build --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude xtask --workspace"
             },
             // Test
-            ${bash -c "set -o allexport && source /tmp/github.env && set +o allexport
-                cargo hack test --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace"
+            ${bash -c "cargo hack test --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace"
             },
             // Doc
-            ${bash -c "set -o allexport && source /tmp/github.env && set +o allexport
-                cargo hack test --doc --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace"
+            ${bash -c "cargo hack test --doc --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace"
             },
             "echo Build done",
             "sleep 1"
