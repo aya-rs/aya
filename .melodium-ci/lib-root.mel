@@ -43,13 +43,21 @@ treatment buildTestAya(const api_token: string, const github_contexts: string = 
     triggerFinish: trigger<void>()
     startup.trigger -> prepareContexts.trigger,ready -> concentratedFinish.trigger,data -> triggerFinish.stream,end -> manageLogs.stop
     
-    build_aarch64: buildTestAyaForArch[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+    build_aarch64: buildTestAyaForArchUsingImage[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        short_rust_arch="aarch64",
+        full_rust_arch="aarch64-unknown-linux-gnu",
+        ubuntu_arch="arm64",
+        image="ghcr.io/taiki-e/rust-cross-toolchain:aarch64-unknown-linux-gnu-dev-amd64",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+    /*buildTestAyaForArch[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
         short_rust_arch="aarch64",
         full_rust_arch="aarch64-unknown-linux-gnu",
         ubuntu_arch="arm64",
         repository_clone_ref=repository_clone_ref,
         repository_clone_url=repository_clone_url
-    )
+    )*/
     /*build_armv7: buildTestAyaForArch[logger=logger, dispatcher=dispatcher, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
         short_rust_arch="armv7",
         full_rust_arch="armv7-unknown-linux-gnueabi",
@@ -143,7 +151,7 @@ treatment buildTestAyaForArch[logger: Logger, dispatcher: CicdDispatchEngine, gi
             |format("dpkg --add-architecture {arch}", |entry("arch", ubuntu_arch)),
             "/usr/bin/systemctl mask docker.service docker.socket",
             "apt-get update",
-            |format("apt-get install -y liblzma-dev:{arch} qemu-user", |entry("arch", ubuntu_arch)),
+            |format("bash -c \"apt-get install -y liblzma-dev:{arch} qemu-user ; exit 0\"", |entry("arch", ubuntu_arch)),
             ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/taiki-e/setup-cross-toolchain-action/refs/tags/v1/main.sh | bash -"},
             "cat /tmp/github.env"
         ]),
@@ -217,6 +225,82 @@ treatment buildTestAyaForArch[logger: Logger, dispatcher: CicdDispatchEngine, gi
     )
 
     ready.awaited -> build.trigger,finished -> Self.finished
+
+    pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
+    successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
+    errorState:   postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(),   name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
+    failureState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |failure(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
+
+    Self.trigger --> pendingState.trigger
+    build.success -> successState.trigger
+    build.error ---> errorState.trigger
+    build.failed --> failureState.trigger
+}
+
+
+treatment buildTestAyaForArchUsingImage[logger: Logger, dispatcher: CicdDispatchEngine, github_contexts: JavaScriptEngine, finish_concentrator: Concentrator](short_rust_arch: string, full_rust_arch: string, ubuntu_arch: string, image: string, repository_clone_ref: string, repository_clone_url: string)
+  model runner: CicdRunnerEngine()
+  input trigger: Block<void>
+  output finished: Block<void>
+{
+    setupRunner[logger=logger, dispatcher=dispatcher, runner=runner](
+        name="buildTestAya",
+        cpu=100,
+        memory=150,
+        storage=800,
+        containers=[
+            |container("rust", 6000, 1000, 8000, |amd64(), [], image, _)
+        ]
+    )
+    stopRunner[runner=runner]()
+    concentrateFinish: concentrateBlock<void>[concentrator=finish_concentrator]()
+    Self.trigger -> setupRunner.trigger
+    build.finished -> stopRunner.trigger
+    build.finished -> concentrateFinish.data
+
+    checkout[logger=logger, runner=runner](
+        label = |format("checkout_{short}", |entry("short", short_rust_arch)),
+        repository_clone_url = repository_clone_url,
+        repository_clone_ref = repository_clone_ref
+    )
+
+    //ready: waitBlock<void>()
+    setupRunner.ready -> checkout.trigger//,success -> ready.a
+    //prepare.awaited -------------------------------> ready.b
+
+    build: stepOn[logger=logger, runner=runner](
+        name = |format("build_{short}", |entry("short", short_rust_arch)),
+        executor_name = "rust",
+        commands = |raw_commands([
+            // Build
+            ${bash -c "set -o allexport && source /tmp/github.env && set +o allexport
+                cargo hack build --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude xtask --workspace"
+            },
+            // Test
+            ${bash -c "set -o allexport && source /tmp/github.env && set +o allexport
+                cargo hack test --all-targets --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace"
+            },
+            // Doc
+            ${bash -c "set -o allexport && source /tmp/github.env && set +o allexport
+                cargo hack test --doc --feature-powerset --exclude aya-ebpf --exclude aya-ebpf-bindings --exclude aya-log-ebpf --exclude integration-ebpf --exclude integration-test --exclude xtask --workspace"
+            },
+            "echo Build done",
+            "sleep 1"
+        ]),
+        environment = |wrap<Environment>(
+            |environment(
+                |map([
+                    |entry("RUST_BACKTRACE", "full"),
+                    |entry("CARGO_BUILD_TARGET", full_rust_arch)
+                ]),
+                "/root/aya", // working_directory
+                false, // expand_variables
+                false // clear_env
+            )
+        )
+    )
+
+    /*ready.awaited*/ checkout.success -> build.trigger,finished -> Self.finished
 
     pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
     successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
