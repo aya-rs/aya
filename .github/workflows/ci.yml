@@ -279,6 +279,10 @@ jobs:
           brew bundle
           echo $(brew --prefix curl)/bin >> $GITHUB_PATH
           echo $(brew --prefix llvm)/bin >> $GITHUB_PATH
+          # Point bpf-linker's build.rs to the brew prefixes with static
+          # libraries it needs.
+          echo "CXXSTDLIB_PATH=$(brew --prefix llvm)/lib/c++" >> $GITHUB_ENV
+          echo "ZLIB_PATH=$(brew --prefix zlib)/lib" >> $GITHUB_ENV
 
           # https://github.com/actions/setup-python/issues/577
           find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
@@ -328,6 +332,7 @@ jobs:
               ;;
             macOS)
               target=${arch}-apple-darwin
+              echo "LLVM_LINK_FEATURE=llvm-link-static" >> $GITHUB_ENV
               ;;
             *)
               echo "::error::Unsupported runner OS: ${{ runner.os }}"
@@ -341,8 +346,13 @@ jobs:
       # NB: rustc doesn't ship libLLVM.so on macOS, so disable proxying (default feature). We also
       # --force so that bpf-linker gets always relinked against the latest LLVM downloaded above.
       #
+      # Add the downloaded LLVM to PATH for this build step.
+      #
       # Do this on all system (not just macOS) to avoid relying on rustc-provided libLLVM.so.
-      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker --no-default-features --features llvm-21 --force
+      - run: |
+          cargo install \
+            --git https://github.com/aya-rs/bpf-linker.git bpf-linker \
+            --no-default-features --features "llvm-21,${LLVM_LINK_FEATURE}" --force
 
       - uses: actions/cache@v4
         with:
