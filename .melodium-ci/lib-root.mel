@@ -105,6 +105,7 @@ treatment buildTestAya(const api_token: string, const github_contexts: string = 
 treatment checkout[logger: Logger, runner: CicdRunnerEngine](label: string, executor_name: string = "rust", repository_clone_url: string, repository_clone_ref: string)
   input trigger: Block<void>
   output success: Block<void>
+  output finished: Block<void>
   output error: Block<void>
 {
     stepOn[logger=logger, runner=runner](
@@ -121,6 +122,7 @@ treatment checkout[logger: Logger, runner: CicdRunnerEngine](label: string, exec
         ])
     )
     Self.trigger -> stepOn.trigger,success -> Self.success
+                    stepOn.finished --------> Self.finished
                     stepOn.error -----------> Self.error
 }
 
@@ -309,7 +311,7 @@ treatment buildTestAyaForArchUsingImage[logger: Logger, dispatcher: CicdDispatch
         )
     )
 
-    /*ready.awaited*/ checkout.finished -> build.trigger,finished -> Self.finished
+    /*ready.awaited*/ checkout.success -> build.trigger,finished -> Self.finished
 
     pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
     successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = short_rust_arch, description = "Build and Test Aya on arch", log_response = true)
