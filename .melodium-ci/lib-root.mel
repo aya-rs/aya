@@ -274,7 +274,7 @@ treatment buildTestAyaForArchUsingImage[logger: Logger, dispatcher: CicdDispatch
     )
 
     //ready: waitBlock<void>()
-    setupRunner.ready -> install.trigger,success -> checkout.trigger//,success -> ready.a
+    setupRunner.ready -> install.trigger,finished -> checkout.trigger//,success -> ready.a
     //prepare.awaited -------------------------------> ready.b
 
     build: stepOn[logger=logger, runner=runner](
