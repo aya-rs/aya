@@ -27,7 +27,15 @@ jobs:
       # Installed *after* nightly so it is the default.
       - uses: dtolnay/rust-toolchain@stable
 
+      - id: nightly-prefix
+        run: |
+          set -euo pipefail
+          prefix="$(rustc +nightly --version --verbose | awk '/commit-date/ {print "nightly-" $2}')"
+          echo "value=$prefix" >> "$GITHUB_OUTPUT"
+
       - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: ${{ steps.nightly-prefix.outputs.value }}
 
       - uses: taiki-e/install-action@v2
         with:
