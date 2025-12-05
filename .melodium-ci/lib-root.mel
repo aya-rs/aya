@@ -30,9 +30,9 @@ use std/text/compose::|format
 use work/resources::|container
 use work/resources/arch::|amd64
 
-treatment buildTestAya(const github_contexts: string = "{}", repository_clone_url: string, repository_clone_ref: string)
+treatment buildTestAya(const api_token, const github_contexts: string = "{}", repository_clone_url: string, repository_clone_ref: string)
   model logger: Logger()
-  model dispatcher: CicdDispatchEngine(location="compose", api_token="")
+  model dispatcher: CicdDispatchEngine(api_token=api_token)
   model finish_concentrator: Concentrator()
   model github_contexts: JavaScriptEngine()
 {
