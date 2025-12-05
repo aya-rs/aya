@@ -258,6 +258,15 @@ treatment buildTestAyaForArchUsingImage[logger: Logger, dispatcher: CicdDispatch
     build.finished -> stopRunner.trigger
     build.finished -> concentrateFinish.data
 
+    install: stepOn[logger=logger, runner=runner](
+        name = |format("install_{short}", |entry("short", short_rust_arch)),
+        executor_name = "rust",
+        commands = |raw_commands([
+            "apt-get update",
+            "apt-get install -y git"
+            ])
+    )
+
     checkout[logger=logger, runner=runner](
         label = |format("checkout_{short}", |entry("short", short_rust_arch)),
         repository_clone_url = repository_clone_url,
@@ -265,7 +274,7 @@ treatment buildTestAyaForArchUsingImage[logger: Logger, dispatcher: CicdDispatch
     )
 
     //ready: waitBlock<void>()
-    setupRunner.ready -> checkout.trigger//,success -> ready.a
+    setupRunner.ready -> install.trigger,success -> checkout.trigger//,success -> ready.a
     //prepare.awaited -------------------------------> ready.b
 
     build: stepOn[logger=logger, runner=runner](
