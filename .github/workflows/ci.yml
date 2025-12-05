@@ -24,9 +24,6 @@ jobs:
         with:
           components: clippy,miri,rustfmt,rust-src
 
-      # Installed *after* nightly so it is the default.
-      - uses: dtolnay/rust-toolchain@stable
-
       - id: nightly-prefix
         run: |
           set -euo pipefail
