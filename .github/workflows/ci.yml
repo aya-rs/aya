@@ -152,7 +152,15 @@ jobs:
       # Installed *after* nightly so it is the default.
       - uses: dtolnay/rust-toolchain@stable
 
+      - id: nightly-prefix
+        run: |
+          set -euo pipefail
+          prefix="$(rustc +nightly --version --verbose | awk '/commit-date/ {print "nightly-" $2}')"
+          echo "value=$prefix" >> "$GITHUB_OUTPUT"
+
       - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: ${{ steps.nightly-prefix.outputs.value }}
 
       - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker --features llvm-21
 
@@ -294,7 +302,15 @@ jobs:
         with:
           targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
 
+      - id: nightly-prefix
+        run: |
+          set -euo pipefail
+          prefix="$(rustc +nightly --version --verbose | awk '/commit-date/ {print "nightly-" $2}')"
+          echo "value=$prefix" >> "$GITHUB_OUTPUT"
+
       - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: ${{ steps.nightly-prefix.outputs.value }}
 
       - name: Install libLLVM
         # Download libLLVM from Rust CI to ensure that the libLLVM version
