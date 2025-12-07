@@ -153,6 +153,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
+        env:
+          # Use the nightly toolchain as part of the cache key so that any
+          # change in the nightly version automatically invalidates the cache.
+          RUSTUP_TOOLCHAIN: nightly
 
       - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker --features llvm-21
 
@@ -295,6 +299,10 @@ jobs:
           targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
 
       - uses: Swatinem/rust-cache@v2
+        env:
+          # Use the nightly toolchain as part of the cache key so that any
+          # change in the nightly version automatically invalidates the cache.
+          RUSTUP_TOOLCHAIN: nightly
 
       - name: Install libLLVM
         # Download libLLVM from Rust CI to ensure that the libLLVM version
