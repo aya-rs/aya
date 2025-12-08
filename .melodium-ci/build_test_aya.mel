@@ -1,0 +1,90 @@
+use root/prepare::checkout
+use root/prepare::setupToolchain
+use root/prepare::prepareRust
+
+treatment buildTestAyaForArch[logger: Logger, github_contexts: JavaScriptEngine, finish_concentrator: Concentrator](rust_target: string, repository_clone_url: string, repository_clone_ref: string)
+  input trigger: Block<void>
+  output finished: Block<void>
+{
+    concentrateFinish: concentrateBlock<void>[concentrator=finish_concentrator]()
+    run.finished -> concentrateFinish.data
+
+    checkout[logger=logger](
+        label=|format("checkout ({rust_target})", |entry("rust_target", rust_target)),
+        repository_clone_url=repository_clone_url,
+        repository_clone_ref=repository_clone_ref,
+        clone_directory=|format("/tmp/work_{rust_target}", |entry("rust_target", rust_target))
+    )
+    setupToolchain[logger=logger](rust_target=rust_target)
+    prepareRust[logger=logger](rust_target=rust_target)
+
+    rustReady: waitBlock<void>()
+    projectReady: waitBlock<void>()
+    Self.trigger -> prepareRust.trigger,success ----> rustReady.a
+    Self.trigger -> setupToolchain.trigger,success -> rustReady.b,awaited -> projectReady.a
+    Self.trigger -> checkout.trigger,success ------------------------------> projectReady.b,awaited -> run.trigger
+
+    run: localStep[logger=logger](
+        name = |format("run ({rust_target})", |entry("rust_target", rust_target)),
+        variables = |wrap<StringMap>(
+            |map([
+                |entry("RUST_BACKTRACE", "full"),
+                |entry("CARGO_BUILD_TARGET", rust_target)
+            ])
+        ),
+        commands = [
+            // Build
+            |command("bash", ["-c", "
+                set -o allexport && source /tmp/${CARGO_BUILD_TARGET}/github.env && set +o allexport
+                cargo hack build --all-targets --feature-powerset \\
+                  --exclude aya-ebpf \\
+                  --exclude aya-ebpf-bindings \\
+                  --exclude aya-log-ebpf \\
+                  --exclude integration-ebpf \\
+                  --exclude xtask \\
+                  --workspace
+            "]),
+            // Test
+            |command("bash", ["-c", "
+                set -o allexport && source /tmp/${CARGO_BUILD_TARGET}/github.env && set +o allexport
+                cargo hack test --all-targets --feature-powerset \\
+                --exclude aya-ebpf \\
+                --exclude aya-ebpf-bindings \\
+                --exclude aya-log-ebpf \\
+                --exclude integration-ebpf \\
+                --exclude integration-test \\
+                --exclude xtask \\
+                --workspace
+            "]),
+            // Doc
+            |command("bash", ["-c", "
+                set -o allexport && source /tmp/${CARGO_BUILD_TARGET}/github.env && set +o allexport
+                cargo hack test --doc --feature-powerset \\
+                --exclude aya-ebpf \\
+                --exclude aya-ebpf-bindings \\
+                --exclude aya-log-ebpf \\
+                --exclude integration-ebpf \\
+                --exclude integration-test \\
+                --exclude xtask \\
+                --workspace
+            "])
+        ],
+        
+    )
+
+    prepare.awaited -> build.trigger,finished -> Self.finished
+
+    pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = rust_target, description = "Build and Test Aya on arch", log_response = true)
+    successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = rust_target, description = "Build and Test Aya on arch", log_response = true)
+    errorState:   postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(),   name = rust_target, description = "Build and Test Aya on arch", log_response = true)
+    failureState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |failure(), name = rust_target, description = "Build and Test Aya on arch", log_response = true)
+
+    Self.trigger --> pendingState.trigger
+    run.success ---> successState.trigger
+    run.error -----> errorState.trigger
+
+    uncheckSuccess: uncheck<void>()
+    oneFailure: one<void>()
+    run.success -> uncheckSuccess.value,uncheck -> oneFailure.a
+    run.failed ----------------------------------> oneFailure.b,value -> failureState.trigger
+}
