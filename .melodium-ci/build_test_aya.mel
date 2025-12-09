@@ -1,8 +1,34 @@
+use cicd/logging::manageLogs
+use cicd/naive::localStep
+use cicd/services/github::prepareContexts
+use cicd/services/github::postGithubStateContext
+use cicd/services/github::|pending
+use cicd/services/github::|success
+use cicd/services/github::|error
+use cicd/services/github::|failure
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use process/command::|command
 use root/prepare::checkout
 use root/prepare::setupToolchain
 use root/prepare::prepareRust
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/engine/util::startup
+use std/flow::one
+use std/flow::passBlock
+use std/flow::uncheck
+use std/flow::waitBlock
+use std/flow::trigger
+use std/flow/concentrate::Concentrator
+use std/flow/concentrate::concentrateBlock
+use std/flow/concentrate::concentrated
+use std/ops/option::|wrap
+use std/ops/vec::|contains
+use std/text/compose::|format
 
-treatment buildTestAyaForArch[logger: Logger, github_contexts: JavaScriptEngine, finish_concentrator: Concentrator](rust_target: string, repository_clone_url: string, repository_clone_ref: string)
+treatment buildTestAyaForArch[logger: Logger, github_contexts: JavaScriptEngine, finish_concentrator: Concentrator](rust_target: string, repository_clone_url: string, repository_clone_ref: string, targets: Vec<string>)
   input trigger: Block<void>
   output finished: Block<void>
 {
@@ -18,11 +44,12 @@ treatment buildTestAyaForArch[logger: Logger, github_contexts: JavaScriptEngine,
     setupToolchain[logger=logger](rust_target=rust_target)
     prepareRust[logger=logger](rust_target=rust_target)
 
+    doRun: passBlock<void>(cond=|contains<string>(targets, rust_target))
     rustReady: waitBlock<void>()
     projectReady: waitBlock<void>()
-    Self.trigger -> prepareRust.trigger,success ----> rustReady.a
-    Self.trigger -> setupToolchain.trigger,success -> rustReady.b,awaited -> projectReady.a
-    Self.trigger -> checkout.trigger,success ------------------------------> projectReady.b,awaited -> run.trigger
+    Self.trigger -> doRun.block,passed -> prepareRust.trigger,success ----> rustReady.a
+                    doRun.passed -------> setupToolchain.trigger,success -> rustReady.b,awaited -> projectReady.a
+                    doRun.passed -------> checkout.trigger,success ------------------------------> projectReady.b,awaited -> run.trigger
 
     run: localStep[logger=logger](
         name = |format("run ({rust_target})", |entry("rust_target", rust_target)),
@@ -68,18 +95,17 @@ treatment buildTestAyaForArch[logger: Logger, github_contexts: JavaScriptEngine,
                 --exclude xtask \\
                 --workspace
             "])
-        ],
-        
+        ]
     )
 
-    prepare.awaited -> build.trigger,finished -> Self.finished
+    run.finished -> Self.finished
 
     pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = rust_target, description = "Build and Test Aya on arch", log_response = true)
     successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = rust_target, description = "Build and Test Aya on arch", log_response = true)
     errorState:   postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(),   name = rust_target, description = "Build and Test Aya on arch", log_response = true)
     failureState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |failure(), name = rust_target, description = "Build and Test Aya on arch", log_response = true)
 
-    Self.trigger --> pendingState.trigger
+    doRun.passed --> pendingState.trigger
     run.success ---> successState.trigger
     run.error -----> errorState.trigger
 
@@ -87,4 +113,61 @@ treatment buildTestAyaForArch[logger: Logger, github_contexts: JavaScriptEngine,
     oneFailure: one<void>()
     run.success -> uncheckSuccess.value,uncheck -> oneFailure.a
     run.failed ----------------------------------> oneFailure.b,value -> failureState.trigger
+}
+
+treatment buildTestAya(const github_contexts: string = "{}", targets: Vec<string>, repository_clone_url: string, repository_clone_ref: string)
+  model logger: Logger()
+  model finish_concentrator: Concentrator()
+  model github_contexts: JavaScriptEngine()
+{
+    startup()
+    prepareContexts[contexts=github_contexts](github_contexts=github_contexts)
+    manageLogs[logger=logger](output_directory="logs/")
+    concentratedFinish: concentrated<void>[concentrator=finish_concentrator]()
+    triggerFinish: trigger<void>()
+    startup.trigger -> prepareContexts.trigger,ready -> concentratedFinish.trigger,data -> triggerFinish.stream,end -> manageLogs.stop
+    
+    build_aarch64: buildTestAyaForArch[logger=logger, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        targets=targets,
+        rust_target="aarch64-unknown-linux-gnu",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+    build_armv7: buildTestAyaForArch[logger=logger, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        targets=targets,
+        rust_target="armv7-unknown-linux-gnueabi",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+    build_powerpc64le: buildTestAyaForArch[logger=logger, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        targets=targets,
+        rust_target="powerpc64le-unknown-linux-gnu",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+    build_riscv64gc: buildTestAyaForArch[logger=logger, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        targets=targets,
+        rust_target="riscv64gc-unknown-linux-gnu",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+    build_s390x: buildTestAyaForArch[logger=logger, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        targets=targets,
+        rust_target="s390x-unknown-linux-gnu",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+    build_x86_64: buildTestAyaForArch[logger=logger, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        targets=targets,
+        rust_target="x86_64-unknown-linux-gnu",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+
+    prepareContexts.ready -> build_aarch64.trigger
+    prepareContexts.ready -> build_armv7.trigger
+    prepareContexts.ready -> build_powerpc64le.trigger
+    prepareContexts.ready -> build_riscv64gc.trigger
+    prepareContexts.ready -> build_s390x.trigger
+    prepareContexts.ready -> build_x86_64.trigger
 }

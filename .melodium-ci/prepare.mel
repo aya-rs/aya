@@ -4,6 +4,7 @@ use process/command::|raw_commands
 use std/data/string_map::StringMap
 use std/data/string_map::|entry
 use std/data/string_map::|map
+use std/ops/option::|wrap
 use std/text/compose::|format
 
 treatment checkout[logger: Logger](label: string, repository_clone_url: string, repository_clone_ref: string, clone_directory: string)
@@ -41,13 +42,13 @@ treatment setupToolchain[logger: Logger](rust_target: string)
         commands = |raw_commands([
             |format("mkdir /tmp/{rust_target}", |entry("rust_target", rust_target)),
             |format("touch /tmp/{rust_target}/github.env", |entry("rust_target", rust_target)),
-            ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/taiki-e/setup-cross-toolchain-action/refs/tags/v1/main.sh | bash -"}/*,
+            ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/taiki-e/setup-cross-toolchain-action/refs/tags/v1/main.sh | bash -"},
             |format("cat /tmp/{rust_target}/github.env", |entry("rust_target", rust_target))
         ]),
         variables = |wrap<StringMap>(
             |map([
                 |entry("INPUT_TARGET", rust_target),
-                |entry("GITHUB_ENV", |format("cat /tmp/{rust_target}/github.env", |entry("rust_target", short_rust_arch)))
+                |entry("GITHUB_ENV", |format("cat /tmp/{rust_target}/github.env", |entry("rust_target", rust_target)))
             ])
         )
     )

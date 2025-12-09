@@ -23,10 +23,21 @@ jobs:
   #  secrets:
   #      token: ${{ secrets.GITHUB_TOKEN }}
   buildTestAya:
-    uses: melodium-tech/github-actions/.github/workflows/melodium.yml@v0.9.1
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - aarch64-unknown-linux-gnu
+          - armv7-unknown-linux-gnueabi
+          - loongarch64-unknown-linux-gnu
+          - powerpc64le-unknown-linux-gnu
+          - riscv64gc-unknown-linux-gnu
+          - s390x-unknown-linux-gnu
+          - x86_64-unknown-linux-gnu
+    uses: melodium-tech/github-actions/.github/workflows/melodium-ubuntu.yml@v0.9.1
     with:
       command: |
-        run .melodium-ci/Compo.toml buildTestAya --api_token='"${{ vars.CADENCE_TOKEN }}"' --repository_clone_url='"${{ github.repositoryUrl }}"' --repository_clone_ref='"${{ github.ref_name }}"' --github_contexts='$''{{{{ { "github": { "api_url": ${{ toJSON(github.api_url) }}, "repository": ${{ toJSON(github.repository) }}, "sha": ${{ toJSON(github.sha) }} }, "secrets": { "GITHUB_TOKEN": "'"$GITHUB_TOKEN"'" } } }}}}'
+        run .melodium-ci/Compo.toml buildTestAya --targets='[${{ toJSON( matrix.arch ) }}]' --repository_clone_url='"${{ github.repositoryUrl }}"' --repository_clone_ref='"${{ github.ref_name }}"' --github_contexts='$''{{{{ { "github": { "api_url": ${{ toJSON(github.api_url) }}, "repository": ${{ toJSON(github.repository) }}, "sha": ${{ toJSON(github.sha) }} }, "secrets": { "GITHUB_TOKEN": "'"$GITHUB_TOKEN"'" } } }}}}'
       artifact-path: 'logs/'
       artifact-name: 'mel_buildTestAya'
     secrets:
