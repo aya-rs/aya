@@ -39,7 +39,7 @@ jobs:
       command: |
         run .melodium-ci/Compo.toml buildTestAya --targets='[${{ toJSON( matrix.arch ) }}]' --repository_clone_url='"${{ github.repositoryUrl }}"' --repository_clone_ref='"${{ github.ref_name }}"' --github_contexts='$''{{{{ { "github": { "api_url": ${{ toJSON(github.api_url) }}, "repository": ${{ toJSON(github.repository) }}, "sha": ${{ toJSON(github.sha) }} }, "secrets": { "GITHUB_TOKEN": "'"$GITHUB_TOKEN"'" } } }}}}'
       artifact-path: 'logs/'
-      artifact-name: 'mel_buildTestAya_${{ toJSON( matrix.arch ) }}'
+      artifact-name: 'mel_buildTestAya_${{ matrix.arch }}'
     secrets:
         token: ${{ secrets.GITHUB_TOKEN }}
     permissions:

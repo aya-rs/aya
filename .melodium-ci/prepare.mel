@@ -50,7 +50,7 @@ treatment setupToolchain[logger: Logger](rust_target: string)
         variables = |wrap<StringMap>(
             |map([
                 |entry("INPUT_TARGET", rust_target),
-                |entry("GITHUB_ENV", |format("cat /tmp/{rust_target}/github.env", |entry("rust_target", rust_target)))
+                |entry("GITHUB_ENV", |format("/tmp/{rust_target}/github.env", |entry("rust_target", rust_target)))
             ])
         )
     )
