@@ -111,8 +111,10 @@ treatment buildTestAyaForArch[logger: Logger, github_contexts: JavaScriptEngine,
 
     uncheckSuccess: uncheck<void>()
     oneFailure: one<void>()
+    realFailure: waitBlock<void>()
     run.success -> uncheckSuccess.value,uncheck -> oneFailure.a
-    run.failed ----------------------------------> oneFailure.b,value -> failureState.trigger
+    run.failed ----------------------------------> oneFailure.b,value -> realFailure.a,awaited -> failureState.trigger
+    doRun.passed ------------------------------------------------------> realFailure.b
 }
 
 treatment buildTestAya(const github_contexts: string = "{}", targets: Vec<string>, repository_clone_url: string, repository_clone_ref: string)
@@ -136,6 +138,12 @@ treatment buildTestAya(const github_contexts: string = "{}", targets: Vec<string
     build_armv7: buildTestAyaForArch[logger=logger, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
         targets=targets,
         rust_target="armv7-unknown-linux-gnueabi",
+        repository_clone_ref=repository_clone_ref,
+        repository_clone_url=repository_clone_url
+    )
+    build_loongarch64: buildTestAyaForArch[logger=logger, github_contexts=github_contexts, finish_concentrator=finish_concentrator](
+        targets=targets,
+        rust_target="loongarch64-unknown-linux-gnu",
         repository_clone_ref=repository_clone_ref,
         repository_clone_url=repository_clone_url
     )
@@ -166,6 +174,7 @@ treatment buildTestAya(const github_contexts: string = "{}", targets: Vec<string
 
     prepareContexts.ready -> build_aarch64.trigger
     prepareContexts.ready -> build_armv7.trigger
+    prepareContexts.ready -> build_loongarch64.trigger
     prepareContexts.ready -> build_powerpc64le.trigger
     prepareContexts.ready -> build_riscv64gc.trigger
     prepareContexts.ready -> build_s390x.trigger
