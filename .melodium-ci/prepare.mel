@@ -41,8 +41,9 @@ treatment setupToolchain[logger: Logger](rust_target: string)
         name = |format("setupToolchain ({rust_target})", |entry("rust_target", rust_target)),
         commands = |raw_commands([
             |format("echo GithubEnv /tmp/{rust_target}/github.env", |entry("rust_target", rust_target)),
-            |format("mkdir /tmp/{rust_target}", |entry("rust_target", rust_target)),
+            |format("mkdir -p /tmp/{rust_target}", |entry("rust_target", rust_target)),
             |format("touch /tmp/{rust_target}/github.env", |entry("rust_target", rust_target)),
+            |format("ls /tmp/{rust_target}", |entry("rust_target", rust_target)),
             ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/taiki-e/setup-cross-toolchain-action/refs/tags/v1/main.sh | bash -"},
             |format("cat /tmp/{rust_target}/github.env", |entry("rust_target", rust_target))
         ]),
