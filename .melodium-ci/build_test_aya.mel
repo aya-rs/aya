@@ -1,17 +1,13 @@
 use cicd/logging::manageLogs
 use cicd/naive::localStep
 use cicd/services/github::prepareContexts
-use cicd/services/github::postGithubStateContext
-use cicd/services/github::|pending
-use cicd/services/github::|success
-use cicd/services/github::|error
-use cicd/services/github::|failure
 use javascript::JavaScriptEngine
 use log/logger::Logger
 use process/command::|command
 use root/prepare::checkout
 use root/prepare::setupToolchain
 use root/prepare::prepareRust
+use root/report::reportState
 use std/data/string_map::StringMap
 use std/data/string_map::|entry
 use std/data/string_map::|map
@@ -100,20 +96,21 @@ treatment buildTestAyaForArch[logger: Logger, github_contexts: JavaScriptEngine,
 
     run.finished -> Self.finished
 
-    pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = rust_target, description = "Build and Test Aya on arch", log_response = true)
-    successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = rust_target, description = "Build and Test Aya on arch", log_response = true)
-    errorState:   postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(),   name = rust_target, description = "Build and Test Aya on arch", log_response = true)
-    failureState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |failure(), name = rust_target, description = "Build and Test Aya on arch", log_response = true)
+    reportState[logger=logger, github_contexts=github_contexts](
+        name=rust_target,
+        description="Build and Test Aya on arch",
+        log_response=true
+    )
 
-    doRun.passed --> pendingState.trigger
-    run.success ---> successState.trigger
-    run.error -----> errorState.trigger
+    doRun.passed --> reportState.pending
+    run.success ---> reportState.success
+    run.error -----> reportState.error
 
     uncheckSuccess: uncheck<void>()
     oneFailure: one<void>()
     realFailure: waitBlock<void>()
     run.success -> uncheckSuccess.value,uncheck -> oneFailure.a
-    run.failed ----------------------------------> oneFailure.b,value -> realFailure.a,awaited -> failureState.trigger
+    run.failed ----------------------------------> oneFailure.b,value -> realFailure.a,awaited -> reportState.failure
     doRun.passed ------------------------------------------------------> realFailure.b
 }
 

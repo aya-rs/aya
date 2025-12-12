@@ -1,0 +1,24 @@
+use cicd/services/github::postGithubStateContext
+use cicd/services/github::|pending
+use cicd/services/github::|success
+use cicd/services/github::|error
+use cicd/services/github::|failure
+use javascript::JavaScriptEngine
+use log/logger::Logger
+
+treatment reportState[logger: Logger, github_contexts: JavaScriptEngine](name: string, description: string, log_response: bool)
+  input pending: Block<void>
+  input success: Block<void>
+  input error:   Block<void>
+  input failure: Block<void>
+{
+    pendingState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |pending(), name = name, description = description, log_response = log_response)
+    successState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |success(), name = name, description = description, log_response = log_response)
+    errorState:   postGithubStateContext[contexts=github_contexts, logger=logger](state = |error(),   name = name, description = description, log_response = log_response)
+    failureState: postGithubStateContext[contexts=github_contexts, logger=logger](state = |failure(), name = name, description = description, log_response = log_response)
+
+    Self.pending -> pendingState.trigger
+    Self.success -> successState.trigger
+    Self.error ---> errorState.trigger
+    Self.failure -> failureState.trigger
+}

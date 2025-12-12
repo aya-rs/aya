@@ -1,0 +1,156 @@
+use cicd/logging::manageLogs
+use cicd/naive::localStep
+use cicd/services/github::prepareContexts
+use javascript::JavaScriptEngine
+use log/logger::Logger
+use process/command::|command
+use process/command::|raw_commands
+use root/prepare::checkout
+use root/report::reportState
+use std/data/string_map::StringMap
+use std/data/string_map::|entry
+use std/data/string_map::|map
+use std/engine/util::startup
+use std/flow::one
+use std/flow::passBlock
+use std/flow::uncheck
+use std/flow::waitBlock
+use std/flow::trigger
+use std/ops/option::|wrap
+
+treatment buildTestAyaEbpf[logger: Logger, github_contexts: JavaScriptEngine](repository_clone_ref: string, repository_clone_url: string)
+  input trigger: Block<void>
+  output finished: Block<void>
+{
+    checkout[logger=logger](
+        label="checkout",
+        repository_clone_url=repository_clone_url,
+        repository_clone_ref=repository_clone_ref,
+        clone_directory="/tmp/work"
+    )
+
+    rustNightly: localStep[logger=logger](
+        name="rustNightly",
+        commands= [
+            |command("rustup", ["toolchain", "install", "nightly", "--component", "rust-src", "--allow-downgrade"])
+        ]
+    )
+
+    rustStable: localStep[logger=logger](
+        name="rustStable",
+        commands= [
+            |command("rustup", ["toolchain", "install", "stable"])
+        ]
+    )
+
+    cargoHack: localStep[logger=logger](
+        name="cargoHack",
+        commands=|raw_commands([
+            ${bash -c "curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash -"},
+            "cargo binstall cargo-hack"
+        ])
+    )
+
+    bpfLinker: localStep[logger=logger](
+        name="bpfLinker",
+        commands= [
+            |command("cargo", ["install", "--git", "https://github.com/aya-rs/bpf-linker.git", "bpf-linker", "--features", "llvm-21"])
+        ]
+    )
+
+    build: localStep[logger=logger](
+        name = "build",
+        commands = [|command("bash", ["-c", ${{{
+          set -euo pipefail
+
+          cd /tmp/work
+
+          failures=()
+
+          # NB: this hand-rolled shell script is used instead of a matrix
+          # because the time spent doing useful work per target is about equal
+          # to the overhead of setting up the job - so this saves a bunch of
+          # machine time.
+          for arch in aarch64 arm loongarch64 mips powerpc64 riscv64 s390x x86_64; do
+            echo "::group::arch=$arch"
+            export RUSTFLAGS="--cfg bpf_target_arch=\"$arch\""
+            for target in bpfeb-unknown-none bpfel-unknown-none; do
+              echo "::group::target=$target"
+              if ! (
+                cargo +nightly hack build \
+                  --release \
+                  --target "$target" \
+                  -Z build-std=core \
+                  --package aya-ebpf \
+                  --package aya-ebpf-bindings \
+                  --package aya-log-ebpf \
+                  --package integration-ebpf \
+                  --feature-powerset
+              ); then
+                failures+=("build: $arch/$target")
+              fi
+              echo "::endgroup::"
+            done
+            if ! (
+              RUSTDOCFLAGS=$RUSTFLAGS cargo +nightly hack test --doc \
+                --package aya-ebpf \
+                --package aya-ebpf-bindings \
+                --package aya-log-ebpf \
+                --package integration-ebpf \
+                --feature-powerset
+            ); then
+              failures+=("doctests: $arch")
+            fi
+            echo "::endgroup::"
+          done
+
+          if ((${#failures[@]})); then
+            echo "::error::Some builds/tests failed:"
+            printf '  %s\n' "${failures[@]}"
+            sleep 1
+            exit 1
+          fi
+            }}}
+        ])],
+        variables = |wrap<StringMap>(
+            |map([
+                    |entry("RUST_BACKTRACE", "full")
+                ])
+        )
+    )
+
+    waitRustStuff: waitBlock<void>()
+    waitAllReady: waitBlock<void>()
+
+    Self.trigger -> checkout.trigger,success ------------------------------------------------------------------------------------------> waitAllReady.a,awaited -> build.trigger,finished -> Self.finished
+    Self.trigger -> rustNightly.trigger,success -> rustStable.trigger,success -> cargoHack.trigger,success -> waitRustStuff.a,awaited -> waitAllReady.b
+                                                   rustStable.success ---------> bpfLinker.trigger,success -> waitRustStuff.b
+
+
+    reportState[github_contexts=github_contexts, logger=logger](
+        name = "All BPF",
+        description = "Build & test for all BPF architectures",
+        log_response = true
+    )
+    Self.trigger --> reportState.pending
+    build.success -> reportState.success
+    build.error ---> reportState.error
+
+    uncheckSuccess: uncheck<void>()
+    oneFailure: one<void>()
+    build.success -> uncheckSuccess.value,uncheck -> oneFailure.a
+    build.failed ----------------------------------> oneFailure.b,value -> reportState.failure
+}
+
+treatment buildTestAyaEbpfEntrypoint(const github_contexts: string = "{}", repository_clone_url: string, repository_clone_ref: string)
+  model logger: Logger()
+  model github_contexts: JavaScriptEngine()
+{
+    startup()
+    prepareContexts[contexts=github_contexts](github_contexts=github_contexts)
+    manageLogs[logger=logger](output_directory="logs/")
+
+    buildTestAyaEbpf[logger=logger, github_contexts=github_contexts](repository_clone_url=repository_clone_url, repository_clone_ref=repository_clone_ref)
+
+    startup.trigger -> prepareContexts.trigger,ready -> buildTestAyaEbpf.trigger,finished -> manageLogs.stop
+}

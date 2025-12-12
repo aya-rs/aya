@@ -16,5 +16,5 @@ work = "^0.9.1"
 
 [entrypoints]
 buildTestAya = "ci/build_test_aya::buildTestAya"
-buildTestAyaEbpf = "ci::buildTestAyaEbpfEntrypoint"
+buildTestAyaEbpf = "ci/build_test_aya_ebpf::buildTestAyaEbpfEntrypoint"
 
