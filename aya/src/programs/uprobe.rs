@@ -1,29 +1,35 @@
 //! User space probes.
 use std::{
+    borrow::Cow,
+    collections::HashMap,
     error::Error,
-    ffi::{CStr, OsStr, OsString},
+    ffi::{CStr, CString, OsStr, OsString},
     fmt::{self, Write},
     fs,
     io::{self, BufRead as _, Cursor, Read as _},
     mem,
-    os::{fd::AsFd as _, unix::ffi::OsStrExt as _},
+    os::{
+        fd::{AsFd as _, BorrowedFd},
+        unix::ffi::OsStrExt as _,
+    },
     path::{Path, PathBuf},
     sync::LazyLock,
 };
 
-use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE};
+use aya_obj::generated::{bpf_attach_type, bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE};
+use libc::{ENOTSUP, EOPNOTSUPP};
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, Symbol};
 use thiserror::Error;
 
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        impl_try_into_fdlink, load_program,
+        FdLink, LinkError, ProgramData, ProgramError, ProgramFd, ProgramInfo, ProgramType,
+        define_link_wrapper, impl_try_into_fdlink, load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{OsStringExt as _, Probe, ProbeKind, attach},
     },
-    sys::bpf_link_get_info_by_fd,
+    sys::{BpfLinkCreateArgs, LinkTarget, SyscallError, bpf_link_create, bpf_link_get_info_by_fd},
     util::MMap,
 };
 
@@ -46,10 +52,19 @@ const LD_SO_CACHE_HEADER_NEW: &str = "glibc-ld.so.cache1.1";
 pub struct UProbe {
     pub(crate) data: ProgramData<UProbeLink>,
     pub(crate) kind: ProbeKind,
+    pub(crate) compiled_for_multi: MultiCompileState,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub(crate) enum MultiCompileState {
+    Multi,
+    Single,
+    Unknown,
 }
 
 /// The location in the target object file to which the uprobe is to be
 /// attached.
+#[derive(Debug, Clone)]
 pub enum UProbeAttachLocation<'a> {
     /// The location of the target function in the target object file.
     Symbol(&'a str),
@@ -70,6 +85,28 @@ impl From<u64> for UProbeAttachLocation<'static> {
     fn from(offset: u64) -> Self {
         Self::AbsoluteOffset(offset)
     }
+}
+
+/// Options used when attaching a [`UProbe`] to multiple locations.
+#[derive(Debug)]
+pub struct UProbeMultiAttachOptions<'a> {
+    /// The target binary or shared object.
+    pub target: Cow<'a, Path>,
+    /// Restrict the attachment to a single process.
+    pub pid: Option<u32>,
+    /// Attach as [`ProbeKind::Entry`] or [`ProbeKind::Return`].
+    pub kind: ProbeKind,
+    /// Locations to attach to.
+    pub locations: Cow<'a, [UProbeMultiLocation<'a>]>,
+}
+
+/// Describes a single uprobe attachment within [`UProbeMultiAttachOptions`].
+#[derive(Debug, Clone)]
+pub struct UProbeMultiLocation<'a> {
+    /// The target location.
+    pub location: UProbeAttachLocation<'a>,
+    /// Optional per-location attach cookie.
+    pub cookie: Option<u64>,
 }
 
 impl UProbe {
@@ -130,9 +167,82 @@ impl UProbe {
             offset
         };
 
-        let Self { data, kind } = self;
+        let Self { data, kind, .. } = self;
         let path = path.as_os_str();
         attach::<Self, _>(data, *kind, path, offset, pid, cookie)
+    }
+
+    /// Attaches the program to multiple locations in a single call.
+    ///
+    /// This batches multiple uprobes for the same target binary or shared object into one
+    /// `bpf_link_create` invocation so a single eBPF program can watch many instruction offsets
+    /// without issuing one syscall per attach. The kernel must support `BPF_TRACE_UPROBE_MULTI`
+    /// links (introduced in Linux 6.6); otherwise this returns
+    /// [`UProbeError::UProbeMultiNotSupported`].
+    ///
+    /// The eBPF program must be compiled with the `uprobe.multi/...` section (for example by using
+    /// `#[uprobe(multi)]` in Aya’s macros) so that `BPF_PROG_LOAD` sets
+    /// `expected_attach_type = BPF_TRACE_UPROBE_MULTI`. Programs compiled without the multi section
+    /// prefix are rejected with [`UProbeError::ProgramNotMulti`].
+    ///
+    /// # Parameters
+    ///
+    /// The `opts` argument configures the attachment:
+    ///
+    /// - [`UProbeMultiAttachOptions::target`] selects the binary or shared object path.
+    /// - [`UProbeMultiAttachOptions::pid`] optionally restricts events to a single process.
+    /// - [`UProbeMultiAttachOptions::kind`] chooses entry vs. return probes.
+    /// - [`UProbeMultiAttachOptions::locations`] describes every symbol/offset plus per-location
+    ///   cookies; the list must be non-empty or the call fails with
+    ///   [`UProbeError::InvalidLocations`].
+    pub fn attach_multi(
+        &mut self,
+        opts: UProbeMultiAttachOptions<'_>,
+    ) -> Result<UProbeLinkId, ProgramError> {
+        match self.compiled_for_multi {
+            MultiCompileState::Multi => {}
+            MultiCompileState::Single => {
+                return Err(UProbeError::ProgramNotMulti.into());
+            }
+            MultiCompileState::Unknown => {
+                log::warn!("attaching multi-uprobe to a program without multi metadata");
+            }
+        }
+
+        let UProbeMultiAttachOptions {
+            target,
+            pid,
+            kind,
+            locations,
+        } = opts;
+
+        let proc_map = pid.map(ProcMap::new).transpose()?;
+        let resolved_path = resolve_attach_path(target.as_ref(), proc_map.as_ref())?;
+        if locations.is_empty() {
+            return Err(UProbeError::InvalidLocations {
+                path: resolved_path.to_path_buf(),
+                reason: String::from("no locations were provided"),
+            }
+            .into());
+        }
+        let path_buf = resolved_path.to_path_buf();
+        let (offsets, cookies) = resolve_multi_locations(&path_buf, locations)?;
+
+        let prog_fd = self.data.fd()?;
+        let prog_fd = prog_fd.as_fd();
+        let path_cstr = CString::new(path_buf.as_os_str().as_bytes()).map_err(|error| {
+            ProgramError::IOError(io::Error::new(io::ErrorKind::InvalidInput, error))
+        })?;
+
+        let link = try_attach_uprobe_multi_link(
+            prog_fd,
+            &path_cstr,
+            &offsets,
+            pid,
+            kind,
+            cookies.as_deref(),
+        )?;
+        self.data.links.insert(UProbeLink::from(link))
     }
 
     /// Creates a program from a pinned entry on a bpffs.
@@ -143,7 +253,50 @@ impl UProbe {
     /// the program being unloaded from the kernel if it is still pinned.
     pub fn from_pin<P: AsRef<Path>>(path: P, kind: ProbeKind) -> Result<Self, ProgramError> {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
-        Ok(Self { data, kind })
+        Ok(Self {
+            data,
+            kind,
+            compiled_for_multi: MultiCompileState::Unknown,
+        })
+    }
+
+    /// Constructs an instance of a [`Self`] from a [`ProgramInfo`].
+    ///
+    /// This allows the caller to get a handle to an already loaded program from
+    /// the kernel without having to load it again.
+    ///
+    /// # Errors
+    ///
+    /// - If the program type reported by the kernel does not match
+    ///   [`Self::PROGRAM_TYPE`].
+    /// - If the file descriptor of the program cannot be cloned.
+    ///
+    /// # Safety
+    ///
+    /// Caller must ensure the info actually describes a uprobe/uretprobe.
+    pub unsafe fn from_program_info(
+        info: ProgramInfo,
+        name: Cow<'static, str>,
+        kind: ProbeKind,
+    ) -> Result<Self, ProgramError> {
+        if info.program_type() != Self::PROGRAM_TYPE.into() {
+            return Err(ProgramError::UnexpectedProgramType {});
+        }
+        // The generic `impl_from_prog_info!` macro can't populate `compiled_for_multi`,
+        // so we provide this bespoke implementation to keep the new state in sync.
+        let ProgramFd(fd) = info.fd()?;
+        let ProgramInfo(bpf_program_info) = info;
+        Ok(Self {
+            data: ProgramData::from_bpf_prog_info(
+                Some(name),
+                fd,
+                Path::new(""),
+                bpf_program_info,
+                VerifierLogLevel::default(),
+            )?,
+            kind,
+            compiled_for_multi: MultiCompileState::Unknown,
+        })
     }
 }
 
@@ -194,6 +347,208 @@ where
                 path: target.to_owned(),
             })
         })
+}
+
+fn resolve_multi_locations<'a>(
+    path: &Path,
+    locations: Cow<'a, [UProbeMultiLocation<'a>]>,
+) -> Result<(Vec<u64>, Option<Vec<u64>>), UProbeError> {
+    let mut offsets = vec![0; locations.len()];
+    let mut cookies = Vec::with_capacity(locations.len());
+    let mut has_cookie = false;
+    let mut requests = Vec::new();
+
+    for (index, UProbeMultiLocation { location, cookie }) in locations.iter().enumerate() {
+        match location {
+            UProbeAttachLocation::Symbol(symbol) => requests.push(SymbolRequest {
+                index,
+                symbol,
+                additional: 0,
+            }),
+            UProbeAttachLocation::SymbolOffset(symbol, additional) => {
+                requests.push(SymbolRequest {
+                    index,
+                    symbol,
+                    additional: *additional,
+                })
+            }
+            UProbeAttachLocation::AbsoluteOffset(offset) => {
+                offsets[index] = *offset;
+            }
+        }
+        has_cookie |= cookie.is_some();
+        cookies.push(cookie.unwrap_or(0));
+    }
+
+    if !requests.is_empty() {
+        // Every requested symbol must successfully resolve to a file offset, `resolve_symbols`
+        // propagates an error if any entry is missing so we never attach a partially resolved list.
+        let symbol_names: Vec<&str> = requests.iter().map(|req| req.symbol).collect();
+        let resolved = resolve_symbols(path, &symbol_names).map_err(|error| {
+            let symbol = match &error {
+                ResolveSymbolError::Unknown(symbol)
+                | ResolveSymbolError::NotInSection(symbol)
+                | ResolveSymbolError::SectionFileRangeNone(symbol, _)
+                | ResolveSymbolError::BuildIdMismatch(symbol) => symbol.clone(),
+                _ => symbol_names
+                    .first()
+                    .map(|symbol| (*symbol).to_string())
+                    .unwrap_or_default(),
+            };
+            UProbeError::SymbolError {
+                symbol,
+                error: Box::new(error),
+            }
+        })?;
+
+        for (request, offset) in requests.iter().zip(resolved.into_iter()) {
+            offsets[request.index] = offset + request.additional;
+        }
+    }
+
+    let cookies = has_cookie.then_some(cookies);
+    Ok((offsets, cookies))
+}
+
+struct SymbolRequest<'a> {
+    index: usize,
+    symbol: &'a str,
+    additional: u64,
+}
+
+fn resolve_symbols(path: &Path, symbols: &[&str]) -> Result<Vec<u64>, ResolveSymbolError> {
+    if symbols.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let requests = build_symbol_requests(symbols);
+    let mut offsets = vec![None; symbols.len()];
+    let data = MMap::map_copy_read_only(path)?;
+    let obj = object::read::File::parse(data.as_ref())?;
+    resolve_symbols_in_object(&obj, &requests, &mut offsets)?;
+
+    if offsets.iter().all(Option::is_some) {
+        return finalize_symbol_offsets(offsets, symbols);
+    }
+
+    if let Some(symbol) = first_unresolved_symbol(symbols, &offsets) {
+        let debug_path = find_debug_path_in_object(&obj, path, symbol)?;
+        let data = MMap::map_copy_read_only(&debug_path)
+            .map_err(|e| ResolveSymbolError::DebuglinkAccessError(debug_path.clone(), e))?;
+        let debug_obj = object::read::File::parse(data.as_ref())?;
+        verify_build_ids(&obj, &debug_obj, symbol)?;
+        resolve_symbols_in_object(&debug_obj, &requests, &mut offsets)?;
+    }
+
+    finalize_symbol_offsets(offsets, symbols)
+}
+
+fn build_symbol_requests<'a>(symbols: &[&'a str]) -> HashMap<&'a str, Vec<usize>> {
+    let mut requests: HashMap<&'a str, Vec<usize>> = HashMap::new();
+    for (index, symbol) in symbols.iter().enumerate() {
+        requests.entry(*symbol).or_default().push(index);
+    }
+    requests
+}
+
+fn resolve_symbols_in_object(
+    obj: &object::File<'_>,
+    requests: &HashMap<&str, Vec<usize>>,
+    offsets: &mut [Option<u64>],
+) -> Result<(), ResolveSymbolError> {
+    if requests.is_empty() {
+        return Ok(());
+    }
+
+    let mut remaining = requests
+        .values()
+        .flat_map(|indices| indices.iter())
+        .filter(|&&index| offsets[index].is_none())
+        .count();
+
+    for sym in obj.dynamic_symbols().chain(obj.symbols()) {
+        let symbol_name = match sym.name() {
+            Ok(name) => name,
+            Err(_) => continue,
+        };
+
+        let Some(indices) = requests.get(symbol_name) else {
+            continue;
+        };
+
+        let offset = symbol_translated_address(obj, sym, symbol_name)?;
+        for &index in indices {
+            if offsets[index].is_none() {
+                offsets[index] = Some(offset);
+                remaining -= 1;
+                if remaining == 0 {
+                    return Ok(());
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn finalize_symbol_offsets(
+    offsets: Vec<Option<u64>>,
+    symbols: &[&str],
+) -> Result<Vec<u64>, ResolveSymbolError> {
+    offsets
+        .into_iter()
+        .zip(symbols)
+        .map(|(offset, symbol)| {
+            offset.ok_or_else(|| ResolveSymbolError::Unknown((*symbol).to_string()))
+        })
+        .collect()
+}
+
+fn first_unresolved_symbol<'a>(symbols: &[&'a str], offsets: &[Option<u64>]) -> Option<&'a str> {
+    symbols
+        .iter()
+        .zip(offsets)
+        .find_map(|(symbol, offset)| offset.is_none().then_some(*symbol))
+}
+
+fn try_attach_uprobe_multi_link(
+    prog_fd: BorrowedFd<'_>,
+    path: &CString,
+    offsets: &[u64],
+    pid: Option<u32>,
+    kind: ProbeKind,
+    cookies: Option<&[u64]>,
+) -> Result<PerfLinkInner, ProgramError> {
+    let flags = match kind {
+        ProbeKind::Entry => 0,
+        ProbeKind::Return => aya_obj::generated::BPF_F_UPROBE_MULTI_RETURN,
+    };
+    let args = BpfLinkCreateArgs::UProbeMulti {
+        path,
+        offsets,
+        ref_ctr_offsets: None,
+        cookies,
+        pid,
+        flags,
+    };
+
+    let link_fd = bpf_link_create(
+        prog_fd,
+        LinkTarget::None,
+        bpf_attach_type::BPF_TRACE_UPROBE_MULTI,
+        0,
+        Some(args),
+    )
+    .map_err(|io_error| match io_error.raw_os_error() {
+        Some(code) if code == ENOTSUP || code == EOPNOTSUPP => {
+            ProgramError::UProbeError(UProbeError::UProbeMultiNotSupported)
+        }
+        _ => ProgramError::SyscallError(SyscallError {
+            call: "bpf_link_create",
+            io_error,
+        }),
+    })?;
+    Ok(PerfLinkInner::Fd(FdLink::new(link_fd)))
 }
 
 // Only run this test on linux with glibc because only in that configuration do we know that we'll
@@ -254,7 +609,9 @@ impl TryFrom<FdLink> for UProbeLink {
 
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
         let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
-        if info.type_ == (bpf_link_type::BPF_LINK_TYPE_TRACING as u32) {
+        if info.type_ == (bpf_link_type::BPF_LINK_TYPE_TRACING as u32)
+            || info.type_ == (bpf_link_type::BPF_LINK_TYPE_UPROBE_MULTI as u32)
+        {
             return Ok(Self::new(PerfLinkInner::Fd(fd_link)));
         }
         Err(LinkError::InvalidLink)
@@ -308,6 +665,23 @@ pub enum UProbeError {
         #[source]
         source: ProcMapError,
     },
+
+    /// The kernel does not support multi-uprobe links.
+    #[error("uprobe_multi links are not supported by the running kernel")]
+    UProbeMultiNotSupported,
+
+    /// The provided locations were invalid.
+    #[error("invalid uprobe locations for `{path}`: {reason}")]
+    InvalidLocations {
+        /// path to target.
+        path: PathBuf,
+        /// human-readable reason.
+        reason: String,
+    },
+
+    /// The program was not compiled for multi-attach.
+    #[error("attach_multi requires a program compiled with #[uprobe(multi)]")]
+    ProgramNotMulti,
 }
 
 /// Error reading from /proc/pid/maps.
@@ -690,32 +1064,11 @@ fn find_debug_path_in_object<'a>(
     }
 }
 
-fn find_symbol_in_object<'a>(obj: &'a object::File<'a>, symbol: &str) -> Option<Symbol<'a, 'a>> {
-    obj.dynamic_symbols()
-        .chain(obj.symbols())
-        .find(|sym| sym.name().map(|name| name == symbol).unwrap_or(false))
-}
-
 fn resolve_symbol(path: &Path, symbol: &str) -> Result<u64, ResolveSymbolError> {
-    let data = MMap::map_copy_read_only(path)?;
-    let obj = object::read::File::parse(data.as_ref())?;
-
-    if let Some(sym) = find_symbol_in_object(&obj, symbol) {
-        symbol_translated_address(&obj, sym, symbol)
-    } else {
-        // Only search in the debug object if the symbol was not found in the main object
-        let debug_path = find_debug_path_in_object(&obj, path, symbol)?;
-        let debug_data = MMap::map_copy_read_only(&debug_path)
-            .map_err(|e| ResolveSymbolError::DebuglinkAccessError(debug_path, e))?;
-        let debug_obj = object::read::File::parse(debug_data.as_ref())?;
-
-        verify_build_ids(&obj, &debug_obj, symbol)?;
-
-        let sym = find_symbol_in_object(&debug_obj, symbol)
-            .ok_or_else(|| ResolveSymbolError::Unknown(symbol.to_string()))?;
-
-        symbol_translated_address(&debug_obj, sym, symbol)
-    }
+    let mut offsets = resolve_symbols(path, std::slice::from_ref(&symbol))?;
+    offsets
+        .pop()
+        .ok_or_else(|| ResolveSymbolError::Unknown(symbol.to_string()))
 }
 
 fn symbol_translated_address(
