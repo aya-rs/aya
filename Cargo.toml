@@ -21,6 +21,7 @@ members = [
     "ebpf/aya-ebpf",
     "ebpf/aya-ebpf-bindings",
     "ebpf/aya-log-ebpf",
+    "ebpf/aya-xdp-dispatcher-ebpf",
     "test/integration-ebpf",
 ]
 
