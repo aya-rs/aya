@@ -29,7 +29,7 @@ fn bpf_strncmp() {
             .unwrap();
         prog.load().unwrap();
 
-        prog.attach("trigger_bpf_strncmp", "/proc/self/exe", None, None)
+        prog.attach("trigger_bpf_strncmp", "/proc/self/exe", None)
             .unwrap();
     }
 
