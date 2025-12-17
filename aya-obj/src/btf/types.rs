@@ -276,6 +276,10 @@ impl Func {
     pub(crate) fn set_linkage(&mut self, linkage: FuncLinkage) {
         self.info = (self.info & 0xFFFF0000) | (linkage as u32) & 0xFFFF;
     }
+
+    pub(crate) fn info(&self) -> u32 {
+        self.info
+    }
 }
 
 #[repr(C)]

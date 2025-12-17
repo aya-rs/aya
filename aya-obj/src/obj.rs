@@ -441,6 +441,7 @@ impl FromStr for ProgramSection {
 impl Object {
     /// Parses the binary data as an object file into an [Object]
     pub fn parse(data: &[u8]) -> Result<Self, ParseError> {
+        log::debug!("Object::parse called with {} bytes", data.len());
         let obj = object::read::File::parse(data).map_err(ParseError::ElfError)?;
         let endianness = obj.endianness();
 
@@ -492,10 +493,14 @@ impl Object {
         // as they're required to prepare function and line information
         // when parsing program sections
         if let Some(s) = obj.section_by_name(".BTF") {
+            log::debug!("Found .BTF section in object file");
             bpf_obj.parse_section(Section::try_from(&s)?)?;
             if let Some(s) = obj.section_by_name(".BTF.ext") {
+                log::debug!("Found .BTF.ext section in object file");
                 bpf_obj.parse_section(Section::try_from(&s)?)?;
             }
+        } else {
+            log::debug!("No .BTF section found in object file");
         }
 
         for s in obj.sections() {

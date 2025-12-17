@@ -501,12 +501,16 @@ impl Btf {
         symbol_offsets: &HashMap<String, u64>,
         features: &BtfFeatures,
     ) -> Result<(), BtfError> {
+        debug!("fixup_and_sanitize: starting with {} BTF types", self.types.types.len());
         let enum64_placeholder_id = OnceCell::new();
         let filler_var_id = OnceCell::new();
         let mut types = mem::take(&mut self.types);
         for i in 0..types.types.len() {
             let t = &mut types.types[i];
             let kind = t.kind();
+            if i < 10 || kind == BtfKind::Func {
+                debug!("Processing type {}: kind={:?}", i, kind);
+            }
             match t {
                 // Fixup PTR for Rust.
                 //
@@ -561,6 +565,18 @@ impl Btf {
                     // Start DataSec Fixups
                     let name = self.string_at(d.name_offset)?;
                     let name = name.into_owned();
+
+                    // .ksyms describes forward declarations of kfunc signatures, as well as
+                    // references to kernel symbols.
+                    // .kconfig describes kernel configuration variables (e.g., CONFIG_HZ).
+                    // Both are extern-backing datasecs with nothing to fix up - all sizes
+                    // and offsets are 0, and there's no corresponding ELF section.
+                    // See:
+                    // https://github.com/libbpf/libbpf/blob/05f94ddbb837f5f4b3161e341eed21be307eaa04/src/libbpf.c#L2916
+                    if name == ".ksyms" || name == ".kconfig" {
+                        debug!("{kind} {name}: skipping fixups for extern-backing datasec");
+                        continue;
+                    }
 
                     // Handle any "/" characters in section names.
                     // Example: "maps/hashmap"
@@ -696,10 +712,21 @@ impl Btf {
                 // Sanitize FUNC.
                 BtfType::Func(ty) => {
                     let name = self.string_at(ty.name_offset)?;
+                    let linkage = ty.linkage();
+                    debug!("{kind} {name}: linkage={:?}, info=0x{:x}", linkage, ty.info());
+                    
                     // Sanitize FUNC.
                     if !features.btf_func {
                         debug!("{kind}: not supported. replacing with TYPEDEF");
                         *t = BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
+                    } else if linkage == FuncLinkage::Unknown {
+                        // Unknown linkage is invalid and will be rejected by the kernel.
+                        // This should never happen with valid BTF from clang/LLVM.
+                        debug!("{kind} {name}: WARNING - Unknown linkage detected! This will cause kernel rejection.");
+                    } else if linkage == FuncLinkage::Extern {
+                        // Extern functions (kfuncs) should pass through unchanged, like libbpf does.
+                        // See: https://github.com/libbpf/libbpf/blob/05f94ddbb837f5f4b3161e341eed21be307eaa04/src/libbpf.c#L2892
+                        debug!("{kind} {name}: extern linkage - passing through unchanged");
                     } else if !features.btf_func_global
                         || name == "memset"
                         || name == "memcpy"
@@ -829,17 +856,22 @@ impl Object {
         features: &BtfFeatures,
     ) -> Result<Option<&Btf>, BtfError> {
         if let Some(obj_btf) = &mut self.btf {
+            debug!("Object has BTF with {} types", obj_btf.types.types.len());
             if obj_btf.is_empty() {
+                debug!("BTF is empty, skipping fixup");
                 return Ok(None);
             }
             // fixup btf
+            debug!("Starting BTF fixup_and_sanitize");
             obj_btf.fixup_and_sanitize(
                 &self.section_infos,
                 &self.symbol_offset_by_name,
                 features,
             )?;
+            debug!("BTF fixup_and_sanitize completed successfully");
             Ok(Some(obj_btf))
         } else {
+            debug!("Object has no BTF section");
             Ok(None)
         }
     }
@@ -1590,6 +1622,80 @@ mod tests {
     }
 
     #[test]
+    fn test_skip_extern_datasec() {
+        // Test that .ksyms and .kconfig sections are skipped during fixup
+        let mut btf = Btf::new();
+        let name_offset = btf.add_string("int");
+        let int_type_id = btf.add_type(BtfType::Int(Int::new(
+            name_offset,
+            4,
+            IntEncoding::Signed,
+            0,
+        )));
+
+        // Create a .ksyms datasec
+        let ksyms_var_name = btf.add_string("kfunc_helper");
+        let ksyms_var_type_id = btf.add_type(BtfType::Var(Var::new(
+            ksyms_var_name,
+            int_type_id,
+            VarLinkage::Extern,
+        )));
+        let ksyms_name_offset = btf.add_string(".ksyms");
+        let ksyms_datasec_id = btf.add_type(BtfType::DataSec(DataSec::new(
+            ksyms_name_offset,
+            vec![DataSecEntry {
+                btf_type: ksyms_var_type_id,
+                offset: 0,
+                size: 0,
+            }],
+            0,
+        )));
+
+        // Create a .kconfig datasec
+        let kconfig_var_name = btf.add_string("CONFIG_HZ");
+        let kconfig_var_type_id = btf.add_type(BtfType::Var(Var::new(
+            kconfig_var_name,
+            int_type_id,
+            VarLinkage::Extern,
+        )));
+        let kconfig_name_offset = btf.add_string(".kconfig");
+        let kconfig_datasec_id = btf.add_type(BtfType::DataSec(DataSec::new(
+            kconfig_name_offset,
+            vec![DataSecEntry {
+                btf_type: kconfig_var_type_id,
+                offset: 0,
+                size: 0,
+            }],
+            0,
+        )));
+
+        let features = BtfFeatures {
+            btf_datasec: true,
+            ..Default::default()
+        };
+
+        // Pass empty section_infos - .ksyms and .kconfig should not require them
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+            .unwrap();
+
+        // Verify that .ksyms datasec was not modified (still has size 0)
+        assert_matches!(btf.type_by_id(ksyms_datasec_id).unwrap(), BtfType::DataSec(fixed) => {
+            assert_eq!(btf.string_at(fixed.name_offset).unwrap(), ".ksyms");
+            assert_eq!(fixed.size, 0);
+        });
+
+        // Verify that .kconfig datasec was not modified (still has size 0)
+        assert_matches!(btf.type_by_id(kconfig_datasec_id).unwrap(), BtfType::DataSec(fixed) => {
+            assert_eq!(btf.string_at(fixed.name_offset).unwrap(), ".kconfig");
+            assert_eq!(fixed.size, 0);
+        });
+
+        // Ensure we can convert to bytes and back again
+        let raw = btf.to_bytes();
+        Btf::parse(&raw, Endianness::default()).unwrap();
+    }
+
+    #[test]
     fn test_sanitize_func_and_proto() {
         let mut btf = Btf::new();
         let name_offset = btf.add_string("int");
@@ -1806,6 +1912,58 @@ mod tests {
             let raw = btf.to_bytes();
             Btf::parse(&raw, Endianness::default()).unwrap();
         }
+    }
+
+    #[test]
+    fn test_extern_func_preserved() {
+        // Test that extern FUNC entries (kfuncs) are preserved unchanged
+        let mut btf = Btf::new();
+        let name_offset = btf.add_string("int");
+        let int_type_id = btf.add_type(BtfType::Int(Int::new(
+            name_offset,
+            4,
+            IntEncoding::Signed,
+            0,
+        )));
+
+        let params = vec![BtfParam {
+            name_offset: btf.add_string("skb"),
+            btf_type: int_type_id,
+        }];
+        let func_proto_type_id =
+            btf.add_type(BtfType::FuncProto(FuncProto::new(params, int_type_id)));
+
+        // Create an extern FUNC (kfunc)
+        let kfunc_name = btf.add_string("bpf_sha256");
+        let kfunc_type_id = btf.add_type(BtfType::Func(Func::new(
+            kfunc_name,
+            func_proto_type_id,
+            FuncLinkage::Extern,
+        )));
+
+        let features = BtfFeatures {
+            btf_func: true,
+            btf_func_global: true,
+            ..Default::default()
+        };
+
+        btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), &features)
+            .unwrap();
+
+        // Verify that extern linkage is preserved
+        assert_matches!(btf.type_by_id(kfunc_type_id).unwrap(), BtfType::Func(fixed) => {
+            assert_eq!(fixed.linkage(), FuncLinkage::Extern);
+            assert_eq!(btf.string_at(fixed.name_offset).unwrap(), "bpf_sha256");
+        });
+
+        // Ensure we can convert to bytes and back again
+        let raw = btf.to_bytes();
+        let reparsed = Btf::parse(&raw, Endianness::default()).unwrap();
+        
+        // Verify the linkage is still extern after round-trip
+        assert_matches!(reparsed.type_by_id(kfunc_type_id).unwrap(), BtfType::Func(fixed) => {
+            assert_eq!(fixed.linkage(), FuncLinkage::Extern);
+        });
     }
 
     #[test]
