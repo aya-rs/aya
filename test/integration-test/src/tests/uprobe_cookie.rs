@@ -26,7 +26,7 @@ fn test_uprobe_cookie() {
     const PROG_A: &str = "uprobe_cookie_trigger_ebpf_program_a";
     const PROG_B: &str = "uprobe_cookie_trigger_ebpf_program_b";
     let attach = |prog: &mut UProbe, fn_name, cookie| {
-        prog.attach(fn_name, "/proc/self/exe", None, Some(cookie))
+        prog.attach((fn_name, cookie), "/proc/self/exe", None)
             .unwrap()
     };
 
