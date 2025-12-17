@@ -72,6 +72,23 @@ impl From<u64> for UProbeAttachLocation<'static> {
     }
 }
 
+/// Describes a single attachment point along with its optional cookie.
+pub struct UProbeAttachPoint<'a> {
+    /// The actual target location.
+    pub location: UProbeAttachLocation<'a>,
+    /// Optional cookie available via `bpf_get_attach_cookie()`.
+    pub cookie: Option<u64>,
+}
+
+impl<'a, L: Into<UProbeAttachLocation<'a>>> From<L> for UProbeAttachPoint<'a> {
+    fn from(location: L) -> Self {
+        Self {
+            location: location.into(),
+            cookie: None,
+        }
+    }
+}
+
 impl UProbe {
     /// The type of the program according to the kernel.
     pub const PROGRAM_TYPE: ProgramType = ProgramType::KProbe;
@@ -90,9 +107,9 @@ impl UProbe {
     /// Attaches the program.
     ///
     /// Attaches the uprobe to the function `fn_name` defined in the `target`.
-    /// If `offset` is non-zero, it is added to the address of the target
-    /// function. If `pid` is not `None`, the program executes only when the
-    /// target function is executed by the given `pid`.
+    /// If the attach point specifies an offset, it is added to the address of
+    /// the target function. If `pid` is not `None`, the program executes only
+    /// when the target function is executed by the given `pid`.
     ///
     /// The `target` argument can be an absolute path to a binary or library, or
     /// a library name (eg: `"libc"`).
@@ -104,17 +121,19 @@ impl UProbe {
     /// The returned value can be used to detach, see [UProbe::detach].
     ///
     /// The cookie is supported since kernel 5.15, and it is made available to
-    /// the eBPF program via the `bpf_get_attach_cookie()` helper.
-    pub fn attach<'loc, T: AsRef<Path>, Loc: Into<UProbeAttachLocation<'loc>>>(
+    /// the eBPF program via the `bpf_get_attach_cookie()` helper. The `point`
+    /// argument may be just a location (no cookie) or a [`UProbeAttachPoint`],
+    /// only the latter sets the cookie explicitly.
+    pub fn attach<'a, T: AsRef<Path>, Point: Into<UProbeAttachPoint<'a>>>(
         &mut self,
-        location: Loc,
+        point: Point,
         target: T,
         pid: Option<u32>,
-        cookie: Option<u64>,
     ) -> Result<UProbeLinkId, ProgramError> {
+        let UProbeAttachPoint { location, cookie } = point.into();
         let proc_map = pid.map(ProcMap::new).transpose()?;
         let path = resolve_attach_path(target.as_ref(), proc_map.as_ref())?;
-        let (symbol, offset) = match location.into() {
+        let (symbol, offset) = match location {
             UProbeAttachLocation::Symbol(s) => (Some(s), 0),
             UProbeAttachLocation::SymbolOffset(s, offset) => (Some(s), offset),
             UProbeAttachLocation::AbsoluteOffset(offset) => (None, offset),
