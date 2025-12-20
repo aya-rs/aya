@@ -29,6 +29,7 @@ once_cell = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
+test-case = { workspace = true }
 tempfile = { workspace = true }
 
 [package.metadata.docs.rs]
