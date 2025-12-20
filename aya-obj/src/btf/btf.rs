@@ -910,7 +910,7 @@ impl Object {
 
             // Build a single-pass index of all VARs contained in DATASEC types:
             // var_name -> (datasec_name, var)
-            let mut datasec_var_index: HashMap<String, (String, Var)> = HashMap::new();
+            let mut datasec_var_index = HashMap::new();
             for t in &obj_btf.types.types {
                 let BtfType::DataSec(d) = t else {
                     continue;
@@ -933,9 +933,8 @@ impl Object {
                 .filter(|(_, s)| s.name.is_some() && s.section_index.is_none() && s.is_external)
                 .map(|(_, s)| (s.name.as_ref().unwrap().clone(), s));
 
-            let mut section_data = Vec::<u8>::new();
+            let mut kconfig_data = Vec::new();
             let mut offset = 0u64;
-            let mut has_extern_data = false;
 
             for (name, symbol) in symbols {
                 let (datasec_name, var) = match datasec_var_index.get(&name) {
@@ -957,37 +956,39 @@ impl Object {
                     let type_size = obj_btf.type_size(var.btf_type)?;
                     let type_align = obj_btf.type_align(var.btf_type)? as u64;
 
-                    let mut external_value_opt = externs.get(&name);
+                    let mut external_value = externs.get(&name);
                     let empty_data = vec![0; type_size];
 
-                    if external_value_opt.is_none() && symbol.is_weak {
-                        external_value_opt = Some(&empty_data);
+                    // If this extern is weak and we couldn't find a kconfig value for it,
+                    // follow libbpf semantics: treat it as 0 instead of failing the load.
+                    if external_value.is_none() && symbol.is_weak {
+                        external_value = Some(&empty_data);
                     }
 
-                    if let Some(data) = external_value_opt {
+                    if let Some(data) = external_value {
                         symbol.address = (offset + (type_align - 1)) & !(type_align - 1);
                         symbol.size = type_size as u64;
                         symbol.section_index = Some(kconfig_map_index);
 
-                        section_data
-                            .resize(section_data.len() + (symbol.address - offset) as usize, 0);
+                        kconfig_data
+                            .resize(kconfig_data.len() + (symbol.address - offset) as usize, 0);
 
                         self.symbol_offset_by_name.insert(name, symbol.address);
-                        section_data.extend(data);
-                        offset = section_data.len() as u64;
+                        kconfig_data.extend(data);
+                        offset = kconfig_data.len() as u64;
                     } else {
                         return Err(BtfError::ExternalSymbolNotFound { symbol_name: name });
                     }
                 }
             }
 
-            if has_extern_data {
+            if !kconfig_data.is_empty() {
                 self.section_infos.insert(
                     ".kconfig".into(),
-                    (SectionIndex(kconfig_map_index), section_data.len() as u64),
+                    (SectionIndex(kconfig_map_index), kconfig_data.len() as u64),
                 );
 
-                return Ok(Some((SectionIndex(kconfig_map_index), section_data)));
+                return Ok(Some((SectionIndex(kconfig_map_index), kconfig_data)));
             }
         }
         Ok(None)
