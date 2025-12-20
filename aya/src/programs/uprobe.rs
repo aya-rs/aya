@@ -309,7 +309,7 @@ pub enum ProcMapError {
 ///
 /// This contains information about a mapped portion of memory
 /// for the process, ranging from address to address_end.
-#[derive(Debug)]
+#[cfg_attr(test, derive(Debug, PartialEq))]
 struct ProcMapEntry<'a> {
     #[cfg_attr(not(test), expect(dead_code))]
     address: u64,
@@ -323,7 +323,35 @@ struct ProcMapEntry<'a> {
     dev: &'a OsStr,
     #[cfg_attr(not(test), expect(dead_code))]
     inode: u32,
-    path: Option<&'a Path>,
+    path: Option<&'a OsStr>,
+}
+
+/// Split a byte slice on ASCII whitespace up to `n` times.
+///
+/// The last item yielded contains the remainder of the slice and may itself
+/// contain whitespace.
+fn split_ascii_whitespace_n(s: &[u8], mut n: usize) -> impl Iterator<Item = &[u8]> {
+    let mut s = s.trim_ascii_end();
+
+    std::iter::from_fn(move || {
+        if n == 0 {
+            None
+        } else {
+            s = s.trim_ascii_start();
+
+            n -= 1;
+            Some(if n == 0 {
+                s
+            } else if let Some(i) = s.iter().position(|b| b.is_ascii_whitespace()) {
+                let (next, rest) = s.split_at(i);
+                s = rest;
+                next
+            } else {
+                n = 0;
+                s
+            })
+        }
+    })
 }
 
 impl<'a> ProcMapEntry<'a> {
@@ -334,8 +362,9 @@ impl<'a> ProcMapEntry<'a> {
             line: OsString::from_vec(line.to_vec()),
         };
 
-        let mut parts = line
-            .split(|b| b.is_ascii_whitespace())
+        let mut parts =
+            // address, perms, offset, dev, inode, path = 6.
+            split_ascii_whitespace_n(line, 6)
             .filter(|part| !part.is_empty());
 
         let mut next = || parts.next().ok_or_else(err);
@@ -378,20 +407,7 @@ impl<'a> ProcMapEntry<'a> {
             .parse()
             .map_err(|std::num::ParseIntError { .. }| err())?;
 
-        let path = parts
-            .next()
-            .and_then(|path| match path {
-                [b'[', .., b']'] => None,
-                path => {
-                    let path = Path::new(OsStr::from_bytes(path));
-                    if !path.is_absolute() {
-                        Some(Err(err()))
-                    } else {
-                        Some(Ok(path))
-                    }
-                }
-            })
-            .transpose()?;
+        let path = parts.next().map(OsStr::from_bytes);
 
         if let Some(_part) = parts.next() {
             return Err(err());
@@ -458,6 +474,7 @@ impl<T: AsRef<[u8]>> ProcMap<T> {
                 path,
             } = entry?;
             if let Some(path) = path {
+                let path = Path::new(path);
                 if let Some(filename) = path.file_name() {
                     if let Some(suffix) = filename.strip_prefix(lib) {
                         if suffix.is_empty()
@@ -728,6 +745,7 @@ fn symbol_translated_address(
 mod tests {
     use assert_matches::assert_matches;
     use object::{Architecture, BinaryFormat, Endianness, write::SectionKind};
+    use test_case::test_case;
 
     use super::*;
 
@@ -932,99 +950,174 @@ mod tests {
         let align_bytes = aligned_slice(&mut debug_bytes);
         let debug_obj = object::File::parse(&*align_bytes).expect("got debug obj");
 
-        assert!(matches!(
+        assert_matches!(
             verify_build_ids(&main_obj, &debug_obj, "symbol_name"),
-            Err(ResolveSymbolError::BuildIdMismatch(_))
-        ));
-    }
-
-    #[test]
-    fn test_parse_proc_map_entry_shared_lib() {
-        assert_matches!(
-            ProcMapEntry::parse(b"7ffd6fbea000-7ffd6fbec000	r-xp	00000000	00:00	0	[vdso]"),
-            Ok(ProcMapEntry {
-                address: 0x7ffd6fbea000,
-                address_end: 0x7ffd6fbec000,
-                perms,
-                offset: 0,
-                dev,
-                inode: 0,
-                path: None,
-            }) if perms == "r-xp" && dev == "00:00"
+            Err(ResolveSymbolError::BuildIdMismatch(ref symbol_name)) if symbol_name == "symbol_name"
         );
     }
 
-    #[test]
-    fn test_parse_proc_map_entry_absolute_path() {
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca83a000-7f1bca83c000	rw-p	00036000	fd:01	2895508	/usr/lib64/ld-linux-x86-64.so.2"),
-            Ok(ProcMapEntry {
-                address: 0x7f1bca83a000,
-                address_end: 0x7f1bca83c000,
-                perms,
-                offset: 0x00036000,
-                dev,
-                inode: 2895508,
-                path: Some(path),
-            }) if perms == "rw-p" && dev == "fd:01" && path == Path::new("/usr/lib64/ld-linux-x86-64.so.2")
-        );
+    #[derive(Debug, Clone, Copy)]
+    struct ExpectedProcMapEntry {
+        address: u64,
+        address_end: u64,
+        perms: &'static str,
+        offset: u64,
+        dev: &'static str,
+        inode: u32,
+        path: Option<&'static str>,
     }
 
-    #[test]
-    fn test_parse_proc_map_entry_all_zeros() {
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f9000-7f1bca601000	rw-p	00000000	00:00	0"),
-            Ok(ProcMapEntry {
-                address: 0x7f1bca5f9000,
-                address_end: 0x7f1bca601000,
-                perms,
-                offset: 0,
-                dev,
-                inode: 0,
-                path: None,
-            }) if perms == "rw-p" && dev == "00:00"
-        );
+    #[test_case(
+        b"7ffd6fbea000-7ffd6fbec000  r-xp  00000000  00:00  0  [vdso]",
+        ExpectedProcMapEntry {
+            address: 0x7ffd6fbea000,
+            address_end: 0x7ffd6fbec000,
+            perms: "r-xp",
+            offset: 0,
+            dev: "00:00",
+            inode: 0,
+            path: Some("[vdso]"),
+        };
+        "bracketed_name"
+    )]
+    #[test_case(
+        b"7f1bca83a000-7f1bca83c000  rw-p  00036000  fd:01  2895508  /usr/lib64/ld-linux-x86-64.so.2",
+        ExpectedProcMapEntry {
+            address: 0x7f1bca83a000,
+            address_end: 0x7f1bca83c000,
+            perms: "rw-p",
+            offset: 0x00036000,
+            dev: "fd:01",
+            inode: 2895508,
+            path: Some("/usr/lib64/ld-linux-x86-64.so.2"),
+        };
+        "absolute_path"
+    )]
+    #[test_case(
+        b"7f1bca5f9000-7f1bca601000  rw-p  00000000  00:00  0",
+        ExpectedProcMapEntry {
+            address: 0x7f1bca5f9000,
+            address_end: 0x7f1bca601000,
+            perms: "rw-p",
+            offset: 0,
+            dev: "00:00",
+            inode: 0,
+            path: None,
+        };
+        "no_path"
+    )]
+    #[test_case(
+        b"7f1bca5f9000-7f1bca601000  rw-p  00000000  00:00  0  deadbeef",
+        ExpectedProcMapEntry {
+            address: 0x7f1bca5f9000,
+            address_end: 0x7f1bca601000,
+            perms: "rw-p",
+            offset: 0,
+            dev: "00:00",
+            inode: 0,
+            path: Some("deadbeef"),
+        };
+        "relative_path_token"
+    )]
+    #[test_case(
+        b"7f1bca83a000-7f1bca83c000  rw-p  00036000  fd:01  2895508  /usr/lib/libc.so.6 (deleted)",
+        ExpectedProcMapEntry {
+            address: 0x7f1bca83a000,
+            address_end: 0x7f1bca83c000,
+            perms: "rw-p",
+            offset: 0x00036000,
+            dev: "fd:01",
+            inode: 2895508,
+            path: Some("/usr/lib/libc.so.6 (deleted)"),
+        };
+        "deleted_suffix_in_path"
+    )]
+    // The path field is the remainder of the line. It may contain whitespace and arbitrary tokens.
+    #[test_case(
+        b"71064dc000-71064df000 ---p 00000000 00:00 0  [page size compat] extra",
+        ExpectedProcMapEntry {
+            address: 0x71064dc000,
+            address_end: 0x71064df000,
+            perms: "---p",
+            offset: 0,
+            dev: "00:00",
+            inode: 0,
+            path: Some("[page size compat] extra"),
+        };
+        "path_remainder_with_spaces"
+    )]
+    #[test_case(
+        b"724a0000-72aab000 rw-p 00000000 00:00 0 [anon:dalvik-zygote space] (deleted) extra",
+        ExpectedProcMapEntry {
+            address: 0x724a0000,
+            address_end: 0x72aab000,
+            perms: "rw-p",
+            offset: 0,
+            dev: "00:00",
+            inode: 0,
+            path: Some("[anon:dalvik-zygote space] (deleted) extra"),
+        };
+        "bracketed_name_with_spaces"
+    )]
+    #[test_case(
+        b"5ba3b000-5da3b000 r--s 00000000 00:01 1033 /memfd:jit-zygote-cache (deleted)",
+        ExpectedProcMapEntry {
+            address: 0x5ba3b000,
+            address_end: 0x5da3b000,
+            perms: "r--s",
+            offset: 0,
+            dev: "00:01",
+            inode: 1033,
+            path: Some("/memfd:jit-zygote-cache (deleted)"),
+        };
+        "memfd_deleted"
+    )]
+    #[test_case(
+        b"6cd539c000-6cd559c000 rw-s 00000000 00:01 7215 /dev/ashmem/CursorWindow: /data/user/0/package/databases/kitefly.db (deleted)",
+        ExpectedProcMapEntry {
+            address: 0x6cd539c000,
+            address_end: 0x6cd559c000,
+            perms: "rw-s",
+            offset: 0,
+            dev: "00:01",
+            inode: 7215,
+            path: Some("/dev/ashmem/CursorWindow: /data/user/0/package/databases/kitefly.db (deleted)"),
+        };
+        "ashmem_with_spaces"
+    )]
+    fn test_parse_proc_map_entry_ok(line: &'static [u8], expected: ExpectedProcMapEntry) {
+        use std::ffi::OsStr;
+
+        let ExpectedProcMapEntry {
+            address,
+            address_end,
+            perms,
+            offset,
+            dev,
+            inode,
+            path,
+        } = expected;
+
+        assert_matches!(ProcMapEntry::parse(line), Ok(entry) if entry == ProcMapEntry {
+            address,
+            address_end,
+            perms: OsStr::new(perms),
+            offset,
+            dev: OsStr::new(dev),
+            inode,
+            path: path.map(OsStr::new),
+        });
     }
 
-    #[test]
-    fn test_parse_proc_map_entry_parse_errors() {
+    #[test_case(b"zzzz-7ffd6fbea000  r-xp  00000000  00:00  0  [vdso]"; "bad_address")]
+    #[test_case(b"7f1bca5f9000-7f1bca601000  r-xp  zzzz  00:00  0  [vdso]"; "bad_offset")]
+    #[test_case(b"7f1bca5f9000-7f1bca601000  r-xp  00000000  00:00  zzzz  [vdso]"; "bad_inode")]
+    #[test_case(b"7f1bca5f90007ffd6fbea000  r-xp  00000000  00:00  0  [vdso]"; "bad_address_range")]
+    #[test_case(b"7f1bca5f9000-7f1bca601000  r-xp  00000000"; "missing_fields")]
+    #[test_case(b"7f1bca5f9000-7f1bca601000-deadbeef  rw-p  00000000  00:00  0"; "bad_address_delimiter")]
+    fn test_parse_proc_map_entry_err(line: &'static [u8]) {
         assert_matches!(
-            ProcMapEntry::parse(b"zzzz-7ffd6fbea000	r-xp	00000000	00:00	0	[vdso]"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"zzzz-7ffd6fbea000	r-xp	00000000	00:00	0	[vdso]"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f9000-7f1bca601000	r-xp	zzzz	00:00	0	[vdso]"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f9000-7f1bca601000	r-xp	00000000	00:00	zzzz	[vdso]"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f90007ffd6fbea000	r-xp	00000000	00:00	0	[vdso]"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f9000-7f1bca601000	r-xp	00000000"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f9000-7f1bca601000-deadbeef	rw-p	00000000	00:00	0"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f9000-7f1bca601000	rw-p	00000000	00:00	0	deadbeef"),
+            ProcMapEntry::parse(line),
             Err(ProcMapError::ParseLine { line: _ })
         );
     }

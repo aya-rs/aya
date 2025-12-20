@@ -30,6 +30,7 @@ thiserror = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
+test-case = { workspace = true }
 
 [package.metadata.docs.rs]
 all-features = true
