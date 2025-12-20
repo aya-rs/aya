@@ -398,24 +398,35 @@ impl<'a> ProcMapEntry<'a> {
             .parse()
             .map_err(|std::num::ParseIntError { .. }| err())?;
 
-        let path = parts
-            .next()
-            .and_then(|path| match path {
-                [b'[', .., b']'] => None,
-                path => {
-                    let path = Path::new(OsStr::from_bytes(path));
-                    if !path.is_absolute() {
-                        Some(Err(err()))
-                    } else {
-                        Some(Ok(path))
+        let path_part = parts.next();
+        let path = match path_part {
+            Some(val) => {
+                // Special mappings (e.g., [stack], [vdso], or Android's [anon:...]).
+                if val.first() == Some(&b'[') {
+                    None
+                }
+                // Absolute paths.
+                else if val.first() == Some(&b'/') {
+                    let p = Path::new(OsStr::from_bytes(val));
+                    match parts.next() {
+                        Some(suffix) if suffix == b"(deleted)" => {
+                            if parts.next().is_some() {
+                                return Err(err());
+                            }
+                            Some(p)
+                        }
+                        None => Some(p),
+                        _ => return Err(err()),
                     }
                 }
-            })
-            .transpose()?;
-
-        if let Some(_part) = parts.next() {
-            return Err(err());
-        }
+                // Malformed/Unknown format.
+                else {
+                    return Err(err());
+                }
+            }
+            // No path present (valid for some anonymous mappings).
+            None => None,
+        };
 
         Ok(Self {
             address: start,
@@ -1048,5 +1059,23 @@ mod tests {
             proc_map_libs.find_library_path_by_name(Path::new("ld-linux-x86-64.so.2")),
             Ok(Some(path)) if path == Path::new("/usr/lib64/ld-linux-x86-64.so.2")
         );
+    }
+
+    #[test]
+    fn test_parse_proc_map_entry_deleted() {
+        assert_matches!(
+            ProcMapEntry::parse(b"7f1bca83a000-7f1bca83c000	rw-p	00036000	fd:01	2895508	/usr/lib/libc.so.6 (deleted)"),
+            Ok(ProcMapEntry { path: Some(path), .. }) if path == Path::new("/usr/lib/libc.so.6")
+        );
+
+        assert_matches!(
+                ProcMapEntry::parse(b"7f1bca83a000-7f1bca83c000	rw-p	00036000	fd:01	2895508	/usr/lib/libc.so.6 something_else"),
+                Err(ProcMapError::ParseLine { .. })
+            );
+
+        assert_matches!(
+                ProcMapEntry::parse(b"7f1bca83a000-7f1bca83c000	rw-p	00036000	fd:01	2895508	/usr/lib/libc.so.6 (deleted) extra"),
+                Err(ProcMapError::ParseLine { .. })
+            );
     }
 }
