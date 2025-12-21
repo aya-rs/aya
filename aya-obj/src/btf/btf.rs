@@ -951,8 +951,6 @@ impl Object {
                 };
 
                 if datasec_name == ".kconfig" {
-                    has_extern_data = true;
-
                     let type_size = obj_btf.type_size(var.btf_type)?;
                     let type_align = obj_btf.type_align(var.btf_type)? as u64;
 
