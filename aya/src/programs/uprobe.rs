@@ -398,36 +398,28 @@ impl<'a> ProcMapEntry<'a> {
             .parse()
             .map_err(|std::num::ParseIntError { .. }| err())?;
 
-        let path_part = parts.next();
-        let path = match path_part {
-            Some(val) => {
-                // Special mappings (e.g., [stack], [vdso], or Android's [anon:...]).
-                let first = val.first();
-                if first == Some(&b'[') {
-                    None
-                }
-                // Absolute paths.
-                else if first == Some(&b'/') {
-                    let p = Path::new(OsStr::from_bytes(val));
+        let path = parts
+            .next()
+            .and_then(|path| match path {
+                [b'[', .., b']'] => None,
+
+                path => {
+                    let path = Path::new(OsStr::from_bytes(path));
+                    if !path.is_absolute() {
+                        return Some(Err(err()));
+                    }
                     match parts.next() {
-                        Some(suffix) if suffix == b"(deleted)" => {
-                            if parts.next().is_some() {
-                                return Err(err());
-                            }
-                            Some(p)
-                        }
-                        None => Some(p),
-                        _ => return Err(err()),
+                        Some(b"(deleted)") => Some(Ok(path)),
+                        None => Some(Ok(path)),
+                        _ => Some(Err(err())),
                     }
                 }
-                // Malformed/Unknown format.
-                else {
-                    return Err(err());
-                }
-            }
-            // No path present (valid for some anonymous mappings).
-            None => None,
-        };
+            })
+            .transpose()?;
+
+        if let Some(_part) = parts.next() {
+            return Err(err());
+        }
 
         Ok(Self {
             address: start,
