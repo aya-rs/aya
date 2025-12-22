@@ -421,11 +421,12 @@ impl<'a> ProcMapEntry<'a> {
         let path = match path_part {
             Some(val) => {
                 // Special mappings (e.g., [stack], [vdso], or Android's [anon:...]).
-                if val.first() == Some(&b'[') {
+                let first = val.first();
+                if first == Some(&b'[') {
                     None
                 }
                 // Absolute paths.
-                else if val.first() == Some(&b'/') {
+                else if first == Some(&b'/') {
                     let p = Path::new(OsStr::from_bytes(val));
                     match parts.next() {
                         Some(suffix) if suffix == b"(deleted)" => {
