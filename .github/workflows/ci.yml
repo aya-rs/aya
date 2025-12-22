@@ -32,7 +32,7 @@ jobs:
 
       - run: git ls-files -- '*.c' '*.h' | xargs clang-format --dry-run --Werror
 
-      - uses: DavidAnson/markdownlint-cli2-action@v21
+      - uses: DavidAnson/markdownlint-cli2-action@v22
 
       - run: taplo fmt --check
 
@@ -47,7 +47,7 @@ jobs:
         if: ${{ !(github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
       - run: cargo xtask public-api --bless
         if: ${{ (github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
-      - uses: peter-evans/create-pull-request@v7
+      - uses: peter-evans/create-pull-request@v8
         if: ${{ (github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
         with:
           # GitHub actions aren't allowed to trigger other actions to prevent
@@ -351,7 +351,7 @@ jobs:
             --git https://github.com/aya-rs/bpf-linker.git bpf-linker \
             --no-default-features --features "llvm-21,${LLVM_LINK_FEATURE}" --force
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: test/.tmp
           key: ${{ runner.arch }}-${{ runner.os }}-test-cache-${{ matrix.download-kernel-images }}

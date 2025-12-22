@@ -231,18 +231,14 @@ async fn ring_buf_async_with_drops() {
     // Make sure that there is nothing else in the ring_buf.
     assert_matches!(async_fd.into_inner().next(), None);
 
-    let max_dropped: u64 = u64::try_from(
-        data.len()
-            .checked_sub(RING_BUF_MAX_ENTRIES - 1)
-            .unwrap_or_default(),
-    )
-    .unwrap();
+    let max_dropped: u64 =
+        u64::try_from(data.len().saturating_sub(RING_BUF_MAX_ENTRIES - 1)).unwrap();
     let max_seen = u64::try_from(data.iter().filter(|v| *v % 2 == 0).count()).unwrap();
     let max_rejected = u64::try_from(data.len()).unwrap() - max_seen;
     let Registers { dropped, rejected } = regs.get(&0, 0).unwrap().iter().sum();
     let total = u64::try_from(data.len()).unwrap();
-    let min_seen = max_seen.checked_sub(max_dropped).unwrap_or_default();
-    let min_rejected = max_rejected.checked_sub(dropped).unwrap_or_default();
+    let min_seen = max_seen.saturating_sub(max_dropped);
+    let min_rejected = max_rejected.saturating_sub(dropped);
     let facts = format!(
         "seen={seen}, rejected={rejected}, dropped={dropped}, total={total}, max_seen={max_seen}, \
         max_rejected={max_rejected}, max_dropped={max_dropped}",
