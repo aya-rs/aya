@@ -402,20 +402,20 @@ impl<'a> ProcMapEntry<'a> {
             .next()
             .and_then(|path| match path {
                 [b'[', .., b']'] => None,
-
                 path => {
                     let path = Path::new(OsStr::from_bytes(path));
                     if !path.is_absolute() {
-                        return Some(Err(err()));
-                    }
-                    match parts.next() {
-                        Some(b"(deleted)") => Some(Ok(path)),
-                        None => Some(Ok(path)),
-                        _ => Some(Err(err())),
+                        Some(Err(err()))
+                    } else {
+                        Some(Ok(path))
                     }
                 }
             })
             .transpose()?;
+
+        if path.is_some() && parts.next().is_some_and(|part| part != b"(deleted)") {
+            return Err(err());
+        }
 
         if let Some(_part) = parts.next() {
             return Err(err());
