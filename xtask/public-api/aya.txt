@@ -7301,7 +7301,7 @@ pub fn aya::programs::trace_point::TracePointLinkId::from(t: T) -> T
 pub mod aya::programs::uprobe
 pub enum aya::programs::uprobe::ProcMapError
 pub aya::programs::uprobe::ProcMapError::ParseLine
-pub aya::programs::uprobe::ProcMapError::ParseLine::line: alloc::vec::Vec<u8>
+pub aya::programs::uprobe::ProcMapError::ParseLine::line: std::ffi::os_str::OsString
 pub aya::programs::uprobe::ProcMapError::ReadFile(std::io::error::Error)
 impl core::convert::From<std::io::error::Error> for aya::programs::uprobe::ProcMapError
 pub fn aya::programs::uprobe::ProcMapError::from(source: std::io::error::Error) -> Self

@@ -6,7 +6,10 @@ use std::{
     fs,
     io::{self, BufRead as _, Cursor, Read as _},
     mem,
-    os::{fd::AsFd as _, unix::ffi::OsStrExt as _},
+    os::{
+        fd::AsFd as _,
+        unix::ffi::{OsStrExt as _, OsStringExt as _},
+    },
     path::{Path, PathBuf},
     sync::LazyLock,
 };
@@ -337,11 +340,17 @@ pub enum ProcMapError {
     ReadFile(#[from] io::Error),
 
     /// Error parsing a line of /proc/pid/maps.
-    #[error("could not parse {:?}", OsStr::from_bytes(line))]
+    #[error("could not parse {}", line.display())]
     ParseLine {
         /// The line that could not be parsed.
-        line: Vec<u8>,
+        line: OsString,
     },
+}
+
+#[derive(Debug)]
+struct ProcMapPath<'a> {
+    path: &'a Path,
+    deleted: bool,
 }
 
 /// A entry that has been parsed from /proc/`pid`/maps.
@@ -362,7 +371,31 @@ struct ProcMapEntry<'a> {
     dev: &'a OsStr,
     #[cfg_attr(not(test), expect(dead_code))]
     inode: u32,
-    path: Option<&'a Path>,
+    path: Option<ProcMapPath<'a>>,
+}
+
+fn split_ascii_whitespace_n(s: &[u8], mut n: usize) -> impl Iterator<Item = &[u8]> {
+    let mut s = s.trim_ascii_end();
+
+    std::iter::from_fn(move || {
+        if n == 0 {
+            None
+        } else {
+            s = s.trim_ascii_start();
+
+            n -= 1;
+            Some(if n == 0 {
+                s
+            } else if let Some(i) = s.iter().position(|b| b.is_ascii_whitespace()) {
+                let (next, rest) = s.split_at(i);
+                s = rest;
+                next
+            } else {
+                n = 0;
+                s
+            })
+        }
+    })
 }
 
 impl<'a> ProcMapEntry<'a> {
@@ -370,11 +403,12 @@ impl<'a> ProcMapEntry<'a> {
         use std::os::unix::ffi::OsStrExt as _;
 
         let err = || ProcMapError::ParseLine {
-            line: line.to_vec(),
+            line: OsString::from_vec(line.to_vec()),
         };
 
-        let mut parts = line
-            .split(|b| b.is_ascii_whitespace())
+        let mut parts =
+            // address, perms, offset, dev, inode, path = 6.
+            split_ascii_whitespace_n(line, 6)
             .filter(|part| !part.is_empty());
 
         let mut next = || parts.next().ok_or_else(err);
@@ -417,31 +451,40 @@ impl<'a> ProcMapEntry<'a> {
             .parse()
             .map_err(|std::num::ParseIntError { .. }| err())?;
 
-        let tokens: Vec<&[u8]> = parts.collect();
-        let (body, is_deleted) = match tokens.as_slice() {
-            [rest @ .., b"(deleted)"] => (rest, true),
-            rest => (rest, false),
-        };
-        let path = match body {
-            [] if !is_deleted => Ok(None),
-            [first, ..]
-                if first.starts_with(b"[")
-                    && body.last().unwrap().ends_with(b"]")
-                    && !is_deleted =>
-            {
-                Ok(None)
-            }
-            [first, ..] if first.starts_with(b"/dev/ashmem") => Ok(None),
-            [bytes] => {
-                let path = Path::new(OsStr::from_bytes(bytes));
-                if path.is_absolute() {
-                    Ok(Some(path))
-                } else {
-                    Err(err())
+        let path = parts
+            .next()
+            .and_then(|path| match path {
+                [b'[', .., b']'] => None,
+                path => {
+                    let path = path
+                        .split(u8::is_ascii_whitespace)
+                        .filter(|part| !part.is_empty())
+                        .collect::<Vec<_>>();
+                    let path = match path.as_slice() {
+                        [first, path @ ..] if first.starts_with(b"/dev/ashmem/") => path,
+                        path => path,
+                    };
+                    let (path, deleted) = match path {
+                        [path @ .., b"(deleted)"] => (path, true),
+                        path => (path, false),
+                    };
+                    if let [path] = path {
+                        let path = Path::new(OsStr::from_bytes(path));
+                        if !path.is_absolute() {
+                            Some(Err(err()))
+                        } else {
+                            Some(Ok(ProcMapPath { path, deleted }))
+                        }
+                    } else {
+                        Some(Err(err()))
+                    }
                 }
-            }
-            _ => Err(err()),
-        }?;
+            })
+            .transpose()?;
+
+        if let Some(_part) = parts.next() {
+            return Err(err());
+        }
 
         Ok(Self {
             address: start,
@@ -503,8 +546,8 @@ impl<T: AsRef<[u8]>> ProcMap<T> {
                 inode: _,
                 path,
             } = entry?;
-            if let Some(path) = path {
-                if let Some(filename) = path.file_name() {
+            if let Some(ProcMapPath { path, deleted }) = path {
+                if !deleted && let Some(filename) = path.file_name() {
                     if let Some(suffix) = filename.strip_prefix(lib) {
                         if suffix.is_empty()
                             || suffix.starts_with(OsStr::new(".so"))
@@ -967,8 +1010,8 @@ mod tests {
                 offset: 0x00036000,
                 dev,
                 inode: 2895508,
-                path: Some(path),
-            }) if perms == "rw-p" && dev == "fd:01" && path == Path::new("/usr/lib64/ld-linux-x86-64.so.2")
+                path: Some(ProcMapPath { path, deleted: false }),
+            }) if perms == "rw-p" && dev == "fd:01" && path == "/usr/lib64/ld-linux-x86-64.so.2"
         );
     }
 
@@ -1040,7 +1083,7 @@ mod tests {
 
         assert_matches!(
             proc_map_libs.find_library_path_by_name(Path::new("libcrypto.so.3.0.9")),
-            Ok(Some(path)) if path == Path::new("/usr/lib64/libcrypto.so.3.0.9")
+            Ok(Some(path)) if path == "/usr/lib64/libcrypto.so.3.0.9"
         );
     }
 
@@ -1053,7 +1096,7 @@ mod tests {
 
         assert_matches!(
             proc_map_libs.find_library_path_by_name(Path::new("libcrypto")),
-            Ok(Some(path)) if path == Path::new("/usr/lib64/libcrypto.so.3.0.9")
+            Ok(Some(path)) if path == "/usr/lib64/libcrypto.so.3.0.9"
         );
     }
 
@@ -1072,7 +1115,7 @@ mod tests {
 
         assert_matches!(
             proc_map_libs.find_library_path_by_name(Path::new("ld-linux-x86-64.so.2")),
-            Ok(Some(path)) if path == Path::new("/usr/lib64/ld-linux-x86-64.so.2")
+            Ok(Some(path)) if path == "/usr/lib64/ld-linux-x86-64.so.2"
         );
     }
 
@@ -1087,8 +1130,8 @@ mod tests {
                 offset: 0x00036000,
                 dev,
                 inode: 2895508,
-                path: Some(path),
-            }) if perms == "rw-p" && dev == "fd:01" && path == Path::new("/usr/lib/libc.so.6")
+                path: Some(ProcMapPath { path, deleted: true }),
+            }) if perms == "rw-p" && dev == "fd:01" && path == "/usr/lib/libc.so.6"
         );
 
         assert_matches!(
@@ -1168,8 +1211,8 @@ mod tests {
                 offset: 0,
                 dev,
                 inode: 1033,
-                path: Some(path),
-            }) if perms == "r--s" && dev == "00:01" && path == Path::new("/memfd:jit-zygote-cache")
+                path: Some(ProcMapPath { path, deleted: false }),
+            }) if perms == "r--s" && dev == "00:01" && path == "/memfd:jit-zygote-cache"
         );
         assert_matches!(
             ProcMapEntry::parse(b"5ba3b000-5da3b000 r--s 00000000 00:01 1033 /memfd:jit-zygote-cache (deleted)"),
@@ -1180,8 +1223,8 @@ mod tests {
                 offset: 0,
                 dev,
                 inode: 1033,
-                path: Some(path),
-            }) if perms == "r--s" && dev == "00:01" && path == Path::new("/memfd:jit-zygote-cache")
+                path: Some(ProcMapPath { path, deleted: true }),
+            }) if perms == "r--s" && dev == "00:01" && path == "/memfd:jit-zygote-cache"
         );
         assert_matches!(
             ProcMapEntry::parse(b"6cd539c000-6cd559c000 rw-s 00000000 00:01 7215 /dev/ashmem/CursorWindow: /data/user/0/package/databases/kitefly.db (deleted)"),
@@ -1192,8 +1235,8 @@ mod tests {
                 offset: 0,
                 dev,
                 inode: 7215,
-                path: None,
-            }) if perms == "rw-s" && dev == "00:01"
+                path: Some(ProcMapPath { path, deleted: true }),
+            }) if perms == "rw-s" && dev == "00:01" && path == "/data/user/0/package/databases/kitefly.db"
         );
     }
 }
