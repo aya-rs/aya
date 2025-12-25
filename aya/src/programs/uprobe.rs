@@ -398,28 +398,31 @@ impl<'a> ProcMapEntry<'a> {
             .parse()
             .map_err(|std::num::ParseIntError { .. }| err())?;
 
-        let path = parts
-            .next()
-            .and_then(|path| match path {
-                [b'[', .., b']'] => None,
-                path => {
-                    let path = Path::new(OsStr::from_bytes(path));
-                    if !path.is_absolute() {
-                        Some(Err(err()))
-                    } else {
-                        Some(Ok(path))
-                    }
+        let tokens: Vec<&[u8]> = parts.collect();
+        let (body, is_deleted) = match tokens.as_slice() {
+            [rest @ .., b"(deleted)"] => (rest, true),
+            rest => (rest, false),
+        };
+        let path = match body {
+            [] if !is_deleted => Ok(None),
+            [first, ..]
+                if first.starts_with(b"[")
+                    && body.last().unwrap().ends_with(b"]")
+                    && !is_deleted =>
+            {
+                Ok(None)
+            }
+            [first, ..] if first.starts_with(b"/dev/ashmem") => Ok(None),
+            [bytes] => {
+                let path = Path::new(OsStr::from_bytes(bytes));
+                if path.is_absolute() {
+                    Ok(Some(path))
+                } else {
+                    Err(err())
                 }
-            })
-            .transpose()?;
-
-        if path.is_some() && parts.next().is_some_and(|part| part != b"(deleted)") {
-            return Err(err());
-        }
-
-        if let Some(_part) = parts.next() {
-            return Err(err());
-        }
+            }
+            _ => Err(err()),
+        }?;
 
         Ok(Self {
             address: start,
@@ -1084,6 +1087,94 @@ mod tests {
         assert_matches!(
             ProcMapEntry::parse(b"7f1bca83a000-7f1bca83c000	rw-p	00036000	fd:01	2895508	/usr/lib/libc.so.6 (deleted) extra"),
             Err(ProcMapError::ParseLine { line: _ })
+        );
+    }
+
+    #[test]
+    fn test_parse_proc_map_entry_android_special() {
+        assert_matches!(
+            ProcMapEntry::parse(b"71064dc000-71064df000 ---p 00000000 00:00 0  [page size compat]"),
+            Ok(ProcMapEntry {
+                address: 0x71064dc000,
+                address_end: 0x71064df000,
+                perms,
+                offset: 0,
+                dev,
+                inode: 0,
+                path: None,
+            }) if perms == "---p" && dev == "00:00"
+        );
+        assert_matches!(
+            ProcMapEntry::parse(
+                b"71064dc000-71064df000 ---p 00000000 00:00 0  [page size compat] extra"
+            ),
+            Err(ProcMapError::ParseLine { line: _ })
+        );
+        assert_matches!(
+            ProcMapEntry::parse(
+                b"71064dc000-71064df000 ---p 00000000 00:00 0  [page size compat] (deleted)"
+            ),
+            Err(ProcMapError::ParseLine { line: _ })
+        );
+        assert_matches!(
+            ProcMapEntry::parse(b"724a0000-72aab000 rw-p 00000000 00:00 0 [anon:dalvik-zygote space] (deleted) extra"),
+            Err(ProcMapError::ParseLine { line: _ })
+        );
+        assert_matches!(
+            ProcMapEntry::parse(
+                b"6e3f427000-6e3f527000 rw-p 00000000 00:00 0 [anon:dalvik-allocspace zygote / non moving space live-bitmap 0]"
+            ),
+            Ok(ProcMapEntry {
+                address: 0x6e3f427000,
+                address_end: 0x6e3f527000,
+                perms,
+                offset: 0,
+                dev,
+                inode: 0,
+                path: None,
+            }) if perms == "rw-p" && dev == "00:00"
+        );
+        assert_matches!(
+            ProcMapEntry::parse(
+                b"6e3f427000-6e3f527000 rw-p 00000000 00:00 0 [anon:dalvik-allocspace zygote / non moving space live-bitmap 0] extra"
+            ),
+            Err(ProcMapError::ParseLine { line: _ })
+        );
+        assert_matches!(
+            ProcMapEntry::parse(b"5ba3b000-5da3b000 r--s 00000000 00:01 1033 /memfd:jit-zygote-cache"),
+            Ok(ProcMapEntry {
+                address: 0x5ba3b000,
+                address_end: 0x5da3b000,
+                perms,
+                offset: 0,
+                dev,
+                inode: 1033,
+                path: Some(path),
+            }) if perms == "r--s" && dev == "00:01" && path == Path::new("/memfd:jit-zygote-cache")
+        );
+        assert_matches!(
+            ProcMapEntry::parse(b"5ba3b000-5da3b000 r--s 00000000 00:01 1033 /memfd:jit-zygote-cache (deleted)"),
+            Ok(ProcMapEntry {
+                address: 0x5ba3b000,
+                address_end: 0x5da3b000,
+                perms,
+                offset: 0,
+                dev,
+                inode: 1033,
+                path: Some(path),
+            }) if perms == "r--s" && dev == "00:01" && path == Path::new("/memfd:jit-zygote-cache")
+        );
+        assert_matches!(
+            ProcMapEntry::parse(b"6cd539c000-6cd559c000 rw-s 00000000 00:01 7215 /dev/ashmem/CursorWindow: /data/user/0/package/databases/kitefly.db (deleted)"),
+            Ok(ProcMapEntry {
+                address: 0x6cd539c000,
+                address_end: 0x6cd559c000,
+                perms,
+                offset: 0,
+                dev,
+                inode: 7215,
+                path: None,
+            }) if perms == "rw-s" && dev == "00:01"
         );
     }
 }
