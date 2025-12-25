@@ -355,7 +355,8 @@ impl<'a> ProcMapEntry<'a> {
         };
 
         let mut parts = line
-            .split(|b| b.is_ascii_whitespace())
+            // address, perms, offset, dev, inode, path = 6.
+            .splitn(6, u8::is_ascii_whitespace)
             .filter(|part| !part.is_empty());
 
         let mut next = || parts.next().ok_or_else(err);
@@ -398,31 +399,37 @@ impl<'a> ProcMapEntry<'a> {
             .parse()
             .map_err(|std::num::ParseIntError { .. }| err())?;
 
-        let tokens: Vec<&[u8]> = parts.collect();
-        let (body, is_deleted) = match tokens.as_slice() {
-            [rest @ .., b"(deleted)"] => (rest, true),
-            rest => (rest, false),
-        };
-        let path = match body {
-            [] if !is_deleted => Ok(None),
-            [first, ..]
-                if first.starts_with(b"[")
-                    && body.last().unwrap().ends_with(b"]")
-                    && !is_deleted =>
-            {
-                Ok(None)
-            }
-            [first, ..] if first.starts_with(b"/dev/ashmem") => Ok(None),
-            [bytes] => {
-                let path = Path::new(OsStr::from_bytes(bytes));
-                if path.is_absolute() {
-                    Ok(Some(path))
-                } else {
-                    Err(err())
+        let path = parts
+            .next()
+            .and_then(|path| match path {
+                [b'[', .., b']'] => None,
+                path => {
+                    let path = path.split(u8::is_ascii_whitespace).collect::<Vec<_>>();
+                    let path = match path.as_slice() {
+                        [first, path @ ..] if first.starts_with(b"/dev/ashmem/") => path,
+                        path => path,
+                    };
+                    let path = match path {
+                        [path @ .., b"(deleted)"] => path,
+                        path => path,
+                    };
+                    if let [path] = path {
+                        let path = Path::new(OsStr::from_bytes(path));
+                        if !path.is_absolute() {
+                            Some(Err(err()))
+                        } else {
+                            Some(Ok(path))
+                        }
+                    } else {
+                        Some(Err(err()))
+                    }
                 }
-            }
-            _ => Err(err()),
-        }?;
+            })
+            .transpose()?;
+
+        if let Some(_part) = parts.next() {
+            return Err(err());
+        }
 
         Ok(Self {
             address: start,
