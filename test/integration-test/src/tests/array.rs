@@ -55,7 +55,7 @@ fn test_array() {
         for (prog_name, symbol) in progs_and_symbols {
             let prog: &mut UProbe = ebpf.program_mut(prog_name).unwrap().try_into().unwrap();
             prog.load().unwrap();
-            prog.attach(symbol, "/proc/self/exe", None).unwrap();
+            prog.attach([symbol], "/proc/self/exe", None).unwrap();
         }
         let result_array = ebpf.map(result_map).unwrap();
         let result_array = Array::<_, u32>::try_from(result_array).unwrap();

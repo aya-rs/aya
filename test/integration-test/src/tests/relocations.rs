@@ -55,7 +55,7 @@ fn load_and_attach(name: &str, bytes: &[u8]) -> Ebpf {
     let prog: &mut UProbe = bpf.program_mut(name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
-    prog.attach("trigger_relocations_program", "/proc/self/exe", None)
+    prog.attach(["trigger_relocations_program"], "/proc/self/exe", None)
         .unwrap();
 
     bpf
