@@ -5,6 +5,7 @@ use std::os::fd::AsFd;
 use aya_obj::generated::{
     bpf_attach_type::BPF_CGROUP_DEVICE, bpf_prog_type::BPF_PROG_TYPE_CGROUP_DEVICE,
 };
+use log::warn;
 
 use crate::{
     programs::{
@@ -67,6 +68,11 @@ impl CgroupDevice {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [CgroupDevice::detach]
+    ///
+    /// # Warning
+    ///
+    /// On kernels 5.7.0 and later, attach modes other than `CgroupAttachMode::default()` are not passed to `bpf_link_create`.
+    /// On older kernels (using `bpf_prog_attach`), the attach mode is honored.
     pub fn attach<T: AsFd>(
         &mut self,
         cgroup: T,
@@ -77,11 +83,17 @@ impl CgroupDevice {
         let cgroup_fd = cgroup.as_fd();
 
         if KernelVersion::at_least(5, 7, 0) {
+            if mode != CgroupAttachMode::default() {
+                warn!(
+                    "CgroupAttachMode {:?} will not be passed on to bpf_link_create",
+                    mode
+                );
+            }
             let link_fd = bpf_link_create(
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),
                 BPF_CGROUP_DEVICE,
-                mode.into(),
+                0,
                 None,
             )
             .map_err(|io_error| SyscallError {
