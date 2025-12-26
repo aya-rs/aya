@@ -56,7 +56,7 @@ fn multiple_btf_maps() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_bpf_program", "/proc/self/exe", None)
+    prog.attach(["trigger_bpf_program"], "/proc/self/exe", None)
         .unwrap();
 
     trigger_bpf_program();
@@ -106,7 +106,7 @@ fn pin_lifecycle_multiple_btf_maps() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_bpf_program", "/proc/self/exe", None)
+    prog.attach(["trigger_bpf_program"], "/proc/self/exe", None)
         .unwrap();
 
     trigger_bpf_program();
@@ -336,7 +336,7 @@ fn basic_uprobe() {
 
     let program_name = "test_uprobe";
     let attach = |prog: &mut P| {
-        prog.attach("uprobe_function", "/proc/self/exe", None)
+        prog.attach(["uprobe_function"], "/proc/self/exe", None)
             .unwrap()
     };
     run_unload_program_test(
@@ -582,7 +582,7 @@ fn pin_lifecycle_uprobe() {
 
     let program_name = "test_uprobe";
     let attach = |prog: &mut P| {
-        prog.attach("uprobe_function", "/proc/self/exe", None)
+        prog.attach(["uprobe_function"], "/proc/self/exe", None)
             .unwrap()
     };
     let program_pin = "/sys/fs/bpf/aya-uprobe-test-prog";

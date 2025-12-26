@@ -32,10 +32,10 @@ fn test_uprobe_cookie() {
     const PROG_B: &str = "uprobe_cookie_trigger_ebpf_program_b";
     let attach = |prog: &mut UProbe, fn_name: &str, cookie| {
         prog.attach(
-            UProbeAttachPoint {
+            [UProbeAttachPoint {
                 location: fn_name.into(),
                 cookie: Some(cookie),
-            },
+            }],
             "/proc/self/exe",
             None,
         )
