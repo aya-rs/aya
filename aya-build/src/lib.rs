@@ -125,7 +125,7 @@ pub fn build_ebpf<'a>(
         }
 
         // Workaround for https://github.com/rust-lang/cargo/issues/6412 where cargo flocks itself.
-        let target_dir = out_dir.join(name);
+        let target_dir = out_dir.join(format!("{name}-out"));
         cmd.arg("--target-dir").arg(&target_dir);
 
         let mut child = cmd
