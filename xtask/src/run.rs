@@ -49,6 +49,11 @@ enum Environment {
 pub(crate) struct Options {
     #[clap(subcommand)]
     environment: Environment,
+
+    /// The package whose tests to build and run.
+    #[clap(short = 'p', long, global = true, default_value = "integration-test")]
+    package: String,
+
     /// Arguments to pass to your application.
     #[clap(global = true, last = true)]
     run_args: Vec<OsString>,
@@ -209,22 +214,20 @@ fn one<T: Debug>(slice: &[T]) -> Result<&T> {
 pub(crate) fn run(opts: Options) -> Result<()> {
     let Options {
         environment,
+        package,
         run_args,
     } = opts;
 
     type Binary = (String, PathBuf);
-    fn binaries(target: Option<&str>) -> Result<Vec<(&str, Vec<Binary>)>> {
+    fn binaries(package: &str, target: Option<&str>) -> Result<Vec<(&'static str, Vec<Binary>)>> {
         ["dev", "release"]
             .into_iter()
             .map(|profile| {
                 let binaries = build(target, |cmd| {
-                    cmd.env(AYA_BUILD_INTEGRATION_BPF, "true").args([
-                        "--package",
-                        "integration-test",
-                        "--tests",
-                        "--profile",
-                        profile,
-                    ])
+                    if package == "integration-test" {
+                        cmd.env(AYA_BUILD_INTEGRATION_BPF, "true");
+                    }
+                    cmd.args(["--package", package, "--tests", "--profile", profile])
                 })?;
                 anyhow::Ok((profile, binaries))
             })
@@ -242,7 +245,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
             let runner = args.next().ok_or(anyhow!("no first argument"))?;
             let args = args.collect::<Vec<_>>();
 
-            let binaries = binaries(None)?;
+            let binaries = binaries(&package, None)?;
 
             let mut failures = String::new();
             for (profile, binaries) in binaries {
@@ -605,7 +608,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                     build(Some(&target), |cmd| cmd.args(test_distro_args))
                         .context("building test-distro package failed")?;
 
-                let binaries = binaries(Some(&target))?;
+                let binaries = binaries(&package, Some(&target))?;
 
                 let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
 
