@@ -11,21 +11,21 @@
 
 - Coding guidelines:
   - Use github or bootlin permalinks when referencing kernel sources.
-- Integration testing:
-  - Prepare:
+- Testing (if local machine is not Linux):
+  - Prepare integration tests:
 
     ```sh
     .github/scripts/download_kernel_images.sh \
       test/.tmp/debian-kernels/<arch> <arch> [VERSIONS]...
     ```
 
-  - Run:
+  - Run in a VM:
 
     <!-- markdownlint-disable line-length -->
 
     ```sh
-    find test/.tmp -name '*.deb' -print0 | xargs -0 -t sh -c \
-      'cargo xtask integration-test vm --cache-dir test/.tmp "$@" -- <test-filter> [ARGS]...' _
+    find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 sh -c \
+      'cargo xtask integration-test vm [-p <PACKAGE>] --cache-dir test/.tmp "$@" -- <test-filter> [ARGS]...' _
     ```
 
     <!-- markdownlint-restore -->
