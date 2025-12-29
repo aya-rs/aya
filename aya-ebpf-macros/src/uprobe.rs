@@ -29,6 +29,7 @@ pub(crate) struct UProbe {
     offset: Option<u64>,
     item: ItemFn,
     sleepable: bool,
+    multi: bool,
 }
 
 impl UProbe {
@@ -48,6 +49,7 @@ impl UProbe {
             .transpose()
             .map_err(|err| span.error(format!("failed to parse `offset` argument: {err}")))?;
         let sleepable = pop_bool_arg(&mut args, "sleepable");
+        let multi = pop_bool_arg(&mut args, "multi");
         err_on_unknown_args(&args)?;
         Ok(Self {
             kind,
@@ -56,6 +58,7 @@ impl UProbe {
             function,
             offset,
             sleepable,
+            multi,
         })
     }
 
@@ -67,6 +70,7 @@ impl UProbe {
             offset,
             item,
             sleepable,
+            multi,
         } = self;
         let ItemFn {
             attrs: _,
@@ -75,6 +79,9 @@ impl UProbe {
             block: _,
         } = item;
         let mut prefix = kind.to_string();
+        if *multi {
+            prefix.push_str(".multi");
+        }
         if *sleepable {
             prefix.push_str(".s");
         }

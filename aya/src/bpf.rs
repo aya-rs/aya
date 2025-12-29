@@ -11,7 +11,7 @@ use aya_obj::{
     EbpfSectionKind, Features, Object, ParseError, ProgramSection,
     btf::{Btf, BtfError, BtfFeatures, BtfRelocationError},
     generated::{
-        BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS,
+        BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_attach_type,
         bpf_map_type::{self, *},
     },
     relocation::EbpfRelocationError,
@@ -26,7 +26,7 @@ use crate::{
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe,
         LircMode2, Lsm, LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError,
         RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter,
-        TracePoint, UProbe, Xdp,
+        TracePoint, UProbe, Xdp, uprobe::MultiCompileState,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -463,8 +463,14 @@ impl<'a> EbpfLoader<'a> {
                                 }
                                 ProgramSection::KRetProbe
                                 | ProgramSection::KProbe
-                                | ProgramSection::UProbe { sleepable: _ }
-                                | ProgramSection::URetProbe { sleepable: _ }
+                                | ProgramSection::UProbe {
+                                    sleepable: _,
+                                    multi: _,
+                                }
+                                | ProgramSection::URetProbe {
+                                    sleepable: _,
+                                    multi: _,
+                                }
                                 | ProgramSection::TracePoint
                                 | ProgramSection::SocketFilter
                                 | ProgramSection::Xdp {
@@ -604,26 +610,44 @@ impl<'a> EbpfLoader<'a> {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             kind: ProbeKind::Return,
                         }),
-                        ProgramSection::UProbe { sleepable } => {
+                        ProgramSection::UProbe { sleepable, multi } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
+                            }
+                            if *multi {
+                                data.expected_attach_type =
+                                    Some(bpf_attach_type::BPF_TRACE_UPROBE_MULTI);
                             }
                             Program::UProbe(UProbe {
                                 data,
                                 kind: ProbeKind::Entry,
+                                compiled_for_multi: if *multi {
+                                    MultiCompileState::Multi
+                                } else {
+                                    MultiCompileState::Single
+                                },
                             })
                         }
-                        ProgramSection::URetProbe { sleepable } => {
+                        ProgramSection::URetProbe { sleepable, multi } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
+                            if *multi {
+                                data.expected_attach_type =
+                                    Some(bpf_attach_type::BPF_TRACE_UPROBE_MULTI);
+                            }
                             Program::UProbe(UProbe {
                                 data,
                                 kind: ProbeKind::Return,
+                                compiled_for_multi: if *multi {
+                                    MultiCompileState::Multi
+                                } else {
+                                    MultiCompileState::Single
+                                },
                             })
                         }
                         ProgramSection::TracePoint => Program::TracePoint(TracePoint {
