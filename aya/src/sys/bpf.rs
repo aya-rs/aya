@@ -257,6 +257,89 @@ pub(crate) fn bpf_map_lookup_elem_per_cpu<K: Pod, V: Pod>(
     }
 }
 
+/// Batch lookup and delete elements from a per-cpu map.
+///
+/// # Arguments
+///
+/// * `fd` - The file descriptor of the map
+/// * `in_batch` - Optional reference to the previous batch cursor (None for first call)
+/// * `batch_size` - Maximum number of elements to retrieve
+/// * `flags` - Operation flags
+///
+/// # Returns
+///
+/// Returns a tuple of (keys, values, out_batch) where:
+/// - keys: Vector of retrieved keys
+/// - values: Vector of retrieved per-CPU values
+/// - out_batch: Optional cursor for the next batch
+///
+/// # Introduced in kernel v5.6
+pub(crate) fn bpf_map_lookup_and_delete_batch_per_cpu<K: Pod, V: Pod>(
+    fd: BorrowedFd<'_>,
+    in_batch: Option<&K>,
+    batch_size: usize,
+    flags: u64,
+) -> io::Result<(Vec<K>, Vec<PerCpuValues<V>>, Option<K>)> {
+    if batch_size == 0 {
+        return Ok((Vec::new(), Vec::new(), None));
+    }
+
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let mut out_batch = MaybeUninit::<K>::uninit();
+    let mut keys = vec![unsafe { mem::zeroed() }; batch_size];
+
+    let value_size = mem::size_of::<V>().next_multiple_of(8);
+    let nr_cpus = crate::util::nr_cpus().map_err(|(_, error)| error)?;
+    // value out buffer
+    let mut values_buffer = vec![0u8; batch_size * nr_cpus * value_size];
+
+    let batch_attr = unsafe { &mut attr.batch };
+    batch_attr.map_fd = fd.as_raw_fd() as u32;
+    batch_attr.keys = keys.as_mut_ptr() as u64;
+    batch_attr.values = values_buffer.as_mut_ptr() as u64;
+    batch_attr.count = batch_size as u32;
+    if let Some(batch) = in_batch {
+        batch_attr.in_batch = ptr::from_ref(batch) as u64;
+    }
+    batch_attr.out_batch = ptr::from_mut(&mut out_batch) as u64;
+    batch_attr.flags = flags;
+
+    if let Err(e) = unit_sys_bpf(bpf_cmd::BPF_MAP_LOOKUP_AND_DELETE_BATCH, &mut attr) {
+        if e.raw_os_error() != Some(ENOENT) {
+            return Err(e);
+        }
+    }
+
+    let actual_count = unsafe { attr.batch.count } as usize;
+    keys.truncate(actual_count);
+    let mut values = Vec::with_capacity(actual_count);
+    for i in 0..actual_count {
+        let offset = i * nr_cpus * value_size;
+        let per_cpu_values: Vec<V> = (0..nr_cpus)
+            .map(|cpu| {
+                let value_offset = offset + cpu * value_size;
+                // SAFETY:
+                // 1. `values_buffer` is allocated with size `batch_size * nr_cpus * value_size`.
+                // 2. The loop bounds ensure `i < actual_count` (<= batch_size) and `cpu < nr_cpus`.
+                // 3. Therefore, `value_offset` is always within the bounds of `kernel_mem`.
+                // 4. `ptr::read_unaligned` allows reading potentially unaligned values from the byte buffer.
+                unsafe { ptr::read_unaligned(values_buffer.as_ptr().add(value_offset).cast::<V>()) }
+            })
+            .collect();
+
+        values.push(
+            PerCpuValues::try_from(per_cpu_values)
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?,
+        );
+    }
+    let out_batch = if actual_count > 0 {
+        Some(unsafe { out_batch.assume_init() })
+    } else {
+        None
+    };
+    Ok((keys, values, out_batch))
+}
+
 pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
     fd: BorrowedFd<'_>,
     key: Option<&K>,
