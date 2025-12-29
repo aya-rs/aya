@@ -221,6 +221,7 @@ impl<T> core::convert::From<T> for aya::maps::hash_map::HashMap<T, K, V>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::from(t: T) -> T
 pub struct aya::maps::hash_map::PerCpuHashMap<T, K: aya::Pod, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::hash_map::PerCpuHashMap<T, K, V>
+pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::batch_lookup_and_delete(&self, batch_size: usize, in_batch: core::option::Option<&K>, flags: u64) -> core::result::Result<(alloc::vec::Vec<K>, alloc::vec::Vec<aya::maps::PerCpuValues<V>>, core::option::Option<K>), aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::get(&self, key: &K, flags: u64) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, K, aya::maps::PerCpuValues<V>, Self>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::keys(&self) -> aya::maps::MapKeys<'_, K>
@@ -1964,6 +1965,7 @@ impl<T> core::convert::From<T> for aya::maps::PerCpuArray<T, V>
 pub fn aya::maps::PerCpuArray<T, V>::from(t: T) -> T
 pub struct aya::maps::PerCpuHashMap<T, K: aya::Pod, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::hash_map::PerCpuHashMap<T, K, V>
+pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::batch_lookup_and_delete(&self, batch_size: usize, in_batch: core::option::Option<&K>, flags: u64) -> core::result::Result<(alloc::vec::Vec<K>, alloc::vec::Vec<aya::maps::PerCpuValues<V>>, core::option::Option<K>), aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::get(&self, key: &K, flags: u64) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, K, aya::maps::PerCpuValues<V>, Self>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::keys(&self) -> aya::maps::MapKeys<'_, K>
