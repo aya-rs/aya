@@ -384,15 +384,26 @@ pub(crate) enum LinkTarget<'f> {
     Fd(BorrowedFd<'f>),
     IfIndex(u32),
     Iter,
+    None,
 }
 
 // Models https://github.com/torvalds/linux/blob/2144da25/include/uapi/linux/bpf.h#L1724-L1782.
 pub(crate) enum BpfLinkCreateArgs<'a> {
     TargetBtfId(u32),
     // since kernel 5.15
-    PerfEvent { bpf_cookie: u64 },
+    PerfEvent {
+        bpf_cookie: u64,
+    },
     // since kernel 6.6
     Tcx(&'a LinkRef),
+    UProbeMulti {
+        path: &'a CStr,
+        offsets: &'a [u64],
+        ref_ctr_offsets: Option<&'a [u64]>,
+        cookies: Option<&'a [u64]>,
+        pid: Option<u32>,
+        flags: u32,
+    },
 }
 
 // since kernel 5.7
@@ -418,7 +429,7 @@ pub(crate) fn bpf_link_create(
         // fact, the kernel explicitly rejects non-zero target FDs for
         // iterators:
         // https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/bpf_iter.c#L517-L518
-        LinkTarget::Iter => {}
+        LinkTarget::Iter | LinkTarget::None => {}
     };
     attr.link_create.attach_type = attach_type as u32;
     attr.link_create.flags = flags;
@@ -447,6 +458,27 @@ pub(crate) fn bpf_link_create(
                         .relative_id = id.to_owned();
                 }
             },
+            BpfLinkCreateArgs::UProbeMulti {
+                path,
+                offsets,
+                ref_ctr_offsets,
+                cookies,
+                pid,
+                flags,
+            } => {
+                let multi = unsafe { &mut attr.link_create.__bindgen_anon_3.uprobe_multi };
+                multi.path = path.as_ptr() as u64;
+                multi.offsets = offsets.as_ptr() as u64;
+                multi.cnt = offsets.len() as u32;
+                multi.flags = flags;
+                multi.pid = pid.unwrap_or(0);
+                multi.ref_ctr_offsets = ref_ctr_offsets
+                    .map(|slice| slice.as_ptr() as u64)
+                    .unwrap_or_default();
+                multi.cookies = cookies
+                    .map(|slice| slice.as_ptr() as u64)
+                    .unwrap_or_default();
+            }
         }
     }
 
