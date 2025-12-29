@@ -21,3 +21,6 @@ linker = "s390x-linux-gnu-gcc"
 
 [target.mips-unknown-linux-gnu]
 linker = "mips-linux-gnu-gcc"
+
+[unstable]
+bindeps = true

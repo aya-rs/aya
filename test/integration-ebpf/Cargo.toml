@@ -21,7 +21,7 @@ integration-common = { path = "../integration-common" }
 network-types = { workspace = true }
 
 [build-dependencies]
-which = { workspace = true, features = ["real-sys"] }
+bpf-linker = { workspace = true, artifact = "bin", features = ["llvm-21"] }
 xtask = { path = "../../xtask" }
 
 [[bin]]
