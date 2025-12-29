@@ -125,7 +125,11 @@ pub fn build_ebpf<'a>(
         }
 
         // Workaround for https://github.com/rust-lang/cargo/issues/6412 where cargo flocks itself.
-        let target_dir = out_dir.join(name);
+        //
+        // Keep the cargo `--target-dir` separate from `OUT_DIR`'s output artifacts. Otherwise, if
+        // the package name matches a bin target name, `target_dir` would collide with the file we
+        // later copy to `OUT_DIR/<bin-name>`, causing `fs::copy` to fail with EISDIR.
+        let target_dir = out_dir.join("aya-build").join("target").join(name);
         cmd.arg("--target-dir").arg(&target_dir);
 
         let mut child = cmd
