@@ -431,10 +431,10 @@ impl<T: AsRef<[u8]>> ProcMap<T> {
     fn libs(&self) -> impl Iterator<Item = Result<ProcMapEntry<'_>, ProcMapError>> {
         let Self { pid: _, data } = self;
 
+        // /proc/<pid>/maps ends with '\n', so split() yields a trailing empty slice without this.
         data.as_ref()
+            .trim_ascii()
             .split(|&b| b == b'\n')
-            // /proc/<pid>/maps ends with '\n', so split() yields a trailing empty slice.
-            .filter(|line| !line.is_empty())
             .map(ProcMapEntry::parse)
     }
 
@@ -1026,7 +1026,9 @@ mod tests {
     fn test_proc_map_find_lib_by_name() {
         let proc_map_libs = ProcMap {
             pid: 0xdead,
-            data: b"7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libcrypto.so.3.0.9",
+            data: br#"
+7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libcrypto.so.3.0.9
+"#,
         };
 
         assert_matches!(
@@ -1039,7 +1041,9 @@ mod tests {
     fn test_proc_map_find_lib_by_partial_name() {
         let proc_map_libs = ProcMap {
             pid: 0xdead,
-            data: b"7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libcrypto.so.3.0.9",
+            data: br#"
+7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libcrypto.so.3.0.9
+"#,
         };
 
         assert_matches!(
