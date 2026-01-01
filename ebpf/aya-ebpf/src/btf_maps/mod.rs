@@ -1,21 +1,8 @@
-use core::marker::PhantomData;
-
 pub mod array;
 pub mod sk_storage;
 
 pub use array::Array;
 pub use sk_storage::SkStorage;
-
-/// A marker used to remove names of annotated types in LLVM debug info and
-/// therefore also in BTF.
-#[repr(transparent)]
-pub(crate) struct AyaBtfMapMarker(PhantomData<()>);
-
-impl AyaBtfMapMarker {
-    pub(crate) const fn new() -> Self {
-        Self(PhantomData)
-    }
-}
 
 #[macro_export]
 macro_rules! btf_map_def {
@@ -30,9 +17,6 @@ macro_rules! btf_map_def {
             value: *const V,
             max_entries: *const [i32; M],
             map_flags: *const [i32; F],
-
-            // Anonymize the struct.
-            _anon: $crate::btf_maps::AyaBtfMapMarker,
         }
 
         #[expect(
@@ -47,7 +31,6 @@ macro_rules! btf_map_def {
                     value: ::core::ptr::null(),
                     max_entries: ::core::ptr::null(),
                     map_flags: ::core::ptr::null(),
-                    _anon: $crate::btf_maps::AyaBtfMapMarker::new(),
                 }
             }
         }
