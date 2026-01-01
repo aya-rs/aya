@@ -1,5 +1,6 @@
 //! User space probes.
 use std::{
+    borrow::Cow,
     error::Error,
     ffi::{CStr, OsStr, OsString},
     fmt::{self, Write},
@@ -621,19 +622,19 @@ enum ResolveSymbolError {
     BuildIdMismatch(String),
 }
 
-fn construct_debuglink_path(filename: &[u8], main_path: &Path) -> PathBuf {
+fn construct_debuglink_path<'a>(filename: &'a [u8], main_path: &Path) -> Cow<'a, Path> {
     let filename_str = OsStr::from_bytes(filename);
     let debuglink_path = Path::new(filename_str);
 
     if debuglink_path.is_relative() {
         // If the debug path is relative, resolve it against the parent of the main path
         main_path.parent().map_or_else(
-            || PathBuf::from(debuglink_path), // Use original if no parent
-            |parent| parent.join(debuglink_path),
+            || debuglink_path.into(), // Use original if no parent
+            |parent| parent.join(debuglink_path).into(),
         )
     } else {
         // If the path is not relative, just use original
-        PathBuf::from(debuglink_path)
+        debuglink_path.into()
     }
 }
 
@@ -658,10 +659,10 @@ fn verify_build_ids<'a>(
 }
 
 fn find_debug_path_in_object<'a>(
-    obj: &'a object::File<'a>,
+    obj: &object::File<'a>,
     main_path: &Path,
     symbol: &str,
-) -> Result<PathBuf, ResolveSymbolError> {
+) -> Result<Cow<'a, Path>, ResolveSymbolError> {
     match obj.gnu_debuglink() {
         Ok(Some((filename, _))) => Ok(construct_debuglink_path(filename, main_path)),
         Ok(None) => Err(ResolveSymbolError::Unknown(symbol.to_string())),
@@ -685,7 +686,7 @@ fn resolve_symbol(path: &Path, symbol: &str) -> Result<u64, ResolveSymbolError> 
         // Only search in the debug object if the symbol was not found in the main object
         let debug_path = find_debug_path_in_object(&obj, path, symbol)?;
         let debug_data = MMap::map_copy_read_only(&debug_path)
-            .map_err(|e| ResolveSymbolError::DebuglinkAccessError(debug_path, e))?;
+            .map_err(|e| ResolveSymbolError::DebuglinkAccessError(debug_path.into_owned(), e))?;
         let debug_obj = object::read::File::parse(debug_data.as_ref())?;
 
         verify_build_ids(&obj, &debug_obj, symbol)?;
@@ -894,9 +895,13 @@ mod tests {
         let main_obj = object::File::parse(&*align_bytes).expect("got main obj");
 
         let main_path = Path::new("/path/to/main");
-        let result = find_debug_path_in_object(&main_obj, main_path, "symbol");
 
-        assert_eq!(result.unwrap(), Path::new("/path/to/main.debug"));
+        assert_matches!(
+            find_debug_path_in_object(&main_obj, main_path, "symbol"),
+            Ok(path) => {
+                assert_eq!(&*path, "/path/to/main.debug", "path: {}", path.display());
+            }
+        );
     }
 
     #[test]
@@ -910,7 +915,10 @@ mod tests {
         let align_bytes = aligned_slice(&mut debug_bytes);
         let debug_obj = object::File::parse(&*align_bytes).expect("got debug obj");
 
-        verify_build_ids(&main_obj, &debug_obj, "symbol_name").unwrap();
+        assert_matches!(
+            verify_build_ids(&main_obj, &debug_obj, "symbol_name"),
+            Ok(())
+        );
     }
 
     #[test]
@@ -1032,7 +1040,9 @@ mod tests {
 
         assert_matches!(
             proc_map_libs.find_library_path_by_name(Path::new("libcrypto.so.3.0.9")),
-            Ok(Some(path)) if path == Path::new("/usr/lib64/libcrypto.so.3.0.9")
+            Ok(Some(path)) => {
+                assert_eq!(path, "/usr/lib64/libcrypto.so.3.0.9", "path: {}", path.display());
+            }
         );
     }
 
@@ -1047,7 +1057,9 @@ mod tests {
 
         assert_matches!(
             proc_map_libs.find_library_path_by_name(Path::new("libcrypto")),
-            Ok(Some(path)) if path == Path::new("/usr/lib64/libcrypto.so.3.0.9")
+            Ok(Some(path)) => {
+                assert_eq!(path, "/usr/lib64/libcrypto.so.3.0.9", "path: {}", path.display());
+            }
         );
     }
 
@@ -1066,7 +1078,9 @@ mod tests {
 
         assert_matches!(
             proc_map_libs.find_library_path_by_name(Path::new("ld-linux-x86-64.so.2")),
-            Ok(Some(path)) if path == Path::new("/usr/lib64/ld-linux-x86-64.so.2")
+            Ok(Some(path)) => {
+                assert_eq!(path, "/usr/lib64/ld-linux-x86-64.so.2", "path: {}", path.display());
+            }
         );
     }
 }
