@@ -215,49 +215,6 @@ where
         })
 }
 
-// Only run this test on linux with glibc because only in that configuration do we know that we'll
-// be dynamically linked to libc and can exercise resolving the path to libc via the current
-// process's memory map.
-#[test]
-#[cfg_attr(
-    any(miri, not(all(target_os = "linux", target_env = "gnu"))),
-    ignore = "requires glibc, doesn't work in miri"
-)]
-fn test_resolve_attach_path() {
-    // Look up the current process's pid.
-    let pid = std::process::id();
-    let proc_map = ProcMap::new(pid).unwrap();
-
-    // Now let's resolve the path to libc. It should exist in the current process's memory map and
-    // then in the ld.so.cache.
-    let libc_path = resolve_attach_path("libc".as_ref(), Some(&proc_map)).unwrap_or_else(|err| {
-        match err.source() {
-            Some(source) => panic!("{err}: {source}"),
-            None => panic!("{err}"),
-        }
-    });
-
-    // Make sure we got a path that contains libc.
-    assert_matches::assert_matches!(
-        libc_path.to_str(),
-        Some(libc_path) if libc_path.contains("libc"),
-        "libc_path: {}", libc_path.display()
-    );
-
-    // If we pass an absolute path that doesn't match anything in /proc/<pid>/maps, we should fall
-    // back to the provided path instead of erroring out. Using a synthetic absolute path keeps the
-    // test hermetic.
-    let synthetic_absolute = Path::new("/tmp/.aya-test-resolve-attach-absolute");
-    let absolute_path =
-        resolve_attach_path(synthetic_absolute, Some(&proc_map)).unwrap_or_else(|err| {
-            match err.source() {
-                Some(source) => panic!("{err}: {source}"),
-                None => panic!("{err}"),
-            }
-        });
-    assert_eq!(absolute_path, synthetic_absolute);
-}
-
 define_link_wrapper!(
     UProbeLink,
     UProbeLinkId,
@@ -769,6 +726,43 @@ mod tests {
     use object::{Architecture, BinaryFormat, Endianness, write::SectionKind};
 
     use super::*;
+
+    // Only run this test on with libc dynamically linked so that it can
+    // exercise resolving the path to libc via the current process's memory map.
+    #[test]
+    #[cfg_attr(
+        any(miri, not(target_os = "linux"), target_feature = "crt-static"),
+        ignore = "requires dynamic linkage of libc"
+    )]
+    fn test_resolve_attach_path() {
+        // Look up the current process's pid.
+        let pid = std::process::id();
+        let proc_map = ProcMap::new(pid).expect("failed to get proc map");
+
+        // Now let's resolve the path to libc. It should exist in the current process's memory map and
+        // then in the ld.so.cache.
+        assert_matches!(
+            resolve_attach_path("libc".as_ref(), Some(&proc_map)),
+            Ok(path) => {
+                // Make sure we got a path that contains libc.
+                assert_matches!(
+                    path.to_str(),
+                    Some(path) if path.contains("libc"), "path: {}", path.display()
+                );
+            }
+        );
+
+        // If we pass an absolute path that doesn't match anything in /proc/<pid>/maps, we should fall
+        // back to the provided path instead of erroring out. Using a synthetic absolute path keeps the
+        // test hermetic.
+        let synthetic_absolute = Path::new("/tmp/.aya-test-resolve-attach-absolute");
+        assert_matches!(
+            resolve_attach_path(synthetic_absolute, Some(&proc_map)),
+            Ok(path) => {
+                assert_eq!(path, synthetic_absolute, "path: {}", path.display());
+            }
+        );
+    }
 
     #[test]
     fn test_relative_path_with_parent() {
