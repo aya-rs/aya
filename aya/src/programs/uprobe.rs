@@ -6,7 +6,10 @@ use std::{
     fs,
     io::{self, BufRead as _, Cursor, Read as _},
     mem,
-    os::{fd::AsFd as _, unix::ffi::OsStrExt as _},
+    os::{
+        fd::AsFd as _,
+        unix::ffi::{OsStrExt as _, OsStringExt as _},
+    },
     path::{Path, PathBuf},
     sync::LazyLock,
 };
@@ -294,10 +297,10 @@ pub enum ProcMapError {
     ReadFile(#[from] io::Error),
 
     /// Error parsing a line of /proc/pid/maps.
-    #[error("could not parse {:?}", OsStr::from_bytes(line))]
+    #[error("could not parse {}", line.display())]
     ParseLine {
         /// The line that could not be parsed.
-        line: Vec<u8>,
+        line: OsString,
     },
 }
 
@@ -327,7 +330,7 @@ impl<'a> ProcMapEntry<'a> {
         use std::os::unix::ffi::OsStrExt as _;
 
         let err = || ProcMapError::ParseLine {
-            line: line.to_vec(),
+            line: OsString::from_vec(line.to_vec()),
         };
 
         let mut parts = line
