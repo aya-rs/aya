@@ -374,7 +374,7 @@ impl<'a> ProcMapEntry<'a> {
         };
 
         let mut parts = line
-            .split(|b| b.is_ascii_whitespace())
+            .splitn(6, |b| b.is_ascii_whitespace())
             .filter(|part| !part.is_empty());
 
         let mut next = || parts.next().ok_or_else(err);
@@ -419,7 +419,7 @@ impl<'a> ProcMapEntry<'a> {
 
         let path = parts
             .next()
-            .and_then(|path| match path {
+            .and_then(|path| match path.trim_ascii() {
                 [b'[', .., b']'] => None,
                 path => {
                     let path = Path::new(OsStr::from_bytes(path));
@@ -1021,6 +1021,38 @@ mod tests {
         assert_matches!(
             ProcMapEntry::parse(b"7f1bca5f9000-7f1bca601000	rw-p	00000000	00:00	0	deadbeef"),
             Err(ProcMapError::ParseLine { line: _ })
+        );
+    }
+
+    #[test]
+    fn test_parse_proc_map_anon_region_with_spaces() {
+        assert_matches!(
+            ProcMapEntry::parse(b"7302f31000-73031e0000 ---p 00000000 00:00 0                              [anon:cfi shadow]"),
+            Ok(ProcMapEntry {
+                address: 0x7302f31000,
+                address_end: 0x73031e0000,
+                perms,
+                offset: 0,
+                dev,
+                inode: 0,
+                path: None,
+            }) if perms == "---p" && dev == "00:00"
+        );
+    }
+
+    #[test]
+    fn test_parse_proc_map_without_path() {
+        assert_matches!(
+            ProcMapEntry::parse(b"7382f80000-7382f81000 ---p 00000000 00:00 0 "),
+            Ok(ProcMapEntry {
+                address: 0x7382f80000,
+                address_end: 0x7382f81000,
+                perms,
+                offset: 0,
+                dev,
+                inode: 0,
+                path: None,
+            }) if perms == "---p" && dev == "00:00"
         );
     }
 
