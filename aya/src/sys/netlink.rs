@@ -547,7 +547,7 @@ impl NetlinkMessage {
 }
 
 const fn align_to(v: usize, align: usize) -> usize {
-    (v + (align - 1)) & !(align - 1)
+    v.next_multiple_of(align)
 }
 
 fn htons(u: u16) -> u16 {

@@ -876,7 +876,7 @@ mod tests {
 
         let ptr = vec.as_ptr() as usize;
 
-        let aligned_ptr = (ptr + alignment - 1) & !(alignment - 1);
+        let aligned_ptr = ptr.next_multiple_of(alignment);
 
         let offset = aligned_ptr - ptr;
 
