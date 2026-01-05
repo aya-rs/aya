@@ -154,8 +154,6 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker --features llvm-21
-
       - uses: taiki-e/install-action@cargo-hack
 
       - name: Build & test for all BPF architectures
@@ -329,6 +327,7 @@ jobs:
               ;;
             macOS)
               target=${arch}-apple-darwin
+              # TODO: how can this work with artifact dependencies?
               echo "LLVM_LINK_FEATURE=llvm-link-static" >> $GITHUB_ENV
               ;;
             *)
@@ -339,17 +338,6 @@ jobs:
           curl -sfSL https://ci-artifacts.rust-lang.org/rustc-builds/$rustc_sha/rust-dev-nightly-${target}.tar.xz | \
             tar -xJ --strip-components 2 -C /tmp/rustc-llvm
           echo /tmp/rustc-llvm/bin >> $GITHUB_PATH
-
-      # NB: rustc doesn't ship libLLVM.so on macOS, so disable proxying (default feature). We also
-      # --force so that bpf-linker gets always relinked against the latest LLVM downloaded above.
-      #
-      # Add the downloaded LLVM to PATH for this build step.
-      #
-      # Do this on all system (not just macOS) to avoid relying on rustc-provided libLLVM.so.
-      - run: |
-          cargo install \
-            --git https://github.com/aya-rs/bpf-linker.git bpf-linker \
-            --no-default-features --features "llvm-21,${LLVM_LINK_FEATURE}" --force
 
       - uses: actions/cache@v5
         with:

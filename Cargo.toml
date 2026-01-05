@@ -69,6 +69,7 @@ assert_matches = { version = "1.5.0", default-features = false }
 base64 = { version = "0.22.1", default-features = false }
 bindgen = { version = "0.72", default-features = false }
 bitflags = { version = "2.2.1", default-features = false }
+bpf-linker = { version = "0.9.10" }
 bytes = { version = "1", default-features = false }
 cargo_metadata = { version = "0.23.0", default-features = false }
 clap = { version = "4", default-features = false }
@@ -108,7 +109,6 @@ testing_logger = { version = "0.1.1", default-features = false }
 thiserror = { version = "2.0.3", default-features = false }
 tokio = { version = "1.24.0", default-features = false }
 walkdir = { version = "2", default-features = false }
-which = { version = "8.0.0", default-features = false }
 xdpilone = { version = "1.0.5", default-features = false }
 xz2 = { version = "0.1.7", default-features = false }
 
@@ -161,3 +161,6 @@ unused_lifetimes = "warn"
 unused_macro_rules = "warn"
 #unused_qualifications = "warn" # https://github.com/rust-lang/rust/commit/9ccc7b7 added size_of to the prelude, but we need to continue to qualify it so that we build on older compilers.
 #unused_results = "warn"
+
+[patch.crates-io]
+bpf-linker = { git = "https://github.com/aya-rs/bpf-linker.git" }
