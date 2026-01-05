@@ -217,7 +217,6 @@ pub struct Function {
 /// - `action`
 /// - `sk_reuseport/migrate`, `sk_reuseport`
 /// - `syscall`
-/// - `struct_ops+`
 /// - `fmod_ret+`, `fmod_ret.s+`
 /// - `iter+`, `iter.s+`
 #[derive(Debug, Clone)]
@@ -274,6 +273,9 @@ pub enum ProgramSection {
     },
     CgroupDevice,
     Iter {
+        sleepable: bool,
+    },
+    StructOps {
         sleepable: bool,
     },
 }
@@ -429,6 +431,8 @@ impl FromStr for ProgramSection {
             "sk_lookup" => Self::SkLookup,
             "iter" => Self::Iter { sleepable: false },
             "iter.s" => Self::Iter { sleepable: true },
+            "struct_ops" => Self::StructOps { sleepable: false },
+            "struct_ops.s" => Self::StructOps { sleepable: true },
             _ => {
                 return Err(ParseError::InvalidProgramSection {
                     section: section.to_owned(),
@@ -2630,6 +2634,52 @@ mod tests {
                     attach_type: CgroupSockoptAttachType::Get,
                     ..
                 },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_struct_ops() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                "struct_ops/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::StructOps { sleepable: false },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_struct_ops_sleepable() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                "struct_ops.s/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::StructOps { sleepable: true },
                 ..
             })
         );
