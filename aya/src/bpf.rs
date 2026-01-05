@@ -26,7 +26,7 @@ use crate::{
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe,
         LircMode2, Lsm, LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError,
         RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter,
-        TracePoint, UProbe, Xdp,
+        StructOps, TracePoint, UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -458,7 +458,8 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::Lsm { sleepable: _ }
                                 | ProgramSection::LsmCgroup
                                 | ProgramSection::BtfTracePoint
-                                | ProgramSection::Iter { sleepable: _ } => {
+                                | ProgramSection::Iter { sleepable: _ }
+                                | ProgramSection::StructOps { sleepable: _ } => {
                                     return Err(EbpfError::BtfError(err));
                                 }
                                 ProgramSection::KRetProbe
@@ -749,6 +750,14 @@ impl<'a> EbpfLoader<'a> {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
                             Program::Iter(Iter { data })
+                        }
+                        ProgramSection::StructOps { sleepable } => {
+                            let mut data =
+                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
+                            if *sleepable {
+                                data.flags = BPF_F_SLEEPABLE;
+                            }
+                            Program::StructOps(StructOps { data })
                         }
                     }
                 };
