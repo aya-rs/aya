@@ -1026,8 +1026,26 @@ impl_from_pin!(
     SockOps,
     CgroupDevice,
     Iter,
-    StructOps,
 );
+
+// StructOps needs special handling for from_pin since it has member_name field
+impl StructOps {
+    /// Creates a program from a pinned entry on a bpffs.
+    ///
+    /// Existing links will not be populated. To work with existing links you should use [`crate::programs::links::PinnedLink`].
+    ///
+    /// On drop, any managed links are detached and the program is unloaded. This will not result in
+    /// the program being unloaded from the kernel if it is still pinned.
+    ///
+    /// Note: The member name cannot be determined from a pinned program.
+    pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
+        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+        Ok(Self {
+            data,
+            member_name: String::new(),
+        })
+    }
+}
 
 macro_rules! impl_from_prog_info {
     (

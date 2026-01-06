@@ -607,6 +607,37 @@ impl MapData {
         })
     }
 
+    /// Creates a struct_ops map with the btf_vmlinux_value_type_id.
+    ///
+    /// This is used for BPF_MAP_TYPE_STRUCT_OPS maps which require the kernel BTF
+    /// type ID for the struct_ops type.
+    pub(crate) fn create_struct_ops(
+        mut obj: aya_obj::Map,
+        name: &str,
+        btf_fd: Option<BorrowedFd<'_>>,
+        btf_vmlinux_value_type_id: u32,
+        kernel_value_size: u32,
+    ) -> Result<Self, MapError> {
+        let c_name = CString::new(name)
+            .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
+
+        // For struct_ops maps, use the kernel's struct size as value_size.
+        // The kernel rejects maps where value_size doesn't match its struct size.
+        if let aya_obj::Map::StructOps(ref mut m) = obj {
+            m.data.resize(kernel_value_size as usize, 0);
+        }
+
+        let fd = bpf_create_map_with_vmlinux_btf(&c_name, &obj, btf_fd, Some(btf_vmlinux_value_type_id))
+            .map_err(|io_error| MapError::CreateError {
+                name: name.into(),
+                io_error,
+            })?;
+        Ok(Self {
+            obj,
+            fd: MapFd::from_fd(fd),
+        })
+    }
+
     pub(crate) fn create_pinned_by_name<P: AsRef<Path>>(
         path: P,
         obj: aya_obj::Map,
