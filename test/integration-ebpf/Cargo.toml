@@ -115,3 +115,7 @@ path = "src/printk_test.rs"
 [[bin]]
 name = "struct_ops_test"
 path = "src/struct_ops_test.rs"
+
+[[bin]]
+name = "hid_bpf_test"
+path = "src/hid_bpf_test.rs"
