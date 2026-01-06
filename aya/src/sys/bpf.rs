@@ -27,7 +27,7 @@ use libc::{
     EBADF, ENOENT, ENOSPC, EPERM, RLIM_INFINITY, RLIMIT_MEMLOCK, getrlimit, rlim_t, rlimit,
     setrlimit,
 };
-use log::warn;
+use log::{debug, warn};
 
 use crate::{
     Btf, Pod, VerifierLogLevel,
@@ -52,6 +52,15 @@ pub(crate) fn bpf_create_map(
     def: &aya_obj::Map,
     btf_fd: Option<BorrowedFd<'_>>,
 ) -> io::Result<crate::MockableFd> {
+    bpf_create_map_with_vmlinux_btf(name, def, btf_fd, None)
+}
+
+pub(crate) fn bpf_create_map_with_vmlinux_btf(
+    name: &CStr,
+    def: &aya_obj::Map,
+    btf_fd: Option<BorrowedFd<'_>>,
+    btf_vmlinux_value_type_id: Option<u32>,
+) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_1 };
@@ -61,7 +70,12 @@ pub(crate) fn bpf_create_map(
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
 
-    if let aya_obj::Map::Btf(m) = def {
+    // Handle struct_ops maps specially - they need btf_vmlinux_value_type_id
+    if let aya_obj::Map::StructOps(_) = def {
+        if let Some(vmlinux_type_id) = btf_vmlinux_value_type_id {
+            u.btf_vmlinux_value_type_id = vmlinux_type_id;
+        }
+    } else if let aya_obj::Map::Btf(m) = def {
         use bpf_map_type::*;
 
         // Mimic https://github.com/libbpf/libbpf/issues/355
@@ -165,6 +179,10 @@ pub(crate) fn bpf_load_program(
     }
     u.insns = aya_attr.insns.as_ptr() as u64;
     u.insn_cnt = aya_attr.insns.len() as u32;
+    debug!(
+        "bpf_load_program: prog_type={} insn_cnt={} expected_attach_type={:?} attach_btf_id={:?}",
+        u.prog_type, aya_attr.insns.len(), aya_attr.expected_attach_type, aya_attr.attach_btf_id
+    );
     u.license = aya_attr.license.as_ptr() as u64;
     u.kern_version = aya_attr.kernel_version;
 

@@ -448,7 +448,51 @@ impl Btf {
         })
     }
 
-    pub(crate) fn type_size(&self, root_type_id: u32) -> Result<usize, BtfError> {
+    /// Returns the index of a struct member by name.
+    ///
+    /// This is useful for struct_ops programs where `expected_attach_type` needs
+    /// to be set to the member index in the kernel struct.
+    pub fn struct_member_index(&self, struct_type_id: u32, member_name: &str) -> Result<u32, BtfError> {
+        let ty = self.types.type_by_id(struct_type_id)?;
+        let members = match ty {
+            BtfType::Struct(s) => &s.members,
+            _ => return Err(BtfError::UnexpectedBtfType { type_id: struct_type_id }),
+        };
+        for (index, member) in members.iter().enumerate() {
+            let name = self.string_at(member.name_offset)?;
+            if name == member_name {
+                return Ok(index as u32);
+            }
+        }
+        Err(BtfError::UnknownBtfTypeName {
+            type_name: member_name.to_owned(),
+        })
+    }
+
+    /// Returns the byte offset of a struct member by name.
+    ///
+    /// This is useful for struct_ops where we need to find the offset of the
+    /// `data` field within the kernel wrapper struct (e.g., `bpf_struct_ops_hid_bpf_ops`).
+    pub fn struct_member_byte_offset(&self, struct_type_id: u32, member_name: &str) -> Result<u32, BtfError> {
+        let ty = self.types.type_by_id(struct_type_id)?;
+        let members = match ty {
+            BtfType::Struct(s) => &s.members,
+            _ => return Err(BtfError::UnexpectedBtfType { type_id: struct_type_id }),
+        };
+        for member in members.iter() {
+            let name = self.string_at(member.name_offset)?;
+            if name == member_name {
+                // offset is in bits, convert to bytes
+                return Ok(member.offset / 8);
+            }
+        }
+        Err(BtfError::UnknownBtfTypeName {
+            type_name: member_name.to_owned(),
+        })
+    }
+
+    /// Returns the size of a BTF type in bytes.
+    pub fn type_size(&self, root_type_id: u32) -> Result<usize, BtfError> {
         let mut type_id = root_type_id;
         let mut n_elems = 1;
         for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {

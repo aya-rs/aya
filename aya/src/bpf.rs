@@ -459,7 +459,7 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::LsmCgroup
                                 | ProgramSection::BtfTracePoint
                                 | ProgramSection::Iter { sleepable: _ }
-                                | ProgramSection::StructOps { sleepable: _ } => {
+                                | ProgramSection::StructOps { sleepable: _, member_name: _ } => {
                                     return Err(EbpfError::BtfError(err));
                                 }
                                 ProgramSection::KRetProbe
@@ -545,7 +545,37 @@ impl<'a> EbpfLoader<'a> {
                 _ => (),
             }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
-            let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
+
+            // Handle struct_ops maps specially - they need btf_vmlinux_value_type_id
+            let mut map = if let aya_obj::Map::StructOps(ref struct_ops_map) = obj {
+                // Look up the kernel BTF type for bpf_struct_ops_<type_name>
+                let vmlinux_btf = btf.as_deref().ok_or_else(|| {
+                    EbpfError::BtfError(aya_obj::btf::BtfError::UnknownBtfTypeName {
+                        type_name: format!(
+                            "bpf_struct_ops_{} (kernel BTF not available)",
+                            struct_ops_map.type_name
+                        ),
+                    })
+                })?;
+                let kernel_type_name = format!("bpf_struct_ops_{}", struct_ops_map.type_name);
+                let vmlinux_type_id = vmlinux_btf
+                    .id_by_type_name_kind(&kernel_type_name, aya_obj::btf::BtfKind::Struct)?;
+
+                // Get the kernel struct size - the kernel rejects maps with wrong value_size
+                let kernel_value_size = vmlinux_btf.type_size(vmlinux_type_id)? as u32;
+
+                // Get the offset of the 'data' field within the wrapper struct
+                // The actual struct_ops data is stored at this offset
+                let data_offset = vmlinux_btf.struct_member_byte_offset(vmlinux_type_id, "data")?;
+
+                let mut map_data = MapData::create_struct_ops(obj, &name, btf_fd, vmlinux_type_id, kernel_value_size)?;
+
+                // Store the data offset in the struct_ops map
+                if let aya_obj::Map::StructOps(m) = map_data.obj_mut() {
+                    m.data_offset = data_offset;
+                }
+                map_data
+            } else if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
                 MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd)?
             } else {
                 match obj.pinning() {
@@ -757,13 +787,13 @@ impl<'a> EbpfLoader<'a> {
                             }
                             Program::Iter(Iter { data })
                         }
-                        ProgramSection::StructOps { sleepable } => {
+                        ProgramSection::StructOps { sleepable, member_name } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
-                            Program::StructOps(StructOps { data })
+                            Program::StructOps(StructOps { data, member_name: member_name.clone() })
                         }
                     }
                 };
@@ -1172,6 +1202,102 @@ impl Ebpf {
     /// ```
     pub fn programs_mut(&mut self) -> impl Iterator<Item = (&str, &mut Program)> {
         self.programs.iter_mut().map(|(s, p)| (s.as_str(), p))
+    }
+
+    /// Loads struct_ops programs and fills their file descriptors into the corresponding maps.
+    ///
+    /// This method must be called before registering struct_ops maps. It:
+    /// 1. Loads all struct_ops programs
+    /// 2. Gets their file descriptors
+    /// 3. Writes the FDs to the correct offsets in the struct_ops map data
+    ///
+    /// After calling this method, you can register the struct_ops map using
+    /// [`StructOpsMap::register`](crate::maps::StructOpsMap::register).
+    ///
+    /// # Arguments
+    ///
+    /// * `btf` - The kernel BTF information, typically from `Btf::from_sys_fs()`
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::{Ebpf, Btf, maps::StructOpsMap};
+    ///
+    /// let mut bpf = Ebpf::load_file("my_struct_ops.o")?;
+    /// let btf = Btf::from_sys_fs()?;
+    /// bpf.load_struct_ops(&btf)?;
+    ///
+    /// let mut struct_ops: StructOpsMap<_> = bpf.take_map("my_ops").unwrap().try_into()?;
+    /// struct_ops.register()?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn load_struct_ops(&mut self, btf: &Btf) -> Result<(), EbpfError> {
+        use std::os::fd::{AsFd, AsRawFd};
+
+        // Collect (struct_name, program_names) for each struct_ops map
+        let mut struct_ops_info: Vec<(String, Vec<String>)> = Vec::new();
+        for (map_name, map) in self.maps.iter() {
+            if let Map::StructOps(map_data) = map {
+                if let aya_obj::Map::StructOps(m) = map_data.obj() {
+                    let prog_names: Vec<String> = m.func_info.iter().map(|i| i.prog_name.clone()).collect();
+                    debug!("struct_ops map '{}' type='{}' prog_names={:?}", map_name, m.type_name, prog_names);
+                    struct_ops_info.push((m.type_name.clone(), prog_names));
+                }
+            }
+        }
+
+        // Load all struct_ops programs
+        for (struct_name, prog_names) in &struct_ops_info {
+            for prog_name in prog_names {
+                debug!("looking for struct_ops program '{}'", prog_name);
+                if let Some(Program::StructOps(struct_ops)) = self.programs.get_mut(prog_name) {
+                    debug!("loading struct_ops program '{}' for struct '{}'", prog_name, struct_name);
+                    struct_ops.load(struct_name, btf)?;
+                } else {
+                    warn!("struct_ops program '{}' not found or not StructOps type", prog_name);
+                }
+            }
+        }
+
+        // Fill program FDs into struct_ops maps
+        for (map_name, map) in self.maps.iter_mut() {
+            if let Map::StructOps(map_data) = map {
+                // Get the func_info and data_offset from the map's object
+                let (func_info, data_offset): (Vec<_>, u32) = {
+                    if let aya_obj::Map::StructOps(m) = map_data.obj() {
+                        (m.func_info.clone(), m.data_offset)
+                    } else {
+                        continue;
+                    }
+                };
+
+                debug!("struct_ops map '{}' data_offset={}", map_name, data_offset);
+                for info in func_info {
+                    // Add data_offset to the member offset since the ops struct is nested
+                    // inside the kernel wrapper struct (e.g., bpf_struct_ops_hid_bpf_ops.data)
+                    let actual_offset = (data_offset + info.member_offset) as usize;
+                    // Find the program by name
+                    if let Some(Program::StructOps(prog)) = self.programs.get(&info.prog_name) {
+                        // Get the program's FD
+                        let fd = prog.fd()?;
+                        let raw_fd = fd.as_fd().as_raw_fd();
+                        debug!(
+                            "filling FD {} for program '{}' at offset {} (data_offset {} + member_offset {})",
+                            raw_fd, info.prog_name, actual_offset, data_offset, info.member_offset
+                        );
+                        // Write the FD to the struct data at the specified offset
+                        let data = map_data.obj_mut().data_mut();
+                        if actual_offset + 4 <= data.len() {
+                            data[actual_offset..actual_offset + 4].copy_from_slice(&raw_fd.to_ne_bytes());
+                        }
+                    } else {
+                        warn!("struct_ops program '{}' not found", info.prog_name);
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 

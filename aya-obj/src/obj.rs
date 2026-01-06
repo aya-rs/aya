@@ -277,6 +277,8 @@ pub enum ProgramSection {
     },
     StructOps {
         sleepable: bool,
+        /// The struct member name this program implements (from section name)
+        member_name: String,
     },
 }
 
@@ -431,8 +433,15 @@ impl FromStr for ProgramSection {
             "sk_lookup" => Self::SkLookup,
             "iter" => Self::Iter { sleepable: false },
             "iter.s" => Self::Iter { sleepable: true },
-            "struct_ops" => Self::StructOps { sleepable: false },
-            "struct_ops.s" => Self::StructOps { sleepable: true },
+            "struct_ops" => Self::StructOps {
+                sleepable: false,
+                member_name: next()?.to_string(),
+            },
+            "struct_ops.s" => Self::StructOps {
+                sleepable: true,
+                member_name: next()?.to_string(),
+            },
+            "syscall" => Self::Syscall,
             _ => {
                 return Err(ParseError::InvalidProgramSection {
                     section: section.to_owned(),
@@ -835,6 +844,120 @@ impl Object {
         Ok(())
     }
 
+    fn parse_struct_ops_section(&mut self, section: &Section<'_>) -> Result<(), ParseError> {
+        let btf = self.btf.as_ref().ok_or(ParseError::NoBTF)?;
+        let is_link = section.kind == EbpfSectionKind::StructOpsLink;
+
+        // Get symbols for this section to find the variable names
+        let symbols = self
+            .symbols_by_section
+            .get(&section.index)
+            .ok_or(ParseError::NoSymbolsForSection {
+                section_name: section.name.to_owned(),
+            })?;
+
+        // Look for the DATASEC type for this section in BTF
+        let sec_name = section.name;
+        let datasec = btf.types().enumerate().find_map(|(i, t)| {
+            if let crate::btf::BtfType::DataSec(ds) = t {
+                let name = btf.string_at(ds.name_offset).ok()?;
+                if name == sec_name {
+                    return Some((i as u32, ds));
+                }
+            }
+            None
+        });
+
+        // If no DATASEC found in BTF, we can still create maps from symbols
+        // but won't have BTF type information
+        if let Some((_sec_type_id, datasec)) = datasec {
+            // Parse variables from BTF DATASEC
+            for var_sec_info in datasec.entries.iter() {
+                let var_type = btf.type_by_id(var_sec_info.btf_type)?;
+
+                let var = match var_type {
+                    crate::btf::BtfType::Var(v) => v,
+                    _ => continue, // Skip non-VAR types
+                };
+
+                let var_name = btf.string_at(var.name_offset)?.to_string();
+
+                // Get the actual struct type that the VAR points to
+                let struct_type_id = var.btf_type;
+                let struct_type = btf.type_by_id(struct_type_id)?;
+
+                let type_name = match struct_type {
+                    crate::btf::BtfType::Struct(s) => btf.string_at(s.name_offset)?.to_string(),
+                    _ => continue, // Skip if not a struct type
+                };
+
+                // Find the symbol index for this variable
+                let symbol_index = symbols
+                    .iter()
+                    .find(|&&sym_idx| {
+                        if let Some(sym) = self.symbol_table.get(&sym_idx) {
+                            if let Some(name) = sym.name.as_ref() {
+                                return name == &var_name;
+                            }
+                        }
+                        false
+                    })
+                    .copied()
+                    .unwrap_or(0);
+
+                // Extract the data for this variable from the section
+                let offset = var_sec_info.offset as usize;
+                let size = var_sec_info.size as usize;
+                let data = if offset + size <= section.data.len() {
+                    section.data[offset..offset + size].to_vec()
+                } else {
+                    alloc::vec![0u8; size]
+                };
+
+                // Process relocations to find function pointer fields
+                // Relocations point to program symbols at specific offsets in the struct
+                let mut func_info = alloc::vec::Vec::new();
+                for rel in section.relocations.iter() {
+                    // Check if this relocation is within this variable's data
+                    let rel_offset = rel.offset as usize;
+                    if rel_offset >= offset && rel_offset < offset + size {
+                        // Get the symbol for this relocation
+                        if let Some(sym) = self.symbol_table.get(&rel.symbol_index) {
+                            // Check if this is a text symbol (program)
+                            if sym.kind == object::SymbolKind::Text {
+                                if let Some(name) = sym.name.as_ref() {
+                                    // The member_offset is relative to the start of this struct
+                                    let member_offset = (rel_offset - offset) as u32;
+                                    func_info.push(crate::maps::StructOpsFuncInfo {
+                                        member_name: alloc::string::String::new(), // Could look up from BTF
+                                        member_offset,
+                                        prog_name: name.clone(),
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Create the StructOpsMap entry
+                let map = crate::maps::StructOpsMap {
+                    type_name,
+                    btf_type_id: struct_type_id,
+                    section_index: section.index.0,
+                    symbol_index,
+                    data,
+                    is_link,
+                    func_info,
+                    data_offset: 0, // Will be set from kernel BTF during loading
+                };
+
+                self.maps.insert(var_name, crate::maps::Map::StructOps(map));
+            }
+        }
+
+        Ok(())
+    }
+
     fn parse_section(&mut self, section: Section<'_>) -> Result<(), ParseError> {
         self.section_infos
             .insert(section.name.to_owned(), (section.index, section.size));
@@ -883,6 +1006,21 @@ impl Object {
                 }
             }
             EbpfSectionKind::Undefined | EbpfSectionKind::License | EbpfSectionKind::Version => {}
+            EbpfSectionKind::StructOps | EbpfSectionKind::StructOpsLink => {
+                self.parse_struct_ops_section(&section)?;
+                // Store relocations for struct_ops sections - they'll be used to resolve
+                // function pointer fields to BPF programs
+                if !section.relocations.is_empty() {
+                    self.relocations.insert(
+                        section.index,
+                        section
+                            .relocations
+                            .into_iter()
+                            .map(|rel| (rel.offset, rel))
+                            .collect(),
+                    );
+                }
+            }
         }
 
         Ok(())
@@ -1037,6 +1175,10 @@ pub enum EbpfSectionKind {
     License,
     /// `version`
     Version,
+    /// `.struct_ops`
+    StructOps,
+    /// `.struct_ops.link`
+    StructOpsLink,
 }
 
 impl EbpfSectionKind {
@@ -1049,6 +1191,10 @@ impl EbpfSectionKind {
             Self::Maps
         } else if name.starts_with(".maps") {
             Self::BtfMaps
+        } else if name.starts_with(".struct_ops.link") {
+            Self::StructOpsLink
+        } else if name.starts_with(".struct_ops") {
+            Self::StructOps
         } else if name.starts_with(".text") {
             Self::Text
         } else if name.starts_with(".bss") {
@@ -2656,9 +2802,9 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::StructOps { sleepable: false },
+                section: ProgramSection::StructOps { sleepable: false, member_name },
                 ..
-            })
+            }) if member_name == "foo"
         );
     }
 
@@ -2679,9 +2825,9 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::StructOps { sleepable: true },
+                section: ProgramSection::StructOps { sleepable: true, member_name },
                 ..
-            })
+            }) if member_name == "foo"
         );
     }
 
