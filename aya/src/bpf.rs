@@ -586,7 +586,11 @@ impl<'a> EbpfLoader<'a> {
                     }
                 }
             };
-            map.finalize()?;
+            // Don't finalize struct_ops maps - they need program FDs filled in first
+            // and will be registered later via StructOpsMap::register()
+            if !matches!(map.obj(), aya_obj::Map::StructOps(_)) {
+                map.finalize()?;
+            }
             maps.insert(name, map);
         }
 
@@ -831,6 +835,7 @@ fn parse_map(
         BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
         BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
         BPF_MAP_TYPE_SK_STORAGE => Map::SkStorage(map),
+        BPF_MAP_TYPE_STRUCT_OPS => Map::StructOps(map),
         m_type => {
             if allow_unsupported_maps {
                 Map::Unsupported(map)

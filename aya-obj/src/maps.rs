@@ -282,6 +282,17 @@ impl Map {
             Self::StructOps(m) => Some(m.symbol_index),
         }
     }
+
+    /// Returns the BTF value type ID for struct_ops maps.
+    ///
+    /// This is the type ID of the struct_ops type in the program's BTF.
+    pub fn btf_value_type_id(&self) -> Option<u32> {
+        match self {
+            Self::Legacy(_) => None,
+            Self::Btf(m) => Some(m.def.btf_value_type_id),
+            Self::StructOps(m) => Some(m.btf_type_id),
+        }
+    }
 }
 
 /// A map declared with legacy BPF map declaration style, most likely from a `maps` section.
