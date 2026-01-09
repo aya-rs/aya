@@ -2,8 +2,13 @@ pub mod aya_build
 pub enum aya_build::Toolchain<'a>
 pub aya_build::Toolchain::Custom(&'a str)
 pub aya_build::Toolchain::Nightly
+impl core::cmp::PartialEq<rustc_version::Channel> for aya_build::Toolchain<'_>
+pub fn aya_build::Toolchain<'_>::eq(&self, other: &rustc_version::Channel) -> bool
+impl<'a> core::cmp::PartialEq for aya_build::Toolchain<'a>
+pub fn aya_build::Toolchain<'a>::eq(&self, other: &aya_build::Toolchain<'a>) -> bool
 impl<'a> core::default::Default for aya_build::Toolchain<'a>
 pub fn aya_build::Toolchain<'a>::default() -> aya_build::Toolchain<'a>
+impl<'a> core::marker::StructuralPartialEq for aya_build::Toolchain<'a>
 impl<'a> core::marker::Freeze for aya_build::Toolchain<'a>
 impl<'a> core::marker::Send for aya_build::Toolchain<'a>
 impl<'a> core::marker::Sync for aya_build::Toolchain<'a>

@@ -10,6 +10,7 @@ use std::{
 
 use anyhow::{Context as _, Result, anyhow};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
+use which::which;
 
 #[derive(Default)]
 pub struct Package<'a> {
@@ -65,6 +66,8 @@ pub fn build_ebpf<'a>(
     let bpf_target_arch = target_arch_fixup(bpf_target_arch.into());
     let target = format!("{target}-unknown-none");
 
+    let has_rustup = which("rustup").is_ok();
+
     for Package {
         name,
         root_dir,
@@ -78,16 +81,40 @@ pub fn build_ebpf<'a>(
         // changes to the binaries too, which gets us the rest of the way.
         println!("cargo:rerun-if-changed={root_dir}");
 
-        let mut cmd = Command::new("rustup");
+        let mut cmd = if has_rustup {
+            let mut cmd = Command::new("rustup");
+            cmd.args([
+                "run",
+                toolchain.as_str(),
+                "cargo",
+                "build",
+                "--package",
+                name,
+                "-Z",
+                "build-std=core",
+            ]);
+
+            cmd
+        } else {
+            let channel = rustc_version::version_meta()?.channel;
+            if toolchain != channel {
+                println!(
+                    "cargo:warning=rustup was not found and the selected toolchain ({}) differs from the toolchain currently in use ({channel:?}), attempting to build anyways",
+                    toolchain.as_str()
+                );
+            }
+
+            let mut cmd = Command::new("cargo");
+            cmd.args(["build", "--package", name]);
+
+            if channel == rustc_version::Channel::Nightly {
+                cmd.args(["-Z", "build-std=core"]);
+            }
+
+            cmd
+        };
+
         cmd.args([
-            "run",
-            toolchain.as_str(),
-            "cargo",
-            "build",
-            "--package",
-            name,
-            "-Z",
-            "build-std=core",
             "--bins",
             "--message-format=json",
             "--release",
@@ -198,7 +225,7 @@ pub fn build_ebpf<'a>(
 }
 
 /// The toolchain to use for building eBPF programs.
-#[derive(Default)]
+#[derive(Default, PartialEq)]
 pub enum Toolchain<'a> {
     /// The latest nightly toolchain i.e. `nightly`.
     #[default]
@@ -215,6 +242,12 @@ impl<'a> Toolchain<'a> {
             Toolchain::Nightly => "nightly",
             Toolchain::Custom(toolchain) => toolchain,
         }
+    }
+}
+
+impl PartialEq<rustc_version::Channel> for Toolchain<'_> {
+    fn eq(&self, other: &rustc_version::Channel) -> bool {
+        self == &Self::Nightly && other == &rustc_version::Channel::Nightly
     }
 }
 
