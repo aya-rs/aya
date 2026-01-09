@@ -10,6 +10,8 @@ use std::{
 
 use anyhow::{Context as _, Result, anyhow};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
+use rustc_version::Channel;
+use which::which;
 
 #[derive(Default)]
 pub struct Package<'a> {
@@ -65,6 +67,9 @@ pub fn build_ebpf<'a>(
     let bpf_target_arch = target_arch_fixup(bpf_target_arch.into());
     let target = format!("{target}-unknown-none");
 
+    let rustup_path = which("rustup");
+    let rustc_channel = rustc_version::version_meta()?.channel;
+
     for Package {
         name,
         root_dir,
@@ -78,25 +83,41 @@ pub fn build_ebpf<'a>(
         // changes to the binaries too, which gets us the rest of the way.
         println!("cargo:rerun-if-changed={root_dir}");
 
-        let mut cmd = Command::new("rustup");
+        let mut cmd = if let Ok(path) = &rustup_path {
+            let mut cmd = Command::new(path);
+            cmd.args(["run", toolchain.as_str(), "cargo"]);
+
+            cmd
+        } else {
+            if !(matches!(toolchain, Toolchain::Nightly) && rustc_channel == Channel::Nightly) {
+                println!(
+                    "cargo:warning=rustup was not found and the selected toolchain ({}) differs from the toolchain currently in use ({rustc_channel:?}), attempting to build anyway",
+                    toolchain.as_str()
+                );
+            }
+
+            Command::new("cargo")
+        };
+
         cmd.args([
-            "run",
-            toolchain.as_str(),
-            "cargo",
             "build",
             "--package",
             name,
-            "-Z",
-            "build-std=core",
             "--bins",
             "--message-format=json",
             "--release",
             "--target",
             &target,
         ]);
+
+        if rustup_path.is_ok() || rustc_channel == Channel::Nightly {
+            cmd.args(["-Z", "build-std=core"]);
+        }
+
         if no_default_features {
             cmd.arg("--no-default-features");
         }
+
         cmd.args(["--features", &features.join(",")]);
 
         {
