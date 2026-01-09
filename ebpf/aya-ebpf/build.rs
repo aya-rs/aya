@@ -7,8 +7,7 @@ fn main() {
 
 #[rustversion::nightly]
 fn check_rust_version() {
-    // TODO(https://github.com/rust-lang/rust/issues/141492): restore this.
-    // println!("cargo:rustc-cfg=generic_const_exprs");
+    println!("cargo:rustc-cfg=generic_const_exprs");
 }
 
 #[rustversion::not(nightly)]
