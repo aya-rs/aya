@@ -10940,7 +10940,7 @@ impl aya::Pod for i16
 impl aya::Pod for i32
 impl aya::Pod for i64
 impl aya::Pod for i8
-impl aya::Pod for libc::unix::linux_like::linux::nlattr
+impl aya::Pod for libc::new::linux_uapi::linux::netlink::nlattr
 impl aya::Pod for u128
 impl aya::Pod for u16
 impl aya::Pod for u32
