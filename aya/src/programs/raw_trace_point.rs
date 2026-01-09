@@ -51,7 +51,10 @@ impl RawTracePoint {
     ///
     /// The returned value can be used to detach, see [RawTracePoint::detach].
     pub fn attach(&mut self, tp_name: &str) -> Result<RawTracePointLinkId, ProgramError> {
-        let tp_name_c = CString::new(tp_name).unwrap();
+        let tp_name_c = CString::new(tp_name).map_err(|source| ProgramError::InvalidName {
+            name: tp_name.to_string(),
+            source,
+        })?;
         attach_raw_tracepoint(&mut self.data, Some(&tp_name_c))
     }
 }
