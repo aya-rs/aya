@@ -14,7 +14,7 @@ use aya::{
         loaded_links, loaded_programs,
         tc::TcAttachOptions,
         trace_point::{TracePointLink, TracePointLinkId},
-        uprobe::{UProbeLink, UProbeLinkId},
+        uprobe::{Single, UProbeLink, UProbeLinkId},
         xdp::{XdpLink, XdpLinkId},
     },
     util::KernelVersion,
@@ -58,6 +58,7 @@ fn multiple_btf_maps() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
+    let prog: &mut UProbe<Single> = prog.expect_single().unwrap();
     prog.attach("trigger_bpf_program", "/proc/self/exe", None)
         .unwrap();
 
@@ -108,6 +109,7 @@ fn pin_lifecycle_multiple_btf_maps() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
+    let prog: &mut UProbe<Single> = prog.expect_single().unwrap();
     prog.attach("trigger_bpf_program", "/proc/self/exe", None)
         .unwrap();
 
@@ -338,6 +340,7 @@ fn basic_uprobe() {
 
     let program_name = "test_uprobe";
     let attach = |prog: &mut P| {
+        let prog: &mut UProbe<Single> = prog.expect_single().unwrap();
         prog.attach("uprobe_function", "/proc/self/exe", None)
             .unwrap()
     };
@@ -636,6 +639,7 @@ fn pin_lifecycle_uprobe() {
 
     let program_name = "test_uprobe";
     let attach = |prog: &mut P| {
+        let prog: &mut UProbe<Single> = prog.expect_single().unwrap();
         prog.attach("uprobe_function", "/proc/self/exe", None)
             .unwrap()
     };

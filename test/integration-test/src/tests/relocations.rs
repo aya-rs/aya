@@ -1,6 +1,6 @@
 use aya::{
     Ebpf,
-    programs::{UProbe, Xdp},
+    programs::{UProbe, Xdp, uprobe::Single},
     util::KernelVersion,
 };
 
@@ -54,6 +54,7 @@ fn load_and_attach(name: &str, bytes: &[u8]) -> Ebpf {
 
     let prog: &mut UProbe = bpf.program_mut(name).unwrap().try_into().unwrap();
     prog.load().unwrap();
+    let prog: &mut UProbe<Single> = prog.expect_single().unwrap();
 
     prog.attach("trigger_relocations_program", "/proc/self/exe", None)
         .unwrap();

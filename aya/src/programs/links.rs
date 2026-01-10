@@ -473,7 +473,7 @@ macro_rules! id_as_key {
 pub(crate) use id_as_key;
 
 macro_rules! define_link_wrapper {
-    ($wrapper:ident, $wrapper_id:ident, $base:ident, $base_id:ident, $program:ident $(,)?) => {
+    ($wrapper:ident, $wrapper_id:ident, $base:ident, $base_id:ident, $program:ident $(<$gen:ident>)? $( where $($gen_bound:tt)+ )? $(,)?) => {
         /// The type returned by
         #[doc = concat!("[`", stringify!($program), "::attach`]")]
         /// . Can be passed to
@@ -541,7 +541,7 @@ macro_rules! define_link_wrapper {
             }
         }
 
-        impl $program {
+        impl$(<$gen>)? $program$(<$gen>)? $(where $($gen_bound)+)? {
             /// Detaches the program.
             ///
             /// See [`Self::attach`].
