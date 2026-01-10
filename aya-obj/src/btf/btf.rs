@@ -613,8 +613,21 @@ impl Btf {
                         d.name_offset = self.add_string(&fixed_name);
                     }
 
-                    // There are some cases when the compiler does indeed populate the size.
-                    if d.size > 0 {
+                    // .ksyms is a pseudo-section for extern kernel symbols.
+                    // It has no real ELF section and the kernel rejects DATASEC with
+                    // size=0 and non-empty entries. Replace with INT to remove it.
+                    if name == ".ksyms" {
+                        debug!("{kind} {name}: pseudo-section, replacing with INT");
+                        let old_size = d.type_info_size();
+                        let new_type = BtfType::Int(Int::new(d.name_offset, 0, IntEncoding::None, 0));
+                        let new_size = new_type.type_info_size();
+                        // Update header to reflect the size change
+                        self.header.type_len =
+                            self.header.type_len - old_size as u32 + new_size as u32;
+                        self.header.str_off = self.header.type_len;
+                        *t = new_type;
+                    } else if d.size > 0 {
+                        // There are some cases when the compiler does indeed populate the size.
                         debug!("{kind} {name}: size fixup not required");
                     } else {
                         // We need to get the size of the section from the ELF file.
@@ -743,6 +756,15 @@ impl Btf {
                     // Sanitize FUNC.
                     if !features.btf_func {
                         debug!("{kind}: not supported. replacing with TYPEDEF");
+                        *t = BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
+                    } else if ty.linkage() == FuncLinkage::Extern {
+                        // BTF_FUNC_EXTERN is used for kfuncs (kernel functions).
+                        // These are resolved from kernel BTF at load time, so we
+                        // should not include them in the program BTF. Replace with
+                        // TYPEDEF to preserve type info without the problematic linkage.
+                        debug!(
+                            "{kind} {name}: extern kfunc, replacing with TYPEDEF"
+                        );
                         *t = BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
                     } else if !features.btf_func_global
                         || name == "memset"

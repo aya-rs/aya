@@ -1005,7 +1005,10 @@ impl Object {
                     );
                 }
             }
-            EbpfSectionKind::Undefined | EbpfSectionKind::License | EbpfSectionKind::Version => {}
+            EbpfSectionKind::Undefined
+            | EbpfSectionKind::License
+            | EbpfSectionKind::Version
+            | EbpfSectionKind::Ksyms => {}
             EbpfSectionKind::StructOps | EbpfSectionKind::StructOpsLink => {
                 self.parse_struct_ops_section(&section)?;
                 // Store relocations for struct_ops sections - they'll be used to resolve
@@ -1179,6 +1182,8 @@ pub enum EbpfSectionKind {
     StructOps,
     /// `.struct_ops.link`
     StructOpsLink,
+    /// `.ksyms` - kernel symbol references resolved at load time
+    Ksyms,
 }
 
 impl EbpfSectionKind {
@@ -1207,6 +1212,8 @@ impl EbpfSectionKind {
             Self::Btf
         } else if name == ".BTF.ext" {
             Self::BtfExt
+        } else if name == ".ksyms" {
+            Self::Ksyms
         } else {
             Self::Undefined
         }
