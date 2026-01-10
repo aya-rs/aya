@@ -605,7 +605,7 @@ impl<'a> EbpfLoader<'a> {
                 .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
             &text_sections,
         )?;
-        obj.relocate_calls(&text_sections)?;
+        obj.relocate_calls(&text_sections, btf.as_deref())?;
         obj.sanitize_functions(&FEATURES);
 
         let programs = obj
