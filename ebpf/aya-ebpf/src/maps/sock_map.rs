@@ -72,7 +72,7 @@ impl SockMap {
     }
 
     pub fn redirect_sk_lookup(
-        &mut self,
+        &self,
         ctx: &SkLookupContext,
         index: u32,
         flags: u64,
