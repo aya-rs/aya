@@ -106,7 +106,7 @@ impl<K> SockHash<K> {
     }
 
     pub fn redirect_sk_lookup(
-        &mut self,
+        &self,
         ctx: impl Borrow<SkLookupContext>,
         key: impl Borrow<K>,
         flags: u64,
