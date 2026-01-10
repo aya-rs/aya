@@ -26,7 +26,7 @@ use crate::{
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe,
         LircMode2, Lsm, LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError,
         RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter,
-        StructOps, TracePoint, UProbe, Xdp,
+        StructOps, Syscall, TracePoint, UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -489,7 +489,8 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::SkLookup
                                 | ProgramSection::FlowDissector
                                 | ProgramSection::CgroupSock { attach_type: _ }
-                                | ProgramSection::CgroupDevice => {}
+                                | ProgramSection::CgroupDevice
+                                | ProgramSection::Syscall => {}
                             }
                         }
 
@@ -799,6 +800,9 @@ impl<'a> EbpfLoader<'a> {
                             }
                             Program::StructOps(StructOps { data, member_name: member_name.clone() })
                         }
+                        ProgramSection::Syscall => Program::Syscall(Syscall {
+                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
+                        }),
                     }
                 };
                 (name, program)
