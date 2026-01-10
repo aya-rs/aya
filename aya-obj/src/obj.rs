@@ -280,6 +280,8 @@ pub enum ProgramSection {
         /// The struct member name this program implements (from section name)
         member_name: String,
     },
+    /// BPF_PROG_TYPE_SYSCALL - invoked via bpf() syscall
+    Syscall,
 }
 
 impl FromStr for ProgramSection {
