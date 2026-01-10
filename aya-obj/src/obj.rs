@@ -615,69 +615,80 @@ impl Object {
 
     fn parse_programs(&mut self, section: &Section<'_>) -> Result<(), ParseError> {
         let program_section = ProgramSection::from_str(section.name)?;
-        let syms =
-            self.symbols_by_section
-                .get(&section.index)
-                .ok_or(ParseError::NoSymbolsForSection {
-                    section_name: section.name.to_string(),
-                })?;
-        for symbol_index in syms {
-            let symbol = self
-                .symbol_table
-                .get(symbol_index)
-                .expect("all symbols in symbols_by_section are also in symbol_table");
 
-            // Here we get both ::Label (LBB*) and ::Text symbols, and we only want the latter.
-            let name = match (symbol.name.as_ref(), symbol.kind) {
-                (Some(name), SymbolKind::Text) if !name.is_empty() => name,
-                _ => continue,
+        // Collect ALL text symbols by address - includes both program entry points and static helpers
+        let mut symbols_by_address = HashMap::new();
+        for sym in self.symbol_table.values() {
+            if sym.is_definition
+                && sym.kind == SymbolKind::Text
+                && sym.section_index == Some(section.index.0)
+            {
+                if symbols_by_address.contains_key(&sym.address) {
+                    return Err(ParseError::SymbolTableConflict {
+                        section_index: section.index.0,
+                        address: sym.address,
+                    });
+                }
+                symbols_by_address.insert(sym.address, sym);
+            }
+        }
+
+        // Walk through the section and register ALL functions (like parse_text_section does)
+        let mut offset = 0;
+        while offset < section.data.len() {
+            let address = section.address + offset as u64;
+            let sym = symbols_by_address
+                .get(&address)
+                .ok_or(ParseError::UnknownSymbol {
+                    section_index: section.index.0,
+                    address,
+                })?;
+            if sym.size == 0 {
+                return Err(ParseError::InvalidSymbol {
+                    index: sym.index,
+                    name: sym.name.clone(),
+                });
+            }
+
+            let name = sym.name.clone().unwrap_or_default();
+            let (func_info, line_info, func_info_rec_size, line_info_rec_size) =
+                get_func_and_line_info(self.btf_ext.as_ref(), sym, section, offset, true);
+
+            let function = Function {
+                name: name.clone(),
+                address,
+                section_index: section.index,
+                section_offset: offset,
+                instructions: copy_instructions(
+                    &section.data[offset..offset + sym.size as usize],
+                )?,
+                func_info,
+                line_info,
+                func_info_rec_size,
+                line_info_rec_size,
             };
 
-            let (p, f) =
-                self.parse_program(section, program_section.clone(), name.to_string(), symbol)?;
-            let key = p.function_key();
-            self.programs.insert(f.name.clone(), p);
-            self.functions.insert(key, f);
+            // Register the function
+            self.functions.insert((section.index.0, address), function.clone());
+
+            // The first function (at offset 0) is the program entry point
+            if offset == 0 {
+                self.programs.insert(
+                    name.clone(),
+                    Program {
+                        license: self.license.clone(),
+                        kernel_version: self.kernel_version,
+                        section: program_section.clone(),
+                        section_index: section.index.0,
+                        address,
+                    },
+                );
+            }
+
+            offset += sym.size as usize;
         }
+
         Ok(())
-    }
-
-    fn parse_program(
-        &self,
-        section: &Section<'_>,
-        program_section: ProgramSection,
-        name: String,
-        symbol: &Symbol,
-    ) -> Result<(Program, Function), ParseError> {
-        let offset = symbol.address as usize - section.address as usize;
-        let (func_info, line_info, func_info_rec_size, line_info_rec_size) =
-            get_func_and_line_info(self.btf_ext.as_ref(), symbol, section, offset, true);
-
-        let start = symbol.address as usize;
-        let end = (symbol.address + symbol.size) as usize;
-
-        let function = Function {
-            name: name.to_owned(),
-            address: symbol.address,
-            section_index: section.index,
-            section_offset: start,
-            instructions: copy_instructions(&section.data[start..end])?,
-            func_info,
-            line_info,
-            func_info_rec_size,
-            line_info_rec_size,
-        };
-
-        Ok((
-            Program {
-                license: self.license.clone(),
-                kernel_version: self.kernel_version,
-                section: program_section.clone(),
-                section_index: section.index.0,
-                address: symbol.address,
-            },
-            function,
-        ))
     }
 
     fn parse_text_section(&mut self, section: Section<'_>) -> Result<(), ParseError> {
