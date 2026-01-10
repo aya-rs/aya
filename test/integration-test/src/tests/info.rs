@@ -11,7 +11,10 @@ use std::{fs, panic, path::Path, time::SystemTime};
 use aya::{
     Ebpf,
     maps::{Array, HashMap, IterableMap as _, MapError, MapType, loaded_maps},
-    programs::{ProgramError, ProgramType, SocketFilter, TracePoint, UProbe, loaded_programs},
+    programs::{
+        ProgramError, ProgramType, SocketFilter, TracePoint, UProbe, loaded_programs,
+        uprobe::Single,
+    },
     sys::{is_map_supported, is_program_supported},
     util::KernelVersion,
 };
@@ -65,6 +68,7 @@ fn test_loaded_programs() {
     };
 
     // Ensure we can perform basic operations on the re-created program.
+    let p: &mut UProbe<Single> = p.expect_single().unwrap();
     let res = p.attach("uprobe_function", "/proc/self/exe", None).unwrap();
 
     // Ensure the program can be detached.

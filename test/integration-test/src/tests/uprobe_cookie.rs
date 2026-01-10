@@ -1,7 +1,10 @@
 use aya::{
     EbpfLoader,
     maps::ring_buf::RingBuf,
-    programs::{UProbe, uprobe::UProbeAttachPoint},
+    programs::{
+        UProbe,
+        uprobe::{Single, UProbeAttachPoint},
+    },
     util::KernelVersion,
 };
 
@@ -28,9 +31,10 @@ fn test_uprobe_cookie() {
         .try_into()
         .unwrap();
     prog.load().unwrap();
+    let prog: &mut UProbe<Single> = prog.expect_single().unwrap();
     const PROG_A: &str = "uprobe_cookie_trigger_ebpf_program_a";
     const PROG_B: &str = "uprobe_cookie_trigger_ebpf_program_b";
-    let attach = |prog: &mut UProbe, fn_name: &str, cookie| {
+    let attach = |prog: &mut UProbe<Single>, fn_name: &str, cookie| {
         prog.attach(
             UProbeAttachPoint {
                 location: fn_name.into(),

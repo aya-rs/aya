@@ -15,7 +15,7 @@ use assert_matches::assert_matches;
 use aya::{
     Ebpf, EbpfLoader,
     maps::{MapData, array::PerCpuArray, ring_buf::RingBuf},
-    programs::UProbe,
+    programs::{UProbe, uprobe::Single},
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
 use integration_common::ring_buf::Registers;
@@ -66,6 +66,7 @@ impl RingBufTest {
             .try_into()
             .unwrap();
         prog.load().unwrap();
+        let prog: &mut UProbe<Single> = prog.expect_single().unwrap();
         prog.attach("ring_buf_trigger_ebpf_program", "/proc/self/exe", None)
             .unwrap();
 

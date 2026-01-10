@@ -797,7 +797,6 @@ macro_rules! impl_program_unload {
 
 impl_program_unload!(
     KProbe,
-    UProbe,
     TracePoint,
     SocketFilter,
     Xdp,
@@ -867,6 +866,36 @@ impl_fd!(
     CgroupDevice,
     Iter,
 );
+
+impl<M: uprobe::UProbeMode> UProbe<M> {
+    /// Pins the program to a BPF filesystem.
+    pub fn pin<P: AsRef<Path>>(&mut self, path: P) -> Result<(), PinError> {
+        self.data.path = Some(path.as_ref().to_path_buf());
+        pin_program(&self.data, path)
+    }
+
+    /// Removes the pinned link from the filesystem.
+    pub fn unpin(&mut self) -> Result<(), io::Error> {
+        if let Some(path) = self.data.path.take() {
+            std::fs::remove_file(path)?;
+        }
+        Ok(())
+    }
+
+    /// Unloads the program from the kernel.
+    ///
+    /// Links will be detached before unloading the program. Owned links obtained using
+    /// `take_link()` will not be detached.
+    pub fn unload(&mut self) -> Result<(), ProgramError> {
+        unload_program(&mut self.data)
+    }
+}
+
+impl<M: uprobe::UProbeMode> Drop for UProbe<M> {
+    fn drop(&mut self) {
+        let _: Result<(), ProgramError> = self.unload();
+    }
+}
 
 /// Trait implemented by the [`Program`] types which support the kernel's
 /// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f235dc3f69d13375b32f4209228e1cb96).
@@ -948,7 +977,6 @@ macro_rules! impl_program_pin{
 
 impl_program_pin!(
     KProbe,
-    UProbe,
     TracePoint,
     SocketFilter,
     Xdp,
@@ -1101,7 +1129,6 @@ macro_rules! impl_from_prog_info {
 
 impl_from_prog_info!(
     unsafe KProbe kind : ProbeKind,
-    unsafe UProbe kind : ProbeKind,
     TracePoint,
     Xdp attach_type : XdpAttachType,
     SkMsg,

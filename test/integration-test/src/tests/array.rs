@@ -1,4 +1,8 @@
-use aya::{EbpfLoader, maps::Array, programs::UProbe};
+use aya::{
+    EbpfLoader,
+    maps::Array,
+    programs::{UProbe, uprobe::Single},
+};
 use integration_common::array::{GET_INDEX, GET_PTR_INDEX, GET_PTR_MUT_INDEX};
 
 #[unsafe(no_mangle)]
@@ -55,6 +59,7 @@ fn test_array() {
         for (prog_name, symbol) in progs_and_symbols {
             let prog: &mut UProbe = ebpf.program_mut(prog_name).unwrap().try_into().unwrap();
             prog.load().unwrap();
+            let prog: &mut UProbe<Single> = prog.expect_single().unwrap();
             prog.attach(symbol, "/proc/self/exe", None).unwrap();
         }
         let result_array = ebpf.map(result_map).unwrap();

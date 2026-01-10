@@ -1,6 +1,10 @@
 use std::{borrow::Cow, sync::Mutex};
 
-use aya::{Ebpf, EbpfLoader, maps::Array, programs::UProbe};
+use aya::{
+    Ebpf, EbpfLoader,
+    maps::Array,
+    programs::{UProbe, uprobe::Single},
+};
 use aya_log::EbpfLogger;
 use integration_common::log::{BUF_LEN, Buffer};
 use log::{Level, Log, Record};
@@ -69,6 +73,7 @@ fn log() {
 
     let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
     prog.load().unwrap();
+    let prog: &mut UProbe<Single> = prog.expect_single().unwrap();
     prog.attach("trigger_ebpf_program", "/proc/self/exe", None)
         .unwrap();
 
@@ -248,6 +253,7 @@ fn log_level_only_error_warn() {
 
     let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
     prog.load().unwrap();
+    let prog: &mut UProbe<Single> = prog.expect_single().unwrap();
     prog.attach("trigger_ebpf_program", "/proc/self/exe", None)
         .unwrap();
 
@@ -303,6 +309,7 @@ fn log_level_prevents_verif_fail() {
         .try_into()
         .unwrap();
     prog.load().unwrap();
+    let prog: &mut UProbe<Single> = prog.expect_single().unwrap();
     prog.attach("trigger_ebpf_program", "/proc/self/exe", None)
         .unwrap();
 

@@ -1,7 +1,7 @@
 use aya::{
     Ebpf,
     maps::{Array, HashMap},
-    programs::UProbe,
+    programs::{UProbe, uprobe::Single},
 };
 
 #[unsafe(no_mangle)]
@@ -20,6 +20,7 @@ fn test_maps_disjoint() {
         .unwrap();
 
     prog.load().unwrap();
+    let prog: &mut UProbe<Single> = prog.expect_single().unwrap();
     prog.attach("trigger_ebpf_program_maps_disjoint", "/proc/self/exe", None)
         .unwrap();
 
