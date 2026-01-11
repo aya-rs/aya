@@ -71,6 +71,7 @@ fn main() -> Result<()> {
         ("iter.bpf.c", true),
         ("main.bpf.c", false),
         ("multimap-btf.bpf.c", false),
+        ("ringbuf-btf.bpf.c", true),
         ("enum_signed_32_checked_variants_reloc.bpf.c", true),
         ("enum_signed_32_reloc.bpf.c", true),
         ("enum_signed_64_checked_variants_reloc.bpf.c", true),
