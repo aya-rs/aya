@@ -12,41 +12,133 @@
 //! - `hid_rdesc_fixup`: Called to modify the HID report descriptor at probe time
 //! - `hid_hw_request`: Called for hardware requests (feature reports, etc.)
 //! - `hid_hw_output_report`: Called for output reports
+//!
+//! # BTF Requirements
+//!
+//! For kfuncs like `hid_bpf_get_data` to work, the BPF program must use
+//! `*mut hid_bpf_ctx` as the context parameter type. This generates the correct
+//! BTF that the kernel verifier expects.
+//!
+//! # Example
+//!
+//! ```ignore
+//! use aya_ebpf::programs::hid_bpf::hid_bpf_ctx;
+//!
+//! // Declare kfuncs as extern - the linker resolves these to kernel functions
+//! extern "C" {
+//!     fn hid_bpf_get_data(ctx: *mut hid_bpf_ctx, offset: u32, size: u32) -> *mut u8;
+//! }
+//!
+//! #[no_mangle]
+//! #[link_section = "struct_ops/hid_device_event"]
+//! pub unsafe extern "C" fn my_hid_event(ctx: *mut hid_bpf_ctx) -> i32 {
+//!     let data = hid_bpf_get_data(ctx, 0, 8);
+//!     if data.is_null() {
+//!         return 0;
+//!     }
+//!     // Process HID report data...
+//!     0
+//! }
+//! ```
 
 use core::ffi::c_void;
 
 use crate::EbpfContext;
 
-/// Context for HID-BPF callbacks.
+/// Forward declaration of hid_device to match kernel's BTF.
+/// This is never instantiated; we only use pointers to it.
+#[repr(C)]
+pub struct hid_device {
+    _opaque: [u8; 0],
+}
+
+/// Kernel's HID-BPF context structure.
 ///
-/// This context is passed to HID-BPF struct_ops callbacks and provides access
-/// to HID report data through the [`hid_bpf_get_data`] kfunc.
+/// This struct must be named `hid_bpf_ctx` (snake_case) to match the kernel's
+/// BTF type name. The kernel verifier checks that kfunc arguments point to
+/// this exact struct type.
+///
+/// # BTF Generation
+///
+/// When used as `*mut hid_bpf_ctx` in function signatures, LLVM generates
+/// BTF with `STRUCT 'hid_bpf_ctx'` which the kernel verifier can match.
+///
+/// # Layout
+///
+/// This matches the kernel's `struct hid_bpf_ctx` from `include/linux/hid_bpf.h`.
+/// Using simple i32 for retval since the union is just size alias.
+#[repr(C)]
+pub struct hid_bpf_ctx {
+    /// Pointer to the HID device (opaque, do not dereference in BPF).
+    pub hid: *mut hid_device,
+    /// Allocated size for data buffer access.
+    pub allocated_size: u32,
+    /// Return value (same memory as size in kernel's union).
+    pub retval: i32,
+}
+
+/// High-level context wrapper for HID-BPF callbacks.
+///
+/// This wrapper provides a safe interface around the raw `hid_bpf_ctx` pointer.
+/// For kfunc calls, use [`Self::ctx_ptr()`] to get the properly typed pointer.
 #[repr(C)]
 pub struct HidBpfContext {
-    ctx: *mut c_void,
+    ctx: *mut hid_bpf_ctx,
 }
 
 impl HidBpfContext {
-    /// Creates a new HidBpfContext from a raw pointer.
+    /// Creates a new HidBpfContext from a raw hid_bpf_ctx pointer.
     ///
     /// # Safety
     ///
     /// The pointer must be a valid `struct hid_bpf_ctx *` from the kernel.
     #[inline]
-    pub fn new(ctx: *mut c_void) -> Self {
+    pub fn new(ctx: *mut hid_bpf_ctx) -> Self {
         Self { ctx }
     }
 
     /// Returns a raw pointer to the underlying `hid_bpf_ctx`.
+    ///
+    /// Use this pointer when calling kfuncs like `hid_bpf_get_data`.
     #[inline]
-    pub fn hid_bpf_ctx(&self) -> *mut c_void {
+    pub fn ctx_ptr(&self) -> *mut hid_bpf_ctx {
         self.ctx
+    }
+
+    /// Returns the allocated size from the context.
+    ///
+    /// # Safety
+    ///
+    /// The context pointer must be valid.
+    #[inline]
+    pub unsafe fn allocated_size(&self) -> u32 {
+        unsafe { (*self.ctx).allocated_size }
+    }
+
+    /// Returns the retval field from the context.
+    ///
+    /// # Safety
+    ///
+    /// The context pointer must be valid.
+    #[inline]
+    pub unsafe fn retval(&self) -> i32 {
+        unsafe { (*self.ctx).retval }
+    }
+
+    /// Sets the retval field in the context.
+    ///
+    /// # Safety
+    ///
+    /// The context pointer must be valid.
+    #[inline]
+    pub unsafe fn set_retval(&mut self, val: i32) {
+        unsafe { (*self.ctx).retval = val };
     }
 }
 
 impl EbpfContext for HidBpfContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.ctx
+        self.ctx as *mut c_void
     }
 }
 

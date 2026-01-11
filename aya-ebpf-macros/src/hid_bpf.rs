@@ -54,10 +54,13 @@ impl HidBpf {
         let fn_name = &sig.ident;
         let section_name: Cow<'_, _> = kind.section_name().into();
 
+        // IMPORTANT: The entry point MUST use *mut hid_bpf_ctx (not c_void)
+        // to generate correct BTF for kfuncs like hid_bpf_get_data.
+        // The kernel verifier checks that kfunc args match BTF struct types.
         quote! {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = #section_name)]
-            #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
+            #vis fn #fn_name(ctx: *mut ::aya_ebpf::programs::hid_bpf::hid_bpf_ctx) -> i32 {
                 let _ = #fn_name(::aya_ebpf::programs::HidBpfContext::new(ctx));
                 return 0;
 
@@ -89,7 +92,7 @@ mod tests {
         let expected = quote! {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "struct_ops/hid_device_event")]
-            fn device_event(ctx: *mut ::core::ffi::c_void) -> i32 {
+            fn device_event(ctx: *mut ::aya_ebpf::programs::hid_bpf::hid_bpf_ctx) -> i32 {
                 let _ = device_event(::aya_ebpf::programs::HidBpfContext::new(ctx));
                 return 0;
 
@@ -117,7 +120,7 @@ mod tests {
         let expected = quote! {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "struct_ops/hid_rdesc_fixup")]
-            fn rdesc_fixup(ctx: *mut ::core::ffi::c_void) -> i32 {
+            fn rdesc_fixup(ctx: *mut ::aya_ebpf::programs::hid_bpf::hid_bpf_ctx) -> i32 {
                 let _ = rdesc_fixup(::aya_ebpf::programs::HidBpfContext::new(ctx));
                 return 0;
 
