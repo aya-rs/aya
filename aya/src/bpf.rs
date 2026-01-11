@@ -1237,30 +1237,87 @@ impl Ebpf {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn load_struct_ops(&mut self, btf: &Btf) -> Result<(), EbpfError> {
+        use aya_obj::btf::BtfKind;
         use std::os::fd::{AsFd, AsRawFd};
 
-        // Collect (struct_name, program_names) for each struct_ops map
-        let mut struct_ops_info: Vec<(String, Vec<String>)> = Vec::new();
+        // Collect (map_name, struct_name, program_names) for each struct_ops map
+        let mut struct_ops_info: Vec<(String, String, Vec<String>)> = Vec::new();
         for (map_name, map) in self.maps.iter() {
             if let Map::StructOps(map_data) = map {
                 if let aya_obj::Map::StructOps(m) = map_data.obj() {
-                    let prog_names: Vec<String> = m.func_info.iter().map(|i| i.prog_name.clone()).collect();
-                    debug!("struct_ops map '{}' type='{}' prog_names={:?}", map_name, m.type_name, prog_names);
-                    struct_ops_info.push((m.type_name.clone(), prog_names));
+                    let prog_names: Vec<String> =
+                        m.func_info.iter().map(|i| i.prog_name.clone()).collect();
+                    debug!(
+                        "struct_ops map '{}' type='{}' prog_names={:?}",
+                        map_name, m.type_name, prog_names
+                    );
+                    struct_ops_info.push((map_name.clone(), m.type_name.clone(), prog_names));
                 }
             }
         }
 
-        // Load all struct_ops programs
-        for (struct_name, prog_names) in &struct_ops_info {
+        // If func_info is empty (no relocations), fall back to matching by member_name
+        // This happens with Rust BPF objects where function pointer fields can't create relocations
+        let mut fallback_matches: Vec<(String, String, String, u32)> = Vec::new(); // (map_name, struct_name, prog_name, member_offset)
+        for (map_name, struct_name, prog_names) in &struct_ops_info {
+            if prog_names.is_empty() {
+                debug!(
+                    "struct_ops map '{}' has no func_info, using fallback matching by member_name",
+                    map_name
+                );
+                // Get struct BTF type ID for member offset lookup
+                if let Ok(struct_type_id) = btf.id_by_type_name_kind(struct_name, BtfKind::Struct) {
+                    // Find all StructOps programs and match by member_name
+                    for (prog_name, prog) in self.programs.iter() {
+                        if let Program::StructOps(struct_ops) = prog {
+                            let member_name = struct_ops.member_name();
+                            if let Ok(member_offset) =
+                                btf.struct_member_byte_offset(struct_type_id, member_name)
+                            {
+                                debug!(
+                                    "fallback: matched program '{}' to member '{}' at offset {}",
+                                    prog_name, member_name, member_offset
+                                );
+                                fallback_matches.push((
+                                    map_name.clone(),
+                                    struct_name.clone(),
+                                    prog_name.clone(),
+                                    member_offset,
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Load all struct_ops programs (from func_info)
+        for (_, struct_name, prog_names) in &struct_ops_info {
             for prog_name in prog_names {
                 debug!("looking for struct_ops program '{}'", prog_name);
                 if let Some(Program::StructOps(struct_ops)) = self.programs.get_mut(prog_name) {
-                    debug!("loading struct_ops program '{}' for struct '{}'", prog_name, struct_name);
+                    debug!(
+                        "loading struct_ops program '{}' for struct '{}'",
+                        prog_name, struct_name
+                    );
                     struct_ops.load(struct_name, btf)?;
                 } else {
-                    warn!("struct_ops program '{}' not found or not StructOps type", prog_name);
+                    warn!(
+                        "struct_ops program '{}' not found or not StructOps type",
+                        prog_name
+                    );
                 }
+            }
+        }
+
+        // Load fallback-matched programs
+        for (_, struct_name, prog_name, _) in &fallback_matches {
+            if let Some(Program::StructOps(struct_ops)) = self.programs.get_mut(prog_name) {
+                debug!(
+                    "loading fallback struct_ops program '{}' for struct '{}'",
+                    prog_name, struct_name
+                );
+                struct_ops.load(struct_name, btf)?;
             }
         }
 
@@ -1277,26 +1334,46 @@ impl Ebpf {
                 };
 
                 debug!("struct_ops map '{}' data_offset={}", map_name, data_offset);
-                for info in func_info {
-                    // Add data_offset to the member offset since the ops struct is nested
-                    // inside the kernel wrapper struct (e.g., bpf_struct_ops_hid_bpf_ops.data)
+
+                // Fill FDs from func_info (relocation-based)
+                for info in &func_info {
                     let actual_offset = (data_offset + info.member_offset) as usize;
-                    // Find the program by name
                     if let Some(Program::StructOps(prog)) = self.programs.get(&info.prog_name) {
-                        // Get the program's FD
                         let fd = prog.fd()?;
                         let raw_fd = fd.as_fd().as_raw_fd();
                         debug!(
                             "filling FD {} for program '{}' at offset {} (data_offset {} + member_offset {})",
                             raw_fd, info.prog_name, actual_offset, data_offset, info.member_offset
                         );
-                        // Write the FD to the struct data at the specified offset
                         let data = map_data.obj_mut().data_mut();
                         if actual_offset + 4 <= data.len() {
-                            data[actual_offset..actual_offset + 4].copy_from_slice(&raw_fd.to_ne_bytes());
+                            data[actual_offset..actual_offset + 4]
+                                .copy_from_slice(&raw_fd.to_ne_bytes());
                         }
                     } else {
                         warn!("struct_ops program '{}' not found", info.prog_name);
+                    }
+                }
+
+                // Fill FDs from fallback matches (section-name based)
+                if func_info.is_empty() {
+                    for (fallback_map, _, prog_name, member_offset) in &fallback_matches {
+                        if fallback_map == map_name {
+                            let actual_offset = (data_offset + member_offset) as usize;
+                            if let Some(Program::StructOps(prog)) = self.programs.get(prog_name) {
+                                let fd = prog.fd()?;
+                                let raw_fd = fd.as_fd().as_raw_fd();
+                                debug!(
+                                    "filling FD {} for fallback program '{}' at offset {} (data_offset {} + member_offset {})",
+                                    raw_fd, prog_name, actual_offset, data_offset, member_offset
+                                );
+                                let data = map_data.obj_mut().data_mut();
+                                if actual_offset + 4 <= data.len() {
+                                    data[actual_offset..actual_offset + 4]
+                                        .copy_from_slice(&raw_fd.to_ne_bytes());
+                                }
+                            }
+                        }
                     }
                 }
             }

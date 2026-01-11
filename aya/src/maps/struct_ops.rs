@@ -18,7 +18,8 @@ use aya_obj::maps::StructOpsFuncInfo;
 
 use crate::{
     maps::{MapData, MapError, MapFd},
-    sys::{bpf_map_update_elem_ptr, SyscallError},
+    programs::links::FdLink,
+    sys::{bpf_map_update_elem_ptr, bpf_struct_ops_link_create, SyscallError},
 };
 
 /// A struct_ops map that implements kernel callbacks.
@@ -242,6 +243,52 @@ impl<T: Borrow<MapData>> StructOpsMap<T> {
             .map_err(MapError::from)?;
 
         Ok(())
+    }
+
+    /// Attaches a link-based struct_ops by creating a BPF link.
+    ///
+    /// For struct_ops maps created with the `BPF_F_LINK` flag (from `.struct_ops.link` section),
+    /// this method creates a BPF link that activates the struct_ops. This must be called
+    /// after [`register()`](Self::register) has been called to update the map data.
+    ///
+    /// For non-link struct_ops (from `.struct_ops` section), calling [`register()`](Self::register)
+    /// alone is sufficient - no link is needed.
+    ///
+    /// # Returns
+    ///
+    /// An `FdLink` that keeps the struct_ops active. When the link is dropped (or its
+    /// file descriptor is closed), the struct_ops will be detached.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use aya::maps::StructOpsMap;
+    /// # fn example(struct_ops: &StructOpsMap<aya::maps::MapData>) -> Result<(), aya::maps::MapError> {
+    /// // First register the struct_ops data
+    /// struct_ops.register()?;
+    ///
+    /// // For link-based struct_ops, create the link to activate
+    /// if struct_ops.is_link() {
+    ///     let _link = struct_ops.attach()?;
+    ///     // Keep the link alive to maintain attachment
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn attach(&self) -> Result<FdLink, MapError> {
+        let data = self.inner.borrow();
+        let fd = data.fd().as_fd();
+
+        debug!("creating struct_ops link for map");
+
+        let link_fd = bpf_struct_ops_link_create(fd)
+            .map_err(|io_error| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })
+            .map_err(MapError::from)?;
+
+        Ok(FdLink::new(link_fd))
     }
 }
 

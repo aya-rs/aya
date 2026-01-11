@@ -473,6 +473,33 @@ pub(crate) fn bpf_link_create(
     unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) }
 }
 
+/// Creates a BPF link for a struct_ops map.
+///
+/// For link-based struct_ops (maps created with BPF_F_LINK flag),
+/// this activates the struct_ops after bpf_map_update_elem has been called.
+///
+/// # Arguments
+///
+/// * `map_fd` - The file descriptor of the struct_ops map
+///
+/// # Returns
+///
+/// A new file descriptor for the BPF link on success.
+// since kernel 5.13 (for struct_ops links)
+pub(crate) fn bpf_struct_ops_link_create(map_fd: BorrowedFd<'_>) -> io::Result<crate::MockableFd> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    // For struct_ops, the kernel reuses prog_fd field for the map_fd
+    attr.link_create.__bindgen_anon_1.prog_fd = map_fd.as_raw_fd() as u32;
+    // target_fd is 0 for struct_ops
+    attr.link_create.__bindgen_anon_2.target_fd = 0;
+    // BPF_STRUCT_OPS = 44
+    attr.link_create.attach_type = bpf_attach_type::BPF_STRUCT_OPS as u32;
+
+    // SAFETY: BPF_LINK_CREATE returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) }
+}
+
 // since kernel 5.7
 pub(crate) fn bpf_link_update(
     link_fd: BorrowedFd<'_>,
