@@ -1778,6 +1778,204 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::flow_dissector::FlowD
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::flow_dissector::FlowDissectorContext
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::from(t: T) -> T
+pub mod aya_ebpf::programs::hid_bpf
+#[repr(u32)] pub enum aya_ebpf::programs::hid_bpf::HidClassRequest
+pub aya_ebpf::programs::hid_bpf::HidClassRequest::GetIdle = 2
+pub aya_ebpf::programs::hid_bpf::HidClassRequest::GetProtocol = 3
+pub aya_ebpf::programs::hid_bpf::HidClassRequest::GetReport = 1
+pub aya_ebpf::programs::hid_bpf::HidClassRequest::SetIdle = 10
+pub aya_ebpf::programs::hid_bpf::HidClassRequest::SetProtocol = 11
+pub aya_ebpf::programs::hid_bpf::HidClassRequest::SetReport = 9
+impl core::clone::Clone for aya_ebpf::programs::hid_bpf::HidClassRequest
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::clone(&self) -> aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::cmp::Eq for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::cmp::PartialEq for aya_ebpf::programs::hid_bpf::HidClassRequest
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::eq(&self, other: &aya_ebpf::programs::hid_bpf::HidClassRequest) -> bool
+impl core::fmt::Debug for aya_ebpf::programs::hid_bpf::HidClassRequest
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::marker::StructuralPartialEq for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::marker::Freeze for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::marker::Send for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::marker::Sync for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::marker::Unpin for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::hid_bpf::HidClassRequest where U: core::convert::From<T>
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::hid_bpf::HidClassRequest where U: core::convert::Into<T>
+pub type aya_ebpf::programs::hid_bpf::HidClassRequest::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::hid_bpf::HidClassRequest where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::hid_bpf::HidClassRequest::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::hid_bpf::HidClassRequest where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::hid_bpf::HidClassRequest where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::hid_bpf::HidClassRequest where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_ebpf::programs::hid_bpf::HidClassRequest where T: core::clone::Clone
+pub unsafe fn aya_ebpf::programs::hid_bpf::HidClassRequest::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_ebpf::programs::hid_bpf::HidClassRequest
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::from(t: T) -> T
+#[repr(u32)] pub enum aya_ebpf::programs::hid_bpf::HidReportType
+pub aya_ebpf::programs::hid_bpf::HidReportType::Feature = 2
+pub aya_ebpf::programs::hid_bpf::HidReportType::Input = 0
+pub aya_ebpf::programs::hid_bpf::HidReportType::Output = 1
+impl core::clone::Clone for aya_ebpf::programs::hid_bpf::HidReportType
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::clone(&self) -> aya_ebpf::programs::hid_bpf::HidReportType
+impl core::cmp::Eq for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::cmp::PartialEq for aya_ebpf::programs::hid_bpf::HidReportType
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::eq(&self, other: &aya_ebpf::programs::hid_bpf::HidReportType) -> bool
+impl core::fmt::Debug for aya_ebpf::programs::hid_bpf::HidReportType
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::marker::StructuralPartialEq for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::marker::Freeze for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::marker::Send for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::marker::Sync for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::marker::Unpin for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::hid_bpf::HidReportType
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::hid_bpf::HidReportType where U: core::convert::From<T>
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::hid_bpf::HidReportType where U: core::convert::Into<T>
+pub type aya_ebpf::programs::hid_bpf::HidReportType::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::hid_bpf::HidReportType where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::hid_bpf::HidReportType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::hid_bpf::HidReportType where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::hid_bpf::HidReportType where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::hid_bpf::HidReportType where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_ebpf::programs::hid_bpf::HidReportType where T: core::clone::Clone
+pub unsafe fn aya_ebpf::programs::hid_bpf::HidReportType::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_ebpf::programs::hid_bpf::HidReportType
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::from(t: T) -> T
+#[repr(transparent)] pub struct aya_ebpf::programs::hid_bpf::HidBpfContext
+impl aya_ebpf::programs::hid_bpf::HidBpfContext
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::allocated_size(&self) -> u32
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::as_ptr(&self) -> *mut aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+pub unsafe fn aya_ebpf::programs::hid_bpf::HidBpfContext::new(ctx: *mut aya_ebpf::programs::hid_bpf::hid_bpf_ctx) -> Self
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::retval(&self) -> i32
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::set_retval(&mut self, val: i32)
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::hid_bpf::HidBpfContext
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::hid_bpf::HidBpfContext
+impl !core::marker::Send for aya_ebpf::programs::hid_bpf::HidBpfContext
+impl !core::marker::Sync for aya_ebpf::programs::hid_bpf::HidBpfContext
+impl core::marker::Unpin for aya_ebpf::programs::hid_bpf::HidBpfContext
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::hid_bpf::HidBpfContext
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::hid_bpf::HidBpfContext
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::hid_bpf::HidBpfContext where U: core::convert::From<T>
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::hid_bpf::HidBpfContext where U: core::convert::Into<T>
+pub type aya_ebpf::programs::hid_bpf::HidBpfContext::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::hid_bpf::HidBpfContext where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::hid_bpf::HidBpfContext::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::hid_bpf::HidBpfContext where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::hid_bpf::HidBpfContext where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::hid_bpf::HidBpfContext where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::hid_bpf::HidBpfContext
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::from(t: T) -> T
+pub struct aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+impl aya_ebpf::programs::hid_bpf::HidBpfData<'_>
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'_>::copy_from_slice(&mut self, offset: usize, src: &[u8]) -> bool
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'_>::get(&self, idx: usize) -> core::option::Option<u8>
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'_>::is_empty(&self) -> bool
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'_>::len(&self) -> usize
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'_>::set(&mut self, idx: usize, val: u8) -> bool
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'_>::starts_with(&self, pattern: &[u8]) -> bool
+impl<'a> core::marker::Freeze for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+impl<'a> !core::marker::Send for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+impl<'a> !core::marker::Sync for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+impl<'a> core::marker::Unpin for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+impl<'a> !core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::hid_bpf::HidBpfData<'a> where U: core::convert::From<T>
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::hid_bpf::HidBpfData<'a> where U: core::convert::Into<T>
+pub type aya_ebpf::programs::hid_bpf::HidBpfData<'a>::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::hid_bpf::HidBpfData<'a> where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::hid_bpf::HidBpfData<'a>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::hid_bpf::HidBpfData<'a> where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::hid_bpf::HidBpfData<'a> where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::hid_bpf::HidBpfData<'a> where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::from(t: T) -> T
+#[repr(C)] pub struct aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+pub aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::hid: u32
+pub aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::rdesc: [u8; 4096]
+pub aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::rdesc_size: u32
+pub aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::retval: i32
+impl core::marker::Freeze for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+impl core::marker::Send for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+impl core::marker::Sync for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+impl core::marker::Unpin for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs where U: core::convert::From<T>
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs where U: core::convert::Into<T>
+pub type aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::from(t: T) -> T
+#[repr(C)] pub struct aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+pub aya_ebpf::programs::hid_bpf::hid_bpf_ctx::allocated_size: u32
+pub aya_ebpf::programs::hid_bpf::hid_bpf_ctx::hid: u64
+pub aya_ebpf::programs::hid_bpf::hid_bpf_ctx::retval: i32
+impl core::marker::Freeze for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+impl core::marker::Send for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+impl core::marker::Sync for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+impl core::marker::Unpin for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::hid_bpf::hid_bpf_ctx where U: core::convert::From<T>
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::hid_bpf::hid_bpf_ctx where U: core::convert::Into<T>
+pub type aya_ebpf::programs::hid_bpf::hid_bpf_ctx::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::hid_bpf::hid_bpf_ctx where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::hid_bpf::hid_bpf_ctx::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::hid_bpf::hid_bpf_ctx where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::hid_bpf::hid_bpf_ctx where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::hid_bpf::hid_bpf_ctx where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::from(t: T) -> T
+pub const aya_ebpf::programs::hid_bpf::BUS_BLUETOOTH: u16
+pub const aya_ebpf::programs::hid_bpf::BUS_I2C: u16
+pub const aya_ebpf::programs::hid_bpf::BUS_USB: u16
+pub const aya_ebpf::programs::hid_bpf::HID_GROUP_ANY: u16
+pub const aya_ebpf::programs::hid_bpf::HID_GROUP_GENERIC: u16
+pub const aya_ebpf::programs::hid_bpf::HID_IGNORE_EVENT: i32
 pub mod aya_ebpf::programs::lsm
 pub struct aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::programs::lsm::LsmContext
@@ -2405,6 +2603,83 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::xdp::XdpContext where
 pub fn aya_ebpf::programs::xdp::XdpContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::from(t: T) -> T
+#[repr(u32)] pub enum aya_ebpf::programs::HidClassRequest
+pub aya_ebpf::programs::HidClassRequest::GetIdle = 2
+pub aya_ebpf::programs::HidClassRequest::GetProtocol = 3
+pub aya_ebpf::programs::HidClassRequest::GetReport = 1
+pub aya_ebpf::programs::HidClassRequest::SetIdle = 10
+pub aya_ebpf::programs::HidClassRequest::SetProtocol = 11
+pub aya_ebpf::programs::HidClassRequest::SetReport = 9
+impl core::clone::Clone for aya_ebpf::programs::hid_bpf::HidClassRequest
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::clone(&self) -> aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::cmp::Eq for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::cmp::PartialEq for aya_ebpf::programs::hid_bpf::HidClassRequest
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::eq(&self, other: &aya_ebpf::programs::hid_bpf::HidClassRequest) -> bool
+impl core::fmt::Debug for aya_ebpf::programs::hid_bpf::HidClassRequest
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::marker::StructuralPartialEq for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::marker::Freeze for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::marker::Send for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::marker::Sync for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::marker::Unpin for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::hid_bpf::HidClassRequest
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::hid_bpf::HidClassRequest where U: core::convert::From<T>
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::hid_bpf::HidClassRequest where U: core::convert::Into<T>
+pub type aya_ebpf::programs::hid_bpf::HidClassRequest::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::hid_bpf::HidClassRequest where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::hid_bpf::HidClassRequest::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::hid_bpf::HidClassRequest where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::hid_bpf::HidClassRequest where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::hid_bpf::HidClassRequest where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_ebpf::programs::hid_bpf::HidClassRequest where T: core::clone::Clone
+pub unsafe fn aya_ebpf::programs::hid_bpf::HidClassRequest::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_ebpf::programs::hid_bpf::HidClassRequest
+pub fn aya_ebpf::programs::hid_bpf::HidClassRequest::from(t: T) -> T
+#[repr(u32)] pub enum aya_ebpf::programs::HidReportType
+pub aya_ebpf::programs::HidReportType::Feature = 2
+pub aya_ebpf::programs::HidReportType::Input = 0
+pub aya_ebpf::programs::HidReportType::Output = 1
+impl core::clone::Clone for aya_ebpf::programs::hid_bpf::HidReportType
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::clone(&self) -> aya_ebpf::programs::hid_bpf::HidReportType
+impl core::cmp::Eq for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::cmp::PartialEq for aya_ebpf::programs::hid_bpf::HidReportType
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::eq(&self, other: &aya_ebpf::programs::hid_bpf::HidReportType) -> bool
+impl core::fmt::Debug for aya_ebpf::programs::hid_bpf::HidReportType
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::marker::StructuralPartialEq for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::marker::Freeze for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::marker::Send for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::marker::Sync for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::marker::Unpin for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::hid_bpf::HidReportType
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::hid_bpf::HidReportType
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::hid_bpf::HidReportType where U: core::convert::From<T>
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::hid_bpf::HidReportType where U: core::convert::Into<T>
+pub type aya_ebpf::programs::hid_bpf::HidReportType::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::hid_bpf::HidReportType where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::hid_bpf::HidReportType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::hid_bpf::HidReportType where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::hid_bpf::HidReportType where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::hid_bpf::HidReportType where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_ebpf::programs::hid_bpf::HidReportType where T: core::clone::Clone
+pub unsafe fn aya_ebpf::programs::hid_bpf::HidReportType::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_ebpf::programs::hid_bpf::HidReportType
+pub fn aya_ebpf::programs::hid_bpf::HidReportType::from(t: T) -> T
 pub struct aya_ebpf::programs::BtfTracePointContext
 impl aya_ebpf::programs::tp_btf::BtfTracePointContext
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::arg<T: aya_ebpf::Argument>(&self, n: usize) -> T
@@ -2548,6 +2823,94 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::flow_dissector::FlowD
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::flow_dissector::FlowDissectorContext
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::from(t: T) -> T
+#[repr(transparent)] pub struct aya_ebpf::programs::HidBpfContext
+impl aya_ebpf::programs::hid_bpf::HidBpfContext
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::allocated_size(&self) -> u32
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::as_ptr(&self) -> *mut aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+pub unsafe fn aya_ebpf::programs::hid_bpf::HidBpfContext::new(ctx: *mut aya_ebpf::programs::hid_bpf::hid_bpf_ctx) -> Self
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::retval(&self) -> i32
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::set_retval(&mut self, val: i32)
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::hid_bpf::HidBpfContext
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::hid_bpf::HidBpfContext
+impl !core::marker::Send for aya_ebpf::programs::hid_bpf::HidBpfContext
+impl !core::marker::Sync for aya_ebpf::programs::hid_bpf::HidBpfContext
+impl core::marker::Unpin for aya_ebpf::programs::hid_bpf::HidBpfContext
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::hid_bpf::HidBpfContext
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::hid_bpf::HidBpfContext
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::hid_bpf::HidBpfContext where U: core::convert::From<T>
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::hid_bpf::HidBpfContext where U: core::convert::Into<T>
+pub type aya_ebpf::programs::hid_bpf::HidBpfContext::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::hid_bpf::HidBpfContext where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::hid_bpf::HidBpfContext::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::hid_bpf::HidBpfContext where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::hid_bpf::HidBpfContext where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::hid_bpf::HidBpfContext where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::hid_bpf::HidBpfContext
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::from(t: T) -> T
+pub struct aya_ebpf::programs::HidBpfData<'a>
+impl aya_ebpf::programs::hid_bpf::HidBpfData<'_>
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'_>::copy_from_slice(&mut self, offset: usize, src: &[u8]) -> bool
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'_>::get(&self, idx: usize) -> core::option::Option<u8>
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'_>::is_empty(&self) -> bool
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'_>::len(&self) -> usize
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'_>::set(&mut self, idx: usize, val: u8) -> bool
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'_>::starts_with(&self, pattern: &[u8]) -> bool
+impl<'a> core::marker::Freeze for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+impl<'a> !core::marker::Send for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+impl<'a> !core::marker::Sync for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+impl<'a> core::marker::Unpin for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+impl<'a> !core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::hid_bpf::HidBpfData<'a> where U: core::convert::From<T>
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::hid_bpf::HidBpfData<'a> where U: core::convert::Into<T>
+pub type aya_ebpf::programs::hid_bpf::HidBpfData<'a>::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::hid_bpf::HidBpfData<'a> where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::hid_bpf::HidBpfData<'a>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::hid_bpf::HidBpfData<'a> where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::hid_bpf::HidBpfData<'a> where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::hid_bpf::HidBpfData<'a> where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::hid_bpf::HidBpfData<'a>
+pub fn aya_ebpf::programs::hid_bpf::HidBpfData<'a>::from(t: T) -> T
+#[repr(C)] pub struct aya_ebpf::programs::HidBpfProbeArgs
+pub aya_ebpf::programs::HidBpfProbeArgs::hid: u32
+pub aya_ebpf::programs::HidBpfProbeArgs::rdesc: [u8; 4096]
+pub aya_ebpf::programs::HidBpfProbeArgs::rdesc_size: u32
+pub aya_ebpf::programs::HidBpfProbeArgs::retval: i32
+impl core::marker::Freeze for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+impl core::marker::Send for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+impl core::marker::Sync for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+impl core::marker::Unpin for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs where U: core::convert::From<T>
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs where U: core::convert::Into<T>
+pub type aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::hid_bpf::HidBpfProbeArgs
+pub fn aya_ebpf::programs::hid_bpf::HidBpfProbeArgs::from(t: T) -> T
 pub struct aya_ebpf::programs::LsmContext
 impl aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::arg<T: aya_ebpf::Argument>(&self, n: usize) -> T
@@ -3080,6 +3443,38 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::xdp::XdpContext where
 pub fn aya_ebpf::programs::xdp::XdpContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::from(t: T) -> T
+#[repr(C)] pub struct aya_ebpf::programs::hid_bpf_ctx
+pub aya_ebpf::programs::hid_bpf_ctx::allocated_size: u32
+pub aya_ebpf::programs::hid_bpf_ctx::hid: u64
+pub aya_ebpf::programs::hid_bpf_ctx::retval: i32
+impl core::marker::Freeze for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+impl core::marker::Send for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+impl core::marker::Sync for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+impl core::marker::Unpin for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::hid_bpf::hid_bpf_ctx where U: core::convert::From<T>
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::hid_bpf::hid_bpf_ctx where U: core::convert::Into<T>
+pub type aya_ebpf::programs::hid_bpf::hid_bpf_ctx::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::hid_bpf::hid_bpf_ctx where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::hid_bpf::hid_bpf_ctx::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::hid_bpf::hid_bpf_ctx where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::hid_bpf::hid_bpf_ctx where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::hid_bpf::hid_bpf_ctx where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::hid_bpf::hid_bpf_ctx
+pub fn aya_ebpf::programs::hid_bpf::hid_bpf_ctx::from(t: T) -> T
+pub const aya_ebpf::programs::BUS_BLUETOOTH: u16
+pub const aya_ebpf::programs::BUS_I2C: u16
+pub const aya_ebpf::programs::BUS_USB: u16
+pub const aya_ebpf::programs::HID_GROUP_ANY: u16
+pub const aya_ebpf::programs::HID_GROUP_GENERIC: u16
+pub const aya_ebpf::programs::HID_IGNORE_EVENT: i32
 pub macro aya_ebpf::bpf_printk!
 pub macro aya_ebpf::btf_map_def!
 pub const aya_ebpf::TASK_COMM_LEN: usize
@@ -3100,6 +3495,8 @@ impl aya_ebpf::EbpfContext for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::flow_dissector::FlowDissectorContext
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::hid_bpf::HidBpfContext
+pub fn aya_ebpf::programs::hid_bpf::HidBpfContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::perf_event::PerfEventContext

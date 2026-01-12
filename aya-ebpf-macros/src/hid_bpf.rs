@@ -22,10 +22,10 @@ pub(crate) enum HidBpfKind {
 impl HidBpfKind {
     fn section_name(&self) -> &'static str {
         match self {
-            HidBpfKind::DeviceEvent => "struct_ops/hid_device_event",
-            HidBpfKind::RdescFixup => "struct_ops/hid_rdesc_fixup",
-            HidBpfKind::HwRequest => "struct_ops/hid_hw_request",
-            HidBpfKind::HwOutputReport => "struct_ops/hid_hw_output_report",
+            Self::DeviceEvent => "struct_ops/hid_device_event",
+            Self::RdescFixup => "struct_ops/hid_rdesc_fixup",
+            Self::HwRequest => "struct_ops/hid_hw_request",
+            Self::HwOutputReport => "struct_ops/hid_hw_output_report",
         }
     }
 }
@@ -61,8 +61,7 @@ impl HidBpf {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::aya_ebpf::programs::hid_bpf::hid_bpf_ctx) -> i32 {
-                let _ = #fn_name(::aya_ebpf::programs::HidBpfContext::new(ctx));
-                return 0;
+                return #fn_name(unsafe { ::aya_ebpf::programs::HidBpfContext::new(ctx) });
 
                 #item
             }
@@ -93,8 +92,7 @@ mod tests {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "struct_ops/hid_device_event")]
             fn device_event(ctx: *mut ::aya_ebpf::programs::hid_bpf::hid_bpf_ctx) -> i32 {
-                let _ = device_event(::aya_ebpf::programs::HidBpfContext::new(ctx));
-                return 0;
+                return device_event(unsafe { ::aya_ebpf::programs::HidBpfContext::new(ctx) });
 
                 fn device_event(ctx: HidBpfContext) -> i32 {
                     0
@@ -121,8 +119,7 @@ mod tests {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "struct_ops/hid_rdesc_fixup")]
             fn rdesc_fixup(ctx: *mut ::aya_ebpf::programs::hid_bpf::hid_bpf_ctx) -> i32 {
-                let _ = rdesc_fixup(::aya_ebpf::programs::HidBpfContext::new(ctx));
-                return 0;
+                return rdesc_fixup(unsafe { ::aya_ebpf::programs::HidBpfContext::new(ctx) });
 
                 fn rdesc_fixup(ctx: HidBpfContext) -> i32 {
                     0
