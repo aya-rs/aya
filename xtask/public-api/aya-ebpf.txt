@@ -736,7 +736,7 @@ pub mod aya_ebpf::maps::sock_hash
 impl<K> aya_ebpf::maps::sock_hash::SockHash<K>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::pinned(max_entries: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_msg(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_msg::SkMsgContext>, key: impl core::borrow::BorrowMut<K>, flags: u64) -> i64
-pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_sk_lookup(&mut self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_lookup::SkLookupContext>, key: impl core::borrow::Borrow<K>, flags: u64) -> core::result::Result<(), u32>
+pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_sk_lookup(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_lookup::SkLookupContext>, key: impl core::borrow::Borrow<K>, flags: u64) -> core::result::Result<(), u32>
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_skb(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_buff::SkBuffContext>, key: impl core::borrow::BorrowMut<K>, flags: u64) -> i64
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::update(&self, key: impl core::borrow::BorrowMut<K>, sk_ops: impl core::borrow::BorrowMut<aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops>, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::with_max_entries(max_entries: u32, flags: u32) -> Self
@@ -767,7 +767,7 @@ pub mod aya_ebpf::maps::sock_map
 impl aya_ebpf::maps::sock_map::SockMap
 pub const fn aya_ebpf::maps::sock_map::SockMap::pinned(max_entries: u32, flags: u32) -> Self
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, index: u32, flags: u64) -> i64
-pub fn aya_ebpf::maps::sock_map::SockMap::redirect_sk_lookup(&mut self, ctx: &aya_ebpf::programs::sk_lookup::SkLookupContext, index: u32, flags: u64) -> core::result::Result<(), u32>
+pub fn aya_ebpf::maps::sock_map::SockMap::redirect_sk_lookup(&self, ctx: &aya_ebpf::programs::sk_lookup::SkLookupContext, index: u32, flags: u64) -> core::result::Result<(), u32>
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, ctx: &aya_ebpf::programs::sk_buff::SkBuffContext, index: u32, flags: u64) -> i64
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, index: u32, sk_ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::sock_map::SockMap::with_max_entries(max_entries: u32, flags: u32) -> Self
@@ -1432,7 +1432,7 @@ pub fn aya_ebpf::maps::ring_buf::RingBuf::from(t: T) -> T
 impl<K> aya_ebpf::maps::sock_hash::SockHash<K>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::pinned(max_entries: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_msg(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_msg::SkMsgContext>, key: impl core::borrow::BorrowMut<K>, flags: u64) -> i64
-pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_sk_lookup(&mut self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_lookup::SkLookupContext>, key: impl core::borrow::Borrow<K>, flags: u64) -> core::result::Result<(), u32>
+pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_sk_lookup(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_lookup::SkLookupContext>, key: impl core::borrow::Borrow<K>, flags: u64) -> core::result::Result<(), u32>
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_skb(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_buff::SkBuffContext>, key: impl core::borrow::BorrowMut<K>, flags: u64) -> i64
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::update(&self, key: impl core::borrow::BorrowMut<K>, sk_ops: impl core::borrow::BorrowMut<aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops>, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::with_max_entries(max_entries: u32, flags: u32) -> Self
@@ -1462,7 +1462,7 @@ pub fn aya_ebpf::maps::sock_hash::SockHash<K>::from(t: T) -> T
 impl aya_ebpf::maps::sock_map::SockMap
 pub const fn aya_ebpf::maps::sock_map::SockMap::pinned(max_entries: u32, flags: u32) -> Self
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, index: u32, flags: u64) -> i64
-pub fn aya_ebpf::maps::sock_map::SockMap::redirect_sk_lookup(&mut self, ctx: &aya_ebpf::programs::sk_lookup::SkLookupContext, index: u32, flags: u64) -> core::result::Result<(), u32>
+pub fn aya_ebpf::maps::sock_map::SockMap::redirect_sk_lookup(&self, ctx: &aya_ebpf::programs::sk_lookup::SkLookupContext, index: u32, flags: u64) -> core::result::Result<(), u32>
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, ctx: &aya_ebpf::programs::sk_buff::SkBuffContext, index: u32, flags: u64) -> i64
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, index: u32, sk_ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::sock_map::SockMap::with_max_entries(max_entries: u32, flags: u32) -> Self
