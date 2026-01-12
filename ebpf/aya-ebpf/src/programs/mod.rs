@@ -27,8 +27,9 @@ pub use fentry::FEntryContext;
 pub use fexit::FExitContext;
 pub use flow_dissector::FlowDissectorContext;
 pub use hid_bpf::{
-    hid_bpf_ctx, HidBpfContext, HidBpfProbeArgs, HidClassRequest, HidReportType, BUS_BLUETOOTH,
-    BUS_I2C, BUS_USB, HID_GROUP_ANY, HID_GROUP_GENERIC, HID_IGNORE_EVENT,
+    hid_bpf_ctx, AllocatedContext, HidBpfContext, HidBpfData, HidBpfProbeArgs, HidClassRequest,
+    HidReportType, BUS_BLUETOOTH, BUS_I2C, BUS_USB, HID_GROUP_ANY, HID_GROUP_GENERIC,
+    HID_IGNORE_EVENT,
 };
 pub use lsm::LsmContext;
 pub use perf_event::PerfEventContext;
