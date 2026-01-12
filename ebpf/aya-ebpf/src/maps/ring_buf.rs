@@ -6,6 +6,8 @@ use core::{
     ops::{Deref, DerefMut},
 };
 
+#[cfg(generic_const_exprs)]
+use crate::const_assert::{Assert, IsTrue};
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_RINGBUF},
     helpers::{
@@ -14,17 +16,6 @@ use crate::{
     },
     maps::PinningType,
 };
-
-#[cfg(generic_const_exprs)]
-mod const_assert {
-    pub struct Assert<const COND: bool> {}
-
-    pub trait IsTrue {}
-
-    impl IsTrue for Assert<true> {}
-}
-#[cfg(generic_const_exprs)]
-use const_assert::{Assert, IsTrue};
 
 #[repr(transparent)]
 pub struct RingBuf {
@@ -59,6 +50,12 @@ impl DerefMut for RingBufBytes<'_> {
 }
 
 impl RingBufBytes<'_> {
+    pub(crate) unsafe fn from_raw(ptr: *mut u8, size: usize) -> Option<Self> {
+        (!ptr.is_null())
+            .then(|| unsafe { core::slice::from_raw_parts_mut(ptr, size) })
+            .map(Self)
+    }
+
     /// Commit this ring buffer entry. The entry will be made visible to the userspace reader.
     pub fn submit(self, flags: u64) {
         let Self(inner) = self;
@@ -98,6 +95,10 @@ impl<T> DerefMut for RingBufEntry<T> {
 }
 
 impl<T> RingBufEntry<T> {
+    pub(crate) unsafe fn from_raw(ptr: *mut MaybeUninit<T>) -> Option<Self> {
+        unsafe { ptr.as_mut() }.map(Self)
+    }
+
     /// Discard this ring buffer entry. The entry will be skipped by the userspace reader.
     pub fn discard(self, flags: u64) {
         let Self(inner) = self;
@@ -152,10 +153,7 @@ impl RingBuf {
     pub fn reserve_bytes(&self, size: usize, flags: u64) -> Option<RingBufBytes<'_>> {
         let ptr =
             unsafe { bpf_ringbuf_reserve(self.def.get().cast(), size as u64, flags) }.cast::<u8>();
-        (!ptr.is_null()).then(|| {
-            let inner = unsafe { core::slice::from_raw_parts_mut(ptr, size) };
-            RingBufBytes(inner)
-        })
+        unsafe { RingBufBytes::from_raw(ptr, size) }
     }
 
     /// Reserve memory in the ring buffer that can fit `T`.
@@ -188,7 +186,7 @@ impl RingBuf {
             bpf_ringbuf_reserve(self.def.get().cast(), mem::size_of::<T>() as u64, flags)
         }
         .cast::<MaybeUninit<T>>();
-        unsafe { ptr.as_mut() }.map(|ptr| RingBufEntry(ptr))
+        unsafe { RingBufEntry::from_raw(ptr) }
     }
 
     /// Copy `data` to the ring buffer output.

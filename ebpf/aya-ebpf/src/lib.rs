@@ -25,6 +25,8 @@
 
 mod args;
 pub mod bindings;
+#[cfg(generic_const_exprs)]
+mod const_assert;
 pub use args::Argument;
 pub mod btf_maps;
 #[expect(clippy::missing_safety_doc)]
