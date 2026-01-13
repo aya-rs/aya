@@ -38,7 +38,7 @@
 
 // modules we don't export
 mod info;
-mod probe;
+pub(crate) mod probe;
 mod utils;
 
 // modules we explicitly export so their pub items (Links etc) get exported too
