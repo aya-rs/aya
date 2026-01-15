@@ -5,9 +5,9 @@ use std::{
 };
 
 use crate::{
-    maps::{check_kv_size, hash_map, MapData, MapError, MapFd},
-    sys::{bpf_map_get_fd_by_id, bpf_map_lookup_elem, SyscallError},
     Pod,
+    maps::{MapData, MapError, MapFd, check_kv_size, hash_map},
+    sys::{SyscallError, bpf_map_get_fd_by_id, bpf_map_lookup_elem},
 };
 
 /// An hashmap of eBPF Maps

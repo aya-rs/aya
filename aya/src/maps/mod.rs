@@ -1018,10 +1018,12 @@ mod test_utils {
                 max_entries: 1024,
                 ..Default::default()
             },
+            inner_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
             symbol_index: None,
+            initial_slots: std::collections::BTreeMap::new(),
         })
     }
 
@@ -1037,10 +1039,12 @@ mod test_utils {
                 max_entries,
                 ..Default::default()
             },
+            inner_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
             symbol_index: None,
+            initial_slots: std::collections::BTreeMap::new(),
         })
     }
 }

@@ -6,8 +6,8 @@ use std::{
 };
 
 use crate::{
-    maps::{check_bounds, check_kv_size, MapData, MapError, MapFd},
-    sys::{bpf_map_get_fd_by_id, bpf_map_lookup_elem, bpf_map_update_elem, SyscallError},
+    maps::{MapData, MapError, MapFd, check_bounds, check_kv_size},
+    sys::{SyscallError, bpf_map_get_fd_by_id, bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
 /// An array of eBPF Maps
