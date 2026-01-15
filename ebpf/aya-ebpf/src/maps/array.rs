@@ -5,7 +5,7 @@ use aya_ebpf_cty::c_long;
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_ARRAY},
     insert, lookup,
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
 };
 
 #[repr(transparent)]
@@ -15,6 +15,7 @@ pub struct Array<T> {
 }
 
 unsafe impl<T: Sync> Sync for Array<T> {}
+unsafe impl<T> InnerMap for Array<T> {}
 
 impl<T> Array<T> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {

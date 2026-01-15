@@ -936,10 +936,12 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
                 max_entries: 1,
                 ..Default::default()
             },
+            inner_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
             data: Vec::new(),
+            initial_slots: std::collections::BTreeMap::new(),
         }),
         "aya_global",
         None,

@@ -1,6 +1,6 @@
 //! Map struct and type bindings.
 
-use alloc::vec::Vec;
+use alloc::{collections::BTreeMap, vec::Vec};
 use core::mem;
 
 use crate::{EbpfSectionKind, InvalidTypeBinding};
@@ -247,6 +247,64 @@ impl Map {
             Self::Btf(m) => Some(m.symbol_index),
         }
     }
+
+    /// Sets the inner map definition, in case of a map of maps (legacy maps only)
+    pub fn set_legacy_inner(&mut self, inner_def: &Map) {
+        match self {
+            Map::Legacy(m) => {
+                if let Map::Legacy(inner_def) = inner_def {
+                    m.inner_def = Some(inner_def.def);
+                } else {
+                    panic!("inner map is not a legacy map");
+                }
+            }
+            Map::Btf(_) => panic!("inner map already set"),
+        }
+    }
+
+    /// Returns the inner map definition, in case of a map of maps
+    pub fn inner(&self) -> Option<Map> {
+        match self {
+            Map::Legacy(m) => m.inner_def.as_ref().map(|inner_def| {
+                Map::Legacy(LegacyMap {
+                    def: *inner_def,
+                    inner_def: None,
+                    section_index: m.section_index,
+                    section_kind: m.section_kind,
+                    symbol_index: m.symbol_index,
+                    data: Vec::new(),
+                    initial_slots: BTreeMap::new(),
+                })
+            }),
+            Map::Btf(m) => m.inner_def.as_ref().map(|inner_def| {
+                Map::Btf(BtfMap {
+                    def: inner_def.clone(),
+                    inner_def: None,
+                    section_index: m.section_index,
+                    symbol_index: m.symbol_index,
+                    data: Vec::new(),
+                    initial_slots: BTreeMap::new(),
+                })
+            }),
+        }
+    }
+
+    /// Places the file descriptor of an inner map into the initial slots of a
+    /// map-of-maps. The map is placed at the given index.
+    pub fn set_initial_map_fd(&mut self, index: usize, inner_map_fd: i32) -> bool {
+        match self {
+            Map::Legacy(m) => m.initial_slots.insert(index, inner_map_fd).is_none(),
+            Map::Btf(m) => m.initial_slots.insert(index, inner_map_fd).is_none(),
+        }
+    }
+
+    /// Returns the initial slots of a map-of-maps
+    pub fn initial_map_fds(&self) -> &BTreeMap<usize, i32> {
+        match self {
+            Map::Legacy(m) => &m.initial_slots,
+            Map::Btf(m) => &m.initial_slots,
+        }
+    }
 }
 
 /// A map declared with legacy BPF map declaration style, most likely from a `maps` section.
@@ -257,6 +315,8 @@ impl Map {
 pub struct LegacyMap {
     /// The definition of the map
     pub def: bpf_map_def,
+    /// The definition of the inner map, in case of a map of maps
+    pub inner_def: Option<bpf_map_def>,
     /// The section index
     pub section_index: usize,
     /// The section kind
@@ -269,6 +329,8 @@ pub struct LegacyMap {
     pub symbol_index: Option<usize>,
     /// The map data
     pub data: Vec<u8>,
+    /// Initial slots for map-of-maps (index -> inner map fd)
+    pub initial_slots: BTreeMap<usize, i32>,
 }
 
 /// A BTF-defined map, most likely from a `.maps` section.
@@ -276,7 +338,11 @@ pub struct LegacyMap {
 pub struct BtfMap {
     /// The definition of the map
     pub def: BtfMapDef,
+    /// The definition of the inner map, in case of a map of maps
+    pub inner_def: Option<BtfMapDef>,
     pub(crate) section_index: usize,
     pub(crate) symbol_index: usize,
     pub(crate) data: Vec<u8>,
+    /// Initial slots for map-of-maps (index -> inner map fd)
+    pub initial_slots: BTreeMap<usize, i32>,
 }

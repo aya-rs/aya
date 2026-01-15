@@ -77,6 +77,7 @@ pub mod bloom_filter;
 pub mod hash_map;
 mod info;
 pub mod lpm_trie;
+pub mod of_maps;
 pub mod perf;
 pub mod queue;
 pub mod ring_buf;
@@ -91,6 +92,7 @@ pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use info::{MapInfo, MapType, loaded_maps};
 pub use lpm_trie::LpmTrie;
+pub use of_maps::{Array as ArrayOfMaps, HashMap as HashMapOfMaps};
 pub use perf::PerfEventArray;
 pub use queue::Queue;
 pub use ring_buf::RingBuf;
@@ -103,6 +105,10 @@ pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
 #[derive(Error, Debug)]
 /// Errors occuring from working with Maps
 pub enum MapError {
+    /// A map error
+    #[error("{0}")]
+    Error(String),
+
     /// Invalid map type encontered
     #[error("invalid map type {map_type}")]
     InvalidMapType {
@@ -237,6 +243,8 @@ impl AsFd for MapFd {
 pub enum Map {
     /// An [`Array`] map.
     Array(MapData),
+    /// An [`ArrayOfMaps`] map.
+    ArrayOfMaps(MapData),
     /// A [`BloomFilter`] map.
     BloomFilter(MapData),
     /// A [`CpuMap`] map.
@@ -247,6 +255,8 @@ pub enum Map {
     DevMapHash(MapData),
     /// A [`HashMap`] map.
     HashMap(MapData),
+    /// A [`HashMapOfMaps`] map.
+    HashOfMaps(MapData),
     /// A [`LpmTrie`] map.
     LpmTrie(MapData),
     /// A [`HashMap`] map that uses a LRU eviction policy.
@@ -286,11 +296,13 @@ impl Map {
     fn map_type(&self) -> u32 {
         match self {
             Self::Array(map) => map.obj.map_type(),
+            Self::ArrayOfMaps(map) => map.obj.map_type(),
             Self::BloomFilter(map) => map.obj.map_type(),
             Self::CpuMap(map) => map.obj.map_type(),
             Self::DevMap(map) => map.obj.map_type(),
             Self::DevMapHash(map) => map.obj.map_type(),
             Self::HashMap(map) => map.obj.map_type(),
+            Self::HashOfMaps(map) => map.obj.map_type(),
             Self::LpmTrie(map) => map.obj.map_type(),
             Self::LruHashMap(map) => map.obj.map_type(),
             Self::PerCpuArray(map) => map.obj.map_type(),
@@ -317,11 +329,13 @@ impl Map {
     pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
         match self {
             Self::Array(map) => map.pin(path),
+            Self::ArrayOfMaps(map) => map.pin(path),
             Self::BloomFilter(map) => map.pin(path),
             Self::CpuMap(map) => map.pin(path),
             Self::DevMap(map) => map.pin(path),
             Self::DevMapHash(map) => map.pin(path),
             Self::HashMap(map) => map.pin(path),
+            Self::HashOfMaps(map) => map.pin(path),
             Self::LpmTrie(map) => map.pin(path),
             Self::LruHashMap(map) => map.pin(path),
             Self::PerCpuArray(map) => map.pin(path),
@@ -375,8 +389,8 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_RINGBUF => Self::RingBuf(map_data),
             bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER => Self::BloomFilter(map_data),
             bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY => Self::Unsupported(map_data),
-            bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Self::Unsupported(map_data),
-            bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Self::ArrayOfMaps(map_data),
+            bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Self::HashOfMaps(map_data),
             bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Self::SkStorage(map_data),
@@ -423,6 +437,7 @@ macro_rules! impl_map_pin {
 }
 
 impl_map_pin!(() {
+    ArrayOfMaps,
     ProgramArray,
     SockMap,
     StackTraceMap,
@@ -440,6 +455,10 @@ impl_map_pin!((V) {
     Queue,
     SkStorage,
     Stack,
+});
+
+impl_map_pin!((K) {
+    HashMapOfMaps,
 });
 
 impl_map_pin!((K, V) {
@@ -500,6 +519,7 @@ macro_rules! impl_try_from_map {
 }
 
 impl_try_from_map!(() {
+    ArrayOfMaps,
     CpuMap,
     DevMap,
     DevMapHash,
@@ -519,6 +539,10 @@ impl_try_from_map!((V) {
     SockHash,
     SkStorage,
     Stack,
+});
+
+impl_try_from_map!((K) {
+    HashMapOfMaps from HashOfMaps,
 });
 
 impl_try_from_map!((K, V) {

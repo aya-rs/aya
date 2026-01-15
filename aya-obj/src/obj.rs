@@ -775,9 +775,11 @@ impl Object {
                             map_name,
                             Map::Btf(BtfMap {
                                 def,
+                                inner_def: None,
                                 section_index: section.index.0,
                                 symbol_index: *symbol_index,
                                 data: Vec::new(),
+                                initial_slots: BTreeMap::new(),
                             }),
                         );
                     }
@@ -817,7 +819,9 @@ impl Object {
                     section_kind: section.kind,
                     symbol_index: Some(sym.index),
                     def,
+                    inner_def: None,
                     data: Vec::new(),
+                    initial_slots: BTreeMap::new(),
                 }),
             );
             have_symbols = true;
@@ -1222,7 +1226,9 @@ fn parse_data_map_section(section: &Section<'_>) -> Result<Map, ParseError> {
         // Data maps don't require symbols to be relocated
         symbol_index: None,
         def,
+        inner_def: None,
         data,
+        initial_slots: BTreeMap::new(),
     }))
 }
 
@@ -1379,9 +1385,11 @@ pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
                 btf_key_type_id: info.btf_key_type_id,
                 btf_value_type_id: info.btf_value_type_id,
             },
+            inner_def: None,
             section_index: 0,
             symbol_index: 0,
             data: Vec::new(),
+            initial_slots: BTreeMap::new(),
         })
     } else {
         Map::Legacy(LegacyMap {
@@ -1394,10 +1402,12 @@ pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
                 pinning: pinned,
                 id: info.id,
             },
+            inner_def: None,
             section_index: 0,
             symbol_index: None,
             section_kind: EbpfSectionKind::Undefined,
             data: Vec::new(),
+            initial_slots: BTreeMap::new(),
         })
     }
 }
