@@ -1,9 +1,9 @@
-use std::{convert::TryInto as _, fs::remove_file, path::Path, thread, time::Duration};
+use std::{convert::TryInto as _, fs::remove_file, path::Path, ptr, thread, time::Duration};
 
 use assert_matches::assert_matches;
 use aya::{
     Ebpf,
-    maps::Array,
+    maps::{Array, RingBuf},
     pin::PinError,
     programs::{
         FlowDissector, KProbe, ProbeKind, Program, ProgramError, TracePoint, UProbe, Xdp, XdpFlags,
@@ -43,6 +43,31 @@ fn memmove() {
     let mut bpf = Ebpf::load(crate::MEMMOVE_TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut("do_dnat").unwrap().try_into().unwrap();
     prog.load().unwrap();
+}
+
+#[test_log::test]
+fn ringbuffer_btf_map() {
+    let mut bpf = Ebpf::load(crate::RINGBUF_BTF).unwrap();
+    let ring_buf = bpf.take_map("events").unwrap();
+    let mut ring_buf = RingBuf::try_from(ring_buf).unwrap();
+
+    let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+    prog.attach("trigger_bpf_program", "/proc/self/exe", None)
+        .unwrap();
+
+    trigger_bpf_program();
+
+    #[repr(C)]
+    struct Event {
+        pid: u32,
+        comm: [u8; 16],
+    }
+
+    let item = ring_buf.next().unwrap();
+    let event = unsafe { ptr::read_unaligned(item.as_ptr() as *const Event) };
+    assert_ne!(event.pid, 0);
+    assert!(!event.comm.is_empty());
 }
 
 #[test_log::test]
