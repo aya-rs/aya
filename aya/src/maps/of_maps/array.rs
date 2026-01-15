@@ -2,7 +2,7 @@
 
 use std::{
     borrow::{Borrow, BorrowMut},
-    os::fd::{AsFd as _, AsRawFd},
+    os::fd::{AsFd as _, AsRawFd as _},
 };
 
 use crate::{
@@ -34,6 +34,11 @@ impl<T: Borrow<MapData>> Array<T> {
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
     pub fn len(&self) -> u32 {
         self.inner.borrow().obj.max_entries()
+    }
+
+    /// Returns true if the array is empty.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     /// Returns the value stored at the given index.

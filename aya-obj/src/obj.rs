@@ -1663,6 +1663,7 @@ mod tests {
                     pinning: PinningType::None,
                 },
                 data,
+                ..
             })) if data == map_data && value_size == map_data.len() as u32
         )
     }
@@ -2660,10 +2661,12 @@ mod tests {
                     id: 1,
                     pinning: PinningType::None,
                 },
+                inner_def: None,
                 section_index: 1,
                 section_kind: EbpfSectionKind::Rodata,
                 symbol_index: Some(1),
                 data: vec![0, 0, 0],
+                initial_slots: BTreeMap::new(),
             }),
         );
         obj.symbol_table.insert(

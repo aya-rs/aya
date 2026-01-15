@@ -249,24 +249,24 @@ impl Map {
     }
 
     /// Sets the inner map definition, in case of a map of maps (legacy maps only)
-    pub fn set_legacy_inner(&mut self, inner_def: &Map) {
+    pub fn set_legacy_inner(&mut self, inner_def: &Self) {
         match self {
-            Map::Legacy(m) => {
-                if let Map::Legacy(inner_def) = inner_def {
+            Self::Legacy(m) => {
+                if let Self::Legacy(inner_def) = inner_def {
                     m.inner_def = Some(inner_def.def);
                 } else {
                     panic!("inner map is not a legacy map");
                 }
             }
-            Map::Btf(_) => panic!("inner map already set"),
+            Self::Btf(_) => panic!("inner map already set"),
         }
     }
 
     /// Returns the inner map definition, in case of a map of maps
-    pub fn inner(&self) -> Option<Map> {
+    pub fn inner(&self) -> Option<Self> {
         match self {
-            Map::Legacy(m) => m.inner_def.as_ref().map(|inner_def| {
-                Map::Legacy(LegacyMap {
+            Self::Legacy(m) => m.inner_def.as_ref().map(|inner_def| {
+                Self::Legacy(LegacyMap {
                     def: *inner_def,
                     inner_def: None,
                     section_index: m.section_index,
@@ -276,9 +276,9 @@ impl Map {
                     initial_slots: BTreeMap::new(),
                 })
             }),
-            Map::Btf(m) => m.inner_def.as_ref().map(|inner_def| {
-                Map::Btf(BtfMap {
-                    def: inner_def.clone(),
+            Self::Btf(m) => m.inner_def.as_ref().map(|inner_def| {
+                Self::Btf(BtfMap {
+                    def: *inner_def,
                     inner_def: None,
                     section_index: m.section_index,
                     symbol_index: m.symbol_index,
@@ -293,16 +293,16 @@ impl Map {
     /// map-of-maps. The map is placed at the given index.
     pub fn set_initial_map_fd(&mut self, index: usize, inner_map_fd: i32) -> bool {
         match self {
-            Map::Legacy(m) => m.initial_slots.insert(index, inner_map_fd).is_none(),
-            Map::Btf(m) => m.initial_slots.insert(index, inner_map_fd).is_none(),
+            Self::Legacy(m) => m.initial_slots.insert(index, inner_map_fd).is_none(),
+            Self::Btf(m) => m.initial_slots.insert(index, inner_map_fd).is_none(),
         }
     }
 
     /// Returns the initial slots of a map-of-maps
     pub fn initial_map_fds(&self) -> &BTreeMap<usize, i32> {
         match self {
-            Map::Legacy(m) => &m.initial_slots,
-            Map::Btf(m) => &m.initial_slots,
+            Self::Legacy(m) => &m.initial_slots,
+            Self::Btf(m) => &m.initial_slots,
         }
     }
 }
