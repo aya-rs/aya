@@ -641,25 +641,30 @@ impl<'a> EbpfLoader<'a> {
         }
 
         // Then, create map-of-maps with appropriate inner_map_fd
-        for (name, obj) in maps_of_maps {
-            let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
-            let inner_map = find_inner_map_for(map_type, &maps);
+        for (name, map_obj) in maps_of_maps {
+            let map_type: bpf_map_type = map_obj.map_type().try_into().map_err(MapError::from)?;
+            // First check for explicit inner map binding, then fall back to heuristic
+            let inner_map = if let Some(inner_name) = obj.inner_map_bindings.get(&name) {
+                maps.get(inner_name)
+            } else {
+                find_inner_map_for(map_type, &maps)
+            };
             let inner_map_fd = inner_map.map(|m| m.fd().as_fd());
 
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
             let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
-                MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd, inner_map_fd)?
+                MapData::create_pinned_by_name(pin_path, map_obj, &name, btf_fd, inner_map_fd)?
             } else {
-                match obj.pinning() {
+                match map_obj.pinning() {
                     PinningType::None => {
-                        MapData::create_with_inner_map_fd(obj, &name, btf_fd, inner_map_fd)?
+                        MapData::create_with_inner_map_fd(map_obj, &name, btf_fd, inner_map_fd)?
                     }
                     PinningType::ByName => {
                         let path = default_map_pin_directory
                             .as_deref()
                             .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
                         let path = path.join(&name);
-                        MapData::create_pinned_by_name(path, obj, &name, btf_fd, inner_map_fd)?
+                        MapData::create_pinned_by_name(path, map_obj, &name, btf_fd, inner_map_fd)?
                     }
                 }
             };
