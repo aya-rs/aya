@@ -17,8 +17,8 @@ pub struct ArrayOfMaps<T: InnerMap> {
 unsafe impl<T: InnerMap> Sync for ArrayOfMaps<T> {}
 
 impl<T: InnerMap> ArrayOfMaps<T> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> ArrayOfMaps<T> {
-        ArrayOfMaps {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_ARRAY_OF_MAPS,
                 key_size: mem::size_of::<u32>() as u32,
@@ -32,8 +32,8 @@ impl<T: InnerMap> ArrayOfMaps<T> {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> ArrayOfMaps<T> {
-        ArrayOfMaps {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_ARRAY_OF_MAPS,
                 key_size: mem::size_of::<u32>() as u32,
@@ -57,10 +57,10 @@ impl<T: InnerMap> ArrayOfMaps<T> {
     unsafe fn lookup(&self, index: u32) -> Option<NonNull<T>> {
         let ptr = unsafe {
             bpf_map_lookup_elem(
-                self.def.get() as *mut _,
-                &index as *const _ as *const c_void,
+                self.def.get().cast(),
+                core::ptr::from_ref(&index).cast::<c_void>(),
             )
         };
-        NonNull::new(ptr as *mut T)
+        NonNull::new(ptr.cast::<T>())
     }
 }

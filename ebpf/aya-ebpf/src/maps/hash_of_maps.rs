@@ -16,8 +16,8 @@ pub struct HashOfMaps<K, V> {
 }
 
 impl<K, V: InnerMap> HashOfMaps<K, V> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> HashOfMaps<K, V> {
-        HashOfMaps {
+    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_HASH_OF_MAPS,
                 key_size: mem::size_of::<K>() as u32,
@@ -32,8 +32,8 @@ impl<K, V: InnerMap> HashOfMaps<K, V> {
         }
     }
 
-    pub const fn pinned(max_entries: u32, flags: u32) -> HashOfMaps<K, V> {
-        HashOfMaps {
+    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+        Self {
             def: UnsafeCell::new(bpf_map_def {
                 type_: BPF_MAP_TYPE_HASH_OF_MAPS,
                 key_size: mem::size_of::<K>() as u32,
@@ -49,6 +49,9 @@ impl<K, V: InnerMap> HashOfMaps<K, V> {
     }
 
     /// Retrieve the value associate with `key` from the map.
+    ///
+    /// # Safety
+    ///
     /// This function is unsafe. Unless the map flag `BPF_F_NO_PREALLOC` is used, the kernel does not
     /// make guarantee on the atomicity of `insert` or `remove`, and any element removed from the
     /// map might get aliased by another element in the map, causing garbage to be read, or
@@ -56,9 +59,12 @@ impl<K, V: InnerMap> HashOfMaps<K, V> {
     #[inline]
     pub unsafe fn get(&self, key: &K) -> Option<NonNull<u32>> {
         let value = unsafe {
-            bpf_map_lookup_elem(self.def.get() as *mut _, key as *const _ as *const c_void)
+            bpf_map_lookup_elem(
+                self.def.get().cast(),
+                core::ptr::from_ref(key).cast::<c_void>(),
+            )
         };
         // FIXME: alignment
-        NonNull::new(value as *mut _)
+        NonNull::new(value.cast())
     }
 }
