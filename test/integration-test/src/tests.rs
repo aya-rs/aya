@@ -12,6 +12,7 @@ mod lsm;
 mod map_pin;
 mod maps_disjoint;
 mod perf_event_bp;
+mod prog_array;
 mod raw_tracepoint;
 mod rbpf;
 mod relocations;
