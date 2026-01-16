@@ -10,8 +10,8 @@ use aya_ebpf::{
 #[cfg(not(test))]
 extern crate ebpf_panic;
 
-// ArrayOfMaps test maps
-#[map]
+// ArrayOfMaps test maps - explicitly bind to INNER_ARRAY_1 as template
+#[map(inner = "INNER_ARRAY_1")]
 static ARRAY_OF_MAPS: ArrayOfMaps<Array<u32>> = ArrayOfMaps::with_max_entries(2, 0);
 
 #[map]
@@ -20,8 +20,8 @@ static INNER_ARRAY_1: Array<u32> = Array::with_max_entries(10, 0);
 #[map]
 static INNER_ARRAY_2: Array<u32> = Array::with_max_entries(10, 0);
 
-// HashOfMaps test maps
-#[map]
+// HashOfMaps test maps - explicitly bind to INNER_HASH_1 as template
+#[map(inner = "INNER_HASH_1")]
 static HASH_OF_MAPS: HashOfMaps<u32, HashMap<u32, u32>> = HashOfMaps::with_max_entries(2, 0);
 
 #[map]
