@@ -2,6 +2,7 @@
 
 use std::{
     borrow::{Borrow, BorrowMut},
+    marker::PhantomData,
     os::fd::{AsFd as _, AsRawFd as _},
 };
 
@@ -74,6 +75,48 @@ impl<T: Borrow<MapData>> Array<T> {
             Err(MapError::KeyNotFound)
         }
     }
+
+    /// An iterator over the elements of the array. The iterator item type is
+    /// `Result<(u32, Array<MapData, V>), MapError>`.
+    pub fn iter<V: Pod>(&self) -> ArrayOfMapsIter<'_, T, V> {
+        ArrayOfMapsIter::new(self)
+    }
+}
+
+/// Iterator over an ArrayOfMaps.
+pub struct ArrayOfMapsIter<'coll, T, V: Pod> {
+    map: &'coll Array<T>,
+    index: u32,
+    len: u32,
+    _v: PhantomData<V>,
+}
+
+impl<'coll, T: Borrow<MapData>, V: Pod> ArrayOfMapsIter<'coll, T, V> {
+    fn new(map: &'coll Array<T>) -> Self {
+        Self {
+            map,
+            index: 0,
+            len: map.len(),
+            _v: PhantomData,
+        }
+    }
+}
+
+impl<T: Borrow<MapData>, V: Pod> Iterator for ArrayOfMapsIter<'_, T, V> {
+    type Item = Result<(u32, crate::maps::Array<MapData, V>), MapError>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.index < self.len {
+            let index = self.index;
+            self.index += 1;
+            match self.map.get::<V>(&index, 0) {
+                Ok(inner_map) => return Some(Ok((index, inner_map))),
+                Err(MapError::KeyNotFound) => continue,
+                Err(e) => return Some(Err(e)),
+            }
+        }
+        None
+    }
 }
 impl<T: BorrowMut<MapData>> Array<T> {
     /// Sets the value of the element at the given index.
@@ -93,5 +136,17 @@ impl<T: BorrowMut<MapData>> Array<T> {
             },
         )?;
         Ok(())
+    }
+}
+
+impl Array<MapData> {
+    /// Returns a reference to the underlying [`MapData`].
+    pub fn map_data(&self) -> &MapData {
+        &self.inner
+    }
+
+    /// Returns a file descriptor reference to the underlying map.
+    pub fn fd(&self) -> &MapFd {
+        self.inner.fd()
     }
 }
