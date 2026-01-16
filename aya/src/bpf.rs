@@ -20,7 +20,7 @@ use log::{debug, warn};
 use thiserror::Error;
 
 use crate::{
-    maps::{Map, MapData, MapError},
+    maps::{Map, MapData, MapError, ProgramArray},
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe,
@@ -126,6 +126,9 @@ pub struct EbpfLoader<'a> {
     // Map pin path overrides the pin path of the map that matches the provided name before
     // it is created.
     map_pin_path_by_name: HashMap<&'a str, std::borrow::Cow<'a, Path>>,
+    // Prog array entries: map_name -> Vec<(program_name, index)>
+    // These will be populated after programs are loaded.
+    prog_array_entries: HashMap<&'a str, Vec<(&'a str, u32)>>,
 
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
@@ -166,6 +169,7 @@ impl<'a> EbpfLoader<'a> {
             globals: HashMap::new(),
             max_entries: HashMap::new(),
             map_pin_path_by_name: HashMap::new(),
+            prog_array_entries: HashMap::new(),
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
             allow_unsupported_maps: false,
@@ -215,6 +219,42 @@ impl<'a> EbpfLoader<'a> {
     ///
     pub fn allow_unsupported_maps(&mut self) -> &mut Self {
         self.allow_unsupported_maps = true;
+        self
+    }
+
+    /// Specifies that a program should be inserted into a [`ProgramArray`](crate::maps::ProgramArray) at a given index.
+    ///
+    /// This allows you to set up tail call jump tables declaratively. After loading all the
+    /// programs, call [`Ebpf::populate_prog_arrays`] to populate the program arrays with the
+    /// loaded program file descriptors.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::EbpfLoader;
+    ///
+    /// let mut ebpf = EbpfLoader::new()
+    ///     .set_prog_array_entry("JUMP_TABLE", 0, "prog_0")
+    ///     .set_prog_array_entry("JUMP_TABLE", 1, "prog_1")
+    ///     .load_file("file.o")?;
+    ///
+    /// // Load the programs
+    /// // ...
+    ///
+    /// // Populate the program arrays with loaded program FDs
+    /// ebpf.populate_prog_arrays()?;
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    pub fn set_prog_array_entry(
+        &mut self,
+        map_name: &'a str,
+        index: u32,
+        program_name: &'a str,
+    ) -> &mut Self {
+        self.prog_array_entries
+            .entry(map_name)
+            .or_default()
+            .push((program_name, index));
         self
     }
 
@@ -440,6 +480,7 @@ impl<'a> EbpfLoader<'a> {
             verifier_log_level,
             allow_unsupported_maps,
             map_pin_path_by_name,
+            prog_array_entries,
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
@@ -760,7 +801,23 @@ impl<'a> EbpfLoader<'a> {
             .map(|data| parse_map(data, *allow_unsupported_maps))
             .collect::<Result<HashMap<String, Map>, EbpfError>>()?;
 
-        Ok(Ebpf { maps, programs })
+        // Convert prog_array_entries to owned strings
+        let prog_array_entries = prog_array_entries
+            .drain()
+            .map(|(map_name, entries)| {
+                let entries = entries
+                    .into_iter()
+                    .map(|(prog_name, index)| (prog_name.to_string(), index))
+                    .collect();
+                (map_name.to_string(), entries)
+            })
+            .collect();
+
+        Ok(Ebpf {
+            maps,
+            programs,
+            prog_array_entries,
+        })
     }
 }
 
@@ -926,6 +983,8 @@ impl Default for EbpfLoader<'_> {
 pub struct Ebpf {
     maps: HashMap<String, Map>,
     programs: HashMap<String, Program>,
+    /// Prog array entries to be populated: map_name -> Vec<(program_name, index)>
+    prog_array_entries: HashMap<String, Vec<(String, u32)>>,
 }
 
 /// The main entry point into the library, used to work with eBPF programs and maps.
@@ -1171,6 +1230,83 @@ impl Ebpf {
     pub fn programs_mut(&mut self) -> impl Iterator<Item = (&str, &mut Program)> {
         self.programs.iter_mut().map(|(s, p)| (s.as_str(), p))
     }
+
+    /// Populates program arrays with loaded program file descriptors.
+    ///
+    /// This method sets up tail call jump tables by populating program arrays with the
+    /// file descriptors of loaded programs. The entries to populate are specified using
+    /// [`EbpfLoader::set_prog_array_entry`] during loading.
+    ///
+    /// This method should be called after all required programs have been loaded.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - A specified map is not found
+    /// - A specified map is not a program array
+    /// - A specified program is not found
+    /// - A specified program has not been loaded yet
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::EbpfLoader;
+    ///
+    /// let mut ebpf = EbpfLoader::new()
+    ///     .set_prog_array_entry("JUMP_TABLE", 0, "prog_0")
+    ///     .set_prog_array_entry("JUMP_TABLE", 1, "prog_1")
+    ///     .load_file("file.o")?;
+    ///
+    /// // Load the programs first
+    /// // ...
+    ///
+    /// // Then populate the program arrays
+    /// ebpf.populate_prog_arrays()?;
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    pub fn populate_prog_arrays(&mut self) -> Result<(), EbpfError> {
+        // Take ownership of entries to avoid borrow conflicts
+        let entries = std::mem::take(&mut self.prog_array_entries);
+
+        for (map_name, prog_entries) in entries {
+            let map = self.maps.get_mut(&map_name).ok_or_else(|| {
+                EbpfError::ProgArrayPopulateError {
+                    message: format!("map '{}' not found", map_name),
+                }
+            })?;
+
+            let mut prog_array: ProgramArray<&mut MapData> =
+                map.try_into().map_err(|e: MapError| EbpfError::ProgArrayPopulateError {
+                    message: format!("map '{}' is not a program array: {}", map_name, e),
+                })?;
+
+            for (prog_name, index) in prog_entries {
+                let program = self.programs.get(&prog_name).ok_or_else(|| {
+                    EbpfError::ProgArrayPopulateError {
+                        message: format!("program '{}' not found", prog_name),
+                    }
+                })?;
+
+                let fd = program.fd().map_err(|e| EbpfError::ProgArrayPopulateError {
+                    message: format!(
+                        "program '{}' has not been loaded yet: {}",
+                        prog_name, e
+                    ),
+                })?;
+
+                prog_array
+                    .set(index, fd, 0)
+                    .map_err(|e| EbpfError::ProgArrayPopulateError {
+                        message: format!(
+                            "failed to set program '{}' at index {} in map '{}': {}",
+                            prog_name, index, map_name, e
+                        ),
+                    })?;
+            }
+        }
+
+        Ok(())
+    }
 }
 
 /// The error type returned by [`Ebpf::load_file`] and [`Ebpf::load`].
@@ -1220,6 +1356,13 @@ pub enum EbpfError {
     #[error("program error: {0}")]
     /// A program error
     ProgramError(#[from] ProgramError),
+
+    /// Error populating program arrays
+    #[error("error populating program array: {message}")]
+    ProgArrayPopulateError {
+        /// Description of what went wrong
+        message: String,
+    },
 }
 
 /// The error type returned by [`Bpf::load_file`] and [`Bpf::load`].

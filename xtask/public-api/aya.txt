@@ -10981,6 +10981,8 @@ pub aya::EbpfError::FileError::path: std::path::PathBuf
 pub aya::EbpfError::MapError(aya::maps::MapError)
 pub aya::EbpfError::NoBTF
 pub aya::EbpfError::ParseError(aya_obj::obj::ParseError)
+pub aya::EbpfError::ProgArrayPopulateError
+pub aya::EbpfError::ProgArrayPopulateError::message: alloc::string::String
 pub aya::EbpfError::ProgramError(aya::programs::ProgramError)
 pub aya::EbpfError::RelocationError(aya_obj::relocation::EbpfRelocationError)
 pub aya::EbpfError::UnexpectedPinningType
@@ -11036,6 +11038,7 @@ pub fn aya::Ebpf::map_mut(&mut self, name: &str) -> core::option::Option<&mut ay
 pub fn aya::Ebpf::maps(&self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &aya::maps::Map)>
 pub fn aya::Ebpf::maps_disjoint_mut<const N: usize>(&mut self, names: [&str; N]) -> [core::option::Option<&mut aya::maps::Map>; N]
 pub fn aya::Ebpf::maps_mut(&mut self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &mut aya::maps::Map)>
+pub fn aya::Ebpf::populate_prog_arrays(&mut self) -> core::result::Result<(), aya::EbpfError>
 pub fn aya::Ebpf::program(&self, name: &str) -> core::option::Option<&aya::programs::Program>
 pub fn aya::Ebpf::program_mut(&mut self, name: &str) -> core::option::Option<&mut aya::programs::Program>
 pub fn aya::Ebpf::programs(&self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &aya::programs::Program)>
@@ -11079,6 +11082,7 @@ pub fn aya::EbpfLoader<'a>::new() -> Self
 pub fn aya::EbpfLoader<'a>::override_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T, must_exist: bool) -> &mut Self
 pub fn aya::EbpfLoader<'a>::set_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T, must_exist: bool) -> &mut Self
 pub fn aya::EbpfLoader<'a>::set_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self
+pub fn aya::EbpfLoader<'a>::set_prog_array_entry(&mut self, map_name: &'a str, index: u32, program_name: &'a str) -> &mut Self
 pub fn aya::EbpfLoader<'a>::verifier_log_level(&mut self, level: aya::VerifierLogLevel) -> &mut Self
 impl core::default::Default for aya::EbpfLoader<'_>
 pub fn aya::EbpfLoader<'_>::default() -> Self
