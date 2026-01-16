@@ -9835,6 +9835,7 @@ impl<T> core::convert::From<T> for aya::programs::perf_event::PerfEvent
 pub fn aya::programs::perf_event::PerfEvent::from(t: T) -> T
 pub struct aya::programs::ProgramFd(_)
 impl aya::programs::ProgramFd
+pub fn aya::programs::ProgramFd::test_run(&self, opts: &mut aya::programs::TestRunOptions<'_>) -> core::result::Result<aya::programs::TestRunResult, aya::sys::SyscallError>
 pub fn aya::programs::ProgramFd::try_clone(&self) -> std::io::error::Result<Self>
 impl core::fmt::Debug for aya::programs::ProgramFd
 pub fn aya::programs::ProgramFd::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -10302,6 +10303,70 @@ impl<T> core::borrow::BorrowMut<T> for aya::programs::socket_filter::SocketFilte
 pub fn aya::programs::socket_filter::SocketFilter::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::from(t: T) -> T
+pub struct aya::programs::TestRunOptions<'a>
+pub aya::programs::TestRunOptions::batch_size: u32
+pub aya::programs::TestRunOptions::cpu: u32
+pub aya::programs::TestRunOptions::ctx_in: core::option::Option<&'a [u8]>
+pub aya::programs::TestRunOptions::ctx_out: core::option::Option<&'a mut [u8]>
+pub aya::programs::TestRunOptions::data_in: core::option::Option<&'a [u8]>
+pub aya::programs::TestRunOptions::data_out: core::option::Option<&'a mut [u8]>
+pub aya::programs::TestRunOptions::flags: u32
+pub aya::programs::TestRunOptions::repeat: u32
+impl<'a> core::default::Default for aya::programs::TestRunOptions<'a>
+pub fn aya::programs::TestRunOptions<'a>::default() -> aya::programs::TestRunOptions<'a>
+impl<'a> core::fmt::Debug for aya::programs::TestRunOptions<'a>
+pub fn aya::programs::TestRunOptions<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Freeze for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::Send for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::Sync for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::Unpin for aya::programs::TestRunOptions<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::TestRunOptions<'a>
+impl<'a> !core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunOptions<'a>
+impl<T, U> core::convert::Into<U> for aya::programs::TestRunOptions<'a> where U: core::convert::From<T>
+pub fn aya::programs::TestRunOptions<'a>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::TestRunOptions<'a> where U: core::convert::Into<T>
+pub type aya::programs::TestRunOptions<'a>::Error = core::convert::Infallible
+pub fn aya::programs::TestRunOptions<'a>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::TestRunOptions<'a> where U: core::convert::TryFrom<T>
+pub type aya::programs::TestRunOptions<'a>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::TestRunOptions<'a>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::TestRunOptions<'a> where T: 'static + ?core::marker::Sized
+pub fn aya::programs::TestRunOptions<'a>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::TestRunOptions<'a> where T: ?core::marker::Sized
+pub fn aya::programs::TestRunOptions<'a>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::TestRunOptions<'a> where T: ?core::marker::Sized
+pub fn aya::programs::TestRunOptions<'a>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::TestRunOptions<'a>
+pub fn aya::programs::TestRunOptions<'a>::from(t: T) -> T
+pub struct aya::programs::TestRunResult
+pub aya::programs::TestRunResult::ctx_size_out: u32
+pub aya::programs::TestRunResult::data_size_out: u32
+pub aya::programs::TestRunResult::duration: u32
+pub aya::programs::TestRunResult::return_value: u32
+impl core::fmt::Debug for aya::programs::TestRunResult
+pub fn aya::programs::TestRunResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::TestRunResult
+impl core::marker::Send for aya::programs::TestRunResult
+impl core::marker::Sync for aya::programs::TestRunResult
+impl core::marker::Unpin for aya::programs::TestRunResult
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::TestRunResult
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunResult
+impl<T, U> core::convert::Into<U> for aya::programs::TestRunResult where U: core::convert::From<T>
+pub fn aya::programs::TestRunResult::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::TestRunResult where U: core::convert::Into<T>
+pub type aya::programs::TestRunResult::Error = core::convert::Infallible
+pub fn aya::programs::TestRunResult::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::TestRunResult where U: core::convert::TryFrom<T>
+pub type aya::programs::TestRunResult::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::TestRunResult::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::TestRunResult where T: 'static + ?core::marker::Sized
+pub fn aya::programs::TestRunResult::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::TestRunResult where T: ?core::marker::Sized
+pub fn aya::programs::TestRunResult::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::TestRunResult where T: ?core::marker::Sized
+pub fn aya::programs::TestRunResult::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::TestRunResult
+pub fn aya::programs::TestRunResult::from(t: T) -> T
 pub struct aya::programs::TracePoint
 impl aya::programs::trace_point::TracePoint
 pub const aya::programs::trace_point::TracePoint::PROGRAM_TYPE: aya::programs::ProgramType
@@ -10784,6 +10849,70 @@ impl<T> core::borrow::BorrowMut<T> for aya::sys::SyscallError where T: ?core::ma
 pub fn aya::sys::SyscallError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::sys::SyscallError
 pub fn aya::sys::SyscallError::from(t: T) -> T
+pub struct aya::sys::TestRunOptions<'a>
+pub aya::sys::TestRunOptions::batch_size: u32
+pub aya::sys::TestRunOptions::cpu: u32
+pub aya::sys::TestRunOptions::ctx_in: core::option::Option<&'a [u8]>
+pub aya::sys::TestRunOptions::ctx_out: core::option::Option<&'a mut [u8]>
+pub aya::sys::TestRunOptions::data_in: core::option::Option<&'a [u8]>
+pub aya::sys::TestRunOptions::data_out: core::option::Option<&'a mut [u8]>
+pub aya::sys::TestRunOptions::flags: u32
+pub aya::sys::TestRunOptions::repeat: u32
+impl<'a> core::default::Default for aya::programs::TestRunOptions<'a>
+pub fn aya::programs::TestRunOptions<'a>::default() -> aya::programs::TestRunOptions<'a>
+impl<'a> core::fmt::Debug for aya::programs::TestRunOptions<'a>
+pub fn aya::programs::TestRunOptions<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Freeze for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::Send for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::Sync for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::Unpin for aya::programs::TestRunOptions<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::TestRunOptions<'a>
+impl<'a> !core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunOptions<'a>
+impl<T, U> core::convert::Into<U> for aya::programs::TestRunOptions<'a> where U: core::convert::From<T>
+pub fn aya::programs::TestRunOptions<'a>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::TestRunOptions<'a> where U: core::convert::Into<T>
+pub type aya::programs::TestRunOptions<'a>::Error = core::convert::Infallible
+pub fn aya::programs::TestRunOptions<'a>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::TestRunOptions<'a> where U: core::convert::TryFrom<T>
+pub type aya::programs::TestRunOptions<'a>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::TestRunOptions<'a>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::TestRunOptions<'a> where T: 'static + ?core::marker::Sized
+pub fn aya::programs::TestRunOptions<'a>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::TestRunOptions<'a> where T: ?core::marker::Sized
+pub fn aya::programs::TestRunOptions<'a>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::TestRunOptions<'a> where T: ?core::marker::Sized
+pub fn aya::programs::TestRunOptions<'a>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::TestRunOptions<'a>
+pub fn aya::programs::TestRunOptions<'a>::from(t: T) -> T
+pub struct aya::sys::TestRunResult
+pub aya::sys::TestRunResult::ctx_size_out: u32
+pub aya::sys::TestRunResult::data_size_out: u32
+pub aya::sys::TestRunResult::duration: u32
+pub aya::sys::TestRunResult::return_value: u32
+impl core::fmt::Debug for aya::programs::TestRunResult
+pub fn aya::programs::TestRunResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::TestRunResult
+impl core::marker::Send for aya::programs::TestRunResult
+impl core::marker::Sync for aya::programs::TestRunResult
+impl core::marker::Unpin for aya::programs::TestRunResult
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::TestRunResult
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunResult
+impl<T, U> core::convert::Into<U> for aya::programs::TestRunResult where U: core::convert::From<T>
+pub fn aya::programs::TestRunResult::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::programs::TestRunResult where U: core::convert::Into<T>
+pub type aya::programs::TestRunResult::Error = core::convert::Infallible
+pub fn aya::programs::TestRunResult::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::programs::TestRunResult where U: core::convert::TryFrom<T>
+pub type aya::programs::TestRunResult::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::programs::TestRunResult::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::programs::TestRunResult where T: 'static + ?core::marker::Sized
+pub fn aya::programs::TestRunResult::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::programs::TestRunResult where T: ?core::marker::Sized
+pub fn aya::programs::TestRunResult::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::programs::TestRunResult where T: ?core::marker::Sized
+pub fn aya::programs::TestRunResult::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::programs::TestRunResult
+pub fn aya::programs::TestRunResult::from(t: T) -> T
 pub fn aya::sys::enable_stats(stats_type: aya::sys::Stats) -> core::result::Result<std::os::fd::owned::OwnedFd, aya::sys::SyscallError>
 pub fn aya::sys::is_map_supported(map_type: aya::maps::MapType) -> core::result::Result<bool, aya::sys::SyscallError>
 pub fn aya::sys::is_program_supported(program_type: aya::programs::ProgramType) -> core::result::Result<bool, aya::programs::ProgramError>
