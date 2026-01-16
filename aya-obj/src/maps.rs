@@ -305,6 +305,67 @@ impl Map {
             Self::Btf(m) => &m.initial_slots,
         }
     }
+
+    /// Creates a new Hash map definition programmatically.
+    ///
+    /// This is useful for creating inner maps dynamically for map-of-maps types.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_size` - Size of the key in bytes
+    /// * `value_size` - Size of the value in bytes
+    /// * `max_entries` - Maximum number of entries in the map
+    /// * `flags` - Map flags (e.g., BPF_F_NO_PREALLOC)
+    pub fn new_hash(key_size: u32, value_size: u32, max_entries: u32, flags: u32) -> Self {
+        use crate::generated::bpf_map_type::BPF_MAP_TYPE_HASH;
+        Self::Legacy(LegacyMap {
+            def: bpf_map_def {
+                map_type: BPF_MAP_TYPE_HASH as u32,
+                key_size,
+                value_size,
+                max_entries,
+                map_flags: flags,
+                id: 0,
+                pinning: PinningType::None,
+            },
+            inner_def: None,
+            section_index: 0,
+            section_kind: EbpfSectionKind::Undefined,
+            symbol_index: None,
+            data: Vec::new(),
+            initial_slots: BTreeMap::new(),
+        })
+    }
+
+    /// Creates a new Array map definition programmatically.
+    ///
+    /// This is useful for creating inner maps dynamically for map-of-maps types.
+    ///
+    /// # Arguments
+    ///
+    /// * `value_size` - Size of the value in bytes
+    /// * `max_entries` - Maximum number of entries in the map
+    /// * `flags` - Map flags
+    pub fn new_array(value_size: u32, max_entries: u32, flags: u32) -> Self {
+        use crate::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY;
+        Self::Legacy(LegacyMap {
+            def: bpf_map_def {
+                map_type: BPF_MAP_TYPE_ARRAY as u32,
+                key_size: mem::size_of::<u32>() as u32,
+                value_size,
+                max_entries,
+                map_flags: flags,
+                id: 0,
+                pinning: PinningType::None,
+            },
+            inner_def: None,
+            section_index: 0,
+            section_kind: EbpfSectionKind::Undefined,
+            symbol_index: None,
+            data: Vec::new(),
+            initial_slots: BTreeMap::new(),
+        })
+    }
 }
 
 /// A map declared with legacy BPF map declaration style, most likely from a `maps` section.
