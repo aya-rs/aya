@@ -8505,6 +8505,7 @@ pub aya_obj::obj::EbpfSectionKind::BtfMaps
 pub aya_obj::obj::EbpfSectionKind::Data
 pub aya_obj::obj::EbpfSectionKind::License
 pub aya_obj::obj::EbpfSectionKind::Maps
+pub aya_obj::obj::EbpfSectionKind::MapsInner
 pub aya_obj::obj::EbpfSectionKind::Program
 pub aya_obj::obj::EbpfSectionKind::Rodata
 pub aya_obj::obj::EbpfSectionKind::Text
@@ -8805,6 +8806,7 @@ pub aya_obj::obj::Object::btf: core::option::Option<aya_obj::btf::Btf>
 pub aya_obj::obj::Object::btf_ext: core::option::Option<aya_obj::btf::BtfExt>
 pub aya_obj::obj::Object::endianness: object::endian::Endianness
 pub aya_obj::obj::Object::functions: alloc::collections::btree::map::BTreeMap<(usize, u64), aya_obj::Function>
+pub aya_obj::obj::Object::inner_map_bindings: std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>
 pub aya_obj::obj::Object::kernel_version: core::option::Option<u32>
 pub aya_obj::obj::Object::license: alloc::ffi::c_str::CString
 pub aya_obj::obj::Object::maps: std::collections::hash::map::HashMap<alloc::string::String, aya_obj::maps::Map>
@@ -9319,6 +9321,7 @@ pub aya_obj::EbpfSectionKind::BtfMaps
 pub aya_obj::EbpfSectionKind::Data
 pub aya_obj::EbpfSectionKind::License
 pub aya_obj::EbpfSectionKind::Maps
+pub aya_obj::EbpfSectionKind::MapsInner
 pub aya_obj::EbpfSectionKind::Program
 pub aya_obj::EbpfSectionKind::Rodata
 pub aya_obj::EbpfSectionKind::Text
@@ -9674,6 +9677,7 @@ pub aya_obj::Object::btf: core::option::Option<aya_obj::btf::Btf>
 pub aya_obj::Object::btf_ext: core::option::Option<aya_obj::btf::BtfExt>
 pub aya_obj::Object::endianness: object::endian::Endianness
 pub aya_obj::Object::functions: alloc::collections::btree::map::BTreeMap<(usize, u64), aya_obj::Function>
+pub aya_obj::Object::inner_map_bindings: std::collections::hash::map::HashMap<alloc::string::String, alloc::string::String>
 pub aya_obj::Object::kernel_version: core::option::Option<u32>
 pub aya_obj::Object::license: alloc::ffi::c_str::CString
 pub aya_obj::Object::maps: std::collections::hash::map::HashMap<alloc::string::String, aya_obj::maps::Map>
