@@ -60,7 +60,6 @@ impl<T: Borrow<MapData>, K: Pod> HashMap<T, K> {
             Err(MapError::KeyNotFound)
         }
     }
-
 }
 
 impl<T: BorrowMut<MapData>, K: Pod> HashMap<T, K> {

@@ -51,7 +51,11 @@ impl<T: Borrow<MapData>> Array<T> {
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_lookup_elem` fails.
-    pub fn get<V: Pod>(&self, index: &u32, flags: u64) -> Result<crate::maps::Array<MapData, V>, MapError> {
+    pub fn get<V: Pod>(
+        &self,
+        index: &u32,
+        flags: u64,
+    ) -> Result<crate::maps::Array<MapData, V>, MapError> {
         let data = self.inner.borrow();
         check_bounds(data, *index)?;
         let fd = data.fd().as_fd();
