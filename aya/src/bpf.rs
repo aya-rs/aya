@@ -562,6 +562,7 @@ impl<'a> EbpfLoader<'a> {
         }
 
         // Helper function to find a suitable inner map for a map-of-maps
+        // Prefers maps with larger max_entries since utility maps tend to be smaller
         fn find_inner_map_for(
             outer_type: bpf_map_type,
             maps: &HashMap<String, MapData>,
@@ -572,7 +573,8 @@ impl<'a> EbpfLoader<'a> {
                 _ => return None,
             };
             maps.values()
-                .find(|m| m.obj().map_type() == inner_type as u32)
+                .filter(|m| m.obj().map_type() == inner_type as u32)
+                .max_by_key(|m| m.obj().max_entries())
         }
 
         // Separate maps into regular maps and map-of-maps
