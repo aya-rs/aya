@@ -626,9 +626,19 @@ pub struct MapData {
 impl MapData {
     /// Creates a new map with the provided `name`
     pub fn create(
+        obj: aya_obj::Map,
+        name: &str,
+        btf_fd: Option<BorrowedFd<'_>>,
+    ) -> Result<Self, MapError> {
+        Self::create_with_inner_map_fd(obj, name, btf_fd, None)
+    }
+
+    /// Creates a new map with the provided `name` and optional `inner_map_fd` for map-of-maps types
+    pub(crate) fn create_with_inner_map_fd(
         mut obj: aya_obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
+        inner_map_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
         let c_name = CString::new(name)
             .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
@@ -651,11 +661,12 @@ impl MapData {
             }
         };
 
-        let fd =
-            bpf_create_map(&c_name, &obj, btf_fd).map_err(|io_error| MapError::CreateError {
+        let fd = bpf_create_map(&c_name, &obj, btf_fd, inner_map_fd).map_err(|io_error| {
+            MapError::CreateError {
                 name: name.into(),
                 io_error,
-            })?;
+            }
+        })?;
         Ok(Self {
             obj,
             fd: MapFd::from_fd(fd),
@@ -667,6 +678,7 @@ impl MapData {
         obj: aya_obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
+        inner_map_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
         use std::os::unix::ffi::OsStrExt as _;
 
@@ -693,7 +705,7 @@ impl MapData {
                 fd: MapFd::from_fd(fd),
             }),
             Err(_) => {
-                let map = Self::create(obj, name, btf_fd)?;
+                let map = Self::create_with_inner_map_fd(obj, name, btf_fd, inner_map_fd)?;
                 map.pin(path).map_err(|error| MapError::PinError {
                     name: Some(name.into()),
                     error,

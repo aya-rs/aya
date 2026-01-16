@@ -51,6 +51,7 @@ pub(crate) fn bpf_create_map(
     name: &CStr,
     def: &aya_obj::Map,
     btf_fd: Option<BorrowedFd<'_>>,
+    inner_map_fd: Option<BorrowedFd<'_>>,
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -60,6 +61,11 @@ pub(crate) fn bpf_create_map(
     u.value_size = def.value_size();
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
+
+    // For map-of-maps types, set the inner_map_fd
+    if let Some(inner_fd) = inner_map_fd {
+        u.inner_map_fd = inner_fd.as_raw_fd() as u32;
+    }
 
     if let aya_obj::Map::Btf(m) = def {
         use bpf_map_type::*;
