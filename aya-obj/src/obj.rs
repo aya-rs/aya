@@ -137,6 +137,8 @@ pub struct Object {
     pub programs: HashMap<String, Program>,
     /// Functions
     pub functions: BTreeMap<(usize, u64), Function>,
+    /// Inner map bindings: maps outer map name to inner (template) map name
+    pub inner_map_bindings: HashMap<String, String>,
     pub(crate) relocations: HashMap<SectionIndex, HashMap<u64, Relocation>>,
     pub(crate) symbol_table: HashMap<usize, Symbol>,
     pub(crate) symbols_by_section: HashMap<SectionIndex, Vec<usize>>,
@@ -521,6 +523,7 @@ impl Object {
             maps: HashMap::new(),
             programs: HashMap::new(),
             functions: BTreeMap::new(),
+            inner_map_bindings: HashMap::new(),
             relocations: HashMap::new(),
             symbol_table: HashMap::new(),
             symbols_by_section: HashMap::new(),
@@ -882,10 +885,49 @@ impl Object {
                     );
                 }
             }
+            EbpfSectionKind::MapsInner => self.parse_maps_inner(&section),
             EbpfSectionKind::Undefined | EbpfSectionKind::License | EbpfSectionKind::Version => {}
         }
 
         Ok(())
+    }
+
+    /// Parses the `.maps.inner` section which contains outer->inner map bindings.
+    /// Format: null-terminated pairs of "outer_name\0inner_name\0"
+    fn parse_maps_inner(&mut self, section: &Section<'_>) {
+        let data = section.data;
+        let mut offset = 0;
+
+        while offset < data.len() {
+            // Read outer map name (null-terminated)
+            let outer_end = data[offset..]
+                .iter()
+                .position(|&b| b == 0)
+                .map(|p| offset + p)
+                .unwrap_or(data.len());
+
+            if outer_end >= data.len() {
+                break;
+            }
+
+            let outer_name = String::from_utf8_lossy(&data[offset..outer_end]).into_owned();
+            offset = outer_end + 1; // skip null terminator
+
+            // Read inner map name (null-terminated)
+            let inner_end = data[offset..]
+                .iter()
+                .position(|&b| b == 0)
+                .map(|p| offset + p)
+                .unwrap_or(data.len());
+
+            let inner_name = String::from_utf8_lossy(&data[offset..inner_end]).into_owned();
+            offset = inner_end + 1; // skip null terminator
+
+            if !outer_name.is_empty() && !inner_name.is_empty() {
+                self.inner_map_bindings
+                    .insert(outer_name.clone(), inner_name.clone());
+            }
+        }
     }
 
     /// Sanitize BPF functions.
@@ -1019,6 +1061,8 @@ pub enum EbpfSectionKind {
     Maps,
     /// `.maps`
     BtfMaps,
+    /// `.maps.inner`
+    MapsInner,
     /// A program section
     Program,
     /// `.data`
@@ -1047,6 +1091,8 @@ impl EbpfSectionKind {
             Self::Version
         } else if name.starts_with("maps") {
             Self::Maps
+        } else if name == ".maps.inner" {
+            Self::MapsInner
         } else if name.starts_with(".maps") {
             Self::BtfMaps
         } else if name.starts_with(".text") {
