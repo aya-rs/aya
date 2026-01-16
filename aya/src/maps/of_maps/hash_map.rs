@@ -146,3 +146,170 @@ impl<K: Pod> HashMap<MapData, K> {
         self.inner.fd()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::io;
+
+    use assert_matches::assert_matches;
+    use aya_obj::generated::{bpf_cmd, bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS};
+    use libc::{EFAULT, ENOENT};
+
+    use super::*;
+    use crate::{
+        maps::{Map, test_utils},
+        sys::{SysResult, Syscall, override_syscall},
+    };
+
+    fn new_obj_map() -> aya_obj::Map {
+        test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_HASH_OF_MAPS)
+    }
+
+    fn new_map(obj: aya_obj::Map) -> MapData {
+        test_utils::new_map(obj)
+    }
+
+    fn sys_error(value: i32) -> SysResult {
+        Err((-1, io::Error::from_raw_os_error(value)))
+    }
+
+    #[test]
+    fn test_wrong_key_size() {
+        let map = new_map(new_obj_map());
+        assert_matches!(
+            HashMap::<_, u8>::new(&map),
+            Err(MapError::InvalidKeySize {
+                size: 1,
+                expected: 4
+            })
+        );
+    }
+
+    #[test]
+    fn test_try_from_wrong_map() {
+        let map = new_map(test_utils::new_obj_map::<u32>(
+            aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_HASH,
+        ));
+        let map = Map::HashMap(map);
+        assert_matches!(
+            HashMap::<_, u32>::try_from(&map),
+            Err(MapError::InvalidMapType { .. })
+        );
+    }
+
+    #[test]
+    fn test_new_ok() {
+        let map = new_map(new_obj_map());
+        assert!(HashMap::<_, u32>::new(&map).is_ok());
+    }
+
+    #[test]
+    fn test_insert_syscall_error() {
+        let mut map = new_map(new_obj_map());
+        let inner_map = new_map(test_utils::new_obj_map::<u32>(
+            aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_HASH,
+        ));
+        let mut hm = HashMap::<_, u32>::new(&mut map).unwrap();
+
+        override_syscall(|_| sys_error(EFAULT));
+
+        assert_matches!(
+            hm.insert(1, inner_map.fd(), 0),
+            Err(MapError::SyscallError(SyscallError { call: "bpf_map_update_elem", .. }))
+        );
+    }
+
+    #[test]
+    fn test_insert_ok() {
+        let mut map = new_map(new_obj_map());
+        let inner_map = new_map(test_utils::new_obj_map::<u32>(
+            aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_HASH,
+        ));
+        let mut hm = HashMap::<_, u32>::new(&mut map).unwrap();
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
+                ..
+            } => Ok(0),
+            _ => sys_error(EFAULT),
+        });
+
+        assert!(hm.insert(1, inner_map.fd(), 0).is_ok());
+    }
+
+    #[test]
+    fn test_remove_syscall_error() {
+        let mut map = new_map(new_obj_map());
+        let mut hm = HashMap::<_, u32>::new(&mut map).unwrap();
+
+        override_syscall(|_| sys_error(EFAULT));
+
+        assert_matches!(
+            hm.remove(&1),
+            Err(MapError::SyscallError(SyscallError { call: "bpf_map_delete_elem", .. }))
+        );
+    }
+
+    #[test]
+    fn test_remove_ok() {
+        let mut map = new_map(new_obj_map());
+        let mut hm = HashMap::<_, u32>::new(&mut map).unwrap();
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_DELETE_ELEM,
+                ..
+            } => Ok(0),
+            _ => sys_error(EFAULT),
+        });
+
+        assert!(hm.remove(&1).is_ok());
+    }
+
+    #[test]
+    fn test_get_syscall_error() {
+        let map = new_map(new_obj_map());
+        let hm = HashMap::<_, u32>::new(&map).unwrap();
+
+        override_syscall(|_| sys_error(EFAULT));
+
+        assert_matches!(
+            hm.get::<u32, u32>(&1, 0),
+            Err(MapError::SyscallError(SyscallError { call: "bpf_map_lookup_elem", .. }))
+        );
+    }
+
+    #[test]
+    fn test_get_not_found() {
+        let map = new_map(new_obj_map());
+        let hm = HashMap::<_, u32>::new(&map).unwrap();
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
+                ..
+            } => sys_error(ENOENT),
+            _ => sys_error(EFAULT),
+        });
+
+        assert_matches!(hm.get::<u32, u32>(&1, 0), Err(MapError::KeyNotFound));
+    }
+
+    #[test]
+    fn test_keys_empty() {
+        let map = new_map(new_obj_map());
+        let hm = HashMap::<_, u32>::new(&map).unwrap();
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_GET_NEXT_KEY,
+                ..
+            } => sys_error(ENOENT),
+            _ => sys_error(EFAULT),
+        });
+
+        let keys: Result<Vec<_>, _> = hm.keys().collect();
+        assert_matches!(keys, Ok(ks) if ks.is_empty());
+    }
+}
