@@ -7,32 +7,25 @@
 #define TASK_COMM_LEN 16
 #endif
 
-struct event {
-  u32 pid;
-  u8 comm[TASK_COMM_LEN];
-};
-
 struct {
   __uint(type, BPF_MAP_TYPE_RINGBUF);
   __uint(max_entries, 1 << 24);
-  __type(value, struct event);
-} events SEC(".maps");
+  __type(value, __u32);
+} map SEC(".maps");
 
 SEC("uprobe")
 int bpf_prog(void *ctx) {
-  u64 id = bpf_get_current_pid_tgid();
-  u32 tgid = id >> 32;
-  struct event *task_info;
+  u32 val = 0xdeadbeef;
 
-  task_info = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-  if (!task_info) {
+  u32 *buf;
+  buf = bpf_ringbuf_reserve(&map, sizeof(__u32), 0);
+  if (!buf) {
     return 0;
   }
 
-  task_info->pid = tgid;
-  bpf_get_current_comm(&task_info->comm, TASK_COMM_LEN);
+  *buf = val;
 
-  bpf_ringbuf_submit(task_info, 0);
+  bpf_ringbuf_submit(buf, 0);
 
   return 0;
 }

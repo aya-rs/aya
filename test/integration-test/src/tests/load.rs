@@ -1,4 +1,4 @@
-use std::{convert::TryInto as _, fs::remove_file, path::Path, ptr, thread, time::Duration};
+use std::{convert::TryInto as _, fs::remove_file, path::Path, thread, time::Duration};
 
 use assert_matches::assert_matches;
 use aya::{
@@ -48,7 +48,7 @@ fn memmove() {
 #[test_log::test]
 fn ringbuffer_btf_map() {
     let mut bpf = Ebpf::load(crate::RINGBUF_BTF).unwrap();
-    let ring_buf = bpf.take_map("events").unwrap();
+    let ring_buf = bpf.take_map("map").unwrap();
     let mut ring_buf = RingBuf::try_from(ring_buf).unwrap();
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
@@ -58,16 +58,9 @@ fn ringbuffer_btf_map() {
 
     trigger_bpf_program();
 
-    #[repr(C)]
-    struct Event {
-        pid: u32,
-        comm: [u8; 16],
-    }
-
     let item = ring_buf.next().unwrap();
-    let event = unsafe { ptr::read_unaligned(item.as_ptr().cast::<Event>()) };
-    assert_ne!(event.pid, 0);
-    assert_eq!(event.comm.len(), 16);
+    let val = u32::from_ne_bytes(*item.as_array::<4>().unwrap());
+    assert_eq!(val, 0xdeadbeef);
 }
 
 #[test_log::test]
