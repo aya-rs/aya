@@ -224,7 +224,8 @@ impl MapFd {
         Self { fd }
     }
 
-    fn try_clone(&self) -> io::Result<Self> {
+    /// Creates a new instance that shares the same underlying file description as `self`.
+    pub fn try_clone(&self) -> io::Result<Self> {
         let Self { fd } = self;
         let fd = fd.try_clone()?;
         Ok(Self { fd })
@@ -407,6 +408,36 @@ impl Map {
             bpf_map_type::__MAX_BPF_MAP_TYPE => return Err(MapError::InvalidMapType { map_type }),
         };
         Ok(map)
+    }
+
+    /// Returns the file descriptor of the map.
+    pub fn fd(&self) -> &MapFd {
+        match self {
+            Self::Array(map) => map.fd(),
+            Self::ArrayOfMaps(map) => map.fd(),
+            Self::BloomFilter(map) => map.fd(),
+            Self::CpuMap(map) => map.fd(),
+            Self::DevMap(map) => map.fd(),
+            Self::DevMapHash(map) => map.fd(),
+            Self::HashMap(map) => map.fd(),
+            Self::HashOfMaps(map) => map.fd(),
+            Self::LpmTrie(map) => map.fd(),
+            Self::LruHashMap(map) => map.fd(),
+            Self::PerCpuArray(map) => map.fd(),
+            Self::PerCpuHashMap(map) => map.fd(),
+            Self::PerCpuLruHashMap(map) => map.fd(),
+            Self::PerfEventArray(map) => map.fd(),
+            Self::ProgramArray(map) => map.fd(),
+            Self::Queue(map) => map.fd(),
+            Self::RingBuf(map) => map.fd(),
+            Self::SockHash(map) => map.fd(),
+            Self::SockMap(map) => map.fd(),
+            Self::SkStorage(map) => map.fd(),
+            Self::Stack(map) => map.fd(),
+            Self::StackTraceMap(map) => map.fd(),
+            Self::Unsupported(map) => map.fd(),
+            Self::XskMap(map) => map.fd(),
+        }
     }
 }
 
