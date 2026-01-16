@@ -15,6 +15,8 @@ pub struct HashOfMaps<K, V> {
     _v: PhantomData<V>,
 }
 
+unsafe impl<K, V: InnerMap> Sync for HashOfMaps<K, V> {}
+
 impl<K, V: InnerMap> HashOfMaps<K, V> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
         Self {
@@ -48,7 +50,7 @@ impl<K, V: InnerMap> HashOfMaps<K, V> {
         }
     }
 
-    /// Retrieve the value associate with `key` from the map.
+    /// Retrieve the inner map associated with `key` from the map.
     ///
     /// # Safety
     ///
@@ -56,15 +58,20 @@ impl<K, V: InnerMap> HashOfMaps<K, V> {
     /// make guarantee on the atomicity of `insert` or `remove`, and any element removed from the
     /// map might get aliased by another element in the map, causing garbage to be read, or
     /// corruption in case of writes.
-    #[inline]
-    pub unsafe fn get(&self, key: &K) -> Option<NonNull<u32>> {
-        let value = unsafe {
+    #[inline(always)]
+    pub unsafe fn get(&self, key: &K) -> Option<&V> {
+        // FIXME: alignment
+        unsafe { self.lookup(key).map(|p| p.as_ref()) }
+    }
+
+    #[inline(always)]
+    unsafe fn lookup(&self, key: &K) -> Option<NonNull<V>> {
+        let ptr = unsafe {
             bpf_map_lookup_elem(
                 self.def.get().cast(),
                 core::ptr::from_ref(key).cast::<c_void>(),
             )
         };
-        // FIXME: alignment
-        NonNull::new(value.cast())
+        NonNull::new(ptr.cast::<V>())
     }
 }
