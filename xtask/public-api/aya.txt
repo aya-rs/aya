@@ -1208,6 +1208,7 @@ pub aya::maps::Map::StackTraceMap(aya::maps::MapData)
 pub aya::maps::Map::Unsupported(aya::maps::MapData)
 pub aya::maps::Map::XskMap(aya::maps::MapData)
 impl aya::maps::Map
+pub fn aya::maps::Map::fd(&self) -> &aya::maps::MapFd
 pub fn aya::maps::Map::from_map_data(map_data: aya::maps::MapData) -> core::result::Result<Self, aya::maps::MapError>
 pub fn aya::maps::Map::pin<P: core::convert::AsRef<std::path::Path>>(&self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ArrayOfMaps<aya::maps::MapData>
@@ -1980,6 +1981,8 @@ pub fn aya::maps::MapData::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::maps::MapData
 pub fn aya::maps::MapData::from(t: T) -> T
 pub struct aya::maps::MapFd
+impl aya::maps::MapFd
+pub fn aya::maps::MapFd::try_clone(&self) -> std::io::error::Result<Self>
 impl core::fmt::Debug for aya::maps::MapFd
 pub fn aya::maps::MapFd::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl std::os::fd::owned::AsFd for aya::maps::MapFd

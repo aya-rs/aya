@@ -555,12 +555,12 @@ pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::from(t: T) -> T
 pub mod aya_ebpf::maps::hash_of_maps
 #[repr(transparent)] pub struct aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
 impl<K, V: aya_ebpf::maps::InnerMap> aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
-pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get(&self, key: &K) -> core::option::Option<core::ptr::non_null::NonNull<u32>>
+pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub const fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
+impl<K, V: aya_ebpf::maps::InnerMap> core::marker::Sync for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V> where K: core::marker::Send, V: core::marker::Send
-impl<K, V> !core::marker::Sync for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
 impl<K, V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
 impl<K, V> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V> where K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
@@ -1330,12 +1330,12 @@ impl<T> core::convert::From<T> for aya_ebpf::maps::hash_map::HashMap<K, V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::HashOfMaps<K, V>
 impl<K, V: aya_ebpf::maps::InnerMap> aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
-pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get(&self, key: &K) -> core::option::Option<core::ptr::non_null::NonNull<u32>>
+pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get(&self, key: &K) -> core::option::Option<&V>
 pub const fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
+impl<K, V: aya_ebpf::maps::InnerMap> core::marker::Sync for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V> where K: core::marker::Send, V: core::marker::Send
-impl<K, V> !core::marker::Sync for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
 impl<K, V> core::marker::Unpin for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V> where K: core::marker::Unpin, V: core::marker::Unpin
 impl<K, V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
 impl<K, V> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V> where K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
