@@ -830,19 +830,9 @@ fn max_entries_override(
 /// based on the rules for that map type.
 fn value_size_override(map_type: bpf_map_type) -> Option<u32> {
     match map_type {
-        BPF_MAP_TYPE_CPUMAP => {
-            if FEATURES.cpumap_prog_id() {
-                Some(8)
-            } else {
-                Some(4)
-            }
-        }
+        BPF_MAP_TYPE_CPUMAP => Some(if FEATURES.cpumap_prog_id() { 8 } else { 4 }),
         BPF_MAP_TYPE_DEVMAP | BPF_MAP_TYPE_DEVMAP_HASH => {
-            if FEATURES.devmap_prog_id() {
-                Some(8)
-            } else {
-                Some(4)
-            }
+            Some(if FEATURES.devmap_prog_id() { 8 } else { 4 })
         }
         BPF_MAP_TYPE_RINGBUF => Some(0),
         _ => None,
