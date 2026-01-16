@@ -59,7 +59,8 @@ fn ringbuffer_btf_map() {
     trigger_bpf_program();
 
     let item = ring_buf.next().unwrap();
-    let val = u32::from_ne_bytes(*item.as_array::<4>().unwrap());
+    let item: [u8; 4] = (*item).try_into().unwrap();
+    let val = u32::from_ne_bytes(item);
     assert_eq!(val, 0xdeadbeef);
 }
 
