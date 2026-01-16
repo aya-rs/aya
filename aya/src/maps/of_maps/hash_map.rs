@@ -6,7 +6,7 @@ use std::{
 
 use crate::{
     Pod,
-    maps::{MapData, MapError, MapFd, check_kv_size, hash_map},
+    maps::{MapData, MapError, MapFd, check_kv_size, hash_map, info::MapInfo},
     sys::{SyscallError, bpf_map_get_fd_by_id, bpf_map_lookup_elem},
 };
 
@@ -36,20 +36,31 @@ impl<T: Borrow<MapData>, K: Pod> HashMap<T, K> {
         })
     }
 
-    /// Returns a copy of the value associated with the key.
-    pub fn get(&self, key: &K, flags: u64) -> Result<MapFd, MapError> {
+    /// Returns the inner map associated with the key.
+    ///
+    /// The returned map can be used to read and write values. If you only need
+    /// the file descriptor, you can call `.fd()` on the returned map.
+    pub fn get<IK: Pod, IV: Pod>(
+        &self,
+        key: &K,
+        flags: u64,
+    ) -> Result<crate::maps::HashMap<MapData, IK, IV>, MapError> {
         let fd = self.inner.borrow().fd().as_fd();
-        let value = bpf_map_lookup_elem(fd, key, flags).map_err(|io_error| SyscallError {
-            call: "bpf_map_lookup_elem",
-            io_error,
-        })?;
-        if let Some(value) = value {
-            let fd = bpf_map_get_fd_by_id(value)?;
-            Ok(MapFd::from_fd(fd))
+        let value: Option<u32> =
+            bpf_map_lookup_elem(fd, key, flags).map_err(|io_error| SyscallError {
+                call: "bpf_map_lookup_elem",
+                io_error,
+            })?;
+        if let Some(id) = value {
+            let inner_fd = bpf_map_get_fd_by_id(id)?;
+            let info = MapInfo::new_from_fd(inner_fd.as_fd())?;
+            let map_data = MapData::from_id(info.id())?;
+            crate::maps::HashMap::new(map_data)
         } else {
             Err(MapError::KeyNotFound)
         }
     }
+
 }
 
 impl<T: BorrowMut<MapData>, K: Pod> HashMap<T, K> {

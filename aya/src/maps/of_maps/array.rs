@@ -6,7 +6,8 @@ use std::{
 };
 
 use crate::{
-    maps::{MapData, MapError, MapFd, check_bounds, check_kv_size},
+    Pod,
+    maps::{MapData, MapError, MapFd, check_bounds, check_kv_size, info::MapInfo},
     sys::{SyscallError, bpf_map_get_fd_by_id, bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
@@ -41,13 +42,16 @@ impl<T: Borrow<MapData>> Array<T> {
         self.len() == 0
     }
 
-    /// Returns the value stored at the given index.
+    /// Returns the inner map stored at the given index.
+    ///
+    /// The returned map can be used to read and write values. If you only need
+    /// the file descriptor, you can call `.fd()` on the returned map.
     ///
     /// # Errors
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_lookup_elem` fails.
-    pub fn get(&self, index: &u32, flags: u64) -> Result<MapFd, MapError> {
+    pub fn get<V: Pod>(&self, index: &u32, flags: u64) -> Result<crate::maps::Array<MapData, V>, MapError> {
         let data = self.inner.borrow();
         check_bounds(data, *index)?;
         let fd = data.fd().as_fd();
@@ -57,9 +61,11 @@ impl<T: Borrow<MapData>> Array<T> {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?;
-        if let Some(value) = value {
-            let fd = bpf_map_get_fd_by_id(value)?;
-            Ok(MapFd::from_fd(fd))
+        if let Some(id) = value {
+            let inner_fd = bpf_map_get_fd_by_id(id)?;
+            let info = MapInfo::new_from_fd(inner_fd.as_fd())?;
+            let map_data = MapData::from_id(info.id())?;
+            crate::maps::Array::new(map_data)
         } else {
             Err(MapError::KeyNotFound)
         }
