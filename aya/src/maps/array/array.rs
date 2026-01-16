@@ -100,7 +100,7 @@ impl<V: Pod> Array<MapData, V> {
     ///
     /// This method creates a standalone BPF array map that is not loaded from an eBPF object file.
     /// It is particularly useful for creating inner maps dynamically for map-of-maps types
-    /// like [`ArrayOfMaps`](super::ArrayOfMaps).
+    /// like [`ArrayOfMaps`](crate::maps::ArrayOfMaps).
     ///
     /// # Arguments
     ///

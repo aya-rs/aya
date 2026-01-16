@@ -381,6 +381,8 @@ pub fn aya::maps::ArrayOfMaps<&'a aya::maps::MapData>::try_from(map: &'a aya::ma
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData>
 pub type aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug> core::fmt::Debug for aya::maps::ArrayOfMaps<T>
+pub fn aya::maps::ArrayOfMaps<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T> core::marker::Freeze for aya::maps::ArrayOfMaps<T> where T: core::marker::Freeze
 impl<T> core::marker::Send for aya::maps::ArrayOfMaps<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::ArrayOfMaps<T> where T: core::marker::Sync
@@ -1716,6 +1718,8 @@ pub fn aya::maps::ArrayOfMaps<&'a aya::maps::MapData>::try_from(map: &'a aya::ma
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData>
 pub type aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug> core::fmt::Debug for aya::maps::ArrayOfMaps<T>
+pub fn aya::maps::ArrayOfMaps<T>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T> core::marker::Freeze for aya::maps::ArrayOfMaps<T> where T: core::marker::Freeze
 impl<T> core::marker::Send for aya::maps::ArrayOfMaps<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::ArrayOfMaps<T> where T: core::marker::Sync

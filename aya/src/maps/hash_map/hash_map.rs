@@ -99,7 +99,7 @@ impl<K: Pod, V: Pod> HashMap<MapData, K, V> {
     ///
     /// This method creates a standalone BPF hash map that is not loaded from an eBPF object file.
     /// It is particularly useful for creating inner maps dynamically for map-of-maps types
-    /// like [`HashMapOfMaps`](super::HashMapOfMaps) or [`ArrayOfMaps`](super::super::array::ArrayOfMaps).
+    /// like [`HashMapOfMaps`](crate::maps::HashMapOfMaps) or [`ArrayOfMaps`](crate::maps::ArrayOfMaps).
     ///
     /// # Arguments
     ///
