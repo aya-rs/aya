@@ -20,6 +20,7 @@ use crate::{
 ///
 /// The minimum kernel version required to use this feature is 4.14.
 #[doc(alias = "BPF_MAP_TYPE_ARRAY_OF_MAPS")]
+#[derive(Debug)]
 pub struct Array<T> {
     pub(crate) inner: T,
 }
@@ -148,5 +149,146 @@ impl Array<MapData> {
     /// Returns a file descriptor reference to the underlying map.
     pub fn fd(&self) -> &MapFd {
         self.inner.fd()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io;
+
+    use assert_matches::assert_matches;
+    use aya_obj::generated::{bpf_cmd, bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS};
+    use libc::{EFAULT, ENOENT};
+
+    use super::*;
+    use crate::{
+        maps::{Map, test_utils},
+        sys::{SysResult, Syscall, override_syscall},
+    };
+
+    fn new_obj_map() -> aya_obj::Map {
+        test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_ARRAY_OF_MAPS)
+    }
+
+    fn new_map(obj: aya_obj::Map) -> MapData {
+        test_utils::new_map(obj)
+    }
+
+    fn sys_error(value: i32) -> SysResult {
+        Err((-1, io::Error::from_raw_os_error(value)))
+    }
+
+    #[test]
+    fn test_wrong_key_size() {
+        let map = new_map(test_utils::new_obj_map::<u8>(BPF_MAP_TYPE_ARRAY_OF_MAPS));
+        assert_matches!(
+            Array::new(&map),
+            Err(MapError::InvalidKeySize {
+                size: 4,
+                expected: 1
+            })
+        );
+    }
+
+    #[test]
+    fn test_try_from_wrong_map() {
+        let map = new_map(test_utils::new_obj_map::<u32>(
+            aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_HASH,
+        ));
+        let map = Map::HashMap(map);
+        assert_matches!(
+            Array::try_from(&map),
+            Err(MapError::InvalidMapType { .. })
+        );
+    }
+
+    #[test]
+    fn test_new_ok() {
+        let map = new_map(new_obj_map());
+        assert!(Array::new(&map).is_ok());
+    }
+
+    #[test]
+    fn test_set_syscall_error() {
+        let mut map = new_map(new_obj_map());
+        let inner_map = new_map(test_utils::new_obj_map::<u32>(
+            aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY,
+        ));
+        let mut arr = Array::new(&mut map).unwrap();
+
+        override_syscall(|_| sys_error(EFAULT));
+
+        assert_matches!(
+            arr.set(0, inner_map.fd(), 0),
+            Err(MapError::SyscallError(SyscallError { call: "bpf_map_update_elem", .. }))
+        );
+    }
+
+    #[test]
+    fn test_set_ok() {
+        let mut map = new_map(new_obj_map());
+        let inner_map = new_map(test_utils::new_obj_map::<u32>(
+            aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY,
+        ));
+        let mut arr = Array::new(&mut map).unwrap();
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
+                ..
+            } => Ok(0),
+            _ => sys_error(EFAULT),
+        });
+
+        assert!(arr.set(0, inner_map.fd(), 0).is_ok());
+    }
+
+    #[test]
+    fn test_set_out_of_bounds() {
+        let mut map = new_map(new_obj_map());
+        let inner_map = new_map(test_utils::new_obj_map::<u32>(
+            aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY,
+        ));
+        let mut arr = Array::new(&mut map).unwrap();
+
+        assert_matches!(arr.set(1024, inner_map.fd(), 0), Err(MapError::OutOfBounds { .. }));
+    }
+
+    #[test]
+    fn test_get_syscall_error() {
+        let map = new_map(new_obj_map());
+        let arr = Array::new(&map).unwrap();
+
+        override_syscall(|_| sys_error(EFAULT));
+
+        let result = arr.get::<u32>(&0, 0);
+        assert!(matches!(
+            result,
+            Err(MapError::SyscallError(SyscallError { call: "bpf_map_lookup_elem", .. }))
+        ));
+    }
+
+    #[test]
+    fn test_get_not_found() {
+        let map = new_map(new_obj_map());
+        let arr = Array::new(&map).unwrap();
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
+                ..
+            } => sys_error(ENOENT),
+            _ => sys_error(EFAULT),
+        });
+
+        assert!(matches!(arr.get::<u32>(&0, 0), Err(MapError::KeyNotFound)));
+    }
+
+    #[test]
+    fn test_get_out_of_bounds() {
+        let map = new_map(new_obj_map());
+        let arr = Array::new(&map).unwrap();
+
+        assert!(matches!(arr.get::<u32>(&1024, 0), Err(MapError::OutOfBounds { .. })));
     }
 }
