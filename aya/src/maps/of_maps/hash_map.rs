@@ -215,7 +215,10 @@ mod tests {
 
         assert_matches!(
             hm.insert(1, inner_map.fd(), 0),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_update_elem", .. }))
+            Err(MapError::SyscallError(SyscallError {
+                call: "bpf_map_update_elem",
+                ..
+            }))
         );
     }
 
@@ -247,7 +250,10 @@ mod tests {
 
         assert_matches!(
             hm.remove(&1),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_delete_elem", .. }))
+            Err(MapError::SyscallError(SyscallError {
+                call: "bpf_map_delete_elem",
+                ..
+            }))
         );
     }
 
@@ -276,7 +282,10 @@ mod tests {
 
         assert_matches!(
             hm.get::<u32, u32>(&1, 0),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_lookup_elem", .. }))
+            Err(MapError::SyscallError(SyscallError {
+                call: "bpf_map_lookup_elem",
+                ..
+            }))
         );
     }
 

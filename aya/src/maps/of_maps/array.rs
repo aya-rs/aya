@@ -196,10 +196,7 @@ mod tests {
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_HASH,
         ));
         let map = Map::HashMap(map);
-        assert_matches!(
-            Array::try_from(&map),
-            Err(MapError::InvalidMapType { .. })
-        );
+        assert_matches!(Array::try_from(&map), Err(MapError::InvalidMapType { .. }));
     }
 
     #[test]
@@ -220,7 +217,10 @@ mod tests {
 
         assert_matches!(
             arr.set(0, inner_map.fd(), 0),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_update_elem", .. }))
+            Err(MapError::SyscallError(SyscallError {
+                call: "bpf_map_update_elem",
+                ..
+            }))
         );
     }
 
@@ -251,7 +251,10 @@ mod tests {
         ));
         let mut arr = Array::new(&mut map).unwrap();
 
-        assert_matches!(arr.set(1024, inner_map.fd(), 0), Err(MapError::OutOfBounds { .. }));
+        assert_matches!(
+            arr.set(1024, inner_map.fd(), 0),
+            Err(MapError::OutOfBounds { .. })
+        );
     }
 
     #[test]
@@ -264,7 +267,10 @@ mod tests {
         let result = arr.get::<u32>(&0, 0);
         assert!(matches!(
             result,
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_lookup_elem", .. }))
+            Err(MapError::SyscallError(SyscallError {
+                call: "bpf_map_lookup_elem",
+                ..
+            }))
         ));
     }
 
@@ -289,6 +295,9 @@ mod tests {
         let map = new_map(new_obj_map());
         let arr = Array::new(&map).unwrap();
 
-        assert!(matches!(arr.get::<u32>(&1024, 0), Err(MapError::OutOfBounds { .. })));
+        assert!(matches!(
+            arr.get::<u32>(&1024, 0),
+            Err(MapError::OutOfBounds { .. })
+        ));
     }
 }
