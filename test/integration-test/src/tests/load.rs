@@ -67,7 +67,7 @@ fn ringbuffer_btf_map() {
     let item = ring_buf.next().unwrap();
     let event = unsafe { ptr::read_unaligned(item.as_ptr() as *const Event) };
     assert_ne!(event.pid, 0);
-    assert!(!event.comm.is_empty());
+    assert_eq!(event.comm.len(), 16);
 }
 
 #[test_log::test]
