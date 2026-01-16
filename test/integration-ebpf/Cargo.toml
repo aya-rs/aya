@@ -111,3 +111,7 @@ path = "src/perf_event_bp.rs"
 [[bin]]
 name = "prog_array"
 path = "src/prog_array.rs"
+
+[[bin]]
+name = "map_of_maps"
+path = "src/map_of_maps.rs"

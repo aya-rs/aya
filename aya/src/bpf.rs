@@ -562,10 +562,10 @@ impl<'a> EbpfLoader<'a> {
         }
 
         // Helper function to find a suitable inner map for a map-of-maps
-        fn find_inner_map_for<'a>(
+        fn find_inner_map_for(
             outer_type: bpf_map_type,
-            maps: &'a HashMap<String, MapData>,
-        ) -> Option<&'a MapData> {
+            maps: &HashMap<String, MapData>,
+        ) -> Option<&MapData> {
             let inner_type = match outer_type {
                 BPF_MAP_TYPE_ARRAY_OF_MAPS => BPF_MAP_TYPE_ARRAY,
                 BPF_MAP_TYPE_HASH_OF_MAPS => BPF_MAP_TYPE_HASH,
