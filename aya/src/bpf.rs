@@ -552,13 +552,51 @@ impl<'a> EbpfLoader<'a> {
         if let Some(btf) = &btf {
             obj.relocate_btf(btf)?;
         }
-        let mut maps = HashMap::new();
-        for (name, mut obj) in obj.maps.drain() {
+
+        // Helper function to check if a map type is a map-of-maps
+        fn is_map_of_maps(map_type: bpf_map_type) -> bool {
+            matches!(
+                map_type,
+                BPF_MAP_TYPE_ARRAY_OF_MAPS | BPF_MAP_TYPE_HASH_OF_MAPS
+            )
+        }
+
+        // Helper function to find a suitable inner map for a map-of-maps
+        fn find_inner_map_for<'a>(
+            outer_type: bpf_map_type,
+            maps: &'a HashMap<String, MapData>,
+        ) -> Option<&'a MapData> {
+            let inner_type = match outer_type {
+                BPF_MAP_TYPE_ARRAY_OF_MAPS => BPF_MAP_TYPE_ARRAY,
+                BPF_MAP_TYPE_HASH_OF_MAPS => BPF_MAP_TYPE_HASH,
+                _ => return None,
+            };
+            maps.values()
+                .find(|m| m.obj().map_type() == inner_type as u32)
+        }
+
+        // Separate maps into regular maps and map-of-maps
+        let mut regular_maps: Vec<(String, aya_obj::Map)> = Vec::new();
+        let mut maps_of_maps: Vec<(String, aya_obj::Map)> = Vec::new();
+
+        for (name, map_obj) in obj.maps.drain() {
             if let (false, EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata) =
-                (FEATURES.bpf_global_data(), obj.section_kind())
+                (FEATURES.bpf_global_data(), map_obj.section_kind())
             {
                 continue;
             }
+            let map_type: bpf_map_type = map_obj.map_type().try_into().map_err(MapError::from)?;
+            if is_map_of_maps(map_type) {
+                maps_of_maps.push((name, map_obj));
+            } else {
+                regular_maps.push((name, map_obj));
+            }
+        }
+
+        let mut maps = HashMap::new();
+
+        // First, create all regular maps
+        for (name, mut obj) in regular_maps {
             let num_cpus = || {
                 Ok(nr_cpus().map_err(|(path, error)| EbpfError::FileError {
                     path: PathBuf::from(path),
@@ -566,21 +604,21 @@ impl<'a> EbpfLoader<'a> {
                 })? as u32)
             };
             let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
-            if let Some(max_entries) = max_entries_override(
+            if let Some(max_entries_val) = max_entries_override(
                 map_type,
                 max_entries.get(name.as_str()).copied(),
                 || obj.max_entries(),
                 num_cpus,
                 || page_size() as u32,
             )? {
-                obj.set_max_entries(max_entries)
+                obj.set_max_entries(max_entries_val)
             }
             if let Some(value_size) = value_size_override(map_type) {
                 obj.set_value_size(value_size)
             }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
             let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
-                MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd)?
+                MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd, None)?
             } else {
                 match obj.pinning() {
                     PinningType::None => MapData::create(obj, &name, btf_fd)?,
@@ -592,7 +630,34 @@ impl<'a> EbpfLoader<'a> {
                             .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
                         let path = path.join(&name);
 
-                        MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
+                        MapData::create_pinned_by_name(path, obj, &name, btf_fd, None)?
+                    }
+                }
+            };
+            map.finalize()?;
+            maps.insert(name, map);
+        }
+
+        // Then, create map-of-maps with appropriate inner_map_fd
+        for (name, obj) in maps_of_maps {
+            let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
+            let inner_map = find_inner_map_for(map_type, &maps);
+            let inner_map_fd = inner_map.map(|m| m.fd().as_fd());
+
+            let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
+            let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
+                MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd, inner_map_fd)?
+            } else {
+                match obj.pinning() {
+                    PinningType::None => {
+                        MapData::create_with_inner_map_fd(obj, &name, btf_fd, inner_map_fd)?
+                    }
+                    PinningType::ByName => {
+                        let path = default_map_pin_directory
+                            .as_deref()
+                            .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
+                        let path = path.join(&name);
+                        MapData::create_pinned_by_name(path, obj, &name, btf_fd, inner_map_fd)?
                     }
                 }
             };
@@ -849,6 +914,8 @@ fn parse_map(
         BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
         BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
         BPF_MAP_TYPE_SK_STORAGE => Map::SkStorage(map),
+        BPF_MAP_TYPE_ARRAY_OF_MAPS => Map::ArrayOfMaps(map),
+        BPF_MAP_TYPE_HASH_OF_MAPS => Map::HashOfMaps(map),
         m_type => {
             if allow_unsupported_maps {
                 Map::Unsupported(map)
