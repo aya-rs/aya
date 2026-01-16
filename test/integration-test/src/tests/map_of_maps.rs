@@ -105,3 +105,35 @@ fn hash_of_maps() {
     let results: Array<&MapData, u32> = ebpf.map("RESULTS").unwrap().try_into().unwrap();
     assert_eq!(results.get(&1, 0).unwrap(), 1);
 }
+
+/// Test dynamic inner map creation: create inner maps programmatically and use them with HashOfMaps
+#[test_log::test]
+fn hash_of_maps_dynamic() {
+    let mut ebpf = Ebpf::load(crate::MAP_OF_MAPS).unwrap();
+
+    // Create inner maps dynamically with the same max_entries as the template (10)
+    // Note: max_entries must match the template used when creating the outer map
+    let mut inner_1: HashMap<MapData, u32, u32> = HashMap::create(10, 0).unwrap();
+    let mut inner_2: HashMap<MapData, u32, u32> = HashMap::create(10, 0).unwrap();
+
+    // Pre-populate the dynamic inner maps with some data
+    inner_1.insert(100u32, 1000u32, 0).unwrap();
+    inner_2.insert(100u32, 2000u32, 0).unwrap();
+
+    // Insert the dynamically created inner maps into the outer HashOfMaps
+    {
+        let mut outer: HashMapOfMaps<&mut MapData, u32> =
+            ebpf.map_mut("HASH_OF_MAPS").unwrap().try_into().unwrap();
+        // Use keys 10 and 11 to avoid conflict with the other test
+        outer.insert(10u32, inner_1.fd(), 0).unwrap();
+        outer.insert(11u32, inner_2.fd(), 0).unwrap();
+    }
+
+    // Verify we can still read from the dynamically created inner maps
+    assert_eq!(inner_1.get(&100, 0).unwrap(), 1000);
+    assert_eq!(inner_2.get(&100, 0).unwrap(), 2000);
+
+    // Modify the inner maps and verify changes persist
+    inner_1.insert(200u32, 3000u32, 0).unwrap();
+    assert_eq!(inner_1.get(&200, 0).unwrap(), 3000);
+}
