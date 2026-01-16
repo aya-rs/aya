@@ -15,34 +15,37 @@ fn prog_array_manual() {
         main_prog.load().unwrap();
     }
     {
-        let tail_0: &mut SocketFilter =
-            ebpf.program_mut("tail_0").unwrap().try_into().unwrap();
+        let tail_0: &mut SocketFilter = ebpf.program_mut("tail_0").unwrap().try_into().unwrap();
         tail_0.load().unwrap();
     }
     {
-        let tail_1: &mut SocketFilter =
-            ebpf.program_mut("tail_1").unwrap().try_into().unwrap();
+        let tail_1: &mut SocketFilter = ebpf.program_mut("tail_1").unwrap().try_into().unwrap();
         tail_1.load().unwrap();
     }
 
     // Get the program FDs (clone them to avoid borrow issues)
-    let tail_0_fd = ebpf.program("tail_0").unwrap().fd().unwrap().try_clone().unwrap();
-    let tail_1_fd = ebpf.program("tail_1").unwrap().fd().unwrap().try_clone().unwrap();
+    let tail_0_fd = ebpf
+        .program("tail_0")
+        .unwrap()
+        .fd()
+        .unwrap()
+        .try_clone()
+        .unwrap();
+    let tail_1_fd = ebpf
+        .program("tail_1")
+        .unwrap()
+        .fd()
+        .unwrap()
+        .try_clone()
+        .unwrap();
 
     // Manually set the program array entries
-    let mut jump_table: ProgramArray<_> = ebpf
-        .map_mut("JUMP_TABLE")
-        .unwrap()
-        .try_into()
-        .unwrap();
+    let mut jump_table: ProgramArray<_> = ebpf.map_mut("JUMP_TABLE").unwrap().try_into().unwrap();
     jump_table.set(0, &tail_0_fd, 0).unwrap();
     jump_table.set(1, &tail_1_fd, 0).unwrap();
 
     // Verify entries are set by checking indices
-    let indices: Vec<u32> = jump_table
-        .indices()
-        .filter_map(|r| r.ok())
-        .collect();
+    let indices: Vec<u32> = jump_table.indices().filter_map(|r| r.ok()).collect();
     assert!(indices.contains(&0));
     assert!(indices.contains(&1));
 }
@@ -67,13 +70,11 @@ fn prog_array_auto_populate() {
         main_prog.load().unwrap();
     }
     {
-        let tail_0: &mut SocketFilter =
-            ebpf.program_mut("tail_0").unwrap().try_into().unwrap();
+        let tail_0: &mut SocketFilter = ebpf.program_mut("tail_0").unwrap().try_into().unwrap();
         tail_0.load().unwrap();
     }
     {
-        let tail_1: &mut SocketFilter =
-            ebpf.program_mut("tail_1").unwrap().try_into().unwrap();
+        let tail_1: &mut SocketFilter = ebpf.program_mut("tail_1").unwrap().try_into().unwrap();
         tail_1.load().unwrap();
     }
 
@@ -81,15 +82,8 @@ fn prog_array_auto_populate() {
     ebpf.populate_prog_arrays().unwrap();
 
     // Verify entries are set
-    let jump_table: ProgramArray<_> = ebpf
-        .map("JUMP_TABLE")
-        .unwrap()
-        .try_into()
-        .unwrap();
-    let indices: Vec<u32> = jump_table
-        .indices()
-        .filter_map(|r| r.ok())
-        .collect();
+    let jump_table: ProgramArray<_> = ebpf.map("JUMP_TABLE").unwrap().try_into().unwrap();
+    let indices: Vec<u32> = jump_table.indices().filter_map(|r| r.ok()).collect();
     assert!(indices.contains(&0));
     assert!(indices.contains(&1));
 }
@@ -138,8 +132,7 @@ fn prog_array_populate_missing_map_error() {
         .unwrap();
 
     // Load the program first
-    let tail_0: &mut SocketFilter =
-        ebpf.program_mut("tail_0").unwrap().try_into().unwrap();
+    let tail_0: &mut SocketFilter = ebpf.program_mut("tail_0").unwrap().try_into().unwrap();
     tail_0.load().unwrap();
 
     let result = ebpf.populate_prog_arrays();

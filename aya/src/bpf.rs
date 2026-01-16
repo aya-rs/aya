@@ -1269,16 +1269,18 @@ impl Ebpf {
         let entries = std::mem::take(&mut self.prog_array_entries);
 
         for (map_name, prog_entries) in entries {
-            let map = self.maps.get_mut(&map_name).ok_or_else(|| {
-                EbpfError::ProgArrayPopulateError {
-                    message: format!("map '{}' not found", map_name),
-                }
-            })?;
+            let map =
+                self.maps
+                    .get_mut(&map_name)
+                    .ok_or_else(|| EbpfError::ProgArrayPopulateError {
+                        message: format!("map '{}' not found", map_name),
+                    })?;
 
             let mut prog_array: ProgramArray<&mut MapData> =
-                map.try_into().map_err(|e: MapError| EbpfError::ProgArrayPopulateError {
-                    message: format!("map '{}' is not a program array: {}", map_name, e),
-                })?;
+                map.try_into()
+                    .map_err(|e: MapError| EbpfError::ProgArrayPopulateError {
+                        message: format!("map '{}' is not a program array: {}", map_name, e),
+                    })?;
 
             for (prog_name, index) in prog_entries {
                 let program = self.programs.get(&prog_name).ok_or_else(|| {
@@ -1287,12 +1289,11 @@ impl Ebpf {
                     }
                 })?;
 
-                let fd = program.fd().map_err(|e| EbpfError::ProgArrayPopulateError {
-                    message: format!(
-                        "program '{}' has not been loaded yet: {}",
-                        prog_name, e
-                    ),
-                })?;
+                let fd = program
+                    .fd()
+                    .map_err(|e| EbpfError::ProgArrayPopulateError {
+                        message: format!("program '{}' has not been loaded yet: {}", prog_name, e),
+                    })?;
 
                 prog_array
                     .set(index, fd, 0)
