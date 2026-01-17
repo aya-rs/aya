@@ -5,7 +5,7 @@ use aya_ebpf_bindings::bindings::bpf_cpumap_val;
 use super::try_redirect_map;
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_CPUMAP},
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
 };
 
 /// An array of available CPUs.
@@ -36,6 +36,7 @@ pub struct CpuMap {
 }
 
 unsafe impl Sync for CpuMap {}
+unsafe impl InnerMap for CpuMap {}
 
 impl CpuMap {
     /// Creates a [`CpuMap`] with a set maximum number of elements.

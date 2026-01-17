@@ -3,7 +3,7 @@ use core::{cell::UnsafeCell, marker::PhantomData, mem, ptr::NonNull};
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY},
     lookup,
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
 };
 
 #[repr(transparent)]
@@ -13,6 +13,7 @@ pub struct PerCpuArray<T> {
 }
 
 unsafe impl<T> Sync for PerCpuArray<T> {}
+unsafe impl<T> InnerMap for PerCpuArray<T> {}
 
 impl<T> PerCpuArray<T> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {

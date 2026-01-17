@@ -14,7 +14,7 @@ use crate::{
         bpf_ringbuf_discard, bpf_ringbuf_output, bpf_ringbuf_query, bpf_ringbuf_reserve,
         bpf_ringbuf_submit,
     },
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
 };
 
 #[repr(transparent)]
@@ -23,6 +23,7 @@ pub struct RingBuf {
 }
 
 unsafe impl Sync for RingBuf {}
+unsafe impl InnerMap for RingBuf {}
 
 /// A ring buffer entry, returned from [`RingBuf::reserve_bytes`].
 ///

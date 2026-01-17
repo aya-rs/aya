@@ -8,7 +8,7 @@ use crate::{
         bpf_sock_map_update,
     },
     lookup,
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
     programs::{SkBuffContext, SkLookupContext, SkMsgContext},
 };
 
@@ -18,6 +18,7 @@ pub struct SockMap {
 }
 
 unsafe impl Sync for SockMap {}
+unsafe impl InnerMap for SockMap {}
 
 impl SockMap {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {

@@ -6,7 +6,7 @@ use super::{dev_map::DevMapValue, try_redirect_map};
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH},
     lookup,
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
 };
 
 /// A map of network devices.
@@ -38,6 +38,7 @@ pub struct DevMapHash {
 }
 
 unsafe impl Sync for DevMapHash {}
+unsafe impl InnerMap for DevMapHash {}
 
 impl DevMapHash {
     /// Creates a [`DevMapHash`] with a set maximum number of elements.

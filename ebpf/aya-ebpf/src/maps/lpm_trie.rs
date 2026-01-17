@@ -6,7 +6,7 @@ use aya_ebpf_cty::c_long;
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_LPM_TRIE},
     insert, lookup,
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
     remove,
 };
 
@@ -18,6 +18,7 @@ pub struct LpmTrie<K, V> {
 }
 
 unsafe impl<K: Sync, V: Sync> Sync for LpmTrie<K, V> {}
+unsafe impl<K, V> InnerMap for LpmTrie<K, V> {}
 
 #[repr(C, packed)]
 pub struct Key<K> {
