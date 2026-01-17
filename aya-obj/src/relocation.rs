@@ -151,7 +151,7 @@ impl Object {
     /// to the BTF type ID.
     pub fn relocate_calls(
         &mut self,
-        _text_sections: &HashSet<usize>,
+        text_sections: &HashSet<usize>,
         kernel_btf: Option<&Btf>,
     ) -> Result<(), EbpfRelocationError> {
         for (name, program) in self.programs.iter() {
@@ -159,6 +159,7 @@ impl Object {
                 &self.functions,
                 &self.relocations,
                 &self.symbol_table,
+                text_sections,
                 kernel_btf,
             );
 
@@ -286,6 +287,7 @@ struct FunctionLinker<'a> {
     linked_functions: HashMap<u64, usize>,
     relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
     symbol_table: &'a HashMap<usize, Symbol>,
+    text_sections: &'a HashSet<usize>,
     kernel_btf: Option<&'a Btf>,
 }
 
@@ -294,6 +296,7 @@ impl<'a> FunctionLinker<'a> {
         functions: &'a BTreeMap<(usize, u64), Function>,
         relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
         symbol_table: &'a HashMap<usize, Symbol>,
+        text_sections: &'a HashSet<usize>,
         kernel_btf: Option<&'a Btf>,
     ) -> Self {
         Self {
@@ -301,6 +304,7 @@ impl<'a> FunctionLinker<'a> {
             linked_functions: HashMap::new(),
             relocations,
             symbol_table,
+            text_sections,
             kernel_btf,
         }
     }
@@ -407,6 +411,16 @@ impl<'a> FunctionLinker<'a> {
                     continue;
                 }
             }
+
+            // Filter to only consider text relocations - data relocations are
+            // handled in relocate_maps()
+            let rel = rel.filter(|(_rel, sym)| {
+                sym.kind == SymbolKind::Text
+                    || sym
+                        .section_index
+                        .map(|section_index| self.text_sections.contains(&section_index))
+                        .unwrap_or(false)
+            });
 
             // not a call and not a text relocation, we don't need to do anything
             if !is_call && rel.is_none() {
