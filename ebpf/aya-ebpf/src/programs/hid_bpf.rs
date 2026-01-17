@@ -45,8 +45,7 @@
 //! }
 //! ```
 
-use core::ffi::c_void;
-use core::marker::PhantomData;
+use core::{ffi::c_void, marker::PhantomData};
 
 use crate::EbpfContext;
 
@@ -208,6 +207,7 @@ impl HidBpfContext {
     /// Get safe access to the HID report data buffer.
     ///
     /// Returns `None` if the kernel returns a null pointer (e.g., invalid offset/size).
+    #[cfg(target_arch = "bpf")]
     #[inline(always)]
     pub fn data(&self, offset: u32, size: u32) -> Option<HidBpfData<'_>> {
         // SAFETY: kfunc returns valid pointer or null, size is validated by kernel
@@ -257,7 +257,7 @@ impl HidBpfContext {
 
 impl EbpfContext for HidBpfContext {
     fn as_ptr(&self) -> *mut c_void {
-        self.ctx as *mut c_void
+        self.ctx.cast::<c_void>()
     }
 }
 
@@ -283,10 +283,12 @@ impl EbpfContext for HidBpfContext {
 /// // Send command - context auto-released on drop
 /// let ret = vendor.hw_request(&mut buf, HidReportType::Feature, HidClassRequest::SetReport);
 /// ```
+#[cfg(target_arch = "bpf")]
 pub struct AllocatedContext {
     ctx: *mut hid_bpf_ctx,
 }
 
+#[cfg(target_arch = "bpf")]
 impl AllocatedContext {
     /// Allocate a new HID-BPF context for the given HID ID.
     ///
@@ -314,7 +316,12 @@ impl AllocatedContext {
     ///
     /// Number of bytes transferred on success, negative error code on failure.
     #[inline(always)]
-    pub fn hw_request(&self, buf: &mut [u8], rtype: HidReportType, reqtype: HidClassRequest) -> i32 {
+    pub fn hw_request(
+        &self,
+        buf: &mut [u8],
+        rtype: HidReportType,
+        reqtype: HidClassRequest,
+    ) -> i32 {
         // SAFETY: context valid, buffer valid for its length
         unsafe {
             kfunc::hid_bpf_hw_request(
@@ -334,6 +341,7 @@ impl AllocatedContext {
     }
 }
 
+#[cfg(target_arch = "bpf")]
 impl Drop for AllocatedContext {
     #[inline(always)]
     fn drop(&mut self) {
@@ -353,6 +361,7 @@ impl Drop for AllocatedContext {
 ///
 /// Most users should use the safe wrappers ([`HidBpfContext`], [`AllocatedContext`])
 /// instead of calling these directly.
+#[cfg(target_arch = "bpf")]
 pub mod kfunc {
     use super::hid_bpf_ctx;
 

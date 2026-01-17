@@ -724,7 +724,7 @@ macro_rules! impl_integer_promotion {
         /// Create `printk` arguments from integer types.
         impl From<$ty> for PrintkArg {
             #[inline]
-            #[allow(trivial_numeric_casts)]
+            #[allow(trivial_numeric_casts, clippy::cast_sign_loss)]
             fn from(x: $ty) -> Self {
                 Self(x as $via as u64)
             }
