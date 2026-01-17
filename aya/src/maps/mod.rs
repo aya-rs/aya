@@ -635,11 +635,12 @@ impl MapData {
             m.data.resize(kernel_value_size as usize, 0);
         }
 
-        let fd = bpf_create_map_with_vmlinux_btf(&c_name, &obj, btf_fd, Some(btf_vmlinux_value_type_id))
-            .map_err(|io_error| MapError::CreateError {
-                name: name.into(),
-                io_error,
-            })?;
+        let fd =
+            bpf_create_map_with_vmlinux_btf(&c_name, &obj, btf_fd, Some(btf_vmlinux_value_type_id))
+                .map_err(|io_error| MapError::CreateError {
+                    name: name.into(),
+                    io_error,
+                })?;
         Ok(Self {
             obj,
             fd: MapFd::from_fd(fd),

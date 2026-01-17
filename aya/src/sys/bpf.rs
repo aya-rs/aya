@@ -182,7 +182,10 @@ pub(crate) fn bpf_load_program(
     u.insn_cnt = aya_attr.insns.len() as u32;
     debug!(
         "bpf_load_program: prog_type={} insn_cnt={} expected_attach_type={:?} attach_btf_id={:?}",
-        u.prog_type, aya_attr.insns.len(), aya_attr.expected_attach_type, aya_attr.attach_btf_id
+        u.prog_type,
+        aya_attr.insns.len(),
+        aya_attr.expected_attach_type,
+        aya_attr.attach_btf_id
     );
     u.license = aya_attr.license.as_ptr() as u64;
     u.kern_version = aya_attr.kernel_version;

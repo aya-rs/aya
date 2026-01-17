@@ -661,9 +661,7 @@ impl Object {
                 address,
                 section_index: section.index,
                 section_offset: offset,
-                instructions: copy_instructions(
-                    &section.data[offset..offset + sym.size as usize],
-                )?,
+                instructions: copy_instructions(&section.data[offset..offset + sym.size as usize])?,
                 func_info,
                 line_info,
                 func_info_rec_size,
@@ -671,7 +669,8 @@ impl Object {
             };
 
             // Register the function
-            self.functions.insert((section.index.0, address), function.clone());
+            self.functions
+                .insert((section.index.0, address), function.clone());
 
             // The first function (at offset 0) is the program entry point
             if offset == 0 {
@@ -862,12 +861,12 @@ impl Object {
         let is_link = section.kind == EbpfSectionKind::StructOpsLink;
 
         // Get symbols for this section to find the variable names
-        let symbols = self
-            .symbols_by_section
-            .get(&section.index)
-            .ok_or(ParseError::NoSymbolsForSection {
-                section_name: section.name.to_owned(),
-            })?;
+        let symbols =
+            self.symbols_by_section
+                .get(&section.index)
+                .ok_or(ParseError::NoSymbolsForSection {
+                    section_name: section.name.to_owned(),
+                })?;
 
         // Look for the DATASEC type for this section in BTF
         let sec_name = section.name;

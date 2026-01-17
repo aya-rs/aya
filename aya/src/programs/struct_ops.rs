@@ -1,14 +1,13 @@
 //! struct_ops programs.
 
-use log::debug;
-
 use aya_obj::{
     btf::{Btf, BtfKind},
     generated::bpf_prog_type::BPF_PROG_TYPE_STRUCT_OPS,
 };
+use log::debug;
 
 use crate::programs::{
-    define_link_wrapper, load_program, FdLink, FdLinkId, ProgramData, ProgramError, ProgramType,
+    FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper, load_program,
 };
 
 /// A program that implements a kernel struct_ops interface.

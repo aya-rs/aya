@@ -12,14 +12,13 @@ use std::{
     os::fd::AsFd as _,
 };
 
-use log::debug;
-
 use aya_obj::maps::StructOpsFuncInfo;
+use log::debug;
 
 use crate::{
     maps::{MapData, MapError, MapFd},
     programs::links::FdLink,
-    sys::{bpf_map_update_elem_ptr, bpf_struct_ops_link_create, SyscallError},
+    sys::{SyscallError, bpf_map_update_elem_ptr, bpf_struct_ops_link_create},
 };
 
 /// A struct_ops map that implements kernel callbacks.

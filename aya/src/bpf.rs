@@ -459,7 +459,10 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::LsmCgroup
                                 | ProgramSection::BtfTracePoint
                                 | ProgramSection::Iter { sleepable: _ }
-                                | ProgramSection::StructOps { sleepable: _, member_name: _ } => {
+                                | ProgramSection::StructOps {
+                                    sleepable: _,
+                                    member_name: _,
+                                } => {
                                     return Err(EbpfError::BtfError(err));
                                 }
                                 ProgramSection::KRetProbe
@@ -569,7 +572,13 @@ impl<'a> EbpfLoader<'a> {
                 // The actual struct_ops data is stored at this offset
                 let data_offset = vmlinux_btf.struct_member_byte_offset(vmlinux_type_id, "data")?;
 
-                let mut map_data = MapData::create_struct_ops(obj, &name, btf_fd, vmlinux_type_id, kernel_value_size)?;
+                let mut map_data = MapData::create_struct_ops(
+                    obj,
+                    &name,
+                    btf_fd,
+                    vmlinux_type_id,
+                    kernel_value_size,
+                )?;
 
                 // Store the data offset in the struct_ops map
                 if let aya_obj::Map::StructOps(m) = map_data.obj_mut() {
@@ -792,13 +801,19 @@ impl<'a> EbpfLoader<'a> {
                             }
                             Program::Iter(Iter { data })
                         }
-                        ProgramSection::StructOps { sleepable, member_name } => {
+                        ProgramSection::StructOps {
+                            sleepable,
+                            member_name,
+                        } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
-                            Program::StructOps(StructOps { data, member_name: member_name.clone() })
+                            Program::StructOps(StructOps {
+                                data,
+                                member_name: member_name.clone(),
+                            })
                         }
                         ProgramSection::Syscall => Program::Syscall(Syscall {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
@@ -1241,8 +1256,9 @@ impl Ebpf {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn load_struct_ops(&mut self, btf: &Btf) -> Result<(), EbpfError> {
-        use aya_obj::btf::BtfKind;
         use std::os::fd::{AsFd, AsRawFd};
+
+        use aya_obj::btf::BtfKind;
 
         // Collect (map_name, struct_name, program_names) for each struct_ops map
         let mut struct_ops_info: Vec<(String, String, Vec<String>)> = Vec::new();
