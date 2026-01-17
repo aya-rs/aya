@@ -919,7 +919,6 @@ pub fn aya::maps::struct_ops::StructOpsMap<T>::pin<P: core::convert::AsRef<std::
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::struct_ops::StructOpsMap<T>
 pub fn aya::maps::struct_ops::StructOpsMap<T>::set_field_i32(&mut self, offset: u32, value: i32) -> core::result::Result<(), aya::maps::MapError>
 pub fn aya::maps::struct_ops::StructOpsMap<T>::set_field_u32(&mut self, offset: u32, value: u32) -> core::result::Result<(), aya::maps::MapError>
-pub fn aya::maps::struct_ops::StructOpsMap<T>::set_prog_fd(&mut self, offset: u32, fd: i32) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::struct_ops::StructOpsMap<aya::maps::MapData>
 pub type aya::maps::struct_ops::StructOpsMap<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::struct_ops::StructOpsMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -2490,7 +2489,6 @@ pub fn aya::maps::struct_ops::StructOpsMap<T>::pin<P: core::convert::AsRef<std::
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::struct_ops::StructOpsMap<T>
 pub fn aya::maps::struct_ops::StructOpsMap<T>::set_field_i32(&mut self, offset: u32, value: i32) -> core::result::Result<(), aya::maps::MapError>
 pub fn aya::maps::struct_ops::StructOpsMap<T>::set_field_u32(&mut self, offset: u32, value: u32) -> core::result::Result<(), aya::maps::MapError>
-pub fn aya::maps::struct_ops::StructOpsMap<T>::set_prog_fd(&mut self, offset: u32, fd: i32) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::struct_ops::StructOpsMap<aya::maps::MapData>
 pub type aya::maps::struct_ops::StructOpsMap<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::struct_ops::StructOpsMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>

@@ -53,8 +53,7 @@ impl StructOps {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = #fn_name(::aya_ebpf::programs::StructOpsContext::new(ctx));
-                return 0;
+                return #fn_name(::aya_ebpf::programs::StructOpsContext::new(ctx));
 
                 #item
             }
@@ -84,8 +83,7 @@ mod tests {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "struct_ops/my_callback")]
             fn my_callback(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = my_callback(::aya_ebpf::programs::StructOpsContext::new(ctx));
-                return 0;
+                return my_callback(::aya_ebpf::programs::StructOpsContext::new(ctx));
 
                 fn my_callback(ctx: &mut aya_ebpf::programs::StructOpsContext) -> i32 {
                     0
@@ -113,8 +111,7 @@ mod tests {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "struct_ops/hid_device_event")]
             fn my_handler(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = my_handler(::aya_ebpf::programs::StructOpsContext::new(ctx));
-                return 0;
+                return my_handler(::aya_ebpf::programs::StructOpsContext::new(ctx));
 
                 fn my_handler(ctx: &mut aya_ebpf::programs::StructOpsContext) -> i32 {
                     0
@@ -142,8 +139,7 @@ mod tests {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "struct_ops.s/my_callback")]
             fn my_callback(ctx: *mut ::core::ffi::c_void) -> i32 {
-                let _ = my_callback(::aya_ebpf::programs::StructOpsContext::new(ctx));
-                return 0;
+                return my_callback(::aya_ebpf::programs::StructOpsContext::new(ctx));
 
                 fn my_callback(ctx: &mut aya_ebpf::programs::StructOpsContext) -> i32 {
                     0

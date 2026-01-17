@@ -286,7 +286,7 @@ fn delete_probe_event(
 ) -> Result<(), (PathBuf, io::Error)> {
     use std::os::unix::ffi::OsStrExt as _;
 
-    let events_file_name = tracefs.join(format!("{pmu}_events"));
+    let events_file_name = tracefs.join(format!("{}_events", pmu));
 
     fs::read(&events_file_name)
         .and_then(|events| {
