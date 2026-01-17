@@ -1256,7 +1256,7 @@ impl Ebpf {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn load_struct_ops(&mut self, btf: &Btf) -> Result<(), EbpfError> {
-        use std::os::fd::{AsFd, AsRawFd};
+        use std::os::fd::{AsFd as _, AsRawFd as _};
 
         use aya_obj::btf::BtfKind;
 
@@ -1268,8 +1268,8 @@ impl Ebpf {
                     let prog_names: Vec<String> =
                         m.func_info.iter().map(|i| i.prog_name.clone()).collect();
                     debug!(
-                        "struct_ops map '{}' type='{}' prog_names={:?}",
-                        map_name, m.type_name, prog_names
+                        "struct_ops map '{map_name}' type='{}' prog_names={prog_names:?}",
+                        m.type_name
                     );
                     struct_ops_info.push((map_name.clone(), m.type_name.clone(), prog_names));
                 }
@@ -1282,8 +1282,7 @@ impl Ebpf {
         for (map_name, struct_name, prog_names) in &struct_ops_info {
             if prog_names.is_empty() {
                 debug!(
-                    "struct_ops map '{}' has no func_info, using fallback matching by member_name",
-                    map_name
+                    "struct_ops map '{map_name}' has no func_info, using fallback matching by member_name"
                 );
                 // Get struct BTF type ID for member offset lookup
                 if let Ok(struct_type_id) = btf.id_by_type_name_kind(struct_name, BtfKind::Struct) {
@@ -1295,8 +1294,7 @@ impl Ebpf {
                                 btf.struct_member_byte_offset(struct_type_id, member_name)
                             {
                                 debug!(
-                                    "fallback: matched program '{}' to member '{}' at offset {}",
-                                    prog_name, member_name, member_offset
+                                    "fallback: matched program '{prog_name}' to member '{member_name}' at offset {member_offset}"
                                 );
                                 fallback_matches.push((
                                     map_name.clone(),
@@ -1314,18 +1312,12 @@ impl Ebpf {
         // Load all struct_ops programs (from func_info)
         for (_, struct_name, prog_names) in &struct_ops_info {
             for prog_name in prog_names {
-                debug!("looking for struct_ops program '{}'", prog_name);
+                debug!("looking for struct_ops program '{prog_name}'");
                 if let Some(Program::StructOps(struct_ops)) = self.programs.get_mut(prog_name) {
-                    debug!(
-                        "loading struct_ops program '{}' for struct '{}'",
-                        prog_name, struct_name
-                    );
+                    debug!("loading struct_ops program '{prog_name}' for struct '{struct_name}'");
                     struct_ops.load(struct_name, btf)?;
                 } else {
-                    warn!(
-                        "struct_ops program '{}' not found or not StructOps type",
-                        prog_name
-                    );
+                    warn!("struct_ops program '{prog_name}' not found or not StructOps type");
                 }
             }
         }
@@ -1334,8 +1326,7 @@ impl Ebpf {
         for (_, struct_name, prog_name, _) in &fallback_matches {
             if let Some(Program::StructOps(struct_ops)) = self.programs.get_mut(prog_name) {
                 debug!(
-                    "loading fallback struct_ops program '{}' for struct '{}'",
-                    prog_name, struct_name
+                    "loading fallback struct_ops program '{prog_name}' for struct '{struct_name}'"
                 );
                 struct_ops.load(struct_name, btf)?;
             }
@@ -1353,7 +1344,7 @@ impl Ebpf {
                     }
                 };
 
-                debug!("struct_ops map '{}' data_offset={}", map_name, data_offset);
+                debug!("struct_ops map '{map_name}' data_offset={data_offset}");
 
                 // Fill FDs from func_info (relocation-based)
                 for info in &func_info {
@@ -1361,9 +1352,10 @@ impl Ebpf {
                     if let Some(Program::StructOps(prog)) = self.programs.get(&info.prog_name) {
                         let fd = prog.fd()?;
                         let raw_fd = fd.as_fd().as_raw_fd();
+                        let member_offset = info.member_offset;
+                        let prog_name = &info.prog_name;
                         debug!(
-                            "filling FD {} for program '{}' at offset {} (data_offset {} + member_offset {})",
-                            raw_fd, info.prog_name, actual_offset, data_offset, info.member_offset
+                            "filling FD {raw_fd} for program '{prog_name}' at offset {actual_offset} (data_offset {data_offset} + member_offset {member_offset})"
                         );
                         let data = map_data.obj_mut().data_mut();
                         if actual_offset + 4 <= data.len() {
@@ -1371,7 +1363,8 @@ impl Ebpf {
                                 .copy_from_slice(&raw_fd.to_ne_bytes());
                         }
                     } else {
-                        warn!("struct_ops program '{}' not found", info.prog_name);
+                        let prog_name = &info.prog_name;
+                        warn!("struct_ops program '{prog_name}' not found");
                     }
                 }
 
@@ -1384,8 +1377,7 @@ impl Ebpf {
                                 let fd = prog.fd()?;
                                 let raw_fd = fd.as_fd().as_raw_fd();
                                 debug!(
-                                    "filling FD {} for fallback program '{}' at offset {} (data_offset {} + member_offset {})",
-                                    raw_fd, prog_name, actual_offset, data_offset, member_offset
+                                    "filling FD {raw_fd} for fallback program '{prog_name}' at offset {actual_offset} (data_offset {data_offset} + member_offset {member_offset})"
                                 );
                                 let data = map_data.obj_mut().data_mut();
                                 if actual_offset + 4 <= data.len() {

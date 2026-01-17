@@ -151,7 +151,7 @@ impl Object {
     /// to the BTF type ID.
     pub fn relocate_calls(
         &mut self,
-        text_sections: &HashSet<usize>,
+        _text_sections: &HashSet<usize>,
         kernel_btf: Option<&Btf>,
     ) -> Result<(), EbpfRelocationError> {
         for (name, program) in self.programs.iter() {
@@ -159,7 +159,6 @@ impl Object {
                 &self.functions,
                 &self.relocations,
                 &self.symbol_table,
-                text_sections,
                 kernel_btf,
             );
 
@@ -287,7 +286,6 @@ struct FunctionLinker<'a> {
     linked_functions: HashMap<u64, usize>,
     relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
     symbol_table: &'a HashMap<usize, Symbol>,
-    text_sections: &'a HashSet<usize>,
     kernel_btf: Option<&'a Btf>,
 }
 
@@ -296,7 +294,6 @@ impl<'a> FunctionLinker<'a> {
         functions: &'a BTreeMap<(usize, u64), Function>,
         relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
         symbol_table: &'a HashMap<usize, Symbol>,
-        text_sections: &'a HashSet<usize>,
         kernel_btf: Option<&'a Btf>,
     ) -> Self {
         Self {
@@ -304,7 +301,6 @@ impl<'a> FunctionLinker<'a> {
             linked_functions: HashMap::new(),
             relocations,
             symbol_table,
-            text_sections,
             kernel_btf,
         }
     }
@@ -394,21 +390,18 @@ impl<'a> FunctionLinker<'a> {
                                 ins.imm = btf_id as i32;
                                 ins.set_src_reg(BPF_PSEUDO_KFUNC_CALL as u8);
                                 debug!(
-                                    "resolved kfunc `{}` to BTF id {} at instruction {}",
-                                    kfunc_name, btf_id, ins_index
+                                    "resolved kfunc `{kfunc_name}` to BTF id {btf_id} at instruction {ins_index}"
                                 );
                             }
                             Err(e) => {
                                 debug!(
-                                    "kfunc `{}` not found in kernel BTF: {}, leaving unresolved",
-                                    kfunc_name, e
+                                    "kfunc `{kfunc_name}` not found in kernel BTF: {e}, leaving unresolved"
                                 );
                             }
                         }
                     } else {
                         debug!(
-                            "no kernel BTF available, skipping kfunc `{}` at instruction {}",
-                            kfunc_name, ins_index
+                            "no kernel BTF available, skipping kfunc `{kfunc_name}` at instruction {ins_index}"
                         );
                     }
                     continue;

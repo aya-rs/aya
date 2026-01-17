@@ -2,7 +2,7 @@
 
 use aya_obj::{
     btf::{Btf, BtfKind},
-    generated::bpf_prog_type::BPF_PROG_TYPE_STRUCT_OPS,
+    generated::{bpf_attach_type, bpf_prog_type::BPF_PROG_TYPE_STRUCT_OPS},
 };
 use log::debug;
 
@@ -68,13 +68,14 @@ impl StructOps {
         let member_index = btf.struct_member_index(struct_type_id, &self.member_name)?;
 
         debug!(
-            "loading struct_ops program member='{}' struct='{}' member_index={}",
-            self.member_name, struct_name, member_index
+            "loading struct_ops program member='{}' struct='{struct_name}' member_index={member_index}",
+            self.member_name
         );
 
         // expected_attach_type for struct_ops is the member index (not BPF_STRUCT_OPS)
         // SAFETY: the kernel uses expected_attach_type as a u32 for struct_ops member index
-        self.data.expected_attach_type = Some(unsafe { std::mem::transmute(member_index) });
+        self.data.expected_attach_type =
+            Some(unsafe { std::mem::transmute::<u32, bpf_attach_type>(member_index) });
         self.data.attach_btf_id = Some(struct_type_id);
         load_program(BPF_PROG_TYPE_STRUCT_OPS, &mut self.data)
     }

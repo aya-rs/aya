@@ -234,7 +234,7 @@ impl<T: Borrow<MapData>> StructOpsMap<T> {
 
         // For struct_ops, we need to update the map with the struct data
         // The struct data should already have program FDs filled in
-        bpf_map_update_elem_ptr(fd, &key, data.obj().data().as_ptr() as *mut u8, 0)
+        bpf_map_update_elem_ptr(fd, &key, data.obj().data().as_ptr().cast_mut(), 0)
             .map_err(|io_error| SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,
