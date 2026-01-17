@@ -4511,7 +4511,7 @@ pub fn aya::programs::raw_trace_point::RawTracePointLink::from(b: aya::programs:
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::sk_lookup::SkLookupLink
 pub fn aya::programs::sk_lookup::SkLookupLink::from(b: aya::programs::links::FdLink) -> aya::programs::sk_lookup::SkLookupLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::struct_ops::StructOpsLink
-pub fn aya::programs::struct_ops::StructOpsLink::from(b: aya::programs::links::FdLink) -> aya::programs::struct_ops::StructOpsLink
+pub fn aya::programs::struct_ops::StructOpsLink::from(b: aya::programs::links::FdLink) -> Self
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::tp_btf::BtfTracePointLink
 pub fn aya::programs::tp_btf::BtfTracePointLink::from(b: aya::programs::links::FdLink) -> aya::programs::tp_btf::BtfTracePointLink
 impl core::convert::From<aya::programs::links::PinnedLink> for aya::programs::links::FdLink
@@ -4525,7 +4525,7 @@ pub fn aya::programs::links::FdLink::from(w: aya::programs::raw_trace_point::Raw
 impl core::convert::From<aya::programs::sk_lookup::SkLookupLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::sk_lookup::SkLookupLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::struct_ops::StructOpsLink> for aya::programs::links::FdLink
-pub fn aya::programs::links::FdLink::from(w: aya::programs::struct_ops::StructOpsLink) -> aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::from(w: aya::programs::struct_ops::StructOpsLink) -> Self
 impl core::convert::From<aya::programs::tp_btf::BtfTracePointLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(w: aya::programs::tp_btf::BtfTracePointLink) -> aya::programs::links::FdLink
 impl core::convert::TryFrom<aya::programs::cgroup_skb::CgroupSkbLink> for aya::programs::links::FdLink
@@ -6824,9 +6824,6 @@ pub const aya::programs::struct_ops::StructOps::PROGRAM_TYPE: aya::programs::Pro
 pub fn aya::programs::struct_ops::StructOps::load(&mut self, struct_name: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::struct_ops::StructOps::member_name(&self) -> &str
 impl aya::programs::struct_ops::StructOps
-pub fn aya::programs::struct_ops::StructOps::detach(&mut self, link_id: aya::programs::struct_ops::StructOpsLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::struct_ops::StructOps::take_link(&mut self, link_id: aya::programs::struct_ops::StructOpsLinkId) -> core::result::Result<aya::programs::struct_ops::StructOpsLink, aya::programs::ProgramError>
-impl aya::programs::struct_ops::StructOps
 pub fn aya::programs::struct_ops::StructOps::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::struct_ops::StructOps
 pub fn aya::programs::struct_ops::StructOps::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
@@ -6878,9 +6875,9 @@ impl core::cmp::Eq for aya::programs::struct_ops::StructOpsLink
 impl core::cmp::PartialEq for aya::programs::struct_ops::StructOpsLink
 pub fn aya::programs::struct_ops::StructOpsLink::eq(&self, other: &Self) -> bool
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::struct_ops::StructOpsLink
-pub fn aya::programs::struct_ops::StructOpsLink::from(b: aya::programs::links::FdLink) -> aya::programs::struct_ops::StructOpsLink
+pub fn aya::programs::struct_ops::StructOpsLink::from(b: aya::programs::links::FdLink) -> Self
 impl core::convert::From<aya::programs::struct_ops::StructOpsLink> for aya::programs::links::FdLink
-pub fn aya::programs::links::FdLink::from(w: aya::programs::struct_ops::StructOpsLink) -> aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::from(w: aya::programs::struct_ops::StructOpsLink) -> Self
 impl core::fmt::Debug for aya::programs::struct_ops::StructOpsLink
 pub fn aya::programs::struct_ops::StructOpsLink::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::struct_ops::StructOpsLink
@@ -10513,9 +10510,6 @@ impl aya::programs::struct_ops::StructOps
 pub const aya::programs::struct_ops::StructOps::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::struct_ops::StructOps::load(&mut self, struct_name: &str, btf: &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::struct_ops::StructOps::member_name(&self) -> &str
-impl aya::programs::struct_ops::StructOps
-pub fn aya::programs::struct_ops::StructOps::detach(&mut self, link_id: aya::programs::struct_ops::StructOpsLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::struct_ops::StructOps::take_link(&mut self, link_id: aya::programs::struct_ops::StructOpsLinkId) -> core::result::Result<aya::programs::struct_ops::StructOpsLink, aya::programs::ProgramError>
 impl aya::programs::struct_ops::StructOps
 pub fn aya::programs::struct_ops::StructOps::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
 impl aya::programs::struct_ops::StructOps

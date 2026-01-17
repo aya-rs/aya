@@ -7,7 +7,7 @@ use aya_obj::{
 use log::debug;
 
 use crate::programs::{
-    FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper, load_program,
+    FdLink, FdLinkId, Link, ProgramData, ProgramError, ProgramType, links::id_as_key, load_program,
 };
 
 /// A program that implements a kernel struct_ops interface.
@@ -90,4 +90,64 @@ impl StructOps {
     }
 }
 
-define_link_wrapper!(StructOpsLink, StructOpsLinkId, FdLink, FdLinkId, StructOps);
+/// The identifier for a [`StructOpsLink`].
+///
+/// This is returned by [`StructOpsMap::attach`](crate::maps::StructOpsMap::attach).
+#[derive(Debug, Hash, Eq, PartialEq)]
+pub struct StructOpsLinkId(FdLinkId);
+
+/// The link used by [`StructOps`] programs.
+///
+/// This is created by [`StructOpsMap::attach`](crate::maps::StructOpsMap::attach)
+/// after the struct_ops map has been registered.
+#[derive(Debug)]
+pub struct StructOpsLink(Option<FdLink>);
+
+#[allow(dead_code)]
+impl StructOpsLink {
+    pub(crate) fn new(base: FdLink) -> Self {
+        Self(Some(base))
+    }
+
+    fn inner(&self) -> &FdLink {
+        self.0.as_ref().unwrap()
+    }
+
+    fn into_inner(mut self) -> FdLink {
+        self.0.take().unwrap()
+    }
+}
+
+impl Drop for StructOpsLink {
+    fn drop(&mut self) {
+        if let Some(base) = self.0.take() {
+            let _: Result<(), ProgramError> = base.detach();
+        }
+    }
+}
+
+impl Link for StructOpsLink {
+    type Id = StructOpsLinkId;
+
+    fn id(&self) -> Self::Id {
+        StructOpsLinkId(self.0.as_ref().unwrap().id())
+    }
+
+    fn detach(mut self) -> Result<(), ProgramError> {
+        self.0.take().unwrap().detach()
+    }
+}
+
+id_as_key!(StructOpsLink, StructOpsLinkId);
+
+impl From<FdLink> for StructOpsLink {
+    fn from(b: FdLink) -> Self {
+        Self(Some(b))
+    }
+}
+
+impl From<StructOpsLink> for FdLink {
+    fn from(mut w: StructOpsLink) -> Self {
+        w.0.take().unwrap()
+    }
+}
