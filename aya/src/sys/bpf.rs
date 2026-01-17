@@ -70,12 +70,17 @@ pub(crate) fn bpf_create_map_with_vmlinux_btf(
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
 
-    // Handle struct_ops maps - they need btf_vmlinux_value_type_id and btf_fd
-    // Key: btf_value_type_id must be 0 for struct_ops (NOT the program type ID!)
+    // Handle struct_ops maps - they use btf_vmlinux_value_type_id exclusively.
+    // When btf_vmlinux_value_type_id is set, btf_value_type_id MUST be 0 (kernel rejects otherwise).
+    // See kernel/bpf/syscall.c map_create() validation.
+    // However, btf_fd IS required to resolve struct/function types in the BPF object's BTF.
     if let aya_obj::Map::StructOps(_) = def {
         if let Some(vmlinux_type_id) = btf_vmlinux_value_type_id {
             u.btf_vmlinux_value_type_id = vmlinux_type_id;
         }
+        // btf_value_type_id must be 0 (already zeroed via mem::zeroed)
+        // btf_fd IS needed for struct_ops to resolve struct/function references
+        u.btf_fd = btf_fd.map(|fd| fd.as_raw_fd()).unwrap_or_default() as u32;
     } else if let aya_obj::Map::Btf(m) = def {
         use bpf_map_type::*;
 

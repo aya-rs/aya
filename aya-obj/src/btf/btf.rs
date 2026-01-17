@@ -629,10 +629,11 @@ impl Btf {
                         d.name_offset = self.add_string(&fixed_name);
                     }
 
-                    // .ksyms is a pseudo-section for extern kernel symbols.
+                    // .ksyms is a pseudo-section for extern kernel symbols (see EbpfSectionKind::Ksyms).
                     // It has no real ELF section and the kernel rejects DATASEC with
                     // size=0 and non-empty entries. Replace with INT to remove it.
-                    if name == ".ksyms" {
+                    const KSYMS_SECTION: &str = ".ksyms";
+                    if name == KSYMS_SECTION {
                         debug!("{kind} {name}: pseudo-section, replacing with INT");
                         let old_size = d.type_info_size();
                         let new_type =

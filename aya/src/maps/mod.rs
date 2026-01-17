@@ -626,13 +626,24 @@ impl MapData {
         btf_fd: Option<BorrowedFd<'_>>,
         btf_vmlinux_value_type_id: u32,
         kernel_value_size: u32,
+        data_offset: u32,
     ) -> Result<Self, MapError> {
         let c_name = CString::new(name)
             .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
 
         // For struct_ops maps, value_size must match kernel wrapper size (bpf_struct_ops_<name>)
+        // The .struct_ops section data represents the ops struct, which must be placed at
+        // data_offset within the kernel wrapper struct (bpf_struct_ops_<name>).
         if let aya_obj::Map::StructOps(ref mut m) = obj {
-            m.data.resize(kernel_value_size as usize, 0);
+            let original_data = std::mem::take(&mut m.data);
+            let mut new_data = vec![0u8; kernel_value_size as usize];
+            let offset = data_offset as usize;
+            // Copy original data to the correct offset within the wrapper struct
+            if offset + original_data.len() <= new_data.len() {
+                new_data[offset..offset + original_data.len()].copy_from_slice(&original_data);
+            }
+            m.data = new_data;
+            m.data_offset = data_offset;
         }
 
         let fd =

@@ -108,14 +108,13 @@ impl<T: Borrow<MapData>> StructOpsMap<T> {
 impl<T: BorrowMut<MapData>> StructOpsMap<T> {
     /// Sets a program FD at the specified offset in the struct data.
     ///
-    /// This is used to fill in the program FDs for function pointer fields
-    /// before registering the struct_ops.
+    /// This is an internal method used by [`Ebpf::load_struct_ops`] to fill in
+    /// program FDs for function pointer fields. Users should call
+    /// `load_struct_ops()` instead of this method directly.
     ///
-    /// # Arguments
-    ///
-    /// * `offset` - The byte offset where the program FD should be written
-    /// * `fd` - The file descriptor of the loaded BPF program
-    pub fn set_prog_fd(&mut self, offset: u32, fd: i32) -> Result<(), MapError> {
+    /// [`Ebpf::load_struct_ops`]: crate::Ebpf::load_struct_ops
+    #[allow(dead_code)]
+    pub(crate) fn set_prog_fd(&mut self, offset: u32, fd: i32) -> Result<(), MapError> {
         self.set_field_i32(offset, fd)
     }
 
@@ -212,9 +211,10 @@ impl<T: BorrowMut<MapData>> StructOpsMap<T> {
 impl<T: Borrow<MapData>> StructOpsMap<T> {
     /// Registers the struct_ops by calling bpf_map_update_elem.
     ///
-    /// This should be called after all associated BPF programs have been loaded
-    /// and their file descriptors have been filled into the struct data using
-    /// [`set_prog_fd`](Self::set_prog_fd).
+    /// This should be called after [`Ebpf::load_struct_ops`] has been called to load
+    /// all associated BPF programs and fill their file descriptors into the struct data.
+    ///
+    /// [`Ebpf::load_struct_ops`]: crate::Ebpf::load_struct_ops
     pub fn register(&self) -> Result<(), MapError> {
         let data = self.inner.borrow();
         let key: u32 = 0;
@@ -232,9 +232,11 @@ impl<T: Borrow<MapData>> StructOpsMap<T> {
             data_offset
         );
 
-        // For struct_ops, we need to update the map with the struct data
-        // The struct data should already have program FDs filled in
-        bpf_map_update_elem_ptr(fd, &key, data.obj().data().as_ptr().cast_mut(), 0)
+        // For struct_ops, we need to update the map with the struct data.
+        // The struct data should already have program FDs filled in.
+        // Use a mutable copy to avoid casting away const from immutable data.
+        let mut value = data.obj().data().to_vec();
+        bpf_map_update_elem_ptr(fd, &key, value.as_mut_ptr(), 0)
             .map_err(|io_error| SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,

@@ -379,8 +379,11 @@ impl<'a> FunctionLinker<'a> {
                         .map(|sym| (rel, sym))
                 });
 
-            // Check if this is a kfunc (external kernel function) relocation
-            // Kfuncs have no section_index (undefined/external symbols)
+            // Check if this is a kfunc (external kernel function) relocation.
+            // Kfuncs are represented as undefined/external symbols in the ELF file,
+            // which means they have no section_index (sym.section_index.is_none()).
+            // These need to be resolved at load time by looking up the function
+            // in the kernel's BTF and setting the instruction's imm to the BTF ID.
             if let Some((_rel, sym)) = &rel {
                 if sym.section_index.is_none() {
                     let kfunc_name = sym.name.as_deref().unwrap_or("?");

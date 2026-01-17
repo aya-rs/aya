@@ -7,7 +7,7 @@ use aya_obj::{
 use log::debug;
 
 use crate::programs::{
-    FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper, load_program,
+    FdLink, FdLinkId, Link, ProgramData, ProgramError, ProgramType, links::id_as_key, load_program,
 };
 
 /// A program that implements a kernel struct_ops interface.
@@ -72,8 +72,12 @@ impl StructOps {
             self.member_name
         );
 
-        // expected_attach_type for struct_ops is the member index (not BPF_STRUCT_OPS)
-        // SAFETY: the kernel uses expected_attach_type as a u32 for struct_ops member index
+        // For struct_ops, expected_attach_type stores the member index (not a bpf_attach_type).
+        // SAFETY: While this creates a technically invalid enum value, it is safe because:
+        // 1. bpf_attach_type is #[repr(u32)] so it has the same memory layout as u32
+        // 2. The value is only used by casting back to u32 in bpf_load_program()
+        // 3. The kernel interprets this field as a raw u32 for struct_ops programs
+        // A cleaner solution would require adding a separate field to ProgramData.
         self.data.expected_attach_type =
             Some(unsafe { std::mem::transmute::<u32, bpf_attach_type>(member_index) });
         self.data.attach_btf_id = Some(struct_type_id);
@@ -86,4 +90,64 @@ impl StructOps {
     }
 }
 
-define_link_wrapper!(StructOpsLink, StructOpsLinkId, FdLink, FdLinkId, StructOps);
+/// The identifier for a [`StructOpsLink`].
+///
+/// This is returned by [`StructOpsMap::attach`](crate::maps::StructOpsMap::attach).
+#[derive(Debug, Hash, Eq, PartialEq)]
+pub struct StructOpsLinkId(FdLinkId);
+
+/// The link used by [`StructOps`] programs.
+///
+/// This is created by [`StructOpsMap::attach`](crate::maps::StructOpsMap::attach)
+/// after the struct_ops map has been registered.
+#[derive(Debug)]
+pub struct StructOpsLink(Option<FdLink>);
+
+#[allow(dead_code)]
+impl StructOpsLink {
+    pub(crate) fn new(base: FdLink) -> Self {
+        Self(Some(base))
+    }
+
+    fn inner(&self) -> &FdLink {
+        self.0.as_ref().unwrap()
+    }
+
+    fn into_inner(mut self) -> FdLink {
+        self.0.take().unwrap()
+    }
+}
+
+impl Drop for StructOpsLink {
+    fn drop(&mut self) {
+        if let Some(base) = self.0.take() {
+            let _: Result<(), ProgramError> = base.detach();
+        }
+    }
+}
+
+impl Link for StructOpsLink {
+    type Id = StructOpsLinkId;
+
+    fn id(&self) -> Self::Id {
+        StructOpsLinkId(self.0.as_ref().unwrap().id())
+    }
+
+    fn detach(mut self) -> Result<(), ProgramError> {
+        self.0.take().unwrap().detach()
+    }
+}
+
+id_as_key!(StructOpsLink, StructOpsLinkId);
+
+impl From<FdLink> for StructOpsLink {
+    fn from(b: FdLink) -> Self {
+        Self(Some(b))
+    }
+}
+
+impl From<StructOpsLink> for FdLink {
+    fn from(mut w: StructOpsLink) -> Self {
+        w.0.take().unwrap()
+    }
+}
