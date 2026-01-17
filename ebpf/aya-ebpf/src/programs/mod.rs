@@ -2,6 +2,7 @@ pub mod device;
 pub mod fentry;
 pub mod fexit;
 pub mod flow_dissector;
+pub mod hid_bpf;
 pub mod lsm;
 pub mod perf_event;
 pub mod probe;
@@ -14,6 +15,7 @@ pub mod sock;
 pub mod sock_addr;
 pub mod sock_ops;
 pub mod sockopt;
+pub mod struct_ops;
 pub mod sysctl;
 pub mod tc;
 pub mod tp_btf;
@@ -24,6 +26,12 @@ pub use device::DeviceContext;
 pub use fentry::FEntryContext;
 pub use fexit::FExitContext;
 pub use flow_dissector::FlowDissectorContext;
+#[cfg(target_arch = "bpf")]
+pub use hid_bpf::{AllocatedContext, kfunc};
+pub use hid_bpf::{
+    BUS_BLUETOOTH, BUS_I2C, BUS_USB, HID_GROUP_ANY, HID_GROUP_GENERIC, HID_IGNORE_EVENT,
+    HidBpfContext, HidBpfData, HidBpfProbeArgs, HidClassRequest, HidReportType, hid_bpf_ctx,
+};
 pub use lsm::LsmContext;
 pub use perf_event::PerfEventContext;
 pub use probe::ProbeContext;
@@ -36,6 +44,7 @@ pub use sock::SockContext;
 pub use sock_addr::SockAddrContext;
 pub use sock_ops::SockOpsContext;
 pub use sockopt::SockoptContext;
+pub use struct_ops::StructOpsContext;
 pub use sysctl::SysctlContext;
 pub use tc::TcContext;
 pub use tp_btf::BtfTracePointContext;

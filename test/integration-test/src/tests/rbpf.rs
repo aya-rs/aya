@@ -91,7 +91,7 @@ fn use_map_with_rbpf() {
         )
         .expect("Relocation failed");
     // Actually there is no local function call involved.
-    object.relocate_calls(&text_sections).unwrap();
+    object.relocate_calls(&text_sections, None).unwrap();
 
     // Executes the program
     assert_eq!(object.programs.len(), 1);
