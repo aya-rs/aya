@@ -572,19 +572,14 @@ impl<'a> EbpfLoader<'a> {
                 // The actual struct_ops data is stored at this offset
                 let data_offset = vmlinux_btf.struct_member_byte_offset(vmlinux_type_id, "data")?;
 
-                let mut map_data = MapData::create_struct_ops(
+                MapData::create_struct_ops(
                     obj,
                     &name,
                     btf_fd,
                     vmlinux_type_id,
                     kernel_value_size,
-                )?;
-
-                // Store the data offset in the struct_ops map
-                if let aya_obj::Map::StructOps(m) = map_data.obj_mut() {
-                    m.data_offset = data_offset;
-                }
-                map_data
+                    data_offset,
+                )?
             } else if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
                 MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd)?
             } else {
