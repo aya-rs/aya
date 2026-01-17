@@ -10,8 +10,13 @@ use crate::{
     maps::{
         IterableMap, MapData, MapError, MapIter, MapKeys, PerCpuValues, check_kv_size, hash_map,
     },
-    sys::{SyscallError, bpf_map_lookup_elem_per_cpu, bpf_map_update_elem_per_cpu},
+    sys::{
+        SyscallError, bpf_map_lookup_and_delete_batch_per_cpu, bpf_map_lookup_elem_per_cpu,
+        bpf_map_update_elem_per_cpu,
+    },
 };
+
+type BatchResult<K, V> = (Vec<K>, Vec<PerCpuValues<V>>, Option<K>);
 
 /// Similar to [`HashMap`](crate::maps::HashMap) but each CPU holds a separate value for a given key. Typically used to
 /// minimize lock contention in eBPF programs.
@@ -81,6 +86,77 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// type is `Result<K, MapError>`.
     pub fn keys(&self) -> MapKeys<'_, K> {
         MapKeys::new(self.inner.borrow())
+    }
+
+    /// Batch lookup and delete multiple key-value pairs from the map.
+    ///
+    /// This method retrieves and removes up to `batch_size` entries from the map in a single
+    /// syscall, which is more efficient than calling `get` and `remove` individually for each key.
+    ///
+    /// # Arguments
+    ///
+    /// * `batch_size` - Maximum number of entries to retrieve in this batch
+    /// * `in_batch` - Optional cursor from a previous batch operation (use `None` for the first call)
+    /// * `flags` - Operation flags
+    ///
+    /// # Returns
+    ///
+    /// Returns a tuple of `(keys, values, out_batch)` where:
+    /// - `keys` - Vector of retrieved keys
+    /// - `values` - Vector of retrieved per-CPU values (one `PerCpuValues<V>` per key)
+    /// - `out_batch` - Optional cursor for the next batch (pass this as `in_batch` to continue iteration)
+    ///
+    /// When `out_batch` is `None`, there are no more entries to retrieve.
+    ///
+    /// # Minimum kernel version
+    ///
+    /// The minimum kernel version required to use this feature is 5.6.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # let mut bpf = aya::Ebpf::load(&[])?;
+    /// use aya::maps::PerCpuHashMap;
+    ///
+    /// let mut hm = PerCpuHashMap::<_, u8, u32>::try_from(bpf.map_mut("PER_CPU_STORAGE").unwrap())?;
+    ///
+    /// // Retrieve and delete entries in batches of 64
+    /// let mut cursor = None;
+    /// loop {
+    ///     let (keys, values, next_cursor) = hm.batch_lookup_and_delete(64, cursor.as_ref(), 0)?;
+    ///
+    ///     if keys.is_empty() {
+    ///         break;
+    ///     }
+    ///
+    ///     for (key, per_cpu_vals) in keys.iter().zip(values.iter()) {
+    ///         println!("Key: {}, Values: {:?}", key, per_cpu_vals);
+    ///     }
+    ///
+    ///     cursor = next_cursor;
+    ///     if cursor.is_none() {
+    ///         break;
+    ///     }
+    /// }
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    pub fn batch_lookup_and_delete(
+        &self,
+        batch_size: usize,
+        in_batch: Option<&K>,
+        flags: u64,
+    ) -> Result<BatchResult<K, V>, MapError> {
+        let fd = self.inner.borrow().fd().as_fd();
+
+        bpf_map_lookup_and_delete_batch_per_cpu(fd, in_batch, batch_size, flags)
+            .map(|batch| (batch.keys, batch.values, batch.out_batch))
+            .map_err(|io_error| {
+                SyscallError {
+                    call: "bpf_map_lookup_and_delete_batch",
+                    io_error,
+                }
+                .into()
+            })
     }
 }
 
@@ -193,5 +269,117 @@ mod tests {
         override_syscall(|_| sys_error(ENOENT));
 
         assert_matches!(map.get(&1, 0), Err(MapError::KeyNotFound));
+    }
+
+    #[test]
+    fn test_batch_lookup_and_delete_empty() {
+        use aya_obj::generated::bpf_cmd;
+
+        use crate::sys::Syscall;
+
+        let map_data =
+            || test_utils::new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_PERCPU_HASH));
+        let map = Map::PerCpuHashMap(map_data());
+        let map = PerCpuHashMap::<_, u32, u32>::try_from(&map).unwrap();
+
+        // Mock the syscall to return ENOENT (no entries)
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_LOOKUP_AND_DELETE_BATCH,
+                attr,
+            } => {
+                // Kernel sets count to 0 when no entries are returned
+                attr.batch.count = 0;
+                sys_error(ENOENT)
+            }
+            _ => sys_error(libc::EINVAL),
+        });
+
+        let result = map.batch_lookup_and_delete(10, None, 0);
+        assert_matches!(result, Ok((keys, values, cursor)) => {
+            assert_eq!(keys.len(), 0);
+            assert_eq!(values.len(), 0);
+            assert_eq!(cursor, None);
+        });
+    }
+
+    #[test]
+    fn test_batch_lookup_and_delete_with_entries() {
+        use std::ptr;
+
+        use aya_obj::generated::bpf_cmd;
+
+        use crate::{sys::Syscall, util::nr_cpus};
+
+        let map_data =
+            || test_utils::new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_PERCPU_HASH));
+        let map = Map::PerCpuHashMap(map_data());
+        let map = PerCpuHashMap::<_, u32, u32>::try_from(&map).unwrap();
+
+        // Mock the syscall to return 2 entries
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_LOOKUP_AND_DELETE_BATCH,
+                attr,
+            } => unsafe {
+                // Get nr_cpus inside the closure to avoid capturing
+                let nr_cpus = nr_cpus().unwrap();
+
+                // Fill in the keys
+                let keys_ptr = attr.batch.keys as *mut u32;
+                *keys_ptr.add(0) = 10;
+                *keys_ptr.add(1) = 20;
+
+                // Fill in the values (per-CPU)
+                let value_size = (std::mem::size_of::<u32>() + 7) & !7;
+                let values_ptr = attr.batch.values as *mut u8;
+
+                // For key 10: values [100, 101, 102, ...]
+                for cpu in 0..nr_cpus {
+                    let offset = cpu * value_size;
+                    ptr::write_unaligned(values_ptr.add(offset).cast::<u32>(), 100 + cpu as u32);
+                }
+
+                // For key 20: values [200, 201, 202, ...]
+                for cpu in 0..nr_cpus {
+                    let offset = nr_cpus * value_size + cpu * value_size;
+                    ptr::write_unaligned(values_ptr.add(offset).cast::<u32>(), 200 + cpu as u32);
+                }
+
+                // Set the actual count
+                attr.batch.count = 2;
+
+                // Set out_batch (next cursor)
+                let out_batch_ptr = attr.batch.out_batch as *mut u32;
+                *out_batch_ptr = 30;
+
+                Ok(0)
+            },
+            _ => sys_error(libc::EINVAL),
+        });
+
+        let result = map.batch_lookup_and_delete(10, None, 0);
+        let nr_cpus = nr_cpus().unwrap();
+        assert_matches!(result, Ok((keys, values, cursor)) => {
+            assert_eq!(keys.len(), 2);
+            assert_eq!(values.len(), 2);
+
+            assert_eq!(keys[0], 10);
+            assert_eq!(keys[1], 20);
+
+            // Check per-CPU values for key 10
+            assert_eq!(values[0].len(), nr_cpus);
+            for (cpu, value) in values[0].iter().enumerate().take(nr_cpus) {
+                assert_eq!(*value, 100 + cpu as u32);
+            }
+
+            // Check per-CPU values for key 20
+            assert_eq!(values[1].len(), nr_cpus);
+            for (cpu, value) in values[1].iter().enumerate().take(nr_cpus) {
+                assert_eq!(*value, 200 + cpu as u32);
+            }
+
+            assert_eq!(cursor, Some(30));
+        });
     }
 }
