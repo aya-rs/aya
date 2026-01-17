@@ -4,7 +4,7 @@ use alloc::vec::Vec;
 use core::mem;
 
 use crate::{
-    generated::bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS, EbpfSectionKind, InvalidTypeBinding,
+    EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS,
 };
 
 impl TryFrom<u32> for crate::generated::bpf_map_type {

@@ -452,11 +452,19 @@ impl Btf {
     ///
     /// This is useful for struct_ops programs where `expected_attach_type` needs
     /// to be set to the member index in the kernel struct.
-    pub fn struct_member_index(&self, struct_type_id: u32, member_name: &str) -> Result<u32, BtfError> {
+    pub fn struct_member_index(
+        &self,
+        struct_type_id: u32,
+        member_name: &str,
+    ) -> Result<u32, BtfError> {
         let ty = self.types.type_by_id(struct_type_id)?;
         let members = match ty {
             BtfType::Struct(s) => &s.members,
-            _ => return Err(BtfError::UnexpectedBtfType { type_id: struct_type_id }),
+            _ => {
+                return Err(BtfError::UnexpectedBtfType {
+                    type_id: struct_type_id,
+                });
+            }
         };
         for (index, member) in members.iter().enumerate() {
             let name = self.string_at(member.name_offset)?;
@@ -473,11 +481,19 @@ impl Btf {
     ///
     /// This is useful for struct_ops where we need to find the offset of the
     /// `data` field within the kernel wrapper struct (e.g., `bpf_struct_ops_hid_bpf_ops`).
-    pub fn struct_member_byte_offset(&self, struct_type_id: u32, member_name: &str) -> Result<u32, BtfError> {
+    pub fn struct_member_byte_offset(
+        &self,
+        struct_type_id: u32,
+        member_name: &str,
+    ) -> Result<u32, BtfError> {
         let ty = self.types.type_by_id(struct_type_id)?;
         let members = match ty {
             BtfType::Struct(s) => &s.members,
-            _ => return Err(BtfError::UnexpectedBtfType { type_id: struct_type_id }),
+            _ => {
+                return Err(BtfError::UnexpectedBtfType {
+                    type_id: struct_type_id,
+                });
+            }
         };
         for member in members.iter() {
             let name = self.string_at(member.name_offset)?;
@@ -619,7 +635,8 @@ impl Btf {
                     if name == ".ksyms" {
                         debug!("{kind} {name}: pseudo-section, replacing with INT");
                         let old_size = d.type_info_size();
-                        let new_type = BtfType::Int(Int::new(d.name_offset, 0, IntEncoding::None, 0));
+                        let new_type =
+                            BtfType::Int(Int::new(d.name_offset, 0, IntEncoding::None, 0));
                         let new_size = new_type.type_info_size();
                         // Update header to reflect the size change
                         self.header.type_len =
@@ -762,9 +779,7 @@ impl Btf {
                         // These are resolved from kernel BTF at load time, so we
                         // should not include them in the program BTF. Replace with
                         // TYPEDEF to preserve type info without the problematic linkage.
-                        debug!(
-                            "{kind} {name}: extern kfunc, replacing with TYPEDEF"
-                        );
+                        debug!("{kind} {name}: extern kfunc, replacing with TYPEDEF");
                         *t = BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
                     } else if !features.btf_func_global
                         || name == "memset"
