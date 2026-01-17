@@ -10,7 +10,7 @@
 //!
 //! - [`HidBpfContext`]: Safe wrapper around kernel's `hid_bpf_ctx`
 //! - [`HidBpfData`]: Bounds-checked access to HID report data buffers
-//! - [`AllocatedContext`]: RAII guard for allocated contexts (auto-releases on drop)
+//! - `AllocatedContext`: RAII guard for allocated contexts (auto-releases on drop, BPF target only)
 //!
 //! # Callbacks
 //!
