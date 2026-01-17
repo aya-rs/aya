@@ -23,6 +23,7 @@ mod sk_msg;
 mod sk_skb;
 mod sock_ops;
 mod socket_filter;
+mod struct_ops;
 mod tc;
 mod tracepoint;
 mod uprobe;
@@ -51,6 +52,7 @@ use sk_msg::SkMsg;
 use sk_skb::{SkSkb, SkSkbKind};
 use sock_ops::SockOps;
 use socket_filter::SocketFilter;
+use struct_ops::StructOps;
 use tc::SchedClassifier;
 use tracepoint::TracePoint;
 use uprobe::{UProbe, UProbeKind};
@@ -595,6 +597,40 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn fexit(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match FExit::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
+    }
+    .into()
+}
+
+/// Marks a function as an eBPF struct_ops program.
+///
+/// Struct ops programs implement kernel interfaces like `hid_bpf_ops` for
+/// HID device handling or `sched_ext_ops` for custom schedulers.
+///
+/// # Arguments
+///
+/// * `name` - Optional name for the struct_ops callback. If not specified,
+///   the function name is used.
+/// * `sleepable` - Mark the program as sleepable.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 5.6.
+///
+/// # Example
+///
+/// ```no_run
+/// use aya_ebpf::{macros::struct_ops, programs::StructOpsContext};
+///
+/// #[struct_ops]
+/// fn my_callback(ctx: StructOpsContext) -> i32 {
+///     0
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn struct_ops(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match StructOps::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
         Err(err) => err.into_compile_error(),
     }

@@ -19,6 +19,7 @@ mod ring_buf;
 mod sk_storage;
 mod smoke;
 mod strncmp;
+mod struct_ops;
 mod tcx;
 mod uprobe_cookie;
 mod xdp;

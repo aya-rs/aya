@@ -2208,6 +2208,35 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sockopt::SockoptConte
 pub fn aya_ebpf::programs::sockopt::SockoptContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sockopt::SockoptContext
 pub fn aya_ebpf::programs::sockopt::SockoptContext::from(t: T) -> T
+pub mod aya_ebpf::programs::struct_ops
+pub struct aya_ebpf::programs::struct_ops::StructOpsContext
+impl aya_ebpf::programs::struct_ops::StructOpsContext
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::arg<T: aya_ebpf::Argument>(&self, n: usize) -> T
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::new(ctx: *mut core::ffi::c_void) -> Self
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::struct_ops::StructOpsContext
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::struct_ops::StructOpsContext
+impl !core::marker::Send for aya_ebpf::programs::struct_ops::StructOpsContext
+impl !core::marker::Sync for aya_ebpf::programs::struct_ops::StructOpsContext
+impl core::marker::Unpin for aya_ebpf::programs::struct_ops::StructOpsContext
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::struct_ops::StructOpsContext
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::struct_ops::StructOpsContext
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::struct_ops::StructOpsContext where U: core::convert::From<T>
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::struct_ops::StructOpsContext where U: core::convert::Into<T>
+pub type aya_ebpf::programs::struct_ops::StructOpsContext::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::struct_ops::StructOpsContext where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::struct_ops::StructOpsContext::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::struct_ops::StructOpsContext where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::struct_ops::StructOpsContext where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::struct_ops::StructOpsContext where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::struct_ops::StructOpsContext
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::from(t: T) -> T
 pub mod aya_ebpf::programs::sysctl
 pub struct aya_ebpf::programs::sysctl::SysctlContext
 pub aya_ebpf::programs::sysctl::SysctlContext::sysctl: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sysctl
@@ -2888,6 +2917,34 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::sockopt::SockoptConte
 pub fn aya_ebpf::programs::sockopt::SockoptContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::sockopt::SockoptContext
 pub fn aya_ebpf::programs::sockopt::SockoptContext::from(t: T) -> T
+pub struct aya_ebpf::programs::StructOpsContext
+impl aya_ebpf::programs::struct_ops::StructOpsContext
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::arg<T: aya_ebpf::Argument>(&self, n: usize) -> T
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::new(ctx: *mut core::ffi::c_void) -> Self
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::struct_ops::StructOpsContext
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl core::marker::Freeze for aya_ebpf::programs::struct_ops::StructOpsContext
+impl !core::marker::Send for aya_ebpf::programs::struct_ops::StructOpsContext
+impl !core::marker::Sync for aya_ebpf::programs::struct_ops::StructOpsContext
+impl core::marker::Unpin for aya_ebpf::programs::struct_ops::StructOpsContext
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::struct_ops::StructOpsContext
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::struct_ops::StructOpsContext
+impl<T, U> core::convert::Into<U> for aya_ebpf::programs::struct_ops::StructOpsContext where U: core::convert::From<T>
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::programs::struct_ops::StructOpsContext where U: core::convert::Into<T>
+pub type aya_ebpf::programs::struct_ops::StructOpsContext::Error = core::convert::Infallible
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::programs::struct_ops::StructOpsContext where U: core::convert::TryFrom<T>
+pub type aya_ebpf::programs::struct_ops::StructOpsContext::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::programs::struct_ops::StructOpsContext where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::programs::struct_ops::StructOpsContext where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::programs::struct_ops::StructOpsContext where T: ?core::marker::Sized
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::programs::struct_ops::StructOpsContext
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::from(t: T) -> T
 pub struct aya_ebpf::programs::SysctlContext
 pub aya_ebpf::programs::SysctlContext::sysctl: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sysctl
 impl aya_ebpf::programs::sysctl::SysctlContext
@@ -3067,6 +3124,8 @@ impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sockopt::SockoptContext
 pub fn aya_ebpf::programs::sockopt::SockoptContext::as_ptr(&self) -> *mut core::ffi::c_void
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::struct_ops::StructOpsContext
+pub fn aya_ebpf::programs::struct_ops::StructOpsContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sysctl::SysctlContext
 pub fn aya_ebpf::programs::sysctl::SysctlContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tc::TcContext

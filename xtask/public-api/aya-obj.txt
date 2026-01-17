@@ -363,7 +363,10 @@ pub fn aya_obj::btf::Btf::id_by_type_name_kind(&self, name: &str, kind: aya_obj:
 pub fn aya_obj::btf::Btf::new() -> Self
 pub fn aya_obj::btf::Btf::parse(data: &[u8], endianness: object::endian::Endianness) -> core::result::Result<Self, aya_obj::btf::BtfError>
 pub fn aya_obj::btf::Btf::parse_file<P: core::convert::AsRef<std::path::Path>>(path: P, endianness: object::endian::Endianness) -> core::result::Result<Self, aya_obj::btf::BtfError>
+pub fn aya_obj::btf::Btf::struct_member_byte_offset(&self, struct_type_id: u32, member_name: &str) -> core::result::Result<u32, aya_obj::btf::BtfError>
+pub fn aya_obj::btf::Btf::struct_member_index(&self, struct_type_id: u32, member_name: &str) -> core::result::Result<u32, aya_obj::btf::BtfError>
 pub fn aya_obj::btf::Btf::to_bytes(&self) -> alloc::vec::Vec<u8>
+pub fn aya_obj::btf::Btf::type_size(&self, root_type_id: u32) -> core::result::Result<usize, aya_obj::btf::BtfError>
 impl core::clone::Clone for aya_obj::btf::Btf
 pub fn aya_obj::btf::Btf::clone(&self) -> aya_obj::btf::Btf
 impl core::default::Default for aya_obj::btf::Btf
@@ -8202,7 +8205,9 @@ pub mod aya_obj::maps
 pub enum aya_obj::maps::Map
 pub aya_obj::maps::Map::Btf(aya_obj::maps::BtfMap)
 pub aya_obj::maps::Map::Legacy(aya_obj::maps::LegacyMap)
+pub aya_obj::maps::Map::StructOps(aya_obj::maps::StructOpsMap)
 impl aya_obj::maps::Map
+pub fn aya_obj::maps::Map::btf_value_type_id(&self) -> core::option::Option<u32>
 pub fn aya_obj::maps::Map::data(&self) -> &[u8]
 pub fn aya_obj::maps::Map::data_mut(&mut self) -> &mut alloc::vec::Vec<u8>
 pub fn aya_obj::maps::Map::key_size(&self) -> u32
@@ -8439,6 +8444,83 @@ impl<T> core::clone::CloneToUninit for aya_obj::maps::LegacyMap where T: core::c
 pub unsafe fn aya_obj::maps::LegacyMap::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::maps::LegacyMap
 pub fn aya_obj::maps::LegacyMap::from(t: T) -> T
+pub struct aya_obj::maps::StructOpsFuncInfo
+pub aya_obj::maps::StructOpsFuncInfo::member_name: alloc::string::String
+pub aya_obj::maps::StructOpsFuncInfo::member_offset: u32
+pub aya_obj::maps::StructOpsFuncInfo::prog_name: alloc::string::String
+impl core::clone::Clone for aya_obj::maps::StructOpsFuncInfo
+pub fn aya_obj::maps::StructOpsFuncInfo::clone(&self) -> aya_obj::maps::StructOpsFuncInfo
+impl core::fmt::Debug for aya_obj::maps::StructOpsFuncInfo
+pub fn aya_obj::maps::StructOpsFuncInfo::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya_obj::maps::StructOpsFuncInfo
+impl core::marker::Send for aya_obj::maps::StructOpsFuncInfo
+impl core::marker::Sync for aya_obj::maps::StructOpsFuncInfo
+impl core::marker::Unpin for aya_obj::maps::StructOpsFuncInfo
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::StructOpsFuncInfo
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::StructOpsFuncInfo
+impl<T, U> core::convert::Into<U> for aya_obj::maps::StructOpsFuncInfo where U: core::convert::From<T>
+pub fn aya_obj::maps::StructOpsFuncInfo::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::maps::StructOpsFuncInfo where U: core::convert::Into<T>
+pub type aya_obj::maps::StructOpsFuncInfo::Error = core::convert::Infallible
+pub fn aya_obj::maps::StructOpsFuncInfo::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::maps::StructOpsFuncInfo where U: core::convert::TryFrom<T>
+pub type aya_obj::maps::StructOpsFuncInfo::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::maps::StructOpsFuncInfo::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::maps::StructOpsFuncInfo where T: core::clone::Clone
+pub type aya_obj::maps::StructOpsFuncInfo::Owned = T
+pub fn aya_obj::maps::StructOpsFuncInfo::clone_into(&self, target: &mut T)
+pub fn aya_obj::maps::StructOpsFuncInfo::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::maps::StructOpsFuncInfo where T: 'static + ?core::marker::Sized
+pub fn aya_obj::maps::StructOpsFuncInfo::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::maps::StructOpsFuncInfo where T: ?core::marker::Sized
+pub fn aya_obj::maps::StructOpsFuncInfo::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::maps::StructOpsFuncInfo where T: ?core::marker::Sized
+pub fn aya_obj::maps::StructOpsFuncInfo::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_obj::maps::StructOpsFuncInfo where T: core::clone::Clone
+pub unsafe fn aya_obj::maps::StructOpsFuncInfo::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_obj::maps::StructOpsFuncInfo
+pub fn aya_obj::maps::StructOpsFuncInfo::from(t: T) -> T
+pub struct aya_obj::maps::StructOpsMap
+pub aya_obj::maps::StructOpsMap::btf_type_id: u32
+pub aya_obj::maps::StructOpsMap::data: alloc::vec::Vec<u8>
+pub aya_obj::maps::StructOpsMap::data_offset: u32
+pub aya_obj::maps::StructOpsMap::func_info: alloc::vec::Vec<aya_obj::maps::StructOpsFuncInfo>
+pub aya_obj::maps::StructOpsMap::is_link: bool
+pub aya_obj::maps::StructOpsMap::section_index: usize
+pub aya_obj::maps::StructOpsMap::symbol_index: usize
+pub aya_obj::maps::StructOpsMap::type_name: alloc::string::String
+impl core::clone::Clone for aya_obj::maps::StructOpsMap
+pub fn aya_obj::maps::StructOpsMap::clone(&self) -> aya_obj::maps::StructOpsMap
+impl core::fmt::Debug for aya_obj::maps::StructOpsMap
+pub fn aya_obj::maps::StructOpsMap::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya_obj::maps::StructOpsMap
+impl core::marker::Send for aya_obj::maps::StructOpsMap
+impl core::marker::Sync for aya_obj::maps::StructOpsMap
+impl core::marker::Unpin for aya_obj::maps::StructOpsMap
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::StructOpsMap
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::StructOpsMap
+impl<T, U> core::convert::Into<U> for aya_obj::maps::StructOpsMap where U: core::convert::From<T>
+pub fn aya_obj::maps::StructOpsMap::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::maps::StructOpsMap where U: core::convert::Into<T>
+pub type aya_obj::maps::StructOpsMap::Error = core::convert::Infallible
+pub fn aya_obj::maps::StructOpsMap::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::maps::StructOpsMap where U: core::convert::TryFrom<T>
+pub type aya_obj::maps::StructOpsMap::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::maps::StructOpsMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::maps::StructOpsMap where T: core::clone::Clone
+pub type aya_obj::maps::StructOpsMap::Owned = T
+pub fn aya_obj::maps::StructOpsMap::clone_into(&self, target: &mut T)
+pub fn aya_obj::maps::StructOpsMap::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::maps::StructOpsMap where T: 'static + ?core::marker::Sized
+pub fn aya_obj::maps::StructOpsMap::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::maps::StructOpsMap where T: ?core::marker::Sized
+pub fn aya_obj::maps::StructOpsMap::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::maps::StructOpsMap where T: ?core::marker::Sized
+pub fn aya_obj::maps::StructOpsMap::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_obj::maps::StructOpsMap where T: core::clone::Clone
+pub unsafe fn aya_obj::maps::StructOpsMap::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_obj::maps::StructOpsMap
+pub fn aya_obj::maps::StructOpsMap::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::maps::bpf_map_def
 pub aya_obj::maps::bpf_map_def::id: u32
 pub aya_obj::maps::bpf_map_def::key_size: u32
@@ -8493,10 +8575,13 @@ pub aya_obj::obj::EbpfSectionKind::Btf
 pub aya_obj::obj::EbpfSectionKind::BtfExt
 pub aya_obj::obj::EbpfSectionKind::BtfMaps
 pub aya_obj::obj::EbpfSectionKind::Data
+pub aya_obj::obj::EbpfSectionKind::Ksyms
 pub aya_obj::obj::EbpfSectionKind::License
 pub aya_obj::obj::EbpfSectionKind::Maps
 pub aya_obj::obj::EbpfSectionKind::Program
 pub aya_obj::obj::EbpfSectionKind::Rodata
+pub aya_obj::obj::EbpfSectionKind::StructOps
+pub aya_obj::obj::EbpfSectionKind::StructOpsLink
 pub aya_obj::obj::EbpfSectionKind::Text
 pub aya_obj::obj::EbpfSectionKind::Undefined
 pub aya_obj::obj::EbpfSectionKind::Version
@@ -8645,6 +8730,10 @@ pub aya_obj::obj::ProgramSection::SkSkbStreamParser
 pub aya_obj::obj::ProgramSection::SkSkbStreamVerdict
 pub aya_obj::obj::ProgramSection::SockOps
 pub aya_obj::obj::ProgramSection::SocketFilter
+pub aya_obj::obj::ProgramSection::StructOps
+pub aya_obj::obj::ProgramSection::StructOps::member_name: alloc::string::String
+pub aya_obj::obj::ProgramSection::StructOps::sleepable: bool
+pub aya_obj::obj::ProgramSection::Syscall
 pub aya_obj::obj::ProgramSection::TracePoint
 pub aya_obj::obj::ProgramSection::UProbe
 pub aya_obj::obj::ProgramSection::UProbe::sleepable: bool
@@ -8809,7 +8898,7 @@ pub fn aya_obj::Object::sanitize_functions(&mut self, features: &aya_obj::Featur
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, target_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
-pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>, kernel_btf: core::option::Option<&aya_obj::btf::Btf>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
@@ -9307,10 +9396,13 @@ pub aya_obj::EbpfSectionKind::Btf
 pub aya_obj::EbpfSectionKind::BtfExt
 pub aya_obj::EbpfSectionKind::BtfMaps
 pub aya_obj::EbpfSectionKind::Data
+pub aya_obj::EbpfSectionKind::Ksyms
 pub aya_obj::EbpfSectionKind::License
 pub aya_obj::EbpfSectionKind::Maps
 pub aya_obj::EbpfSectionKind::Program
 pub aya_obj::EbpfSectionKind::Rodata
+pub aya_obj::EbpfSectionKind::StructOps
+pub aya_obj::EbpfSectionKind::StructOpsLink
 pub aya_obj::EbpfSectionKind::Text
 pub aya_obj::EbpfSectionKind::Undefined
 pub aya_obj::EbpfSectionKind::Version
@@ -9354,7 +9446,9 @@ pub fn aya_obj::EbpfSectionKind::from(t: T) -> T
 pub enum aya_obj::Map
 pub aya_obj::Map::Btf(aya_obj::maps::BtfMap)
 pub aya_obj::Map::Legacy(aya_obj::maps::LegacyMap)
+pub aya_obj::Map::StructOps(aya_obj::maps::StructOpsMap)
 impl aya_obj::maps::Map
+pub fn aya_obj::maps::Map::btf_value_type_id(&self) -> core::option::Option<u32>
 pub fn aya_obj::maps::Map::data(&self) -> &[u8]
 pub fn aya_obj::maps::Map::data_mut(&mut self) -> &mut alloc::vec::Vec<u8>
 pub fn aya_obj::maps::Map::key_size(&self) -> u32
@@ -9508,6 +9602,10 @@ pub aya_obj::ProgramSection::SkSkbStreamParser
 pub aya_obj::ProgramSection::SkSkbStreamVerdict
 pub aya_obj::ProgramSection::SockOps
 pub aya_obj::ProgramSection::SocketFilter
+pub aya_obj::ProgramSection::StructOps
+pub aya_obj::ProgramSection::StructOps::member_name: alloc::string::String
+pub aya_obj::ProgramSection::StructOps::sleepable: bool
+pub aya_obj::ProgramSection::Syscall
 pub aya_obj::ProgramSection::TracePoint
 pub aya_obj::ProgramSection::UProbe
 pub aya_obj::ProgramSection::UProbe::sleepable: bool
@@ -9672,7 +9770,7 @@ pub fn aya_obj::Object::sanitize_functions(&mut self, features: &aya_obj::Featur
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, target_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
-pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>, kernel_btf: core::option::Option<&aya_obj::btf::Btf>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
