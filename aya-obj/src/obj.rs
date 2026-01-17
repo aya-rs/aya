@@ -672,19 +672,17 @@ impl Object {
             self.functions
                 .insert((section.index.0, address), function.clone());
 
-            // The first function (at offset 0) is the program entry point
-            if offset == 0 {
-                self.programs.insert(
-                    name.clone(),
-                    Program {
-                        license: self.license.clone(),
-                        kernel_version: self.kernel_version,
-                        section: program_section.clone(),
-                        section_index: section.index.0,
-                        address,
-                    },
-                );
-            }
+            // Register as a program
+            self.programs.insert(
+                name.clone(),
+                Program {
+                    license: self.license.clone(),
+                    kernel_version: self.kernel_version,
+                    section: program_section.clone(),
+                    section_index: section.index.0,
+                    address,
+                },
+            );
 
             offset += sym.size as usize;
         }
@@ -1676,7 +1674,7 @@ mod tests {
                 name: Some(name.to_string()),
                 address,
                 size,
-                is_definition: false,
+                is_definition: true,
                 kind: SymbolKind::Text,
             },
         );
