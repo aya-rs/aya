@@ -16,3 +16,5 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true, default-features = true }
 cargo_metadata = { workspace = true }
+rustc_version = { workspace = true }
+which = { workspace = true, features = ["real-sys"] }
