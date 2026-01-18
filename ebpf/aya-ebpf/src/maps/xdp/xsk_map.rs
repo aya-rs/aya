@@ -4,7 +4,7 @@ use super::try_redirect_map;
 use crate::{
     bindings::bpf_map_type::BPF_MAP_TYPE_XSKMAP,
     lookup,
-    maps::{MapDef, PinningType},
+    maps::{InnerMap, MapDef, PinningType},
 };
 
 /// An array of AF_XDP sockets.
@@ -53,6 +53,9 @@ use crate::{
 pub struct XskMap {
     def: MapDef,
 }
+
+unsafe impl Sync for XskMap {}
+unsafe impl InnerMap for XskMap {}
 
 impl XskMap {
     map_constructors!(
