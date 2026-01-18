@@ -8,7 +8,7 @@ use aya_ebpf_cty::c_long;
 use crate::{
     bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_HASH},
     insert, lookup,
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
     remove,
 };
 
@@ -20,6 +20,7 @@ pub struct HashMap<K, V> {
 }
 
 unsafe impl<K: Sync, V: Sync> Sync for HashMap<K, V> {}
+unsafe impl<K: Sync, V: Sync> InnerMap for HashMap<K, V> {}
 
 impl<K, V> HashMap<K, V> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
@@ -101,6 +102,7 @@ pub struct LruHashMap<K, V> {
 }
 
 unsafe impl<K: Sync, V: Sync> Sync for LruHashMap<K, V> {}
+unsafe impl<K: Sync, V: Sync> InnerMap for LruHashMap<K, V> {}
 
 impl<K, V> LruHashMap<K, V> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
@@ -182,6 +184,7 @@ pub struct PerCpuHashMap<K, V> {
 }
 
 unsafe impl<K, V> Sync for PerCpuHashMap<K, V> {}
+unsafe impl<K: Sync, V: Sync> InnerMap for PerCpuHashMap<K, V> {}
 
 impl<K, V> PerCpuHashMap<K, V> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
@@ -263,6 +266,7 @@ pub struct LruPerCpuHashMap<K, V> {
 }
 
 unsafe impl<K, V> Sync for LruPerCpuHashMap<K, V> {}
+unsafe impl<K: Sync, V: Sync> InnerMap for LruPerCpuHashMap<K, V> {}
 
 impl<K, V> LruPerCpuHashMap<K, V> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
