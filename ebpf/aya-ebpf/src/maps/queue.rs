@@ -3,7 +3,7 @@ use core::{borrow::Borrow, marker::PhantomData, mem, ptr};
 use crate::{
     bindings::bpf_map_type::BPF_MAP_TYPE_QUEUE,
     helpers::{bpf_map_peek_elem, bpf_map_pop_elem, bpf_map_push_elem},
-    maps::{MapDef, PinningType},
+    maps::{InnerMap, MapDef, PinningType},
 };
 
 #[repr(transparent)]
@@ -11,6 +11,9 @@ pub struct Queue<T> {
     def: MapDef,
     _t: PhantomData<T>,
 }
+
+unsafe impl<T: Sync> Sync for Queue<T> {}
+unsafe impl<T> InnerMap for Queue<T> {}
 
 impl<T> Queue<T> {
     map_constructors!((), T, BPF_MAP_TYPE_QUEUE, phantom _t);

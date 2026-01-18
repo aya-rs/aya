@@ -8,7 +8,7 @@ use aya_ebpf_cty::c_long;
 use crate::{
     bindings::bpf_map_type::BPF_MAP_TYPE_HASH,
     insert, lookup,
-    maps::{MapDef, PinningType},
+    maps::{InnerMap, MapDef, PinningType},
     remove,
 };
 
@@ -19,6 +19,8 @@ macro_rules! define_hash_map {
             def: MapDef,
             _kv: PhantomData<(K, V)>,
         }
+
+        unsafe impl<K: Sync, V: Sync> InnerMap for $name<K, V> {}
 
         impl<K, V> $name<K, V> {
             pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {

@@ -3,7 +3,7 @@ use core::{borrow::Borrow, marker::PhantomData, ptr};
 use crate::{
     bindings::bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER,
     helpers::{bpf_map_peek_elem, bpf_map_push_elem},
-    maps::{MapDef, PinningType},
+    maps::{InnerMap, MapDef, PinningType},
 };
 
 #[repr(transparent)]
@@ -11,6 +11,8 @@ pub struct BloomFilter<T> {
     def: MapDef,
     _t: PhantomData<T>,
 }
+
+unsafe impl<T> InnerMap for BloomFilter<T> {}
 
 impl<T> BloomFilter<T> {
     map_constructors!((), T, BPF_MAP_TYPE_BLOOM_FILTER, phantom _t);

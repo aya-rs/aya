@@ -6,7 +6,7 @@ use super::try_redirect_map;
 use crate::{
     bindings::bpf_map_type::BPF_MAP_TYPE_DEVMAP,
     lookup,
-    maps::{MapDef, PinningType},
+    maps::{InnerMap, MapDef, PinningType},
 };
 
 /// An array of network devices.
@@ -34,6 +34,9 @@ use crate::{
 pub struct DevMap {
     def: MapDef,
 }
+
+unsafe impl Sync for DevMap {}
+unsafe impl InnerMap for DevMap {}
 
 impl DevMap {
     map_constructors!(
