@@ -38,6 +38,7 @@ pub struct DevMapHash {
 }
 
 unsafe impl Sync for DevMapHash {}
+impl super::super::private::Sealed for DevMapHash {}
 unsafe impl InnerMap for DevMapHash {}
 
 impl DevMapHash {

@@ -17,6 +17,7 @@ pub struct LpmTrie<K, V> {
 }
 
 unsafe impl<K: Sync, V: Sync> Sync for LpmTrie<K, V> {}
+impl<K, V> super::private::Sealed for LpmTrie<K, V> {}
 unsafe impl<K, V> InnerMap for LpmTrie<K, V> {}
 
 #[repr(C, packed)]

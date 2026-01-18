@@ -13,6 +13,7 @@ pub struct Queue<T> {
 }
 
 unsafe impl<T: Sync> Sync for Queue<T> {}
+impl<T> super::private::Sealed for Queue<T> {}
 unsafe impl<T> InnerMap for Queue<T> {}
 
 impl<T> Queue<T> {

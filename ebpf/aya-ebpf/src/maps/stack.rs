@@ -13,6 +13,7 @@ pub struct Stack<T> {
 }
 
 unsafe impl<T: Sync> Sync for Stack<T> {}
+impl<T> super::private::Sealed for Stack<T> {}
 unsafe impl<T> InnerMap for Stack<T> {}
 
 impl<T> Stack<T> {

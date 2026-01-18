@@ -55,6 +55,7 @@ pub struct XskMap {
 }
 
 unsafe impl Sync for XskMap {}
+impl super::super::private::Sealed for XskMap {}
 unsafe impl InnerMap for XskMap {}
 
 impl XskMap {
