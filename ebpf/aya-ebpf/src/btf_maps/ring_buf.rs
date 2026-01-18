@@ -1,4 +1,4 @@
-use core::{borrow::Borrow, cell::UnsafeCell, mem, mem::MaybeUninit};
+use core::{borrow::Borrow, cell::UnsafeCell, mem, mem::MaybeUninit, ptr};
 
 #[cfg(generic_const_exprs)]
 use crate::const_assert::{Assert, IsTrue};
@@ -119,7 +119,7 @@ impl<T, const M: usize, const F: usize> RingBuf<T, M, F> {
         let ret = unsafe {
             bpf_ringbuf_output(
                 self.0.get().cast(),
-                core::ptr::from_ref(data).cast_mut().cast(),
+                ptr::from_ref(data).cast_mut().cast(),
                 mem::size_of_val(data) as u64,
                 flags,
             )

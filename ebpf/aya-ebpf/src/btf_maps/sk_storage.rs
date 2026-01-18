@@ -3,7 +3,7 @@ use core::{cell::UnsafeCell, ptr};
 use aya_ebpf_bindings::bindings::{
     BPF_F_NO_PREALLOC, BPF_SK_STORAGE_GET_F_CREATE, bpf_map_type::BPF_MAP_TYPE_SK_STORAGE, bpf_sock,
 };
-use aya_ebpf_cty::{c_long, c_void};
+use aya_ebpf_cty::c_long;
 
 use crate::{
     btf_map_def,
@@ -31,17 +31,11 @@ impl<T> SkStorage<T> {
     }
 
     #[inline(always)]
-    fn as_ptr(&self) -> *mut c_void {
-        let Self(inner) = self;
-
-        inner.get().cast()
-    }
-
-    #[inline(always)]
     fn get_ptr(&self, ctx: &SockAddrContext, value: *mut T, flags: u64) -> *mut T {
         let sock_addr = unsafe { &*ctx.sock_addr };
         let sk = unsafe { sock_addr.__bindgen_anon_1.sk };
-        unsafe { bpf_sk_storage_get(self.as_ptr(), sk.cast(), value.cast(), flags) }.cast::<T>()
+        unsafe { bpf_sk_storage_get(self.0.get().cast(), sk.cast(), value.cast(), flags) }
+            .cast::<T>()
     }
 
     /// Gets a mutable reference to the value associated with `sk`.
@@ -81,7 +75,7 @@ impl<T> SkStorage<T> {
     /// This function may dereference the pointer `sk`.
     #[inline(always)]
     pub unsafe fn delete(&self, sk: *mut bpf_sock) -> Result<(), c_long> {
-        let ret = unsafe { bpf_sk_storage_delete(self.as_ptr(), sk.cast()) };
+        let ret = unsafe { bpf_sk_storage_delete(self.0.get().cast(), sk.cast()) };
         if ret == 0 { Ok(()) } else { Err(ret) }
     }
 }

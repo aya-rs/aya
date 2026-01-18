@@ -147,7 +147,7 @@ pub fn check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool {
 fn insert<K, V>(def: *mut c_void, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
     let key = ptr::from_ref(key);
     let value = ptr::from_ref(value);
-    match unsafe { bpf_map_update_elem(def.cast(), key.cast(), value.cast(), flags) } {
+    match unsafe { bpf_map_update_elem(def, key.cast(), value.cast(), flags) } {
         0 => Ok(()),
         ret => Err(ret),
     }
@@ -156,7 +156,7 @@ fn insert<K, V>(def: *mut c_void, key: &K, value: &V, flags: u64) -> Result<(), 
 #[inline]
 fn remove<K>(def: *mut c_void, key: &K) -> Result<(), c_long> {
     let key = ptr::from_ref(key);
-    match unsafe { bpf_map_delete_elem(def.cast(), key.cast()) } {
+    match unsafe { bpf_map_delete_elem(def, key.cast()) } {
         0 => Ok(()),
         ret => Err(ret),
     }
@@ -165,5 +165,5 @@ fn remove<K>(def: *mut c_void, key: &K) -> Result<(), c_long> {
 #[inline]
 fn lookup<K, V>(def: *mut c_void, key: &K) -> Option<NonNull<V>> {
     let key = ptr::from_ref(key);
-    NonNull::new(unsafe { bpf_map_lookup_elem(def.cast(), key.cast()) }.cast())
+    NonNull::new(unsafe { bpf_map_lookup_elem(def, key.cast()) }.cast())
 }

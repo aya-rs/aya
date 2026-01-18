@@ -94,7 +94,6 @@ pub mod bindings {
     pub const TC_ACT_EXT_VAL_MASK: i32 = crate::generated::bindings::TC_ACT_EXT_VAL_MASK as i32;
 
     #[repr(C)]
-    #[derive(Debug, Copy, Clone)]
     pub struct bpf_map_def {
         pub type_: ::aya_ebpf_cty::c_uint,
         pub key_size: ::aya_ebpf_cty::c_uint,

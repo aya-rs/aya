@@ -907,7 +907,7 @@ impl BtfExt {
             // data.len(). Additionally, we know that the header has
             // been initialized so it's safe to call for assume_init.
             unsafe {
-                core::ptr::copy(data.as_ptr(), header.as_mut_ptr().cast::<u8>(), len_to_read);
+                ptr::copy(data.as_ptr(), header.as_mut_ptr().cast::<u8>(), len_to_read);
                 header.assume_init()
             }
         };
