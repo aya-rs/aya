@@ -60,6 +60,8 @@ bpf_file!(
     TWO_PROGS => "two_progs",
     XDP_SEC => "xdp_sec",
     UPROBE_COOKIE => "uprobe_cookie",
+    PROG_ARRAY => "prog_array",
+    MAP_OF_MAPS => "map_of_maps",
 );
 
 #[cfg(test)]
