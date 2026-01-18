@@ -36,6 +36,7 @@ pub struct DevMap {
 }
 
 unsafe impl Sync for DevMap {}
+impl super::super::private::Sealed for DevMap {}
 unsafe impl InnerMap for DevMap {}
 
 impl DevMap {

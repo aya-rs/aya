@@ -109,9 +109,16 @@ pub use stack::Stack;
 pub use stack_trace::StackTrace;
 pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
 
+mod private {
+    pub trait Sealed {}
+}
+
 /// Marker trait for all eBPF maps that can be used in a map of maps.
+///
+/// This trait is sealed and cannot be implemented outside this crate.
 ///
 /// # Safety
 ///
-/// Only implement this trait for map types that can be safely used as inner maps.
-pub unsafe trait InnerMap {}
+/// This trait must only be implemented for map types that the kernel accepts
+/// as inner maps in a map-of-maps structure.
+pub unsafe trait InnerMap: private::Sealed {}

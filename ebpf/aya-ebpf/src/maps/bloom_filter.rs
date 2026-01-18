@@ -12,6 +12,7 @@ pub struct BloomFilter<T> {
     _t: PhantomData<T>,
 }
 
+impl<T> super::private::Sealed for BloomFilter<T> {}
 unsafe impl<T> InnerMap for BloomFilter<T> {}
 
 impl<T> BloomFilter<T> {

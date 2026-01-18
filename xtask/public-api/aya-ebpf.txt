@@ -1885,7 +1885,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::maps::XskMap where T: ?core::ma
 pub fn aya_ebpf::maps::XskMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::XskMap
 pub fn aya_ebpf::maps::XskMap::from(t: T) -> T
-pub unsafe trait aya_ebpf::maps::InnerMap
+pub unsafe trait aya_ebpf::maps::InnerMap: aya_ebpf::maps::private::Sealed
 impl aya_ebpf::maps::InnerMap for aya_ebpf::maps::CpuMap
 impl aya_ebpf::maps::InnerMap for aya_ebpf::maps::DevMap
 impl aya_ebpf::maps::InnerMap for aya_ebpf::maps::DevMapHash

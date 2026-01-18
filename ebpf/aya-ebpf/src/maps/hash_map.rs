@@ -20,6 +20,7 @@ macro_rules! define_hash_map {
             _kv: PhantomData<(K, V)>,
         }
 
+        impl<K: Sync, V: Sync> super::private::Sealed for $name<K, V> {}
         unsafe impl<K: Sync, V: Sync> InnerMap for $name<K, V> {}
 
         impl<K, V> $name<K, V> {
