@@ -5,7 +5,7 @@ use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
 use syn::{ItemFn, spanned::Spanned as _};
 
-use crate::args::{err_on_unknown_args, pop_bool_arg, pop_string_arg};
+use crate::args::Args;
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) enum UProbeKind {
@@ -39,16 +39,17 @@ impl UProbe {
     ) -> Result<Self, Diagnostic> {
         let item = syn::parse2(item)?;
         let span = attrs.span();
-        let mut args = syn::parse2(attrs)?;
-        let path = pop_string_arg(&mut args, "path");
-        let function = pop_string_arg(&mut args, "function");
-        let offset = pop_string_arg(&mut args, "offset")
+        let mut args: Args = syn::parse2(attrs)?;
+        let path = args.pop_string("path");
+        let function = args.pop_string("function");
+        let offset = args
+            .pop_string("offset")
             .as_deref()
             .map(str::parse)
             .transpose()
             .map_err(|err| span.error(format!("failed to parse `offset` argument: {err}")))?;
-        let sleepable = pop_bool_arg(&mut args, "sleepable");
-        err_on_unknown_args(&args)?;
+        let sleepable = args.pop_bool("sleepable");
+        args.into_error()?;
         Ok(Self {
             kind,
             item,
