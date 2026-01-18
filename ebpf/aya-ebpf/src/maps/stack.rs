@@ -12,6 +12,7 @@ pub struct Stack<T> {
     _t: PhantomData<T>,
 }
 
+impl<T> super::private::Sealed for Stack<T> {}
 unsafe impl<T> InnerMap for Stack<T> {}
 
 impl<T> Stack<T> {

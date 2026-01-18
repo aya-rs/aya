@@ -18,6 +18,7 @@ pub struct SockMap {
 }
 
 unsafe impl Sync for SockMap {}
+impl super::private::Sealed for SockMap {}
 unsafe impl InnerMap for SockMap {}
 
 impl SockMap {

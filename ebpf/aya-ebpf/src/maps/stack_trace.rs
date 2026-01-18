@@ -13,6 +13,7 @@ pub struct StackTrace {
 }
 
 unsafe impl Sync for StackTrace {}
+impl super::private::Sealed for StackTrace {}
 unsafe impl InnerMap for StackTrace {}
 
 const PERF_MAX_STACK_DEPTH: u32 = 127;
