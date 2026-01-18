@@ -125,6 +125,8 @@ pub use crate::programs::{
     uprobe::{UProbe, UProbeError},
     xdp::{Xdp, XdpError, XdpFlags},
 };
+// Re-export test run types for convenience
+pub use crate::sys::{TestRunOptions, TestRunResult};
 use crate::{
     VerifierLogLevel,
     maps::MapError,
@@ -133,7 +135,8 @@ use crate::{
     sys::{
         EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget, SyscallError, bpf_btf_get_fd_by_id,
         bpf_get_object, bpf_link_get_fd_by_id, bpf_load_program, bpf_pin_object,
-        bpf_prog_get_fd_by_id, bpf_prog_query, iter_link_ids, retry_with_verifier_logs,
+        bpf_prog_get_fd_by_id, bpf_prog_query, bpf_prog_test_run, iter_link_ids,
+        retry_with_verifier_logs,
     },
     util::KernelVersion,
 };
@@ -248,6 +251,37 @@ impl ProgramFd {
         let Self(inner) = self;
         let inner = inner.try_clone()?;
         Ok(Self(inner))
+    }
+
+    /// Runs the program in test mode.
+    ///
+    /// This allows testing BPF programs by simulating their execution with
+    /// provided input data and context, and checking the return value.
+    ///
+    /// # Minimum kernel version
+    ///
+    /// The minimum kernel version required to use this feature is 4.12.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use aya::programs::{ProgramFd, TestRunOptions, TestRunResult};
+    /// # use aya::sys::SyscallError;
+    /// # fn test(prog_fd: &ProgramFd) -> Result<(), SyscallError> {
+    /// let mut opts = TestRunOptions {
+    ///     data_in: Some(&[0u8; 64]),
+    ///     repeat: 1,
+    ///     ..Default::default()
+    /// };
+    /// let result = prog_fd.test_run(&mut opts)?;
+    /// println!("Program returned: {}", result.return_value);
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[doc(alias = "BPF_PROG_TEST_RUN")]
+    #[doc(alias = "BPF_PROG_RUN")]
+    pub fn test_run(&self, opts: &mut TestRunOptions<'_>) -> Result<TestRunResult, SyscallError> {
+        bpf_prog_test_run(self.as_fd(), opts)
     }
 }
 
