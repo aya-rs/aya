@@ -24,6 +24,7 @@ pub struct SockHash<K> {
 }
 
 unsafe impl<K: Sync> Sync for SockHash<K> {}
+impl<K> super::private::Sealed for SockHash<K> {}
 unsafe impl<K> InnerMap for SockHash<K> {}
 
 impl<K> SockHash<K> {

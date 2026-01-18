@@ -20,6 +20,7 @@ pub struct HashMap<K, V> {
 }
 
 unsafe impl<K: Sync, V: Sync> Sync for HashMap<K, V> {}
+impl<K: Sync, V: Sync> super::private::Sealed for HashMap<K, V> {}
 unsafe impl<K: Sync, V: Sync> InnerMap for HashMap<K, V> {}
 
 impl<K, V> HashMap<K, V> {
@@ -102,6 +103,7 @@ pub struct LruHashMap<K, V> {
 }
 
 unsafe impl<K: Sync, V: Sync> Sync for LruHashMap<K, V> {}
+impl<K: Sync, V: Sync> super::private::Sealed for LruHashMap<K, V> {}
 unsafe impl<K: Sync, V: Sync> InnerMap for LruHashMap<K, V> {}
 
 impl<K, V> LruHashMap<K, V> {
@@ -184,6 +186,7 @@ pub struct PerCpuHashMap<K, V> {
 }
 
 unsafe impl<K, V> Sync for PerCpuHashMap<K, V> {}
+impl<K: Sync, V: Sync> super::private::Sealed for PerCpuHashMap<K, V> {}
 unsafe impl<K: Sync, V: Sync> InnerMap for PerCpuHashMap<K, V> {}
 
 impl<K, V> PerCpuHashMap<K, V> {
@@ -266,6 +269,7 @@ pub struct LruPerCpuHashMap<K, V> {
 }
 
 unsafe impl<K, V> Sync for LruPerCpuHashMap<K, V> {}
+impl<K: Sync, V: Sync> super::private::Sealed for LruPerCpuHashMap<K, V> {}
 unsafe impl<K: Sync, V: Sync> InnerMap for LruPerCpuHashMap<K, V> {}
 
 impl<K, V> LruPerCpuHashMap<K, V> {

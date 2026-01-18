@@ -36,6 +36,7 @@ pub struct CpuMap {
 }
 
 unsafe impl Sync for CpuMap {}
+impl super::super::private::Sealed for CpuMap {}
 unsafe impl InnerMap for CpuMap {}
 
 impl CpuMap {

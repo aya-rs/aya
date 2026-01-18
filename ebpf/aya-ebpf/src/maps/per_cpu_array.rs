@@ -13,6 +13,7 @@ pub struct PerCpuArray<T> {
 }
 
 unsafe impl<T> Sync for PerCpuArray<T> {}
+impl<T> super::private::Sealed for PerCpuArray<T> {}
 unsafe impl<T> InnerMap for PerCpuArray<T> {}
 
 impl<T> PerCpuArray<T> {

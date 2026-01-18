@@ -15,6 +15,7 @@ pub struct Array<T> {
 }
 
 unsafe impl<T: Sync> Sync for Array<T> {}
+impl<T> super::private::Sealed for Array<T> {}
 unsafe impl<T> InnerMap for Array<T> {}
 
 impl<T> Array<T> {
