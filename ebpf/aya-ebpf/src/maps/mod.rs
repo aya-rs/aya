@@ -1,9 +1,48 @@
-#[repr(u32)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub(crate) enum PinningType {
-    None = 0,
-    ByName = 1,
+pub(crate) mod def {
+    use core::{cell::UnsafeCell, mem};
+
+    use aya_ebpf_cty::c_void;
+
+    use crate::bindings::bpf_map_def;
+
+    #[repr(u32)]
+    pub(crate) enum PinningType {
+        None = 0,
+        ByName = 1,
+    }
+
+    #[repr(transparent)]
+    pub(crate) struct MapDef(UnsafeCell<bpf_map_def>);
+
+    unsafe impl Sync for MapDef {}
+
+    impl MapDef {
+        pub(crate) const fn new<K, V>(
+            type_: u32,
+            max_entries: u32,
+            map_flags: u32,
+            pinning: PinningType,
+        ) -> Self {
+            let key_size = mem::size_of::<K>() as u32;
+            let value_size = mem::size_of::<V>() as u32;
+            Self(UnsafeCell::new(bpf_map_def {
+                type_,
+                key_size,
+                value_size,
+                max_entries,
+                map_flags,
+                id: 0,
+                pinning: pinning as u32,
+            }))
+        }
+
+        pub(crate) fn as_ptr(&self) -> *mut c_void {
+            self.0.get().cast()
+        }
+    }
 }
+
+pub(crate) use def::{MapDef, PinningType};
 
 pub mod array;
 pub mod bloom_filter;

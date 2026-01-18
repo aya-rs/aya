@@ -1,28 +1,26 @@
 use core::{
     borrow::Borrow,
-    cell::UnsafeCell,
     mem,
     mem::MaybeUninit,
     ops::{Deref, DerefMut},
+    ptr,
 };
 
 #[cfg(generic_const_exprs)]
 use crate::const_assert::{Assert, IsTrue};
 use crate::{
-    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_RINGBUF},
+    bindings::bpf_map_type::BPF_MAP_TYPE_RINGBUF,
     helpers::{
         bpf_ringbuf_discard, bpf_ringbuf_output, bpf_ringbuf_query, bpf_ringbuf_reserve,
         bpf_ringbuf_submit,
     },
-    maps::PinningType,
+    maps::{MapDef, PinningType},
 };
 
 #[repr(transparent)]
 pub struct RingBuf {
-    def: UnsafeCell<bpf_map_def>,
+    def: MapDef,
 }
-
-unsafe impl Sync for RingBuf {}
 
 /// A ring buffer entry, returned from [`RingBuf::reserve_bytes`].
 ///
@@ -131,15 +129,7 @@ impl RingBuf {
 
     const fn new(byte_size: u32, flags: u32, pinning_type: PinningType) -> Self {
         Self {
-            def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_RINGBUF,
-                key_size: 0,
-                value_size: 0,
-                max_entries: byte_size,
-                map_flags: flags,
-                id: 0,
-                pinning: pinning_type as u32,
-            }),
+            def: MapDef::new::<(), ()>(BPF_MAP_TYPE_RINGBUF, byte_size, flags, pinning_type),
         }
     }
 
@@ -151,8 +141,8 @@ impl RingBuf {
     /// allocation sizes. In other words, it is incumbent upon users of this function to convince
     /// the verifier that `size` is a compile-time constant. Good luck!
     pub fn reserve_bytes(&self, size: usize, flags: u64) -> Option<RingBufBytes<'_>> {
-        let ptr =
-            unsafe { bpf_ringbuf_reserve(self.def.get().cast(), size as u64, flags) }.cast::<u8>();
+        let ptr = unsafe { bpf_ringbuf_reserve(self.def.as_ptr().cast(), size as u64, flags) }
+            .cast::<u8>();
         unsafe { RingBufBytes::from_raw(ptr, size) }
     }
 
@@ -183,7 +173,7 @@ impl RingBuf {
 
     fn reserve_impl<T: 'static>(&self, flags: u64) -> Option<RingBufEntry<T>> {
         let ptr = unsafe {
-            bpf_ringbuf_reserve(self.def.get().cast(), mem::size_of::<T>() as u64, flags)
+            bpf_ringbuf_reserve(self.def.as_ptr().cast(), mem::size_of::<T>() as u64, flags)
         }
         .cast::<MaybeUninit<T>>();
         unsafe { RingBufEntry::from_raw(ptr) }
@@ -209,8 +199,8 @@ impl RingBuf {
         assert_eq!(8 % mem::align_of_val(data), 0);
         let ret = unsafe {
             bpf_ringbuf_output(
-                self.def.get().cast(),
-                core::ptr::from_ref(data).cast_mut().cast(),
+                self.def.as_ptr().cast(),
+                ptr::from_ref(data).cast_mut().cast(),
                 mem::size_of_val(data) as u64,
                 flags,
             )
@@ -222,6 +212,6 @@ impl RingBuf {
     ///
     /// Consult `bpf_ringbuf_query` documentation for a list of allowed flags.
     pub fn query(&self, flags: u64) -> u64 {
-        unsafe { bpf_ringbuf_query(self.def.get().cast(), flags) }
+        unsafe { bpf_ringbuf_query(self.def.as_ptr().cast(), flags) }
     }
 }

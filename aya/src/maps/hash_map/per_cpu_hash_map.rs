@@ -44,8 +44,7 @@ use crate::{
 #[doc(alias = "BPF_MAP_TYPE_PERCPU_HASH")]
 pub struct PerCpuHashMap<T, K: Pod, V: Pod> {
     pub(crate) inner: T,
-    _k: PhantomData<K>,
-    _v: PhantomData<V>,
+    _kv: PhantomData<(K, V)>,
 }
 
 impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
@@ -55,8 +54,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
 
         Ok(Self {
             inner: map,
-            _k: PhantomData,
-            _v: PhantomData,
+            _kv: PhantomData,
         })
     }
 

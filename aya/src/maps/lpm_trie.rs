@@ -47,8 +47,7 @@ use crate::{
 #[derive(Debug)]
 pub struct LpmTrie<T, K, V> {
     pub(crate) inner: T,
-    _k: PhantomData<K>,
-    _v: PhantomData<V>,
+    _kv: PhantomData<(K, V)>,
 }
 
 /// A Key for an LpmTrie map.
@@ -111,8 +110,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
 
         Ok(Self {
             inner: map,
-            _k: PhantomData,
-            _v: PhantomData,
+            _kv: PhantomData,
         })
     }
 

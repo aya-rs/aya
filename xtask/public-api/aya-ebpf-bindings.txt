@@ -4896,11 +4896,6 @@ pub aya_ebpf_bindings::bindings::bpf_map_def::max_entries: aya_ebpf_cty::ad::c_u
 pub aya_ebpf_bindings::bindings::bpf_map_def::pinning: aya_ebpf_cty::ad::c_uint
 pub aya_ebpf_bindings::bindings::bpf_map_def::type_: aya_ebpf_cty::ad::c_uint
 pub aya_ebpf_bindings::bindings::bpf_map_def::value_size: aya_ebpf_cty::ad::c_uint
-impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_map_def
-pub fn aya_ebpf_bindings::bindings::bpf_map_def::clone(&self) -> aya_ebpf_bindings::bindings::bpf_map_def
-impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_map_def
-pub fn aya_ebpf_bindings::bindings::bpf_map_def::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_map_def
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_map_def
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_map_def
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_map_def
@@ -4921,8 +4916,6 @@ impl<T> core::borrow::Borrow<T> for aya_ebpf_bindings::bindings::bpf_map_def whe
 pub fn aya_ebpf_bindings::bindings::bpf_map_def::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for aya_ebpf_bindings::bindings::bpf_map_def where T: ?core::marker::Sized
 pub fn aya_ebpf_bindings::bindings::bpf_map_def::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for aya_ebpf_bindings::bindings::bpf_map_def where T: core::clone::Clone
-pub unsafe fn aya_ebpf_bindings::bindings::bpf_map_def::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf_bindings::bindings::bpf_map_def
 pub fn aya_ebpf_bindings::bindings::bpf_map_def::from(t: T) -> T
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_map_info

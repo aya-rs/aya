@@ -45,7 +45,7 @@ macro_rules! btf_map_def {
         )]
         impl<K, V, const M: usize, const F: usize> $name<K, V, M, F> {
             pub const fn new() -> $name<K, V, M, F> {
-                $name {
+                Self {
                     r#type: ::core::ptr::null(),
                     key: ::core::ptr::null(),
                     value: ::core::ptr::null(),

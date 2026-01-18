@@ -33,8 +33,7 @@ use crate::{
 #[derive(Debug)]
 pub struct HashMap<T, K, V> {
     pub(crate) inner: T,
-    _k: PhantomData<K>,
-    _v: PhantomData<V>,
+    _kv: PhantomData<(K, V)>,
 }
 
 impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
@@ -44,8 +43,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
 
         Ok(Self {
             inner: map,
-            _k: PhantomData,
-            _v: PhantomData,
+            _kv: PhantomData,
         })
     }
 
