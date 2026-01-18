@@ -13,7 +13,7 @@ use crate::{
         bpf_sock_hash_update,
     },
     lookup,
-    maps::PinningType,
+    maps::{InnerMap, PinningType},
     programs::{SkBuffContext, SkLookupContext, SkMsgContext},
 };
 
@@ -24,6 +24,7 @@ pub struct SockHash<K> {
 }
 
 unsafe impl<K: Sync> Sync for SockHash<K> {}
+unsafe impl<K> InnerMap for SockHash<K> {}
 
 impl<K> SockHash<K> {
     pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
