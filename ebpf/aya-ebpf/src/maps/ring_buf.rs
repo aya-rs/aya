@@ -23,6 +23,7 @@ pub struct RingBuf {
 }
 
 unsafe impl Sync for RingBuf {}
+impl super::private::Sealed for RingBuf {}
 unsafe impl InnerMap for RingBuf {}
 
 /// A ring buffer entry, returned from [`RingBuf::reserve_bytes`].
