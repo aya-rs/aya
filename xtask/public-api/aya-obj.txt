@@ -8647,8 +8647,10 @@ pub aya_obj::obj::ProgramSection::SockOps
 pub aya_obj::obj::ProgramSection::SocketFilter
 pub aya_obj::obj::ProgramSection::TracePoint
 pub aya_obj::obj::ProgramSection::UProbe
+pub aya_obj::obj::ProgramSection::UProbe::multi: bool
 pub aya_obj::obj::ProgramSection::UProbe::sleepable: bool
 pub aya_obj::obj::ProgramSection::URetProbe
+pub aya_obj::obj::ProgramSection::URetProbe::multi: bool
 pub aya_obj::obj::ProgramSection::URetProbe::sleepable: bool
 pub aya_obj::obj::ProgramSection::Xdp
 pub aya_obj::obj::ProgramSection::Xdp::attach_type: aya_obj::programs::xdp::XdpAttachType
@@ -9510,8 +9512,10 @@ pub aya_obj::ProgramSection::SockOps
 pub aya_obj::ProgramSection::SocketFilter
 pub aya_obj::ProgramSection::TracePoint
 pub aya_obj::ProgramSection::UProbe
+pub aya_obj::ProgramSection::UProbe::multi: bool
 pub aya_obj::ProgramSection::UProbe::sleepable: bool
 pub aya_obj::ProgramSection::URetProbe
+pub aya_obj::ProgramSection::URetProbe::multi: bool
 pub aya_obj::ProgramSection::URetProbe::sleepable: bool
 pub aya_obj::ProgramSection::Xdp
 pub aya_obj::ProgramSection::Xdp::attach_type: aya_obj::programs::xdp::XdpAttachType
