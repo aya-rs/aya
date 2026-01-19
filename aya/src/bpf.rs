@@ -918,6 +918,31 @@ fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
     page_size * pages_needed.next_power_of_two()
 }
 
+/// Writes a file descriptor at the specified offset in struct_ops map data.
+///
+/// This helper handles the offset calculation (data_offset + member_offset) and
+/// bounds checking for writing program FDs into struct_ops map data buffers.
+///
+/// # Arguments
+///
+/// * `data` - The mutable data buffer to write into
+/// * `data_offset` - The byte offset of the ops struct within the kernel wrapper struct
+/// * `member_offset` - The byte offset of the member within the ops struct
+/// * `fd` - The file descriptor value to write (as i32)
+///
+/// # Returns
+///
+/// `true` if the write succeeded, `false` if the calculated offset is out of bounds.
+fn write_struct_ops_fd(data: &mut [u8], data_offset: u32, member_offset: u32, fd: i32) -> bool {
+    let actual_offset = (data_offset + member_offset) as usize;
+    if actual_offset + 4 <= data.len() {
+        data[actual_offset..actual_offset + 4].copy_from_slice(&fd.to_ne_bytes());
+        true
+    } else {
+        false
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use aya_obj::generated::bpf_map_type::*;
@@ -970,6 +995,58 @@ mod tests {
                 .unwrap()
             )
         })
+    }
+
+    mod struct_ops_fd {
+        use super::super::write_struct_ops_fd;
+
+        #[test]
+        fn test_write_with_both_offsets() {
+            let mut data = vec![0u8; 64];
+            let fd: i32 = 789;
+
+            // data_offset=8, member_offset=16 -> writes at byte 24
+            let result = write_struct_ops_fd(&mut data, 8, 16, fd);
+
+            assert!(result);
+            assert_eq!(i32::from_ne_bytes(data[24..28].try_into().unwrap()), 789);
+        }
+
+        #[test]
+        fn test_write_out_of_bounds_returns_false() {
+            let mut data = vec![0u8; 16];
+
+            // Trying to write at offset 20 in a 16-byte buffer
+            let result = write_struct_ops_fd(&mut data, 0, 20, 42);
+
+            assert!(!result);
+            // Data should be unchanged
+            assert!(data.iter().all(|&b| b == 0));
+        }
+
+        #[test]
+        fn test_write_partial_out_of_bounds() {
+            let mut data = vec![0u8; 16];
+
+            // Offset 14 + 4 bytes = 18, which exceeds buffer size of 16
+            let result = write_struct_ops_fd(&mut data, 0, 14, 42);
+
+            assert!(!result);
+            // Data should be unchanged
+            assert!(data.iter().all(|&b| b == 0));
+        }
+
+        #[test]
+        fn test_write_at_exact_boundary() {
+            let mut data = vec![0u8; 16];
+            let fd: i32 = 999;
+
+            // Offset 12 + 4 bytes = 16, exactly at buffer boundary (valid)
+            let result = write_struct_ops_fd(&mut data, 0, 12, fd);
+
+            assert!(result);
+            assert_eq!(i32::from_ne_bytes(data[12..16].try_into().unwrap()), 999);
+        }
     }
 }
 
@@ -1350,20 +1427,17 @@ impl Ebpf {
 
                 // Fill FDs from func_info (relocation-based)
                 for info in &func_info {
-                    let actual_offset = (data_offset + info.member_offset) as usize;
                     if let Some(Program::StructOps(prog)) = self.programs.get(&info.prog_name) {
                         let fd = prog.fd()?;
                         let raw_fd = fd.as_fd().as_raw_fd();
                         let member_offset = info.member_offset;
                         let prog_name = &info.prog_name;
+                        let actual_offset = data_offset + member_offset;
                         debug!(
                             "filling FD {raw_fd} for program '{prog_name}' at offset {actual_offset} (data_offset {data_offset} + member_offset {member_offset})"
                         );
                         let data = map_data.obj_mut().data_mut();
-                        if actual_offset + 4 <= data.len() {
-                            data[actual_offset..actual_offset + 4]
-                                .copy_from_slice(&raw_fd.to_ne_bytes());
-                        }
+                        write_struct_ops_fd(data, data_offset, member_offset, raw_fd);
                     } else {
                         let prog_name = &info.prog_name;
                         warn!("struct_ops program '{prog_name}' not found");
@@ -1374,18 +1448,15 @@ impl Ebpf {
                 if func_info.is_empty() {
                     for (fallback_map, _, prog_name, member_offset) in &fallback_matches {
                         if fallback_map == map_name {
-                            let actual_offset = (data_offset + member_offset) as usize;
                             if let Some(Program::StructOps(prog)) = self.programs.get(prog_name) {
                                 let fd = prog.fd()?;
                                 let raw_fd = fd.as_fd().as_raw_fd();
+                                let actual_offset = data_offset + member_offset;
                                 debug!(
                                     "filling FD {raw_fd} for fallback program '{prog_name}' at offset {actual_offset} (data_offset {data_offset} + member_offset {member_offset})"
                                 );
                                 let data = map_data.obj_mut().data_mut();
-                                if actual_offset + 4 <= data.len() {
-                                    data[actual_offset..actual_offset + 4]
-                                        .copy_from_slice(&raw_fd.to_ne_bytes());
-                                }
+                                write_struct_ops_fd(data, data_offset, *member_offset, raw_fd);
                             }
                         }
                     }

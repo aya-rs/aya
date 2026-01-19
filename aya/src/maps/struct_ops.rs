@@ -118,6 +118,35 @@ impl<T: BorrowMut<MapData>> StructOpsMap<T> {
         self.set_field_i32(offset, fd)
     }
 
+    /// Internal helper to write bytes at an offset in the struct data.
+    ///
+    /// Handles the data_offset adjustment for struct_ops maps and bounds checking.
+    fn write_bytes_at_offset(&mut self, offset: u32, bytes: &[u8]) -> Result<(), MapError> {
+        let map_data = self.inner.borrow_mut();
+        let obj = map_data.obj_mut();
+
+        // Get the data_offset from the struct_ops map - this is the offset of the
+        // actual ops struct within the kernel wrapper struct
+        let data_offset = if let aya_obj::Map::StructOps(m) = obj {
+            m.data_offset
+        } else {
+            0
+        };
+
+        let data = obj.data_mut();
+        // Add data_offset to the user-provided offset
+        let actual_offset = (data_offset + offset) as usize;
+        if actual_offset + bytes.len() > data.len() {
+            return Err(MapError::OutOfBounds {
+                index: actual_offset as u32,
+                max_entries: data.len() as u32,
+            });
+        }
+
+        data[actual_offset..actual_offset + bytes.len()].copy_from_slice(bytes);
+        Ok(())
+    }
+
     /// Sets an i32 field at the specified byte offset in the struct data.
     ///
     /// This is useful for setting fields like `hid_id` in HID-BPF struct_ops
@@ -139,29 +168,7 @@ impl<T: BorrowMut<MapData>> StructOpsMap<T> {
     /// # }
     /// ```
     pub fn set_field_i32(&mut self, offset: u32, value: i32) -> Result<(), MapError> {
-        let map_data = self.inner.borrow_mut();
-        let obj = map_data.obj_mut();
-
-        // Get the data_offset from the struct_ops map - this is the offset of the
-        // actual ops struct within the kernel wrapper struct
-        let data_offset = if let aya_obj::Map::StructOps(m) = obj {
-            m.data_offset
-        } else {
-            0
-        };
-
-        let data = obj.data_mut();
-        // Add data_offset to the user-provided offset
-        let actual_offset = (data_offset + offset) as usize;
-        if actual_offset + 4 > data.len() {
-            return Err(MapError::OutOfBounds {
-                index: actual_offset as u32,
-                max_entries: data.len() as u32,
-            });
-        }
-
-        data[actual_offset..actual_offset + 4].copy_from_slice(&value.to_ne_bytes());
-        Ok(())
+        self.write_bytes_at_offset(offset, &value.to_ne_bytes())
     }
 
     /// Sets a u32 field at the specified byte offset in the struct data.
@@ -182,29 +189,7 @@ impl<T: BorrowMut<MapData>> StructOpsMap<T> {
     /// # }
     /// ```
     pub fn set_field_u32(&mut self, offset: u32, value: u32) -> Result<(), MapError> {
-        let map_data = self.inner.borrow_mut();
-        let obj = map_data.obj_mut();
-
-        // Get the data_offset from the struct_ops map - this is the offset of the
-        // actual ops struct within the kernel wrapper struct
-        let data_offset = if let aya_obj::Map::StructOps(m) = obj {
-            m.data_offset
-        } else {
-            0
-        };
-
-        let data = obj.data_mut();
-        // Add data_offset to the user-provided offset
-        let actual_offset = (data_offset + offset) as usize;
-        if actual_offset + 4 > data.len() {
-            return Err(MapError::OutOfBounds {
-                index: actual_offset as u32,
-                max_entries: data.len() as u32,
-            });
-        }
-
-        data[actual_offset..actual_offset + 4].copy_from_slice(&value.to_ne_bytes());
-        Ok(())
+        self.write_bytes_at_offset(offset, &value.to_ne_bytes())
     }
 }
 
@@ -298,5 +283,232 @@ impl TryFrom<MapData> for StructOpsMap<MapData> {
 
     fn try_from(map: MapData) -> Result<Self, Self::Error> {
         Self::new(map)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io;
+
+    use assert_matches::assert_matches;
+    use aya_obj::generated::{bpf_cmd, bpf_map_type::BPF_MAP_TYPE_ARRAY};
+    use libc::EFAULT;
+
+    use super::*;
+    use crate::{
+        maps::{Map, test_utils::new_map},
+        sys::{SysResult, Syscall, override_syscall},
+    };
+
+    fn sys_error(value: i32) -> SysResult {
+        Err((-1, io::Error::from_raw_os_error(value)))
+    }
+
+    /// Creates a new aya_obj::Map::StructOps with the given parameters.
+    fn new_struct_ops_obj_map(
+        type_name: &str,
+        data_size: usize,
+        is_link: bool,
+        func_info: Vec<aya_obj::maps::StructOpsFuncInfo>,
+        data_offset: u32,
+    ) -> aya_obj::Map {
+        aya_obj::Map::StructOps(aya_obj::maps::StructOpsMap {
+            type_name: type_name.to_string(),
+            btf_type_id: 1,
+            section_index: 0,
+            symbol_index: 0,
+            data: vec![0u8; data_size],
+            is_link,
+            func_info,
+            data_offset,
+        })
+    }
+
+    /// Creates a basic struct_ops map for testing.
+    fn new_basic_struct_ops_obj_map() -> aya_obj::Map {
+        new_struct_ops_obj_map("test_ops", 64, false, vec![], 0)
+    }
+
+    #[test]
+    fn test_try_from_ok() {
+        let map = new_map(new_basic_struct_ops_obj_map());
+        let map = Map::StructOps(map);
+        assert!(StructOpsMap::try_from(&map).is_ok());
+    }
+
+    #[test]
+    fn test_try_from_wrong_map() {
+        let map = new_map(crate::maps::test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_ARRAY));
+        let map = Map::Array(map);
+
+        assert_matches!(
+            StructOpsMap::try_from(&map),
+            Err(MapError::InvalidMapType { .. })
+        );
+    }
+
+    #[test]
+    fn test_func_info() {
+        let func_info = vec![
+            aya_obj::maps::StructOpsFuncInfo {
+                member_name: "callback1".to_string(),
+                member_offset: 8,
+                prog_name: "my_prog1".to_string(),
+            },
+            aya_obj::maps::StructOpsFuncInfo {
+                member_name: "callback2".to_string(),
+                member_offset: 16,
+                prog_name: "my_prog2".to_string(),
+            },
+        ];
+        let map = new_map(new_struct_ops_obj_map("test_ops", 64, false, func_info, 0));
+        let struct_ops = StructOpsMap::new(&map).unwrap();
+
+        let info = struct_ops.func_info().unwrap();
+        assert_eq!(info.len(), 2);
+        assert_eq!(info[0].member_name, "callback1");
+        assert_eq!(info[0].member_offset, 8);
+        assert_eq!(info[0].prog_name, "my_prog1");
+        assert_eq!(info[1].member_name, "callback2");
+        assert_eq!(info[1].member_offset, 16);
+        assert_eq!(info[1].prog_name, "my_prog2");
+    }
+
+    #[test]
+    fn test_type_name() {
+        let map = new_map(new_struct_ops_obj_map("hid_bpf_ops", 64, false, vec![], 0));
+        let struct_ops = StructOpsMap::new(&map).unwrap();
+
+        assert_eq!(struct_ops.type_name(), Some("hid_bpf_ops"));
+    }
+
+    #[test]
+    fn test_is_link_true() {
+        let map = new_map(new_struct_ops_obj_map("test_ops", 64, true, vec![], 0));
+        let struct_ops = StructOpsMap::new(&map).unwrap();
+
+        assert!(struct_ops.is_link());
+    }
+
+    #[test]
+    fn test_is_link_false() {
+        let map = new_map(new_struct_ops_obj_map("test_ops", 64, false, vec![], 0));
+        let struct_ops = StructOpsMap::new(&map).unwrap();
+
+        assert!(!struct_ops.is_link());
+    }
+
+    #[test]
+    fn test_set_field_i32_ok() {
+        let mut map = new_map(new_basic_struct_ops_obj_map());
+        let mut struct_ops = StructOpsMap::new(&mut map).unwrap();
+
+        assert!(struct_ops.set_field_i32(0, 42).is_ok());
+
+        // Verify the value was written correctly
+        let data = map.obj().data();
+        let value = i32::from_ne_bytes(data[0..4].try_into().unwrap());
+        assert_eq!(value, 42);
+    }
+
+    #[test]
+    fn test_set_field_out_of_bounds() {
+        let mut map = new_map(new_struct_ops_obj_map("test_ops", 16, false, vec![], 0));
+        let mut struct_ops = StructOpsMap::new(&mut map).unwrap();
+
+        // Try to write at offset 20, which exceeds the 16 byte data size
+        assert_matches!(
+            struct_ops.set_field_i32(20, 42),
+            Err(MapError::OutOfBounds { .. })
+        );
+    }
+
+    #[test]
+    fn test_set_field_with_data_offset() {
+        // Create a map with data_offset = 8
+        let mut map = new_map(new_struct_ops_obj_map("test_ops", 64, false, vec![], 8));
+        let mut struct_ops = StructOpsMap::new(&mut map).unwrap();
+
+        // Write at user offset 0, which should go to actual offset 8
+        assert!(struct_ops.set_field_i32(0, 99).is_ok());
+
+        // Verify the value was written at the correct actual offset (8)
+        let data = map.obj().data();
+        let value_at_0 = i32::from_ne_bytes(data[0..4].try_into().unwrap());
+        let value_at_8 = i32::from_ne_bytes(data[8..12].try_into().unwrap());
+        assert_eq!(value_at_0, 0); // Should be unchanged
+        assert_eq!(value_at_8, 99); // Should have the written value
+    }
+
+    #[test]
+    fn test_set_field_with_data_offset_out_of_bounds() {
+        // Create a map with data_offset = 60, data size = 64
+        // Writing 4 bytes at user offset 4 would go to actual offset 64, which is out of bounds
+        let mut map = new_map(new_struct_ops_obj_map("test_ops", 64, false, vec![], 60));
+        let mut struct_ops = StructOpsMap::new(&mut map).unwrap();
+
+        assert_matches!(
+            struct_ops.set_field_i32(4, 42),
+            Err(MapError::OutOfBounds { .. })
+        );
+    }
+
+    #[test]
+    fn test_register_ok() {
+        let map = new_map(new_basic_struct_ops_obj_map());
+        let struct_ops = StructOpsMap::new(&map).unwrap();
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_UPDATE_ELEM,
+                ..
+            } => Ok(0),
+            _ => sys_error(EFAULT),
+        });
+
+        assert!(struct_ops.register().is_ok());
+    }
+
+    #[test]
+    fn test_register_syscall_error() {
+        let map = new_map(new_basic_struct_ops_obj_map());
+        let struct_ops = StructOpsMap::new(&map).unwrap();
+
+        override_syscall(|_| sys_error(EFAULT));
+
+        assert_matches!(
+            struct_ops.register(),
+            Err(MapError::SyscallError(SyscallError { call: "bpf_map_update_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
+        );
+    }
+
+    #[test]
+    fn test_attach_ok() {
+        let map = new_map(new_struct_ops_obj_map("test_ops", 64, true, vec![], 0));
+        let struct_ops = StructOpsMap::new(&map).unwrap();
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_LINK_CREATE,
+                ..
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            _ => sys_error(EFAULT),
+        });
+
+        let link = struct_ops.attach();
+        assert!(link.is_ok());
+    }
+
+    #[test]
+    fn test_attach_syscall_error() {
+        let map = new_map(new_struct_ops_obj_map("test_ops", 64, true, vec![], 0));
+        let struct_ops = StructOpsMap::new(&map).unwrap();
+
+        override_syscall(|_| sys_error(EFAULT));
+
+        assert_matches!(
+            struct_ops.attach(),
+            Err(MapError::SyscallError(SyscallError { call: "bpf_link_create", io_error })) if io_error.raw_os_error() == Some(EFAULT)
+        );
     }
 }
