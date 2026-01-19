@@ -2,11 +2,13 @@
 
 use aya_obj::{
     btf::{Btf, BtfKind},
-    generated::{bpf_attach_type, bpf_prog_type::BPF_PROG_TYPE_STRUCT_OPS},
+    generated::bpf_prog_type::BPF_PROG_TYPE_STRUCT_OPS,
 };
 use log::debug;
 
-use crate::programs::{FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, load_program};
+use crate::programs::{
+    ExpectedAttachType, FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, load_program,
+};
 
 /// A program that implements a kernel struct_ops interface.
 ///
@@ -71,13 +73,9 @@ impl StructOps {
         );
 
         // For struct_ops, expected_attach_type stores the member index (not a bpf_attach_type).
-        // SAFETY: While this creates a technically invalid enum value, it is safe because:
-        // 1. bpf_attach_type is #[repr(u32)] so it has the same memory layout as u32
-        // 2. The value is only used by casting back to u32 in bpf_load_program()
-        // 3. The kernel interprets this field as a raw u32 for struct_ops programs
-        // A cleaner solution would require adding a separate field to ProgramData.
+        // The kernel interprets this field as a raw u32 for struct_ops programs.
         self.data.expected_attach_type =
-            Some(unsafe { std::mem::transmute::<u32, bpf_attach_type>(member_index) });
+            Some(ExpectedAttachType::StructOpsMemberIndex(member_index));
         self.data.attach_btf_id = Some(struct_type_id);
         load_program(BPF_PROG_TYPE_STRUCT_OPS, &mut self.data)
     }

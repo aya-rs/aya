@@ -6,8 +6,8 @@ use aya_obj::{
 };
 
 use crate::programs::{
-    FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper, load_program,
-    utils::attach_raw_tracepoint,
+    ExpectedAttachType, FdLink, FdLinkId, ProgramData, ProgramError, ProgramType,
+    define_link_wrapper, load_program, utils::attach_raw_tracepoint,
 };
 
 /// A program that can be attached to the exit point of (almost) anny kernel
@@ -60,7 +60,7 @@ impl FExit {
     /// is exited. The `btf` argument must contain the BTF info for the running
     /// kernel.
     pub fn load(&mut self, fn_name: &str, btf: &Btf) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_TRACE_FEXIT);
+        self.data.expected_attach_type = Some(ExpectedAttachType::AttachType(BPF_TRACE_FEXIT));
         self.data.attach_btf_id = Some(btf.id_by_type_name_kind(fn_name, BtfKind::Func)?);
         load_program(BPF_PROG_TYPE_TRACING, &mut self.data)
     }

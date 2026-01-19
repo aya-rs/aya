@@ -528,13 +528,53 @@ impl Program {
     }
 }
 
+/// The expected attach type for a BPF program.
+///
+/// For most program types, this is a `bpf_attach_type` enum value.
+/// For struct_ops programs, the kernel interprets this field as a member index
+/// rather than an attach type.
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum ExpectedAttachType {
+    /// Standard attach type for most program types.
+    AttachType(bpf_attach_type),
+    /// Member index for struct_ops programs.
+    ///
+    /// The kernel uses this field to identify which struct member the program
+    /// implements, not as a `bpf_attach_type`.
+    StructOpsMemberIndex(u32),
+}
+
+impl ExpectedAttachType {
+    /// Returns the raw u32 value to pass to the kernel.
+    pub(crate) fn as_raw(&self) -> u32 {
+        match self {
+            Self::AttachType(t) => *t as u32,
+            Self::StructOpsMemberIndex(idx) => *idx,
+        }
+    }
+
+    /// Returns the `bpf_attach_type` if this is an `AttachType` variant.
+    ///
+    /// # Panics
+    ///
+    /// Panics if this is a `StructOpsMemberIndex` variant.
+    pub(crate) fn attach_type(&self) -> bpf_attach_type {
+        match self {
+            Self::AttachType(t) => *t,
+            Self::StructOpsMemberIndex(_) => {
+                panic!("expected AttachType variant, got StructOpsMemberIndex")
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct ProgramData<T: Link> {
     pub(crate) name: Option<Cow<'static, str>>,
     pub(crate) obj: Option<(aya_obj::Program, aya_obj::Function)>,
     pub(crate) fd: Option<ProgramFd>,
     pub(crate) links: Links<T>,
-    pub(crate) expected_attach_type: Option<bpf_attach_type>,
+    pub(crate) expected_attach_type: Option<ExpectedAttachType>,
     pub(crate) attach_btf_obj_fd: Option<crate::MockableFd>,
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<ProgramFd>,
@@ -720,7 +760,7 @@ fn load_program<T: Link>(
         insns: instructions,
         license,
         kernel_version: target_kernel_version,
-        expected_attach_type: *expected_attach_type,
+        expected_attach_type: expected_attach_type.map(|t| t.as_raw()),
         prog_btf_fd: btf_fd.as_ref().map(|f| f.as_fd()),
         attach_btf_obj_fd: attach_btf_obj_fd.as_ref().map(|fd| fd.as_fd()),
         attach_btf_id: *attach_btf_id,
