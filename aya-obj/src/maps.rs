@@ -4,7 +4,8 @@ use alloc::vec::Vec;
 use core::mem;
 
 use crate::{
-    EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS,
+    EbpfSectionKind, InvalidTypeBinding,
+    generated::{bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS, BPF_F_LINK},
 };
 
 impl TryFrom<u32> for crate::generated::bpf_map_type {
@@ -209,10 +210,9 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.map_flags,
             Self::Btf(m) => m.def.map_flags,
-            // BPF_F_LINK (0x2000) is used for .struct_ops.link sections
             Self::StructOps(m) => {
                 if m.is_link {
-                    0x2000 // BPF_F_LINK
+                    BPF_F_LINK
                 } else {
                     0
                 }
