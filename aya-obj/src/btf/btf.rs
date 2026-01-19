@@ -34,6 +34,10 @@ pub(crate) const MAX_SPEC_LEN: usize = 64;
 /// The error type returned when `BTF` operations fail.
 #[derive(thiserror::Error, Debug)]
 pub enum BtfError {
+    /// BTF is not available
+    #[error("BTF is not available")]
+    NoBtf,
+
     #[cfg(feature = "std")]
     /// Error parsing file
     #[error("error parsing {path}")]

@@ -8,7 +8,7 @@ use object::{SectionIndex, SymbolKind};
 
 use crate::{
     EbpfSectionKind,
-    btf::{Btf, BtfKind},
+    btf::{Btf, BtfError, BtfKind},
     generated::{
         BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_KFUNC_CALL,
         BPF_PSEUDO_MAP_FD, BPF_PSEUDO_MAP_VALUE, bpf_insn,
@@ -85,6 +85,16 @@ pub enum RelocationError {
         offset: u64,
         /// The relocation number
         relocation_number: usize,
+    },
+
+    /// Kfunc not found in kernel BTF
+    #[error("kfunc `{name}` not found in kernel BTF")]
+    UnknownKfunc {
+        /// The kfunc name
+        name: String,
+        /// The underlying BTF error
+        #[source]
+        error: BtfError,
     },
 }
 
@@ -388,29 +398,27 @@ impl<'a> FunctionLinker<'a> {
                 if sym.section_index.is_none() {
                     let kfunc_name = sym.name.as_deref().unwrap_or("?");
 
-                    // Look up the kfunc in kernel BTF
-                    if let Some(btf) = self.kernel_btf {
-                        match btf.id_by_type_name_kind(kfunc_name, BtfKind::Func) {
-                            Ok(btf_id) => {
-                                // Set the instruction to call the kfunc via BTF
-                                let ins = &mut program.instructions[ins_index];
-                                ins.imm = btf_id as i32;
-                                ins.set_src_reg(BPF_PSEUDO_KFUNC_CALL as u8);
-                                debug!(
-                                    "resolved kfunc `{kfunc_name}` to BTF id {btf_id} at instruction {ins_index}"
-                                );
-                            }
-                            Err(e) => {
-                                debug!(
-                                    "kfunc `{kfunc_name}` not found in kernel BTF: {e}, leaving unresolved"
-                                );
-                            }
-                        }
-                    } else {
-                        debug!(
-                            "no kernel BTF available, skipping kfunc `{kfunc_name}` at instruction {ins_index}"
-                        );
-                    }
+                    // Look up the kfunc in kernel BTF. If kernel BTF is not available,
+                    // we cannot resolve the kfunc and must fail.
+                    let btf = self.kernel_btf.ok_or_else(|| RelocationError::UnknownKfunc {
+                        name: kfunc_name.to_owned(),
+                        error: BtfError::NoBtf,
+                    })?;
+
+                    let btf_id = btf
+                        .id_by_type_name_kind(kfunc_name, BtfKind::Func)
+                        .map_err(|error| RelocationError::UnknownKfunc {
+                            name: kfunc_name.to_owned(),
+                            error,
+                        })?;
+
+                    // Set the instruction to call the kfunc via BTF
+                    let ins = &mut program.instructions[ins_index];
+                    ins.imm = btf_id as i32;
+                    ins.set_src_reg(BPF_PSEUDO_KFUNC_CALL as u8);
+                    debug!(
+                        "resolved kfunc `{kfunc_name}` to BTF id {btf_id} at instruction {ins_index}"
+                    );
                     continue;
                 }
             }
