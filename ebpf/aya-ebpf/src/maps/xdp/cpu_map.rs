@@ -34,51 +34,43 @@ pub struct CpuMap {
 }
 
 impl CpuMap {
-    /// Creates a [`CpuMap`] with a set maximum number of elements.
-    ///
-    /// In a CPU map, an entry represents a CPU core. Thus there should be as many entries as there
-    /// are CPU cores on the system. `max_entries` can be set to zero here, and updated by userspace
-    /// at runtime. Refer to the userspace documentation for more information.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// use aya_ebpf::{macros::map, maps::CpuMap};
-    ///
-    /// #[map]
-    /// static MAP: CpuMap = CpuMap::with_max_entries(8, 0);
-    /// ```
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::None)
-    }
-
-    /// Creates a [`CpuMap`] with a set maximum number of elements that can be pinned to the BPF
-    /// File System (bpffs).
-    ///
-    /// See [`CpuMap::with_max_entries`] for more information.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// use aya_ebpf::{macros::map, maps::CpuMap};
-    ///
-    /// #[map]
-    /// static MAP: CpuMap = CpuMap::pinned(8, 0);
-    /// ```
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::ByName)
-    }
-
-    const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
-        Self {
-            def: MapDef::new::<u32, bpf_cpumap_val>(
-                BPF_MAP_TYPE_CPUMAP,
-                max_entries,
-                flags,
-                pinning,
-            ),
-        }
-    }
+    map_constructors!(
+        u32,
+        bpf_cpumap_val,
+        BPF_MAP_TYPE_CPUMAP,
+        with_docs {
+            /// Creates a [`CpuMap`] with a set maximum number of elements.
+            ///
+            /// In a CPU map, an entry represents a CPU core. Thus there should be as many entries
+            /// as there are CPU cores on the system. `max_entries` can be set to zero here, and
+            /// updated by userspace at runtime. Refer to the userspace documentation for more
+            /// information.
+            ///
+            /// # Examples
+            ///
+            /// ```rust,no_run
+            /// use aya_ebpf::{macros::map, maps::CpuMap};
+            ///
+            /// #[map]
+            /// static MAP: CpuMap = CpuMap::with_max_entries(8, 0);
+            /// ```
+        },
+        pinned_docs {
+            /// Creates a [`CpuMap`] with a set maximum number of elements that can be pinned to
+            /// the BPF File System (bpffs).
+            ///
+            /// See [`CpuMap::with_max_entries`] for more information.
+            ///
+            /// # Examples
+            ///
+            /// ```rust,no_run
+            /// use aya_ebpf::{macros::map, maps::CpuMap};
+            ///
+            /// #[map]
+            /// static MAP: CpuMap = CpuMap::pinned(8, 0);
+            /// ```
+        },
+    );
 
     /// Redirects the current packet on the CPU at `index`.
     ///

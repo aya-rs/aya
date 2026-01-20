@@ -36,45 +36,36 @@ pub struct DevMap {
 }
 
 impl DevMap {
-    /// Creates a [`DevMap`] with a set maximum number of elements.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// use aya_ebpf::{macros::map, maps::DevMap};
-    ///
-    /// #[map]
-    /// static MAP: DevMap = DevMap::with_max_entries(8, 0);
-    /// ```
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::None)
-    }
-
-    /// Creates a [`DevMap`] with a set maximum number of elements that can be pinned to the BPF
-    /// File System (bpffs).
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// use aya_ebpf::{macros::map, maps::DevMap};
-    ///
-    /// #[map]
-    /// static MAP: DevMap = DevMap::pinned(8, 0);
-    /// ```
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::ByName)
-    }
-
-    const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
-        Self {
-            def: MapDef::new::<u32, bpf_devmap_val>(
-                BPF_MAP_TYPE_DEVMAP,
-                max_entries,
-                flags,
-                pinning,
-            ),
-        }
-    }
+    map_constructors!(
+        u32,
+        bpf_devmap_val,
+        BPF_MAP_TYPE_DEVMAP,
+        with_docs {
+            /// Creates a [`DevMap`] with a set maximum number of elements.
+            ///
+            /// # Examples
+            ///
+            /// ```rust,no_run
+            /// use aya_ebpf::{macros::map, maps::DevMap};
+            ///
+            /// #[map]
+            /// static MAP: DevMap = DevMap::with_max_entries(8, 0);
+            /// ```
+        },
+        pinned_docs {
+            /// Creates a [`DevMap`] with a set maximum number of elements that can be pinned to
+            /// the BPF File System (bpffs).
+            ///
+            /// # Examples
+            ///
+            /// ```rust,no_run
+            /// use aya_ebpf::{macros::map, maps::DevMap};
+            ///
+            /// #[map]
+            /// static MAP: DevMap = DevMap::pinned(8, 0);
+            /// ```
+        },
+    );
 
     /// Retrieves the interface index at `index` in the array.
     ///

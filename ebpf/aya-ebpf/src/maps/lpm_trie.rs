@@ -31,21 +31,7 @@ impl<K> Key<K> {
 }
 
 impl<K, V> LpmTrie<K, V> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::None)
-    }
-
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::ByName)
-    }
-
-    const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
-        let flags = flags | BPF_F_NO_PREALLOC;
-        Self {
-            def: MapDef::new::<Key<K>, V>(BPF_MAP_TYPE_LPM_TRIE, max_entries, flags, pinning),
-            _kv: PhantomData,
-        }
-    }
+    map_constructors!(Key<K>, V, BPF_MAP_TYPE_LPM_TRIE, extra_flags BPF_F_NO_PREALLOC, phantom _kv);
 
     #[inline]
     pub fn get(&self, key: impl Borrow<Key<K>>) -> Option<&V> {

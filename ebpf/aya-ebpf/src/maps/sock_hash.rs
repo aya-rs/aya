@@ -23,20 +23,7 @@ pub struct SockHash<K> {
 }
 
 impl<K> SockHash<K> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::None)
-    }
-
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::ByName)
-    }
-
-    const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
-        Self {
-            def: MapDef::new::<K, u32>(BPF_MAP_TYPE_SOCKHASH, max_entries, flags, pinning),
-            _k: PhantomData,
-        }
-    }
+    map_constructors!(K, u32, BPF_MAP_TYPE_SOCKHASH, phantom _k);
 
     pub fn update(
         &self,

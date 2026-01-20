@@ -13,20 +13,7 @@ pub struct Stack<T> {
 }
 
 impl<T> Stack<T> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::None)
-    }
-
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::ByName)
-    }
-
-    const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
-        Self {
-            def: MapDef::new::<(), T>(BPF_MAP_TYPE_STACK, max_entries, flags, pinning),
-            _t: PhantomData,
-        }
-    }
+    map_constructors!((), T, BPF_MAP_TYPE_STACK, phantom _t);
 
     pub fn push(&self, value: impl Borrow<T>, flags: u64) -> Result<(), i64> {
         let ret = unsafe {
