@@ -15,20 +15,7 @@ pub struct Array<T> {
 }
 
 impl<T> Array<T> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::None)
-    }
-
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::ByName)
-    }
-
-    const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
-        Self {
-            def: MapDef::new::<u32, T>(BPF_MAP_TYPE_ARRAY, max_entries, flags, pinning),
-            _t: PhantomData,
-        }
-    }
+    map_constructors!(u32, T, BPF_MAP_TYPE_ARRAY, _t);
 
     #[inline(always)]
     pub fn get(&self, index: u32) -> Option<&T> {

@@ -55,40 +55,7 @@ pub struct XskMap {
 }
 
 impl XskMap {
-    /// Creates a [`XskMap`] with a set maximum number of elements.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// use aya_ebpf::{macros::map, maps::XskMap};
-    ///
-    /// #[map]
-    /// static SOCKS: XskMap =  XskMap::with_max_entries(8, 0);
-    /// ```
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::None)
-    }
-
-    /// Creates a [`XskMap`] with a set maximum number of elements that can be pinned to the BPF
-    /// filesystem (bpffs).
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// use aya_ebpf::{macros::map, maps::XskMap};
-    ///
-    /// #[map]
-    /// static SOCKS: XskMap = XskMap::pinned(8, 0);
-    /// ```
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::ByName)
-    }
-
-    const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
-        Self {
-            def: MapDef::new::<u32, u32>(BPF_MAP_TYPE_XSKMAP, max_entries, flags, pinning),
-        }
-    }
+    map_constructors!(u32, u32, BPF_MAP_TYPE_XSKMAP);
 
     /// Retrieves the queue to which the socket is bound at `index` in the array.
     ///

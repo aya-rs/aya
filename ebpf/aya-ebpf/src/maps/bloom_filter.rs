@@ -13,20 +13,7 @@ pub struct BloomFilter<T> {
 }
 
 impl<T> BloomFilter<T> {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::None)
-    }
-
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::ByName)
-    }
-
-    const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
-        Self {
-            def: MapDef::new::<(), T>(BPF_MAP_TYPE_BLOOM_FILTER, max_entries, flags, pinning),
-            _t: PhantomData,
-        }
-    }
+    map_constructors!((), T, BPF_MAP_TYPE_BLOOM_FILTER, _t);
 
     #[inline]
     pub fn contains(&mut self, value: impl Borrow<T>) -> Result<(), i64> {

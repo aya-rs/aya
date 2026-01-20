@@ -16,19 +16,7 @@ pub struct SockMap {
 }
 
 impl SockMap {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::None)
-    }
-
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::ByName)
-    }
-
-    const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
-        Self {
-            def: MapDef::new::<u32, u32>(BPF_MAP_TYPE_SOCKMAP, max_entries, flags, pinning),
-        }
-    }
+    map_constructors!(u32, u32, BPF_MAP_TYPE_SOCKMAP);
 
     #[expect(clippy::missing_safety_doc)]
     pub unsafe fn update(

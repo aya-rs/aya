@@ -15,24 +15,7 @@ pub struct StackTrace {
 const PERF_MAX_STACK_DEPTH: usize = 127;
 
 impl StackTrace {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::None)
-    }
-
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::ByName)
-    }
-
-    const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
-        Self {
-            def: MapDef::new::<u32, [u64; PERF_MAX_STACK_DEPTH]>(
-                BPF_MAP_TYPE_STACK_TRACE,
-                max_entries,
-                flags,
-                pinning,
-            ),
-        }
-    }
+    map_constructors!(u32, [u64; PERF_MAX_STACK_DEPTH], BPF_MAP_TYPE_STACK_TRACE);
 
     #[expect(clippy::missing_safety_doc)]
     pub unsafe fn get_stackid<C: EbpfContext>(

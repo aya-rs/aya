@@ -44,6 +44,29 @@ pub(crate) mod def {
 
 pub(crate) use def::{MapDef, PinningType};
 
+macro_rules! map_constructors {
+    ($key:ty, $value:ty, $map_type:expr $(, $phantom:ident)?) => {
+        map_constructors!($key, $value, $map_type, 0 $(, $phantom)?);
+    };
+    ($key:ty, $value:ty, $map_type:expr, $extra_flags:expr $(, $phantom:ident)?) => {
+        pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+            Self::new(max_entries, flags, PinningType::None)
+        }
+
+        pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+            Self::new(max_entries, flags, PinningType::ByName)
+        }
+
+        const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
+            let flags = flags | $extra_flags;
+            Self {
+                def: MapDef::new::<$key, $value>($map_type, max_entries, flags, pinning),
+                $($phantom: core::marker::PhantomData,)?
+            }
+        }
+    };
+}
+
 pub mod array;
 pub mod bloom_filter;
 pub mod hash_map;

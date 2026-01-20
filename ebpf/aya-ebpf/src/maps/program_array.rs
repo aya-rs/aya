@@ -36,19 +36,7 @@ pub struct ProgramArray {
 }
 
 impl ProgramArray {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::None)
-    }
-
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::ByName)
-    }
-
-    const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
-        Self {
-            def: MapDef::new::<u32, u32>(BPF_MAP_TYPE_PROG_ARRAY, max_entries, flags, pinning),
-        }
-    }
+    map_constructors!(u32, u32, BPF_MAP_TYPE_PROG_ARRAY);
 
     /// Perform a tail call into a program indexed by this map.
     ///
