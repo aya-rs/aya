@@ -228,14 +228,7 @@ impl ConsumerPos {
     fn consume(&mut self, len: usize) {
         let Self { pos, metadata } = self;
 
-        // TODO: Use primitive method when https://github.com/rust-lang/rust/issues/88581 is stabilized.
-        fn next_multiple_of(n: usize, multiple: usize) -> usize {
-            match n % multiple {
-                0 => n,
-                rem => n + (multiple - rem),
-            }
-        }
-        *pos += next_multiple_of(usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap() + len, 8);
+        *pos += (usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap() + len).next_multiple_of(8);
 
         // Write operation needs to be properly ordered with respect to the producer committing new
         // data to the ringbuf. The producer uses xchg (SeqCst) to commit new data [1]. The producer
