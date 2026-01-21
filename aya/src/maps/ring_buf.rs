@@ -130,6 +130,31 @@ impl<T> RingBuf<T> {
         } = self;
         producer.next(consumer)
     }
+
+    /// Drain available entries from the ringbuf in a single batch.
+    ///
+    /// The callback is invoked once per entry with a borrowed slice into the mmap.
+    /// Do not retain the slice outside the callback; the backing storage can be
+    /// overwritten once the consumer position advances.
+    pub fn drain<F>(&mut self, f: F) -> DrainStats
+    where
+        F: FnMut(&[u8]),
+    {
+        self.drain_with_limit(usize::MAX, usize::MAX, f)
+    }
+
+    /// Drain up to `max_items` entries or `max_bytes` total bytes, whichever comes first.
+    ///
+    /// This performs a single consumer position update after the batch.
+    pub fn drain_with_limit<F>(&mut self, max_items: usize, max_bytes: usize, f: F) -> DrainStats
+    where
+        F: FnMut(&[u8]),
+    {
+        let Self {
+            consumer, producer, ..
+        } = self;
+        producer.drain(consumer, max_items, max_bytes, f)
+    }
 }
 
 impl<T: Borrow<MapData>> AsFd for RingBuf<T> {
@@ -189,6 +214,17 @@ impl Debug for RingBufItem<'_> {
     }
 }
 
+/// Stats returned by [`RingBuf::drain`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DrainStats {
+    /// Number of entries read.
+    pub read: usize,
+    /// Number of discarded entries skipped.
+    pub discarded: usize,
+    /// Total bytes processed (payload size, not including headers).
+    pub bytes: usize,
+}
+
 struct ConsumerMetadata {
     mmap: MMap,
 }
@@ -225,17 +261,18 @@ impl ConsumerPos {
         Self { pos, metadata }
     }
 
-    fn consume(&mut self, len: usize) {
-        let Self { pos, metadata } = self;
+    fn advance(&mut self, len: usize) {
+        let Self { pos, .. } = self;
+        *pos += item_advance(len);
+    }
 
-        // TODO: Use primitive method when https://github.com/rust-lang/rust/issues/88581 is stabilized.
-        fn next_multiple_of(n: usize, multiple: usize) -> usize {
-            match n % multiple {
-                0 => n,
-                rem => n + (multiple - rem),
-            }
-        }
-        *pos += next_multiple_of(usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap() + len, 8);
+    fn commit(&self) {
+        let Self { pos, metadata } = self;
+        metadata.as_ref().store(*pos, Ordering::SeqCst);
+    }
+
+    fn consume(&mut self, len: usize) {
+        self.advance(len);
 
         // Write operation needs to be properly ordered with respect to the producer committing new
         // data to the ringbuf. The producer uses xchg (SeqCst) to commit new data [1]. The producer
@@ -246,7 +283,7 @@ impl ConsumerPos {
         //
         // [1]: https://github.com/torvalds/linux/blob/2772d7df/kernel/bpf/ringbuf.c#L487-L488
         // [2]: https://github.com/torvalds/linux/blob/2772d7df/kernel/bpf/ringbuf.c#L494
-        metadata.as_ref().store(*pos, Ordering::SeqCst);
+        self.commit();
     }
 }
 
@@ -334,73 +371,132 @@ impl ProducerData {
                 mmap_data.len()
             )
         });
-        while data_available(mmap, pos_cache, consumer) {
-            match read_item(data_pages, *mask, consumer) {
+        while data_available(mmap, pos_cache, consumer.pos) {
+            match read_item(data_pages, *mask, consumer.pos) {
                 Item::Busy => return None,
                 Item::Discard { len } => consumer.consume(len),
                 Item::Data(data) => return Some(RingBufItem { data, consumer }),
             }
         }
         return None;
+    }
 
-        enum Item<'a> {
-            Busy,
-            Discard { len: usize },
-            Data(&'a [u8]),
-        }
+    fn drain<F>(
+        &mut self,
+        consumer: &mut ConsumerPos,
+        max_items: usize,
+        max_bytes: usize,
+        mut f: F,
+    ) -> DrainStats
+    where
+        F: FnMut(&[u8]),
+    {
+        let &mut Self {
+            ref mmap,
+            ref mut data_offset,
+            ref mut pos_cache,
+            ref mut mask,
+        } = self;
+        let mmap_data = mmap.as_ref();
+        let data_pages = mmap_data.get(*data_offset..).unwrap_or_else(|| {
+            panic!(
+                "offset {} out of bounds, data len {}",
+                data_offset,
+                mmap_data.len()
+            )
+        });
 
-        fn data_available(
-            producer: &MMap,
-            producer_cache: &mut usize,
-            consumer: &ConsumerPos,
-        ) -> bool {
-            let ConsumerPos { pos: consumer, .. } = consumer;
-            // Refresh the producer position cache if it appears that the consumer is caught up
-            // with the producer position.
-            if consumer == producer_cache {
-                *producer_cache = load_producer_pos(producer);
+        let start_pos = consumer.pos;
+        let mut stats = DrainStats {
+            read: 0,
+            discarded: 0,
+            bytes: 0,
+        };
+
+        while data_available(mmap, pos_cache, consumer.pos) {
+            if stats.read + stats.discarded >= max_items || stats.bytes >= max_bytes {
+                break;
             }
 
-            // Note that we don't compare the order of the values because the producer position may
-            // overflow u32 and wrap around to 0. Instead we just compare equality and assume that
-            // the consumer position is always logically less than the producer position.
-            //
-            // Note also that the kernel, at the time of writing [1], doesn't seem to handle this
-            // overflow correctly at all, and it's not clear that one can produce events after the
-            // producer position has wrapped around.
-            //
-            // [1]: https://github.com/torvalds/linux/blob/4b810bf0/kernel/bpf/ringbuf.c#L434-L440
-            consumer != producer_cache
-        }
-
-        fn read_item<'data>(data: &'data [u8], mask: u32, pos: &ConsumerPos) -> Item<'data> {
-            let ConsumerPos { pos, .. } = pos;
-            let offset = pos & usize::try_from(mask).unwrap();
-            let must_get_data = |offset, len| {
-                data.get(offset..offset + len).unwrap_or_else(|| {
-                    panic!("{:?} not in {:?}", offset..offset + len, 0..data.len())
-                })
-            };
-            let header_ptr: *const AtomicU32 = must_get_data(offset, mem::size_of::<AtomicU32>())
-                .as_ptr()
-                .cast();
-            // Pair the kernel's SeqCst write (implies Release) [1] with an Acquire load. This
-            // ensures data written by the producer will be visible.
-            //
-            // [1]: https://github.com/torvalds/linux/blob/eb26cbb1/kernel/bpf/ringbuf.c#L488
-            let header = unsafe { &*header_ptr }.load(Ordering::Acquire);
-            if header & BPF_RINGBUF_BUSY_BIT != 0 {
-                Item::Busy
-            } else {
-                let len = usize::try_from(header & mask).unwrap();
-                if header & BPF_RINGBUF_DISCARD_BIT != 0 {
-                    Item::Discard { len }
-                } else {
-                    let data_offset = offset + usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap();
-                    let data = must_get_data(data_offset, len);
-                    Item::Data(data)
+            match read_item(data_pages, *mask, consumer.pos) {
+                Item::Busy => break,
+                Item::Discard { len } => {
+                    if stats.bytes + len > max_bytes && (stats.read + stats.discarded) > 0 {
+                        break;
+                    }
+                    stats.discarded += 1;
+                    stats.bytes += len;
+                    consumer.advance(len);
+                }
+                Item::Data(data) => {
+                    let len = data.len();
+                    if stats.bytes + len > max_bytes && (stats.read + stats.discarded) > 0 {
+                        break;
+                    }
+                    f(data);
+                    stats.read += 1;
+                    stats.bytes += len;
+                    consumer.advance(len);
                 }
             }
+        }
+
+        if consumer.pos != start_pos {
+            consumer.commit();
+        }
+        stats
+    }
+}
+
+enum Item<'a> {
+    Busy,
+    Discard { len: usize },
+    Data(&'a [u8]),
+}
+
+fn data_available(producer: &MMap, producer_cache: &mut usize, consumer: usize) -> bool {
+    // Refresh the producer position cache if it appears that the consumer is caught up
+    // with the producer position.
+    if consumer == *producer_cache {
+        *producer_cache = load_producer_pos(producer);
+    }
+
+    // Note that we don't compare the order of the values because the producer position may
+    // overflow u32 and wrap around to 0. Instead we just compare equality and assume that
+    // the consumer position is always logically less than the producer position.
+    //
+    // Note also that the kernel, at the time of writing [1], doesn't seem to handle this
+    // overflow correctly at all, and it's not clear that one can produce events after the
+    // producer position has wrapped around.
+    //
+    // [1]: https://github.com/torvalds/linux/blob/4b810bf0/kernel/bpf/ringbuf.c#L434-L440
+    consumer != *producer_cache
+}
+
+fn read_item<'data>(data: &'data [u8], mask: u32, pos: usize) -> Item<'data> {
+    let offset = pos & usize::try_from(mask).unwrap();
+    let must_get_data = |offset, len| {
+        data.get(offset..offset + len).unwrap_or_else(|| {
+            panic!("{:?} not in {:?}", offset..offset + len, 0..data.len())
+        })
+    };
+    let header_ptr: *const AtomicU32 =
+        must_get_data(offset, mem::size_of::<AtomicU32>()).as_ptr().cast();
+    // Pair the kernel's SeqCst write (implies Release) [1] with an Acquire load. This
+    // ensures data written by the producer will be visible.
+    //
+    // [1]: https://github.com/torvalds/linux/blob/eb26cbb1/kernel/bpf/ringbuf.c#L488
+    let header = unsafe { &*header_ptr }.load(Ordering::Acquire);
+    if header & BPF_RINGBUF_BUSY_BIT != 0 {
+        Item::Busy
+    } else {
+        let len = usize::try_from(header & mask).unwrap();
+        if header & BPF_RINGBUF_DISCARD_BIT != 0 {
+            Item::Discard { len }
+        } else {
+            let data_offset = offset + usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap();
+            let data = must_get_data(data_offset, len);
+            Item::Data(data)
         }
     }
 }
@@ -412,4 +508,14 @@ fn load_producer_pos(producer: &MMap) -> usize {
     //
     // [1]: https://github.com/torvalds/linux/blob/eb26cbb1/kernel/bpf/ringbuf.c#L447-L448
     unsafe { producer.ptr().cast::<AtomicUsize>().as_ref() }.load(Ordering::Acquire)
+}
+
+fn item_advance(len: usize) -> usize {
+    fn next_multiple_of(n: usize, multiple: usize) -> usize {
+        match n % multiple {
+            0 => n,
+            rem => n + (multiple - rem),
+        }
+    }
+    next_multiple_of(usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap() + len, 8)
 }
