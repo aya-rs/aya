@@ -163,6 +163,9 @@ pub(crate) unsafe fn mmap(
 ) -> *mut c_void {
     #[cfg(test)]
     {
+        if let Some(ptr) = TEST_MMAP_RET_QUEUE.with(|queue| queue.borrow_mut().pop_front()) {
+            return ptr;
+        }
         TEST_MMAP_RET.with(|ret| *ret.borrow())
     }
 
