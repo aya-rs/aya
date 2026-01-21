@@ -29,8 +29,17 @@ once_cell = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
+criterion = "0.5"
 tempfile = { workspace = true }
 test-case = { workspace = true }
+
+[features]
+bench = []
+
+[[bench]]
+name = "perf_buffer"
+harness = false
+required-features = ["bench"]
 
 [package.metadata.docs.rs]
 all-features = true

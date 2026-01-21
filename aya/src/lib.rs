@@ -58,52 +58,52 @@ pub use sys::netlink_set_link_up;
 // process when we try to close a fake file descriptor.
 #[derive(Debug)]
 struct MockableFd {
-    #[cfg(not(test))]
+    #[cfg(not(any(test, feature = "bench")))]
     fd: OwnedFd,
-    #[cfg(test)]
+    #[cfg(any(test, feature = "bench"))]
     fd: Option<OwnedFd>,
 }
 
 impl MockableFd {
-    #[cfg(test)]
+    #[cfg(any(test, feature = "bench"))]
     const fn mock_signed_fd() -> i32 {
         1337
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, feature = "bench"))]
     const fn mock_unsigned_fd() -> u32 {
         1337
     }
 
-    #[cfg(not(test))]
+    #[cfg(not(any(test, feature = "bench")))]
     fn from_fd(fd: OwnedFd) -> Self {
         Self { fd }
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, feature = "bench"))]
     fn from_fd(fd: OwnedFd) -> Self {
         let fd = Some(fd);
         Self { fd }
     }
 
-    #[cfg(not(test))]
+    #[cfg(not(any(test, feature = "bench")))]
     fn inner(&self) -> &OwnedFd {
         let Self { fd } = self;
         fd
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, feature = "bench"))]
     fn inner(&self) -> &OwnedFd {
         let Self { fd } = self;
         fd.as_ref().unwrap()
     }
 
-    #[cfg(not(test))]
+    #[cfg(not(any(test, feature = "bench")))]
     fn into_inner(self) -> OwnedFd {
         self.fd
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, feature = "bench"))]
     fn into_inner(mut self) -> OwnedFd {
         self.fd.take().unwrap()
     }
@@ -144,7 +144,7 @@ impl FromRawFd for MockableFd {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "bench"))]
 impl Drop for MockableFd {
     fn drop(&mut self) {
         use std::os::fd::AsRawFd as _;
