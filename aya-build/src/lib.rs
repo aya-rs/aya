@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     env,
-    ffi::OsString,
+    ffi::{OsStr, OsString},
     fs,
     io::{BufRead as _, BufReader},
     path::PathBuf,
@@ -79,15 +79,29 @@ pub fn build_ebpf<'a>(
     let bpf_target_arch = target_arch_fixup(bpf_target_arch.into());
     let target = format!("{target}-unknown-none");
 
-    let rustup_path = which("rustup");
-    let rustc_channel = rustc_version::version_meta()?.channel;
-
-    if !(matches!(toolchain, Toolchain::Nightly) && rustc_channel == Channel::Nightly) {
-        println!(
-            "cargo:warning=rustup was not found and the selected toolchain ({}) differs from the toolchain currently in use ({rustc_channel:?}), attempting to build anyway",
-            toolchain.as_str()
-        );
-    }
+    const RUSTUP: &str = "rustup";
+    let rustup = which(RUSTUP);
+    let (program, args, build_std) = match rustup.as_ref() {
+        Ok(rustup) => (
+            rustup.as_os_str(),
+            &["run", toolchain.as_str(), "cargo"][..],
+            true,
+        ),
+        Err(err) => {
+            let rustc_version::VersionMeta {
+                semver: _,
+                commit_hash: _,
+                commit_date: _,
+                build_date: _,
+                channel,
+                host: _,
+                short_version_string: _,
+                llvm_version: _,
+            } = rustc_version::version_meta().context("failed to get rustc version meta")?;
+            println!("cargo:warning=which({RUSTUP})={err}; proceeding with current toolchain");
+            (OsStr::new("cargo"), &[][..], channel == Channel::Nightly)
+        }
+    };
 
     for Package {
         name,
@@ -102,15 +116,8 @@ pub fn build_ebpf<'a>(
         // changes to the binaries too, which gets us the rest of the way.
         println!("cargo:rerun-if-changed={root_dir}");
 
-        let mut cmd = if let Ok(path) = &rustup_path {
-            let mut cmd = Command::new(path);
-            cmd.args(["run", toolchain.as_str(), "cargo"]);
-
-            cmd
-        } else {
-            Command::new("cargo")
-        };
-
+        let mut cmd = Command::new(program);
+        cmd.args(args);
         cmd.args([
             "build",
             "--package",
@@ -122,7 +129,7 @@ pub fn build_ebpf<'a>(
             &target,
         ]);
 
-        if rustup_path.is_ok() || rustc_channel == Channel::Nightly {
+        if build_std {
             cmd.args(["-Z", "build-std=core"]);
         }
 
