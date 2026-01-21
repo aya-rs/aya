@@ -5,7 +5,7 @@ pub(crate) mod feature_probe;
 mod netlink;
 mod perf_event;
 
-#[cfg(test)]
+#[cfg(any(test, feature = "bench"))]
 mod fake;
 
 use std::{
@@ -16,7 +16,7 @@ use std::{
 
 use aya_obj::generated::{bpf_attr, bpf_cmd, perf_event_attr};
 pub(crate) use bpf::*;
-#[cfg(test)]
+#[cfg(any(test, feature = "bench"))]
 pub(crate) use fake::*;
 pub use feature_probe::{is_map_supported, is_program_supported};
 #[doc(hidden)]
@@ -97,12 +97,12 @@ impl std::fmt::Debug for Syscall<'_> {
 }
 
 fn syscall(call: Syscall<'_>) -> SysResult {
-    #[cfg(test)]
+    #[cfg(any(test, feature = "bench"))]
     {
         TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) })
     }
 
-    #[cfg(not(test))]
+    #[cfg(not(any(test, feature = "bench")))]
     {
         let ret = unsafe {
             match call {
@@ -152,7 +152,7 @@ fn syscall(call: Syscall<'_>) -> SysResult {
     }
 }
 
-#[cfg_attr(test, expect(unused_variables))]
+#[cfg_attr(any(test, feature = "bench"), expect(unused_variables))]
 pub(crate) unsafe fn mmap(
     addr: *mut c_void,
     len: usize,
@@ -161,12 +161,12 @@ pub(crate) unsafe fn mmap(
     fd: BorrowedFd<'_>,
     offset: libc::off_t,
 ) -> *mut c_void {
-    #[cfg(test)]
+    #[cfg(any(test, feature = "bench"))]
     {
         TEST_MMAP_RET.with(|ret| *ret.borrow())
     }
 
-    #[cfg(not(test))]
+    #[cfg(not(any(test, feature = "bench")))]
     {
         use std::os::fd::AsRawFd as _;
 
@@ -174,14 +174,14 @@ pub(crate) unsafe fn mmap(
     }
 }
 
-#[cfg_attr(test, expect(unused_variables))]
+#[cfg_attr(any(test, feature = "bench"), expect(unused_variables))]
 pub(crate) unsafe fn munmap(addr: *mut c_void, len: usize) -> c_int {
-    #[cfg(test)]
+    #[cfg(any(test, feature = "bench"))]
     {
         0
     }
 
-    #[cfg(not(test))]
+    #[cfg(not(any(test, feature = "bench")))]
     {
         unsafe { libc::munmap(addr, len) }
     }

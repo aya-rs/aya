@@ -55,6 +55,15 @@ impl<T: BorrowMut<MapData>> PerfEventArrayBuffer<T> {
     pub fn read_events(&mut self, out_bufs: &mut [BytesMut]) -> Result<Events, PerfBufferError> {
         self.buf.read_events(out_bufs)
     }
+
+    /// Reads events from the buffer without copying sample data.
+    ///
+    /// The returned iterator yields samples that borrow the underlying mmap.
+    /// The consumer position is updated when the iterator is dropped. Do not
+    /// hold it across `.await` points, and avoid using `mem::forget`.
+    pub fn read_events_raw(&mut self) -> Result<super::RawEvents<'_>, PerfBufferError> {
+        self.buf.read_events_raw()
+    }
 }
 
 impl<T: BorrowMut<MapData>> AsFd for PerfEventArrayBuffer<T> {
