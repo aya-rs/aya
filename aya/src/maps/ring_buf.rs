@@ -276,8 +276,8 @@ impl ConsumerPos {
         metadata.as_ref().store(*pos, Ordering::SeqCst);
     }
 
-    fn consume(&mut self, len: usize) {
-        self.advance(len);
+
+  *pos += (usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap() + len).next_multiple_of(8);
 
         // Write operation needs to be properly ordered with respect to the producer committing new
         // data to the ringbuf. The producer uses xchg (SeqCst) to commit new data [1]. The producer
