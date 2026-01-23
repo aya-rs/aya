@@ -67,6 +67,7 @@ fn main() -> Result<()> {
     let out_dir = PathBuf::from(out_dir);
 
     const C_BPF: &[(&str, bool)] = &[
+        ("btf_maps.bpf.c", true),
         ("ext.bpf.c", false),
         ("iter.bpf.c", true),
         ("main.bpf.c", false),
