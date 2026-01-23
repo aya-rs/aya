@@ -24,12 +24,22 @@ impl AyaBtfMapMarker {
 /// This macro generates a map definition struct that produces BTF metadata
 /// compatible with both aya and libbpf loaders.
 ///
-/// The invoker provides `key` and `value` types without the `*const` wrapper;
-/// the macro adds `*const` internally (this is a BTF implementation detail).
+/// The invoker provides `key_type` and `value_type` types without the `*const`
+/// wrapper; the macro adds `*const` internally (this is a BTF implementation
+/// detail).
+///
+/// Generics are limited to type parameters (with optional defaults) followed by
+/// a semicolon and const parameters (with optional defaults). Lifetimes and
+/// bounds are not supported.
+#[allow(unused_macro_rules)]
 macro_rules! btf_map_def {
     (
         $(#[$attr:meta])*
-        $vis:vis struct $name:ident<$($tp:ident),+ $(; $(const $cg_name:ident : usize $(= $cg_default:tt)?),+)?>,
+        $vis:vis struct $name:ident<
+            $($ty_gen:ident $(= $ty_default:ty)?),+
+            $(; $(const $const_gen:ident : $const_ty:ty $(= $const_default:tt)?),+)?
+            $(,)?
+        >,
         map_type: $map_type:ident,
         max_entries: $max_entries:expr,
         map_flags: $map_flags:expr,
@@ -42,7 +52,10 @@ macro_rules! btf_map_def {
         // repr(C) is required to ensure fields maintain their declared order in BTF.
         // Without it, Rust may reorder fields and libbpf will fail to parse the map definition.
         #[repr(C)]
-        $vis struct $name<$($tp),+ $(, $(const $cg_name : usize $(= $cg_default)?),+)?> {
+        $vis struct $name<
+            $($ty_gen $(= $ty_default)?),+
+            $(, $(const $const_gen : $const_ty $(= $const_default)?),+)?
+        > {
             r#type: *const [i32; $crate::bindings::bpf_map_type::$map_type as usize],
             key: *const $key_ty,
             value: *const $value_ty,
@@ -56,15 +69,33 @@ macro_rules! btf_map_def {
             _anon: $crate::btf_maps::AyaBtfMapMarker,
         }
 
-        unsafe impl<$($tp: Sync),+ $(, $(const $cg_name : usize),+)?> Sync for $name<$($tp),+ $(, $($cg_name),+)?> {}
+        unsafe impl<
+            $($ty_gen),+
+            $(, $(const $const_gen : $const_ty),+)?
+        > Sync for $name<
+            $($ty_gen),+
+            $(, $($const_gen),+)?
+        > {}
 
-        impl<$($tp),+ $(, $(const $cg_name : usize),+)?> Default for $name<$($tp),+ $(, $($cg_name),+)?> {
+        impl<
+            $($ty_gen),+
+            $(, $(const $const_gen : $const_ty),+)?
+        > Default for $name<
+            $($ty_gen),+
+            $(, $($const_gen),+)?
+        > {
             fn default() -> Self {
                 Self::new()
             }
         }
 
-        impl<$($tp),+ $(, $(const $cg_name : usize),+)?> $name<$($tp),+ $(, $($cg_name),+)?> {
+        impl<
+            $($ty_gen),+
+            $(, $(const $const_gen : $const_ty),+)?
+        > $name<
+            $($ty_gen),+
+            $(, $($const_gen),+)?
+        > {
             pub const fn new() -> Self {
                 Self {
                     r#type: ::core::ptr::null(),
