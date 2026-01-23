@@ -7,6 +7,7 @@ macro_rules! bpf_file {
 }
 
 bpf_file!(
+    BTF_MAPS => "btf_maps.bpf.o",
     EXT => "ext.bpf.o",
     ITER_TASK => "iter.bpf.o",
     MAIN => "main.bpf.o",

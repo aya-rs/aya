@@ -1,5 +1,6 @@
 mod array;
 mod bpf_probe_read;
+mod btf_maps;
 mod btf_relocations;
 mod elf;
 mod feature_probe;
