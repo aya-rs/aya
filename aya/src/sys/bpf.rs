@@ -18,7 +18,7 @@ use aya_obj::{
     generated::{
         BPF_ADD, BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_IMM, BPF_JMP, BPF_K,
         BPF_LD, BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_X, bpf_attach_type, bpf_attr,
-        bpf_btf_info, bpf_cmd, bpf_func_id::*, bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type,
+        bpf_btf_info, bpf_cmd, bpf_func_id, bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type,
         bpf_prog_info, bpf_prog_type, bpf_stats_type,
     },
     maps::{LegacyMap, bpf_map_def},
@@ -62,35 +62,33 @@ pub(crate) fn bpf_create_map(
     u.map_flags = def.map_flags();
 
     if let aya_obj::Map::Btf(m) = def {
-        use bpf_map_type::*;
-
         // Mimic https://github.com/libbpf/libbpf/issues/355
         // Currently a bunch of (usually pretty specialized) BPF maps do not support
         // specifying BTF types for the key and value.
-        match u.map_type.try_into() {
-            Ok(BPF_MAP_TYPE_PERF_EVENT_ARRAY)
-            | Ok(BPF_MAP_TYPE_CGROUP_ARRAY)
-            | Ok(BPF_MAP_TYPE_STACK_TRACE)
-            | Ok(BPF_MAP_TYPE_ARRAY_OF_MAPS)
-            | Ok(BPF_MAP_TYPE_HASH_OF_MAPS)
-            | Ok(BPF_MAP_TYPE_DEVMAP)
-            | Ok(BPF_MAP_TYPE_DEVMAP_HASH)
-            | Ok(BPF_MAP_TYPE_CPUMAP)
-            | Ok(BPF_MAP_TYPE_XSKMAP)
-            | Ok(BPF_MAP_TYPE_SOCKMAP)
-            | Ok(BPF_MAP_TYPE_SOCKHASH)
-            | Ok(BPF_MAP_TYPE_QUEUE)
-            | Ok(BPF_MAP_TYPE_STACK)
-            | Ok(BPF_MAP_TYPE_RINGBUF) => {
-                u.btf_key_type_id = 0;
-                u.btf_value_type_id = 0;
-                u.btf_fd = 0;
-            }
-            _ => {
-                u.btf_key_type_id = m.def.btf_key_type_id;
-                u.btf_value_type_id = m.def.btf_value_type_id;
-                u.btf_fd = btf_fd.map(|fd| fd.as_raw_fd()).unwrap_or_default() as u32;
-            }
+        if let Ok(
+            bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY
+            | bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY
+            | bpf_map_type::BPF_MAP_TYPE_STACK_TRACE
+            | bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS
+            | bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS
+            | bpf_map_type::BPF_MAP_TYPE_DEVMAP
+            | bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH
+            | bpf_map_type::BPF_MAP_TYPE_CPUMAP
+            | bpf_map_type::BPF_MAP_TYPE_XSKMAP
+            | bpf_map_type::BPF_MAP_TYPE_SOCKMAP
+            | bpf_map_type::BPF_MAP_TYPE_SOCKHASH
+            | bpf_map_type::BPF_MAP_TYPE_QUEUE
+            | bpf_map_type::BPF_MAP_TYPE_STACK
+            | bpf_map_type::BPF_MAP_TYPE_RINGBUF,
+        ) = u.map_type.try_into()
+        {
+            u.btf_key_type_id = 0;
+            u.btf_value_type_id = 0;
+            u.btf_fd = 0;
+        } else {
+            u.btf_key_type_id = m.def.btf_key_type_id;
+            u.btf_value_type_id = m.def.btf_value_type_id;
+            u.btf_fd = btf_fd.map(|fd| fd.as_raw_fd()).unwrap_or_default() as u32;
         }
     }
 
@@ -419,7 +417,7 @@ pub(crate) fn bpf_link_create(
         // iterators:
         // https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/bpf_iter.c#L517-L518
         LinkTarget::Iter => {}
-    };
+    }
     attr.link_create.attach_type = attach_type as u32;
     attr.link_create.flags = flags;
 
@@ -439,18 +437,21 @@ pub(crate) fn bpf_link_create(
                         .__bindgen_anon_1
                         .relative_fd = fd.to_owned() as u32;
                 }
-                LinkRef::Id(id) => {
-                    attr.link_create
-                        .__bindgen_anon_3
-                        .tcx
-                        .__bindgen_anon_1
-                        .relative_id = id.to_owned();
-                }
+                LinkRef::Id(id) => unsafe {
+                    id.clone_into(
+                        &mut attr
+                            .link_create
+                            .__bindgen_anon_3
+                            .tcx
+                            .__bindgen_anon_1
+                            .relative_id,
+                    );
+                },
             },
         }
     }
 
-    // SAFETY: BPF_LINK_CREATE returns a new file descriptor.
+    // BPF_LINK_CREATE returns a new file descriptor.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) }
 }
 
@@ -684,7 +685,9 @@ pub(crate) fn bpf_load_btf(
     unsafe { fd_sys_bpf(bpf_cmd::BPF_BTF_LOAD, &mut attr) }
 }
 
-// SAFETY: only use for bpf_cmd that return a new file descriptor on success.
+/// # Safety
+///
+/// Only use for `bpf_cmd` values that return a new file descriptor on success.
 pub(super) unsafe fn fd_sys_bpf(
     cmd: bpf_cmd,
     attr: &mut bpf_attr,
@@ -725,7 +728,7 @@ fn with_raised_rlimit_retry<T, F: FnMut() -> io::Result<T>>(mut op: F) -> io::Re
                 rlim_cur: RLIM_INFINITY,
                 rlim_max: RLIM_INFINITY,
             };
-            let ret = unsafe { setrlimit(RLIMIT_MEMLOCK, &limit) };
+            let ret = unsafe { setrlimit(RLIMIT_MEMLOCK, &raw const limit) };
             if ret != 0 {
                 struct HumanSize(rlim_t);
 
@@ -889,7 +892,13 @@ pub(crate) fn is_probe_read_kernel_supported() -> bool {
         new_insn(add64_imm, 1, 0, 0, -8),
         new_insn(mov64_imm, 2, 0, 0, 8),
         new_insn(mov64_imm, 3, 0, 0, 0),
-        new_insn(call, 0, 0, 0, BPF_FUNC_probe_read_kernel as i32),
+        new_insn(
+            call,
+            0,
+            0,
+            0,
+            bpf_func_id::BPF_FUNC_probe_read_kernel as i32,
+        ),
         new_insn(exit, 0, 0, 0, 0),
     ];
 
@@ -979,7 +988,13 @@ pub(crate) fn is_bpf_cookie_supported() -> bool {
     let call = (BPF_JMP | BPF_CALL) as u8;
     let exit = (BPF_JMP | BPF_EXIT) as u8;
     let insns = [
-        new_insn(call, 0, 0, 0, BPF_FUNC_get_attach_cookie as i32),
+        new_insn(
+            call,
+            0,
+            0,
+            0,
+            bpf_func_id::BPF_FUNC_get_attach_cookie as i32,
+        ),
         new_insn(exit, 0, 0, 0, 0),
     ];
 
@@ -993,7 +1008,7 @@ pub(crate) fn is_bpf_cookie_supported() -> bool {
     bpf_prog_load(&mut attr).is_ok()
 }
 
-/// Tests whether CpuMap, DevMap and DevMapHash support program ids
+/// Tests whether [`CpuMap`], [`DevMap`] and [`DevMapHash`] support program ids.
 pub(crate) fn is_prog_id_supported(map_type: bpf_map_type) -> bool {
     assert_matches!(
         map_type,

@@ -135,7 +135,7 @@ impl PerfBuffer {
         Ok(perf_buf)
     }
 
-    fn buf(&self) -> ptr::NonNull<perf_event_mmap_page> {
+    const fn buf(&self) -> ptr::NonNull<perf_event_mmap_page> {
         self.mmap.ptr().cast()
     }
 
@@ -198,7 +198,7 @@ impl PerfBuffer {
                 x if x == PERF_RECORD_SAMPLE as u32 => {
                     buf.clear();
                     buf.reserve(sample_size);
-                    unsafe { buf.set_len(sample_size) };
+                    unsafe { buf.set_len(sample_size) }
 
                     fill_buf(sample_start, base, self.size, buf);
 
@@ -254,7 +254,7 @@ impl PerfBuffer {
         };
 
         atomic::fence(Ordering::SeqCst);
-        unsafe { (*header).data_tail = tail as u64 };
+        unsafe { (*header).data_tail = tail as u64 }
 
         result.map(|()| events)
     }
@@ -268,7 +268,8 @@ impl AsFd for PerfBuffer {
 
 impl Drop for PerfBuffer {
     fn drop(&mut self) {
-        let _: io::Result<()> = perf_event_ioctl(self.fd.as_fd(), PerfEventIoctlRequest::Disable);
+        let _unused: io::Result<()> =
+            perf_event_ioctl(self.fd.as_fd(), PerfEventIoctlRequest::Disable);
     }
 }
 
@@ -289,6 +290,7 @@ mod tests {
     }
 
     const PAGE_SIZE: usize = 4096;
+    #[repr(C)]
     union MMappedBuf {
         mmap_page: perf_event_mmap_page,
         data: [u8; PAGE_SIZE * 2],
@@ -299,7 +301,7 @@ mod tests {
         override_syscall(|call| match call {
             Syscall::PerfEventOpen { .. } => Ok(crate::MockableFd::mock_signed_fd().into()),
             Syscall::PerfEventIoctl { .. } => Ok(0),
-            call => panic!("unexpected syscall: {call:?}"),
+            call @ Syscall::Ebpf { .. } => panic!("unexpected syscall: {call:?}"),
         });
         TEST_MMAP_RET.with(|ret| *ret.borrow_mut() = buf.cast());
     }

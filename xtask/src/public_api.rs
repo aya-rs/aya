@@ -80,7 +80,7 @@ pub(crate) fn public_api(options: Options, metadata: Metadata) -> Result<()> {
         .filter_map(|result| {
             // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this allowance
             // when the lint behaves more sensibly.
-            #[expect(clippy::manual_ok_err)]
+            #[expect(clippy::manual_ok_err, reason = "type ascription")]
             match result {
                 Ok(()) => None,
                 Err(err) => Some(err),
@@ -146,7 +146,7 @@ fn check_package_api(
                 Diff::Both(..) => (),
                 Diff::Right(line) => writeln!(&mut buf, "-{line}").unwrap(),
                 Diff::Left(line) => writeln!(&mut buf, "+{line}").unwrap(),
-            };
+            }
             buf
         }))
 }

@@ -91,7 +91,7 @@ impl Extension {
     /// effectively replacing the original target function.
     ///
     /// The returned value can be used to detach the extension and restore the
-    /// original function, see [Extension::detach].
+    /// original function, see [`Extension::detach`].
     pub fn attach(&mut self) -> Result<ExtensionLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
@@ -129,7 +129,7 @@ impl Extension {
     /// Once attached, the extension effectively replaces the original target function.
     ///
     /// The returned value can be used to detach the extension and restore the
-    /// original function, see [Extension::detach].
+    /// original function, see [`Extension::detach`].
     pub fn attach_to_program(
         &mut self,
         program: &ProgramFd,

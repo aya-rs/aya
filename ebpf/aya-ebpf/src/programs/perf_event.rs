@@ -9,7 +9,7 @@ pub struct PerfEventContext {
 }
 
 impl PerfEventContext {
-    pub fn new(ctx: *mut bpf_perf_event_data) -> Self {
+    pub const fn new(ctx: *mut bpf_perf_event_data) -> Self {
         Self { ctx }
     }
 }

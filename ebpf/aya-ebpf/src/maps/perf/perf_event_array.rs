@@ -30,7 +30,7 @@ impl<T> PerfEventArray<T> {
     }
 
     pub fn output<C: EbpfContext>(&self, ctx: &C, data: impl Borrow<T>, flags: u32) {
-        self.output_at_index(ctx, BPF_F_CURRENT_CPU as u32, data, flags)
+        self.output_at_index(ctx, BPF_F_CURRENT_CPU as u32, data, flags);
     }
 
     pub fn output_at_index<C: EbpfContext>(

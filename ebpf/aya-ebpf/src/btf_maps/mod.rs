@@ -18,7 +18,6 @@ pub use sk_storage::SkStorage;
 /// Generics are limited to type parameters (with optional defaults) followed by
 /// a semicolon and const parameters (with optional defaults). Lifetimes and
 /// bounds are not supported.
-#[allow(unused_macro_rules)]
 macro_rules! btf_map_def {
     (
         $(#[$attr:meta])*
@@ -94,7 +93,7 @@ macro_rules! btf_map_def {
             }
 
             #[inline(always)]
-            pub(crate) fn as_ptr(&self) -> *mut ::core::ffi::c_void {
+            pub(crate) const fn as_ptr(&self) -> *mut ::core::ffi::c_void {
                 ::core::ptr::from_ref(self).cast_mut().cast()
             }
         }

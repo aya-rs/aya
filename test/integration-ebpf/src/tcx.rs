@@ -7,6 +7,6 @@ use aya_ebpf::{bindings::tcx_action_base::TCX_NEXT, macros::classifier, programs
 extern crate ebpf_panic;
 
 #[classifier]
-fn tcx_next(_ctx: TcContext) -> i32 {
+const fn tcx_next(_ctx: TcContext) -> i32 {
     TCX_NEXT
 }

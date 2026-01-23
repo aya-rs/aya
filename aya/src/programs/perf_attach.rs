@@ -47,11 +47,13 @@ impl Link for PerfLinkInner {
 
 id_as_key!(PerfLinkInner, PerfLinkIdInner);
 
-/// The identifer of a PerfLink.
+/// The identifier of a `PerfLink`.
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct PerfLinkId(RawFd);
 
-/// The attachment type of PerfEvent programs.
+/// The attachment type of [`PerfEvent`] programs.
+///
+/// [`PerfEvent`]: crate::programs::PerfEvent
 #[derive(Debug)]
 pub(crate) struct PerfLink {
     perf_fd: crate::MockableFd,
@@ -67,9 +69,10 @@ impl Link for PerfLink {
 
     fn detach(self) -> Result<(), ProgramError> {
         let Self { perf_fd, event } = self;
-        let _: io::Result<()> = perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::Disable);
+        let _unused: io::Result<()> =
+            perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::Disable);
         if let Some(event) = event {
-            let _: Result<(), ProgramError> = event.detach();
+            let _unused: Result<(), ProgramError> = event.detach();
         }
 
         Ok(())

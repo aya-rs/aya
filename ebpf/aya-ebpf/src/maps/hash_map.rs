@@ -1,12 +1,9 @@
 use core::{borrow::Borrow, marker::PhantomData};
 
-use aya_ebpf_bindings::bindings::bpf_map_type::{
-    BPF_MAP_TYPE_LRU_HASH, BPF_MAP_TYPE_LRU_PERCPU_HASH, BPF_MAP_TYPE_PERCPU_HASH,
-};
+use aya_ebpf_bindings::bindings::bpf_map_type;
 use aya_ebpf_cty::c_long;
 
 use crate::{
-    bindings::bpf_map_type::BPF_MAP_TYPE_HASH,
     insert, lookup,
     maps::{MapDef, PinningType},
     remove,
@@ -84,10 +81,10 @@ macro_rules! define_hash_map {
     };
 }
 
-define_hash_map!(HashMap, BPF_MAP_TYPE_HASH);
-define_hash_map!(LruHashMap, BPF_MAP_TYPE_LRU_HASH);
-define_hash_map!(PerCpuHashMap, BPF_MAP_TYPE_PERCPU_HASH);
-define_hash_map!(LruPerCpuHashMap, BPF_MAP_TYPE_LRU_PERCPU_HASH);
+define_hash_map!(HashMap, bpf_map_type::BPF_MAP_TYPE_HASH);
+define_hash_map!(LruHashMap, bpf_map_type::BPF_MAP_TYPE_LRU_HASH);
+define_hash_map!(PerCpuHashMap, bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH);
+define_hash_map!(LruPerCpuHashMap, bpf_map_type::BPF_MAP_TYPE_LRU_PERCPU_HASH);
 
 #[inline]
 unsafe fn get<'a, K, V>(def: *mut aya_ebpf_cty::c_void, key: &K) -> Option<&'a V> {
@@ -96,7 +93,7 @@ unsafe fn get<'a, K, V>(def: *mut aya_ebpf_cty::c_void, key: &K) -> Option<&'a V
 
 #[inline]
 fn get_ptr_mut<K, V>(def: *mut aya_ebpf_cty::c_void, key: &K) -> Option<*mut V> {
-    lookup(def.cast(), key).map(|p| p.as_ptr())
+    lookup(def.cast(), key).map(core::ptr::NonNull::as_ptr)
 }
 
 #[inline]

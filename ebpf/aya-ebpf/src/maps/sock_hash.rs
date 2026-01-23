@@ -82,7 +82,7 @@ impl<K> SockHash<K> {
     ) -> Result<(), u32> {
         let sk = lookup(self.def.as_ptr(), key.borrow()).ok_or(1u32)?;
         let ret = unsafe { bpf_sk_assign(ctx.borrow().as_ptr().cast(), sk.as_ptr(), flags) };
-        unsafe { bpf_sk_release(sk.as_ptr()) };
+        let _: i64 = unsafe { bpf_sk_release(sk.as_ptr()) };
         match ret {
             0 => Ok(()),
             _ret => Err(1),

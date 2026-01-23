@@ -57,7 +57,7 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     pub fn contains(&self, mut value: &V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
 
-        match bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags).map_err(
+        match bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &raw mut value, flags).map_err(
             |io_error| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
@@ -87,10 +87,7 @@ mod tests {
     use std::io;
 
     use assert_matches::assert_matches;
-    use aya_obj::generated::{
-        bpf_cmd,
-        bpf_map_type::{BPF_MAP_TYPE_ARRAY, BPF_MAP_TYPE_BLOOM_FILTER},
-    };
+    use aya_obj::generated::{bpf_cmd, bpf_map_type};
     use libc::{EFAULT, ENOENT};
 
     use super::*;
@@ -103,7 +100,7 @@ mod tests {
     };
 
     fn new_obj_map() -> aya_obj::Map {
-        test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_BLOOM_FILTER)
+        test_utils::new_obj_map::<u32>(bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER)
     }
 
     fn sys_error(value: i32) -> SysResult {
@@ -124,7 +121,9 @@ mod tests {
 
     #[test]
     fn test_try_from_wrong_map() {
-        let map = new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_ARRAY));
+        let map = new_map(test_utils::new_obj_map::<u32>(
+            bpf_map_type::BPF_MAP_TYPE_ARRAY,
+        ));
         let map = Map::Array(map);
 
         assert_matches!(
@@ -145,7 +144,7 @@ mod tests {
         let map = new_map(new_obj_map());
 
         let map = Map::BloomFilter(map);
-        let _: BloomFilter<_, u32> = map.try_into().unwrap();
+        let _unused: BloomFilter<_, u32> = map.try_into().unwrap();
     }
 
     #[test]

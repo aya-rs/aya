@@ -56,7 +56,7 @@ pub(crate) fn lines(bytes: &[u8]) -> impl Iterator<Item = &OsStr> {
 
 pub(crate) trait OsStringExt {
     fn starts_with(&self, needle: &OsStr) -> bool;
-    #[expect(dead_code)] // Would be odd to have the others without this one.
+    #[expect(dead_code, reason = "kept for symmetry with the other helpers")]
     fn ends_with(&self, needle: &OsStr) -> bool;
     fn strip_prefix(&self, prefix: &OsStr) -> Option<&OsStr>;
     fn strip_suffix(&self, suffix: &OsStr) -> Option<&OsStr>;
@@ -128,7 +128,7 @@ impl Drop for ProbeEvent {
         } = self;
         if let Some((detach_debug_fs, is_guard)) = detach_debug_fs {
             if *is_guard {
-                let _: Result<(), ProgramError> = detach_debug_fs(event_alias);
+                let _unused: Result<(), ProgramError> = detach_debug_fs(event_alias);
             }
         }
     }
@@ -152,15 +152,15 @@ pub(crate) fn attach<P: Probe, T: Link + From<PerfLinkInner>>(
     // Use debugfs to create probe
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
-    let link = if !KernelVersion::at_least(4, 17, 0) {
+    let link = if KernelVersion::at_least(4, 17, 0) {
+        let perf_fd = create_as_probe::<P>(kind, fn_name, offset, pid)?;
+        perf_attach(prog_fd, perf_fd, cookie)
+    } else {
         if cookie.is_some() {
             return Err(ProgramError::AttachCookieNotSupported);
         }
         let (perf_fd, event) = create_as_trace_point::<P>(kind, fn_name, offset, pid)?;
         perf_attach_debugfs(prog_fd, perf_fd, event)
-    } else {
-        let perf_fd = create_as_probe::<P>(kind, fn_name, offset, pid)?;
-        perf_attach(prog_fd, perf_fd, cookie)
     }?;
     program_data.links.insert(T::from(link))
 }
@@ -286,7 +286,7 @@ fn delete_probe_event(
 ) -> Result<(), (PathBuf, io::Error)> {
     use std::os::unix::ffi::OsStrExt as _;
 
-    let events_file_name = tracefs.join(format!("{}_events", pmu));
+    let events_file_name = tracefs.join(format!("{pmu}_events"));
 
     fs::read(&events_file_name)
         .and_then(|events| {
@@ -311,17 +311,13 @@ fn delete_probe_event(
             });
 
             if found {
-                OpenOptions::new()
-                    .append(true)
-                    .open(&events_file_name)
-                    .and_then(|mut events_file| {
-                        let mut rm = OsString::new();
-                        rm.push("-:");
-                        rm.push(event_alias);
-                        rm.push("\n");
+                let mut events_file = OpenOptions::new().append(true).open(&events_file_name)?;
+                let mut rm = OsString::new();
+                rm.push("-:");
+                rm.push(event_alias);
+                rm.push("\n");
 
-                        events_file.write_all(rm.as_bytes())
-                    })
+                events_file.write_all(rm.as_bytes())
             } else {
                 Ok(())
             }

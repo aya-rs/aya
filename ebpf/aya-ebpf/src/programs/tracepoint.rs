@@ -7,11 +7,14 @@ pub struct TracePointContext {
 }
 
 impl TracePointContext {
-    pub fn new(ctx: *mut c_void) -> Self {
+    pub const fn new(ctx: *mut c_void) -> Self {
         Self { ctx }
     }
 
-    #[expect(clippy::missing_safety_doc)]
+    #[expect(
+        clippy::missing_safety_doc,
+        reason = "safety requirements come from the underlying helper"
+    )]
     pub unsafe fn read_at<T>(&self, offset: usize) -> Result<T, i64> {
         unsafe { bpf_probe_read(self.ctx.add(offset).cast()) }
     }

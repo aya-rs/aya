@@ -46,7 +46,7 @@ pub fn generate<T: AsRef<str>>(
     let (additional_flags, ctypes_prefix) = extract_ctypes_prefix(&additional_flags);
 
     if let Some(prefix) = ctypes_prefix {
-        bindgen = bindgen.ctypes_prefix(prefix)
+        bindgen = bindgen.ctypes_prefix(prefix);
     }
 
     for ty in types {
@@ -142,7 +142,7 @@ mod test {
     use super::{combine_flags, extract_ctypes_prefix};
 
     fn to_vec(s: &str) -> Vec<String> {
-        s.split(' ').map(|x| x.into()).collect()
+        s.split(' ').map(Into::into).collect()
     }
 
     #[test]

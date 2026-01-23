@@ -20,12 +20,12 @@ pub struct LpmTrie<K, V> {
 pub struct Key<K> {
     /// Represents the number of bits matched against.
     pub prefix_len: u32,
-    /// Represents arbitrary data stored in the LpmTrie.
+    /// Represents arbitrary data stored in the [`LpmTrie`].
     pub data: K,
 }
 
 impl<K> Key<K> {
-    pub fn new(prefix_len: u32, data: K) -> Self {
+    pub const fn new(prefix_len: u32, data: K) -> Self {
         Self { prefix_len, data }
     }
 }

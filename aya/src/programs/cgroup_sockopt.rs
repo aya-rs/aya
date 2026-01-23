@@ -67,7 +67,7 @@ impl CgroupSockopt {
 
     /// Attaches the program to the given cgroup.
     ///
-    /// The returned value can be used to detach, see [CgroupSockopt::detach].
+    /// The returned value can be used to detach, see [`CgroupSockopt::detach`].
     pub fn attach<T: AsFd>(
         &mut self,
         cgroup: T,

@@ -82,6 +82,15 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     }
 }
 
+impl<'a, T: Borrow<MapData>, K: Pod, V: Pod> IntoIterator for &'a PerCpuHashMap<T, K, V> {
+    type Item = Result<(K, PerCpuValues<V>), MapError>;
+    type IntoIter = MapIter<'a, K, PerCpuValues<V>, PerCpuHashMap<T, K, V>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
 impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// Inserts a slice of values - one for each CPU - for the given key.
     ///
@@ -150,9 +159,7 @@ mod tests {
     use std::io;
 
     use assert_matches::assert_matches;
-    use aya_obj::generated::bpf_map_type::{
-        BPF_MAP_TYPE_LRU_PERCPU_HASH, BPF_MAP_TYPE_PERCPU_HASH,
-    };
+    use aya_obj::generated::bpf_map_type;
     use libc::ENOENT;
 
     use super::*;
@@ -168,23 +175,29 @@ mod tests {
     #[test]
     fn test_try_from_ok() {
         let map = Map::PerCpuHashMap(test_utils::new_map(test_utils::new_obj_map::<u32>(
-            BPF_MAP_TYPE_PERCPU_HASH,
+            bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH,
         )));
-        let _: PerCpuHashMap<_, u32, u32> = map.try_into().unwrap();
+        let _unused: PerCpuHashMap<_, u32, u32> = map.try_into().unwrap();
     }
     #[test]
     fn test_try_from_ok_lru() {
-        let map_data =
-            || test_utils::new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_LRU_PERCPU_HASH));
+        let map_data = || {
+            test_utils::new_map(test_utils::new_obj_map::<u32>(
+                bpf_map_type::BPF_MAP_TYPE_LRU_PERCPU_HASH,
+            ))
+        };
         let map = Map::PerCpuHashMap(map_data());
-        let _: PerCpuHashMap<_, u32, u32> = map.try_into().unwrap();
+        let _unused: PerCpuHashMap<_, u32, u32> = map.try_into().unwrap();
         let map = Map::PerCpuLruHashMap(map_data());
-        let _: PerCpuHashMap<_, u32, u32> = map.try_into().unwrap();
+        let _unused: PerCpuHashMap<_, u32, u32> = map.try_into().unwrap();
     }
     #[test]
     fn test_get_not_found() {
-        let map_data =
-            || test_utils::new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_LRU_PERCPU_HASH));
+        let map_data = || {
+            test_utils::new_map(test_utils::new_obj_map::<u32>(
+                bpf_map_type::BPF_MAP_TYPE_LRU_PERCPU_HASH,
+            ))
+        };
         let map = Map::PerCpuHashMap(map_data());
         let map = PerCpuHashMap::<_, u32, u32>::try_from(&map).unwrap();
 

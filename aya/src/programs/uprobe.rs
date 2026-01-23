@@ -103,7 +103,7 @@ impl UProbe {
 
     /// Returns [`ProbeKind::Entry`] if the program is a `uprobe`, or
     /// [`ProbeKind::Return`] if the program is a `uretprobe`.
-    pub fn kind(&self) -> ProbeKind {
+    pub const fn kind(&self) -> ProbeKind {
         self.kind
     }
 
@@ -121,7 +121,7 @@ impl UProbe {
     /// the target function.  Instead if the program is a `uretprobe`, it is
     /// attached to the return address of the target function.
     ///
-    /// The returned value can be used to detach, see [UProbe::detach].
+    /// The returned value can be used to detach, see [`UProbe::detach`].
     ///
     /// The cookie is supported since kernel 5.15, and it is made available to
     /// the eBPF program via the `bpf_get_attach_cookie()` helper. The `point`
@@ -307,20 +307,20 @@ pub enum ProcMapError {
 /// A entry that has been parsed from /proc/`pid`/maps.
 ///
 /// This contains information about a mapped portion of memory
-/// for the process, ranging from address to address_end.
+/// for the process, ranging from address to `address_end`.
 #[cfg_attr(test, derive(Debug, PartialEq))]
 struct ProcMapEntry<'a> {
-    #[cfg_attr(not(test), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code, reason = "parsed but not exposed"))]
     address: u64,
-    #[cfg_attr(not(test), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code, reason = "parsed but not exposed"))]
     address_end: u64,
-    #[cfg_attr(not(test), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code, reason = "parsed but not exposed"))]
     perms: &'a OsStr,
-    #[cfg_attr(not(test), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code, reason = "parsed but not exposed"))]
     offset: u64,
-    #[cfg_attr(not(test), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code, reason = "parsed but not exposed"))]
     dev: &'a OsStr,
-    #[cfg_attr(not(test), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code, reason = "parsed but not exposed"))]
     inode: u32,
     path: Option<&'a OsStr>,
 }
@@ -341,7 +341,7 @@ fn split_ascii_whitespace_n(s: &[u8], mut n: usize) -> impl Iterator<Item = &[u8
             n -= 1;
             Some(if n == 0 {
                 s
-            } else if let Some(i) = s.iter().position(|b| b.is_ascii_whitespace()) {
+            } else if let Some(i) = s.iter().position(u8::is_ascii_whitespace) {
                 let (next, rest) = s.split_at(i);
                 s = rest;
                 next
@@ -557,41 +557,41 @@ impl LdSoCache {
             cursor.consume(6 * size_of::<u32>());
         }
 
-        let offset = if !new_format {
-            cursor.position() as usize + num_entries as usize * 12
-        } else {
+        let offset = if new_format {
             0
+        } else {
+            cursor.position() as usize + num_entries as usize * 12
         };
 
-        let entries = (0..num_entries)
-            .map(|_: u32| {
-                let flags = read_i32(&mut cursor)?;
-                let k_pos = read_u32(&mut cursor)? as usize;
-                let v_pos = read_u32(&mut cursor)? as usize;
+        let entries = std::iter::repeat_with(|| {
+            let flags = read_i32(&mut cursor)?;
+            let k_pos = read_u32(&mut cursor)? as usize;
+            let v_pos = read_u32(&mut cursor)? as usize;
 
-                if new_format {
-                    cursor.consume(12);
-                }
+            if new_format {
+                cursor.consume(12);
+            }
 
-                let read_str = |pos| {
-                    use std::os::unix::ffi::OsStrExt as _;
-                    OsStr::from_bytes(
-                        unsafe { CStr::from_ptr(cursor.get_ref()[offset + pos..].as_ptr().cast()) }
-                            .to_bytes(),
-                    )
-                    .to_owned()
-                };
+            let read_str = |pos| {
+                use std::os::unix::ffi::OsStrExt as _;
+                OsStr::from_bytes(
+                    unsafe { CStr::from_ptr(cursor.get_ref()[offset + pos..].as_ptr().cast()) }
+                        .to_bytes(),
+                )
+                .to_owned()
+            };
 
-                let key = read_str(k_pos);
-                let value = read_str(v_pos);
+            let key = read_str(k_pos);
+            let value = read_str(v_pos);
 
-                Ok::<_, io::Error>(CacheEntry {
-                    key,
-                    value,
-                    _flags: flags,
-                })
+            Ok::<_, io::Error>(CacheEntry {
+                key,
+                value,
+                _flags: flags,
             })
-            .collect::<Result<_, _>>()?;
+        })
+        .take(num_entries as usize)
+        .collect::<Result<_, _>>()?;
 
         Ok(Self { entries })
     }
@@ -605,11 +605,10 @@ impl LdSoCache {
         entries
             .iter()
             .find_map(|CacheEntry { key, value, _flags }| {
-                key.strip_prefix(lib).and_then(|suffix| {
-                    suffix
-                        .starts_with(OsStr::new(".so"))
-                        .then_some(Path::new(value.as_os_str()))
-                })
+                let suffix = key.strip_prefix(lib)?;
+                suffix
+                    .starts_with(OsStr::new(".so"))
+                    .then_some(Path::new(value.as_os_str()))
             })
     }
 }
@@ -689,7 +688,7 @@ fn find_debug_path_in_object<'a>(
 fn find_symbol_in_object<'a>(obj: &'a object::File<'a>, symbol: &str) -> Option<Symbol<'a, 'a>> {
     obj.dynamic_symbols()
         .chain(obj.symbols())
-        .find(|sym| sym.name().map(|name| name == symbol).unwrap_or(false))
+        .find(|sym| sym.name().is_ok_and(|name| name == symbol))
 }
 
 fn resolve_symbol(path: &Path, symbol: &str) -> Result<u64, ResolveSymbolError> {
@@ -723,9 +722,7 @@ fn symbol_translated_address(
         obj.kind(),
         object::ObjectKind::Dynamic | object::ObjectKind::Executable
     );
-    if !needs_addr_translation {
-        Ok(sym.address())
-    } else {
+    if needs_addr_translation {
         let index = sym
             .section_index()
             .ok_or_else(|| ResolveSymbolError::NotInSection(symbol_name.to_string()))?;
@@ -737,6 +734,8 @@ fn symbol_translated_address(
             )
         })?;
         Ok(sym.address() - section.address() + offset)
+    } else {
+        Ok(sym.address())
     }
 }
 
@@ -824,6 +823,10 @@ mod tests {
         );
     }
 
+    #[expect(
+        clippy::little_endian_bytes,
+        reason = "ELF debuglink fields are encoded as little-endian"
+    )]
     fn create_elf_with_debuglink(
         debug_filename: &[u8],
         crc: u32,
@@ -851,6 +854,10 @@ mod tests {
         obj.write()
     }
 
+    #[expect(
+        clippy::little_endian_bytes,
+        reason = "ELF note headers are encoded as little-endian"
+    )]
     fn create_elf_with_build_id(build_id: &[u8]) -> Result<Vec<u8>, object::write::Error> {
         let mut obj =
             object::write::Object::new(BinaryFormat::Elf, Architecture::X86_64, Endianness::Little);
@@ -951,7 +958,7 @@ mod tests {
 
         assert_matches!(
             verify_build_ids(&main_obj, &debug_obj, "symbol_name"),
-            Err(ResolveSymbolError::BuildIdMismatch(ref symbol_name)) if symbol_name == "symbol_name"
+            Err(ResolveSymbolError::BuildIdMismatch(symbol_name)) if symbol_name == "symbol_name"
         );
     }
 
@@ -1125,9 +1132,9 @@ mod tests {
     fn test_proc_map_find_lib_by_name() {
         let proc_map_libs = ProcMap {
             pid: 0xdead,
-            data: br#"
+            data: b"
 7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libcrypto.so.3.0.9
-"#,
+",
         };
 
         assert_matches!(
@@ -1142,9 +1149,9 @@ mod tests {
     fn test_proc_map_find_lib_by_partial_name() {
         let proc_map_libs = ProcMap {
             pid: 0xdead,
-            data: br#"
+            data: b"
 7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libcrypto.so.3.0.9
-"#,
+",
         };
 
         assert_matches!(
@@ -1159,13 +1166,13 @@ mod tests {
     fn test_proc_map_with_multiple_lib_entries() {
         let proc_map_libs = ProcMap {
             pid: 0xdead,
-            data: br#"
+            data: b"
 7f372868000-7f3722869000	r--p	00000000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
 7f3722869000-7f372288f000	r-xp	00001000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
 7f372288f000-7f3722899000	r--p	00027000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
 7f3722899000-7f372289b000	r--p	00030000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
 7f372289b000-7f372289d000	rw-p	00032000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
-"#,
+",
         };
 
         assert_matches!(

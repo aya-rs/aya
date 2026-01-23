@@ -40,10 +40,10 @@ fn find_system_map() -> Vec<PathBuf> {
 
 struct KernelSymbol<'a> {
     address: u64,
-    #[expect(dead_code)]
+    #[expect(dead_code, reason = "parsed for completeness")]
     r#type: &'a str,
     name: &'a str,
-    #[expect(dead_code)]
+    #[expect(dead_code, reason = "parsed for completeness")]
     module: Option<&'a str>,
 }
 
@@ -55,7 +55,7 @@ fn parse_kernel_symbol(line: &str) -> Option<KernelSymbol<'_>> {
     let module = parts.next();
     // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this allowance
     // when the lint behaves more sensibly.
-    #[expect(clippy::manual_ok_err)]
+    #[expect(clippy::manual_ok_err, reason = "type ascription")]
     let address = match u64::from_str_radix(address, 16) {
         Ok(address) => Some(address),
         Err(ParseIntError { .. }) => None,
@@ -213,7 +213,7 @@ fn perf_event_bp() {
         let system_map = match system_map.as_slice() {
             [system_map] => system_map,
             [] => panic!("no system map found"),
-            system_maps => panic!("multiple system maps found: {:?}", system_maps),
+            system_maps => panic!("multiple system maps found: {system_maps:?}"),
         };
         let system_map = fs::read_to_string(system_map).unwrap_or_else(|error| {
             panic!("fs::read_to_string({}): {error:?}", system_map.display())

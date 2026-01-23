@@ -7,7 +7,7 @@ pub struct FExitContext {
 }
 
 impl FExitContext {
-    pub fn new(ctx: *mut c_void) -> Self {
+    pub const fn new(ctx: *mut c_void) -> Self {
         Self { ctx }
     }
 

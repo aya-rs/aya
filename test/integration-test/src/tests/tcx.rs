@@ -95,7 +95,10 @@ fn tcx() {
     let (revision, got_order) = SchedClassifier::query_tcx("lo", TcAttachType::Ingress).unwrap();
     assert_eq!(revision, (expected_order.len() + 1) as u64);
     assert_eq!(
-        got_order.iter().map(|p| p.id()).collect::<Vec<_>>(),
+        got_order
+            .iter()
+            .map(aya::programs::ProgramInfo::id)
+            .collect::<Vec<_>>(),
         expected_order
     );
 }

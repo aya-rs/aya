@@ -7,9 +7,9 @@ use crate::{
     maps::{MapDef, PinningType},
 };
 
-/// An array of AF_XDP sockets.
+/// An array of `AF_XDP` sockets.
 ///
-/// XDP programs can use this map to redirect packets to a target AF_XDP socket using the
+/// XDP programs can use this map to redirect packets to a target `AF_XDP` socket using the
 /// `XDP_REDIRECT` action.
 ///
 /// # Minimum kernel version
@@ -46,7 +46,7 @@ use crate::{
 ///   recieve queue count, see the userspace documentation of `CpuMap`.
 /// - Create a single socket and use a [`CpuMap`](super::CpuMap) to redirect the packet to the
 ///   correct CPU core. This way, the packet is sent to another CPU, and a chained XDP program can
-///   the redirect to the AF_XDP socket. Using a single socket simplifies the userspace code but
+///   the redirect to the `AF_XDP` socket. Using a single socket simplifies the userspace code but
 ///   will not perform great unless not a lot of traffic is redirected to the socket. Regular
 ///   traffic however will not be impacted, contrary to reducing the queue count.
 #[repr(transparent)]
@@ -107,7 +107,7 @@ impl XskMap {
         Some(value.queue_id)
     }
 
-    /// Redirects the current packet to the AF_XDP socket at `index`.
+    /// Redirects the current packet to the `AF_XDP` socket at `index`.
     ///
     /// The lower two bits of `flags` are used for the return code if the map lookup fails, which
     /// can be used as the XDP program's return code if a matching socket cannot be found.

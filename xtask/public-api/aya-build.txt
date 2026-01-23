@@ -1,4 +1,5 @@
 pub mod aya_build
+pub use aya_build::Result
 pub enum aya_build::Toolchain<'a>
 pub aya_build::Toolchain::Custom(&'a str)
 pub aya_build::Toolchain::Nightly
@@ -56,4 +57,4 @@ pub fn aya_build::Package<'a>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_build::Package<'a>
 pub fn aya_build::Package<'a>::from(t: T) -> T
 pub fn aya_build::build_ebpf<'a>(packages: impl core::iter::traits::collect::IntoIterator<Item = aya_build::Package<'a>>, toolchain: aya_build::Toolchain<'a>) -> anyhow::Result<()>
-pub fn aya_build::emit_bpf_target_arch_cfg()
+pub fn aya_build::emit_bpf_target_arch_cfg() -> anyhow::Result<()>

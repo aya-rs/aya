@@ -52,7 +52,7 @@ impl Xdp {
             Some(XdpMap::CpuMap) => section_name.push("cpumap"),
             Some(XdpMap::DevMap) => section_name.push("devmap"),
             None => (),
-        };
+        }
         let section_name = section_name.join("/");
         let fn_name = &sig.ident;
         quote! {
