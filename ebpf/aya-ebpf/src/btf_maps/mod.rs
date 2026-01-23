@@ -19,42 +19,69 @@ impl AyaBtfMapMarker {
     }
 }
 
-#[macro_export]
+/// Defines a BTF-compatible map struct with flat `#[repr(C)]` layout.
+///
+/// This macro generates a map definition struct that produces BTF metadata
+/// compatible with both aya and libbpf loaders.
+///
+/// The invoker must provide `key` and `value` fields explicitly, which allows
+/// for maps with different type parameter patterns (e.g., `<K, V>`).
 macro_rules! btf_map_def {
-    ($name:ident, $t:ident $(, $field:ident : $ty:ty)* $(,)?) => {
-        #[expect(
-            dead_code,
-            reason = "These fields exist only for BTF metadata exposure. None of them are actually used."
-        )]
-        pub struct $name<K, V, const M: usize, const F: usize = 0> {
-            r#type: *const [i32; $t as usize],
-            key: *const K,
-            value: *const V,
-            max_entries: *const [i32; M],
-            map_flags: *const [i32; F],
+    (
+        $(#[$attr:meta])*
+        $vis:vis struct $name:ident<$tp:ident $(, const $cg_name:ident : usize $(= $cg_default:tt)?)*>,
+        map_type: $map_type:ident,
+        max_entries: $max_entries:expr,
+        map_flags: $map_flags:expr,
+        key: $key_ty:ty,
+        value: $value_ty:ty
+        $(, $extra_field:ident : $extra_ty:ty)*
+        $(,)?
+    ) => {
+        $(#[$attr])*
+        #[repr(C)]
+        $vis struct $name<$tp $(, const $cg_name : usize $(= $cg_default)?)*> {
+            r#type: *const [i32; $crate::bindings::bpf_map_type::$map_type as usize],
+            key: $key_ty,
+            value: $value_ty,
 
-            $($field: $ty,)*
+            max_entries: *const [i32; $max_entries],
+            map_flags: *const [i32; $map_flags],
 
+            $($extra_field: $extra_ty,)*
             // Anonymize the struct.
             _anon: $crate::btf_maps::AyaBtfMapMarker,
         }
 
-        #[expect(
-            clippy::new_without_default,
-            reason = "BPF maps are always used as static variables, therefore this method has to be `const`. `Default::default` is not `const`."
-        )]
-        impl<K, V, const M: usize, const F: usize> $name<K, V, M, F> {
-            pub const fn new() -> $name<K, V, M, F> {
+        unsafe impl<$tp: Sync $(, const $cg_name : usize)*> Sync for $name<$tp $(, $cg_name)*> {}
+
+        impl<$tp $(, const $cg_name : usize)*> Default for $name<$tp $(, $cg_name)*> {
+            fn default() -> Self {
+                Self::new()
+            }
+        }
+
+        impl<$tp $(, const $cg_name : usize)*> $name<$tp $(, $cg_name)*> {
+            pub const fn new() -> Self {
                 Self {
                     r#type: ::core::ptr::null(),
                     key: ::core::ptr::null(),
                     value: ::core::ptr::null(),
-                    $($field: ::core::ptr::null(),)*
+
                     max_entries: ::core::ptr::null(),
                     map_flags: ::core::ptr::null(),
+
+                    $($extra_field: ::core::ptr::null(),)*
                     _anon: $crate::btf_maps::AyaBtfMapMarker::new(),
                 }
+            }
+
+            #[inline(always)]
+            pub(crate) fn as_ptr(&self) -> *mut ::core::ffi::c_void {
+                ::core::ptr::from_ref(self).cast_mut().cast()
             }
         }
     };
 }
+
+pub(crate) use btf_map_def;
