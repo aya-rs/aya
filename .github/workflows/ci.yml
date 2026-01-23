@@ -38,6 +38,13 @@ jobs:
 
       - run: cargo +nightly fmt --all -- --check
 
+      - name: Install libbpf-rs prerequisites
+        run: |
+          set -euxo pipefail
+
+          sudo apt update
+          sudo apt -y install autopoint
+
       - run: ./clippy.sh
 
       # On the `aya-rs/aya` repository, regenerate the public API on a schedule.
@@ -101,6 +108,13 @@ jobs:
       - uses: taiki-e/setup-cross-toolchain-action@v1
         with:
           target: ${{ matrix.arch }}
+
+      - name: Install libbpf-rs prerequisites
+        run: |
+          set -euxo pipefail
+
+          sudo apt update
+          sudo apt -y install autopoint
 
       - name: Build
         run: |
@@ -263,7 +277,7 @@ jobs:
 
           sudo apt update
           sudo apt -y install \
-            gettext \
+            autopoint \
             liblzma-dev \
             lynx \
             musl-tools \
