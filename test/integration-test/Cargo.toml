@@ -17,6 +17,7 @@ workspace = true
 aya = { path = "../../aya", version = "^0.13.2", default-features = false }
 
 [dev-dependencies]
+libbpf-rs = { workspace = true }
 anyhow = { workspace = true, features = ["std"] }
 assert_matches = { workspace = true }
 aya-log = { path = "../../aya-log", version = "^0.2.2", default-features = false }
