@@ -1,18 +1,31 @@
-use core::{borrow::Borrow, cell::UnsafeCell, mem, mem::MaybeUninit, ptr};
+use core::{borrow::Borrow, mem, mem::MaybeUninit, ptr};
 
 #[cfg(generic_const_exprs)]
 use crate::const_assert::{Assert, IsTrue};
 use crate::{
     bindings::bpf_map_type::BPF_MAP_TYPE_RINGBUF,
-    btf_map_def,
+    btf_maps::AyaBtfMapMarker,
     helpers::{bpf_ringbuf_output, bpf_ringbuf_reserve},
     maps::ring_buf::{RingBufBytes, RingBufEntry},
 };
 
-btf_map_def!(RingBufDef, BPF_MAP_TYPE_RINGBUF, value_size: *const [i32; 0]);
-
-#[repr(transparent)]
-pub struct RingBuf<T, const M: usize, const F: usize = 0>(UnsafeCell<RingBufDef<(), T, M, F>>);
+/// A BTF-compatible BPF ring buffer map.
+///
+/// The `#[repr(C)]` struct with flat fields defines the map in BTF format.
+/// Ring buffers have a special `value_size` field set to 0.
+#[repr(C)]
+#[allow(dead_code)]
+pub struct RingBuf<T, const M: usize, const F: usize = 0> {
+    r#type: *const [i32; BPF_MAP_TYPE_RINGBUF as usize],
+    key: *const (),
+    value: *const T,
+    max_entries: *const [i32; M],
+    map_flags: *const [i32; F],
+    /// Ring buffers require value_size to be 0.
+    value_size: *const [i32; 0],
+    // Anonymize the struct in BTF.
+    _anon: AyaBtfMapMarker,
+}
 
 unsafe impl<T: Sync, const M: usize, const F: usize> Sync for RingBuf<T, M, F> {}
 
@@ -22,7 +35,20 @@ impl<T, const M: usize, const F: usize> RingBuf<T, M, F> {
         reason = "BPF maps are always used as static variables, therefore this method has to be `const`. `Default::default` is not `const`."
     )]
     pub const fn new() -> Self {
-        Self(UnsafeCell::new(RingBufDef::new()))
+        Self {
+            r#type: core::ptr::null(),
+            key: core::ptr::null(),
+            value: core::ptr::null(),
+            max_entries: core::ptr::null(),
+            map_flags: core::ptr::null(),
+            value_size: core::ptr::null(),
+            _anon: AyaBtfMapMarker::new(),
+        }
+    }
+
+    #[inline(always)]
+    fn as_ptr(&self) -> *mut core::ffi::c_void {
+        core::ptr::from_ref(self).cast_mut().cast()
     }
 
     /// Reserve a dynamically sized byte buffer in the ring buffer.
@@ -33,8 +59,7 @@ impl<T, const M: usize, const F: usize> RingBuf<T, M, F> {
     /// allocation sizes. In other words, it is incumbent upon users of this function to convince
     /// the verifier that `size` is a compile-time constant. Good luck!
     pub fn reserve_bytes(&self, size: usize, flags: u64) -> Option<RingBufBytes<'_>> {
-        let ptr =
-            unsafe { bpf_ringbuf_reserve(self.0.get().cast(), size as u64, flags) }.cast::<u8>();
+        let ptr = unsafe { bpf_ringbuf_reserve(self.as_ptr(), size as u64, flags) }.cast::<u8>();
         unsafe { RingBufBytes::from_raw(ptr, size) }
     }
 
@@ -87,9 +112,8 @@ impl<T, const M: usize, const F: usize> RingBuf<T, M, F> {
     }
 
     fn reserve_impl<U: 'static>(&self, flags: u64) -> Option<RingBufEntry<U>> {
-        let ptr =
-            unsafe { bpf_ringbuf_reserve(self.0.get().cast(), mem::size_of::<U>() as u64, flags) }
-                .cast::<MaybeUninit<U>>();
+        let ptr = unsafe { bpf_ringbuf_reserve(self.as_ptr(), mem::size_of::<U>() as u64, flags) }
+            .cast::<MaybeUninit<U>>();
         unsafe { RingBufEntry::from_raw(ptr) }
     }
 
@@ -118,7 +142,7 @@ impl<T, const M: usize, const F: usize> RingBuf<T, M, F> {
         assert_eq!(8 % mem::align_of_val(data), 0);
         let ret = unsafe {
             bpf_ringbuf_output(
-                self.0.get().cast(),
+                self.as_ptr(),
                 ptr::from_ref(data).cast_mut().cast(),
                 mem::size_of_val(data) as u64,
                 flags,
