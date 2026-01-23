@@ -24,6 +24,7 @@ aya-obj = { path = "../../aya-obj", version = "^0.2.2", default-features = false
 epoll = { workspace = true }
 futures = { workspace = true, features = ["alloc"] }
 integration-common = { path = "../integration-common", features = ["user"] }
+libbpf-rs = { workspace = true, features = ["vendored"] }
 libc = { workspace = true }
 log = { workspace = true }
 nix = { workspace = true, features = ["mount", "sched"] }
