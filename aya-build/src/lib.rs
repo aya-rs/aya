@@ -249,14 +249,14 @@ pub fn emit_bpf_target_arch_cfg() {
     const HOST: &str = "HOST";
     println!("cargo:rerun-if-env-changed={HOST}");
 
-    if std::env::var_os(BPF_TARGET_ARCH).is_none() {
-        let host = std::env::var_os(HOST).unwrap_or_else(|| panic!("{HOST} not set"));
+    if env::var_os(BPF_TARGET_ARCH).is_none() {
+        let host = env::var_os(HOST).unwrap_or_else(|| panic!("{HOST} not set"));
         let host = host
             .into_string()
             .unwrap_or_else(|err| panic!("OsString::into_string({HOST}): {err:?}"));
         let host = host.as_str();
 
-        let bpf_target_arch = if let Some(bpf_target_arch) = std::env::var_os(AYA_BPF_TARGET_ARCH) {
+        let bpf_target_arch = if let Some(bpf_target_arch) = env::var_os(AYA_BPF_TARGET_ARCH) {
             bpf_target_arch
                 .into_string()
                 .unwrap_or_else(|err| {

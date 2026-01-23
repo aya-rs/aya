@@ -52,11 +52,7 @@ use crate::{
 pub unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, c_long> {
     let mut v: MaybeUninit<T> = MaybeUninit::uninit();
     let ret = unsafe {
-        generated::bpf_probe_read(
-            v.as_mut_ptr().cast(),
-            mem::size_of::<T>() as u32,
-            src.cast(),
-        )
+        generated::bpf_probe_read(v.as_mut_ptr().cast(), size_of::<T>() as u32, src.cast())
     };
     if ret == 0 {
         Ok(unsafe { v.assume_init() })
@@ -118,11 +114,7 @@ pub unsafe fn bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> Result<(), c
 pub unsafe fn bpf_probe_read_user<T>(src: *const T) -> Result<T, c_long> {
     let mut v: MaybeUninit<T> = MaybeUninit::uninit();
     let ret = unsafe {
-        generated::bpf_probe_read_user(
-            v.as_mut_ptr().cast(),
-            mem::size_of::<T>() as u32,
-            src.cast(),
-        )
+        generated::bpf_probe_read_user(v.as_mut_ptr().cast(), size_of::<T>() as u32, src.cast())
     };
     if ret == 0 {
         Ok(unsafe { v.assume_init() })
@@ -183,11 +175,7 @@ pub unsafe fn bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> Result<
 pub unsafe fn bpf_probe_read_kernel<T>(src: *const T) -> Result<T, c_long> {
     let mut v: MaybeUninit<T> = MaybeUninit::uninit();
     let ret = unsafe {
-        generated::bpf_probe_read_kernel(
-            v.as_mut_ptr().cast(),
-            mem::size_of::<T>() as u32,
-            src.cast(),
-        )
+        generated::bpf_probe_read_kernel(v.as_mut_ptr().cast(), size_of::<T>() as u32, src.cast())
     };
     if ret == 0 {
         Ok(unsafe { v.assume_init() })
@@ -569,9 +557,8 @@ pub unsafe fn bpf_probe_read_kernel_str_bytes(
 /// On failure, this function returns a negative value wrapped in an `Err`.
 #[inline]
 pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), c_long> {
-    let ret = unsafe {
-        generated::bpf_probe_write_user(dst.cast(), src.cast(), mem::size_of::<T>() as u32)
-    };
+    let ret =
+        unsafe { generated::bpf_probe_write_user(dst.cast(), src.cast(), size_of::<T>() as u32) };
     if ret == 0 { Ok(()) } else { Err(ret) }
 }
 
@@ -594,7 +581,7 @@ pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), 
 pub fn bpf_get_current_comm() -> Result<[u8; 16], c_long> {
     let mut comm: [u8; 16usize] = [0; 16];
     let ret = unsafe {
-        generated::bpf_get_current_comm(comm.as_mut_ptr().cast(), mem::size_of_val(&comm) as u32)
+        generated::bpf_get_current_comm(comm.as_mut_ptr().cast(), size_of_val(&comm) as u32)
     };
     if ret == 0 { Ok(comm) } else { Err(ret) }
 }
@@ -806,7 +793,7 @@ pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
         2 => printk(fmt_ptr, fmt_size, args[0], args[1]),
         3 => printk(fmt_ptr, fmt_size, args[0], args[1], args[2]),
         _ => unsafe {
-            generated::bpf_trace_vprintk(
+            bpf_trace_vprintk(
                 fmt_ptr,
                 fmt_size,
                 args.as_ptr().cast(),

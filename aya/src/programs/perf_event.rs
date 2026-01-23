@@ -137,7 +137,7 @@ pub enum HardwareEvent {
 
 impl HardwareEvent {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<HardwareEvent>()];
+        const _: [(); 4] = [(); size_of::<HardwareEvent>()];
         self as u32
     }
 }
@@ -187,7 +187,7 @@ pub enum SoftwareEvent {
 
 impl SoftwareEvent {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<SoftwareEvent>()];
+        const _: [(); 4] = [(); size_of::<SoftwareEvent>()];
         self as u32
     }
 }
@@ -222,7 +222,7 @@ pub enum HwCacheEvent {
 
 impl HwCacheEvent {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<HwCacheEvent>()];
+        const _: [(); 4] = [(); size_of::<HwCacheEvent>()];
         self as u32
     }
 }
@@ -245,7 +245,7 @@ pub enum HwCacheOp {
 
 impl HwCacheOp {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<HwCacheOp>()];
+        const _: [(); 4] = [(); size_of::<HwCacheOp>()];
         self as u32
     }
 }
@@ -269,7 +269,7 @@ pub enum HwCacheResult {
 
 impl HwCacheResult {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<HwCacheResult>()];
+        const _: [(); 4] = [(); size_of::<HwCacheResult>()];
         self as u32
     }
 }
@@ -291,7 +291,7 @@ pub enum PerfBreakpointType {
 
 impl PerfBreakpointType {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<PerfBreakpointType>()];
+        const _: [(); 4] = [(); size_of::<PerfBreakpointType>()];
         self as u32
     }
 }
@@ -316,7 +316,7 @@ pub enum PerfBreakpointLength {
 
 impl PerfBreakpointLength {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<PerfBreakpointLength>()];
+        const _: [(); 4] = [(); size_of::<PerfBreakpointLength>()];
         self as u32
     }
 }

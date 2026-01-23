@@ -1,4 +1,4 @@
-use core::{borrow::Borrow, marker::PhantomData, mem, ptr};
+use core::{borrow::Borrow, marker::PhantomData, ptr};
 
 use crate::{
     EbpfContext,
@@ -48,7 +48,7 @@ impl<T> PerfEventArray<T> {
                 self.def.as_ptr().cast(),
                 flags,
                 ptr::from_ref(data).cast_mut().cast(),
-                mem::size_of_val(data) as u64,
+                size_of_val(data) as u64,
             );
         }
     }

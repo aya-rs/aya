@@ -419,11 +419,11 @@ pub(crate) fn page_size() -> usize {
 
 // bytes_of converts a <T> to a byte slice
 pub(crate) fn bytes_of<T: Pod>(val: &T) -> &[u8] {
-    unsafe { slice::from_raw_parts(std::ptr::from_ref(val).cast(), mem::size_of_val(val)) }
+    unsafe { slice::from_raw_parts(ptr::from_ref(val).cast(), size_of_val(val)) }
 }
 
 pub(crate) fn bytes_of_slice<T: Pod>(val: &[T]) -> &[u8] {
-    let size = val.len().wrapping_mul(mem::size_of::<T>());
+    let size = val.len().wrapping_mul(size_of::<T>());
     // Safety:
     // Any alignment is allowed.
     // The size is determined in this function.
@@ -483,7 +483,7 @@ impl MMap {
 
     /// Maps the file at `path` for reading, using `mmap` with `MAP_PRIVATE`.
     pub(crate) fn map_copy_read_only(path: &Path) -> Result<Self, io::Error> {
-        let file = fs::File::open(path)?;
+        let file = File::open(path)?;
         Self::new(
             file.as_fd(),
             file.metadata()?.len().try_into().map_err(|e| {
@@ -507,7 +507,7 @@ impl MMap {
 impl AsRef<[u8]> for MMap {
     fn as_ref(&self) -> &[u8] {
         let Self { ptr, len } = self;
-        unsafe { std::slice::from_raw_parts(ptr.as_ptr().cast(), *len) }
+        unsafe { slice::from_raw_parts(ptr.as_ptr().cast(), *len) }
     }
 }
 

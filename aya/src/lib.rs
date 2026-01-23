@@ -152,7 +152,7 @@ impl Drop for MockableFd {
         let Self { fd } = self;
         let fd = fd.take().unwrap();
         if fd.as_raw_fd() < Self::mock_signed_fd() {
-            std::mem::drop(fd)
+            drop(fd)
         } else {
             std::mem::forget(fd)
         }

@@ -1,5 +1,4 @@
 use std::{
-    mem,
     os::fd::AsRawFd as _,
     path::Path,
     sync::{
@@ -75,7 +74,7 @@ impl RingBufTest {
         bpf_fn: impl FnOnce(&mut Ebpf),
     ) -> Self {
         const RING_BUF_BYTE_SIZE: u32 =
-            (RING_BUF_MAX_ENTRIES * (mem::size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
+            (RING_BUF_MAX_ENTRIES * (size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
 
         // Use the loader API to control the size of the ring_buf.
         let mut loader = EbpfLoader::new();
@@ -190,7 +189,7 @@ fn ring_buf_mismatch_size<T>(
     T: Copy + Into<u64> + PartialEq + std::fmt::Debug,
 {
     const RING_BUF_BYTE_SIZE: u32 =
-        (RING_BUF_MAX_ENTRIES * (mem::size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
+        (RING_BUF_MAX_ENTRIES * (size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
     let mut loader = EbpfLoader::new();
     for &map in ALL_RING_BUFS {
         loader.map_max_entries(map, RING_BUF_BYTE_SIZE);
@@ -205,7 +204,7 @@ fn ring_buf_mismatch_size<T>(
     trigger(value.into());
     {
         let read = ring_buf.next().unwrap();
-        assert_eq!(read.len(), mem::size_of::<T>());
+        assert_eq!(read.len(), size_of::<T>());
         let decoded = decode(read.as_ref());
         assert_eq!(decoded, value);
     }

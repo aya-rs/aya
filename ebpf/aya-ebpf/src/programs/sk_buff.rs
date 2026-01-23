@@ -1,8 +1,4 @@
-use core::{
-    ffi::c_void,
-    mem::{self, MaybeUninit},
-    ptr,
-};
+use core::{ffi::c_void, mem::MaybeUninit, ptr};
 
 use aya_ebpf_bindings::helpers::{
     bpf_clone_redirect, bpf_get_socket_uid, bpf_l3_csum_replace, bpf_l4_csum_replace,
@@ -67,7 +63,7 @@ impl SkBuff {
                 self.skb as *const _,
                 offset as u32,
                 ptr::from_mut(&mut data).cast(),
-                mem::size_of_val(&data) as u32,
+                size_of_val(&data) as u32,
             );
             if ret == 0 {
                 Ok(data.assume_init())
@@ -110,7 +106,7 @@ impl SkBuff {
                 self.skb.cast(),
                 offset as u32,
                 ptr::from_ref(v).cast(),
-                mem::size_of_val(v) as u32,
+                size_of_val(v) as u32,
                 flags,
             );
             if ret == 0 { Ok(()) } else { Err(ret) }

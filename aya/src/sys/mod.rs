@@ -107,7 +107,7 @@ fn syscall(call: Syscall<'_>) -> SysResult {
         let ret = unsafe {
             match call {
                 Syscall::Ebpf { cmd, attr } => {
-                    libc::syscall(libc::SYS_bpf, cmd, attr, std::mem::size_of::<bpf_attr>())
+                    libc::syscall(libc::SYS_bpf, cmd, attr, size_of::<bpf_attr>())
                 }
                 Syscall::PerfEventOpen {
                     attr,

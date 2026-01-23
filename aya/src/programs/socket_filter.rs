@@ -88,7 +88,7 @@ impl SocketFilter {
                 SOL_SOCKET,
                 SO_ATTACH_BPF as i32,
                 std::ptr::from_ref(&prog_fd).cast(),
-                std::mem::size_of_val(&prog_fd) as u32,
+                size_of_val(&prog_fd) as u32,
             )
         };
         if ret < 0 {
@@ -145,7 +145,7 @@ impl Link for SocketFilterLink {
                 SOL_SOCKET,
                 SO_DETACH_BPF as i32,
                 std::ptr::from_ref(&self.prog_fd).cast(),
-                std::mem::size_of_val(&self.prog_fd) as u32,
+                size_of_val(&self.prog_fd) as u32,
             );
         }
         Ok(())

@@ -125,7 +125,7 @@ pub struct EbpfLoader<'a> {
     max_entries: HashMap<&'a str, u32>,
     // Map pin path overrides the pin path of the map that matches the provided name before
     // it is created.
-    map_pin_path_by_name: HashMap<&'a str, std::borrow::Cow<'a, Path>>,
+    map_pin_path_by_name: HashMap<&'a str, Cow<'a, Path>>,
 
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,

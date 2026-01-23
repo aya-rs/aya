@@ -1,5 +1,5 @@
 pub(crate) mod def {
-    use core::{cell::UnsafeCell, mem};
+    use core::cell::UnsafeCell;
 
     use aya_ebpf_cty::c_void;
 
@@ -23,8 +23,8 @@ pub(crate) mod def {
             map_flags: u32,
             pinning: PinningType,
         ) -> Self {
-            let key_size = mem::size_of::<K>() as u32;
-            let value_size = mem::size_of::<V>() as u32;
+            let key_size = size_of::<K>() as u32;
+            let value_size = size_of::<V>() as u32;
             Self(UnsafeCell::new(bpf_map_def {
                 type_,
                 key_size,

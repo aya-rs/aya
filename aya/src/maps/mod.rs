@@ -52,7 +52,6 @@ use std::{
     ffi::CString,
     io,
     marker::PhantomData,
-    mem,
     ops::Deref,
     os::fd::{AsFd, BorrowedFd, OwnedFd},
     path::Path,
@@ -537,12 +536,12 @@ pub(crate) fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
 }
 
 pub(crate) fn check_kv_size<K, V>(map: &MapData) -> Result<(), MapError> {
-    let size = mem::size_of::<K>();
+    let size = size_of::<K>();
     let expected = map.obj.key_size() as usize;
     if size != expected {
         return Err(MapError::InvalidKeySize { size, expected });
     }
-    let size = mem::size_of::<V>();
+    let size = size_of::<V>();
     let expected = map.obj.value_size() as usize;
     if size != expected {
         return Err(MapError::InvalidValueSize { size, expected });
@@ -551,7 +550,7 @@ pub(crate) fn check_kv_size<K, V>(map: &MapData) -> Result<(), MapError> {
 }
 
 pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
-    let size = mem::size_of::<V>();
+    let size = size_of::<V>();
     let expected = map.obj.value_size() as usize;
     if size != expected {
         return Err(MapError::InvalidValueSize { size, expected });
@@ -919,7 +918,7 @@ impl<T: Pod> TryFrom<Vec<T>> for PerCpuValues<T> {
 
 impl<T: Pod> PerCpuValues<T> {
     pub(crate) fn alloc_kernel_mem() -> Result<PerCpuKernelMem, io::Error> {
-        let value_size = mem::size_of::<T>().next_multiple_of(8);
+        let value_size = size_of::<T>().next_multiple_of(8);
         let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
         Ok(PerCpuKernelMem {
             bytes: vec![0u8; nr_cpus * value_size],
@@ -927,7 +926,7 @@ impl<T: Pod> PerCpuValues<T> {
     }
 
     pub(crate) unsafe fn from_kernel_mem(mem: PerCpuKernelMem) -> Self {
-        let stride = mem::size_of::<T>().next_multiple_of(8);
+        let stride = size_of::<T>().next_multiple_of(8);
         let mut values = Vec::new();
         let mut offset = 0;
         while offset < mem.bytes.len() {
@@ -943,7 +942,7 @@ impl<T: Pod> PerCpuValues<T> {
     pub(crate) fn build_kernel_mem(&self) -> Result<PerCpuKernelMem, io::Error> {
         let mut mem = Self::alloc_kernel_mem()?;
         let mem_ptr = mem.as_mut_ptr();
-        let value_size = mem::size_of::<T>().next_multiple_of(8);
+        let value_size = size_of::<T>().next_multiple_of(8);
         for (i, value) in self.values.iter().enumerate() {
             unsafe { ptr::write_unaligned(mem_ptr.byte_add(i * value_size).cast(), *value) };
         }
@@ -989,7 +988,7 @@ mod test_utils {
         aya_obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: map_type as u32,
-                key_size: std::mem::size_of::<K>() as u32,
+                key_size: size_of::<K>() as u32,
                 value_size: 4,
                 max_entries: 1024,
                 ..Default::default()
@@ -1008,7 +1007,7 @@ mod test_utils {
         aya_obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: map_type as u32,
-                key_size: std::mem::size_of::<K>() as u32,
+                key_size: size_of::<K>() as u32,
                 value_size: 4,
                 max_entries,
                 ..Default::default()
@@ -1163,10 +1162,10 @@ mod tests {
             } => {
                 assert_eq!(
                     unsafe { attr.info.info_len },
-                    mem::size_of::<bpf_map_info>() as u32
+                    size_of::<bpf_map_info>() as u32
                 );
                 unsafe {
-                    let name_bytes = mem::transmute::<&[u8], &[c_char]>(TEST_NAME.as_bytes());
+                    let name_bytes = std::mem::transmute::<&[u8], &[c_char]>(TEST_NAME.as_bytes());
                     let map_info = attr.info.info as *mut bpf_map_info;
                     map_info.write({
                         let mut map_info = map_info.read();

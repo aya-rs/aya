@@ -4,7 +4,7 @@
 
 use std::{
     borrow::{Borrow, BorrowMut},
-    fs, io, mem,
+    fs, io,
     os::fd::AsFd as _,
     path::Path,
     str::FromStr,
@@ -81,7 +81,7 @@ pub struct StackTraceMap<T> {
 impl<T: Borrow<MapData>> StackTraceMap<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
-        let expected = mem::size_of::<u32>();
+        let expected = size_of::<u32>();
         let size = data.obj.key_size() as usize;
         if size != expected {
             return Err(MapError::InvalidKeySize { size, expected });
@@ -93,7 +93,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
                 io_error,
             })?;
         let size = data.obj.value_size() as usize;
-        if size > max_stack_depth * mem::size_of::<u64>() {
+        if size > max_stack_depth * size_of::<u64>() {
             return Err(MapError::InvalidValueSize { size, expected });
         }
 

@@ -12,7 +12,8 @@
     non_snake_case,
     non_upper_case_globals,
     unreachable_pub,
-    unsafe_op_in_unsafe_fn
+    unsafe_op_in_unsafe_fn,
+    unused_qualifications
 )]
 #![no_std]
 

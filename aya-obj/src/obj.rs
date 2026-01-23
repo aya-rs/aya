@@ -1137,7 +1137,7 @@ fn parse_license(data: &[u8]) -> Result<CString, ParseError> {
         .to_owned())
 }
 
-fn parse_version(data: &[u8], endianness: object::Endianness) -> Result<Option<u32>, ParseError> {
+fn parse_version(data: &[u8], endianness: Endianness) -> Result<Option<u32>, ParseError> {
     let data = match data.len() {
         4 => data.try_into().unwrap(),
         _ => {
@@ -1148,8 +1148,8 @@ fn parse_version(data: &[u8], endianness: object::Endianness) -> Result<Option<u
     };
 
     let v = match endianness {
-        object::Endianness::Big => u32::from_be_bytes(data),
-        object::Endianness::Little => u32::from_le_bytes(data),
+        Endianness::Big => u32::from_be_bytes(data),
+        Endianness::Little => u32::from_le_bytes(data),
     };
 
     Ok(if v == KERNEL_VERSION_ANY {
@@ -1189,7 +1189,7 @@ fn parse_data_map_section(section: &Section<'_>) -> Result<Map, ParseError> {
         EbpfSectionKind::Data | EbpfSectionKind::Rodata => {
             let def = bpf_map_def {
                 map_type: BPF_MAP_TYPE_ARRAY as u32,
-                key_size: mem::size_of::<u32>() as u32,
+                key_size: size_of::<u32>() as u32,
                 // We need to use section.size here since
                 // .bss will always have data.len() == 0
                 value_size: section.size as u32,
@@ -1206,7 +1206,7 @@ fn parse_data_map_section(section: &Section<'_>) -> Result<Map, ParseError> {
         EbpfSectionKind::Bss => {
             let def = bpf_map_def {
                 map_type: BPF_MAP_TYPE_ARRAY as u32,
-                key_size: mem::size_of::<u32>() as u32,
+                key_size: size_of::<u32>() as u32,
                 value_size: section.size as u32,
                 max_entries: 1,
                 map_flags: 0,
@@ -1233,7 +1233,7 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
         });
     }
 
-    if data.len() < mem::size_of::<bpf_map_def>() {
+    if data.len() < size_of::<bpf_map_def>() {
         let mut map_def = bpf_map_def::default();
         unsafe {
             let map_def_ptr = from_raw_parts_mut(ptr::from_mut(&mut map_def).cast(), data.len());
@@ -1404,11 +1404,11 @@ pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
 
 /// Copies a block of eBPF instructions
 pub fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
-    if !data.len().is_multiple_of(mem::size_of::<bpf_insn>()) {
+    if !data.len().is_multiple_of(size_of::<bpf_insn>()) {
         return Err(ParseError::InvalidProgramCode);
     }
     let instructions = data
-        .chunks_exact(mem::size_of::<bpf_insn>())
+        .chunks_exact(size_of::<bpf_insn>())
         .map(|d| unsafe { ptr::read_unaligned(d.as_ptr().cast()) })
         .collect::<Vec<_>>();
     Ok(instructions)
@@ -1750,7 +1750,7 @@ mod tests {
     #[test]
     fn test_parse_section_map() {
         let mut obj = fake_obj();
-        fake_sym(&mut obj, 0, 0, "foo", mem::size_of::<bpf_map_def>() as u64);
+        fake_sym(&mut obj, 0, 0, "foo", size_of::<bpf_map_def>() as u64);
         assert_matches!(
             obj.parse_section(fake_section(
                 EbpfSectionKind::Maps,
@@ -1832,9 +1832,9 @@ mod tests {
     #[test]
     fn test_parse_section_multiple_maps() {
         let mut obj = fake_obj();
-        fake_sym(&mut obj, 0, 0, "foo", mem::size_of::<bpf_map_def>() as u64);
-        fake_sym(&mut obj, 0, 28, "bar", mem::size_of::<bpf_map_def>() as u64);
-        fake_sym(&mut obj, 0, 60, "baz", mem::size_of::<bpf_map_def>() as u64);
+        fake_sym(&mut obj, 0, 0, "foo", size_of::<bpf_map_def>() as u64);
+        fake_sym(&mut obj, 0, 28, "bar", size_of::<bpf_map_def>() as u64);
+        fake_sym(&mut obj, 0, 60, "baz", size_of::<bpf_map_def>() as u64);
         let def = &bpf_map_def {
             map_type: 1,
             key_size: 2,
@@ -2643,7 +2643,7 @@ mod tests {
             Map::Legacy(LegacyMap {
                 def: bpf_map_def {
                     map_type: BPF_MAP_TYPE_ARRAY as u32,
-                    key_size: mem::size_of::<u32>() as u32,
+                    key_size: size_of::<u32>() as u32,
                     value_size: 3,
                     max_entries: 1,
                     map_flags: BPF_F_RDONLY_PROG,

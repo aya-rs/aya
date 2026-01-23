@@ -343,7 +343,7 @@ impl Btf {
 
     /// Parses BTF from binary data of the given endianness
     pub fn parse(data: &[u8], endianness: Endianness) -> Result<Self, BtfError> {
-        if data.len() < mem::size_of::<btf_header>() {
+        if data.len() < size_of::<btf_header>() {
             return Err(BtfError::InvalidHeader);
         }
 
@@ -535,7 +535,7 @@ impl Btf {
                         name_offset = self.add_string(&fixed_name);
                     }
 
-                    let entries = core::mem::take(&mut d.entries);
+                    let entries = mem::take(&mut d.entries);
 
                     let members = entries
                         .iter()
@@ -875,7 +875,7 @@ impl BtfExt {
             pub hdr_len: u32,
         }
 
-        if data.len() < core::mem::size_of::<MinimalHeader>() {
+        if data.len() < size_of::<MinimalHeader>() {
             return Err(BtfError::InvalidHeader);
         }
 
@@ -896,12 +896,12 @@ impl BtfExt {
             // forwards compatibility: if newer headers are bigger
             // than the pre-generated btf_ext_header we should only
             // read up to btf_ext_header
-            let len_to_read = len_to_read.min(core::mem::size_of::<btf_ext_header>());
+            let len_to_read = len_to_read.min(size_of::<btf_ext_header>());
 
             // now create our full-fledge header; but start with it
             // zeroed out so unavailable fields stay as zero on older
             // BTF.ext sections
-            let mut header = core::mem::MaybeUninit::<btf_ext_header>::zeroed();
+            let mut header = mem::MaybeUninit::<btf_ext_header>::zeroed();
             // Safety: we have checked that len_to_read is less than
             // size_of::<btf_ext_header> and less than
             // data.len(). Additionally, we know that the header has

@@ -1,7 +1,6 @@
 //! Program relocation handling.
 
 use alloc::{borrow::ToOwned as _, collections::BTreeMap, string::String};
-use core::mem;
 
 use log::debug;
 use object::{SectionIndex, SymbolKind};
@@ -22,7 +21,7 @@ type RawFd = std::os::fd::RawFd;
 #[cfg(not(feature = "std"))]
 type RawFd = core::ffi::c_int;
 
-pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
+pub(crate) const INS_SIZE: usize = size_of::<bpf_insn>();
 
 /// The error type returned by [`Object::relocate_maps`] and [`Object::relocate_calls`]
 #[derive(thiserror::Error, Debug)]
@@ -620,7 +619,7 @@ mod test {
                 size: 64,
             },
             Relocation {
-                offset: mem::size_of::<bpf_insn>() as u64,
+                offset: size_of::<bpf_insn>() as u64,
                 symbol_index: 2,
                 size: 64,
             },
@@ -715,7 +714,7 @@ mod test {
                 size: 64,
             },
             Relocation {
-                offset: mem::size_of::<bpf_insn>() as u64,
+                offset: size_of::<bpf_insn>() as u64,
                 symbol_index: 2,
                 size: 64,
             },

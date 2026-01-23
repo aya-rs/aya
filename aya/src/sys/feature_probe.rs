@@ -413,7 +413,7 @@ fn probe_bpf_info<T>(fd: MockableFd, info: T) -> Result<bool, SyscallError> {
     // SAFETY: all-zero byte-pattern valid for `bpf_attr`
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     attr.info.bpf_fd = fd.as_raw_fd() as u32;
-    attr.info.info_len = mem::size_of_val(&info) as u32;
+    attr.info.info_len = size_of_val(&info) as u32;
     attr.info.info = ptr::from_ref(&info) as u64;
 
     let io_error = match unit_sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {

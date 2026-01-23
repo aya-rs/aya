@@ -7,7 +7,6 @@
 use std::{
     borrow::Borrow,
     fmt::{self, Debug, Formatter},
-    mem,
     ops::Deref,
     os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
     sync::atomic::{AtomicU32, AtomicUsize, Ordering},
@@ -374,7 +373,7 @@ impl ProducerData {
                     panic!("{:?} not in {:?}", offset..offset + len, 0..data.len())
                 })
             };
-            let header_ptr: *const AtomicU32 = must_get_data(offset, mem::size_of::<AtomicU32>())
+            let header_ptr: *const AtomicU32 = must_get_data(offset, size_of::<AtomicU32>())
                 .as_ptr()
                 .cast();
             // Pair the kernel's SeqCst write (implies Release) [1] with an Acquire load. This

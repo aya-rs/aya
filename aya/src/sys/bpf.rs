@@ -578,7 +578,7 @@ fn bpf_obj_get_info_by_fd<T, F: FnOnce(&mut T)>(
 
     attr.info.bpf_fd = fd.as_raw_fd() as u32;
     attr.info.info = ptr::from_ref(&info) as u64;
-    attr.info.info_len = mem::size_of_val(&info) as u32;
+    attr.info.info_len = size_of_val(&info) as u32;
 
     match unit_sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
         Ok(()) => Ok(info),
@@ -674,7 +674,7 @@ pub(crate) fn bpf_load_btf(
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_7 };
     u.btf = raw_btf.as_ptr() as u64;
-    u.btf_size = mem::size_of_val(raw_btf) as u32;
+    u.btf_size = size_of_val(raw_btf) as u32;
     if !log_buf.is_empty() {
         u.btf_log_level = verifier_log_level.bits();
         u.btf_log_buf = log_buf.as_mut_ptr() as u64;
@@ -707,7 +707,7 @@ fn with_raised_rlimit_retry<T, F: FnMut() -> io::Result<T>>(mut op: F) -> io::Re
             if KernelVersion::at_least(5, 11, 0) {
                 return;
             }
-            let mut limit = mem::MaybeUninit::<rlimit>::uninit();
+            let mut limit = MaybeUninit::<rlimit>::uninit();
             let ret = unsafe { getrlimit(RLIMIT_MEMLOCK, limit.as_mut_ptr()) };
             if ret != 0 {
                 warn!("getrlimit(RLIMIT_MEMLOCK) failed: {ret}");
