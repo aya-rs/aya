@@ -9,15 +9,18 @@
 /// can parse and load.
 #[test_log::test]
 fn libbpf_can_load_btf_maps() {
-    // Use libbpf-rs to open the object file
+    // Use libbpf-rs to open the object file.
     let obj = libbpf_rs::ObjectBuilder::default()
         .open_memory(crate::BTF_MAPS_PLAIN)
         .expect("libbpf failed to open Rust eBPF object with btf_maps");
 
-    // Verify libbpf can see the BTF_ARRAY map
-    let map_names: Vec<_> = obj.maps().map(|m| m.name().to_os_string()).collect();
-    assert!(
-        map_names.iter().any(|name| name == "BTF_ARRAY"),
-        "libbpf should find the BTF_ARRAY map defined with btf_map macro, found: {map_names:?}"
-    );
+    // Verify libbpf can see the BTF_ARRAY map.
+    let map_names: Vec<_> = obj.maps().map(|m| m.name()).collect();
+    if !map_names.iter().any(|name| *name == "BTF_ARRAY") {
+        let display_map_names = map_names.join(std::ffi::OsStr::new(", "));
+        panic!(
+            "libbpf should find the BTF_ARRAY map defined with btf_map macro, found: {}",
+            display_map_names.display()
+        );
+    }
 }
