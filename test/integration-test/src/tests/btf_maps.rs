@@ -15,7 +15,12 @@ fn libbpf_can_load_btf_maps() {
         .expect("libbpf failed to open Rust eBPF object with btf_maps");
 
     // Verify libbpf can see the BTF_ARRAY map.
-    let map_names: Vec<_> = obj.maps().map(|m| m.name()).collect();
+
+    // Materialize the maps because `OpenMap::name` returns the wrong lifetime.
+    //
+    // TODO(https://github.com/libbpf/libbpf-rs/pull/1308): Remove this once the PR is merged.
+    let maps = obj.maps().collect::<Vec<_>>();
+    let map_names: Vec<_> = maps.iter().map(|m| m.name()).collect();
     if !map_names.iter().any(|name| *name == "BTF_ARRAY") {
         let display_map_names = map_names.join(std::ffi::OsStr::new(", "));
         panic!(
