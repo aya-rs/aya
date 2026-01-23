@@ -1,7 +1,7 @@
 #![expect(missing_docs)]
 
 use alloc::{string::ToString as _, vec, vec::Vec};
-use core::{fmt::Display, mem, ptr};
+use core::{fmt::Display, ptr};
 
 use object::Endianness;
 
@@ -49,7 +49,7 @@ impl Fwd {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+        size_of::<Self>()
     }
 }
 
@@ -71,7 +71,7 @@ impl Const {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+        size_of::<Self>()
     }
 
     pub(crate) fn new(btf_type: u32) -> Self {
@@ -102,7 +102,7 @@ impl Volatile {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+        size_of::<Self>()
     }
 }
 
@@ -123,7 +123,7 @@ impl Restrict {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+        size_of::<Self>()
     }
 }
 
@@ -145,7 +145,7 @@ impl Ptr {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+        size_of::<Self>()
     }
 
     pub fn new(name_offset: u32, btf_type: u32) -> Self {
@@ -176,7 +176,7 @@ impl Typedef {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+        size_of::<Self>()
     }
 
     pub(crate) fn new(name_offset: u32, btf_type: u32) -> Self {
@@ -206,7 +206,7 @@ impl Float {
         BtfKind::Float
     }
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+        size_of::<Self>()
     }
 
     pub fn new(name_offset: u32, size: u32) -> Self {
@@ -256,7 +256,7 @@ impl Func {
         BtfKind::Func
     }
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+        size_of::<Self>()
     }
 
     pub fn new(name_offset: u32, proto: u32, linkage: FuncLinkage) -> Self {
@@ -296,7 +296,7 @@ impl TypeTag {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+        size_of::<Self>()
     }
 
     pub fn new(name_offset: u32, btf_type: u32) -> Self {
@@ -361,7 +361,7 @@ impl Int {
         BtfKind::Int
     }
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+        size_of::<Self>()
     }
 
     pub fn new(name_offset: u32, size: u32, encoding: IntEncoding, offset: u32) -> Self {
@@ -442,7 +442,7 @@ impl Enum {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Fwd>() + mem::size_of::<BtfEnum>() * self.variants.len()
+        size_of::<Fwd>() + size_of::<BtfEnum>() * self.variants.len()
     }
 
     pub fn new(name_offset: u32, signed: bool, variants: Vec<BtfEnum>) -> Self {
@@ -536,7 +536,7 @@ impl Enum64 {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Fwd>() + mem::size_of::<BtfEnum64>() * self.variants.len()
+        size_of::<Fwd>() + size_of::<BtfEnum64>() * self.variants.len()
     }
 
     pub(crate) fn is_signed(&self) -> bool {
@@ -618,7 +618,7 @@ impl Struct {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Fwd>() + mem::size_of::<BtfMember>() * self.members.len()
+        size_of::<Fwd>() + size_of::<BtfMember>() * self.members.len()
     }
 
     pub(crate) fn new(name_offset: u32, members: Vec<BtfMember>, size: u32) -> Self {
@@ -732,7 +732,7 @@ impl Union {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Fwd>() + mem::size_of::<BtfMember>() * self.members.len()
+        size_of::<Fwd>() + size_of::<BtfMember>() * self.members.len()
     }
 
     pub(crate) fn member_bit_offset(&self, member: &BtfMember) -> usize {
@@ -793,7 +793,7 @@ impl Array {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+        size_of::<Self>()
     }
 
     #[cfg(test)]
@@ -858,7 +858,7 @@ impl FuncProto {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Fwd>() + mem::size_of::<BtfParam>() * self.params.len()
+        size_of::<Fwd>() + size_of::<BtfParam>() * self.params.len()
     }
 
     pub fn new(params: Vec<BtfParam>, return_type: u32) -> Self {
@@ -924,7 +924,7 @@ impl Var {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+        size_of::<Self>()
     }
 
     pub fn new(name_offset: u32, btf_type: u32, linkage: VarLinkage) -> Self {
@@ -992,7 +992,7 @@ impl DataSec {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Fwd>() + mem::size_of::<DataSecEntry>() * self.entries.len()
+        size_of::<Fwd>() + size_of::<DataSecEntry>() * self.entries.len()
     }
 
     pub fn new(name_offset: u32, entries: Vec<DataSecEntry>, size: u32) -> Self {
@@ -1038,7 +1038,7 @@ impl DeclTag {
     }
 
     pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+        size_of::<Self>()
     }
 
     pub fn new(name_offset: u32, btf_type: u32, component_index: i32) -> Self {
@@ -1137,7 +1137,7 @@ impl Display for BtfKind {
 }
 
 unsafe fn read<T>(data: &[u8]) -> Result<T, BtfError> {
-    if mem::size_of::<T>() > data.len() {
+    if size_of::<T>() > data.len() {
         return Err(BtfError::InvalidTypeInfo);
     }
 
@@ -1145,12 +1145,12 @@ unsafe fn read<T>(data: &[u8]) -> Result<T, BtfError> {
 }
 
 unsafe fn read_array<T>(data: &[u8], len: usize) -> Result<Vec<T>, BtfError> {
-    if mem::size_of::<T>() * len > data.len() {
+    if size_of::<T>() * len > data.len() {
         return Err(BtfError::InvalidTypeInfo);
     }
-    let data = &data[0..mem::size_of::<T>() * len];
+    let data = &data[0..size_of::<T>() * len];
     let r = data
-        .chunks(mem::size_of::<T>())
+        .chunks(size_of::<T>())
         .map(|chunk| unsafe { ptr::read_unaligned(chunk.as_ptr().cast()) })
         .collect();
     Ok(r)
@@ -1159,7 +1159,7 @@ unsafe fn read_array<T>(data: &[u8], len: usize) -> Result<Vec<T>, BtfError> {
 impl BtfType {
     pub(crate) unsafe fn read(data: &[u8], endianness: Endianness) -> Result<Self, BtfError> {
         let ty = unsafe { read_array::<u32>(data, 3)? };
-        let data = &data[mem::size_of::<u32>() * 3..];
+        let data = &data[size_of::<u32>() * 3..];
         let vlen = type_vlen(ty[1]);
         Ok(match type_kind(ty[1])? {
             BtfKind::Unknown => Self::Unknown,
@@ -1199,7 +1199,7 @@ impl BtfType {
                 btf_type: ty[2],
             }),
             BtfKind::Int => {
-                if mem::size_of::<u32>() > data.len() {
+                if size_of::<u32>() > data.len() {
                     return Err(BtfError::InvalidTypeInfo);
                 }
                 let read_u32 = if endianness == Endianness::Little {
@@ -1211,7 +1211,7 @@ impl BtfType {
                     name_offset: ty[0],
                     info: ty[1],
                     size: ty[2],
-                    data: read_u32(data[..mem::size_of::<u32>()].try_into().unwrap()),
+                    data: read_u32(data[..size_of::<u32>()].try_into().unwrap()),
                 })
             }
             BtfKind::Float => Self::Float(Float {
@@ -1316,7 +1316,7 @@ impl BtfType {
             Self::Struct(t) => Some(t.size),
             Self::Union(t) => Some(t.size),
             Self::DataSec(t) => Some(t.size),
-            Self::Ptr(_) => Some(mem::size_of::<&()>() as u32),
+            Self::Ptr(_) => Some(size_of::<&()>() as u32),
             _ => None,
         }
     }
@@ -1339,7 +1339,7 @@ impl BtfType {
 
     pub(crate) fn type_info_size(&self) -> usize {
         match self {
-            Self::Unknown => mem::size_of::<Fwd>(),
+            Self::Unknown => size_of::<Fwd>(),
             Self::Fwd(t) => t.type_info_size(),
             Self::Const(t) => t.type_info_size(),
             Self::Volatile(t) => t.type_info_size(),

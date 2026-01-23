@@ -159,5 +159,5 @@ unused_extern_crates = "warn"
 unused_import_braces = "warn"
 unused_lifetimes = "warn"
 unused_macro_rules = "warn"
-#unused_qualifications = "warn" # https://github.com/rust-lang/rust/commit/9ccc7b7 added size_of to the prelude, but we need to continue to qualify it so that we build on older compilers.
+unused_qualifications = "warn"
 #unused_results = "warn"

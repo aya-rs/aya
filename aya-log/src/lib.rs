@@ -61,7 +61,6 @@
 
 use std::{
     fmt::{LowerHex, UpperHex},
-    mem,
     net::{Ipv4Addr, Ipv6Addr},
     os::fd::{AsFd, AsRawFd},
     ptr, str,
@@ -530,7 +529,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
         match tag {
             RecordFieldKind::Target => {
                 let target =
-                    target.replace(str::from_utf8(value).map_err(|std::str::Utf8Error { .. }| ())?);
+                    target.replace(str::from_utf8(value).map_err(|str::Utf8Error { .. }| ())?);
                 if target.is_some() {
                     return Err(());
                 }
@@ -552,14 +551,13 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
             }
             RecordFieldKind::Module => {
                 let module =
-                    module.replace(str::from_utf8(value).map_err(|std::str::Utf8Error { .. }| ())?);
+                    module.replace(str::from_utf8(value).map_err(|str::Utf8Error { .. }| ())?);
                 if module.is_some() {
                     return Err(());
                 }
             }
             RecordFieldKind::File => {
-                let file =
-                    file.replace(str::from_utf8(value).map_err(|std::str::Utf8Error { .. }| ())?);
+                let file = file.replace(str::from_utf8(value).map_err(|str::Utf8Error { .. }| ())?);
                 if file.is_some() {
                     return Err(());
                 }
@@ -799,16 +797,15 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
 }
 
 fn try_read<T: Pod>(mut buf: &[u8]) -> Result<(T, &[u8], &[u8]), ()> {
-    if buf.len() < mem::size_of::<T>() + mem::size_of::<LogValueLength>() {
+    if buf.len() < size_of::<T>() + size_of::<LogValueLength>() {
         return Err(());
     }
 
     let tag = unsafe { ptr::read_unaligned(buf.as_ptr().cast::<T>()) };
-    buf = &buf[mem::size_of::<T>()..];
+    buf = &buf[size_of::<T>()..];
 
-    let len =
-        LogValueLength::from_ne_bytes(buf[..mem::size_of::<LogValueLength>()].try_into().unwrap());
-    buf = &buf[mem::size_of::<LogValueLength>()..];
+    let len = LogValueLength::from_ne_bytes(buf[..size_of::<LogValueLength>()].try_into().unwrap());
+    buf = &buf[size_of::<LogValueLength>()..];
 
     let len: usize = len.into();
     if buf.len() < len {
@@ -1234,7 +1231,7 @@ mod test {
         len += "ipv6: ".write(&mut input[len..]).unwrap().get();
         len += DisplayHint::Ip.write(&mut input[len..]).unwrap().get();
 
-        let ipv6 = std::net::Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0x1, 0x1);
+        let ipv6 = Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0x1, 0x1);
         let ipv6_arr = ipv6.octets();
         len += ipv6_arr.write(&mut input[len..]).unwrap().get();
 

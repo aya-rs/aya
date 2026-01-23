@@ -6,7 +6,7 @@ use alloc::{
     vec,
     vec::Vec,
 };
-use core::{mem, ops::Bound::Included, ptr};
+use core::{ops::Bound::Included, ptr};
 
 use object::SectionIndex;
 
@@ -201,7 +201,7 @@ pub(crate) struct Relocation {
 
 impl Relocation {
     pub(crate) unsafe fn parse(data: &[u8], number: usize) -> Result<Self, BtfError> {
-        if mem::size_of::<bpf_core_relo>() > data.len() {
+        if size_of::<bpf_core_relo>() > data.len() {
             return Err(BtfError::InvalidRelocationInfo);
         }
 
@@ -274,8 +274,8 @@ fn is_relocation_inside_function(
         return false;
     }
 
-    let ins_offset = rel.ins_offset / mem::size_of::<bpf_insn>();
-    let func_offset = func.section_offset / mem::size_of::<bpf_insn>();
+    let ins_offset = rel.ins_offset / size_of::<bpf_insn>();
+    let func_offset = func.section_offset / size_of::<bpf_insn>();
     let func_size = func.instructions.len();
 
     (func_offset..func_offset + func_size).contains(&ins_offset)
@@ -313,7 +313,7 @@ fn relocate_btf_functions<'target>(
         };
 
         let instructions = &mut function.instructions;
-        let ins_index = (rel.ins_offset - function.section_offset) / mem::size_of::<bpf_insn>();
+        let ins_index = (rel.ins_offset - function.section_offset) / size_of::<bpf_insn>();
         if ins_index >= instructions.len() {
             return Err(RelocationError::InvalidInstructionIndex {
                 index: ins_index,
@@ -946,7 +946,7 @@ impl ComputedRelocation {
     ) -> Result<(), RelocationError> {
         let instructions = &mut function.instructions;
         let num_instructions = instructions.len();
-        let ins_index = (rel.ins_offset - function.section_offset) / mem::size_of::<bpf_insn>();
+        let ins_index = (rel.ins_offset - function.section_offset) / size_of::<bpf_insn>();
         let ins =
             instructions
                 .get_mut(ins_index)
@@ -966,7 +966,7 @@ impl ComputedRelocation {
             if is_ld_imm64 {
                 let next_ins = instructions.get_mut(ins_index + 1).ok_or(
                     RelocationError::InvalidInstructionIndex {
-                        index: (ins_index + 1) * mem::size_of::<bpf_insn>(),
+                        index: (ins_index + 1) * size_of::<bpf_insn>(),
                         num_instructions,
                         relocation_number: rel.number,
                     },
@@ -1113,7 +1113,7 @@ impl ComputedRelocation {
                 return Err(RelocationError::MissingTargetDefinition {
                     kind: rel.kind,
                     type_id: rel.type_id,
-                    ins_index: rel.ins_offset / mem::size_of::<bpf_insn>(),
+                    ins_index: rel.ins_offset / size_of::<bpf_insn>(),
                 })?;
             }
         };
@@ -1147,7 +1147,7 @@ impl ComputedRelocation {
                 return Err(RelocationError::MissingTargetDefinition {
                     kind: rel.kind,
                     type_id: rel.type_id,
-                    ins_index: rel.ins_offset / mem::size_of::<bpf_insn>(),
+                    ins_index: rel.ins_offset / size_of::<bpf_insn>(),
                 })?;
             }
         };
@@ -1278,7 +1278,7 @@ impl ComputedRelocation {
                 return Err(RelocationError::MissingTargetDefinition {
                     kind: rel.kind,
                     type_id: rel.type_id,
-                    ins_index: rel.ins_offset / mem::size_of::<bpf_insn>(),
+                    ins_index: rel.ins_offset / size_of::<bpf_insn>(),
                 })?;
             }
         };

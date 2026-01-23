@@ -812,7 +812,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 let mut counts = [0; TERMINATE_AFTER_COUNT.len()];
 
                 let mut terminate_if_kernel_hang =
-                    move |line: &str, stdin: &Arc<Mutex<ChildStdin>>| -> anyhow::Result<()> {
+                    move |line: &str, stdin: &Arc<Mutex<ChildStdin>>| -> Result<()> {
                         if let Some(i) = TERMINATE_AFTER_COUNT
                             .iter()
                             .position(|(marker, _)| line.contains(marker))

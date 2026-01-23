@@ -6,7 +6,6 @@ use std::{
     fmt::{self, Write},
     fs,
     io::{self, BufRead as _, Cursor, Read as _},
-    mem,
     os::{
         fd::AsFd as _,
         unix::ffi::{OsStrExt as _, OsStringExt as _},
@@ -513,14 +512,14 @@ impl LdSoCache {
         let mut cursor = Cursor::new(data);
 
         let read_u32 = |cursor: &mut Cursor<_>| -> Result<u32, io::Error> {
-            let mut buf = [0u8; mem::size_of::<u32>()];
+            let mut buf = [0u8; size_of::<u32>()];
             cursor.read_exact(&mut buf)?;
 
             Ok(u32::from_ne_bytes(buf))
         };
 
         let read_i32 = |cursor: &mut Cursor<_>| -> Result<i32, io::Error> {
-            let mut buf = [0u8; mem::size_of::<i32>()];
+            let mut buf = [0u8; size_of::<i32>()];
             cursor.read_exact(&mut buf)?;
 
             Ok(i32::from_ne_bytes(buf))
@@ -555,7 +554,7 @@ impl LdSoCache {
         let num_entries = read_u32(&mut cursor)?;
 
         if new_format {
-            cursor.consume(6 * mem::size_of::<u32>());
+            cursor.consume(6 * size_of::<u32>());
         }
 
         let offset = if !new_format {

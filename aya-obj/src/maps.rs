@@ -1,7 +1,6 @@
 //! Map struct and type bindings.
 
 use alloc::vec::Vec;
-use core::mem;
 
 use crate::{EbpfSectionKind, InvalidTypeBinding};
 
@@ -129,7 +128,7 @@ pub struct bpf_map_def {
 }
 
 /// The first five __u32 of `bpf_map_def` must be defined.
-pub(crate) const MINIMUM_MAP_SIZE: usize = mem::size_of::<u32>() * 5;
+pub(crate) const MINIMUM_MAP_SIZE: usize = size_of::<u32>() * 5;
 
 /// Map data defined in `maps` or `.maps` sections
 #[derive(Debug, Clone)]

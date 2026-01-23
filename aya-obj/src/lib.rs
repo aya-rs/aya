@@ -87,7 +87,8 @@ pub mod btf;
     non_snake_case,
     trivial_numeric_casts,
     unreachable_pub,
-    unsafe_op_in_unsafe_fn
+    unsafe_op_in_unsafe_fn,
+    unused_qualifications
 )]
 pub mod generated;
 pub mod links;

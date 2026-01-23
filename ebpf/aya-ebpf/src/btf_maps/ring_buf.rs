@@ -1,4 +1,4 @@
-use core::{borrow::Borrow, cell::UnsafeCell, mem, mem::MaybeUninit, ptr};
+use core::{borrow::Borrow, cell::UnsafeCell, mem::MaybeUninit, ptr};
 
 #[cfg(generic_const_exprs)]
 use crate::const_assert::{Assert, IsTrue};
@@ -82,14 +82,13 @@ impl<T, const M: usize, const F: usize> RingBuf<T, M, F> {
     /// Returns `None` if the ring buffer is full.
     #[cfg(not(generic_const_exprs))]
     pub fn reserve_untyped<U: 'static>(&self, flags: u64) -> Option<RingBufEntry<U>> {
-        assert_eq!(8 % mem::align_of::<U>(), 0);
+        assert_eq!(8 % align_of::<U>(), 0);
         self.reserve_impl::<U>(flags)
     }
 
     fn reserve_impl<U: 'static>(&self, flags: u64) -> Option<RingBufEntry<U>> {
-        let ptr =
-            unsafe { bpf_ringbuf_reserve(self.0.get().cast(), mem::size_of::<U>() as u64, flags) }
-                .cast::<MaybeUninit<U>>();
+        let ptr = unsafe { bpf_ringbuf_reserve(self.0.get().cast(), size_of::<U>() as u64, flags) }
+            .cast::<MaybeUninit<U>>();
         unsafe { RingBufEntry::from_raw(ptr) }
     }
 
@@ -115,12 +114,12 @@ impl<T, const M: usize, const F: usize> RingBuf<T, M, F> {
     /// [`submit`]: RingBufEntry::submit
     pub fn output_untyped<U: ?Sized>(&self, data: impl Borrow<U>, flags: u64) -> Result<(), i64> {
         let data = data.borrow();
-        assert_eq!(8 % mem::align_of_val(data), 0);
+        assert_eq!(8 % align_of_val(data), 0);
         let ret = unsafe {
             bpf_ringbuf_output(
                 self.0.get().cast(),
                 ptr::from_ref(data).cast_mut().cast(),
-                mem::size_of_val(data) as u64,
+                size_of_val(data) as u64,
                 flags,
             )
         };
