@@ -13,8 +13,12 @@ rust-version.workspace = true
 [lints]
 workspace = true
 
+[features]
+libbpf-test = ["dep:libbpf-rs"]
+
 [dependencies]
 aya = { path = "../../aya", version = "^0.13.2", default-features = false }
+libbpf-rs = { version = "0.25", optional = true }
 
 [dev-dependencies]
 anyhow = { workspace = true, features = ["std"] }
