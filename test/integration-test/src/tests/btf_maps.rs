@@ -15,9 +15,15 @@ fn libbpf_can_load_btf_maps() {
         .expect("libbpf failed to open Rust eBPF object with btf_maps");
 
     // Verify libbpf can see the BTF_ARRAY map.
-    let map_names: Vec<_> = obj.maps().map(|m| m.name().to_os_string()).collect();
-    assert!(
-        map_names.iter().any(|name| name == "BTF_ARRAY"),
-        "libbpf should find the BTF_ARRAY map defined with btf_map macro, found: {map_names:?}"
-    );
+    let map_names: Vec<_> = obj.maps().map(|m| m.name()).collect();
+    if !map_names.iter().any(|name| name == "BTF_ARRAY") {
+        let display_map_names = map_names
+            .iter()
+            .map(|name| name.display())
+            .collect::<Vec<_>>()
+            .join(", ");
+        panic!(
+            "libbpf should find the BTF_ARRAY map defined with btf_map macro, found: {display_map_names}"
+        );
+    }
 }
