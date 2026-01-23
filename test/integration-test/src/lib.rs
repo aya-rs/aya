@@ -41,6 +41,7 @@ bpf_file!(
 
     ARRAY => "array",
     BPF_PROBE_READ => "bpf_probe_read",
+    BTF_MAPS_PLAIN => "btf_maps_plain",
     LINEAR_DATA_STRUCTURES => "linear_data_structures",
     LOG => "log",
     MAP_TEST => "map_test",

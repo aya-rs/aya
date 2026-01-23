@@ -1,5 +1,7 @@
 mod array;
 mod bpf_probe_read;
+#[cfg(feature = "libbpf-test")]
+mod btf_maps;
 mod btf_relocations;
 mod elf;
 mod feature_probe;
