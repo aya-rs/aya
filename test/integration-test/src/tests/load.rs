@@ -172,7 +172,7 @@ fn poll_loaded_program_id(name: &str) -> impl Iterator<Item = Option<u32>> + '_ 
             // Ignore race failures which can happen when the tests delete a
             // program in the middle of a `loaded_programs()` call.
             loaded_programs()
-                .filter_map(|prog| prog.ok())
+                .filter_map(Result::ok)
                 .find_map(|prog| (prog.name() == name.as_bytes()).then(|| prog.id()))
         })
 }
@@ -193,7 +193,7 @@ fn assert_loaded_and_linked(name: &str) {
             // Ignore race failures which can happen when the tests delete a
             // program in the middle of a `loaded_programs()` call.
             loaded_links()
-                .filter_map(|link| link.ok())
+                .filter_map(Result::ok)
                 .find_map(|link| (link.program_id() == prog_id).then_some(link.id()))
         });
     assert!(
@@ -594,7 +594,7 @@ fn run_pin_program_lifecycle_test<P>(
                 // Unpin the program. It will be unloaded since its link was not pinned.
                 drop(prog);
             }
-        };
+        }
     }
 
     // program should be unloaded

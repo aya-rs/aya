@@ -4,16 +4,30 @@
 )]
 #![expect(
     clippy::all,
+    clippy::as_pointer_underscore,
     clippy::cast_lossless,
+    clippy::decimal_literal_representation,
+    clippy::missing_const_for_fn,
     clippy::ptr_as_ptr,
+    clippy::pub_underscore_fields,
     clippy::ref_as_ptr,
+    clippy::renamed_function_params,
+    clippy::semicolon_inside_block,
     clippy::use_self,
+    clippy::used_underscore_binding,
+    missing_docs,
     non_camel_case_types,
-    non_snake_case,
     non_upper_case_globals,
+    non_snake_case,
+    trivial_casts,
     unreachable_pub,
     unsafe_op_in_unsafe_fn,
-    unused_qualifications
+    unused_qualifications,
+    reason = "generated code"
+)]
+#![allow(
+    clippy::wildcard_imports,
+    reason = "generated code on some architectures"
 )]
 #![no_std]
 

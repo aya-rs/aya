@@ -1,9 +1,9 @@
 //! Test that libbpf can load BTF maps from Rust eBPF programs.
 //!
-//! This test verifies that the BTF metadata produced by aya-ebpf's btf_maps
+//! This test verifies that the BTF metadata produced by aya-ebpf's `btf_maps`
 //! is compatible with libbpf's loader.
 
-/// Test that libbpf can open and load a Rust eBPF program with btf_maps.
+/// Test that libbpf can open and load a Rust eBPF program with `btf_maps`.
 ///
 /// This verifies that our BTF map definitions produce metadata that libbpf
 /// can parse and load.
@@ -20,7 +20,7 @@ fn libbpf_can_load_btf_maps() {
     //
     // TODO(https://github.com/libbpf/libbpf-rs/commit/9622223): remove the `collect` when this commit is released.
     let maps = obj.maps().collect::<Vec<_>>();
-    let map_names: Vec<_> = maps.iter().map(|m| m.name()).collect();
+    let map_names: Vec<_> = maps.iter().map(libbpf_rs::OpenMapImpl::name).collect();
     if !map_names.iter().any(|name| *name == "BTF_ARRAY") {
         let display_map_names = map_names.join(std::ffi::OsStr::new(", "));
         panic!(

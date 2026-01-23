@@ -1,3 +1,7 @@
+#![allow(clippy::print_stdout, reason = "xtask is a CLI tool")]
+#![allow(clippy::print_stderr, reason = "xtask is a CLI tool")]
+#![allow(clippy::use_debug, reason = "debug output aids troubleshooting")]
+
 use std::{
     collections::BTreeMap,
     env,
@@ -84,7 +88,7 @@ where
     let stdout = BufReader::new(stdout);
     let mut executables = Vec::new();
     for message in Message::parse_stream(stdout) {
-        #[expect(clippy::collapsible_match)]
+        #[expect(clippy::collapsible_match, reason = "better captures intent")]
         match message.context("valid JSON")? {
             Message::CompilerArtifact(Artifact {
                 executable,
@@ -195,7 +199,7 @@ where
                 dest.display(),
             );
             match control_flow {
-                ControlFlow::Continue => continue,
+                ControlFlow::Continue => {}
                 ControlFlow::Break => break,
             }
         }
@@ -256,7 +260,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
     match environment {
         Environment::Local { runner } => {
             let mut args = runner.trim().split_terminator(' ');
-            let runner = args.next().ok_or(anyhow!("no first argument"))?;
+            let runner = args.next().ok_or_else(|| anyhow!("no first argument"))?;
             let args = args.collect::<Vec<_>>();
 
             let binaries = binaries(&package, None, &[])?;
@@ -285,7 +289,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
             if failures.is_empty() {
                 Ok(())
             } else {
-                Err(anyhow!("failures:\n{}", failures))
+                Err(anyhow!("failures:\n{failures}"))
             }
         }
         Environment::VM {
@@ -471,7 +475,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                             .find_map(|modules_dir| {
                                 // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this
                                 // allowance when the lint behaves more sensibly.
-                                #[expect(clippy::manual_ok_err)]
+                                #[expect(clippy::manual_ok_err, reason = "type ascription")]
                                 match path.strip_prefix(modules_dir) {
                                     Ok(path) => Some(path),
                                     Err(path::StripPrefixError { .. }) => None,
@@ -672,12 +676,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 //
                 // dir  /bin                  755 0 0
                 let write_dir = |out_path: &Path| {
-                    for bytes in [
-                        "dir ".as_bytes(),
-                        out_path.as_os_str().as_bytes(),
-                        " ".as_bytes(),
-                        "755 0 0\n".as_bytes(),
-                    ] {
+                    for bytes in [b"dir ", out_path.as_os_str().as_bytes(), b" ", b"755 0 0\n"] {
                         stdin.deref().write_all(bytes).expect("write");
                     }
                 };
@@ -687,13 +686,13 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 // file /init    path-to-init 755 0 0
                 let write_file = |out_path: &Path, in_path: &Path, mode: &str| {
                     for bytes in [
-                        "file ".as_bytes(),
+                        b"file ",
                         out_path.as_os_str().as_bytes(),
-                        " ".as_bytes(),
+                        b" ",
                         in_path.as_os_str().as_bytes(),
-                        " ".as_bytes(),
+                        b" ",
                         mode.as_bytes(),
-                        "\n".as_bytes(),
+                        b"\n",
                     ] {
                         stdin.deref().write_all(bytes).expect("write");
                     }
@@ -715,13 +714,13 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     write_file(&Path::new("/boot").join(name), system_map, "644 0 0");
                 }
 
-                test_distro.iter().for_each(|(name, path)| {
+                for (name, path) in &test_distro {
                     if name == "init" {
                         write_file(Path::new("/init"), path, "755 0 0");
                     } else {
                         write_file(&Path::new("/sbin").join(name), path, "755 0 0");
                     }
-                });
+                }
 
                 // At this point we need to make a slight detour!
                 // Preparing the `modules.alias` file inside the VM as part of
@@ -755,6 +754,10 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                             )
                         })?,
                     );
+                    #[expect(
+                        clippy::filetype_is_file,
+                        reason = "we only want to copy regular files"
+                    )]
                     if metadata.file_type().is_dir() {
                         write_dir(&out_path);
                     } else if metadata.file_type().is_file() {
@@ -862,6 +865,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                                 stdin
                                     .write_all(&[0x01, b'x'])
                                     .context("failed to write to stdin")?;
+                                drop(stdin);
                                 println!("waiting for QEMU to terminate");
                             }
                         }
@@ -869,7 +873,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     };
 
                 let stderr = {
-                    let stdin = stdin.clone();
+                    let stdin = Arc::clone(&stdin);
                     thread::Builder::new()
                         .spawn(move || {
                             for line in stderr.lines() {
@@ -893,7 +897,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         let previous = match line {
                             "success" => outcome.replace(Ok(())),
                             "failure" => outcome.replace(Err(())),
-                            line => bail!("unexpected init output: {}", line),
+                            line => bail!("unexpected init output: {line}"),
                         };
                         if let Some(previous) = previous {
                             bail!("multiple exit status: previous={previous:?}, current={line}");
@@ -911,7 +915,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
 
                 stderr.join().unwrap()?;
 
-                let outcome = outcome.ok_or(anyhow!("init did not exit"))?;
+                let outcome = outcome.ok_or_else(|| anyhow!("init did not exit"))?;
                 match outcome {
                     Ok(()) => {}
                     Err(()) => {

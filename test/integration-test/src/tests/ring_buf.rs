@@ -23,7 +23,7 @@ use scopeguard::defer;
 use tokio::io::{Interest, unix::AsyncFd};
 
 struct RingBufTest {
-    _bpf: Ebpf,
+    bpf: Ebpf,
     ring_buf: RingBuf<MapData>,
     regs: PerCpuArray<MapData, Registers>,
 }
@@ -94,7 +94,7 @@ impl RingBufTest {
             .unwrap();
 
         Self {
-            _bpf: bpf,
+            bpf,
             ring_buf,
             regs,
         }
@@ -123,7 +123,7 @@ fn ring_buf(n: usize) {
             RingBufTest {
                 mut ring_buf,
                 regs,
-                _bpf,
+                bpf: _bpf,
             },
             data,
         ) = WithData::new(n, variant);
@@ -255,7 +255,7 @@ async fn ring_buf_async_with_drops() {
             RingBufTest {
                 ring_buf,
                 regs,
-                _bpf,
+                bpf: _bpf,
             },
             data,
         ) = WithData::new(RING_BUF_MAX_ENTRIES * 8, variant);
@@ -354,7 +354,7 @@ async fn ring_buf_async_no_drop() {
             RingBufTest {
                 ring_buf,
                 regs,
-                _bpf,
+                bpf: _bpf,
             },
             data,
         ) = WithData::new(RING_BUF_MAX_ENTRIES * 3, variant);
@@ -381,7 +381,7 @@ async fn ring_buf_async_no_drop() {
         // Note that unlike in the synchronous case where all of the entries are written before any of
         // them are read, in this case we expect all of the entries to make their way to userspace
         // because entries are being consumed as they are produced.
-        let expected: Vec<u64> = data.iter().cloned().filter(|v| *v % 2 == 0).collect();
+        let expected: Vec<u64> = data.iter().copied().filter(|v| *v % 2 == 0).collect();
         let expected_len = expected.len();
         let reader = async move {
             let mut seen = Vec::with_capacity(expected_len);
@@ -422,7 +422,7 @@ fn ring_buf_epoll_wakeup() {
     for &variant in RING_BUF_VARIANTS {
         let RingBufTest {
             mut ring_buf,
-            _bpf,
+            bpf: _bpf,
             regs: _,
         } = RingBufTest::new(variant);
 
@@ -460,7 +460,7 @@ async fn ring_buf_asyncfd_events() {
         let RingBufTest {
             ring_buf,
             regs: _,
-            _bpf,
+            bpf: _bpf,
         } = RingBufTest::new(variant);
 
         let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
@@ -497,7 +497,7 @@ impl WriterThread {
         let done = Arc::new(AtomicBool::new(false));
         Self {
             thread: {
-                let done = done.clone();
+                let done = Arc::clone(&done);
                 thread::spawn(move || {
                     while !done.load(Ordering::Relaxed) {
                         // Write 0 which is even and won't be rejected.
@@ -529,7 +529,7 @@ async fn ring_buf_pinned() {
         let RingBufTest {
             mut ring_buf,
             regs: _,
-            _bpf,
+            bpf,
         } = RingBufTest::new_with_mutators(
             variant,
             |_loader| {},
@@ -552,13 +552,13 @@ async fn ring_buf_pinned() {
             assert_eq!(item, v.to_ne_bytes());
         }
         drop(ring_buf);
-        drop(_bpf);
+        drop(bpf);
 
         // Reopen the ring buffer using the pinned map.
         let RingBufTest {
             mut ring_buf,
             regs: _,
-            _bpf,
+            bpf: _bpf,
         } = RingBufTest::new_with_mutators(
             variant,
             |loader| {

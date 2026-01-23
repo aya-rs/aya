@@ -66,7 +66,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
         program_type,
         ProgramType::Tracing | ProgramType::Extension | ProgramType::Lsm(_)
     )
-    .then_some([0_u8; 256]);
+    .then_some([0u8; 256]);
 
     // Both tracing and lsm types require a valid `attach_btf_id` to load successfully. However, if
     // the symbols cannot be found in the BTF, then leave the field unset/0.
@@ -162,9 +162,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
                 //
                 // The same test for cGroup LSM programs would require attaching to a real cgroup,
                 // which is more involved and not possible in the general case.
-                if !matches!(program_type, ProgramType::Lsm(LsmAttachType::Mac)) {
-                    Ok(true)
-                } else {
+                if matches!(program_type, ProgramType::Lsm(LsmAttachType::Mac)) {
                     match bpf_raw_tracepoint_open(None, prog_fd.as_fd()) {
                         Ok(_) => Ok(true),
                         Err(io_error) => match io_error.raw_os_error() {
@@ -175,6 +173,8 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
                             })),
                         },
                     }
+                } else {
+                    Ok(true)
                 }
             }
         }
@@ -317,7 +317,7 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
         _ => {}
     }
 
-    // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
+    // BPF_MAP_CREATE returns a new file descriptor.
     let io_error = match bpf_map_create(&mut attr) {
         Ok(_fd) => return Ok(true),
         Err(io_error) => io_error,

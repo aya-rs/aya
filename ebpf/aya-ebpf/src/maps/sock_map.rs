@@ -18,25 +18,30 @@ pub struct SockMap {
 impl SockMap {
     map_constructors!(u32, u32, BPF_MAP_TYPE_SOCKMAP);
 
-    #[expect(clippy::missing_safety_doc)]
+    #[expect(clippy::missing_safety_doc, reason = "TODO")]
     pub unsafe fn update(
         &self,
         mut index: u32,
         sk_ops: *mut bpf_sock_ops,
         flags: u64,
     ) -> Result<(), i64> {
-        let index: *mut _ = &mut index;
-        let ret =
-            unsafe { bpf_sock_map_update(sk_ops, self.def.as_ptr().cast(), index.cast(), flags) };
+        let ret = unsafe {
+            bpf_sock_map_update(
+                sk_ops,
+                self.def.as_ptr().cast(),
+                core::ptr::from_mut(&mut index).cast(),
+                flags,
+            )
+        };
         if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
-    #[expect(clippy::missing_safety_doc)]
+    #[expect(clippy::missing_safety_doc, reason = "TODO")]
     pub unsafe fn redirect_msg(&self, ctx: &SkMsgContext, index: u32, flags: u64) -> i64 {
         unsafe { bpf_msg_redirect_map(ctx.as_ptr().cast(), self.def.as_ptr().cast(), index, flags) }
     }
 
-    #[expect(clippy::missing_safety_doc)]
+    #[expect(clippy::missing_safety_doc, reason = "TODO")]
     pub unsafe fn redirect_skb(&self, ctx: &SkBuffContext, index: u32, flags: u64) -> i64 {
         unsafe { bpf_sk_redirect_map(ctx.as_ptr().cast(), self.def.as_ptr().cast(), index, flags) }
     }
@@ -49,7 +54,7 @@ impl SockMap {
     ) -> Result<(), u32> {
         let sk = lookup(self.def.as_ptr(), &index).ok_or(1u32)?;
         let ret = unsafe { bpf_sk_assign(ctx.as_ptr().cast(), sk.as_ptr(), flags) };
-        unsafe { bpf_sk_release(sk.as_ptr()) };
+        let _: i64 = unsafe { bpf_sk_release(sk.as_ptr()) };
         match ret {
             0 => Ok(()),
             _ret => Err(1),

@@ -74,7 +74,7 @@ impl SocketFilter {
 
     /// Attaches the filter on the given socket.
     ///
-    /// The returned value can be used to detach from the socket, see [SocketFilter::detach].
+    /// The returned value can be used to detach from the socket, see [`SocketFilter::detach`].
     pub fn attach<T: AsFd>(&mut self, socket: T) -> Result<SocketFilterLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
@@ -103,7 +103,7 @@ impl SocketFilter {
 
     /// Detaches the program.
     ///
-    /// See [`Self::attach``].
+    /// See [`Self::attach`].
     pub fn detach(&mut self, link_id: SocketFilterLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
@@ -124,7 +124,7 @@ impl SocketFilter {
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct SocketFilterLinkId(RawFd, RawFd);
 
-/// A SocketFilter Link
+/// A [`SocketFilter`] Link.
 #[derive(Debug)]
 pub struct SocketFilterLink {
     socket: RawFd,

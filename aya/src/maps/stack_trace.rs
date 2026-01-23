@@ -103,7 +103,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
         })
     }
 
-    /// Returns the stack trace with the given stack_id.
+    /// Returns the stack trace with the given `stack_id`.
     ///
     /// # Errors
     ///
@@ -138,7 +138,7 @@ impl<T: Borrow<MapData>> StackTraceMap<T> {
         MapIter::new(self)
     }
 
-    /// An iterator visiting all the stack_ids in arbitrary order. The iterator element
+    /// An iterator visiting all the `stack_ids` in arbitrary order. The iterator element
     /// type is `Result<u32, MapError>`.
     pub fn stack_ids(&self) -> MapKeys<'_, u32> {
         MapKeys::new(self.inner.borrow())
@@ -150,8 +150,8 @@ impl<T: Borrow<MapData>> IterableMap<u32, StackTrace> for StackTraceMap<T> {
         self.inner.borrow()
     }
 
-    fn get(&self, index: &u32) -> Result<StackTrace, MapError> {
-        self.get(index, 0)
+    fn get(&self, key: &u32) -> Result<StackTrace, MapError> {
+        self.get(key, 0)
     }
 }
 
@@ -165,7 +165,7 @@ impl<'a, T: Borrow<MapData>> IntoIterator for &'a StackTraceMap<T> {
 }
 
 impl<T: BorrowMut<MapData>> StackTraceMap<T> {
-    /// Removes the stack trace with the given stack_id.
+    /// Removes the stack trace with the given `stack_id`.
     pub fn remove(&mut self, stack_id: &u32) -> Result<(), MapError> {
         hash_map::remove(self.inner.borrow_mut(), stack_id)
     }
@@ -197,5 +197,5 @@ fn sysctl<T: FromStr>(key: &str) -> Result<T, io::Error> {
     let val = fs::read_to_string(Path::new("/proc/sys").join(key))?;
     val.trim()
         .parse::<T>()
-        .map_err(|_: T::Err| io::Error::new(io::ErrorKind::InvalidData, val))
+        .map_err(|_err: T::Err| io::Error::new(io::ErrorKind::InvalidData, val))
 }

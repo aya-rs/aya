@@ -338,7 +338,7 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 /// ```
 ///
 /// You can also convert the resulted bytes slice into `&str` using
-/// [core::str::from_utf8_unchecked]:
+/// [`core::str::from_utf8_unchecked`]:
 ///
 /// ```no_run
 /// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_user_str_bytes};
@@ -487,7 +487,7 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 /// ```
 ///
 /// You can also convert the resulted bytes slice into `&str` using
-/// [core::str::from_utf8_unchecked]:
+/// [`core::str::from_utf8_unchecked`]:
 ///
 /// ```no_run
 /// # use aya_ebpf::{cty::c_long, helpers::bpf_probe_read_kernel_str_bytes};
@@ -697,7 +697,7 @@ pub struct PrintkArg([u8; 8]);
 impl PrintkArg {
     /// Manually construct a `printk` BPF helper argument.
     #[inline]
-    pub fn from_raw(x: u64) -> Self {
+    pub const fn from_raw(x: u64) -> Self {
         Self(x.to_ne_bytes())
     }
 }
@@ -707,7 +707,8 @@ macro_rules! impl_integer_promotion {
         /// Create `printk` arguments from integer types.
         impl From<$ty> for PrintkArg {
             #[inline]
-            #[allow(trivial_numeric_casts)]
+            #[expect(clippy::allow_attributes, reason = "macro")]
+            #[allow(trivial_numeric_casts, reason = "macro")]
             fn from(x: $ty) -> Self {
                 Self((x as $via).to_ne_bytes())
             }

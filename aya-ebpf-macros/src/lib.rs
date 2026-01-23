@@ -422,8 +422,8 @@ pub fn btf_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
     .into()
 }
 
-/// Marks a function as a SK_SKB Stream Parser eBPF program that can be attached
-/// to a SockMap
+/// Marks a function as a `SK_SKB` Stream Parser eBPF program that can be attached
+/// to a `SockMap`.
 ///
 /// # Minimum kernel version
 ///
@@ -452,8 +452,8 @@ pub fn stream_parser(attrs: TokenStream, item: TokenStream) -> TokenStream {
     sk_skb(SkSkbKind::StreamParser, attrs, item)
 }
 
-/// Marks a function as a SK_SKB Stream Verdict eBPF program that can be attached
-/// to a SockMap
+/// Marks a function as a `SK_SKB` Stream Verdict eBPF program that can be attached
+/// to a `SockMap`.
 ///
 /// # Minimum kernel version
 ///
@@ -517,9 +517,11 @@ pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 /// Marks a function as a fentry eBPF program that can be attached to almost
-/// any function inside the kernel. The difference between fentry and kprobe
-/// is that fexit has practically zero overhead to call before kernel function.
-/// fentry programs can be also attached to other eBPF programs.
+/// any function inside the kernel.
+///
+/// The difference between fentry and kprobe is that fexit has practically zero
+/// overhead to call before kernel function. fentry programs can be also
+/// attached to other eBPF programs.
 ///
 /// # Minimumm kernel version
 ///
@@ -559,10 +561,12 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 /// Marks a function as a fexit eBPF program that can be attached to almost
-/// any function inside the kernel. The difference between fexit and kretprobe
-/// is that fexit has practically zero overhead to call after kernel function
-/// and it focuses on access to arguments rather than the return value. fexit
-/// programs can be also attached to other eBPF programs
+/// any function inside the kernel.
+///
+/// The difference between fexit and kretprobe is that fexit has practically
+/// zero overhead to call after kernel function and it focuses on access to
+/// arguments rather than the return value. fexit programs can be also attached
+/// to other eBPF programs.
 ///
 /// # Minimumm kernel version
 ///

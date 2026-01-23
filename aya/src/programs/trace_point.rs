@@ -73,7 +73,7 @@ impl TracePoint {
     /// For a list of the available event categories and names, see
     /// `/sys/kernel/debug/tracing/events`.
     ///
-    /// The returned value can be used to detach, see [TracePoint::detach].
+    /// The returned value can be used to detach, see [`TracePoint::detach`].
     pub fn attach(&mut self, category: &str, name: &str) -> Result<TracePointLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();

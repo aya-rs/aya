@@ -10,10 +10,7 @@ use std::{
 use aya_obj::{
     EbpfSectionKind, Features, Object, ParseError, ProgramSection,
     btf::{Btf, BtfError, BtfFeatures, BtfRelocationError},
-    generated::{
-        BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS,
-        bpf_map_type::{self, *},
-    },
+    generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
 };
 use log::{debug, warn};
@@ -40,7 +37,11 @@ use crate::{
 };
 
 /// Marker trait for types that can safely be converted to and from byte slices.
-#[expect(clippy::missing_safety_doc)]
+///
+/// # Safety
+///
+/// This trait is unsafe because it allows for the conversion of types to and
+/// from byte slices.
 pub unsafe trait Pod: Copy + 'static {}
 
 macro_rules! unsafe_impl_pod {
@@ -61,8 +62,8 @@ pub use aya_obj::maps::{PinningType, bpf_map_def};
 pub(crate) static FEATURES: LazyLock<Features> = LazyLock::new(detect_features);
 
 fn detect_features() -> Features {
-    let btf = if is_btf_supported() {
-        Some(BtfFeatures::new(
+    let btf = is_btf_supported().then(|| {
+        BtfFeatures::new(
             is_btf_func_supported(),
             is_btf_func_global_supported(),
             is_btf_datasec_supported(),
@@ -71,18 +72,16 @@ fn detect_features() -> Features {
             is_btf_decl_tag_supported(),
             is_btf_type_tag_supported(),
             is_btf_enum64_supported(),
-        ))
-    } else {
-        None
-    };
+        )
+    });
     let f = Features::new(
         is_prog_name_supported(),
         is_probe_read_kernel_supported(),
         is_perf_link_supported(),
         is_bpf_global_data_supported(),
         is_bpf_cookie_supported(),
-        is_prog_id_supported(BPF_MAP_TYPE_CPUMAP),
-        is_prog_id_supported(BPF_MAP_TYPE_DEVMAP),
+        is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP),
+        is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_DEVMAP),
         btf,
     );
     debug!("BPF Feature Detection: {f:#?}");
@@ -174,7 +173,7 @@ impl<'a> EbpfLoader<'a> {
 
     /// Sets the target [BTF](Btf) info.
     ///
-    /// The loader defaults to loading `BTF` info using [Btf::from_sys_fs].
+    /// The loader defaults to loading `BTF` info using [`Btf::from_sys_fs`].
     /// Use this method if you want to load `BTF` from a custom location or
     /// pass `None` to disable `BTF` relocations entirely.
     /// # Example
@@ -213,7 +212,7 @@ impl<'a> EbpfLoader<'a> {
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn allow_unsupported_maps(&mut self) -> &mut Self {
+    pub const fn allow_unsupported_maps(&mut self) -> &mut Self {
         self.allow_unsupported_maps = true;
         self
     }
@@ -302,9 +301,9 @@ impl<'a> EbpfLoader<'a> {
         self.override_global(name, value, must_exist)
     }
 
-    /// Set the max_entries for specified map.
+    /// Set the `max_entries` for specified map.
     ///
-    /// Overwrite the value of max_entries of the map that matches
+    /// Overwrite the value of `max_entries` of the map that matches
     /// the provided name before the map is created.
     ///
     /// # Example
@@ -323,7 +322,7 @@ impl<'a> EbpfLoader<'a> {
         self
     }
 
-    /// Set the max_entries for specified map.
+    /// Set the `max_entries` for specified map.
     #[deprecated(since = "0.13.2", note = "please use `map_max_entries` instead")]
     pub fn set_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self {
         self.map_max_entries(name, size)
@@ -391,7 +390,7 @@ impl<'a> EbpfLoader<'a> {
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     ///
-    pub fn verifier_log_level(&mut self, level: VerifierLogLevel) -> &mut Self {
+    pub const fn verifier_log_level(&mut self, level: VerifierLogLevel) -> &mut Self {
         self.verifier_log_level = level;
         self
     }
@@ -577,7 +576,7 @@ impl<'a> EbpfLoader<'a> {
             .programs
             .drain()
             .map(|(name, prog_obj)| {
-                let function_obj = obj.functions.get(&prog_obj.function_key()).unwrap().clone();
+                let function_obj = obj.functions[&prog_obj.function_key()].clone();
 
                 let prog_name = FEATURES.bpf_name().then(|| name.clone().into());
                 let section = prog_obj.section.clone();
@@ -771,27 +770,27 @@ fn parse_map(
     let (name, map) = data;
     let map_type = bpf_map_type::try_from(map.obj().map_type()).map_err(MapError::from)?;
     let map = match map_type {
-        BPF_MAP_TYPE_ARRAY => Map::Array(map),
-        BPF_MAP_TYPE_PERCPU_ARRAY => Map::PerCpuArray(map),
-        BPF_MAP_TYPE_PROG_ARRAY => Map::ProgramArray(map),
-        BPF_MAP_TYPE_HASH => Map::HashMap(map),
-        BPF_MAP_TYPE_LRU_HASH => Map::LruHashMap(map),
-        BPF_MAP_TYPE_PERCPU_HASH => Map::PerCpuHashMap(map),
-        BPF_MAP_TYPE_LRU_PERCPU_HASH => Map::PerCpuLruHashMap(map),
-        BPF_MAP_TYPE_PERF_EVENT_ARRAY => Map::PerfEventArray(map),
-        BPF_MAP_TYPE_RINGBUF => Map::RingBuf(map),
-        BPF_MAP_TYPE_SOCKHASH => Map::SockHash(map),
-        BPF_MAP_TYPE_SOCKMAP => Map::SockMap(map),
-        BPF_MAP_TYPE_BLOOM_FILTER => Map::BloomFilter(map),
-        BPF_MAP_TYPE_LPM_TRIE => Map::LpmTrie(map),
-        BPF_MAP_TYPE_STACK => Map::Stack(map),
-        BPF_MAP_TYPE_STACK_TRACE => Map::StackTraceMap(map),
-        BPF_MAP_TYPE_QUEUE => Map::Queue(map),
-        BPF_MAP_TYPE_CPUMAP => Map::CpuMap(map),
-        BPF_MAP_TYPE_DEVMAP => Map::DevMap(map),
-        BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
-        BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
-        BPF_MAP_TYPE_SK_STORAGE => Map::SkStorage(map),
+        bpf_map_type::BPF_MAP_TYPE_ARRAY => Map::Array(map),
+        bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY => Map::PerCpuArray(map),
+        bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY => Map::ProgramArray(map),
+        bpf_map_type::BPF_MAP_TYPE_HASH => Map::HashMap(map),
+        bpf_map_type::BPF_MAP_TYPE_LRU_HASH => Map::LruHashMap(map),
+        bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH => Map::PerCpuHashMap(map),
+        bpf_map_type::BPF_MAP_TYPE_LRU_PERCPU_HASH => Map::PerCpuLruHashMap(map),
+        bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY => Map::PerfEventArray(map),
+        bpf_map_type::BPF_MAP_TYPE_RINGBUF => Map::RingBuf(map),
+        bpf_map_type::BPF_MAP_TYPE_SOCKHASH => Map::SockHash(map),
+        bpf_map_type::BPF_MAP_TYPE_SOCKMAP => Map::SockMap(map),
+        bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER => Map::BloomFilter(map),
+        bpf_map_type::BPF_MAP_TYPE_LPM_TRIE => Map::LpmTrie(map),
+        bpf_map_type::BPF_MAP_TYPE_STACK => Map::Stack(map),
+        bpf_map_type::BPF_MAP_TYPE_STACK_TRACE => Map::StackTraceMap(map),
+        bpf_map_type::BPF_MAP_TYPE_QUEUE => Map::Queue(map),
+        bpf_map_type::BPF_MAP_TYPE_CPUMAP => Map::CpuMap(map),
+        bpf_map_type::BPF_MAP_TYPE_DEVMAP => Map::DevMap(map),
+        bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
+        bpf_map_type::BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
+        bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Map::SkStorage(map),
         m_type => {
             if allow_unsupported_maps {
                 Map::Unsupported(map)
@@ -807,7 +806,7 @@ fn parse_map(
     Ok((name, map))
 }
 
-/// Computes the value which should be used to override the max_entries value of the map
+/// Computes the value which should be used to override the `max_entries` value of the map
 /// based on the user-provided override and the rules for that map type.
 fn max_entries_override(
     map_type: bpf_map_type,
@@ -818,23 +817,23 @@ fn max_entries_override(
 ) -> Result<Option<u32>, EbpfError> {
     let max_entries = || user_override.unwrap_or_else(&current_value);
     Ok(match map_type {
-        BPF_MAP_TYPE_PERF_EVENT_ARRAY if max_entries() == 0 => Some(num_cpus()?),
-        BPF_MAP_TYPE_RINGBUF => Some(adjust_to_page_size(max_entries(), page_size()))
+        bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY if max_entries() == 0 => Some(num_cpus()?),
+        bpf_map_type::BPF_MAP_TYPE_RINGBUF => Some(adjust_to_page_size(max_entries(), page_size()))
             .filter(|adjusted| *adjusted != max_entries())
             .or(user_override),
         _ => user_override,
     })
 }
 
-/// Computes the value which should be used to override the value_size value of the map
+/// Computes the value which should be used to override the `value_size` value of the map
 /// based on the rules for that map type.
 fn value_size_override(map_type: bpf_map_type) -> Option<u32> {
     match map_type {
-        BPF_MAP_TYPE_CPUMAP => Some(if FEATURES.cpumap_prog_id() { 8 } else { 4 }),
-        BPF_MAP_TYPE_DEVMAP | BPF_MAP_TYPE_DEVMAP_HASH => {
+        bpf_map_type::BPF_MAP_TYPE_CPUMAP => Some(if FEATURES.cpumap_prog_id() { 8 } else { 4 }),
+        bpf_map_type::BPF_MAP_TYPE_DEVMAP | bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => {
             Some(if FEATURES.devmap_prog_id() { 8 } else { 4 })
         }
-        BPF_MAP_TYPE_RINGBUF => Some(0),
+        bpf_map_type::BPF_MAP_TYPE_RINGBUF => Some(0),
         _ => None,
     }
 }
@@ -843,7 +842,7 @@ fn value_size_override(map_type: bpf_map_type) -> Option<u32> {
 //
 // This mirrors the logic used by libbpf.
 // See https://github.com/libbpf/libbpf/blob/ec6f716eda43/src/libbpf.c#L2461-L2463
-fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
+const fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
     // If the byte_size is zero, return zero and let the verifier reject the map
     // when it is loaded. This is the behavior of libbpf.
     if byte_size == 0 {
@@ -851,7 +850,7 @@ fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
     }
     // TODO: Replace with primitive method when int_roundings (https://github.com/rust-lang/rust/issues/88581)
     // is stabilized.
-    fn div_ceil(n: u32, rhs: u32) -> u32 {
+    const fn div_ceil(n: u32, rhs: u32) -> u32 {
         let d = n / rhs;
         let r = n % rhs;
         if r > 0 && rhs > 0 { d + 1 } else { d }
@@ -870,7 +869,7 @@ mod tests {
     #[test]
     fn test_adjust_to_page_size() {
         use super::adjust_to_page_size;
-        [
+        for (exp, input) in [
             (0, 0),
             (4096, 1),
             (4096, 4095),
@@ -878,15 +877,15 @@ mod tests {
             (8192, 4097),
             (8192, 8192),
             (16384, 8193),
-        ]
-        .into_iter()
-        .for_each(|(exp, input)| assert_eq!(exp, adjust_to_page_size(input, PAGE_SIZE)))
+        ] {
+            assert_eq!(exp, adjust_to_page_size(input, PAGE_SIZE));
+        }
     }
 
     #[test]
     fn test_max_entries_override() {
         use super::max_entries_override;
-        [
+        for (map_type, user_override, current_value, exp) in [
             (BPF_MAP_TYPE_RINGBUF, Some(1), 1, Some(PAGE_SIZE)),
             (BPF_MAP_TYPE_RINGBUF, None, 1, Some(PAGE_SIZE)),
             (BPF_MAP_TYPE_RINGBUF, None, PAGE_SIZE, None),
@@ -897,21 +896,19 @@ mod tests {
             (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 42, None),
             (BPF_MAP_TYPE_ARRAY, None, 1, None),
             (BPF_MAP_TYPE_ARRAY, Some(2), 1, Some(2)),
-        ]
-        .into_iter()
-        .for_each(|(map_type, user_override, current_value, exp)| {
+        ] {
             assert_eq!(
                 exp,
                 max_entries_override(
                     map_type,
                     user_override,
-                    || { current_value },
+                    || current_value,
                     || Ok(NUM_CPUS),
-                    || PAGE_SIZE
+                    || PAGE_SIZE,
                 )
                 .unwrap()
-            )
-        })
+            );
+        }
     }
 }
 
@@ -939,7 +936,7 @@ impl Ebpf {
     /// the kernel supports [BTF](Btf) debug info, it is automatically loaded from
     /// `/sys/kernel/btf/vmlinux`.
     ///
-    /// For more loading options, see [EbpfLoader].
+    /// For more loading options, see [`EbpfLoader`].
     ///
     /// # Examples
     ///
@@ -965,7 +962,7 @@ impl Ebpf {
     /// into your binary, it is recommended that you do so using
     /// [`include_bytes_aligned`](crate::include_bytes_aligned).
     ///
-    /// For more loading options, see [EbpfLoader].
+    /// For more loading options, see [`EbpfLoader`].
     ///
     /// # Examples
     ///
@@ -1094,7 +1091,7 @@ impl Ebpf {
     /// Returns a reference to the program with the given name.
     ///
     /// You can use this to inspect a program and its properties. To load and attach a program, use
-    /// [program_mut](Self::program_mut) instead.
+    /// [`program_mut`](Self::program_mut) instead.
     ///
     /// For more details on programs and their usage, see the [programs module
     /// documentation](crate::programs).
@@ -1182,7 +1179,7 @@ pub enum EbpfError {
         /// The file path
         path: PathBuf,
         #[source]
-        /// The original io::Error
+        /// The original [`io::Error`]
         error: io::Error,
     },
 
@@ -1242,7 +1239,7 @@ fn load_btf(
 /// Global data that can be exported to eBPF programs before they are loaded.
 ///
 /// Valid global data includes `Pod` types and slices of `Pod` types. See also
-/// [EbpfLoader::override_global].
+/// [`EbpfLoader::override_global`].
 pub struct GlobalData<'a> {
     bytes: &'a [u8],
 }

@@ -50,7 +50,7 @@ pub struct LpmTrie<T, K, V> {
     _kv: PhantomData<(K, V)>,
 }
 
-/// A Key for an LpmTrie map.
+/// A Key for an [`LpmTrie`] map.
 ///
 /// # Examples
 ///
@@ -85,17 +85,17 @@ impl<K: Pod> Key<K> {
     /// let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
     /// let key =  Key::new(16, u32::from(ipaddr).to_be());
     /// ```
-    pub fn new(prefix_len: u32, data: K) -> Self {
+    pub const fn new(prefix_len: u32, data: K) -> Self {
         Self { prefix_len, data }
     }
 
     /// Returns the number of bits in the data to be matched.
-    pub fn prefix_len(&self) -> u32 {
+    pub const fn prefix_len(&self) -> u32 {
         self.prefix_len
     }
 
     /// Returns the data stored in the Key.
-    pub fn data(&self) -> K {
+    pub const fn data(&self) -> K {
         self.data
     }
 }
@@ -114,7 +114,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
         })
     }
 
-    /// Returns a copy of the value associated with the longest prefix matching key in the LpmTrie.
+    /// Returns a copy of the value associated with the longest prefix matching key in the [`LpmTrie`].
     pub fn get(&self, key: &Key<K>, flags: u64) -> Result<V, MapError> {
         hash_map::get(self.inner.borrow(), key, flags)
     }
@@ -129,6 +129,15 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// type is `Result<Key<K>, MapError>`.
     pub fn keys(&self) -> MapKeys<'_, Key<K>> {
         MapKeys::new(self.inner.borrow())
+    }
+}
+
+impl<'a, T: Borrow<MapData>, K: Pod, V: Pod> IntoIterator for &'a LpmTrie<T, K, V> {
+    type Item = Result<(Key<K>, V), MapError>;
+    type IntoIter = MapIter<'a, Key<K>, V, LpmTrie<T, K, V>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 
@@ -166,10 +175,7 @@ mod tests {
     use std::{io, net::Ipv4Addr};
 
     use assert_matches::assert_matches;
-    use aya_obj::generated::{
-        bpf_cmd,
-        bpf_map_type::{BPF_MAP_TYPE_ARRAY, BPF_MAP_TYPE_LPM_TRIE},
-    };
+    use aya_obj::generated::{bpf_cmd, bpf_map_type};
     use libc::{EFAULT, ENOENT};
 
     use super::*;
@@ -182,7 +188,7 @@ mod tests {
     };
 
     fn new_obj_map() -> aya_obj::Map {
-        test_utils::new_obj_map::<Key<u32>>(BPF_MAP_TYPE_LPM_TRIE)
+        test_utils::new_obj_map::<Key<u32>>(bpf_map_type::BPF_MAP_TYPE_LPM_TRIE)
     }
 
     fn sys_error(value: i32) -> SysResult {
@@ -215,7 +221,9 @@ mod tests {
 
     #[test]
     fn test_try_from_wrong_map() {
-        let map = new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_ARRAY));
+        let map = new_map(test_utils::new_obj_map::<u32>(
+            bpf_map_type::BPF_MAP_TYPE_ARRAY,
+        ));
         let map = Map::Array(map);
 
         assert_matches!(
@@ -236,7 +244,7 @@ mod tests {
         let map = new_map(new_obj_map());
 
         let map = Map::LpmTrie(map);
-        let _: LpmTrie<_, u32, u32> = map.try_into().unwrap();
+        let _unused: LpmTrie<_, u32, u32> = map.try_into().unwrap();
     }
 
     #[test]

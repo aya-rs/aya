@@ -49,9 +49,9 @@ impl KProbe {
 
         Ok(Self {
             kind,
-            item,
             function,
             offset,
+            item,
         })
     }
 

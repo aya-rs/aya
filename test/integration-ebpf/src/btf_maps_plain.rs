@@ -1,7 +1,7 @@
-//! eBPF program using only btf_maps (no legacy maps).
+//! eBPF program using only `btf_maps` (no legacy maps).
 //!
 //! This program is used to test that libbpf can load BTF maps
-//! produced by aya-ebpf's btf_maps module.
+//! produced by aya-ebpf's `btf_maps` module.
 
 #![no_std]
 #![no_main]

@@ -67,6 +67,10 @@ pub(crate) fn perf_event_open(
                     u64::from(length.into_primitive()),
                 ),
                 BreakpointConfig::Instruction { address } => {
+                    #[expect(
+                        clippy::panic,
+                        reason = "unsupported c_long size indicates an unsupported platform"
+                    )]
                     const fn length(size: usize) -> c_uint {
                         match size {
                             1 => HW_BREAKPOINT_LEN_1,
@@ -97,7 +101,7 @@ pub(crate) fn perf_event_open(
     attr.size = size_of::<perf_event_attr>() as u32;
     attr.type_ = perf_type;
     attr.sample_type = PERF_SAMPLE_RAW as u64;
-    attr.set_inherit(if inherit { 1 } else { 0 });
+    attr.set_inherit(u64::from(inherit));
 
     match sample_policy {
         SamplePolicy::Period(period) => {

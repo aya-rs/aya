@@ -65,7 +65,7 @@ impl CgroupSysctl {
 
     /// Attaches the program to the given cgroup.
     ///
-    /// The returned value can be used to detach, see [CgroupSysctl::detach].
+    /// The returned value can be used to detach, see [`CgroupSysctl::detach`].
     pub fn attach<T: AsFd>(
         &mut self,
         cgroup: T,

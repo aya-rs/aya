@@ -46,6 +46,10 @@ pub(crate) enum NetlinkErrorInternal {
 /// An error occurred during a netlink operation.
 #[derive(Error, Debug)]
 #[error(transparent)]
+#[expect(
+    unnameable_types,
+    reason = "the internal error is crate-private but transparently wrapped"
+)]
 pub struct NetlinkError(#[from] NetlinkErrorInternal);
 
 impl NetlinkError {
@@ -62,8 +66,9 @@ impl NetlinkError {
     }
 }
 
-// Safety: marking this as unsafe overall because of all the pointer math required to comply with
-// netlink alignments
+/// # Safety
+///
+/// This function performs pointer arithmetic to satisfy netlink alignments.
 pub(crate) unsafe fn netlink_set_xdp_fd(
     if_index: i32,
     fd: Option<BorrowedFd<'_>>,
@@ -90,10 +95,7 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
     let mut attrs = NestedAttrs::new(attrs_buf, IFLA_XDP);
     attrs
-        .write_attr(
-            IFLA_XDP_FD as u16,
-            fd.map(|fd| fd.as_raw_fd()).unwrap_or(-1),
-        )
+        .write_attr(IFLA_XDP_FD as u16, fd.map_or(-1, |fd| fd.as_raw_fd()))
         .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
 
     if flags > 0 {
@@ -243,7 +245,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
 
 pub(crate) unsafe fn netlink_qdisc_detach(
     if_index: i32,
-    attach_type: &TcAttachType,
+    attach_type: TcAttachType,
     priority: u16,
     handle: u32,
 ) -> Result<(), NetlinkError> {
@@ -400,7 +402,7 @@ impl NetlinkSocket {
             ) < 0
             {
                 return Err(NetlinkErrorInternal::IoError(io::Error::last_os_error()));
-            };
+            }
 
             // Set NETLINK_CAP_ACK to avoid getting copies of request payload.
             if setsockopt(
@@ -412,8 +414,8 @@ impl NetlinkSocket {
             ) < 0
             {
                 return Err(NetlinkErrorInternal::IoError(io::Error::last_os_error()));
-            };
-        };
+            }
+        }
 
         // Safety: sockaddr_nl is POD so this is safe
         let mut addr = unsafe { mem::zeroed::<sockaddr_nl>() };
@@ -550,7 +552,7 @@ const fn align_to(v: usize, align: usize) -> usize {
     v.next_multiple_of(align)
 }
 
-fn htons(u: u16) -> u16 {
+const fn htons(u: u16) -> u16 {
     u.to_be()
 }
 
@@ -561,7 +563,7 @@ struct NestedAttrs<'a> {
 }
 
 impl<'a> NestedAttrs<'a> {
-    fn new(buf: &'a mut [u8], top_attr_type: u16) -> Self {
+    const fn new(buf: &'a mut [u8], top_attr_type: u16) -> Self {
         Self {
             buf,
             top_attr_type,
@@ -645,7 +647,7 @@ struct NlAttrsIterator<'a> {
 }
 
 impl<'a> NlAttrsIterator<'a> {
-    fn new(attrs: &'a [u8]) -> Self {
+    const fn new(attrs: &'a [u8]) -> Self {
         Self { attrs, offset: 0 }
     }
 }

@@ -79,13 +79,13 @@ impl CgroupSkb {
     /// section name, eg `cgroup_skb/ingress` or `cgroup_skb/egress`. This
     /// method returns `None` for programs defined with the generic section
     /// `cgroup/skb`.
-    pub fn expected_attach_type(&self) -> &Option<CgroupSkbAttachType> {
+    pub const fn expected_attach_type(&self) -> &Option<CgroupSkbAttachType> {
         &self.attach_type
     }
 
     /// Attaches the program to the given cgroup.
     ///
-    /// The returned value can be used to detach, see [CgroupSkb::detach].
+    /// The returned value can be used to detach, see [`CgroupSkb::detach`].
     pub fn attach<T: AsFd>(
         &mut self,
         cgroup: T,

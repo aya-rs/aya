@@ -10,8 +10,8 @@ pub(crate) struct NameValue {
 }
 
 pub(crate) struct Args {
-    pub(crate) strings: Vec<NameValue>,
-    pub(crate) bools: Vec<Ident>,
+    pub strings: Vec<NameValue>,
+    pub bools: Vec<Ident>,
 }
 
 impl Parse for Args {
@@ -39,8 +39,7 @@ impl Parse for Args {
             })?
             .into_pairs()
             .map(|pair| match pair {
-                Pair::Punctuated(name_val, _) => name_val,
-                Pair::End(name_val) => name_val,
+                Pair::Punctuated(name_val, _) | Pair::End(name_val) => name_val,
             });
 
         let mut strings = Vec::new();

@@ -36,7 +36,7 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> Array<T, MAX_ENTRIES, FLAG
 
     #[inline(always)]
     pub fn get_ptr_mut(&self, index: u32) -> Option<*mut T> {
-        unsafe { self.lookup(index).map(|p| p.as_ptr()) }
+        unsafe { self.lookup(index).map(NonNull::as_ptr) }
     }
 
     #[inline(always)]
