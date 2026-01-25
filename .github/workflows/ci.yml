@@ -418,8 +418,9 @@ jobs:
           ac_cv_search_fts_close: 'none required'
         run: |
           set -euxo pipefail
+          extra_cflags=(-I "${{ github.workspace }}/ci/headers")
           arch=$(uname -m)
-          extra_cflags=(-idirafter "/usr/include/${arch}-linux-gnu" -idirafter /usr/include)
+          extra_cflags+=(-idirafter "/usr/include/${arch}-linux-gnu" -idirafter /usr/include)
           if [ "${arch}" = aarch64 ]; then
             extra_cflags+=(-mno-outline-atomics)
           fi
