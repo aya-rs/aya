@@ -387,6 +387,10 @@ jobs:
 
       - name: Run virtualized integration tests
         if: matrix.download-kernel-images != 'local'
+        # See https://github.com/libbpf/libbpf-sys/issues/137.
+        env:
+          ac_cv_search_argp_parse: 'none required'
+          ac_cv_search__obstack_free: 'none required'
         run: |
           set -euxo pipefail
           find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \

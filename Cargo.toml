@@ -162,3 +162,6 @@ unused_lifetimes = "warn"
 unused_macro_rules = "warn"
 unused_qualifications = "warn"
 #unused_results = "warn"
+
+[patch.crates-io]
+libbpf-sys = { git = "https://github.com/tamird/libbpf-sys", branch = "build-only-libelf" }
