@@ -418,12 +418,18 @@ jobs:
           ac_cv_search_fts_close: 'none required'
         run: |
           set -euxo pipefail
+
           arch=$(uname -m)
-          extra_cflags=(-idirafter "/usr/include/${arch}-linux-gnu" -idirafter /usr/include)
+          libbpf_sys_extra_cflags=(-idirafter "/usr/include/${arch}-linux-gnu" -idirafter /usr/include)
           if [ "${arch}" = aarch64 ]; then
-            extra_cflags+=(-mno-outline-atomics)
+            libbpf_sys_extra_cflags+=(-mno-outline-atomics)
           fi
-          export LIBBPF_SYS_EXTRA_CFLAGS="${extra_cflags[@]}"
+          export LIBBPF_SYS_EXTRA_CFLAGS="${libbpf_sys_extra_cflags[@]}"
+
+          # libbpf-sys forwards LIBBPF_SYS_EXTRA_CFLAGS to libbpf, but the
+          # vendored elfutils build ignores it and only honors CFLAGS/CPPFLAGS.
+          export CFLAGS='-I${{ github.workspace }}/ci/headers'
+
           find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
             cargo xtask integration-test vm --cache-dir test/.tmp \
               --github-api-token ${{ secrets.GITHUB_TOKEN }}
