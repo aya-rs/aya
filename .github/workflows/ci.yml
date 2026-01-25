@@ -278,6 +278,7 @@ jobs:
           sudo apt update
           sudo apt -y install \
             autopoint \
+            linux-libc-dev \
             liblzma-dev \
             lynx \
             musl-tools \
@@ -393,6 +394,12 @@ jobs:
           ac_cv_search__obstack_free: 'none required'
         run: |
           set -euxo pipefail
+          arch=$(uname -m)
+          extra_cflags=(-idirafter "/usr/include/${arch}-linux-gnu" -idirafter /usr/include)
+          if [ "${arch}" = aarch64 ]; then
+            extra_cflags+=(-mno-outline-atomics)
+          fi
+          export LIBBPF_SYS_EXTRA_CFLAGS="${extra_cflags[@]}"
           find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
             cargo xtask integration-test vm --cache-dir test/.tmp \
               --github-api-token ${{ secrets.GITHUB_TOKEN }}
