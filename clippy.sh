@@ -2,6 +2,22 @@
 
 set -eux
 
+# macOS cross-compilation fixes for libbpf-sys vendored dependencies.
+#
+# PATH and CFLAGS are set here rather than in libbpf-sys.env because they
+# require dynamic absolute paths (the env file only contains static values).
+#
+# See https://github.com/libbpf/libbpf-sys/issues/137.
+if [ "$(uname -s)" = "Darwin" ]; then
+  script_dir=$(cd "$(dirname "$0")" && pwd)
+  export PATH="$script_dir/ci/bin:$PATH"
+  export CFLAGS="-I$script_dir/ci/headers"
+  set -a
+  . "$script_dir/ci/libbpf-sys.env"
+  . "$script_dir/ci/macos-toolchain.env"
+  set +a
+fi
+
 # `-C panic=abort` because "unwinding panics are not supported without std"; integration-ebpf
 # contains `#[no_std]` binaries.
 #
