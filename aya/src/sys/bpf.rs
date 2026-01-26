@@ -567,6 +567,90 @@ pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<crate::MockableFd, S
     })
 }
 
+/// Options for running a BPF program test.
+#[derive(Debug, Default)]
+pub struct TestRunOptions<'a> {
+    /// Input data to pass to the program.
+    pub data_in: Option<&'a [u8]>,
+    /// Output buffer for data modified by the program.
+    pub data_out: Option<&'a mut [u8]>,
+    /// Input context to pass to the program.
+    pub ctx_in: Option<&'a [u8]>,
+    /// Output buffer for context modified by the program.
+    pub ctx_out: Option<&'a mut [u8]>,
+    /// Number of times to repeat the test.
+    pub repeat: u32,
+    /// Flags to control test behavior.
+    pub flags: u32,
+    /// CPU to run the test on (requires BPF_F_TEST_RUN_ON_CPU flag).
+    pub cpu: u32,
+    /// Batch size for network packet tests (requires BPF_F_TEST_XDP_LIVE_FRAMES flag).
+    pub batch_size: u32,
+}
+
+/// Result of running a BPF program test.
+#[derive(Debug)]
+pub struct TestRunResult {
+    /// Return value from the program.
+    pub return_value: u32,
+    /// Duration of the test run in nanoseconds.
+    pub duration: u32,
+    /// Size of data written to data_out.
+    pub data_size_out: u32,
+    /// Size of context written to ctx_out.
+    pub ctx_size_out: u32,
+}
+
+/// Run a loaded BPF program with test data.
+///
+/// Introduced in kernel v4.12.
+pub(crate) fn bpf_prog_test_run(
+    prog_fd: BorrowedFd<'_>,
+    opts: &mut TestRunOptions<'_>,
+) -> Result<TestRunResult, SyscallError> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    let test = unsafe { &mut attr.test };
+    test.prog_fd = prog_fd.as_raw_fd() as u32;
+    // at least 1
+    test.repeat = opts.repeat.max(1);
+    test.flags = opts.flags;
+    test.cpu = opts.cpu;
+    test.batch_size = opts.batch_size;
+
+    if let Some(data_in) = opts.data_in {
+        test.data_in = data_in.as_ptr() as u64;
+        test.data_size_in = data_in.len() as u32;
+    }
+
+    if let Some(data_out) = &opts.data_out {
+        test.data_out = data_out.as_ptr() as u64;
+        test.data_size_out = data_out.len() as u32;
+    }
+
+    if let Some(ctx_in) = opts.ctx_in {
+        test.ctx_in = ctx_in.as_ptr() as u64;
+        test.ctx_size_in = ctx_in.len() as u32;
+    }
+
+    if let Some(ctx_out) = &opts.ctx_out {
+        test.ctx_out = ctx_out.as_ptr() as u64;
+        test.ctx_size_out = ctx_out.len() as u32;
+    }
+
+    unit_sys_bpf(bpf_cmd::BPF_PROG_TEST_RUN, &mut attr).map_err(|io_error| SyscallError {
+        call: "bpf_prog_test_run",
+        io_error,
+    })?;
+
+    Ok(TestRunResult {
+        return_value: unsafe { attr.test.retval },
+        duration: unsafe { attr.test.duration },
+        data_size_out: unsafe { attr.test.data_size_out },
+        ctx_size_out: unsafe { attr.test.ctx_size_out },
+    })
+}
+
 /// Introduced in kernel v4.13.
 fn bpf_obj_get_info_by_fd<T, F: FnOnce(&mut T)>(
     fd: BorrowedFd<'_>,
