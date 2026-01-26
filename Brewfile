@@ -12,6 +12,11 @@ brew "lynx"
 brew "pkg-config"
 brew "qemu"
 
+# Required by libbpf-sys vendored dependencies.
+brew "autoconf"
+brew "automake"
+brew "gawk"
+
 # macOS provides only dynamic zlib. Install the static one.
 brew "zlib"
 
