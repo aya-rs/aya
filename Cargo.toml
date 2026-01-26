@@ -84,7 +84,7 @@ indoc = { version = "2.0", default-features = false }
 libc = { version = "0.2.105", default-features = false }
 log = { version = "0.4", default-features = false }
 network-types = { version = "0.1.0", default-features = false }
-nix = { version = "0.30.1", default-features = false }
+nix = { version = "0.31.1", default-features = false }
 num_enum = { version = "0.7", default-features = false }
 object = { version = "0.38", default-features = false }
 once_cell = { version = "1.20.1", default-features = false }
