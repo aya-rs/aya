@@ -43,7 +43,7 @@ fn test_count_exec(_ctx: SkBuffContext) -> i64 {
             *count += 1;
         }
     }
-    0 
+    0
 }
 
 #[xdp]
