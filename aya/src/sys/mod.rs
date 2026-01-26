@@ -16,9 +16,9 @@ use std::{
 
 use aya_obj::generated::{bpf_attr, bpf_cmd, perf_event_attr};
 pub(crate) use bpf::*;
+pub use bpf::{TestRunOptions, TestRunResult};
 #[cfg(test)]
 pub(crate) use fake::*;
-pub use bpf::{TestRunOptions, TestRunResult};
 pub use feature_probe::{is_map_supported, is_program_supported};
 #[doc(hidden)]
 pub use netlink::netlink_set_link_up;

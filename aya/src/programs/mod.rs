@@ -901,7 +901,7 @@ macro_rules! impl_program_test_run {
                 ///
                 /// Returns [`ProgramError::SyscallError`] if the underlying syscall fails.
                 /// Common errors include `-ENOSPC` if output buffers are too small.
-                /// 
+                ///
                 /// # Example
                 ///
                 /// ```ignore
