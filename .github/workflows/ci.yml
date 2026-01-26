@@ -118,9 +118,10 @@ jobs:
 
       - name: Build
         env:
-          # Fix for 32-bit ARM: Ubuntu 24.04 GCC defines _TIME_BITS=64 by default,
-          # which requires _FILE_OFFSET_BITS=64 (glibc requirement).
-          CFLAGS_armv7_unknown_linux_gnueabi: "-D_FILE_OFFSET_BITS=64"
+          # Fix for 32-bit ARM: Ubuntu 24.04 GCC defines _TIME_BITS=64 as a built-in,
+          # which requires _FILE_OFFSET_BITS=64 (glibc requirement). We must unset
+          # _TIME_BITS first because the built-in is seen before -D flags by libbpf-sys.
+          CFLAGS_armv7_unknown_linux_gnueabi: "-U_TIME_BITS -D_FILE_OFFSET_BITS=64"
         run: |
           set -euxo pipefail
           cargo hack build --all-targets --feature-powerset \
