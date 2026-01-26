@@ -2,20 +2,11 @@
 
 set -eux
 
-# macOS cross-compilation fixes for libbpf-sys vendored dependencies:
-# - zlib: configure sets AR=libtool on Darwin (Mach-O format, not ELF)
-#   → make wrapper overrides AR/RANLIB (https://github.com/madler/zlib/issues/331)
-# - elfutils: configure needs AR/RANLIB in environment to find cross tools
-# - Autoconf cache variables to skip checks that fail during cross-compilation
-#   (https://github.com/libbpf/libbpf-sys/issues/137)
+# macOS cross-compilation fixes for libbpf-sys vendored dependencies.
+# See https://github.com/libbpf/libbpf-sys/issues/137
 if [ "$(uname -s)" = "Darwin" ]; then
-  tmp_bin=$(mktemp -d)
-  cat > "$tmp_bin/make" << 'EOF'
-#!/bin/bash
-exec /usr/bin/make AR=x86_64-linux-musl-ar ARFLAGS=rcs RANLIB=x86_64-linux-musl-ranlib "$@"
-EOF
-  chmod +x "$tmp_bin/make"
-  export PATH="$tmp_bin:$PATH"
+  script_dir=$(cd "$(dirname "$0")" && pwd)
+  export PATH="$script_dir/ci/bin:$PATH"
   export AR=x86_64-linux-musl-ar
   export RANLIB=x86_64-linux-musl-ranlib
   export ac_cv_search_argp_parse='none required'

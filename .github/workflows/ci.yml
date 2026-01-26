@@ -119,9 +119,8 @@ jobs:
       - name: Build
         env:
           # Fix for 32-bit ARM: Ubuntu 24.04 GCC defines _TIME_BITS=64 by default,
-          # which requires _FILE_OFFSET_BITS=64 to be set first (glibc requirement).
-          # We unset _TIME_BITS and set _FILE_OFFSET_BITS=64 to avoid the conflict.
-          CFLAGS_armv7_unknown_linux_gnueabi: "-U_TIME_BITS -D_FILE_OFFSET_BITS=64"
+          # which requires _FILE_OFFSET_BITS=64 (glibc requirement).
+          CFLAGS_armv7_unknown_linux_gnueabi: "-D_FILE_OFFSET_BITS=64"
         run: |
           set -euxo pipefail
           cargo hack build --all-targets --feature-powerset \
@@ -281,7 +280,8 @@ jobs:
           sudo udevadm trigger --name-match=kvm || true # kvm is not available on arm64.
 
           sudo apt update
-          # linux-libc-dev provides kernel headers for libbpf-sys cross-compilation.
+          # linux-libc-dev provides Linux API headers for libbpf-sys cross-compilation.
+          #
           # See https://github.com/libbpf/libbpf-sys/issues/137
           sudo apt -y install \
             autopoint \
@@ -393,25 +393,17 @@ jobs:
         if: runner.os == 'Linux' && matrix.skip-local != true
         run: cargo xtask integration-test local
 
-      # macOS cross-compilation fixes for libbpf-sys vendored dependencies:
-      # - zlib: configure sets AR=libtool on Darwin (Mach-O format, not ELF)
-      #   → make wrapper overrides AR/RANLIB (https://github.com/madler/zlib/issues/331)
-      # - elfutils: configure needs AR/RANLIB in environment to find cross tools
+      # macOS cross-compilation fixes for libbpf-sys vendored dependencies.
+      # See https://github.com/libbpf/libbpf-sys/issues/137
       - name: Set cross-compilation env for macOS
         if: runner.os == 'macOS'
         run: |
-          mkdir -p /tmp/bin
-          cat > /tmp/bin/make << 'EOF'
-          #!/bin/bash
-          exec /usr/bin/make AR=x86_64-linux-musl-ar ARFLAGS=rcs RANLIB=x86_64-linux-musl-ranlib "$@"
-          EOF
-          chmod +x /tmp/bin/make
-          echo "/tmp/bin" >> $GITHUB_PATH
+          echo "${{ github.workspace }}/ci/bin" >> $GITHUB_PATH
           echo "AR=x86_64-linux-musl-ar" >> $GITHUB_ENV
           echo "RANLIB=x86_64-linux-musl-ranlib" >> $GITHUB_ENV
 
       # libbpf-sys cross-compilation workarounds:
-      # - linux-libc-dev provides kernel headers (installed above)
+      # - linux-libc-dev provides Linux API headers (installed above)
       # - LIBBPF_SYS_EXTRA_CFLAGS adds -idirafter to find system headers
       # - ac_cv_search_* variables skip autoconf checks that fail during cross-compilation
       # See https://github.com/libbpf/libbpf-sys/issues/137
