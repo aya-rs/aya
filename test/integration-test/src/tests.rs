@@ -26,6 +26,7 @@ mod map_pin;
 mod maps_disjoint;
 mod perf_event_bp;
 mod printk;
+mod prog_test_run;
 mod raw_tracepoint;
 mod rbpf;
 mod relocations;
