@@ -117,6 +117,10 @@ jobs:
           sudo apt -y install autopoint
 
       - name: Build
+        env:
+          # Fix for 32-bit ARM: Ubuntu 24.04 GCC sets _TIME_BITS=64 by default,
+          # but glibc requires _FILE_OFFSET_BITS=64 first. Unset _TIME_BITS and set FILE_OFFSET.
+          CFLAGS_armv7_unknown_linux_gnueabi: "-U_TIME_BITS -D_FILE_OFFSET_BITS=64"
         run: |
           set -euxo pipefail
           cargo hack build --all-targets --feature-powerset \
@@ -386,12 +390,32 @@ jobs:
         if: runner.os == 'Linux' && matrix.skip-local != true
         run: cargo xtask integration-test local
 
+      # macOS cross-compilation fixes for libbpf-sys vendored dependencies:
+      # - zlib: configure sets AR=libtool on Darwin (Mach-O format, not ELF)
+      #   → make wrapper overrides AR/RANLIB (https://github.com/madler/zlib/issues/331)
+      # - elfutils: configure needs AR/RANLIB in environment to find cross tools
+      - name: Set cross-compilation env for macOS
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p /tmp/bin
+          cat > /tmp/bin/make << 'EOF'
+          #!/bin/bash
+          exec /usr/bin/make AR=x86_64-linux-musl-ar ARFLAGS=rcs RANLIB=x86_64-linux-musl-ranlib "$@"
+          EOF
+          chmod +x /tmp/bin/make
+          echo "/tmp/bin" >> $GITHUB_PATH
+          echo "AR=x86_64-linux-musl-ar" >> $GITHUB_ENV
+          echo "RANLIB=x86_64-linux-musl-ranlib" >> $GITHUB_ENV
+
       - name: Run virtualized integration tests
         if: matrix.download-kernel-images != 'local'
-        # See https://github.com/libbpf/libbpf-sys/issues/137.
         env:
+          # Autoconf cache variables to skip checks that fail during cross-compilation.
+          # See https://github.com/libbpf/libbpf-sys/issues/137
           ac_cv_search_argp_parse: 'none required'
           ac_cv_search__obstack_free: 'none required'
+          ac_cv_search_gzdirect: 'none required'
+          ac_cv_search_fts_close: 'none required'
         run: |
           set -euxo pipefail
           arch=$(uname -m)

@@ -13,6 +13,7 @@ brew "pkg-config"
 brew "qemu"
 
 brew "autoconf" # "autoreconf is required to compile libbpf-sys with the selected set of features"
+brew "automake" # "aclocal (part of automake) is required by elfutils autoreconf"
 brew "gawk" # "gawk is required to compile libbpf-sys with the selected set of features"
 
 # macOS provides only dynamic zlib. Install the static one.
