@@ -118,8 +118,9 @@ jobs:
 
       - name: Build
         env:
-          # Fix for 32-bit ARM: Ubuntu 24.04 GCC sets _TIME_BITS=64 by default,
-          # but glibc requires _FILE_OFFSET_BITS=64 first. Unset _TIME_BITS and set FILE_OFFSET.
+          # Fix for 32-bit ARM: Ubuntu 24.04 GCC defines _TIME_BITS=64 by default,
+          # which requires _FILE_OFFSET_BITS=64 to be set first (glibc requirement).
+          # We unset _TIME_BITS and set _FILE_OFFSET_BITS=64 to avoid the conflict.
           CFLAGS_armv7_unknown_linux_gnueabi: "-U_TIME_BITS -D_FILE_OFFSET_BITS=64"
         run: |
           set -euxo pipefail
@@ -280,6 +281,8 @@ jobs:
           sudo udevadm trigger --name-match=kvm || true # kvm is not available on arm64.
 
           sudo apt update
+          # linux-libc-dev provides kernel headers for libbpf-sys cross-compilation.
+          # See https://github.com/libbpf/libbpf-sys/issues/137
           sudo apt -y install \
             autopoint \
             linux-libc-dev \
@@ -407,11 +410,14 @@ jobs:
           echo "AR=x86_64-linux-musl-ar" >> $GITHUB_ENV
           echo "RANLIB=x86_64-linux-musl-ranlib" >> $GITHUB_ENV
 
+      # libbpf-sys cross-compilation workarounds:
+      # - linux-libc-dev provides kernel headers (installed above)
+      # - LIBBPF_SYS_EXTRA_CFLAGS adds -idirafter to find system headers
+      # - ac_cv_search_* variables skip autoconf checks that fail during cross-compilation
+      # See https://github.com/libbpf/libbpf-sys/issues/137
       - name: Run virtualized integration tests
         if: matrix.download-kernel-images != 'local'
         env:
-          # Autoconf cache variables to skip checks that fail during cross-compilation.
-          # See https://github.com/libbpf/libbpf-sys/issues/137
           ac_cv_search_argp_parse: 'none required'
           ac_cv_search__obstack_free: 'none required'
           ac_cv_search_gzdirect: 'none required'
