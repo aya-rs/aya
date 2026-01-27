@@ -6,6 +6,12 @@ pub mod array {
     pub const GET_PTR_MUT_INDEX: u32 = 2;
 }
 
+pub mod bloom_filter {
+    pub const INSERT_INDEX: u32 = 0;
+    pub const CONTAINS_PRESENT_INDEX: u32 = 1;
+    pub const CONTAINS_ABSENT_INDEX: u32 = 2;
+}
+
 pub mod bpf_probe_read {
     pub const RESULT_BUF_LEN: usize = 1024;
 
