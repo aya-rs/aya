@@ -318,8 +318,8 @@ pub fn aya_ebpf::maps::array::Array<T>::from(t: T) -> T
 pub mod aya_ebpf::maps::bloom_filter
 #[repr(transparent)] pub struct aya_ebpf::maps::bloom_filter::BloomFilter<T>
 impl<T> aya_ebpf::maps::bloom_filter::BloomFilter<T>
-pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::contains(&mut self, value: impl core::borrow::Borrow<T>) -> core::result::Result<(), i64>
-pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::insert(&mut self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::contains(&self, value: impl core::borrow::Borrow<T>) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::insert(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::bloom_filter::BloomFilter<T>
@@ -1056,8 +1056,8 @@ impl<T> core::convert::From<T> for aya_ebpf::maps::array::Array<T>
 pub fn aya_ebpf::maps::array::Array<T>::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::BloomFilter<T>
 impl<T> aya_ebpf::maps::bloom_filter::BloomFilter<T>
-pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::contains(&mut self, value: impl core::borrow::Borrow<T>) -> core::result::Result<(), i64>
-pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::insert(&mut self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::contains(&self, value: impl core::borrow::Borrow<T>) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::insert(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::bloom_filter::BloomFilter<T>
