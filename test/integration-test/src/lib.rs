@@ -40,6 +40,7 @@ bpf_file!(
     VARIABLES_RELOC => "variables_reloc.bpf.o",
 
     ARRAY => "array",
+    BLOOM_FILTER => "bloom_filter",
     BPF_PROBE_READ => "bpf_probe_read",
     BTF_MAPS_PLAIN => "btf_maps_plain",
     LINEAR_DATA_STRUCTURES => "linear_data_structures",
