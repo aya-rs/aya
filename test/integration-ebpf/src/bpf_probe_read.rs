@@ -13,7 +13,7 @@ use integration_common::bpf_probe_read::{RESULT_BUF_LEN, TestResult};
 extern crate ebpf_panic;
 
 fn read_str_bytes(
-    fun: unsafe fn(*const u8, &mut [u8]) -> Result<&[u8], i64>,
+    fun: unsafe fn(*const u8, &mut [u8]) -> Result<&[u8], i32>,
     iptr: Option<*const u8>,
     ilen: Option<usize>,
 ) {

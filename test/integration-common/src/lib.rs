@@ -13,7 +13,7 @@ pub mod bpf_probe_read {
     #[repr(C)]
     pub struct TestResult {
         pub buf: [u8; RESULT_BUF_LEN],
-        pub len: Option<Result<usize, i64>>,
+        pub len: Option<Result<usize, i32>>,
     }
 
     #[cfg(feature = "user")]
