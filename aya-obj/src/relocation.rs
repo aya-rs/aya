@@ -7,9 +7,10 @@ use object::{SectionIndex, SymbolKind};
 
 use crate::{
     EbpfSectionKind,
+    btf::{Btf, BtfKind},
     generated::{
-        BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
-        BPF_PSEUDO_MAP_VALUE, bpf_insn,
+        BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_KFUNC_CALL,
+        BPF_PSEUDO_MAP_FD, BPF_PSEUDO_MAP_VALUE, bpf_insn,
     },
     maps::Map,
     obj::{Function, Object},
@@ -143,9 +144,14 @@ impl Object {
     }
 
     /// Relocates function calls
+    ///
+    /// If `kernel_btf` is provided, kfunc calls will be resolved by looking up
+    /// the function name in the kernel BTF and setting the instruction's `imm`
+    /// to the BTF type ID.
     pub fn relocate_calls(
         &mut self,
         text_sections: &HashSet<usize>,
+        kernel_btf: Option<&Btf>,
     ) -> Result<(), EbpfRelocationError> {
         for (name, program) in self.programs.iter() {
             let linker = FunctionLinker::new(
@@ -153,6 +159,7 @@ impl Object {
                 &self.relocations,
                 &self.symbol_table,
                 text_sections,
+                kernel_btf,
             );
 
             let func_orig =
@@ -280,6 +287,7 @@ struct FunctionLinker<'a> {
     relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
     symbol_table: &'a HashMap<usize, Symbol>,
     text_sections: &'a HashSet<usize>,
+    kernel_btf: Option<&'a Btf>,
 }
 
 impl<'a> FunctionLinker<'a> {
@@ -288,6 +296,7 @@ impl<'a> FunctionLinker<'a> {
         relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
         symbol_table: &'a HashMap<usize, Symbol>,
         text_sections: &'a HashSet<usize>,
+        kernel_btf: Option<&'a Btf>,
     ) -> Self {
         Self {
             functions,
@@ -295,6 +304,7 @@ impl<'a> FunctionLinker<'a> {
             relocations,
             symbol_table,
             text_sections,
+            kernel_btf,
         }
     }
 
@@ -366,16 +376,53 @@ impl<'a> FunctionLinker<'a> {
                     self.symbol_table
                         .get(&rel.symbol_index)
                         .map(|sym| (rel, sym))
-                })
-                .filter(|(_rel, sym)| {
-                    // only consider text relocations, data relocations are
-                    // relocated in relocate_maps()
-                    sym.kind == SymbolKind::Text
-                        || sym
-                            .section_index
-                            .map(|section_index| self.text_sections.contains(&section_index))
-                            .unwrap_or(false)
                 });
+
+            // Check if this is a kfunc (external kernel function) relocation.
+            // Kfuncs are represented as undefined/external symbols in the ELF file,
+            // which means they have no section_index (sym.section_index.is_none()).
+            // These need to be resolved at load time by looking up the function
+            // in the kernel's BTF and setting the instruction's imm to the BTF ID.
+            if let Some((_rel, sym)) = &rel {
+                if sym.section_index.is_none() {
+                    let kfunc_name = sym.name.as_deref().unwrap_or("?");
+
+                    // Look up the kfunc in kernel BTF
+                    if let Some(btf) = self.kernel_btf {
+                        match btf.id_by_type_name_kind(kfunc_name, BtfKind::Func) {
+                            Ok(btf_id) => {
+                                // Set the instruction to call the kfunc via BTF
+                                let ins = &mut program.instructions[ins_index];
+                                ins.imm = btf_id as i32;
+                                ins.set_src_reg(BPF_PSEUDO_KFUNC_CALL as u8);
+                                debug!(
+                                    "resolved kfunc `{kfunc_name}` to BTF id {btf_id} at instruction {ins_index}"
+                                );
+                            }
+                            Err(e) => {
+                                debug!(
+                                    "kfunc `{kfunc_name}` not found in kernel BTF: {e}, leaving unresolved"
+                                );
+                            }
+                        }
+                    } else {
+                        debug!(
+                            "no kernel BTF available, skipping kfunc `{kfunc_name}` at instruction {ins_index}"
+                        );
+                    }
+                    continue;
+                }
+            }
+
+            // Filter to only consider text relocations - data relocations are
+            // handled in relocate_maps()
+            let rel = rel.filter(|(_rel, sym)| {
+                sym.kind == SymbolKind::Text
+                    || sym
+                        .section_index
+                        .map(|section_index| self.text_sections.contains(&section_index))
+                        .unwrap_or(false)
+            });
 
             // not a call and not a text relocation, we don't need to do anything
             if !is_call && rel.is_none() {

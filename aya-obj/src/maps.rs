@@ -2,7 +2,9 @@
 
 use alloc::vec::Vec;
 
-use crate::{EbpfSectionKind, InvalidTypeBinding};
+use crate::{
+    EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS,
+};
 
 impl TryFrom<u32> for crate::generated::bpf_map_type {
     type Error = InvalidTypeBinding<u32>;
@@ -137,6 +139,8 @@ pub enum Map {
     Legacy(LegacyMap),
     /// A map defined in the `.maps` section
     Btf(BtfMap),
+    /// A struct_ops map defined in `.struct_ops` or `.struct_ops.link` sections
+    StructOps(StructOpsMap),
 }
 
 impl Map {
@@ -145,6 +149,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.map_type,
             Self::Btf(m) => m.def.map_type,
+            Self::StructOps(_) => BPF_MAP_TYPE_STRUCT_OPS as u32,
         }
     }
 
@@ -153,6 +158,8 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.key_size,
             Self::Btf(m) => m.def.key_size,
+            // struct_ops maps always have key_size of 4
+            Self::StructOps(_) => 4,
         }
     }
 
@@ -161,6 +168,8 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.value_size,
             Self::Btf(m) => m.def.value_size,
+            // For struct_ops, value_size is the size of the struct data
+            Self::StructOps(m) => m.data.len() as u32,
         }
     }
 
@@ -169,6 +178,8 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.value_size = size,
             Self::Btf(m) => m.def.value_size = size,
+            // struct_ops value_size is determined by the data, cannot be set
+            Self::StructOps(_) => {}
         }
     }
 
@@ -177,6 +188,8 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.max_entries,
             Self::Btf(m) => m.def.max_entries,
+            // struct_ops maps always have max_entries of 1
+            Self::StructOps(_) => 1,
         }
     }
 
@@ -185,6 +198,8 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.max_entries = v,
             Self::Btf(m) => m.def.max_entries = v,
+            // struct_ops max_entries is always 1, cannot be changed
+            Self::StructOps(_) => {}
         }
     }
 
@@ -193,6 +208,14 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.map_flags,
             Self::Btf(m) => m.def.map_flags,
+            // BPF_F_LINK (0x2000) is used for .struct_ops.link sections
+            Self::StructOps(m) => {
+                if m.is_link {
+                    0x2000 // BPF_F_LINK
+                } else {
+                    0
+                }
+            }
         }
     }
 
@@ -201,6 +224,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.pinning,
             Self::Btf(m) => m.def.pinning,
+            Self::StructOps(_) => PinningType::None,
         }
     }
 
@@ -209,6 +233,7 @@ impl Map {
         match self {
             Self::Legacy(m) => &m.data,
             Self::Btf(m) => &m.data,
+            Self::StructOps(m) => &m.data,
         }
     }
 
@@ -217,6 +242,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.data.as_mut(),
             Self::Btf(m) => m.data.as_mut(),
+            Self::StructOps(m) => m.data.as_mut(),
         }
     }
 
@@ -225,6 +251,7 @@ impl Map {
         match self {
             Self::Legacy(m) => m.section_index,
             Self::Btf(m) => m.section_index,
+            Self::StructOps(m) => m.section_index,
         }
     }
 
@@ -233,6 +260,13 @@ impl Map {
         match self {
             Self::Legacy(m) => m.section_kind,
             Self::Btf(_) => EbpfSectionKind::BtfMaps,
+            Self::StructOps(m) => {
+                if m.is_link {
+                    EbpfSectionKind::StructOpsLink
+                } else {
+                    EbpfSectionKind::StructOps
+                }
+            }
         }
     }
 
@@ -244,6 +278,18 @@ impl Map {
         match self {
             Self::Legacy(m) => m.symbol_index,
             Self::Btf(m) => Some(m.symbol_index),
+            Self::StructOps(m) => Some(m.symbol_index),
+        }
+    }
+
+    /// Returns the BTF value type ID for struct_ops maps.
+    ///
+    /// This is the type ID of the struct_ops type in the program's BTF.
+    pub fn btf_value_type_id(&self) -> Option<u32> {
+        match self {
+            Self::Legacy(_) => None,
+            Self::Btf(m) => Some(m.def.btf_value_type_id),
+            Self::StructOps(m) => Some(m.btf_type_id),
         }
     }
 }
@@ -278,4 +324,41 @@ pub struct BtfMap {
     pub(crate) section_index: usize,
     pub(crate) symbol_index: usize,
     pub(crate) data: Vec<u8>,
+}
+
+/// Information about a function pointer field in a struct_ops struct.
+#[derive(Debug, Clone)]
+pub struct StructOpsFuncInfo {
+    /// The name of the struct member (function pointer field)
+    pub member_name: alloc::string::String,
+    /// The offset of this member within the struct (in bytes)
+    pub member_offset: u32,
+    /// The name of the BPF program that implements this callback
+    pub prog_name: alloc::string::String,
+}
+
+/// A struct_ops map, defined in `.struct_ops` or `.struct_ops.link` sections.
+///
+/// Struct_ops maps are special BPF maps that allow implementing kernel subsystem
+/// callbacks (like tcp_congestion_ops, hid_bpf_ops, sched_ext_ops) in BPF programs.
+#[derive(Debug, Clone)]
+pub struct StructOpsMap {
+    /// The name of the struct_ops type (e.g., "hid_bpf_ops", "tcp_congestion_ops")
+    pub type_name: alloc::string::String,
+    /// BTF type ID of the struct_ops type
+    pub btf_type_id: u32,
+    /// The section index where this struct_ops was defined
+    pub section_index: usize,
+    /// The symbol index for this struct_ops variable
+    pub symbol_index: usize,
+    /// The struct instance data (will have program FDs filled in during loading)
+    pub data: Vec<u8>,
+    /// Whether this is a link-based struct_ops (from `.struct_ops.link` section)
+    pub is_link: bool,
+    /// Information about function pointer fields that need BPF programs
+    pub func_info: Vec<StructOpsFuncInfo>,
+    /// Byte offset of the `data` field within the kernel wrapper struct
+    /// (e.g., offset of `data` in `bpf_struct_ops_hid_bpf_ops`)
+    /// This offset must be added to all member offsets when writing to the struct.
+    pub data_offset: u32,
 }

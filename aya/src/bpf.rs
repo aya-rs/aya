@@ -26,7 +26,7 @@ use crate::{
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe,
         LircMode2, Lsm, LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError,
         RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter,
-        TracePoint, UProbe, Xdp,
+        StructOps, Syscall, TracePoint, UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -458,7 +458,11 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::Lsm { sleepable: _ }
                                 | ProgramSection::LsmCgroup
                                 | ProgramSection::BtfTracePoint
-                                | ProgramSection::Iter { sleepable: _ } => {
+                                | ProgramSection::Iter { sleepable: _ }
+                                | ProgramSection::StructOps {
+                                    sleepable: _,
+                                    member_name: _,
+                                } => {
                                     return Err(EbpfError::BtfError(err));
                                 }
                                 ProgramSection::KRetProbe
@@ -488,7 +492,8 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::SkLookup
                                 | ProgramSection::FlowDissector
                                 | ProgramSection::CgroupSock { attach_type: _ }
-                                | ProgramSection::CgroupDevice => {}
+                                | ProgramSection::CgroupDevice
+                                | ProgramSection::Syscall => {}
                             }
                         }
 
@@ -538,7 +543,38 @@ impl<'a> EbpfLoader<'a> {
                 obj.set_value_size(value_size)
             }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
-            let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
+
+            // Handle struct_ops maps specially - they need btf_vmlinux_value_type_id
+            let mut map = if let aya_obj::Map::StructOps(ref struct_ops_map) = obj {
+                // Look up the kernel BTF type for bpf_struct_ops_<type_name>
+                let vmlinux_btf = btf.as_deref().ok_or_else(|| {
+                    EbpfError::BtfError(aya_obj::btf::BtfError::UnknownBtfTypeName {
+                        type_name: format!(
+                            "bpf_struct_ops_{} (kernel BTF not available)",
+                            struct_ops_map.type_name
+                        ),
+                    })
+                })?;
+                let kernel_type_name = format!("bpf_struct_ops_{}", struct_ops_map.type_name);
+                let vmlinux_type_id = vmlinux_btf
+                    .id_by_type_name_kind(&kernel_type_name, aya_obj::btf::BtfKind::Struct)?;
+
+                // Get the kernel struct size - the kernel rejects maps with wrong value_size
+                let kernel_value_size = vmlinux_btf.type_size(vmlinux_type_id)? as u32;
+
+                // Get the offset of the 'data' field within the wrapper struct
+                // The actual struct_ops data is stored at this offset
+                let data_offset = vmlinux_btf.struct_member_byte_offset(vmlinux_type_id, "data")?;
+
+                MapData::create_struct_ops(
+                    obj,
+                    &name,
+                    btf_fd,
+                    vmlinux_type_id,
+                    kernel_value_size,
+                    data_offset,
+                )?
+            } else if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
                 MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd)?
             } else {
                 match obj.pinning() {
@@ -555,7 +591,11 @@ impl<'a> EbpfLoader<'a> {
                     }
                 }
             };
-            map.finalize()?;
+            // Don't finalize struct_ops maps - they need program FDs filled in first
+            // and will be registered later via StructOpsMap::register()
+            if !matches!(map.obj(), aya_obj::Map::StructOps(_)) {
+                map.finalize()?;
+            }
             maps.insert(name, map);
         }
 
@@ -570,7 +610,7 @@ impl<'a> EbpfLoader<'a> {
                 .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
             &text_sections,
         )?;
-        obj.relocate_calls(&text_sections)?;
+        obj.relocate_calls(&text_sections, btf.as_deref())?;
         obj.sanitize_functions(&FEATURES);
 
         let programs = obj
@@ -750,6 +790,23 @@ impl<'a> EbpfLoader<'a> {
                             }
                             Program::Iter(Iter { data })
                         }
+                        ProgramSection::StructOps {
+                            sleepable,
+                            member_name,
+                        } => {
+                            let mut data =
+                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
+                            if *sleepable {
+                                data.flags = BPF_F_SLEEPABLE;
+                            }
+                            Program::StructOps(StructOps {
+                                data,
+                                member_name: member_name.clone(),
+                            })
+                        }
+                        ProgramSection::Syscall => Program::Syscall(Syscall {
+                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
+                        }),
                     }
                 };
                 (name, program)
@@ -792,6 +849,7 @@ fn parse_map(
         BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
         BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
         BPF_MAP_TYPE_SK_STORAGE => Map::SkStorage(map),
+        BPF_MAP_TYPE_STRUCT_OPS => Map::StructOps(map),
         m_type => {
             if allow_unsupported_maps {
                 Map::Unsupported(map)
@@ -1170,6 +1228,172 @@ impl Ebpf {
     /// ```
     pub fn programs_mut(&mut self) -> impl Iterator<Item = (&str, &mut Program)> {
         self.programs.iter_mut().map(|(s, p)| (s.as_str(), p))
+    }
+
+    /// Loads struct_ops programs and fills their file descriptors into the corresponding maps.
+    ///
+    /// This method must be called before registering struct_ops maps. It:
+    /// 1. Loads all struct_ops programs
+    /// 2. Gets their file descriptors
+    /// 3. Writes the FDs to the correct offsets in the struct_ops map data
+    ///
+    /// After calling this method, you can register the struct_ops map using
+    /// [`StructOpsMap::register`](crate::maps::StructOpsMap::register).
+    ///
+    /// # Arguments
+    ///
+    /// * `btf` - The kernel BTF information, typically from `Btf::from_sys_fs()`
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::{Ebpf, Btf, maps::StructOpsMap};
+    ///
+    /// let mut bpf = Ebpf::load_file("my_struct_ops.o")?;
+    /// let btf = Btf::from_sys_fs()?;
+    /// bpf.load_struct_ops(&btf)?;
+    ///
+    /// let mut struct_ops: StructOpsMap<_> = bpf.take_map("my_ops").unwrap().try_into()?;
+    /// struct_ops.register()?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn load_struct_ops(&mut self, btf: &Btf) -> Result<(), EbpfError> {
+        use std::os::fd::{AsFd as _, AsRawFd as _};
+
+        use aya_obj::btf::BtfKind;
+
+        // Collect (map_name, struct_name, program_names) for each struct_ops map
+        let mut struct_ops_info: Vec<(String, String, Vec<String>)> = Vec::new();
+        for (map_name, map) in self.maps.iter() {
+            if let Map::StructOps(map_data) = map {
+                if let aya_obj::Map::StructOps(m) = map_data.obj() {
+                    let prog_names: Vec<String> =
+                        m.func_info.iter().map(|i| i.prog_name.clone()).collect();
+                    debug!(
+                        "struct_ops map '{map_name}' type='{}' prog_names={prog_names:?}",
+                        m.type_name
+                    );
+                    struct_ops_info.push((map_name.clone(), m.type_name.clone(), prog_names));
+                }
+            }
+        }
+
+        // If func_info is empty (no relocations), fall back to matching by member_name
+        // This happens with Rust BPF objects where function pointer fields can't create relocations
+        let mut fallback_matches: Vec<(String, String, String, u32)> = Vec::new(); // (map_name, struct_name, prog_name, member_offset)
+        for (map_name, struct_name, prog_names) in &struct_ops_info {
+            if prog_names.is_empty() {
+                debug!(
+                    "struct_ops map '{map_name}' has no func_info, using fallback matching by member_name"
+                );
+                // Get struct BTF type ID for member offset lookup
+                if let Ok(struct_type_id) = btf.id_by_type_name_kind(struct_name, BtfKind::Struct) {
+                    // Find all StructOps programs and match by member_name
+                    for (prog_name, prog) in self.programs.iter() {
+                        if let Program::StructOps(struct_ops) = prog {
+                            let member_name = struct_ops.member_name();
+                            if let Ok(member_offset) =
+                                btf.struct_member_byte_offset(struct_type_id, member_name)
+                            {
+                                debug!(
+                                    "fallback: matched program '{prog_name}' to member '{member_name}' at offset {member_offset}"
+                                );
+                                fallback_matches.push((
+                                    map_name.clone(),
+                                    struct_name.clone(),
+                                    prog_name.clone(),
+                                    member_offset,
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Load all struct_ops programs (from func_info)
+        for (_, struct_name, prog_names) in &struct_ops_info {
+            for prog_name in prog_names {
+                debug!("looking for struct_ops program '{prog_name}'");
+                if let Some(Program::StructOps(struct_ops)) = self.programs.get_mut(prog_name) {
+                    debug!("loading struct_ops program '{prog_name}' for struct '{struct_name}'");
+                    struct_ops.load(struct_name, btf)?;
+                } else {
+                    warn!("struct_ops program '{prog_name}' not found or not StructOps type");
+                }
+            }
+        }
+
+        // Load fallback-matched programs
+        for (_, struct_name, prog_name, _) in &fallback_matches {
+            if let Some(Program::StructOps(struct_ops)) = self.programs.get_mut(prog_name) {
+                debug!(
+                    "loading fallback struct_ops program '{prog_name}' for struct '{struct_name}'"
+                );
+                struct_ops.load(struct_name, btf)?;
+            }
+        }
+
+        // Fill program FDs into struct_ops maps
+        for (map_name, map) in self.maps.iter_mut() {
+            if let Map::StructOps(map_data) = map {
+                // Get the func_info and data_offset from the map's object
+                let (func_info, data_offset): (Vec<_>, u32) = {
+                    if let aya_obj::Map::StructOps(m) = map_data.obj() {
+                        (m.func_info.clone(), m.data_offset)
+                    } else {
+                        continue;
+                    }
+                };
+
+                debug!("struct_ops map '{map_name}' data_offset={data_offset}");
+
+                // Fill FDs from func_info (relocation-based)
+                for info in &func_info {
+                    let actual_offset = (data_offset + info.member_offset) as usize;
+                    if let Some(Program::StructOps(prog)) = self.programs.get(&info.prog_name) {
+                        let fd = prog.fd()?;
+                        let raw_fd = fd.as_fd().as_raw_fd();
+                        let member_offset = info.member_offset;
+                        let prog_name = &info.prog_name;
+                        debug!(
+                            "filling FD {raw_fd} for program '{prog_name}' at offset {actual_offset} (data_offset {data_offset} + member_offset {member_offset})"
+                        );
+                        let data = map_data.obj_mut().data_mut();
+                        if actual_offset + 4 <= data.len() {
+                            data[actual_offset..actual_offset + 4]
+                                .copy_from_slice(&raw_fd.to_ne_bytes());
+                        }
+                    } else {
+                        let prog_name = &info.prog_name;
+                        warn!("struct_ops program '{prog_name}' not found");
+                    }
+                }
+
+                // Fill FDs from fallback matches (section-name based)
+                if func_info.is_empty() {
+                    for (fallback_map, _, prog_name, member_offset) in &fallback_matches {
+                        if fallback_map == map_name {
+                            let actual_offset = (data_offset + member_offset) as usize;
+                            if let Some(Program::StructOps(prog)) = self.programs.get(prog_name) {
+                                let fd = prog.fd()?;
+                                let raw_fd = fd.as_fd().as_raw_fd();
+                                debug!(
+                                    "filling FD {raw_fd} for fallback program '{prog_name}' at offset {actual_offset} (data_offset {data_offset} + member_offset {member_offset})"
+                                );
+                                let data = map_data.obj_mut().data_mut();
+                                if actual_offset + 4 <= data.len() {
+                                    data[actual_offset..actual_offset + 4]
+                                        .copy_from_slice(&raw_fd.to_ne_bytes());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
     }
 }
 
