@@ -15,7 +15,7 @@ impl TracePointContext {
         clippy::missing_safety_doc,
         reason = "safety requirements come from the underlying helper"
     )]
-    pub unsafe fn read_at<T>(&self, offset: usize) -> Result<T, i64> {
+    pub unsafe fn read_at<T>(&self, offset: usize) -> Result<T, i32> {
         unsafe { bpf_probe_read_kernel(self.ctx.add(offset).cast()) }
     }
 }
