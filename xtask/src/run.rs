@@ -1,5 +1,6 @@
 use std::{
     collections::BTreeMap,
+    env,
     ffi::{OsStr, OsString},
     fmt::{Debug, Write as _},
     fs::{self, File, OpenOptions},
@@ -15,7 +16,7 @@ use anyhow::{Context as _, Result, anyhow, bail};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 use walkdir::WalkDir;
-use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors};
+use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors, libbpf_sys_env};
 
 const GEN_INIT_CPIO_PATCH: &str = include_str!("../patches/gen_init_cpio.c.macos.diff");
 
@@ -211,7 +212,7 @@ fn one<T: Debug>(slice: &[T]) -> Result<&T> {
 }
 
 /// Build and run the project.
-pub(crate) fn run(opts: Options) -> Result<()> {
+pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
     let Options {
         environment,
         package,
@@ -219,20 +220,31 @@ pub(crate) fn run(opts: Options) -> Result<()> {
     } = opts;
 
     type Binary = (String, PathBuf);
-    fn binaries(package: &str, target: Option<&str>) -> Result<Vec<(&'static str, Vec<Binary>)>> {
+
+    let binaries = |package: &str,
+                    target: Option<&str>,
+                    envs: &[(&OsStr, &OsStr)]|
+     -> Result<Vec<(&'static str, Vec<Binary>)>> {
         ["dev", "release"]
             .into_iter()
             .map(|profile| {
                 let binaries = build(target, |cmd| {
                     if package == "integration-test" {
                         cmd.env(AYA_BUILD_INTEGRATION_BPF, "true");
+                        libbpf_sys_env(workspace_root, cmd);
                     }
-                    cmd.args(["--package", package, "--tests", "--profile", profile])
+                    cmd.envs(envs.iter().copied()).args([
+                        "--package",
+                        package,
+                        "--tests",
+                        "--profile",
+                        profile,
+                    ])
                 })?;
                 anyhow::Ok((profile, binaries))
             })
             .collect()
-    }
+    };
 
     // Use --test-threads=1 to prevent tests from interacting with shared
     // kernel state due to the lack of inter-test isolation.
@@ -245,7 +257,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
             let runner = args.next().ok_or(anyhow!("no first argument"))?;
             let args = args.collect::<Vec<_>>();
 
-            let binaries = binaries(&package, None)?;
+            let binaries = binaries(&package, None, &[])?;
 
             let mut failures = String::new();
             for (profile, binaries) in binaries {
@@ -608,7 +620,38 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                     build(Some(&target), |cmd| cmd.args(test_distro_args))
                         .context("building test-distro package failed")?;
 
-                let binaries = binaries(&package, Some(&target))?;
+                // Set up cross compilation.
+                //
+                // See https://github.com/libbpf/libbpf-sys/issues/137.
+                const LIBBPF_SYS_EXTRA_CFLAGS: &str = "LIBBPF_SYS_EXTRA_CFLAGS";
+                let mut extra = OsString::new();
+                extra.push(format!(
+                    "-idirafter /usr/include/{guest_arch}-linux-gnu -idirafter /usr/include",
+                ));
+                if guest_arch == "aarch64" {
+                    extra.push(" -mno-outline-atomics");
+                }
+                if let Some(existing) = env::var_os(LIBBPF_SYS_EXTRA_CFLAGS) {
+                    extra.push(" ");
+                    extra.push(existing);
+                }
+
+                const RUSTFLAGS: &str = "RUSTFLAGS";
+                let mut rustflags = OsString::new();
+                rustflags.push("-Clink-arg=-latomic");
+                if let Some(existing) = env::var_os(RUSTFLAGS) {
+                    rustflags.push(" ");
+                    rustflags.push(existing);
+                }
+
+                let binaries = binaries(
+                    &package,
+                    Some(&target),
+                    &[
+                        (OsStr::new(LIBBPF_SYS_EXTRA_CFLAGS), &extra),
+                        (OsStr::new(RUSTFLAGS), &rustflags),
+                    ],
+                )?;
 
                 let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
 
