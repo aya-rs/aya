@@ -1,7 +1,6 @@
 use core::{borrow::Borrow, marker::PhantomData};
 
 use aya_ebpf_bindings::bindings::bpf_map_type;
-use aya_ebpf_cty::c_long;
 
 use crate::{
     insert, lookup,
@@ -69,12 +68,12 @@ macro_rules! define_hash_map {
                 key: impl Borrow<K>,
                 value: impl Borrow<V>,
                 flags: u64,
-            ) -> Result<(), c_long> {
+            ) -> Result<(), i32> {
                 insert(self.def.as_ptr(), key.borrow(), value.borrow(), flags)
             }
 
             #[inline]
-            pub fn remove(&self, key: impl Borrow<K>) -> Result<(), c_long> {
+            pub fn remove(&self, key: impl Borrow<K>) -> Result<(), i32> {
                 remove(self.def.as_ptr(), key.borrow())
             }
         }
