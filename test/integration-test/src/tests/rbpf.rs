@@ -1,4 +1,4 @@
-use core::{mem::size_of, ptr, slice::from_raw_parts};
+use core::{ptr, slice::from_raw_parts};
 use std::collections::HashMap;
 
 use assert_matches::assert_matches;
@@ -17,11 +17,7 @@ fn run_with_rbpf() {
         }
     );
 
-    let instructions = &object
-        .functions
-        .get(&object.programs["pass"].function_key())
-        .unwrap()
-        .instructions;
+    let instructions = &object.functions[&object.programs["pass"].function_key()].instructions;
     let data = unsafe {
         from_raw_parts(
             instructions.as_ptr().cast(),
@@ -55,7 +51,7 @@ fn use_map_with_rbpf() {
     unsafe {
         MULTIMAP_MAPS = [ptr::null_mut(); 3];
     }
-    for (name, map) in object.maps.iter() {
+    for (name, map) in &object.maps {
         assert_eq!(map.key_size(), size_of::<u32>() as u32);
         assert_eq!(map.value_size(), size_of::<u64>() as u32);
         assert_eq!(
@@ -85,8 +81,7 @@ fn use_map_with_rbpf() {
         .collect();
     object
         .relocate_maps(
-            maps.iter()
-                .map(|(s, (fd, map))| (s.as_ref() as &str, *fd, map)),
+            maps.iter().map(|(s, (fd, map))| (s.as_ref(), *fd, map)),
             &text_sections,
         )
         .expect("Relocation failed");
@@ -95,11 +90,7 @@ fn use_map_with_rbpf() {
 
     // Executes the program
     assert_eq!(object.programs.len(), 1);
-    let instructions = &object
-        .functions
-        .get(&object.programs["bpf_prog"].function_key())
-        .unwrap()
-        .instructions;
+    let instructions = &object.functions[&object.programs["bpf_prog"].function_key()].instructions;
     let data = unsafe {
         from_raw_parts(
             instructions.as_ptr().cast(),

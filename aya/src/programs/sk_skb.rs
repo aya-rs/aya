@@ -84,7 +84,7 @@ impl SkSkb {
 
     /// Attaches the program to the given socket map.
     ///
-    /// The returned value can be used to detach, see [SkSkb::detach].
+    /// The returned value can be used to detach, see [`SkSkb::detach`].
     pub fn attach(&mut self, map: &SockMapFd) -> Result<SkSkbLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();

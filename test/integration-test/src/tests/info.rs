@@ -47,7 +47,7 @@ fn test_loaded_programs() {
     }
 
     // Loaded programs should contain our test program
-    let mut programs = programs.filter_map(|prog| prog.ok());
+    let mut programs = programs.filter_map(Result::ok);
     kernel_assert!(
         programs.any(|prog| prog.id() == test_prog.id()),
         KernelVersion::new(4, 13, 0)
@@ -55,7 +55,7 @@ fn test_loaded_programs() {
 
     // Use loaded programs to find our test program and exercise `from_program_info()`.
     let info = loaded_programs()
-        .filter_map(|prog| prog.ok())
+        .filter_map(Result::ok)
         .find(|prog| prog.id() == test_prog.id())
         .unwrap();
 
@@ -153,12 +153,9 @@ fn test_loaded_at() {
         prog.load().unwrap();
 
         let t2 = SystemTime::now();
-        let loaded_at = match prog.info().unwrap().loaded_at() {
-            Some(time) => time,
-            None => {
-                eprintln!("skipping test - `bpf_prog_info.load_time` field not supported");
-                return;
-            }
+        let Some(loaded_at) = prog.info().unwrap().loaded_at() else {
+            eprintln!("skipping test - `bpf_prog_info.load_time` field not supported");
+            return;
         };
         prog.unload().unwrap();
 
@@ -240,7 +237,7 @@ fn list_loaded_maps() {
     }
 
     // Loaded maps should contain our test maps
-    let maps: Vec<_> = maps.filter_map(|m| m.ok()).collect();
+    let maps: Vec<_> = maps.filter_map(Result::ok).collect();
     if let Ok(info) = &prog.info() {
         if let Some(map_ids) = info.map_ids().unwrap() {
             assert_eq!(2, map_ids.len());

@@ -56,13 +56,13 @@ impl RingBufBytes<'_> {
     /// Commit this ring buffer entry. The entry will be made visible to the userspace reader.
     pub fn submit(self, flags: u64) {
         let Self(inner) = self;
-        unsafe { bpf_ringbuf_submit(inner.as_mut_ptr().cast(), flags) };
+        unsafe { bpf_ringbuf_submit(inner.as_mut_ptr().cast(), flags) }
     }
 
     /// Discard this ring buffer entry. The entry will be skipped by the userspace reader.
     pub fn discard(self, flags: u64) {
         let Self(inner) = self;
-        unsafe { bpf_ringbuf_discard(inner.as_mut_ptr().cast(), flags) };
+        unsafe { bpf_ringbuf_discard(inner.as_mut_ptr().cast(), flags) }
     }
 }
 
@@ -99,13 +99,13 @@ impl<T> RingBufEntry<T> {
     /// Discard this ring buffer entry. The entry will be skipped by the userspace reader.
     pub fn discard(self, flags: u64) {
         let Self(inner) = self;
-        unsafe { bpf_ringbuf_discard(inner.as_mut_ptr().cast(), flags) };
+        unsafe { bpf_ringbuf_discard(inner.as_mut_ptr().cast(), flags) }
     }
 
     /// Commit this ring buffer entry. The entry will be made visible to the userspace reader.
     pub fn submit(self, flags: u64) {
         let Self(inner) = self;
-        unsafe { bpf_ringbuf_submit(inner.as_mut_ptr().cast(), flags) };
+        unsafe { bpf_ringbuf_submit(inner.as_mut_ptr().cast(), flags) }
     }
 }
 
@@ -162,7 +162,7 @@ impl RingBuf {
     ///
     /// The kernel will reserve memory at an 8-bytes aligned boundary, so `mem::align_of<T>()` must
     /// be equal or smaller than 8. If you use this with a `T` that isn't properly aligned, this
-    /// function will be compiled to a panic; depending on your panic_handler, this may make
+    /// function will be compiled to a panic; depending on your `panic_handler`, this may make
     /// the eBPF program fail to load, or it may make it have undefined behavior.
     #[cfg(not(generic_const_exprs))]
     pub fn reserve<T: 'static>(&self, flags: u64) -> Option<RingBufEntry<T>> {

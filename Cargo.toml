@@ -116,44 +116,254 @@ xz2 = { version = "0.1.7", default-features = false }
 
 [workspace.lints.clippy]
 all = "warn"
+cargo = "warn"
+pedantic = "warn"
+
+cast_possible_truncation = { level = "allow", priority = 1 }
+cast_possible_wrap = { level = "allow", priority = 1 }
+cast_sign_loss = { level = "allow", priority = 1 }
+default_trait_access = { level = "allow", priority = 1 }
+inline_always = { level = "allow", priority = 1 }
+items_after_statements = { level = "allow", priority = 1 }
+len_without_is_empty = { level = "allow", priority = 1 }
+match_same_arms = { level = "allow", priority = 1 }
+missing_errors_doc = { level = "allow", priority = 1 }
+missing_panics_doc = { level = "allow", priority = 1 }
+must_use_candidate = { level = "allow", priority = 1 }
+needless_pass_by_value = { level = "allow", priority = 1 }
+semicolon_if_nothing_returned = { level = "allow", priority = 1 }
+similar_names = { level = "allow", priority = 1 }
+struct_excessive_bools = { level = "allow", priority = 1 }
+too_many_lines = { level = "allow", priority = 1 }
+transmute_ptr_to_ptr = { level = "allow", priority = 1 }
+unreadable_literal = { level = "allow", priority = 1 }
+
+cargo_common_metadata = { level = "allow", priority = 1 }
+multiple_crate_versions = { level = "allow", priority = 1 }
+
+# absolute_paths = "warn" # Maybe someday.
+alloc_instead_of_core = "warn"
+allow_attributes = "warn"
+allow_attributes_without_reason = "warn"
+# arbitrary_source_item_ordering = "warn" # Maybe someday.
+# arithmetic_side_effects = "warn" # Maybe someday.
+# as_conversions = "warn" # We should make this warn.
+as_pointer_underscore = "warn"
 as_ptr_cast_mut = "warn"
 as_underscore = "warn"
-cast_lossless = "warn"
-#cast_possible_truncation = "warn"
-#cast_possible_wrap = "warn"
-cast_precision_loss = "warn"
-#cast_sign_loss = "warn"
-char_lit_as_u8 = "warn"
-fn_to_numeric_cast = "warn"
-fn_to_numeric_cast_with_truncation = "warn"
-mut_mut = "warn"
-needless_bitwise_bool = "warn"
-needless_lifetimes = "warn"
-no_mangle_with_rust_abi = "warn"
-ptr_as_ptr = "warn"
-ptr_cast_constness = "warn"
-ref_as_ptr = "warn"
-unnecessary_cast = "warn"
+assertions_on_result_states = "warn"
+big_endian_bytes = "warn"
+branches_sharing_code = "warn"
+# cfg_not_test = "warn" # Never.
+clear_with_drain = "warn"
+clone_on_ref_ptr = "warn"
+coerce_container_to_any = "warn"
+# cognitive_complexity = "warn" # Never.
+collection_is_never_read = "warn"
+# create_dir = "warn" # Never.
+dbg_macro = "warn"
+debug_assert_with_mut_call = "warn"
+# decimal_literal_representation = "warn" # Maybe someday.
+# default_numeric_fallback = "warn" # Never.
+default_union_representation = "warn"
+deref_by_slicing = "warn"
+derive_partial_eq_without_eq = "warn"
+disallowed_script_idents = "warn"
+doc_include_without_cfg = "warn"
+doc_link_code = "warn"
+# else_if_without_else = "warn" # Maybe someday.
+empty_drop = "warn"
+empty_enum_variants_with_brackets = "warn"
+empty_structs_with_brackets = "warn"
+equatable_if_let = "warn"
+# error_impl_error = "warn" # Don't care.
+# exhaustive_enums = "warn" # Don't care.
+# exhaustive_structs = "warn" # Don't care.
+exit = "warn"
+# expect_used = "warn" # Maybe someday.
+fallible_impl_from = "warn"
+# field_scoped_visibility_modifiers = "warn" # Maybe someday.
+filetype_is_file = "warn"
+float_arithmetic = "warn"
+float_cmp_const = "warn"
+fn_to_numeric_cast_any = "warn"
+future_not_send = "warn"
+get_unwrap = "warn"
+# host_endian_bytes = "warn" # Never.
+if_then_some_else_none = "warn"
+# impl_trait_in_params = "warn" # Don't care.
+# implicit_return = "warn" # Never.
+imprecise_flops = "warn"
+# indexing_slicing = "warn" # Maybe someday.
+infinite_loop = "warn"
+inline_asm_x86_att_syntax = "warn"
+inline_asm_x86_intel_syntax = "warn"
+# integer_division = "warn" # Probably never.
+# integer_division_remainder_used = "warn" # Never.
+iter_on_empty_collections = "warn"
+iter_on_single_items = "warn"
+# iter_over_hash_type = "warn" # Never.
+iter_with_drain = "warn"
+large_include_file = "warn"
+large_stack_frames = "warn"
+let_underscore_must_use = "warn"
+let_underscore_untyped = "warn"
+literal_string_with_formatting_args = "warn"
+little_endian_bytes = "warn"
+lossy_float_literal = "warn"
+map_err_ignore = "warn"
+map_with_unused_argument_over_ranges = "warn"
+mem_forget = "warn"
+# min_ident_chars = "warn" # Maybe someday.
+# missing_assert_message = "warn" # Probably never.
+missing_asserts_for_indexing = "warn"
+missing_const_for_fn = "warn"
+# missing_docs_in_private_items = "warn" # Maybe someday.
+# missing_inline_in_public_items = "warn" # Maybe someday.
+# missing_trait_methods = "warn" # Probably never.
+mixed_read_write_in_expression = "warn"
+# mod_module_files = "warn" # Never. Mutually exclusive with self_named_module_files.
+# module_name_repetitions = "warn" # Maybe someday.
+modulo_arithmetic = "warn"
+# multiple_inherent_impl = "warn" # Don't care.
+# multiple_unsafe_ops_per_block = "warn" # Maybe someday.
+mutex_atomic = "warn"
+mutex_integer = "warn"
+needless_collect = "warn"
+needless_pass_by_ref_mut = "warn"
+needless_raw_strings = "warn"
+non_ascii_literal = "warn"
+non_send_fields_in_send_ty = "warn"
+non_zero_suggestions = "warn"
+nonstandard_macro_braces = "warn"
+# option_if_let_else = "warn" # Never.
+or_fun_call = "warn"
+panic = "warn"
+# panic_in_result_fn = "warn" # Maybe someday.
+# partial_pub_fields = "warn" # Never.
+path_buf_push_overwrite = "warn"
+pathbuf_init_then_push = "warn"
+# pattern_type_mismatch = "warn" # Never. The ergonomics are terrible.
+pointer_format = "warn"
+precedence_bits = "warn"
+print_stderr = "warn"
+print_stdout = "warn"
+# pub_use = "warn" # Never.
+# pub_with_shorthand = "warn" # Never.
+pub_without_shorthand = "warn"
+# question_mark_used = "warn" # Never.
+rc_buffer = "warn"
+rc_mutex = "warn"
+read_zero_byte_vec = "warn"
+redundant_clone = "warn"
+# redundant_pub_crate = "warn" # Never. This is mutually exclusive with unreachable_pub.
+# redundant_test_prefix = "warn" # Maybe someday.
+redundant_type_annotations = "warn"
+ref_patterns = "warn"
+renamed_function_params = "warn"
+rest_pat_in_fully_bound_structs = "warn"
+return_and_then = "warn"
+# same_name_method = "warn" # Maybe someday.
+self_named_module_files = "warn"
+semicolon_inside_block = "warn"
+# semicolon_outside_block = "warn" # Never.
+separated_literal_suffix = "warn"
+set_contains_or_insert = "warn"
+# shadow_reuse = "warn" # Never.
+# shadow_same = "warn" # Never.
+# shadow_unrelated = "warn" # Never.
+significant_drop_in_scrutinee = "warn"
+significant_drop_tightening = "warn"
+# single_call_fn = "warn" # Maybe someday.
+# single_char_lifetime_names = "warn" # Maybe someday.
+single_option_map = "warn"
+# std_instead_of_alloc = "warn" # Maybe someday.
+# std_instead_of_core = "warn" # Maybe someday.
+# str_to_string = "warn" # Maybe someday.
+string_add = "warn"
+string_lit_as_bytes = "warn"
+string_lit_chars_any = "warn"
+# string_slice = "warn" # Maybe someday.
+suboptimal_flops = "warn"
+suspicious_operation_groupings = "warn"
+suspicious_xor_used_as_pow = "warn"
+tests_outside_test_module = "warn"
+todo = "warn"
+too_long_first_doc_paragraph = "warn"
+trailing_empty_array = "warn"
+trait_duplication_in_bounds = "warn"
+transmute_undefined_repr = "warn"
+trivial_regex = "warn"
+try_err = "warn"
+tuple_array_conversions = "warn"
+type_repetition_in_bounds = "warn"
+# undocumented_unsafe_blocks = "warn" # Maybe someday.
+unimplemented = "warn"
+uninhabited_references = "warn"
+unnecessary_safety_comment = "warn"
+unnecessary_safety_doc = "warn"
+unnecessary_self_imports = "warn"
+unnecessary_struct_initialization = "warn"
+# unneeded_field_pattern = "warn" # Never. Exhaustive is good.
+unreachable = "warn"
+# unseparated_literal_suffix = "warn" # Never. Mutually exclusive with separated_literal_suffix.
+unused_peekable = "warn"
+unused_result_ok = "warn"
+unused_rounding = "warn"
 unused_trait_names = "warn"
+# unwrap_in_result = "warn" # Maybe someday.
+# unwrap_used = "warn" # Maybe someday.
+use_debug = "warn"
 use_self = "warn"
+useless_let_if_seq = "warn"
+verbose_file_reads = "warn"
+volatile_composites = "warn"
+while_float = "warn"
+# wildcard_enum_match_arm = "warn" # Maybe someday.
 
 [workspace.lints.rust]
 absolute_paths_not_starting_with_crate = "warn"
-deprecated_in_future = "warn"
+ambiguous_negative_literals = "warn"
+closure_returning_async_block = "warn"
+deprecated_safe_2024 = "warn"
+deref_into_dyn_supertrait = "warn"
+edition_2024_expr_fragment_specifier = "warn"
 elided_lifetimes_in_paths = "warn"
 explicit_outlives_requirements = "warn"
 ffi_unwind_calls = "warn"
+if_let_rescope = "warn"
+impl_trait_overcaptures = "warn"
+impl_trait_redundant_captures = "warn"
 keyword_idents = "warn"
-#let_underscore_drop = "warn"
+keyword_idents_2018 = "warn"
+keyword_idents_2024 = "warn"
+let_underscore_drop = "warn"
+linker_messages = "warn"
 macro_use_extern_crate = "warn"
 meta_variable_misuse = "warn"
-missing_abi = "warn"
-#missing_copy_implementations = "warn"
+# missing_copy_implementations = "warn" # Never.
+# missing_debug_implementations = "warn" # Never.
+# missing_docs = "warn" # Maybe someday.
+missing_unsafe_on_extern = "warn"
 non_ascii_idents = "warn"
-noop_method_call = "warn"
+redundant_imports = "warn"
+redundant_lifetimes = "warn"
+rust_2021_incompatible_closure_captures = "warn"
+rust_2021_incompatible_or_patterns = "warn"
+rust_2021_prefixes_incompatible_syntax = "warn"
+rust_2021_prelude_collisions = "warn"
+rust_2024_guarded_string_incompatible_syntax = "warn"
+rust_2024_incompatible_pat = "warn"
+rust_2024_prelude_collisions = "warn"
 single_use_lifetimes = "warn"
+tail_expr_drop_order = "warn"
+trivial_casts = "warn"
 trivial_numeric_casts = "warn"
+unit_bindings = "warn"
+unnameable_types = "warn"
 unreachable_pub = "warn"
+unsafe_attr_outside_unsafe = "warn"
+# unsafe_code = "warn" # Maybe someday. (lol)
 unsafe_op_in_unsafe_fn = "warn"
 unstable_features = "warn"
 unused_crate_dependencies = "warn"
@@ -162,4 +372,5 @@ unused_import_braces = "warn"
 unused_lifetimes = "warn"
 unused_macro_rules = "warn"
 unused_qualifications = "warn"
-#unused_results = "warn"
+# unused_results = "warn" # We should make this warn.
+# variant_size_differences = "warn" # Never.

@@ -44,7 +44,7 @@ impl<T> SkStorage<T> {
 
     /// Gets a mutable reference to the value associated with `sk`.
     ///
-    /// If no value is associated with `sk`, `value` will be inserted.`
+    /// If no value is associated with `sk`, `value` will be inserted.
     ///
     /// # Safety
     ///

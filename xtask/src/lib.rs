@@ -17,7 +17,7 @@ pub fn exec(cmd: &mut Command) -> Result<()> {
     Ok(())
 }
 
-/// Returns a [`Command`]` that Installs the libbpf headers files from the `source_dir` to the
+/// Returns a [`Command`] that Installs the libbpf headers files from the `source_dir` to the
 /// `headers_dir`.
 pub fn install_libbpf_headers_cmd(
     source_dir: impl AsRef<Path>,
@@ -39,7 +39,7 @@ pub fn install_libbpf_headers_cmd(
 pub struct Errors<E>(Vec<E>);
 
 impl<E> Errors<E> {
-    pub fn new(errors: Vec<E>) -> Self {
+    pub const fn new(errors: Vec<E>) -> Self {
         Self(errors)
     }
 }
@@ -54,6 +54,10 @@ where
             if i != 0 {
                 writeln!(f)?;
             }
+            #[expect(
+                clippy::use_debug,
+                reason = "<anyhow::Error as Display> does not show backtrace"
+            )]
             write!(f, "{error:?}")?;
         }
         Ok(())

@@ -82,7 +82,7 @@ impl SkMsg {
 
     /// Attaches the program to the given sockmap.
     ///
-    /// The returned value can be used to detach, see [SkMsg::detach].
+    /// The returned value can be used to detach, see [`SkMsg::detach`].
     pub fn attach(&mut self, map: &SockMapFd) -> Result<SkMsgLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();

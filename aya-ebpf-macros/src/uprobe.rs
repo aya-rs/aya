@@ -52,10 +52,10 @@ impl UProbe {
         args.into_error()?;
         Ok(Self {
             kind,
-            item,
             path,
             function,
             offset,
+            item,
             sleepable,
         })
     }
@@ -86,7 +86,7 @@ impl UProbe {
                 // TODO: check this in parse instead.
                 let function = function
                     .as_deref()
-                    .ok_or(item.sig.span().error("expected `function` attribute"))?;
+                    .ok_or_else(|| item.sig.span().error("expected `function` attribute"))?;
                 match offset {
                     None => format!("{prefix}/{path}:{function}").into(),
                     Some(offset) => format!("{prefix}/{path}:{function}+{offset}").into(),

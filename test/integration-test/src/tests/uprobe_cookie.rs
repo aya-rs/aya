@@ -6,6 +6,10 @@ use aya::{
 };
 
 #[test_log::test]
+#[expect(
+    clippy::little_endian_bytes,
+    reason = "the eBPF program writes the cookie as little-endian bytes"
+)]
 fn test_uprobe_cookie() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 15, 0) {

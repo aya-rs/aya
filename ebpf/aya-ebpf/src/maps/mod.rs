@@ -36,7 +36,7 @@ pub(crate) mod def {
             }))
         }
 
-        pub(crate) fn as_ptr(&self) -> *mut c_void {
+        pub(crate) const fn as_ptr(&self) -> *mut c_void {
             self.0.get().cast()
         }
     }

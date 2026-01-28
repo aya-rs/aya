@@ -61,7 +61,6 @@ impl<T: Borrow<MapData>> DevMap<T> {
     /// Returns the number of elements in the array.
     ///
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
-    #[expect(clippy::len_without_is_empty)]
     pub fn len(&self) -> u32 {
         self.inner.borrow().obj.max_entries()
     }
@@ -178,6 +177,10 @@ impl<T: Borrow<MapData>> IterableMap<u32, DevMapValue> for DevMap<T> {
 unsafe impl Pod for bpf_devmap_val {}
 
 #[derive(Clone, Copy, Debug)]
+#[expect(
+    unnameable_types,
+    reason = "this value type is exposed via the map API, not by path"
+)]
 /// The value of a device map.
 pub struct DevMapValue {
     /// Target interface index to redirect to.

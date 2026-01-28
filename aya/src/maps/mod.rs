@@ -122,7 +122,7 @@ pub enum MapError {
         /// Map name
         name: String,
         #[source]
-        /// Original io::Error
+        /// Original [`io::Error`]
         io_error: io::Error,
     },
 
@@ -213,7 +213,7 @@ pub struct MapFd {
 }
 
 impl MapFd {
-    fn from_fd(fd: crate::MockableFd) -> Self {
+    const fn from_fd(fd: crate::MockableFd) -> Self {
         Self { fd }
     }
 
@@ -282,7 +282,7 @@ pub enum Map {
 
 impl Map {
     /// Returns the low level map type.
-    fn map_type(&self) -> u32 {
+    const fn map_type(&self) -> u32 {
         match self {
             Self::Array(map) => map.obj.map_type(),
             Self::BloomFilter(map) => map.obj.map_type(),
@@ -526,7 +526,7 @@ impl_try_from_map!((K, V) {
     PerCpuHashMap from PerCpuHashMap|PerCpuLruHashMap,
 });
 
-pub(crate) fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
+pub(crate) const fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
     let max_entries = map.obj.max_entries();
     if index >= max_entries {
         Err(MapError::OutOfBounds { index, max_entries })
@@ -535,7 +535,7 @@ pub(crate) fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
     }
 }
 
-pub(crate) fn check_kv_size<K, V>(map: &MapData) -> Result<(), MapError> {
+pub(crate) const fn check_kv_size<K, V>(map: &MapData) -> Result<(), MapError> {
     let size = size_of::<K>();
     let expected = map.obj.key_size() as usize;
     if size != expected {
@@ -545,16 +545,16 @@ pub(crate) fn check_kv_size<K, V>(map: &MapData) -> Result<(), MapError> {
     let expected = map.obj.value_size() as usize;
     if size != expected {
         return Err(MapError::InvalidValueSize { size, expected });
-    };
+    }
     Ok(())
 }
 
-pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
+pub(crate) const fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
     let size = size_of::<V>();
     let expected = map.obj.value_size() as usize;
     if size != expected {
         return Err(MapError::InvalidValueSize { size, expected });
-    };
+    }
     Ok(())
 }
 
@@ -593,7 +593,7 @@ impl MapData {
             if obj.max_entries() == 0 || obj.max_entries() > nr_cpus {
                 obj.set_max_entries(nr_cpus);
             }
-        };
+        }
 
         let fd =
             bpf_create_map(&c_name, &obj, btf_fd).map_err(|io_error| MapError::CreateError {
@@ -628,22 +628,18 @@ impl MapData {
                 });
             }
         };
-        match bpf_get_object(&path_string).map_err(|io_error| SyscallError {
-            call: "BPF_OBJ_GET",
-            io_error,
-        }) {
-            Ok(fd) => Ok(Self {
+        if let Ok(fd) = bpf_get_object(&path_string) {
+            Ok(Self {
                 obj,
                 fd: MapFd::from_fd(fd),
-            }),
-            Err(_) => {
-                let map = Self::create(obj, name, btf_fd)?;
-                map.pin(path).map_err(|error| MapError::PinError {
-                    name: Some(name.into()),
-                    error,
-                })?;
-                Ok(map)
-            }
+            })
+        } else {
+            let map = Self::create(obj, name, btf_fd)?;
+            map.pin(path).map_err(|error| MapError::PinError {
+                name: Some(name.into()),
+                error,
+            })?;
+            Ok(map)
         }
     }
 
@@ -757,12 +753,12 @@ impl MapData {
     }
 
     /// Returns the file descriptor of the map.
-    pub fn fd(&self) -> &MapFd {
+    pub const fn fd(&self) -> &MapFd {
         let Self { obj: _, fd } = self;
         fd
     }
 
-    pub(crate) fn obj(&self) -> &aya_obj::Map {
+    pub(crate) const fn obj(&self) -> &aya_obj::Map {
         let Self { obj, fd: _ } = self;
         obj
     }
@@ -790,7 +786,7 @@ pub struct MapKeys<'coll, K: Pod> {
 }
 
 impl<'coll, K: Pod> MapKeys<'coll, K> {
-    fn new(map: &'coll MapData) -> Self {
+    const fn new(map: &'coll MapData) -> Self {
         Self {
             map,
             err: false,
@@ -850,7 +846,7 @@ impl<K: Pod, V, I: IterableMap<K, V>> Iterator for MapIter<'_, K, V, I> {
             match self.keys.next() {
                 Some(Ok(key)) => match self.map.get(&key) {
                     Ok(value) => return Some(Ok((key, value))),
-                    Err(MapError::KeyNotFound) => continue,
+                    Err(MapError::KeyNotFound) => {}
                     Err(e) => return Some(Err(e)),
                 },
                 Some(Err(e)) => return Some(Err(e)),
@@ -865,7 +861,7 @@ pub(crate) struct PerCpuKernelMem {
 }
 
 impl PerCpuKernelMem {
-    pub(crate) fn as_mut_ptr(&mut self) -> *mut u8 {
+    pub(crate) const fn as_mut_ptr(&mut self) -> *mut u8 {
         self.bytes.as_mut_ptr()
     }
 }
@@ -944,7 +940,7 @@ impl<T: Pod> PerCpuValues<T> {
         let mem_ptr = mem.as_mut_ptr();
         let value_size = size_of::<T>().next_multiple_of(8);
         for (i, value) in self.values.iter().enumerate() {
-            unsafe { ptr::write_unaligned(mem_ptr.byte_add(i * value_size).cast(), *value) };
+            unsafe { ptr::write_unaligned(mem_ptr.byte_add(i * value_size).cast(), *value) }
         }
 
         Ok(mem)
@@ -1025,7 +1021,7 @@ mod tests {
     use std::{ffi::c_char, os::fd::AsRawFd as _};
 
     use assert_matches::assert_matches;
-    use aya_obj::generated::{bpf_cmd, bpf_map_info, bpf_map_type};
+    use aya_obj::generated::{bpf_cmd, bpf_map_info};
     use libc::EFAULT;
 
     use super::*;

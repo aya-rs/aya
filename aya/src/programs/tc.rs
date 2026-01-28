@@ -113,24 +113,24 @@ pub enum TcError {
 }
 
 impl TcAttachType {
-    pub(crate) fn tc_parent(&self) -> u32 {
+    pub(crate) const fn tc_parent(self) -> u32 {
         match self {
-            Self::Custom(parent) => *parent,
+            Self::Custom(parent) => parent,
             Self::Ingress => tc_handler_make(TC_H_CLSACT, TC_H_MIN_INGRESS),
             Self::Egress => tc_handler_make(TC_H_CLSACT, TC_H_MIN_EGRESS),
         }
     }
 
-    pub(crate) fn tcx_attach_type(&self) -> Result<bpf_attach_type, TcError> {
+    pub(crate) const fn tcx_attach_type(self) -> Result<bpf_attach_type, TcError> {
         match self {
             Self::Ingress => Ok(BPF_TCX_INGRESS),
             Self::Egress => Ok(BPF_TCX_EGRESS),
-            Self::Custom(tcx_attach_type) => Err(TcError::InvalidTcxAttach(*tcx_attach_type)),
+            Self::Custom(tcx_attach_type) => Err(TcError::InvalidTcxAttach(tcx_attach_type)),
         }
     }
 }
 
-/// Options for a SchedClassifier attach operation.
+/// Options for a [`SchedClassifier`] attach operation.
 ///
 /// The options vary based on what is supported by the current kernel. Kernels
 /// older than 6.6.0 must utilize netlink for attachments, while newer kernels
@@ -144,7 +144,7 @@ pub enum TcAttachOptions {
     TcxOrder(LinkOrder),
 }
 
-/// Options for SchedClassifier attach via netlink.
+/// Options for [`SchedClassifier`] attach via netlink.
 #[derive(Debug, Default, Hash, Eq, PartialEq)]
 pub struct NlOptions {
     /// Priority assigned to tc program with lower number = higher priority.
@@ -172,7 +172,7 @@ impl SchedClassifier {
     ///
     /// For finer grained control over link ordering use [`SchedClassifier::attach_with_options`].
     ///
-    /// The returned value can be used to detach, see [SchedClassifier::detach].
+    /// The returned value can be used to detach, see [`SchedClassifier::detach`].
     ///
     /// # Errors
     ///
@@ -203,7 +203,7 @@ impl SchedClassifier {
 
     /// Attaches the program to the given `interface` with options defined in [`TcAttachOptions`].
     ///
-    /// The returned value can be used to detach, see [SchedClassifier::detach].
+    /// The returned value can be used to detach, see [`SchedClassifier::detach`].
     ///
     /// # Link Pinning (TCX mode, kernel >= 6.6)
     ///
@@ -435,7 +435,7 @@ impl Link for NlLink {
         unsafe {
             netlink_qdisc_detach(
                 self.if_index as i32,
-                &self.attach_type,
+                self.attach_type,
                 self.priority,
                 self.handle,
             )
@@ -516,7 +516,7 @@ define_link_wrapper!(
 impl SchedClassifierLink {
     /// Constructs a [`SchedClassifierLink`] where the `if_name`, `attach_type`,
     /// `priority` and `handle` are already known. This may have been found from a link created by
-    /// [SchedClassifier::attach], the output of the `tc filter` command or from the output of
+    /// [`SchedClassifier::attach`], the output of the `tc filter` command or from the output of
     /// another BPF loader.
     ///
     /// Note: If you create a link for a program that you do not own, detaching it may have
@@ -614,8 +614,8 @@ pub fn qdisc_detach_program(
 }
 
 /// Detaches the programs with the given name as a C string.
-/// Unlike qdisc_detach_program, this function does not allocate an additional
-/// CString to.
+/// Unlike [`qdisc_detach_program`], this function does not allocate an additional
+/// [`CString`] to store the name.
 ///
 /// # Errors
 ///
@@ -638,7 +638,7 @@ fn qdisc_detach_program_fast(
     }
 
     for (prio, handle) in filter_info {
-        unsafe { netlink_qdisc_detach(if_index, &attach_type, prio, handle)? };
+        unsafe { netlink_qdisc_detach(if_index, attach_type, prio, handle)? }
     }
 
     Ok(())

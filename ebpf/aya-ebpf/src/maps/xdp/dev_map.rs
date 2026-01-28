@@ -120,6 +120,10 @@ impl DevMap {
 }
 
 #[derive(Clone, Copy)]
+#[expect(
+    unnameable_types,
+    reason = "this value type is exposed via the map API, not by path"
+)]
 /// The value of a device map.
 pub struct DevMapValue {
     /// Target interface index to redirect to.

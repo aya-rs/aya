@@ -81,8 +81,8 @@ use crate::{
 ///
 /// # Polling
 ///
-/// In the example above the implementations of poll(), poll.readable(), guard.inner_mut(), and
-/// guard.clear_ready() are not given. RingBuf implements [`AsRawFd`], so you can implement polling
+/// In the example above the implementations of `poll()`, `poll.readable()`, `guard.inner_mut()`, and
+/// `guard.clear_ready()` are not given. `RingBuf` implements [`AsRawFd`], so you can implement polling
 /// using any crate that can poll file descriptors, like epoll, mio etc. The above example API is
 /// motivated by that of [`tokio::io::unix::AsyncFd`].
 ///
@@ -116,13 +116,16 @@ impl<T> RingBuf<T> {
     ///
     /// Returns `Some(item)` if the ringbuf is not empty. Returns `None` if the ringbuf is empty, in
     /// which case the caller may register for availability notifications through `epoll` or other
-    /// APIs. Only one RingBufItem may be outstanding at a time.
+    /// APIs. Only one [`RingBufItem`] may be outstanding at a time.
     //
     // This is not an implementation of `Iterator` because we need to be able to refer to the
     // lifetime of the iterator in the returned `RingBufItem`. If the Iterator::Item leveraged GATs,
     // one could imagine an implementation of `Iterator` that would work. GATs are stabilized in
     // Rust 1.65, but there's not yet a trait that the community seems to have standardized around.
-    #[expect(clippy::should_implement_trait)]
+    #[expect(
+        clippy::should_implement_trait,
+        reason = "this is not an iterator; it yields a borrow-tied item"
+    )]
     pub fn next(&mut self) -> Option<RingBufItem<'_>> {
         let Self {
             consumer, producer, ..
@@ -312,13 +315,18 @@ impl ProducerData {
     }
 
     fn next<'a>(&'a mut self, consumer: &'a mut ConsumerPos) -> Option<RingBufItem<'a>> {
-        let &mut Self {
-            ref mmap,
-            ref mut data_offset,
-            ref mut pos_cache,
-            ref mut mask,
+        let Self {
+            mmap,
+            data_offset,
+            pos_cache,
+            mask,
         } = self;
+        let mmap = &*mmap;
         let mmap_data = mmap.as_ref();
+        #[expect(
+            clippy::panic,
+            reason = "invalid ring buffer layout is a fatal internal error"
+        )]
         let data_pages = mmap_data.get(*data_offset..).unwrap_or_else(|| {
             panic!(
                 "offset {} out of bounds, data len {}",
@@ -368,6 +376,10 @@ impl ProducerData {
         fn read_item<'data>(data: &'data [u8], mask: u32, pos: &ConsumerPos) -> Item<'data> {
             let ConsumerPos { pos, .. } = pos;
             let offset = pos & usize::try_from(mask).unwrap();
+            #[expect(
+                clippy::panic,
+                reason = "invalid ring buffer layout is a fatal internal error"
+            )]
             let must_get_data = |offset, len| {
                 data.get(offset..offset + len).unwrap_or_else(|| {
                     panic!("{:?} not in {:?}", offset..offset + len, 0..data.len())

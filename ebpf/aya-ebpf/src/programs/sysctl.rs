@@ -7,7 +7,7 @@ pub struct SysctlContext {
 }
 
 impl SysctlContext {
-    pub fn new(sysctl: *mut bpf_sysctl) -> Self {
+    pub const fn new(sysctl: *mut bpf_sysctl) -> Self {
         Self { sysctl }
     }
 }

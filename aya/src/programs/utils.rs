@@ -63,7 +63,7 @@ pub(crate) fn boot_time() -> SystemTime {
     let get_time = |clock_id| {
         let mut time = unsafe { std::mem::zeroed::<libc::timespec>() };
         assert_eq!(
-            unsafe { libc::clock_gettime(clock_id, &mut time) },
+            unsafe { libc::clock_gettime(clock_id, &raw mut time) },
             0,
             "clock_gettime({clock_id}, _)"
         );

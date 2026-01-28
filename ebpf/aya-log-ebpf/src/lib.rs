@@ -39,7 +39,7 @@ pub mod macro_support {
     /// Returns `true` if the provided level is enabled according to [`AYA_LOG_LEVEL`].
     #[inline(always)]
     pub fn level_enabled(level: Level) -> bool {
-        let current_level = unsafe { core::ptr::read_volatile(&AYA_LOG_LEVEL) };
+        let current_level = unsafe { core::ptr::read_volatile(&raw const AYA_LOG_LEVEL) };
         level as u8 <= current_level
     }
 }

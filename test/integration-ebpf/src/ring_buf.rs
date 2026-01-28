@@ -39,12 +39,9 @@ macro_rules! define_ring_buf_test {
                 Some(regs) => unsafe { &mut *regs },
                 None => return,
             };
-            let mut entry = match $reserve {
-                Some(entry) => entry,
-                None => {
-                    *dropped += 1;
-                    return;
-                }
+            let Some(mut entry) = $reserve else {
+                *dropped += 1;
+                return;
             };
             // Write the first argument to the function back out to RING_BUF if it is even,
             // otherwise increment the counter in REJECTED. This exercises discarding data.
@@ -74,9 +71,8 @@ macro_rules! define_ring_buf_mismatch {
     ($name:ident, $ty:ty) => {
         #[uprobe]
         fn $name(ctx: ProbeContext) {
-            let mut entry = match RING_BUF_MISMATCH.reserve_untyped::<$ty>(0) {
-                Some(entry) => entry,
-                None => return,
+            let Some(mut entry) = RING_BUF_MISMATCH.reserve_untyped::<$ty>(0) else {
+                return;
             };
             let arg: $ty = match ctx.arg(0) {
                 Some(arg) => arg,

@@ -84,6 +84,14 @@ impl<'a> ChildCgroup<'a> {
 }
 
 impl Drop for ChildCgroup<'_> {
+    #[expect(
+        clippy::print_stderr,
+        reason = "drop handlers avoid panic-in-panic by logging errors"
+    )]
+    #[expect(
+        clippy::use_debug,
+        reason = "debug formatting preserves error context in drop"
+    )]
     fn drop(&mut self) {
         let Self {
             parent,
@@ -107,7 +115,7 @@ impl Drop for ChildCgroup<'_> {
                 .with_context(|| format!("fs::read_to_string(\"{}\")", pids.display()))?;
             for pid in pids.split_inclusive('\n') {
                 dst.write_all(pid.as_bytes())
-                    .with_context(|| format!("dst.write_all(\"{}\")", pid))?;
+                    .with_context(|| format!("dst.write_all(\"{pid}\")"))?;
             }
 
             fs::remove_dir(&path)
@@ -135,6 +143,10 @@ pub(crate) struct NetNsGuard {
 impl NetNsGuard {
     const PERSIST_DIR: &str = "/var/run/netns/";
 
+    #[expect(
+        clippy::print_stdout,
+        reason = "integration tests print namespace transitions for diagnostics"
+    )]
     pub(crate) fn new() -> Self {
         let current_thread_netns_path = format!("/proc/self/task/{}/ns/net", nix::unistd::gettid());
         let old_ns = fs::File::open(&current_thread_netns_path).unwrap_or_else(|err| {
@@ -148,7 +160,7 @@ impl NetNsGuard {
         fs::create_dir_all(Self::PERSIST_DIR)
             .unwrap_or_else(|err| panic!("fs::create_dir_all(\"{}\"): {err:?}", Self::PERSIST_DIR));
         let ns_path = Path::new(Self::PERSIST_DIR).join(&name);
-        let _: fs::File = fs::File::create(&ns_path)
+        let _unused: fs::File = fs::File::create(&ns_path)
             .unwrap_or_else(|err| panic!("fs::File::create(\"{}\"): {err:?}", ns_path.display()));
         nix::sched::unshare(nix::sched::CloneFlags::CLONE_NEWNET)
             .expect("nix::sched::unshare(CLONE_NEWNET)");
@@ -164,19 +176,18 @@ impl NetNsGuard {
 
         println!("entered network namespace {name}");
 
-        let ns = Self { old_ns, name };
+        let ns = Self { name, old_ns };
 
         // By default, the loopback in a new netns is down. Set it up.
         let lo = CString::new("lo").unwrap();
         unsafe {
             let idx = if_nametoindex(lo.as_ptr());
-            if idx == 0 {
-                panic!(
-                    "interface `lo` not found in netns {}: {}",
-                    ns.name,
-                    io::Error::last_os_error()
-                );
-            }
+            assert!(
+                idx != 0,
+                "interface `lo` not found in netns {}: {}",
+                ns.name,
+                io::Error::last_os_error()
+            );
             netlink_set_link_up(idx as i32)
                 .unwrap_or_else(|e| panic!("failed to set `lo` up in netns {}: {e}", ns.name));
         }
@@ -186,6 +197,14 @@ impl NetNsGuard {
 }
 
 impl Drop for NetNsGuard {
+    #[expect(
+        clippy::print_stderr,
+        reason = "drop handlers avoid panic-in-panic by logging errors"
+    )]
+    #[expect(
+        clippy::use_debug,
+        reason = "debug formatting preserves error context in drop"
+    )]
     fn drop(&mut self) {
         let Self { old_ns, name } = self;
         match (|| -> Result<()> {

@@ -66,7 +66,7 @@ impl LircMode2 {
 
     /// Attaches the program to the given lirc device.
     ///
-    /// The returned value can be used to detach, see [LircMode2::detach].
+    /// The returned value can be used to detach, see [`LircMode2::detach`].
     pub fn attach<T: AsFd>(&mut self, lircdev: T) -> Result<LircLinkId, ProgramError> {
         let prog_fd = self.fd()?;
 
@@ -126,18 +126,18 @@ impl LircMode2 {
 pub struct LircLinkId(RawFd, RawFd);
 
 #[derive(Debug)]
-/// An LircMode2 Link
+/// An `LircMode2` Link.
 pub struct LircLink {
     prog_fd: ProgramFd,
     target_fd: crate::MockableFd,
 }
 
 impl LircLink {
-    pub(crate) fn new(prog_fd: ProgramFd, target_fd: crate::MockableFd) -> Self {
+    pub(crate) const fn new(prog_fd: ProgramFd, target_fd: crate::MockableFd) -> Self {
         Self { prog_fd, target_fd }
     }
 
-    /// Get ProgramInfo from this link
+    /// Get [`ProgramInfo`] from this link.
     pub fn info(&self) -> Result<ProgramInfo, ProgramError> {
         let Self {
             prog_fd,

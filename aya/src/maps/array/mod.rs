@@ -1,6 +1,9 @@
 //! Array types.
 
-#[expect(clippy::module_inception)]
+#[expect(
+    clippy::module_inception,
+    reason = "module name matches the exported type"
+)]
 mod array;
 mod per_cpu_array;
 mod program_array;

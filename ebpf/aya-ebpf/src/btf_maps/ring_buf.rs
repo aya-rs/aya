@@ -52,7 +52,7 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> RingBuf<T, MAX_ENTRIES, FL
     ///
     /// The kernel will reserve memory at an 8-bytes aligned boundary, so `mem::align_of<U>()` must
     /// be equal or smaller than 8. If you use this with a `U` that isn't properly aligned, this
-    /// function will be compiled to a panic; depending on your panic_handler, this may make
+    /// function will be compiled to a panic; depending on your `panic_handler`, this may make
     /// the eBPF program fail to load, or it may make it have undefined behavior.
     #[cfg(not(generic_const_exprs))]
     pub fn reserve(&self, flags: u64) -> Option<RingBufEntry<T>>

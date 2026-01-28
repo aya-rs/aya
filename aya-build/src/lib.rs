@@ -8,7 +8,8 @@ use std::{
     process::{Child, Command, Stdio},
 };
 
-use anyhow::{Context as _, Result, anyhow};
+pub use anyhow::Result;
+use anyhow::{Context as _, anyhow};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use rustc_version::Channel;
 use which::which;
@@ -41,6 +42,7 @@ fn target_arch_fixup(target_arch: Cow<'_, str>) -> Cow<'_, str> {
 /// prevent their use for the time being.
 ///
 /// [bindeps]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html?highlight=feature#artifact-dependencies
+#[expect(clippy::print_stdout, reason = "println! is used for cargo:warning")]
 pub fn build_ebpf<'a>(
     packages: impl IntoIterator<Item = Package<'a>>,
     toolchain: Toolchain<'a>,
@@ -57,25 +59,30 @@ pub fn build_ebpf<'a>(
         return Ok(());
     }
 
-    let out_dir = env::var_os("OUT_DIR").ok_or(anyhow!("OUT_DIR not set"))?;
+    const OUT_DIR: &str = "OUT_DIR";
+    let out_dir = env::var_os(OUT_DIR).ok_or_else(|| anyhow!("{OUT_DIR} not set"))?;
     let out_dir = PathBuf::from(out_dir);
 
-    let endian =
-        env::var_os("CARGO_CFG_TARGET_ENDIAN").ok_or(anyhow!("CARGO_CFG_TARGET_ENDIAN not set"))?;
+    const CARGO_CFG_TARGET_ENDIAN: &str = "CARGO_CFG_TARGET_ENDIAN";
+    let endian = env::var_os(CARGO_CFG_TARGET_ENDIAN)
+        .ok_or_else(|| anyhow!("{CARGO_CFG_TARGET_ENDIAN} not set"))?;
     let target = if endian == "big" {
         "bpfeb"
     } else if endian == "little" {
         "bpfel"
     } else {
-        return Err(anyhow!("unsupported endian={endian:?}"));
+        return Err(anyhow!("unsupported endian={}", endian.display()));
     };
 
     const TARGET_ARCH: &str = "CARGO_CFG_TARGET_ARCH";
     let bpf_target_arch =
-        env::var_os(TARGET_ARCH).unwrap_or_else(|| panic!("{TARGET_ARCH} not set"));
-    let bpf_target_arch = bpf_target_arch
-        .into_string()
-        .unwrap_or_else(|err| panic!("OsString::into_string({TARGET_ARCH}): {err:?}"));
+        env::var_os(TARGET_ARCH).ok_or_else(|| anyhow!("{TARGET_ARCH} not set"))?;
+    let bpf_target_arch = bpf_target_arch.into_string().map_err(|bpf_target_arch| {
+        anyhow!(
+            "OsString::into_string({TARGET_ARCH}={})",
+            bpf_target_arch.display()
+        )
+    })?;
     let bpf_target_arch = target_arch_fixup(bpf_target_arch.into());
     let target = format!("{target}-unknown-none");
 
@@ -203,8 +210,8 @@ pub fn build_ebpf<'a>(
         let stdout = BufReader::new(stdout);
         let mut executables = Vec::new();
         for message in Message::parse_stream(stdout) {
-            #[expect(clippy::collapsible_match)]
-            match message.expect("valid JSON") {
+            #[expect(clippy::collapsible_match, reason = "better captures intent")]
+            match message.with_context(|| anyhow!("cargo stdout stream contains invalid JSON"))? {
                 Message::CompilerArtifact(Artifact {
                     executable,
                     target: Target { name, .. },
@@ -240,8 +247,9 @@ pub fn build_ebpf<'a>(
 
         for (name, binary) in executables {
             let dst = out_dir.join(name);
-            let _: u64 = fs::copy(&binary, &dst)
-                .with_context(|| format!("failed to copy {binary:?} to {dst:?}"))?;
+            let _: u64 = fs::copy(&binary, &dst).with_context(|| {
+                format!("failed to copy {} to {}", binary.display(), dst.display())
+            })?;
         }
     }
     Ok(())
@@ -260,16 +268,17 @@ pub enum Toolchain<'a> {
 }
 
 impl<'a> Toolchain<'a> {
-    fn as_str(&self) -> &'a str {
+    const fn as_str(&self) -> &'a str {
         match self {
-            Toolchain::Nightly => "nightly",
-            Toolchain::Custom(toolchain) => toolchain,
+            Self::Nightly => "nightly",
+            Self::Custom(toolchain) => toolchain,
         }
     }
 }
 
 /// Emit cfg flags that describe the desired BPF target architecture.
-pub fn emit_bpf_target_arch_cfg() {
+#[expect(clippy::print_stdout, reason = "println! is used for cargo:warning")]
+pub fn emit_bpf_target_arch_cfg() -> Result<()> {
     // The presence of this environment variable indicates that `--cfg
     // bpf_target_arch="..."` was passed to the compiler, so we don't need to
     // emit it again. Note that we cannot *set* this environment variable - it
@@ -288,18 +297,21 @@ pub fn emit_bpf_target_arch_cfg() {
     println!("cargo:rerun-if-env-changed={HOST}");
 
     if env::var_os(BPF_TARGET_ARCH).is_none() {
-        let host = env::var_os(HOST).unwrap_or_else(|| panic!("{HOST} not set"));
+        let host = env::var_os(HOST).ok_or_else(|| anyhow!("{HOST} not set"))?;
         let host = host
             .into_string()
-            .unwrap_or_else(|err| panic!("OsString::into_string({HOST}): {err:?}"));
+            .map_err(|host| anyhow!("OsString::into_string({HOST}={})", host.display()))?;
         let host = host.as_str();
 
         let bpf_target_arch = if let Some(bpf_target_arch) = env::var_os(AYA_BPF_TARGET_ARCH) {
             bpf_target_arch
                 .into_string()
-                .unwrap_or_else(|err| {
-                    panic!("OsString::into_string({AYA_BPF_TARGET_ARCH}): {err:?}")
-                })
+                .map_err(|bpf_target_arch| {
+                    anyhow!(
+                        "OsString::into_string({AYA_BPF_TARGET_ARCH}={})",
+                        bpf_target_arch.display()
+                    )
+                })?
                 .into()
         } else {
             target_arch_fixup(
@@ -325,4 +337,6 @@ pub fn emit_bpf_target_arch_cfg() {
         print!("\"{value}\",");
     }
     println!("))");
+
+    Ok(())
 }

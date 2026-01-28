@@ -49,7 +49,7 @@ fn try_do_dnat(ctx: XdpContext) -> Result<u32, ()> {
         match unsafe { *hproto } {
             EtherType::Ipv6 => {
                 let ip_hdr: *const Ipv6Hdr = ptr_at(&ctx, EthHdr::LEN)?;
-                unsafe { (*ip_hdr.cast_mut()).dst_addr = nat.orig_ip };
+                unsafe { (*ip_hdr.cast_mut()).dst_addr = nat.orig_ip }
             }
             _ => return Ok(xdp_action::XDP_PASS),
         }

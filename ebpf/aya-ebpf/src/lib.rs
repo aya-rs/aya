@@ -10,14 +10,23 @@
 )]
 #![cfg_attr(
     generic_const_exprs,
-    expect(incomplete_features),
-    expect(unstable_features),
+    expect(
+        incomplete_features,
+        reason = "generic_const_exprs requires incomplete features"
+    ),
+    expect(
+        unstable_features,
+        reason = "generic_const_exprs requires unstable features"
+    ),
     feature(generic_const_exprs)
 )]
 #![cfg_attr(
     target_arch = "bpf",
     expect(unused_crate_dependencies, reason = "compiler_builtins"),
-    expect(unstable_features),
+    expect(
+        unstable_features,
+        reason = "asm_experimental_arch requires unstable features"
+    ),
     feature(asm_experimental_arch)
 )]
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
@@ -29,7 +38,10 @@ pub mod bindings;
 mod const_assert;
 pub use args::Argument;
 pub mod btf_maps;
-#[expect(clippy::missing_safety_doc)]
+#[expect(
+    clippy::missing_safety_doc,
+    reason = "helpers mirror kernel helpers with implicit safety contracts"
+)]
 pub mod helpers;
 pub mod maps;
 pub mod programs;
@@ -76,7 +88,7 @@ mod intrinsics {
 
     #[unsafe(no_mangle)]
     unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
-        #[expect(clippy::cast_sign_loss)]
+        #[expect(clippy::cast_sign_loss, reason = "architecture-specific")]
         let b = c as u8;
         for i in 0..n {
             unsafe { *s.add(i) = b }
@@ -134,12 +146,10 @@ pub fn check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool {
         in_bounds == 1
     }
     // We only need this for doc tests which are compiled for the host target
+    #[expect(clippy::unreachable, reason = "only used for doc tests")]
     #[cfg(not(target_arch = "bpf"))]
     {
-        let _ = value;
-        let _ = lower;
-        let _ = upper;
-        unimplemented!()
+        unreachable!("value={value} lower={lower} upper={upper}");
     }
 }
 

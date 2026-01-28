@@ -65,7 +65,7 @@ impl SkLookup {
 
     /// Attaches the program to the given network namespace.
     ///
-    /// The returned value can be used to detach, see [SkLookup::detach].
+    /// The returned value can be used to detach, see [`SkLookup::detach`].
     pub fn attach<T: AsFd>(&mut self, netns: T) -> Result<SkLookupLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();

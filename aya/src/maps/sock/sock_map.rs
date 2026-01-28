@@ -6,7 +6,7 @@ use std::{
 };
 
 use crate::maps::{
-    MapData, MapError, MapFd, MapKeys, check_bounds, check_kv_size, hash_map, sock::SockMapFd,
+    MapData, MapError, MapKeys, check_bounds, check_kv_size, hash_map, sock::SockMapFd,
 };
 
 /// An array of TCP or UDP sockets.
@@ -73,7 +73,7 @@ impl<T: Borrow<MapData>> SockMap<T> {
     /// The returned file descriptor can be used to attach programs that work with
     /// socket maps, like [`SkMsg`](crate::programs::SkMsg) and [`SkSkb`](crate::programs::SkSkb).
     pub fn fd(&self) -> &SockMapFd {
-        let fd: &MapFd = self.inner.borrow().fd();
+        let fd = self.inner.borrow().fd();
         // TODO(https://github.com/rust-lang/rfcs/issues/3066): avoid this unsafe.
         // SAFETY: `SockMapFd` is #[repr(transparent)] over `MapFd`.
         unsafe { std::mem::transmute(fd) }

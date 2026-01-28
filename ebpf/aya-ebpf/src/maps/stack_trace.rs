@@ -17,7 +17,10 @@ const PERF_MAX_STACK_DEPTH: usize = 127;
 impl StackTrace {
     map_constructors!(u32, [u64; PERF_MAX_STACK_DEPTH], BPF_MAP_TYPE_STACK_TRACE);
 
-    #[expect(clippy::missing_safety_doc)]
+    #[expect(
+        clippy::missing_safety_doc,
+        reason = "safety requirements come from the underlying helper"
+    )]
     pub unsafe fn get_stackid<C: EbpfContext>(
         &self,
         ctx: impl Borrow<C>,
