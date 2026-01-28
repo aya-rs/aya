@@ -4,6 +4,7 @@ use std::os::fd::AsFd;
 use aya_obj::generated::{
     bpf_attach_type::BPF_CGROUP_SOCK_OPS, bpf_prog_type::BPF_PROG_TYPE_SOCK_OPS,
 };
+use log::warn;
 
 use crate::{
     programs::{
@@ -65,6 +66,11 @@ impl SockOps {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [SockOps::detach].
+    ///
+    /// # Warning
+    ///
+    /// On kernels 5.7.0 and later, attach modes other than `CgroupAttachMode::default()` are not passed to `bpf_link_create`.
+    /// On older kernels (using `bpf_prog_attach`), the attach mode is honored.
     pub fn attach<T: AsFd>(
         &mut self,
         cgroup: T,
@@ -75,17 +81,17 @@ impl SockOps {
         let cgroup_fd = cgroup.as_fd();
         let attach_type = BPF_CGROUP_SOCK_OPS;
         if KernelVersion::at_least(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(cgroup_fd),
-                attach_type,
-                mode.into(),
-                None,
-            )
-            .map_err(|io_error| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+            if mode != CgroupAttachMode::default() {
+                warn!(
+                    "CgroupAttachMode {:?} will not be passed on to bpf_link_create",
+                    mode
+                );
+            }
+            let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(cgroup_fd), attach_type, 0, None)
+                .map_err(|io_error| SyscallError {
+                    call: "bpf_link_create",
+                    io_error,
+                })?;
             self.data
                 .links
                 .insert(SockOpsLink::new(SockOpsLinkInner::Fd(FdLink::new(link_fd))))
