@@ -11,6 +11,10 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
