@@ -6,7 +6,7 @@
   - Many crates only build on Linux; on macOS lint and type check using
 
   ```sh
-  ./clippy.sh --target x86_64-unknown-linux-musl
+  cargo xtask clippy -- --target x86_64-unknown-linux-musl
   ```
 
 - Coding guidelines:
