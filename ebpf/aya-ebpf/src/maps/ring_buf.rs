@@ -13,13 +13,17 @@ use crate::{
         bpf_ringbuf_discard, bpf_ringbuf_output, bpf_ringbuf_query, bpf_ringbuf_reserve,
         bpf_ringbuf_submit,
     },
-    maps::{MapDef, PinningType},
+    maps::{InnerMap, MapDef, PinningType},
 };
 
 #[repr(transparent)]
 pub struct RingBuf {
     def: MapDef,
 }
+
+unsafe impl Sync for RingBuf {}
+impl super::private::Sealed for RingBuf {}
+unsafe impl InnerMap for RingBuf {}
 
 /// A ring buffer entry, returned from [`RingBuf::reserve_bytes`].
 ///

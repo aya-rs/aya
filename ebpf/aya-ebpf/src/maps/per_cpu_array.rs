@@ -3,7 +3,7 @@ use core::{marker::PhantomData, ptr::NonNull};
 use crate::{
     bindings::bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY,
     lookup,
-    maps::{MapDef, PinningType},
+    maps::{InnerMap, MapDef, PinningType},
 };
 
 #[repr(transparent)]
@@ -11,6 +11,10 @@ pub struct PerCpuArray<T> {
     def: MapDef,
     _t: PhantomData<T>,
 }
+
+unsafe impl<T> Sync for PerCpuArray<T> {}
+impl<T> super::private::Sealed for PerCpuArray<T> {}
+unsafe impl<T> InnerMap for PerCpuArray<T> {}
 
 impl<T> PerCpuArray<T> {
     map_constructors!(u32, T, BPF_MAP_TYPE_PERCPU_ARRAY, phantom _t);
