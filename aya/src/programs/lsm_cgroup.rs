@@ -9,7 +9,10 @@ use aya_obj::{
 
 use crate::{
     VerifierLogLevel,
-    programs::{FdLink, FdLinkId, ProgramData, ProgramError, define_link_wrapper, load_program},
+    programs::{
+        ExpectedAttachType, FdLink, FdLinkId, ProgramData, ProgramError, define_link_wrapper,
+        load_program,
+    },
     sys::{BpfLinkCreateArgs, LinkTarget, SyscallError, bpf_link_create},
 };
 
@@ -66,7 +69,7 @@ impl LsmCgroup {
     /// * `lsm_hook_name` - full name of the LSM hook that the program should
     ///   be attached to
     pub fn load(&mut self, lsm_hook_name: &str, btf: &Btf) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_LSM_CGROUP);
+        self.data.expected_attach_type = Some(ExpectedAttachType::AttachType(BPF_LSM_CGROUP));
         let type_name = format!("bpf_lsm_{lsm_hook_name}");
         self.data.attach_btf_id =
             Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Func)?);
@@ -81,7 +84,7 @@ impl LsmCgroup {
     /// the program being unloaded from the kernel if it is still pinned.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
         let mut data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
-        data.expected_attach_type = Some(BPF_LSM_CGROUP);
+        data.expected_attach_type = Some(ExpectedAttachType::AttachType(BPF_LSM_CGROUP));
         Ok(Self { data })
     }
 
@@ -98,7 +101,7 @@ impl LsmCgroup {
         // - LsmCgroup::from_pin has been called
         //
         // In all cases, expected_attach_type is guaranteed to be Some(_).
-        let attach_type = self.data.expected_attach_type.unwrap();
+        let attach_type = self.data.expected_attach_type.unwrap().attach_type();
         let btf_id = self.data.attach_btf_id.ok_or(ProgramError::NotLoaded)?;
         let link_fd = bpf_link_create(
             prog_fd,

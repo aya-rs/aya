@@ -41,7 +41,7 @@
 //! let text_sections = std::collections::HashSet::new();
 //! #[cfg(not(feature = "std"))]
 //! let text_sections = hashbrown::HashSet::new();
-//! object.relocate_calls(&text_sections).unwrap();
+//! object.relocate_calls(&text_sections, None).unwrap();
 //! object.relocate_maps(std::iter::empty(), &text_sections).unwrap();
 //!
 //! // Run with rbpf

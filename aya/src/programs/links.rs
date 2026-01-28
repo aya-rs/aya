@@ -472,19 +472,28 @@ macro_rules! id_as_key {
 
 pub(crate) use id_as_key;
 
-macro_rules! define_link_wrapper {
-    ($wrapper:ident, $wrapper_id:ident, $base:ident, $base_id:ident, $program:ident $(,)?) => {
-        /// The type returned by
-        #[doc = concat!("[`", stringify!($program), "::attach`]")]
-        /// . Can be passed to
-        #[doc = concat!("[`", stringify!($program), "::detach`]")]
-        /// .
+/// Defines link types and conversions without adding methods to the program.
+///
+/// This macro generates the link type, link ID type, and conversion implementations
+/// for programs that don't have a standard `attach()` method (like StructOps where
+/// the link is created via `StructOpsMap::attach()`).
+///
+/// For programs with a standard `attach()` method, use [`define_link_wrapper!`] instead,
+/// which calls this macro internally and also adds `detach()` and `take_link()` methods.
+macro_rules! define_link_types {
+    (
+        $(#[$wrapper_doc:meta])*
+        $wrapper:ident,
+        $(#[$wrapper_id_doc:meta])*
+        $wrapper_id:ident,
+        $base:ident,
+        $base_id:ident $(,)?
+    ) => {
+        $(#[$wrapper_id_doc])*
         #[derive(Debug, Hash, Eq, PartialEq)]
         pub struct $wrapper_id($base_id);
 
-        /// The link used by
-        #[doc = concat!("[`", stringify!($program), "`]")]
-        /// programs.
+        $(#[$wrapper_doc])*
         #[derive(Debug)]
         pub struct $wrapper(Option<$base>);
 
@@ -540,6 +549,27 @@ macro_rules! define_link_wrapper {
                 w.0.take().unwrap()
             }
         }
+    };
+}
+
+pub(crate) use define_link_types;
+
+macro_rules! define_link_wrapper {
+    ($wrapper:ident, $wrapper_id:ident, $base:ident, $base_id:ident, $program:ident $(,)?) => {
+        $crate::programs::links::define_link_types!(
+            /// The link used by
+            #[doc = concat!("[`", stringify!($program), "`]")]
+            /// programs.
+            $wrapper,
+            /// The type returned by
+            #[doc = concat!("[`", stringify!($program), "::attach`]")]
+            /// . Can be passed to
+            #[doc = concat!("[`", stringify!($program), "::detach`]")]
+            /// .
+            $wrapper_id,
+            $base,
+            $base_id,
+        );
 
         impl $program {
             /// Detaches the program.

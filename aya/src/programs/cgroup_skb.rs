@@ -10,8 +10,9 @@ use aya_obj::generated::{
 use crate::{
     VerifierLogLevel,
     programs::{
-        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program,
+        CgroupAttachMode, ExpectedAttachType, FdLink, Link, ProgAttachLink, ProgramData,
+        ProgramError, ProgramType, define_link_wrapper, id_as_key, impl_try_into_fdlink,
+        load_program,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
@@ -66,10 +67,13 @@ impl CgroupSkb {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = self.attach_type.map(|attach_type| match attach_type {
-            CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
-            CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
-        });
+        self.data.expected_attach_type =
+            self.attach_type
+                .map(|attach_type| match attach_type {
+                    CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
+                    CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
+                })
+                .map(ExpectedAttachType::AttachType);
         load_program(BPF_PROG_TYPE_CGROUP_SKB, &mut self.data)
     }
 

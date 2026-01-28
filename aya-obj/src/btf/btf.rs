@@ -34,6 +34,10 @@ pub(crate) const MAX_SPEC_LEN: usize = 64;
 /// The error type returned when `BTF` operations fail.
 #[derive(thiserror::Error, Debug)]
 pub enum BtfError {
+    /// BTF is not available
+    #[error("BTF is not available")]
+    NoBtf,
+
     #[cfg(feature = "std")]
     /// Error parsing file
     #[error("error parsing {path}")]
@@ -444,7 +448,67 @@ impl Btf {
         })
     }
 
-    pub(crate) fn type_size(&self, root_type_id: u32) -> Result<usize, BtfError> {
+    /// Returns the index of a struct member by name.
+    ///
+    /// This is useful for struct_ops programs where `expected_attach_type` needs
+    /// to be set to the member index in the kernel struct.
+    pub fn struct_member_index(
+        &self,
+        struct_type_id: u32,
+        member_name: &str,
+    ) -> Result<u32, BtfError> {
+        let ty = self.types.type_by_id(struct_type_id)?;
+        let members = match ty {
+            BtfType::Struct(s) => &s.members,
+            _ => {
+                return Err(BtfError::UnexpectedBtfType {
+                    type_id: struct_type_id,
+                });
+            }
+        };
+        for (index, member) in members.iter().enumerate() {
+            let name = self.string_at(member.name_offset)?;
+            if name == member_name {
+                return Ok(index as u32);
+            }
+        }
+        Err(BtfError::UnknownBtfTypeName {
+            type_name: member_name.to_owned(),
+        })
+    }
+
+    /// Returns the byte offset of a struct member by name.
+    ///
+    /// This is useful for struct_ops where we need to find the offset of the
+    /// `data` field within the kernel wrapper struct (e.g., `bpf_struct_ops_hid_bpf_ops`).
+    pub fn struct_member_byte_offset(
+        &self,
+        struct_type_id: u32,
+        member_name: &str,
+    ) -> Result<u32, BtfError> {
+        let ty = self.types.type_by_id(struct_type_id)?;
+        let members = match ty {
+            BtfType::Struct(s) => &s.members,
+            _ => {
+                return Err(BtfError::UnexpectedBtfType {
+                    type_id: struct_type_id,
+                });
+            }
+        };
+        for member in members.iter() {
+            let name = self.string_at(member.name_offset)?;
+            if name == member_name {
+                // offset is in bits, convert to bytes
+                return Ok(member.offset / 8);
+            }
+        }
+        Err(BtfError::UnknownBtfTypeName {
+            type_name: member_name.to_owned(),
+        })
+    }
+
+    /// Returns the size of a BTF type in bytes.
+    pub fn type_size(&self, root_type_id: u32) -> Result<usize, BtfError> {
         let mut type_id = root_type_id;
         let mut n_elems = 1;
         for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
@@ -565,8 +629,23 @@ impl Btf {
                         d.name_offset = self.add_string(&fixed_name);
                     }
 
-                    // There are some cases when the compiler does indeed populate the size.
-                    if d.size > 0 {
+                    // .ksyms is a pseudo-section for extern kernel symbols (see EbpfSectionKind::Ksyms).
+                    // It has no real ELF section and the kernel rejects DATASEC with
+                    // size=0 and non-empty entries. Replace with INT to remove it.
+                    const KSYMS_SECTION: &str = ".ksyms";
+                    if name == KSYMS_SECTION {
+                        debug!("{kind} {name}: pseudo-section, replacing with INT");
+                        let old_size = d.type_info_size();
+                        let new_type =
+                            BtfType::Int(Int::new(d.name_offset, 0, IntEncoding::None, 0));
+                        let new_size = new_type.type_info_size();
+                        // Update header to reflect the size change
+                        self.header.type_len =
+                            self.header.type_len - old_size as u32 + new_size as u32;
+                        self.header.str_off = self.header.type_len;
+                        *t = new_type;
+                    } else if d.size > 0 {
+                        // There are some cases when the compiler does indeed populate the size.
                         debug!("{kind} {name}: size fixup not required");
                     } else {
                         // We need to get the size of the section from the ELF file.
@@ -695,6 +774,13 @@ impl Btf {
                     // Sanitize FUNC.
                     if !features.btf_func {
                         debug!("{kind}: not supported. replacing with TYPEDEF");
+                        *t = BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
+                    } else if ty.linkage() == FuncLinkage::Extern {
+                        // BTF_FUNC_EXTERN is used for kfuncs (kernel functions).
+                        // These are resolved from kernel BTF at load time, so we
+                        // should not include them in the program BTF. Replace with
+                        // TYPEDEF to preserve type info without the problematic linkage.
+                        debug!("{kind} {name}: extern kfunc, replacing with TYPEDEF");
                         *t = BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
                     } else if !features.btf_func_global
                         || name == "memset"

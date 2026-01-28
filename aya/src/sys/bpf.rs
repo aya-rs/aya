@@ -27,7 +27,7 @@ use libc::{
     EBADF, ENOENT, ENOSPC, EPERM, RLIM_INFINITY, RLIMIT_MEMLOCK, getrlimit, rlim_t, rlimit,
     setrlimit,
 };
-use log::warn;
+use log::{debug, warn};
 
 use crate::{
     Btf, Pod, VerifierLogLevel,
@@ -52,6 +52,15 @@ pub(crate) fn bpf_create_map(
     def: &aya_obj::Map,
     btf_fd: Option<BorrowedFd<'_>>,
 ) -> io::Result<crate::MockableFd> {
+    bpf_create_map_with_vmlinux_btf(name, def, btf_fd, None)
+}
+
+pub(crate) fn bpf_create_map_with_vmlinux_btf(
+    name: &CStr,
+    def: &aya_obj::Map,
+    btf_fd: Option<BorrowedFd<'_>>,
+    btf_vmlinux_value_type_id: Option<u32>,
+) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let u = unsafe { &mut attr.__bindgen_anon_1 };
@@ -61,7 +70,18 @@ pub(crate) fn bpf_create_map(
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
 
-    if let aya_obj::Map::Btf(m) = def {
+    // Handle struct_ops maps - they use btf_vmlinux_value_type_id exclusively.
+    // When btf_vmlinux_value_type_id is set, btf_value_type_id MUST be 0 (kernel rejects otherwise).
+    // See kernel/bpf/syscall.c map_create() validation.
+    // However, btf_fd IS required to resolve struct/function types in the BPF object's BTF.
+    if let aya_obj::Map::StructOps(_) = def {
+        if let Some(vmlinux_type_id) = btf_vmlinux_value_type_id {
+            u.btf_vmlinux_value_type_id = vmlinux_type_id;
+        }
+        // btf_value_type_id must be 0 (already zeroed via mem::zeroed)
+        // btf_fd IS needed for struct_ops to resolve struct/function references
+        u.btf_fd = btf_fd.map(|fd| fd.as_raw_fd()).unwrap_or_default() as u32;
+    } else if let aya_obj::Map::Btf(m) = def {
         use bpf_map_type::*;
 
         // Mimic https://github.com/libbpf/libbpf/issues/355
@@ -130,7 +150,11 @@ pub(crate) struct EbpfLoadProgramAttrs<'a> {
     pub(crate) insns: &'a [bpf_insn],
     pub(crate) license: &'a CStr,
     pub(crate) kernel_version: u32,
-    pub(crate) expected_attach_type: Option<bpf_attach_type>,
+    /// The expected attach type as a raw u32 value.
+    ///
+    /// For most program types, this is a `bpf_attach_type` cast to u32.
+    /// For struct_ops, this is the struct member index.
+    pub(crate) expected_attach_type: Option<u32>,
     pub(crate) prog_btf_fd: Option<BorrowedFd<'a>>,
     pub(crate) attach_btf_obj_fd: Option<BorrowedFd<'a>>,
     pub(crate) attach_btf_id: Option<u32>,
@@ -161,10 +185,17 @@ pub(crate) fn bpf_load_program(
     u.prog_flags = aya_attr.flags;
     u.prog_type = aya_attr.ty as u32;
     if let Some(v) = aya_attr.expected_attach_type {
-        u.expected_attach_type = v as u32;
+        u.expected_attach_type = v;
     }
     u.insns = aya_attr.insns.as_ptr() as u64;
     u.insn_cnt = aya_attr.insns.len() as u32;
+    debug!(
+        "bpf_load_program: prog_type={} insn_cnt={} expected_attach_type={:?} attach_btf_id={:?}",
+        u.prog_type,
+        aya_attr.insns.len(),
+        aya_attr.expected_attach_type,
+        aya_attr.attach_btf_id
+    );
     u.license = aya_attr.license.as_ptr() as u64;
     u.kern_version = aya_attr.kernel_version;
 
@@ -449,6 +480,33 @@ pub(crate) fn bpf_link_create(
             },
         }
     }
+
+    // SAFETY: BPF_LINK_CREATE returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) }
+}
+
+/// Creates a BPF link for a struct_ops map.
+///
+/// For link-based struct_ops (maps created with BPF_F_LINK flag),
+/// this activates the struct_ops after bpf_map_update_elem has been called.
+///
+/// # Arguments
+///
+/// * `map_fd` - The file descriptor of the struct_ops map
+///
+/// # Returns
+///
+/// A new file descriptor for the BPF link on success.
+// since kernel 5.13 (for struct_ops links)
+pub(crate) fn bpf_struct_ops_link_create(map_fd: BorrowedFd<'_>) -> io::Result<crate::MockableFd> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    // For struct_ops, the kernel reuses prog_fd field for the map_fd
+    attr.link_create.__bindgen_anon_1.prog_fd = map_fd.as_raw_fd() as u32;
+    // target_fd is 0 for struct_ops
+    attr.link_create.__bindgen_anon_2.target_fd = 0;
+    // BPF_STRUCT_OPS = 44
+    attr.link_create.attach_type = bpf_attach_type::BPF_STRUCT_OPS as u32;
 
     // SAFETY: BPF_LINK_CREATE returns a new file descriptor.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) }

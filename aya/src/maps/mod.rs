@@ -65,8 +65,9 @@ use crate::{
     PinningType, Pod,
     pin::PinError,
     sys::{
-        SyscallError, bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
-        bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object,
+        SyscallError, bpf_create_map, bpf_create_map_with_vmlinux_btf, bpf_get_object,
+        bpf_map_freeze, bpf_map_get_fd_by_id, bpf_map_get_next_key, bpf_map_update_elem_ptr,
+        bpf_pin_object,
     },
     util::nr_cpus,
 };
@@ -83,6 +84,7 @@ pub mod sk_storage;
 pub mod sock;
 pub mod stack;
 pub mod stack_trace;
+pub mod struct_ops;
 pub mod xdp;
 
 pub use array::{Array, PerCpuArray, ProgramArray};
@@ -97,6 +99,7 @@ pub use sk_storage::SkStorage;
 pub use sock::{SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
+pub use struct_ops::StructOpsMap;
 pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
 
 #[derive(Error, Debug)]
@@ -274,6 +277,8 @@ pub enum Map {
     Stack(MapData),
     /// A [`StackTraceMap`] map.
     StackTraceMap(MapData),
+    /// A [`StructOpsMap`] map.
+    StructOps(MapData),
     /// An unsupported map type.
     Unsupported(MapData),
     /// A [`XskMap`] map.
@@ -304,6 +309,7 @@ impl Map {
             Self::SkStorage(map) => map.obj.map_type(),
             Self::Stack(map) => map.obj.map_type(),
             Self::StackTraceMap(map) => map.obj.map_type(),
+            Self::StructOps(map) => map.obj.map_type(),
             Self::Unsupported(map) => map.obj.map_type(),
             Self::XskMap(map) => map.obj.map_type(),
         }
@@ -335,6 +341,7 @@ impl Map {
             Self::SkStorage(map) => map.pin(path),
             Self::Stack(map) => map.pin(path),
             Self::StackTraceMap(map) => map.pin(path),
+            Self::StructOps(map) => map.pin(path),
             Self::Unsupported(map) => map.pin(path),
             Self::XskMap(map) => map.pin(path),
         }
@@ -379,7 +386,7 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Self::SkStorage(map_data),
-            bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS => Self::StructOps(map_data),
             bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_TASK_STORAGE => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF => Self::Unsupported(map_data),
@@ -425,6 +432,7 @@ impl_map_pin!(() {
     ProgramArray,
     SockMap,
     StackTraceMap,
+    StructOpsMap,
     CpuMap,
     DevMap,
     DevMapHash,
@@ -507,6 +515,7 @@ impl_try_from_map!(() {
     RingBuf,
     SockMap,
     StackTraceMap,
+    StructOpsMap from StructOps,
     XskMap,
 });
 
@@ -600,6 +609,48 @@ impl MapData {
                 name: name.into(),
                 io_error,
             })?;
+        Ok(Self {
+            obj,
+            fd: MapFd::from_fd(fd),
+        })
+    }
+
+    /// Creates a struct_ops map with the btf_vmlinux_value_type_id.
+    ///
+    /// This is used for BPF_MAP_TYPE_STRUCT_OPS maps which require the kernel BTF
+    /// type ID for the struct_ops type.
+    pub(crate) fn create_struct_ops(
+        mut obj: aya_obj::Map,
+        name: &str,
+        btf_fd: Option<BorrowedFd<'_>>,
+        btf_vmlinux_value_type_id: u32,
+        kernel_value_size: u32,
+        data_offset: u32,
+    ) -> Result<Self, MapError> {
+        let c_name = CString::new(name)
+            .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
+
+        // For struct_ops maps, value_size must match kernel wrapper size (bpf_struct_ops_<name>)
+        // The .struct_ops section data represents the ops struct, which must be placed at
+        // data_offset within the kernel wrapper struct (bpf_struct_ops_<name>).
+        if let aya_obj::Map::StructOps(ref mut m) = obj {
+            let original_data = std::mem::take(&mut m.data);
+            let mut new_data = vec![0u8; kernel_value_size as usize];
+            let offset = data_offset as usize;
+            // Copy original data to the correct offset within the wrapper struct
+            if offset + original_data.len() <= new_data.len() {
+                new_data[offset..offset + original_data.len()].copy_from_slice(&original_data);
+            }
+            m.data = new_data;
+            m.data_offset = data_offset;
+        }
+
+        let fd =
+            bpf_create_map_with_vmlinux_btf(&c_name, &obj, btf_fd, Some(btf_vmlinux_value_type_id))
+                .map_err(|io_error| MapError::CreateError {
+                    name: name.into(),
+                    io_error,
+                })?;
         Ok(Self {
             obj,
             fd: MapFd::from_fd(fd),
@@ -763,6 +814,11 @@ impl MapData {
     }
 
     pub(crate) fn obj(&self) -> &aya_obj::Map {
+        let Self { obj, fd: _ } = self;
+        obj
+    }
+
+    pub(crate) fn obj_mut(&mut self) -> &mut aya_obj::Map {
         let Self { obj, fd: _ } = self;
         obj
     }

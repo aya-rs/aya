@@ -12,6 +12,7 @@ mod cgroup_sysctl;
 mod fentry;
 mod fexit;
 mod flow_dissector;
+mod hid_bpf;
 mod kprobe;
 mod lsm;
 mod lsm_cgroup;
@@ -23,6 +24,7 @@ mod sk_msg;
 mod sk_skb;
 mod sock_ops;
 mod socket_filter;
+mod struct_ops;
 mod tc;
 mod tracepoint;
 mod uprobe;
@@ -39,6 +41,7 @@ use cgroup_sysctl::CgroupSysctl;
 use fentry::FEntry;
 use fexit::FExit;
 use flow_dissector::FlowDissector;
+use hid_bpf::{HidBpf, HidBpfKind};
 use kprobe::{KProbe, KProbeKind};
 use lsm::Lsm;
 use lsm_cgroup::LsmCgroup;
@@ -51,6 +54,7 @@ use sk_msg::SkMsg;
 use sk_skb::{SkSkb, SkSkbKind};
 use sock_ops::SockOps;
 use socket_filter::SocketFilter;
+use struct_ops::StructOps;
 use tc::SchedClassifier;
 use tracepoint::TracePoint;
 use uprobe::{UProbe, UProbeKind};
@@ -595,6 +599,154 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn fexit(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match FExit::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
+    }
+    .into()
+}
+
+/// Marks a function as an eBPF struct_ops program.
+///
+/// Struct ops programs implement kernel interfaces like `hid_bpf_ops` for
+/// HID device handling or `sched_ext_ops` for custom schedulers.
+///
+/// # Arguments
+///
+/// * `name` - Optional name for the struct_ops callback. If not specified,
+///   the function name is used.
+/// * `sleepable` - Mark the program as sleepable.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 5.6.
+///
+/// # Example
+///
+/// ```no_run
+/// use aya_ebpf::{macros::struct_ops, programs::StructOpsContext};
+///
+/// #[struct_ops]
+/// fn my_callback(ctx: StructOpsContext) -> i32 {
+///     0
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn struct_ops(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match StructOps::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
+    }
+    .into()
+}
+
+/// Marks a function as an HID-BPF device event handler.
+///
+/// This callback is invoked for each HID input report received from the device.
+/// The function should return 0 to pass the event through, or modify the report
+/// data and return a new size.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.3.
+///
+/// # Example
+///
+/// ```no_run
+/// use aya_ebpf::{macros::hid_device_event, programs::HidBpfContext};
+///
+/// #[hid_device_event]
+/// fn device_event(ctx: HidBpfContext) -> i32 {
+///     0
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn hid_device_event(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match HidBpf::parse(HidBpfKind::DeviceEvent, attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
+    }
+    .into()
+}
+
+/// Marks a function as an HID-BPF report descriptor fixup handler.
+///
+/// This callback is invoked once at device probe time to allow modifying the
+/// HID report descriptor. The function should return 0 to keep the original
+/// descriptor, or return a positive value indicating the new descriptor size.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.3.
+///
+/// # Example
+///
+/// ```no_run
+/// use aya_ebpf::{macros::hid_rdesc_fixup, programs::HidBpfContext};
+///
+/// #[hid_rdesc_fixup]
+/// fn rdesc_fixup(ctx: HidBpfContext) -> i32 {
+///     0
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn hid_rdesc_fixup(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match HidBpf::parse(HidBpfKind::RdescFixup, attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
+    }
+    .into()
+}
+
+/// Marks a function as an HID-BPF hardware request handler.
+///
+/// This callback is invoked when the kernel sends hardware requests like
+/// GET_REPORT or SET_REPORT. Useful for intercepting and modifying feature
+/// reports.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.3.
+///
+/// # Example
+///
+/// ```no_run
+/// use aya_ebpf::{macros::hid_hw_request, programs::HidBpfContext};
+///
+/// #[hid_hw_request]
+/// fn hw_request(ctx: HidBpfContext) -> i32 {
+///     0
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn hid_hw_request(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match HidBpf::parse(HidBpfKind::HwRequest, attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
+    }
+    .into()
+}
+
+/// Marks a function as an HID-BPF output report handler.
+///
+/// This callback is invoked when an output report is sent to the device.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 6.3.
+///
+/// # Example
+///
+/// ```no_run
+/// use aya_ebpf::{macros::hid_hw_output_report, programs::HidBpfContext};
+///
+/// #[hid_hw_output_report]
+/// fn hw_output_report(ctx: HidBpfContext) -> i32 {
+///     0
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn hid_hw_output_report(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match HidBpf::parse(HidBpfKind::HwOutputReport, attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
         Err(err) => err.into_compile_error(),
     }
