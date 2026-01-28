@@ -1,7 +1,6 @@
 use core::ptr;
 
 use aya_ebpf_bindings::bindings::{BPF_F_NO_PREALLOC, BPF_SK_STORAGE_GET_F_CREATE, bpf_sock};
-use aya_ebpf_cty::c_long;
 
 use crate::{
     btf_maps::btf_map_def,
@@ -68,8 +67,8 @@ impl<T> SkStorage<T> {
     ///
     /// This function may dereference the pointer `sk`.
     #[inline(always)]
-    pub unsafe fn delete(&self, sk: *mut bpf_sock) -> Result<(), c_long> {
+    pub unsafe fn delete(&self, sk: *mut bpf_sock) -> Result<(), i32> {
         let ret = unsafe { bpf_sk_storage_delete(self.as_ptr(), sk.cast()) };
-        if ret == 0 { Ok(()) } else { Err(ret) }
+        if ret == 0 { Ok(()) } else { Err(ret as i32) }
     }
 }
