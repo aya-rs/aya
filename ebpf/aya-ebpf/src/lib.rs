@@ -38,7 +38,7 @@ use core::ptr::{self, NonNull};
 
 pub use aya_ebpf_cty as cty;
 pub use aya_ebpf_macros as macros;
-use cty::{c_long, c_void};
+use cty::c_void;
 use helpers::{
     bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid, bpf_map_delete_elem,
     bpf_map_lookup_elem, bpf_map_update_elem,
@@ -50,7 +50,7 @@ pub trait EbpfContext {
     fn as_ptr(&self) -> *mut c_void;
 
     #[inline]
-    fn command(&self) -> Result<[u8; TASK_COMM_LEN], c_long> {
+    fn command(&self) -> Result<[u8; TASK_COMM_LEN], i32> {
         bpf_get_current_comm()
     }
 
@@ -144,21 +144,21 @@ pub fn check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool {
 }
 
 #[inline]
-fn insert<K, V>(def: *mut c_void, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
+fn insert<K, V>(def: *mut c_void, key: &K, value: &V, flags: u64) -> Result<(), i32> {
     let key = ptr::from_ref(key);
     let value = ptr::from_ref(value);
     match unsafe { bpf_map_update_elem(def, key.cast(), value.cast(), flags) } {
         0 => Ok(()),
-        ret => Err(ret),
+        ret => Err(ret as i32),
     }
 }
 
 #[inline]
-fn remove<K>(def: *mut c_void, key: &K) -> Result<(), c_long> {
+fn remove<K>(def: *mut c_void, key: &K) -> Result<(), i32> {
     let key = ptr::from_ref(key);
     match unsafe { bpf_map_delete_elem(def, key.cast()) } {
         0 => Ok(()),
-        ret => Err(ret),
+        ret => Err(ret as i32),
     }
 }
 
