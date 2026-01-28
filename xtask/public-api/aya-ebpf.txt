@@ -11,7 +11,7 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::array:
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::get(&self, index: u32) -> core::option::Option<&T>
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::get_ptr_mut(&self, index: u32) -> core::option::Option<*mut T>
-pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::set(&self, index: u32, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::set(&self, index: u32, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::new() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
@@ -77,7 +77,7 @@ pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::from(t: T) 
 pub mod aya_ebpf::btf_maps::sk_storage
 #[repr(C)] pub struct aya_ebpf::btf_maps::sk_storage::SkStorage<T>
 impl<T> aya_ebpf::btf_maps::sk_storage::SkStorage<T>
-pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::delete(&self, sk: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::delete(&self, sk: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock) -> core::result::Result<(), i32>
 pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_or_insert_ptr_mut(&self, ctx: &aya_ebpf::programs::sock_addr::SockAddrContext, value: core::option::Option<&mut T>) -> *mut T
 pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_ptr_mut(&self, ctx: &aya_ebpf::programs::sock_addr::SockAddrContext) -> *mut T
 impl<T> aya_ebpf::btf_maps::sk_storage::SkStorage<T>
@@ -112,7 +112,7 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::array:
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::get(&self, index: u32) -> core::option::Option<&T>
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::get_ptr_mut(&self, index: u32) -> core::option::Option<*mut T>
-pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::set(&self, index: u32, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::set(&self, index: u32, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::new() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
@@ -176,7 +176,7 @@ impl<T> core::convert::From<T> for aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::from(t: T) -> T
 #[repr(C)] pub struct aya_ebpf::btf_maps::SkStorage<T>
 impl<T> aya_ebpf::btf_maps::sk_storage::SkStorage<T>
-pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::delete(&self, sk: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::delete(&self, sk: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock) -> core::result::Result<(), i32>
 pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_or_insert_ptr_mut(&self, ctx: &aya_ebpf::programs::sock_addr::SockAddrContext, value: core::option::Option<&mut T>) -> *mut T
 pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_ptr_mut(&self, ctx: &aya_ebpf::programs::sock_addr::SockAddrContext) -> *mut T
 impl<T> aya_ebpf::btf_maps::sk_storage::SkStorage<T>
@@ -266,21 +266,21 @@ impl<T> core::clone::CloneToUninit for aya_ebpf::helpers::PrintkArg where T: cor
 pub unsafe fn aya_ebpf::helpers::PrintkArg::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf::helpers::PrintkArg
 pub fn aya_ebpf::helpers::PrintkArg::from(t: T) -> T
-pub fn aya_ebpf::helpers::bpf_get_current_comm() -> core::result::Result<[u8; 16], aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::helpers::bpf_get_current_comm() -> core::result::Result<[u8; 16], i32>
 pub fn aya_ebpf::helpers::bpf_get_current_pid_tgid() -> u64
 pub fn aya_ebpf::helpers::bpf_get_current_uid_gid() -> u64
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read<T>(src: *const T) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel<T>(src: *const T) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel_str_bytes(src: *const u8, dest: &mut [u8]) -> core::result::Result<&[u8], aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user<T>(src: *const T) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user_str_bytes(src: *const u8, dest: &mut [u8]) -> core::result::Result<&[u8], aya_ebpf_cty::od::c_long>
-pub unsafe fn aya_ebpf::helpers::bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read<T>(src: *const T) -> core::result::Result<T, i32>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> core::result::Result<(), i32>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel<T>(src: *const T) -> core::result::Result<T, i32>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> core::result::Result<(), i32>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> core::result::Result<usize, i32>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_kernel_str_bytes(src: *const u8, dest: &mut [u8]) -> core::result::Result<&[u8], i32>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> core::result::Result<usize, i32>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user<T>(src: *const T) -> core::result::Result<T, i32>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> core::result::Result<(), i32>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> core::result::Result<usize, i32>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_read_user_str_bytes(src: *const u8, dest: &mut [u8]) -> core::result::Result<&[u8], i32>
+pub unsafe fn aya_ebpf::helpers::bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> core::result::Result<(), i32>
 pub fn aya_ebpf::helpers::bpf_strncmp<const N: usize>(s1: &[u8; N], s2: &core::ffi::c_str::CStr) -> core::cmp::Ordering
 pub mod aya_ebpf::maps
 pub mod aya_ebpf::maps::array
@@ -290,7 +290,7 @@ pub fn aya_ebpf::maps::array::Array<T>::get(&self, index: u32) -> core::option::
 pub fn aya_ebpf::maps::array::Array<T>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
 pub fn aya_ebpf::maps::array::Array<T>::get_ptr_mut(&self, index: u32) -> core::option::Option<*mut T>
 pub const fn aya_ebpf::maps::array::Array<T>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::array::Array<T>::set(&self, index: u32, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::array::Array<T>::set(&self, index: u32, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::array::Array<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::array::Array<T>
 impl<T> core::marker::Send for aya_ebpf::maps::array::Array<T> where T: core::marker::Send
@@ -351,9 +351,9 @@ impl<K, V> aya_ebpf::maps::hash_map::HashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::HashMap<K, V>::get(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::get_ptr(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::get_ptr_mut(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::HashMap<K, V>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::HashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::HashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::HashMap<K, V> where K: core::marker::Send, V: core::marker::Send
@@ -383,9 +383,9 @@ impl<K, V> aya_ebpf::maps::hash_map::LruHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get_ptr(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get_ptr_mut(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::LruHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
@@ -415,9 +415,9 @@ impl<K, V> aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get_ptr(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get_ptr_mut(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
@@ -447,9 +447,9 @@ impl<K, V> aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get_ptr(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get_ptr_mut(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
@@ -506,9 +506,9 @@ pub fn aya_ebpf::maps::lpm_trie::Key<K>::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 impl<K, V> aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::get(&self, key: impl core::borrow::Borrow<aya_ebpf::maps::lpm_trie::Key<K>>) -> core::option::Option<&V>
-pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::insert(&self, key: impl core::borrow::Borrow<aya_ebpf::maps::lpm_trie::Key<K>>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::insert(&self, key: impl core::borrow::Borrow<aya_ebpf::maps::lpm_trie::Key<K>>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::remove(&self, key: impl core::borrow::Borrow<aya_ebpf::maps::lpm_trie::Key<K>>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::remove(&self, key: impl core::borrow::Borrow<aya_ebpf::maps::lpm_trie::Key<K>>) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where K: core::marker::Send, V: core::marker::Send
@@ -627,7 +627,7 @@ pub mod aya_ebpf::maps::program_array
 #[repr(transparent)] pub struct aya_ebpf::maps::program_array::ProgramArray
 impl aya_ebpf::maps::program_array::ProgramArray
 pub const fn aya_ebpf::maps::program_array::ProgramArray::pinned(max_entries: u32, flags: u32) -> Self
-pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<core::convert::Infallible, aya_ebpf_cty::od::c_long>
+pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<core::convert::Infallible, i32>
 pub const fn aya_ebpf::maps::program_array::ProgramArray::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::program_array::ProgramArray
 impl core::marker::Send for aya_ebpf::maps::program_array::ProgramArray
@@ -1029,7 +1029,7 @@ pub fn aya_ebpf::maps::array::Array<T>::get(&self, index: u32) -> core::option::
 pub fn aya_ebpf::maps::array::Array<T>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
 pub fn aya_ebpf::maps::array::Array<T>::get_ptr_mut(&self, index: u32) -> core::option::Option<*mut T>
 pub const fn aya_ebpf::maps::array::Array<T>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::array::Array<T>::set(&self, index: u32, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::array::Array<T>::set(&self, index: u32, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::array::Array<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::array::Array<T>
 impl<T> core::marker::Send for aya_ebpf::maps::array::Array<T> where T: core::marker::Send
@@ -1174,9 +1174,9 @@ impl<K, V> aya_ebpf::maps::hash_map::HashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::HashMap<K, V>::get(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::get_ptr(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::get_ptr_mut(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::HashMap<K, V>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::HashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::HashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::HashMap<K, V> where K: core::marker::Send, V: core::marker::Send
@@ -1204,9 +1204,9 @@ pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::LpmTrie<K, V>
 impl<K, V> aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::get(&self, key: impl core::borrow::Borrow<aya_ebpf::maps::lpm_trie::Key<K>>) -> core::option::Option<&V>
-pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::insert(&self, key: impl core::borrow::Borrow<aya_ebpf::maps::lpm_trie::Key<K>>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::insert(&self, key: impl core::borrow::Borrow<aya_ebpf::maps::lpm_trie::Key<K>>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::remove(&self, key: impl core::borrow::Borrow<aya_ebpf::maps::lpm_trie::Key<K>>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::remove(&self, key: impl core::borrow::Borrow<aya_ebpf::maps::lpm_trie::Key<K>>) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where K: core::marker::Send, V: core::marker::Send
@@ -1236,9 +1236,9 @@ impl<K, V> aya_ebpf::maps::hash_map::LruHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get_ptr(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::get_ptr_mut(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::LruHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
@@ -1268,9 +1268,9 @@ impl<K, V> aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get_ptr(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::get_ptr_mut(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
@@ -1330,9 +1330,9 @@ impl<K, V> aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<&V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get_ptr(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*const V>
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get_ptr_mut(&self, key: impl core::borrow::Borrow<K>) -> core::option::Option<*mut V>
-pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::insert(&self, key: impl core::borrow::Borrow<K>, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::remove(&self, key: impl core::borrow::Borrow<K>) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 impl<K, V> core::marker::Send for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where K: core::marker::Send, V: core::marker::Send
@@ -1418,7 +1418,7 @@ pub fn aya_ebpf::maps::PerfEventByteArray::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::ProgramArray
 impl aya_ebpf::maps::program_array::ProgramArray
 pub const fn aya_ebpf::maps::program_array::ProgramArray::pinned(max_entries: u32, flags: u32) -> Self
-pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<core::convert::Infallible, aya_ebpf_cty::od::c_long>
+pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<core::convert::Infallible, i32>
 pub const fn aya_ebpf::maps::program_array::ProgramArray::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::program_array::ProgramArray
 impl core::marker::Send for aya_ebpf::maps::program_array::ProgramArray
@@ -2331,7 +2331,7 @@ pub mod aya_ebpf::programs::tracepoint
 pub struct aya_ebpf::programs::tracepoint::TracePointContext
 impl aya_ebpf::programs::tracepoint::TracePointContext
 pub const fn aya_ebpf::programs::tracepoint::TracePointContext::new(ctx: *mut core::ffi::c_void) -> Self
-pub unsafe fn aya_ebpf::programs::tracepoint::TracePointContext::read_at<T>(&self, offset: usize) -> core::result::Result<T, i64>
+pub unsafe fn aya_ebpf::programs::tracepoint::TracePointContext::read_at<T>(&self, offset: usize) -> core::result::Result<T, i32>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tracepoint::TracePointContext
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::tracepoint::TracePointContext
@@ -3000,7 +3000,7 @@ pub fn aya_ebpf::programs::tc::TcContext::from(t: T) -> T
 pub struct aya_ebpf::programs::TracePointContext
 impl aya_ebpf::programs::tracepoint::TracePointContext
 pub const fn aya_ebpf::programs::tracepoint::TracePointContext::new(ctx: *mut core::ffi::c_void) -> Self
-pub unsafe fn aya_ebpf::programs::tracepoint::TracePointContext::read_at<T>(&self, offset: usize) -> core::result::Result<T, i64>
+pub unsafe fn aya_ebpf::programs::tracepoint::TracePointContext::read_at<T>(&self, offset: usize) -> core::result::Result<T, i32>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tracepoint::TracePointContext
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::as_ptr(&self) -> *mut core::ffi::c_void
 impl core::marker::Freeze for aya_ebpf::programs::tracepoint::TracePointContext
@@ -3097,7 +3097,7 @@ pub trait aya_ebpf::Argument: aya_ebpf::args::sealed::Argument
 impl<T: aya_ebpf::args::sealed::Argument> aya_ebpf::Argument for T
 pub trait aya_ebpf::EbpfContext
 pub fn aya_ebpf::EbpfContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
-pub fn aya_ebpf::EbpfContext::command(&self) -> core::result::Result<[u8; 16], aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::EbpfContext::command(&self) -> core::result::Result<[u8; 16], i32>
 pub fn aya_ebpf::EbpfContext::gid(&self) -> u32
 pub fn aya_ebpf::EbpfContext::pid(&self) -> u32
 pub fn aya_ebpf::EbpfContext::tgid(&self) -> u32
