@@ -690,15 +690,21 @@ macro_rules! bpf_printk {
 pub use bpf_printk;
 
 /// Argument ready to be passed to `printk` BPF helper.
+///
+/// This wraps a `u64` directly (not `[u8; 8]`) to ensure correct ABI handling
+/// when passed as a variadic argument to `bpf_trace_printk`. The C ABI for
+/// variadic functions may handle arrays differently than scalar types, causing
+/// incorrect values to be printed. Using `u64` ensures the value is passed
+/// by value in a register.
 #[repr(transparent)]
 #[derive(Copy, Clone)]
-pub struct PrintkArg([u8; 8]);
+pub struct PrintkArg(u64);
 
 impl PrintkArg {
     /// Manually construct a `printk` BPF helper argument.
     #[inline]
     pub fn from_raw(x: u64) -> Self {
-        Self(x.to_ne_bytes())
+        Self(x)
     }
 }
 
@@ -707,9 +713,9 @@ macro_rules! impl_integer_promotion {
         /// Create `printk` arguments from integer types.
         impl From<$ty> for PrintkArg {
             #[inline]
-            #[allow(trivial_numeric_casts)]
+            #[allow(trivial_numeric_casts, clippy::cast_sign_loss)]
             fn from(x: $ty) -> Self {
-                Self((x as $via).to_ne_bytes())
+                Self(x as $via as u64)
             }
         }
     )*}
@@ -733,7 +739,7 @@ impl_integer_promotion!(
 impl<T> From<*const T> for PrintkArg {
     #[inline]
     fn from(x: *const T) -> Self {
-        Self((x as usize).to_ne_bytes())
+        Self(x as usize as u64)
     }
 }
 
@@ -741,7 +747,7 @@ impl<T> From<*const T> for PrintkArg {
 impl<T> From<*mut T> for PrintkArg {
     #[inline]
     fn from(x: *mut T) -> Self {
-        Self((x as usize).to_ne_bytes())
+        Self(x as usize as u64)
     }
 }
 

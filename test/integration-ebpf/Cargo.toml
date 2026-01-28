@@ -111,3 +111,7 @@ path = "src/uprobe_cookie.rs"
 [[bin]]
 name = "perf_event_bp"
 path = "src/perf_event_bp.rs"
+
+[[bin]]
+name = "printk_test"
+path = "src/printk_test.rs"
