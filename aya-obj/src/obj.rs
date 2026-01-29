@@ -146,6 +146,8 @@ pub struct Object {
     pub programs: HashMap<String, Program>,
     /// Functions
     pub functions: BTreeMap<(usize, u64), Function>,
+    /// Inner map bindings: maps outer map name to inner (template) map name
+    pub inner_map_bindings: HashMap<String, String>,
     pub(crate) relocations: HashMap<SectionIndex, HashMap<u64, Relocation>>,
     pub(crate) symbol_table: HashMap<usize, Symbol>,
     pub(crate) symbols_by_section: HashMap<SectionIndex, Vec<usize>>,
@@ -530,6 +532,7 @@ impl Object {
             maps: HashMap::new(),
             programs: HashMap::new(),
             functions: BTreeMap::new(),
+            inner_map_bindings: HashMap::new(),
             relocations: HashMap::new(),
             symbol_table: HashMap::new(),
             symbols_by_section: HashMap::new(),
@@ -780,9 +783,11 @@ impl Object {
                             map_name,
                             Map::Btf(BtfMap {
                                 def,
+                                inner_def: None,
                                 section_index: section.index.0,
                                 symbol_index: *symbol_index,
                                 data: Vec::new(),
+                                initial_slots: BTreeMap::new(),
                             }),
                         );
                     }
@@ -825,7 +830,9 @@ impl Object {
                     section_kind: section.kind,
                     symbol_index: Some(sym.index),
                     def,
+                    inner_def: None,
                     data: Vec::new(),
+                    initial_slots: BTreeMap::new(),
                 }),
             );
             have_symbols = true;
@@ -886,10 +893,59 @@ impl Object {
                     );
                 }
             }
+            EbpfSectionKind::MapsInner => self.parse_maps_inner(&section),
             EbpfSectionKind::Undefined | EbpfSectionKind::License | EbpfSectionKind::Version => {}
         }
 
         Ok(())
+    }
+
+    /// Parses the `.maps.inner` section which contains outer->inner map bindings.
+    ///
+    /// This is an aya-specific mechanism for declaring inner map bindings at compile time,
+    /// used by the legacy `#[map(inner = "...")]` macro. This mechanism is NOT compatible
+    /// with libbpf loaders.
+    ///
+    /// Unlike libbpf which uses BTF relocations within the `.maps` section
+    /// (see <https://patchwork.ozlabs.org/comment/2418417/>), this legacy system uses a
+    /// separate section containing null-terminated string pairs.
+    ///
+    /// For libbpf compatibility, use `#[btf_map]` with `aya_ebpf::btf_maps::{ArrayOfMaps, HashOfMaps}`
+    /// which use BTF relocations that both aya and libbpf can process.
+    ///
+    /// Format: `"outer_name\0inner_name\0"` pairs, emitted by the `#[map(inner = "...")]` macro.
+    fn parse_maps_inner(&mut self, section: &Section<'_>) {
+        let data = section.data;
+        let mut offset = 0;
+
+        while offset < data.len() {
+            // Read outer map name (null-terminated)
+            let outer_end = data[offset..]
+                .iter()
+                .position(|&b| b == 0)
+                .map_or(data.len(), |p| offset + p);
+
+            if outer_end >= data.len() {
+                break;
+            }
+
+            let outer_name = String::from_utf8_lossy(&data[offset..outer_end]).into_owned();
+            offset = outer_end + 1; // skip null terminator
+
+            // Read inner map name (null-terminated)
+            let inner_end = data[offset..]
+                .iter()
+                .position(|&b| b == 0)
+                .map_or(data.len(), |p| offset + p);
+
+            let inner_name = String::from_utf8_lossy(&data[offset..inner_end]).into_owned();
+            offset = inner_end + 1; // skip null terminator
+
+            if !outer_name.is_empty() && !inner_name.is_empty() {
+                self.inner_map_bindings
+                    .insert(outer_name.clone(), inner_name.clone());
+            }
+        }
     }
 
     /// Sanitize BPF functions.
@@ -1026,6 +1082,8 @@ pub enum EbpfSectionKind {
     Maps,
     /// `.maps`
     BtfMaps,
+    /// `.maps.inner`
+    MapsInner,
     /// A program section
     Program,
     /// `.data`
@@ -1054,6 +1112,8 @@ impl EbpfSectionKind {
             Self::Version
         } else if name.starts_with("maps") {
             Self::Maps
+        } else if name == ".maps.inner" {
+            Self::MapsInner
         } else if name.starts_with(".maps") {
             Self::BtfMaps
         } else if name.starts_with(".text") {
@@ -1240,7 +1300,9 @@ fn parse_data_map_section(section: &Section<'_>) -> Map {
         // Data maps don't require symbols to be relocated
         symbol_index: None,
         def,
+        inner_def: None,
         data,
+        initial_slots: BTreeMap::new(),
     })
 }
 
@@ -1353,9 +1415,11 @@ pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
                 btf_key_type_id: info.btf_key_type_id,
                 btf_value_type_id: info.btf_value_type_id,
             },
+            inner_def: None,
             section_index: 0,
             symbol_index: 0,
             data: Vec::new(),
+            initial_slots: BTreeMap::new(),
         })
     } else {
         Map::Legacy(LegacyMap {
@@ -1368,10 +1432,12 @@ pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
                 pinning: pinned,
                 id: info.id,
             },
+            inner_def: None,
             section_index: 0,
             symbol_index: None,
             section_kind: EbpfSectionKind::Undefined,
             data: Vec::new(),
+            initial_slots: BTreeMap::new(),
         })
     }
 }
@@ -1632,6 +1698,7 @@ mod tests {
                     pinning: PinningType::None,
                 },
                 data,
+                ..
             }) if data == map_data && value_size == map_data.len() as u32
         )
     }
@@ -2629,10 +2696,12 @@ mod tests {
                     id: 1,
                     pinning: PinningType::None,
                 },
+                inner_def: None,
                 section_index: 1,
                 section_kind: EbpfSectionKind::Rodata,
                 symbol_index: Some(1),
                 data: vec![0, 0, 0],
+                initial_slots: BTreeMap::new(),
             }),
         );
         obj.symbol_table.insert(
