@@ -33,6 +33,9 @@ pub struct CpuMap {
     def: MapDef,
 }
 
+unsafe impl Sync for CpuMap {}
+impl super::super::private::Sealed for CpuMap {}
+
 impl CpuMap {
     map_constructors!(
         u32,

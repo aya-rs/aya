@@ -22,6 +22,9 @@ pub struct SockHash<K> {
     _k: PhantomData<K>,
 }
 
+unsafe impl<K: Sync> Sync for SockHash<K> {}
+impl<K> super::private::Sealed for SockHash<K> {}
+
 impl<K> SockHash<K> {
     map_constructors!(K, u32, BPF_MAP_TYPE_SOCKHASH, phantom _k);
 

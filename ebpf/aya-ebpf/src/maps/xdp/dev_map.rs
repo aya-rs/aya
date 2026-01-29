@@ -35,6 +35,9 @@ pub struct DevMap {
     def: MapDef,
 }
 
+unsafe impl Sync for DevMap {}
+impl super::super::private::Sealed for DevMap {}
+
 impl DevMap {
     map_constructors!(
         u32,

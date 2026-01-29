@@ -21,6 +21,9 @@ pub struct RingBuf {
     def: MapDef,
 }
 
+unsafe impl Sync for RingBuf {}
+impl super::private::Sealed for RingBuf {}
+
 /// A ring buffer entry, returned from [`RingBuf::reserve_bytes`].
 ///
 /// You must [`submit`] or [`discard`] this entry before it gets dropped.

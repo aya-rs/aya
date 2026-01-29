@@ -76,8 +76,10 @@ macro_rules! map_constructors {
 }
 
 pub mod array;
+pub mod array_of_maps;
 pub mod bloom_filter;
 pub mod hash_map;
+pub mod hash_of_maps;
 pub mod lpm_trie;
 pub mod per_cpu_array;
 pub mod perf;
@@ -91,8 +93,10 @@ pub mod stack_trace;
 pub mod xdp;
 
 pub use array::Array;
+pub use array_of_maps::ArrayOfMaps;
 pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, LruHashMap, LruPerCpuHashMap, PerCpuHashMap};
+pub use hash_of_maps::HashOfMaps;
 pub use lpm_trie::LpmTrie;
 pub use per_cpu_array::PerCpuArray;
 pub use perf::{PerfEventArray, PerfEventByteArray};
@@ -104,3 +108,25 @@ pub use sock_map::SockMap;
 pub use stack::Stack;
 pub use stack_trace::StackTrace;
 pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
+
+mod private {
+    /// Sealed trait to prevent external implementations of [`super::InnerMap`].
+    #[expect(
+        unnameable_types,
+        reason = "sealed trait pattern requires pub trait in private mod"
+    )]
+    pub trait Sealed {}
+}
+
+/// Marker trait for all eBPF maps that can be used in a map of maps.
+///
+/// This trait is sealed and cannot be implemented outside this crate.
+///
+/// # Safety
+///
+/// This trait must only be implemented for map types that the kernel accepts
+/// as inner maps in a map-of-maps structure.
+pub unsafe trait InnerMap: private::Sealed {}
+
+// SAFETY: All types implementing `private::Sealed` are valid inner map types.
+unsafe impl<T: private::Sealed> InnerMap for T {}

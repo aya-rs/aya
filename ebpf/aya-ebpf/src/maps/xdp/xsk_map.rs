@@ -54,6 +54,9 @@ pub struct XskMap {
     def: MapDef,
 }
 
+unsafe impl Sync for XskMap {}
+impl super::super::private::Sealed for XskMap {}
+
 impl XskMap {
     map_constructors!(
         u32,

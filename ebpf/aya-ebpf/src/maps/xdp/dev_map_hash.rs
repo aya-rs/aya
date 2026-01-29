@@ -37,6 +37,9 @@ pub struct DevMapHash {
     def: MapDef,
 }
 
+unsafe impl Sync for DevMapHash {}
+impl super::super::private::Sealed for DevMapHash {}
+
 impl DevMapHash {
     map_constructors!(
         u32,

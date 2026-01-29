@@ -12,6 +12,9 @@ pub struct StackTrace {
     def: MapDef,
 }
 
+unsafe impl Sync for StackTrace {}
+impl super::private::Sealed for StackTrace {}
+
 const PERF_MAX_STACK_DEPTH: usize = 127;
 
 impl StackTrace {

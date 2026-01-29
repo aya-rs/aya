@@ -16,6 +16,9 @@ pub struct LpmTrie<K, V> {
     _kv: PhantomData<(K, V)>,
 }
 
+unsafe impl<K: Sync, V: Sync> Sync for LpmTrie<K, V> {}
+impl<K, V> super::private::Sealed for LpmTrie<K, V> {}
+
 #[repr(C, packed)]
 pub struct Key<K> {
     /// Represents the number of bits matched against.

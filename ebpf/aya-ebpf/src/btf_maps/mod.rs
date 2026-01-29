@@ -1,8 +1,12 @@
 pub mod array;
+pub mod array_of_maps;
+pub mod hash_of_maps;
 pub mod ring_buf;
 pub mod sk_storage;
 
 pub use array::Array;
+pub use array_of_maps::ArrayOfMaps;
+pub use hash_of_maps::HashOfMaps;
 pub use ring_buf::RingBuf;
 pub use sk_storage::SkStorage;
 

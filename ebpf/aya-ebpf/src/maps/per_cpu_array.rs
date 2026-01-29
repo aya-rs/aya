@@ -12,6 +12,9 @@ pub struct PerCpuArray<T> {
     _t: PhantomData<T>,
 }
 
+unsafe impl<T> Sync for PerCpuArray<T> {}
+impl<T> super::private::Sealed for PerCpuArray<T> {}
+
 impl<T> PerCpuArray<T> {
     map_constructors!(u32, T, BPF_MAP_TYPE_PERCPU_ARRAY, phantom _t);
 

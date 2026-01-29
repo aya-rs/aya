@@ -15,6 +15,9 @@ pub struct SockMap {
     def: MapDef,
 }
 
+unsafe impl Sync for SockMap {}
+impl super::private::Sealed for SockMap {}
+
 impl SockMap {
     map_constructors!(u32, u32, BPF_MAP_TYPE_SOCKMAP);
 

@@ -12,6 +12,9 @@ pub struct Queue<T> {
     _t: PhantomData<T>,
 }
 
+unsafe impl<T: Sync> Sync for Queue<T> {}
+impl<T> super::private::Sealed for Queue<T> {}
+
 impl<T> Queue<T> {
     map_constructors!((), T, BPF_MAP_TYPE_QUEUE, phantom _t);
 

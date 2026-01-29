@@ -12,6 +12,9 @@ pub struct Stack<T> {
     _t: PhantomData<T>,
 }
 
+unsafe impl<T: Sync> Sync for Stack<T> {}
+impl<T> super::private::Sealed for Stack<T> {}
+
 impl<T> Stack<T> {
     map_constructors!((), T, BPF_MAP_TYPE_STACK, phantom _t);
 
