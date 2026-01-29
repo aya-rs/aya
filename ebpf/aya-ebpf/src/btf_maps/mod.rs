@@ -1,8 +1,12 @@
 pub mod array;
+pub mod array_of_maps;
+pub mod hash_of_maps;
 pub mod ring_buf;
 pub mod sk_storage;
 
 pub use array::Array;
+pub use array_of_maps::ArrayOfMaps;
+pub use hash_of_maps::HashOfMaps;
 pub use ring_buf::RingBuf;
 pub use sk_storage::SkStorage;
 
@@ -18,7 +22,60 @@ pub use sk_storage::SkStorage;
 /// Generics are limited to type parameters (with optional defaults) followed by
 /// a semicolon and const parameters (with optional defaults). Lifetimes and
 /// bounds are not supported.
+///
+/// # Map-of-maps support
+///
+/// For map-of-maps types (`ArrayOfMaps`, `HashOfMaps`), add an `inner_map` clause:
+///
+/// ```ignore
+/// btf_map_def!(
+///     pub struct HashOfMaps<K, V; const M: usize, const F: usize = 0>,
+///     map_type: BPF_MAP_TYPE_HASH_OF_MAPS,
+///     max_entries: M,
+///     map_flags: F,
+///     key_type: K,
+///     value_type: u32,
+///     inner_map: V,
+/// );
+/// ```
+///
+/// This generates a `values: [*const V; 0]` field for BTF relocation. The inner
+/// map type `V` is encoded in BTF so that loaders can resolve the inner map
+/// template.
 macro_rules! btf_map_def {
+    // Map-of-maps (with inner_map) - rewrites into the regular arm with a
+    // `values` extra field whose initializer is `[]` (a zero-length array).
+    (
+        $(#[$attr:meta])*
+        $vis:vis struct $name:ident<
+            $($ty_gen:ident $(= $ty_default:ty)?),+
+            $(; $(const $const_gen:ident : $const_ty:ty $(= $const_default:tt)?),+)?
+            $(,)?
+        >,
+        map_type: $map_type:ident,
+        max_entries: $max_entries:expr,
+        map_flags: $map_flags:expr,
+        key_type: $key_ty:ty,
+        value_type: $value_ty:ty,
+        inner_map: $inner_ty:ty
+        $(,)?
+    ) => {
+        $crate::btf_maps::btf_map_def!(
+            $(#[$attr])*
+            $vis struct $name<
+                $($ty_gen $(= $ty_default)?),+
+                $(; $(const $const_gen : $const_ty $(= $const_default)?),+)?
+            >,
+            map_type: $map_type,
+            max_entries: $max_entries,
+            map_flags: $map_flags,
+            key_type: $key_ty,
+            value_type: $value_ty,
+            values: [*const $inner_ty; 0] = []
+        );
+    };
+
+    // Regular map (with optional extra fields and initializers)
     (
         $(#[$attr:meta])*
         $vis:vis struct $name:ident<
@@ -31,7 +88,7 @@ macro_rules! btf_map_def {
         map_flags: $map_flags:expr,
         key_type: $key_ty:ty,
         value_type: $value_ty:ty
-        $(, $extra_field:ident : $extra_ty:ty)*
+        $(, $extra_field:ident : $extra_ty:ty = $extra_init:expr)*
         $(,)?
     ) => {
         $(#[$attr])*
@@ -45,10 +102,8 @@ macro_rules! btf_map_def {
             r#type: *const [i32; $crate::bindings::bpf_map_type::$map_type as usize],
             key: *const $key_ty,
             value: *const $value_ty,
-
             max_entries: *const [i32; $max_entries],
             map_flags: *const [i32; $map_flags],
-
             $($extra_field: $extra_ty,)*
         }
 
@@ -59,6 +114,19 @@ macro_rules! btf_map_def {
             $($ty_gen),+
             $(, $($const_gen),+)?
         > {}
+
+        impl<
+            $($ty_gen),+
+            $(, $(const $const_gen : $const_ty),+)?
+        > $name<
+            $($ty_gen),+
+            $(, $($const_gen),+)?
+        > {
+            #[inline(always)]
+            pub(crate) const fn as_ptr(&self) -> *mut ::core::ffi::c_void {
+                ::core::ptr::from_ref(self).cast_mut().cast()
+            }
+        }
 
         impl<
             $($ty_gen),+
@@ -84,17 +152,10 @@ macro_rules! btf_map_def {
                     r#type: ::core::ptr::null(),
                     key: ::core::ptr::null(),
                     value: ::core::ptr::null(),
-
                     max_entries: ::core::ptr::null(),
                     map_flags: ::core::ptr::null(),
-
-                    $($extra_field: ::core::ptr::null(),)*
+                    $($extra_field: $extra_init,)*
                 }
-            }
-
-            #[inline(always)]
-            pub(crate) const fn as_ptr(&self) -> *mut ::core::ffi::c_void {
-                ::core::ptr::from_ref(self).cast_mut().cast()
             }
         }
     };
