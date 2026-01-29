@@ -1,7 +1,6 @@
 use core::{borrow::Borrow, marker::PhantomData};
 
 use aya_ebpf_bindings::bindings::BPF_F_NO_PREALLOC;
-use aya_ebpf_cty::c_long;
 
 use crate::{
     bindings::bpf_map_type::BPF_MAP_TYPE_LPM_TRIE,
@@ -44,12 +43,12 @@ impl<K, V> LpmTrie<K, V> {
         key: impl Borrow<Key<K>>,
         value: impl Borrow<V>,
         flags: u64,
-    ) -> Result<(), c_long> {
+    ) -> Result<(), i32> {
         insert(self.def.as_ptr(), key.borrow(), value.borrow(), flags)
     }
 
     #[inline]
-    pub fn remove(&self, key: impl Borrow<Key<K>>) -> Result<(), c_long> {
+    pub fn remove(&self, key: impl Borrow<Key<K>>) -> Result<(), i32> {
         remove(self.def.as_ptr(), key.borrow())
     }
 }

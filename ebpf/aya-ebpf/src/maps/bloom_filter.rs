@@ -16,7 +16,7 @@ impl<T> BloomFilter<T> {
     map_constructors!((), T, BPF_MAP_TYPE_BLOOM_FILTER, phantom _t);
 
     #[inline]
-    pub fn contains(&mut self, value: impl Borrow<T>) -> Result<(), i64> {
+    pub fn contains(&self, value: impl Borrow<T>) -> Result<(), i64> {
         let ret = unsafe {
             bpf_map_peek_elem(
                 self.def.as_ptr().cast(),
@@ -27,7 +27,7 @@ impl<T> BloomFilter<T> {
     }
 
     #[inline]
-    pub fn insert(&mut self, value: impl Borrow<T>, flags: u64) -> Result<(), i64> {
+    pub fn insert(&self, value: impl Borrow<T>, flags: u64) -> Result<(), i64> {
         let ret = unsafe {
             bpf_map_push_elem(
                 self.def.as_ptr().cast(),
