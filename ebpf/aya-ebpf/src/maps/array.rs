@@ -12,6 +12,8 @@ pub struct Array<T> {
     _t: PhantomData<T>,
 }
 
+impl<T> super::private::Map for Array<T> {}
+
 impl<T> Array<T> {
     map_constructors!(u32, T, BPF_MAP_TYPE_ARRAY, phantom _t);
 
