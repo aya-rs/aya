@@ -4,13 +4,17 @@ use crate::{
     EbpfContext,
     bindings::bpf_map_type::BPF_MAP_TYPE_STACK_TRACE,
     helpers::bpf_get_stackid,
-    maps::{MapDef, PinningType},
+    maps::{InnerMap, MapDef, PinningType},
 };
 
 #[repr(transparent)]
 pub struct StackTrace {
     def: MapDef,
 }
+
+unsafe impl Sync for StackTrace {}
+impl super::private::Sealed for StackTrace {}
+unsafe impl InnerMap for StackTrace {}
 
 const PERF_MAX_STACK_DEPTH: usize = 127;
 

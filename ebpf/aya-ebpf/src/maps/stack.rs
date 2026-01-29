@@ -3,7 +3,7 @@ use core::{borrow::Borrow, marker::PhantomData, mem, ptr};
 use crate::{
     bindings::bpf_map_type::BPF_MAP_TYPE_STACK,
     helpers::{bpf_map_peek_elem, bpf_map_pop_elem, bpf_map_push_elem},
-    maps::{MapDef, PinningType},
+    maps::{InnerMap, MapDef, PinningType},
 };
 
 #[repr(transparent)]
@@ -11,6 +11,10 @@ pub struct Stack<T> {
     def: MapDef,
     _t: PhantomData<T>,
 }
+
+unsafe impl<T: Sync> Sync for Stack<T> {}
+impl<T> super::private::Sealed for Stack<T> {}
+unsafe impl<T> InnerMap for Stack<T> {}
 
 impl<T> Stack<T> {
     map_constructors!((), T, BPF_MAP_TYPE_STACK, phantom _t);

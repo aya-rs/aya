@@ -6,7 +6,7 @@ use crate::{
         bpf_sock_map_update,
     },
     lookup,
-    maps::{MapDef, PinningType},
+    maps::{InnerMap, MapDef, PinningType},
     programs::{SkBuffContext, SkLookupContext, SkMsgContext},
 };
 
@@ -14,6 +14,10 @@ use crate::{
 pub struct SockMap {
     def: MapDef,
 }
+
+unsafe impl Sync for SockMap {}
+impl super::private::Sealed for SockMap {}
+unsafe impl InnerMap for SockMap {}
 
 impl SockMap {
     map_constructors!(u32, u32, BPF_MAP_TYPE_SOCKMAP);

@@ -12,7 +12,7 @@ use crate::{
         bpf_sock_hash_update,
     },
     lookup,
-    maps::{MapDef, PinningType},
+    maps::{InnerMap, MapDef, PinningType},
     programs::{SkBuffContext, SkLookupContext, SkMsgContext},
 };
 
@@ -21,6 +21,10 @@ pub struct SockHash<K> {
     def: MapDef,
     _k: PhantomData<K>,
 }
+
+unsafe impl<K: Sync> Sync for SockHash<K> {}
+impl<K> super::private::Sealed for SockHash<K> {}
+unsafe impl<K> InnerMap for SockHash<K> {}
 
 impl<K> SockHash<K> {
     map_constructors!(K, u32, BPF_MAP_TYPE_SOCKHASH, phantom _k);
