@@ -54,6 +54,8 @@ pub struct XskMap {
     def: MapDef,
 }
 
+impl super::super::private::Map for XskMap {}
+
 impl XskMap {
     map_constructors!(
         u32,
