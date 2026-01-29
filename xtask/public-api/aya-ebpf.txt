@@ -669,7 +669,7 @@ impl aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
-pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>>
+pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where aya_ebpf::maps::ring_buf::const_assert::Assert<{ _ }>: aya_ebpf::maps::ring_buf::const_assert::IsTrue
 pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve_bytes(&self, size: usize, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufBytes<'_>>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBuf
@@ -1432,7 +1432,7 @@ impl aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
-pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>>
+pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where aya_ebpf::maps::ring_buf::const_assert::Assert<{ _ }>: aya_ebpf::maps::ring_buf::const_assert::IsTrue
 pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve_bytes(&self, size: usize, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufBytes<'_>>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::with_byte_size(byte_size: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::ring_buf::RingBuf
