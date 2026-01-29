@@ -17,7 +17,7 @@ use log::{debug, warn};
 use thiserror::Error;
 
 use crate::{
-    maps::{Map, MapData, MapError},
+    maps::{Map, MapData, MapError, ProgramArray},
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe,
@@ -125,6 +125,9 @@ pub struct EbpfLoader<'a> {
     // Map pin path overrides the pin path of the map that matches the provided name before
     // it is created.
     map_pin_path_by_name: HashMap<&'a str, Cow<'a, Path>>,
+    // Prog array entries: map_name -> Vec<(program_name, index)>
+    // These will be populated after programs are loaded.
+    prog_array_entries: HashMap<&'a str, Vec<(&'a str, u32)>>,
 
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
@@ -165,6 +168,7 @@ impl<'a> EbpfLoader<'a> {
             globals: HashMap::new(),
             max_entries: HashMap::new(),
             map_pin_path_by_name: HashMap::new(),
+            prog_array_entries: HashMap::new(),
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
             allow_unsupported_maps: false,
@@ -214,6 +218,42 @@ impl<'a> EbpfLoader<'a> {
     ///
     pub const fn allow_unsupported_maps(&mut self) -> &mut Self {
         self.allow_unsupported_maps = true;
+        self
+    }
+
+    /// Specifies that a program should be inserted into a [`ProgramArray`](crate::maps::ProgramArray) at a given index.
+    ///
+    /// This allows you to set up tail call jump tables declaratively. After loading all the
+    /// programs, call [`Ebpf::populate_prog_arrays`] to populate the program arrays with the
+    /// loaded program file descriptors.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::EbpfLoader;
+    ///
+    /// let mut ebpf = EbpfLoader::new()
+    ///     .set_prog_array_entry("JUMP_TABLE", 0, "prog_0")
+    ///     .set_prog_array_entry("JUMP_TABLE", 1, "prog_1")
+    ///     .load_file("file.o")?;
+    ///
+    /// // Load the programs
+    /// // ...
+    ///
+    /// // Populate the program arrays with loaded program FDs
+    /// ebpf.populate_prog_arrays()?;
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    pub fn set_prog_array_entry(
+        &mut self,
+        map_name: &'a str,
+        index: u32,
+        program_name: &'a str,
+    ) -> &mut Self {
+        self.prog_array_entries
+            .entry(map_name)
+            .or_default()
+            .push((program_name, index));
         self
     }
 
@@ -439,6 +479,7 @@ impl<'a> EbpfLoader<'a> {
             verifier_log_level,
             allow_unsupported_maps,
             map_pin_path_by_name,
+            prog_array_entries,
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
@@ -510,13 +551,53 @@ impl<'a> EbpfLoader<'a> {
         if let Some(btf) = &btf {
             obj.relocate_btf(btf)?;
         }
-        let mut maps = HashMap::new();
-        for (name, mut obj) in obj.maps.drain() {
+
+        // Helper function to check if a map type is a map-of-maps
+        const fn is_map_of_maps(map_type: bpf_map_type) -> bool {
+            matches!(
+                map_type,
+                bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS | bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS
+            )
+        }
+
+        // Helper function to find a suitable inner map for a map-of-maps
+        // Prefers maps with larger max_entries since utility maps tend to be smaller
+        fn find_inner_map_for(
+            outer_type: bpf_map_type,
+            maps: &HashMap<String, MapData>,
+        ) -> Option<&MapData> {
+            let inner_type = match outer_type {
+                bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => bpf_map_type::BPF_MAP_TYPE_ARRAY,
+                bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => bpf_map_type::BPF_MAP_TYPE_HASH,
+                _ => return None,
+            };
+            maps.values()
+                .filter(|m| m.obj().map_type() == inner_type as u32)
+                .max_by_key(|m| m.obj().max_entries())
+        }
+
+        // Separate maps into regular maps and map-of-maps
+        let mut regular_maps: Vec<(String, aya_obj::Map)> = Vec::new();
+        let mut maps_of_maps: Vec<(String, aya_obj::Map)> = Vec::new();
+
+        for (name, map_obj) in obj.maps.drain() {
             if let (false, EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata) =
-                (FEATURES.bpf_global_data(), obj.section_kind())
+                (FEATURES.bpf_global_data(), map_obj.section_kind())
             {
                 continue;
             }
+            let map_type: bpf_map_type = map_obj.map_type().try_into().map_err(MapError::from)?;
+            if is_map_of_maps(map_type) {
+                maps_of_maps.push((name, map_obj));
+            } else {
+                regular_maps.push((name, map_obj));
+            }
+        }
+
+        let mut maps = HashMap::new();
+
+        // First, create all regular maps
+        for (name, mut obj) in regular_maps {
             let num_cpus = || {
                 Ok(nr_cpus().map_err(|(path, error)| EbpfError::FileError {
                     path: PathBuf::from(path),
@@ -524,21 +605,21 @@ impl<'a> EbpfLoader<'a> {
                 })? as u32)
             };
             let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
-            if let Some(max_entries) = max_entries_override(
+            if let Some(max_entries_val) = max_entries_override(
                 map_type,
                 max_entries.get(name.as_str()).copied(),
                 || obj.max_entries(),
                 num_cpus,
                 || page_size() as u32,
             )? {
-                obj.set_max_entries(max_entries)
+                obj.set_max_entries(max_entries_val)
             }
             if let Some(value_size) = value_size_override(map_type) {
                 obj.set_value_size(value_size)
             }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
             let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
-                MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd)?
+                MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd, None)?
             } else {
                 match obj.pinning() {
                     PinningType::None => MapData::create(obj, &name, btf_fd)?,
@@ -550,7 +631,39 @@ impl<'a> EbpfLoader<'a> {
                             .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
                         let path = path.join(&name);
 
-                        MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
+                        MapData::create_pinned_by_name(path, obj, &name, btf_fd, None)?
+                    }
+                }
+            };
+            map.finalize()?;
+            maps.insert(name, map);
+        }
+
+        // Then, create map-of-maps with appropriate inner_map_fd
+        for (name, map_obj) in maps_of_maps {
+            let map_type: bpf_map_type = map_obj.map_type().try_into().map_err(MapError::from)?;
+            // First check for explicit inner map binding, then fall back to heuristic
+            let inner_map = if let Some(inner_name) = obj.inner_map_bindings.get(&name) {
+                maps.get(inner_name)
+            } else {
+                find_inner_map_for(map_type, &maps)
+            };
+            let inner_map_fd = inner_map.map(|m| m.fd().as_fd());
+
+            let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
+            let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
+                MapData::create_pinned_by_name(pin_path, map_obj, &name, btf_fd, inner_map_fd)?
+            } else {
+                match map_obj.pinning() {
+                    PinningType::None => {
+                        MapData::create_with_inner_map_fd(map_obj, &name, btf_fd, inner_map_fd)?
+                    }
+                    PinningType::ByName => {
+                        let path = default_map_pin_directory
+                            .as_deref()
+                            .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
+                        let path = path.join(&name);
+                        MapData::create_pinned_by_name(path, map_obj, &name, btf_fd, inner_map_fd)?
                     }
                 }
             };
@@ -759,7 +872,23 @@ impl<'a> EbpfLoader<'a> {
             .map(|data| parse_map(data, *allow_unsupported_maps))
             .collect::<Result<HashMap<String, Map>, EbpfError>>()?;
 
-        Ok(Ebpf { maps, programs })
+        // Convert prog_array_entries to owned strings
+        let prog_array_entries = prog_array_entries
+            .drain()
+            .map(|(map_name, entries)| {
+                let entries = entries
+                    .into_iter()
+                    .map(|(prog_name, index)| (prog_name.to_string(), index))
+                    .collect();
+                (map_name.to_string(), entries)
+            })
+            .collect();
+
+        Ok(Ebpf {
+            maps,
+            programs,
+            prog_array_entries,
+        })
     }
 }
 
@@ -791,6 +920,8 @@ fn parse_map(
         bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
         bpf_map_type::BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
         bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Map::SkStorage(map),
+        bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Map::ArrayOfMaps(map),
+        bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Map::HashOfMaps(map),
         m_type => {
             if allow_unsupported_maps {
                 Map::Unsupported(map)
@@ -923,6 +1054,8 @@ impl Default for EbpfLoader<'_> {
 pub struct Ebpf {
     maps: HashMap<String, Map>,
     programs: HashMap<String, Program>,
+    /// Prog array entries to be populated: `map_name` -> `Vec<(program_name, index)>`
+    prog_array_entries: HashMap<String, Vec<(String, u32)>>,
 }
 
 /// The main entry point into the library, used to work with eBPF programs and maps.
@@ -1168,6 +1301,83 @@ impl Ebpf {
     pub fn programs_mut(&mut self) -> impl Iterator<Item = (&str, &mut Program)> {
         self.programs.iter_mut().map(|(s, p)| (s.as_str(), p))
     }
+
+    /// Populates program arrays with loaded program file descriptors.
+    ///
+    /// This method sets up tail call jump tables by populating program arrays with the
+    /// file descriptors of loaded programs. The entries to populate are specified using
+    /// [`EbpfLoader::set_prog_array_entry`] during loading.
+    ///
+    /// This method should be called after all required programs have been loaded.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - A specified map is not found
+    /// - A specified map is not a program array
+    /// - A specified program is not found
+    /// - A specified program has not been loaded yet
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use aya::EbpfLoader;
+    ///
+    /// let mut ebpf = EbpfLoader::new()
+    ///     .set_prog_array_entry("JUMP_TABLE", 0, "prog_0")
+    ///     .set_prog_array_entry("JUMP_TABLE", 1, "prog_1")
+    ///     .load_file("file.o")?;
+    ///
+    /// // Load the programs first
+    /// // ...
+    ///
+    /// // Then populate the program arrays
+    /// ebpf.populate_prog_arrays()?;
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    pub fn populate_prog_arrays(&mut self) -> Result<(), EbpfError> {
+        // Take ownership of entries to avoid borrow conflicts
+        let entries = std::mem::take(&mut self.prog_array_entries);
+
+        for (map_name, prog_entries) in entries {
+            let map =
+                self.maps
+                    .get_mut(&map_name)
+                    .ok_or_else(|| EbpfError::ProgArrayPopulateError {
+                        message: format!("map '{map_name}' not found"),
+                    })?;
+
+            let mut prog_array: ProgramArray<&mut MapData> =
+                map.try_into()
+                    .map_err(|e: MapError| EbpfError::ProgArrayPopulateError {
+                        message: format!("map '{map_name}' is not a program array: {e}"),
+                    })?;
+
+            for (prog_name, index) in prog_entries {
+                let program = self.programs.get(&prog_name).ok_or_else(|| {
+                    EbpfError::ProgArrayPopulateError {
+                        message: format!("program '{prog_name}' not found"),
+                    }
+                })?;
+
+                let fd = program
+                    .fd()
+                    .map_err(|e| EbpfError::ProgArrayPopulateError {
+                        message: format!("program '{prog_name}' has not been loaded yet: {e}"),
+                    })?;
+
+                prog_array
+                    .set(index, fd, 0)
+                    .map_err(|e| EbpfError::ProgArrayPopulateError {
+                        message: format!(
+                            "failed to set program '{prog_name}' at index {index} in map '{map_name}': {e}"
+                        ),
+                    })?;
+            }
+        }
+
+        Ok(())
+    }
 }
 
 /// The error type returned by [`Ebpf::load_file`] and [`Ebpf::load`].
@@ -1217,6 +1427,13 @@ pub enum EbpfError {
     #[error("program error: {0}")]
     /// A program error
     ProgramError(#[from] ProgramError),
+
+    /// Error populating program arrays
+    #[error("error populating program array: {message}")]
+    ProgArrayPopulateError {
+        /// Description of what went wrong
+        message: String,
+    },
 }
 
 /// The error type returned by [`Bpf::load_file`] and [`Bpf::load`].
