@@ -49,7 +49,7 @@ jobs:
           sudo apt update
           sudo apt -y install autopoint
 
-      - run: ./clippy.sh
+      - run: cargo xtask clippy
 
       # On the `aya-rs/aya` repository, regenerate the public API on a schedule.
       #
@@ -398,46 +398,10 @@ jobs:
         if: runner.os == 'Linux' && matrix.skip-local != true
         run: cargo xtask integration-test local
 
-      # macOS cross-compilation fixes for libbpf-sys vendored dependencies.
-      #
-      # See https://github.com/libbpf/libbpf-sys/issues/137.
-      - name: Set cross-compilation env for macOS
-        if: runner.os == 'macOS'
-        run: |
-          # Add make wrapper that overrides AR/RANLIB for zlib build.
-          echo "${{ github.workspace }}/ci/bin" >> $GITHUB_PATH
-          # Export env vars, stripping comments and quotes (shell quoting breaks GITHUB_ENV).
-          grep -v '^#' ci/libbpf-sys.env ci/macos-toolchain.env | grep -v '^$' | sed 's/"//g' >> $GITHUB_ENV
-
-      # libbpf-sys cross-compilation workarounds:
-      # - linux-libc-dev provides kernel UAPI headers (installed above)
-      # - LIBBPF_SYS_EXTRA_CFLAGS adds -idirafter for cross-compile header paths
-      # - ac_cv_search_* variables from ci/libbpf-sys.env skip autoconf checks
-      #
-      # See https://github.com/libbpf/libbpf-sys/issues/137.
       - name: Run virtualized integration tests
         if: matrix.download-kernel-images != 'local'
         run: |
           set -euxo pipefail
-
-          # Source cross-compilation env vars for libbpf-sys vendored dependencies.
-          set -a
-          . ci/libbpf-sys.env
-          if [ "$(uname -s)" = "Darwin" ]; then
-            . ci/macos-toolchain.env
-          fi
-          set +a
-
-          arch=$(uname -m)
-          libbpf_sys_extra_cflags=(-idirafter "/usr/include/${arch}-linux-gnu" -idirafter /usr/include)
-          if [ "${arch}" = aarch64 ]; then
-            libbpf_sys_extra_cflags+=(-mno-outline-atomics)
-          fi
-          export LIBBPF_SYS_EXTRA_CFLAGS="${libbpf_sys_extra_cflags[@]}"
-
-          # libbpf-sys forwards LIBBPF_SYS_EXTRA_CFLAGS to libbpf, but the
-          # vendored elfutils build ignores it and only honors CFLAGS/CPPFLAGS.
-          export CFLAGS='-I${{ github.workspace }}/ci/headers'
 
           find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
             cargo xtask integration-test vm --cache-dir test/.tmp \
