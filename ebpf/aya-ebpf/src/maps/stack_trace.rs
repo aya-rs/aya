@@ -10,6 +10,8 @@ pub struct StackTrace {
     def: MapDef,
 }
 
+impl super::private::Map for StackTrace {}
+
 impl StackTrace {
     map_constructors!(
         u32,

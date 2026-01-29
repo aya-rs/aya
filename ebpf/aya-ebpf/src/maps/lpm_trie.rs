@@ -15,6 +15,8 @@ pub struct LpmTrie<K, V> {
     _kv: PhantomData<(K, V)>,
 }
 
+impl<K, V> super::private::Map for LpmTrie<K, V> {}
+
 #[repr(C, packed)]
 pub struct Key<K> {
     /// Represents the number of bits matched against.
