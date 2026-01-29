@@ -13,7 +13,11 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
+aya = { path = "../../aya", version = "^0.13.1", optional = true }
 aya-ebpf-cty = { version = "^0.2.3", path = "../aya-ebpf-cty" }
 
 [build-dependencies]
 aya-build = { version = "^0.1.3", path = "../../aya-build" }
+
+[features]
+user = ["dep:aya"]
