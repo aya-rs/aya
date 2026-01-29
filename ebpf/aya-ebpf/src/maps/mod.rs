@@ -17,6 +17,7 @@ pub(crate) mod def {
     unsafe impl Sync for MapDef {}
 
     impl MapDef {
+        /// Creates a new map definition with key type `K` and value type `V`.
         pub(crate) const fn new<K, V>(
             type_: u32,
             max_entries: u32,
@@ -25,6 +26,32 @@ pub(crate) mod def {
         ) -> Self {
             let key_size = size_of::<K>() as u32;
             let value_size = size_of::<V>() as u32;
+            Self(UnsafeCell::new(bpf_map_def {
+                type_,
+                key_size,
+                value_size,
+                max_entries,
+                map_flags,
+                id: 0,
+                pinning: pinning as u32,
+            }))
+        }
+
+        /// Creates a new map-of-maps definition with key type `K`.
+        ///
+        /// Unlike [`new`](Self::new), this sets `value_size` to `size_of::<u32>()`
+        /// because map-of-maps store inner map file descriptors (u32), not arbitrary values.
+        ///
+        /// BPF programs can only perform lookups on map-of-maps; insert/update/delete
+        /// operations are restricted to userspace.
+        pub(crate) const fn new_map_of_maps<K>(
+            type_: u32,
+            max_entries: u32,
+            map_flags: u32,
+            pinning: PinningType,
+        ) -> Self {
+            let key_size = size_of::<K>() as u32;
+            let value_size = size_of::<u32>() as u32; // inner map fd
             Self(UnsafeCell::new(bpf_map_def {
                 type_,
                 key_size,
@@ -76,8 +103,10 @@ macro_rules! map_constructors {
 }
 
 pub mod array;
+pub mod array_of_maps;
 pub mod bloom_filter;
 pub mod hash_map;
+pub mod hash_of_maps;
 pub mod lpm_trie;
 pub mod per_cpu_array;
 pub mod perf;
@@ -91,8 +120,10 @@ pub mod stack_trace;
 pub mod xdp;
 
 pub use array::Array;
+pub use array_of_maps::ArrayOfMaps;
 pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, LruHashMap, LruPerCpuHashMap, PerCpuHashMap};
+pub use hash_of_maps::HashOfMaps;
 pub use lpm_trie::LpmTrie;
 pub use per_cpu_array::PerCpuArray;
 pub use perf::{PerfEventArray, PerfEventByteArray};
@@ -104,3 +135,19 @@ pub use sock_map::SockMap;
 pub use stack::Stack;
 pub use stack_trace::StackTrace;
 pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
+
+mod private {
+    /// Sealed trait to prevent external implementations of [`super::Map`].
+    #[expect(
+        unnameable_types,
+        reason = "sealed trait pattern requires pub trait in private mod"
+    )]
+    pub trait Map {}
+}
+
+/// Marker trait for all eBPF maps that can be used in a map of maps.
+///
+/// This trait is sealed and cannot be implemented outside this crate.
+pub trait Map: private::Map {}
+
+impl<T: private::Map> Map for T {}
