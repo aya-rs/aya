@@ -76,6 +76,7 @@ pub mod bloom_filter;
 pub mod hash_map;
 mod info;
 pub mod lpm_trie;
+pub mod of_maps;
 pub mod perf;
 pub mod queue;
 pub mod ring_buf;
@@ -90,6 +91,7 @@ pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use info::{MapInfo, MapType, loaded_maps};
 pub use lpm_trie::LpmTrie;
+pub use of_maps::{Array as ArrayOfMaps, HashMap as HashMapOfMaps};
 pub use perf::PerfEventArray;
 pub use queue::Queue;
 pub use ring_buf::RingBuf;
@@ -99,9 +101,22 @@ pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
 pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
 
+/// Trait for constructing a typed map from [`MapData`].
+///
+/// This is used by map-of-maps types ([`ArrayOfMaps`], [`HashMapOfMaps`]) to
+/// let callers specify the expected inner map type when retrieving entries.
+pub trait FromMapData: Sized {
+    /// Constructs a typed map from raw [`MapData`].
+    fn from_map_data(map_data: MapData) -> Result<Self, MapError>;
+}
+
 #[derive(Error, Debug)]
 /// Errors occuring from working with Maps
 pub enum MapError {
+    /// Missing inner map binding for a map-of-maps
+    #[error("{0}")]
+    MissingInnerMapBinding(String),
+
     /// Invalid map type encontered
     #[error("invalid map type {map_type}")]
     InvalidMapType {
@@ -217,7 +232,8 @@ impl MapFd {
         Self { fd }
     }
 
-    fn try_clone(&self) -> io::Result<Self> {
+    /// Creates a new instance that shares the same underlying file description as `self`.
+    pub fn try_clone(&self) -> io::Result<Self> {
         let Self { fd } = self;
         let fd = fd.try_clone()?;
         Ok(Self { fd })
@@ -236,6 +252,8 @@ impl AsFd for MapFd {
 pub enum Map {
     /// An [`Array`] map.
     Array(MapData),
+    /// An [`ArrayOfMaps`] map.
+    ArrayOfMaps(MapData),
     /// A [`BloomFilter`] map.
     BloomFilter(MapData),
     /// A [`CpuMap`] map.
@@ -246,6 +264,8 @@ pub enum Map {
     DevMapHash(MapData),
     /// A [`HashMap`] map.
     HashMap(MapData),
+    /// A [`HashMapOfMaps`] map.
+    HashOfMaps(MapData),
     /// A [`LpmTrie`] map.
     LpmTrie(MapData),
     /// A [`HashMap`] map that uses a LRU eviction policy.
@@ -285,11 +305,13 @@ impl Map {
     const fn map_type(&self) -> u32 {
         match self {
             Self::Array(map) => map.obj.map_type(),
+            Self::ArrayOfMaps(map) => map.obj.map_type(),
             Self::BloomFilter(map) => map.obj.map_type(),
             Self::CpuMap(map) => map.obj.map_type(),
             Self::DevMap(map) => map.obj.map_type(),
             Self::DevMapHash(map) => map.obj.map_type(),
             Self::HashMap(map) => map.obj.map_type(),
+            Self::HashOfMaps(map) => map.obj.map_type(),
             Self::LpmTrie(map) => map.obj.map_type(),
             Self::LruHashMap(map) => map.obj.map_type(),
             Self::PerCpuArray(map) => map.obj.map_type(),
@@ -316,11 +338,13 @@ impl Map {
     pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
         match self {
             Self::Array(map) => map.pin(path),
+            Self::ArrayOfMaps(map) => map.pin(path),
             Self::BloomFilter(map) => map.pin(path),
             Self::CpuMap(map) => map.pin(path),
             Self::DevMap(map) => map.pin(path),
             Self::DevMapHash(map) => map.pin(path),
             Self::HashMap(map) => map.pin(path),
+            Self::HashOfMaps(map) => map.pin(path),
             Self::LpmTrie(map) => map.pin(path),
             Self::LruHashMap(map) => map.pin(path),
             Self::PerCpuArray(map) => map.pin(path),
@@ -374,8 +398,8 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_RINGBUF => Self::RingBuf(map_data),
             bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER => Self::BloomFilter(map_data),
             bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY => Self::Unsupported(map_data),
-            bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Self::Unsupported(map_data),
-            bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Self::ArrayOfMaps(map_data),
+            bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Self::HashOfMaps(map_data),
             bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Self::SkStorage(map_data),
@@ -392,6 +416,36 @@ impl Map {
             bpf_map_type::__MAX_BPF_MAP_TYPE => return Err(MapError::InvalidMapType { map_type }),
         };
         Ok(map)
+    }
+
+    /// Returns the file descriptor of the map.
+    pub const fn fd(&self) -> &MapFd {
+        match self {
+            Self::Array(map) => map.fd(),
+            Self::ArrayOfMaps(map) => map.fd(),
+            Self::BloomFilter(map) => map.fd(),
+            Self::CpuMap(map) => map.fd(),
+            Self::DevMap(map) => map.fd(),
+            Self::DevMapHash(map) => map.fd(),
+            Self::HashMap(map) => map.fd(),
+            Self::HashOfMaps(map) => map.fd(),
+            Self::LpmTrie(map) => map.fd(),
+            Self::LruHashMap(map) => map.fd(),
+            Self::PerCpuArray(map) => map.fd(),
+            Self::PerCpuHashMap(map) => map.fd(),
+            Self::PerCpuLruHashMap(map) => map.fd(),
+            Self::PerfEventArray(map) => map.fd(),
+            Self::ProgramArray(map) => map.fd(),
+            Self::Queue(map) => map.fd(),
+            Self::RingBuf(map) => map.fd(),
+            Self::SockHash(map) => map.fd(),
+            Self::SockMap(map) => map.fd(),
+            Self::SkStorage(map) => map.fd(),
+            Self::Stack(map) => map.fd(),
+            Self::StackTraceMap(map) => map.fd(),
+            Self::Unsupported(map) => map.fd(),
+            Self::XskMap(map) => map.fd(),
+        }
     }
 }
 
@@ -422,6 +476,7 @@ macro_rules! impl_map_pin {
 }
 
 impl_map_pin!(() {
+    ArrayOfMaps,
     ProgramArray,
     SockMap,
     StackTraceMap,
@@ -439,6 +494,10 @@ impl_map_pin!((V) {
     Queue,
     SkStorage,
     Stack,
+});
+
+impl_map_pin!((K) {
+    HashMapOfMaps,
 });
 
 impl_map_pin!((K, V) {
@@ -499,6 +558,7 @@ macro_rules! impl_try_from_map {
 }
 
 impl_try_from_map!(() {
+    ArrayOfMaps,
     CpuMap,
     DevMap,
     DevMapHash,
@@ -520,11 +580,27 @@ impl_try_from_map!((V) {
     Stack,
 });
 
+impl_try_from_map!((K) {
+    HashMapOfMaps from HashOfMaps,
+});
+
 impl_try_from_map!((K, V) {
     HashMap from HashMap|LruHashMap,
     LpmTrie,
     PerCpuHashMap from PerCpuHashMap|PerCpuLruHashMap,
 });
+
+impl<V: Pod> FromMapData for Array<MapData, V> {
+    fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
+        Self::new(map_data)
+    }
+}
+
+impl<K: Pod, V: Pod> FromMapData for HashMap<MapData, K, V> {
+    fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
+        Self::new(map_data)
+    }
+}
 
 pub(crate) const fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
     let max_entries = map.obj.max_entries();
@@ -570,9 +646,19 @@ pub struct MapData {
 impl MapData {
     /// Creates a new map with the provided `name`
     pub fn create(
+        obj: aya_obj::Map,
+        name: &str,
+        btf_fd: Option<BorrowedFd<'_>>,
+    ) -> Result<Self, MapError> {
+        Self::create_with_inner_map_fd(obj, name, btf_fd, None)
+    }
+
+    /// Creates a new map with the provided `name` and optional `inner_map_fd` for map-of-maps types
+    pub(crate) fn create_with_inner_map_fd(
         mut obj: aya_obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
+        inner_map_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
         let c_name = CString::new(name)
             .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
@@ -595,11 +681,12 @@ impl MapData {
             }
         }
 
-        let fd =
-            bpf_create_map(&c_name, &obj, btf_fd).map_err(|io_error| MapError::CreateError {
+        let fd = bpf_create_map(&c_name, &obj, btf_fd, inner_map_fd).map_err(|io_error| {
+            MapError::CreateError {
                 name: name.into(),
                 io_error,
-            })?;
+            }
+        })?;
         Ok(Self {
             obj,
             fd: MapFd::from_fd(fd),
@@ -611,6 +698,7 @@ impl MapData {
         obj: aya_obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
+        inner_map_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
         use std::os::unix::ffi::OsStrExt as _;
 
@@ -634,7 +722,7 @@ impl MapData {
                 fd: MapFd::from_fd(fd),
             })
         } else {
-            let map = Self::create(obj, name, btf_fd)?;
+            let map = Self::create_with_inner_map_fd(obj, name, btf_fd, inner_map_fd)?;
             map.pin(path).map_err(|error| MapError::PinError {
                 name: Some(name.into()),
                 error,
@@ -989,10 +1077,12 @@ mod test_utils {
                 max_entries: 1024,
                 ..Default::default()
             },
+            inner_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
             symbol_index: None,
+            initial_slots: std::collections::BTreeMap::new(),
         })
     }
 
@@ -1008,10 +1098,12 @@ mod test_utils {
                 max_entries,
                 ..Default::default()
             },
+            inner_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
             symbol_index: None,
+            initial_slots: std::collections::BTreeMap::new(),
         })
     }
 }
