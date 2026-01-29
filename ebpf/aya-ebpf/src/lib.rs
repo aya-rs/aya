@@ -45,6 +45,7 @@ pub mod btf_maps;
 pub mod helpers;
 pub mod maps;
 pub mod programs;
+pub mod spin_lock;
 
 use core::ptr::{self, NonNull};
 

@@ -29,6 +29,7 @@ mod relocations;
 mod ring_buf;
 mod sk_storage;
 mod smoke;
+mod spin_lock;
 mod strncmp;
 mod tcx;
 mod uprobe_cookie;
