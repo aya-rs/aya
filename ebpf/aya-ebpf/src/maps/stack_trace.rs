@@ -12,6 +12,8 @@ pub struct StackTrace {
     def: MapDef,
 }
 
+impl super::private::Map for StackTrace {}
+
 const PERF_MAX_STACK_DEPTH: usize = 127;
 
 impl StackTrace {
