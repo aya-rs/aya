@@ -1,8 +1,8 @@
 use aya::{
     Ebpf,
     maps::Array,
-    programs::{SchedClassifier, SocketFilter, Xdp},
-    sys::TestRunOptions,
+    programs::{SchedClassifier, SocketFilter, TestRun, Xdp},
+    TestRunOptions,
     util::KernelVersion,
 };
 
