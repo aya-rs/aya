@@ -16,10 +16,11 @@ use aya_obj::{
         VarLinkage,
     },
     generated::{
-        BPF_ADD, BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_IMM, BPF_JMP, BPF_K,
-        BPF_LD, BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_X, bpf_attach_type, bpf_attr,
-        bpf_btf_info, bpf_cmd, bpf_func_id, bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type,
-        bpf_prog_info, bpf_prog_type, bpf_stats_type,
+        BPF_ADD, BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_F_TEST_RUN_ON_CPU,
+        BPF_F_TEST_XDP_LIVE_FRAMES, BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_MEM, BPF_MOV,
+        BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_X, bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd,
+        bpf_func_id, bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type, bpf_prog_info,
+        bpf_prog_type, bpf_stats_type,
     },
     maps::{LegacyMap, bpf_map_def},
 };
@@ -581,13 +582,14 @@ pub struct TestRunOptions<'a> {
     pub ctx_out: Option<&'a mut [u8]>,
     /// Number of times to repeat the test.
     pub repeat: u32,
-    /// Flags to control test behavior.
-    pub flags: u32,
-    /// CPU to run the test on (requires BPF_F_TEST_RUN_ON_CPU flag).
-    pub cpu: u32,
-    /// Batch size for network packet tests (requires BPF_F_TEST_XDP_LIVE_FRAMES flag).
-    /// This field only works for XDP programs.
-    pub batch_size: u32,
+    // CPU to run the test on, only works with tracepoint programs.
+    // should be set via `run_on_cpu` function to set the appropriate flag.
+    cpu: u32,
+    // Batch size for network packet tests, only works with XDP programs.
+    // should be set via `xdp_live_frames` function to set the appropriate flag.
+    batch_size: u32,
+    // Flags to control test behavior.
+    flags: u32,
 }
 
 impl Default for TestRunOptions<'_> {
@@ -598,10 +600,30 @@ impl Default for TestRunOptions<'_> {
             ctx_in: None,
             ctx_out: None,
             repeat: 1,
-            flags: 0,
             cpu: 0,
             batch_size: 0,
+            flags: 0,
         }
+    }
+}
+
+impl TestRunOptions<'_> {
+    /// Sets the CPU to run the test on.
+    /// This automatically sets the `BPF_F_TEST_RUN_ON_CPU` flag.
+    /// This option only works with `TracePoint` programs.
+    pub fn run_on_cpu(mut self, cpu: u32) -> Self {
+        self.cpu = cpu;
+        self.flags |= BPF_F_TEST_RUN_ON_CPU;
+        self
+    }
+
+    /// Sets the batch size for XDP live frames testing.
+    /// This automatically sets the `BPF_F_TEST_XDP_LIVE_FRAMES` flag.
+    /// This option only works with `XDP` programs.
+    pub fn xdp_live_frames(mut self, batch_size: u32) -> Self {
+        self.batch_size = batch_size;
+        self.flags |= BPF_F_TEST_XDP_LIVE_FRAMES;
+        self
     }
 }
 
