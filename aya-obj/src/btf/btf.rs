@@ -24,6 +24,7 @@ use crate::{
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
     },
+    extern_types::ExternCollection,
     generated::{btf_ext_header, btf_header},
     util::{HashMap, bytes_of},
 };
@@ -264,6 +265,8 @@ pub struct Btf {
     strings: Vec<u8>,
     types: BtfTypes,
     _endianness: Endianness,
+    /// Extern functions parsed from ksyms section
+    pub(crate) externs: ExternCollection,
 }
 
 fn add_type(header: &mut btf_header, types: &mut BtfTypes, btf_type: BtfType) -> u32 {
@@ -292,6 +295,7 @@ impl Btf {
             strings: vec![0],
             types: BtfTypes::default(),
             _endianness: Endianness::default(),
+            externs: ExternCollection::new(),
         }
     }
 
@@ -364,6 +368,7 @@ impl Btf {
             strings,
             types,
             _endianness: endianness,
+            externs: ExternCollection::new(),
         })
     }
 
@@ -500,6 +505,9 @@ impl Btf {
         symbol_offsets: &HashMap<String, u64>,
         features: &BtfFeatures,
     ) -> Result<(), BtfError> {
+        if !self.externs.is_empty() {
+            self.fixup_ksyms_datasec(self.externs.datasec_id, self.externs.dummy_ksym_var_id)?;
+        }
         let enum64_placeholder_id = OnceCell::new();
         let filler_var_id = OnceCell::new();
         let mut types = mem::take(&mut self.types);
@@ -803,6 +811,128 @@ impl Btf {
             }
         }
         self.types = types;
+        Ok(())
+    }
+
+    /// Fixes up BTF for `.ksyms` datasec entries containing extern kernel symbol and
+    /// makes it acceptable by the kernel:
+    ///
+    /// * Changes linkage of extern functions to `GLOBAL`, fixes parameter names, injects
+    ///   a dummy variable representing them in datasec.
+    /// * Changes linkage of extern variables to `GLOBAL_ALLOCATED`, replaces their type
+    ///   with `int`.
+    pub(crate) fn fixup_ksyms_datasec(
+        &mut self,
+        datasec_id: Option<u32>,
+        dummy_var_id: Option<u32>,
+    ) -> Result<(), BtfError> {
+        // Extract dummy variable's name offset and type ID for patching func_proto names and datasec entries.
+        // If dummy var exists: use its name_offset (for string table patching) and btf_type (underlying int type).
+        // If no dummy var (fallback): search for a 4-byte int type directly, with no name_offset.
+        // Both paths provide an int_btf_id to ensure type consistency in datasec variable entries.
+        let (dummy_var_name_offset, int_btf_id) = if let Some(dummy_id) = dummy_var_id {
+            let dummy_type = &self.types.types[dummy_id as usize];
+            if let BtfType::Var(v) = dummy_type {
+                (Some(v.name_offset), v.btf_type)
+            } else {
+                return Err(BtfError::InvalidDatasec);
+            }
+        } else {
+            let int_id = self
+                .types
+                .types
+                .iter()
+                .enumerate()
+                .find_map(|(idx, t)| {
+                    if let BtfType::Int(int_type) = t {
+                        (int_type.size == 4).then_some(idx as u32)
+                    } else {
+                        None
+                    }
+                })
+                .ok_or(BtfError::InvalidDatasec)?;
+
+            (None, int_id)
+        };
+
+        let datasec_id = datasec_id.ok_or(BtfError::InvalidDatasec)?;
+
+        let datasec_name = {
+            let datasec = &self.types.types[datasec_id as usize];
+            let BtfType::DataSec(d) = datasec else {
+                return Err(BtfError::InvalidDatasec);
+            };
+            self.string_at(d.name_offset)?.into_owned()
+        };
+
+        debug!("DATASEC {datasec_name}: fixing up extern ksyms");
+
+        let entry_type_ids: Vec<u32> = {
+            let BtfType::DataSec(d) = &self.types.types[datasec_id as usize] else {
+                return Err(BtfError::InvalidDatasec);
+            };
+            d.entries.iter().map(|e| e.btf_type).collect()
+        };
+
+        let mut offset = 0u32;
+        let size = size_of::<i32>() as u32;
+
+        for (i, &type_id) in entry_type_ids.iter().enumerate() {
+            match &self.types.types[type_id as usize] {
+                BtfType::Func(f) => {
+                    let (func_name, proto_id) =
+                        { (self.string_at(f.name_offset)?.into_owned(), f.btf_type) };
+
+                    if let BtfType::Func(f) = &mut self.types.types[type_id as usize] {
+                        f.set_linkage(FuncLinkage::Global);
+                    }
+
+                    if let Some(dummy_name_off) = dummy_var_name_offset {
+                        if let BtfType::FuncProto(func_proto) =
+                            &mut self.types.types[proto_id as usize]
+                        {
+                            for param in &mut func_proto.params {
+                                if param.btf_type != 0 && param.name_offset == 0 {
+                                    param.name_offset = dummy_name_off;
+                                }
+                            }
+                        }
+                    }
+
+                    if let (Some(dummy_id), BtfType::DataSec(d)) =
+                        (dummy_var_id, &mut self.types.types[datasec_id as usize])
+                    {
+                        d.entries[i].btf_type = dummy_id;
+                    }
+
+                    debug!("DATASEC {datasec_name}: FUNC {func_name}: fixup offset {offset}");
+                }
+                BtfType::Var(v) => {
+                    let var_name = { self.string_at(v.name_offset)?.into_owned() };
+
+                    if let BtfType::Var(v) = &mut self.types.types[type_id as usize] {
+                        v.linkage = VarLinkage::Global;
+                        v.btf_type = int_btf_id;
+                    }
+
+                    debug!("DATASEC {datasec_name}: VAR {var_name}: fixup offset {offset}");
+                }
+                _ => continue,
+            }
+
+            if let BtfType::DataSec(d) = &mut self.types.types[datasec_id as usize] {
+                d.entries[i].offset = offset;
+                d.entries[i].size = size;
+            }
+
+            offset += size;
+        }
+
+        if let BtfType::DataSec(d) = &mut self.types.types[datasec_id as usize] {
+            d.size = offset;
+            debug!("DATASEC {datasec_name}: fixup size to {offset}");
+        }
+
         Ok(())
     }
 }

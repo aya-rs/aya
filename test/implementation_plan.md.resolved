@@ -1,0 +1,115 @@
+# Ksyms Test Refactoring Plan
+
+## Goal
+Separate tests by their BTF requirements so per-CPU helper tests don't fail on kernels that only have kallsyms.
+
+---
+
+## Current State
+
+| BPF Program | Uses | Tests Using It |
+|-------------|------|----------------|
+| [ksyms_typed_weak](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#196-263) | `bpf_this_cpu_ptr` | 5 tests |
+| [ksyms_typeless](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#488-547) | kallsyms only | 3 tests |
+| [ksyms_typed_strong](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#93-195) | `bpf_this_cpu_ptr` | 1 test |
+
+**Problem**: [ksyms_typed_weak](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#196-263) bundles per-CPU helpers with kfunc tests - all fail together.
+
+---
+
+## Proposed Structure
+
+### BPF Programs (4 total)
+
+| Program | Purpose | Requires |
+|---------|---------|----------|
+| [ksyms_typeless](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#488-547) | Typeless kallsyms resolution | kallsyms |
+| [ksyms_typed](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#196-263) | Typed ksym address resolution (no helpers) | BTF for symbol |
+| `ksyms_percpu` | Per-CPU helpers (`bpf_this_cpu_ptr`, `bpf_per_cpu_ptr`) | BTF + DATASEC |
+| [ksyms_kfunc](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#323-414) | Kfunc resolution and invocation | BTF for kfuncs |
+
+### Test Mapping
+
+| Test | New BPF Program | What It Checks |
+|------|-----------------|----------------|
+| [ksyms_typed_strong](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#93-195) | [ksyms_typed](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#196-263) | Strong typed errors if not in BTF |
+| [ksyms_typed_weak](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#196-263) | [ksyms_typed](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#196-263) | Weak typed resolves or returns 0 |
+| [ksyms_per_cpu_ptr](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#415-487) | `ksyms_percpu` | Per-CPU helpers work |
+| [ksyms_kfunc](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#323-414) | [ksyms_kfunc](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#323-414) | Kfunc call succeeds |
+| [ksyms_typeless_variable](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#488-547) | [ksyms_typeless](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#488-547) | Kallsyms resolution |
+| [ksyms_weak_typeless](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#548-595) | [ksyms_typeless](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#488-547) | Weak typeless = 0 |
+| [ksyms_typeless_restricted](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#596-648) | [ksyms_typeless](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#488-547) | Loads without kallsyms |
+
+---
+
+## Implementation Steps
+
+### 1. Create [ksyms_typed.bpf.c](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/bpf/ksyms_typed.bpf.c) (new)
+```c
+// Typed ksyms without per-CPU helpers
+extern int bpf_prog_active __ksym __weak;
+
+SEC("tp_btf/sys_enter")
+int ksyms_typed(ctx) {
+    // Just store address, no bpf_this_cpu_ptr
+    output[0] = (u64)&bpf_prog_active;
+}
+```
+
+### 2. Create `ksyms_percpu.bpf.c` (new)
+```c
+// Per-CPU helpers (requires BTF + DATASEC)
+extern int bpf_prog_active __ksym __weak;
+
+SEC("tp_btf/sys_enter")  
+int ksyms_percpu(ctx) {
+    if (&bpf_prog_active) {
+        int *p = bpf_this_cpu_ptr(&bpf_prog_active);
+        // ...
+    }
+}
+```
+
+### 3. Create `ksyms_kfunc.bpf.c` (new)
+```c
+// Kfunc tests (separate from per-CPU)
+void bpf_rcu_read_lock(void) __ksym __weak;
+void bpf_rcu_read_unlock(void) __ksym __weak;
+
+SEC("tp_btf/sys_enter")
+int ksyms_kfunc_test(ctx) {
+    if (bpf_rcu_read_lock) {
+        bpf_rcu_read_lock();
+        bpf_rcu_read_unlock();
+        output[0] = 1;
+    }
+}
+```
+
+### 4. Update [build.rs](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/build.rs)
+Add new BPF files to `C_BPF` list.
+
+### 5. Update [lib.rs](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/aya-obj/src/lib.rs)
+Add constants for new BPF object files.
+
+### 6. Refactor Rust tests
+- Update test imports
+- Remove redundant tests ([ksyms_weak_typed](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#264-322) duplicates [ksyms_typed_weak](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#196-263) logic)
+- Simplify skip conditions
+
+---
+
+## Benefits
+
+1. **Per-CPU tests** only run on kernels with full BTF support
+2. **Kfunc tests** can run independently (many kernels have kfuncs but not percpu BTF)
+3. **Typed tests** can work with just BTF lookup (no helpers needed)
+4. **Typeless tests** remain unchanged (kallsyms only)
+
+---
+
+## Questions
+
+1. Should [ksyms_weak_typed](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#264-322) be removed as duplicate of [ksyms_typed_weak](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#196-263)?
+2. Should we keep [ksyms_typed_strong](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/src/tests/ksyms.rs#93-195) in its own file or merge into [ksyms_typed.bpf.c](file:///Users/altugbozkurt/Desktop/ebpf-related-work/aya-altug/aya/test/integration-test/bpf/ksyms_typed.bpf.c)?
+
