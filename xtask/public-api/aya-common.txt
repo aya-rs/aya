@@ -1,0 +1,4 @@
+pub mod aya_common
+pub mod aya_common::spin_lock
+pub type aya_common::spin_lock::SpinLock = bpf_spin_lock
+pub type aya_common::SpinLock = bpf_spin_lock
