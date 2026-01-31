@@ -567,7 +567,8 @@ pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<crate::MockableFd, S
 }
 
 /// Options for running a BPF program test.
-#[derive(Debug, Default)]
+/// see [ebpf.io](https://docs.ebpf.io/linux/syscall/BPF_PROG_TEST_RUN/) for detailed usages.
+#[derive(Debug)]
 pub struct TestRunOptions<'a> {
     /// Input data to pass to the program.
     pub data_in: Option<&'a [u8]>,
@@ -584,7 +585,23 @@ pub struct TestRunOptions<'a> {
     /// CPU to run the test on (requires BPF_F_TEST_RUN_ON_CPU flag).
     pub cpu: u32,
     /// Batch size for network packet tests (requires BPF_F_TEST_XDP_LIVE_FRAMES flag).
+    /// This field only works for XDP programs.
     pub batch_size: u32,
+}
+
+impl Default for TestRunOptions<'_> {
+    fn default() -> Self {
+        Self {
+            data_in: None,
+            data_out: None,
+            ctx_in: None,
+            ctx_out: None,
+            repeat: 1,
+            flags: 0,
+            cpu: 0,
+            batch_size: 0,
+        }
+    }
 }
 
 /// Result of running a BPF program test.
@@ -611,8 +628,7 @@ pub(crate) fn bpf_prog_test_run(
 
     let test = unsafe { &mut attr.test };
     test.prog_fd = prog_fd.as_raw_fd() as u32;
-    // at least 1
-    test.repeat = opts.repeat.max(1);
+    test.repeat = opts.repeat;
     test.flags = opts.flags;
     test.cpu = opts.cpu;
     test.batch_size = opts.batch_size;

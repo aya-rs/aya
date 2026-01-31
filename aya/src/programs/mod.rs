@@ -876,50 +876,61 @@ impl_fd!(
     Iter,
 );
 
+/// Runs the program with test input data and returns the result.
+///
+/// This function uses the kernel's `BPF_PROG_TEST_RUN` command to execute
+/// the program in a test environment with provided input data.
+pub trait TestRun {
+    /// Runs the program with test input data and returns the result.
+    ///
+    /// This function uses the kernel's `BPF_PROG_TEST_RUN` command to execute
+    /// the program in a test environment with provided input data.
+    ///
+    /// # Arguments
+    ///
+    /// * `opts` - Test run options including input/output data and context
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`crate::sys::TestRunResult`] containing:
+    /// - `return_value`: The value returned by the program
+    /// - `duration`: Execution time in nanoseconds
+    /// - `data_size_out`: Size of data written to output buffer
+    /// - `ctx_size_out`: Size of context written to output buffer
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError::SyscallError`] if the underlying syscall fails.
+    /// Common errors include `-ENOSPC` if output buffers are too small.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let input_data = [0u8; 64];
+    /// let mut output_data = [0u8; 64];
+    ///
+    /// let mut opts = TestRunOptions {
+    ///     data_in: Some(&input_data),
+    ///     data_out: Some(&mut output_data),
+    ///     repeat: 1,
+    ///     ..Default::default()
+    /// };
+    ///
+    /// let result = program.test_run(&mut opts)?;
+    /// println!("Program returned: {}, took {} ns", result.return_value, result.duration);
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    fn test_run(
+        &self,
+        opts: &mut crate::sys::TestRunOptions<'_>,
+    ) -> Result<crate::sys::TestRunResult, ProgramError>;
+}
+
 macro_rules! impl_program_test_run {
     ($($struct_name:ident),+ $(,)?) => {
         $(
-            impl $struct_name {
-                /// Runs the program with test input data and returns the result.
-                ///
-                /// This function uses the kernel's `BPF_PROG_TEST_RUN` command to execute
-                /// the program in a test environment with provided input data.
-                ///
-                /// # Arguments
-                ///
-                /// * `opts` - Test run options including input/output data and context
-                ///
-                /// # Returns
-                ///
-                /// Returns a [`crate::sys::TestRunResult`] containing:
-                /// - `return_value`: The value returned by the program
-                /// - `duration`: Execution time in nanoseconds
-                /// - `data_size_out`: Size of data written to output buffer
-                /// - `ctx_size_out`: Size of context written to output buffer
-                ///
-                /// # Errors
-                ///
-                /// Returns [`ProgramError::SyscallError`] if the underlying syscall fails.
-                /// Common errors include `-ENOSPC` if output buffers are too small.
-                ///
-                /// # Example
-                ///
-                /// ```ignore
-                /// let input_data = [0u8; 64];
-                /// let mut output_data = [0u8; 64];
-                ///
-                /// let mut opts = TestRunOptions {
-                ///     data_in: Some(&input_data),
-                ///     data_out: Some(&mut output_data),
-                ///     repeat: 1,
-                ///     ..Default::default()
-                /// };
-                ///
-                /// let result = program.test_run(&mut opts)?;
-                /// println!("Program returned: {}, took {} ns", result.return_value, result.duration);
-                /// # Ok::<(), Box<dyn std::error::Error>>(())
-                /// ```
-                pub fn test_run(&self, opts: &mut crate::sys::TestRunOptions<'_>) -> Result<crate::sys::TestRunResult, ProgramError> {
+            impl TestRun for $struct_name {
+                fn test_run(&self, opts: &mut crate::sys::TestRunOptions<'_>) -> Result<crate::sys::TestRunResult, ProgramError> {
                     test_run(&self.data, opts)
                 }
             }
