@@ -177,7 +177,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker --features llvm-21
+      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker
 
       - uses: taiki-e/install-action@cargo-hack
 
@@ -377,7 +377,7 @@ jobs:
       - run: |
           cargo install \
             --git https://github.com/aya-rs/bpf-linker.git bpf-linker \
-            --no-default-features --features "llvm-21,${LLVM_LINK_FEATURE}" --force
+            --no-default-features --features "llvm-22,${LLVM_LINK_FEATURE}" --force
 
       - uses: actions/cache@v5
         with:
