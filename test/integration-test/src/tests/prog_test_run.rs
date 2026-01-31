@@ -1,7 +1,7 @@
 use aya::{
     Ebpf, TestRunOptions,
     maps::Array,
-    programs::{SchedClassifier, SocketFilter, TestRun, Xdp},
+    programs::{SchedClassifier, SocketFilter, TestRun as _, Xdp},
     util::KernelVersion,
 };
 
