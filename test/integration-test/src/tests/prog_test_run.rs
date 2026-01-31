@@ -1,8 +1,7 @@
 use aya::{
-    Ebpf,
+    Ebpf, TestRunOptions,
     maps::Array,
     programs::{SchedClassifier, SocketFilter, TestRun, Xdp},
-    TestRunOptions,
     util::KernelVersion,
 };
 
@@ -31,12 +30,9 @@ fn test_xdp_test_run() {
     let data_in = vec![0u8; 64];
     let mut data_out = vec![0u8; 64];
 
-    let mut opts = TestRunOptions {
-        data_in: Some(&data_in),
-        data_out: Some(&mut data_out),
-        repeat: 1,
-        ..Default::default()
-    };
+    let mut opts = TestRunOptions::default();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
 
     let result = prog.test_run(&mut opts).unwrap();
 
@@ -61,12 +57,9 @@ fn test_xdp_modify_packet() {
     let data_in = vec![0u8; 64];
     let mut data_out = vec![0u8; 64];
 
-    let mut opts = TestRunOptions {
-        data_in: Some(&data_in),
-        data_out: Some(&mut data_out),
-        repeat: 1,
-        ..Default::default()
-    };
+    let mut opts = TestRunOptions::default();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
 
     let result = prog.test_run(&mut opts).unwrap();
 
@@ -92,12 +85,9 @@ fn test_socket_filter_test_run() {
     let data_in = vec![0u8; packet_len];
     let mut data_out = vec![0u8; packet_len];
 
-    let mut opts = TestRunOptions {
-        data_in: Some(&data_in),
-        data_out: Some(&mut data_out),
-        repeat: 1,
-        ..Default::default()
-    };
+    let mut opts = TestRunOptions::default();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
 
     let result = prog.test_run(&mut opts).unwrap();
 
@@ -127,12 +117,9 @@ fn test_classifier_test_run() {
     let data_in = vec![0u8; 64];
     let mut data_out = vec![0u8; 64];
 
-    let mut opts = TestRunOptions {
-        data_in: Some(&data_in),
-        data_out: Some(&mut data_out),
-        repeat: 1,
-        ..Default::default()
-    };
+    let mut opts = TestRunOptions::default();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
 
     let result = prog.test_run(&mut opts).unwrap();
 
@@ -160,13 +147,10 @@ fn test_run_repeat() {
 
     // Run the test 50 times
     let repeat_count = 50;
-    let mut opts = TestRunOptions {
-        data_in: Some(&data_in),
-        data_out: Some(&mut data_out),
-        repeat: repeat_count,
-        ..Default::default()
-    };
-
+    let mut opts = TestRunOptions::default();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
+    opts.repeat = repeat_count;
     let _result = prog.test_run(&mut opts).unwrap();
 
     let final_count: u64 = exec_count.get(&0, 0).unwrap();
@@ -226,14 +210,11 @@ fn test_xdp_context() {
     let ctx_bytes = unsafe { std::slice::from_raw_parts(&ctx as *const XdpMd as *const u8, size) };
     let mut ctx_out = vec![0u8; size];
 
-    let mut opts = TestRunOptions {
-        data_in: Some(&data_in),
-        data_out: Some(&mut data_out),
-        ctx_in: Some(ctx_bytes),
-        ctx_out: Some(&mut ctx_out),
-        repeat: 1,
-        ..Default::default()
-    };
+    let mut opts = TestRunOptions::default();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
+    opts.ctx_in = Some(ctx_bytes);
+    opts.ctx_out = Some(&mut ctx_out);
 
     let result = prog.test_run(&mut opts).unwrap();
 
