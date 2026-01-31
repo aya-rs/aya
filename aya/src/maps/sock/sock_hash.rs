@@ -7,8 +7,7 @@ use std::{
 use crate::{
     Pod,
     maps::{
-        IterableMap, MapData, MapError, MapFd, MapIter, MapKeys, check_kv_size, hash_map,
-        sock::SockMapFd,
+        IterableMap, MapData, MapError, MapIter, MapKeys, check_kv_size, hash_map, sock::SockMapFd,
     },
 };
 
@@ -101,10 +100,19 @@ impl<T: Borrow<MapData>, K: Pod> SockHash<T, K> {
     /// The returned file descriptor can be used to attach programs that work with
     /// socket maps, like [`SkMsg`](crate::programs::SkMsg) and [`SkSkb`](crate::programs::SkSkb).
     pub fn fd(&self) -> &SockMapFd {
-        let fd: &MapFd = self.inner.borrow().fd();
+        let fd = self.inner.borrow().fd();
         // TODO(https://github.com/rust-lang/rfcs/issues/3066): avoid this unsafe.
         // SAFETY: `SockMapFd` is #[repr(transparent)] over `MapFd`.
         unsafe { std::mem::transmute(fd) }
+    }
+}
+
+impl<'a, T: Borrow<MapData>, K: Pod> IntoIterator for &'a SockHash<T, K> {
+    type Item = Result<(K, RawFd), MapError>;
+    type IntoIter = MapIter<'a, K, RawFd, SockHash<T, K>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 

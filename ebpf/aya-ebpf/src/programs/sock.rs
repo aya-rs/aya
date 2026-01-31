@@ -7,7 +7,7 @@ pub struct SockContext {
 }
 
 impl SockContext {
-    pub fn new(sock: *mut bpf_sock) -> Self {
+    pub const fn new(sock: *mut bpf_sock) -> Self {
         Self { sock }
     }
 }

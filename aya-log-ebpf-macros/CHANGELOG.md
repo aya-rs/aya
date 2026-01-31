@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## v0.1.1 (2025-11-17)
+
+### Breaking Changes
+
+ - <csr-id-9be2d723ce5d7bf5f85d69d54aa5fd7f60d48edc/> Macros now emit ring-buffer based logging code to match the host transport, which requires kernel 5.8 or newer.
+
+### New Features
+
+ - <csr-id-b36cbc3eb8413d4fba4f2d820fec8176751457ac/> Added a load-time log level mask so unnecessary log calls can be compiled out entirely.
+ - <csr-id-aa47acc57a9d5f947e8df8cabbb2678f14e198bb/> Macros may now be used in expression position, simplifying complex logging statements.
+ - <csr-id-353b83383dccc430619f3c6d95e17edd6ca8a96c/> The generated code performs zero-copy writes into the ring buffer where possible, reducing instruction count inside probes.
+ - <csr-id-a98b638fa95fd8edb8c015ee03154d2f03ecffc8/> Added raw-pointer formatting support so eBPF logs can mirror host-side diagnostics.
+
+### Maintenance
+
+ - <csr-id-600927d6bb802fbaaddea8b54708c386b15fd88e/>, <csr-id-8fb19264638c7d02c4e83d315c0c4824dc1e27e1/> Tidied the macro support module and aligned the crate with the workspace lint/edition settings.
+
 ## v0.1.0 (2024-04-12)
 
 <csr-id-13b1fc63ef2ae083ba03ce9de24cb4f31f989d21/>

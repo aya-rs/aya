@@ -1,12 +1,12 @@
-use core::{cell::UnsafeCell, hint::unreachable_unchecked, mem};
+use core::hint::unreachable_unchecked;
 
 use aya_ebpf_cty::c_long;
 
 use crate::{
     EbpfContext,
-    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY},
+    bindings::bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY,
     helpers::bpf_tail_call,
-    maps::PinningType,
+    maps::{MapDef, PinningType},
 };
 
 /// A BPF map that stores an array of program indices for tail calling.
@@ -32,39 +32,11 @@ use crate::{
 /// ```
 #[repr(transparent)]
 pub struct ProgramArray {
-    def: UnsafeCell<bpf_map_def>,
+    def: MapDef,
 }
 
-unsafe impl Sync for ProgramArray {}
-
 impl ProgramArray {
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self {
-            def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_PROG_ARRAY,
-                key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<u32>() as u32,
-                max_entries,
-                map_flags: flags,
-                id: 0,
-                pinning: PinningType::None as u32,
-            }),
-        }
-    }
-
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self {
-            def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_PROG_ARRAY,
-                key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<u32>() as u32,
-                max_entries,
-                map_flags: flags,
-                id: 0,
-                pinning: PinningType::ByName as u32,
-            }),
-        }
-    }
+    map_constructors!(u32, u32, BPF_MAP_TYPE_PROG_ARRAY);
 
     /// Perform a tail call into a program indexed by this map.
     ///
@@ -84,7 +56,7 @@ impl ProgramArray {
         ctx: &C,
         index: u32,
     ) -> Result<core::convert::Infallible, c_long> {
-        let res = unsafe { bpf_tail_call(ctx.as_ptr(), self.def.get().cast(), index) };
+        let res = unsafe { bpf_tail_call(ctx.as_ptr(), self.def.as_ptr().cast(), index) };
         if res != 0 {
             Err(res)
         } else {

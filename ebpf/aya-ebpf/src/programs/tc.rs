@@ -7,12 +7,11 @@ pub struct TcContext {
 }
 
 impl TcContext {
-    pub fn new(skb: *mut __sk_buff) -> Self {
+    pub const fn new(skb: *mut __sk_buff) -> Self {
         let skb = SkBuff { skb };
         Self { skb }
     }
 
-    #[expect(clippy::len_without_is_empty)]
     #[inline]
     pub fn len(&self) -> u32 {
         self.skb.len()
@@ -30,7 +29,7 @@ impl TcContext {
 
     #[inline]
     pub fn set_mark(&mut self, mark: u32) {
-        self.skb.set_mark(mark)
+        self.skb.set_mark(mark);
     }
 
     #[inline]

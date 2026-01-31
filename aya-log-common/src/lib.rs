@@ -173,6 +173,7 @@ pub enum DisplayHint {
 }
 
 mod sealed {
+    #[expect(unnameable_types, reason = "this is the sealed trait pattern")]
     pub trait Sealed {}
 }
 

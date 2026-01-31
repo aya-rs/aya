@@ -160,10 +160,6 @@ pub enum BtfError {
     /// unable to get symbol name
     #[error("Unable to get symbol name")]
     InvalidSymbolName,
-
-    /// BTF map wrapper's layout is unexpected
-    #[error("BTF map wrapper's layout is unexpected: {0:?}")]
-    UnexpectedBtfMapWrapperLayout(Struct),
 }
 
 /// Available BTF features
@@ -181,8 +177,12 @@ pub struct BtfFeatures {
 
 impl BtfFeatures {
     #[doc(hidden)]
+    #[expect(
+        clippy::fn_params_excessive_bools,
+        reason = "this interface is terrible"
+    )]
     #[expect(clippy::too_many_arguments, reason = "this interface is terrible")]
-    pub fn new(
+    pub const fn new(
         btf_func: bool,
         btf_func_global: bool,
         btf_datasec: bool,
@@ -204,48 +204,48 @@ impl BtfFeatures {
         }
     }
 
-    /// Returns true if the BTF_TYPE_FUNC is supported.
-    pub fn btf_func(&self) -> bool {
+    /// Returns true if `BTF_TYPE_FUNC` is supported.
+    pub const fn btf_func(&self) -> bool {
         self.btf_func
     }
 
-    /// Returns true if the BTF_TYPE_FUNC_GLOBAL is supported.
-    pub fn btf_func_global(&self) -> bool {
+    /// Returns true if `BTF_TYPE_FUNC_GLOBAL` is supported.
+    pub const fn btf_func_global(&self) -> bool {
         self.btf_func_global
     }
 
-    /// Returns true if the BTF_TYPE_DATASEC is supported.
-    pub fn btf_datasec(&self) -> bool {
+    /// Returns true if `BTF_TYPE_DATASEC` is supported.
+    pub const fn btf_datasec(&self) -> bool {
         self.btf_datasec
     }
 
-    /// Returns true if zero-length DATASec entries are accepted.
-    pub fn btf_datasec_zero(&self) -> bool {
+    /// Returns true if zero-length `DATASec` entries are accepted.
+    pub const fn btf_datasec_zero(&self) -> bool {
         self.btf_datasec_zero
     }
 
-    /// Returns true if the BTF_FLOAT is supported.
-    pub fn btf_float(&self) -> bool {
+    /// Returns true if `BTF_FLOAT` is supported.
+    pub const fn btf_float(&self) -> bool {
         self.btf_float
     }
 
-    /// Returns true if the BTF_DECL_TAG is supported.
-    pub fn btf_decl_tag(&self) -> bool {
+    /// Returns true if `BTF_DECL_TAG` is supported.
+    pub const fn btf_decl_tag(&self) -> bool {
         self.btf_decl_tag
     }
 
-    /// Returns true if the BTF_TYPE_TAG is supported.
-    pub fn btf_type_tag(&self) -> bool {
+    /// Returns true if `BTF_TYPE_TAG` is supported.
+    pub const fn btf_type_tag(&self) -> bool {
         self.btf_type_tag
     }
 
-    /// Returns true if the BTF_KIND_FUNC_PROTO is supported.
-    pub fn btf_kind_func_proto(&self) -> bool {
+    /// Returns true if `BTF_KIND_FUNC_PROTO` is supported.
+    pub const fn btf_kind_func_proto(&self) -> bool {
         self.btf_func && self.btf_decl_tag
     }
 
-    /// Returns true if the BTF_KIND_ENUM64 is supported.
-    pub fn btf_enum64(&self) -> bool {
+    /// Returns true if `BTF_KIND_ENUM64` is supported.
+    pub const fn btf_enum64(&self) -> bool {
         self.btf_enum64
     }
 }
@@ -295,7 +295,7 @@ impl Btf {
         }
     }
 
-    pub(crate) fn is_empty(&self) -> bool {
+    pub(crate) const fn is_empty(&self) -> bool {
         // the first one is awlays BtfType::Unknown
         self.types.types.len() < 2
     }
@@ -343,7 +343,7 @@ impl Btf {
 
     /// Parses BTF from binary data of the given endianness
     pub fn parse(data: &[u8], endianness: Endianness) -> Result<Self, BtfError> {
-        if data.len() < mem::size_of::<btf_header>() {
+        if data.len() < size_of::<btf_header>() {
             return Err(BtfError::InvalidHeader);
         }
 
@@ -431,7 +431,7 @@ impl Btf {
         self.string_at(ty.name_offset()).ok().map(String::from)
     }
 
-    /// Returns a type id matching the type name and [BtfKind]
+    /// Returns a type id matching the type name and [`BtfKind`].
     pub fn id_by_type_name_kind(&self, name: &str, kind: BtfKind) -> Result<u32, BtfError> {
         for (type_id, ty) in self.types().enumerate() {
             if ty.kind() != kind {
@@ -440,7 +440,6 @@ impl Btf {
             if self.type_name(ty)? == name {
                 return Ok(type_id as u32);
             }
-            continue;
         }
 
         Err(BtfError::UnknownBtfTypeName {
@@ -535,7 +534,7 @@ impl Btf {
                         name_offset = self.add_string(&fixed_name);
                     }
 
-                    let entries = core::mem::take(&mut d.entries);
+                    let entries = mem::take(&mut d.entries);
 
                     let members = entries
                         .iter()
@@ -576,11 +575,8 @@ impl Btf {
                         // We need to get the size of the section from the ELF file.
                         // Fortunately, we cached these when parsing it initially
                         // and we can this up by name in section_infos.
-                        let size = match section_infos.get(&name) {
-                            Some((_, size)) => size,
-                            None => {
-                                return Err(BtfError::UnknownSectionSize { section_name: name });
-                            }
+                        let Some((_, size)) = section_infos.get(&name) else {
+                            return Err(BtfError::UnknownSectionSize { section_name: name });
                         };
                         debug!("{kind} {name}: fixup size to {size}");
                         d.size = *size as u32;
@@ -636,7 +632,7 @@ impl Btf {
                             }
                         }
 
-                        for e in entries.iter_mut() {
+                        for e in &mut entries {
                             if let BtfType::Var(var) = types.type_by_id(e.btf_type)? {
                                 let var_name = self.string_at(var.name_offset)?;
                                 if var.linkage == VarLinkage::Static {
@@ -644,13 +640,10 @@ impl Btf {
                                     continue;
                                 }
 
-                                let offset = match symbol_offsets.get(var_name.as_ref()) {
-                                    Some(offset) => offset,
-                                    None => {
-                                        return Err(BtfError::SymbolOffsetNotFound {
-                                            symbol_name: var_name.into_owned(),
-                                        });
-                                    }
+                                let Some(offset) = symbol_offsets.get(var_name.as_ref()) else {
+                                    return Err(BtfError::SymbolOffsetNotFound {
+                                        symbol_name: var_name.into_owned(),
+                                    });
                                 };
                                 e.offset = *offset as u32;
                                 debug!("{kind} {name}: VAR {var_name}: fixup offset {offset}");
@@ -712,12 +705,12 @@ impl Btf {
                         // want tracking info (eg bound checks) to be propagated to the
                         // memory builtins.
                         if ty.linkage() == FuncLinkage::Global {
-                            if !features.btf_func_global {
+                            if features.btf_func_global {
+                                debug!("changing FUNC {name} linkage to BTF_FUNC_STATIC");
+                            } else {
                                 debug!(
                                     "{kind}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
                                 );
-                            } else {
-                                debug!("changing FUNC {name} linkage to BTF_FUNC_STATIC");
                             }
                             ty.set_linkage(FuncLinkage::Static);
                         }
@@ -845,7 +838,7 @@ impl Object {
     }
 }
 
-unsafe fn read_btf_header(data: &[u8]) -> btf_header {
+const unsafe fn read_btf_header(data: &[u8]) -> btf_header {
     // Safety: Btf_header is POD so read_unaligned is safe
     unsafe { ptr::read_unaligned(data.as_ptr().cast()) }
 }
@@ -875,7 +868,7 @@ impl BtfExt {
             pub hdr_len: u32,
         }
 
-        if data.len() < core::mem::size_of::<MinimalHeader>() {
+        if data.len() < size_of::<MinimalHeader>() {
             return Err(BtfError::InvalidHeader);
         }
 
@@ -896,18 +889,18 @@ impl BtfExt {
             // forwards compatibility: if newer headers are bigger
             // than the pre-generated btf_ext_header we should only
             // read up to btf_ext_header
-            let len_to_read = len_to_read.min(core::mem::size_of::<btf_ext_header>());
+            let len_to_read = len_to_read.min(size_of::<btf_ext_header>());
 
             // now create our full-fledge header; but start with it
             // zeroed out so unavailable fields stay as zero on older
             // BTF.ext sections
-            let mut header = core::mem::MaybeUninit::<btf_ext_header>::zeroed();
+            let mut header = mem::MaybeUninit::<btf_ext_header>::zeroed();
             // Safety: we have checked that len_to_read is less than
             // size_of::<btf_ext_header> and less than
             // data.len(). Additionally, we know that the header has
             // been initialized so it's safe to call for assume_init.
             unsafe {
-                core::ptr::copy(data.as_ptr(), header.as_mut_ptr().cast::<u8>(), len_to_read);
+                ptr::copy(data.as_ptr(), header.as_mut_ptr().cast::<u8>(), len_to_read);
                 header.assume_init()
             }
         };
@@ -1041,15 +1034,15 @@ impl BtfExt {
         self.info_data(self.header.line_info_off, self.header.line_info_len)
     }
 
-    pub(crate) fn relocations(&self) -> &[(u32, Vec<Relocation>)] {
+    pub(crate) const fn relocations(&self) -> &[(u32, Vec<Relocation>)] {
         self.relocations.as_slice()
     }
 
-    pub(crate) fn func_info_rec_size(&self) -> usize {
+    pub(crate) const fn func_info_rec_size(&self) -> usize {
         self.func_info_rec_size
     }
 
-    pub(crate) fn line_info_rec_size(&self) -> usize {
+    pub(crate) const fn line_info_rec_size(&self) -> usize {
         self.line_info_rec_size
     }
 }
@@ -1062,7 +1055,7 @@ pub(crate) struct SecInfoIter<'a> {
 }
 
 impl<'a> SecInfoIter<'a> {
-    fn new(data: &'a [u8], rec_size: usize, endianness: Endianness) -> Self {
+    const fn new(data: &'a [u8], rec_size: usize, endianness: Endianness) -> Self {
         Self {
             data,
             rec_size,
@@ -1102,8 +1095,8 @@ impl<'a> Iterator for SecInfoIter<'a> {
     }
 }
 
-/// BtfTypes allows for access and manipulation of a
-/// collection of BtfType objects
+/// [`BtfTypes`] allows for access and manipulation of a
+/// collection of [`BtfType`] objects.
 #[derive(Debug, Clone)]
 pub(crate) struct BtfTypes {
     pub(crate) types: Vec<BtfType>,
@@ -1127,7 +1120,7 @@ impl BtfTypes {
         buf
     }
 
-    pub(crate) fn len(&self) -> usize {
+    pub(crate) const fn len(&self) -> usize {
         self.types.len()
     }
 
@@ -1146,27 +1139,21 @@ impl BtfTypes {
         for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
             let ty = self.type_by_id(type_id)?;
 
-            use BtfType::*;
             match ty {
-                Volatile(ty) => {
+                BtfType::Volatile(ty) => {
                     type_id = ty.btf_type;
-                    continue;
                 }
-                Const(ty) => {
+                BtfType::Const(ty) => {
                     type_id = ty.btf_type;
-                    continue;
                 }
-                Restrict(ty) => {
+                BtfType::Restrict(ty) => {
                     type_id = ty.btf_type;
-                    continue;
                 }
-                Typedef(ty) => {
+                BtfType::Typedef(ty) => {
                     type_id = ty.btf_type;
-                    continue;
                 }
-                TypeTag(ty) => {
+                BtfType::TypeTag(ty) => {
                     type_id = ty.btf_type;
-                    continue;
                 }
                 _ => return Ok(type_id),
             }
@@ -1190,10 +1177,7 @@ mod tests {
     use assert_matches::assert_matches;
 
     use super::*;
-    use crate::btf::{
-        BtfEnum64, BtfParam, DataSec, DataSecEntry, DeclTag, Enum64, Float, Func, FuncProto, Ptr,
-        TypeTag, Var,
-    };
+    use crate::btf::{BtfParam, DeclTag, Float, Func, FuncProto, Ptr, TypeTag};
 
     #[test]
     fn test_parse_header() {
@@ -1349,7 +1333,7 @@ mod tests {
         let ext_data = unsafe { bytes_of::<TestStruct>(&test_data).to_vec() };
 
         assert_eq!(ext_data.len(), 80);
-        let _: BtfExt = BtfExt::parse(&ext_data, Endianness::default(), &btf).unwrap();
+        let _unused: BtfExt = BtfExt::parse(&ext_data, Endianness::default(), &btf).unwrap();
     }
 
     #[test]

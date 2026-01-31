@@ -1,16 +1,17 @@
 use crate::bindings::{bpf_raw_tracepoint_args, pt_regs};
 
 mod sealed {
-    #[expect(clippy::missing_safety_doc)]
-    pub unsafe trait Argument {
+    #[expect(unnameable_types, reason = "this is the sealed trait pattern")]
+    pub trait Argument {
         fn from_register(value: u64) -> Self;
     }
 
-    macro_rules! unsafe_impl_argument {
+    macro_rules! impl_argument {
         ($($( { $($generics:tt)* } )? $ty:ty $( { where $($where:tt)* } )?),+ $(,)?) => {
             $(
-                #[allow(clippy::cast_lossless, trivial_numeric_casts)]
-                unsafe impl$($($generics)*)? Argument for $ty $(where $($where)*)? {
+                #[expect(clippy::allow_attributes, reason = "macro")]
+                #[allow(clippy::cast_lossless, trivial_numeric_casts, reason = "macro")]
+                impl$($($generics)*)? Argument for $ty $(where $($where)*)? {
                     fn from_register(value: u64) -> Self {
                         value as Self
                     }
@@ -19,7 +20,7 @@ mod sealed {
         }
     }
 
-    unsafe_impl_argument!(
+    impl_argument!(
         i8,
         u8,
         i16,
@@ -238,25 +239,29 @@ impl PtRegsLayout for pt_regs {
     }
 }
 
-/// Coerces a `T` from the `n`th argument of a pt_regs context where `n` starts
+/// Coerces a `T` from the `n`th argument of a `pt_regs` context where `n` starts
 /// at 0 and increases by 1 for each successive argument.
 pub(crate) fn arg<T: Argument>(ctx: &pt_regs, n: usize) -> Option<T> {
     let reg = ctx.arg_reg(n)?;
+    #[expect(clippy::allow_attributes, reason = "architecture-specific")]
     #[allow(
         clippy::cast_sign_loss,
         clippy::unnecessary_cast,
-        trivial_numeric_casts
+        trivial_numeric_casts,
+        reason = "architecture-specific"
     )]
     Some(T::from_register((*reg) as u64))
 }
 
-/// Coerces a `T` from the return value of a pt_regs context.
+/// Coerces a `T` from the return value of a `pt_regs` context.
 pub(crate) fn ret<T: Argument>(ctx: &pt_regs) -> T {
     let reg = ctx.rc_reg();
+    #[expect(clippy::allow_attributes, reason = "architecture-specific")]
     #[allow(
         clippy::cast_sign_loss,
         clippy::unnecessary_cast,
-        trivial_numeric_casts
+        trivial_numeric_casts,
+        reason = "architecture-specific"
     )]
     T::from_register((*reg) as u64)
 }

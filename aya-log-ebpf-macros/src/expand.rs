@@ -76,19 +76,21 @@ pub(crate) fn log(args: LogArgs, level_expr: Option<TokenStream>) -> Result<Toke
         format_string,
         formatting_args,
     } = args;
-    let target = match target {
-        Some(t) => quote! { #t },
-        None => quote! { module_path!() },
+    let target = if let Some(target) = target {
+        quote! { #target }
+    } else {
+        quote! { module_path!() }
     };
-    let level_expr = match level_expr {
-        Some(level_expr) => level_expr,
-        None => {
-            let level_expr = level.ok_or(Error::new(
+    let level_expr = if let Some(level_expr) = level_expr {
+        level_expr
+    } else {
+        let level_expr = level.ok_or_else(|| {
+            Error::new(
                 format_string.span(),
                 "missing `level` argument: try passing an `aya_log_ebpf::Level` value",
-            ))?;
-            quote! { #level_expr }
-        }
+            )
+        })?;
+        quote! { #level_expr }
     };
 
     let format_string_val = format_string.value();

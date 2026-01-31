@@ -47,7 +47,7 @@ enum CurrentKernelVersionError {
 
 impl KernelVersion {
     /// Constructor.
-    pub fn new(major: u8, minor: u8, patch: u16) -> Self {
+    pub const fn new(major: u8, minor: u8, patch: u16) -> Self {
         Self {
             major,
             minor,
@@ -88,7 +88,7 @@ impl KernelVersion {
         }
     }
 
-    /// The equivalent of LINUX_VERSION_CODE.
+    /// The equivalent of `LINUX_VERSION_CODE`.
     pub fn code(self) -> u32 {
         let Self {
             major,
@@ -127,11 +127,10 @@ impl KernelVersion {
     // These (get_ubuntu_kernel_version, parse_ubuntu_kernel_version, read_ubuntu_kernel_version_file)
     // are ported from https://github.com/torvalds/linux/blob/3f01e9f/tools/lib/bpf/libbpf_probes.c#L21-L101.
     fn get_ubuntu_kernel_version() -> Result<Option<Self>, CurrentKernelVersionError> {
-        Self::read_ubuntu_kernel_version_file().and_then(|content| {
-            content
-                .and_then(|content| Self::parse_ubuntu_kernel_version(&content).transpose())
-                .transpose()
-        })
+        let content = Self::read_ubuntu_kernel_version_file()?;
+        content
+            .and_then(|content| Self::parse_ubuntu_kernel_version(&content).transpose())
+            .transpose()
     }
 
     fn read_ubuntu_kernel_version_file() -> Result<Option<String>, CurrentKernelVersionError> {
@@ -139,10 +138,10 @@ impl KernelVersion {
         match fs::read_to_string(UBUNTU_KVER_FILE) {
             Ok(s) => Ok(Some(s)),
             Err(e) => {
-                if e.kind() != io::ErrorKind::NotFound {
-                    Err(e.into())
-                } else {
+                if e.kind() == io::ErrorKind::NotFound {
                     Ok(None)
+                } else {
+                    Err(e.into())
                 }
             }
         }
@@ -170,9 +169,8 @@ impl KernelVersion {
         // terminated by a null byte ('\0').
         let s = unsafe { CStr::from_ptr(info.version.as_ptr()) };
         let s = s.to_str()?;
-        let kernel_version_string = match s.split_once("Debian ") {
-            Some((_prefix, suffix)) => suffix,
-            None => return Ok(None),
+        let Some((_prefix, kernel_version_string)) = s.split_once("Debian ") else {
+            return Ok(None);
         };
         Self::parse_kernel_version_string(kernel_version_string).map(Some)
     }
@@ -183,7 +181,7 @@ impl KernelVersion {
         }
 
         let mut info = unsafe { mem::zeroed::<utsname>() };
-        if unsafe { uname(&mut info) } != 0 {
+        if unsafe { uname(&raw mut info) } != 0 {
             return Err(io::Error::last_os_error().into());
         }
 
@@ -306,7 +304,7 @@ fn parse_kernel_symbols(reader: impl BufRead) -> Result<BTreeMap<u64, String>, i
                 let name = parts.next()?;
                 // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this
                 // allowance when the lint behaves more sensibly.
-                #[expect(clippy::manual_ok_err)]
+                #[expect(clippy::manual_ok_err, reason = "type ascription")]
                 let addr = match u64::from_str_radix(addr, 16) {
                     Ok(addr) => Some(addr),
                     Err(ParseIntError { .. }) => None,
@@ -371,7 +369,7 @@ pub(crate) fn ifindex_from_ifname(if_name: &str) -> Result<u32, io::Error> {
     Ok(if_index)
 }
 
-pub(crate) fn tc_handler_make(major: u32, minor: u32) -> u32 {
+pub(crate) const fn tc_handler_make(major: u32, minor: u32) -> u32 {
     (major & TC_H_MAJ_MASK) | (minor & TC_H_MIN_MASK)
 }
 
@@ -418,12 +416,12 @@ pub(crate) fn page_size() -> usize {
 }
 
 // bytes_of converts a <T> to a byte slice
-pub(crate) fn bytes_of<T: Pod>(val: &T) -> &[u8] {
-    unsafe { slice::from_raw_parts(std::ptr::from_ref(val).cast(), mem::size_of_val(val)) }
+pub(crate) const fn bytes_of<T: Pod>(val: &T) -> &[u8] {
+    unsafe { slice::from_raw_parts(ptr::from_ref(val).cast(), size_of_val(val)) }
 }
 
-pub(crate) fn bytes_of_slice<T: Pod>(val: &[T]) -> &[u8] {
-    let size = val.len().wrapping_mul(mem::size_of::<T>());
+pub(crate) const fn bytes_of_slice<T: Pod>(val: &[T]) -> &[u8] {
+    let size = val.len().wrapping_mul(size_of::<T>());
     // Safety:
     // Any alignment is allowed.
     // The size is determined in this function.
@@ -435,8 +433,7 @@ pub(crate) fn bytes_of_bpf_name(bpf_name: &[core::ffi::c_char; 16]) -> &[u8] {
     let length = bpf_name
         .iter()
         .rposition(|ch| *ch != 0)
-        .map(|pos| pos + 1)
-        .unwrap_or(0);
+        .map_or(0, |pos| pos + 1);
     unsafe { slice::from_raw_parts(bpf_name.as_ptr().cast(), length) }
 }
 
@@ -468,14 +465,14 @@ impl MMap {
                 io_error: io::Error::last_os_error(),
             }),
             ptr => {
-                let ptr = ptr::NonNull::new(ptr).ok_or(
+                let ptr = ptr::NonNull::new(ptr).ok_or_else(|| {
                     // This should never happen, but to be paranoid, and so we never need to talk
                     // about a null pointer, we check it anyway.
                     SyscallError {
                         call: "mmap",
                         io_error: io::Error::other("mmap returned null pointer"),
-                    },
-                )?;
+                    }
+                })?;
                 Ok(Self { ptr, len })
             }
         }
@@ -483,7 +480,7 @@ impl MMap {
 
     /// Maps the file at `path` for reading, using `mmap` with `MAP_PRIVATE`.
     pub(crate) fn map_copy_read_only(path: &Path) -> Result<Self, io::Error> {
-        let file = fs::File::open(path)?;
+        let file = File::open(path)?;
         Self::new(
             file.as_fd(),
             file.metadata()?.len().try_into().map_err(|e| {
@@ -499,7 +496,7 @@ impl MMap {
         .map_err(|SyscallError { io_error, call: _ }| io_error)
     }
 
-    pub(crate) fn ptr(&self) -> ptr::NonNull<c_void> {
+    pub(crate) const fn ptr(&self) -> ptr::NonNull<c_void> {
         self.ptr
     }
 }
@@ -507,14 +504,14 @@ impl MMap {
 impl AsRef<[u8]> for MMap {
     fn as_ref(&self) -> &[u8] {
         let Self { ptr, len } = self;
-        unsafe { std::slice::from_raw_parts(ptr.as_ptr().cast(), *len) }
+        unsafe { slice::from_raw_parts(ptr.as_ptr().cast(), *len) }
     }
 }
 
 impl Drop for MMap {
     fn drop(&mut self) {
         let Self { ptr, len } = *self;
-        unsafe { munmap(ptr.as_ptr(), len) };
+        let _: i32 = unsafe { munmap(ptr.as_ptr(), len) };
     }
 }
 
@@ -571,10 +568,7 @@ mod tests {
             .as_bytes();
         let syms = parse_kernel_symbols(&mut BufReader::new(data)).unwrap();
         assert_eq!(syms.keys().collect::<Vec<_>>(), vec![&0x2000, &0x6000]);
-        assert_eq!(
-            syms.get(&0x2000u64).unwrap().as_str(),
-            "irq_stack_backing_store"
-        );
-        assert_eq!(syms.get(&0x6000u64).unwrap().as_str(), "cpu_tss_rw");
+        assert_eq!(syms[&0x2000u64].as_str(), "irq_stack_backing_store");
+        assert_eq!(syms[&0x6000u64].as_str(), "cpu_tss_rw");
     }
 }

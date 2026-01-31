@@ -47,7 +47,7 @@ impl ProgramInfo {
     /// The unique ID for this program.
     ///
     /// Introduced in kernel v4.13.
-    pub fn id(&self) -> u32 {
+    pub const fn id(&self) -> u32 {
         self.0.id
     }
 
@@ -58,7 +58,11 @@ impl ProgramInfo {
     /// will remain the same.
     ///
     /// Introduced in kernel v4.13.
-    pub fn tag(&self) -> u64 {
+    #[expect(
+        clippy::big_endian_bytes,
+        reason = "the kernel exposes the tag as a big-endian byte array"
+    )]
+    pub const fn tag(&self) -> u64 {
         u64::from_be_bytes(self.0.tag)
     }
 
@@ -68,7 +72,7 @@ impl ProgramInfo {
     /// above may already have it enabled by default.
     ///
     /// Introduced in kernel v4.13.
-    pub fn size_jitted(&self) -> u32 {
+    pub const fn size_jitted(&self) -> u32 {
         self.0.jited_prog_len
     }
 
@@ -170,7 +174,7 @@ impl ProgramInfo {
     /// with [`Stats::RunTime`](crate::sys::Stats::RunTime).
     ///
     /// Introduced in kernel v5.1.
-    pub fn run_time(&self) -> Duration {
+    pub const fn run_time(&self) -> Duration {
         Duration::from_nanos(self.0.run_time_ns)
     }
 
@@ -181,7 +185,7 @@ impl ProgramInfo {
     /// with [`Stats::RunTime`](crate::sys::Stats::RunTime).
     ///
     /// Introduced in kernel v5.1.
-    pub fn run_count(&self) -> u64 {
+    pub const fn run_count(&self) -> u64 {
         self.0.run_cnt
     }
 
@@ -294,7 +298,7 @@ pub fn loaded_programs() -> impl Iterator<Item = Result<ProgramInfo, ProgramErro
 }
 
 /// The type of LSM program.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LsmAttachType {
     /// A MAC (Mandatory Access Control) LSM program.
     Mac,

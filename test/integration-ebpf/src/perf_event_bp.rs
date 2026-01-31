@@ -19,6 +19,6 @@ static READERS: HashMap<u32, u64> = HashMap::with_max_entries(1, 0);
 fn perf_event_bp(ctx: PerfEventContext) -> u32 {
     let tgid = ctx.tgid();
     let addr = unsafe { (*ctx.ctx).addr };
-    let _ = READERS.insert(tgid, addr, 0);
+    let _unused: Result<_, _> = READERS.insert(tgid, addr, 0);
     0
 }

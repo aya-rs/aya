@@ -64,7 +64,7 @@ impl SockOps {
 
     /// Attaches the program to the given cgroup.
     ///
-    /// The returned value can be used to detach, see [SockOps::detach].
+    /// The returned value can be used to detach, see [`SockOps::detach`].
     pub fn attach<T: AsFd>(
         &mut self,
         cgroup: T,

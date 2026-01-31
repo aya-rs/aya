@@ -47,7 +47,6 @@ impl<T: Borrow<MapData>, V: Pod> Array<T, V> {
     /// Returns the number of elements in the array.
     ///
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
-    #[expect(clippy::len_without_is_empty)]
     pub fn len(&self) -> u32 {
         self.inner.borrow().obj.max_entries()
     }
@@ -90,7 +89,7 @@ impl<T: Borrow<MapData>, V: Pod> IterableMap<u32, V> for Array<T, V> {
         self.inner.borrow()
     }
 
-    fn get(&self, index: &u32) -> Result<V, MapError> {
-        self.get(index, 0)
+    fn get(&self, key: &u32) -> Result<V, MapError> {
+        self.get(key, 0)
     }
 }

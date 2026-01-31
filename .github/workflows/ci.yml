@@ -11,6 +11,10 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
@@ -18,14 +22,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: dtolnay/rust-toolchain@nightly
         with:
           components: clippy,miri,rustfmt,rust-src
-
-      # Installed *after* nightly so it is the default.
-      - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
 
@@ -35,13 +36,20 @@ jobs:
 
       - run: git ls-files -- '*.c' '*.h' | xargs clang-format --dry-run --Werror
 
-      - uses: DavidAnson/markdownlint-cli2-action@v20
+      - uses: DavidAnson/markdownlint-cli2-action@v22
 
       - run: taplo fmt --check
 
       - run: cargo +nightly fmt --all -- --check
 
-      - run: ./clippy.sh
+      - name: Install libbpf-rs prerequisites
+        run: |
+          set -euxo pipefail
+
+          sudo apt update
+          sudo apt -y install autopoint
+
+      - run: cargo xtask clippy
 
       # On the `aya-rs/aya` repository, regenerate the public API on a schedule.
       #
@@ -50,7 +58,7 @@ jobs:
         if: ${{ !(github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
       - run: cargo xtask public-api --bless
         if: ${{ (github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
-      - uses: peter-evans/create-pull-request@v7
+      - uses: peter-evans/create-pull-request@v8
         if: ${{ (github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
         with:
           # GitHub actions aren't allowed to trigger other actions to prevent
@@ -90,7 +98,7 @@ jobs:
           - x86_64-unknown-linux-gnu
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -105,7 +113,19 @@ jobs:
         with:
           target: ${{ matrix.arch }}
 
+      - name: Install libbpf-rs prerequisites
+        run: |
+          set -euxo pipefail
+
+          sudo apt update
+          sudo apt -y install autopoint
+
       - name: Build
+        env:
+          # Fix for 32-bit ARM: Ubuntu 24.04 GCC defines _TIME_BITS=64 as a built-in,
+          # which requires _FILE_OFFSET_BITS=64 (glibc requirement). We must unset
+          # _TIME_BITS first because the built-in is seen before -D flags by libbpf-sys.
+          CFLAGS_armv7_unknown_linux_gnueabi: "-U_TIME_BITS -D_FILE_OFFSET_BITS=64"
         run: |
           set -euxo pipefail
           cargo hack build --all-targets --feature-powerset \
@@ -146,7 +166,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: dtolnay/rust-toolchain@nightly
         with:
@@ -218,10 +238,10 @@ jobs:
       matrix:
         # We don't have a fast solution for running virtualized integration
         # tests on arm64 because:
-        # - Github broke nested virtualization on macos-15-intel (see below).
-        # - Github arm64 runners don't support nested virtualization (see
+        # - GitHub Ubuntu arm64 runners don't support nested virtualization (see
         #   https://github.com/orgs/community/discussions/148648#discussioncomment-11863547).
-        # - Unlike HVF, KVM doesn't emulate CPUs.
+        # - GitHub macOS arm64 runners don't support nested virtualization (see
+        #   https://docs.github.com/en/actions/reference/runners/github-hosted-runners#limitations-for-arm64-macos-runners).
         #
         # So we spin a runner for every arm64 kernel to avoid waiting 20 minutes
         # for CI. We use arm64 runners to avoid cross-compilation.
@@ -234,15 +254,11 @@ jobs:
         skip-local:
           - true
         include:
-          # TODO(https://github.com/actions/runner-images/issues/13277): Reenable when fixed.
-          # macos-15 is arm64[0] which doesn't support nested
-          # virtualization[1].
-          #
-          # [0] https://github.com/actions/runner-images#available-images
-          #
-          # [1] https://docs.github.com/en/actions/reference/runners/github-hosted-runners#limitations-for-arm64-macos-runners
-          #
-          # - os: macos-15-intel
+          - os: macos-latest
+            # Just one kernel to keep things fast. We just want to keep things from rotting on
+            # macOS. We use amd64 because otherwise qemu tries to use HVF and hits a hard error:
+            # qemu-system-aarch64: -accel hvf: Error: ret = HV_UNSUPPORTED (0xfae9400f, at ../target/arm/hvf/hvf.c:956)
+            download-kernel-images: amd64 5.10
 
           # We don't use ubuntu-latest because we care about the apt packages available.
           - os: ubuntu-24.04
@@ -254,7 +270,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -269,7 +285,12 @@ jobs:
           sudo udevadm trigger --name-match=kvm || true # kvm is not available on arm64.
 
           sudo apt update
+          # linux-libc-dev provides kernel UAPI headers for libbpf-sys cross-compilation.
+          #
+          # See https://github.com/libbpf/libbpf-sys/issues/137.
           sudo apt -y install \
+            autopoint \
+            linux-libc-dev \
             liblzma-dev \
             lynx \
             musl-tools \
@@ -283,6 +304,10 @@ jobs:
           brew bundle
           echo $(brew --prefix curl)/bin >> $GITHUB_PATH
           echo $(brew --prefix llvm)/bin >> $GITHUB_PATH
+          # Point bpf-linker's build.rs to the brew prefixes with static
+          # libraries it needs.
+          echo "CXXSTDLIB_PATH=$(brew --prefix llvm)/lib/c++" >> $GITHUB_ENV
+          echo "ZLIB_PATH=$(brew --prefix zlib)/lib" >> $GITHUB_ENV
 
           # https://github.com/actions/setup-python/issues/577
           find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
@@ -332,6 +357,7 @@ jobs:
               ;;
             macOS)
               target=${arch}-apple-darwin
+              echo "LLVM_LINK_FEATURE=llvm-link-static" >> $GITHUB_ENV
               ;;
             *)
               echo "::error::Unsupported runner OS: ${{ runner.os }}"
@@ -345,10 +371,15 @@ jobs:
       # NB: rustc doesn't ship libLLVM.so on macOS, so disable proxying (default feature). We also
       # --force so that bpf-linker gets always relinked against the latest LLVM downloaded above.
       #
+      # Add the downloaded LLVM to PATH for this build step.
+      #
       # Do this on all system (not just macOS) to avoid relying on rustc-provided libLLVM.so.
-      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker --no-default-features --features llvm-21 --force
+      - run: |
+          cargo install \
+            --git https://github.com/aya-rs/bpf-linker.git bpf-linker \
+            --no-default-features --features "llvm-21,${LLVM_LINK_FEATURE}" --force
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: test/.tmp
           key: ${{ runner.arch }}-${{ runner.os }}-test-cache-${{ matrix.download-kernel-images }}
@@ -371,6 +402,7 @@ jobs:
         if: matrix.download-kernel-images != 'local'
         run: |
           set -euxo pipefail
+
           find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
             cargo xtask integration-test vm --cache-dir test/.tmp \
               --github-api-token ${{ secrets.GITHUB_TOKEN }}

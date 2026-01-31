@@ -1,42 +1,30 @@
-use core::{cell::UnsafeCell, ptr};
+use core::ptr;
 
-use aya_ebpf_bindings::bindings::{
-    BPF_F_NO_PREALLOC, BPF_SK_STORAGE_GET_F_CREATE, bpf_map_type::BPF_MAP_TYPE_SK_STORAGE, bpf_sock,
-};
-use aya_ebpf_cty::{c_long, c_void};
+use aya_ebpf_bindings::bindings::{BPF_F_NO_PREALLOC, BPF_SK_STORAGE_GET_F_CREATE, bpf_sock};
+use aya_ebpf_cty::c_long;
 
 use crate::{
-    btf_map_def,
+    btf_maps::btf_map_def,
     helpers::generated::{bpf_sk_storage_delete, bpf_sk_storage_get},
     programs::sock_addr::SockAddrContext,
 };
 
-btf_map_def!(SkStorageDef, BPF_MAP_TYPE_SK_STORAGE);
-
-// TODO(https://github.com/rust-lang/rust/issues/76560): this should be:
-//
-// { F | BPF_F_NO_PREALLOC as usize }.
-#[repr(transparent)]
-pub struct SkStorage<T>(UnsafeCell<SkStorageDef<i32, T, 0, { BPF_F_NO_PREALLOC as usize }>>);
-
-unsafe impl<T: Sync> Sync for SkStorage<T> {}
+btf_map_def!(
+    /// A BTF-compatible BPF socket storage map.
+    ///
+    /// Socket storage maps require `BPF_F_NO_PREALLOC` flag and `max_entries: 0`.
+    pub struct SkStorage<T>,
+    map_type: BPF_MAP_TYPE_SK_STORAGE,
+    max_entries: 0,
+    // TODO(https://github.com/rust-lang/rust/issues/76560): this should be:
+    //
+    // { F | BPF_F_NO_PREALLOC as usize }.
+    map_flags: BPF_F_NO_PREALLOC as usize,
+    key_type: i32,
+    value_type: T,
+);
 
 impl<T> SkStorage<T> {
-    #[expect(
-        clippy::new_without_default,
-        reason = "BPF maps are always used as static variables, therefore this method has to be `const`. `Default::default` is not `const`."
-    )]
-    pub const fn new() -> Self {
-        Self(UnsafeCell::new(SkStorageDef::new()))
-    }
-
-    #[inline(always)]
-    fn as_ptr(&self) -> *mut c_void {
-        let Self(inner) = self;
-
-        inner.get().cast()
-    }
-
     #[inline(always)]
     fn get_ptr(&self, ctx: &SockAddrContext, value: *mut T, flags: u64) -> *mut T {
         let sock_addr = unsafe { &*ctx.sock_addr };
@@ -56,7 +44,7 @@ impl<T> SkStorage<T> {
 
     /// Gets a mutable reference to the value associated with `sk`.
     ///
-    /// If no value is associated with `sk`, `value` will be inserted.`
+    /// If no value is associated with `sk`, `value` will be inserted.
     ///
     /// # Safety
     ///

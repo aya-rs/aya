@@ -67,7 +67,7 @@ impl FEntry {
 
     /// Attaches the program.
     ///
-    /// The returned value can be used to detach, see [FEntry::detach].
+    /// The returned value can be used to detach, see [`FEntry::detach`].
     pub fn attach(&mut self) -> Result<FEntryLinkId, ProgramError> {
         attach_raw_tracepoint(&mut self.data, None)
     }

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## v0.1.2 (2025-11-17)
+
+### New Features
+
+ - <csr-id-701a9333a828973f7bc5f8b7270b7936b0a4aaba/>, <csr-id-3ff60911375a6044bbf9060bef25aa5e9d3747ae/>, <csr-id-6252b4c9722c7c2ee2458741ae328dcc0c3c5234/> Regenerated the bindings from libbpf 324f3c38…, pulling in MIPS and LoongArch64 support alongside the latest kernel constants.
+
+### Maintenance
+
+ - <csr-id-1fe12b99907dda6553a6069fa462d6241d3fa171/>, <csr-id-5f5305c2a8ca0a739219093599dd57182d440ac1/> General lint/build fixes (including the riscv64 build) to keep the generated code warning-free.
+
 ## v0.1.1 (2024-10-09)
 
 ### Other

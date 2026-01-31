@@ -56,8 +56,8 @@ fn push_literal(frag: &mut Vec<Fragment>, unescaped_literal: &str) -> Result<(),
 /// like `:x` or `:ipv4` (without curly braces, which are parsed by the `parse`
 /// function).
 fn parse_param(input: &str) -> Result<Parameter, String> {
-    let hint = match input.strip_prefix(":") {
-        Some(input) => match input {
+    let hint = if let Some(input) = input.strip_prefix(":") {
+        match input {
             "" => return Err("malformed format string (missing display hint after ':')".into()),
             "x" => DisplayHint::LowerHex,
             "X" => DisplayHint::UpperHex,
@@ -66,13 +66,12 @@ fn parse_param(input: &str) -> Result<Parameter, String> {
             "MAC" => DisplayHint::UpperMac,
             "p" => DisplayHint::Pointer,
             input => return Err(format!("unknown display hint: {input:?}")),
-        },
-        None => {
-            if !input.is_empty() {
-                return Err(format!("unexpected content {input:?} in format string"));
-            }
-            DisplayHint::Default
         }
+    } else {
+        if !input.is_empty() {
+            return Err(format!("unexpected content {input:?} in format string"));
+        }
+        DisplayHint::Default
     };
     Ok(Parameter { hint })
 }
@@ -133,6 +132,10 @@ mod test {
 
     use super::*;
 
+    #[expect(
+        clippy::literal_string_with_formatting_args,
+        reason = "that's the point"
+    )]
     #[test]
     fn test_parse() {
         assert_eq!(

@@ -7,7 +7,10 @@ use crate::{
     sys::{SyscallError, bpf_map_delete_elem, bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
-#[expect(clippy::module_inception)]
+#[expect(
+    clippy::module_inception,
+    reason = "module name matches the exported type"
+)]
 mod hash_map;
 mod per_cpu_hash_map;
 

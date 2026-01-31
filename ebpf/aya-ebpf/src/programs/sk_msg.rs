@@ -11,7 +11,7 @@ pub struct SkMsgContext {
 }
 
 impl SkMsgContext {
-    pub fn new(msg: *mut sk_msg_md) -> Self {
+    pub const fn new(msg: *mut sk_msg_md) -> Self {
         Self { msg }
     }
 

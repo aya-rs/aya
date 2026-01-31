@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{ItemStatic, Result};
 
-use crate::args::name_arg;
+use crate::args::Args;
 
 pub(crate) struct BtfMap {
     item: ItemStatic,
@@ -14,8 +14,9 @@ pub(crate) struct BtfMap {
 impl BtfMap {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self> {
         let item: ItemStatic = syn::parse2(item)?;
-        let mut args = syn::parse2(attrs)?;
-        let name = name_arg(&mut args).unwrap_or_else(|| item.ident.to_string());
+        let mut args: Args = syn::parse2(attrs)?;
+        let name = args.pop_name().unwrap_or_else(|| item.ident.to_string());
+        args.into_error()?;
         Ok(Self { item, name })
     }
 

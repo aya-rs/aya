@@ -137,7 +137,7 @@ pub enum HardwareEvent {
 
 impl HardwareEvent {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<HardwareEvent>()];
+        const _: [(); 4] = [(); size_of::<HardwareEvent>()];
         self as u32
     }
 }
@@ -187,7 +187,7 @@ pub enum SoftwareEvent {
 
 impl SoftwareEvent {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<SoftwareEvent>()];
+        const _: [(); 4] = [(); size_of::<SoftwareEvent>()];
         self as u32
     }
 }
@@ -222,7 +222,7 @@ pub enum HwCacheEvent {
 
 impl HwCacheEvent {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<HwCacheEvent>()];
+        const _: [(); 4] = [(); size_of::<HwCacheEvent>()];
         self as u32
     }
 }
@@ -245,7 +245,7 @@ pub enum HwCacheOp {
 
 impl HwCacheOp {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<HwCacheOp>()];
+        const _: [(); 4] = [(); size_of::<HwCacheOp>()];
         self as u32
     }
 }
@@ -269,7 +269,7 @@ pub enum HwCacheResult {
 
 impl HwCacheResult {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<HwCacheResult>()];
+        const _: [(); 4] = [(); size_of::<HwCacheResult>()];
         self as u32
     }
 }
@@ -278,20 +278,20 @@ impl HwCacheResult {
 #[repr(u32)]
 #[derive(Debug, Clone, Copy)]
 pub enum PerfBreakpointType {
-    /// HW_BREAKPOINT_R, trigger when we read the memory location.
+    /// `HW_BREAKPOINT_R`, trigger when we read the memory location.
     #[doc(alias = "HW_BREAKPOINT_R")]
     Read = HW_BREAKPOINT_R,
-    /// HW_BREAKPOINT_W, trigger when we write the memory location.
+    /// `HW_BREAKPOINT_W`, trigger when we write the memory location.
     #[doc(alias = "HW_BREAKPOINT_W")]
     Write = HW_BREAKPOINT_W,
-    /// HW_BREAKPOINT_RW, trigger when we read or write the memory location.
+    /// `HW_BREAKPOINT_RW`, trigger when we read or write the memory location.
     #[doc(alias = "HW_BREAKPOINT_RW")]
     ReadWrite = HW_BREAKPOINT_RW,
 }
 
 impl PerfBreakpointType {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<PerfBreakpointType>()];
+        const _: [(); 4] = [(); size_of::<PerfBreakpointType>()];
         self as u32
     }
 }
@@ -300,23 +300,23 @@ impl PerfBreakpointType {
 #[repr(u32)]
 #[derive(Debug, Clone, Copy)]
 pub enum PerfBreakpointLength {
-    /// HW_BREAKPOINT_LEN_1
+    /// `HW_BREAKPOINT_LEN_1`
     #[doc(alias = "HW_BREAKPOINT_LEN_1")]
     Len1 = HW_BREAKPOINT_LEN_1,
-    /// HW_BREAKPOINT_LEN_2
+    /// `HW_BREAKPOINT_LEN_2`
     #[doc(alias = "HW_BREAKPOINT_LEN_2")]
     Len2 = HW_BREAKPOINT_LEN_2,
-    /// HW_BREAKPOINT_LEN_4
+    /// `HW_BREAKPOINT_LEN_4`
     #[doc(alias = "HW_BREAKPOINT_LEN_4")]
     Len4 = HW_BREAKPOINT_LEN_4,
-    /// HW_BREAKPOINT_LEN_8
+    /// `HW_BREAKPOINT_LEN_8`
     #[doc(alias = "HW_BREAKPOINT_LEN_8")]
     Len8 = HW_BREAKPOINT_LEN_8,
 }
 
 impl PerfBreakpointLength {
     pub(crate) const fn into_primitive(self) -> u32 {
-        const _: [(); 4] = [(); std::mem::size_of::<PerfBreakpointLength>()];
+        const _: [(); 4] = [(); size_of::<PerfBreakpointLength>()];
         self as u32
     }
 }
@@ -357,11 +357,11 @@ pub(crate) enum WakeupPolicy {
     /// Every N events
     Events(u32),
     /// Every N bytes
-    #[expect(dead_code)]
+    #[expect(dead_code, reason = "TODO")]
     Watermark(u32),
 }
 
-/// The scope of a PerfEvent
+/// The scope of a [`PerfEvent`].
 #[derive(Debug, Clone, Copy)]
 pub enum PerfEventScope {
     /// calling process

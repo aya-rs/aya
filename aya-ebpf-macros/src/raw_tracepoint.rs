@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::{err_on_unknown_args, pop_string_arg};
+use crate::args::Args;
 
 pub(crate) struct RawTracePoint {
     item: ItemFn,
@@ -14,9 +14,9 @@ pub(crate) struct RawTracePoint {
 impl RawTracePoint {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self> {
         let item = syn::parse2(item)?;
-        let mut args = syn::parse2(attrs)?;
-        let tracepoint = pop_string_arg(&mut args, "tracepoint");
-        err_on_unknown_args(&args)?;
+        let mut args: Args = syn::parse2(attrs)?;
+        let tracepoint = args.pop_string("tracepoint");
+        args.into_error()?;
         Ok(Self { item, tracepoint })
     }
 

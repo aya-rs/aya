@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## v0.1.2 (2025-11-17)
+
+### New Features
+
+ - <csr-id-77b1c6194c8f9bb69ffc6a60c3b8189b73e00e8f/> Added Flow Dissector macro support so attaching those programs no longer requires manual boilerplate.
+ - <csr-id-5a43bedc0180ba41854e6c23f0476c2cbeb1e2bd/> Switched error reporting to `proc-macro2-diagnostics`, providing richer compiler output when macro expansion fails.
+
+### Maintenance
+
+ - <csr-id-dae394e199878283475a8cc5d1ca0ab82db305db/> Dropped the stale dev-dependency on `aya-ebpf` and kept the crate in sync with the workspace lint/edition configuration.
+
 ## v0.1.1 (2024-10-09)
 
 ### Chore

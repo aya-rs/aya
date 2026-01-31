@@ -62,7 +62,7 @@ impl KProbe {
 
     /// Returns [`ProbeKind::Entry`] if the program is a `kprobe`, or
     /// [`ProbeKind::Return`] if the program is a `kretprobe`.
-    pub fn kind(&self) -> ProbeKind {
+    pub const fn kind(&self) -> ProbeKind {
         self.kind
     }
 
@@ -76,7 +76,7 @@ impl KProbe {
     /// Conversely if the program is a `kretprobe`, it is attached to the return address of the
     /// target function.
     ///
-    /// The returned value can be used to detach from the given function, see [KProbe::detach].
+    /// The returned value can be used to detach from the given function, see [`KProbe::detach`].
     pub fn attach<T: AsRef<OsStr>>(
         &mut self,
         fn_name: T,

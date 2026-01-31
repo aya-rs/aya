@@ -1,7 +1,7 @@
 [package]
 description = "A parser for the aya log format strings"
 name = "aya-log-parser"
-version = "0.1.13"
+version = "0.1.14"
 
 authors.workspace = true
 edition.workspace = true
@@ -14,7 +14,7 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-aya-log-common = { path = "../aya-log-common", version = "^0.1.14", default-features = false }
+aya-log-common = { path = "../aya-log-common", version = "^0.1.16", default-features = false }
 
 [dev-dependencies]
 assert_matches = { workspace = true }
