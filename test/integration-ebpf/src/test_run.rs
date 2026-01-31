@@ -16,13 +16,14 @@ static EXEC_COUNT: Array<u64> = Array::with_max_entries(1, 0);
 
 #[xdp]
 fn test_xdp(ctx: XdpContext) -> u32 {
-    match unsafe { try_test_xdp(ctx) } {
+    match try_test_xdp(ctx) {
         Ok(ret) => ret,
         Err(_) => xdp_action::XDP_ABORTED,
     }
 }
 
-unsafe fn try_test_xdp(_ctx: XdpContext) -> Result<u32, u32> {
+#[inline]
+fn try_test_xdp(_ctx: XdpContext) -> Result<u32, u32> {
     Ok(xdp_action::XDP_PASS)
 }
 
@@ -38,8 +39,8 @@ fn test_classifier(_ctx: TcContext) -> i32 {
 
 #[socket_filter]
 fn test_count_exec(_ctx: SkBuffContext) -> i64 {
-    unsafe {
-        if let Some(count) = EXEC_COUNT.get_ptr_mut(0) {
+    if let Some(count) = EXEC_COUNT.get_ptr_mut(0) {
+        unsafe {
             *count += 1;
         }
     }
@@ -48,13 +49,14 @@ fn test_count_exec(_ctx: SkBuffContext) -> i64 {
 
 #[xdp]
 fn test_xdp_modify(ctx: XdpContext) -> u32 {
-    match unsafe { try_test_xdp_modify(ctx) } {
+    match try_test_xdp_modify(ctx) {
         Ok(ret) => ret,
         Err(_) => xdp_action::XDP_ABORTED,
     }
 }
 
-unsafe fn try_test_xdp_modify(ctx: XdpContext) -> Result<u32, u32> {
+#[inline]
+fn try_test_xdp_modify(ctx: XdpContext) -> Result<u32, u32> {
     let data = ctx.data();
     let data_end = ctx.data_end();
 
@@ -74,13 +76,14 @@ unsafe fn try_test_xdp_modify(ctx: XdpContext) -> Result<u32, u32> {
 
 #[xdp]
 fn test_xdp_context(ctx: XdpContext) -> u32 {
-    match unsafe { try_test_xdp_context(ctx) } {
+    match try_test_xdp_context(ctx) {
         Ok(ret) => ret,
         Err(_) => xdp_action::XDP_ABORTED,
     }
 }
 
-unsafe fn try_test_xdp_context(ctx: XdpContext) -> Result<u32, u32> {
+#[inline]
+fn try_test_xdp_context(ctx: XdpContext) -> Result<u32, u32> {
     // hardcoded expected value
     const EXPECTED_IF: u32 = 1;
 
