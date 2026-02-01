@@ -88,9 +88,9 @@ fn try_test_xdp_context(ctx: XdpContext) -> Result<u32, u32> {
     const EXPECTED_IF: u32 = 1;
 
     let md = ctx.ctx;
-    let rx_queue = unsafe { (*md).ingress_ifindex };
-
-    if rx_queue == EXPECTED_IF {
+    let ingress_ifindex = unsafe { (*md).ingress_ifindex };
+    
+    if ingress_ifindex == EXPECTED_IF {
         Ok(xdp_action::XDP_PASS)
     } else {
         Ok(xdp_action::XDP_DROP)
