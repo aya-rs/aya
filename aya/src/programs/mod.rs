@@ -611,7 +611,7 @@ impl<T: Link> ProgramData<T> {
 
 fn test_run<T: Link>(
     data: &ProgramData<T>,
-    opts: &mut crate::sys::TestRunOptions<'_>,
+    opts: &crate::sys::TestRunOptions<'_>,
 ) -> Result<crate::sys::TestRunResult, ProgramError> {
     let fd = data.fd()?.as_fd();
     crate::sys::bpf_prog_test_run(fd, opts).map_err(Into::into)

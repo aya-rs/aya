@@ -616,7 +616,8 @@ impl TestRunOptions<'_> {
     /// Sets the CPU to run the test on.
     /// This automatically sets the `BPF_F_TEST_RUN_ON_CPU` flag.
     /// This option only works with `TracePoint` programs.
-    pub fn run_on_cpu(mut self, cpu: u32) -> Self {
+    #[must_use]
+    pub const fn run_on_cpu(mut self, cpu: u32) -> Self {
         self.cpu = cpu;
         self.flags |= BPF_F_TEST_RUN_ON_CPU;
         self
@@ -625,7 +626,8 @@ impl TestRunOptions<'_> {
     /// Sets the batch size for XDP live frames testing.
     /// This automatically sets the `BPF_F_TEST_XDP_LIVE_FRAMES` flag.
     /// This option only works with `XDP` programs.
-    pub fn xdp_live_frames(mut self, batch_size: u32) -> Self {
+    #[must_use]
+    pub const fn xdp_live_frames(mut self, batch_size: u32) -> Self {
         self.batch_size = batch_size;
         self.flags |= BPF_F_TEST_XDP_LIVE_FRAMES;
         self
@@ -639,9 +641,9 @@ pub struct TestRunResult {
     pub return_value: u32,
     /// Duration of the test run in nanoseconds.
     pub duration: u32,
-    /// Size of data written to data_out.
+    /// Size of data written to `data_out`.
     pub data_size_out: u32,
-    /// Size of context written to ctx_out.
+    /// Size of context written to `ctx_out`.
     pub ctx_size_out: u32,
 }
 
@@ -650,7 +652,7 @@ pub struct TestRunResult {
 /// Introduced in kernel v4.12.
 pub(crate) fn bpf_prog_test_run(
     prog_fd: BorrowedFd<'_>,
-    opts: &mut TestRunOptions<'_>,
+    opts: &TestRunOptions<'_>,
 ) -> Result<TestRunResult, SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
