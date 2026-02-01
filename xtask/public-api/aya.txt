@@ -6894,8 +6894,8 @@ pub aya::sys::TestRunOptions::data_out: core::option::Option<&'a mut [u8]>
 pub aya::sys::TestRunOptions::repeat: u32
 impl aya::TestRunOptions<'_>
 pub fn aya::TestRunOptions<'_>::new() -> Self
-pub fn aya::TestRunOptions<'_>::run_on_cpu(self, cpu: u32) -> Self
-pub fn aya::TestRunOptions<'_>::xdp_live_frames(self, batch_size: u32) -> Self
+pub const fn aya::TestRunOptions<'_>::run_on_cpu(self, cpu: u32) -> Self
+pub const fn aya::TestRunOptions<'_>::xdp_live_frames(self, batch_size: u32) -> Self
 impl core::default::Default for aya::TestRunOptions<'_>
 pub fn aya::TestRunOptions<'_>::default() -> Self
 impl<'a> core::fmt::Debug for aya::TestRunOptions<'a>
@@ -7062,8 +7062,8 @@ pub aya::TestRunOptions::data_out: core::option::Option<&'a mut [u8]>
 pub aya::TestRunOptions::repeat: u32
 impl aya::TestRunOptions<'_>
 pub fn aya::TestRunOptions<'_>::new() -> Self
-pub fn aya::TestRunOptions<'_>::run_on_cpu(self, cpu: u32) -> Self
-pub fn aya::TestRunOptions<'_>::xdp_live_frames(self, batch_size: u32) -> Self
+pub const fn aya::TestRunOptions<'_>::run_on_cpu(self, cpu: u32) -> Self
+pub const fn aya::TestRunOptions<'_>::xdp_live_frames(self, batch_size: u32) -> Self
 impl core::default::Default for aya::TestRunOptions<'_>
 pub fn aya::TestRunOptions<'_>::default() -> Self
 impl<'a> core::fmt::Debug for aya::TestRunOptions<'a>
