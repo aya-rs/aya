@@ -6887,14 +6887,15 @@ impl core::marker::UnsafeUnpin for aya::sys::SyscallError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::sys::SyscallError
 impl !core::panic::unwind_safe::UnwindSafe for aya::sys::SyscallError
 pub struct aya::sys::TestRunOptions<'a>
-pub aya::sys::TestRunOptions::batch_size: u32
-pub aya::sys::TestRunOptions::cpu: u32
 pub aya::sys::TestRunOptions::ctx_in: core::option::Option<&'a [u8]>
 pub aya::sys::TestRunOptions::ctx_out: core::option::Option<&'a mut [u8]>
 pub aya::sys::TestRunOptions::data_in: core::option::Option<&'a [u8]>
 pub aya::sys::TestRunOptions::data_out: core::option::Option<&'a mut [u8]>
-pub aya::sys::TestRunOptions::flags: u32
 pub aya::sys::TestRunOptions::repeat: u32
+impl aya::TestRunOptions<'_>
+pub fn aya::TestRunOptions<'_>::new() -> Self
+pub fn aya::TestRunOptions<'_>::run_on_cpu(self, cpu: u32) -> Self
+pub fn aya::TestRunOptions<'_>::xdp_live_frames(self, batch_size: u32) -> Self
 impl core::default::Default for aya::TestRunOptions<'_>
 pub fn aya::TestRunOptions<'_>::default() -> Self
 impl<'a> core::fmt::Debug for aya::TestRunOptions<'a>
@@ -7054,14 +7055,15 @@ impl<'a> core::marker::UnsafeUnpin for aya::GlobalData<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::GlobalData<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya::GlobalData<'a>
 pub struct aya::TestRunOptions<'a>
-pub aya::TestRunOptions::batch_size: u32
-pub aya::TestRunOptions::cpu: u32
 pub aya::TestRunOptions::ctx_in: core::option::Option<&'a [u8]>
 pub aya::TestRunOptions::ctx_out: core::option::Option<&'a mut [u8]>
 pub aya::TestRunOptions::data_in: core::option::Option<&'a [u8]>
 pub aya::TestRunOptions::data_out: core::option::Option<&'a mut [u8]>
-pub aya::TestRunOptions::flags: u32
 pub aya::TestRunOptions::repeat: u32
+impl aya::TestRunOptions<'_>
+pub fn aya::TestRunOptions<'_>::new() -> Self
+pub fn aya::TestRunOptions<'_>::run_on_cpu(self, cpu: u32) -> Self
+pub fn aya::TestRunOptions<'_>::xdp_live_frames(self, batch_size: u32) -> Self
 impl core::default::Default for aya::TestRunOptions<'_>
 pub fn aya::TestRunOptions<'_>::default() -> Self
 impl<'a> core::fmt::Debug for aya::TestRunOptions<'a>
