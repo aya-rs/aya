@@ -876,10 +876,7 @@ impl_fd!(
     Iter,
 );
 
-/// Runs the program with test input data and returns the result.
-///
-/// This function uses the kernel's `BPF_PROG_TEST_RUN` command to execute
-/// the program in a test environment with provided input data.
+/// Trait for BPF programs that support test execution via `BPF_PROG_TEST_RUN`.
 pub trait TestRun {
     /// Runs the program with test input data and returns the result.
     ///

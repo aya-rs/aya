@@ -582,7 +582,7 @@ pub struct TestRunOptions<'a> {
     pub ctx_out: Option<&'a mut [u8]>,
     /// Number of times to repeat the test.
     pub repeat: u32,
-    // CPU to run the test on, only works with tracepoint programs.
+    // CPU to run the test on, only works with RawTracePoint programs.
     // should be set via `run_on_cpu` function to set the appropriate flag.
     cpu: u32,
     // Batch size for network packet tests, only works with XDP programs.
