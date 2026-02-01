@@ -18,6 +18,7 @@ mod info;
 mod iter;
 mod linear_data_structures;
 mod load;
+mod load_bytes;
 mod log;
 mod lsm;
 mod map_pin;
