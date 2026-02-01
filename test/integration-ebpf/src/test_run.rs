@@ -86,10 +86,9 @@ fn test_xdp_context(ctx: XdpContext) -> u32 {
 fn try_test_xdp_context(ctx: XdpContext) -> Result<u32, u32> {
     // hardcoded expected value
     const EXPECTED_IF: u32 = 1;
-
     let md = ctx.ctx;
     let ingress_ifindex = unsafe { (*md).ingress_ifindex };
-    
+
     if ingress_ifindex == EXPECTED_IF {
         Ok(xdp_action::XDP_PASS)
     } else {
