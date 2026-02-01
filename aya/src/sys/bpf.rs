@@ -607,6 +607,11 @@ impl Default for TestRunOptions<'_> {
 }
 
 impl TestRunOptions<'_> {
+    /// Creates a new `TestRunOptions` with default values.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Sets the CPU to run the test on.
     /// This automatically sets the `BPF_F_TEST_RUN_ON_CPU` flag.
     /// This option only works with `TracePoint` programs.
