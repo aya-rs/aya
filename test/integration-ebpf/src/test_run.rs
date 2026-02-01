@@ -15,16 +15,8 @@ extern crate ebpf_panic;
 static EXEC_COUNT: Array<u64> = Array::with_max_entries(1, 0);
 
 #[xdp]
-fn test_xdp(ctx: XdpContext) -> u32 {
-    match try_test_xdp(ctx) {
-        Ok(ret) => ret,
-        Err(_) => xdp_action::XDP_ABORTED,
-    }
-}
-
-#[inline]
-fn try_test_xdp(_ctx: XdpContext) -> Result<u32, u32> {
-    Ok(xdp_action::XDP_PASS)
+const fn test_xdp(_ctx: XdpContext) -> u32 {
+    xdp_action::XDP_PASS
 }
 
 #[socket_filter]
@@ -33,7 +25,7 @@ fn test_sock_filter(ctx: SkBuffContext) -> i64 {
 }
 
 #[classifier]
-fn test_classifier(_ctx: TcContext) -> i32 {
+const fn test_classifier(_ctx: TcContext) -> i32 {
     SK_PASS as i32
 }
 
@@ -49,19 +41,11 @@ fn test_count_exec(_ctx: SkBuffContext) -> i64 {
 
 #[xdp]
 fn test_xdp_modify(ctx: XdpContext) -> u32 {
-    match try_test_xdp_modify(ctx) {
-        Ok(ret) => ret,
-        Err(_) => xdp_action::XDP_ABORTED,
-    }
-}
-
-#[inline]
-fn try_test_xdp_modify(ctx: XdpContext) -> Result<u32, u32> {
     let data = ctx.data();
     let data_end = ctx.data_end();
 
     if data + 16 > data_end {
-        return Ok(xdp_action::XDP_PASS);
+        return xdp_action::XDP_PASS;
     }
 
     let packet = data as *mut u8;
@@ -71,27 +55,19 @@ fn try_test_xdp_modify(ctx: XdpContext) -> Result<u32, u32> {
         }
     }
 
-    Ok(xdp_action::XDP_PASS)
+    xdp_action::XDP_PASS
 }
 
 #[xdp]
 fn test_xdp_context(ctx: XdpContext) -> u32 {
-    match try_test_xdp_context(ctx) {
-        Ok(ret) => ret,
-        Err(_) => xdp_action::XDP_ABORTED,
-    }
-}
-
-#[inline]
-fn try_test_xdp_context(ctx: XdpContext) -> Result<u32, u32> {
     // hardcoded expected value
     const EXPECTED_IF: u32 = 1;
     let md = ctx.ctx;
     let ingress_ifindex = unsafe { (*md).ingress_ifindex };
 
     if ingress_ifindex == EXPECTED_IF {
-        Ok(xdp_action::XDP_PASS)
+        xdp_action::XDP_PASS
     } else {
-        Ok(xdp_action::XDP_DROP)
+        xdp_action::XDP_DROP
     }
 }

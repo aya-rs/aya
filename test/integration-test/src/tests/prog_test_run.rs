@@ -1,5 +1,3 @@
-use std::mem::size_of;
-
 use aya::{
     Ebpf, TestRunOptions,
     maps::Array,
@@ -11,8 +9,7 @@ fn require_version(major: u8, minor: u8, patch: u16) -> bool {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(major, minor, patch) {
         eprintln!(
-            "skipping test on kernel {kernel_version:?}, requires kernel >= {}.{}.{}",
-            major, minor, patch
+            "skipping test on kernel {kernel_version:?}, requires kernel >= {major}.{minor}.{patch}",
         );
         return false;
     }
@@ -69,7 +66,7 @@ fn test_xdp_modify_packet() {
     assert!(result.duration > 0, "Expected non-zero duration");
 
     let expected_pattern: Vec<u8> = vec![0xAAu8; 16];
-    assert_eq!(&data_out[..16], &expected_pattern[..],);
+    assert_eq!(&data_out[..16], &*expected_pattern,);
     assert_eq!(&data_out[16..], &data_in[16..],);
 }
 
@@ -210,8 +207,7 @@ fn test_xdp_context() {
     };
 
     let size = size_of::<XdpMd>();
-    #[allow(clippy::ref_as_ptr, clippy::ptr_as_ptr)]
-    let ctx_bytes = unsafe { std::slice::from_raw_parts(&ctx as *const XdpMd as *const u8, size) };
+    let ctx_bytes = unsafe { std::slice::from_raw_parts((&raw const ctx).cast::<u8>(), size) };
     let mut ctx_out = vec![0u8; size];
 
     let mut opts = TestRunOptions::default();
