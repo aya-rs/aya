@@ -1,3 +1,5 @@
+use std::mem::size_of;
+
 use aya::{
     Ebpf, TestRunOptions,
     maps::Array,
@@ -184,13 +186,15 @@ fn test_xdp_context() {
         egress_ifindex: u32,
     }
 
-    // there are several rules must follow for using the xdp_md context correctly,
+    // There are several rules that must be followed for using the xdp_md context correctly
     // which are extracted from the kernel's selftests:
     //   1. Meta data's size must be a multiple of 4
     //   2. data_meta must reference the start of data
     //   3. Total size of data must be data_end - data_meta or larger
     //   4. RX queue cannot be specified without specifying an ingress
     //   5. Interface 1 is always the loopback interface which always has only
+    //      one RX queue (index 0). This makes index 1 an invalid rx queue index
+    //      for interface 1.
     //   6. The egress cannot be specified
     // see: https://github.com/torvalds/linux/blob/63804fed149a6750ffd28610c5c1c98cce6bd377/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L92
     // for more details.
