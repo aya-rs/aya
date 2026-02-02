@@ -5,11 +5,12 @@
 use aya_ebpf::{
     bindings::{bpf_ret_code, xdp_action},
     macros::{
-        flow_dissector, kprobe, kretprobe, lsm, lsm_cgroup, tracepoint, uprobe, uretprobe, xdp,
+        flow_dissector, kprobe, kretprobe, lsm, lsm_cgroup, socket_filter, tracepoint, uprobe,
+        uretprobe, xdp,
     },
     programs::{
-        FlowDissectorContext, LsmContext, ProbeContext, RetProbeContext, TracePointContext,
-        XdpContext,
+        FlowDissectorContext, LsmContext, ProbeContext, RetProbeContext, SkBuffContext,
+        TracePointContext, XdpContext,
     },
 };
 #[cfg(not(test))]
@@ -60,4 +61,13 @@ const fn test_lsm(_ctx: LsmContext) -> i32 {
 #[lsm_cgroup(hook = "socket_bind")]
 const fn test_lsm_cgroup(_ctx: LsmContext) -> i32 {
     0 // Disallow.
+}
+
+#[socket_filter]
+fn fix_test_load_bytes(ctx: SkBuffContext) -> i64 {
+    let mut buf = [0u8; 4];
+    match ctx.load_bytes(2, &mut buf) {
+        Ok(_) => 1,
+        Err(_) => 0,
+    }
 }
