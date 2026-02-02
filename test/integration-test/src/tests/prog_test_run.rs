@@ -72,6 +72,10 @@ fn test_xdp_modify_packet() {
 
 #[test_log::test]
 fn test_socket_filter_test_run() {
+    if !require_version(5, 18, 0) {
+        return;
+    }
+
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
     let prog: &mut SocketFilter = bpf
         .program_mut("test_sock_filter")
@@ -128,6 +132,10 @@ fn test_classifier_test_run() {
 
 #[test_log::test]
 fn test_run_repeat() {
+    if !require_version(5, 18, 0) {
+        return;
+    }
+
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
 
     let mut exec_count: Array<_, u64> = bpf.take_map("EXEC_COUNT").unwrap().try_into().unwrap();
