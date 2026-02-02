@@ -29,6 +29,10 @@ name = "array"
 path = "src/array.rs"
 
 [[bin]]
+name = "bloom_filter"
+path = "src/bloom_filter.rs"
+
+[[bin]]
 name = "bpf_probe_read"
 path = "src/bpf_probe_read.rs"
 

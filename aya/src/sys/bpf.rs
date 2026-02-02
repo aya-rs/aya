@@ -258,7 +258,7 @@ pub(crate) fn bpf_map_lookup_elem_per_cpu<K: Pod, V: Pod>(
 pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
     fd: BorrowedFd<'_>,
     key: Option<&K>,
-    value: *mut V,
+    value: *const V,
     flags: u64,
 ) -> io::Result<Option<()>> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };

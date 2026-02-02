@@ -54,10 +54,10 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     }
 
     /// Query the existence of the element.
-    pub fn contains(&self, mut value: &V, flags: u64) -> Result<(), MapError> {
+    pub fn contains(&self, value: &V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
 
-        match bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &raw mut value, flags).map_err(
+        match bpf_map_lookup_elem_ptr::<[u32; 0], _>(fd, None, &raw const *value, flags).map_err(
             |io_error| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
