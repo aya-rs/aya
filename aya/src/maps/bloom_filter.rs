@@ -9,7 +9,7 @@ use std::{
 use crate::{
     Pod,
     maps::{MapData, MapError, check_v_size},
-    sys::{SyscallError, bpf_map_lookup_elem_ptr, bpf_map_push_elem},
+    sys::{SyscallError, bpf_map_lookup_elem_ptr_const, bpf_map_push_elem},
 };
 
 /// A Bloom Filter.
@@ -57,7 +57,7 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     pub fn contains(&self, value: &V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
 
-        match bpf_map_lookup_elem_ptr::<[u32; 0], _>(fd, None, &raw const *value, flags).map_err(
+        match bpf_map_lookup_elem_ptr_const::<[u32; 0], _>(fd, None, &raw const *value, flags).map_err(
             |io_error| SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,

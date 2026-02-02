@@ -258,6 +258,30 @@ pub(crate) fn bpf_map_lookup_elem_per_cpu<K: Pod, V: Pod>(
 pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
     fd: BorrowedFd<'_>,
     key: Option<&K>,
+    value: *mut V,
+    flags: u64,
+) -> io::Result<Option<()>> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    let u = unsafe { &mut attr.__bindgen_anon_2 };
+    u.map_fd = fd.as_raw_fd() as u32;
+    if let Some(key) = key {
+        u.key = ptr::from_ref(key) as u64;
+    }
+    u.__bindgen_anon_1.value = value as u64;
+    u.flags = flags;
+
+    match unit_sys_bpf(bpf_cmd::BPF_MAP_LOOKUP_ELEM, &mut attr) {
+        Ok(()) => Ok(Some(())),
+        Err(io_error) if io_error.raw_os_error() == Some(ENOENT) => Ok(None),
+        Err(e) => Err(e),
+    }
+}
+
+// will not update the value, only check for existence
+pub(crate) fn bpf_map_lookup_elem_ptr_const<K: Pod, V>(
+    fd: BorrowedFd<'_>,
+    key: Option<&K>,
     value: *const V,
     flags: u64,
 ) -> io::Result<Option<()>> {
