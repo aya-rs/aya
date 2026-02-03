@@ -74,7 +74,7 @@ pub mod xdp;
 
 use std::{
     borrow::Cow,
-    ffi::CString,
+    ffi::{CString, NulError},
     io,
     os::fd::{AsFd, BorrowedFd},
     path::{Path, PathBuf},
@@ -184,6 +184,16 @@ pub enum ProgramError {
         name: String,
     },
 
+    /// The network interface name is invalid.
+    #[error("invalid network interface name {name}")]
+    InvalidInterfaceName {
+        /// interface name
+        name: String,
+        /// source error
+        #[source]
+        source: NulError,
+    },
+
     /// The program is not of the expected type.
     #[error("unexpected program type")]
     UnexpectedProgramType,
@@ -224,11 +234,24 @@ pub enum ProgramError {
     #[error(transparent)]
     Btf(#[from] BtfError),
 
-    /// The program is not attached.
+    /// The program name is invalid.
     #[error("the program name `{name}` is invalid")]
     InvalidName {
         /// program name
         name: String,
+        /// source error
+        #[source]
+        source: NulError,
+    },
+
+    /// The path is invalid.
+    #[error("the path `{path}` is invalid")]
+    InvalidPath {
+        /// path
+        path: PathBuf,
+        /// source error
+        #[source]
+        source: NulError,
     },
 
     /// An error occurred while working with IO.
@@ -590,8 +613,12 @@ impl<T: Link> ProgramData<T> {
     ) -> Result<Self, ProgramError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|source| {
+            ProgramError::InvalidPath {
+                path: path.as_ref().to_path_buf(),
+                source,
+            }
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "bpf_obj_get",
             io_error,
@@ -685,16 +712,15 @@ fn load_program<T: Link>(
     let target_kernel_version =
         kernel_version.unwrap_or_else(|| KernelVersion::current().map_or(0, KernelVersion::code));
 
-    let prog_name = if let Some(name) = name.as_deref() {
-        let prog_name = CString::new(name).map_err(|err @ std::ffi::NulError { .. }| {
-            let name = err.into_vec();
-            let name = unsafe { String::from_utf8_unchecked(name) };
-            ProgramError::InvalidName { name }
-        })?;
-        Some(prog_name)
-    } else {
-        None
-    };
+    let prog_name = name
+        .as_deref()
+        .map(|name| {
+            CString::new(name).map_err(|source| {
+                let name = name.to_owned();
+                ProgramError::InvalidName { name, source }
+            })
+        })
+        .transpose()?;
 
     let attr = EbpfLoadProgramAttrs {
         name: prog_name,

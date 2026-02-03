@@ -117,8 +117,12 @@ impl MapInfo {
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, MapError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|source| {
+            MapError::InvalidPath {
+                path: path.as_ref().to_path_buf(),
+                source,
+            }
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
