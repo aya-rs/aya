@@ -49,7 +49,7 @@ impl RawTracePoint {
 
     /// Attaches the program to the given tracepoint.
     ///
-    /// The returned value can be used to detach, see [RawTracePoint::detach].
+    /// The returned value can be used to detach, see [`RawTracePoint::detach`].
     pub fn attach(&mut self, tp_name: &str) -> Result<RawTracePointLinkId, ProgramError> {
         let tp_name_c = CString::new(tp_name).map_err(|source| ProgramError::InvalidName {
             name: tp_name.to_string(),

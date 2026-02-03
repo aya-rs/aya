@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::{err_on_unknown_args, pop_bool_arg, pop_string_arg};
+use crate::args::Args;
 
 pub(crate) struct FEntry {
     item: ItemFn,
@@ -15,10 +15,10 @@ pub(crate) struct FEntry {
 impl FEntry {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self> {
         let item = syn::parse2(item)?;
-        let mut args = syn::parse2(attrs)?;
-        let function = pop_string_arg(&mut args, "function");
-        let sleepable = pop_bool_arg(&mut args, "sleepable");
-        err_on_unknown_args(&args)?;
+        let mut args: Args = syn::parse2(attrs)?;
+        let function = args.pop_string("function");
+        let sleepable = args.pop_bool("sleepable");
+        args.into_error()?;
         Ok(Self {
             item,
             function,

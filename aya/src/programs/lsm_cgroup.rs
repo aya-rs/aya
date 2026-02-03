@@ -87,12 +87,12 @@ impl LsmCgroup {
 
     /// Attaches the program.
     ///
-    /// The returned value can be used to detach, see [LsmCgroup::detach].
+    /// The returned value can be used to detach, see [`LsmCgroup::detach`].
     pub fn attach<T: AsFd>(&mut self, cgroup: T) -> Result<LsmLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
-        // Unwrap safety: the function starts with `self.fd()?` that will succeed if and only
+        // Unwrap invariant: the function starts with `self.fd()?` that will succeed if and only
         // if the program has been loaded, i.e. there is an fd. That happens if:
         // - LsmCgroup::load has been called
         // - LsmCgroup::from_pin has been called

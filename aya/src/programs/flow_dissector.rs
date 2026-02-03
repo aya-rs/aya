@@ -76,7 +76,7 @@ impl FlowDissector {
 
     /// Attaches the program to the given network namespace.
     ///
-    /// The returned value can be used to detach, see [FlowDissector::detach].
+    /// The returned value can be used to detach, see [`FlowDissector::detach`].
     pub fn attach<T: AsFd>(&mut self, netns: T) -> Result<FlowDissectorLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();

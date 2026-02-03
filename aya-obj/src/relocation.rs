@@ -1,7 +1,6 @@
 //! Program relocation handling.
 
 use alloc::{borrow::ToOwned as _, collections::BTreeMap, string::String};
-use core::mem;
 
 use log::debug;
 use object::{SectionIndex, SymbolKind};
@@ -22,7 +21,7 @@ type RawFd = std::os::fd::RawFd;
 #[cfg(not(feature = "std"))]
 type RawFd = core::ffi::c_int;
 
-pub(crate) const INS_SIZE: usize = mem::size_of::<bpf_insn>();
+pub(crate) const INS_SIZE: usize = size_of::<bpf_insn>();
 
 /// The error type returned by [`Object::relocate_maps`] and [`Object::relocate_calls`]
 #[derive(thiserror::Error, Debug)]
@@ -159,7 +158,7 @@ impl Object {
         &mut self,
         text_sections: &HashSet<usize>,
     ) -> Result<(), EbpfRelocationError> {
-        for (name, program) in self.programs.iter() {
+        for (name, program) in &self.programs {
             let linker = FunctionLinker::new(
                 &self.functions,
                 &self.relocations,
@@ -234,7 +233,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
         };
 
         // calls and relocation to .text symbols are handled in a separate step
-        if insn_is_call(&instructions[ins_index]) || text_sections.contains(&section_index) {
+        if insn_is_call(instructions[ins_index]) || text_sections.contains(&section_index) {
             continue;
         }
 
@@ -274,11 +273,11 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
         };
         debug_assert_eq!(map.section_index(), section_index);
 
-        if !map.data().is_empty() {
+        if map.data().is_empty() {
+            instructions[ins_index].set_src_reg(BPF_PSEUDO_MAP_FD as u8);
+        } else {
             instructions[ins_index].set_src_reg(BPF_PSEUDO_MAP_VALUE as u8);
             instructions[ins_index + 1].imm = instructions[ins_index].imm + sym.address as i32;
-        } else {
-            instructions[ins_index].set_src_reg(BPF_PSEUDO_MAP_FD as u8);
         }
         instructions[ins_index].imm = *fd;
     }
@@ -328,7 +327,7 @@ impl<'a> FunctionLinker<'a> {
     ) -> Result<usize, RelocationError> {
         if let Some(fun_ins_index) = self.linked_functions.get(&fun.address) {
             return Ok(*fun_ins_index);
-        };
+        }
 
         // append fun.instructions to the program and record that `fun.address` has been inserted
         // at `start_ins`. We'll use `start_ins` to do pc-relative calls.
@@ -341,7 +340,7 @@ impl<'a> FunctionLinker<'a> {
 
         // link func and line info into the main program
         // the offset needs to be adjusted
-        self.link_func_and_line_info(program, fun, start_ins)?;
+        Self::link_func_and_line_info(program, fun, start_ins);
 
         self.linked_functions.insert(fun.address, start_ins);
 
@@ -366,7 +365,7 @@ impl<'a> FunctionLinker<'a> {
         // patch pc-relative calls too.
         for ins_index in start_ins..start_ins + n_instructions {
             let ins = program.instructions[ins_index];
-            let is_call = insn_is_call(&ins);
+            let is_call = insn_is_call(ins);
 
             let rel = relocations
                 .and_then(|relocations| {
@@ -386,10 +385,9 @@ impl<'a> FunctionLinker<'a> {
                     // only consider text relocations, data relocations are
                     // relocated in relocate_maps()
                     sym.kind == SymbolKind::Text
-                        || sym
-                            .section_index
-                            .map(|section_index| self.text_sections.contains(&section_index))
-                            .unwrap_or(false)
+                        || sym.section_index.is_some_and(|section_index| {
+                            self.text_sections.contains(&section_index)
+                        })
                 });
 
             // not a call and not a text relocation, we don't need to do anything
@@ -443,7 +441,7 @@ impl<'a> FunctionLinker<'a> {
             let callee = self
                 .functions
                 .get(&(callee_section_index, callee_address))
-                .ok_or(RelocationError::UnknownFunction {
+                .ok_or_else(|| RelocationError::UnknownFunction {
                     address: callee_address,
                     caller_name: fun.name.clone(),
                 })?;
@@ -472,14 +470,9 @@ impl<'a> FunctionLinker<'a> {
         Ok(())
     }
 
-    fn link_func_and_line_info(
-        &mut self,
-        program: &mut Function,
-        fun: &Function,
-        start: usize,
-    ) -> Result<(), RelocationError> {
+    fn link_func_and_line_info(program: &mut Function, fun: &Function, start: usize) {
         let func_info = &fun.func_info.func_info;
-        let func_info = func_info.iter().cloned().map(|mut info| {
+        let func_info = func_info.iter().copied().map(|mut info| {
             // `start` is the new instruction offset of `fun` within `program`
             info.insn_off = start as u32;
             info
@@ -492,7 +485,7 @@ impl<'a> FunctionLinker<'a> {
             // this is the original offset
             let original_start_off = line_info[0].insn_off;
 
-            let line_info = line_info.iter().cloned().map(|mut info| {
+            let line_info = line_info.iter().copied().map(|mut info| {
                 // rebase offsets on top of start, which is the offset of the
                 // function in the program being linked
                 info.insn_off = start as u32 + (info.insn_off - original_start_off);
@@ -502,11 +495,10 @@ impl<'a> FunctionLinker<'a> {
             program.line_info.line_info.extend(line_info);
             program.line_info.num_info = program.func_info.func_info.len() as u32;
         }
-        Ok(())
     }
 }
 
-fn insn_is_call(ins: &bpf_insn) -> bool {
+fn insn_is_call(ins: bpf_insn) -> bool {
     let klass = u32::from(ins.code & 0x07);
     let op = u32::from(ins.code & 0xF0);
     let src = u32::from(ins.code & 0x08);
@@ -639,7 +631,7 @@ mod test {
                 size: 64,
             },
             Relocation {
-                offset: mem::size_of::<bpf_insn>() as u64,
+                offset: size_of::<bpf_insn>() as u64,
                 symbol_index: 2,
                 size: 64,
             },
@@ -734,7 +726,7 @@ mod test {
                 size: 64,
             },
             Relocation {
-                offset: mem::size_of::<bpf_insn>() as u64,
+                offset: size_of::<bpf_insn>() as u64,
                 symbol_index: 2,
                 size: 64,
             },

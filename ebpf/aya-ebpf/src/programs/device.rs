@@ -7,7 +7,7 @@ pub struct DeviceContext {
 }
 
 impl DeviceContext {
-    pub fn new(device: *mut bpf_cgroup_dev_ctx) -> Self {
+    pub const fn new(device: *mut bpf_cgroup_dev_ctx) -> Self {
         Self { device }
     }
 }

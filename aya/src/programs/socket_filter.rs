@@ -74,7 +74,7 @@ impl SocketFilter {
 
     /// Attaches the filter on the given socket.
     ///
-    /// The returned value can be used to detach from the socket, see [SocketFilter::detach].
+    /// The returned value can be used to detach from the socket, see [`SocketFilter::detach`].
     pub fn attach<T: AsFd>(&mut self, socket: T) -> Result<SocketFilterLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
@@ -88,7 +88,7 @@ impl SocketFilter {
                 SOL_SOCKET,
                 SO_ATTACH_BPF as i32,
                 std::ptr::from_ref(&prog_fd).cast(),
-                std::mem::size_of_val(&prog_fd) as u32,
+                size_of_val(&prog_fd) as u32,
             )
         };
         if ret < 0 {
@@ -103,7 +103,7 @@ impl SocketFilter {
 
     /// Detaches the program.
     ///
-    /// See [`Self::attach``].
+    /// See [`Self::attach`].
     pub fn detach(&mut self, link_id: SocketFilterLinkId) -> Result<(), ProgramError> {
         self.data.links.remove(link_id)
     }
@@ -124,7 +124,7 @@ impl SocketFilter {
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub struct SocketFilterLinkId(RawFd, RawFd);
 
-/// A SocketFilter Link
+/// A [`SocketFilter`] Link.
 #[derive(Debug)]
 pub struct SocketFilterLink {
     socket: RawFd,
@@ -145,7 +145,7 @@ impl Link for SocketFilterLink {
                 SOL_SOCKET,
                 SO_DETACH_BPF as i32,
                 std::ptr::from_ref(&self.prog_fd).cast(),
-                std::mem::size_of_val(&self.prog_fd) as u32,
+                size_of_val(&self.prog_fd) as u32,
             );
         }
         Ok(())

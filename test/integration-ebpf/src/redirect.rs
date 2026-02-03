@@ -74,6 +74,6 @@ fn redirect_dev_chain(_ctx: XdpContext) -> u32 {
 #[inline(always)]
 fn inc_hit(index: u32) {
     if let Some(hit) = HITS.get_ptr_mut(index) {
-        unsafe { *hit += 1 };
+        unsafe { *hit += 1 }
     }
 }

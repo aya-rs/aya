@@ -7,7 +7,7 @@ pub struct SockAddrContext {
 }
 
 impl SockAddrContext {
-    pub fn new(sock_addr: *mut bpf_sock_addr) -> Self {
+    pub const fn new(sock_addr: *mut bpf_sock_addr) -> Self {
         Self { sock_addr }
     }
 }

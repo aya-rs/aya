@@ -94,7 +94,7 @@ impl Xdp {
 
     /// Attaches the program to the given `interface`.
     ///
-    /// The returned value can be used to detach, see [Xdp::detach].
+    /// The returned value can be used to detach, see [`Xdp::detach`].
     ///
     /// # Errors
     ///
@@ -120,7 +120,7 @@ impl Xdp {
 
     /// Attaches the program to the given interface index.
     ///
-    /// The returned value can be used to detach, see [Xdp::detach].
+    /// The returned value can be used to detach, see [`Xdp::detach`].
     ///
     /// # Errors
     ///
@@ -134,7 +134,7 @@ impl Xdp {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
 
-        // Unwrap safety: the function starts with `self.fd()?` that will succeed if and only
+        // Unwrap invariant: the function starts with `self.fd()?` that will succeed if and only
         // if the program has been loaded, i.e. there is an fd. We get one by:
         // - Using `Xdp::from_pin` that sets `expected_attach_type`
         // - Calling `Xdp::attach` that sets `expected_attach_type`, as geting an `Xdp`
@@ -265,7 +265,7 @@ impl Link for NlLink {
         };
         // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
         let prog_fd = unsafe { BorrowedFd::borrow_raw(self.prog_fd) };
-        let _: Result<(), NetlinkError> =
+        let _unused: Result<(), NetlinkError> =
             unsafe { netlink_set_xdp_fd(self.if_index, None, Some(prog_fd), flags) };
         Ok(())
     }

@@ -13,6 +13,10 @@ use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 use crate::utils::NetNsGuard;
 
 #[test_log::test]
+#[expect(
+    clippy::big_endian_bytes,
+    reason = "packet headers are encoded in network byte order"
+)]
 fn af_xdp() {
     let _netns = NetNsGuard::new();
 
@@ -92,8 +96,10 @@ fn af_xdp() {
     let (ip, buf) = buf.split_at(20);
     assert_eq!(ip[9], 17); // UDP
     let (udp, payload) = buf.split_at(8);
-    assert_eq!(&udp[0..2], port.to_be_bytes().as_slice()); // Source
-    assert_eq!(&udp[2..4], 1777u16.to_be_bytes().as_slice()); // Dest
+    let ports = &udp[..4];
+    let (src, dst) = ports.split_at(2);
+    assert_eq!(src, port.to_be_bytes().as_slice()); // Source
+    assert_eq!(dst, 1777u16.to_be_bytes().as_slice()); // Dest
     assert_eq!(payload, b"hello AF_XDP");
 
     assert_eq!(rx.available(), 1);
@@ -125,7 +131,7 @@ fn ensure_symbol(obj_file: &object::File<'_>, sec_name: &str, sym_name: &str) {
     let sec = obj_file.section_by_name(sec_name).unwrap_or_else(|| {
         let secs = obj_file
             .sections()
-            .flat_map(|sec| sec.name().ok().map(|name| name.to_owned()))
+            .filter_map(|sec| sec.name().ok().map(ToOwned::to_owned))
             .collect::<Vec<_>>();
         panic!("section {sec_name} not found. available sections: {secs:?}");
     });
@@ -191,9 +197,8 @@ fn cpumap_chain() {
             "skipping test - cpumap attachment not supported on generic (loopback) interface"
         );
         return;
-    } else {
-        let _: XdpLinkId = result.unwrap();
-    };
+    }
+    let _unused: XdpLinkId = result.unwrap();
 
     const PAYLOAD: &str = "hello cpumap";
 

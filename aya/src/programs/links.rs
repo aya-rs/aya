@@ -33,7 +33,7 @@ pub trait Link: std::fmt::Debug + Eq + std::hash::Hash + 'static {
     /// Returns the link id
     fn id(&self) -> Self::Id;
 
-    /// Detaches the LinkOwnedLink is gone... but this doesn't work :(
+    /// Detaches the `LinkOwnedLink` is gone... but this doesn't work :(
     fn detach(self) -> Result<(), ProgramError>;
 }
 
@@ -107,7 +107,7 @@ impl<T: Link> Links<T> {
 
 impl<T: Link> Drop for Links<T> {
     fn drop(&mut self) {
-        let _: Result<(), ProgramError> = self.remove_all();
+        let _unused: Result<(), ProgramError> = self.remove_all();
     }
 }
 
@@ -122,12 +122,12 @@ impl LinkInfo {
     }
 
     /// Returns the link ID.
-    pub fn id(&self) -> u32 {
+    pub const fn id(&self) -> u32 {
         self.0.id
     }
 
     /// Returns the program ID.
-    pub fn program_id(&self) -> u32 {
+    pub const fn program_id(&self) -> u32 {
         self.0.prog_id
     }
 
@@ -168,10 +168,10 @@ pub enum LinkType {
     /// A Perf Event link type.
     #[doc(alias = "BPF_LINK_TYPE_PERF_EVENT")]
     PerfEvent = bpf_link_type::BPF_LINK_TYPE_PERF_EVENT as isize,
-    /// A KProbe Multi link type.
+    /// A `KProbe` Multi link type.
     #[doc(alias = "BPF_LINK_TYPE_KPROBE_MULTI")]
     KProbeMulti = bpf_link_type::BPF_LINK_TYPE_KPROBE_MULTI as isize,
-    /// A StructOps link type.
+    /// A `StructOps` link type.
     #[doc(alias = "BPF_LINK_TYPE_STRUCT_OPS")]
     StructOps = bpf_link_type::BPF_LINK_TYPE_STRUCT_OPS as isize,
     /// A Netfilter link type.
@@ -192,23 +192,22 @@ impl TryFrom<bpf_link_type> for LinkType {
     type Error = LinkError;
 
     fn try_from(link_type: bpf_link_type) -> Result<Self, Self::Error> {
-        use bpf_link_type::*;
         match link_type {
-            BPF_LINK_TYPE_UNSPEC => Ok(Self::Unspecified),
-            BPF_LINK_TYPE_RAW_TRACEPOINT => Ok(Self::RawTracePoint),
-            BPF_LINK_TYPE_TRACING => Ok(Self::Tracing),
-            BPF_LINK_TYPE_CGROUP => Ok(Self::Cgroup),
-            BPF_LINK_TYPE_ITER => Ok(Self::Iter),
-            BPF_LINK_TYPE_NETNS => Ok(Self::Netns),
-            BPF_LINK_TYPE_XDP => Ok(Self::Xdp),
-            BPF_LINK_TYPE_PERF_EVENT => Ok(Self::PerfEvent),
-            BPF_LINK_TYPE_KPROBE_MULTI => Ok(Self::KProbeMulti),
-            BPF_LINK_TYPE_STRUCT_OPS => Ok(Self::StructOps),
-            BPF_LINK_TYPE_NETFILTER => Ok(Self::Netfilter),
-            BPF_LINK_TYPE_TCX => Ok(Self::Tcx),
-            BPF_LINK_TYPE_UPROBE_MULTI => Ok(Self::UProbeMulti),
-            BPF_LINK_TYPE_NETKIT => Ok(Self::Netkit),
-            __MAX_BPF_LINK_TYPE => Err(LinkError::UnknownLinkType(link_type as u32)),
+            bpf_link_type::BPF_LINK_TYPE_UNSPEC => Ok(Self::Unspecified),
+            bpf_link_type::BPF_LINK_TYPE_RAW_TRACEPOINT => Ok(Self::RawTracePoint),
+            bpf_link_type::BPF_LINK_TYPE_TRACING => Ok(Self::Tracing),
+            bpf_link_type::BPF_LINK_TYPE_CGROUP => Ok(Self::Cgroup),
+            bpf_link_type::BPF_LINK_TYPE_ITER => Ok(Self::Iter),
+            bpf_link_type::BPF_LINK_TYPE_NETNS => Ok(Self::Netns),
+            bpf_link_type::BPF_LINK_TYPE_XDP => Ok(Self::Xdp),
+            bpf_link_type::BPF_LINK_TYPE_PERF_EVENT => Ok(Self::PerfEvent),
+            bpf_link_type::BPF_LINK_TYPE_KPROBE_MULTI => Ok(Self::KProbeMulti),
+            bpf_link_type::BPF_LINK_TYPE_STRUCT_OPS => Ok(Self::StructOps),
+            bpf_link_type::BPF_LINK_TYPE_NETFILTER => Ok(Self::Netfilter),
+            bpf_link_type::BPF_LINK_TYPE_TCX => Ok(Self::Tcx),
+            bpf_link_type::BPF_LINK_TYPE_UPROBE_MULTI => Ok(Self::UProbeMulti),
+            bpf_link_type::BPF_LINK_TYPE_NETKIT => Ok(Self::Netkit),
+            bpf_link_type::__MAX_BPF_LINK_TYPE => Err(LinkError::UnknownLinkType(link_type as u32)),
         }
     }
 }
@@ -248,7 +247,7 @@ pub struct FdLink {
 }
 
 impl FdLink {
-    pub(crate) fn new(fd: crate::MockableFd) -> Self {
+    pub(crate) const fn new(fd: crate::MockableFd) -> Self {
         Self { fd }
     }
 
@@ -341,7 +340,7 @@ pub struct PinnedLink {
 }
 
 impl PinnedLink {
-    fn new(path: PathBuf, link: FdLink) -> Self {
+    const fn new(path: PathBuf, link: FdLink) -> Self {
         Self { inner: link, path }
     }
 
@@ -384,7 +383,7 @@ pub struct ProgAttachLink {
 }
 
 impl ProgAttachLink {
-    pub(crate) fn new(
+    pub(crate) const fn new(
         prog_fd: ProgramFd,
         target_fd: crate::MockableFd,
         attach_type: bpf_attach_type,
@@ -492,15 +491,16 @@ macro_rules! define_link_wrapper {
         #[derive(Debug)]
         pub struct $wrapper(Option<$base>);
 
-        #[allow(dead_code)]
+        #[expect(clippy::allow_attributes, reason = "macro")]
+        #[allow(dead_code, reason = "macro")]
         // allow dead code since currently XDP/TC are the only consumers of inner and
         // into_inner
         impl $wrapper {
-            fn new(base: $base) -> $wrapper {
+            const fn new(base: $base) -> $wrapper {
                 $wrapper(Some(base))
             }
 
-            fn inner(&self) -> &$base {
+            const fn inner(&self) -> &$base {
                 self.0.as_ref().unwrap()
             }
 
@@ -514,7 +514,7 @@ macro_rules! define_link_wrapper {
                 use $crate::programs::links::Link as _;
 
                 if let Some(base) = self.0.take() {
-                    let _: Result<(), ProgramError> = base.detach();
+                    let _unused: Result<(), ProgramError> = base.detach();
                 }
             }
         }
@@ -668,7 +668,7 @@ impl Default for LinkOrder {
 
 impl LinkOrder {
     /// Attach before all other links.
-    pub fn first() -> Self {
+    pub const fn first() -> Self {
         Self {
             link_ref: LinkRef::Id(0),
             flags: MprogFlags::BEFORE,
@@ -676,7 +676,7 @@ impl LinkOrder {
     }
 
     /// Attach after all other links.
-    pub fn last() -> Self {
+    pub const fn last() -> Self {
         Self {
             link_ref: LinkRef::Id(0),
             flags: MprogFlags::AFTER,

@@ -27,14 +27,7 @@ const EIGHT_KB_ARRAY: [u8; 8192] = [0u8; 8192];
 #[uprobe]
 fn test_log(ctx: ProbeContext) {
     debug!(&ctx, "Hello from eBPF!");
-    error!(
-        &ctx,
-        "{}, {}, {}, {:x}",
-        69,
-        420i32,
-        "wao",
-        "wao".as_bytes()
-    );
+    error!(&ctx, "{}, {}, {}, {:x}", 69, 420i32, "wao", b"wao");
 
     // 10.0.0.1
     let ipv4 = Ipv4Addr::new(10, 0, 0, 1);
@@ -94,15 +87,17 @@ fn test_log(ctx: ProbeContext) {
 
     // Testing compilation only.
     if false {
-        struct NoCopy {}
+        struct NoCopy;
 
         impl NoCopy {
-            fn consume(self) -> u64 {
+            const fn consume(self) -> u64 {
+                let Self = self;
+
                 0xdeadbeef
             }
         }
 
-        let no_copy = NoCopy {};
+        let no_copy = NoCopy;
 
         // Check usage in expression position.
         let () = debug!(&ctx, "{:x}", no_copy.consume());

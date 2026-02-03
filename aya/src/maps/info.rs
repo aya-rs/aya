@@ -34,9 +34,8 @@ impl MapInfo {
     ///
     /// Uses kernel v4.13 features.
     pub fn from_id(id: u32) -> Result<Self, MapError> {
-        bpf_map_get_fd_by_id(id)
-            .map_err(MapError::from)
-            .and_then(|fd| Self::new_from_fd(fd.as_fd()))
+        let fd = bpf_map_get_fd_by_id(id).map_err(MapError::from)?;
+        Self::new_from_fd(fd.as_fd())
     }
 
     /// The type of map.
@@ -51,35 +50,35 @@ impl MapInfo {
     /// The unique ID for this map.
     ///
     /// Introduced in kernel v4.13.
-    pub fn id(&self) -> u32 {
+    pub const fn id(&self) -> u32 {
         self.0.id
     }
 
     /// The key size for this map in bytes.
     ///
     /// Introduced in kernel v4.13.
-    pub fn key_size(&self) -> u32 {
+    pub const fn key_size(&self) -> u32 {
         self.0.key_size
     }
 
     /// The value size for this map in bytes.
     ///
     /// Introduced in kernel v4.13.
-    pub fn value_size(&self) -> u32 {
+    pub const fn value_size(&self) -> u32 {
         self.0.value_size
     }
 
     /// The maximum number of entries in this map.
     ///
     /// Introduced in kernel v4.13.
-    pub fn max_entries(&self) -> u32 {
+    pub const fn max_entries(&self) -> u32 {
         self.0.max_entries
     }
 
     /// The flags used in loading this map.
     ///
     /// Introduced in kernel v4.13.
-    pub fn map_flags(&self) -> u32 {
+    pub const fn map_flags(&self) -> u32 {
         self.0.map_flags
     }
 
@@ -358,43 +357,44 @@ impl TryFrom<bpf_map_type> for MapType {
     type Error = MapError;
 
     fn try_from(map_type: bpf_map_type) -> Result<Self, Self::Error> {
-        use bpf_map_type::*;
         Ok(match map_type {
-            BPF_MAP_TYPE_UNSPEC => Self::Unspecified,
-            BPF_MAP_TYPE_HASH => Self::Hash,
-            BPF_MAP_TYPE_ARRAY => Self::Array,
-            BPF_MAP_TYPE_PROG_ARRAY => Self::ProgramArray,
-            BPF_MAP_TYPE_PERF_EVENT_ARRAY => Self::PerfEventArray,
-            BPF_MAP_TYPE_PERCPU_HASH => Self::PerCpuHash,
-            BPF_MAP_TYPE_PERCPU_ARRAY => Self::PerCpuArray,
-            BPF_MAP_TYPE_STACK_TRACE => Self::StackTrace,
-            BPF_MAP_TYPE_CGROUP_ARRAY => Self::CgroupArray,
-            BPF_MAP_TYPE_LRU_HASH => Self::LruHash,
-            BPF_MAP_TYPE_LRU_PERCPU_HASH => Self::LruPerCpuHash,
-            BPF_MAP_TYPE_LPM_TRIE => Self::LpmTrie,
-            BPF_MAP_TYPE_ARRAY_OF_MAPS => Self::ArrayOfMaps,
-            BPF_MAP_TYPE_HASH_OF_MAPS => Self::HashOfMaps,
-            BPF_MAP_TYPE_DEVMAP => Self::DevMap,
-            BPF_MAP_TYPE_SOCKMAP => Self::SockMap,
-            BPF_MAP_TYPE_CPUMAP => Self::CpuMap,
-            BPF_MAP_TYPE_XSKMAP => Self::XskMap,
-            BPF_MAP_TYPE_SOCKHASH => Self::SockHash,
-            BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::CgroupStorage,
-            BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::ReuseportSockArray,
-            BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED => Self::PerCpuCgroupStorage,
-            BPF_MAP_TYPE_QUEUE => Self::Queue,
-            BPF_MAP_TYPE_STACK => Self::Stack,
-            BPF_MAP_TYPE_SK_STORAGE => Self::SkStorage,
-            BPF_MAP_TYPE_DEVMAP_HASH => Self::DevMapHash,
-            BPF_MAP_TYPE_STRUCT_OPS => Self::StructOps,
-            BPF_MAP_TYPE_RINGBUF => Self::RingBuf,
-            BPF_MAP_TYPE_INODE_STORAGE => Self::InodeStorage,
-            BPF_MAP_TYPE_TASK_STORAGE => Self::TaskStorage,
-            BPF_MAP_TYPE_BLOOM_FILTER => Self::BloomFilter,
-            BPF_MAP_TYPE_USER_RINGBUF => Self::UserRingBuf,
-            BPF_MAP_TYPE_CGRP_STORAGE => Self::CgrpStorage,
-            BPF_MAP_TYPE_ARENA => Self::Arena,
-            __MAX_BPF_MAP_TYPE => {
+            bpf_map_type::BPF_MAP_TYPE_UNSPEC => Self::Unspecified,
+            bpf_map_type::BPF_MAP_TYPE_HASH => Self::Hash,
+            bpf_map_type::BPF_MAP_TYPE_ARRAY => Self::Array,
+            bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY => Self::ProgramArray,
+            bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY => Self::PerfEventArray,
+            bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH => Self::PerCpuHash,
+            bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY => Self::PerCpuArray,
+            bpf_map_type::BPF_MAP_TYPE_STACK_TRACE => Self::StackTrace,
+            bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY => Self::CgroupArray,
+            bpf_map_type::BPF_MAP_TYPE_LRU_HASH => Self::LruHash,
+            bpf_map_type::BPF_MAP_TYPE_LRU_PERCPU_HASH => Self::LruPerCpuHash,
+            bpf_map_type::BPF_MAP_TYPE_LPM_TRIE => Self::LpmTrie,
+            bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Self::ArrayOfMaps,
+            bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Self::HashOfMaps,
+            bpf_map_type::BPF_MAP_TYPE_DEVMAP => Self::DevMap,
+            bpf_map_type::BPF_MAP_TYPE_SOCKMAP => Self::SockMap,
+            bpf_map_type::BPF_MAP_TYPE_CPUMAP => Self::CpuMap,
+            bpf_map_type::BPF_MAP_TYPE_XSKMAP => Self::XskMap,
+            bpf_map_type::BPF_MAP_TYPE_SOCKHASH => Self::SockHash,
+            bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::CgroupStorage,
+            bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::ReuseportSockArray,
+            bpf_map_type::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED => {
+                Self::PerCpuCgroupStorage
+            }
+            bpf_map_type::BPF_MAP_TYPE_QUEUE => Self::Queue,
+            bpf_map_type::BPF_MAP_TYPE_STACK => Self::Stack,
+            bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Self::SkStorage,
+            bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => Self::DevMapHash,
+            bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS => Self::StructOps,
+            bpf_map_type::BPF_MAP_TYPE_RINGBUF => Self::RingBuf,
+            bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE => Self::InodeStorage,
+            bpf_map_type::BPF_MAP_TYPE_TASK_STORAGE => Self::TaskStorage,
+            bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER => Self::BloomFilter,
+            bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF => Self::UserRingBuf,
+            bpf_map_type::BPF_MAP_TYPE_CGRP_STORAGE => Self::CgrpStorage,
+            bpf_map_type::BPF_MAP_TYPE_ARENA => Self::Arena,
+            bpf_map_type::__MAX_BPF_MAP_TYPE => {
                 return Err(MapError::InvalidMapType {
                     map_type: map_type as u32,
                 });

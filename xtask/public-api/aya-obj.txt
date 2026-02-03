@@ -30,7 +30,6 @@ pub aya_obj::btf::BtfError::MaximumTypeDepthReached
 pub aya_obj::btf::BtfError::MaximumTypeDepthReached::type_id: u32
 pub aya_obj::btf::BtfError::SymbolOffsetNotFound
 pub aya_obj::btf::BtfError::SymbolOffsetNotFound::symbol_name: alloc::string::String
-pub aya_obj::btf::BtfError::UnexpectedBtfMapWrapperLayout(aya_obj::btf::Struct)
 pub aya_obj::btf::BtfError::UnexpectedBtfType
 pub aya_obj::btf::BtfError::UnexpectedBtfType::type_id: u32
 pub aya_obj::btf::BtfError::UnknownBtfType
@@ -402,7 +401,7 @@ pub fn aya_obj::btf::Btf::from(t: T) -> T
 pub aya_obj::btf::BtfEnum::name_offset: u32
 pub aya_obj::btf::BtfEnum::value: u32
 impl aya_obj::btf::BtfEnum
-pub fn aya_obj::btf::BtfEnum::new(name_offset: u32, value: u32) -> Self
+pub const fn aya_obj::btf::BtfEnum::new(name_offset: u32, value: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::BtfEnum
 pub fn aya_obj::btf::BtfEnum::clone(&self) -> aya_obj::btf::BtfEnum
 impl core::fmt::Debug for aya_obj::btf::BtfEnum
@@ -437,7 +436,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::BtfEnum
 pub fn aya_obj::btf::BtfEnum::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::BtfEnum64
 impl aya_obj::btf::BtfEnum64
-pub fn aya_obj::btf::BtfEnum64::new(name_offset: u32, value: u64) -> Self
+pub const fn aya_obj::btf::BtfEnum64::new(name_offset: u32, value: u64) -> Self
 impl core::clone::Clone for aya_obj::btf::BtfEnum64
 pub fn aya_obj::btf::BtfEnum64::clone(&self) -> aya_obj::btf::BtfEnum64
 impl core::fmt::Debug for aya_obj::btf::BtfEnum64
@@ -506,15 +505,15 @@ impl<T> core::convert::From<T> for aya_obj::btf::BtfExt
 pub fn aya_obj::btf::BtfExt::from(t: T) -> T
 pub struct aya_obj::btf::BtfFeatures
 impl aya_obj::btf::BtfFeatures
-pub fn aya_obj::btf::BtfFeatures::btf_datasec(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_datasec_zero(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_decl_tag(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_enum64(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_float(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_func(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_func_global(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_kind_func_proto(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_type_tag(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_datasec(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_datasec_zero(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_decl_tag(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_enum64(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_float(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_func(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_func_global(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_kind_func_proto(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_type_tag(&self) -> bool
 impl core::default::Default for aya_obj::btf::BtfFeatures
 pub fn aya_obj::btf::BtfFeatures::default() -> aya_obj::btf::BtfFeatures
 impl core::fmt::Debug for aya_obj::btf::BtfFeatures
@@ -643,7 +642,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Const
 pub fn aya_obj::btf::Const::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::DataSec
 impl aya_obj::btf::DataSec
-pub fn aya_obj::btf::DataSec::new(name_offset: u32, entries: alloc::vec::Vec<aya_obj::btf::DataSecEntry>, size: u32) -> Self
+pub const fn aya_obj::btf::DataSec::new(name_offset: u32, entries: alloc::vec::Vec<aya_obj::btf::DataSecEntry>, size: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::DataSec
 pub fn aya_obj::btf::DataSec::clone(&self) -> aya_obj::btf::DataSec
 impl core::fmt::Debug for aya_obj::btf::DataSec
@@ -714,7 +713,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::DataSecEntry
 pub fn aya_obj::btf::DataSecEntry::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::DeclTag
 impl aya_obj::btf::DeclTag
-pub fn aya_obj::btf::DeclTag::new(name_offset: u32, btf_type: u32, component_index: i32) -> Self
+pub const fn aya_obj::btf::DeclTag::new(name_offset: u32, btf_type: u32, component_index: i32) -> Self
 impl core::clone::Clone for aya_obj::btf::DeclTag
 pub fn aya_obj::btf::DeclTag::clone(&self) -> aya_obj::btf::DeclTag
 impl core::fmt::Debug for aya_obj::btf::DeclTag
@@ -749,7 +748,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::DeclTag
 pub fn aya_obj::btf::DeclTag::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Enum
 impl aya_obj::btf::Enum
-pub fn aya_obj::btf::Enum::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum>) -> Self
+pub const fn aya_obj::btf::Enum::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum>) -> Self
 impl core::clone::Clone for aya_obj::btf::Enum
 pub fn aya_obj::btf::Enum::clone(&self) -> aya_obj::btf::Enum
 impl core::fmt::Debug for aya_obj::btf::Enum
@@ -784,7 +783,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Enum
 pub fn aya_obj::btf::Enum::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Enum64
 impl aya_obj::btf::Enum64
-pub fn aya_obj::btf::Enum64::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum64>) -> Self
+pub const fn aya_obj::btf::Enum64::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum64>) -> Self
 impl core::clone::Clone for aya_obj::btf::Enum64
 pub fn aya_obj::btf::Enum64::clone(&self) -> aya_obj::btf::Enum64
 impl core::fmt::Debug for aya_obj::btf::Enum64
@@ -819,7 +818,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Enum64
 pub fn aya_obj::btf::Enum64::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Float
 impl aya_obj::btf::Float
-pub fn aya_obj::btf::Float::new(name_offset: u32, size: u32) -> Self
+pub const fn aya_obj::btf::Float::new(name_offset: u32, size: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::Float
 pub fn aya_obj::btf::Float::clone(&self) -> aya_obj::btf::Float
 impl core::fmt::Debug for aya_obj::btf::Float
@@ -854,7 +853,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Float
 pub fn aya_obj::btf::Float::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Func
 impl aya_obj::btf::Func
-pub fn aya_obj::btf::Func::new(name_offset: u32, proto: u32, linkage: aya_obj::btf::FuncLinkage) -> Self
+pub const fn aya_obj::btf::Func::new(name_offset: u32, proto: u32, linkage: aya_obj::btf::FuncLinkage) -> Self
 impl core::clone::Clone for aya_obj::btf::Func
 pub fn aya_obj::btf::Func::clone(&self) -> aya_obj::btf::Func
 impl core::fmt::Debug for aya_obj::btf::Func
@@ -923,7 +922,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::FuncInfo
 pub fn aya_obj::btf::FuncInfo::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::FuncProto
 impl aya_obj::btf::FuncProto
-pub fn aya_obj::btf::FuncProto::new(params: alloc::vec::Vec<aya_obj::btf::BtfParam>, return_type: u32) -> Self
+pub const fn aya_obj::btf::FuncProto::new(params: alloc::vec::Vec<aya_obj::btf::BtfParam>, return_type: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::FuncProto
 pub fn aya_obj::btf::FuncProto::clone(&self) -> aya_obj::btf::FuncProto
 impl core::fmt::Debug for aya_obj::btf::FuncProto
@@ -961,7 +960,7 @@ pub aya_obj::btf::FuncSecInfo::func_info: alloc::vec::Vec<aya_obj::generated::bp
 pub aya_obj::btf::FuncSecInfo::num_info: u32
 impl aya_obj::btf::FuncSecInfo
 pub fn aya_obj::btf::FuncSecInfo::func_info_bytes(&self) -> alloc::vec::Vec<u8>
-pub fn aya_obj::btf::FuncSecInfo::len(&self) -> usize
+pub const fn aya_obj::btf::FuncSecInfo::len(&self) -> usize
 impl core::clone::Clone for aya_obj::btf::FuncSecInfo
 pub fn aya_obj::btf::FuncSecInfo::clone(&self) -> aya_obj::btf::FuncSecInfo
 impl core::default::Default for aya_obj::btf::FuncSecInfo
@@ -1031,7 +1030,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Fwd
 pub fn aya_obj::btf::Fwd::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Int
 impl aya_obj::btf::Int
-pub fn aya_obj::btf::Int::new(name_offset: u32, size: u32, encoding: aya_obj::btf::IntEncoding, offset: u32) -> Self
+pub const fn aya_obj::btf::Int::new(name_offset: u32, size: u32, encoding: aya_obj::btf::IntEncoding, offset: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::Int
 pub fn aya_obj::btf::Int::clone(&self) -> aya_obj::btf::Int
 impl core::fmt::Debug for aya_obj::btf::Int
@@ -1068,7 +1067,7 @@ pub struct aya_obj::btf::LineSecInfo
 pub aya_obj::btf::LineSecInfo::line_info: alloc::vec::Vec<aya_obj::generated::bpf_line_info>
 pub aya_obj::btf::LineSecInfo::num_info: u32
 impl aya_obj::btf::LineSecInfo
-pub fn aya_obj::btf::LineSecInfo::len(&self) -> usize
+pub const fn aya_obj::btf::LineSecInfo::len(&self) -> usize
 pub fn aya_obj::btf::LineSecInfo::line_info_bytes(&self) -> alloc::vec::Vec<u8>
 impl core::clone::Clone for aya_obj::btf::LineSecInfo
 pub fn aya_obj::btf::LineSecInfo::clone(&self) -> aya_obj::btf::LineSecInfo
@@ -1106,7 +1105,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::LineSecInfo
 pub fn aya_obj::btf::LineSecInfo::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Ptr
 impl aya_obj::btf::Ptr
-pub fn aya_obj::btf::Ptr::new(name_offset: u32, btf_type: u32) -> Self
+pub const fn aya_obj::btf::Ptr::new(name_offset: u32, btf_type: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::Ptr
 pub fn aya_obj::btf::Ptr::clone(&self) -> aya_obj::btf::Ptr
 impl core::fmt::Debug for aya_obj::btf::Ptr
@@ -1207,7 +1206,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Struct
 pub fn aya_obj::btf::Struct::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::TypeTag
 impl aya_obj::btf::TypeTag
-pub fn aya_obj::btf::TypeTag::new(name_offset: u32, btf_type: u32) -> Self
+pub const fn aya_obj::btf::TypeTag::new(name_offset: u32, btf_type: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::TypeTag
 pub fn aya_obj::btf::TypeTag::clone(&self) -> aya_obj::btf::TypeTag
 impl core::fmt::Debug for aya_obj::btf::TypeTag
@@ -1308,7 +1307,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Union
 pub fn aya_obj::btf::Union::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Var
 impl aya_obj::btf::Var
-pub fn aya_obj::btf::Var::new(name_offset: u32, btf_type: u32, linkage: aya_obj::btf::VarLinkage) -> Self
+pub const fn aya_obj::btf::Var::new(name_offset: u32, btf_type: u32, linkage: aya_obj::btf::VarLinkage) -> Self
 impl core::clone::Clone for aya_obj::btf::Var
 pub fn aya_obj::btf::Var::clone(&self) -> aya_obj::btf::Var
 impl core::fmt::Debug for aya_obj::btf::Var
@@ -8057,24 +8056,38 @@ pub const aya_obj::generated::BTF_KIND_VOLATILE: aya_obj::generated::_bindgen_ty
 pub const aya_obj::generated::BTF_VAR_GLOBAL_ALLOCATED: aya_obj::generated::_bindgen_ty_43
 pub const aya_obj::generated::BTF_VAR_GLOBAL_EXTERN: aya_obj::generated::_bindgen_ty_43
 pub const aya_obj::generated::BTF_VAR_STATIC: aya_obj::generated::_bindgen_ty_43
-pub const aya_obj::generated::IFLA_XDP_ATTACHED: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_DRV_PROG_ID: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_EXPECTED_FD: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_FD: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_FLAGS: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_HW_PROG_ID: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_PROG_ID: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_SKB_PROG_ID: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::IFLA_XDP_UNSPEC: aya_obj::generated::_bindgen_ty_92
-pub const aya_obj::generated::NFPROTO_ARP: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_BRIDGE: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_DECNET: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_INET: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_IPV4: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_IPV6: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_NETDEV: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_NUMPROTO: aya_obj::generated::_bindgen_ty_99
-pub const aya_obj::generated::NFPROTO_UNSPEC: aya_obj::generated::_bindgen_ty_99
+pub const aya_obj::generated::HW_BREAKPOINT_EMPTY: aya_obj::generated::_bindgen_ty_45
+pub const aya_obj::generated::HW_BREAKPOINT_INVALID: aya_obj::generated::_bindgen_ty_45
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_1: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_2: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_3: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_4: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_5: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_6: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_7: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_LEN_8: aya_obj::generated::_bindgen_ty_44
+pub const aya_obj::generated::HW_BREAKPOINT_R: aya_obj::generated::_bindgen_ty_45
+pub const aya_obj::generated::HW_BREAKPOINT_RW: aya_obj::generated::_bindgen_ty_45
+pub const aya_obj::generated::HW_BREAKPOINT_W: aya_obj::generated::_bindgen_ty_45
+pub const aya_obj::generated::HW_BREAKPOINT_X: aya_obj::generated::_bindgen_ty_45
+pub const aya_obj::generated::IFLA_XDP_ATTACHED: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_DRV_PROG_ID: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_EXPECTED_FD: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_FD: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_FLAGS: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_HW_PROG_ID: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_PROG_ID: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_SKB_PROG_ID: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::IFLA_XDP_UNSPEC: aya_obj::generated::_bindgen_ty_94
+pub const aya_obj::generated::NFPROTO_ARP: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_BRIDGE: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_DECNET: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_INET: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_IPV4: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_IPV6: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_NETDEV: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_NUMPROTO: aya_obj::generated::_bindgen_ty_101
+pub const aya_obj::generated::NFPROTO_UNSPEC: aya_obj::generated::_bindgen_ty_101
 pub const aya_obj::generated::NLMSG_ALIGNTO: u32
 pub const aya_obj::generated::NR_BTF_KINDS: aya_obj::generated::_bindgen_ty_42
 pub const aya_obj::generated::PERF_EVENT_IOC_DISABLE: u32
@@ -8097,36 +8110,36 @@ pub const aya_obj::generated::PERF_MAX_CONTEXTS_PER_STACK: u32
 pub const aya_obj::generated::PERF_MAX_STACK_DEPTH: u32
 pub const aya_obj::generated::SO_ATTACH_BPF: u32
 pub const aya_obj::generated::SO_DETACH_BPF: u32
-pub const aya_obj::generated::TCA_BPF_ACT: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_CLASSID: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_FD: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_FLAGS: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_FLAGS_GEN: aya_obj::generated::_bindgen_ty_154
+pub const aya_obj::generated::TCA_BPF_ACT: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_CLASSID: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_FD: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_FLAGS: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_FLAGS_GEN: aya_obj::generated::_bindgen_ty_156
 pub const aya_obj::generated::TCA_BPF_FLAG_ACT_DIRECT: u32
-pub const aya_obj::generated::TCA_BPF_ID: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_NAME: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_OPS: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_OPS_LEN: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_POLICE: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_TAG: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_BPF_UNSPEC: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::TCA_CHAIN: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_DUMP_FLAGS: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_DUMP_INVISIBLE: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_EGRESS_BLOCK: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_EXT_WARN_MSG: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_FCNT: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_HW_OFFLOAD: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_INGRESS_BLOCK: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_KIND: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_OPTIONS: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_PAD: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_RATE: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_STAB: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_STATS: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_STATS2: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_UNSPEC: aya_obj::generated::_bindgen_ty_174
-pub const aya_obj::generated::TCA_XSTATS: aya_obj::generated::_bindgen_ty_174
+pub const aya_obj::generated::TCA_BPF_ID: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_NAME: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_OPS: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_OPS_LEN: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_POLICE: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_TAG: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_BPF_UNSPEC: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::TCA_CHAIN: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_DUMP_FLAGS: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_DUMP_INVISIBLE: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_EGRESS_BLOCK: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_EXT_WARN_MSG: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_FCNT: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_HW_OFFLOAD: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_INGRESS_BLOCK: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_KIND: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_OPTIONS: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_PAD: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_RATE: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_STAB: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_STATS: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_STATS2: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_UNSPEC: aya_obj::generated::_bindgen_ty_176
+pub const aya_obj::generated::TCA_XSTATS: aya_obj::generated::_bindgen_ty_176
 pub const aya_obj::generated::TC_H_CLSACT: u32
 pub const aya_obj::generated::TC_H_INGRESS: u32
 pub const aya_obj::generated::TC_H_MAJ_MASK: u32
@@ -8143,10 +8156,10 @@ pub const aya_obj::generated::XDP_FLAGS_MODES: u32
 pub const aya_obj::generated::XDP_FLAGS_REPLACE: u32
 pub const aya_obj::generated::XDP_FLAGS_SKB_MODE: u32
 pub const aya_obj::generated::XDP_FLAGS_UPDATE_IF_NOEXIST: u32
-pub const aya_obj::generated::__IFLA_XDP_MAX: aya_obj::generated::_bindgen_ty_92
+pub const aya_obj::generated::__IFLA_XDP_MAX: aya_obj::generated::_bindgen_ty_94
 pub const aya_obj::generated::__MAX_BPF_REG: aya_obj::generated::_bindgen_ty_1
-pub const aya_obj::generated::__TCA_BPF_MAX: aya_obj::generated::_bindgen_ty_154
-pub const aya_obj::generated::__TCA_MAX: aya_obj::generated::_bindgen_ty_174
+pub const aya_obj::generated::__TCA_BPF_MAX: aya_obj::generated::_bindgen_ty_156
+pub const aya_obj::generated::__TCA_MAX: aya_obj::generated::_bindgen_ty_176
 pub type aya_obj::generated::__s16 = core::ffi::primitives::c_short
 pub type aya_obj::generated::__s32 = core::ffi::primitives::c_int
 pub type aya_obj::generated::__s64 = core::ffi::primitives::c_longlong
@@ -8155,14 +8168,15 @@ pub type aya_obj::generated::__u32 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::__u64 = core::ffi::primitives::c_ulonglong
 pub type aya_obj::generated::__u8 = core::ffi::primitives::c_uchar
 pub type aya_obj::generated::_bindgen_ty_10 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_101 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_11 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_12 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_13 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_14 = core::ffi::primitives::c_ulong
 pub type aya_obj::generated::_bindgen_ty_15 = core::ffi::primitives::c_int
-pub type aya_obj::generated::_bindgen_ty_154 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_156 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_17 = core::ffi::primitives::c_uint
-pub type aya_obj::generated::_bindgen_ty_174 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_176 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_19 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_2 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_21 = core::ffi::primitives::c_uint
@@ -8174,13 +8188,14 @@ pub type aya_obj::generated::_bindgen_ty_4 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_41 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_42 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_43 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_44 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_45 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_5 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_6 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_7 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_8 = core::ffi::primitives::c_uint
 pub type aya_obj::generated::_bindgen_ty_9 = core::ffi::primitives::c_uint
-pub type aya_obj::generated::_bindgen_ty_92 = core::ffi::primitives::c_uint
-pub type aya_obj::generated::_bindgen_ty_99 = core::ffi::primitives::c_uint
+pub type aya_obj::generated::_bindgen_ty_94 = core::ffi::primitives::c_uint
 pub mod aya_obj::links
 pub mod aya_obj::maps
 pub enum aya_obj::maps::Map
@@ -8189,17 +8204,17 @@ pub aya_obj::maps::Map::Legacy(aya_obj::maps::LegacyMap)
 impl aya_obj::maps::Map
 pub fn aya_obj::maps::Map::data(&self) -> &[u8]
 pub fn aya_obj::maps::Map::data_mut(&mut self) -> &mut alloc::vec::Vec<u8>
-pub fn aya_obj::maps::Map::key_size(&self) -> u32
-pub fn aya_obj::maps::Map::map_flags(&self) -> u32
-pub fn aya_obj::maps::Map::map_type(&self) -> u32
-pub fn aya_obj::maps::Map::max_entries(&self) -> u32
-pub fn aya_obj::maps::Map::pinning(&self) -> aya_obj::maps::PinningType
-pub fn aya_obj::maps::Map::section_index(&self) -> usize
-pub fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::EbpfSectionKind
-pub fn aya_obj::maps::Map::set_max_entries(&mut self, v: u32)
-pub fn aya_obj::maps::Map::set_value_size(&mut self, size: u32)
-pub fn aya_obj::maps::Map::symbol_index(&self) -> core::option::Option<usize>
-pub fn aya_obj::maps::Map::value_size(&self) -> u32
+pub const fn aya_obj::maps::Map::key_size(&self) -> u32
+pub const fn aya_obj::maps::Map::map_flags(&self) -> u32
+pub const fn aya_obj::maps::Map::map_type(&self) -> u32
+pub const fn aya_obj::maps::Map::max_entries(&self) -> u32
+pub const fn aya_obj::maps::Map::pinning(&self) -> aya_obj::maps::PinningType
+pub const fn aya_obj::maps::Map::section_index(&self) -> usize
+pub const fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::EbpfSectionKind
+pub const fn aya_obj::maps::Map::set_max_entries(&mut self, v: u32)
+pub const fn aya_obj::maps::Map::set_value_size(&mut self, size: u32)
+pub const fn aya_obj::maps::Map::symbol_index(&self) -> core::option::Option<usize>
+pub const fn aya_obj::maps::Map::value_size(&self) -> u32
 impl core::clone::Clone for aya_obj::maps::Map
 pub fn aya_obj::maps::Map::clone(&self) -> aya_obj::maps::Map
 impl core::fmt::Debug for aya_obj::maps::Map
@@ -8674,14 +8689,14 @@ impl<T> core::convert::From<T> for aya_obj::ProgramSection
 pub fn aya_obj::ProgramSection::from(t: T) -> T
 pub struct aya_obj::obj::Features
 impl aya_obj::Features
-pub fn aya_obj::Features::bpf_cookie(&self) -> bool
-pub fn aya_obj::Features::bpf_global_data(&self) -> bool
-pub fn aya_obj::Features::bpf_name(&self) -> bool
-pub fn aya_obj::Features::bpf_perf_link(&self) -> bool
-pub fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
-pub fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
-pub fn aya_obj::Features::cpumap_prog_id(&self) -> bool
-pub fn aya_obj::Features::devmap_prog_id(&self) -> bool
+pub const fn aya_obj::Features::bpf_cookie(&self) -> bool
+pub const fn aya_obj::Features::bpf_global_data(&self) -> bool
+pub const fn aya_obj::Features::bpf_name(&self) -> bool
+pub const fn aya_obj::Features::bpf_perf_link(&self) -> bool
+pub const fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
+pub const fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
+pub const fn aya_obj::Features::cpumap_prog_id(&self) -> bool
+pub const fn aya_obj::Features::devmap_prog_id(&self) -> bool
 impl core::default::Default for aya_obj::Features
 pub fn aya_obj::Features::default() -> aya_obj::Features
 impl core::fmt::Debug for aya_obj::Features
@@ -8834,7 +8849,7 @@ pub aya_obj::obj::Program::license: alloc::ffi::c_str::CString
 pub aya_obj::obj::Program::section: aya_obj::ProgramSection
 pub aya_obj::obj::Program::section_index: usize
 impl aya_obj::Program
-pub fn aya_obj::Program::function_key(&self) -> (usize, u64)
+pub const fn aya_obj::Program::function_key(&self) -> (usize, u64)
 impl core::clone::Clone for aya_obj::Program
 pub fn aya_obj::Program::clone(&self) -> aya_obj::Program
 impl core::fmt::Debug for aya_obj::Program
@@ -8868,7 +8883,7 @@ pub unsafe fn aya_obj::Program::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::Program
 pub fn aya_obj::Program::from(t: T) -> T
 pub fn aya_obj::obj::copy_instructions(data: &[u8]) -> core::result::Result<alloc::vec::Vec<aya_obj::generated::bpf_insn>, aya_obj::ParseError>
-pub fn aya_obj::obj::parse_map_info(info: aya_obj::generated::bpf_map_info, pinned: aya_obj::maps::PinningType) -> aya_obj::maps::Map
+pub const fn aya_obj::obj::parse_map_info(info: aya_obj::generated::bpf_map_info, pinned: aya_obj::maps::PinningType) -> aya_obj::maps::Map
 pub mod aya_obj::programs
 pub mod aya_obj::programs::cgroup_sock
 pub enum aya_obj::programs::cgroup_sock::CgroupSockAttachType
@@ -9344,17 +9359,17 @@ pub aya_obj::Map::Legacy(aya_obj::maps::LegacyMap)
 impl aya_obj::maps::Map
 pub fn aya_obj::maps::Map::data(&self) -> &[u8]
 pub fn aya_obj::maps::Map::data_mut(&mut self) -> &mut alloc::vec::Vec<u8>
-pub fn aya_obj::maps::Map::key_size(&self) -> u32
-pub fn aya_obj::maps::Map::map_flags(&self) -> u32
-pub fn aya_obj::maps::Map::map_type(&self) -> u32
-pub fn aya_obj::maps::Map::max_entries(&self) -> u32
-pub fn aya_obj::maps::Map::pinning(&self) -> aya_obj::maps::PinningType
-pub fn aya_obj::maps::Map::section_index(&self) -> usize
-pub fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::EbpfSectionKind
-pub fn aya_obj::maps::Map::set_max_entries(&mut self, v: u32)
-pub fn aya_obj::maps::Map::set_value_size(&mut self, size: u32)
-pub fn aya_obj::maps::Map::symbol_index(&self) -> core::option::Option<usize>
-pub fn aya_obj::maps::Map::value_size(&self) -> u32
+pub const fn aya_obj::maps::Map::key_size(&self) -> u32
+pub const fn aya_obj::maps::Map::map_flags(&self) -> u32
+pub const fn aya_obj::maps::Map::map_type(&self) -> u32
+pub const fn aya_obj::maps::Map::max_entries(&self) -> u32
+pub const fn aya_obj::maps::Map::pinning(&self) -> aya_obj::maps::PinningType
+pub const fn aya_obj::maps::Map::section_index(&self) -> usize
+pub const fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::EbpfSectionKind
+pub const fn aya_obj::maps::Map::set_max_entries(&mut self, v: u32)
+pub const fn aya_obj::maps::Map::set_value_size(&mut self, size: u32)
+pub const fn aya_obj::maps::Map::symbol_index(&self) -> core::option::Option<usize>
+pub const fn aya_obj::maps::Map::value_size(&self) -> u32
 impl core::clone::Clone for aya_obj::maps::Map
 pub fn aya_obj::maps::Map::clone(&self) -> aya_obj::maps::Map
 impl core::fmt::Debug for aya_obj::maps::Map
@@ -9540,14 +9555,14 @@ impl<T> core::convert::From<T> for aya_obj::ProgramSection
 pub fn aya_obj::ProgramSection::from(t: T) -> T
 pub struct aya_obj::Features
 impl aya_obj::Features
-pub fn aya_obj::Features::bpf_cookie(&self) -> bool
-pub fn aya_obj::Features::bpf_global_data(&self) -> bool
-pub fn aya_obj::Features::bpf_name(&self) -> bool
-pub fn aya_obj::Features::bpf_perf_link(&self) -> bool
-pub fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
-pub fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
-pub fn aya_obj::Features::cpumap_prog_id(&self) -> bool
-pub fn aya_obj::Features::devmap_prog_id(&self) -> bool
+pub const fn aya_obj::Features::bpf_cookie(&self) -> bool
+pub const fn aya_obj::Features::bpf_global_data(&self) -> bool
+pub const fn aya_obj::Features::bpf_name(&self) -> bool
+pub const fn aya_obj::Features::bpf_perf_link(&self) -> bool
+pub const fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
+pub const fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
+pub const fn aya_obj::Features::cpumap_prog_id(&self) -> bool
+pub const fn aya_obj::Features::devmap_prog_id(&self) -> bool
 impl core::default::Default for aya_obj::Features
 pub fn aya_obj::Features::default() -> aya_obj::Features
 impl core::fmt::Debug for aya_obj::Features
@@ -9700,7 +9715,7 @@ pub aya_obj::Program::license: alloc::ffi::c_str::CString
 pub aya_obj::Program::section: aya_obj::ProgramSection
 pub aya_obj::Program::section_index: usize
 impl aya_obj::Program
-pub fn aya_obj::Program::function_key(&self) -> (usize, u64)
+pub const fn aya_obj::Program::function_key(&self) -> (usize, u64)
 impl core::clone::Clone for aya_obj::Program
 pub fn aya_obj::Program::clone(&self) -> aya_obj::Program
 impl core::fmt::Debug for aya_obj::Program
@@ -9735,7 +9750,7 @@ impl<T> core::convert::From<T> for aya_obj::Program
 pub fn aya_obj::Program::from(t: T) -> T
 pub struct aya_obj::VerifierLog(_)
 impl aya_obj::VerifierLog
-pub fn aya_obj::VerifierLog::new(log: alloc::string::String) -> Self
+pub const fn aya_obj::VerifierLog::new(log: alloc::string::String) -> Self
 impl core::fmt::Debug for aya_obj::VerifierLog
 pub fn aya_obj::VerifierLog::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya_obj::VerifierLog
@@ -9765,4 +9780,4 @@ pub fn aya_obj::VerifierLog::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::VerifierLog
 pub fn aya_obj::VerifierLog::from(t: T) -> T
 pub fn aya_obj::copy_instructions(data: &[u8]) -> core::result::Result<alloc::vec::Vec<aya_obj::generated::bpf_insn>, aya_obj::ParseError>
-pub fn aya_obj::parse_map_info(info: aya_obj::generated::bpf_map_info, pinned: aya_obj::maps::PinningType) -> aya_obj::maps::Map
+pub const fn aya_obj::parse_map_info(info: aya_obj::generated::bpf_map_info, pinned: aya_obj::maps::PinningType) -> aya_obj::maps::Map

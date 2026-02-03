@@ -1,53 +1,36 @@
-use core::{borrow::Borrow, cell::UnsafeCell, marker::PhantomData, mem, ptr};
+use core::{borrow::Borrow, marker::PhantomData, ptr};
 
 use crate::{
     EbpfContext,
-    bindings::{BPF_F_CURRENT_CPU, bpf_map_def, bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY},
+    bindings::{BPF_F_CURRENT_CPU, bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY},
     helpers::bpf_perf_event_output,
-    maps::PinningType,
+    maps::{MapDef, PinningType},
 };
 
 #[repr(transparent)]
 pub struct PerfEventArray<T> {
-    def: UnsafeCell<bpf_map_def>,
+    def: MapDef,
     _t: PhantomData<T>,
 }
 
-unsafe impl<T: Sync> Sync for PerfEventArray<T> {}
-
 impl<T> PerfEventArray<T> {
     pub const fn new(flags: u32) -> Self {
-        Self {
-            def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-                key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<u32>() as u32,
-                max_entries: 0,
-                map_flags: flags,
-                id: 0,
-                pinning: PinningType::None as u32,
-            }),
-            _t: PhantomData,
-        }
+        Self::new_with_pinning(flags, PinningType::None)
     }
 
     pub const fn pinned(flags: u32) -> Self {
+        Self::new_with_pinning(flags, PinningType::ByName)
+    }
+
+    const fn new_with_pinning(flags: u32, pinning: PinningType) -> Self {
         Self {
-            def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-                key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<u32>() as u32,
-                max_entries: 0,
-                map_flags: flags,
-                id: 0,
-                pinning: PinningType::ByName as u32,
-            }),
+            def: MapDef::new::<u32, u32>(BPF_MAP_TYPE_PERF_EVENT_ARRAY, 0, flags, pinning),
             _t: PhantomData,
         }
     }
 
     pub fn output<C: EbpfContext>(&self, ctx: &C, data: impl Borrow<T>, flags: u32) {
-        self.output_at_index(ctx, BPF_F_CURRENT_CPU as u32, data, flags)
+        self.output_at_index(ctx, BPF_F_CURRENT_CPU as u32, data, flags);
     }
 
     pub fn output_at_index<C: EbpfContext>(
@@ -62,10 +45,10 @@ impl<T> PerfEventArray<T> {
         unsafe {
             bpf_perf_event_output(
                 ctx.as_ptr(),
-                self.def.get().cast(),
+                self.def.as_ptr().cast(),
                 flags,
                 ptr::from_ref(data).cast_mut().cast(),
-                mem::size_of_val(data) as u64,
+                size_of_val(data) as u64,
             );
         }
     }

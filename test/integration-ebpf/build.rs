@@ -5,7 +5,7 @@ use xtask::AYA_BUILD_INTEGRATION_BPF;
 
 /// Building this crate has an undeclared dependency on the `bpf-linker` binary. This would be
 /// better expressed by [artifact-dependencies][bindeps] but issues such as
-/// https://github.com/rust-lang/cargo/issues/12385 make their use impractical for the time being.
+/// <https://github.com/rust-lang/cargo/issues/12385> make their use impractical for the time being.
 ///
 /// This file implements an imperfect solution: it causes cargo to rebuild the crate whenever the
 /// mtime of `which bpf-linker` changes. Note that possibility that a new bpf-linker is added to
@@ -20,8 +20,7 @@ fn main() {
     let build_integration_bpf = env::var(AYA_BUILD_INTEGRATION_BPF)
         .as_deref()
         .map(str::parse)
-        .map(Result::unwrap)
-        .unwrap_or_default();
+        .is_ok_and(Result::unwrap);
 
     if build_integration_bpf {
         let bpf_linker = which("bpf-linker").unwrap();

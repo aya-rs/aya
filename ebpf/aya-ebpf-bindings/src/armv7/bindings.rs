@@ -365,11 +365,6 @@ pub type __be32 = __u32;
 pub type __wsum = __u32;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct bpf_perf_event_data {
-    _unused: [u8; 0],
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
 pub struct linux_binprm {
     _unused: [u8; 0],
 }
@@ -2895,6 +2890,14 @@ pub struct bpf_iter_num {
 #[derive(Debug, Copy, Clone)]
 pub struct pt_regs {
     pub uregs: [::aya_ebpf_cty::c_long; 18usize],
+}
+pub type bpf_user_pt_regs_t = pt_regs;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct bpf_perf_event_data {
+    pub regs: bpf_user_pt_regs_t,
+    pub sample_period: __u64,
+    pub addr: __u64,
 }
 pub type sa_family_t = ::aya_ebpf_cty::c_ushort;
 #[repr(C)]

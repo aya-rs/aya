@@ -9,7 +9,7 @@ pub struct SockOpsContext {
 }
 
 impl SockOpsContext {
-    pub fn new(ops: *mut bpf_sock_ops) -> Self {
+    pub const fn new(ops: *mut bpf_sock_ops) -> Self {
         Self { ops }
     }
 

@@ -49,7 +49,7 @@ pub(crate) fn helper_from_item(item: &ForeignItemStatic, call_index: usize) -> O
                     });
                 }
             }
-        };
+        }
     }
 
     None

@@ -52,7 +52,6 @@ use std::{
     ffi::{CString, NulError},
     io,
     marker::PhantomData,
-    mem,
     ops::Deref,
     os::fd::{AsFd, BorrowedFd, OwnedFd},
     path::{Path, PathBuf},
@@ -136,7 +135,7 @@ pub enum MapError {
         /// Map name
         name: String,
         #[source]
-        /// Original io::Error
+        /// Original [`io::Error`]
         io_error: io::Error,
     },
 
@@ -227,7 +226,7 @@ pub struct MapFd {
 }
 
 impl MapFd {
-    fn from_fd(fd: crate::MockableFd) -> Self {
+    const fn from_fd(fd: crate::MockableFd) -> Self {
         Self { fd }
     }
 
@@ -296,7 +295,7 @@ pub enum Map {
 
 impl Map {
     /// Returns the low level map type.
-    fn map_type(&self) -> u32 {
+    const fn map_type(&self) -> u32 {
         match self {
             Self::Array(map) => map.obj.map_type(),
             Self::BloomFilter(map) => map.obj.map_type(),
@@ -540,7 +539,7 @@ impl_try_from_map!((K, V) {
     PerCpuHashMap from PerCpuHashMap|PerCpuLruHashMap,
 });
 
-pub(crate) fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
+pub(crate) const fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
     let max_entries = map.obj.max_entries();
     if index >= max_entries {
         Err(MapError::OutOfBounds { index, max_entries })
@@ -549,26 +548,26 @@ pub(crate) fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
     }
 }
 
-pub(crate) fn check_kv_size<K, V>(map: &MapData) -> Result<(), MapError> {
-    let size = mem::size_of::<K>();
+pub(crate) const fn check_kv_size<K, V>(map: &MapData) -> Result<(), MapError> {
+    let size = size_of::<K>();
     let expected = map.obj.key_size() as usize;
     if size != expected {
         return Err(MapError::InvalidKeySize { size, expected });
     }
-    let size = mem::size_of::<V>();
+    let size = size_of::<V>();
     let expected = map.obj.value_size() as usize;
     if size != expected {
         return Err(MapError::InvalidValueSize { size, expected });
-    };
+    }
     Ok(())
 }
 
-pub(crate) fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
-    let size = mem::size_of::<V>();
+pub(crate) const fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
+    let size = size_of::<V>();
     let expected = map.obj.value_size() as usize;
     if size != expected {
         return Err(MapError::InvalidValueSize { size, expected });
-    };
+    }
     Ok(())
 }
 
@@ -609,7 +608,7 @@ impl MapData {
             if obj.max_entries() == 0 || obj.max_entries() > nr_cpus {
                 obj.set_max_entries(nr_cpus);
             }
-        };
+        }
 
         let fd =
             bpf_create_map(&c_name, &obj, btf_fd).map_err(|io_error| MapError::CreateError {
@@ -644,22 +643,18 @@ impl MapData {
                 });
             }
         };
-        match bpf_get_object(&path_string).map_err(|io_error| SyscallError {
-            call: "BPF_OBJ_GET",
-            io_error,
-        }) {
-            Ok(fd) => Ok(Self {
+        if let Ok(fd) = bpf_get_object(&path_string) {
+            Ok(Self {
                 obj,
                 fd: MapFd::from_fd(fd),
-            }),
-            Err(_) => {
-                let map = Self::create(obj, name, btf_fd)?;
-                map.pin(path).map_err(|error| MapError::PinError {
-                    name: Some(name.into()),
-                    error,
-                })?;
-                Ok(map)
-            }
+            })
+        } else {
+            let map = Self::create(obj, name, btf_fd)?;
+            map.pin(path).map_err(|error| MapError::PinError {
+                name: Some(name.into()),
+                error,
+            })?;
+            Ok(map)
         }
     }
 
@@ -773,12 +768,12 @@ impl MapData {
     }
 
     /// Returns the file descriptor of the map.
-    pub fn fd(&self) -> &MapFd {
+    pub const fn fd(&self) -> &MapFd {
         let Self { obj: _, fd } = self;
         fd
     }
 
-    pub(crate) fn obj(&self) -> &aya_obj::Map {
+    pub(crate) const fn obj(&self) -> &aya_obj::Map {
         let Self { obj, fd: _ } = self;
         obj
     }
@@ -806,7 +801,7 @@ pub struct MapKeys<'coll, K: Pod> {
 }
 
 impl<'coll, K: Pod> MapKeys<'coll, K> {
-    fn new(map: &'coll MapData) -> Self {
+    const fn new(map: &'coll MapData) -> Self {
         Self {
             map,
             err: false,
@@ -866,7 +861,7 @@ impl<K: Pod, V, I: IterableMap<K, V>> Iterator for MapIter<'_, K, V, I> {
             match self.keys.next() {
                 Some(Ok(key)) => match self.map.get(&key) {
                     Ok(value) => return Some(Ok((key, value))),
-                    Err(MapError::KeyNotFound) => continue,
+                    Err(MapError::KeyNotFound) => {}
                     Err(e) => return Some(Err(e)),
                 },
                 Some(Err(e)) => return Some(Err(e)),
@@ -881,7 +876,7 @@ pub(crate) struct PerCpuKernelMem {
 }
 
 impl PerCpuKernelMem {
-    pub(crate) fn as_mut_ptr(&mut self) -> *mut u8 {
+    pub(crate) const fn as_mut_ptr(&mut self) -> *mut u8 {
         self.bytes.as_mut_ptr()
     }
 }
@@ -934,7 +929,7 @@ impl<T: Pod> TryFrom<Vec<T>> for PerCpuValues<T> {
 
 impl<T: Pod> PerCpuValues<T> {
     pub(crate) fn alloc_kernel_mem() -> Result<PerCpuKernelMem, io::Error> {
-        let value_size = (mem::size_of::<T>() + 7) & !7;
+        let value_size = size_of::<T>().next_multiple_of(8);
         let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
         Ok(PerCpuKernelMem {
             bytes: vec![0u8; nr_cpus * value_size],
@@ -942,7 +937,7 @@ impl<T: Pod> PerCpuValues<T> {
     }
 
     pub(crate) unsafe fn from_kernel_mem(mem: PerCpuKernelMem) -> Self {
-        let stride = (mem::size_of::<T>() + 7) & !7;
+        let stride = size_of::<T>().next_multiple_of(8);
         let mut values = Vec::new();
         let mut offset = 0;
         while offset < mem.bytes.len() {
@@ -958,9 +953,9 @@ impl<T: Pod> PerCpuValues<T> {
     pub(crate) fn build_kernel_mem(&self) -> Result<PerCpuKernelMem, io::Error> {
         let mut mem = Self::alloc_kernel_mem()?;
         let mem_ptr = mem.as_mut_ptr();
-        let value_size = (mem::size_of::<T>() + 7) & !7;
+        let value_size = size_of::<T>().next_multiple_of(8);
         for (i, value) in self.values.iter().enumerate() {
-            unsafe { ptr::write_unaligned(mem_ptr.byte_add(i * value_size).cast(), *value) };
+            unsafe { ptr::write_unaligned(mem_ptr.byte_add(i * value_size).cast(), *value) }
         }
 
         Ok(mem)
@@ -1004,7 +999,7 @@ mod test_utils {
         aya_obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: map_type as u32,
-                key_size: std::mem::size_of::<K>() as u32,
+                key_size: size_of::<K>() as u32,
                 value_size: 4,
                 max_entries: 1024,
                 ..Default::default()
@@ -1023,7 +1018,7 @@ mod test_utils {
         aya_obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: map_type as u32,
-                key_size: std::mem::size_of::<K>() as u32,
+                key_size: size_of::<K>() as u32,
                 value_size: 4,
                 max_entries,
                 ..Default::default()
@@ -1041,7 +1036,7 @@ mod tests {
     use std::{ffi::c_char, os::fd::AsRawFd as _};
 
     use assert_matches::assert_matches;
-    use aya_obj::generated::{bpf_cmd, bpf_map_info, bpf_map_type};
+    use aya_obj::generated::{bpf_cmd, bpf_map_info};
     use libc::EFAULT;
 
     use super::*;
@@ -1178,10 +1173,10 @@ mod tests {
             } => {
                 assert_eq!(
                     unsafe { attr.info.info_len },
-                    mem::size_of::<bpf_map_info>() as u32
+                    size_of::<bpf_map_info>() as u32
                 );
                 unsafe {
-                    let name_bytes = mem::transmute::<&[u8], &[c_char]>(TEST_NAME.as_bytes());
+                    let name_bytes = std::mem::transmute::<&[u8], &[c_char]>(TEST_NAME.as_bytes());
                     let map_info = attr.info.info as *mut bpf_map_info;
                     map_info.write({
                         let mut map_info = map_info.read();
