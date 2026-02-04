@@ -16,11 +16,10 @@ use aya_obj::{
         VarLinkage,
     },
     generated::{
-        BPF_ADD, BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_F_TEST_RUN_ON_CPU,
-        BPF_F_TEST_XDP_LIVE_FRAMES, BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_MEM, BPF_MOV,
-        BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_X, bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd,
-        bpf_func_id, bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type, bpf_prog_info,
-        bpf_prog_type, bpf_stats_type,
+        BPF_ADD, BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_IMM, BPF_JMP, BPF_K,
+        BPF_LD, BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_X, bpf_attach_type, bpf_attr,
+        bpf_btf_info, bpf_cmd, bpf_func_id, bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type,
+        bpf_prog_info, bpf_prog_type, bpf_stats_type,
     },
     maps::{LegacyMap, bpf_map_def},
 };
@@ -33,7 +32,7 @@ use log::warn;
 use crate::{
     Btf, Pod, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
-    programs::{LsmAttachType, ProgramType, links::LinkRef},
+    programs::{LsmAttachType, ProgramType, TestRunOptions, TestRunResult, links::LinkRef},
     sys::{Syscall, SyscallError, syscall},
     util::KernelVersion,
 };
@@ -566,83 +565,6 @@ pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<crate::MockableFd, S
             io_error,
         }
     })
-}
-
-/// Options for running a BPF program test.
-///
-/// see [ebpf.io](https://docs.ebpf.io/linux/syscall/BPF_PROG_TEST_RUN/) for detailed usages.
-#[derive(Debug)]
-pub struct TestRunOptions<'a> {
-    /// Input data to pass to the program.
-    pub data_in: Option<&'a [u8]>,
-    /// Output buffer for data modified by the program.
-    pub data_out: Option<&'a mut [u8]>,
-    /// Input context to pass to the program.
-    pub ctx_in: Option<&'a [u8]>,
-    /// Output buffer for context modified by the program.
-    pub ctx_out: Option<&'a mut [u8]>,
-    /// Number of times to repeat the test.
-    pub repeat: u32,
-    cpu: u32,
-    batch_size: u32,
-    flags: u32,
-}
-
-impl Default for TestRunOptions<'_> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl TestRunOptions<'_> {
-    /// Creates a new `TestRunOptions` with default values.
-    pub const fn new() -> Self {
-        Self {
-            data_in: None,
-            data_out: None,
-            ctx_in: None,
-            ctx_out: None,
-            repeat: 1,
-            cpu: 0,
-            batch_size: 0,
-            flags: 0,
-        }
-    }
-
-    /// Sets the CPU to run the test on.
-    ///
-    /// This automatically sets the `BPF_F_TEST_RUN_ON_CPU` flag.
-    /// This option only works with `RawTracePoint` programs.
-    #[must_use]
-    pub const fn run_on_cpu(mut self, cpu: u32) -> Self {
-        self.cpu = cpu;
-        self.flags |= BPF_F_TEST_RUN_ON_CPU;
-        self
-    }
-
-    /// Sets the batch size for XDP live frames testing.
-    ///
-    /// This automatically sets the `BPF_F_TEST_XDP_LIVE_FRAMES` flag.
-    /// This option only works with `XDP` programs.
-    #[must_use]
-    pub const fn xdp_live_frames(mut self, batch_size: u32) -> Self {
-        self.batch_size = batch_size;
-        self.flags |= BPF_F_TEST_XDP_LIVE_FRAMES;
-        self
-    }
-}
-
-/// Result of running a BPF program test.
-#[derive(Debug)]
-pub struct TestRunResult {
-    /// Return value from the program.
-    pub return_value: u32,
-    /// Duration of the test run in nanoseconds.
-    pub duration: u32,
-    /// Size of data written to `data_out`.
-    pub data_size_out: u32,
-    /// Size of context written to `ctx_out`.
-    pub ctx_size_out: u32,
 }
 
 /// Run a loaded BPF program with test data.

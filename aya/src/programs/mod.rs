@@ -84,7 +84,10 @@ use std::{
 use aya_obj::{
     VerifierLog,
     btf::BtfError,
-    generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
+    generated::{
+        BPF_F_TEST_RUN_ON_CPU, BPF_F_TEST_XDP_LIVE_FRAMES, bpf_attach_type, bpf_prog_info,
+        bpf_prog_type,
+    },
     programs::XdpAttachType,
 };
 use info::impl_info;
@@ -611,8 +614,8 @@ impl<T: Link> ProgramData<T> {
 
 fn test_run<T: Link>(
     data: &ProgramData<T>,
-    opts: crate::TestRunOptions<'_>,
-) -> Result<crate::TestRunResult, ProgramError> {
+    opts: TestRunOptions<'_>,
+) -> Result<TestRunResult, ProgramError> {
     let fd = data.fd()?.as_fd();
     crate::sys::bpf_prog_test_run(fd, opts).map_err(Into::into)
 }
@@ -876,6 +879,82 @@ impl_fd!(
     Iter,
 );
 
+/// Options for running a BPF program test.
+///
+/// see [ebpf.io](https://docs.ebpf.io/linux/syscall/BPF_PROG_TEST_RUN/) for detailed usages.
+#[derive(Debug)]
+pub struct TestRunOptions<'a> {
+    /// Input data to pass to the program.
+    pub data_in: Option<&'a [u8]>,
+    /// Output buffer for data modified by the program.
+    pub data_out: Option<&'a mut [u8]>,
+    /// Input context to pass to the program.
+    pub ctx_in: Option<&'a [u8]>,
+    /// Output buffer for context modified by the program.
+    pub ctx_out: Option<&'a mut [u8]>,
+    /// Number of times to repeat the test.
+    pub repeat: u32,
+    pub(crate) cpu: u32,
+    pub(crate) batch_size: u32,
+    pub(crate) flags: u32,
+}
+
+impl Default for TestRunOptions<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TestRunOptions<'_> {
+    /// Creates a new `TestRunOptions` with default values.
+    pub const fn new() -> Self {
+        Self {
+            data_in: None,
+            data_out: None,
+            ctx_in: None,
+            ctx_out: None,
+            repeat: 1,
+            cpu: 0,
+            batch_size: 0,
+            flags: 0,
+        }
+    }
+
+    /// Sets the CPU to run the test on.
+    ///
+    /// This automatically sets the `BPF_F_TEST_RUN_ON_CPU` flag.
+    /// This option only works with `RawTracePoint` programs.
+    #[must_use]
+    pub const fn run_on_cpu(mut self, cpu: u32) -> Self {
+        self.cpu = cpu;
+        self.flags |= BPF_F_TEST_RUN_ON_CPU;
+        self
+    }
+
+    /// Sets the batch size for XDP live frames testing.
+    ///
+    /// This automatically sets the `BPF_F_TEST_XDP_LIVE_FRAMES` flag.
+    /// This option only works with `XDP` programs.
+    #[must_use]
+    pub const fn xdp_live_frames(mut self, batch_size: u32) -> Self {
+        self.batch_size = batch_size;
+        self.flags |= BPF_F_TEST_XDP_LIVE_FRAMES;
+        self
+    }
+}
+
+/// Result of running a BPF program test.
+#[derive(Debug)]
+pub struct TestRunResult {
+    /// Return value from the program.
+    pub return_value: u32,
+    /// Duration of the test run in nanoseconds.
+    pub duration: u32,
+    /// Size of data written to `data_out`.
+    pub data_size_out: u32,
+    /// Size of context written to `ctx_out`.
+    pub ctx_size_out: u32,
+}
 /// Trait for BPF programs that support test execution via `BPF_PROG_TEST_RUN`.
 pub trait TestRun {
     /// Runs the program with test input data and returns the result.
@@ -919,15 +998,15 @@ pub trait TestRun {
     /// ```
     fn test_run(
         &self,
-        opts: crate::TestRunOptions<'_>,
-    ) -> Result<crate::TestRunResult, ProgramError>;
+        opts: TestRunOptions<'_>,
+    ) -> Result<TestRunResult, ProgramError>;
 }
 
 macro_rules! impl_program_test_run {
     ($($struct_name:ident),+ $(,)?) => {
         $(
             impl TestRun for $struct_name {
-                fn test_run(&self, opts: crate::TestRunOptions<'_>) -> Result<crate::TestRunResult, ProgramError> {
+                fn test_run(&self, opts: TestRunOptions<'_>) -> Result<TestRunResult, ProgramError> {
                     test_run(&self.data, opts)
                 }
             }
