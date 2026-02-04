@@ -583,17 +583,19 @@ pub struct TestRunOptions<'a> {
     pub ctx_out: Option<&'a mut [u8]>,
     /// Number of times to repeat the test.
     pub repeat: u32,
-    // CPU to run the test on, only works with RawTracePoint programs.
     cpu: u32,
-    // Batch size for network packet tests, only works with XDP programs.
     batch_size: u32,
-    // Flags to control test behavior.
     flags: u32,
+}
+
+impl Default for TestRunOptions<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TestRunOptions<'_> {
     /// Creates a new `TestRunOptions` with default values.
-    #[expect(clippy::new_without_default, reason = "ignore default method")]
     pub const fn new() -> Self {
         Self {
             data_in: None,
@@ -650,31 +652,42 @@ pub(crate) fn bpf_prog_test_run(
     prog_fd: BorrowedFd<'_>,
     opts: TestRunOptions<'_>,
 ) -> Result<TestRunResult, SyscallError> {
+    let TestRunOptions {
+        data_in,
+        data_out,
+        ctx_in,
+        ctx_out,
+        repeat,
+        cpu,
+        batch_size,
+        flags,
+    } = opts;
+
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     let test = unsafe { &mut attr.test };
     test.prog_fd = prog_fd.as_raw_fd() as u32;
-    test.repeat = opts.repeat;
-    test.flags = opts.flags;
-    test.cpu = opts.cpu;
-    test.batch_size = opts.batch_size;
+    test.repeat = repeat;
+    test.flags = flags;
+    test.cpu = cpu;
+    test.batch_size = batch_size;
 
-    if let Some(data_in) = opts.data_in {
+    if let Some(data_in) = data_in {
         test.data_in = data_in.as_ptr() as u64;
         test.data_size_in = data_in.len() as u32;
     }
 
-    if let Some(data_out) = &opts.data_out {
+    if let Some(data_out) = data_out {
         test.data_out = data_out.as_ptr() as u64;
         test.data_size_out = data_out.len() as u32;
     }
 
-    if let Some(ctx_in) = opts.ctx_in {
+    if let Some(ctx_in) = ctx_in {
         test.ctx_in = ctx_in.as_ptr() as u64;
         test.ctx_size_in = ctx_in.len() as u32;
     }
 
-    if let Some(ctx_out) = &opts.ctx_out {
+    if let Some(ctx_out) = ctx_out {
         test.ctx_out = ctx_out.as_ptr() as u64;
         test.ctx_size_out = ctx_out.len() as u32;
     }
