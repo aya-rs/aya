@@ -60,7 +60,6 @@ fn test_xdp_modify(ctx: XdpContext) -> u32 {
 
 #[xdp]
 fn test_xdp_context(ctx: XdpContext) -> u32 {
-    // hardcoded expected value
     const EXPECTED_IF: u32 = 1;
     let md = ctx.ctx;
     let ingress_ifindex = unsafe { (*md).ingress_ifindex };

@@ -569,6 +569,7 @@ pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<crate::MockableFd, S
 }
 
 /// Options for running a BPF program test.
+///
 /// see [ebpf.io](https://docs.ebpf.io/linux/syscall/BPF_PROG_TEST_RUN/) for detailed usages.
 #[derive(Debug)]
 pub struct TestRunOptions<'a> {
@@ -583,17 +584,17 @@ pub struct TestRunOptions<'a> {
     /// Number of times to repeat the test.
     pub repeat: u32,
     // CPU to run the test on, only works with RawTracePoint programs.
-    // should be set via `run_on_cpu` function to set the appropriate flag.
     cpu: u32,
     // Batch size for network packet tests, only works with XDP programs.
-    // should be set via `xdp_live_frames` function to set the appropriate flag.
     batch_size: u32,
     // Flags to control test behavior.
     flags: u32,
 }
 
-impl Default for TestRunOptions<'_> {
-    fn default() -> Self {
+impl TestRunOptions<'_> {
+    /// Creates a new `TestRunOptions` with default values.
+    #[expect(clippy::new_without_default, reason = "ignore default method")]
+    pub const fn new() -> Self {
         Self {
             data_in: None,
             data_out: None,
@@ -605,17 +606,11 @@ impl Default for TestRunOptions<'_> {
             flags: 0,
         }
     }
-}
-
-impl TestRunOptions<'_> {
-    /// Creates a new `TestRunOptions` with default values.
-    pub fn new() -> Self {
-        Self::default()
-    }
 
     /// Sets the CPU to run the test on.
+    ///
     /// This automatically sets the `BPF_F_TEST_RUN_ON_CPU` flag.
-    /// This option only works with `TracePoint` programs.
+    /// This option only works with `RawTracePoint` programs.
     #[must_use]
     pub const fn run_on_cpu(mut self, cpu: u32) -> Self {
         self.cpu = cpu;
@@ -624,6 +619,7 @@ impl TestRunOptions<'_> {
     }
 
     /// Sets the batch size for XDP live frames testing.
+    ///
     /// This automatically sets the `BPF_F_TEST_XDP_LIVE_FRAMES` flag.
     /// This option only works with `XDP` programs.
     #[must_use]
@@ -652,7 +648,7 @@ pub struct TestRunResult {
 /// Introduced in kernel v4.12.
 pub(crate) fn bpf_prog_test_run(
     prog_fd: BorrowedFd<'_>,
-    opts: &TestRunOptions<'_>,
+    opts: TestRunOptions<'_>,
 ) -> Result<TestRunResult, SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 

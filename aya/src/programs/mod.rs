@@ -611,8 +611,8 @@ impl<T: Link> ProgramData<T> {
 
 fn test_run<T: Link>(
     data: &ProgramData<T>,
-    opts: &crate::sys::TestRunOptions<'_>,
-) -> Result<crate::sys::TestRunResult, ProgramError> {
+    opts: crate::TestRunOptions<'_>,
+) -> Result<crate::TestRunResult, ProgramError> {
     let fd = data.fd()?.as_fd();
     crate::sys::bpf_prog_test_run(fd, opts).map_err(Into::into)
 }
@@ -919,15 +919,15 @@ pub trait TestRun {
     /// ```
     fn test_run(
         &self,
-        opts: &mut crate::sys::TestRunOptions<'_>,
-    ) -> Result<crate::sys::TestRunResult, ProgramError>;
+        opts: crate::TestRunOptions<'_>,
+    ) -> Result<crate::TestRunResult, ProgramError>;
 }
 
 macro_rules! impl_program_test_run {
     ($($struct_name:ident),+ $(,)?) => {
         $(
             impl TestRun for $struct_name {
-                fn test_run(&self, opts: &mut crate::sys::TestRunOptions<'_>) -> Result<crate::sys::TestRunResult, ProgramError> {
+                fn test_run(&self, opts: crate::TestRunOptions<'_>) -> Result<crate::TestRunResult, ProgramError> {
                     test_run(&self.data, opts)
                 }
             }

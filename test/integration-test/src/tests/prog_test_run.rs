@@ -29,11 +29,11 @@ fn test_xdp_test_run() {
     let data_in = vec![0u8; 64];
     let mut data_out = vec![0u8; 64];
 
-    let mut opts = TestRunOptions::default();
+    let mut opts = TestRunOptions::new();
     opts.data_in = Some(&data_in);
     opts.data_out = Some(&mut data_out);
 
-    let result = prog.test_run(&mut opts).unwrap();
+    let result = prog.test_run(opts).unwrap();
 
     assert_eq!(result.return_value, 2, "Expected XDP_PASS (2)");
     assert!(result.duration > 0, "Expected non-zero duration");
@@ -56,11 +56,11 @@ fn test_xdp_modify_packet() {
     let data_in = vec![0u8; 64];
     let mut data_out = vec![0u8; 64];
 
-    let mut opts = TestRunOptions::default();
+    let mut opts = TestRunOptions::new();
     opts.data_in = Some(&data_in);
     opts.data_out = Some(&mut data_out);
 
-    let result = prog.test_run(&mut opts).unwrap();
+    let result = prog.test_run(opts).unwrap();
 
     assert_eq!(result.return_value, 2, "Expected XDP_PASS (2)");
     assert!(result.duration > 0, "Expected non-zero duration");
@@ -88,11 +88,11 @@ fn test_socket_filter_test_run() {
     let data_in = vec![0u8; packet_len];
     let mut data_out = vec![0u8; packet_len];
 
-    let mut opts = TestRunOptions::default();
+    let mut opts = TestRunOptions::new();
     opts.data_in = Some(&data_in);
     opts.data_out = Some(&mut data_out);
 
-    let result = prog.test_run(&mut opts).unwrap();
+    let result = prog.test_run(opts).unwrap();
 
     // Ethernet header size = 14 bytes
     let expected_len = packet_len - 14;
@@ -105,7 +105,7 @@ fn test_socket_filter_test_run() {
 
 #[test_log::test]
 fn test_classifier_test_run() {
-    if !require_version(4, 14, 0) {
+    if !require_version(4, 12, 0) {
         return;
     }
 
@@ -120,11 +120,11 @@ fn test_classifier_test_run() {
     let data_in = vec![0u8; 64];
     let mut data_out = vec![0u8; 64];
 
-    let mut opts = TestRunOptions::default();
+    let mut opts = TestRunOptions::new();
     opts.data_in = Some(&data_in);
     opts.data_out = Some(&mut data_out);
 
-    let result = prog.test_run(&mut opts).unwrap();
+    let result = prog.test_run(opts).unwrap();
 
     assert_eq!(result.return_value, 1, "Expected SK_PASS(1)");
     assert!(result.duration > 0, "Expected non-zero duration");
@@ -154,11 +154,11 @@ fn test_run_repeat() {
 
     // Run the test 50 times
     let repeat_count = 50;
-    let mut opts = TestRunOptions::default();
+    let mut opts = TestRunOptions::new();
     opts.data_in = Some(&data_in);
     opts.data_out = Some(&mut data_out);
     opts.repeat = repeat_count;
-    let _result = prog.test_run(&mut opts).unwrap();
+    let _result = prog.test_run(opts).unwrap();
 
     let final_count: u64 = exec_count.get(&0, 0).unwrap();
     assert_eq!(final_count, repeat_count.into());
@@ -218,13 +218,13 @@ fn test_xdp_context() {
     let ctx_bytes = unsafe { std::slice::from_raw_parts((&raw const ctx).cast::<u8>(), size) };
     let mut ctx_out = vec![0u8; size];
 
-    let mut opts = TestRunOptions::default();
+    let mut opts = TestRunOptions::new();
     opts.data_in = Some(&data_in);
     opts.data_out = Some(&mut data_out);
     opts.ctx_in = Some(ctx_bytes);
     opts.ctx_out = Some(&mut ctx_out);
 
-    let result = prog.test_run(&mut opts).unwrap();
+    let result = prog.test_run(opts).unwrap();
 
     // XDP_PASS is 2 - should pass when rx_queue_index matches expected value
     assert_eq!(
