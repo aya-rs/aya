@@ -6,6 +6,10 @@ use aya::{
 };
 use integration_common::test_run::{IF_INDEX, XDP_MODIGY_LEN, XDP_MODIGY_VAL};
 
+// https://github.com/torvalds/linux/blob/8fdb05de0e2db89d8f56144c60ab784812e8c3b7/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L48
+const PKT_V4_SIZE: usize = 14 + 20 + 20;
+const DATA_IN_SIZE: usize = PKT_V4_SIZE + size_of::<u32>();
+
 fn require_version(major: u8, minor: u8, patch: u16) -> bool {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(major, minor, patch) {
@@ -27,8 +31,8 @@ fn test_xdp_test_run() {
     let prog: &mut Xdp = bpf.program_mut("test_xdp").unwrap().try_into().unwrap();
     prog.load().unwrap();
 
-    let data_in = vec![0u8; 64];
-    let mut data_out = vec![0u8; 64];
+    let data_in = vec![0u8; DATA_IN_SIZE];
+    let mut data_out = vec![0u8; DATA_IN_SIZE];
 
     let mut opts = TestRunOptions::new();
     opts.data_in = Some(&data_in);
@@ -54,8 +58,8 @@ fn test_xdp_modify_packet() {
         .unwrap();
     prog.load().unwrap();
 
-    let data_in = vec![0u8; 64];
-    let mut data_out = vec![0u8; 64];
+    let data_in = vec![0u8; DATA_IN_SIZE];
+    let mut data_out = vec![0u8; DATA_IN_SIZE];
 
     let mut opts = TestRunOptions::new();
     opts.data_in = Some(&data_in);
@@ -85,9 +89,8 @@ fn test_socket_filter_test_run() {
         .unwrap();
     prog.load().unwrap();
 
-    let packet_len = 128;
-    let data_in = vec![0u8; packet_len];
-    let mut data_out = vec![0u8; packet_len];
+    let data_in = vec![0u8; DATA_IN_SIZE];
+    let mut data_out = vec![0u8; DATA_IN_SIZE];
 
     let mut opts = TestRunOptions::new();
     opts.data_in = Some(&data_in);
@@ -96,7 +99,7 @@ fn test_socket_filter_test_run() {
     let result = prog.test_run(opts).unwrap();
 
     // Ethernet header size = 14 bytes
-    let expected_len = packet_len - 14;
+    let expected_len = DATA_IN_SIZE - 14;
     assert_eq!(
         result.return_value as usize, expected_len,
         "Expected return value to be packet length minus Ethernet header"
@@ -118,8 +121,8 @@ fn test_classifier_test_run() {
         .unwrap();
     prog.load().unwrap();
 
-    let data_in = vec![0u8; 64];
-    let mut data_out = vec![0u8; 64];
+    let data_in = vec![0u8; DATA_IN_SIZE];
+    let mut data_out = vec![0u8; DATA_IN_SIZE];
 
     let mut opts = TestRunOptions::new();
     opts.data_in = Some(&data_in);
@@ -150,8 +153,8 @@ fn test_run_repeat() {
         .unwrap();
     prog.load().unwrap();
 
-    let data_in = vec![0u8; 64];
-    let mut data_out = vec![0u8; 64];
+    let data_in = vec![0u8; DATA_IN_SIZE];
+    let mut data_out = vec![0u8; DATA_IN_SIZE];
 
     // Run the test 50 times
     let repeat_count = 50;
@@ -179,8 +182,8 @@ fn test_xdp_context() {
         .unwrap();
     prog.load().unwrap();
 
-    let data_in = vec![0u8; 64];
-    let mut data_out = vec![0u8; 64];
+    let data_in = vec![0u8; DATA_IN_SIZE];
+    let mut data_out = vec![0u8; DATA_IN_SIZE];
 
     #[repr(C)]
     #[derive(Clone, Copy)]
