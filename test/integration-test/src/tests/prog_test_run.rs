@@ -4,6 +4,7 @@ use aya::{
     programs::{SchedClassifier, SocketFilter, TestRun as _, Xdp},
     util::KernelVersion,
 };
+use integration_common::test_run::{IF_INDEX, XDP_MODIGY_LEN, XDP_MODIGY_VAL};
 
 fn require_version(major: u8, minor: u8, patch: u16) -> bool {
     let kernel_version = KernelVersion::current().unwrap();
@@ -65,9 +66,9 @@ fn test_xdp_modify_packet() {
     assert_eq!(result.return_value, 2, "Expected XDP_PASS (2)");
     assert!(result.duration > 0, "Expected non-zero duration");
 
-    let expected_pattern: Vec<u8> = vec![0xAAu8; 16];
-    assert_eq!(&data_out[..16], &*expected_pattern,);
-    assert_eq!(&data_out[16..], &data_in[16..],);
+    let expected_pattern: Vec<u8> = vec![XDP_MODIGY_VAL; XDP_MODIGY_LEN];
+    assert_eq!(&data_out[..XDP_MODIGY_LEN], &*expected_pattern);
+    assert_eq!(&data_out[XDP_MODIGY_LEN..], &data_in[XDP_MODIGY_LEN..]);
 }
 
 #[test_log::test]
@@ -182,6 +183,7 @@ fn test_xdp_context() {
     let mut data_out = vec![0u8; 64];
 
     #[repr(C)]
+    #[derive(Clone, Copy)]
     struct XdpMd {
         data: u32,
         data_end: u32,
@@ -191,23 +193,13 @@ fn test_xdp_context() {
         egress_ifindex: u32,
     }
 
-    // There are several rules that must be followed for using the xdp_md context correctly
-    // which are extracted from the kernel's selftests:
-    //   1. Meta data's size must be a multiple of 4
-    //   2. data_meta must reference the start of data
-    //   3. Total size of data must be data_end - data_meta or larger
-    //   4. RX queue cannot be specified without specifying an ingress
-    //   5. Interface 1 is always the loopback interface which always has only
-    //      one RX queue (index 0). This makes index 1 an invalid rx queue index
-    //      for interface 1.
-    //   6. The egress cannot be specified
     // see: https://github.com/torvalds/linux/blob/63804fed149a6750ffd28610c5c1c98cce6bd377/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L92
     // for more details.
     let ctx = XdpMd {
         data: 0,
         data_end: data_in.len() as u32,
         data_meta: 0,
-        ingress_ifindex: 1,
+        ingress_ifindex: IF_INDEX,
         // RX queue cannot be specified without specifying an ingress
         rx_queue_index: 0,
         // egress cannot be specified
