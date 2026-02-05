@@ -97,6 +97,10 @@ name = "test"
 path = "src/test.rs"
 
 [[bin]]
+name = "test_run"
+path = "src/test_run.rs"
+
+[[bin]]
 name = "two_progs"
 path = "src/two_progs.rs"
 
