@@ -3,7 +3,7 @@ use std::{
     fmt::{self, Write},
     fs::{self, OpenOptions},
     io::{self, Write as _},
-    os::fd::AsFd as _,
+    os::fd::{AsFd as _, BorrowedFd},
     path::{Path, PathBuf},
     process,
     sync::atomic::{AtomicUsize, Ordering},
@@ -11,8 +11,10 @@ use std::{
 
 use crate::{
     programs::{
-        Link, ProgramData, ProgramError, perf_attach, perf_attach::PerfLinkInner,
-        perf_attach_debugfs, trace_point::read_sys_fs_trace_point_id, utils::find_tracefs_path,
+        Link, ProgramData, ProgramError,
+        perf_attach::{PerfLinkInner, PerfLinkLeaf, perf_attach, perf_attach_debugfs},
+        trace_point::read_sys_fs_trace_point_id,
+        utils::find_tracefs_path,
     },
     sys::{SyscallError, perf_event_open_probe, perf_event_open_trace_point},
     util::KernelVersion,
@@ -152,7 +154,19 @@ pub(crate) fn attach<P: Probe, T: Link + From<PerfLinkInner>>(
     // Use debugfs to create probe
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
-    let link = if KernelVersion::at_least(4, 17, 0) {
+    let link = attach_perf_link::<P>(prog_fd, kind, fn_name, offset, pid, cookie)?;
+    program_data.links.insert(T::from(link.into()))
+}
+
+pub(crate) fn attach_perf_link<P: Probe>(
+    prog_fd: BorrowedFd<'_>,
+    kind: ProbeKind,
+    fn_name: &OsStr,
+    offset: u64,
+    pid: Option<u32>,
+    cookie: Option<u64>,
+) -> Result<PerfLinkLeaf, ProgramError> {
+    if KernelVersion::at_least(4, 17, 0) {
         let perf_fd = create_as_probe::<P>(kind, fn_name, offset, pid)?;
         perf_attach(prog_fd, perf_fd, cookie)
     } else {
@@ -161,8 +175,7 @@ pub(crate) fn attach<P: Probe, T: Link + From<PerfLinkInner>>(
         }
         let (perf_fd, event) = create_as_trace_point::<P>(kind, fn_name, offset, pid)?;
         perf_attach_debugfs(prog_fd, perf_fd, event)
-    }?;
-    program_data.links.insert(T::from(link))
+    }
 }
 
 fn detach_debug_fs<P: Probe>(event_alias: &OsStr) -> Result<(), ProgramError> {

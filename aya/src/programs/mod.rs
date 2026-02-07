@@ -129,12 +129,9 @@ use crate::{
     VerifierLogLevel,
     maps::MapError,
     pin::PinError,
-    programs::{
-        links::{
-            FdLink, FdLinkId, LinkError, LinkInfo, Links, ProgAttachLink, ProgAttachLinkId,
-            define_link_wrapper, id_as_key, impl_try_into_fdlink,
-        },
-        perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach, perf_attach_debugfs},
+    programs::links::{
+        FdLink, FdLinkId, LinkError, LinkInfo, Links, ProgAttachLink, ProgAttachLinkId,
+        define_link_wrapper, id_as_key, impl_try_into_fdlink,
     },
     sys::{
         EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget, SyscallError, bpf_btf_get_fd_by_id,
@@ -1113,7 +1110,6 @@ macro_rules! impl_from_prog_info {
 
 impl_from_prog_info!(
     unsafe KProbe kind : ProbeKind,
-    unsafe UProbe kind : ProbeKind,
     TracePoint,
     Xdp attach_type : XdpAttachType,
     SkMsg,
