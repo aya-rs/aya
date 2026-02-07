@@ -965,10 +965,6 @@ impl Object {
 
                     if let Some(data) = external_value {
                         symbol.address = (offset + (type_align - 1)) & !(type_align - 1);
-                        assert_eq!(
-                            symbol.size, type_size as u64,
-                            "Yes, we need to patch the size"
-                        );
                         symbol.size = type_size as u64;
                         symbol.section_index = Some(kconfig_map_index);
 
