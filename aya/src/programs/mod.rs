@@ -1101,7 +1101,6 @@ macro_rules! impl_from_prog_info {
 
 impl_from_prog_info!(
     unsafe KProbe kind : ProbeKind,
-    unsafe UProbe kind : ProbeKind,
     TracePoint,
     Xdp attach_type : XdpAttachType,
     SkMsg,

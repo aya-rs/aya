@@ -19,12 +19,14 @@ use crate::{
 pub(crate) enum PerfLinkIdInner {
     FdLinkId(<FdLink as Link>::Id),
     PerfLinkId(<PerfLink as Link>::Id),
+    Multi(Vec<Self>),
 }
 
 #[derive(Debug)]
 pub(crate) enum PerfLinkInner {
     Fd(FdLink),
     PerfLink(PerfLink),
+    Multi(Vec<Self>),
 }
 
 impl Link for PerfLinkInner {
@@ -34,6 +36,7 @@ impl Link for PerfLinkInner {
         match self {
             Self::Fd(link) => PerfLinkIdInner::FdLinkId(link.id()),
             Self::PerfLink(link) => PerfLinkIdInner::PerfLinkId(link.id()),
+            Self::Multi(links) => PerfLinkIdInner::Multi(links.iter().map(Link::id).collect()),
         }
     }
 
@@ -41,6 +44,16 @@ impl Link for PerfLinkInner {
         match self {
             Self::Fd(link) => link.detach(),
             Self::PerfLink(link) => link.detach(),
+            Self::Multi(links) => {
+                // Best-effort cleanup: keep detaching remaining links even if one fails.
+                let mut first_error = None;
+                for link in links {
+                    if let Err(error) = link.detach() {
+                        first_error.get_or_insert(error);
+                    }
+                }
+                first_error.map_or(Ok(()), Err)
+            }
         }
     }
 }
