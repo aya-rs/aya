@@ -1,3 +1,5 @@
+use std::{net::UdpSocket, time::Duration};
+
 use aya::{
     Ebpf, EbpfLoader, KConfig,
     programs::{Extension, TracePoint, Xdp, XdpFlags, tc},
@@ -93,6 +95,7 @@ fn kconfig() {
         );
         return;
     }
+    let _netns = NetNsGuard::new();
     let kconfig = KConfig::current();
     let mut bpf = EbpfLoader::new()
         .kconfig(kconfig)
@@ -101,4 +104,16 @@ fn kconfig() {
     let pass: &mut Xdp = bpf.program_mut("kconfig").unwrap().try_into().unwrap();
     pass.load().unwrap();
     pass.attach("lo", XdpFlags::default()).unwrap();
+
+    let receiver = UdpSocket::bind("127.0.0.1:0").unwrap();
+    receiver
+        .set_read_timeout(Some(Duration::from_secs(1)))
+        .unwrap();
+    let sender = UdpSocket::bind("127.0.0.1:0").unwrap();
+    sender
+        .send_to(b"kconfig", receiver.local_addr().unwrap())
+        .unwrap();
+    let mut buf = [0u8; 64];
+    let (len, _) = receiver.recv_from(&mut buf).unwrap();
+    assert_eq!(&buf[..len], b"kconfig");
 }

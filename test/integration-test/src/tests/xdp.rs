@@ -68,7 +68,7 @@ fn af_xdp() {
 
     socks.set(0, rx.as_raw_fd(), 0).unwrap();
 
-    let frame = umem.frame(BufIdx(0)).unwrap();
+    le frame = umem.frame(BufIdx(0)).unwrap();
     let frame1 = umem.frame(BufIdx(1)).unwrap();
 
     // Produce two frames to be filled by the kernel
