@@ -8,7 +8,11 @@ use aya_obj::generated::bpf_attach_type::BPF_PERF_EVENT;
 
 use crate::{
     FEATURES,
-    programs::{FdLink, Link, ProgramError, id_as_key, probe::ProbeEvent},
+    programs::{
+        FdLink, Link, ProgramError, id_as_key,
+        probe::ProbeEvent,
+        uprobe::{UProbeError, UProbeLinkDetachErrors},
+    },
     sys::{
         BpfLinkCreateArgs, LinkTarget, PerfEventIoctlRequest, SyscallError, bpf_link_create,
         is_bpf_cookie_supported, perf_event_ioctl,
@@ -17,23 +21,38 @@ use crate::{
 
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub(crate) enum PerfLinkIdInner {
+    Single(PerfLinkIdLeaf),
+    Multi(Vec<PerfLinkIdLeaf>),
+}
+
+#[derive(Debug, Hash, Eq, PartialEq)]
+pub(crate) enum PerfLinkIdLeaf {
     FdLinkId(<FdLink as Link>::Id),
     PerfLinkId(<PerfLink as Link>::Id),
 }
 
 #[derive(Debug)]
-pub(crate) enum PerfLinkInner {
+pub(crate) enum PerfLinkLeaf {
     Fd(FdLink),
     PerfLink(PerfLink),
 }
 
-impl Link for PerfLinkInner {
-    type Id = PerfLinkIdInner;
+impl PerfLinkLeaf {
+    pub(crate) fn into_fd_link(self) -> Result<FdLink, Self> {
+        match self {
+            Self::Fd(link) => Ok(link),
+            Self::PerfLink(link) => Err(Self::PerfLink(link)),
+        }
+    }
+}
+
+impl Link for PerfLinkLeaf {
+    type Id = PerfLinkIdLeaf;
 
     fn id(&self) -> Self::Id {
         match self {
-            Self::Fd(link) => PerfLinkIdInner::FdLinkId(link.id()),
-            Self::PerfLink(link) => PerfLinkIdInner::PerfLinkId(link.id()),
+            Self::Fd(link) => PerfLinkIdLeaf::FdLinkId(link.id()),
+            Self::PerfLink(link) => PerfLinkIdLeaf::PerfLinkId(link.id()),
         }
     }
 
@@ -45,7 +64,93 @@ impl Link for PerfLinkInner {
     }
 }
 
+id_as_key!(PerfLinkLeaf, PerfLinkIdLeaf);
+
+#[derive(Debug)]
+pub(crate) enum PerfLinkInner {
+    Single(PerfLinkLeaf),
+    Multi(Vec<PerfLinkLeaf>),
+}
+
+impl PerfLinkInner {
+    pub(crate) fn into_leaf(self) -> Result<PerfLinkLeaf, Self> {
+        match self {
+            Self::Single(link) => Ok(link),
+            Self::Multi(links) => Err(Self::Multi(links)),
+        }
+    }
+
+    pub(crate) fn into_fd_link(self) -> Result<FdLink, Self> {
+        match self {
+            Self::Single(link) => link.into_fd_link().map_err(Self::Single),
+            Self::Multi(links) => Err(Self::Multi(links)),
+        }
+    }
+}
+
+impl From<PerfLinkIdLeaf> for PerfLinkIdInner {
+    fn from(link_id: PerfLinkIdLeaf) -> Self {
+        Self::Single(link_id)
+    }
+}
+
+impl From<FdLink> for PerfLinkLeaf {
+    fn from(link: FdLink) -> Self {
+        Self::Fd(link)
+    }
+}
+
+impl From<PerfLinkLeaf> for PerfLinkInner {
+    fn from(link: PerfLinkLeaf) -> Self {
+        Self::Single(link)
+    }
+}
+
+impl From<FdLink> for PerfLinkInner {
+    fn from(link: FdLink) -> Self {
+        PerfLinkLeaf::from(link).into()
+    }
+}
+
+impl Link for PerfLinkInner {
+    type Id = PerfLinkIdInner;
+
+    fn id(&self) -> Self::Id {
+        match self {
+            Self::Single(link) => link.id().into(),
+            Self::Multi(links) => PerfLinkIdInner::Multi(links.iter().map(Link::id).collect()),
+        }
+    }
+
+    fn detach(self) -> Result<(), ProgramError> {
+        match self {
+            Self::Single(link) => link.detach(),
+            Self::Multi(links) => {
+                // Best-effort cleanup: keep detaching remaining links even if one fails.
+                let mut errors = Vec::new();
+                for link in links {
+                    if let Err(error) = link.detach() {
+                        errors.push(error);
+                    }
+                }
+                collect_link_detach_errors(errors)
+            }
+        }
+    }
+}
+
 id_as_key!(PerfLinkInner, PerfLinkIdInner);
+
+pub(crate) fn collect_link_detach_errors(errors: Vec<ProgramError>) -> Result<(), ProgramError> {
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(UProbeError::CompositeLinkDetachFailed {
+            error: UProbeLinkDetachErrors::new(errors),
+        }
+        .into())
+    }
+}
 
 /// The identifier of a `PerfLink`.
 #[derive(Debug, Hash, Eq, PartialEq)]
@@ -81,6 +186,18 @@ impl Link for PerfLink {
 
 id_as_key!(PerfLink, PerfLinkId);
 
+impl From<PerfLink> for PerfLinkLeaf {
+    fn from(link: PerfLink) -> Self {
+        Self::PerfLink(link)
+    }
+}
+
+impl From<PerfLink> for PerfLinkInner {
+    fn from(link: PerfLink) -> Self {
+        PerfLinkLeaf::from(link).into()
+    }
+}
+
 pub(crate) fn perf_attach(
     prog_fd: BorrowedFd<'_>,
     perf_fd: crate::MockableFd,
@@ -101,7 +218,7 @@ pub(crate) fn perf_attach(
             call: "bpf_link_create",
             io_error,
         })?;
-        Ok(PerfLinkInner::Fd(FdLink::new(link_fd)))
+        Ok(FdLink::new(link_fd).into())
     } else {
         perf_attach_either(prog_fd, perf_fd, None)
     }
@@ -137,5 +254,46 @@ fn perf_attach_either(
         event.disarm();
     }
 
-    Ok(PerfLinkInner::PerfLink(PerfLink { perf_fd, event }))
+    Ok(PerfLink { perf_fd, event }.into())
+}
+
+#[cfg(test)]
+mod tests {
+    use assert_matches::assert_matches;
+
+    use super::*;
+
+    #[test]
+    fn test_collect_link_detach_errors_empty_ok() {
+        collect_link_detach_errors(Vec::new()).unwrap();
+    }
+
+    #[test]
+    fn test_collect_link_detach_errors_single_error() {
+        let error = collect_link_detach_errors(vec![ProgramError::AlreadyLoaded]).unwrap_err();
+
+        assert_matches!(
+            error,
+            ProgramError::UProbeError(UProbeError::CompositeLinkDetachFailed { error })
+                if matches!(error.as_slice(), [ProgramError::AlreadyLoaded])
+        );
+    }
+
+    #[test]
+    fn test_collect_link_detach_errors_multiple_errors() {
+        let error = collect_link_detach_errors(vec![
+            ProgramError::AlreadyAttached,
+            ProgramError::NotAttached,
+        ])
+        .unwrap_err();
+
+        assert_matches!(
+            error,
+            ProgramError::UProbeError(UProbeError::CompositeLinkDetachFailed { error })
+                if matches!(
+                    error.as_slice(),
+                    [ProgramError::AlreadyAttached, ProgramError::NotAttached]
+                )
+        );
+    }
 }

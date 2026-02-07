@@ -474,7 +474,7 @@ impl PerfEvent {
     }
 }
 
-impl_try_into_fdlink!(PerfEventLink, PerfLinkInner);
+impl_try_into_fdlink!(PerfEventLink, PerfLinkInner, into_fd_link);
 
 impl TryFrom<FdLink> for PerfEventLink {
     type Error = LinkError;
@@ -482,7 +482,7 @@ impl TryFrom<FdLink> for PerfEventLink {
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
         let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
         if info.type_ == (bpf_link_type::BPF_LINK_TYPE_PERF_EVENT as u32) {
-            return Ok(Self::new(PerfLinkInner::Fd(fd_link)));
+            return Ok(Self::new(fd_link.into()));
         }
         Err(LinkError::InvalidLink)
     }
