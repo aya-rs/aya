@@ -8,7 +8,11 @@ use aya_obj::generated::bpf_attach_type::BPF_PERF_EVENT;
 
 use crate::{
     FEATURES,
-    programs::{FdLink, Link, ProgramError, id_as_key, probe::ProbeEvent},
+    programs::{
+        FdLink, Link, ProgramError, id_as_key,
+        probe::ProbeEvent,
+        uprobe::{UProbeError, UProbeLinkDetachErrors},
+    },
     sys::{
         BpfLinkCreateArgs, LinkTarget, PerfEventIoctlRequest, SyscallError, bpf_link_create,
         is_bpf_cookie_supported, perf_event_ioctl,
@@ -19,12 +23,65 @@ use crate::{
 pub(crate) enum PerfLinkIdInner {
     FdLinkId(<FdLink as Link>::Id),
     PerfLinkId(<PerfLink as Link>::Id),
+    Multi(Vec<PerfLinkIdLeaf>),
 }
+
+#[derive(Debug, Hash, Eq, PartialEq)]
+pub(crate) enum PerfLinkIdLeaf {
+    FdLinkId(<FdLink as Link>::Id),
+    PerfLinkId(<PerfLink as Link>::Id),
+}
+
+#[derive(Debug)]
+pub(crate) enum PerfLinkLeaf {
+    Fd(FdLink),
+    PerfLink(PerfLink),
+}
+
+impl Link for PerfLinkLeaf {
+    type Id = PerfLinkIdLeaf;
+
+    fn id(&self) -> Self::Id {
+        match self {
+            Self::Fd(link) => PerfLinkIdLeaf::FdLinkId(link.id()),
+            Self::PerfLink(link) => PerfLinkIdLeaf::PerfLinkId(link.id()),
+        }
+    }
+
+    fn detach(self) -> Result<(), ProgramError> {
+        match self {
+            Self::Fd(link) => link.detach(),
+            Self::PerfLink(link) => link.detach(),
+        }
+    }
+}
+
+id_as_key!(PerfLinkLeaf, PerfLinkIdLeaf);
 
 #[derive(Debug)]
 pub(crate) enum PerfLinkInner {
     Fd(FdLink),
     PerfLink(PerfLink),
+    Multi(Vec<PerfLinkLeaf>),
+}
+
+impl PerfLinkInner {
+    pub(crate) fn into_leaf(self) -> Result<PerfLinkLeaf, Self> {
+        match self {
+            Self::Fd(link) => Ok(PerfLinkLeaf::Fd(link)),
+            Self::PerfLink(link) => Ok(PerfLinkLeaf::PerfLink(link)),
+            Self::Multi(links) => Err(Self::Multi(links)),
+        }
+    }
+}
+
+impl From<PerfLinkLeaf> for PerfLinkInner {
+    fn from(link: PerfLinkLeaf) -> Self {
+        match link {
+            PerfLinkLeaf::Fd(link) => Self::Fd(link),
+            PerfLinkLeaf::PerfLink(link) => Self::PerfLink(link),
+        }
+    }
 }
 
 impl Link for PerfLinkInner {
@@ -34,6 +91,7 @@ impl Link for PerfLinkInner {
         match self {
             Self::Fd(link) => PerfLinkIdInner::FdLinkId(link.id()),
             Self::PerfLink(link) => PerfLinkIdInner::PerfLinkId(link.id()),
+            Self::Multi(links) => PerfLinkIdInner::Multi(links.iter().map(Link::id).collect()),
         }
     }
 
@@ -41,6 +99,23 @@ impl Link for PerfLinkInner {
         match self {
             Self::Fd(link) => link.detach(),
             Self::PerfLink(link) => link.detach(),
+            Self::Multi(links) => {
+                // Best-effort cleanup: keep detaching remaining links even if one fails.
+                let mut errors = Vec::new();
+                for link in links {
+                    if let Err(error) = link.detach() {
+                        errors.push(error);
+                    }
+                }
+                match errors.len() {
+                    0 => Ok(()),
+                    1 => Err(errors.pop().unwrap()),
+                    _ => Err(UProbeError::CompositeLinkDetachFailed {
+                        error: UProbeLinkDetachErrors::new(errors),
+                    }
+                    .into()),
+                }
+            }
         }
     }
 }
