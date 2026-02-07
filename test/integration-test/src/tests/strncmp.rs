@@ -28,9 +28,12 @@ fn bpf_strncmp() {
             .try_into()
             .unwrap();
         prog.load().unwrap();
-
-        prog.attach("trigger_bpf_strncmp", "/proc/self/exe", None)
-            .unwrap();
+        match prog {
+            UProbe::Single(p) => p.attach("trigger_bpf_strncmp", "/proc/self/exe", None),
+            UProbe::Multi(_) => panic!("expected single-attach program"),
+            UProbe::Unknown(_) => panic!("unexpected unknown uprobe mode for loaded program"),
+        }
+        .unwrap();
     }
 
     let array = Array::<_, TestResult>::try_from(bpf.map("RESULT").unwrap()).unwrap();

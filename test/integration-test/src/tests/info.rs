@@ -59,13 +59,23 @@ fn test_loaded_programs() {
         .find(|prog| prog.id() == test_prog.id())
         .unwrap();
 
-    let mut p: UProbe = unsafe {
+    let p: UProbe = unsafe {
         UProbe::from_program_info(info, "test_uprobe".into(), aya::programs::ProbeKind::Entry)
             .unwrap()
     };
 
-    // Ensure we can perform basic operations on the re-created program.
-    let res = p.attach("uprobe_function", "/proc/self/exe", None).unwrap();
+    // Default unknown mode to single-attach for compatibility with old kernels.
+    let mut p = match p {
+        UProbe::Unknown(p) => UProbe::Single(p.into_single()),
+        p => p,
+    };
+
+    let res = match &mut p {
+        UProbe::Single(s) => s.attach("uprobe_function", "/proc/self/exe", None),
+        UProbe::Multi(_) => panic!("expected single-attach program"),
+        UProbe::Unknown(_) => panic!("unknown should be converted before attach"),
+    }
+    .unwrap();
 
     // Ensure the program can be detached.
     p.detach(res).unwrap();

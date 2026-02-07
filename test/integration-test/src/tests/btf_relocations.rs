@@ -89,9 +89,12 @@ fn relocation_tests(
 
     let program: &mut UProbe = bpf.program_mut("program").unwrap().try_into().unwrap();
     program.load().unwrap();
-    program
-        .attach("trigger_btf_relocations_program", "/proc/self/exe", None)
-        .unwrap();
+    match program {
+        UProbe::Single(p) => p.attach("trigger_btf_relocations_program", "/proc/self/exe", None),
+        UProbe::Multi(_) => panic!("expected single-attach program"),
+        UProbe::Unknown(_) => panic!("unexpected unknown uprobe mode for loaded program"),
+    }
+    .unwrap();
 
     trigger_btf_relocations_program();
 

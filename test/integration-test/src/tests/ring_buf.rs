@@ -90,8 +90,12 @@ impl RingBufTest {
         let regs = PerCpuArray::<_, Registers>::try_from(regs).unwrap();
         let prog: &mut UProbe = bpf.program_mut(variant.prog).unwrap().try_into().unwrap();
         prog.load().unwrap();
-        prog.attach("ring_buf_trigger_ebpf_program", "/proc/self/exe", None)
-            .unwrap();
+        match prog {
+            UProbe::Single(p) => p.attach("ring_buf_trigger_ebpf_program", "/proc/self/exe", None),
+            UProbe::Multi(_) => panic!("expected single-attach program"),
+            UProbe::Unknown(_) => panic!("unexpected unknown uprobe mode for loaded program"),
+        }
+        .unwrap();
 
         Self {
             bpf,
@@ -199,7 +203,12 @@ fn ring_buf_mismatch_size<T>(
     let mut ring_buf = RingBuf::try_from(ring_buf).unwrap();
     let prog: &mut UProbe = bpf.program_mut(prog).unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach(trigger_symbol, "/proc/self/exe", None).unwrap();
+    match prog {
+        UProbe::Single(p) => p.attach(trigger_symbol, "/proc/self/exe", None),
+        UProbe::Multi(_) => panic!("expected single-attach program"),
+        UProbe::Unknown(_) => panic!("unexpected unknown uprobe mode for loaded program"),
+    }
+    .unwrap();
 
     trigger(value.into());
     {

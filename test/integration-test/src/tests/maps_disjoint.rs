@@ -20,8 +20,12 @@ fn test_maps_disjoint() {
         .unwrap();
 
     prog.load().unwrap();
-    prog.attach("trigger_ebpf_program_maps_disjoint", "/proc/self/exe", None)
-        .unwrap();
+    let _link_id = match prog {
+        UProbe::Single(p) => p.attach("trigger_ebpf_program_maps_disjoint", "/proc/self/exe", None),
+        UProbe::Multi(_) => panic!("expected single-attach program"),
+        UProbe::Unknown(_) => panic!("unexpected unknown uprobe mode for loaded program"),
+    }
+    .unwrap();
 
     let [foo, bar, baz] = bpf.maps_disjoint_mut(["FOO", "BAR", "BAZ"]);
 

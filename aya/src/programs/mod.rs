@@ -135,6 +135,7 @@ use crate::{
             define_link_wrapper, id_as_key, impl_try_into_fdlink,
         },
         perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach, perf_attach_debugfs},
+        uprobe::UProbeInner,
     },
     sys::{
         EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget, SyscallError, bpf_btf_get_fd_by_id,
@@ -797,7 +798,6 @@ macro_rules! impl_program_unload {
 
 impl_program_unload!(
     KProbe,
-    UProbe,
     TracePoint,
     SocketFilter,
     Xdp,
@@ -840,7 +840,6 @@ macro_rules! impl_fd {
 
 impl_fd!(
     KProbe,
-    UProbe,
     TracePoint,
     SocketFilter,
     Xdp,
@@ -948,7 +947,6 @@ macro_rules! impl_program_pin{
 
 impl_program_pin!(
     KProbe,
-    UProbe,
     TracePoint,
     SocketFilter,
     Xdp,
@@ -1101,7 +1099,7 @@ macro_rules! impl_from_prog_info {
 
 impl_from_prog_info!(
     unsafe KProbe kind : ProbeKind,
-    unsafe UProbe kind : ProbeKind,
+    unsafe UProbeInner kind : ProbeKind,
     TracePoint,
     Xdp attach_type : XdpAttachType,
     SkMsg,

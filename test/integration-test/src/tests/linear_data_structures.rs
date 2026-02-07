@@ -47,7 +47,14 @@ macro_rules! define_linear_ds_host_test {
             ] {
                 let prog: &mut UProbe = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
                 prog.load().unwrap();
-                prog.attach(symbol, "/proc/self/exe", None).unwrap();
+                match prog {
+                    UProbe::Single(p) => p.attach(symbol, "/proc/self/exe", None),
+                    UProbe::Multi(_) => panic!("expected single-attach program"),
+                    UProbe::Unknown(_) => {
+                        panic!("unexpected unknown uprobe mode for loaded program")
+                    }
+                }
+                .unwrap();
             }
             let array_map = bpf.map("RESULT").unwrap();
             let array = Array::<_, u64>::try_from(array_map).unwrap();

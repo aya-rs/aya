@@ -69,8 +69,12 @@ fn log() {
 
     let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_ebpf_program", "/proc/self/exe", None)
-        .unwrap();
+    match prog {
+        UProbe::Single(p) => p.attach("trigger_ebpf_program", "/proc/self/exe", None),
+        UProbe::Multi(_) => panic!("expected single-attach program"),
+        UProbe::Unknown(_) => panic!("unexpected unknown uprobe mode for loaded program"),
+    }
+    .unwrap();
 
     // Call the function that the uprobe is attached to, so it starts logging.
     trigger_ebpf_program();
@@ -248,8 +252,12 @@ fn log_level_only_error_warn() {
 
     let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_ebpf_program", "/proc/self/exe", None)
-        .unwrap();
+    match prog {
+        UProbe::Single(p) => p.attach("trigger_ebpf_program", "/proc/self/exe", None),
+        UProbe::Multi(_) => panic!("expected single-attach program"),
+        UProbe::Unknown(_) => panic!("unexpected unknown uprobe mode for loaded program"),
+    }
+    .unwrap();
 
     trigger_ebpf_program();
     logger.flush();
@@ -303,8 +311,12 @@ fn log_level_prevents_verif_fail() {
         .try_into()
         .unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_ebpf_program", "/proc/self/exe", None)
-        .unwrap();
+    match prog {
+        UProbe::Single(p) => p.attach("trigger_ebpf_program", "/proc/self/exe", None),
+        UProbe::Multi(_) => panic!("expected single-attach program"),
+        UProbe::Unknown(_) => panic!("unexpected unknown uprobe mode for loaded program"),
+    }
+    .unwrap();
 
     trigger_ebpf_program();
     logger.flush();
