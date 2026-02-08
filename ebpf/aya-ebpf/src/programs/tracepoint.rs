@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{EbpfContext, helpers::bpf_probe_read};
+use crate::{EbpfContext, helpers::bpf_probe_read_kernel};
 
 pub struct TracePointContext {
     ctx: *mut c_void,
@@ -16,7 +16,7 @@ impl TracePointContext {
         reason = "safety requirements come from the underlying helper"
     )]
     pub unsafe fn read_at<T>(&self, offset: usize) -> Result<T, i64> {
-        unsafe { bpf_probe_read(self.ctx.add(offset).cast()) }
+        unsafe { bpf_probe_read_kernel(self.ctx.add(offset).cast()) }
     }
 }
 
