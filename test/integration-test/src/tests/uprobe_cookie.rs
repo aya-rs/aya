@@ -35,14 +35,18 @@ fn test_uprobe_cookie() {
     const PROG_A: &str = "uprobe_cookie_trigger_ebpf_program_a";
     const PROG_B: &str = "uprobe_cookie_trigger_ebpf_program_b";
     let attach = |prog: &mut UProbe, fn_name: &str, cookie| {
-        prog.attach(
-            UProbeAttachPoint {
-                location: fn_name.into(),
-                cookie: Some(cookie),
-            },
-            "/proc/self/exe",
-            None,
-        )
+        match prog {
+            UProbe::Single(p) => p.attach(
+                UProbeAttachPoint {
+                    location: fn_name.into(),
+                    cookie: Some(cookie),
+                },
+                "/proc/self/exe",
+                None,
+            ),
+            UProbe::Multi(_) => panic!("expected single-attach program"),
+            UProbe::Unknown(_) => panic!("unexpected unknown uprobe mode for loaded program"),
+        }
         .unwrap()
     };
 

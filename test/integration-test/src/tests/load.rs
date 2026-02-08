@@ -55,8 +55,12 @@ fn ringbuffer_btf_map() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_bpf_program", "/proc/self/exe", None)
-        .unwrap();
+    match prog {
+        UProbe::Single(p) => p.attach("trigger_bpf_program", "/proc/self/exe", None),
+        UProbe::Multi(_) => panic!("expected single-attach program"),
+        UProbe::Unknown(_) => panic!("unexpected unknown uprobe mode for loaded program"),
+    }
+    .unwrap();
 
     trigger_bpf_program();
 
@@ -77,8 +81,12 @@ fn multiple_btf_maps() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_bpf_program", "/proc/self/exe", None)
-        .unwrap();
+    match prog {
+        UProbe::Single(p) => p.attach("trigger_bpf_program", "/proc/self/exe", None),
+        UProbe::Multi(_) => panic!("expected single-attach program"),
+        UProbe::Unknown(_) => panic!("unexpected unknown uprobe mode for loaded program"),
+    }
+    .unwrap();
 
     trigger_bpf_program();
 
@@ -127,8 +135,12 @@ fn pin_lifecycle_multiple_btf_maps() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_bpf_program", "/proc/self/exe", None)
-        .unwrap();
+    match prog {
+        UProbe::Single(p) => p.attach("trigger_bpf_program", "/proc/self/exe", None),
+        UProbe::Multi(_) => panic!("expected single-attach program"),
+        UProbe::Unknown(_) => panic!("unexpected unknown uprobe mode for loaded program"),
+    }
+    .unwrap();
 
     trigger_bpf_program();
 
@@ -357,8 +369,14 @@ fn basic_uprobe() {
 
     let program_name = "test_uprobe";
     let attach = |prog: &mut P| {
-        prog.attach("uprobe_function", "/proc/self/exe", None)
-            .unwrap()
+        match prog {
+            UProbe::Single(p) => p.attach("uprobe_function", "/proc/self/exe", None),
+            UProbe::Multi(_) => panic!("expected single-attach program"),
+            UProbe::Unknown(_) => {
+                panic!("unexpected unknown uprobe mode for loaded program")
+            }
+        }
+        .unwrap()
     };
     run_unload_program_test(
         crate::TEST,
@@ -655,12 +673,24 @@ fn pin_lifecycle_uprobe() {
 
     let program_name = "test_uprobe";
     let attach = |prog: &mut P| {
-        prog.attach("uprobe_function", "/proc/self/exe", None)
-            .unwrap()
+        match prog {
+            UProbe::Single(p) => p.attach("uprobe_function", "/proc/self/exe", None),
+            UProbe::Multi(_) => panic!("expected single-attach program"),
+            UProbe::Unknown(_) => {
+                panic!("unexpected unknown uprobe mode for loaded program")
+            }
+        }
+        .unwrap()
     };
     let program_pin = "/sys/fs/bpf/aya-uprobe-test-prog";
     let link_pin = "/sys/fs/bpf/aya-uprobe-test-uprobe-function";
-    let from_pin = |program_pin: &str| P::from_pin(program_pin, ProbeKind::Entry).unwrap();
+    let from_pin = |program_pin: &str| {
+        let prog = P::from_pin(program_pin, ProbeKind::Entry).unwrap();
+        match prog {
+            UProbe::Unknown(p) => UProbe::Single(p.into_single()),
+            p => p,
+        }
+    };
     run_pin_program_lifecycle_test(
         crate::TEST,
         program_name,

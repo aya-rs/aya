@@ -10,7 +10,7 @@ use std::{
 use aya_obj::{
     EbpfSectionKind, Features, Object, ParseError, ProgramSection,
     btf::{Btf, BtfError, BtfFeatures, BtfRelocationError},
-    generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
+    generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_attach_type, bpf_map_type},
     relocation::EbpfRelocationError,
 };
 use log::{debug, warn};
@@ -24,6 +24,7 @@ use crate::{
         LircMode2, Lsm, LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError,
         RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter,
         TracePoint, UProbe, Xdp,
+        uprobe::{UProbeInner, UProbeMulti, UProbeSingle},
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -462,8 +463,14 @@ impl<'a> EbpfLoader<'a> {
                                 }
                                 ProgramSection::KRetProbe
                                 | ProgramSection::KProbe
-                                | ProgramSection::UProbe { sleepable: _ }
-                                | ProgramSection::URetProbe { sleepable: _ }
+                                | ProgramSection::UProbe {
+                                    sleepable: _,
+                                    multi: _,
+                                }
+                                | ProgramSection::URetProbe {
+                                    sleepable: _,
+                                    multi: _,
+                                }
                                 | ProgramSection::TracePoint
                                 | ProgramSection::SocketFilter
                                 | ProgramSection::Xdp {
@@ -597,27 +604,51 @@ impl<'a> EbpfLoader<'a> {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             kind: ProbeKind::Return,
                         }),
-                        ProgramSection::UProbe { sleepable } => {
+                        ProgramSection::UProbe { sleepable, multi } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
-                            Program::UProbe(UProbe {
-                                data,
-                                kind: ProbeKind::Entry,
-                            })
+                            if *multi {
+                                data.expected_attach_type =
+                                    Some(bpf_attach_type::BPF_TRACE_UPROBE_MULTI);
+                            }
+
+                            if *multi {
+                                Program::UProbe(UProbe::Multi(UProbeMulti(UProbeInner {
+                                    data,
+                                    kind: ProbeKind::Entry,
+                                })))
+                            } else {
+                                Program::UProbe(UProbe::Single(UProbeSingle(UProbeInner {
+                                    data,
+                                    kind: ProbeKind::Entry,
+                                })))
+                            }
                         }
-                        ProgramSection::URetProbe { sleepable } => {
+                        ProgramSection::URetProbe { sleepable, multi } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
-                            Program::UProbe(UProbe {
-                                data,
-                                kind: ProbeKind::Return,
-                            })
+                            if *multi {
+                                data.expected_attach_type =
+                                    Some(bpf_attach_type::BPF_TRACE_UPROBE_MULTI);
+                            }
+
+                            if *multi {
+                                Program::UProbe(UProbe::Multi(UProbeMulti(UProbeInner {
+                                    data,
+                                    kind: ProbeKind::Return,
+                                })))
+                            } else {
+                                Program::UProbe(UProbe::Single(UProbeSingle(UProbeInner {
+                                    data,
+                                    kind: ProbeKind::Return,
+                                })))
+                            }
                         }
                         ProgramSection::TracePoint => Program::TracePoint(TracePoint {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
@@ -1121,7 +1152,11 @@ impl Ebpf {
     ///
     /// let program: &mut UProbe = bpf.program_mut("SSL_read").unwrap().try_into()?;
     /// program.load()?;
-    /// program.attach("SSL_read", "libssl", None)?;
+    /// let _link_id = match program {
+    ///     UProbe::Single(p) => Some(p.attach("SSL_read", "libssl", None)?),
+    ///     UProbe::Multi(p) => Some(p.attach("SSL_read", "libssl", None)?),
+    ///     UProbe::Unknown(_) => None,
+    /// };
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn program_mut(&mut self, name: &str) -> Option<&mut Program> {
