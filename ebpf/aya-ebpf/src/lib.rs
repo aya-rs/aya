@@ -46,7 +46,11 @@ pub mod helpers;
 pub mod maps;
 pub mod programs;
 
-use core::ptr::{self, NonNull};
+use core::{
+    cell::UnsafeCell,
+    mem::MaybeUninit,
+    ptr::{self, NonNull},
+};
 
 pub use aya_ebpf_cty as cty;
 pub use aya_ebpf_macros as macros;
@@ -177,3 +181,54 @@ fn lookup<K, V>(def: *mut c_void, key: &K) -> Option<NonNull<V>> {
     let key = ptr::from_ref(key);
     NonNull::new(unsafe { bpf_map_lookup_elem(def, key.cast()) }.cast())
 }
+
+/// A read-only global value that will be initialized by the loader.
+/// Prefer using this to a plain `static` variable to avoid compiler optimizations eliding reads.
+#[repr(transparent)]
+pub struct BpfGlobal<T> {
+    value: SyncUnsafeCell<MaybeUninit<T>>,
+}
+
+impl<T> BpfGlobal<T> {
+    /// Returns a new, uninitialized [`BpfGlobal`], to be initialized at load
+    /// time by the loader.
+    pub const fn new() -> Self {
+        Self {
+            value: SyncUnsafeCell {
+                value: UnsafeCell::new(MaybeUninit::uninit()),
+            },
+        }
+    }
+}
+
+impl<T> Default for BpfGlobal<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T> BpfGlobal<T>
+where
+    T: Copy,
+{
+    /// Load the global variable set by the loader. Uses a volatile load to avoid
+    /// read elision.
+    ///
+    /// # SAFETY
+    /// Global must have been initialized by `EbpfLoader::set_global`.
+    /// `T` must match the data type that was used by the loader.
+    #[inline]
+    pub unsafe fn load(&self) -> T {
+        unsafe { ptr::read_volatile(self.value.value.get() as *const T) }
+    }
+}
+
+/// [`UnsafeCell`] but [`Sync`].
+///
+/// Copy of the standard library's unstable `SyncUnsafeCell`
+#[repr(transparent)]
+struct SyncUnsafeCell<T> {
+    value: UnsafeCell<T>,
+}
+
+unsafe impl<T: Sync> Sync for SyncUnsafeCell<T> {}

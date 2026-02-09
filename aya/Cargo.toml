@@ -29,6 +29,7 @@ once_cell = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
+aya-ebpf = { path = "../ebpf/aya-ebpf" }
 tempfile = { workspace = true }
 test-case = { workspace = true }
 
