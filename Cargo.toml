@@ -81,7 +81,7 @@ futures = { version = "0.3.28", default-features = false }
 glob = { version = "0.3.0", default-features = false }
 hashbrown = { version = "0.16.0", default-features = false }
 indoc = { version = "2.0", default-features = false }
-libbpf-rs = { version = "0.25", default-features = false }
+libbpf-rs = { version = "0.26", default-features = false }
 libc = { version = "0.2.105", default-features = false }
 log = { version = "0.4", default-features = false }
 network-types = { version = "0.1.0", default-features = false }
@@ -94,7 +94,7 @@ proc-macro2-diagnostics = { version = "0.10.1", default-features = false }
 procfs = { version = "0.18.0", default-features = false }
 public-api = { version = "0.50.0", default-features = false }
 quote = { version = "1", default-features = false }
-rand = { version = "0.9", default-features = false }
+rand = { version = "0.10", default-features = false }
 rbpf = { version = "0.4.0", default-features = false }
 rustc_version = { version = "0.4.1", default-features = false }
 rustdoc-json = { version = "0.9.0", default-features = false }
