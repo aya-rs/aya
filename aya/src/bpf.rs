@@ -245,20 +245,15 @@ impl<'a> EbpfLoader<'a> {
     ///
     /// If the `must_exist` argument is `true`, [`EbpfLoader::load`] will fail with [`ParseError::SymbolNotFound`] if the loaded object code does not contain the variable.
     ///
-    /// From Rust eBPF, a global variable can be defined as follows:
+    /// From Rust eBPF, a global variable can be defined and accessed as follows:
     ///
-    /// ```no_run
+    /// ```rust,ignore
+    /// use aya_ebpf::EbpfGlobal;
     /// #[unsafe(no_mangle)]
-    /// static VERSION: i32 = 0;
-    /// ```
+    /// static VERSION: EbpfGlobal<i32> = EbpfGlobal::new(0);
     ///
-    /// Then it can be accessed using `core::ptr::read_volatile`:
-    ///
-    /// ```no_run
-    /// # #[unsafe(no_mangle)]
-    /// # static VERSION: i32 = 0;
-    /// # fn try_test() {
-    /// let version = unsafe { core::ptr::read_volatile(&VERSION) };
+    /// # fn loadit() {
+    /// let version = VERSION.load();
     /// # }
     /// ```
     ///
