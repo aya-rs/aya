@@ -245,26 +245,13 @@ impl<'a> EbpfLoader<'a> {
     ///
     /// If the `must_exist` argument is `true`, [`EbpfLoader::load`] will fail with [`ParseError::SymbolNotFound`] if the loaded object code does not contain the variable.
     ///
-    /// From Rust eBPF, a global variable can be defined as follows:
-    ///
-    /// ```no_run
-    /// #[unsafe(no_mangle)]
-    /// static VERSION: i32 = 0;
-    /// ```
-    ///
-    /// Then it can be accessed using `core::ptr::read_volatile`:
-    ///
-    /// ```no_run
-    /// # #[unsafe(no_mangle)]
-    /// # static VERSION: i32 = 0;
-    /// # fn try_test() {
-    /// let version = unsafe { core::ptr::read_volatile(&VERSION) };
-    /// # }
-    /// ```
+    /// From Rust eBPF, a global variable can be defined using `EbpfGlobal` - please refer to the `aya-ebpf` documentation.
     ///
     /// The type of a global variable must be `Pod` (plain old data), for instance `u8`, `u32` and
     /// all other primitive types. You may use custom types as well, but you must ensure that those
     /// types are `#[repr(C)]` and only contain other `Pod` types.
+    ///
+    /// The type used here and in the eBPF must be the same (or have a compatible layout).
     ///
     /// From C eBPF, you would annotate a global variable as `volatile const`.
     ///
