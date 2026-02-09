@@ -46,7 +46,11 @@ pub mod helpers;
 pub mod maps;
 pub mod programs;
 
-use core::ptr::{self, NonNull};
+use core::{
+    cell::UnsafeCell,
+    mem::MaybeUninit,
+    ptr::{self, NonNull},
+};
 
 pub use aya_ebpf_cty as cty;
 pub use aya_ebpf_macros as macros;
@@ -177,3 +181,70 @@ fn lookup<K, V>(def: *mut c_void, key: &K) -> Option<NonNull<V>> {
     let key = ptr::from_ref(key);
     NonNull::new(unsafe { bpf_map_lookup_elem(def, key.cast()) }.cast())
 }
+
+/// A read-only global value that may be initialized by the loader.
+///
+/// Prefer using this to a plain `static` variable to avoid compiler optimizations eliding reads.
+///
+/// Use `EbpfLoader::override_global` to override the value at load time from userspace.
+/// # Example
+/// ```
+/// # use aya_ebpf::EbpfGlobal;
+/// #[unsafe(no_mangle)]
+/// static VERSION: EbpfGlobal<i32> = EbpfGlobal::new(0);
+///
+/// # fn loadit() {
+/// let version = VERSION.load();
+/// # }
+/// ```
+#[repr(transparent)]
+pub struct EbpfGlobal<T> {
+    // With a regular `static` variable, the compiler may assume that the contents is unchanged since initialization,
+    // and replace reads with the initial value. `{Sync}UnsafeCell` indicates that the contents of this "immutable" static
+    // may in fact change, and `read_volatile` is used additionally to force a memory read to occur at runtime.
+    // Out of an abundance of caution, `MaybeUninit` is additionally used to inhibit compiler analysis and optimizations that may
+    // cause unexpected behavior; in reality, this value should always be initialized with a valid `T`.
+    value: SyncUnsafeCell<MaybeUninit<T>>,
+}
+
+impl<T> EbpfGlobal<T> {
+    /// Returns a new [`EbpfGlobal`] which may be overridden at load
+    /// time by the loader.
+    pub const fn new(value: T) -> Self {
+        Self {
+            value: SyncUnsafeCell {
+                value: UnsafeCell::new(MaybeUninit::new(value)),
+            },
+        }
+    }
+}
+
+impl<T: Default> Default for EbpfGlobal<T> {
+    fn default() -> Self {
+        Self::new(T::default())
+    }
+}
+
+impl<T> EbpfGlobal<T>
+where
+    T: Copy,
+{
+    /// Load the contents of this global variable. Internally, uses a [volatile read](ptr::read_volatile) to avoid
+    /// compiler optimizations reordering/removing loads (as would normally be done for a read-only static).
+    ///
+    /// If `EbpfLoader::override_global` was used, the data type of this global and the overridden value must match.
+    #[inline]
+    pub fn load(&self) -> T {
+        unsafe { ptr::read_volatile(self.value.value.get() as *const T) }
+    }
+}
+
+/// [`UnsafeCell`] but [`Sync`].
+///
+/// Copy of the standard library's unstable `SyncUnsafeCell`: <https://github.com/rust-lang/rust/issues/95439>.
+#[repr(transparent)]
+struct SyncUnsafeCell<T> {
+    value: UnsafeCell<T>,
+}
+
+unsafe impl<T: Sync> Sync for SyncUnsafeCell<T> {}
