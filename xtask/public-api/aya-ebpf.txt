@@ -2967,6 +2967,35 @@ pub fn aya_ebpf::programs::xdp::XdpContext::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::programs::xdp::XdpContext
 pub fn aya_ebpf::programs::xdp::XdpContext::from(t: T) -> T
 pub macro aya_ebpf::bpf_printk!
+#[repr(transparent)] pub struct aya_ebpf::EbpfGlobal<T>
+impl<T> aya_ebpf::EbpfGlobal<T> where T: core::marker::Copy
+pub fn aya_ebpf::EbpfGlobal<T>::load(&self) -> T
+impl<T> aya_ebpf::EbpfGlobal<T>
+pub const fn aya_ebpf::EbpfGlobal<T>::new(value: T) -> Self
+impl<T: core::default::Default> core::default::Default for aya_ebpf::EbpfGlobal<T>
+pub fn aya_ebpf::EbpfGlobal<T>::default() -> Self
+impl<T> !core::marker::Freeze for aya_ebpf::EbpfGlobal<T>
+impl<T> core::marker::Send for aya_ebpf::EbpfGlobal<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya_ebpf::EbpfGlobal<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for aya_ebpf::EbpfGlobal<T> where T: core::marker::Unpin
+impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::EbpfGlobal<T>
+impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::EbpfGlobal<T> where T: core::panic::unwind_safe::UnwindSafe
+impl<T, U> core::convert::Into<U> for aya_ebpf::EbpfGlobal<T> where U: core::convert::From<T>
+pub fn aya_ebpf::EbpfGlobal<T>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::EbpfGlobal<T> where U: core::convert::Into<T>
+pub type aya_ebpf::EbpfGlobal<T>::Error = core::convert::Infallible
+pub fn aya_ebpf::EbpfGlobal<T>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::EbpfGlobal<T> where U: core::convert::TryFrom<T>
+pub type aya_ebpf::EbpfGlobal<T>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::EbpfGlobal<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::EbpfGlobal<T> where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::EbpfGlobal<T>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::EbpfGlobal<T> where T: ?core::marker::Sized
+pub fn aya_ebpf::EbpfGlobal<T>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::EbpfGlobal<T> where T: ?core::marker::Sized
+pub fn aya_ebpf::EbpfGlobal<T>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::EbpfGlobal<T>
+pub fn aya_ebpf::EbpfGlobal<T>::from(t: T) -> T
 pub const aya_ebpf::TASK_COMM_LEN: usize
 pub trait aya_ebpf::Argument: aya_ebpf::args::sealed::Argument
 impl<T: aya_ebpf::args::sealed::Argument> aya_ebpf::Argument for T
