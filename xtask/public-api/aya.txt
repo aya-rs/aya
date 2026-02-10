@@ -137,7 +137,7 @@ pub fn aya::maps::ProgramArray<T>::from(t: T) -> T
 pub mod aya::maps::bloom_filter
 pub struct aya::maps::bloom_filter::BloomFilter<T, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
-pub fn aya::maps::bloom_filter::BloomFilter<T, V>::contains(&self, value: &V, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+pub fn aya::maps::bloom_filter::BloomFilter<T, V>::contains(&self, value: &mut V, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
@@ -1565,7 +1565,7 @@ impl<T> core::convert::From<T> for aya::maps::array::Array<T, V>
 pub fn aya::maps::array::Array<T, V>::from(t: T) -> T
 pub struct aya::maps::BloomFilter<T, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
-pub fn aya::maps::bloom_filter::BloomFilter<T, V>::contains(&self, value: &V, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+pub fn aya::maps::bloom_filter::BloomFilter<T, V>::contains(&self, value: &mut V, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
