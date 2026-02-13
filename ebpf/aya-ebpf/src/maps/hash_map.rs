@@ -17,6 +17,8 @@ macro_rules! define_hash_map {
             _kv: PhantomData<(K, V)>,
         }
 
+        impl<K, V> super::private::Map for $name<K, V> {}
+
         impl<K, V> $name<K, V> {
             pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
                 Self::new(max_entries, flags, PinningType::None)

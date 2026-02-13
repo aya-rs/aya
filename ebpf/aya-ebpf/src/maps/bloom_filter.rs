@@ -12,6 +12,8 @@ pub struct BloomFilter<T> {
     _t: PhantomData<T>,
 }
 
+impl<T> super::private::Map for BloomFilter<T> {}
+
 impl<T> BloomFilter<T> {
     map_constructors!((), T, BPF_MAP_TYPE_BLOOM_FILTER, phantom _t);
 
