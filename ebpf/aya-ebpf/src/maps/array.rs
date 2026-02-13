@@ -1,7 +1,5 @@
 use core::{borrow::Borrow, marker::PhantomData, ptr::NonNull};
 
-use aya_ebpf_cty::c_long;
-
 use crate::{
     bindings::bpf_map_type::BPF_MAP_TYPE_ARRAY,
     insert, lookup,
@@ -39,7 +37,7 @@ impl<T> Array<T> {
 
     /// Sets the value of the element at the given index.
     #[inline(always)]
-    pub fn set(&self, index: u32, value: impl Borrow<T>, flags: u64) -> Result<(), c_long> {
+    pub fn set(&self, index: u32, value: impl Borrow<T>, flags: u64) -> Result<(), i32> {
         insert(self.def.as_ptr(), &index, value.borrow(), flags)
     }
 }
