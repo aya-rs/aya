@@ -76,6 +76,7 @@ extern crate alloc;
 extern crate std;
 
 pub mod btf;
+pub mod extern_types;
 #[expect(
     clippy::all,
     clippy::as_pointer_underscore,
@@ -107,6 +108,7 @@ pub mod programs;
 pub mod relocation;
 mod util;
 
+pub use extern_types::KsymsError;
 pub use maps::Map;
 pub use obj::*;
 
