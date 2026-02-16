@@ -14,6 +14,7 @@ impl core::marker::Freeze for aya_log_parser::Fragment
 impl core::marker::Send for aya_log_parser::Fragment
 impl core::marker::Sync for aya_log_parser::Fragment
 impl core::marker::Unpin for aya_log_parser::Fragment
+impl core::marker::UnsafeUnpin for aya_log_parser::Fragment
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log_parser::Fragment
 impl core::panic::unwind_safe::UnwindSafe for aya_log_parser::Fragment
 impl<T, U> core::convert::Into<U> for aya_log_parser::Fragment where U: core::convert::From<T>
@@ -52,6 +53,7 @@ impl core::marker::Freeze for aya_log_parser::Parameter
 impl core::marker::Send for aya_log_parser::Parameter
 impl core::marker::Sync for aya_log_parser::Parameter
 impl core::marker::Unpin for aya_log_parser::Parameter
+impl core::marker::UnsafeUnpin for aya_log_parser::Parameter
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log_parser::Parameter
 impl core::panic::unwind_safe::UnwindSafe for aya_log_parser::Parameter
 impl<T, U> core::convert::Into<U> for aya_log_parser::Parameter where U: core::convert::From<T>
