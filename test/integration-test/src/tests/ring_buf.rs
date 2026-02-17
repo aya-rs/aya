@@ -9,7 +9,6 @@ use std::{
     time::Duration,
 };
 
-use anyhow::Context as _;
 use assert_matches::assert_matches;
 use aya::{
     Ebpf, EbpfLoader,
@@ -148,12 +147,10 @@ fn ring_buf(n: usize) {
         }
 
         let mut seen = Vec::<u64>::new();
+        let mut batch = ring_buf.batch();
         while seen.len() < expected.len() {
-            if let Some(read) = ring_buf.next() {
-                let read: [u8; 8] = (*read)
-                    .try_into()
-                    .with_context(|| format!("data: {:?}", read.len()))
-                    .unwrap();
+            if let Some(read) = batch.next() {
+                let read = read.as_ref().try_into().unwrap();
                 let arg = u64::from_ne_bytes(read);
                 assert_eq!(arg % 2, 0, "got {arg} from probe");
                 seen.push(arg);
@@ -161,7 +158,7 @@ fn ring_buf(n: usize) {
         }
 
         // Make sure that there is nothing else in the ring_buf.
-        assert_matches!(ring_buf.next(), None);
+        assert_matches!(batch.next(), None);
 
         // Ensure that the data that was read matches what was passed, and the rejected count was set
         // properly.
@@ -202,13 +199,14 @@ fn ring_buf_mismatch_size<T>(
     prog.attach(trigger_symbol, "/proc/self/exe", None).unwrap();
 
     trigger(value.into());
+    let mut batch = ring_buf.batch();
     {
-        let read = ring_buf.next().unwrap();
+        let read = batch.next().unwrap();
         assert_eq!(read.len(), size_of::<T>());
         let decoded = decode(read.as_ref());
         assert_eq!(decoded, value);
     }
-    assert_matches!(ring_buf.next(), None);
+    assert_matches!(batch.next(), None);
 }
 
 #[test_log::test]
@@ -266,11 +264,9 @@ async fn ring_buf_async_with_drops() {
         // Construct an AsyncFd from the RingBuf in order to receive readiness notifications.
         let mut seen = 0;
         let mut process_ring_buf = |ring_buf: &mut RingBuf<_>| {
-            while let Some(read) = ring_buf.next() {
-                let read: [u8; 8] = (*read)
-                    .try_into()
-                    .with_context(|| format!("data: {:?}", read.len()))
-                    .unwrap();
+            let mut batch = ring_buf.batch();
+            while let Some(read) = batch.next() {
+                let read = read.as_ref().try_into().unwrap();
                 let arg = u64::from_ne_bytes(read);
                 assert_eq!(arg % 2, 0, "got {arg} from probe");
                 seen += 1;
@@ -387,14 +383,13 @@ async fn ring_buf_async_no_drop() {
             let mut seen = Vec::with_capacity(expected_len);
             while seen.len() < expected_len {
                 let mut guard = async_fd.readable_mut().await.unwrap();
-                let ring_buf = guard.get_inner_mut();
-                while let Some(read) = ring_buf.next() {
-                    let read: [u8; 8] = (*read)
-                        .try_into()
-                        .with_context(|| format!("data: {:?}", read.len()))
-                        .unwrap();
-                    let arg = u64::from_ne_bytes(read);
-                    seen.push(arg);
+                {
+                    let mut batch = guard.get_inner_mut().batch();
+                    while let Some(read) = batch.next() {
+                        let read = read.as_ref().try_into().unwrap();
+                        let arg = u64::from_ne_bytes(read);
+                        seen.push(arg);
+                    }
                 }
                 guard.clear_ready();
             }
@@ -443,7 +438,8 @@ fn ring_buf_epoll_wakeup() {
         let writer = WriterThread::spawn();
         while total_events < WriterThread::NUM_MESSAGES {
             epoll::wait(epoll_fd, -1, &mut epoll_event_buf).unwrap();
-            while let Some(read) = ring_buf.next() {
+            let mut batch = ring_buf.batch();
+            while let Some(read) = batch.next() {
                 assert_eq!(read.len(), 8);
                 total_events += 1;
             }
@@ -468,10 +464,12 @@ async fn ring_buf_asyncfd_events() {
         let writer = WriterThread::spawn();
         while total_events < WriterThread::NUM_MESSAGES {
             let mut guard = async_fd.readable_mut().await.unwrap();
-            let rb = guard.get_inner_mut();
-            while let Some(read) = rb.next() {
-                assert_eq!(read.len(), 8);
-                total_events += 1;
+            {
+                let mut batch = guard.get_inner_mut().batch();
+                while let Some(read) = batch.next() {
+                    assert_eq!(read.len(), 8);
+                    total_events += 1;
+                }
             }
             guard.clear_ready();
         }
@@ -546,10 +544,13 @@ async fn ring_buf_pinned() {
             ring_buf_trigger_ebpf_program(v);
         }
         let (to_read_before_reopen, to_read_after_reopen) = to_write_before_reopen.split_at(2);
-        for v in to_read_before_reopen {
-            let item = ring_buf.next().unwrap();
-            let item: [u8; 8] = item.as_ref().try_into().unwrap();
-            assert_eq!(item, v.to_ne_bytes());
+        {
+            let mut batch = ring_buf.batch();
+            for v in to_read_before_reopen {
+                let item = batch.next().unwrap();
+                let item: [u8; 8] = item.as_ref().try_into().unwrap();
+                assert_eq!(item, v.to_ne_bytes());
+            }
         }
         drop(ring_buf);
         drop(bpf);
@@ -574,15 +575,16 @@ async fn ring_buf_pinned() {
         }
         // Read both the data that was written before the ring buffer was reopened and the data that
         // was written after it was reopened.
+        let mut batch = ring_buf.batch();
         for v in to_read_after_reopen
             .iter()
             .chain(to_write_after_reopen.iter())
         {
-            let item = ring_buf.next().unwrap();
+            let item = batch.next().unwrap();
             let item: [u8; 8] = item.as_ref().try_into().unwrap();
             assert_eq!(item, v.to_ne_bytes());
         }
         // Make sure there is nothing else in the ring buffer.
-        assert_matches!(ring_buf.next(), None);
+        assert_matches!(batch.next(), None);
     }
 }

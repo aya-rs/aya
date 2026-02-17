@@ -37,7 +37,8 @@ use crate::{
 ///
 /// To receive events you need to:
 /// * Construct [`RingBuf`] using [`RingBuf::try_from`].
-/// * Call [`RingBuf::next`] to poll events from the [`RingBuf`].
+/// * Call [`RingBuf::next`] to read one entry at a time, or [`RingBuf::batch`]
+///   for amortized consumer-position writes while draining multiple entries.
 ///
 /// To receive async notifications of data availability, you may construct an
 /// [`tokio::io::unix::AsyncFd`] from the [`RingBuf`]'s file descriptor and poll it for readiness.
@@ -71,8 +72,11 @@ use crate::{
 /// loop {
 ///     let mut guard = poll.readable();
 ///     let ring_buf = guard.inner_mut();
-///     while let Some(item) = ring_buf.next() {
-///         println!("received: {:?}", item);
+///     {
+///         let mut batch = ring_buf.batch();
+///         while let Some(item) = batch.next() {
+///             println!("received: {:?}", item);
+///         }
 ///     }
 ///     guard.clear_ready();
 /// }
@@ -130,7 +134,23 @@ impl<T> RingBuf<T> {
         let Self {
             consumer, producer, ..
         } = self;
-        producer.next(consumer)
+        producer.next(consumer, None)
+    }
+
+    /// Returns a batch reader for amortized consumer-position writes.
+    ///
+    /// Entries yielded from this batch advance the local consumer position on
+    /// drop, and the shared consumer position is published once when the batch
+    /// is dropped.
+    pub const fn batch(&mut self) -> RingBufBatch<'_> {
+        let Self {
+            consumer, producer, ..
+        } = self;
+        RingBufBatch {
+            consumer,
+            producer,
+            advanced: false,
+        }
     }
 }
 
@@ -151,10 +171,11 @@ impl<T: Borrow<MapData>> AsRawFd for RingBuf<T> {
     }
 }
 
-/// The current outstanding item read from the ringbuf.
+/// An item read from the ring buffer.
 pub struct RingBufItem<'a> {
     data: &'a [u8],
     consumer: &'a mut ConsumerPos,
+    advanced: Option<&'a mut bool>,
 }
 
 impl Deref for RingBufItem<'_> {
@@ -168,8 +189,17 @@ impl Deref for RingBufItem<'_> {
 
 impl Drop for RingBufItem<'_> {
     fn drop(&mut self) {
-        let Self { consumer, data } = self;
-        consumer.consume(data.len())
+        let Self {
+            data,
+            consumer,
+            advanced,
+        } = self;
+        consumer.consume(data.len());
+        if let Some(advanced) = advanced {
+            **advanced = true;
+        } else {
+            consumer.commit();
+        }
     }
 }
 
@@ -182,12 +212,58 @@ impl Debug for RingBufItem<'_> {
                     pos,
                     metadata: ConsumerMetadata { mmap: _ },
                 },
+            advanced: _,
         } = self;
         // In general Relaxed here is sufficient, for debugging, it certainly is.
         f.debug_struct("RingBufItem")
             .field("pos", pos)
             .field("len", &data.len())
             .finish()
+    }
+}
+
+/// A batch reader for amortized consumer-position writes.
+pub struct RingBufBatch<'a> {
+    consumer: &'a mut ConsumerPos,
+    producer: &'a mut ProducerData,
+    advanced: bool,
+}
+
+impl RingBufBatch<'_> {
+    /// Try to take a new entry from the ringbuf.
+    ///
+    /// Returns `Some(item)` if the ringbuf is not empty. Returns `None` if the ringbuf is empty, in
+    /// which case the caller may register for availability notifications through `epoll` or other
+    /// APIs. Only one [`RingBufItem`] may be outstanding at a time.
+    //
+    // This is not an implementation of `Iterator` because we need to be able to refer to the
+    // lifetime of the iterator in the returned `RingBufItem`. If the Iterator::Item leveraged GATs,
+    // one could imagine an implementation of `Iterator` that would work. GATs are stabilized in
+    // Rust 1.65, but there's not yet a trait that the community seems to have standardized around.
+    #[expect(
+        clippy::should_implement_trait,
+        reason = "this is not an iterator; it yields a borrow-tied item"
+    )]
+    pub fn next(&mut self) -> Option<RingBufItem<'_>> {
+        let Self {
+            consumer,
+            producer,
+            advanced,
+        } = self;
+        producer.next(consumer, Some(advanced))
+    }
+}
+
+impl Drop for RingBufBatch<'_> {
+    fn drop(&mut self) {
+        let Self {
+            consumer,
+            producer: _,
+            advanced,
+        } = self;
+        if *advanced {
+            consumer.commit();
+        }
     }
 }
 
@@ -228,10 +304,13 @@ impl ConsumerPos {
     }
 
     fn consume(&mut self, len: usize) {
-        let Self { pos, metadata } = self;
+        let Self { pos, metadata: _ } = self;
 
         *pos += (usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap() + len).next_multiple_of(8);
+    }
 
+    fn commit(&self) {
+        let Self { pos, metadata } = self;
         // Write operation needs to be properly ordered with respect to the producer committing new
         // data to the ringbuf. The producer uses xchg (SeqCst) to commit new data [1]. The producer
         // reads the consumer offset after clearing the busy bit on a new entry [2]. By using SeqCst
@@ -314,7 +393,11 @@ impl ProducerData {
         })
     }
 
-    fn next<'a>(&'a mut self, consumer: &'a mut ConsumerPos) -> Option<RingBufItem<'a>> {
+    fn next<'a>(
+        &'a mut self,
+        consumer: &'a mut ConsumerPos,
+        mut advanced: Option<&'a mut bool>,
+    ) -> Option<RingBufItem<'a>> {
         let Self {
             mmap,
             data_offset,
@@ -334,31 +417,17 @@ impl ProducerData {
                 mmap_data.len()
             )
         });
-        while data_available(mmap, pos_cache, consumer) {
-            match read_item(data_pages, *mask, consumer) {
-                Item::Busy => return None,
-                Item::Discard { len } => consumer.consume(len),
-                Item::Data(data) => return Some(RingBufItem { data, consumer }),
-            }
-        }
-        return None;
-
-        enum Item<'a> {
-            Busy,
-            Discard { len: usize },
-            Data(&'a [u8]),
-        }
-
-        fn data_available(
-            producer: &MMap,
-            producer_cache: &mut usize,
-            consumer: &ConsumerPos,
-        ) -> bool {
-            let ConsumerPos { pos: consumer, .. } = consumer;
+        loop {
             // Refresh the producer position cache if it appears that the consumer is caught up
             // with the producer position.
-            if consumer == producer_cache {
-                *producer_cache = load_producer_pos(producer);
+            if consumer.pos == *pos_cache {
+                // Persist the consumer position to avoid starving the producer.
+                if let Some(advanced) = advanced.as_mut() {
+                    if std::mem::replace(*advanced, false) {
+                        consumer.commit();
+                    }
+                }
+                *pos_cache = load_producer_pos(mmap);
             }
 
             // Note that we don't compare the order of the values because the producer position may
@@ -370,7 +439,33 @@ impl ProducerData {
             // producer position has wrapped around.
             //
             // [1]: https://github.com/torvalds/linux/blob/4b810bf0/kernel/bpf/ringbuf.c#L434-L440
-            consumer != producer_cache
+            if consumer.pos == *pos_cache {
+                return None;
+            }
+            match read_item(data_pages, *mask, consumer) {
+                Item::Busy => return None,
+                Item::Discard { len } => {
+                    consumer.consume(len);
+                    if let Some(advanced) = advanced.as_mut() {
+                        **advanced = true;
+                    } else {
+                        consumer.commit();
+                    }
+                }
+                Item::Data(data) => {
+                    return Some(RingBufItem {
+                        data,
+                        consumer,
+                        advanced,
+                    });
+                }
+            }
+        }
+
+        enum Item<'a> {
+            Busy,
+            Discard { len: usize },
+            Data(&'a [u8]),
         }
 
         fn read_item<'data>(data: &'data [u8], mask: u32, pos: &ConsumerPos) -> Item<'data> {
