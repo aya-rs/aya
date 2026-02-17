@@ -1,3 +1,5 @@
+#![cfg_attr(test, expect(unused_crate_dependencies, reason = "used in benchmarks"))]
+
 macro_rules! bpf_file {
     ($($uppercase:ident => $lowercase:literal),* $(,)?) => {
         $(

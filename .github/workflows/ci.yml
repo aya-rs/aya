@@ -398,6 +398,10 @@ jobs:
         if: runner.os == 'Linux' && matrix.skip-local != true
         run: cargo xtask integration-test local
 
+      - name: Run local integration benchmarks
+        if: runner.os == 'Linux' && matrix.skip-local != true
+        run: cargo xtask integration-test --bench local
+
       - name: Run virtualized integration tests
         if: matrix.download-kernel-images != 'local'
         run: |
