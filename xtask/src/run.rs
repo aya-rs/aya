@@ -61,6 +61,10 @@ pub(crate) struct Options {
     #[clap(short = 'p', long, global = true, default_value = INTEGRATION_TEST_PACKAGE)]
     package: String,
 
+    /// Build and run benches instead of tests.
+    #[clap(long, global = true)]
+    benches: bool,
+
     /// Arguments to pass to your application.
     #[clap(global = true, last = true)]
     run_args: Vec<OsString>,
@@ -222,17 +226,25 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
     let Options {
         environment,
         package,
+        benches,
         run_args,
     } = opts;
 
     type Binary = (String, PathBuf);
 
+    let target_kind = if benches { "--benches" } else { "--tests" };
     let binaries = |package: &str,
                     target: Option<&str>,
                     envs: &[(&OsStr, &OsStr)]|
      -> Result<Vec<(&'static str, Vec<Binary>)>> {
-        ["dev", "release"]
-            .into_iter()
+        let profiles: &[&str] = if benches {
+            &["release"]
+        } else {
+            &["dev", "release"]
+        };
+        profiles
+            .iter()
+            .copied()
             .map(|profile| {
                 let binaries = build(target, |cmd| {
                     if package == INTEGRATION_TEST_PACKAGE {
@@ -242,7 +254,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     cmd.envs(envs.iter().copied()).args([
                         "--package",
                         package,
-                        "--tests",
+                        target_kind,
                         "--profile",
                         profile,
                     ])
@@ -252,10 +264,19 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
             .collect()
     };
 
-    // Use --test-threads=1 to prevent tests from interacting with shared
-    // kernel state due to the lack of inter-test isolation.
-    let default_args = [OsString::from("--test-threads=1")];
-    let run_args = default_args.iter().chain(run_args.iter());
+    let default_args = if benches {
+        // Criterion bench binaries print timing results when invoked with
+        // --bench.
+        &["--bench"]
+    } else {
+        // Use --test-threads=1 to prevent tests from interacting with shared
+        // kernel state due to the lack of inter-test isolation.
+        &["--test-threads=1"]
+    };
+    let run_args = default_args
+        .iter()
+        .map(OsStr::new)
+        .chain(run_args.iter().map(OsString::as_os_str));
 
     match environment {
         Environment::Local { runner } => {
@@ -798,8 +819,8 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 for accel in ["kvm", "hvf", "tcg"] {
                     qemu.args(["-accel", accel]);
                 }
-                let console = OsString::from(console);
-                let mut kernel_args = std::iter::once(("console", &console))
+                let console = OsStr::new(console);
+                let mut kernel_args = std::iter::once(("console", console))
                     .chain(run_args.clone().map(|run_arg| ("init.arg", run_arg)))
                     .enumerate()
                     .fold(OsString::new(), |mut acc, (i, (k, v))| {
