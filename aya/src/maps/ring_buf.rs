@@ -6,8 +6,9 @@
 
 use std::{
     borrow::Borrow,
+    convert::Infallible,
     fmt::{self, Debug, Formatter},
-    ops::Deref,
+    ops::{ControlFlow, Deref},
     os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
     sync::atomic::{self, AtomicU32, AtomicUsize, Ordering},
 };
@@ -37,7 +38,9 @@ use crate::{
 ///
 /// To receive events you need to:
 /// * Construct [`RingBuf`] using [`RingBuf::try_from`].
-/// * Call [`RingBuf::next`] to poll events from the [`RingBuf`].
+/// * Call [`RingBuf::next`] to read one entry at a time, or
+///   [`RingBuf::try_fold`], [`RingBuf::fold`], or [`RingBuf::for_each`] to
+///   process available entries in bulk.
 ///
 /// To receive async notifications of data availability, you may construct an
 /// [`tokio::io::unix::AsyncFd`] from the [`RingBuf`]'s file descriptor and poll it for readiness.
@@ -71,9 +74,9 @@ use crate::{
 /// loop {
 ///     let mut guard = poll.readable();
 ///     let ring_buf = guard.inner_mut();
-///     while let Some(item) = ring_buf.next() {
+///     ring_buf.for_each(|item| {
 ///         println!("received: {:?}", item);
-///     }
+///     });
 ///     guard.clear_ready();
 /// }
 /// # Ok::<(), aya::EbpfError>(())
@@ -138,6 +141,57 @@ impl<T> RingBuf<T> {
         } = self;
         producer.next(consumer)
     }
+
+    /// Processes entries in the ring buffer with `f`.
+    ///
+    /// For each available data entry, `f` receives the accumulator and
+    /// entry:
+    /// * [`ControlFlow::Continue(next)`](ControlFlow::Continue) keeps draining with `next`.
+    /// * [`ControlFlow::Break(break_value)`](ControlFlow::Break) stops early and returns `break_value`.
+    ///
+    /// After stopping early, unread entries might not produce another readiness
+    /// notification. Drain the ring buffer before waiting for readiness again.
+    ///
+    /// If the ring buffer is fully drained, returns [`ControlFlow::Continue`]
+    /// containing the final accumulator.
+    pub fn try_fold<B, C, F>(&mut self, init: C, f: F) -> ControlFlow<B, C>
+    where
+        F: FnMut(C, &[u8]) -> ControlFlow<B, C>,
+    {
+        let Self {
+            map: _,
+            consumer,
+            producer,
+        } = self;
+        producer.try_fold(consumer, init, f)
+    }
+
+    /// Processes entries in the ring buffer with `f`.
+    ///
+    /// For each available data entry, `f` receives the accumulator and entry,
+    /// and returns the next accumulator.
+    ///
+    /// Unlike [`RingBuf::try_fold`], this function cannot short-circuit: it
+    /// always processes entries until the ring buffer is fully drained, then
+    /// returns the final accumulator.
+    pub fn fold<C, F>(&mut self, init: C, mut f: F) -> C
+    where
+        F: FnMut(C, &[u8]) -> C,
+    {
+        let ControlFlow::Continue(acc) = self
+            .try_fold::<Infallible, _, _>(init, |acc, data| ControlFlow::Continue(f(acc, data)));
+        acc
+    }
+
+    /// Processes entries in the ring buffer with `f`.
+    ///
+    /// For each available data entry, `f` receives the entry.
+    pub fn for_each<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&[u8]),
+    {
+        self.fold((), |(), data| f(data))
+    }
 }
 
 impl<T: Borrow<MapData>> AsFd for RingBuf<T> {
@@ -157,7 +211,7 @@ impl<T: Borrow<MapData>> AsRawFd for RingBuf<T> {
     }
 }
 
-/// The current outstanding item read from the ringbuf.
+/// An item read from the ring buffer.
 pub struct RingBufItem<'a> {
     data: &'a [u8],
     consumer: &'a mut ConsumerPos,
@@ -174,8 +228,9 @@ impl Deref for RingBufItem<'_> {
 
 impl Drop for RingBufItem<'_> {
     fn drop(&mut self) {
-        let Self { consumer, data } = self;
-        consumer.consume(data.len())
+        let Self { data, consumer } = self;
+        consumer.consume(data.len());
+        consumer.commit();
     }
 }
 
@@ -233,11 +288,14 @@ impl ConsumerPos {
     }
 
     fn consume(&mut self, len: usize) {
-        let Self { pos, metadata } = self;
+        let Self { pos, metadata: _ } = self;
 
         let record_len = (usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap() + len).next_multiple_of(8);
         *pos = pos.wrapping_add(record_len);
+    }
 
+    fn commit(&mut self) {
+        let Self { pos, metadata } = self;
         // Publish the new position after reading the record. The kernel pairs this with an Acquire
         // load before reusing the record's storage [1].
         //
@@ -322,22 +380,57 @@ impl ProducerData {
             pos_cache,
             mask,
         } = self;
-        let mmap = &*mmap;
+        let data_pages = Self::data_pages(mmap, *data_offset);
+        // The item returned by the previous call may have published a new consumer position after
+        // this function returned.
+        let mut may_have_published = true;
+        loop {
+            match Self::next_item(
+                mmap,
+                data_pages,
+                pos_cache,
+                *mask,
+                consumer,
+                &mut may_have_published,
+                |_consumer| false,
+            )? {
+                Item::Discard { len } => {
+                    consumer.consume(len);
+                    consumer.commit();
+                    may_have_published = true;
+                }
+                Item::Data(data) => return Some(RingBufItem { data, consumer }),
+            }
+        }
+    }
+
+    fn data_pages(mmap: &MMap, data_offset: usize) -> &[u8] {
         let mmap_data = mmap.as_ref();
         #[expect(
             clippy::panic,
             reason = "invalid ring buffer layout is a fatal internal error"
         )]
-        let data_pages = mmap_data.get(*data_offset..).unwrap_or_else(|| {
+        mmap_data.get(data_offset..).unwrap_or_else(|| {
             panic!(
                 "offset {} out of bounds, data len {}",
                 data_offset,
                 mmap_data.len()
             )
-        });
-        // The item returned by the previous call may have published a new consumer position after
-        // this function returned.
-        let mut may_have_published = true;
+        })
+    }
+
+    fn next_item<'a, F>(
+        mmap: &'a MMap,
+        data_pages: &'a [u8],
+        pos_cache: &mut usize,
+        mask: u32,
+        consumer: &mut ConsumerPos,
+        may_have_published: &mut bool,
+        mut flush: F,
+    ) -> Option<Item<'a>>
+    where
+        F: FnMut(&mut ConsumerPos) -> bool,
+    {
         loop {
             let ConsumerPos { pos, metadata: _ } = consumer;
             // Note that we don't compare the order of the values because the word-sized producer
@@ -353,41 +446,101 @@ impl ProducerData {
             let caught_up = *pos == *pos_cache;
 
             if !caught_up {
-                match consumer.read_item(data_pages, *mask) {
-                    Item::Busy => {}
-                    Item::Discard { len } => {
-                        consumer.consume(len);
-                        may_have_published = true;
-                        continue;
-                    }
-                    Item::Data(data) => return Some(RingBufItem { data, consumer }),
+                if let Some(item) = consumer.read_item(data_pages, mask) {
+                    return Some(item);
                 }
             }
 
-            if !may_have_published {
+            if flush(consumer) {
+                *may_have_published = true;
+            }
+            if !*may_have_published {
                 return None;
             }
 
             // Ensure either the next load sees a new record or its producer sees the updated
             // consumer position and sends a notification.
             atomic::fence(Ordering::SeqCst);
-            may_have_published = false;
+            *may_have_published = false;
 
             if caught_up {
                 *pos_cache = load_producer_pos(mmap);
             }
         }
     }
+
+    fn try_fold<B, C, F>(
+        &mut self,
+        consumer: &mut ConsumerPos,
+        init: C,
+        mut f: F,
+    ) -> ControlFlow<B, C>
+    where
+        F: FnMut(C, &[u8]) -> ControlFlow<B, C>,
+    {
+        let Self {
+            mmap,
+            data_offset,
+            pos_cache,
+            mask,
+        } = self;
+        let data_pages = Self::data_pages(mmap, *data_offset);
+        let mut acc = init;
+        let mut advanced = false;
+        let consume = |consumer: &mut ConsumerPos, advanced: &mut bool, len: usize| {
+            consumer.consume(len);
+            *advanced = true;
+        };
+        let flush = |consumer: &mut ConsumerPos, advanced: &mut bool| {
+            let was_advanced = std::mem::replace(advanced, false);
+            if was_advanced {
+                consumer.commit();
+            }
+            was_advanced
+        };
+        // This must be deferred in case `f` panics.
+        let mut guard = scopeguard::guard((consumer, &mut advanced), |(consumer, advanced)| {
+            flush(consumer, advanced);
+        });
+        // The item returned by the previous call may have published a new consumer position after
+        // this function returned.
+        let mut may_have_published = true;
+        loop {
+            let (consumer, advanced) = &mut *guard;
+            let Some(item) = Self::next_item(
+                mmap,
+                data_pages,
+                pos_cache,
+                *mask,
+                consumer,
+                &mut may_have_published,
+                |consumer| flush(consumer, advanced),
+            ) else {
+                break;
+            };
+            match item {
+                Item::Discard { len } => consume(consumer, advanced, len),
+                Item::Data(data) => {
+                    // This must be deferred in case `f` panics.
+                    scopeguard::defer! { consume(consumer, advanced, data.len()) };
+                    match f(acc, data) {
+                        ControlFlow::Continue(next) => acc = next,
+                        ControlFlow::Break(v) => return ControlFlow::Break(v),
+                    }
+                }
+            }
+        }
+        ControlFlow::Continue(acc)
+    }
 }
 
 enum Item<'a> {
-    Busy,
     Discard { len: usize },
     Data(&'a [u8]),
 }
 
 impl ConsumerPos {
-    fn read_item<'data>(&self, data: &'data [u8], mask: u32) -> Item<'data> {
+    fn read_item<'data>(&self, data: &'data [u8], mask: u32) -> Option<Item<'data>> {
         let Self { pos, metadata: _ } = self;
         let offset = pos & usize::try_from(mask).unwrap();
         #[expect(
@@ -407,15 +560,15 @@ impl ConsumerPos {
         // [1]: https://github.com/torvalds/linux/blob/eb26cbb1/kernel/bpf/ringbuf.c#L488
         let header = unsafe { &*header_ptr }.load(Ordering::Acquire);
         if header & BPF_RINGBUF_BUSY_BIT != 0 {
-            Item::Busy
+            None
         } else {
             let len = usize::try_from(header & mask).unwrap();
             if header & BPF_RINGBUF_DISCARD_BIT != 0 {
-                Item::Discard { len }
+                Some(Item::Discard { len })
             } else {
                 let data_offset = offset + usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap();
                 let data = must_get_data(data_offset, len);
-                Item::Data(data)
+                Some(Item::Data(data))
             }
         }
     }
