@@ -58,17 +58,17 @@ use std::{
     ptr,
 };
 
-use aya_obj::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type, parse_map_info};
+use aya_obj::{generated::bpf_map_type, parse_map_info, EbpfSectionKind, InvalidTypeBinding};
 use thiserror::Error;
 
 use crate::{
-    PinningType, Pod,
     pin::PinError,
     sys::{
-        SyscallError, bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
-        bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object,
+        bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id, bpf_map_get_next_key,
+        bpf_map_update_elem_ptr, bpf_pin_object, SyscallError,
     },
     util::nr_cpus,
+    PinningType, Pod,
 };
 
 pub mod array;
@@ -85,10 +85,10 @@ pub mod stack;
 pub mod stack_trace;
 pub mod xdp;
 
-pub use array::{Array, PerCpuArray, ProgramArray};
+pub use array::{Array, ArrayOfMaps, PerCpuArray, ProgramArray};
 pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, PerCpuHashMap};
-pub use info::{MapInfo, MapType, loaded_maps};
+pub use info::{loaded_maps, MapInfo, MapType};
 pub use lpm_trie::LpmTrie;
 pub use perf::PerfEventArray;
 pub use queue::Queue;
@@ -236,6 +236,8 @@ impl AsFd for MapFd {
 pub enum Map {
     /// An [`Array`] map.
     Array(MapData),
+    /// An [`ArrayOfMaps`] map.
+    ArrayOfMaps(MapData),
     /// A [`BloomFilter`] map.
     BloomFilter(MapData),
     /// A [`CpuMap`] map.
@@ -285,6 +287,7 @@ impl Map {
     const fn map_type(&self) -> u32 {
         match self {
             Self::Array(map) => map.obj.map_type(),
+            Self::ArrayOfMaps(map) => map.obj.map_type(),
             Self::BloomFilter(map) => map.obj.map_type(),
             Self::CpuMap(map) => map.obj.map_type(),
             Self::DevMap(map) => map.obj.map_type(),
@@ -316,6 +319,7 @@ impl Map {
     pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
         match self {
             Self::Array(map) => map.pin(path),
+            Self::ArrayOfMaps(map) => map.pin(path),
             Self::BloomFilter(map) => map.pin(path),
             Self::CpuMap(map) => map.pin(path),
             Self::DevMap(map) => map.pin(path),
@@ -374,7 +378,7 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_RINGBUF => Self::RingBuf(map_data),
             bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER => Self::BloomFilter(map_data),
             bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY => Self::Unsupported(map_data),
-            bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Self::ArrayOfMaps(map_data),
             bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::Unsupported(map_data),
@@ -422,6 +426,7 @@ macro_rules! impl_map_pin {
 }
 
 impl_map_pin!(() {
+    ArrayOfMaps,
     ProgramArray,
     SockMap,
     StackTraceMap,
@@ -499,6 +504,7 @@ macro_rules! impl_try_from_map {
 }
 
 impl_try_from_map!(() {
+    ArrayOfMaps,
     CpuMap,
     DevMap,
     DevMapHash,
@@ -595,11 +601,66 @@ impl MapData {
             }
         }
 
-        let fd =
-            bpf_create_map(&c_name, &obj, btf_fd).map_err(|io_error| MapError::CreateError {
+        let fd = bpf_create_map(&c_name, &obj, btf_fd, None).map_err(|io_error| {
+            MapError::CreateError {
                 name: name.into(),
                 io_error,
+            }
+        })?;
+        Ok(Self {
+            obj,
+            fd: MapFd::from_fd(fd),
+        })
+    }
+
+    /// Creates a map-of-maps type, first creating a temporary inner map template
+    /// whose fd is passed as `inner_map_fd` to the outer map creation syscall.
+    pub fn create_map_of_maps(
+        obj: aya_obj::Map,
+        name: &str,
+        btf_fd: Option<BorrowedFd<'_>>,
+    ) -> Result<Self, MapError> {
+        use aya_obj::maps::LegacyMap;
+
+        let c_name = CString::new(name)
+            .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
+
+        let inner_def = obj.inner_map_def().ok_or_else(|| MapError::CreateError {
+            name: name.into(),
+            io_error: io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "map-of-maps requires inner_map_def (embed it in the eBPF-side struct)",
+            ),
+        })?;
+
+        // Create a temporary inner map to use as the template
+        let inner_obj = aya_obj::Map::Legacy(LegacyMap {
+            def: *inner_def,
+            inner_map_def: None,
+            section_index: 0,
+            section_kind: EbpfSectionKind::Undefined,
+            symbol_index: None,
+            data: Vec::new(),
+        });
+        let inner_name = CString::new(format!("{name}.inner"))
+            .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
+        let inner_fd = bpf_create_map(&inner_name, &inner_obj, None, None).map_err(|io_error| {
+            MapError::CreateError {
+                name: name.into(),
+                io_error,
+            }
+        })?;
+
+        // Create the outer map with the inner map fd
+        let fd =
+            bpf_create_map(&c_name, &obj, btf_fd, Some(inner_fd.as_fd())).map_err(|io_error| {
+                MapError::CreateError {
+                    name: name.into(),
+                    io_error,
+                }
             })?;
+        // inner_fd is dropped here — the kernel only needs it during creation
+
         Ok(Self {
             obj,
             fd: MapFd::from_fd(fd),
@@ -958,15 +1019,15 @@ impl<T: Pod> Deref for PerCpuValues<T> {
 #[cfg(test)]
 mod test_utils {
     use aya_obj::{
-        EbpfSectionKind,
         generated::{bpf_cmd, bpf_map_type},
         maps::LegacyMap,
+        EbpfSectionKind,
     };
 
     use crate::{
         bpf_map_def,
         maps::MapData,
-        sys::{Syscall, override_syscall},
+        sys::{override_syscall, Syscall},
     };
 
     pub(super) fn new_map(obj: aya_obj::Map) -> MapData {
@@ -989,6 +1050,7 @@ mod test_utils {
                 max_entries: 1024,
                 ..Default::default()
             },
+            inner_map_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
@@ -1008,6 +1070,7 @@ mod test_utils {
                 max_entries,
                 ..Default::default()
             },
+            inner_map_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
@@ -1025,7 +1088,7 @@ mod tests {
     use libc::EFAULT;
 
     use super::*;
-    use crate::sys::{Syscall, override_syscall};
+    use crate::sys::{override_syscall, Syscall};
 
     fn new_obj_map() -> aya_obj::Map {
         test_utils::new_obj_map::<u32>(bpf_map_type::BPF_MAP_TYPE_HASH)

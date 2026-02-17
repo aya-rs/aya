@@ -6,14 +6,14 @@ use log::debug;
 use object::{SectionIndex, SymbolKind};
 
 use crate::{
-    EbpfSectionKind,
     generated::{
-        BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
-        BPF_PSEUDO_MAP_VALUE, bpf_insn,
+        bpf_insn, BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
+        BPF_PSEUDO_MAP_VALUE,
     },
     maps::Map,
     obj::{Function, Object},
     util::{HashMap, HashSet},
+    EbpfSectionKind,
 };
 
 #[cfg(feature = "std")]
@@ -519,6 +519,7 @@ mod test {
     fn fake_legacy_map(symbol_index: usize) -> Map {
         Map::Legacy(LegacyMap {
             def: Default::default(),
+            inner_map_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Undefined,
             symbol_index: Some(symbol_index),

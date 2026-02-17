@@ -8,10 +8,10 @@ use std::{
 };
 
 use aya_obj::{
-    EbpfSectionKind, Features, Object, ParseError, ProgramSection,
     btf::{Btf, BtfError, BtfFeatures, BtfRelocationError},
-    generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
+    generated::{bpf_map_type, BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS},
     relocation::EbpfRelocationError,
+    EbpfSectionKind, Features, Object, ParseError, ProgramSection,
 };
 use log::{debug, warn};
 use thiserror::Error;
@@ -57,7 +57,7 @@ unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64, u128, i128);
 // It only makes sense that an array of POD types is itself POD
 unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
 
-pub use aya_obj::maps::{PinningType, bpf_map_def};
+pub use aya_obj::maps::{bpf_map_def, PinningType};
 
 pub(crate) static FEATURES: LazyLock<Features> = LazyLock::new(detect_features);
 
@@ -528,7 +528,17 @@ impl<'a> EbpfLoader<'a> {
                 MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd)?
             } else {
                 match obj.pinning() {
-                    PinningType::None => MapData::create(obj, &name, btf_fd)?,
+                    PinningType::None => {
+                        if matches!(
+                            map_type,
+                            bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS
+                                | bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS
+                        ) {
+                            MapData::create_map_of_maps(obj, &name, btf_fd)?
+                        } else {
+                            MapData::create(obj, &name, btf_fd)?
+                        }
+                    }
                     PinningType::ByName => {
                         // pin maps in /sys/fs/bpf by default to align with libbpf
                         // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
@@ -778,6 +788,7 @@ fn parse_map(
         bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
         bpf_map_type::BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
         bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Map::SkStorage(map),
+        bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Map::ArrayOfMaps(map),
         m_type => {
             if allow_unsupported_maps {
                 Map::Unsupported(map)
@@ -840,7 +851,11 @@ const fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
     const fn div_ceil(n: u32, rhs: u32) -> u32 {
         let d = n / rhs;
         let r = n % rhs;
-        if r > 0 && rhs > 0 { d + 1 } else { d }
+        if r > 0 && rhs > 0 {
+            d + 1
+        } else {
+            d
+        }
     }
     let pages_needed = div_ceil(byte_size, page_size);
     page_size * pages_needed.next_power_of_two()

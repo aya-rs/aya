@@ -76,6 +76,7 @@ macro_rules! map_constructors {
 }
 
 pub mod array;
+pub mod array_of_maps;
 pub mod bloom_filter;
 pub mod hash_map;
 pub mod lpm_trie;
@@ -91,6 +92,7 @@ pub mod stack_trace;
 pub mod xdp;
 
 pub use array::Array;
+pub use array_of_maps::ArrayOfMaps;
 pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, LruHashMap, LruPerCpuHashMap, PerCpuHashMap};
 pub use lpm_trie::LpmTrie;

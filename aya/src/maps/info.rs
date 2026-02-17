@@ -10,11 +10,11 @@ use aya_obj::generated::{bpf_map_info, bpf_map_type};
 
 use super::{MapError, MapFd};
 use crate::{
-    FEATURES,
     sys::{
-        SyscallError, bpf_get_object, bpf_map_get_fd_by_id, bpf_map_get_info_by_fd, iter_map_ids,
+        bpf_get_object, bpf_map_get_fd_by_id, bpf_map_get_info_by_fd, iter_map_ids, SyscallError,
     },
     util::bytes_of_bpf_name,
+    FEATURES,
 };
 
 /// Provides Provides metadata information about a loaded eBPF map.

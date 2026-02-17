@@ -17,9 +17,9 @@ use core::{
 
 use log::debug;
 use object::{
+    read::{Object as _, ObjectSection as _, Section as ObjSection},
     Endianness, ObjectSymbol as _, ObjectSymbolTable as _, RelocationTarget, SectionIndex,
     SectionKind, SymbolKind,
-    read::{Object as _, ObjectSection as _, Section as ObjSection},
 };
 
 use crate::{
@@ -27,14 +27,14 @@ use crate::{
         Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,
     },
     generated::{
-        BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K, bpf_func_id, bpf_insn, bpf_map_info,
-        bpf_map_type::BPF_MAP_TYPE_ARRAY,
+        bpf_func_id, bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY, BPF_CALL,
+        BPF_F_RDONLY_PROG, BPF_JMP, BPF_K,
     },
-    maps::{BtfMap, BtfMapDef, LegacyMap, MINIMUM_MAP_SIZE, Map, PinningType, bpf_map_def},
+    maps::{bpf_map_def, BtfMap, BtfMapDef, LegacyMap, Map, PinningType, MINIMUM_MAP_SIZE},
     programs::{
         CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType, XdpAttachType,
     },
-    relocation::{INS_SIZE, Relocation, Symbol},
+    relocation::{Relocation, Symbol, INS_SIZE},
     util::HashMap,
 };
 
@@ -818,6 +818,21 @@ impl Object {
                 .as_ref()
                 .ok_or(ParseError::MapSymbolNameNotFound { i: *i })?;
             let def = parse_map_def(name, data)?;
+
+            // For map-of-maps types (ARRAY_OF_MAPS, HASH_OF_MAPS), the eBPF-side
+            // struct embeds a second bpf_map_def describing the inner map template.
+            // If the symbol is large enough, extract it.
+            let inner_map_def = if (def.map_type
+                == crate::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS as u32
+                || def.map_type == crate::generated::bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS as u32)
+                && data.len() >= size_of::<bpf_map_def>() * 2
+            {
+                let inner_data = &data[size_of::<bpf_map_def>()..];
+                Some(parse_map_def(name, inner_data)?)
+            } else {
+                None
+            };
+
             maps.insert(
                 name.clone(),
                 Map::Legacy(LegacyMap {
@@ -825,6 +840,7 @@ impl Object {
                     section_kind: section.kind,
                     symbol_index: Some(sym.index),
                     def,
+                    inner_map_def,
                     data: Vec::new(),
                 }),
             );
@@ -1240,6 +1256,7 @@ fn parse_data_map_section(section: &Section<'_>) -> Map {
         // Data maps don't require symbols to be relocated
         symbol_index: None,
         def,
+        inner_map_def: None,
         data,
     })
 }
@@ -1371,6 +1388,7 @@ pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
             section_index: 0,
             symbol_index: None,
             section_kind: EbpfSectionKind::Undefined,
+            inner_map_def: None,
             data: Vec::new(),
         })
     }
@@ -1622,6 +1640,7 @@ mod tests {
                 section_index: 0,
                 section_kind: EbpfSectionKind::Data,
                 symbol_index: None,
+                inner_map_def: None,
                 def: bpf_map_def {
                     map_type: _map_type,
                     key_size: 4,
@@ -2632,6 +2651,7 @@ mod tests {
                 section_index: 1,
                 section_kind: EbpfSectionKind::Rodata,
                 symbol_index: Some(1),
+                inner_map_def: None,
                 data: vec![0, 0, 0],
             }),
         );

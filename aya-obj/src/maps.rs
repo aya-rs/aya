@@ -2,7 +2,7 @@
 
 use alloc::vec::Vec;
 
-use crate::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type};
+use crate::{generated::bpf_map_type, EbpfSectionKind, InvalidTypeBinding};
 
 impl TryFrom<u32> for bpf_map_type {
     type Error = InvalidTypeBinding<u32>;
@@ -251,6 +251,18 @@ impl Map {
             Self::Btf(m) => Some(m.symbol_index),
         }
     }
+
+    /// Returns the inner map definition for map-of-maps types.
+    ///
+    /// For `BPF_MAP_TYPE_ARRAY_OF_MAPS` and `BPF_MAP_TYPE_HASH_OF_MAPS`, this
+    /// returns the template definition used to create the inner map whose fd is
+    /// passed as `inner_map_fd` during outer map creation.
+    pub fn inner_map_def(&self) -> Option<&bpf_map_def> {
+        match self {
+            Self::Legacy(m) => m.inner_map_def.as_ref(),
+            Self::Btf(_) => None, // BTF map-of-maps not yet supported
+        }
+    }
 }
 
 /// A map declared with legacy BPF map declaration style, most likely from a `maps` section.
@@ -261,6 +273,10 @@ impl Map {
 pub struct LegacyMap {
     /// The definition of the map
     pub def: bpf_map_def,
+    /// The inner map definition (for BPF_MAP_TYPE_ARRAY_OF_MAPS / HASH_OF_MAPS).
+    /// When present, the loader creates a template inner map and passes its fd
+    /// as `inner_map_fd` when creating the outer map.
+    pub inner_map_def: Option<bpf_map_def>,
     /// The section index
     pub section_index: usize,
     /// The section kind
