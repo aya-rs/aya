@@ -549,24 +549,39 @@ impl<'a> EbpfLoader<'a> {
                 map_obj.set_value_size(value_size)
             }
 
-            let inner_map_fd = if is_map_of_maps(map_type) {
-                let inner_name = obj.inner_map_bindings.get(&name).ok_or_else(|| {
-                    EbpfError::MapError(MapError::MissingInnerMapBinding(format!(
-                        "map '{name}' is a map-of-maps but has no inner map binding; \
-                         use inner = \"...\" to specify one"
-                    )))
-                })?;
-                let inner_map = maps.get(inner_name).ok_or_else(|| {
-                    EbpfError::MapError(MapError::MissingInnerMapBinding(format!(
-                        "inner map '{inner_name}' not found for map-of-maps '{name}'"
-                    )))
-                })?;
-                Some(inner_map.fd().as_fd())
+            let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
+
+            // For BTF map-of-maps, create a temporary inner map from the definition
+            // embedded in the `values` BTF field. The temp map provides the fd that the
+            // kernel needs during outer map creation; it is dropped afterwards.
+            let btf_inner_map = if is_map_of_maps(map_type) {
+                map_obj
+                    .inner()
+                    .map(|inner| MapData::create(inner, &format!("{name}.inner"), btf_fd))
+                    .transpose()?
             } else {
                 None
             };
 
-            let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
+            let inner_map_fd = if is_map_of_maps(map_type) {
+                if let Some(inner) = &btf_inner_map {
+                    Some(inner.fd().as_fd())
+                } else {
+                    // No BTF inner definition; fall back to the `.maps.inner` binding.
+                    let inner_name = obj.inner_map_binding(&name).ok_or_else(|| {
+                        EbpfError::MapError(MapError::MissingInnerMapBinding { name: name.clone() })
+                    })?;
+                    let inner_map = maps.get(inner_name).ok_or_else(|| {
+                        EbpfError::MapError(MapError::InnerMapNotFound {
+                            name: name.clone(),
+                            inner_name: inner_name.to_owned(),
+                        })
+                    })?;
+                    Some(inner_map.fd().as_fd())
+                }
+            } else {
+                None
+            };
             let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
                 MapData::create_pinned_by_name(pin_path, map_obj, &name, btf_fd, inner_map_fd)?
             } else {

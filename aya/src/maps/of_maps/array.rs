@@ -6,24 +6,24 @@ use std::{
 };
 
 use crate::{
-    maps::{FromMapData, MapData, MapError, MapFd, check_bounds, check_kv_size, info::MapInfo},
-    sys::{SyscallError, bpf_map_get_fd_by_id, bpf_map_lookup_elem, bpf_map_update_elem},
+    maps::{FromMapData, MapData, MapError, MapFd, check_bounds, check_kv_size},
+    sys::{SyscallError, bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
-/// An array of eBPF Maps.
+/// An array of eBPF maps.
 ///
-/// A `Array` is used to store references to other maps.
+/// An `ArrayOfMaps` stores references to other eBPF maps.
 ///
 /// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 4.12.
 #[doc(alias = "BPF_MAP_TYPE_ARRAY_OF_MAPS")]
 #[derive(Debug)]
-pub struct Array<T> {
+pub struct ArrayOfMaps<T> {
     pub(crate) inner: T,
 }
 
-impl<T: Borrow<MapData>> Array<T> {
+impl<T: Borrow<MapData>> ArrayOfMaps<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<u32, u32>(data)?;
@@ -46,6 +46,13 @@ impl<T: Borrow<MapData>> Array<T> {
     ///
     /// The type parameter `M` specifies the expected inner map type. It must
     /// implement [`FromMapData`], which validates and wraps the raw [`MapData`].
+    /// Use `MapData` as `M` to retrieve an untyped handle.
+    ///
+    /// # File descriptor cost
+    ///
+    /// Each call opens a **new file descriptor** to the inner map. The caller
+    /// owns the returned map and its FD is closed on drop. Avoid calling this
+    /// in a tight loop without dropping previous results.
     ///
     /// # Errors
     ///
@@ -61,20 +68,14 @@ impl<T: Borrow<MapData>> Array<T> {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?;
-        // The kernel's map-of-maps API is asymmetric: update takes the FD of the inner map,
-        // but lookup returns the ID. We convert the ID back to an FD using bpf_map_get_fd_by_id.
-        if let Some(id) = value {
-            let inner_fd = bpf_map_get_fd_by_id(id)?;
-            let info = MapInfo::new_from_fd(inner_fd.as_fd())?;
-            let map_data = MapData::from_id(info.id())?;
-            M::from_map_data(map_data)
-        } else {
-            Err(MapError::KeyNotFound)
+        match value {
+            Some(id) => super::map_from_id(id),
+            None => Err(MapError::KeyNotFound),
         }
     }
 }
 
-impl<T: BorrowMut<MapData>> Array<T> {
+impl<T: BorrowMut<MapData>> ArrayOfMaps<T> {
     /// Sets the value of the element at the given index.
     ///
     /// # Errors
@@ -95,7 +96,7 @@ impl<T: BorrowMut<MapData>> Array<T> {
     }
 }
 
-impl Array<MapData> {
+impl ArrayOfMaps<MapData> {
     /// Returns a reference to the underlying [`MapData`].
     pub const fn map_data(&self) -> &MapData {
         &self.inner
@@ -137,7 +138,7 @@ mod tests {
     fn test_wrong_key_size() {
         let map = new_map(test_utils::new_obj_map::<u8>(BPF_MAP_TYPE_ARRAY_OF_MAPS));
         assert_matches!(
-            Array::new(&map),
+            ArrayOfMaps::new(&map),
             Err(MapError::InvalidKeySize {
                 size: 4,
                 expected: 1
@@ -151,13 +152,16 @@ mod tests {
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_HASH,
         ));
         let map = Map::HashMap(map);
-        assert_matches!(Array::try_from(&map), Err(MapError::InvalidMapType { .. }));
+        assert_matches!(
+            ArrayOfMaps::try_from(&map),
+            Err(MapError::InvalidMapType { .. })
+        );
     }
 
     #[test]
     fn test_new_ok() {
         let map = new_map(new_obj_map());
-        Array::new(&map).unwrap();
+        ArrayOfMaps::new(&map).unwrap();
     }
 
     #[test]
@@ -166,7 +170,7 @@ mod tests {
         let inner_map = new_map(test_utils::new_obj_map::<u32>(
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY,
         ));
-        let mut arr = Array::new(&mut map).unwrap();
+        let mut arr = ArrayOfMaps::new(&mut map).unwrap();
 
         override_syscall(|_| sys_error(EFAULT));
 
@@ -185,7 +189,7 @@ mod tests {
         let inner_map = new_map(test_utils::new_obj_map::<u32>(
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY,
         ));
-        let mut arr = Array::new(&mut map).unwrap();
+        let mut arr = ArrayOfMaps::new(&mut map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
@@ -204,7 +208,7 @@ mod tests {
         let inner_map = new_map(test_utils::new_obj_map::<u32>(
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY,
         ));
-        let mut arr = Array::new(&mut map).unwrap();
+        let mut arr = ArrayOfMaps::new(&mut map).unwrap();
 
         assert_matches!(
             arr.set(1024, inner_map.fd(), 0),
@@ -215,24 +219,23 @@ mod tests {
     #[test]
     fn test_get_syscall_error() {
         let map = new_map(new_obj_map());
-        let arr = Array::new(&map).unwrap();
+        let arr = ArrayOfMaps::new(&map).unwrap();
 
         override_syscall(|_| sys_error(EFAULT));
 
-        let result = arr.get::<crate::maps::Array<MapData, u32>>(&0, 0);
-        assert!(matches!(
-            result,
+        assert_matches!(
+            arr.get::<crate::maps::HashMap<MapData, u32, u32>>(&0, 0),
             Err(MapError::SyscallError(SyscallError {
                 call: "bpf_map_lookup_elem",
                 ..
             }))
-        ));
+        );
     }
 
     #[test]
     fn test_get_not_found() {
         let map = new_map(new_obj_map());
-        let arr = Array::new(&map).unwrap();
+        let arr = ArrayOfMaps::new(&map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
@@ -242,20 +245,20 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert!(matches!(
-            arr.get::<crate::maps::Array<MapData, u32>>(&0, 0),
+        assert_matches!(
+            arr.get::<crate::maps::HashMap<MapData, u32, u32>>(&0, 0),
             Err(MapError::KeyNotFound)
-        ));
+        );
     }
 
     #[test]
     fn test_get_out_of_bounds() {
         let map = new_map(new_obj_map());
-        let arr = Array::new(&map).unwrap();
+        let arr = ArrayOfMaps::new(&map).unwrap();
 
-        assert!(matches!(
-            arr.get::<crate::maps::Array<MapData, u32>>(&1024, 0),
+        assert_matches!(
+            arr.get::<crate::maps::HashMap<MapData, u32, u32>>(&1024, 0),
             Err(MapError::OutOfBounds { .. })
-        ));
+        );
     }
 }

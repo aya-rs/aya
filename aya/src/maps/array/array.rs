@@ -95,16 +95,11 @@ impl<T: Borrow<MapData>, V: Pod> IterableMap<u32, V> for Array<T, V> {
 }
 
 impl<V: Pod> Array<MapData, V> {
-    /// Creates a new Array with the specified maximum number of entries.
+    /// Creates a standalone BPF array map with `max_entries` slots and the given `flags`.
     ///
-    /// This method creates a standalone BPF array map that is not loaded from an eBPF object file.
-    /// It is particularly useful for creating inner maps dynamically for map-of-maps types
-    /// like [`ArrayOfMaps`](crate::maps::ArrayOfMaps).
-    ///
-    /// # Arguments
-    ///
-    /// * `max_entries` - Maximum number of entries (size) of the array
-    /// * `flags` - Map flags
+    /// The map is not loaded from an eBPF object file. This is particularly useful
+    /// for creating inner maps dynamically for map-of-maps types like
+    /// [`ArrayOfMaps`](crate::maps::ArrayOfMaps).
     ///
     /// # Example
     ///

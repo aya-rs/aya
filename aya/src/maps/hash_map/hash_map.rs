@@ -102,16 +102,11 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> 
 }
 
 impl<K: Pod, V: Pod> HashMap<MapData, K, V> {
-    /// Creates a new `HashMap` with the specified maximum number of entries.
+    /// Creates a standalone BPF hash map with capacity for `max_entries` and the given `flags`.
     ///
-    /// This method creates a standalone BPF hash map that is not loaded from an eBPF object file.
-    /// It is particularly useful for creating inner maps dynamically for map-of-maps types
-    /// like [`HashMapOfMaps`](crate::maps::HashMapOfMaps) or [`ArrayOfMaps`](crate::maps::ArrayOfMaps).
-    ///
-    /// # Arguments
-    ///
-    /// * `max_entries` - Maximum number of entries the map can hold
-    /// * `flags` - Map flags (e.g., `BPF_F_NO_PREALLOC`)
+    /// The map is not loaded from an eBPF object file. This is particularly useful
+    /// for creating inner maps dynamically for map-of-maps types like
+    /// [`HashOfMaps`](crate::maps::HashOfMaps) or [`ArrayOfMaps`](crate::maps::ArrayOfMaps).
     ///
     /// # Example
     ///

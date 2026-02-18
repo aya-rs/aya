@@ -25,6 +25,7 @@ use object::{
 use crate::{
     btf::{
         Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,
+        Struct,
     },
     generated::{
         BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K, bpf_func_id, bpf_insn, bpf_map_info,
@@ -146,8 +147,8 @@ pub struct Object {
     pub programs: HashMap<String, Program>,
     /// Functions
     pub functions: BTreeMap<(usize, u64), Function>,
-    /// Inner map bindings: maps outer map name to inner (template) map name
-    pub inner_map_bindings: HashMap<String, String>,
+    /// Inner map bindings: maps outer map name to inner (template) map name.
+    pub(crate) inner_map_bindings: HashMap<String, String>,
     pub(crate) relocations: HashMap<SectionIndex, HashMap<u64, Relocation>>,
     pub(crate) symbol_table: HashMap<usize, Symbol>,
     pub(crate) symbols_by_section: HashMap<SectionIndex, Vec<usize>>,
@@ -773,7 +774,7 @@ impl Object {
                 if type_name == section.name {
                     // each btf_var_secinfo contains a map
                     for info in &datasec.entries {
-                        let (map_name, def) = parse_btf_map_def(btf, info)?;
+                        let (map_name, def, inner_def) = parse_btf_map_def(btf, info)?;
                         let symbol_index =
                             maps.get(&map_name)
                                 .ok_or_else(|| ParseError::SymbolNotFound {
@@ -783,11 +784,10 @@ impl Object {
                             map_name,
                             Map::Btf(BtfMap {
                                 def,
-                                inner_def: None,
+                                inner_def,
                                 section_index: section.index.0,
                                 symbol_index: *symbol_index,
                                 data: Vec::new(),
-                                initial_slots: BTreeMap::new(),
                             }),
                         );
                     }
@@ -832,7 +832,6 @@ impl Object {
                     def,
                     inner_def: None,
                     data: Vec::new(),
-                    initial_slots: BTreeMap::new(),
                 }),
             );
             have_symbols = true;
@@ -893,7 +892,7 @@ impl Object {
                     );
                 }
             }
-            EbpfSectionKind::MapsInner => self.parse_maps_inner(&section),
+            EbpfSectionKind::MapsInner => self.parse_maps_inner(&section)?,
             EbpfSectionKind::Undefined | EbpfSectionKind::License | EbpfSectionKind::Version => {}
         }
 
@@ -914,38 +913,63 @@ impl Object {
     /// which use BTF relocations that both aya and libbpf can process.
     ///
     /// Format: `"outer_name\0inner_name\0"` pairs, emitted by the `#[map(inner = "...")]` macro.
-    fn parse_maps_inner(&mut self, section: &Section<'_>) {
+    fn parse_maps_inner(&mut self, section: &Section<'_>) -> Result<(), ParseError> {
         let data = section.data;
         let mut offset = 0;
 
         while offset < data.len() {
-            // Read outer map name (null-terminated)
-            let outer_end = data[offset..]
-                .iter()
-                .position(|&b| b == 0)
-                .map_or(data.len(), |p| offset + p);
+            // Read outer map name (null-terminated).
+            let Some(outer_len) = data[offset..].iter().position(|&b| b == 0) else {
+                return Err(ParseError::InvalidMapsInnerSection {
+                    offset,
+                    msg: "unterminated outer map name",
+                });
+            };
 
-            if outer_end >= data.len() {
-                break;
+            let outer_name =
+                core::str::from_utf8(&data[offset..offset + outer_len]).map_err(|_utf8_err| {
+                    ParseError::InvalidMapsInnerSection {
+                        offset,
+                        msg: "invalid UTF-8 in outer map name",
+                    }
+                })?;
+            offset += outer_len + 1; // skip null terminator
+
+            // Read inner map name (null-terminated).
+            let Some(inner_len) = data[offset..].iter().position(|&b| b == 0) else {
+                return Err(ParseError::InvalidMapsInnerSection {
+                    offset,
+                    msg: "unterminated inner map name",
+                });
+            };
+
+            let inner_name =
+                core::str::from_utf8(&data[offset..offset + inner_len]).map_err(|_utf8_err| {
+                    ParseError::InvalidMapsInnerSection {
+                        offset,
+                        msg: "invalid UTF-8 in inner map name",
+                    }
+                })?;
+            offset += inner_len + 1; // skip null terminator
+
+            if outer_name.is_empty() || inner_name.is_empty() {
+                return Err(ParseError::InvalidMapsInnerSection {
+                    offset,
+                    msg: "empty outer or inner map name",
+                });
             }
 
-            let outer_name = String::from_utf8_lossy(&data[offset..outer_end]).into_owned();
-            offset = outer_end + 1; // skip null terminator
-
-            // Read inner map name (null-terminated)
-            let inner_end = data[offset..]
-                .iter()
-                .position(|&b| b == 0)
-                .map_or(data.len(), |p| offset + p);
-
-            let inner_name = String::from_utf8_lossy(&data[offset..inner_end]).into_owned();
-            offset = inner_end + 1; // skip null terminator
-
-            if !outer_name.is_empty() && !inner_name.is_empty() {
-                self.inner_map_bindings
-                    .insert(outer_name.clone(), inner_name.clone());
-            }
+            self.inner_map_bindings
+                .insert(outer_name.to_owned(), inner_name.to_owned());
         }
+
+        Ok(())
+    }
+
+    /// Returns the inner (template) map name bound to the given outer map, if
+    /// any.  These bindings are parsed from the `.maps.inner` ELF section.
+    pub fn inner_map_binding(&self, outer: &str) -> Option<&str> {
+        self.inner_map_bindings.get(outer).map(String::as_str)
     }
 
     /// Sanitize BPF functions.
@@ -1065,6 +1089,15 @@ pub enum ParseError {
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]
     NoBTF,
+
+    /// Invalid `.maps.inner` section data.
+    #[error("invalid `.maps.inner` section at offset {offset}: {msg}")]
+    InvalidMapsInnerSection {
+        /// Byte offset within the section where the error occurred.
+        offset: usize,
+        /// Description of the error.
+        msg: &'static str,
+    },
 }
 
 /// Invalid bindings to the bpf type from the parsed/received value.
@@ -1112,6 +1145,8 @@ impl EbpfSectionKind {
             Self::Version
         } else if name.starts_with("maps") {
             Self::Maps
+        // NB: `.maps.inner` must be matched before `.maps` to avoid being
+        // swallowed by the `.starts_with(".maps")` arm below.
         } else if name == ".maps.inner" {
             Self::MapsInner
         } else if name.starts_with(".maps") {
@@ -1302,7 +1337,6 @@ fn parse_data_map_section(section: &Section<'_>) -> Map {
         def,
         inner_def: None,
         data,
-        initial_slots: BTreeMap::new(),
     })
 }
 
@@ -1325,7 +1359,10 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     }
 }
 
-fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDef), BtfError> {
+fn parse_btf_map_def(
+    btf: &Btf,
+    info: &DataSecEntry,
+) -> Result<(String, BtfMapDef, Option<BtfMapDef>), BtfError> {
     let ty = match btf.type_by_id(info.btf_type)? {
         BtfType::Var(var) => var,
         other => {
@@ -1335,7 +1372,6 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         }
     };
     let map_name = btf.string_at(ty.name_offset)?;
-    let mut map_def = BtfMapDef::default();
 
     let root_type = btf.resolve_type(ty.btf_type)?;
     let s = match btf.type_by_id(root_type)? {
@@ -1346,6 +1382,23 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
             });
         }
     };
+
+    let (map_def, inner_def) = parse_btf_map_struct(btf, s, &map_name, false)?;
+    Ok((map_name.to_string(), map_def, inner_def))
+}
+
+/// Parses BTF struct members into a map definition.
+///
+/// When `is_inner` is true, rejects `values` and `pinning` fields, matching
+/// libbpf behavior for inner map definitions.
+fn parse_btf_map_struct(
+    btf: &Btf,
+    s: &Struct,
+    map_name: &str,
+    is_inner: bool,
+) -> Result<(BtfMapDef, Option<BtfMapDef>), BtfError> {
+    let mut map_def = BtfMapDef::default();
+    let mut inner_map_def = None;
 
     for m in &s.members {
         match btf.string_at(m.name_offset)?.as_ref() {
@@ -1387,18 +1440,67 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
                 map_def.map_flags = get_map_field(btf, m.btf_type)?;
             }
             "pinning" => {
+                if is_inner {
+                    return Err(BtfError::InnerMapCannotBePinned {
+                        name: map_name.to_owned(),
+                    });
+                }
                 let pinning = get_map_field(btf, m.btf_type)?;
                 map_def.pinning = PinningType::try_from(pinning).unwrap_or_else(|_| {
                     debug!("{pinning} is not a valid pin type. using PIN_NONE");
                     PinningType::None
                 });
             }
+            "values" => {
+                if is_inner {
+                    return Err(BtfError::MultiLevelMapInMapNotSupported {
+                        name: map_name.to_owned(),
+                    });
+                }
+                // The inner map type is encoded as a zero-length array of pointers
+                // to the inner struct, matching libbpf's parse_btf_map_def().
+                let arr = match btf.type_by_id(m.btf_type)? {
+                    BtfType::Array(Array { array, .. }) => array,
+                    other => {
+                        return Err(BtfError::UnexpectedBtfType {
+                            type_id: other.btf_type().unwrap_or(0),
+                        });
+                    }
+                };
+                if arr.len != 0 {
+                    return Err(BtfError::InvalidValuesSpec {
+                        name: map_name.to_owned(),
+                    });
+                }
+                let elem_type_id = btf.resolve_type(arr.element_type)?;
+                let ptr = match btf.type_by_id(elem_type_id)? {
+                    BtfType::Ptr(ptr) => ptr,
+                    other => {
+                        return Err(BtfError::UnexpectedBtfType {
+                            type_id: other.btf_type().unwrap_or(0),
+                        });
+                    }
+                };
+                let inner_struct_id = btf.resolve_type(ptr.btf_type)?;
+                let inner_s = match btf.type_by_id(inner_struct_id)? {
+                    BtfType::Struct(s) => s,
+                    other => {
+                        return Err(BtfError::UnexpectedBtfType {
+                            type_id: other.btf_type().unwrap_or(0),
+                        });
+                    }
+                };
+                let (inner_def, _) = parse_btf_map_struct(btf, inner_s, map_name, true)?;
+                inner_map_def = Some(inner_def);
+                // Map-of-maps value is always an fd (u32).
+                map_def.value_size = size_of::<u32>() as u32;
+            }
             other => {
                 debug!("skipping unknown map section: {other}");
             }
         }
     }
-    Ok((map_name.to_string(), map_def))
+    Ok((map_def, inner_map_def))
 }
 
 /// Parses a [`bpf_map_info`] into a [`Map`].
@@ -1419,7 +1521,6 @@ pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
             section_index: 0,
             symbol_index: 0,
             data: Vec::new(),
-            initial_slots: BTreeMap::new(),
         })
     } else {
         Map::Legacy(LegacyMap {
@@ -1437,7 +1538,6 @@ pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
             symbol_index: None,
             section_kind: EbpfSectionKind::Undefined,
             data: Vec::new(),
-            initial_slots: BTreeMap::new(),
         })
     }
 }
@@ -2701,7 +2801,6 @@ mod tests {
                 section_kind: EbpfSectionKind::Rodata,
                 symbol_index: Some(1),
                 data: vec![0, 0, 0],
-                initial_slots: BTreeMap::new(),
             }),
         );
         obj.symbol_table.insert(

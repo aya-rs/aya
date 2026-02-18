@@ -91,7 +91,7 @@ pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use info::{MapInfo, MapType, loaded_maps};
 pub use lpm_trie::LpmTrie;
-pub use of_maps::{Array as ArrayOfMaps, HashMap as HashMapOfMaps};
+pub use of_maps::{ArrayOfMaps, HashOfMaps};
 pub use perf::PerfEventArray;
 pub use queue::Queue;
 pub use ring_buf::RingBuf;
@@ -103,19 +103,41 @@ pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
 
 /// Trait for constructing a typed map from [`MapData`].
 ///
-/// This is used by map-of-maps types ([`ArrayOfMaps`], [`HashMapOfMaps`]) to
+/// This is used by map-of-maps types ([`ArrayOfMaps`], [`HashOfMaps`]) to
 /// let callers specify the expected inner map type when retrieving entries.
-pub trait FromMapData: Sized {
+///
+/// This trait is sealed and cannot be implemented outside of this crate.
+pub trait FromMapData: Sized + sealed::Sealed {
     /// Constructs a typed map from raw [`MapData`].
     fn from_map_data(map_data: MapData) -> Result<Self, MapError>;
+}
+
+mod sealed {
+    #[expect(unnameable_types, reason = "intentionally unnameable sealed trait")]
+    pub trait Sealed {}
 }
 
 #[derive(Error, Debug)]
 /// Errors occuring from working with Maps
 pub enum MapError {
-    /// Missing inner map binding for a map-of-maps
-    #[error("{0}")]
-    MissingInnerMapBinding(String),
+    /// Missing inner map binding for a map-of-maps.
+    #[error(
+        "map `{name}` is a map-of-maps but has no inner map binding; \
+             use #[map(inner = \"<template>\")] or ensure the BTF definition includes a `values` field"
+    )]
+    MissingInnerMapBinding {
+        /// The map name.
+        name: String,
+    },
+
+    /// Inner map not found for a map-of-maps.
+    #[error("inner map `{inner_name}` not found for map-of-maps `{name}`")]
+    InnerMapNotFound {
+        /// The outer map name.
+        name: String,
+        /// The inner map name.
+        inner_name: String,
+    },
 
     /// Invalid map type encontered
     #[error("invalid map type {map_type}")]
@@ -264,7 +286,7 @@ pub enum Map {
     DevMapHash(MapData),
     /// A [`HashMap`] map.
     HashMap(MapData),
-    /// A [`HashMapOfMaps`] map.
+    /// A [`HashOfMaps`] map.
     HashOfMaps(MapData),
     /// A [`LpmTrie`] map.
     LpmTrie(MapData),
@@ -497,7 +519,7 @@ impl_map_pin!((V) {
 });
 
 impl_map_pin!((K) {
-    HashMapOfMaps,
+    HashOfMaps,
 });
 
 impl_map_pin!((K, V) {
@@ -581,7 +603,7 @@ impl_try_from_map!((V) {
 });
 
 impl_try_from_map!((K) {
-    HashMapOfMaps from HashOfMaps,
+    HashOfMaps,
 });
 
 impl_try_from_map!((K, V) {
@@ -590,15 +612,24 @@ impl_try_from_map!((K, V) {
     PerCpuHashMap from PerCpuHashMap|PerCpuLruHashMap,
 });
 
+impl<V: Pod> sealed::Sealed for Array<MapData, V> {}
 impl<V: Pod> FromMapData for Array<MapData, V> {
     fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
         Self::new(map_data)
     }
 }
 
+impl<K: Pod, V: Pod> sealed::Sealed for HashMap<MapData, K, V> {}
 impl<K: Pod, V: Pod> FromMapData for HashMap<MapData, K, V> {
     fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
         Self::new(map_data)
+    }
+}
+
+impl sealed::Sealed for MapData {}
+impl FromMapData for MapData {
+    fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
+        Ok(map_data)
     }
 }
 
@@ -653,7 +684,7 @@ impl MapData {
         Self::create_with_inner_map_fd(obj, name, btf_fd, None)
     }
 
-    /// Creates a new map with the provided `name` and optional `inner_map_fd` for map-of-maps types
+    /// Creates a new map with the provided `name` and optional `inner_map_fd` for map-of-maps types.
     pub(crate) fn create_with_inner_map_fd(
         mut obj: aya_obj::Map,
         name: &str,
@@ -1082,7 +1113,6 @@ mod test_utils {
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
             symbol_index: None,
-            initial_slots: std::collections::BTreeMap::new(),
         })
     }
 
@@ -1103,7 +1133,6 @@ mod test_utils {
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
             symbol_index: None,
-            initial_slots: std::collections::BTreeMap::new(),
         })
     }
 }
