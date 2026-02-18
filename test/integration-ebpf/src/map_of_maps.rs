@@ -10,7 +10,7 @@ use aya_ebpf::{
 #[cfg(not(test))]
 extern crate ebpf_panic;
 
-// ArrayOfMaps test maps - explicitly bind to INNER_ARRAY_1 as template
+// ArrayOfMaps test maps - explicitly bind to INNER_ARRAY_1 as template.
 #[map(inner = "INNER_ARRAY_1")]
 static ARRAY_OF_MAPS: ArrayOfMaps<Array<u32>> = ArrayOfMaps::with_max_entries(2, 0);
 
@@ -20,7 +20,7 @@ static INNER_ARRAY_1: Array<u32> = Array::with_max_entries(10, 0);
 #[map]
 static INNER_ARRAY_2: Array<u32> = Array::with_max_entries(10, 0);
 
-// HashOfMaps test maps - explicitly bind to INNER_HASH_1 as template
+// HashOfMaps test maps - explicitly bind to INNER_HASH_1 as template.
 #[map(inner = "INNER_HASH_1")]
 static HASH_OF_MAPS: HashOfMaps<u32, HashMap<u32, u32>> = HashOfMaps::with_max_entries(2, 0);
 
@@ -30,7 +30,7 @@ static INNER_HASH_1: HashMap<u32, u32> = HashMap::with_max_entries(10, 0);
 #[map]
 static INNER_HASH_2: HashMap<u32, u32> = HashMap::with_max_entries(10, 0);
 
-// Result array to verify values from userspace
+// Result array to verify values from userspace.
 #[map]
 static RESULTS: Array<u32> = Array::with_max_entries(4, 0);
 
@@ -54,7 +54,7 @@ pub extern "C" fn trigger_hash_of_maps() {
     core::hint::black_box(());
 }
 
-/// Test `ArrayOfMaps`: write values to inner arrays via outer map
+/// Test `ArrayOfMaps`: write values to inner arrays via outer map.
 #[uprobe]
 pub(crate) fn test_array_of_maps(_ctx: ProbeContext) -> u32 {
     // Access first inner map (index 0) and write value
@@ -85,7 +85,7 @@ pub(crate) fn test_array_of_maps(_ctx: ProbeContext) -> u32 {
     0
 }
 
-/// Test `HashOfMaps`: write values to inner hashmaps via outer map
+/// Test `HashOfMaps`: write values to inner hashmaps via outer map.
 #[uprobe]
 pub(crate) fn test_hash_of_maps(_ctx: ProbeContext) -> u32 {
     // Access first inner map (key 0) and write value

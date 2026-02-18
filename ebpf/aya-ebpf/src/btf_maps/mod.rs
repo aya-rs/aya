@@ -29,10 +29,10 @@ pub use sk_storage::SkStorage;
 ///
 /// ```ignore
 /// btf_map_def!(
-///     pub struct HashOfMaps<K, V; const M: usize, const F: usize = 0>,
+///     pub struct HashOfMaps<K, V; const MAX_ENTRIES: usize, const FLAGS: usize = 0>,
 ///     map_type: BPF_MAP_TYPE_HASH_OF_MAPS,
-///     max_entries: M,
-///     map_flags: F,
+///     max_entries: MAX_ENTRIES,
+///     map_flags: FLAGS,
 ///     key_type: K,
 ///     value_type: u32,
 ///     inner_map: V,

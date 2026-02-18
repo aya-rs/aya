@@ -23,28 +23,13 @@ use crate::{
 ///
 /// The minimum kernel version required to use this feature is 4.12.
 #[repr(transparent)]
-pub struct HashOfMaps<K, V> {
+pub struct HashOfMaps<K, V: Map> {
     def: MapDef,
     _kv: PhantomData<(K, V)>,
 }
 
 impl<K, V: Map> HashOfMaps<K, V> {
-    /// Creates a hash-of-maps with the specified maximum entries and flags.
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::None)
-    }
-
-    /// Creates a pinned hash-of-maps with the specified maximum entries and flags.
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self::new(max_entries, flags, PinningType::ByName)
-    }
-
-    const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
-        Self {
-            def: MapDef::new::<K, u32>(BPF_MAP_TYPE_HASH_OF_MAPS, max_entries, flags, pinning),
-            _kv: PhantomData,
-        }
-    }
+    map_constructors!(K, u32, BPF_MAP_TYPE_HASH_OF_MAPS, phantom _kv);
 
     /// Retrieve the inner map associated with `key` from the map.
     ///
@@ -56,7 +41,8 @@ impl<K, V: Map> HashOfMaps<K, V> {
     /// corruption in case of writes.
     #[inline(always)]
     pub unsafe fn get(&self, key: &K) -> Option<&V> {
-        // FIXME: alignment
+        // SAFETY: The pointer returned by the BPF helper is valid for the
+        // duration of the program, and we only produce a shared reference.
         unsafe { self.lookup(key).map(|p| p.as_ref()) }
     }
 
