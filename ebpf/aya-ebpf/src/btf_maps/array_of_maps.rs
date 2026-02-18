@@ -17,24 +17,20 @@ btf_map_def!(
     /// ```rust,no_run
     /// use aya_ebpf::{btf_maps::{Array, ArrayOfMaps}, macros::btf_map};
     ///
-    /// // Define the inner map template
+    /// // The inner map definition is parsed from BTF at load time.
     /// #[btf_map]
-    /// static INNER: Array<u32, 10> = Array::new();
-    ///
-    /// // Define the outer map with explicit inner map binding
-    /// #[btf_map(inner = "INNER")]
     /// static OUTER: ArrayOfMaps<Array<u32, 10>, 4> = ArrayOfMaps::new();
     /// ```
-    pub struct ArrayOfMaps<V; const M: usize, const F: usize = 0>,
+    pub struct ArrayOfMaps<V; const MAX_ENTRIES: usize, const FLAGS: usize = 0>,
     map_type: BPF_MAP_TYPE_ARRAY_OF_MAPS,
-    max_entries: M,
-    map_flags: F,
+    max_entries: MAX_ENTRIES,
+    map_flags: FLAGS,
     key_type: u32,
     value_type: u32,
     inner_map: V,
 );
 
-impl<V, const M: usize, const F: usize> ArrayOfMaps<V, M, F> {
+impl<V, const MAX_ENTRIES: usize, const FLAGS: usize> ArrayOfMaps<V, MAX_ENTRIES, FLAGS> {
     /// Retrieves a reference to the inner map at the given index.
     ///
     /// Returns `None` if the index is out of bounds or if no map is stored
