@@ -5,7 +5,6 @@ use quote::{format_ident, quote};
 use syn::{ItemStatic, Result};
 
 use crate::args::Args;
-
 pub(crate) struct Map {
     item: ItemStatic,
     name: String,
@@ -48,6 +47,7 @@ impl Map {
             quote! {
                 #[unsafe(link_section = ".maps.inner")]
                 #[used]
+                #[allow(non_upper_case_globals)]
                 static #binding_ident: [u8; #binding_len] = [#(#binding_bytes),*];
             }
         });
@@ -114,7 +114,6 @@ mod tests {
         )
         .unwrap();
         let expanded = map.expand();
-        // "OUTER\0INNER_TEMPLATE\0" as bytes
         let binding_bytes: &[u8] = b"OUTER\0INNER_TEMPLATE\0";
         let expected = quote!(
             #[unsafe(link_section = "maps")]
@@ -123,6 +122,7 @@ mod tests {
 
             #[unsafe(link_section = ".maps.inner")]
             #[used]
+            #[allow(non_upper_case_globals)]
             static __inner_map_binding_OUTER: [u8; 21usize] = [#(#binding_bytes),*];
         );
         assert_eq!(expected.to_string(), expanded.to_string());
@@ -138,7 +138,6 @@ mod tests {
         )
         .unwrap();
         let expanded = map.expand();
-        // "my_map\0my_template\0" as bytes
         let binding_bytes: &[u8] = b"my_map\0my_template\0";
         let expected = quote!(
             #[unsafe(link_section = "maps")]
@@ -147,6 +146,7 @@ mod tests {
 
             #[unsafe(link_section = ".maps.inner")]
             #[used]
+            #[allow(non_upper_case_globals)]
             static __inner_map_binding_my_map: [u8; 19usize] = [#(#binding_bytes),*];
         );
         assert_eq!(expected.to_string(), expanded.to_string());
@@ -160,9 +160,9 @@ mod tests {
                 static BAR: HashMap<&'static str, u32> = HashMap::new();
             ),
         );
-        match result {
-            Ok(_) => panic!("expected error"),
-            Err(err) => assert_eq!(err.to_string(), "invalid argument"),
-        }
+        let Err(err) = result else {
+            panic!("expected parse error for unknown argument")
+        };
+        assert_eq!(err.to_string(), "invalid argument");
     }
 }

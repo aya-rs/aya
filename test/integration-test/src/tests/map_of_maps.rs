@@ -1,6 +1,6 @@
 use aya::{
     Ebpf,
-    maps::{Array, ArrayOfMaps, HashMap, HashMapOfMaps, MapData},
+    maps::{Array, ArrayOfMaps, HashMap, HashOfMaps, MapData},
     programs::UProbe,
 };
 
@@ -16,7 +16,7 @@ extern "C" fn trigger_hash_of_maps() {
     std::hint::black_box(());
 }
 
-/// Test `ArrayOfMaps`: set inner maps and verify eBPF can access them
+/// Test `ArrayOfMaps`: set inner maps and verify eBPF can access them.
 #[test_log::test]
 fn array_of_maps() {
     let mut ebpf = Ebpf::load(crate::MAP_OF_MAPS).unwrap();
@@ -60,7 +60,7 @@ fn array_of_maps() {
     assert_eq!(results.get(&0, 0).unwrap(), 1);
 }
 
-/// Test `HashOfMaps`: set inner maps and verify eBPF can access them
+/// Test `HashOfMaps`: set inner maps and verify eBPF can access them.
 #[test_log::test]
 fn hash_of_maps() {
     let mut ebpf = Ebpf::load(crate::MAP_OF_MAPS).unwrap();
@@ -71,7 +71,7 @@ fn hash_of_maps() {
 
     // Set inner maps into the outer HashOfMaps
     {
-        let mut outer: HashMapOfMaps<&mut MapData, u32> =
+        let mut outer: HashOfMaps<&mut MapData, u32> =
             ebpf.map_mut("HASH_OF_MAPS").unwrap().try_into().unwrap();
         outer.insert(0u32, &inner_hash_1_fd, 0).unwrap();
         outer.insert(1u32, &inner_hash_2_fd, 0).unwrap();
@@ -106,7 +106,7 @@ fn hash_of_maps() {
     assert_eq!(results.get(&1, 0).unwrap(), 1);
 }
 
-/// Test dynamic inner map creation: create inner maps programmatically and use them with `HashOfMaps`
+/// Test dynamic inner map creation: create inner maps programmatically and use them with `HashOfMaps`.
 #[test_log::test]
 fn hash_of_maps_dynamic() {
     let mut ebpf = Ebpf::load(crate::MAP_OF_MAPS).unwrap();
@@ -122,11 +122,11 @@ fn hash_of_maps_dynamic() {
 
     // Insert the dynamically created inner maps into the outer HashOfMaps
     {
-        let mut outer: HashMapOfMaps<&mut MapData, u32> =
+        let mut outer: HashOfMaps<&mut MapData, u32> =
             ebpf.map_mut("HASH_OF_MAPS").unwrap().try_into().unwrap();
         // Use keys 10 and 11 to avoid conflict with the other test
-        outer.insert(10u32, inner_1.fd(), 0).unwrap();
-        outer.insert(11u32, inner_2.fd(), 0).unwrap();
+        outer.insert(10u32, &inner_1, 0).unwrap();
+        outer.insert(11u32, &inner_2, 0).unwrap();
     }
 
     // Verify we can still read from the dynamically created inner maps
@@ -136,4 +136,47 @@ fn hash_of_maps_dynamic() {
     // Modify the inner maps and verify changes persist
     inner_1.insert(200u32, 3000u32, 0).unwrap();
     assert_eq!(inner_1.get(&200, 0).unwrap(), 3000);
+}
+
+#[unsafe(no_mangle)]
+#[inline(never)]
+extern "C" fn trigger_btf_map_of_maps() {
+    std::hint::black_box(());
+}
+
+/// Test BTF-based `ArrayOfMaps`: inner map definition is parsed from BTF `values` field.
+#[test_log::test]
+fn btf_array_of_maps() {
+    let mut ebpf = Ebpf::load(crate::BTF_MAP_OF_MAPS).unwrap();
+
+    // Create a dynamic inner Array matching the BTF inner definition (Array<u32, 10>).
+    let mut inner_array: Array<MapData, u32> = Array::create(10, 0).unwrap();
+    inner_array.set(0, 42u32, 0).unwrap();
+
+    // Insert the inner array into the outer ArrayOfMaps at index 0.
+    {
+        let mut outer: ArrayOfMaps<&mut MapData> =
+            ebpf.map_mut("OUTER").unwrap().try_into().unwrap();
+        outer.set(0, &inner_array, 0).unwrap();
+    }
+
+    // Load and attach the uprobe.
+    {
+        let prog: &mut UProbe = ebpf
+            .program_mut("test_btf_array_of_maps")
+            .unwrap()
+            .try_into()
+            .unwrap();
+        prog.load().unwrap();
+        prog.attach("trigger_btf_map_of_maps", "/proc/self/exe", None)
+            .unwrap();
+    }
+
+    // Trigger the probe.
+    trigger_btf_map_of_maps();
+
+    // Verify the eBPF program read from the inner map and wrote to RESULTS.
+    let results: Array<&MapData, u32> = ebpf.map("RESULTS").unwrap().try_into().unwrap();
+    assert_eq!(results.get(&0, 0).unwrap(), 42);
+    assert_eq!(results.get(&1, 0).unwrap(), 1);
 }
