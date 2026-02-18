@@ -16,13 +16,13 @@ use aya_ebpf::{
 #[cfg(not(test))]
 extern crate ebpf_panic;
 
-// Inner map template - must be declared before outer map
+// The inner map definition is parsed from the BTF `values` field at load time.
 #[btf_map]
-static INNER: Array<u32, 10> = Array::new();
-
-// Outer map with explicit inner map binding
-#[btf_map(inner = "INNER")]
 static OUTER: ArrayOfMaps<Array<u32, 10>, 4> = ArrayOfMaps::new();
+
+// Result array to verify values from userspace.
+#[btf_map]
+static RESULTS: Array<u32, 4> = Array::new();
 
 #[unsafe(no_mangle)]
 #[inline(never)]
@@ -34,12 +34,22 @@ pub extern "C" fn trigger_btf_map_of_maps() {
     core::hint::black_box(());
 }
 
-/// Test BTF `ArrayOfMaps`: read value from inner array via outer map
+/// Reads a value from an inner array selected via the outer map and stores the result.
 #[uprobe]
 pub(crate) fn test_btf_array_of_maps(_ctx: ProbeContext) -> u32 {
     if let Some(inner) = OUTER.get(0) {
         if let Some(val) = inner.get(0) {
-            return *val;
+            if let Some(ptr) = RESULTS.get_ptr_mut(0) {
+                unsafe {
+                    *ptr = *val;
+                }
+            }
+        }
+    }
+    // Mark test ran.
+    if let Some(ptr) = RESULTS.get_ptr_mut(1) {
+        unsafe {
+            *ptr = 1;
         }
     }
     0

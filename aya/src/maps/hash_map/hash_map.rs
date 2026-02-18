@@ -101,55 +101,6 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> 
     }
 }
 
-impl<K: Pod, V: Pod> HashMap<MapData, K, V> {
-    /// Creates a new `HashMap` with the specified maximum number of entries.
-    ///
-    /// This method creates a standalone BPF hash map that is not loaded from an eBPF object file.
-    /// It is particularly useful for creating inner maps dynamically for map-of-maps types
-    /// like [`HashMapOfMaps`](crate::maps::HashMapOfMaps) or [`ArrayOfMaps`](crate::maps::ArrayOfMaps).
-    ///
-    /// # Arguments
-    ///
-    /// * `max_entries` - Maximum number of entries the map can hold
-    /// * `flags` - Map flags (e.g., `BPF_F_NO_PREALLOC`)
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use aya::maps::HashMap;
-    ///
-    /// // Create a standalone hash map for use as an inner map
-    /// let inner_map: HashMap<_, u32, u64> = HashMap::create(100, 0)?;
-    ///
-    /// // The map's file descriptor can be used with map-of-maps
-    /// let fd = inner_map.fd();
-    /// # Ok::<(), aya::maps::MapError>(())
-    /// ```
-    pub fn create(max_entries: u32, flags: u32) -> Result<Self, MapError> {
-        let obj = aya_obj::Map::new_hash(
-            size_of::<K>() as u32,
-            size_of::<V>() as u32,
-            max_entries,
-            flags,
-        );
-
-        let map_data = MapData::create(obj, "standalone_hash", None)?;
-        Self::new(map_data)
-    }
-
-    /// Returns a reference to the underlying [`MapData`].
-    pub const fn map_data(&self) -> &MapData {
-        &self.inner
-    }
-
-    /// Returns a file descriptor reference to the underlying map.
-    ///
-    /// This is useful when inserting this map into a map-of-maps.
-    pub const fn fd(&self) -> &crate::maps::MapFd {
-        self.inner.fd()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::io;

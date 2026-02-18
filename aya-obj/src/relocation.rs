@@ -521,7 +521,6 @@ mod test {
             section_kind: EbpfSectionKind::Undefined,
             symbol_index: Some(symbol_index),
             data: Vec::new(),
-            initial_slots: BTreeMap::new(),
         })
     }
 
@@ -532,7 +531,6 @@ mod test {
             section_index: 0,
             symbol_index,
             data: Vec::new(),
-            initial_slots: BTreeMap::new(),
         })
     }
 

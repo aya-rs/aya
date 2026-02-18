@@ -17,24 +17,20 @@ btf_map_def!(
     /// ```rust,no_run
     /// use aya_ebpf::{btf_maps::{Array, HashOfMaps}, macros::btf_map};
     ///
-    /// // Define the inner map template
+    /// // The inner map definition is parsed from BTF at load time.
     /// #[btf_map]
-    /// static INNER: Array<u32, 10> = Array::new();
-    ///
-    /// // Define the outer map with explicit inner map binding
-    /// #[btf_map(inner = "INNER")]
     /// static OUTER: HashOfMaps<u32, Array<u32, 10>, 4> = HashOfMaps::new();
     /// ```
-    pub struct HashOfMaps<K, V; const M: usize, const F: usize = 0>,
+    pub struct HashOfMaps<K, V; const MAX_ENTRIES: usize, const FLAGS: usize = 0>,
     map_type: BPF_MAP_TYPE_HASH_OF_MAPS,
-    max_entries: M,
-    map_flags: F,
+    max_entries: MAX_ENTRIES,
+    map_flags: FLAGS,
     key_type: K,
     value_type: u32,
     inner_map: V,
 );
 
-impl<K, V, const M: usize, const F: usize> HashOfMaps<K, V, M, F> {
+impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> HashOfMaps<K, V, MAX_ENTRIES, FLAGS> {
     /// Retrieve the inner map associated with `key` from the map.
     ///
     /// # Safety

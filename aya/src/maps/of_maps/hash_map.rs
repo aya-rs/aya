@@ -1,3 +1,5 @@
+//! A hash map of eBPF maps.
+
 use std::{
     borrow::{Borrow, BorrowMut},
     marker::PhantomData,
@@ -6,28 +8,25 @@ use std::{
 
 use crate::{
     Pod,
-    maps::{
-        FromMapData, MapData, MapError, MapFd, MapKeys, check_kv_size, hash_map, info::MapInfo,
-    },
-    sys::{SyscallError, bpf_map_get_fd_by_id, bpf_map_lookup_elem},
+    maps::{FromMapData, InnerMap, MapData, MapError, MapKeys, check_kv_size, hash_map},
+    sys::{SyscallError, bpf_map_lookup_elem},
 };
 
-/// A hashmap of eBPF Maps.
+/// A hashmap of eBPF maps.
 ///
-/// A `HashMap` is used to store references to other maps.
+/// A `HashOfMaps` stores references to other eBPF maps, keyed by an arbitrary key type.
 ///
 /// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 4.12.
-#[doc(alias = "BPF_MAP_TYPE_HASH")]
-#[doc(alias = "BPF_MAP_TYPE_LRU_HASH")]
+#[doc(alias = "BPF_MAP_TYPE_HASH_OF_MAPS")]
 #[derive(Debug)]
-pub struct HashMap<T, K> {
+pub struct HashOfMaps<T, K> {
     pub(crate) inner: T,
     _k: PhantomData<K>,
 }
 
-impl<T: Borrow<MapData>, K: Pod> HashMap<T, K> {
+impl<T: Borrow<MapData>, K: Pod> HashOfMaps<T, K> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<K, u32>(data)?;
@@ -42,6 +41,13 @@ impl<T: Borrow<MapData>, K: Pod> HashMap<T, K> {
     ///
     /// The type parameter `M` specifies the expected inner map type. It must
     /// implement [`FromMapData`], which validates and wraps the raw [`MapData`].
+    /// Use `MapData` as `M` to retrieve an untyped handle.
+    ///
+    /// # File descriptor cost
+    ///
+    /// Each call opens a **new file descriptor** to the inner map. The caller
+    /// owns the returned map and its FD is closed on drop. Avoid calling this
+    /// in a tight loop without dropping previous results.
     pub fn get<M: FromMapData>(&self, key: &K, flags: u64) -> Result<M, MapError> {
         let fd = self.inner.borrow().fd().as_fd();
         let value: Option<u32> =
@@ -49,15 +55,9 @@ impl<T: Borrow<MapData>, K: Pod> HashMap<T, K> {
                 call: "bpf_map_lookup_elem",
                 io_error,
             })?;
-        // The kernel's map-of-maps API is asymmetric: update takes the FD of the inner map,
-        // but lookup returns the ID. We convert the ID back to an FD using bpf_map_get_fd_by_id.
-        if let Some(id) = value {
-            let inner_fd = bpf_map_get_fd_by_id(id)?;
-            let info = MapInfo::new_from_fd(inner_fd.as_fd())?;
-            let map_data = MapData::from_id(info.id())?;
-            M::from_map_data(map_data)
-        } else {
-            Err(MapError::KeyNotFound)
+        match value {
+            Some(id) => super::map_from_id(id),
+            None => Err(MapError::KeyNotFound),
         }
     }
 
@@ -68,18 +68,18 @@ impl<T: Borrow<MapData>, K: Pod> HashMap<T, K> {
     }
 }
 
-impl<T: BorrowMut<MapData>, K: Pod> HashMap<T, K> {
+impl<T: BorrowMut<MapData>, K: Pod> HashOfMaps<T, K> {
     /// Inserts a key-value pair into the map.
     pub fn insert(
         &mut self,
         key: impl Borrow<K>,
-        value: &MapFd,
+        value: &impl InnerMap,
         flags: u64,
     ) -> Result<(), MapError> {
         hash_map::insert(
             self.inner.borrow_mut(),
             key.borrow(),
-            &value.as_fd().as_raw_fd(),
+            &value.fd().as_fd().as_raw_fd(),
             flags,
         )
     }
@@ -90,15 +90,10 @@ impl<T: BorrowMut<MapData>, K: Pod> HashMap<T, K> {
     }
 }
 
-impl<K: Pod> HashMap<MapData, K> {
+impl<K: Pod> HashOfMaps<MapData, K> {
     /// Returns a reference to the underlying [`MapData`].
     pub const fn map_data(&self) -> &MapData {
         &self.inner
-    }
-
-    /// Returns a file descriptor reference to the underlying map.
-    pub const fn fd(&self) -> &MapFd {
-        self.inner.fd()
     }
 }
 
@@ -132,7 +127,7 @@ mod tests {
     fn test_wrong_key_size() {
         let map = new_map(new_obj_map());
         assert_matches!(
-            HashMap::<_, u8>::new(&map),
+            HashOfMaps::<_, u8>::new(&map),
             Err(MapError::InvalidKeySize {
                 size: 1,
                 expected: 4
@@ -147,7 +142,7 @@ mod tests {
         ));
         let map = Map::HashMap(map);
         assert_matches!(
-            HashMap::<_, u32>::try_from(&map),
+            HashOfMaps::<_, u32>::try_from(&map),
             Err(MapError::InvalidMapType { .. })
         );
     }
@@ -155,7 +150,7 @@ mod tests {
     #[test]
     fn test_new_ok() {
         let map = new_map(new_obj_map());
-        HashMap::<_, u32>::new(&map).unwrap();
+        HashOfMaps::<_, u32>::new(&map).unwrap();
     }
 
     #[test]
@@ -164,12 +159,12 @@ mod tests {
         let inner_map = new_map(test_utils::new_obj_map::<u32>(
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_HASH,
         ));
-        let mut hm = HashMap::<_, u32>::new(&mut map).unwrap();
+        let mut hm = HashOfMaps::<_, u32>::new(&mut map).unwrap();
 
         override_syscall(|_| sys_error(EFAULT));
 
         assert_matches!(
-            hm.insert(1, inner_map.fd(), 0),
+            hm.insert(1, &inner_map, 0),
             Err(MapError::SyscallError(SyscallError {
                 call: "bpf_map_update_elem",
                 ..
@@ -183,7 +178,7 @@ mod tests {
         let inner_map = new_map(test_utils::new_obj_map::<u32>(
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_HASH,
         ));
-        let mut hm = HashMap::<_, u32>::new(&mut map).unwrap();
+        let mut hm = HashOfMaps::<_, u32>::new(&mut map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
@@ -193,13 +188,13 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        hm.insert(1, inner_map.fd(), 0).unwrap();
+        hm.insert(1, &inner_map, 0).unwrap();
     }
 
     #[test]
     fn test_remove_syscall_error() {
         let mut map = new_map(new_obj_map());
-        let mut hm = HashMap::<_, u32>::new(&mut map).unwrap();
+        let mut hm = HashOfMaps::<_, u32>::new(&mut map).unwrap();
 
         override_syscall(|_| sys_error(EFAULT));
 
@@ -215,7 +210,7 @@ mod tests {
     #[test]
     fn test_remove_ok() {
         let mut map = new_map(new_obj_map());
-        let mut hm = HashMap::<_, u32>::new(&mut map).unwrap();
+        let mut hm = HashOfMaps::<_, u32>::new(&mut map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
@@ -231,7 +226,7 @@ mod tests {
     #[test]
     fn test_get_syscall_error() {
         let map = new_map(new_obj_map());
-        let hm = HashMap::<_, u32>::new(&map).unwrap();
+        let hm = HashOfMaps::<_, u32>::new(&map).unwrap();
 
         override_syscall(|_| sys_error(EFAULT));
 
@@ -247,7 +242,7 @@ mod tests {
     #[test]
     fn test_get_not_found() {
         let map = new_map(new_obj_map());
-        let hm = HashMap::<_, u32>::new(&map).unwrap();
+        let hm = HashOfMaps::<_, u32>::new(&map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
@@ -266,7 +261,7 @@ mod tests {
     #[test]
     fn test_keys_empty() {
         let map = new_map(new_obj_map());
-        let hm = HashMap::<_, u32>::new(&map).unwrap();
+        let hm = HashOfMaps::<_, u32>::new(&map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
