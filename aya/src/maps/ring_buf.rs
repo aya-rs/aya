@@ -243,6 +243,45 @@ impl ConsumerPos {
         // [2]: https://github.com/torvalds/linux/blob/2772d7df/kernel/bpf/ringbuf.c#L494
         metadata.as_ref().store(*pos, Ordering::SeqCst);
     }
+
+    fn read_item<'data>(&self, data: &'data [u8], mask: u32) -> Item<'data> {
+        let Self { pos, .. } = self;
+        let offset = pos & usize::try_from(mask).unwrap();
+        #[expect(
+            clippy::panic,
+            reason = "invalid ring buffer layout is a fatal internal error"
+        )]
+        let must_get_data = |offset, len| {
+            data.get(offset..offset + len)
+                .unwrap_or_else(|| panic!("{:?} not in {:?}", offset..offset + len, 0..data.len()))
+        };
+        let header_ptr: *const AtomicU32 = must_get_data(offset, size_of::<AtomicU32>())
+            .as_ptr()
+            .cast();
+        // Pair the kernel's SeqCst write (implies Release) [1] with an Acquire load. This
+        // ensures data written by the producer will be visible.
+        //
+        // [1]: https://github.com/torvalds/linux/blob/eb26cbb1/kernel/bpf/ringbuf.c#L488
+        let header = unsafe { &*header_ptr }.load(Ordering::Acquire);
+        if header & BPF_RINGBUF_BUSY_BIT != 0 {
+            Item::Busy
+        } else {
+            let len = usize::try_from(header & mask).unwrap();
+            if header & BPF_RINGBUF_DISCARD_BIT != 0 {
+                Item::Discard { len }
+            } else {
+                let data_offset = offset + usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap();
+                let data = must_get_data(data_offset, len);
+                Item::Data(data)
+            }
+        }
+    }
+}
+
+enum Item<'a> {
+    Busy,
+    Discard { len: usize },
+    Data(&'a [u8]),
 }
 
 struct ProducerData {
@@ -335,19 +374,13 @@ impl ProducerData {
             )
         });
         while data_available(mmap, pos_cache, consumer) {
-            match read_item(data_pages, *mask, consumer) {
+            match consumer.read_item(data_pages, *mask) {
                 Item::Busy => return None,
                 Item::Discard { len } => consumer.consume(len),
                 Item::Data(data) => return Some(RingBufItem { data, consumer }),
             }
         }
         return None;
-
-        enum Item<'a> {
-            Busy,
-            Discard { len: usize },
-            Data(&'a [u8]),
-        }
 
         fn data_available(
             producer: &MMap,
@@ -371,40 +404,6 @@ impl ProducerData {
             //
             // [1]: https://github.com/torvalds/linux/blob/4b810bf0/kernel/bpf/ringbuf.c#L434-L440
             consumer != producer_cache
-        }
-
-        fn read_item<'data>(data: &'data [u8], mask: u32, pos: &ConsumerPos) -> Item<'data> {
-            let ConsumerPos { pos, .. } = pos;
-            let offset = pos & usize::try_from(mask).unwrap();
-            #[expect(
-                clippy::panic,
-                reason = "invalid ring buffer layout is a fatal internal error"
-            )]
-            let must_get_data = |offset, len| {
-                data.get(offset..offset + len).unwrap_or_else(|| {
-                    panic!("{:?} not in {:?}", offset..offset + len, 0..data.len())
-                })
-            };
-            let header_ptr: *const AtomicU32 = must_get_data(offset, size_of::<AtomicU32>())
-                .as_ptr()
-                .cast();
-            // Pair the kernel's SeqCst write (implies Release) [1] with an Acquire load. This
-            // ensures data written by the producer will be visible.
-            //
-            // [1]: https://github.com/torvalds/linux/blob/eb26cbb1/kernel/bpf/ringbuf.c#L488
-            let header = unsafe { &*header_ptr }.load(Ordering::Acquire);
-            if header & BPF_RINGBUF_BUSY_BIT != 0 {
-                Item::Busy
-            } else {
-                let len = usize::try_from(header & mask).unwrap();
-                if header & BPF_RINGBUF_DISCARD_BIT != 0 {
-                    Item::Discard { len }
-                } else {
-                    let data_offset = offset + usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap();
-                    let data = must_get_data(data_offset, len);
-                    Item::Data(data)
-                }
-            }
         }
     }
 }
