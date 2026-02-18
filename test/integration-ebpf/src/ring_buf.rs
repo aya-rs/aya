@@ -31,6 +31,12 @@ static REGISTERS: PerCpuArray<Registers> = PerCpuArray::with_max_entries(1, 0);
 #[map]
 static REGISTERS_LEGACY: PerCpuArray<Registers> = PerCpuArray::with_max_entries(1, 0);
 
+#[map]
+static REGISTERS_BATCH: PerCpuArray<Registers> = PerCpuArray::with_max_entries(1, 0);
+
+#[map]
+static REGISTERS_LEGACY_BATCH: PerCpuArray<Registers> = PerCpuArray::with_max_entries(1, 0);
+
 macro_rules! define_ring_buf_test {
     ($registers:ident, $name:ident, $reserve:expr) => {
         #[uprobe]
@@ -51,7 +57,7 @@ macro_rules! define_ring_buf_test {
             };
             if arg.is_multiple_of(2) {
                 entry.write(arg);
-                entry.submit(0);
+                entry.submit_default();
             } else {
                 *rejected += 1;
                 entry.discard(0);
@@ -67,6 +73,39 @@ define_ring_buf_test!(
     RING_BUF_LEGACY.reserve::<u64>(0)
 );
 
+macro_rules! define_ring_buf_test_notify_batch {
+    ($registers:ident, $name:ident, $reserve:expr) => {
+        #[uprobe]
+        fn $name(ctx: ProbeContext) {
+            let Registers { dropped, rejected: _ } = match $registers.get_ptr_mut(0) {
+                Some(regs) => unsafe { &mut *regs },
+                None => return,
+            };
+            let Some(mut entry) = $reserve else {
+                *dropped += 1;
+                return;
+            };
+            let arg: u64 = match ctx.arg(0) {
+                Some(arg) => arg,
+                None => return,
+            };
+            entry.write(arg);
+            if arg & 1 == 0 {
+                entry.submit_no_wakeup();
+            } else {
+                entry.submit_force_wakeup();
+            }
+        }
+    };
+}
+
+define_ring_buf_test_notify_batch!(REGISTERS_BATCH, ring_buf_test_batch_notify, RING_BUF.reserve(0));
+define_ring_buf_test_notify_batch!(
+    REGISTERS_LEGACY_BATCH,
+    ring_buf_test_legacy_batch_notify,
+    RING_BUF_LEGACY.reserve::<u64>(0)
+);
+
 macro_rules! define_ring_buf_mismatch {
     ($name:ident, $ty:ty) => {
         #[uprobe]
@@ -79,7 +118,7 @@ macro_rules! define_ring_buf_mismatch {
                 None => return,
             };
             entry.write(arg);
-            entry.submit(0);
+            entry.submit_default();
         }
     };
 }

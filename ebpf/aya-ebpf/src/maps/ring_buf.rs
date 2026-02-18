@@ -8,7 +8,7 @@ use core::{
 #[cfg(generic_const_exprs)]
 use crate::const_assert::{Assert, IsTrue};
 use crate::{
-    bindings::bpf_map_type::BPF_MAP_TYPE_RINGBUF,
+    bindings::{BPF_RB_FORCE_WAKEUP, BPF_RB_NO_WAKEUP, bpf_map_type::BPF_MAP_TYPE_RINGBUF},
     helpers::{
         bpf_ringbuf_discard, bpf_ringbuf_output, bpf_ringbuf_query, bpf_ringbuf_reserve,
         bpf_ringbuf_submit,
@@ -54,15 +54,53 @@ impl RingBufBytes<'_> {
     }
 
     /// Commit this ring buffer entry. The entry will be made visible to the userspace reader.
+    #[inline(always)]
     pub fn submit(self, flags: u64) {
         let Self(inner) = self;
         unsafe { bpf_ringbuf_submit(inner.as_mut_ptr().cast(), flags) }
     }
 
+    /// Commit this ring buffer entry using default wakeup behavior.
+    #[inline(always)]
+    pub fn submit_default(self) {
+        self.submit(0);
+    }
+
+    /// Commit this ring buffer entry without waking userspace readers.
+    #[inline(always)]
+    pub fn submit_no_wakeup(self) {
+        self.submit(BPF_RB_NO_WAKEUP as u64);
+    }
+
+    /// Commit this ring buffer entry and force a userspace wakeup.
+    #[inline(always)]
+    pub fn submit_force_wakeup(self) {
+        self.submit(BPF_RB_FORCE_WAKEUP as u64);
+    }
+
     /// Discard this ring buffer entry. The entry will be skipped by the userspace reader.
+    #[inline(always)]
     pub fn discard(self, flags: u64) {
         let Self(inner) = self;
         unsafe { bpf_ringbuf_discard(inner.as_mut_ptr().cast(), flags) }
+    }
+
+    /// Discard this ring buffer entry using default wakeup behavior.
+    #[inline(always)]
+    pub fn discard_default(self) {
+        self.discard(0);
+    }
+
+    /// Discard this ring buffer entry without waking userspace readers.
+    #[inline(always)]
+    pub fn discard_no_wakeup(self) {
+        self.discard(BPF_RB_NO_WAKEUP as u64);
+    }
+
+    /// Discard this ring buffer entry and force a userspace wakeup.
+    #[inline(always)]
+    pub fn discard_force_wakeup(self) {
+        self.discard(BPF_RB_FORCE_WAKEUP as u64);
     }
 }
 
@@ -97,15 +135,53 @@ impl<T> RingBufEntry<T> {
     }
 
     /// Discard this ring buffer entry. The entry will be skipped by the userspace reader.
+    #[inline(always)]
     pub fn discard(self, flags: u64) {
         let Self(inner) = self;
         unsafe { bpf_ringbuf_discard(inner.as_mut_ptr().cast(), flags) }
     }
 
+    /// Discard this ring buffer entry using default wakeup behavior.
+    #[inline(always)]
+    pub fn discard_default(self) {
+        self.discard(0);
+    }
+
+    /// Discard this ring buffer entry without waking userspace readers.
+    #[inline(always)]
+    pub fn discard_no_wakeup(self) {
+        self.discard(BPF_RB_NO_WAKEUP as u64);
+    }
+
+    /// Discard this ring buffer entry and force a userspace wakeup.
+    #[inline(always)]
+    pub fn discard_force_wakeup(self) {
+        self.discard(BPF_RB_FORCE_WAKEUP as u64);
+    }
+
     /// Commit this ring buffer entry. The entry will be made visible to the userspace reader.
+    #[inline(always)]
     pub fn submit(self, flags: u64) {
         let Self(inner) = self;
         unsafe { bpf_ringbuf_submit(inner.as_mut_ptr().cast(), flags) }
+    }
+
+    /// Commit this ring buffer entry using default wakeup behavior.
+    #[inline(always)]
+    pub fn submit_default(self) {
+        self.submit(0);
+    }
+
+    /// Commit this ring buffer entry without waking userspace readers.
+    #[inline(always)]
+    pub fn submit_no_wakeup(self) {
+        self.submit(BPF_RB_NO_WAKEUP as u64);
+    }
+
+    /// Commit this ring buffer entry and force a userspace wakeup.
+    #[inline(always)]
+    pub fn submit_force_wakeup(self) {
+        self.submit(BPF_RB_FORCE_WAKEUP as u64);
     }
 }
 
