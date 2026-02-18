@@ -596,6 +596,7 @@ impl ProducerData {
         let mut guard = scopeguard::guard((consumer, &mut advanced), |(consumer, advanced)| {
             flush(consumer, advanced);
         });
+        let mut busy_retry = false;
         loop {
             let (consumer, advanced) = &mut *guard;
             if !Self::data_available(mmap, pos_cache, consumer, |consumer| {
@@ -604,9 +605,18 @@ impl ProducerData {
                 break;
             }
             match consumer.read_item(data_pages, self.mask) {
-                Item::Busy => break,
-                Item::Discard { len } => consume(consumer, advanced, len),
+                Item::Busy => {
+                    if std::mem::replace(&mut busy_retry, true) {
+                        break;
+                    }
+                    flush(consumer, advanced);
+                }
+                Item::Discard { len } => {
+                    consume(consumer, advanced, len);
+                    busy_retry = false;
+                }
                 Item::Data(data) => {
+                    busy_retry = false;
                     // This must be deferred in case `f` panics.
                     scopeguard::defer! { consume(consumer, advanced, data.len()) };
                     match f(acc, data) {
