@@ -132,7 +132,9 @@ impl<T> RingBuf<T> {
     )]
     pub fn next(&mut self) -> Option<RingBufItem<'_>> {
         let Self {
-            consumer, producer, ..
+            map: _,
+            consumer,
+            producer,
         } = self;
         producer.next(consumer)
     }
@@ -165,7 +167,7 @@ impl Deref for RingBufItem<'_> {
     type Target = [u8];
 
     fn deref(&self) -> &Self::Target {
-        let Self { data, .. } = self;
+        let Self { data, consumer: _ } = self;
         data
     }
 }
@@ -344,7 +346,7 @@ impl ProducerData {
             )
         });
         while data_available(mmap, pos_cache, consumer) {
-            match read_item(data_pages, *mask, consumer) {
+            match consumer.read_item(data_pages, *mask) {
                 Item::Busy => {
                     if !consumer.needs_wakeup {
                         return None;
@@ -360,12 +362,6 @@ impl ProducerData {
         }
         return None;
 
-        enum Item<'a> {
-            Busy,
-            Discard { len: usize },
-            Data(&'a [u8]),
-        }
-
         fn data_available(
             producer: &MMap,
             producer_cache: &mut usize,
@@ -373,8 +369,8 @@ impl ProducerData {
         ) -> bool {
             let ConsumerPos {
                 pos: consumer,
+                metadata: _,
                 needs_wakeup,
-                ..
             } = consumer;
             // Refresh the producer position cache if it appears that the consumer is caught up
             // with the producer position.
@@ -400,38 +396,49 @@ impl ProducerData {
             // [1]: https://github.com/torvalds/linux/blob/4b810bf0/kernel/bpf/ringbuf.c#L434-L440
             *consumer != *producer_cache
         }
+    }
+}
 
-        fn read_item<'data>(data: &'data [u8], mask: u32, pos: &ConsumerPos) -> Item<'data> {
-            let ConsumerPos { pos, .. } = pos;
-            let offset = pos & usize::try_from(mask).unwrap();
-            #[expect(
-                clippy::panic,
-                reason = "invalid ring buffer layout is a fatal internal error"
-            )]
-            let must_get_data = |offset, len| {
-                data.get(offset..offset + len).unwrap_or_else(|| {
-                    panic!("{:?} not in {:?}", offset..offset + len, 0..data.len())
-                })
-            };
-            let header_ptr: *const AtomicU32 = must_get_data(offset, size_of::<AtomicU32>())
-                .as_ptr()
-                .cast();
-            // The kernel commits the record with a fully ordered xchg [1]. Pair it with an Acquire
-            // load so data written by the producer is visible after the busy bit is cleared.
-            //
-            // [1]: https://github.com/torvalds/linux/blob/eb26cbb1/kernel/bpf/ringbuf.c#L488
-            let header = unsafe { &*header_ptr }.load(Ordering::Acquire);
-            if header & BPF_RINGBUF_BUSY_BIT != 0 {
-                Item::Busy
+enum Item<'a> {
+    Busy,
+    Discard { len: usize },
+    Data(&'a [u8]),
+}
+
+impl ConsumerPos {
+    fn read_item<'data>(&self, data: &'data [u8], mask: u32) -> Item<'data> {
+        let Self {
+            pos,
+            metadata: _,
+            needs_wakeup: _,
+        } = self;
+        let offset = pos & usize::try_from(mask).unwrap();
+        #[expect(
+            clippy::panic,
+            reason = "invalid ring buffer layout is a fatal internal error"
+        )]
+        let must_get_data = |offset, len| {
+            data.get(offset..offset + len)
+                .unwrap_or_else(|| panic!("{:?} not in {:?}", offset..offset + len, 0..data.len()))
+        };
+        let header_ptr: *const AtomicU32 = must_get_data(offset, size_of::<AtomicU32>())
+            .as_ptr()
+            .cast();
+        // The kernel commits the record with a fully ordered xchg [1]. Pair it with an Acquire
+        // load so data written by the producer is visible after the busy bit is cleared.
+        //
+        // [1]: https://github.com/torvalds/linux/blob/eb26cbb1/kernel/bpf/ringbuf.c#L488
+        let header = unsafe { &*header_ptr }.load(Ordering::Acquire);
+        if header & BPF_RINGBUF_BUSY_BIT != 0 {
+            Item::Busy
+        } else {
+            let len = usize::try_from(header & mask).unwrap();
+            if header & BPF_RINGBUF_DISCARD_BIT != 0 {
+                Item::Discard { len }
             } else {
-                let len = usize::try_from(header & mask).unwrap();
-                if header & BPF_RINGBUF_DISCARD_BIT != 0 {
-                    Item::Discard { len }
-                } else {
-                    let data_offset = offset + usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap();
-                    let data = must_get_data(data_offset, len);
-                    Item::Data(data)
-                }
+                let data_offset = offset + usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap();
+                let data = must_get_data(data_offset, len);
+                Item::Data(data)
             }
         }
     }
