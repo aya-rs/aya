@@ -59,12 +59,11 @@ fn test_uprobe_cookie() {
     uprobe_cookie_trigger_ebpf_program_a(3);
     const EXP: &[u64] = &[1, 2, 1, 3];
 
-    let mut seen = Vec::with_capacity(EXP.len());
-    let mut batch = ring_buf.batch();
-    while let Some(read) = batch.next() {
-        let read = (*read).try_into().unwrap();
+    let mut seen = Vec::new();
+    ring_buf.for_each(|read| {
+        let read = read.try_into().unwrap();
         seen.push(u64::from_le_bytes(read));
-    }
+    });
     assert_eq!(seen, EXP);
 }
 
