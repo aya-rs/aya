@@ -62,7 +62,7 @@ pub(crate) fn bpf_create_map(
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
 
-    // For map-of-maps types, set the inner_map_fd
+    // For map-of-maps types, set the inner_map_fd.
     if let Some(inner_fd) = inner_map_fd {
         u.inner_map_fd = inner_fd.as_raw_fd() as u32;
     }
@@ -956,7 +956,6 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
             section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
             data: Vec::new(),
-            initial_slots: std::collections::BTreeMap::new(),
         }),
         "aya_global",
         None,

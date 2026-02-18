@@ -91,7 +91,7 @@ pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use info::{MapInfo, MapType, loaded_maps};
 pub use lpm_trie::LpmTrie;
-pub use of_maps::{Array as ArrayOfMaps, HashMap as HashMapOfMaps};
+pub use of_maps::{ArrayOfMaps, HashOfMaps};
 pub use perf::PerfEventArray;
 pub use queue::Queue;
 pub use ring_buf::RingBuf;
@@ -103,19 +103,52 @@ pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
 
 /// Trait for constructing a typed map from [`MapData`].
 ///
-/// This is used by map-of-maps types ([`ArrayOfMaps`], [`HashMapOfMaps`]) to
+/// This is used by map-of-maps types ([`ArrayOfMaps`], [`HashOfMaps`]) to
 /// let callers specify the expected inner map type when retrieving entries.
-pub trait FromMapData: Sized {
+///
+/// This trait is sealed and cannot be implemented outside of this crate.
+pub trait FromMapData: Sized + sealed::FromMapData {
     /// Constructs a typed map from raw [`MapData`].
     fn from_map_data(map_data: MapData) -> Result<Self, MapError>;
+}
+
+impl<T: sealed::FromMapData> FromMapData for T {
+    fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
+        <Self as sealed::FromMapData>::from_map_data(map_data)
+    }
+}
+
+mod sealed {
+    use super::{MapData, MapError};
+
+    #[expect(unnameable_types, reason = "intentionally unnameable sealed trait")]
+    pub trait FromMapData: Sized {
+        /// Constructs a typed map from raw [`MapData`].
+        fn from_map_data(map_data: MapData) -> Result<Self, MapError>;
+    }
 }
 
 #[derive(Error, Debug)]
 /// Errors occuring from working with Maps
 pub enum MapError {
-    /// Missing inner map binding for a map-of-maps
-    #[error("{0}")]
-    MissingInnerMapBinding(String),
+    /// Missing inner map binding for a map-of-maps.
+    #[error(
+        "map `{name}` is a map-of-maps but has no inner map binding; \
+             use #[map(inner = \"<template>\")] or ensure the BTF definition includes a `values` field"
+    )]
+    MissingInnerMapBinding {
+        /// The map name.
+        name: String,
+    },
+
+    /// Inner map not found for a map-of-maps.
+    #[error("inner map `{inner_name}` not found for map-of-maps `{name}`")]
+    InnerMapNotFound {
+        /// The outer map name.
+        name: String,
+        /// The inner map name.
+        inner_name: String,
+    },
 
     /// Invalid map type encontered
     #[error("invalid map type {map_type}")]
@@ -264,7 +297,7 @@ pub enum Map {
     DevMapHash(MapData),
     /// A [`HashMap`] map.
     HashMap(MapData),
-    /// A [`HashMapOfMaps`] map.
+    /// A [`HashOfMaps`] map.
     HashOfMaps(MapData),
     /// A [`LpmTrie`] map.
     LpmTrie(MapData),
@@ -497,7 +530,7 @@ impl_map_pin!((V) {
 });
 
 impl_map_pin!((K) {
-    HashMapOfMaps,
+    HashOfMaps,
 });
 
 impl_map_pin!((K, V) {
@@ -581,7 +614,7 @@ impl_try_from_map!((V) {
 });
 
 impl_try_from_map!((K) {
-    HashMapOfMaps from HashOfMaps,
+    HashOfMaps,
 });
 
 impl_try_from_map!((K, V) {
@@ -590,17 +623,85 @@ impl_try_from_map!((K, V) {
     PerCpuHashMap from PerCpuHashMap|PerCpuLruHashMap,
 });
 
-impl<V: Pod> FromMapData for Array<MapData, V> {
+// Implements `sealed::FromMapData` for map types that the kernel supports as inner maps.
+// Excluded: ProgramArray (no map_meta_equal), ArrayOfMaps/HashOfMaps (multi-level nesting
+// forbidden).
+macro_rules! impl_from_map_data {
+    ($ty_param:tt { $($ty:ident),+ $(,)? }) => {
+        $(impl_from_map_data!(<$ty_param> $ty);)+
+    };
+    (<($($ty_param:ident),*)> $ty:ident) => {
+        impl<$($ty_param: Pod),*> sealed::FromMapData for $ty<MapData, $($ty_param),*> {
+            fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
+                Self::new(map_data)
+            }
+        }
+    };
+}
+
+impl_from_map_data!(() {
+    CpuMap, DevMap, DevMapHash, PerfEventArray,
+    RingBuf, SockMap, StackTraceMap, XskMap,
+});
+
+impl_from_map_data!((V) {
+    Array, BloomFilter, PerCpuArray,
+    Queue, SockHash, SkStorage, Stack,
+});
+
+impl_from_map_data!((K, V) {
+    HashMap, LpmTrie, PerCpuHashMap,
+});
+
+impl sealed::FromMapData for MapData {
     fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
-        Self::new(map_data)
+        Ok(map_data)
     }
 }
 
-impl<K: Pod, V: Pod> FromMapData for HashMap<MapData, K, V> {
-    fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
-        Self::new(map_data)
-    }
+// Implements `create()` for map types that can be created standalone for use as inner maps in
+// map-of-maps. Each invocation specifies the kernel map type, key size expression, the type
+// parameter used for value size, and a name for the created map.
+macro_rules! impl_create_map {
+    ($ty_param:tt {
+        $($ty:ident($map_type:ident, $key_size:expr, $val:ident, $name:literal)),+ $(,)?
+    }) => {
+        $(impl_create_map!(<$ty_param> $ty($map_type, $key_size, $val, $name));)+
+    };
+    (<($($ty_param:ident),+)> $ty:ident($map_type:ident, $key_size:expr, $val:ident, $name:literal)) => {
+        impl<$($ty_param: Pod),+> $ty<MapData, $($ty_param),+> {
+            /// Creates a standalone map, not loaded from an eBPF object file.
+            ///
+            /// This is useful for creating inner maps to insert into map-of-maps
+            /// types like [`ArrayOfMaps`](crate::maps::ArrayOfMaps) or
+            /// [`HashOfMaps`](crate::maps::HashOfMaps).
+            pub fn create(max_entries: u32, flags: u32) -> Result<Self, MapError> {
+                let obj = aya_obj::Map::new_legacy(
+                    aya_obj::generated::bpf_map_type::$map_type as u32,
+                    $key_size,
+                    size_of::<$val>() as u32,
+                    max_entries,
+                    flags,
+                );
+                Self::new(MapData::create(obj, $name, None)?)
+            }
+        }
+    };
 }
+
+impl_create_map!((V) {
+    Array(BPF_MAP_TYPE_ARRAY, size_of::<u32>() as u32, V, "standalone_array"),
+    PerCpuArray(BPF_MAP_TYPE_PERCPU_ARRAY, size_of::<u32>() as u32, V, "standalone_percpu_array"),
+    BloomFilter(BPF_MAP_TYPE_BLOOM_FILTER, 0, V, "standalone_bloom_filter"),
+    Queue(BPF_MAP_TYPE_QUEUE, 0, V, "standalone_queue"),
+    Stack(BPF_MAP_TYPE_STACK, 0, V, "standalone_stack"),
+});
+
+impl_create_map!((K, V) {
+    HashMap(BPF_MAP_TYPE_HASH, size_of::<K>() as u32, V, "standalone_hash"),
+    PerCpuHashMap(BPF_MAP_TYPE_PERCPU_HASH, size_of::<K>() as u32, V, "standalone_percpu_hash"),
+    LpmTrie(BPF_MAP_TYPE_LPM_TRIE, size_of::<lpm_trie::Key<K>>() as u32, V, "standalone_lpm_trie"),
+});
 
 pub(crate) const fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
     let max_entries = map.obj.max_entries();
@@ -653,7 +754,7 @@ impl MapData {
         Self::create_with_inner_map_fd(obj, name, btf_fd, None)
     }
 
-    /// Creates a new map with the provided `name` and optional `inner_map_fd` for map-of-maps types
+    /// Creates a new map with the provided `name` and optional `inner_map_fd` for map-of-maps types.
     pub(crate) fn create_with_inner_map_fd(
         mut obj: aya_obj::Map,
         name: &str,
@@ -1082,7 +1183,6 @@ mod test_utils {
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
             symbol_index: None,
-            initial_slots: std::collections::BTreeMap::new(),
         })
     }
 
@@ -1103,7 +1203,6 @@ mod test_utils {
             section_kind: EbpfSectionKind::Maps,
             data: Vec::new(),
             symbol_index: None,
-            initial_slots: std::collections::BTreeMap::new(),
         })
     }
 }

@@ -95,36 +95,6 @@ impl<T: Borrow<MapData>, V: Pod> IterableMap<u32, V> for Array<T, V> {
 }
 
 impl<V: Pod> Array<MapData, V> {
-    /// Creates a new Array with the specified maximum number of entries.
-    ///
-    /// This method creates a standalone BPF array map that is not loaded from an eBPF object file.
-    /// It is particularly useful for creating inner maps dynamically for map-of-maps types
-    /// like [`ArrayOfMaps`](crate::maps::ArrayOfMaps).
-    ///
-    /// # Arguments
-    ///
-    /// * `max_entries` - Maximum number of entries (size) of the array
-    /// * `flags` - Map flags
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use aya::maps::Array;
-    ///
-    /// // Create a standalone array map for use as an inner map
-    /// let inner_array: Array<_, u64> = Array::create(100, 0)?;
-    ///
-    /// // The map's file descriptor can be used with map-of-maps
-    /// let fd = inner_array.fd();
-    /// # Ok::<(), aya::maps::MapError>(())
-    /// ```
-    pub fn create(max_entries: u32, flags: u32) -> Result<Self, MapError> {
-        let obj = aya_obj::Map::new_array(size_of::<V>() as u32, max_entries, flags);
-
-        let map_data = MapData::create(obj, "standalone_array", None)?;
-        Self::new(map_data)
-    }
-
     /// Returns a reference to the underlying [`MapData`].
     pub const fn map_data(&self) -> &MapData {
         &self.inner
