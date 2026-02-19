@@ -76,10 +76,16 @@ pub(crate) fn expand_helper(helper: &Helper<'_>) -> TokenStream {
         call_index,
     } = helper;
 
-    let args = inputs
-        .iter()
-        .map(|arg| &arg.name.as_ref().unwrap().0)
-        .collect::<Vec<_>>();
+    let args = inputs.iter().map(
+        |BareFnArg {
+             attrs: _,
+             name,
+             ty: _,
+         }| {
+            let (name, _) = name.as_ref().unwrap();
+            name
+        },
+    );
 
     let helper = quote! {
         pub unsafe fn #ident(#inputs) #output {
