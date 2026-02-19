@@ -139,15 +139,68 @@ fn run() -> anyhow::Result<()> {
     // By contract we run everything in /bin and assume they're rust test binaries.
     //
     // If the user requested command line arguments, they're named init.arg={}.
+    // A shared mount can be configured with:
+    // - init.shared_mount_target={path}
+    // - init.shared_mount_source={source}
+    // - init.shared_mount_fstype={fstype}
+    // Environment variables can be configured with init.env={key}={value}.
 
     // Read kernel parameters from /proc/cmdline. They're space separated on a single line.
     let cmdline = std::fs::read_to_string("/proc/cmdline")
         .with_context(|| "read_to_string(/proc/cmdline) failed")?;
-    let args = cmdline.split_whitespace().filter_map(|parameter| {
-        parameter
-            .strip_prefix("init.arg=")
-            .map(std::ffi::OsStr::new)
-    });
+    let mut shared_mount_target = None::<&str>;
+    let mut shared_mount_source = None::<&str>;
+    let mut shared_mount_fstype = None::<&str>;
+    for parameter in cmdline.split_whitespace() {
+        if let Some(value) = parameter.strip_prefix("init.shared_mount_target=") {
+            shared_mount_target = Some(value);
+        } else if let Some(value) = parameter.strip_prefix("init.shared_mount_source=") {
+            shared_mount_source = Some(value);
+        } else if let Some(value) = parameter.strip_prefix("init.shared_mount_fstype=") {
+            shared_mount_fstype = Some(value);
+        }
+    }
+
+    if let Some(target) = shared_mount_target {
+        std::fs::create_dir_all(target)
+            .with_context(|| format!("create_dir_all({target:?}) failed"))?;
+        let source = shared_mount_source.unwrap_or("shared");
+        let fstype = shared_mount_fstype.unwrap_or("9p");
+        if fstype == "vfat" {
+            for module in [
+                "virtio",
+                "virtio_ring",
+                "virtio_pci",
+                "virtio_blk",
+                "fat",
+                "vfat",
+                "nls_cp437",
+            ] {
+                let mut modprobe = std::process::Command::new("/sbin/modprobe");
+                let status = modprobe
+                    .arg("--module-name")
+                    .arg(module)
+                    .status()
+                    .with_context(|| format!("failed to run {modprobe:?}"))?;
+                if status.code() != Some(0) {
+                    println!("{modprobe:?} failed: {status:?}");
+                }
+            }
+        }
+        let data = (fstype == "9p").then_some("trans=virtio,version=9p2000.L,msize=1048576");
+        if let Err(err) = nix::mount::mount(
+            Some(source),
+            target,
+            Some(fstype),
+            nix::mount::MsFlags::empty(),
+            data,
+        )
+        .with_context(|| format!("mount shared {fstype} at {target:?} failed"))
+        {
+            println!("{err:#}");
+            shared_mount_target = None;
+        }
+    }
 
     // Iterate files in /bin.
     let read_dir = std::fs::read_dir("/bin").context("read_dir(/bin) failed")?;
@@ -156,10 +209,21 @@ fn run() -> anyhow::Result<()> {
             let entry = entry.context("read_dir(/bin) failed")?;
             let path = entry.path();
             let mut cmd = std::process::Command::new(&path);
-            cmd.args(args.clone())
-                .env("RUST_BACKTRACE", "1")
-                .env("RUST_LOG", "debug");
-
+            cmd.env("RUST_BACKTRACE", "1").env("RUST_LOG", "debug");
+            for arg in cmdline
+                .split_whitespace()
+                .filter_map(|parameter| parameter.strip_prefix("init.arg="))
+            {
+                cmd.arg(arg);
+            }
+            for env in cmdline
+                .split_whitespace()
+                .filter_map(|parameter| parameter.strip_prefix("init.env="))
+            {
+                if let Some((key, value)) = env.split_once('=') {
+                    cmd.env(key, value);
+                }
+            }
             println!("running {cmd:?}");
 
             let status = cmd

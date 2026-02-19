@@ -832,6 +832,10 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 }
 
                 let mut qemu = Command::new(format!("qemu-system-{guest_arch}"));
+                let shared_mount_dir = benches
+                    .then(tempfile::tempdir)
+                    .transpose()
+                    .context("failed to create VM shared mount directory")?;
                 if let Some(machine) = machine {
                     qemu.args(["-machine", machine]);
                 }
@@ -841,8 +845,34 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 for accel in ["kvm", "hvf", "tcg"] {
                     qemu.args(["-accel", accel]);
                 }
+                if let Some(shared_mount_dir) = shared_mount_dir.as_ref() {
+                    qemu.arg("-drive").arg(format!(
+                        "file=fat:rw:{},format=raw,if=virtio,id=shared",
+                        shared_mount_dir.path().display()
+                    ));
+                }
                 let console = OsStr::new(console);
                 let mut kernel_args = std::iter::once(("console", console))
+                    .chain(
+                        shared_mount_dir
+                            .as_ref()
+                            .map(|_| ("init.shared_mount_target", OsStr::new("/mnt/shared"))),
+                    )
+                    .chain(
+                        shared_mount_dir
+                            .as_ref()
+                            .map(|_| ("init.shared_mount_source", OsStr::new("/dev/vda1"))),
+                    )
+                    .chain(
+                        shared_mount_dir
+                            .as_ref()
+                            .map(|_| ("init.shared_mount_fstype", OsStr::new("vfat"))),
+                    )
+                    .chain(
+                        shared_mount_dir
+                            .as_ref()
+                            .map(|_| ("init.env", OsStr::new("CRITERION_HOME=/mnt/shared"))),
+                    )
                     .chain(run_args.clone().map(|run_arg| ("init.arg", run_arg)))
                     .enumerate()
                     .fold(OsString::new(), |mut acc, (i, (k, v))| {
