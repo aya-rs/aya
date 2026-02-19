@@ -143,14 +143,11 @@ fn run() -> anyhow::Result<()> {
     // Read kernel parameters from /proc/cmdline. They're space separated on a single line.
     let cmdline = std::fs::read_to_string("/proc/cmdline")
         .with_context(|| "read_to_string(/proc/cmdline) failed")?;
-    let args = cmdline
-        .split_whitespace()
-        .filter_map(|parameter| {
-            parameter
-                .strip_prefix("init.arg=")
-                .map(std::ffi::OsString::from)
-        })
-        .collect::<Vec<_>>();
+    let args = cmdline.split_whitespace().filter_map(|parameter| {
+        parameter
+            .strip_prefix("init.arg=")
+            .map(std::ffi::OsStr::new)
+    });
 
     // Iterate files in /bin.
     let read_dir = std::fs::read_dir("/bin").context("read_dir(/bin) failed")?;
@@ -159,7 +156,7 @@ fn run() -> anyhow::Result<()> {
             let entry = entry.context("read_dir(/bin) failed")?;
             let path = entry.path();
             let mut cmd = std::process::Command::new(&path);
-            cmd.args(&args)
+            cmd.args(args.clone())
                 .env("RUST_BACKTRACE", "1")
                 .env("RUST_LOG", "debug");
 

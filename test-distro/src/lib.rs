@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{borrow::Cow, path::Path};
 
 use anyhow::Context as _;
 use nix::sys::utsname::uname;
@@ -6,13 +6,13 @@ use nix::sys::utsname::uname;
 /// Kernel modules are in `/lib/modules`.
 /// They may be in the root of this directory,
 /// or in subdirectory named after the kernel release.
-pub fn resolve_modules_dir() -> anyhow::Result<PathBuf> {
-    let modules_dir = PathBuf::from("/lib/modules");
+pub fn resolve_modules_dir() -> anyhow::Result<Cow<'static, Path>> {
+    let modules_dir = Path::new("/lib/modules");
     let stat = modules_dir
         .metadata()
         .with_context(|| format!("stat(): {}", modules_dir.display()))?;
     if stat.is_dir() {
-        return Ok(modules_dir);
+        return Ok(modules_dir.into());
     }
 
     let utsname = uname().context("uname()")?;
@@ -26,7 +26,7 @@ pub fn resolve_modules_dir() -> anyhow::Result<PathBuf> {
         "{} is not a directory",
         modules_dir.display()
     );
-    Ok(modules_dir)
+    Ok(modules_dir.into())
 }
 
 pub fn read_to_end(path: &std::path::Path, compressed: bool) -> anyhow::Result<Vec<u8>> {
