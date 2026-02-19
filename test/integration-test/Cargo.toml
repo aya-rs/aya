@@ -22,6 +22,7 @@ assert_matches = { workspace = true }
 aya-log = { path = "../../aya-log", version = "^0.2.2", default-features = false }
 aya-obj = { path = "../../aya-obj", version = "^0.2.2", default-features = false }
 bytes = { workspace = true }
+criterion = { workspace = true, features = ["cargo_bench_support"] }
 epoll = { workspace = true }
 futures = { workspace = true, features = ["alloc"] }
 integration-common = { path = "../integration-common", features = ["user"] }
@@ -44,6 +45,10 @@ tokio = { workspace = true, features = [
     "time",
 ] }
 xdpilone = { workspace = true }
+
+[[bench]]
+harness = false
+name = "ring_buf"
 
 [build-dependencies]
 anyhow = { workspace = true }

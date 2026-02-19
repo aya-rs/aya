@@ -52,6 +52,12 @@ enum Environment {
 
 const INTEGRATION_TEST_PACKAGE: &str = "integration-test";
 
+#[derive(clap::ValueEnum, Clone)]
+enum BenchMode {
+    Default,
+    Fast,
+}
+
 #[derive(Parser)]
 pub(crate) struct Options {
     #[clap(subcommand)]
@@ -60,6 +66,13 @@ pub(crate) struct Options {
     /// The package whose tests to build and run.
     #[clap(short = 'p', long, global = true, default_value = INTEGRATION_TEST_PACKAGE)]
     package: String,
+
+    /// Build and run benches instead of tests.
+    ///
+    /// Use `--benches=fast` to run Criterion with fewer iterations for quicker
+    /// harness debugging.
+    #[clap(long, global = true, value_enum)]
+    benches: Option<BenchMode>,
 
     /// Arguments to pass to your application.
     #[clap(global = true, last = true)]
@@ -222,17 +235,43 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
     let Options {
         environment,
         package,
+        benches,
         run_args,
     } = opts;
 
     type Binary = (String, PathBuf);
 
+    let (profiles, target_kind, default_args): (&[_], _, &[_]) = if let Some(benches) = benches {
+        // Criterion bench binaries print timing results when invoked with
+        // --bench. We don't want to run benchmarks without optimizations.
+        (
+            &["release"],
+            "--benches",
+            match benches {
+                BenchMode::Default => &["--bench"],
+                BenchMode::Fast => &[
+                    "--bench",
+                    "--quiet",
+                    "--warm-up-time",
+                    "0.000000001",
+                    "--sample-size",
+                    "10",
+                    "--noplot",
+                ],
+            },
+        )
+    } else {
+        // Use --test-threads=1 to prevent tests from interacting with shared
+        // kernel state due to the lack of inter-test isolation.
+        (&["dev", "release"], "--tests", &["--test-threads=1"])
+    };
     let binaries = |package: &str,
                     target: Option<&str>,
                     envs: &[(&OsStr, &OsStr)]|
      -> Result<Vec<(&'static str, Vec<Binary>)>> {
-        ["dev", "release"]
-            .into_iter()
+        profiles
+            .iter()
+            .copied()
             .map(|profile| {
                 let binaries = build(target, |cmd| {
                     if package == INTEGRATION_TEST_PACKAGE {
@@ -242,7 +281,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     cmd.envs(envs.iter().copied()).args([
                         "--package",
                         package,
-                        "--tests",
+                        target_kind,
                         "--profile",
                         profile,
                     ])
@@ -252,9 +291,6 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
             .collect()
     };
 
-    // Use --test-threads=1 to prevent tests from interacting with shared
-    // kernel state due to the lack of inter-test isolation.
-    let default_args = ["--test-threads=1"];
     let run_args = default_args
         .iter()
         .map(OsStr::new)
