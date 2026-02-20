@@ -28,6 +28,9 @@ use crate::{
 
 const NLA_HDR_LEN: usize = align_to(size_of::<nlattr>(), NLA_ALIGNTO as usize);
 
+/// `CLS_BPF_NAME_LEN` from `net/sched/cls_bpf.c` in the Linux kernel.
+const CLS_BPF_NAME_LEN: usize = 256;
+
 /// A private error type for internal use in this module.
 #[derive(Error, Debug)]
 pub(crate) enum NetlinkErrorInternal {
@@ -154,6 +157,26 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), Netli
     Ok(())
 }
 
+fn write_tc_attach_attrs(
+    req: &mut TcRequest,
+    nlmsg_len: usize,
+    prog_fd: i32,
+    prog_name: &[u8],
+) -> Result<(), io::Error> {
+    let attrs_buf = unsafe { request_attributes(req, nlmsg_len) };
+
+    let kind_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, b"bpf\0")?;
+
+    let mut options = NestedAttrs::new(&mut attrs_buf[kind_len..], TCA_OPTIONS as u16);
+    options.write_attr(TCA_BPF_FD as u16, prog_fd)?;
+    options.write_attr_bytes(TCA_BPF_NAME as u16, prog_name)?;
+    options.write_attr(TCA_BPF_FLAGS as u16, TCA_BPF_FLAG_ACT_DIRECT)?;
+    let options_len = options.finish()?;
+
+    req.header.nlmsg_len += align_to(kind_len + options_len, NLA_ALIGNTO as usize) as u32;
+    Ok(())
+}
+
 pub(crate) unsafe fn netlink_qdisc_attach(
     if_index: i32,
     attach_type: &TcAttachType,
@@ -197,29 +220,8 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         u32::from(htons(ETH_P_ALL as u16)),
     );
 
-    let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
-
-    // add TCA_KIND
-    let kind_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, b"bpf\0")
+    write_tc_attach_attrs(&mut req, nlmsg_len, prog_fd.as_raw_fd(), prog_name.to_bytes_with_nul())
         .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-
-    // add TCA_OPTIONS which includes TCA_BPF_FD, TCA_BPF_NAME and TCA_BPF_FLAGS
-    let mut options = NestedAttrs::new(&mut attrs_buf[kind_len..], TCA_OPTIONS as u16);
-    options
-        .write_attr(TCA_BPF_FD as u16, prog_fd.as_raw_fd())
-        .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    options
-        .write_attr_bytes(TCA_BPF_NAME as u16, prog_name.to_bytes_with_nul())
-        .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    let flags: u32 = TCA_BPF_FLAG_ACT_DIRECT;
-    options
-        .write_attr(TCA_BPF_FLAGS as u16, flags)
-        .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    let options_len = options
-        .finish()
-        .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-
-    req.header.nlmsg_len += align_to(kind_len + options_len, NLA_ALIGNTO as usize) as u32;
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
 
     // find the RTM_NEWTFILTER reply and read the tcm_info and tcm_handle fields
@@ -369,10 +371,9 @@ unsafe impl Pod for Request {}
 struct TcRequest {
     header: nlmsghdr,
     tc_info: tcmsg,
-    // The kernel allows TC names up to 256 bytes (CLS_BPF_NAME_LEN). 292 is the
-    // smallest 4-byte-aligned size that fits all the netlink attributes including
-    // a 256-byte name.
-    attrs: [u8; 292],
+    // Must fit all netlink attributes written by netlink_qdisc_attach:
+    // TCA_KIND, and nested TCA_OPTIONS containing TCA_BPF_FD, TCA_BPF_NAME, TCA_BPF_FLAGS.
+    attrs: [u8; 5 * NLA_HDR_LEN + 4 + size_of::<i32>() + CLS_BPF_NAME_LEN + size_of::<u32>()],
 }
 
 unsafe impl Pod for TcRequest {}
@@ -856,41 +857,18 @@ mod tests {
         assert_eq!(name.to_str().unwrap(), "foo");
     }
 
-    /// Verify that [`TcRequest`] fits all the attributes [`netlink_qdisc_attach`]
-    /// writes, even with the kernel's maximum TC name length (`CLS_BPF_NAME_LEN` = 256).
+    /// Verify that [`TcRequest`] fits all the attributes [`write_tc_attach_attrs`]
+    /// writes, even with the kernel's maximum TC name length (`CLS_BPF_NAME_LEN`).
     ///
     /// Before the buffer was enlarged, serializing the netlink attributes for
-    /// names approaching the 256-byte kernel limit failed with "no space left".
+    /// long names failed with "no space left".
     #[test]
     fn tc_request_fits_max_length_name() {
-        // The kernel's CLS_BPF_NAME_LEN is 256 (including null terminator),
-        // so the longest valid name is 255 bytes.
-        let max_name = CString::new(vec![b'a'; 255]).unwrap();
-
-        // Set up a TcRequest and get a mutable view of its attribute buffer.
+        let max_name = [b'a'; CLS_BPF_NAME_LEN];
         let mut req = unsafe { mem::zeroed::<TcRequest>() };
         let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
-        let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
+        req.header.nlmsg_len = nlmsg_len as u32;
 
-        // Write the same attributes that netlink_qdisc_attach writes.
-        // If the buffer is too small, these calls return "no space left".
-        let kind_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, b"bpf\0").unwrap();
-        let mut options = NestedAttrs::new(&mut attrs_buf[kind_len..], TCA_OPTIONS as u16);
-        options.write_attr(TCA_BPF_FD as u16, 0i32).unwrap();
-        options
-            .write_attr_bytes(TCA_BPF_NAME as u16, max_name.to_bytes_with_nul())
-            .unwrap();
-        options
-            .write_attr(TCA_BPF_FLAGS as u16, TCA_BPF_FLAG_ACT_DIRECT)
-            .unwrap();
-        let options_len = options.finish().unwrap();
-
-        // Verify the complete message fits within the TcRequest struct.
-        let total_len = nlmsg_len + align_to(kind_len + options_len, NLA_ALIGNTO as usize);
-        assert!(
-            total_len <= size_of::<TcRequest>(),
-            "message length {total_len} exceeds TcRequest size {}",
-            size_of::<TcRequest>(),
-        );
+        write_tc_attach_attrs(&mut req, nlmsg_len, 0, &max_name).unwrap();
     }
 }
