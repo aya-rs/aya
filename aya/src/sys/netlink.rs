@@ -32,6 +32,24 @@ const NLA_HDR_LEN: usize = align_to(size_of::<nlattr>(), NLA_ALIGNTO as usize);
 /// <https://github.com/torvalds/linux/blob/v6.19/net/sched/cls_bpf.c#L28>
 const CLS_BPF_NAME_LEN: usize = 256;
 
+// Size of the attribute buffer needed by write_tc_attach_attrs:
+// TCA_KIND + nested TCA_OPTIONS containing TCA_BPF_FD, TCA_BPF_NAME, TCA_BPF_FLAGS.
+const fn tc_request_attrs_size() -> usize {
+    let al = NLA_ALIGNTO as usize;
+    // TCA_KIND
+    NLA_HDR_LEN + align_to(c"bpf".count_bytes() + 1, al)
+    // TCA_OPTIONS header
+    + NLA_HDR_LEN
+    // TCA_BPF_FD
+    + NLA_HDR_LEN + align_to(size_of::<i32>(), al)
+    // TCA_BPF_NAME
+    + NLA_HDR_LEN + align_to(CLS_BPF_NAME_LEN, al)
+    // TCA_BPF_FLAGS
+    + NLA_HDR_LEN + align_to(size_of::<u32>(), al)
+}
+
+const _: () = assert!(tc_request_attrs_size() == 288);
+
 /// A private error type for internal use in this module.
 #[derive(Error, Debug)]
 pub(crate) enum NetlinkErrorInternal {
@@ -166,7 +184,7 @@ fn write_tc_attach_attrs(
 ) -> Result<(), io::Error> {
     let attrs_buf = unsafe { request_attributes(req, nlmsg_len) };
 
-    let kind_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, b"bpf\0")?;
+    let kind_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, c"bpf".to_bytes_with_nul())?;
 
     let mut options = NestedAttrs::new(&mut attrs_buf[kind_len..], TCA_OPTIONS as u16);
     options.write_attr(TCA_BPF_FD as u16, prog_fd)?;
@@ -377,9 +395,8 @@ unsafe impl Pod for Request {}
 struct TcRequest {
     header: nlmsghdr,
     tc_info: tcmsg,
-    // Must fit all netlink attributes written by netlink_qdisc_attach:
-    // TCA_KIND, and nested TCA_OPTIONS containing TCA_BPF_FD, TCA_BPF_NAME, TCA_BPF_FLAGS.
-    attrs: [u8; 5 * NLA_HDR_LEN + 4 + size_of::<i32>() + CLS_BPF_NAME_LEN + size_of::<u32>()],
+    // Must fit all netlink attributes written by write_tc_attach_attrs.
+    attrs: [u8; tc_request_attrs_size()],
 }
 
 unsafe impl Pod for TcRequest {}
