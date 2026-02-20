@@ -859,8 +859,8 @@ mod tests {
     /// Verify that [`TcRequest`] fits all the attributes [`netlink_qdisc_attach`]
     /// writes, even with the kernel's maximum TC name length (`CLS_BPF_NAME_LEN` = 256).
     ///
-    /// Before the buffer was enlarged, names approaching the 256-byte kernel
-    /// limit caused a "no space left" error during attachment.
+    /// Before the buffer was enlarged, serializing the netlink attributes for
+    /// names approaching the 256-byte kernel limit failed with "no space left".
     #[test]
     fn tc_request_fits_max_length_name() {
         // The kernel's CLS_BPF_NAME_LEN is 256 (including null terminator),
