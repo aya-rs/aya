@@ -1323,9 +1323,13 @@ impl BtfType {
             Self::Struct(t) => Some(t.size),
             Self::Union(t) => Some(t.size),
             Self::DataSec(t) => Some(t.size),
-            Self::Ptr(_) => Some(size_of::<&()>() as u32),
+            Self::Ptr(_) => Some(Self::ptr_size()),
             _ => None,
         }
+    }
+
+    pub(crate) const fn ptr_size() -> u32 {
+        size_of::<&()>() as u32
     }
 
     pub(crate) const fn btf_type(&self) -> Option<u32> {

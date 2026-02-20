@@ -1,5 +1,7 @@
+use std::{net::UdpSocket, time::Duration};
+
 use aya::{
-    Ebpf, EbpfLoader,
+    Ebpf, EbpfLoader, KConfig,
     programs::{Extension, TracePoint, Xdp, XdpFlags, tc},
     util::KernelVersion,
 };
@@ -82,4 +84,34 @@ fn extension() {
     drop_
         .load(pass.fd().unwrap().try_clone().unwrap(), "xdp_pass")
         .unwrap();
+}
+
+#[test]
+fn kconfig() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 9, 0) {
+        eprintln!(
+            "skipping test on kernel {kernel_version:?}, kconfig support for BPF requires 5.9.0"
+        );
+        return;
+    }
+    let _netns = NetNsGuard::new();
+    let kconfig = KConfig::current();
+    let mut loader = EbpfLoader::new();
+    let mut bpf = loader.kconfig(kconfig).load(crate::KCONFIG).unwrap();
+    let pass: &mut Xdp = bpf.program_mut("kconfig").unwrap().try_into().unwrap();
+    pass.load().unwrap();
+    pass.attach("lo", XdpFlags::default()).unwrap();
+
+    let receiver = UdpSocket::bind("127.0.0.1:0").unwrap();
+    receiver
+        .set_read_timeout(Some(Duration::from_secs(1)))
+        .unwrap();
+    let sender = UdpSocket::bind("127.0.0.1:0").unwrap();
+    sender
+        .send_to(b"kconfig", receiver.local_addr().unwrap())
+        .unwrap();
+    let mut buf = [0u8; 64];
+    let (len, _) = receiver.recv_from(&mut buf).unwrap();
+    assert_eq!(&buf[..len], b"kconfig");
 }
