@@ -221,8 +221,13 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         u32::from(htons(ETH_P_ALL as u16)),
     );
 
-    write_tc_attach_attrs(&mut req, nlmsg_len, prog_fd.as_raw_fd(), prog_name.to_bytes_with_nul())
-        .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
+    write_tc_attach_attrs(
+        &mut req,
+        nlmsg_len,
+        prog_fd.as_raw_fd(),
+        prog_name.to_bytes_with_nul(),
+    )
+    .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
 
     // find the RTM_NEWTFILTER reply and read the tcm_info and tcm_handle fields
