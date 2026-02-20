@@ -855,4 +855,42 @@ mod tests {
         let name = CStr::from_bytes_with_nul(inner.data).unwrap();
         assert_eq!(name.to_str().unwrap(), "foo");
     }
+
+    /// Verify that [`TcRequest`] fits all the attributes [`netlink_qdisc_attach`]
+    /// writes, even with the kernel's maximum TC name length (CLS_BPF_NAME_LEN = 256).
+    ///
+    /// Before the buffer was enlarged, names approaching the 256-byte kernel
+    /// limit caused a "no space left" error during attachment.
+    #[test]
+    fn tc_request_fits_max_length_name() {
+        // The kernel's CLS_BPF_NAME_LEN is 256 (including null terminator),
+        // so the longest valid name is 255 bytes.
+        let max_name = CString::new(vec![b'a'; 255]).unwrap();
+
+        // Set up a TcRequest and get a mutable view of its attribute buffer.
+        let mut req = unsafe { mem::zeroed::<TcRequest>() };
+        let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
+        let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
+
+        // Write the same attributes that netlink_qdisc_attach writes.
+        // If the buffer is too small, these calls return "no space left".
+        let kind_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, b"bpf\0").unwrap();
+        let mut options = NestedAttrs::new(&mut attrs_buf[kind_len..], TCA_OPTIONS as u16);
+        options.write_attr(TCA_BPF_FD as u16, 0i32).unwrap();
+        options
+            .write_attr_bytes(TCA_BPF_NAME as u16, max_name.to_bytes_with_nul())
+            .unwrap();
+        options
+            .write_attr(TCA_BPF_FLAGS as u16, TCA_BPF_FLAG_ACT_DIRECT)
+            .unwrap();
+        let options_len = options.finish().unwrap();
+
+        // Verify the complete message fits within the TcRequest struct.
+        let total_len = nlmsg_len + align_to(kind_len + options_len, NLA_ALIGNTO as usize);
+        assert!(
+            total_len <= size_of::<TcRequest>(),
+            "message length {total_len} exceeds TcRequest size {}",
+            size_of::<TcRequest>(),
+        );
+    }
 }
