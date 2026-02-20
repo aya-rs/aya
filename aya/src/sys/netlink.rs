@@ -894,4 +894,17 @@ mod tests {
 
         write_tc_attach_attrs(&mut req, nlmsg_len, 0, &max_name).unwrap();
     }
+
+    /// Verify that a name exceeding `CLS_BPF_NAME_LEN` is rejected.
+    #[test]
+    fn tc_request_rejects_oversized_name() {
+        // One byte over the kernel's maximum — the attribute buffer is sized
+        // exactly for CLS_BPF_NAME_LEN, so this should fail with "no space left".
+        let oversized_name = [b'a'; CLS_BPF_NAME_LEN + 1];
+        let mut req = unsafe { mem::zeroed::<TcRequest>() };
+        let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
+        req.header.nlmsg_len = nlmsg_len as u32;
+
+        assert!(write_tc_attach_attrs(&mut req, nlmsg_len, 0, &oversized_name).is_err());
+    }
 }
