@@ -26,7 +26,10 @@ use crate::{
     util::{bytes_of, tc_handler_make},
 };
 
-const NLA_HDR_LEN: usize = align_to(size_of::<nlattr>(), NLA_ALIGNTO as usize);
+const NLMSG_HDR_LEN: usize = size_of::<nlmsghdr>();
+const NLMSG_HDR_ALIGN_LEN: usize = align_to(NLMSG_HDR_LEN, NLMSG_ALIGNTO as usize);
+const NLA_HDR_LEN: usize = size_of::<nlattr>();
+const NLA_HDR_ALIGN_LEN: usize = align_to(NLA_HDR_LEN, NLA_ALIGNTO as usize);
 
 /// `CLS_BPF_NAME_LEN` from the Linux kernel.
 /// <https://github.com/torvalds/linux/blob/v6.19/net/sched/cls_bpf.c#L28>
@@ -37,15 +40,15 @@ const CLS_BPF_NAME_LEN: usize = 256;
 const fn tc_request_attrs_size() -> usize {
     let al = NLA_ALIGNTO as usize;
     // TCA_KIND
-    NLA_HDR_LEN + align_to(c"bpf".count_bytes() + 1, al)
+    NLA_HDR_ALIGN_LEN + align_to(c"bpf".count_bytes() + 1, al)
     // TCA_OPTIONS header
-    + NLA_HDR_LEN
+    + NLA_HDR_ALIGN_LEN
     // TCA_BPF_FD
-    + NLA_HDR_LEN + align_to(size_of::<i32>(), al)
+    + NLA_HDR_ALIGN_LEN + align_to(size_of::<i32>(), al)
     // TCA_BPF_NAME
-    + NLA_HDR_LEN + align_to(CLS_BPF_NAME_LEN, al)
+    + NLA_HDR_ALIGN_LEN + align_to(CLS_BPF_NAME_LEN, al)
     // TCA_BPF_FLAGS
-    + NLA_HDR_LEN + align_to(size_of::<u32>(), al)
+    + NLA_HDR_ALIGN_LEN + align_to(size_of::<u32>(), al)
 }
 
 const _: () = assert!(tc_request_attrs_size() == 288);
@@ -181,7 +184,7 @@ fn write_tc_attach_attrs(
     nlmsg_len: usize,
     prog_fd: i32,
     prog_name: &[u8],
-) -> Result<(), io::Error> {
+) -> io::Result<()> {
     let attrs_buf = unsafe { request_attributes(req, nlmsg_len) };
 
     let kind_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, c"bpf".to_bytes_with_nul())?;
@@ -535,24 +538,23 @@ struct NetlinkMessage {
 }
 
 impl NetlinkMessage {
-    fn read(buf: &[u8]) -> Result<Self, io::Error> {
+    fn read(buf: &[u8]) -> io::Result<Self> {
         let header_buf = buf
-            .get(..size_of::<nlmsghdr>())
+            .get(..NLMSG_HDR_LEN)
             .ok_or_else(|| io::Error::other("buffer smaller than nlmsghdr"))?;
 
         // Safety: nlmsghdr is POD so read is safe
         let header: nlmsghdr = unsafe { ptr::read_unaligned(header_buf.as_ptr().cast()) };
         let msg_len = header.nlmsg_len as usize;
-        if msg_len < size_of::<nlmsghdr>() {
+        if msg_len < NLMSG_HDR_LEN {
             return Err(io::Error::other("invalid nlmsg_len"));
         }
         let msg = buf
             .get(..msg_len)
             .ok_or_else(|| io::Error::other("invalid nlmsg_len"))?;
 
-        let data_offset = align_to(size_of::<nlmsghdr>(), NLMSG_ALIGNTO as usize);
         let data = msg
-            .get(data_offset..)
+            .get(NLMSG_HDR_ALIGN_LEN..)
             .ok_or_else(|| io::Error::other("need more data"))?;
 
         let (rest, error) = if header.nlmsg_type == NLMSG_ERROR as u16 {
@@ -593,30 +595,29 @@ impl<'a> NestedAttrs<'a> {
         Self {
             buf,
             top_attr_type,
-            offset: NLA_HDR_LEN,
+            offset: NLA_HDR_ALIGN_LEN,
         }
     }
 
-    fn write_attr<T: Pod>(&mut self, attr_type: u16, value: T) -> Result<usize, io::Error> {
-        let size = write_attr(self.buf, self.offset, attr_type, value)?;
-        self.offset += size;
-        Ok(size)
+    fn write_attr<T: Pod>(&mut self, attr_type: u16, value: T) -> io::Result<()> {
+        self.offset += write_attr(self.buf, self.offset, attr_type, value)?;
+        Ok(())
     }
 
-    fn write_attr_bytes(&mut self, attr_type: u16, value: &[u8]) -> Result<usize, io::Error> {
-        let size = write_attr_bytes(self.buf, self.offset, attr_type, value)?;
-        self.offset += size;
-        Ok(size)
+    fn write_attr_bytes(&mut self, attr_type: u16, value: &[u8]) -> io::Result<()> {
+        self.offset += write_attr_bytes(self.buf, self.offset, attr_type, value)?;
+        Ok(())
     }
 
-    fn finish(self) -> Result<usize, io::Error> {
+    fn finish(self) -> io::Result<usize> {
         let nla_len = self.offset;
         let attr = nlattr {
             nla_type: NLA_F_NESTED as u16 | self.top_attr_type,
             nla_len: nla_len as u16,
         };
 
-        write_attr_header(self.buf, 0, attr)?;
+        let header_len = write_attr_header(self.buf, 0, attr)?;
+        debug_assert_eq!(header_len, NLA_HDR_ALIGN_LEN);
         Ok(nla_len)
     }
 }
@@ -626,7 +627,7 @@ fn write_attr<T: Pod>(
     offset: usize,
     attr_type: u16,
     value: T,
-) -> Result<usize, io::Error> {
+) -> io::Result<usize> {
     let value = bytes_of(&value);
     write_attr_bytes(buf, offset, attr_type, value)
 }
@@ -636,27 +637,28 @@ fn write_attr_bytes(
     offset: usize,
     attr_type: u16,
     value: &[u8],
-) -> Result<usize, io::Error> {
+) -> io::Result<usize> {
     let attr = nlattr {
         nla_type: attr_type,
         nla_len: ((NLA_HDR_LEN + value.len()) as u16),
     };
 
-    write_attr_header(buf, offset, attr)?;
-    let value_len = write_bytes(buf, offset + NLA_HDR_LEN, value)?;
+    let header_len = write_attr_header(buf, offset, attr)?;
+    let value_len = write_bytes(buf, offset + header_len, value)?;
 
-    Ok(NLA_HDR_LEN + value_len)
+    Ok(header_len + value_len)
 }
 
 unsafe impl Pod for nlattr {}
 
-fn write_attr_header(buf: &mut [u8], offset: usize, attr: nlattr) -> Result<usize, io::Error> {
+fn write_attr_header(buf: &mut [u8], offset: usize, attr: nlattr) -> io::Result<usize> {
     let attr = bytes_of(&attr);
-    write_bytes(buf, offset, attr)?;
-    Ok(NLA_HDR_LEN)
+    let header_len = write_bytes(buf, offset, attr)?;
+    debug_assert_eq!(header_len, NLA_HDR_ALIGN_LEN);
+    Ok(header_len)
 }
 
-fn write_bytes(buf: &mut [u8], offset: usize, value: &[u8]) -> Result<usize, io::Error> {
+fn write_bytes(buf: &mut [u8], offset: usize, value: &[u8]) -> io::Result<usize> {
     let align_len = align_to(value.len(), NLA_ALIGNTO as usize);
     let buf = buf
         .get_mut(offset..)
