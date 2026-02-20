@@ -28,7 +28,8 @@ use crate::{
 
 const NLA_HDR_LEN: usize = align_to(size_of::<nlattr>(), NLA_ALIGNTO as usize);
 
-/// `CLS_BPF_NAME_LEN` from `net/sched/cls_bpf.c` in the Linux kernel.
+/// `CLS_BPF_NAME_LEN` from the Linux kernel.
+/// <https://github.com/torvalds/linux/blob/v6.19/net/sched/cls_bpf.c#L28>
 const CLS_BPF_NAME_LEN: usize = 256;
 
 /// A private error type for internal use in this module.
