@@ -369,7 +369,10 @@ unsafe impl Pod for Request {}
 struct TcRequest {
     header: nlmsghdr,
     tc_info: tcmsg,
-    attrs: [u8; 64],
+    // The kernel allows TC names up to 256 bytes (CLS_BPF_NAME_LEN). 292 is the
+    // smallest 4-byte-aligned size that fits all the netlink attributes including
+    // a 256-byte name.
+    attrs: [u8; 292],
 }
 
 unsafe impl Pod for TcRequest {}
