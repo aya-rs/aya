@@ -536,35 +536,34 @@ struct NetlinkMessage {
 
 impl NetlinkMessage {
     fn read(buf: &[u8]) -> Result<Self, io::Error> {
-        if size_of::<nlmsghdr>() > buf.len() {
-            return Err(io::Error::other("buffer smaller than nlmsghdr"));
-        }
+        let header_buf = buf
+            .get(..size_of::<nlmsghdr>())
+            .ok_or_else(|| io::Error::other("buffer smaller than nlmsghdr"))?;
 
         // Safety: nlmsghdr is POD so read is safe
-        let header: nlmsghdr = unsafe { ptr::read_unaligned(buf.as_ptr().cast()) };
+        let header: nlmsghdr = unsafe { ptr::read_unaligned(header_buf.as_ptr().cast()) };
         let msg_len = header.nlmsg_len as usize;
-        if msg_len < size_of::<nlmsghdr>() || msg_len > buf.len() {
+        if msg_len < size_of::<nlmsghdr>() {
             return Err(io::Error::other("invalid nlmsg_len"));
         }
+        let msg = buf
+            .get(..msg_len)
+            .ok_or_else(|| io::Error::other("invalid nlmsg_len"))?;
 
         let data_offset = align_to(size_of::<nlmsghdr>(), NLMSG_ALIGNTO as usize);
-        if data_offset >= buf.len() {
-            return Err(io::Error::other("need more data"));
-        }
+        let data = msg
+            .get(data_offset..)
+            .ok_or_else(|| io::Error::other("need more data"))?;
 
         let (rest, error) = if header.nlmsg_type == NLMSG_ERROR as u16 {
-            if data_offset + size_of::<nlmsgerr>() > buf.len() {
-                return Err(io::Error::other(
-                    "NLMSG_ERROR but not enough space for nlmsgerr",
-                ));
-            }
-            (
-                &buf[data_offset + size_of::<nlmsgerr>()..msg_len],
-                // Safety: nlmsgerr is POD so read is safe
-                Some(unsafe { ptr::read_unaligned(buf[data_offset..].as_ptr().cast()) }),
-            )
+            let (err_buf, rest) = data
+                .split_at_checked(size_of::<nlmsgerr>())
+                .ok_or_else(|| io::Error::other("NLMSG_ERROR but not enough space for nlmsgerr"))?;
+            // Safety: nlmsgerr is POD so read is safe
+            let err: nlmsgerr = unsafe { ptr::read_unaligned(err_buf.as_ptr().cast()) };
+            (rest, Some(err))
         } else {
-            (&buf[data_offset..msg_len], None)
+            (data, None)
         };
 
         Ok(Self {
@@ -659,23 +658,22 @@ fn write_attr_header(buf: &mut [u8], offset: usize, attr: nlattr) -> Result<usiz
 
 fn write_bytes(buf: &mut [u8], offset: usize, value: &[u8]) -> Result<usize, io::Error> {
     let align_len = align_to(value.len(), NLA_ALIGNTO as usize);
-    if offset + align_len > buf.len() {
-        return Err(io::Error::other("no space left"));
-    }
-
-    buf[offset..offset + value.len()].copy_from_slice(value);
+    let buf = buf
+        .get_mut(offset..)
+        .and_then(|buf| buf.get_mut(..align_len))
+        .ok_or_else(|| io::Error::other("no space left"))?;
+    buf[..value.len()].copy_from_slice(value);
 
     Ok(align_len)
 }
 
 struct NlAttrsIterator<'a> {
-    attrs: &'a [u8],
-    offset: usize,
+    buf: &'a [u8],
 }
 
 impl<'a> NlAttrsIterator<'a> {
-    const fn new(attrs: &'a [u8]) -> Self {
-        Self { attrs, offset: 0 }
+    const fn new(buf: &'a [u8]) -> Self {
+        Self { buf }
     }
 }
 
@@ -683,35 +681,36 @@ impl<'a> Iterator for NlAttrsIterator<'a> {
     type Item = Result<NlAttr<'a>, NlAttrError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let buf = &self.attrs[self.offset..];
+        let Self { buf } = self;
         if buf.is_empty() {
             return None;
         }
+        let buf = mem::take(buf);
 
-        if NLA_HDR_LEN > buf.len() {
-            self.offset = buf.len();
+        let Some((header_buf, buf)) = buf.split_at_checked(NLA_HDR_LEN) else {
             return Some(Err(NlAttrError::InvalidBufferLength {
                 size: buf.len(),
                 expected: NLA_HDR_LEN,
             }));
-        }
+        };
 
-        let attr: nlattr = unsafe { ptr::read_unaligned(buf.as_ptr().cast()) };
+        let attr: nlattr = unsafe { ptr::read_unaligned(header_buf.as_ptr().cast()) };
         let len = attr.nla_len as usize;
-        let align_len = align_to(len, NLA_ALIGNTO as usize);
-        if len < NLA_HDR_LEN {
+        let Some(payload_len) = len.checked_sub(NLA_HDR_LEN) else {
             return Some(Err(NlAttrError::InvalidHeaderLength(len)));
-        }
-        if align_len > buf.len() {
+        };
+        let align_len = align_to(len, NLA_ALIGNTO as usize);
+        let payload_align_len = align_len - NLA_HDR_LEN;
+        let Some((data, buf)) = buf.split_at_checked(payload_align_len) else {
             return Some(Err(NlAttrError::InvalidBufferLength {
                 size: buf.len(),
-                expected: align_len,
+                expected: payload_align_len,
             }));
-        }
+        };
+        let data = &data[..payload_len];
 
-        let data = &buf[NLA_HDR_LEN..len];
+        self.buf = buf;
 
-        self.offset += align_len;
         Some(Ok(NlAttr { header: attr, data }))
     }
 }
