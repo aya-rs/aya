@@ -754,6 +754,8 @@ unsafe fn request_attributes<T>(req: &mut T, msg_len: usize) -> &mut [u8] {
 mod tests {
     use std::ffi::CString;
 
+    use assert_matches::assert_matches;
+
     use super::*;
 
     #[test]
@@ -880,6 +882,14 @@ mod tests {
         assert_eq!(name.to_str().unwrap(), "foo");
     }
 
+    fn tc_request(name: &[u8]) -> io::Result<()> {
+        let mut req = unsafe { mem::zeroed::<TcRequest>() };
+        let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
+        req.header.nlmsg_len = nlmsg_len as u32;
+
+        write_tc_attach_attrs(&mut req, nlmsg_len, 0, name)
+    }
+
     /// Verify that [`TcRequest`] fits all the attributes [`write_tc_attach_attrs`]
     /// writes, even with the kernel's maximum TC name length (`CLS_BPF_NAME_LEN`).
     ///
@@ -887,12 +897,7 @@ mod tests {
     /// long names failed with "no space left".
     #[test]
     fn tc_request_fits_max_length_name() {
-        let max_name = [b'a'; CLS_BPF_NAME_LEN];
-        let mut req = unsafe { mem::zeroed::<TcRequest>() };
-        let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
-        req.header.nlmsg_len = nlmsg_len as u32;
-
-        write_tc_attach_attrs(&mut req, nlmsg_len, 0, &max_name).unwrap();
+        assert_matches!(tc_request(&[b'a'; CLS_BPF_NAME_LEN]), Ok(()));
     }
 
     /// Verify that a name exceeding `CLS_BPF_NAME_LEN` is rejected.
@@ -900,11 +905,12 @@ mod tests {
     fn tc_request_rejects_oversized_name() {
         // One byte over the kernel's maximum — the attribute buffer is sized
         // exactly for CLS_BPF_NAME_LEN, so this should fail with "no space left".
-        let oversized_name = [b'a'; CLS_BPF_NAME_LEN + 1];
-        let mut req = unsafe { mem::zeroed::<TcRequest>() };
-        let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
-        req.header.nlmsg_len = nlmsg_len as u32;
-
-        assert!(write_tc_attach_attrs(&mut req, nlmsg_len, 0, &oversized_name).is_err());
+        assert_matches!(
+            tc_request(&[b'a'; CLS_BPF_NAME_LEN + 1]),
+            Err(err) => {
+                assert_eq!(err.kind(), io::ErrorKind::Other);
+                assert_eq!(err.to_string(), "no space left");
+            }
+        );
     }
 }
