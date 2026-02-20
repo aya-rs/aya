@@ -60,15 +60,10 @@ fn test_uprobe_cookie() {
     const EXP: &[u64] = &[1, 2, 1, 3];
 
     let mut seen = Vec::new();
-    while let Some(read) = ring_buf.next() {
-        let read = read.as_ref();
-        match read.try_into() {
-            Ok(read) => seen.push(u64::from_le_bytes(read)),
-            Err(std::array::TryFromSliceError { .. }) => {
-                panic!("invalid ring buffer data: {read:x?}")
-            }
-        }
-    }
+    ring_buf.for_each(|read| {
+        let read = read.try_into().unwrap();
+        seen.push(u64::from_le_bytes(read));
+    });
     assert_eq!(seen, EXP);
 }
 

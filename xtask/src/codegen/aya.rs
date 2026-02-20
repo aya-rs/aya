@@ -1,7 +1,4 @@
-use std::{
-    fs::create_dir_all,
-    path::{Path, PathBuf},
-};
+use std::{fs::create_dir_all, path::Path};
 
 use anyhow::{Context as _, Result};
 use aya_tool::bindgen;
@@ -14,7 +11,7 @@ pub(crate) fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
 }
 
 fn codegen_internal_btf_bindings(libbpf_dir: &Path) -> Result<()> {
-    let dir = PathBuf::from("aya-obj");
+    let dir = Path::new("aya-obj");
     let generated = dir.join("src/generated");
 
     let mut bindgen = bindgen::user_builder()
@@ -48,7 +45,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
         s390x_sysroot,
         x86_64_sysroot,
     } = opts;
-    let dir = PathBuf::from("aya-obj");
+    let dir = Path::new("aya-obj");
     let generated = dir.join("src/generated");
     create_dir_all(&generated)?;
 

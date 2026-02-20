@@ -254,14 +254,16 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
 
     // Use --test-threads=1 to prevent tests from interacting with shared
     // kernel state due to the lack of inter-test isolation.
-    let default_args = [OsString::from("--test-threads=1")];
-    let run_args = default_args.iter().chain(run_args.iter());
+    let default_args = ["--test-threads=1"];
+    let run_args = default_args
+        .iter()
+        .map(OsStr::new)
+        .chain(run_args.iter().map(OsString::as_os_str));
 
     match environment {
         Environment::Local { runner } => {
             let mut args = runner.trim().split_terminator(' ');
             let runner = args.next().ok_or_else(|| anyhow!("no first argument"))?;
-            let args = args.collect::<Vec<_>>();
 
             let binaries = binaries(&package, None, &[])?;
 
@@ -269,7 +271,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
             for (profile, binaries) in binaries {
                 for (name, binary) in binaries {
                     let mut cmd = Command::new(runner);
-                    cmd.args(args.iter())
+                    cmd.args(args.clone())
                         .arg(binary)
                         .args(run_args.clone())
                         .env("RUST_BACKTRACE", "1")
@@ -798,8 +800,8 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 for accel in ["kvm", "hvf", "tcg"] {
                     qemu.args(["-accel", accel]);
                 }
-                let console = OsString::from(console);
-                let mut kernel_args = std::iter::once(("console", &console))
+                let console = OsStr::new(console);
+                let mut kernel_args = std::iter::once(("console", console))
                     .chain(run_args.clone().map(|run_arg| ("init.arg", run_arg)))
                     .enumerate()
                     .fold(OsString::new(), |mut acc, (i, (k, v))| {
