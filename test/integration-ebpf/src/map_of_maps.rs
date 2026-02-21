@@ -54,6 +54,26 @@ pub extern "C" fn trigger_hash_of_maps() {
     core::hint::black_box(());
 }
 
+#[unsafe(no_mangle)]
+#[inline(never)]
+#[expect(
+    clippy::missing_const_for_fn,
+    reason = "extern functions cannot be const"
+)]
+pub extern "C" fn trigger_array_of_maps_get_value() {
+    core::hint::black_box(());
+}
+
+#[unsafe(no_mangle)]
+#[inline(never)]
+#[expect(
+    clippy::missing_const_for_fn,
+    reason = "extern functions cannot be const"
+)]
+pub extern "C" fn trigger_hash_of_maps_get_value() {
+    core::hint::black_box(());
+}
+
 /// Test `ArrayOfMaps`: write values to inner arrays via outer map.
 #[uprobe]
 pub(crate) fn test_array_of_maps(_ctx: ProbeContext) -> u32 {
@@ -103,6 +123,46 @@ pub(crate) fn test_hash_of_maps(_ctx: ProbeContext) -> u32 {
         unsafe {
             *ptr = 1;
         } // Mark test ran
+    }
+
+    0
+}
+
+/// Test `ArrayOfMaps::get_value` and `get_value_ptr_mut`.
+#[uprobe]
+pub(crate) fn test_array_of_maps_get_value(_ctx: ProbeContext) -> u32 {
+    if let Some(val) = ARRAY_OF_MAPS.get_value(0, &0u32) {
+        if let Some(ptr) = RESULTS.get_ptr_mut(2) {
+            unsafe {
+                *ptr = *val;
+            }
+        }
+    }
+
+    if let Some(ptr) = ARRAY_OF_MAPS.get_value_ptr_mut(1, &0u32) {
+        unsafe {
+            *ptr = 99;
+        }
+    }
+
+    0
+}
+
+/// Test `HashOfMaps::get_value` and `get_value_ptr_mut`.
+#[uprobe]
+pub(crate) fn test_hash_of_maps_get_value(_ctx: ProbeContext) -> u32 {
+    if let Some(val) = unsafe { HASH_OF_MAPS.get_value(&0u32, &100u32) } {
+        if let Some(ptr) = RESULTS.get_ptr_mut(3) {
+            unsafe {
+                *ptr = *val;
+            }
+        }
+    }
+
+    if let Some(ptr) = unsafe { HASH_OF_MAPS.get_value_ptr_mut(&1u32, &200u32) } {
+        unsafe {
+            *ptr = 88;
+        }
     }
 
     0

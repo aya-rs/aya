@@ -1,6 +1,6 @@
 use aya::{
     Ebpf,
-    maps::{Array, ArrayOfMaps, HashMap, HashOfMaps, MapData},
+    maps::{Array, ArrayOfMaps, HashMap, HashOfMaps, MapData, MapFd},
     programs::UProbe,
 };
 
@@ -27,7 +27,7 @@ fn array_of_maps() {
 
     // Set inner maps into the outer ArrayOfMaps
     {
-        let mut outer: ArrayOfMaps<&mut MapData> =
+        let mut outer: ArrayOfMaps<&mut MapData, MapFd> =
             ebpf.map_mut("ARRAY_OF_MAPS").unwrap().try_into().unwrap();
         outer.set(0, &inner_array_1_fd, 0).unwrap();
         outer.set(1, &inner_array_2_fd, 0).unwrap();
@@ -71,7 +71,7 @@ fn hash_of_maps() {
 
     // Set inner maps into the outer HashOfMaps
     {
-        let mut outer: HashOfMaps<&mut MapData, u32> =
+        let mut outer: HashOfMaps<&mut MapData, u32, MapFd> =
             ebpf.map_mut("HASH_OF_MAPS").unwrap().try_into().unwrap();
         outer.insert(0u32, &inner_hash_1_fd, 0).unwrap();
         outer.insert(1u32, &inner_hash_2_fd, 0).unwrap();
@@ -122,7 +122,7 @@ fn hash_of_maps_dynamic() {
 
     // Insert the dynamically created inner maps into the outer HashOfMaps
     {
-        let mut outer: HashOfMaps<&mut MapData, u32> =
+        let mut outer: HashOfMaps<&mut MapData, u32, HashMap<MapData, u32, u32>> =
             ebpf.map_mut("HASH_OF_MAPS").unwrap().try_into().unwrap();
         // Use keys 10 and 11 to avoid conflict with the other test
         outer.insert(10u32, &inner_1, 0).unwrap();
@@ -136,6 +136,113 @@ fn hash_of_maps_dynamic() {
     // Modify the inner maps and verify changes persist
     inner_1.insert(200u32, 3000u32, 0).unwrap();
     assert_eq!(inner_1.get(&200, 0).unwrap(), 3000);
+}
+
+#[unsafe(no_mangle)]
+#[inline(never)]
+extern "C" fn trigger_array_of_maps_get_value() {
+    std::hint::black_box(());
+}
+
+#[unsafe(no_mangle)]
+#[inline(never)]
+extern "C" fn trigger_hash_of_maps_get_value() {
+    std::hint::black_box(());
+}
+
+/// Test `ArrayOfMaps::get_value` and `get_value_ptr_mut`.
+#[test_log::test]
+fn array_of_maps_get_value() {
+    let mut ebpf = Ebpf::load(crate::MAP_OF_MAPS).unwrap();
+
+    // The eBPF program reads inner_1[0] via get_value and writes inner_2[0] via get_value_ptr_mut.
+    {
+        let mut inner_1: Array<&mut MapData, u32> =
+            ebpf.map_mut("INNER_ARRAY_1").unwrap().try_into().unwrap();
+        inner_1.set(0, 77u32, 0).unwrap();
+    }
+    {
+        let mut inner_2: Array<&mut MapData, u32> =
+            ebpf.map_mut("INNER_ARRAY_2").unwrap().try_into().unwrap();
+        inner_2.set(0, 0u32, 0).unwrap();
+    }
+
+    let inner_array_1_fd = ebpf.map("INNER_ARRAY_1").unwrap().fd().try_clone().unwrap();
+    let inner_array_2_fd = ebpf.map("INNER_ARRAY_2").unwrap().fd().try_clone().unwrap();
+
+    {
+        let mut outer: ArrayOfMaps<&mut MapData, MapFd> =
+            ebpf.map_mut("ARRAY_OF_MAPS").unwrap().try_into().unwrap();
+        outer.set(0, &inner_array_1_fd, 0).unwrap();
+        outer.set(1, &inner_array_2_fd, 0).unwrap();
+    }
+
+    {
+        let prog: &mut UProbe = ebpf
+            .program_mut("test_array_of_maps_get_value")
+            .unwrap()
+            .try_into()
+            .unwrap();
+        prog.load().unwrap();
+        prog.attach("trigger_array_of_maps_get_value", "/proc/self/exe", None)
+            .unwrap();
+    }
+
+    trigger_array_of_maps_get_value();
+
+    let results: Array<&MapData, u32> = ebpf.map("RESULTS").unwrap().try_into().unwrap();
+    assert_eq!(results.get(&2, 0).unwrap(), 77);
+
+    let inner_2: Array<&MapData, u32> = ebpf.map("INNER_ARRAY_2").unwrap().try_into().unwrap();
+    assert_eq!(inner_2.get(&0, 0).unwrap(), 99);
+}
+
+/// Test `HashOfMaps::get_value` and `get_value_ptr_mut`.
+#[test_log::test]
+fn hash_of_maps_get_value() {
+    let mut ebpf = Ebpf::load(crate::MAP_OF_MAPS).unwrap();
+
+    // The eBPF program reads inner_1[100] via get_value and writes inner_2[200] via get_value_ptr_mut.
+    {
+        let mut inner_1: HashMap<&mut MapData, u32, u32> =
+            ebpf.map_mut("INNER_HASH_1").unwrap().try_into().unwrap();
+        inner_1.insert(100u32, 55u32, 0).unwrap();
+    }
+    {
+        let mut inner_2: HashMap<&mut MapData, u32, u32> =
+            ebpf.map_mut("INNER_HASH_2").unwrap().try_into().unwrap();
+        inner_2.insert(200u32, 0u32, 0).unwrap();
+    }
+
+    let inner_hash_1_fd = ebpf.map("INNER_HASH_1").unwrap().fd().try_clone().unwrap();
+    let inner_hash_2_fd = ebpf.map("INNER_HASH_2").unwrap().fd().try_clone().unwrap();
+
+    {
+        let mut outer: HashOfMaps<&mut MapData, u32, MapFd> =
+            ebpf.map_mut("HASH_OF_MAPS").unwrap().try_into().unwrap();
+        outer.insert(0u32, &inner_hash_1_fd, 0).unwrap();
+        outer.insert(1u32, &inner_hash_2_fd, 0).unwrap();
+    }
+
+    {
+        let prog: &mut UProbe = ebpf
+            .program_mut("test_hash_of_maps_get_value")
+            .unwrap()
+            .try_into()
+            .unwrap();
+        prog.load().unwrap();
+        prog.attach("trigger_hash_of_maps_get_value", "/proc/self/exe", None)
+            .unwrap();
+    }
+
+    trigger_hash_of_maps_get_value();
+
+    let results: Array<&MapData, u32> = ebpf.map("RESULTS").unwrap().try_into().unwrap();
+    assert_eq!(results.get(&3, 0).unwrap(), 55);
+
+    let inner_2: HashMap<&MapData, u32, u32> =
+        ebpf.map("INNER_HASH_2").unwrap().try_into().unwrap();
+    assert_eq!(inner_2.get(&200, 0).unwrap(), 88);
 }
 
 #[unsafe(no_mangle)]
@@ -155,7 +262,7 @@ fn btf_array_of_maps() {
 
     // Insert the inner array into the outer ArrayOfMaps at index 0.
     {
-        let mut outer: ArrayOfMaps<&mut MapData> =
+        let mut outer: ArrayOfMaps<&mut MapData, Array<MapData, u32>> =
             ebpf.map_mut("OUTER").unwrap().try_into().unwrap();
         outer.set(0, &inner_array, 0).unwrap();
     }
