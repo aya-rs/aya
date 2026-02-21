@@ -106,16 +106,12 @@ fn af_xdp() {
     writer.commit();
 
     let dst = format!("{}:1777", NetNsGuard::IFACE_ADDR);
-    let peer_bind = format!("{}:0", NetNsGuard::PEER_ADDR);
-    let send_from_peer = || {
-        peer.run(|| {
-            let sock = UdpSocket::bind(&peer_bind).unwrap();
-            sock.send_to(b"hello AF_XDP", &dst).unwrap();
-            sock.local_addr().unwrap().port()
-        })
-    };
-
-    let port = send_from_peer();
+    let port = peer.run(|| {
+        let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::PEER_ADDR)).unwrap();
+        let port = sock.local_addr().unwrap().port();
+        sock.send_to(b"hello AF_XDP", &dst).unwrap();
+        port
+    });
 
     assert_eq!(rx.available(), 1);
     let desc = rx.receive(1).read().unwrap();
@@ -138,11 +134,17 @@ fn af_xdp() {
     // Removes socket from map, no more packets will be redirected.
     socks.unset(0).unwrap();
     assert_eq!(rx.available(), 1);
-    send_from_peer();
+    peer.run(|| {
+        let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::PEER_ADDR)).unwrap();
+        sock.send_to(b"hello AF_XDP", &dst).unwrap();
+    });
     assert_eq!(rx.available(), 1);
     // Adds socket to map again, packets will be redirected again.
     socks.set(0, rx.as_raw_fd(), 0).unwrap();
-    send_from_peer();
+    peer.run(|| {
+        let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::PEER_ADDR)).unwrap();
+        sock.send_to(b"hello AF_XDP", &dst).unwrap();
+    });
     assert_eq!(rx.available(), 2);
 }
 
