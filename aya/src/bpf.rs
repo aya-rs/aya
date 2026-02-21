@@ -591,6 +591,7 @@ impl<'a> EbpfLoader<'a> {
                             .as_deref()
                             .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
                         let path = path.join(&name);
+
                         MapData::create_pinned_by_name(path, map_obj, &name, btf_fd, inner_map_fd)?
                     }
                 }

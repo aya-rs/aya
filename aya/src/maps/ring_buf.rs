@@ -16,7 +16,7 @@ use aya_obj::generated::{BPF_RINGBUF_BUSY_BIT, BPF_RINGBUF_DISCARD_BIT, BPF_RING
 use libc::{MAP_SHARED, PROT_READ, PROT_WRITE};
 
 use crate::{
-    maps::{MapData, MapError, MapFd},
+    maps::{MapData, MapError},
     util::{MMap, page_size},
 };
 
@@ -109,11 +109,9 @@ impl<T: Borrow<MapData>> RingBuf<T> {
             producer,
         })
     }
-}
 
-impl RingBuf<MapData> {
-    pub(crate) const fn map_fd(&self) -> &MapFd {
-        self.map.fd()
+    pub(crate) fn map_data(&self) -> &MapData {
+        self.map.borrow()
     }
 }
 
