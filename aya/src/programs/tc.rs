@@ -1,10 +1,5 @@
 //! Network traffic control programs.
-use std::{
-    ffi::{CStr, CString},
-    io,
-    os::fd::AsFd as _,
-    path::Path,
-};
+use std::{ffi::CString, io, os::fd::AsFd as _, path::Path};
 
 use aya_obj::generated::{
     TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
@@ -22,7 +17,7 @@ use crate::{
         id_as_key, impl_try_into_fdlink, load_program, query,
     },
     sys::{
-        BpfLinkCreateArgs, LinkTarget, NetlinkError, ProgQueryTarget, SyscallError,
+        BpfLinkCreateArgs, LinkTarget, NetlinkError, NetlinkSocket, ProgQueryTarget, SyscallError,
         bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, bpf_prog_get_fd_by_id,
         netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
         netlink_qdisc_detach,
@@ -610,30 +605,16 @@ pub fn qdisc_detach_program(
     name: &str,
 ) -> Result<(), TcError> {
     let cstr = CString::new(name).map_err(TcError::NulError)?;
-    qdisc_detach_program_fast(if_name, attach_type, &cstr)
-}
-
-/// Detaches the programs with the given name as a C string.
-/// Unlike [`qdisc_detach_program`], this function does not allocate an additional
-/// [`CString`] to store the name.
-///
-/// # Errors
-///
-/// Returns [`io::ErrorKind::NotFound`] to indicate that no programs with the
-/// given name were found, so nothing was detached. Other error kinds indicate
-/// an actual failure while detaching a program.
-fn qdisc_detach_program_fast(
-    if_name: &str,
-    attach_type: TcAttachType,
-    name: &CStr,
-) -> Result<(), TcError> {
     let if_index = ifindex_from_ifname(if_name)? as i32;
 
-    let filter_info = unsafe { netlink_find_filter_with_name(if_index, attach_type, name)? };
+    let sock = NetlinkSocket::open().map_err(NetlinkError::from)?;
+    let filter_info = netlink_find_filter_with_name(&sock, if_index, attach_type, &cstr)?;
+    // Check for errors before detaching any programs.
+    let filter_info: Vec<_> = filter_info.collect::<Result<_, _>>()?;
     if filter_info.is_empty() {
         return Err(TcError::IoError(io::Error::new(
             io::ErrorKind::NotFound,
-            name.to_string_lossy(),
+            name.to_owned(),
         )));
     }
 
