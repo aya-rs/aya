@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     ffi::CStr,
-    io, mem,
+    io, iter, mem,
     os::fd::{AsRawFd as _, BorrowedFd, FromRawFd as _},
     ptr, slice,
 };
@@ -144,7 +144,9 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     req.header.nlmsg_len += align_to(nla_len, NLA_ALIGNTO as usize) as u32;
 
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
-    sock.recv()?;
+    for msg in sock.recv() {
+        msg?;
+    }
     Ok(())
 }
 
@@ -174,7 +176,9 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), Netli
     req.header.nlmsg_len += align_to(attr_len, NLA_ALIGNTO as usize) as u32;
 
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
-    sock.recv()?;
+    for msg in sock.recv() {
+        msg?;
+    }
 
     Ok(())
 }
@@ -254,20 +258,19 @@ pub(crate) unsafe fn netlink_qdisc_attach(
 
     // find the RTM_NEWTFILTER reply and read the tcm_info and tcm_handle fields
     // which we'll need to detach
-    let tc_msg: tcmsg = match sock
-        .recv()?
-        .iter()
-        .find(|reply| reply.header.nlmsg_type == RTM_NEWTFILTER)
-    {
-        Some(reply) => unsafe { ptr::read_unaligned(reply.data.as_ptr().cast()) },
-        None => {
-            // if sock.recv() succeeds we should never get here unless there's a
-            // bug in the kernel
-            return Err(NetlinkError(NetlinkErrorInternal::IoError(
-                io::Error::other("no RTM_NEWTFILTER reply received, this is a bug."),
-            )));
+    let tc_msg: tcmsg = (|| {
+        for msg in sock.recv() {
+            let msg = msg?;
+            if msg.header.nlmsg_type == RTM_NEWTFILTER {
+                return Ok(unsafe { ptr::read_unaligned(msg.data.as_ptr().cast()) });
+            }
         }
-    };
+        // if sock.recv() succeeds we should never get here unless there's a
+        // bug in the kernel
+        Err(NetlinkError(NetlinkErrorInternal::IoError(
+            io::Error::other("no RTM_NEWTFILTER reply received, this is a bug."),
+        )))
+    })()?;
 
     let priority = ((tc_msg.tcm_info & TC_H_MAJ_MASK) >> 16) as u16;
     Ok((priority, tc_msg.tcm_handle))
@@ -302,17 +305,19 @@ pub(crate) unsafe fn netlink_qdisc_detach(
 
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
 
-    sock.recv()?;
+    for msg in sock.recv() {
+        msg?;
+    }
 
     Ok(())
 }
 
-// Returns a vector of tuple (priority, handle) for filters matching the provided parameters
-pub(crate) unsafe fn netlink_find_filter_with_name(
+pub(crate) fn netlink_find_filter_with_name(
+    sock: &NetlinkSocket,
     if_index: i32,
     attach_type: TcAttachType,
     name: &CStr,
-) -> Result<Vec<(u16, u32)>, NetlinkError> {
+) -> Result<impl Iterator<Item = Result<(u16, u32), NetlinkError>>, NetlinkError> {
     let mut req = unsafe { mem::zeroed::<TcRequest>() };
 
     let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
@@ -328,34 +333,42 @@ pub(crate) unsafe fn netlink_find_filter_with_name(
     req.tc_info.tcm_ifindex = if_index;
     req.tc_info.tcm_parent = attach_type.tc_parent();
 
-    let sock = NetlinkSocket::open()?;
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+    let mut resp = sock.recv();
 
-    let mut filter_info = Vec::new();
-    for msg in sock.recv()? {
-        if msg.header.nlmsg_type != RTM_NEWTFILTER {
-            continue;
-        }
+    Ok(iter::from_fn(move || {
+        loop {
+            let msg = resp.next()?;
+            if let Some(result) = (|| {
+                let msg = msg?;
+                if msg.header.nlmsg_type != RTM_NEWTFILTER {
+                    return Ok(None);
+                }
 
-        let tc_msg: tcmsg = unsafe { ptr::read_unaligned(msg.data.as_ptr().cast()) };
-        let priority = (tc_msg.tcm_info >> 16) as u16;
-        let attrs = parse_attrs(&msg.data[size_of::<tcmsg>()..])
-            .map_err(|e| NetlinkError(NetlinkErrorInternal::NlAttrError(e)))?;
+                let tc_msg: tcmsg = unsafe { ptr::read_unaligned(msg.data.as_ptr().cast()) };
+                let priority = (tc_msg.tcm_info >> 16) as u16;
+                let attrs = parse_attrs(&msg.data[size_of::<tcmsg>()..])
+                    .map_err(|e| NetlinkError(NetlinkErrorInternal::NlAttrError(e)))?;
 
-        if let Some(opts) = attrs.get(&(TCA_OPTIONS as u16)) {
-            let opts = parse_attrs(opts.data)
-                .map_err(|e| NetlinkError(NetlinkErrorInternal::NlAttrError(e)))?;
-            if let Some(f_name) = opts.get(&(TCA_BPF_NAME as u16)) {
-                if let Ok(f_name) = CStr::from_bytes_with_nul(f_name.data) {
-                    if name == f_name {
-                        filter_info.push((priority, tc_msg.tcm_handle));
+                if let Some(opts) = attrs.get(&(TCA_OPTIONS as u16)) {
+                    let opts = parse_attrs(opts.data)
+                        .map_err(|e| NetlinkError(NetlinkErrorInternal::NlAttrError(e)))?;
+                    if let Some(f_name) = opts.get(&(TCA_BPF_NAME as u16)) {
+                        if let Ok(f_name) = CStr::from_bytes_with_nul(f_name.data) {
+                            if name == f_name {
+                                return Ok(Some((priority, tc_msg.tcm_handle)));
+                            }
+                        }
                     }
                 }
+                Ok(None)
+            })()
+            .transpose()
+            {
+                break Some(result);
             }
         }
-    }
-
-    Ok(filter_info)
+    }))
 }
 
 #[doc(hidden)]
@@ -379,7 +392,9 @@ pub unsafe fn netlink_set_link_up(if_index: i32) -> Result<(), NetlinkError> {
     req.if_info.ifi_change = IFF_UP as u32;
 
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
-    sock.recv()?;
+    for msg in sock.recv() {
+        msg?;
+    }
 
     Ok(())
 }
@@ -405,13 +420,13 @@ struct TcRequest {
 
 unsafe impl Pod for TcRequest {}
 
-struct NetlinkSocket {
+pub(crate) struct NetlinkSocket {
     sock: crate::MockableFd,
     _nl_pid: u32,
 }
 
 impl NetlinkSocket {
-    fn open() -> Result<Self, NetlinkErrorInternal> {
+    pub(crate) fn open() -> Result<Self, NetlinkErrorInternal> {
         // Safety: libc wrapper
         let sock = unsafe { socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE) };
         if sock < 0 {
@@ -477,58 +492,66 @@ impl NetlinkSocket {
         Ok(())
     }
 
-    fn recv(&self) -> Result<Vec<NetlinkMessage>, NetlinkErrorInternal> {
+    fn recv(&self) -> impl Iterator<Item = Result<NetlinkMessage, NetlinkErrorInternal>> {
         let mut buf = [0u8; 4096];
-        let mut messages = Vec::new();
         let mut multipart = true;
-        'out: while multipart {
-            multipart = false;
-            // Safety: libc wrapper
-            let len = unsafe { recv(self.sock.as_raw_fd(), buf.as_mut_ptr().cast(), buf.len(), 0) };
-            if len < 0 {
-                return Err(NetlinkErrorInternal::IoError(io::Error::last_os_error()));
-            }
-            if len == 0 {
-                break;
-            }
 
-            let len = len as usize;
-            let mut offset = 0;
-            while offset < len {
-                let message = NetlinkMessage::read(&buf[offset..])?;
-                offset += align_to(message.header.nlmsg_len as usize, NLMSG_ALIGNTO as usize);
-                multipart = message.header.nlmsg_flags & NLM_F_MULTI as u16 != 0;
-                match i32::from(message.header.nlmsg_type) {
-                    NLMSG_ERROR => {
-                        let err = message.error.unwrap();
-                        if err.error == 0 {
-                            // this is an ACK
-                            continue;
-                        }
-                        let attrs = parse_attrs(&message.data)?;
-                        let err_msg = attrs.get(&(NLMSGERR_ATTR_MSG as u16)).and_then(|msg| {
-                            CStr::from_bytes_with_nul(msg.data)
-                                .ok()
-                                .map(|s| s.to_string_lossy().into_owned())
-                        });
-                        let e = match err_msg {
-                            Some(err_msg) => NetlinkErrorInternal::Error {
-                                message: err_msg,
-                                source: io::Error::from_raw_os_error(-err.error),
-                            },
-                            None => NetlinkErrorInternal::IoError(io::Error::from_raw_os_error(
-                                -err.error,
-                            )),
-                        };
-                        return Err(e);
+        iter::from_fn(move || {
+            (|| {
+                'out: while multipart {
+                    multipart = false;
+                    // Safety: libc wrapper
+                    let len = unsafe {
+                        recv(self.sock.as_raw_fd(), buf.as_mut_ptr().cast(), buf.len(), 0)
+                    };
+                    if len < 0 {
+                        return Err(NetlinkErrorInternal::IoError(io::Error::last_os_error()));
                     }
-                    NLMSG_DONE => break 'out,
-                    _ => messages.push(message),
-                }
-            }
-        }
+                    if len == 0 {
+                        return Ok(None);
+                    }
 
-        Ok(messages)
+                    let len = len as usize;
+                    let mut offset = 0;
+                    while offset < len {
+                        let message = NetlinkMessage::read(&buf[offset..])?;
+                        offset +=
+                            align_to(message.header.nlmsg_len as usize, NLMSG_ALIGNTO as usize);
+                        multipart = message.header.nlmsg_flags & NLM_F_MULTI as u16 != 0;
+                        match i32::from(message.header.nlmsg_type) {
+                            NLMSG_ERROR => {
+                                let err = message.error.unwrap();
+                                if err.error == 0 {
+                                    // this is an ACK
+                                    continue;
+                                }
+                                let attrs = parse_attrs(&message.data)?;
+                                let err_msg =
+                                    attrs.get(&(NLMSGERR_ATTR_MSG as u16)).and_then(|msg| {
+                                        CStr::from_bytes_with_nul(msg.data)
+                                            .ok()
+                                            .map(|s| s.to_string_lossy().into_owned())
+                                    });
+                                let e = match err_msg {
+                                    Some(err_msg) => NetlinkErrorInternal::Error {
+                                        message: err_msg,
+                                        source: io::Error::from_raw_os_error(-err.error),
+                                    },
+                                    None => NetlinkErrorInternal::IoError(
+                                        io::Error::from_raw_os_error(-err.error),
+                                    ),
+                                };
+                                return Err(e);
+                            }
+                            NLMSG_DONE => break 'out,
+                            _ => return Ok(Some(message)),
+                        }
+                    }
+                }
+                Ok(None)
+            })()
+            .transpose()
+        })
     }
 }
 

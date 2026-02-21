@@ -22,7 +22,7 @@ use crate::{
         id_as_key, impl_try_into_fdlink, load_program, query,
     },
     sys::{
-        BpfLinkCreateArgs, LinkTarget, NetlinkError, ProgQueryTarget, SyscallError,
+        BpfLinkCreateArgs, LinkTarget, NetlinkError, NetlinkSocket, ProgQueryTarget, SyscallError,
         bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, bpf_prog_get_fd_by_id,
         netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
         netlink_qdisc_detach,
@@ -629,16 +629,21 @@ fn qdisc_detach_program_fast(
 ) -> Result<(), TcError> {
     let if_index = ifindex_from_ifname(if_name)? as i32;
 
-    let filter_info = unsafe { netlink_find_filter_with_name(if_index, attach_type, name)? };
-    if filter_info.is_empty() {
+    let sock = NetlinkSocket::open().map_err(NetlinkError::from)?;
+    let filter_info = netlink_find_filter_with_name(&sock, if_index, attach_type, name)?;
+
+    let mut empty = true;
+    for item in filter_info {
+        let (prio, handle) = item?;
+        empty = false;
+        unsafe { netlink_qdisc_detach(if_index, attach_type, prio, handle)? }
+    }
+
+    if empty {
         return Err(TcError::IoError(io::Error::new(
             io::ErrorKind::NotFound,
             name.to_string_lossy(),
         )));
-    }
-
-    for (prio, handle) in filter_info {
-        unsafe { netlink_qdisc_detach(if_index, attach_type, prio, handle)? }
     }
 
     Ok(())
