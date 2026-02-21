@@ -10,7 +10,29 @@ use aya::{
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
-use crate::utils::NetNsGuard;
+use crate::utils::{NetNsGuard, PeerNsGuard};
+
+// Sanity-check the veth + PeerNsGuard plumbing without any BPF programs.
+#[test_log::test]
+fn veth_connectivity() {
+    // peer must be declared after netns so it drops first (see PeerNsGuard docs).
+    let netns = NetNsGuard::new();
+    let peer = PeerNsGuard::new(&netns);
+
+    let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::IFACE_ADDR)).unwrap();
+    let addr = sock.local_addr().unwrap();
+    sock.set_read_timeout(Some(Duration::from_secs(10)))
+        .unwrap();
+
+    peer.run(|| {
+        let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::PEER_ADDR)).unwrap();
+        sock.send_to(b"veth ok", addr).unwrap();
+    });
+
+    let mut buf = [0u8; 16];
+    let n = sock.recv(&mut buf).unwrap();
+    assert_eq!(&buf[..n], b"veth ok");
+}
 
 #[test_log::test]
 #[expect(
@@ -18,7 +40,9 @@ use crate::utils::NetNsGuard;
     reason = "packet headers are encoded in network byte order"
 )]
 fn af_xdp() {
-    let _netns = NetNsGuard::new();
+    // peer must be declared after netns so it drops first (see PeerNsGuard docs).
+    let netns = NetNsGuard::new();
+    let peer = PeerNsGuard::new(&netns);
 
     let mut bpf = Ebpf::load(crate::REDIRECT).unwrap();
     let mut socks: XskMap<_> = bpf.take_map("SOCKS").unwrap().try_into().unwrap();
@@ -29,7 +53,7 @@ fn af_xdp() {
         .try_into()
         .unwrap();
     xdp.load().unwrap();
-    xdp.attach("lo", XdpFlags::default()).unwrap();
+    xdp.attach(NetNsGuard::IFACE, XdpFlags::default()).unwrap();
 
     const SIZE: usize = 2 * 4096;
 
@@ -47,7 +71,7 @@ fn af_xdp() {
     };
 
     let mut iface = IfInfo::invalid();
-    iface.from_name(c"lo").unwrap();
+    iface.from_name(c"veth0").unwrap();
     let sock = match Socket::with_shared(&iface, &umem) {
         Ok(sock) => sock,
         Err(err) => {
@@ -81,9 +105,17 @@ fn af_xdp() {
     writer.insert_once(frame1.offset);
     writer.commit();
 
-    let sock = UdpSocket::bind("127.0.0.1:0").unwrap();
-    let port = sock.local_addr().unwrap().port();
-    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    let dst = format!("{}:1777", NetNsGuard::IFACE_ADDR);
+    let peer_bind = format!("{}:0", NetNsGuard::PEER_ADDR);
+    let send_from_peer = || {
+        peer.run(|| {
+            let sock = UdpSocket::bind(&peer_bind).unwrap();
+            sock.send_to(b"hello AF_XDP", &dst).unwrap();
+            sock.local_addr().unwrap().port()
+        })
+    };
+
+    let port = send_from_peer();
 
     assert_eq!(rx.available(), 1);
     let desc = rx.receive(1).read().unwrap();
@@ -97,20 +129,20 @@ fn af_xdp() {
     assert_eq!(ip[9], 17); // UDP
     let (udp, payload) = buf.split_at(8);
     let ports = &udp[..4];
-    let (src, dst) = ports.split_at(2);
+    let (src, dst_port) = ports.split_at(2);
     assert_eq!(src, port.to_be_bytes().as_slice()); // Source
-    assert_eq!(dst, 1777u16.to_be_bytes().as_slice()); // Dest
+    assert_eq!(dst_port, 1777u16.to_be_bytes().as_slice()); // Dest
     assert_eq!(payload, b"hello AF_XDP");
 
     assert_eq!(rx.available(), 1);
     // Removes socket from map, no more packets will be redirected.
     socks.unset(0).unwrap();
     assert_eq!(rx.available(), 1);
-    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    send_from_peer();
     assert_eq!(rx.available(), 1);
     // Adds socket to map again, packets will be redirected again.
     socks.set(0, rx.as_raw_fd(), 0).unwrap();
-    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    send_from_peer();
     assert_eq!(rx.available(), 2);
 }
 
@@ -162,7 +194,9 @@ fn map_load() {
 
 #[test_log::test]
 fn cpumap_chain() {
-    let _netns = NetNsGuard::new();
+    // peer must be declared after netns so it drops first (see PeerNsGuard docs).
+    let netns = NetNsGuard::new();
+    let peer = PeerNsGuard::new(&netns);
 
     let mut bpf = Ebpf::load(crate::REDIRECT).unwrap();
 
@@ -185,28 +219,30 @@ fn cpumap_chain() {
     // Load the main program
     let xdp: &mut Xdp = bpf.program_mut("redirect_cpu").unwrap().try_into().unwrap();
     xdp.load().unwrap();
-    let result = xdp.attach("lo", XdpFlags::default());
-    // Generic devices did not support cpumap XDP programs until 5.15.
+    let result = xdp.attach(NetNsGuard::IFACE, XdpFlags::default());
+    // Native veth devices support cpumap XDP programs from 5.9. The previous
+    // 5.15 gate was only needed because loopback uses generic/SKB-mode XDP.
     //
-    // See https://github.com/torvalds/linux/commit/11941f8a85362f612df61f4aaab0e41b64d2111d.
-    if KernelVersion::current().unwrap() < KernelVersion::new(5, 15, 0) {
+    // See https://github.com/torvalds/linux/commit/9216477449f3.
+    if KernelVersion::current().unwrap() < KernelVersion::new(5, 9, 0) {
         assert_matches!(result, Err(ProgramError::XdpError(XdpError::NetlinkError(err))) => {
             assert_eq!(err.raw_os_error(), Some(libc::EINVAL))
         });
-        eprintln!(
-            "skipping test - cpumap attachment not supported on generic (loopback) interface"
-        );
+        eprintln!("skipping test - cpumap chaining not supported on kernel < 5.9");
         return;
     }
     let _unused: XdpLinkId = result.unwrap();
 
     const PAYLOAD: &str = "hello cpumap";
 
-    let sock = UdpSocket::bind("127.0.0.1:0").unwrap();
+    let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::IFACE_ADDR)).unwrap();
     let addr = sock.local_addr().unwrap();
     sock.set_read_timeout(Some(Duration::from_secs(60)))
         .unwrap();
-    sock.send_to(PAYLOAD.as_bytes(), addr).unwrap();
+    peer.run(|| {
+        let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::PEER_ADDR)).unwrap();
+        sock.send_to(PAYLOAD.as_bytes(), addr).unwrap();
+    });
 
     // Read back the packet to ensure it went through the entire network stack, including our two
     // probes.
