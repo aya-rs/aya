@@ -33,7 +33,7 @@ pub struct CpuMap {
     def: MapDef,
 }
 
-impl super::super::private::Map for CpuMap {}
+impl_private_map!(CpuMap, u32, bpf_cpumap_val);
 
 impl CpuMap {
     map_constructors!(

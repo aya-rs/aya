@@ -21,7 +21,7 @@ pub struct RingBuf {
     def: MapDef,
 }
 
-impl super::private::Map for RingBuf {}
+impl_private_map!(RingBuf, (), ());
 
 /// A ring buffer entry, returned from [`RingBuf::reserve_bytes`].
 ///

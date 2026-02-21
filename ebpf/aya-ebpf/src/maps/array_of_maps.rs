@@ -1,5 +1,7 @@
 use core::{marker::PhantomData, ptr::NonNull};
 
+use aya_ebpf_cty::c_void;
+
 use crate::{
     bindings::bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS,
     lookup,
@@ -44,6 +46,37 @@ impl<T: Map> ArrayOfMaps<T> {
     #[inline(always)]
     unsafe fn lookup(&self, index: u32) -> Option<NonNull<T>> {
         lookup(self.def.as_ptr(), &index)
+    }
+
+    /// Looks up a value directly in the inner map at `outer_index`.
+    ///
+    /// Performs both the outer and inner `bpf_map_lookup_elem` calls in a
+    /// single method, producing fewer BPF instructions between the two
+    /// helpers. This reduces verifier state explosion in tight loops.
+    #[inline(always)]
+    pub fn get_value(
+        &self,
+        outer_index: u32,
+        inner_key: &<T as Map>::Key,
+    ) -> Option<&<T as Map>::Value> {
+        let inner: NonNull<c_void> = lookup(self.def.as_ptr(), &outer_index)?;
+        // SAFETY: Both pointers are returned by BPF helpers and are valid for
+        // the duration of the program. We only produce shared references.
+        unsafe {
+            lookup::<<T as Map>::Key, <T as Map>::Value>(inner.as_ptr(), inner_key)
+                .map(|p| p.as_ref())
+        }
+    }
+
+    /// Same as [`get_value`](Self::get_value) but returns a mutable pointer.
+    #[inline(always)]
+    pub fn get_value_ptr_mut(
+        &self,
+        outer_index: u32,
+        inner_key: &<T as Map>::Key,
+    ) -> Option<*mut <T as Map>::Value> {
+        let inner: NonNull<c_void> = lookup(self.def.as_ptr(), &outer_index)?;
+        lookup::<<T as Map>::Key, <T as Map>::Value>(inner.as_ptr(), inner_key).map(NonNull::as_ptr)
     }
 
     // Note: set is intentionally not implemented.

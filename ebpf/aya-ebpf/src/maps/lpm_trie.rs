@@ -15,7 +15,7 @@ pub struct LpmTrie<K, V> {
     _kv: PhantomData<(K, V)>,
 }
 
-impl<K, V> super::private::Map for LpmTrie<K, V> {}
+impl_private_map!(<K, V> LpmTrie<K, V>, Key<K>, V);
 
 #[repr(C, packed)]
 pub struct Key<K> {
