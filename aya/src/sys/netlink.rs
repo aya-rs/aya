@@ -178,7 +178,7 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), Netli
 
     // add the TCA_KIND attribute
     let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
-    let attr_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, b"clsact\0")
+    let (_, attr_len) = write_attr_bytes(attrs_buf, TCA_KIND as u16, c"clsact".to_bytes_with_nul())
         .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
     req.header.nlmsg_len += nla_align!(attr_len) as u32;
 
@@ -196,9 +196,10 @@ fn write_tc_attach_attrs(
 ) -> io::Result<()> {
     let attrs_buf = unsafe { request_attributes(req, nlmsg_len) };
 
-    let kind_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, c"bpf".to_bytes_with_nul())?;
+    let (attrs_buf, kind_len) =
+        write_attr_bytes(attrs_buf, TCA_KIND as u16, c"bpf".to_bytes_with_nul())?;
 
-    let mut options = NestedAttrs::new(&mut attrs_buf[kind_len..], TCA_OPTIONS as u16);
+    let mut options = NestedAttrs::new(attrs_buf, TCA_OPTIONS as u16);
     options.write_attr(TCA_BPF_FD as u16, prog_fd)?;
     options.write_attr_bytes(TCA_BPF_NAME as u16, prog_name)?;
     options.write_attr(TCA_BPF_FLAGS as u16, TCA_BPF_FLAG_ACT_DIRECT)?;
@@ -590,88 +591,114 @@ const fn htons(u: u16) -> u16 {
 }
 
 struct NestedAttrs<'a> {
-    buf: &'a mut [u8],
+    header_buf: &'a mut [u8],
+    rest: &'a mut [u8],
     top_attr_type: u16,
-    offset: usize,
+    nla_len: usize,
 }
 
 impl<'a> NestedAttrs<'a> {
     const fn new(buf: &'a mut [u8], top_attr_type: u16) -> Self {
+        const fn empty() -> &'static mut [u8] {
+            &mut []
+        }
+
+        let (header_buf, rest) = match buf.split_at_mut_checked(NLA_HDR_ALIGN_LEN) {
+            Some(parts) => parts,
+            None => (empty(), empty()),
+        };
         Self {
-            buf,
+            header_buf,
+            rest,
             top_attr_type,
-            offset: NLA_HDR_ALIGN_LEN,
+            nla_len: NLA_HDR_ALIGN_LEN,
         }
     }
 
     fn write_attr<T: Pod>(&mut self, attr_type: u16, value: T) -> io::Result<()> {
-        self.offset += write_attr(self.buf, self.offset, attr_type, value)?;
+        let Self {
+            header_buf: _,
+            rest,
+            top_attr_type: _,
+            nla_len,
+        } = self;
+        let buf = mem::take(rest);
+        let (rest, size) = write_attr(buf, attr_type, value)?;
+        *nla_len += size;
+        self.rest = rest;
         Ok(())
     }
 
     fn write_attr_bytes(&mut self, attr_type: u16, value: &[u8]) -> io::Result<()> {
-        self.offset += write_attr_bytes(self.buf, self.offset, attr_type, value)?;
+        let Self {
+            header_buf: _,
+            rest,
+            top_attr_type: _,
+            nla_len,
+        } = self;
+        let buf = mem::take(rest);
+        let (rest, size) = write_attr_bytes(buf, attr_type, value)?;
+        *nla_len += size;
+        self.rest = rest;
         Ok(())
     }
 
     fn finish(self) -> io::Result<usize> {
-        let nla_len = self.offset;
+        let Self {
+            header_buf,
+            rest: _,
+            top_attr_type: _,
+            nla_len,
+        } = self;
         let attr = nlattr {
             nla_type: NLA_F_NESTED as u16 | self.top_attr_type,
             nla_len: nla_len as u16,
         };
 
-        let header_len = write_attr_header(self.buf, 0, attr)?;
+        let (_, header_len) = write_attr_header(header_buf, attr)?;
         debug_assert_eq!(header_len, NLA_HDR_ALIGN_LEN);
         Ok(nla_len)
     }
 }
 
-fn write_attr<T: Pod>(
-    buf: &mut [u8],
-    offset: usize,
-    attr_type: u16,
-    value: T,
-) -> io::Result<usize> {
+fn write_attr<T: Pod>(buf: &mut [u8], attr_type: u16, value: T) -> io::Result<(&mut [u8], usize)> {
     let value = bytes_of(&value);
-    write_attr_bytes(buf, offset, attr_type, value)
+    write_attr_bytes(buf, attr_type, value)
 }
 
-fn write_attr_bytes(
-    buf: &mut [u8],
-    offset: usize,
+fn write_attr_bytes<'a>(
+    buf: &'a mut [u8],
     attr_type: u16,
     value: &[u8],
-) -> io::Result<usize> {
+) -> io::Result<(&'a mut [u8], usize)> {
     let attr = nlattr {
         nla_type: attr_type,
         nla_len: ((NLA_HDR_LEN + value.len()) as u16),
     };
 
-    let header_len = write_attr_header(buf, offset, attr)?;
-    let value_len = write_bytes(buf, offset + header_len, value)?;
+    let (buf, header_len) = write_attr_header(buf, attr)?;
+    let (buf, value_len) = write_bytes(buf, value)?;
 
-    Ok(header_len + value_len)
+    Ok((buf, header_len + value_len))
 }
 
 unsafe impl Pod for nlattr {}
 
-fn write_attr_header(buf: &mut [u8], offset: usize, attr: nlattr) -> io::Result<usize> {
+fn write_attr_header(buf: &mut [u8], attr: nlattr) -> io::Result<(&mut [u8], usize)> {
     let attr = bytes_of(&attr);
-    let header_len = write_bytes(buf, offset, attr)?;
+    let (buf, header_len) = write_bytes(buf, attr)?;
     debug_assert_eq!(header_len, NLA_HDR_ALIGN_LEN);
-    Ok(header_len)
+    Ok((buf, header_len))
 }
 
-fn write_bytes(buf: &mut [u8], offset: usize, value: &[u8]) -> io::Result<usize> {
+fn write_bytes<'a>(buf: &'a mut [u8], value: &[u8]) -> io::Result<(&'a mut [u8], usize)> {
     let align_len = nla_align!(value.len());
-    let buf = buf
-        .get_mut(offset..)
-        .and_then(|buf| buf.get_mut(..align_len))
+    let (buf, remaining) = buf
+        .split_at_mut_checked(align_len)
         .ok_or_else(|| io::Error::other("no space left"))?;
     buf[..value.len()].copy_from_slice(value);
 
-    Ok(align_len)
+    Ok((remaining, align_len))
 }
 
 struct NlAttrsIterator<'a> {
@@ -814,7 +841,7 @@ mod tests {
     fn test_nlattr_iterator_one() {
         let mut buf = [0; NLA_HDR_LEN + size_of::<u32>()];
 
-        write_attr(&mut buf, 0, IFLA_XDP_FD as u16, 42u32).unwrap();
+        let (_rest, _written) = write_attr(&mut buf, IFLA_XDP_FD as u16, 42u32).unwrap();
 
         let mut iter = NlAttrsIterator::new(&buf);
         let attr = iter.next().unwrap().unwrap();
@@ -829,14 +856,8 @@ mod tests {
     fn test_nlattr_iterator_many() {
         let mut buf = [0; (NLA_HDR_LEN + size_of::<u32>()) * 2];
 
-        write_attr(&mut buf, 0, IFLA_XDP_FD as u16, 42u32).unwrap();
-        write_attr(
-            &mut buf,
-            NLA_HDR_LEN + size_of::<u32>(),
-            IFLA_XDP_EXPECTED_FD as u16,
-            12u32,
-        )
-        .unwrap();
+        let (rest, _) = write_attr(&mut buf, IFLA_XDP_FD as u16, 42u32).unwrap();
+        let (_rest, _written) = write_attr(rest, IFLA_XDP_EXPECTED_FD as u16, 12u32).unwrap();
 
         let mut iter = NlAttrsIterator::new(&buf);
 
