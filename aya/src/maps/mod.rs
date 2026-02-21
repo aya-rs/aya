@@ -690,7 +690,7 @@ impl sealed::FromMapData for PerfEventArray<MapData> {
 }
 impl sealed::InnerMap for PerfEventArray<MapData> {
     fn inner_map_fd(&self) -> &MapFd {
-        self.map_fd()
+        self.map_data().fd()
     }
 }
 
@@ -701,7 +701,7 @@ impl sealed::FromMapData for RingBuf<MapData> {
 }
 impl sealed::InnerMap for RingBuf<MapData> {
     fn inner_map_fd(&self) -> &MapFd {
-        self.map_fd()
+        self.map_data().fd()
     }
 }
 
