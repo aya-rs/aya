@@ -6,14 +6,17 @@ use std::{
     ffi::CString,
     fs,
     io::{self, Write as _},
+    net::Ipv4Addr,
+    os::fd::AsRawFd as _,
     path::Path,
-    process::{self, Command},
+    process,
     sync::atomic::{AtomicU64, Ordering},
 };
 
 use anyhow::{Context as _, Result};
-use aya::netlink_set_link_up;
 use libc::if_nametoindex;
+
+use crate::netlink;
 
 const CGROUP_ROOT: &str = "/sys/fs/cgroup";
 const CGROUP_PROCS: &str = "cgroup.procs";
@@ -196,23 +199,25 @@ impl NetNsGuard {
                 ns.name,
                 io::Error::last_os_error()
             );
-            netlink_set_link_up(idx as i32)
+            netlink::set_link_up(idx as i32)
                 .unwrap_or_else(|e| panic!("failed to set `lo` up in netns {}: {e}", ns.name));
         }
 
         // Create a veth pair for tests that attach XDP/TC programs. Veth supports
         // native XDP (unlike loopback which only supports SKB/generic mode), so tests
         // exercise the same code path used in production.
-        run_ip(&[
-            "link",
-            "add",
-            Self::IFACE,
-            "type",
-            "veth",
-            "peer",
-            "name",
-            Self::PEER_IFACE,
-        ]);
+        netlink::create_veth_pair(
+            &CString::new(Self::IFACE).unwrap(),
+            &CString::new(Self::PEER_IFACE).unwrap(),
+        )
+        .unwrap_or_else(|e| {
+            panic!(
+                "failed to create veth pair {}/{} in netns {}: {e}",
+                Self::IFACE,
+                Self::PEER_IFACE,
+                ns.name
+            )
+        });
 
         // Bring up both ends.
         for iface in [Self::IFACE, Self::PEER_IFACE] {
@@ -225,7 +230,7 @@ impl NetNsGuard {
                     ns.name,
                     io::Error::last_os_error()
                 );
-                netlink_set_link_up(idx as i32).unwrap_or_else(|e| {
+                netlink::set_link_up(idx as i32).unwrap_or_else(|e| {
                     panic!("failed to set `{iface}` up in netns {}: {e}", ns.name)
                 });
             }
@@ -270,46 +275,25 @@ impl Drop for NetNsGuard {
     }
 }
 
-fn run_ip(args: &[&str]) {
-    let status = Command::new("ip")
-        .args(args)
-        .status()
-        .unwrap_or_else(|e| panic!("ip {}: {e}", args.join(" ")));
-    assert!(status.success(), "ip {} failed", args.join(" "));
-}
-
-fn run_ip_output(args: &[&str]) -> String {
-    let output = Command::new("ip")
-        .args(args)
-        .output()
-        .unwrap_or_else(|e| panic!("ip {}: {e}", args.join(" ")));
-    assert!(output.status.success(), "ip {} failed", args.join(" "));
-    String::from_utf8(output.stdout).unwrap()
-}
-
-/// Run `ip netns exec <ns> ip <args...>`.
-fn run_ip_netns(ns: &str, args: &[&str]) {
-    let mut full_args = vec!["netns", "exec", ns, "ip"];
-    full_args.extend(args);
-    run_ip(&full_args);
-}
-
-/// Run `ip netns exec <ns> ip <args...>` and return stdout.
-fn run_ip_netns_output(ns: &str, args: &[&str]) -> String {
-    let mut full_args = vec!["netns", "exec", ns, "ip"];
-    full_args.extend(args);
-    run_ip_output(&full_args)
-}
-
-/// Parse a MAC address from `ip -o link show` output.
+/// Run a closure inside a network namespace identified by a file handle.
 ///
-/// Expected format: `N: iface: <...> ... link/ether aa:bb:cc:dd:ee:ff brd ...`
-fn parse_mac(ip_link_output: &str) -> &str {
-    ip_link_output
-        .split_whitespace()
-        .skip_while(|s| *s != "link/ether")
-        .nth(1)
-        .unwrap_or_else(|| panic!("could not parse MAC from: {ip_link_output}"))
+/// Uses a scoped thread because `setns` changes the network namespace of the
+/// *calling* thread — running it on a disposable thread avoids polluting the
+/// test thread's namespace.
+fn run_in_netns<F, R>(ns_file: &fs::File, f: F) -> R
+where
+    F: FnOnce() -> R + Send,
+    R: Send,
+{
+    std::thread::scope(|s| {
+        s.spawn(|| {
+            nix::sched::setns(ns_file, nix::sched::CloneFlags::CLONE_NEWNET)
+                .expect("setns to target netns");
+            f()
+        })
+        .join()
+        .unwrap()
+    })
 }
 
 /// A second network namespace connected to the test namespace via the veth pair.
@@ -329,66 +313,150 @@ impl PeerNsGuard {
     pub(crate) fn new(netns: &NetNsGuard) -> Self {
         let name = format!("{}-peer", netns.name());
 
-        // Create peer netns.
-        run_ip(&["netns", "add", &name]);
+        // Create peer netns: create a persist file, then use a scoped thread
+        // to unshare(CLONE_NEWNET) and bind-mount the new ns over the file.
+        let ns_path = Path::new(NetNsGuard::PERSIST_DIR).join(&name);
+        let _unused: fs::File = fs::File::create(&ns_path)
+            .unwrap_or_else(|err| panic!("fs::File::create(\"{}\"): {err:?}", ns_path.display()));
+        std::thread::scope(|s| {
+            s.spawn(|| {
+                nix::sched::unshare(nix::sched::CloneFlags::CLONE_NEWNET)
+                    .expect("unshare(CLONE_NEWNET) for peer ns");
+                let new_ns_path = format!("/proc/self/task/{}/ns/net", nix::unistd::gettid());
+                nix::mount::mount(
+                    Some(new_ns_path.as_str()),
+                    &ns_path,
+                    Some("none"),
+                    nix::mount::MsFlags::MS_BIND,
+                    None::<&str>,
+                )
+                .expect("mount-bind peer netns");
+            })
+            .join()
+            .unwrap();
+        });
 
         // Move veth1 into peer netns.
-        run_ip(&["link", "set", NetNsGuard::PEER_IFACE, "netns", &name]);
+        let peer_iface = CString::new(NetNsGuard::PEER_IFACE).unwrap();
+        let peer_ns = fs::File::open(&ns_path)
+            .unwrap_or_else(|e| panic!("open(\"{}\"): {e}", ns_path.display()));
+        unsafe {
+            let idx = if_nametoindex(peer_iface.as_ptr());
+            assert!(
+                idx != 0,
+                "interface `{}` not found: {}",
+                NetNsGuard::PEER_IFACE,
+                io::Error::last_os_error()
+            );
+            netlink::set_link_ns(idx as i32, peer_ns.as_raw_fd()).unwrap_or_else(|e| {
+                panic!(
+                    "failed to move `{}` to netns {name}: {e}",
+                    NetNsGuard::PEER_IFACE
+                )
+            });
+        }
 
         // Assign IP to veth0 in test netns.
-        run_ip(&[
-            "addr",
-            "add",
-            &format!("{}/24", NetNsGuard::IFACE_ADDR),
-            "dev",
-            NetNsGuard::IFACE,
-        ]);
+        let iface = CString::new(NetNsGuard::IFACE).unwrap();
+        let iface_addr: Ipv4Addr = NetNsGuard::IFACE_ADDR.parse().unwrap();
+        let peer_addr: Ipv4Addr = NetNsGuard::PEER_ADDR.parse().unwrap();
+        unsafe {
+            let idx = if_nametoindex(iface.as_ptr());
+            assert!(
+                idx != 0,
+                "interface `{}` not found: {}",
+                NetNsGuard::IFACE,
+                io::Error::last_os_error()
+            );
+            netlink::add_addr_v4(idx as i32, iface_addr, 24)
+                .unwrap_or_else(|e| panic!("failed to add addr to `{}`: {e}", NetNsGuard::IFACE));
+        }
 
-        // Configure veth1 in peer netns.
-        let peer_addr = format!("{}/24", NetNsGuard::PEER_ADDR);
-        run_ip_netns(
-            &name,
-            &["addr", "add", &peer_addr, "dev", NetNsGuard::PEER_IFACE],
-        );
-        run_ip_netns(&name, &["link", "set", NetNsGuard::PEER_IFACE, "up"]);
-        run_ip_netns(&name, &["link", "set", "lo", "up"]);
+        // Configure veth1 in peer netns: add addr, set link up, set lo up, get MAC.
+        let veth1_mac = run_in_netns(&peer_ns, || {
+            let peer_iface = CString::new(NetNsGuard::PEER_IFACE).unwrap();
+            let lo = CString::new("lo").unwrap();
+            unsafe {
+                let idx = if_nametoindex(peer_iface.as_ptr());
+                assert!(
+                    idx != 0,
+                    "interface `{}` not found in peer netns: {}",
+                    NetNsGuard::PEER_IFACE,
+                    io::Error::last_os_error()
+                );
+                netlink::add_addr_v4(idx as i32, peer_addr, 24).unwrap_or_else(|e| {
+                    panic!(
+                        "failed to add addr to `{}` in peer netns: {e}",
+                        NetNsGuard::PEER_IFACE
+                    )
+                });
+                netlink::set_link_up(idx as i32).unwrap_or_else(|e| {
+                    panic!(
+                        "failed to set `{}` up in peer netns: {e}",
+                        NetNsGuard::PEER_IFACE
+                    )
+                });
 
-        // Read MACs and install static ARP entries to prevent ARP traffic from
-        // being captured by XDP redirect programs.
-        let local_link = run_ip_output(&["-o", "link", "show", NetNsGuard::IFACE]);
-        let veth0_mac = parse_mac(&local_link);
+                let lo_idx = if_nametoindex(lo.as_ptr());
+                assert!(
+                    lo_idx != 0,
+                    "interface `lo` not found in peer netns: {}",
+                    io::Error::last_os_error()
+                );
+                netlink::set_link_up(lo_idx as i32)
+                    .unwrap_or_else(|e| panic!("failed to set `lo` up in peer netns: {e}"));
 
-        let peer_link = run_ip_netns_output(&name, &["-o", "link", "show", NetNsGuard::PEER_IFACE]);
-        let veth1_mac = parse_mac(&peer_link);
+                netlink::get_link_mac(idx as i32).unwrap_or_else(|e| {
+                    panic!("failed to get MAC of `{}`: {e}", NetNsGuard::PEER_IFACE)
+                })
+            }
+        });
+
+        // Read veth0 MAC in test netns.
+        let veth0_mac = unsafe {
+            let idx = if_nametoindex(iface.as_ptr());
+            assert!(
+                idx != 0,
+                "interface `{}` not found: {}",
+                NetNsGuard::IFACE,
+                io::Error::last_os_error()
+            );
+            netlink::get_link_mac(idx as i32)
+                .unwrap_or_else(|e| panic!("failed to get MAC of `{}`: {e}", NetNsGuard::IFACE))
+        };
 
         // Static ARP in test netns: peer IP -> veth1 MAC.
-        run_ip(&[
-            "neigh",
-            "add",
-            NetNsGuard::PEER_ADDR,
-            "lladdr",
-            veth1_mac,
-            "nud",
-            "permanent",
-            "dev",
-            NetNsGuard::IFACE,
-        ]);
+        unsafe {
+            let idx = if_nametoindex(iface.as_ptr());
+            netlink::add_neigh_v4(idx as i32, peer_addr, &veth1_mac).unwrap_or_else(|e| {
+                panic!(
+                    "failed to add neigh entry for {} on `{}`: {e}",
+                    NetNsGuard::PEER_ADDR,
+                    NetNsGuard::IFACE
+                )
+            });
+        }
 
         // Static ARP in peer netns: test IP -> veth0 MAC.
-        run_ip_netns(
-            &name,
-            &[
-                "neigh",
-                "add",
-                NetNsGuard::IFACE_ADDR,
-                "lladdr",
-                veth0_mac,
-                "nud",
-                "permanent",
-                "dev",
-                NetNsGuard::PEER_IFACE,
-            ],
-        );
+        run_in_netns(&peer_ns, || {
+            let peer_iface = CString::new(NetNsGuard::PEER_IFACE).unwrap();
+            unsafe {
+                let idx = if_nametoindex(peer_iface.as_ptr());
+                assert!(
+                    idx != 0,
+                    "interface `{}` not found in peer netns: {}",
+                    NetNsGuard::PEER_IFACE,
+                    io::Error::last_os_error()
+                );
+                netlink::add_neigh_v4(idx as i32, iface_addr, &veth0_mac).unwrap_or_else(|e| {
+                    panic!(
+                        "failed to add neigh entry for {} on `{}`: {e}",
+                        NetNsGuard::IFACE_ADDR,
+                        NetNsGuard::PEER_IFACE
+                    )
+                });
+            }
+        });
 
         Self { name }
     }
@@ -406,16 +474,7 @@ impl PeerNsGuard {
         let peer_ns_path = Path::new(NetNsGuard::PERSIST_DIR).join(&self.name);
         let peer_ns = fs::File::open(&peer_ns_path)
             .unwrap_or_else(|e| panic!("open(\"{}\"): {e}", peer_ns_path.display()));
-
-        std::thread::scope(|s| {
-            s.spawn(|| {
-                nix::sched::setns(&peer_ns, nix::sched::CloneFlags::CLONE_NEWNET)
-                    .expect("setns to peer netns");
-                f()
-            })
-            .join()
-            .unwrap()
-        })
+        run_in_netns(&peer_ns, f)
     }
 }
 
@@ -431,11 +490,12 @@ impl Drop for PeerNsGuard {
     fn drop(&mut self) {
         let Self { name } = self;
         match (|| -> Result<()> {
-            let status = Command::new("ip")
-                .args(["netns", "del", name.as_str()])
-                .status()
-                .with_context(|| format!("ip netns del {name}"))?;
-            anyhow::ensure!(status.success(), "ip netns del {name} failed: {status}");
+            let ns_path = Path::new(NetNsGuard::PERSIST_DIR).join(&name);
+            nix::mount::umount2(&ns_path, nix::mount::MntFlags::MNT_DETACH).with_context(|| {
+                format!("nix::mount::umount2(\"{}\", MNT_DETACH)", ns_path.display())
+            })?;
+            fs::remove_file(&ns_path)
+                .with_context(|| format!("fs::remove_file(\"{}\")", ns_path.display()))?;
             Ok(())
         })() {
             Ok(()) => (),
