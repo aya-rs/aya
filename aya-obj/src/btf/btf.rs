@@ -160,6 +160,27 @@ pub enum BtfError {
     /// unable to get symbol name
     #[error("Unable to get symbol name")]
     InvalidSymbolName,
+
+    /// Inner map definition cannot be pinned.
+    #[error("BTF map `{name}`: inner map definition cannot be pinned")]
+    InnerMapCannotBePinned {
+        /// The name of the map with the invalid definition.
+        name: String,
+    },
+
+    /// Multi-level map-in-map is not supported.
+    #[error("BTF map `{name}`: multi-level map-in-map is not supported")]
+    MultiLevelMapInMapNotSupported {
+        /// The name of the map with the invalid definition.
+        name: String,
+    },
+
+    /// The `values` spec must be a zero-sized array.
+    #[error("BTF map `{name}`: `values` spec is not a zero-sized array")]
+    InvalidValuesSpec {
+        /// The name of the map with the invalid definition.
+        name: String,
+    },
 }
 
 /// Available BTF features

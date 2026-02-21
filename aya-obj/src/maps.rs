@@ -251,6 +251,63 @@ impl Map {
             Self::Btf(m) => Some(m.symbol_index),
         }
     }
+
+    /// Returns the inner map definition, in case of a map of maps.
+    pub fn inner(&self) -> Option<Self> {
+        match self {
+            Self::Legacy(m) => m.inner_def.as_ref().map(|inner_def| {
+                Self::Legacy(LegacyMap {
+                    def: *inner_def,
+                    inner_def: None,
+                    // The inner map is a synthetic object with no ELF presence
+                    // of its own, so use neutral metadata values.
+                    section_index: 0,
+                    section_kind: EbpfSectionKind::Undefined,
+                    symbol_index: None,
+                    data: Vec::new(),
+                })
+            }),
+            Self::Btf(m) => m.inner_def.as_ref().map(|inner_def| {
+                Self::Btf(BtfMap {
+                    def: *inner_def,
+                    inner_def: None,
+                    // The inner map is a synthetic object with no ELF presence
+                    // of its own, so use neutral metadata values.
+                    section_index: 0,
+                    symbol_index: 0,
+                    data: Vec::new(),
+                })
+            }),
+        }
+    }
+
+    /// Creates a new legacy map definition programmatically.
+    ///
+    /// This is useful for creating inner maps dynamically for map-of-maps types.
+    pub const fn new_legacy(
+        map_type: u32,
+        key_size: u32,
+        value_size: u32,
+        max_entries: u32,
+        flags: u32,
+    ) -> Self {
+        Self::Legacy(LegacyMap {
+            def: bpf_map_def {
+                map_type,
+                key_size,
+                value_size,
+                max_entries,
+                map_flags: flags,
+                id: 0,
+                pinning: PinningType::None,
+            },
+            inner_def: None,
+            section_index: 0,
+            section_kind: EbpfSectionKind::Undefined,
+            symbol_index: None,
+            data: Vec::new(),
+        })
+    }
 }
 
 /// A map declared with legacy BPF map declaration style, most likely from a `maps` section.
@@ -261,6 +318,8 @@ impl Map {
 pub struct LegacyMap {
     /// The definition of the map
     pub def: bpf_map_def,
+    /// The definition of the inner map, in case of a map of maps.
+    pub inner_def: Option<bpf_map_def>,
     /// The section index
     pub section_index: usize,
     /// The section kind
@@ -280,6 +339,8 @@ pub struct LegacyMap {
 pub struct BtfMap {
     /// The definition of the map
     pub def: BtfMapDef,
+    /// The definition of the inner map, in case of a map of maps.
+    pub(crate) inner_def: Option<BtfMapDef>,
     pub(crate) section_index: usize,
     pub(crate) symbol_index: usize,
     pub(crate) data: Vec<u8>,
