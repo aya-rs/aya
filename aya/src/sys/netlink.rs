@@ -26,7 +26,17 @@ use crate::{
     util::{bytes_of, tc_handler_make},
 };
 
-const NLA_HDR_LEN: usize = align_to(size_of::<nlattr>(), NLA_ALIGNTO as usize);
+const _: () = assert!(NLA_ALIGNTO < u8::MAX as i32);
+macro_rules! nla_align {
+    ($v:expr) => {{
+        // TODO(https://github.com/rust-lang/rust/issues/143874): use .into() when const_trait_impl is stable.
+        #[expect(clippy::as_underscore, reason = "statically known to be less than u8::MAX")]
+        let result = $v.next_multiple_of(NLA_ALIGNTO as _);
+        result
+    }};
+}
+
+const NLA_HDR_LEN: usize = nla_align!(size_of::<nlattr>());
 
 /// `CLS_BPF_NAME_LEN` from the Linux kernel.
 /// <https://github.com/torvalds/linux/blob/v6.19/net/sched/cls_bpf.c#L28>
@@ -35,17 +45,16 @@ const CLS_BPF_NAME_LEN: usize = 256;
 // Size of the attribute buffer needed by write_tc_attach_attrs:
 // TCA_KIND + nested TCA_OPTIONS containing TCA_BPF_FD, TCA_BPF_NAME, TCA_BPF_FLAGS.
 const fn tc_request_attrs_size() -> usize {
-    let al = NLA_ALIGNTO as usize;
     // TCA_KIND
-    NLA_HDR_LEN + align_to(c"bpf".count_bytes() + 1, al)
+    NLA_HDR_LEN + nla_align!(c"bpf".to_bytes_with_nul().len())
     // TCA_OPTIONS header
     + NLA_HDR_LEN
     // TCA_BPF_FD
-    + NLA_HDR_LEN + align_to(size_of::<i32>(), al)
+    + NLA_HDR_LEN + nla_align!(size_of::<i32>())
     // TCA_BPF_NAME
-    + NLA_HDR_LEN + align_to(CLS_BPF_NAME_LEN, al)
+    + NLA_HDR_LEN + nla_align!(CLS_BPF_NAME_LEN)
     // TCA_BPF_FLAGS
-    + NLA_HDR_LEN + align_to(size_of::<u32>(), al)
+    + NLA_HDR_LEN + nla_align!(size_of::<u32>())
 }
 
 const _: () = assert!(tc_request_attrs_size() == 288);
@@ -138,7 +147,7 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     let nla_len = attrs
         .finish()
         .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    req.header.nlmsg_len += align_to(nla_len, NLA_ALIGNTO as usize) as u32;
+    req.header.nlmsg_len += nla_align!(nla_len) as u32;
 
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
     sock.recv()?;
@@ -168,7 +177,7 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), Netli
     let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
     let attr_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, b"clsact\0")
         .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    req.header.nlmsg_len += align_to(attr_len, NLA_ALIGNTO as usize) as u32;
+    req.header.nlmsg_len += nla_align!(attr_len) as u32;
 
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
     sock.recv()?;
@@ -192,7 +201,7 @@ fn write_tc_attach_attrs(
     options.write_attr(TCA_BPF_FLAGS as u16, TCA_BPF_FLAG_ACT_DIRECT)?;
     let options_len = options.finish()?;
 
-    req.header.nlmsg_len += align_to(kind_len + options_len, NLA_ALIGNTO as usize) as u32;
+    req.header.nlmsg_len += nla_align!(kind_len + options_len) as u32;
     Ok(())
 }
 
@@ -492,7 +501,7 @@ impl NetlinkSocket {
             let mut offset = 0;
             while offset < len {
                 let message = NetlinkMessage::read(&buf[offset..])?;
-                offset += align_to(message.header.nlmsg_len as usize, NLMSG_ALIGNTO as usize);
+                offset += nla_align!(message.header.nlmsg_len as usize);
                 multipart = message.header.nlmsg_flags & NLM_F_MULTI as u16 != 0;
                 match i32::from(message.header.nlmsg_type) {
                     NLMSG_ERROR => {
@@ -547,7 +556,7 @@ impl NetlinkMessage {
             return Err(io::Error::other("invalid nlmsg_len"));
         }
 
-        let data_offset = align_to(size_of::<nlmsghdr>(), NLMSG_ALIGNTO as usize);
+        let data_offset = nla_align!(size_of::<nlmsghdr>());
         if data_offset >= buf.len() {
             return Err(io::Error::other("need more data"));
         }
@@ -573,10 +582,6 @@ impl NetlinkMessage {
             error,
         })
     }
-}
-
-const fn align_to(v: usize, align: usize) -> usize {
-    v.next_multiple_of(align)
 }
 
 const fn htons(u: u16) -> u16 {
@@ -658,7 +663,7 @@ fn write_attr_header(buf: &mut [u8], offset: usize, attr: nlattr) -> Result<usiz
 }
 
 fn write_bytes(buf: &mut [u8], offset: usize, value: &[u8]) -> Result<usize, io::Error> {
-    let align_len = align_to(value.len(), NLA_ALIGNTO as usize);
+    let align_len = nla_align!(value.len());
     if offset + align_len > buf.len() {
         return Err(io::Error::other("no space left"));
     }
@@ -697,8 +702,8 @@ impl<'a> Iterator for NlAttrsIterator<'a> {
         }
 
         let attr: nlattr = unsafe { ptr::read_unaligned(buf.as_ptr().cast()) };
-        let len = attr.nla_len as usize;
-        let align_len = align_to(len, NLA_ALIGNTO as usize);
+        let len = usize::from(attr.nla_len);
+        let align_len = nla_align!(len);
         if len < NLA_HDR_LEN {
             return Some(Err(NlAttrError::InvalidHeaderLength(len)));
         }
