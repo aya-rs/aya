@@ -430,8 +430,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::array::Array<T> where U
 pub type aya_ebpf::maps::array::Array<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::array::Array<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::array::Array<T> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::array::Array<T>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::array::Array<T>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::array::Array<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::array::Array<T>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::array::Array<T> where T: ?core::marker::Sized
@@ -444,8 +442,8 @@ pub mod aya_ebpf::maps::array_of_maps
 #[repr(transparent)] pub struct aya_ebpf::maps::array_of_maps::ArrayOfMaps<T: aya_ebpf::maps::Map>
 impl<T: aya_ebpf::maps::Map> aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>
 pub fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::get(&self, index: u32) -> core::option::Option<&T>
-pub fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::get_value(&self, outer_index: u32, inner_key: &<T as aya_ebpf::maps::Map>::Key) -> core::option::Option<&<T as aya_ebpf::maps::Map>::Value>
-pub fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::get_value_ptr_mut(&self, outer_index: u32, inner_key: &<T as aya_ebpf::maps::Map>::Key) -> core::option::Option<*mut <T as aya_ebpf::maps::Map>::Value>
+pub fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::get_value(&self, outer_index: u32, inner_key: &<T as aya_ebpf::maps::private::Map>::Key) -> core::option::Option<&<T as aya_ebpf::maps::private::Map>::Value>
+pub fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::get_value_ptr_mut(&self, outer_index: u32, inner_key: &<T as aya_ebpf::maps::private::Map>::Key) -> core::option::Option<*mut <T as aya_ebpf::maps::private::Map>::Value>
 pub const fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>
@@ -494,8 +492,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::bloom_filter::BloomFilt
 pub type aya_ebpf::maps::bloom_filter::BloomFilter<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::bloom_filter::BloomFilter<T>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::bloom_filter::BloomFilter<T>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: ?core::marker::Sized
@@ -530,8 +526,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::HashMap<K, V>
 pub type aya_ebpf::maps::hash_map::HashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::hash_map::HashMap<K, V> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::hash_map::HashMap<K, V>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::hash_map::HashMap<K, V>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::hash_map::HashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::HashMap<K, V> where T: ?core::marker::Sized
@@ -565,8 +559,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::LruHashMap<K,
 pub type aya_ebpf::maps::hash_map::LruHashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::hash_map::LruHashMap<K, V>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::hash_map::LruHashMap<K, V>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: ?core::marker::Sized
@@ -600,8 +592,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::LruPerCpuHash
 pub type aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: ?core::marker::Sized
@@ -635,8 +625,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::PerCpuHashMap
 pub type aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: ?core::marker::Sized
@@ -649,8 +637,8 @@ pub mod aya_ebpf::maps::hash_of_maps
 #[repr(transparent)] pub struct aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V: aya_ebpf::maps::Map>
 impl<K, V: aya_ebpf::maps::Map> aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
 pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get(&self, key: &K) -> core::option::Option<&V>
-pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get_value(&self, outer_key: &K, inner_key: &<V as aya_ebpf::maps::Map>::Key) -> core::option::Option<&<V as aya_ebpf::maps::Map>::Value>
-pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get_value_ptr_mut(&self, outer_key: &K, inner_key: &<V as aya_ebpf::maps::Map>::Key) -> core::option::Option<*mut <V as aya_ebpf::maps::Map>::Value>
+pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get_value(&self, outer_key: &K, inner_key: &<V as aya_ebpf::maps::private::Map>::Key) -> core::option::Option<&<V as aya_ebpf::maps::private::Map>::Value>
+pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get_value_ptr_mut(&self, outer_key: &K, inner_key: &<V as aya_ebpf::maps::private::Map>::Key) -> core::option::Option<*mut <V as aya_ebpf::maps::private::Map>::Value>
 pub const fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
@@ -728,8 +716,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 pub type aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: ?core::marker::Sized
@@ -762,8 +748,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::per_cpu_array::PerCpuAr
 pub type aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: ?core::marker::Sized
@@ -884,8 +868,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::queue::Queue<T> where U
 pub type aya_ebpf::maps::queue::Queue<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::queue::Queue<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::queue::Queue<T> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::queue::Queue<T>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::queue::Queue<T>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::queue::Queue<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::queue::Queue<T>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::queue::Queue<T> where T: ?core::marker::Sized
@@ -919,8 +901,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::ring_buf::RingBuf where
 pub type aya_ebpf::maps::ring_buf::RingBuf::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::ring_buf::RingBuf::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::ring_buf::RingBuf where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::ring_buf::RingBuf::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::ring_buf::RingBuf::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::ring_buf::RingBuf where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::ring_buf::RingBuf::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::ring_buf::RingBuf where T: ?core::marker::Sized
@@ -1022,8 +1002,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::sock_hash::SockHash<K> 
 pub type aya_ebpf::maps::sock_hash::SockHash<K>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::sock_hash::SockHash<K> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::sock_hash::SockHash<K>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::sock_hash::SockHash<K>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::sock_hash::SockHash<K> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::sock_hash::SockHash<K> where T: ?core::marker::Sized
@@ -1057,8 +1035,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::sock_map::SockMap where
 pub type aya_ebpf::maps::sock_map::SockMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::sock_map::SockMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::sock_map::SockMap where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::sock_map::SockMap::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::sock_map::SockMap::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::sock_map::SockMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_map::SockMap::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::sock_map::SockMap where T: ?core::marker::Sized
@@ -1091,8 +1067,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::stack::Stack<T> where U
 pub type aya_ebpf::maps::stack::Stack<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::stack::Stack<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::stack::Stack<T> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::stack::Stack<T>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::stack::Stack<T>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::stack::Stack<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::stack::Stack<T>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::stack::Stack<T> where T: ?core::marker::Sized
@@ -1123,8 +1097,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::stack_trace::StackTrace
 pub type aya_ebpf::maps::stack_trace::StackTrace::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::stack_trace::StackTrace::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::stack_trace::StackTrace where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::stack_trace::StackTrace::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::stack_trace::StackTrace::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::stack_trace::StackTrace where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::stack_trace::StackTrace::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::stack_trace::StackTrace where T: ?core::marker::Sized
@@ -1155,8 +1127,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::CpuMap where U: core::c
 pub type aya_ebpf::maps::CpuMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::CpuMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::CpuMap where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::CpuMap::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::CpuMap::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::CpuMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::CpuMap::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::CpuMap where T: ?core::marker::Sized
@@ -1187,8 +1157,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::DevMap where U: core::c
 pub type aya_ebpf::maps::DevMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::DevMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::DevMap where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::DevMap::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::DevMap::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::DevMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMap::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::DevMap where T: ?core::marker::Sized
@@ -1219,8 +1187,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::DevMapHash where U: cor
 pub type aya_ebpf::maps::DevMapHash::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::DevMapHash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::DevMapHash where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::DevMapHash::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::DevMapHash::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::DevMapHash where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMapHash::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::DevMapHash where T: ?core::marker::Sized
@@ -1251,8 +1217,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::XskMap where U: core::c
 pub type aya_ebpf::maps::XskMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::XskMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::XskMap where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::XskMap::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::XskMap::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::XskMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::XskMap::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::XskMap where T: ?core::marker::Sized
@@ -1285,8 +1249,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::array::Array<T> where U
 pub type aya_ebpf::maps::array::Array<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::array::Array<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::array::Array<T> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::array::Array<T>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::array::Array<T>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::array::Array<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::array::Array<T>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::array::Array<T> where T: ?core::marker::Sized
@@ -1298,8 +1260,8 @@ pub fn aya_ebpf::maps::array::Array<T>::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::ArrayOfMaps<T: aya_ebpf::maps::Map>
 impl<T: aya_ebpf::maps::Map> aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>
 pub fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::get(&self, index: u32) -> core::option::Option<&T>
-pub fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::get_value(&self, outer_index: u32, inner_key: &<T as aya_ebpf::maps::Map>::Key) -> core::option::Option<&<T as aya_ebpf::maps::Map>::Value>
-pub fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::get_value_ptr_mut(&self, outer_index: u32, inner_key: &<T as aya_ebpf::maps::Map>::Key) -> core::option::Option<*mut <T as aya_ebpf::maps::Map>::Value>
+pub fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::get_value(&self, outer_index: u32, inner_key: &<T as aya_ebpf::maps::private::Map>::Key) -> core::option::Option<&<T as aya_ebpf::maps::private::Map>::Value>
+pub fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::get_value_ptr_mut(&self, outer_index: u32, inner_key: &<T as aya_ebpf::maps::private::Map>::Key) -> core::option::Option<*mut <T as aya_ebpf::maps::private::Map>::Value>
 pub const fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::array_of_maps::ArrayOfMaps<T>
@@ -1347,8 +1309,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::bloom_filter::BloomFilt
 pub type aya_ebpf::maps::bloom_filter::BloomFilter<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::bloom_filter::BloomFilter<T>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::bloom_filter::BloomFilter<T>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::bloom_filter::BloomFilter<T> where T: ?core::marker::Sized
@@ -1378,8 +1338,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::CpuMap where U: core::c
 pub type aya_ebpf::maps::CpuMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::CpuMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::CpuMap where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::CpuMap::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::CpuMap::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::CpuMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::CpuMap::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::CpuMap where T: ?core::marker::Sized
@@ -1410,8 +1368,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::DevMap where U: core::c
 pub type aya_ebpf::maps::DevMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::DevMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::DevMap where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::DevMap::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::DevMap::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::DevMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMap::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::DevMap where T: ?core::marker::Sized
@@ -1442,8 +1398,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::DevMapHash where U: cor
 pub type aya_ebpf::maps::DevMapHash::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::DevMapHash::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::DevMapHash where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::DevMapHash::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::DevMapHash::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::DevMapHash where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::DevMapHash::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::DevMapHash where T: ?core::marker::Sized
@@ -1477,8 +1431,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::HashMap<K, V>
 pub type aya_ebpf::maps::hash_map::HashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::hash_map::HashMap<K, V> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::hash_map::HashMap<K, V>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::hash_map::HashMap<K, V>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::hash_map::HashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::HashMap<K, V> where T: ?core::marker::Sized
@@ -1490,8 +1442,8 @@ pub fn aya_ebpf::maps::hash_map::HashMap<K, V>::from(t: T) -> T
 #[repr(transparent)] pub struct aya_ebpf::maps::HashOfMaps<K, V: aya_ebpf::maps::Map>
 impl<K, V: aya_ebpf::maps::Map> aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
 pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get(&self, key: &K) -> core::option::Option<&V>
-pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get_value(&self, outer_key: &K, inner_key: &<V as aya_ebpf::maps::Map>::Key) -> core::option::Option<&<V as aya_ebpf::maps::Map>::Value>
-pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get_value_ptr_mut(&self, outer_key: &K, inner_key: &<V as aya_ebpf::maps::Map>::Key) -> core::option::Option<*mut <V as aya_ebpf::maps::Map>::Value>
+pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get_value(&self, outer_key: &K, inner_key: &<V as aya_ebpf::maps::private::Map>::Key) -> core::option::Option<&<V as aya_ebpf::maps::private::Map>::Value>
+pub unsafe fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::get_value_ptr_mut(&self, outer_key: &K, inner_key: &<V as aya_ebpf::maps::private::Map>::Key) -> core::option::Option<*mut <V as aya_ebpf::maps::private::Map>::Value>
 pub const fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K, V> !core::marker::Freeze for aya_ebpf::maps::hash_of_maps::HashOfMaps<K, V>
@@ -1540,8 +1492,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V>
 pub type aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::lpm_trie::LpmTrie<K, V>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::lpm_trie::LpmTrie<K, V> where T: ?core::marker::Sized
@@ -1575,8 +1525,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::LruHashMap<K,
 pub type aya_ebpf::maps::hash_map::LruHashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::hash_map::LruHashMap<K, V>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::hash_map::LruHashMap<K, V>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruHashMap<K, V>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::LruHashMap<K, V> where T: ?core::marker::Sized
@@ -1610,8 +1558,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::LruPerCpuHash
 pub type aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::LruPerCpuHashMap<K, V> where T: ?core::marker::Sized
@@ -1643,8 +1589,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::per_cpu_array::PerCpuAr
 pub type aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: ?core::marker::Sized
@@ -1678,8 +1622,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::hash_map::PerCpuHashMap
 pub type aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::hash_map::PerCpuHashMap<K, V> where T: ?core::marker::Sized
@@ -1797,8 +1739,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::queue::Queue<T> where U
 pub type aya_ebpf::maps::queue::Queue<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::queue::Queue<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::queue::Queue<T> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::queue::Queue<T>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::queue::Queue<T>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::queue::Queue<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::queue::Queue<T>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::queue::Queue<T> where T: ?core::marker::Sized
@@ -1831,8 +1771,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::ring_buf::RingBuf where
 pub type aya_ebpf::maps::ring_buf::RingBuf::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::ring_buf::RingBuf::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::ring_buf::RingBuf where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::ring_buf::RingBuf::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::ring_buf::RingBuf::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::ring_buf::RingBuf where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::ring_buf::RingBuf::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::ring_buf::RingBuf where T: ?core::marker::Sized
@@ -1865,8 +1803,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::sock_hash::SockHash<K> 
 pub type aya_ebpf::maps::sock_hash::SockHash<K>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::sock_hash::SockHash<K> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::sock_hash::SockHash<K>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::sock_hash::SockHash<K>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::sock_hash::SockHash<K> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::sock_hash::SockHash<K> where T: ?core::marker::Sized
@@ -1899,8 +1835,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::sock_map::SockMap where
 pub type aya_ebpf::maps::sock_map::SockMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::sock_map::SockMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::sock_map::SockMap where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::sock_map::SockMap::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::sock_map::SockMap::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::sock_map::SockMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::sock_map::SockMap::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::sock_map::SockMap where T: ?core::marker::Sized
@@ -1932,8 +1866,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::stack::Stack<T> where U
 pub type aya_ebpf::maps::stack::Stack<T>::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::stack::Stack<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::stack::Stack<T> where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::stack::Stack<T>::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::stack::Stack<T>::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::stack::Stack<T> where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::stack::Stack<T>::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::stack::Stack<T> where T: ?core::marker::Sized
@@ -1963,8 +1895,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::stack_trace::StackTrace
 pub type aya_ebpf::maps::stack_trace::StackTrace::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::stack_trace::StackTrace::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::stack_trace::StackTrace where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::stack_trace::StackTrace::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::stack_trace::StackTrace::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::stack_trace::StackTrace where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::stack_trace::StackTrace::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::stack_trace::StackTrace where T: ?core::marker::Sized
@@ -1995,8 +1925,6 @@ impl<T, U> core::convert::TryInto<U> for aya_ebpf::maps::XskMap where U: core::c
 pub type aya_ebpf::maps::XskMap::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn aya_ebpf::maps::XskMap::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
 impl<T> aya_ebpf::maps::Map for aya_ebpf::maps::XskMap where T: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::XskMap::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type aya_ebpf::maps::XskMap::Value = <T as aya_ebpf::maps::private::Map>::Value
 impl<T> core::any::Any for aya_ebpf::maps::XskMap where T: 'static + ?core::marker::Sized
 pub fn aya_ebpf::maps::XskMap::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for aya_ebpf::maps::XskMap where T: ?core::marker::Sized
@@ -2006,11 +1934,7 @@ pub fn aya_ebpf::maps::XskMap::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::maps::XskMap
 pub fn aya_ebpf::maps::XskMap::from(t: T) -> T
 pub trait aya_ebpf::maps::Map: aya_ebpf::maps::private::Map
-pub type aya_ebpf::maps::Map::Key
-pub type aya_ebpf::maps::Map::Value
 impl<T: aya_ebpf::maps::private::Map> aya_ebpf::maps::Map for T
-pub type T::Key = <T as aya_ebpf::maps::private::Map>::Key
-pub type T::Value = <T as aya_ebpf::maps::private::Map>::Value
 pub mod aya_ebpf::programs
 pub mod aya_ebpf::programs::device
 pub struct aya_ebpf::programs::device::DeviceContext

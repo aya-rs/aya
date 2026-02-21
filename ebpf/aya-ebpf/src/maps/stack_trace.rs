@@ -12,7 +12,10 @@ pub struct StackTrace {
     def: MapDef,
 }
 
-impl_private_map!(StackTrace, u32, [u64; PERF_MAX_STACK_DEPTH]);
+impl super::private::Map for StackTrace {
+    type Key = u32;
+    type Value = [u64; PERF_MAX_STACK_DEPTH];
+}
 
 const PERF_MAX_STACK_DEPTH: usize = 127;
 
