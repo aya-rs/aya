@@ -12,7 +12,10 @@ pub struct PerCpuArray<T> {
     _t: PhantomData<T>,
 }
 
-impl_private_map!(<T> PerCpuArray<T>, u32, T);
+impl<T> super::private::Map for PerCpuArray<T> {
+    type Key = u32;
+    type Value = T;
+}
 
 impl<T> PerCpuArray<T> {
     map_constructors!(u32, T, BPF_MAP_TYPE_PERCPU_ARRAY, phantom _t);
