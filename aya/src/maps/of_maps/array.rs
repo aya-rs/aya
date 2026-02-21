@@ -61,7 +61,7 @@ impl<T: Borrow<MapData>, V: FromMapData> ArrayOfMaps<T, V> {
     /// Returns the inner map stored at the given index.
     ///
     /// The inner map type `V` is determined by the type parameter on the
-    /// `ArrayOfMaps` itself. Use `MapData` to retrieve an untyped handle.
+    /// `ArrayOfMaps` itself.
     ///
     /// # File descriptor cost
     ///
@@ -183,7 +183,7 @@ mod tests {
         let inner_map = new_map(test_utils::new_obj_map::<u32>(
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY,
         ));
-        let mut arr: ArrayOfMaps<_, MapData> = ArrayOfMaps::new(&mut map).unwrap();
+        let mut arr = ArrayOfMaps::new(&mut map).unwrap();
 
         override_syscall(|_| sys_error(EFAULT));
 
@@ -202,7 +202,7 @@ mod tests {
         let inner_map = new_map(test_utils::new_obj_map::<u32>(
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY,
         ));
-        let mut arr: ArrayOfMaps<_, MapData> = ArrayOfMaps::new(&mut map).unwrap();
+        let mut arr = ArrayOfMaps::new(&mut map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
@@ -221,7 +221,7 @@ mod tests {
         let inner_map = new_map(test_utils::new_obj_map::<u32>(
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY,
         ));
-        let mut arr: ArrayOfMaps<_, MapData> = ArrayOfMaps::new(&mut map).unwrap();
+        let mut arr = ArrayOfMaps::new(&mut map).unwrap();
 
         assert_matches!(
             arr.set(1024, &inner_map, 0),
@@ -232,7 +232,7 @@ mod tests {
     #[test]
     fn test_get_syscall_error() {
         let map = new_map(new_obj_map());
-        let arr: ArrayOfMaps<_> = ArrayOfMaps::new(&map).unwrap();
+        let arr = ArrayOfMaps::<_, MapData>::new(&map).unwrap();
 
         override_syscall(|_| sys_error(EFAULT));
 
@@ -248,7 +248,7 @@ mod tests {
     #[test]
     fn test_get_not_found() {
         let map = new_map(new_obj_map());
-        let arr: ArrayOfMaps<_> = ArrayOfMaps::new(&map).unwrap();
+        let arr = ArrayOfMaps::<_, MapData>::new(&map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
@@ -264,7 +264,7 @@ mod tests {
     #[test]
     fn test_get_out_of_bounds() {
         let map = new_map(new_obj_map());
-        let arr: ArrayOfMaps<_> = ArrayOfMaps::new(&map).unwrap();
+        let arr = ArrayOfMaps::<_, MapData>::new(&map).unwrap();
 
         assert_matches!(arr.get(&1024, 0), Err(MapError::OutOfBounds { .. }));
     }
