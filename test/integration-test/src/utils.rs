@@ -346,7 +346,10 @@ impl PeerNsGuard {
 
         // Configure veth1 in peer netns.
         let peer_addr = format!("{}/24", NetNsGuard::PEER_ADDR);
-        run_ip_netns(&name, &["addr", "add", &peer_addr, "dev", NetNsGuard::PEER_IFACE]);
+        run_ip_netns(
+            &name,
+            &["addr", "add", &peer_addr, "dev", NetNsGuard::PEER_IFACE],
+        );
         run_ip_netns(&name, &["link", "set", NetNsGuard::PEER_IFACE, "up"]);
         run_ip_netns(&name, &["link", "set", "lo", "up"]);
 
@@ -355,8 +358,7 @@ impl PeerNsGuard {
         let local_link = run_ip_output(&["-o", "link", "show", NetNsGuard::IFACE]);
         let veth0_mac = parse_mac(&local_link);
 
-        let peer_link =
-            run_ip_netns_output(&name, &["-o", "link", "show", NetNsGuard::PEER_IFACE]);
+        let peer_link = run_ip_netns_output(&name, &["-o", "link", "show", NetNsGuard::PEER_IFACE]);
         let veth1_mac = parse_mac(&peer_link);
 
         // Static ARP in test netns: peer IP -> veth1 MAC.
@@ -373,17 +375,20 @@ impl PeerNsGuard {
         ]);
 
         // Static ARP in peer netns: test IP -> veth0 MAC.
-        run_ip_netns(&name, &[
-            "neigh",
-            "add",
-            NetNsGuard::IFACE_ADDR,
-            "lladdr",
-            veth0_mac,
-            "nud",
-            "permanent",
-            "dev",
-            NetNsGuard::PEER_IFACE,
-        ]);
+        run_ip_netns(
+            &name,
+            &[
+                "neigh",
+                "add",
+                NetNsGuard::IFACE_ADDR,
+                "lladdr",
+                veth0_mac,
+                "nud",
+                "permanent",
+                "dev",
+                NetNsGuard::PEER_IFACE,
+            ],
+        );
 
         Self { name }
     }

@@ -34,7 +34,9 @@ fn xdp() {
     let mut bpf = Ebpf::load(crate::PASS).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
-    dispatcher.attach(NetNsGuard::IFACE, XdpFlags::default()).unwrap();
+    dispatcher
+        .attach(NetNsGuard::IFACE, XdpFlags::default())
+        .unwrap();
 }
 
 #[test_log::test]
