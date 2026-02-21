@@ -76,21 +76,6 @@ macro_rules! map_constructors {
     };
 }
 
-macro_rules! impl_private_map {
-    (@impl [$($gen:ident),*] $ty:ty, $key:ty, $value:ty) => {
-        impl<$($gen),*> $crate::maps::private::Map for $ty {
-            type Key = $key;
-            type Value = $value;
-        }
-    };
-    (<$($gen:ident),+> $ty:ty, $key:ty, $value:ty) => {
-        impl_private_map!(@impl [$($gen),+] $ty, $key, $value);
-    };
-    ($ty:ty, $key:ty, $value:ty) => {
-        impl_private_map!(@impl [] $ty, $key, $value);
-    };
-}
-
 pub mod array;
 pub mod array_of_maps;
 pub mod bloom_filter;
@@ -142,14 +127,6 @@ mod private {
 /// Marker trait for all eBPF maps that can be used in a map of maps.
 ///
 /// This trait is sealed and cannot be implemented outside this crate.
-pub trait Map: private::Map {
-    /// The key type declared in this map's definition.
-    type Key;
-    /// The value type declared in this map's definition.
-    type Value;
-}
+pub trait Map: private::Map {}
 
-impl<T: private::Map> Map for T {
-    type Key = <T as private::Map>::Key;
-    type Value = <T as private::Map>::Value;
-}
+impl<T: private::Map> Map for T {}
