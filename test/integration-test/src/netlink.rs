@@ -168,7 +168,7 @@ impl NetlinkSocket {
         }
         let sock = unsafe { OwnedFd::from_raw_fd(sock) };
 
-        let enable = 1i32;
+        let enable = 1_i32;
         unsafe {
             if libc::setsockopt(
                 sock.as_raw_fd(),
@@ -221,7 +221,7 @@ impl NetlinkSocket {
             while offset < len {
                 let message = NetlinkMessage::read(&buf[offset..])?;
                 offset += align_to(message.header.nlmsg_len as usize, NLMSG_ALIGNTO);
-                multipart = message.header.nlmsg_flags & libc::NLM_F_MULTI as u16 != 0;
+                multipart = (message.header.nlmsg_flags & (libc::NLM_F_MULTI as u16)) != 0;
                 match i32::from(message.header.nlmsg_type) {
                     NLMSG_ERROR => {
                         let err = message.error.unwrap();
@@ -299,7 +299,7 @@ fn parse_attrs(buf: &[u8]) -> HashMap<u16, &[u8]> {
             break;
         }
         attrs.insert(
-            attr.nla_type & NLA_TYPE_MASK as u16,
+            attr.nla_type & (NLA_TYPE_MASK as u16),
             &remaining[NLA_HDR_LEN..len],
         );
         offset += align_len;
@@ -390,7 +390,7 @@ fn write_veth_attrs(buf: &mut [u8], if_name: &CStr, peer_name: &CStr) -> Result<
         buf,
         peer_start,
         nlattr {
-            nla_type: NLA_F_NESTED as u16 | VETH_INFO_PEER,
+            nla_type: (NLA_F_NESTED as u16) | VETH_INFO_PEER,
             nla_len: (offset - peer_start) as u16,
         },
     )?;
@@ -398,7 +398,7 @@ fn write_veth_attrs(buf: &mut [u8], if_name: &CStr, peer_name: &CStr) -> Result<
         buf,
         info_data_start,
         nlattr {
-            nla_type: NLA_F_NESTED as u16 | IFLA_INFO_DATA,
+            nla_type: (NLA_F_NESTED as u16) | IFLA_INFO_DATA,
             nla_len: (offset - info_data_start) as u16,
         },
     )?;
@@ -406,7 +406,7 @@ fn write_veth_attrs(buf: &mut [u8], if_name: &CStr, peer_name: &CStr) -> Result<
         buf,
         linkinfo_start,
         nlattr {
-            nla_type: NLA_F_NESTED as u16 | IFLA_LINKINFO,
+            nla_type: (NLA_F_NESTED as u16) | IFLA_LINKINFO,
             nla_len: (offset - linkinfo_start) as u16,
         },
     )?;
