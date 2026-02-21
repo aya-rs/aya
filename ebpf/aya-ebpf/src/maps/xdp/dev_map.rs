@@ -35,7 +35,7 @@ pub struct DevMap {
     def: MapDef,
 }
 
-impl super::super::private::Map for DevMap {}
+impl_private_map!(DevMap, u32, bpf_devmap_val);
 
 impl DevMap {
     map_constructors!(

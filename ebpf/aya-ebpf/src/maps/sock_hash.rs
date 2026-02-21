@@ -22,7 +22,7 @@ pub struct SockHash<K> {
     _k: PhantomData<K>,
 }
 
-impl<K> super::private::Map for SockHash<K> {}
+impl_private_map!(<K> SockHash<K>, K, u32);
 
 impl<K> SockHash<K> {
     map_constructors!(K, u32, BPF_MAP_TYPE_SOCKHASH, phantom _k);
