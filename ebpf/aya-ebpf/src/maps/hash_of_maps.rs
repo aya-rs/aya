@@ -63,16 +63,9 @@ impl<K, V: Map> HashOfMaps<K, V> {
     ///
     /// This function is unsafe for the same reasons as [`get`](Self::get).
     #[inline(always)]
-    pub unsafe fn get_value(
-        &self,
-        outer_key: &K,
-        inner_key: &<V as Map>::Key,
-    ) -> Option<&<V as Map>::Value> {
+    pub unsafe fn get_value(&self, outer_key: &K, inner_key: &V::Key) -> Option<&V::Value> {
         let inner: NonNull<c_void> = lookup(self.def.as_ptr(), outer_key)?;
-        unsafe {
-            lookup::<<V as Map>::Key, <V as Map>::Value>(inner.as_ptr(), inner_key)
-                .map(|p| p.as_ref())
-        }
+        unsafe { lookup::<V::Key, V::Value>(inner.as_ptr(), inner_key).map(|p| p.as_ref()) }
     }
 
     /// Same as [`get_value`](Self::get_value) but returns a mutable pointer.
@@ -84,10 +77,10 @@ impl<K, V: Map> HashOfMaps<K, V> {
     pub unsafe fn get_value_ptr_mut(
         &self,
         outer_key: &K,
-        inner_key: &<V as Map>::Key,
-    ) -> Option<*mut <V as Map>::Value> {
+        inner_key: &V::Key,
+    ) -> Option<*mut V::Value> {
         let inner: NonNull<c_void> = lookup(self.def.as_ptr(), outer_key)?;
-        lookup::<<V as Map>::Key, <V as Map>::Value>(inner.as_ptr(), inner_key).map(NonNull::as_ptr)
+        lookup::<V::Key, V::Value>(inner.as_ptr(), inner_key).map(NonNull::as_ptr)
     }
 
     // Note: insert/remove are intentionally not implemented.

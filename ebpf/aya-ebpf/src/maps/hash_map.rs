@@ -16,7 +16,10 @@ macro_rules! define_hash_map {
             _kv: PhantomData<(K, V)>,
         }
 
-        impl_private_map!(<K, V> $name<K, V>, K, V);
+        impl<K, V> $crate::maps::private::Map for $name<K, V> {
+            type Key = K;
+            type Value = V;
+        }
 
         impl<K, V> $name<K, V> {
             pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
