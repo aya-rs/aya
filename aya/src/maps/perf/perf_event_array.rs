@@ -12,7 +12,7 @@ use std::{
 
 use crate::{
     maps::{
-        MapData, MapError, MapFd, PinError,
+        MapData, MapError, PinError,
         perf::{PerfBuffer, PerfBufferError, PerfEvent},
     },
     sys::bpf_map_update_elem,
@@ -209,11 +209,9 @@ impl<T: Borrow<MapData>> PerfEventArray<T> {
         let data: &MapData = self.map.deref().borrow();
         data.pin(path)
     }
-}
 
-impl PerfEventArray<MapData> {
-    pub(crate) fn map_fd(&self) -> &MapFd {
-        self.map.fd()
+    pub(crate) fn map_data(&self) -> &MapData {
+        self.map.deref().borrow()
     }
 }
 

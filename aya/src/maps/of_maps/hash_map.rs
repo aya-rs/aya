@@ -57,7 +57,7 @@ impl<T: Borrow<MapData>, K: Pod, V: FromMapData> HashOfMaps<T, K, V> {
     /// Returns the inner map associated with the key.
     ///
     /// The inner map type `V` is determined by the type parameter on the
-    /// `HashOfMaps` itself. Use `MapData` to retrieve an untyped handle.
+    /// `HashOfMaps` itself.
     ///
     /// # File descriptor cost
     ///
@@ -169,12 +169,12 @@ mod tests {
         let inner_map = new_map(test_utils::new_obj_map::<u32>(
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_HASH,
         ));
-        let mut hm: HashOfMaps<_, u32, MapData> = HashOfMaps::new(&mut map).unwrap();
+        let mut hm = HashOfMaps::new(&mut map).unwrap();
 
         override_syscall(|_| sys_error(EFAULT));
 
         assert_matches!(
-            hm.insert(1, &inner_map, 0),
+            hm.insert(1u32, &inner_map, 0),
             Err(MapError::SyscallError(SyscallError {
                 call: "bpf_map_update_elem",
                 ..
@@ -188,7 +188,7 @@ mod tests {
         let inner_map = new_map(test_utils::new_obj_map::<u32>(
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_HASH,
         ));
-        let mut hm: HashOfMaps<_, u32, MapData> = HashOfMaps::new(&mut map).unwrap();
+        let mut hm = HashOfMaps::new(&mut map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
@@ -198,18 +198,18 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        hm.insert(1, &inner_map, 0).unwrap();
+        hm.insert(1u32, &inner_map, 0).unwrap();
     }
 
     #[test]
     fn test_remove_syscall_error() {
         let mut map = new_map(new_obj_map());
-        let mut hm: HashOfMaps<_, u32, MapData> = HashOfMaps::new(&mut map).unwrap();
+        let mut hm = HashOfMaps::<_, u32>::new(&mut map).unwrap();
 
         override_syscall(|_| sys_error(EFAULT));
 
         assert_matches!(
-            hm.remove(&1),
+            hm.remove(&1u32),
             Err(MapError::SyscallError(SyscallError {
                 call: "bpf_map_delete_elem",
                 ..
@@ -220,7 +220,7 @@ mod tests {
     #[test]
     fn test_remove_ok() {
         let mut map = new_map(new_obj_map());
-        let mut hm: HashOfMaps<_, u32, MapData> = HashOfMaps::new(&mut map).unwrap();
+        let mut hm = HashOfMaps::<_, u32>::new(&mut map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
@@ -230,7 +230,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        hm.remove(&1).unwrap();
+        hm.remove(&1u32).unwrap();
     }
 
     #[test]
@@ -241,7 +241,7 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
 
         assert_matches!(
-            hm.get(&1, 0),
+            hm.get(&1u32, 0),
             Err(MapError::SyscallError(SyscallError {
                 call: "bpf_map_lookup_elem",
                 ..
@@ -262,7 +262,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert_matches!(hm.get(&1, 0), Err(MapError::KeyNotFound));
+        assert_matches!(hm.get(&1u32, 0), Err(MapError::KeyNotFound));
     }
 
     #[test]
@@ -278,7 +278,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        let keys: Result<Vec<_>, _> = hm.keys().collect();
+        let keys: Result<Vec<u32>, _> = hm.keys().collect();
         assert_matches!(keys, Ok(ks) if ks.is_empty());
     }
 }
