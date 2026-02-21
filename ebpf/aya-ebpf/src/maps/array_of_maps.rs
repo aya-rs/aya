@@ -54,29 +54,18 @@ impl<T: Map> ArrayOfMaps<T> {
     /// single method, producing fewer BPF instructions between the two
     /// helpers. This reduces verifier state explosion in tight loops.
     #[inline(always)]
-    pub fn get_value(
-        &self,
-        outer_index: u32,
-        inner_key: &<T as Map>::Key,
-    ) -> Option<&<T as Map>::Value> {
+    pub fn get_value(&self, outer_index: u32, inner_key: &T::Key) -> Option<&T::Value> {
         let inner: NonNull<c_void> = lookup(self.def.as_ptr(), &outer_index)?;
         // SAFETY: Both pointers are returned by BPF helpers and are valid for
         // the duration of the program. We only produce shared references.
-        unsafe {
-            lookup::<<T as Map>::Key, <T as Map>::Value>(inner.as_ptr(), inner_key)
-                .map(|p| p.as_ref())
-        }
+        unsafe { lookup::<T::Key, T::Value>(inner.as_ptr(), inner_key).map(|p| p.as_ref()) }
     }
 
     /// Same as [`get_value`](Self::get_value) but returns a mutable pointer.
     #[inline(always)]
-    pub fn get_value_ptr_mut(
-        &self,
-        outer_index: u32,
-        inner_key: &<T as Map>::Key,
-    ) -> Option<*mut <T as Map>::Value> {
+    pub fn get_value_ptr_mut(&self, outer_index: u32, inner_key: &T::Key) -> Option<*mut T::Value> {
         let inner: NonNull<c_void> = lookup(self.def.as_ptr(), &outer_index)?;
-        lookup::<<T as Map>::Key, <T as Map>::Value>(inner.as_ptr(), inner_key).map(NonNull::as_ptr)
+        lookup::<T::Key, T::Value>(inner.as_ptr(), inner_key).map(NonNull::as_ptr)
     }
 
     // Note: set is intentionally not implemented.
