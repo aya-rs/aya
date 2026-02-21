@@ -15,7 +15,7 @@ pub struct SockMap {
     def: MapDef,
 }
 
-impl super::private::Map for SockMap {}
+impl_private_map!(SockMap, u32, u32);
 
 impl SockMap {
     map_constructors!(u32, u32, BPF_MAP_TYPE_SOCKMAP);
