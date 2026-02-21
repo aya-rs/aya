@@ -555,29 +555,25 @@ impl<'a> EbpfLoader<'a> {
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
 
             // The kernel requires an inner map fd when creating a map-of-maps.
-            let btf_inner_map = if is_map_of_maps {
-                map_obj
-                    .inner()
-                    .map(|inner| MapData::create(inner, &format!("{name}.inner"), btf_fd))
-                    .transpose()?
-            } else {
-                None
-            };
-
-            let inner_map_fd = if let Some(inner) = &btf_inner_map {
-                Some(inner.fd().as_fd())
-            } else if is_map_of_maps {
-                // No BTF inner definition; fall back to the `.maps.inner` binding.
-                let inner_name = obj.inner_map_binding(&name).ok_or_else(|| {
-                    EbpfError::MapError(MapError::MissingInnerMapBinding { name: name.clone() })
-                })?;
-                let inner_map = maps.get(inner_name).ok_or_else(|| {
-                    EbpfError::MapError(MapError::InnerMapNotFound {
-                        name: name.clone(),
-                        inner_name: inner_name.to_owned(),
-                    })
-                })?;
-                Some(inner_map.fd().as_fd())
+            let btf_inner_map;
+            let inner_map_fd = if is_map_of_maps {
+                if let Some(inner) = map_obj.inner() {
+                    // Try using a BTF definition of the inner map.
+                    btf_inner_map = MapData::create(inner, &format!("{name}.inner"), btf_fd)?;
+                    Some(btf_inner_map.fd().as_fd())
+                } else {
+                    // No BTF inner definition; fall back to the `.maps.inner` binding.
+                    let inner_name = obj.inner_map_binding(&name).ok_or_else(|| {
+                        EbpfError::MapError(MapError::MissingInnerMapBinding { name: name.clone() })
+                    })?;
+                    let inner_map = maps.get(inner_name).ok_or_else(|| {
+                        EbpfError::MapError(MapError::InnerMapNotFound {
+                            name: name.clone(),
+                            inner_name: inner_name.to_owned(),
+                        })
+                    })?;
+                    Some(inner_map.fd().as_fd())
+                }
             } else {
                 None
             };

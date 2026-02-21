@@ -12,7 +12,7 @@ pub struct Stack<T> {
     _t: PhantomData<T>,
 }
 
-impl<T> super::private::Map for Stack<T> {}
+impl_private_map!(<T> Stack<T>, (), T);
 
 impl<T> Stack<T> {
     map_constructors!((), T, BPF_MAP_TYPE_STACK, phantom _t);

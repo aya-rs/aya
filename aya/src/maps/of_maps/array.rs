@@ -2,11 +2,14 @@
 
 use std::{
     borrow::{Borrow, BorrowMut},
+    fmt,
+    marker::PhantomData,
     os::fd::{AsFd as _, AsRawFd as _},
+    path::Path,
 };
 
 use crate::{
-    maps::{FromMapData, InnerMap, MapData, MapError, check_bounds, check_kv_size},
+    maps::{FromMapData, InnerMap, MapData, MapError, PinError, check_bounds, check_kv_size},
     sys::{SyscallError, bpf_map_lookup_elem, bpf_map_update_elem},
 };
 
@@ -18,16 +21,27 @@ use crate::{
 ///
 /// The minimum kernel version required to use this feature is 4.12.
 #[doc(alias = "BPF_MAP_TYPE_ARRAY_OF_MAPS")]
-#[derive(Debug)]
-pub struct ArrayOfMaps<T> {
+pub struct ArrayOfMaps<T, V = MapData> {
     pub(crate) inner: T,
+    _v: PhantomData<V>,
 }
 
-impl<T: Borrow<MapData>> ArrayOfMaps<T> {
+impl<T: fmt::Debug, V> fmt::Debug for ArrayOfMaps<T, V> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ArrayOfMaps")
+            .field("inner", &self.inner)
+            .finish()
+    }
+}
+
+impl<T: Borrow<MapData>, V> ArrayOfMaps<T, V> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
         check_kv_size::<u32, u32>(data)?;
-        Ok(Self { inner: map })
+        Ok(Self {
+            inner: map,
+            _v: PhantomData,
+        })
     }
 
     /// Returns the number of elements in the array.
@@ -41,12 +55,13 @@ impl<T: Borrow<MapData>> ArrayOfMaps<T> {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+}
 
+impl<T: Borrow<MapData>, V: FromMapData> ArrayOfMaps<T, V> {
     /// Returns the inner map stored at the given index.
     ///
-    /// The type parameter `M` specifies the expected inner map type. It must
-    /// implement [`FromMapData`], which validates and wraps the raw [`MapData`].
-    /// Use `MapData` as `M` to retrieve an untyped handle.
+    /// The inner map type `V` is determined by the type parameter on the
+    /// `ArrayOfMaps` itself. Use `MapData` to retrieve an untyped handle.
     ///
     /// # File descriptor cost
     ///
@@ -58,7 +73,7 @@ impl<T: Borrow<MapData>> ArrayOfMaps<T> {
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_lookup_elem` fails.
-    pub fn get<M: FromMapData>(&self, index: &u32, flags: u64) -> Result<M, MapError> {
+    pub fn get(&self, index: &u32, flags: u64) -> Result<V, MapError> {
         let data = self.inner.borrow();
         check_bounds(data, *index)?;
         let fd = data.fd().as_fd();
@@ -75,14 +90,14 @@ impl<T: Borrow<MapData>> ArrayOfMaps<T> {
     }
 }
 
-impl<T: BorrowMut<MapData>> ArrayOfMaps<T> {
+impl<T: BorrowMut<MapData>, V: InnerMap> ArrayOfMaps<T, V> {
     /// Sets the value of the element at the given index.
     ///
     /// # Errors
     ///
     /// Returns [`MapError::OutOfBounds`] if `index` is out of bounds, [`MapError::SyscallError`]
     /// if `bpf_map_update_elem` fails.
-    pub fn set(&mut self, index: u32, value: &impl InnerMap, flags: u64) -> Result<(), MapError> {
+    pub fn set(&mut self, index: u32, value: &V, flags: u64) -> Result<(), MapError> {
         let data = self.inner.borrow_mut();
         check_bounds(data, index)?;
         let fd = data.fd().as_fd();
@@ -96,10 +111,13 @@ impl<T: BorrowMut<MapData>> ArrayOfMaps<T> {
     }
 }
 
-impl ArrayOfMaps<MapData> {
-    /// Returns a reference to the underlying [`MapData`].
-    pub const fn map_data(&self) -> &MapData {
-        &self.inner
+impl<V> ArrayOfMaps<MapData, V> {
+    /// Pins the map to a BPF filesystem.
+    ///
+    /// When a map is pinned it will remain loaded until the corresponding file
+    /// is deleted. All parent directories in the given `path` must already exist.
+    pub fn pin<P: AsRef<Path>>(self, path: P) -> Result<(), PinError> {
+        self.inner.pin(path)
     }
 }
 
@@ -133,7 +151,7 @@ mod tests {
     fn test_wrong_key_size() {
         let map = new_map(test_utils::new_obj_map::<u8>(BPF_MAP_TYPE_ARRAY_OF_MAPS));
         assert_matches!(
-            ArrayOfMaps::new(&map),
+            ArrayOfMaps::<_, MapData>::new(&map),
             Err(MapError::InvalidKeySize {
                 size: 4,
                 expected: 1
@@ -148,7 +166,7 @@ mod tests {
         ));
         let map = Map::HashMap(map);
         assert_matches!(
-            ArrayOfMaps::try_from(&map),
+            ArrayOfMaps::<_, MapData>::try_from(&map),
             Err(MapError::InvalidMapType { .. })
         );
     }
@@ -156,7 +174,7 @@ mod tests {
     #[test]
     fn test_new_ok() {
         let map = new_map(new_obj_map());
-        ArrayOfMaps::new(&map).unwrap();
+        let _: ArrayOfMaps<_> = ArrayOfMaps::new(&map).unwrap();
     }
 
     #[test]
@@ -165,7 +183,7 @@ mod tests {
         let inner_map = new_map(test_utils::new_obj_map::<u32>(
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY,
         ));
-        let mut arr = ArrayOfMaps::new(&mut map).unwrap();
+        let mut arr: ArrayOfMaps<_, MapData> = ArrayOfMaps::new(&mut map).unwrap();
 
         override_syscall(|_| sys_error(EFAULT));
 
@@ -184,7 +202,7 @@ mod tests {
         let inner_map = new_map(test_utils::new_obj_map::<u32>(
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY,
         ));
-        let mut arr = ArrayOfMaps::new(&mut map).unwrap();
+        let mut arr: ArrayOfMaps<_, MapData> = ArrayOfMaps::new(&mut map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
@@ -203,7 +221,7 @@ mod tests {
         let inner_map = new_map(test_utils::new_obj_map::<u32>(
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_ARRAY,
         ));
-        let mut arr = ArrayOfMaps::new(&mut map).unwrap();
+        let mut arr: ArrayOfMaps<_, MapData> = ArrayOfMaps::new(&mut map).unwrap();
 
         assert_matches!(
             arr.set(1024, &inner_map, 0),
@@ -214,12 +232,12 @@ mod tests {
     #[test]
     fn test_get_syscall_error() {
         let map = new_map(new_obj_map());
-        let arr = ArrayOfMaps::new(&map).unwrap();
+        let arr: ArrayOfMaps<_> = ArrayOfMaps::new(&map).unwrap();
 
         override_syscall(|_| sys_error(EFAULT));
 
         assert_matches!(
-            arr.get::<crate::maps::HashMap<MapData, u32, u32>>(&0, 0),
+            arr.get(&0, 0),
             Err(MapError::SyscallError(SyscallError {
                 call: "bpf_map_lookup_elem",
                 ..
@@ -230,7 +248,7 @@ mod tests {
     #[test]
     fn test_get_not_found() {
         let map = new_map(new_obj_map());
-        let arr = ArrayOfMaps::new(&map).unwrap();
+        let arr: ArrayOfMaps<_> = ArrayOfMaps::new(&map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
@@ -240,20 +258,14 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert_matches!(
-            arr.get::<crate::maps::HashMap<MapData, u32, u32>>(&0, 0),
-            Err(MapError::KeyNotFound)
-        );
+        assert_matches!(arr.get(&0, 0), Err(MapError::KeyNotFound));
     }
 
     #[test]
     fn test_get_out_of_bounds() {
         let map = new_map(new_obj_map());
-        let arr = ArrayOfMaps::new(&map).unwrap();
+        let arr: ArrayOfMaps<_> = ArrayOfMaps::new(&map).unwrap();
 
-        assert_matches!(
-            arr.get::<crate::maps::HashMap<MapData, u32, u32>>(&1024, 0),
-            Err(MapError::OutOfBounds { .. })
-        );
+        assert_matches!(arr.get(&1024, 0), Err(MapError::OutOfBounds { .. }));
     }
 }

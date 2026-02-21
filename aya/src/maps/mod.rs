@@ -532,7 +532,6 @@ macro_rules! impl_map_pin {
 }
 
 impl_map_pin!(() {
-    ArrayOfMaps,
     ProgramArray,
     SockMap,
     StackTraceMap,
@@ -552,10 +551,6 @@ impl_map_pin!((V) {
     Stack,
 });
 
-impl_map_pin!((K) {
-    HashOfMaps,
-});
-
 impl_map_pin!((K, V) {
     HashMap,
     PerCpuHashMap,
@@ -564,7 +559,8 @@ impl_map_pin!((K, V) {
 
 // Implements TryFrom<Map> for different map implementations. Different map implementations can be
 // constructed from different variants of the map enum. Also, the implementation may have type
-// parameters (which we assume all have the bound `Pod` and nothing else).
+// parameters. The dispatch arm adds `Pod` bounds explicitly before forwarding to the @impl arm,
+// which accepts arbitrary bounds and is also used by impl_try_from_map_of_maps.
 macro_rules! impl_try_from_map {
     // At the root the type parameters are marked as a single token tree which will be pasted into
     // the invocation for each type. Note that the later patterns require that the token tree be
@@ -580,23 +576,24 @@ macro_rules! impl_try_from_map {
     ($(#[$meta:meta])* <$ty_param:tt> $ty:ident) => {
         impl_try_from_map!($(#[$meta])* <$ty_param> $ty from $ty);
     };
-    // Dispatch for each of the lifetimes.
+    // Dispatch for each of the lifetimes, adding Pod bounds explicitly.
     (
         $(#[$meta:meta])* <($($ty_param:ident),*)> $ty:ident from $($variant:ident)|+
     ) => {
-        impl_try_from_map!($(#[$meta])* <'a> ($($ty_param),*) $ty from $($variant)|+);
-        impl_try_from_map!($(#[$meta])* <'a mut> ($($ty_param),*) $ty from $($variant)|+);
-        impl_try_from_map!($(#[$meta])* <> ($($ty_param),*) $ty from $($variant)|+);
+        impl_try_from_map!(@impl $(#[$meta])* <'a> ($($ty_param: Pod),*) $ty from $($variant)|+);
+        impl_try_from_map!(@impl $(#[$meta])* <'a mut> ($($ty_param: Pod),*) $ty from $($variant)|+);
+        impl_try_from_map!(@impl $(#[$meta])* <> ($($ty_param: Pod),*) $ty from $($variant)|+);
     };
-    // An individual impl.
-    (
+    // An individual impl with explicit bounds. Used by both impl_try_from_map
+    // and impl_try_from_map_of_maps via the @impl internal rule.
+    (@impl
         $(#[$meta:meta])*
         <$($l:lifetime $($m:ident)?)?>
-        ($($ty_param:ident),*)
+        ($($ty_param:ident $(: $bound:path)?),*)
         $ty:ident from $($variant:ident)|+
     ) => {
         $(#[$meta])*
-        impl<$($l,)? $($ty_param: Pod),*> TryFrom<$(&$l $($m)?)? Map>
+        impl<$($l,)? $($ty_param $(: $bound)?),*> TryFrom<$(&$l $($m)?)? Map>
             for $ty<$(&$l $($m)?)? MapData, $($ty_param),*>
         {
             type Error = MapError;
@@ -614,7 +611,6 @@ macro_rules! impl_try_from_map {
 }
 
 impl_try_from_map!(() {
-    ArrayOfMaps,
     CpuMap,
     DevMap,
     DevMapHash,
@@ -636,15 +632,28 @@ impl_try_from_map!((V) {
     Stack,
 });
 
-impl_try_from_map!((K) {
-    HashOfMaps,
-});
-
 impl_try_from_map!((K, V) {
     HashMap from HashMap|LruHashMap,
     LpmTrie,
     PerCpuHashMap from PerCpuHashMap|PerCpuLruHashMap,
 });
+
+// ArrayOfMaps and HashOfMaps need an unconstrained V in TryFrom conversions.
+// Delegates to the @impl arm of impl_try_from_map to avoid duplicating the
+// match body.
+macro_rules! impl_try_from_map_of_maps {
+    ($ty:ident) => {
+        impl_try_from_map_of_maps!($ty <>);
+    };
+    ($ty:ident <$($pre:ident : $pre_bound:path),*>) => {
+        impl_try_from_map!(@impl <'a> ($($pre: $pre_bound,)* V) $ty from $ty);
+        impl_try_from_map!(@impl <'a mut> ($($pre: $pre_bound,)* V) $ty from $ty);
+        impl_try_from_map!(@impl <> ($($pre: $pre_bound,)* V) $ty from $ty);
+    };
+}
+
+impl_try_from_map_of_maps!(ArrayOfMaps);
+impl_try_from_map_of_maps!(HashOfMaps<K: Pod>);
 
 // Implements `sealed::FromMapData` for map types that the kernel supports as inner maps.
 // Excluded: ProgramArray (no map_meta_equal), ArrayOfMaps/HashOfMaps (multi-level nesting

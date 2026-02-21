@@ -1,5 +1,7 @@
 use core::{marker::PhantomData, ptr::NonNull};
 
+use aya_ebpf_cty::c_void;
+
 use crate::{
     bindings::bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS,
     lookup,
@@ -49,6 +51,43 @@ impl<K, V: Map> HashOfMaps<K, V> {
     #[inline(always)]
     unsafe fn lookup(&self, key: &K) -> Option<NonNull<V>> {
         lookup(self.def.as_ptr(), key)
+    }
+
+    /// Looks up a value directly in the inner map associated with `outer_key`.
+    ///
+    /// Performs both the outer and inner `bpf_map_lookup_elem` calls in a
+    /// single method, producing fewer BPF instructions between the two
+    /// helpers. This reduces verifier state explosion in tight loops.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe for the same reasons as [`get`](Self::get).
+    #[inline(always)]
+    pub unsafe fn get_value(
+        &self,
+        outer_key: &K,
+        inner_key: &<V as Map>::Key,
+    ) -> Option<&<V as Map>::Value> {
+        let inner: NonNull<c_void> = lookup(self.def.as_ptr(), outer_key)?;
+        unsafe {
+            lookup::<<V as Map>::Key, <V as Map>::Value>(inner.as_ptr(), inner_key)
+                .map(|p| p.as_ref())
+        }
+    }
+
+    /// Same as [`get_value`](Self::get_value) but returns a mutable pointer.
+    ///
+    /// # Safety
+    ///
+    /// See [`get_value`](Self::get_value).
+    #[inline(always)]
+    pub unsafe fn get_value_ptr_mut(
+        &self,
+        outer_key: &K,
+        inner_key: &<V as Map>::Key,
+    ) -> Option<*mut <V as Map>::Value> {
+        let inner: NonNull<c_void> = lookup(self.def.as_ptr(), outer_key)?;
+        lookup::<<V as Map>::Key, <V as Map>::Value>(inner.as_ptr(), inner_key).map(NonNull::as_ptr)
     }
 
     // Note: insert/remove are intentionally not implemented.
