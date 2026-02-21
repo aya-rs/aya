@@ -38,7 +38,7 @@ fn tcx() {
             attach_program_with_link_order_inner!($program_name, $link_order);
             $program_name
                 .attach_with_options(
-                    "lo",
+                    NetNsGuard::IFACE,
                     TcAttachType::Ingress,
                     TcAttachOptions::TcxOrder($link_order),
                 )
@@ -48,7 +48,7 @@ fn tcx() {
             attach_program_with_link_order_inner!($program_name, $link_order);
             let $link_id_name = $program_name
                 .attach_with_options(
-                    "lo",
+                    NetNsGuard::IFACE,
                     TcAttachType::Ingress,
                     TcAttachOptions::TcxOrder($link_order),
                 )
@@ -92,7 +92,8 @@ fn tcx() {
     .map(|program| program.info().unwrap().id())
     .collect::<Vec<_>>();
 
-    let (revision, got_order) = SchedClassifier::query_tcx("lo", TcAttachType::Ingress).unwrap();
+    let (revision, got_order) =
+        SchedClassifier::query_tcx(NetNsGuard::IFACE, TcAttachType::Ingress).unwrap();
     assert_eq!(revision, (expected_order.len() + 1) as u64);
     assert_eq!(
         got_order
