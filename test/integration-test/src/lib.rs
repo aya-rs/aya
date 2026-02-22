@@ -57,6 +57,9 @@ bpf_file!(
     SIMPLE_PROG => "simple_prog",
     SK_STORAGE => "sk_storage",
     STRNCMP => "strncmp",
+    // TODO(sblaisdo) - add integration test after userspace support is completed
+    // https://github.com/aya-rs/aya/pull/1161
+    // TASK_STORAGE => "task_storage",
     TCX => "tcx",
     TEST => "test",
     TWO_PROGS => "two_progs",

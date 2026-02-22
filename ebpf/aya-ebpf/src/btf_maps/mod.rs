@@ -1,10 +1,12 @@
 pub mod array;
 pub mod ring_buf;
 pub mod sk_storage;
+pub mod task_storage;
 
 pub use array::Array;
 pub use ring_buf::RingBuf;
 pub use sk_storage::SkStorage;
+pub use task_storage::TaskStorage;
 
 /// Defines a BTF-compatible map struct with flat `#[repr(C)]` layout.
 ///
