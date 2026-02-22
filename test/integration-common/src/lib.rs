@@ -96,6 +96,15 @@ pub mod linear_data_structures {
     pub const POP_INDEX: u32 = 1;
 }
 
+pub mod printk {
+    pub const MARKER: &str = "PRINTK_TEST_";
+    pub const TEST_U8: u8 = 42;
+    pub const TEST_U16: u16 = 0x1234;
+    pub const TEST_U32: u32 = 0xDEAD_BEEF;
+    pub const TEST_U64: u64 = 0x0123_4567_89AB_CDEF;
+    pub const TEST_I32: i32 = -12345;
+}
+
 pub mod sk_storage {
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
     #[repr(C)]
