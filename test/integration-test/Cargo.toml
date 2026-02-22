@@ -36,6 +36,8 @@ scopeguard = { workspace = true }
 test-case = { workspace = true }
 test-log = { workspace = true, features = ["log"] }
 tokio = { workspace = true, features = [
+    "fs",
+    "io-util",
     "macros",
     "net",
     "rt-multi-thread",
