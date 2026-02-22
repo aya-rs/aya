@@ -42,24 +42,24 @@ struct Ifinfomsg {
 #[derive(Copy, Clone)]
 #[repr(C)]
 struct Ifaddrmsg {
-    ifa_family: u8,
-    ifa_prefixlen: u8,
-    ifa_flags: u8,
-    ifa_scope: u8,
-    ifa_index: u32,
+    family: u8,
+    prefixlen: u8,
+    flags: u8,
+    scope: u8,
+    index: u32,
 }
 
 /// `struct ndmsg` from `linux/neighbour.h`.
 #[derive(Copy, Clone)]
 #[repr(C)]
 struct Ndmsg {
-    ndm_family: u8,
-    ndm_pad1: u8,
-    ndm_pad2: u16,
-    ndm_ifindex: i32,
-    ndm_state: u16,
-    ndm_flags: u8,
-    ndm_type: u8,
+    family: u8,
+    pad1: u8,
+    pad2: u16,
+    ifindex: i32,
+    state: u16,
+    flags: u8,
+    r#type: u8,
 }
 
 #[derive(Copy, Clone)]
@@ -168,7 +168,7 @@ impl NetlinkSocket {
         }
         let sock = unsafe { OwnedFd::from_raw_fd(sock) };
 
-        let enable = 1_i32;
+        let enable = 1i32;
         unsafe {
             if libc::setsockopt(
                 sock.as_raw_fd(),
@@ -307,7 +307,7 @@ fn parse_attrs(buf: &[u8]) -> HashMap<u16, &[u8]> {
     attrs
 }
 
-/// Set a network interface up (IFF_UP).
+/// Set a network interface up (`IFF_UP`).
 pub(crate) fn set_link_up(if_index: i32) -> io::Result<()> {
     let sock = NetlinkSocket::open()?;
     let mut req = unsafe { mem::zeroed::<LinkRequest>() };
@@ -452,11 +452,11 @@ pub(crate) fn add_addr_v4(if_index: i32, addr: Ipv4Addr, prefix_len: u8) -> io::
         nlmsg_seq: 1,
     };
     req.addr_info = Ifaddrmsg {
-        ifa_family: AF_INET as u8,
-        ifa_prefixlen: prefix_len,
-        ifa_flags: 0,
-        ifa_scope: 0,
-        ifa_index: if_index as u32,
+        family: AF_INET as u8,
+        prefixlen: prefix_len,
+        flags: 0,
+        scope: 0,
+        index: if_index as u32,
     };
 
     let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
@@ -470,7 +470,7 @@ pub(crate) fn add_addr_v4(if_index: i32, addr: Ipv4Addr, prefix_len: u8) -> io::
     Ok(())
 }
 
-/// Read the MAC address (IFLA_ADDRESS) of a network interface.
+/// Read the MAC address (`IFLA_ADDRESS`) of a network interface.
 pub(crate) fn get_link_mac(if_index: i32) -> io::Result<[u8; 6]> {
     let sock = NetlinkSocket::open()?;
     let mut req = unsafe { mem::zeroed::<LinkRequest>() };
@@ -504,7 +504,7 @@ pub(crate) fn get_link_mac(if_index: i32) -> io::Result<[u8; 6]> {
 }
 
 /// Add a static neighbor (ARP) entry.
-pub(crate) fn add_neigh_v4(if_index: i32, dst_addr: Ipv4Addr, lladdr: &[u8; 6]) -> io::Result<()> {
+pub(crate) fn add_neigh_v4(if_index: i32, dst_addr: Ipv4Addr, lladdr: [u8; 6]) -> io::Result<()> {
     let sock = NetlinkSocket::open()?;
     let mut req = unsafe { mem::zeroed::<NeighRequest>() };
 
@@ -517,19 +517,19 @@ pub(crate) fn add_neigh_v4(if_index: i32, dst_addr: Ipv4Addr, lladdr: &[u8; 6]) 
         nlmsg_seq: 1,
     };
     req.neigh_info = Ndmsg {
-        ndm_family: AF_INET as u8,
-        ndm_pad1: 0,
-        ndm_pad2: 0,
-        ndm_ifindex: if_index,
-        ndm_state: NUD_PERMANENT,
-        ndm_flags: NTF_SELF,
-        ndm_type: 0,
+        family: AF_INET as u8,
+        pad1: 0,
+        pad2: 0,
+        ifindex: if_index,
+        state: NUD_PERMANENT,
+        flags: NTF_SELF,
+        r#type: 0,
     };
 
     let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
     let mut offset = 0;
     offset += write_attr_bytes(attrs_buf, offset, NDA_DST, &dst_addr.octets())?;
-    offset += write_attr_bytes(attrs_buf, offset, NDA_LLADDR, lladdr)?;
+    offset += write_attr_bytes(attrs_buf, offset, NDA_LLADDR, &lladdr)?;
     req.header.nlmsg_len += align_to(offset, NLA_ALIGNTO as usize) as u32;
 
     sock.execute(unsafe { &bytes_of(&req)[..req.header.nlmsg_len as usize] })?;

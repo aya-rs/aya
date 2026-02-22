@@ -428,7 +428,7 @@ impl PeerNsGuard {
         // Static ARP in test netns: peer IP -> veth1 MAC.
         unsafe {
             let idx = if_nametoindex(iface.as_ptr());
-            netlink::add_neigh_v4(idx as i32, peer_addr, &veth1_mac).unwrap_or_else(|e| {
+            netlink::add_neigh_v4(idx as i32, peer_addr, veth1_mac).unwrap_or_else(|e| {
                 panic!(
                     "failed to add neigh entry for {} on `{}`: {e}",
                     NetNsGuard::PEER_ADDR,
@@ -448,7 +448,7 @@ impl PeerNsGuard {
                     NetNsGuard::PEER_IFACE,
                     io::Error::last_os_error()
                 );
-                netlink::add_neigh_v4(idx as i32, iface_addr, &veth0_mac).unwrap_or_else(|e| {
+                netlink::add_neigh_v4(idx as i32, iface_addr, veth0_mac).unwrap_or_else(|e| {
                     panic!(
                         "failed to add neigh entry for {} on `{}`: {e}",
                         NetNsGuard::IFACE_ADDR,
