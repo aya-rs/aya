@@ -1,9 +1,10 @@
 use std::{net::UdpSocket, num::NonZeroU32, time::Duration};
 
+use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::{Array, CpuMap, XskMap},
-    programs::{Xdp, XdpFlags},
+    programs::{ProgramError, Xdp, XdpError, XdpFlags},
     util::KernelVersion,
 };
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
@@ -195,9 +196,7 @@ fn map_load() {
 
 #[test_log::test]
 fn cpumap_chain() {
-    // peer must be declared after netns so it drops first (see PeerNsGuard docs).
-    let netns = NetNsGuard::new();
-    let peer = PeerNsGuard::new(&netns);
+    let _netns = NetNsGuard::new();
 
     let mut bpf = Ebpf::load(crate::REDIRECT).unwrap();
 
@@ -217,33 +216,35 @@ fn cpumap_chain() {
     };
     cpus.set(0, 2048, Some(xdp_chain_fd), 0).unwrap();
 
-    // Load the main program
+    // Load the main program and attach to loopback (generic/SKB-mode XDP).
+    // We use loopback instead of veth because cpumap chaining does not
+    // reliably deliver packets through veth on arm64.
     let xdp: &mut Xdp = bpf.program_mut("redirect_cpu").unwrap().try_into().unwrap();
     xdp.load().unwrap();
 
-    // While veth supports native XDP attachment from 5.9, cpumap chaining does
-    // not reliably deliver packets through veth on older kernels (confirmed
-    // failing on 5.10). Gate at 6.1 which is the oldest CI-tested kernel where
-    // this works end-to-end.
-    if KernelVersion::current().unwrap() < KernelVersion::new(6, 1, 0) {
-        eprintln!("skipping test - cpumap chaining on veth unreliable on kernel < 6.1");
+    // Generic devices did not support cpumap XDP programs until 5.15.
+    // See https://github.com/torvalds/linux/commit/11941f8a85362f612df61f4aaab0e41b64d2111d.
+    let result = xdp.attach("lo", XdpFlags::default());
+    if KernelVersion::current().unwrap() < KernelVersion::new(5, 15, 0) {
+        assert_matches!(result, Err(ProgramError::XdpError(XdpError::NetlinkError(err))) => {
+            assert_eq!(err.raw_os_error(), Some(libc::EINVAL))
+        });
+        eprintln!("skipping test - cpumap on generic XDP requires kernel >= 5.15");
         return;
     }
-    xdp.attach(NetNsGuard::IFACE, XdpFlags::default()).unwrap();
+    result.unwrap();
 
     const PAYLOAD: &str = "hello cpumap";
 
-    let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::IFACE_ADDR)).unwrap();
+    // Send a UDP packet to ourselves over loopback so it hits our XDP program.
+    let sock = UdpSocket::bind("127.0.0.1:0").unwrap();
     let addr = sock.local_addr().unwrap();
     sock.set_read_timeout(Some(Duration::from_secs(60)))
         .unwrap();
-    peer.run(|| {
-        let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::PEER_ADDR)).unwrap();
-        sock.send_to(PAYLOAD.as_bytes(), addr).unwrap();
-    });
+    sock.send_to(PAYLOAD.as_bytes(), addr).unwrap();
 
-    // Read back the packet to ensure it went through the entire network stack, including our two
-    // probes.
+    // Read back the packet to ensure it traversed the full XDP pipeline:
+    // redirect_cpu -> cpumap -> redirect_cpu_chain -> network stack.
     let mut buf = [0u8; PAYLOAD.len() + 1];
     let n = sock.recv(&mut buf).unwrap();
 
