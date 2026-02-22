@@ -1,10 +1,9 @@
 use std::{net::UdpSocket, num::NonZeroU32, time::Duration};
 
-use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::{Array, CpuMap, XskMap},
-    programs::{ProgramError, Xdp, XdpError, XdpFlags, xdp::XdpLinkId},
+    programs::{Xdp, XdpFlags},
     util::KernelVersion,
 };
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
@@ -221,19 +220,16 @@ fn cpumap_chain() {
     // Load the main program
     let xdp: &mut Xdp = bpf.program_mut("redirect_cpu").unwrap().try_into().unwrap();
     xdp.load().unwrap();
-    let result = xdp.attach(NetNsGuard::IFACE, XdpFlags::default());
-    // Native veth devices support cpumap XDP programs from 5.9. The previous
-    // 5.15 gate was only needed because loopback uses generic/SKB-mode XDP.
-    //
-    // See https://github.com/torvalds/linux/commit/9216477449f3.
-    if KernelVersion::current().unwrap() < KernelVersion::new(5, 9, 0) {
-        assert_matches!(result, Err(ProgramError::XdpError(XdpError::NetlinkError(err))) => {
-            assert_eq!(err.raw_os_error(), Some(libc::EINVAL))
-        });
-        eprintln!("skipping test - cpumap chaining not supported on kernel < 5.9");
+
+    // While veth supports native XDP attachment from 5.9, cpumap chaining does
+    // not reliably deliver packets through veth on older kernels (confirmed
+    // failing on 5.10). Gate at 6.1 which is the oldest CI-tested kernel where
+    // this works end-to-end.
+    if KernelVersion::current().unwrap() < KernelVersion::new(6, 1, 0) {
+        eprintln!("skipping test - cpumap chaining on veth unreliable on kernel < 6.1");
         return;
     }
-    let _unused: XdpLinkId = result.unwrap();
+    xdp.attach(NetNsGuard::IFACE, XdpFlags::default()).unwrap();
 
     const PAYLOAD: &str = "hello cpumap";
 
