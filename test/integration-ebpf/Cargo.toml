@@ -93,6 +93,10 @@ name = "strncmp"
 path = "src/strncmp.rs"
 
 [[bin]]
+name = "task_storage"
+path = "src/task_storage.rs"
+
+[[bin]]
 name = "tcx"
 path = "src/tcx.rs"
 
