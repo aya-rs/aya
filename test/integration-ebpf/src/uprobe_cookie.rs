@@ -15,12 +15,8 @@ extern crate ebpf_panic;
 static RING_BUF: RingBuf = RingBuf::with_byte_size(0, 0);
 
 #[uprobe]
-#[expect(
-    clippy::little_endian_bytes,
-    reason = "the eBPF program writes the cookie as little-endian bytes"
-)]
 fn uprobe_cookie(ctx: ProbeContext) {
     let cookie = unsafe { helpers::bpf_get_attach_cookie(ctx.as_ptr()) };
-    let cookie_bytes = cookie.to_le_bytes();
+    let cookie_bytes = cookie.to_ne_bytes();
     let _res = RING_BUF.output::<[u8]>(cookie_bytes, 0);
 }

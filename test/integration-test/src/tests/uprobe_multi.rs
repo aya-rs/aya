@@ -93,10 +93,6 @@ fn test_uprobe_attach_multi() {
 }
 
 #[test_log::test]
-#[expect(
-    clippy::little_endian_bytes,
-    reason = "the eBPF program writes cookies as little-endian bytes"
-)]
 fn test_uprobe_single_program_supports_multiple_points() {
     if !aya::features().bpf_cookie() {
         eprintln!(
@@ -151,7 +147,7 @@ fn test_uprobe_single_program_supports_multiple_points() {
     while let Some(record) = ring_buf.next() {
         let data = record.as_ref();
         match data.try_into() {
-            Ok(bytes) => seen.push(u64::from_le_bytes(bytes)),
+            Ok(bytes) => seen.push(u64::from_ne_bytes(bytes)),
             Err(std::array::TryFromSliceError { .. }) => {
                 panic!("invalid ring buffer data: {data:x?}")
             }
@@ -161,10 +157,6 @@ fn test_uprobe_single_program_supports_multiple_points() {
 }
 
 #[test_log::test]
-#[expect(
-    clippy::little_endian_bytes,
-    reason = "the eBPF program writes cookies as little-endian bytes"
-)]
 fn test_uprobe_single_program_composite_link_drop_detaches_all_points() {
     if !aya::features().bpf_cookie() {
         eprintln!(
@@ -221,7 +213,7 @@ fn test_uprobe_single_program_composite_link_drop_detaches_all_points() {
     while let Some(record) = ring_buf.next() {
         let data = record.as_ref();
         match data.try_into() {
-            Ok(bytes) => seen.push(u64::from_le_bytes(bytes)),
+            Ok(bytes) => seen.push(u64::from_ne_bytes(bytes)),
             Err(std::array::TryFromSliceError { .. }) => {
                 panic!("invalid ring buffer data: {data:x?}")
             }
