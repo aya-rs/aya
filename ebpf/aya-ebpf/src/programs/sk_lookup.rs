@@ -7,7 +7,7 @@ pub struct SkLookupContext {
 }
 
 impl SkLookupContext {
-    pub fn new(lookup: *mut bpf_sk_lookup) -> Self {
+    pub const fn new(lookup: *mut bpf_sk_lookup) -> Self {
         Self { lookup }
     }
 }

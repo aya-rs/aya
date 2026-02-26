@@ -67,6 +67,10 @@ pub(crate) fn perf_event_open(
                     u64::from(length.into_primitive()),
                 ),
                 BreakpointConfig::Instruction { address } => {
+                    #[expect(
+                        clippy::panic,
+                        reason = "unsupported c_long size indicates an unsupported platform"
+                    )]
                     const fn length(size: usize) -> c_uint {
                         match size {
                             1 => HW_BREAKPOINT_LEN_1,
@@ -79,7 +83,7 @@ pub(crate) fn perf_event_open(
                             _ => panic!("invalid hardware breakpoint size"),
                         }
                     }
-                    const LENGTH: c_uint = length(std::mem::size_of::<c_long>());
+                    const LENGTH: c_uint = length(size_of::<c_long>());
                     (HW_BREAKPOINT_X, address, u64::from(LENGTH))
                 }
             };
@@ -94,10 +98,10 @@ pub(crate) fn perf_event_open(
     };
 
     attr.config = config;
-    attr.size = mem::size_of::<perf_event_attr>() as u32;
+    attr.size = size_of::<perf_event_attr>() as u32;
     attr.type_ = perf_type;
     attr.sample_type = PERF_SAMPLE_RAW as u64;
-    attr.set_inherit(if inherit { 1 } else { 0 });
+    attr.set_inherit(u64::from(inherit));
 
     match sample_policy {
         SamplePolicy::Period(period) => {
@@ -145,7 +149,7 @@ pub(crate) fn perf_event_open_probe(
 
     let c_name = CString::new(name.as_bytes()).unwrap();
 
-    attr.size = mem::size_of::<perf_event_attr>() as u32;
+    attr.size = size_of::<perf_event_attr>() as u32;
     attr.type_ = ty;
     attr.__bindgen_anon_3.config1 = c_name.as_ptr() as u64;
     attr.__bindgen_anon_4.config2 = offset;

@@ -129,7 +129,13 @@ use crate::{
     VerifierLogLevel,
     maps::MapError,
     pin::PinError,
-    programs::{links::*, perf_attach::*},
+    programs::{
+        links::{
+            FdLink, FdLinkId, LinkError, LinkInfo, Links, ProgAttachLink, ProgAttachLinkId,
+            define_link_wrapper, id_as_key, impl_try_into_fdlink,
+        },
+        perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach, perf_attach_debugfs},
+    },
     sys::{
         EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget, SyscallError, bpf_btf_get_fd_by_id,
         bpf_get_object, bpf_link_get_fd_by_id, bpf_load_program, bpf_pin_object,
@@ -264,10 +270,11 @@ pub struct ProgramId(u32);
 impl ProgramId {
     /// Create a new program id.  
     ///  
+    /// # Safety
+    ///
     /// This method is unsafe since it doesn't check that the given `id` is a
     /// valid program id.
-    #[expect(clippy::missing_safety_doc)]
-    pub unsafe fn new(id: u32) -> Self {
+    pub const unsafe fn new(id: u32) -> Self {
         Self(id)
     }
 }
@@ -333,7 +340,7 @@ pub enum Program {
 
 impl Program {
     /// Returns the program type.
-    pub fn prog_type(&self) -> ProgramType {
+    pub const fn prog_type(&self) -> ProgramType {
         match self {
             Self::KProbe(_) | Self::UProbe(_) => ProgramType::KProbe,
             Self::TracePoint(_) => ProgramType::TracePoint,
@@ -556,11 +563,7 @@ impl<T: Link> ProgramData<T> {
         info: bpf_prog_info,
         verifier_log_level: VerifierLogLevel,
     ) -> Result<Self, ProgramError> {
-        let attach_btf_id = if info.attach_btf_id > 0 {
-            Some(info.attach_btf_id)
-        } else {
-            None
-        };
+        let attach_btf_id = (info.attach_btf_id > 0).then_some(info.attach_btf_id);
         let attach_btf_obj_fd = (info.attach_btf_obj_id != 0)
             .then(|| bpf_btf_get_fd_by_id(info.attach_btf_obj_id))
             .transpose()?;
@@ -617,7 +620,7 @@ fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError
 fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Result<(), PinError> {
     use std::os::unix::ffi::OsStrExt as _;
 
-    let fd = data.fd.as_ref().ok_or(PinError::NoFd {
+    let fd = data.fd.as_ref().ok_or_else(|| PinError::NoFd {
         name: data
             .name
             .as_deref()
@@ -679,11 +682,8 @@ fn load_program<T: Link>(
         },
     ) = obj;
 
-    let target_kernel_version = kernel_version.unwrap_or_else(|| {
-        KernelVersion::current()
-            .map(KernelVersion::code)
-            .unwrap_or(0)
-    });
+    let target_kernel_version =
+        kernel_version.unwrap_or_else(|| KernelVersion::current().map_or(0, KernelVersion::code));
 
     let prog_name = if let Some(name) = name.as_deref() {
         let prog_name = CString::new(name).map_err(|err @ std::ffi::NulError { .. }| {
@@ -788,7 +788,7 @@ macro_rules! impl_program_unload {
 
             impl Drop for $struct_name {
                 fn drop(&mut self) {
-                    let _: Result<(), ProgramError> = self.unload();
+                    let _unused: Result<(), ProgramError> = self.unload();
                 }
             }
         )+

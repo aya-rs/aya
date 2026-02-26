@@ -11,6 +11,7 @@ bpf_file!(
     ITER_TASK => "iter.bpf.o",
     MAIN => "main.bpf.o",
     MULTIMAP_BTF => "multimap-btf.bpf.o",
+    RINGBUF_BTF => "ringbuf-btf.bpf.o",
 
     ENUM_SIGNED_32_RELOC_BPF => "enum_signed_32_reloc.bpf.o",
     ENUM_SIGNED_32_RELOC_BTF => "enum_signed_32_reloc.bpf.target.o",
@@ -39,7 +40,9 @@ bpf_file!(
     VARIABLES_RELOC => "variables_reloc.bpf.o",
 
     ARRAY => "array",
+    BLOOM_FILTER => "bloom_filter",
     BPF_PROBE_READ => "bpf_probe_read",
+    BTF_MAPS_PLAIN => "btf_maps_plain",
     LINEAR_DATA_STRUCTURES => "linear_data_structures",
     LOG => "log",
     MAP_TEST => "map_test",

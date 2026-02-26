@@ -13,10 +13,9 @@ pub(crate) enum SkSkbKind {
 
 impl std::fmt::Display for SkSkbKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use SkSkbKind::*;
         match self {
-            StreamVerdict => write!(f, "stream_verdict"),
-            StreamParser => write!(f, "stream_parser"),
+            Self::StreamVerdict => write!(f, "stream_verdict"),
+            Self::StreamParser => write!(f, "stream_parser"),
         }
     }
 }
@@ -36,7 +35,7 @@ impl SkSkb {
             return Err(attrs.span().error("unexpected attribute"));
         }
         let item = syn::parse2(item)?;
-        Ok(Self { item, kind })
+        Ok(Self { kind, item })
     }
 
     pub(crate) fn expand(&self) -> TokenStream {

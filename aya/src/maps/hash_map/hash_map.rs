@@ -33,8 +33,7 @@ use crate::{
 #[derive(Debug)]
 pub struct HashMap<T, K, V> {
     pub(crate) inner: T,
-    _k: PhantomData<K>,
-    _v: PhantomData<V>,
+    _kv: PhantomData<(K, V)>,
 }
 
 impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
@@ -44,8 +43,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
 
         Ok(Self {
             inner: map,
-            _k: PhantomData,
-            _v: PhantomData,
+            _kv: PhantomData,
         })
     }
 
@@ -64,6 +62,15 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// type is `Result<K, MapError>`.
     pub fn keys(&self) -> MapKeys<'_, K> {
         MapKeys::new(self.inner.borrow())
+    }
+}
+
+impl<'a, T: Borrow<MapData>, K: Pod, V: Pod> IntoIterator for &'a HashMap<T, K, V> {
+    type Item = Result<(K, V), MapError>;
+    type IntoIter = MapIter<'a, K, V, HashMap<T, K, V>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 
@@ -99,10 +106,7 @@ mod tests {
     use std::io;
 
     use assert_matches::assert_matches;
-    use aya_obj::generated::{
-        bpf_attr, bpf_cmd,
-        bpf_map_type::{BPF_MAP_TYPE_HASH, BPF_MAP_TYPE_LRU_HASH},
-    };
+    use aya_obj::generated::{bpf_attr, bpf_cmd, bpf_map_type};
     use libc::{EFAULT, ENOENT};
 
     use super::*;
@@ -115,7 +119,7 @@ mod tests {
     };
 
     fn new_obj_map() -> aya_obj::Map {
-        test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_HASH)
+        test_utils::new_obj_map::<u32>(bpf_map_type::BPF_MAP_TYPE_HASH)
     }
 
     fn sys_error(value: i32) -> SysResult {
@@ -179,16 +183,20 @@ mod tests {
     fn test_try_from_ok() {
         let map = new_map(new_obj_map());
         let map = Map::HashMap(map);
-        let _: HashMap<_, u32, u32> = map.try_into().unwrap();
+        let _unused: HashMap<_, u32, u32> = map.try_into().unwrap();
     }
 
     #[test]
     fn test_try_from_ok_lru() {
-        let map_data = || new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_LRU_HASH));
+        let map_data = || {
+            new_map(test_utils::new_obj_map::<u32>(
+                bpf_map_type::BPF_MAP_TYPE_LRU_HASH,
+            ))
+        };
         let map = Map::HashMap(map_data());
-        let _: HashMap<_, u32, u32> = map.try_into().unwrap();
+        let _unused: HashMap<_, u32, u32> = map.try_into().unwrap();
         let map = Map::LruHashMap(map_data());
-        let _: HashMap<_, u32, u32> = map.try_into().unwrap();
+        let _unused: HashMap<_, u32, u32> = map.try_into().unwrap();
     }
 
     #[test]
@@ -299,17 +307,25 @@ mod tests {
         }
     }
 
+    #[expect(
+        clippy::unnecessary_wraps,
+        reason = "mock syscall handlers use SysResult"
+    )]
     fn set_next_key<T: Copy>(attr: &bpf_attr, next: T) -> SysResult {
         let key =
             (unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.next_key } as *const T).cast_mut();
-        unsafe { *key = next };
+        unsafe { *key = next }
         Ok(0)
     }
 
+    #[expect(
+        clippy::unnecessary_wraps,
+        reason = "mock syscall handlers use SysResult"
+    )]
     fn set_ret<T: Copy>(attr: &bpf_attr, ret: T) -> SysResult {
         let value =
             (unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.value } as *const T).cast_mut();
-        unsafe { *value = ret };
+        unsafe { *value = ret }
         Ok(0)
     }
 

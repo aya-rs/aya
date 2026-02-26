@@ -71,7 +71,7 @@ impl BtfTracePoint {
 
     /// Attaches the program.
     ///
-    /// The returned value can be used to detach, see [BtfTracePoint::detach].
+    /// The returned value can be used to detach, see [`BtfTracePoint::detach`].
     pub fn attach(&mut self) -> Result<BtfTracePointLinkId, ProgramError> {
         attach_raw_tracepoint(&mut self.data, None)
     }

@@ -7,7 +7,6 @@ use aya::{
     programs::{CgroupAttachMode, CgroupSockAddr},
 };
 use integration_common::sk_storage::{Ip, Value};
-use libc::{self};
 use test_log::test;
 
 use crate::utils::{Cgroup, NetNsGuard};

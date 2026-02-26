@@ -33,6 +33,7 @@ impl core::marker::Freeze for aya_log_common::ArgumentKind
 impl core::marker::Send for aya_log_common::ArgumentKind
 impl core::marker::Sync for aya_log_common::ArgumentKind
 impl core::marker::Unpin for aya_log_common::ArgumentKind
+impl core::marker::UnsafeUnpin for aya_log_common::ArgumentKind
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log_common::ArgumentKind
 impl core::panic::unwind_safe::UnwindSafe for aya_log_common::ArgumentKind
 impl<T, U> core::convert::Into<U> for aya_log_common::ArgumentKind where U: core::convert::From<T>
@@ -78,6 +79,7 @@ impl core::marker::Freeze for aya_log_common::DisplayHint
 impl core::marker::Send for aya_log_common::DisplayHint
 impl core::marker::Sync for aya_log_common::DisplayHint
 impl core::marker::Unpin for aya_log_common::DisplayHint
+impl core::marker::UnsafeUnpin for aya_log_common::DisplayHint
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log_common::DisplayHint
 impl core::panic::unwind_safe::UnwindSafe for aya_log_common::DisplayHint
 impl<T, U> core::convert::Into<U> for aya_log_common::DisplayHint where U: core::convert::From<T>
@@ -121,6 +123,7 @@ impl core::marker::Freeze for aya_log_common::Level
 impl core::marker::Send for aya_log_common::Level
 impl core::marker::Sync for aya_log_common::Level
 impl core::marker::Unpin for aya_log_common::Level
+impl core::marker::UnsafeUnpin for aya_log_common::Level
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log_common::Level
 impl core::panic::unwind_safe::UnwindSafe for aya_log_common::Level
 impl<T, U> core::convert::Into<U> for aya_log_common::Level where U: core::convert::From<T>
@@ -159,6 +162,7 @@ impl core::marker::Freeze for aya_log_common::RecordFieldKind
 impl core::marker::Send for aya_log_common::RecordFieldKind
 impl core::marker::Sync for aya_log_common::RecordFieldKind
 impl core::marker::Unpin for aya_log_common::RecordFieldKind
+impl core::marker::UnsafeUnpin for aya_log_common::RecordFieldKind
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log_common::RecordFieldKind
 impl core::panic::unwind_safe::UnwindSafe for aya_log_common::RecordFieldKind
 impl<T, U> core::convert::Into<U> for aya_log_common::RecordFieldKind where U: core::convert::From<T>

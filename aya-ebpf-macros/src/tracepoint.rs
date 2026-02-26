@@ -5,7 +5,7 @@ use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
 use syn::{ItemFn, spanned::Spanned as _};
 
-use crate::args::{err_on_unknown_args, pop_string_arg};
+use crate::args::Args;
 
 pub(crate) struct TracePoint {
     item: ItemFn,
@@ -16,10 +16,10 @@ impl TracePoint {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self, Diagnostic> {
         let item = syn::parse2(item)?;
         let span = attrs.span();
-        let mut args = syn::parse2(attrs)?;
-        let name = pop_string_arg(&mut args, "name");
-        let category = pop_string_arg(&mut args, "category");
-        err_on_unknown_args(&args)?;
+        let mut args: Args = syn::parse2(attrs)?;
+        let name = args.pop_string("name");
+        let category = args.pop_string("category");
+        args.into_error()?;
         match (name, category) {
             (None, None) => Ok(Self {
                 item,

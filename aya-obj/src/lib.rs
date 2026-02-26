@@ -78,16 +78,26 @@ extern crate std;
 pub mod btf;
 #[expect(
     clippy::all,
+    clippy::as_pointer_underscore,
     clippy::cast_lossless,
+    clippy::decimal_literal_representation,
+    clippy::missing_const_for_fn,
     clippy::ptr_as_ptr,
+    clippy::pub_underscore_fields,
     clippy::ref_as_ptr,
+    clippy::renamed_function_params,
+    clippy::semicolon_inside_block,
     clippy::use_self,
+    clippy::used_underscore_binding,
     missing_docs,
     non_camel_case_types,
     non_snake_case,
+    trivial_casts,
     trivial_numeric_casts,
     unreachable_pub,
-    unsafe_op_in_unsafe_fn
+    unsafe_op_in_unsafe_fn,
+    unused_qualifications,
+    reason = "generated code"
 )]
 pub mod generated;
 pub mod links;
@@ -107,7 +117,7 @@ pub struct VerifierLog(alloc::string::String);
 
 impl VerifierLog {
     /// Create a new verifier log.
-    pub fn new(log: alloc::string::String) -> Self {
+    pub const fn new(log: alloc::string::String) -> Self {
         Self(log)
     }
 }

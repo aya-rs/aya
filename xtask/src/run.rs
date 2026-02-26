@@ -1,5 +1,10 @@
+#![allow(clippy::print_stdout, reason = "xtask is a CLI tool")]
+#![allow(clippy::print_stderr, reason = "xtask is a CLI tool")]
+#![allow(clippy::use_debug, reason = "debug output aids troubleshooting")]
+
 use std::{
     collections::BTreeMap,
+    env,
     ffi::{OsStr, OsString},
     fmt::{Debug, Write as _},
     fs::{self, File, OpenOptions},
@@ -15,7 +20,7 @@ use anyhow::{Context as _, Result, anyhow, bail};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 use walkdir::WalkDir;
-use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors};
+use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors, libbpf_sys_env};
 
 const GEN_INIT_CPIO_PATCH: &str = include_str!("../patches/gen_init_cpio.c.macos.diff");
 
@@ -45,10 +50,17 @@ enum Environment {
     },
 }
 
+const INTEGRATION_TEST_PACKAGE: &str = "integration-test";
+
 #[derive(Parser)]
 pub(crate) struct Options {
     #[clap(subcommand)]
     environment: Environment,
+
+    /// The package whose tests to build and run.
+    #[clap(short = 'p', long, global = true, default_value = INTEGRATION_TEST_PACKAGE)]
+    package: String,
+
     /// Arguments to pass to your application.
     #[clap(global = true, last = true)]
     run_args: Vec<OsString>,
@@ -76,7 +88,7 @@ where
     let stdout = BufReader::new(stdout);
     let mut executables = Vec::new();
     for message in Message::parse_stream(stdout) {
-        #[expect(clippy::collapsible_match)]
+        #[expect(clippy::collapsible_match, reason = "better captures intent")]
         match message.context("valid JSON")? {
             Message::CompilerArtifact(Artifact {
                 executable,
@@ -187,7 +199,7 @@ where
                 dest.display(),
             );
             match control_flow {
-                ControlFlow::Continue => continue,
+                ControlFlow::Continue => {}
                 ControlFlow::Break => break,
             }
         }
@@ -206,21 +218,30 @@ fn one<T: Debug>(slice: &[T]) -> Result<&T> {
 }
 
 /// Build and run the project.
-pub(crate) fn run(opts: Options) -> Result<()> {
+pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
     let Options {
         environment,
+        package,
         run_args,
     } = opts;
 
     type Binary = (String, PathBuf);
-    fn binaries(target: Option<&str>) -> Result<Vec<(&str, Vec<Binary>)>> {
+
+    let binaries = |package: &str,
+                    target: Option<&str>,
+                    envs: &[(&OsStr, &OsStr)]|
+     -> Result<Vec<(&'static str, Vec<Binary>)>> {
         ["dev", "release"]
             .into_iter()
             .map(|profile| {
                 let binaries = build(target, |cmd| {
-                    cmd.env(AYA_BUILD_INTEGRATION_BPF, "true").args([
+                    if package == INTEGRATION_TEST_PACKAGE {
+                        cmd.env(AYA_BUILD_INTEGRATION_BPF, "true");
+                        libbpf_sys_env(workspace_root, cmd);
+                    }
+                    cmd.envs(envs.iter().copied()).args([
                         "--package",
-                        "integration-test",
+                        package,
                         "--tests",
                         "--profile",
                         profile,
@@ -229,7 +250,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 anyhow::Ok((profile, binaries))
             })
             .collect()
-    }
+    };
 
     // Use --test-threads=1 to prevent tests from interacting with shared
     // kernel state due to the lack of inter-test isolation.
@@ -239,10 +260,10 @@ pub(crate) fn run(opts: Options) -> Result<()> {
     match environment {
         Environment::Local { runner } => {
             let mut args = runner.trim().split_terminator(' ');
-            let runner = args.next().ok_or(anyhow!("no first argument"))?;
+            let runner = args.next().ok_or_else(|| anyhow!("no first argument"))?;
             let args = args.collect::<Vec<_>>();
 
-            let binaries = binaries(None)?;
+            let binaries = binaries(&package, None, &[])?;
 
             let mut failures = String::new();
             for (profile, binaries) in binaries {
@@ -268,7 +289,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
             if failures.is_empty() {
                 Ok(())
             } else {
-                Err(anyhow!("failures:\n{}", failures))
+                Err(anyhow!("failures:\n{failures}"))
             }
         }
         Environment::VM {
@@ -454,7 +475,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                             .find_map(|modules_dir| {
                                 // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this
                                 // allowance when the lint behaves more sensibly.
-                                #[expect(clippy::manual_ok_err)]
+                                #[expect(clippy::manual_ok_err, reason = "type ascription")]
                                 match path.strip_prefix(modules_dir) {
                                     Ok(path) => Some(path),
                                     Err(path::StripPrefixError { .. }) => None,
@@ -605,7 +626,29 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                     build(Some(&target), |cmd| cmd.args(test_distro_args))
                         .context("building test-distro package failed")?;
 
-                let binaries = binaries(Some(&target))?;
+                // Set up cross compilation.
+                //
+                // See https://github.com/libbpf/libbpf-sys/issues/137.
+                let mut extra;
+                let envs: &[_] = if package == INTEGRATION_TEST_PACKAGE {
+                    const LIBBPF_SYS_EXTRA_CFLAGS: &str = "LIBBPF_SYS_EXTRA_CFLAGS";
+                    extra = OsString::new();
+                    extra.push(format!(
+                        "-idirafter /usr/include/{guest_arch}-linux-gnu -idirafter /usr/include",
+                    ));
+                    if guest_arch == "aarch64" {
+                        extra.push(" -mno-outline-atomics");
+                    }
+                    if let Some(existing) = env::var_os(LIBBPF_SYS_EXTRA_CFLAGS) {
+                        extra.push(" ");
+                        extra.push(existing);
+                    }
+                    &[(OsStr::new(LIBBPF_SYS_EXTRA_CFLAGS), extra.as_os_str())]
+                } else {
+                    &[]
+                };
+
+                let binaries = binaries(&package, Some(&target), envs)?;
 
                 let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
 
@@ -633,12 +676,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 //
                 // dir  /bin                  755 0 0
                 let write_dir = |out_path: &Path| {
-                    for bytes in [
-                        "dir ".as_bytes(),
-                        out_path.as_os_str().as_bytes(),
-                        " ".as_bytes(),
-                        "755 0 0\n".as_bytes(),
-                    ] {
+                    for bytes in [b"dir ", out_path.as_os_str().as_bytes(), b" ", b"755 0 0\n"] {
                         stdin.deref().write_all(bytes).expect("write");
                     }
                 };
@@ -648,13 +686,13 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 // file /init    path-to-init 755 0 0
                 let write_file = |out_path: &Path, in_path: &Path, mode: &str| {
                     for bytes in [
-                        "file ".as_bytes(),
+                        b"file ",
                         out_path.as_os_str().as_bytes(),
-                        " ".as_bytes(),
+                        b" ",
                         in_path.as_os_str().as_bytes(),
-                        " ".as_bytes(),
+                        b" ",
                         mode.as_bytes(),
-                        "\n".as_bytes(),
+                        b"\n",
                     ] {
                         stdin.deref().write_all(bytes).expect("write");
                     }
@@ -676,13 +714,13 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                     write_file(&Path::new("/boot").join(name), system_map, "644 0 0");
                 }
 
-                test_distro.iter().for_each(|(name, path)| {
+                for (name, path) in &test_distro {
                     if name == "init" {
                         write_file(Path::new("/init"), path, "755 0 0");
                     } else {
                         write_file(&Path::new("/sbin").join(name), path, "755 0 0");
                     }
-                });
+                }
 
                 // At this point we need to make a slight detour!
                 // Preparing the `modules.alias` file inside the VM as part of
@@ -716,6 +754,10 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                             )
                         })?,
                     );
+                    #[expect(
+                        clippy::filetype_is_file,
+                        reason = "we only want to copy regular files"
+                    )]
                     if metadata.file_type().is_dir() {
                         write_dir(&out_path);
                     } else if metadata.file_type().is_file() {
@@ -809,7 +851,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                 let mut counts = [0; TERMINATE_AFTER_COUNT.len()];
 
                 let mut terminate_if_kernel_hang =
-                    move |line: &str, stdin: &Arc<Mutex<ChildStdin>>| -> anyhow::Result<()> {
+                    move |line: &str, stdin: &Arc<Mutex<ChildStdin>>| -> Result<()> {
                         if let Some(i) = TERMINATE_AFTER_COUNT
                             .iter()
                             .position(|(marker, _)| line.contains(marker))
@@ -823,6 +865,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                                 stdin
                                     .write_all(&[0x01, b'x'])
                                     .context("failed to write to stdin")?;
+                                drop(stdin);
                                 println!("waiting for QEMU to terminate");
                             }
                         }
@@ -830,7 +873,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                     };
 
                 let stderr = {
-                    let stdin = stdin.clone();
+                    let stdin = Arc::clone(&stdin);
                     thread::Builder::new()
                         .spawn(move || {
                             for line in stderr.lines() {
@@ -854,7 +897,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
                         let previous = match line {
                             "success" => outcome.replace(Ok(())),
                             "failure" => outcome.replace(Err(())),
-                            line => bail!("unexpected init output: {}", line),
+                            line => bail!("unexpected init output: {line}"),
                         };
                         if let Some(previous) = previous {
                             bail!("multiple exit status: previous={previous:?}, current={line}");
@@ -872,7 +915,7 @@ pub(crate) fn run(opts: Options) -> Result<()> {
 
                 stderr.join().unwrap()?;
 
-                let outcome = outcome.ok_or(anyhow!("init did not exit"))?;
+                let outcome = outcome.ok_or_else(|| anyhow!("init did not exit"))?;
                 match outcome {
                     Ok(()) => {}
                     Err(()) => {

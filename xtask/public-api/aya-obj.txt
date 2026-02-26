@@ -30,7 +30,6 @@ pub aya_obj::btf::BtfError::MaximumTypeDepthReached
 pub aya_obj::btf::BtfError::MaximumTypeDepthReached::type_id: u32
 pub aya_obj::btf::BtfError::SymbolOffsetNotFound
 pub aya_obj::btf::BtfError::SymbolOffsetNotFound::symbol_name: alloc::string::String
-pub aya_obj::btf::BtfError::UnexpectedBtfMapWrapperLayout(aya_obj::btf::Struct)
 pub aya_obj::btf::BtfError::UnexpectedBtfType
 pub aya_obj::btf::BtfError::UnexpectedBtfType::type_id: u32
 pub aya_obj::btf::BtfError::UnknownBtfType
@@ -51,6 +50,7 @@ impl core::marker::Freeze for aya_obj::btf::BtfError
 impl core::marker::Send for aya_obj::btf::BtfError
 impl core::marker::Sync for aya_obj::btf::BtfError
 impl core::marker::Unpin for aya_obj::btf::BtfError
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfError
 impl<T, U> core::convert::Into<U> for aya_obj::btf::BtfError where U: core::convert::From<T>
@@ -112,6 +112,7 @@ impl core::marker::Freeze for aya_obj::btf::BtfKind
 impl core::marker::Send for aya_obj::btf::BtfKind
 impl core::marker::Sync for aya_obj::btf::BtfKind
 impl core::marker::Unpin for aya_obj::btf::BtfKind
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfKind
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfKind
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfKind
 impl<T, U> core::convert::Into<U> for aya_obj::btf::BtfKind where U: core::convert::From<T>
@@ -167,6 +168,7 @@ impl core::marker::Freeze for aya_obj::btf::BtfType
 impl core::marker::Send for aya_obj::btf::BtfType
 impl core::marker::Sync for aya_obj::btf::BtfType
 impl core::marker::Unpin for aya_obj::btf::BtfType
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfType
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfType
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfType
 impl<T, U> core::convert::Into<U> for aya_obj::btf::BtfType where U: core::convert::From<T>
@@ -210,6 +212,7 @@ impl core::marker::Freeze for aya_obj::btf::FuncLinkage
 impl core::marker::Send for aya_obj::btf::FuncLinkage
 impl core::marker::Sync for aya_obj::btf::FuncLinkage
 impl core::marker::Unpin for aya_obj::btf::FuncLinkage
+impl core::marker::UnsafeUnpin for aya_obj::btf::FuncLinkage
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::FuncLinkage
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::FuncLinkage
 impl<T, U> core::convert::Into<U> for aya_obj::btf::FuncLinkage where U: core::convert::From<T>
@@ -254,6 +257,7 @@ impl core::marker::Freeze for aya_obj::btf::IntEncoding
 impl core::marker::Send for aya_obj::btf::IntEncoding
 impl core::marker::Sync for aya_obj::btf::IntEncoding
 impl core::marker::Unpin for aya_obj::btf::IntEncoding
+impl core::marker::UnsafeUnpin for aya_obj::btf::IntEncoding
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::IntEncoding
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::IntEncoding
 impl<T, U> core::convert::Into<U> for aya_obj::btf::IntEncoding where U: core::convert::From<T>
@@ -297,6 +301,7 @@ impl core::marker::Freeze for aya_obj::btf::VarLinkage
 impl core::marker::Send for aya_obj::btf::VarLinkage
 impl core::marker::Sync for aya_obj::btf::VarLinkage
 impl core::marker::Unpin for aya_obj::btf::VarLinkage
+impl core::marker::UnsafeUnpin for aya_obj::btf::VarLinkage
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::VarLinkage
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::VarLinkage
 impl<T, U> core::convert::Into<U> for aya_obj::btf::VarLinkage where U: core::convert::From<T>
@@ -330,6 +335,7 @@ impl core::marker::Freeze for aya_obj::btf::Array
 impl core::marker::Send for aya_obj::btf::Array
 impl core::marker::Sync for aya_obj::btf::Array
 impl core::marker::Unpin for aya_obj::btf::Array
+impl core::marker::UnsafeUnpin for aya_obj::btf::Array
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Array
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Array
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Array where U: core::convert::From<T>
@@ -374,6 +380,7 @@ impl core::marker::Freeze for aya_obj::btf::Btf
 impl core::marker::Send for aya_obj::btf::Btf
 impl core::marker::Sync for aya_obj::btf::Btf
 impl core::marker::Unpin for aya_obj::btf::Btf
+impl core::marker::UnsafeUnpin for aya_obj::btf::Btf
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Btf
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Btf
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Btf where U: core::convert::From<T>
@@ -402,7 +409,7 @@ pub fn aya_obj::btf::Btf::from(t: T) -> T
 pub aya_obj::btf::BtfEnum::name_offset: u32
 pub aya_obj::btf::BtfEnum::value: u32
 impl aya_obj::btf::BtfEnum
-pub fn aya_obj::btf::BtfEnum::new(name_offset: u32, value: u32) -> Self
+pub const fn aya_obj::btf::BtfEnum::new(name_offset: u32, value: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::BtfEnum
 pub fn aya_obj::btf::BtfEnum::clone(&self) -> aya_obj::btf::BtfEnum
 impl core::fmt::Debug for aya_obj::btf::BtfEnum
@@ -411,6 +418,7 @@ impl core::marker::Freeze for aya_obj::btf::BtfEnum
 impl core::marker::Send for aya_obj::btf::BtfEnum
 impl core::marker::Sync for aya_obj::btf::BtfEnum
 impl core::marker::Unpin for aya_obj::btf::BtfEnum
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfEnum
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfEnum
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfEnum
 impl<T, U> core::convert::Into<U> for aya_obj::btf::BtfEnum where U: core::convert::From<T>
@@ -437,7 +445,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::BtfEnum
 pub fn aya_obj::btf::BtfEnum::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::BtfEnum64
 impl aya_obj::btf::BtfEnum64
-pub fn aya_obj::btf::BtfEnum64::new(name_offset: u32, value: u64) -> Self
+pub const fn aya_obj::btf::BtfEnum64::new(name_offset: u32, value: u64) -> Self
 impl core::clone::Clone for aya_obj::btf::BtfEnum64
 pub fn aya_obj::btf::BtfEnum64::clone(&self) -> aya_obj::btf::BtfEnum64
 impl core::fmt::Debug for aya_obj::btf::BtfEnum64
@@ -447,6 +455,7 @@ impl core::marker::Freeze for aya_obj::btf::BtfEnum64
 impl core::marker::Send for aya_obj::btf::BtfEnum64
 impl core::marker::Sync for aya_obj::btf::BtfEnum64
 impl core::marker::Unpin for aya_obj::btf::BtfEnum64
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfEnum64
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfEnum64
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfEnum64
 impl<T, U> core::convert::Into<U> for aya_obj::btf::BtfEnum64 where U: core::convert::From<T>
@@ -480,6 +489,7 @@ impl core::marker::Freeze for aya_obj::btf::BtfExt
 impl core::marker::Send for aya_obj::btf::BtfExt
 impl core::marker::Sync for aya_obj::btf::BtfExt
 impl core::marker::Unpin for aya_obj::btf::BtfExt
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfExt
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfExt
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfExt
 impl<T, U> core::convert::Into<U> for aya_obj::btf::BtfExt where U: core::convert::From<T>
@@ -506,15 +516,15 @@ impl<T> core::convert::From<T> for aya_obj::btf::BtfExt
 pub fn aya_obj::btf::BtfExt::from(t: T) -> T
 pub struct aya_obj::btf::BtfFeatures
 impl aya_obj::btf::BtfFeatures
-pub fn aya_obj::btf::BtfFeatures::btf_datasec(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_datasec_zero(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_decl_tag(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_enum64(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_float(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_func(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_func_global(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_kind_func_proto(&self) -> bool
-pub fn aya_obj::btf::BtfFeatures::btf_type_tag(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_datasec(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_datasec_zero(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_decl_tag(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_enum64(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_float(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_func(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_func_global(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_kind_func_proto(&self) -> bool
+pub const fn aya_obj::btf::BtfFeatures::btf_type_tag(&self) -> bool
 impl core::default::Default for aya_obj::btf::BtfFeatures
 pub fn aya_obj::btf::BtfFeatures::default() -> aya_obj::btf::BtfFeatures
 impl core::fmt::Debug for aya_obj::btf::BtfFeatures
@@ -523,6 +533,7 @@ impl core::marker::Freeze for aya_obj::btf::BtfFeatures
 impl core::marker::Send for aya_obj::btf::BtfFeatures
 impl core::marker::Sync for aya_obj::btf::BtfFeatures
 impl core::marker::Unpin for aya_obj::btf::BtfFeatures
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfFeatures
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfFeatures
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfFeatures
 impl<T, U> core::convert::Into<U> for aya_obj::btf::BtfFeatures where U: core::convert::From<T>
@@ -552,6 +563,7 @@ impl core::marker::Freeze for aya_obj::btf::BtfParam
 impl core::marker::Send for aya_obj::btf::BtfParam
 impl core::marker::Sync for aya_obj::btf::BtfParam
 impl core::marker::Unpin for aya_obj::btf::BtfParam
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfParam
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfParam
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfParam
 impl<T, U> core::convert::Into<U> for aya_obj::btf::BtfParam where U: core::convert::From<T>
@@ -588,6 +600,7 @@ impl core::marker::Freeze for aya_obj::btf::BtfRelocationError
 impl core::marker::Send for aya_obj::btf::BtfRelocationError
 impl core::marker::Sync for aya_obj::btf::BtfRelocationError
 impl core::marker::Unpin for aya_obj::btf::BtfRelocationError
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfRelocationError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfRelocationError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfRelocationError
 impl<T, U> core::convert::Into<U> for aya_obj::btf::BtfRelocationError where U: core::convert::From<T>
@@ -617,6 +630,7 @@ impl core::marker::Freeze for aya_obj::btf::Const
 impl core::marker::Send for aya_obj::btf::Const
 impl core::marker::Sync for aya_obj::btf::Const
 impl core::marker::Unpin for aya_obj::btf::Const
+impl core::marker::UnsafeUnpin for aya_obj::btf::Const
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Const
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Const
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Const where U: core::convert::From<T>
@@ -643,7 +657,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Const
 pub fn aya_obj::btf::Const::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::DataSec
 impl aya_obj::btf::DataSec
-pub fn aya_obj::btf::DataSec::new(name_offset: u32, entries: alloc::vec::Vec<aya_obj::btf::DataSecEntry>, size: u32) -> Self
+pub const fn aya_obj::btf::DataSec::new(name_offset: u32, entries: alloc::vec::Vec<aya_obj::btf::DataSecEntry>, size: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::DataSec
 pub fn aya_obj::btf::DataSec::clone(&self) -> aya_obj::btf::DataSec
 impl core::fmt::Debug for aya_obj::btf::DataSec
@@ -652,6 +666,7 @@ impl core::marker::Freeze for aya_obj::btf::DataSec
 impl core::marker::Send for aya_obj::btf::DataSec
 impl core::marker::Sync for aya_obj::btf::DataSec
 impl core::marker::Unpin for aya_obj::btf::DataSec
+impl core::marker::UnsafeUnpin for aya_obj::btf::DataSec
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::DataSec
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::DataSec
 impl<T, U> core::convert::Into<U> for aya_obj::btf::DataSec where U: core::convert::From<T>
@@ -688,6 +703,7 @@ impl core::marker::Freeze for aya_obj::btf::DataSecEntry
 impl core::marker::Send for aya_obj::btf::DataSecEntry
 impl core::marker::Sync for aya_obj::btf::DataSecEntry
 impl core::marker::Unpin for aya_obj::btf::DataSecEntry
+impl core::marker::UnsafeUnpin for aya_obj::btf::DataSecEntry
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::DataSecEntry
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::DataSecEntry
 impl<T, U> core::convert::Into<U> for aya_obj::btf::DataSecEntry where U: core::convert::From<T>
@@ -714,7 +730,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::DataSecEntry
 pub fn aya_obj::btf::DataSecEntry::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::DeclTag
 impl aya_obj::btf::DeclTag
-pub fn aya_obj::btf::DeclTag::new(name_offset: u32, btf_type: u32, component_index: i32) -> Self
+pub const fn aya_obj::btf::DeclTag::new(name_offset: u32, btf_type: u32, component_index: i32) -> Self
 impl core::clone::Clone for aya_obj::btf::DeclTag
 pub fn aya_obj::btf::DeclTag::clone(&self) -> aya_obj::btf::DeclTag
 impl core::fmt::Debug for aya_obj::btf::DeclTag
@@ -723,6 +739,7 @@ impl core::marker::Freeze for aya_obj::btf::DeclTag
 impl core::marker::Send for aya_obj::btf::DeclTag
 impl core::marker::Sync for aya_obj::btf::DeclTag
 impl core::marker::Unpin for aya_obj::btf::DeclTag
+impl core::marker::UnsafeUnpin for aya_obj::btf::DeclTag
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::DeclTag
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::DeclTag
 impl<T, U> core::convert::Into<U> for aya_obj::btf::DeclTag where U: core::convert::From<T>
@@ -749,7 +766,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::DeclTag
 pub fn aya_obj::btf::DeclTag::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Enum
 impl aya_obj::btf::Enum
-pub fn aya_obj::btf::Enum::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum>) -> Self
+pub const fn aya_obj::btf::Enum::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum>) -> Self
 impl core::clone::Clone for aya_obj::btf::Enum
 pub fn aya_obj::btf::Enum::clone(&self) -> aya_obj::btf::Enum
 impl core::fmt::Debug for aya_obj::btf::Enum
@@ -758,6 +775,7 @@ impl core::marker::Freeze for aya_obj::btf::Enum
 impl core::marker::Send for aya_obj::btf::Enum
 impl core::marker::Sync for aya_obj::btf::Enum
 impl core::marker::Unpin for aya_obj::btf::Enum
+impl core::marker::UnsafeUnpin for aya_obj::btf::Enum
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Enum
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Enum
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Enum where U: core::convert::From<T>
@@ -784,7 +802,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Enum
 pub fn aya_obj::btf::Enum::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Enum64
 impl aya_obj::btf::Enum64
-pub fn aya_obj::btf::Enum64::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum64>) -> Self
+pub const fn aya_obj::btf::Enum64::new(name_offset: u32, signed: bool, variants: alloc::vec::Vec<aya_obj::btf::BtfEnum64>) -> Self
 impl core::clone::Clone for aya_obj::btf::Enum64
 pub fn aya_obj::btf::Enum64::clone(&self) -> aya_obj::btf::Enum64
 impl core::fmt::Debug for aya_obj::btf::Enum64
@@ -793,6 +811,7 @@ impl core::marker::Freeze for aya_obj::btf::Enum64
 impl core::marker::Send for aya_obj::btf::Enum64
 impl core::marker::Sync for aya_obj::btf::Enum64
 impl core::marker::Unpin for aya_obj::btf::Enum64
+impl core::marker::UnsafeUnpin for aya_obj::btf::Enum64
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Enum64
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Enum64
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Enum64 where U: core::convert::From<T>
@@ -819,7 +838,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Enum64
 pub fn aya_obj::btf::Enum64::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Float
 impl aya_obj::btf::Float
-pub fn aya_obj::btf::Float::new(name_offset: u32, size: u32) -> Self
+pub const fn aya_obj::btf::Float::new(name_offset: u32, size: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::Float
 pub fn aya_obj::btf::Float::clone(&self) -> aya_obj::btf::Float
 impl core::fmt::Debug for aya_obj::btf::Float
@@ -828,6 +847,7 @@ impl core::marker::Freeze for aya_obj::btf::Float
 impl core::marker::Send for aya_obj::btf::Float
 impl core::marker::Sync for aya_obj::btf::Float
 impl core::marker::Unpin for aya_obj::btf::Float
+impl core::marker::UnsafeUnpin for aya_obj::btf::Float
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Float
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Float
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Float where U: core::convert::From<T>
@@ -854,7 +874,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Float
 pub fn aya_obj::btf::Float::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Func
 impl aya_obj::btf::Func
-pub fn aya_obj::btf::Func::new(name_offset: u32, proto: u32, linkage: aya_obj::btf::FuncLinkage) -> Self
+pub const fn aya_obj::btf::Func::new(name_offset: u32, proto: u32, linkage: aya_obj::btf::FuncLinkage) -> Self
 impl core::clone::Clone for aya_obj::btf::Func
 pub fn aya_obj::btf::Func::clone(&self) -> aya_obj::btf::Func
 impl core::fmt::Debug for aya_obj::btf::Func
@@ -863,6 +883,7 @@ impl core::marker::Freeze for aya_obj::btf::Func
 impl core::marker::Send for aya_obj::btf::Func
 impl core::marker::Sync for aya_obj::btf::Func
 impl core::marker::Unpin for aya_obj::btf::Func
+impl core::marker::UnsafeUnpin for aya_obj::btf::Func
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Func
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Func
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Func where U: core::convert::From<T>
@@ -897,6 +918,7 @@ impl core::marker::Freeze for aya_obj::btf::FuncInfo
 impl core::marker::Send for aya_obj::btf::FuncInfo
 impl core::marker::Sync for aya_obj::btf::FuncInfo
 impl core::marker::Unpin for aya_obj::btf::FuncInfo
+impl core::marker::UnsafeUnpin for aya_obj::btf::FuncInfo
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::FuncInfo
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::FuncInfo
 impl<T, U> core::convert::Into<U> for aya_obj::btf::FuncInfo where U: core::convert::From<T>
@@ -923,7 +945,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::FuncInfo
 pub fn aya_obj::btf::FuncInfo::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::FuncProto
 impl aya_obj::btf::FuncProto
-pub fn aya_obj::btf::FuncProto::new(params: alloc::vec::Vec<aya_obj::btf::BtfParam>, return_type: u32) -> Self
+pub const fn aya_obj::btf::FuncProto::new(params: alloc::vec::Vec<aya_obj::btf::BtfParam>, return_type: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::FuncProto
 pub fn aya_obj::btf::FuncProto::clone(&self) -> aya_obj::btf::FuncProto
 impl core::fmt::Debug for aya_obj::btf::FuncProto
@@ -932,6 +954,7 @@ impl core::marker::Freeze for aya_obj::btf::FuncProto
 impl core::marker::Send for aya_obj::btf::FuncProto
 impl core::marker::Sync for aya_obj::btf::FuncProto
 impl core::marker::Unpin for aya_obj::btf::FuncProto
+impl core::marker::UnsafeUnpin for aya_obj::btf::FuncProto
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::FuncProto
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::FuncProto
 impl<T, U> core::convert::Into<U> for aya_obj::btf::FuncProto where U: core::convert::From<T>
@@ -961,7 +984,7 @@ pub aya_obj::btf::FuncSecInfo::func_info: alloc::vec::Vec<aya_obj::generated::bp
 pub aya_obj::btf::FuncSecInfo::num_info: u32
 impl aya_obj::btf::FuncSecInfo
 pub fn aya_obj::btf::FuncSecInfo::func_info_bytes(&self) -> alloc::vec::Vec<u8>
-pub fn aya_obj::btf::FuncSecInfo::len(&self) -> usize
+pub const fn aya_obj::btf::FuncSecInfo::len(&self) -> usize
 impl core::clone::Clone for aya_obj::btf::FuncSecInfo
 pub fn aya_obj::btf::FuncSecInfo::clone(&self) -> aya_obj::btf::FuncSecInfo
 impl core::default::Default for aya_obj::btf::FuncSecInfo
@@ -972,6 +995,7 @@ impl core::marker::Freeze for aya_obj::btf::FuncSecInfo
 impl core::marker::Send for aya_obj::btf::FuncSecInfo
 impl core::marker::Sync for aya_obj::btf::FuncSecInfo
 impl core::marker::Unpin for aya_obj::btf::FuncSecInfo
+impl core::marker::UnsafeUnpin for aya_obj::btf::FuncSecInfo
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::FuncSecInfo
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::FuncSecInfo
 impl<T, U> core::convert::Into<U> for aya_obj::btf::FuncSecInfo where U: core::convert::From<T>
@@ -1005,6 +1029,7 @@ impl core::marker::Freeze for aya_obj::btf::Fwd
 impl core::marker::Send for aya_obj::btf::Fwd
 impl core::marker::Sync for aya_obj::btf::Fwd
 impl core::marker::Unpin for aya_obj::btf::Fwd
+impl core::marker::UnsafeUnpin for aya_obj::btf::Fwd
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Fwd
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Fwd
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Fwd where U: core::convert::From<T>
@@ -1031,7 +1056,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Fwd
 pub fn aya_obj::btf::Fwd::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Int
 impl aya_obj::btf::Int
-pub fn aya_obj::btf::Int::new(name_offset: u32, size: u32, encoding: aya_obj::btf::IntEncoding, offset: u32) -> Self
+pub const fn aya_obj::btf::Int::new(name_offset: u32, size: u32, encoding: aya_obj::btf::IntEncoding, offset: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::Int
 pub fn aya_obj::btf::Int::clone(&self) -> aya_obj::btf::Int
 impl core::fmt::Debug for aya_obj::btf::Int
@@ -1040,6 +1065,7 @@ impl core::marker::Freeze for aya_obj::btf::Int
 impl core::marker::Send for aya_obj::btf::Int
 impl core::marker::Sync for aya_obj::btf::Int
 impl core::marker::Unpin for aya_obj::btf::Int
+impl core::marker::UnsafeUnpin for aya_obj::btf::Int
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Int
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Int
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Int where U: core::convert::From<T>
@@ -1068,7 +1094,7 @@ pub struct aya_obj::btf::LineSecInfo
 pub aya_obj::btf::LineSecInfo::line_info: alloc::vec::Vec<aya_obj::generated::bpf_line_info>
 pub aya_obj::btf::LineSecInfo::num_info: u32
 impl aya_obj::btf::LineSecInfo
-pub fn aya_obj::btf::LineSecInfo::len(&self) -> usize
+pub const fn aya_obj::btf::LineSecInfo::len(&self) -> usize
 pub fn aya_obj::btf::LineSecInfo::line_info_bytes(&self) -> alloc::vec::Vec<u8>
 impl core::clone::Clone for aya_obj::btf::LineSecInfo
 pub fn aya_obj::btf::LineSecInfo::clone(&self) -> aya_obj::btf::LineSecInfo
@@ -1080,6 +1106,7 @@ impl core::marker::Freeze for aya_obj::btf::LineSecInfo
 impl core::marker::Send for aya_obj::btf::LineSecInfo
 impl core::marker::Sync for aya_obj::btf::LineSecInfo
 impl core::marker::Unpin for aya_obj::btf::LineSecInfo
+impl core::marker::UnsafeUnpin for aya_obj::btf::LineSecInfo
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::LineSecInfo
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::LineSecInfo
 impl<T, U> core::convert::Into<U> for aya_obj::btf::LineSecInfo where U: core::convert::From<T>
@@ -1106,7 +1133,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::LineSecInfo
 pub fn aya_obj::btf::LineSecInfo::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Ptr
 impl aya_obj::btf::Ptr
-pub fn aya_obj::btf::Ptr::new(name_offset: u32, btf_type: u32) -> Self
+pub const fn aya_obj::btf::Ptr::new(name_offset: u32, btf_type: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::Ptr
 pub fn aya_obj::btf::Ptr::clone(&self) -> aya_obj::btf::Ptr
 impl core::fmt::Debug for aya_obj::btf::Ptr
@@ -1115,6 +1142,7 @@ impl core::marker::Freeze for aya_obj::btf::Ptr
 impl core::marker::Send for aya_obj::btf::Ptr
 impl core::marker::Sync for aya_obj::btf::Ptr
 impl core::marker::Unpin for aya_obj::btf::Ptr
+impl core::marker::UnsafeUnpin for aya_obj::btf::Ptr
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Ptr
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Ptr
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Ptr where U: core::convert::From<T>
@@ -1148,6 +1176,7 @@ impl core::marker::Freeze for aya_obj::btf::Restrict
 impl core::marker::Send for aya_obj::btf::Restrict
 impl core::marker::Sync for aya_obj::btf::Restrict
 impl core::marker::Unpin for aya_obj::btf::Restrict
+impl core::marker::UnsafeUnpin for aya_obj::btf::Restrict
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Restrict
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Restrict
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Restrict where U: core::convert::From<T>
@@ -1181,6 +1210,7 @@ impl core::marker::Freeze for aya_obj::btf::Struct
 impl core::marker::Send for aya_obj::btf::Struct
 impl core::marker::Sync for aya_obj::btf::Struct
 impl core::marker::Unpin for aya_obj::btf::Struct
+impl core::marker::UnsafeUnpin for aya_obj::btf::Struct
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Struct
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Struct
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Struct where U: core::convert::From<T>
@@ -1207,7 +1237,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Struct
 pub fn aya_obj::btf::Struct::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::TypeTag
 impl aya_obj::btf::TypeTag
-pub fn aya_obj::btf::TypeTag::new(name_offset: u32, btf_type: u32) -> Self
+pub const fn aya_obj::btf::TypeTag::new(name_offset: u32, btf_type: u32) -> Self
 impl core::clone::Clone for aya_obj::btf::TypeTag
 pub fn aya_obj::btf::TypeTag::clone(&self) -> aya_obj::btf::TypeTag
 impl core::fmt::Debug for aya_obj::btf::TypeTag
@@ -1216,6 +1246,7 @@ impl core::marker::Freeze for aya_obj::btf::TypeTag
 impl core::marker::Send for aya_obj::btf::TypeTag
 impl core::marker::Sync for aya_obj::btf::TypeTag
 impl core::marker::Unpin for aya_obj::btf::TypeTag
+impl core::marker::UnsafeUnpin for aya_obj::btf::TypeTag
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::TypeTag
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::TypeTag
 impl<T, U> core::convert::Into<U> for aya_obj::btf::TypeTag where U: core::convert::From<T>
@@ -1249,6 +1280,7 @@ impl core::marker::Freeze for aya_obj::btf::Typedef
 impl core::marker::Send for aya_obj::btf::Typedef
 impl core::marker::Sync for aya_obj::btf::Typedef
 impl core::marker::Unpin for aya_obj::btf::Typedef
+impl core::marker::UnsafeUnpin for aya_obj::btf::Typedef
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Typedef
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Typedef
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Typedef where U: core::convert::From<T>
@@ -1282,6 +1314,7 @@ impl core::marker::Freeze for aya_obj::btf::Union
 impl core::marker::Send for aya_obj::btf::Union
 impl core::marker::Sync for aya_obj::btf::Union
 impl core::marker::Unpin for aya_obj::btf::Union
+impl core::marker::UnsafeUnpin for aya_obj::btf::Union
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Union
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Union
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Union where U: core::convert::From<T>
@@ -1308,7 +1341,7 @@ impl<T> core::convert::From<T> for aya_obj::btf::Union
 pub fn aya_obj::btf::Union::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::btf::Var
 impl aya_obj::btf::Var
-pub fn aya_obj::btf::Var::new(name_offset: u32, btf_type: u32, linkage: aya_obj::btf::VarLinkage) -> Self
+pub const fn aya_obj::btf::Var::new(name_offset: u32, btf_type: u32, linkage: aya_obj::btf::VarLinkage) -> Self
 impl core::clone::Clone for aya_obj::btf::Var
 pub fn aya_obj::btf::Var::clone(&self) -> aya_obj::btf::Var
 impl core::fmt::Debug for aya_obj::btf::Var
@@ -1317,6 +1350,7 @@ impl core::marker::Freeze for aya_obj::btf::Var
 impl core::marker::Send for aya_obj::btf::Var
 impl core::marker::Sync for aya_obj::btf::Var
 impl core::marker::Unpin for aya_obj::btf::Var
+impl core::marker::UnsafeUnpin for aya_obj::btf::Var
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Var
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Var
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Var where U: core::convert::From<T>
@@ -1350,6 +1384,7 @@ impl core::marker::Freeze for aya_obj::btf::Volatile
 impl core::marker::Send for aya_obj::btf::Volatile
 impl core::marker::Sync for aya_obj::btf::Volatile
 impl core::marker::Unpin for aya_obj::btf::Volatile
+impl core::marker::UnsafeUnpin for aya_obj::btf::Volatile
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::Volatile
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::Volatile
 impl<T, U> core::convert::Into<U> for aya_obj::btf::Volatile where U: core::convert::From<T>
@@ -1418,6 +1453,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_1 where U: core::convert::From<T>
@@ -1462,6 +1498,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_16
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_16
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_16
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_16
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_16
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_16
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_16
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_16 where U: core::convert::From<T>
@@ -1504,6 +1541,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_18
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_18
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_18
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_18
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_18
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_18
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_18
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_18 where U: core::convert::From<T>
@@ -1545,6 +1583,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_20
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_20
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_20
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_20
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_20
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_20
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_20
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_20 where U: core::convert::From<T>
@@ -1587,6 +1626,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_22
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_22
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_22
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_22
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_22
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_22
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_22
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_22 where U: core::convert::From<T>
@@ -1631,6 +1671,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_23
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_23
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_23
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_23
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_23
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_23
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_23
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_23 where U: core::convert::From<T>
@@ -1673,6 +1714,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_25
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_25
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_25
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_25
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_25
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_25
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_25
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_25 where U: core::convert::From<T>
@@ -1715,6 +1757,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_28
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_28
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_28
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_28
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_28
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_28
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_28
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_28 where U: core::convert::From<T>
@@ -1763,6 +1806,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_29
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_29
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_29
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_29
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_29
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_29
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_29
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_29 where U: core::convert::From<T>
@@ -1819,6 +1863,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_30
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_30
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_30
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_30
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_30
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_30
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_30
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_30 where U: core::convert::From<T>
@@ -1873,6 +1918,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_31
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_31
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_31
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_31
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_31
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_31
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_31
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_31 where U: core::convert::From<T>
@@ -1914,6 +1960,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_33
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_33
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_33
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_33
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_33
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_33
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_33
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_33 where U: core::convert::From<T>
@@ -1956,6 +2003,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_34
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_34
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_34
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_34
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_34
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_34
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_34
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_34 where U: core::convert::From<T>
@@ -1999,6 +2047,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_35
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_35
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_35
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_35
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_35
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_35
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_35
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_35 where U: core::convert::From<T>
@@ -2041,6 +2090,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_36
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_36
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_36
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_36
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_36
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_36
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_36
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_36 where U: core::convert::From<T>
@@ -2086,6 +2136,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_37
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_37
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_37
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_37
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_37
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_37
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_37
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_37 where U: core::convert::From<T>
@@ -2136,6 +2187,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_38
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_38
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_38
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_38
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_38
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_38
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_38
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_38 where U: core::convert::From<T>
@@ -2179,6 +2231,7 @@ impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_39
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_39
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_39
 impl core::marker::Unpin for aya_obj::generated::_bindgen_ty_39
+impl core::marker::UnsafeUnpin for aya_obj::generated::_bindgen_ty_39
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty_39
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_39
 impl<T, U> core::convert::Into<U> for aya_obj::generated::_bindgen_ty_39 where U: core::convert::From<T>
@@ -2287,6 +2340,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attach_type
 impl core::marker::Send for aya_obj::generated::bpf_attach_type
 impl core::marker::Sync for aya_obj::generated::bpf_attach_type
 impl core::marker::Unpin for aya_obj::generated::bpf_attach_type
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attach_type
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attach_type
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attach_type
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attach_type where U: core::convert::From<T>
@@ -2332,6 +2386,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_cgroup_iter_order
 impl core::marker::Send for aya_obj::generated::bpf_cgroup_iter_order
 impl core::marker::Sync for aya_obj::generated::bpf_cgroup_iter_order
 impl core::marker::Unpin for aya_obj::generated::bpf_cgroup_iter_order
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_cgroup_iter_order
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_cgroup_iter_order
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_cgroup_iter_order
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_cgroup_iter_order where U: core::convert::From<T>
@@ -2412,6 +2467,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_cmd
 impl core::marker::Send for aya_obj::generated::bpf_cmd
 impl core::marker::Sync for aya_obj::generated::bpf_cmd
 impl core::marker::Unpin for aya_obj::generated::bpf_cmd
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_cmd
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_cmd
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_cmd
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_cmd where U: core::convert::From<T>
@@ -2665,6 +2721,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_func_id
 impl core::marker::Send for aya_obj::generated::bpf_func_id
 impl core::marker::Sync for aya_obj::generated::bpf_func_id
 impl core::marker::Unpin for aya_obj::generated::bpf_func_id
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_func_id
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_func_id
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_func_id
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_func_id where U: core::convert::From<T>
@@ -2723,6 +2780,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_type
 impl core::marker::Send for aya_obj::generated::bpf_link_type
 impl core::marker::Sync for aya_obj::generated::bpf_link_type
 impl core::marker::Unpin for aya_obj::generated::bpf_link_type
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_type
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_type
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_type
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_type where U: core::convert::From<T>
@@ -2805,6 +2863,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_map_type
 impl core::marker::Send for aya_obj::generated::bpf_map_type
 impl core::marker::Sync for aya_obj::generated::bpf_map_type
 impl core::marker::Unpin for aya_obj::generated::bpf_map_type
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_map_type
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_map_type
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_map_type
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_map_type where U: core::convert::From<T>
@@ -2852,6 +2911,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_perf_event_type
 impl core::marker::Send for aya_obj::generated::bpf_perf_event_type
 impl core::marker::Sync for aya_obj::generated::bpf_perf_event_type
 impl core::marker::Unpin for aya_obj::generated::bpf_perf_event_type
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_perf_event_type
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_perf_event_type
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_perf_event_type
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_perf_event_type where U: core::convert::From<T>
@@ -2929,6 +2989,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_prog_type
 impl core::marker::Send for aya_obj::generated::bpf_prog_type
 impl core::marker::Sync for aya_obj::generated::bpf_prog_type
 impl core::marker::Unpin for aya_obj::generated::bpf_prog_type
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_prog_type
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_prog_type
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_prog_type
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_prog_type where U: core::convert::From<T>
@@ -2970,6 +3031,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_stats_type
 impl core::marker::Send for aya_obj::generated::bpf_stats_type
 impl core::marker::Sync for aya_obj::generated::bpf_stats_type
 impl core::marker::Unpin for aya_obj::generated::bpf_stats_type
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_stats_type
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_stats_type
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_stats_type
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_stats_type where U: core::convert::From<T>
@@ -3016,6 +3078,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_task_fd_type
 impl core::marker::Send for aya_obj::generated::bpf_task_fd_type
 impl core::marker::Sync for aya_obj::generated::bpf_task_fd_type
 impl core::marker::Unpin for aya_obj::generated::bpf_task_fd_type
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_task_fd_type
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_task_fd_type
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_task_fd_type
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_task_fd_type where U: core::convert::From<T>
@@ -3059,6 +3122,7 @@ impl core::marker::Freeze for aya_obj::generated::btf_func_linkage
 impl core::marker::Send for aya_obj::generated::btf_func_linkage
 impl core::marker::Sync for aya_obj::generated::btf_func_linkage
 impl core::marker::Unpin for aya_obj::generated::btf_func_linkage
+impl core::marker::UnsafeUnpin for aya_obj::generated::btf_func_linkage
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::btf_func_linkage
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::btf_func_linkage
 impl<T, U> core::convert::Into<U> for aya_obj::generated::btf_func_linkage where U: core::convert::From<T>
@@ -3107,6 +3171,7 @@ impl core::marker::Freeze for aya_obj::generated::nf_inet_hooks
 impl core::marker::Send for aya_obj::generated::nf_inet_hooks
 impl core::marker::Sync for aya_obj::generated::nf_inet_hooks
 impl core::marker::Unpin for aya_obj::generated::nf_inet_hooks
+impl core::marker::UnsafeUnpin for aya_obj::generated::nf_inet_hooks
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::nf_inet_hooks
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::nf_inet_hooks
 impl<T, U> core::convert::Into<U> for aya_obj::generated::nf_inet_hooks where U: core::convert::From<T>
@@ -3154,6 +3219,7 @@ impl core::marker::Freeze for aya_obj::generated::nlmsgerr_attrs
 impl core::marker::Send for aya_obj::generated::nlmsgerr_attrs
 impl core::marker::Sync for aya_obj::generated::nlmsgerr_attrs
 impl core::marker::Unpin for aya_obj::generated::nlmsgerr_attrs
+impl core::marker::UnsafeUnpin for aya_obj::generated::nlmsgerr_attrs
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::nlmsgerr_attrs
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::nlmsgerr_attrs
 impl<T, U> core::convert::Into<U> for aya_obj::generated::nlmsgerr_attrs where U: core::convert::From<T>
@@ -3220,6 +3286,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_event_sample_format
 impl core::marker::Send for aya_obj::generated::perf_event_sample_format
 impl core::marker::Sync for aya_obj::generated::perf_event_sample_format
 impl core::marker::Unpin for aya_obj::generated::perf_event_sample_format
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_event_sample_format
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_event_sample_format
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_event_sample_format
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_event_sample_format where U: core::convert::From<T>
@@ -3282,6 +3349,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_event_type
 impl core::marker::Send for aya_obj::generated::perf_event_type
 impl core::marker::Sync for aya_obj::generated::perf_event_type
 impl core::marker::Unpin for aya_obj::generated::perf_event_type
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_event_type
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_event_type
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_event_type
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_event_type where U: core::convert::From<T>
@@ -3330,6 +3398,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_hw_cache_id
 impl core::marker::Send for aya_obj::generated::perf_hw_cache_id
 impl core::marker::Sync for aya_obj::generated::perf_hw_cache_id
 impl core::marker::Unpin for aya_obj::generated::perf_hw_cache_id
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_hw_cache_id
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_hw_cache_id
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_hw_cache_id
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_hw_cache_id where U: core::convert::From<T>
@@ -3374,6 +3443,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_hw_cache_op_id
 impl core::marker::Send for aya_obj::generated::perf_hw_cache_op_id
 impl core::marker::Sync for aya_obj::generated::perf_hw_cache_op_id
 impl core::marker::Unpin for aya_obj::generated::perf_hw_cache_op_id
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_hw_cache_op_id
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_hw_cache_op_id
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_hw_cache_op_id
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_hw_cache_op_id where U: core::convert::From<T>
@@ -3417,6 +3487,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_hw_cache_op_result_id
 impl core::marker::Send for aya_obj::generated::perf_hw_cache_op_result_id
 impl core::marker::Sync for aya_obj::generated::perf_hw_cache_op_result_id
 impl core::marker::Unpin for aya_obj::generated::perf_hw_cache_op_result_id
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_hw_cache_op_result_id
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_hw_cache_op_result_id
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_hw_cache_op_result_id
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_hw_cache_op_result_id where U: core::convert::From<T>
@@ -3468,6 +3539,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_hw_id
 impl core::marker::Send for aya_obj::generated::perf_hw_id
 impl core::marker::Sync for aya_obj::generated::perf_hw_id
 impl core::marker::Unpin for aya_obj::generated::perf_hw_id
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_hw_id
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_hw_id
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_hw_id
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_hw_id where U: core::convert::From<T>
@@ -3521,6 +3593,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_sw_ids
 impl core::marker::Send for aya_obj::generated::perf_sw_ids
 impl core::marker::Sync for aya_obj::generated::perf_sw_ids
 impl core::marker::Unpin for aya_obj::generated::perf_sw_ids
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_sw_ids
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_sw_ids
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_sw_ids
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_sw_ids where U: core::convert::From<T>
@@ -3568,6 +3641,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_type_id
 impl core::marker::Send for aya_obj::generated::perf_type_id
 impl core::marker::Sync for aya_obj::generated::perf_type_id
 impl core::marker::Unpin for aya_obj::generated::perf_type_id
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_type_id
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_type_id
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_type_id
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_type_id where U: core::convert::From<T>
@@ -3620,6 +3694,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr
 impl core::marker::Send for aya_obj::generated::bpf_attr
 impl core::marker::Sync for aya_obj::generated::bpf_attr
 impl core::marker::Unpin for aya_obj::generated::bpf_attr
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr where U: core::convert::From<T>
@@ -3654,6 +3729,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_10__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1 where U: core::convert::From<T>
@@ -3688,6 +3764,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_10__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2 where U: core::convert::From<T>
@@ -3722,6 +3799,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1 where U: core::convert::From<T>
@@ -3756,6 +3834,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2 where U: core::convert::From<T>
@@ -3797,6 +3876,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3 where U: core::convert::From<T>
@@ -3831,6 +3911,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1 where U: core::convert::From<T>
@@ -3865,6 +3946,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1 where U: core::convert::From<T>
@@ -3899,6 +3981,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_15__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1 where U: core::convert::From<T>
@@ -3933,6 +4016,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_15__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2 where U: core::convert::From<T>
@@ -3967,6 +4051,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_2__bindge
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1 where U: core::convert::From<T>
@@ -4001,6 +4086,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_4__bindge
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1 where U: core::convert::From<T>
@@ -4035,6 +4121,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_6__bindge
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1 where U: core::convert::From<T>
@@ -4069,6 +4156,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_6__bindge
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2 where U: core::convert::From<T>
@@ -4106,6 +4194,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_8__bindge
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1 where U: core::convert::From<T>
@@ -4140,6 +4229,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1 where U: core::convert::From<T>
@@ -4174,6 +4264,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_devmap_val__bindgen_ty_1 where U: core::convert::From<T>
@@ -4219,6 +4310,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1 where U: core::convert::From<T>
@@ -4255,6 +4347,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1 where U: core::convert::From<T>
@@ -4288,6 +4381,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1 where U: core::convert::From<T>
@@ -4322,6 +4416,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2 where U: core::convert::From<T>
@@ -4356,6 +4451,7 @@ impl core::marker::Freeze for aya_obj::generated::btf_type__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::btf_type__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::btf_type__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::btf_type__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::btf_type__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::btf_type__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::btf_type__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::btf_type__bindgen_ty_1 where U: core::convert::From<T>
@@ -4390,6 +4486,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_event_attr__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::perf_event_attr__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::perf_event_attr__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::perf_event_attr__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_event_attr__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_event_attr__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_event_attr__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_event_attr__bindgen_ty_1 where U: core::convert::From<T>
@@ -4424,6 +4521,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_event_attr__bindgen_ty_2
 impl core::marker::Send for aya_obj::generated::perf_event_attr__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::perf_event_attr__bindgen_ty_2
 impl core::marker::Unpin for aya_obj::generated::perf_event_attr__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_event_attr__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_event_attr__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_event_attr__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_event_attr__bindgen_ty_2 where U: core::convert::From<T>
@@ -4460,6 +4558,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_event_attr__bindgen_ty_3
 impl core::marker::Send for aya_obj::generated::perf_event_attr__bindgen_ty_3
 impl core::marker::Sync for aya_obj::generated::perf_event_attr__bindgen_ty_3
 impl core::marker::Unpin for aya_obj::generated::perf_event_attr__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_event_attr__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_event_attr__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_event_attr__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_event_attr__bindgen_ty_3 where U: core::convert::From<T>
@@ -4496,6 +4595,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_event_attr__bindgen_ty_4
 impl core::marker::Send for aya_obj::generated::perf_event_attr__bindgen_ty_4
 impl core::marker::Sync for aya_obj::generated::perf_event_attr__bindgen_ty_4
 impl core::marker::Unpin for aya_obj::generated::perf_event_attr__bindgen_ty_4
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_event_attr__bindgen_ty_4
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_event_attr__bindgen_ty_4
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_event_attr__bindgen_ty_4
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_event_attr__bindgen_ty_4 where U: core::convert::From<T>
@@ -4530,6 +4630,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_event_mmap_page__bindgen_
 impl core::marker::Send for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1 where U: core::convert::From<T>
@@ -4587,6 +4688,7 @@ impl<Storage> core::marker::Freeze for aya_obj::generated::__BindgenBitfieldUnit
 impl<Storage> core::marker::Send for aya_obj::generated::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Send
 impl<Storage> core::marker::Sync for aya_obj::generated::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Sync
 impl<Storage> core::marker::Unpin for aya_obj::generated::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Unpin
+impl<Storage> core::marker::UnsafeUnpin for aya_obj::generated::__BindgenBitfieldUnit<Storage> where Storage: core::marker::UnsafeUnpin
 impl<Storage> core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::__BindgenBitfieldUnit<Storage> where Storage: core::panic::unwind_safe::RefUnwindSafe
 impl<Storage> core::panic::unwind_safe::UnwindSafe for aya_obj::generated::__BindgenBitfieldUnit<Storage> where Storage: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya_obj::generated::__BindgenBitfieldUnit<Storage> where U: core::convert::From<T>
@@ -4626,6 +4728,7 @@ impl<T> core::marker::Freeze for aya_obj::generated::__IncompleteArrayField<T> w
 impl<T> core::marker::Send for aya_obj::generated::__IncompleteArrayField<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_obj::generated::__IncompleteArrayField<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya_obj::generated::__IncompleteArrayField<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya_obj::generated::__IncompleteArrayField<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::__IncompleteArrayField<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_obj::generated::__IncompleteArrayField<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya_obj::generated::__IncompleteArrayField<T> where U: core::convert::From<T>
@@ -4670,6 +4773,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_1 where U: core::convert::From<T>
@@ -4716,6 +4820,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_10
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_10
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_10
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_10
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_10
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_10
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_10
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_10 where U: core::convert::From<T>
@@ -4757,6 +4862,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_11
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_11
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_11
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_11
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_11
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_11
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_11
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_11 where U: core::convert::From<T>
@@ -4799,6 +4905,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_12
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_12
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_12
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_12
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_12
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_12
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_12
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_12 where U: core::convert::From<T>
@@ -4842,6 +4949,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_13
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_13
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_13
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_13
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_13
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_13
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_13
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_13 where U: core::convert::From<T>
@@ -4879,6 +4987,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14 where U: core::convert::From<T>
@@ -4915,6 +5024,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1 where U: core::convert::From<T>
@@ -4950,6 +5060,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2 where U: core::convert::From<T>
@@ -4989,6 +5100,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3 where U: core::convert::From<T>
@@ -5025,6 +5137,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4 where U: core::convert::From<T>
@@ -5063,6 +5176,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5 where U: core::convert::From<T>
@@ -5097,6 +5211,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6 where U: core::convert::From<T>
@@ -5138,6 +5253,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7 where U: core::convert::From<T>
@@ -5172,6 +5288,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindg
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8 where U: core::convert::From<T>
@@ -5208,6 +5325,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_15
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_15
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_15
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_15
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_15
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_15
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_15
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_15 where U: core::convert::From<T>
@@ -5243,6 +5361,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_16
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_16
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_16
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_16
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_16
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_16
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_16
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_16 where U: core::convert::From<T>
@@ -5278,6 +5397,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_17
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_17
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_17
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_17
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_17
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_17
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_17
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_17 where U: core::convert::From<T>
@@ -5314,6 +5434,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_18
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_18
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_18
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_18
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_18
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_18
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_18
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_18 where U: core::convert::From<T>
@@ -5351,6 +5472,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_19
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_19
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_19
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_19
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_19
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_19
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_19
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_19 where U: core::convert::From<T>
@@ -5387,6 +5509,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_2
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_2
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_2 where U: core::convert::From<T>
@@ -5423,6 +5546,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_20
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_20
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_20
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_20
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_20
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_20
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_20
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_20 where U: core::convert::From<T>
@@ -5465,6 +5589,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_3
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_3
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_3
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_3 where U: core::convert::From<T>
@@ -5524,6 +5649,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_4
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_4
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_4
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_4
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_4
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_4
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_4
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_4 where U: core::convert::From<T>
@@ -5562,6 +5688,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_5
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_5
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_5
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_5
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_5
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_5
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_5
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_5 where U: core::convert::From<T>
@@ -5601,6 +5728,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_6
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_6
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_6
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_6
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_6
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_6
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_6
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_6 where U: core::convert::From<T>
@@ -5650,6 +5778,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_7
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_7
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_7
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_7
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_7
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_7
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_7
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_7 where U: core::convert::From<T>
@@ -5685,6 +5814,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_8
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_8
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_8
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_8
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_8
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_8
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_8
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_8 where U: core::convert::From<T>
@@ -5722,6 +5852,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_9
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_9
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_9
 impl core::marker::Unpin for aya_obj::generated::bpf_attr__bindgen_ty_9
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_attr__bindgen_ty_9
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_9
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_9
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_attr__bindgen_ty_9 where U: core::convert::From<T>
@@ -5762,6 +5893,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_btf_info
 impl core::marker::Send for aya_obj::generated::bpf_btf_info
 impl core::marker::Sync for aya_obj::generated::bpf_btf_info
 impl core::marker::Unpin for aya_obj::generated::bpf_btf_info
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_btf_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_btf_info
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_btf_info
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_btf_info where U: core::convert::From<T>
@@ -5800,6 +5932,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_core_relo
 impl core::marker::Send for aya_obj::generated::bpf_core_relo
 impl core::marker::Sync for aya_obj::generated::bpf_core_relo
 impl core::marker::Unpin for aya_obj::generated::bpf_core_relo
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_core_relo
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_core_relo
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_core_relo
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_core_relo where U: core::convert::From<T>
@@ -5834,6 +5967,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_cpumap_val
 impl core::marker::Send for aya_obj::generated::bpf_cpumap_val
 impl core::marker::Sync for aya_obj::generated::bpf_cpumap_val
 impl core::marker::Unpin for aya_obj::generated::bpf_cpumap_val
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_cpumap_val
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_cpumap_val
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_cpumap_val
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_cpumap_val where U: core::convert::From<T>
@@ -5868,6 +6002,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_devmap_val
 impl core::marker::Send for aya_obj::generated::bpf_devmap_val
 impl core::marker::Sync for aya_obj::generated::bpf_devmap_val
 impl core::marker::Unpin for aya_obj::generated::bpf_devmap_val
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_devmap_val
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_devmap_val
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_devmap_val
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_devmap_val where U: core::convert::From<T>
@@ -5904,6 +6039,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_func_info
 impl core::marker::Send for aya_obj::generated::bpf_func_info
 impl core::marker::Sync for aya_obj::generated::bpf_func_info
 impl core::marker::Unpin for aya_obj::generated::bpf_func_info
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_func_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_func_info
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_func_info
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_func_info where U: core::convert::From<T>
@@ -5953,6 +6089,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_insn
 impl core::marker::Send for aya_obj::generated::bpf_insn
 impl core::marker::Sync for aya_obj::generated::bpf_insn
 impl core::marker::Unpin for aya_obj::generated::bpf_insn
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_insn
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_insn
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_insn
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_insn where U: core::convert::From<T>
@@ -5991,6 +6128,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_line_info
 impl core::marker::Send for aya_obj::generated::bpf_line_info
 impl core::marker::Sync for aya_obj::generated::bpf_line_info
 impl core::marker::Unpin for aya_obj::generated::bpf_line_info
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_line_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_line_info
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_line_info
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_line_info where U: core::convert::From<T>
@@ -6027,6 +6165,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info
 impl core::marker::Send for aya_obj::generated::bpf_link_info
 impl core::marker::Sync for aya_obj::generated::bpf_link_info
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info where U: core::convert::From<T>
@@ -6063,6 +6202,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1 where U: core::convert::From<T>
@@ -6105,6 +6245,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10 where U: core::convert::From<T>
@@ -6143,6 +6284,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11 where U: core::convert::From<T>
@@ -6181,6 +6323,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1 where U: core::convert::From<T>
@@ -6221,6 +6364,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2 where U: core::convert::From<T>
@@ -6262,6 +6406,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3 where U: core::convert::From<T>
@@ -6303,6 +6448,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4 where U: core::convert::From<T>
@@ -6339,6 +6485,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12 where U: core::convert::From<T>
@@ -6375,6 +6522,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13 where U: core::convert::From<T>
@@ -6412,6 +6560,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2 where U: core::convert::From<T>
@@ -6448,6 +6597,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3 where U: core::convert::From<T>
@@ -6484,6 +6634,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4 where U: core::convert::From<T>
@@ -6519,6 +6670,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1 where U: core::convert::From<T>
@@ -6555,6 +6707,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1 where U: core::convert::From<T>
@@ -6591,6 +6744,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2 where U: core::convert::From<T>
@@ -6627,6 +6781,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5 where U: core::convert::From<T>
@@ -6662,6 +6817,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6 where U: core::convert::From<T>
@@ -6697,6 +6853,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7 where U: core::convert::From<T>
@@ -6735,6 +6892,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8 where U: core::convert::From<T>
@@ -6774,6 +6932,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__b
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9 where U: core::convert::From<T>
@@ -6807,6 +6966,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_lpm_trie_key
 impl core::marker::Send for aya_obj::generated::bpf_lpm_trie_key
 impl core::marker::Sync for aya_obj::generated::bpf_lpm_trie_key
 impl core::marker::Unpin for aya_obj::generated::bpf_lpm_trie_key
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_lpm_trie_key
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_lpm_trie_key
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_lpm_trie_key
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_lpm_trie_key where U: core::convert::From<T>
@@ -6851,6 +7011,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_map_info
 impl core::marker::Send for aya_obj::generated::bpf_map_info
 impl core::marker::Sync for aya_obj::generated::bpf_map_info
 impl core::marker::Unpin for aya_obj::generated::bpf_map_info
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_map_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_map_info
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_map_info
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_map_info where U: core::convert::From<T>
@@ -6930,6 +7091,7 @@ impl core::marker::Freeze for aya_obj::generated::bpf_prog_info
 impl core::marker::Send for aya_obj::generated::bpf_prog_info
 impl core::marker::Sync for aya_obj::generated::bpf_prog_info
 impl core::marker::Unpin for aya_obj::generated::bpf_prog_info
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_prog_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_prog_info
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_prog_info
 impl<T, U> core::convert::Into<U> for aya_obj::generated::bpf_prog_info where U: core::convert::From<T>
@@ -6967,6 +7129,7 @@ impl core::marker::Freeze for aya_obj::generated::btf_array
 impl core::marker::Send for aya_obj::generated::btf_array
 impl core::marker::Sync for aya_obj::generated::btf_array
 impl core::marker::Unpin for aya_obj::generated::btf_array
+impl core::marker::UnsafeUnpin for aya_obj::generated::btf_array
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::btf_array
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::btf_array
 impl<T, U> core::convert::Into<U> for aya_obj::generated::btf_array where U: core::convert::From<T>
@@ -7002,6 +7165,7 @@ impl core::marker::Freeze for aya_obj::generated::btf_decl_tag
 impl core::marker::Send for aya_obj::generated::btf_decl_tag
 impl core::marker::Sync for aya_obj::generated::btf_decl_tag
 impl core::marker::Unpin for aya_obj::generated::btf_decl_tag
+impl core::marker::UnsafeUnpin for aya_obj::generated::btf_decl_tag
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::btf_decl_tag
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::btf_decl_tag
 impl<T, U> core::convert::Into<U> for aya_obj::generated::btf_decl_tag where U: core::convert::From<T>
@@ -7038,6 +7202,7 @@ impl core::marker::Freeze for aya_obj::generated::btf_enum
 impl core::marker::Send for aya_obj::generated::btf_enum
 impl core::marker::Sync for aya_obj::generated::btf_enum
 impl core::marker::Unpin for aya_obj::generated::btf_enum
+impl core::marker::UnsafeUnpin for aya_obj::generated::btf_enum
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::btf_enum
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::btf_enum
 impl<T, U> core::convert::Into<U> for aya_obj::generated::btf_enum where U: core::convert::From<T>
@@ -7082,6 +7247,7 @@ impl core::marker::Freeze for aya_obj::generated::btf_ext_header
 impl core::marker::Send for aya_obj::generated::btf_ext_header
 impl core::marker::Sync for aya_obj::generated::btf_ext_header
 impl core::marker::Unpin for aya_obj::generated::btf_ext_header
+impl core::marker::UnsafeUnpin for aya_obj::generated::btf_ext_header
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::btf_ext_header
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::btf_ext_header
 impl<T, U> core::convert::Into<U> for aya_obj::generated::btf_ext_header where U: core::convert::From<T>
@@ -7124,6 +7290,7 @@ impl core::marker::Freeze for aya_obj::generated::btf_header
 impl core::marker::Send for aya_obj::generated::btf_header
 impl core::marker::Sync for aya_obj::generated::btf_header
 impl core::marker::Unpin for aya_obj::generated::btf_header
+impl core::marker::UnsafeUnpin for aya_obj::generated::btf_header
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::btf_header
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::btf_header
 impl<T, U> core::convert::Into<U> for aya_obj::generated::btf_header where U: core::convert::From<T>
@@ -7161,6 +7328,7 @@ impl core::marker::Freeze for aya_obj::generated::btf_member
 impl core::marker::Send for aya_obj::generated::btf_member
 impl core::marker::Sync for aya_obj::generated::btf_member
 impl core::marker::Unpin for aya_obj::generated::btf_member
+impl core::marker::UnsafeUnpin for aya_obj::generated::btf_member
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::btf_member
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::btf_member
 impl<T, U> core::convert::Into<U> for aya_obj::generated::btf_member where U: core::convert::From<T>
@@ -7197,6 +7365,7 @@ impl core::marker::Freeze for aya_obj::generated::btf_param
 impl core::marker::Send for aya_obj::generated::btf_param
 impl core::marker::Sync for aya_obj::generated::btf_param
 impl core::marker::Unpin for aya_obj::generated::btf_param
+impl core::marker::UnsafeUnpin for aya_obj::generated::btf_param
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::btf_param
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::btf_param
 impl<T, U> core::convert::Into<U> for aya_obj::generated::btf_param where U: core::convert::From<T>
@@ -7232,6 +7401,7 @@ impl core::marker::Freeze for aya_obj::generated::btf_type
 impl core::marker::Send for aya_obj::generated::btf_type
 impl core::marker::Sync for aya_obj::generated::btf_type
 impl core::marker::Unpin for aya_obj::generated::btf_type
+impl core::marker::UnsafeUnpin for aya_obj::generated::btf_type
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::btf_type
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::btf_type
 impl<T, U> core::convert::Into<U> for aya_obj::generated::btf_type where U: core::convert::From<T>
@@ -7267,6 +7437,7 @@ impl core::marker::Freeze for aya_obj::generated::btf_var
 impl core::marker::Send for aya_obj::generated::btf_var
 impl core::marker::Sync for aya_obj::generated::btf_var
 impl core::marker::Unpin for aya_obj::generated::btf_var
+impl core::marker::UnsafeUnpin for aya_obj::generated::btf_var
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::btf_var
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::btf_var
 impl<T, U> core::convert::Into<U> for aya_obj::generated::btf_var where U: core::convert::From<T>
@@ -7304,6 +7475,7 @@ impl core::marker::Freeze for aya_obj::generated::btf_var_secinfo
 impl core::marker::Send for aya_obj::generated::btf_var_secinfo
 impl core::marker::Sync for aya_obj::generated::btf_var_secinfo
 impl core::marker::Unpin for aya_obj::generated::btf_var_secinfo
+impl core::marker::UnsafeUnpin for aya_obj::generated::btf_var_secinfo
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::btf_var_secinfo
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::btf_var_secinfo
 impl<T, U> core::convert::Into<U> for aya_obj::generated::btf_var_secinfo where U: core::convert::From<T>
@@ -7344,6 +7516,7 @@ impl core::marker::Freeze for aya_obj::generated::ifinfomsg
 impl core::marker::Send for aya_obj::generated::ifinfomsg
 impl core::marker::Sync for aya_obj::generated::ifinfomsg
 impl core::marker::Unpin for aya_obj::generated::ifinfomsg
+impl core::marker::UnsafeUnpin for aya_obj::generated::ifinfomsg
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::ifinfomsg
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::ifinfomsg
 impl<T, U> core::convert::Into<U> for aya_obj::generated::ifinfomsg where U: core::convert::From<T>
@@ -7554,6 +7727,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_event_attr
 impl core::marker::Send for aya_obj::generated::perf_event_attr
 impl core::marker::Sync for aya_obj::generated::perf_event_attr
 impl core::marker::Unpin for aya_obj::generated::perf_event_attr
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_event_attr
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_event_attr
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_event_attr
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_event_attr where U: core::convert::From<T>
@@ -7591,6 +7765,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_event_header
 impl core::marker::Send for aya_obj::generated::perf_event_header
 impl core::marker::Sync for aya_obj::generated::perf_event_header
 impl core::marker::Unpin for aya_obj::generated::perf_event_header
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_event_header
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_event_header
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_event_header
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_event_header where U: core::convert::From<T>
@@ -7649,6 +7824,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_event_mmap_page
 impl core::marker::Send for aya_obj::generated::perf_event_mmap_page
 impl core::marker::Sync for aya_obj::generated::perf_event_mmap_page
 impl core::marker::Unpin for aya_obj::generated::perf_event_mmap_page
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_event_mmap_page
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_event_mmap_page
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_event_mmap_page
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_event_mmap_page where U: core::convert::From<T>
@@ -7715,6 +7891,7 @@ impl core::marker::Freeze for aya_obj::generated::perf_event_mmap_page__bindgen_
 impl core::marker::Send for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Unpin for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1 where U: core::convert::From<T>
@@ -7756,6 +7933,7 @@ impl core::marker::Freeze for aya_obj::generated::tcmsg
 impl core::marker::Send for aya_obj::generated::tcmsg
 impl core::marker::Sync for aya_obj::generated::tcmsg
 impl core::marker::Unpin for aya_obj::generated::tcmsg
+impl core::marker::UnsafeUnpin for aya_obj::generated::tcmsg
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::tcmsg
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::tcmsg
 impl<T, U> core::convert::Into<U> for aya_obj::generated::tcmsg where U: core::convert::From<T>
@@ -8205,17 +8383,17 @@ pub aya_obj::maps::Map::Legacy(aya_obj::maps::LegacyMap)
 impl aya_obj::maps::Map
 pub fn aya_obj::maps::Map::data(&self) -> &[u8]
 pub fn aya_obj::maps::Map::data_mut(&mut self) -> &mut alloc::vec::Vec<u8>
-pub fn aya_obj::maps::Map::key_size(&self) -> u32
-pub fn aya_obj::maps::Map::map_flags(&self) -> u32
-pub fn aya_obj::maps::Map::map_type(&self) -> u32
-pub fn aya_obj::maps::Map::max_entries(&self) -> u32
-pub fn aya_obj::maps::Map::pinning(&self) -> aya_obj::maps::PinningType
-pub fn aya_obj::maps::Map::section_index(&self) -> usize
-pub fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::EbpfSectionKind
-pub fn aya_obj::maps::Map::set_max_entries(&mut self, v: u32)
-pub fn aya_obj::maps::Map::set_value_size(&mut self, size: u32)
-pub fn aya_obj::maps::Map::symbol_index(&self) -> core::option::Option<usize>
-pub fn aya_obj::maps::Map::value_size(&self) -> u32
+pub const fn aya_obj::maps::Map::key_size(&self) -> u32
+pub const fn aya_obj::maps::Map::map_flags(&self) -> u32
+pub const fn aya_obj::maps::Map::map_type(&self) -> u32
+pub const fn aya_obj::maps::Map::max_entries(&self) -> u32
+pub const fn aya_obj::maps::Map::pinning(&self) -> aya_obj::maps::PinningType
+pub const fn aya_obj::maps::Map::section_index(&self) -> usize
+pub const fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::EbpfSectionKind
+pub const fn aya_obj::maps::Map::set_max_entries(&mut self, v: u32)
+pub const fn aya_obj::maps::Map::set_value_size(&mut self, size: u32)
+pub const fn aya_obj::maps::Map::symbol_index(&self) -> core::option::Option<usize>
+pub const fn aya_obj::maps::Map::value_size(&self) -> u32
 impl core::clone::Clone for aya_obj::maps::Map
 pub fn aya_obj::maps::Map::clone(&self) -> aya_obj::maps::Map
 impl core::fmt::Debug for aya_obj::maps::Map
@@ -8224,6 +8402,7 @@ impl core::marker::Freeze for aya_obj::maps::Map
 impl core::marker::Send for aya_obj::maps::Map
 impl core::marker::Sync for aya_obj::maps::Map
 impl core::marker::Unpin for aya_obj::maps::Map
+impl core::marker::UnsafeUnpin for aya_obj::maps::Map
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::Map
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::Map
 impl<T, U> core::convert::Into<U> for aya_obj::maps::Map where U: core::convert::From<T>
@@ -8260,6 +8439,7 @@ impl core::marker::Freeze for aya_obj::maps::PinningError
 impl core::marker::Send for aya_obj::maps::PinningError
 impl core::marker::Sync for aya_obj::maps::PinningError
 impl core::marker::Unpin for aya_obj::maps::PinningError
+impl core::marker::UnsafeUnpin for aya_obj::maps::PinningError
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::PinningError
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::PinningError
 impl<T, U> core::convert::Into<U> for aya_obj::maps::PinningError where U: core::convert::From<T>
@@ -8301,6 +8481,7 @@ impl core::marker::Freeze for aya_obj::maps::PinningType
 impl core::marker::Send for aya_obj::maps::PinningType
 impl core::marker::Sync for aya_obj::maps::PinningType
 impl core::marker::Unpin for aya_obj::maps::PinningType
+impl core::marker::UnsafeUnpin for aya_obj::maps::PinningType
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::PinningType
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::PinningType
 impl<T, U> core::convert::Into<U> for aya_obj::maps::PinningType where U: core::convert::From<T>
@@ -8335,6 +8516,7 @@ impl core::marker::Freeze for aya_obj::maps::BtfMap
 impl core::marker::Send for aya_obj::maps::BtfMap
 impl core::marker::Sync for aya_obj::maps::BtfMap
 impl core::marker::Unpin for aya_obj::maps::BtfMap
+impl core::marker::UnsafeUnpin for aya_obj::maps::BtfMap
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::BtfMap
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::BtfMap
 impl<T, U> core::convert::Into<U> for aya_obj::maps::BtfMap where U: core::convert::From<T>
@@ -8377,6 +8559,7 @@ impl core::marker::Freeze for aya_obj::maps::BtfMapDef
 impl core::marker::Send for aya_obj::maps::BtfMapDef
 impl core::marker::Sync for aya_obj::maps::BtfMapDef
 impl core::marker::Unpin for aya_obj::maps::BtfMapDef
+impl core::marker::UnsafeUnpin for aya_obj::maps::BtfMapDef
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::BtfMapDef
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::BtfMapDef
 impl<T, U> core::convert::Into<U> for aya_obj::maps::BtfMapDef where U: core::convert::From<T>
@@ -8415,6 +8598,7 @@ impl core::marker::Freeze for aya_obj::maps::LegacyMap
 impl core::marker::Send for aya_obj::maps::LegacyMap
 impl core::marker::Sync for aya_obj::maps::LegacyMap
 impl core::marker::Unpin for aya_obj::maps::LegacyMap
+impl core::marker::UnsafeUnpin for aya_obj::maps::LegacyMap
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::LegacyMap
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::LegacyMap
 impl<T, U> core::convert::Into<U> for aya_obj::maps::LegacyMap where U: core::convert::From<T>
@@ -8462,6 +8646,7 @@ impl core::marker::Freeze for aya_obj::maps::bpf_map_def
 impl core::marker::Send for aya_obj::maps::bpf_map_def
 impl core::marker::Sync for aya_obj::maps::bpf_map_def
 impl core::marker::Unpin for aya_obj::maps::bpf_map_def
+impl core::marker::UnsafeUnpin for aya_obj::maps::bpf_map_def
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::bpf_map_def
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::bpf_map_def
 impl<T, U> core::convert::Into<U> for aya_obj::maps::bpf_map_def where U: core::convert::From<T>
@@ -8513,6 +8698,7 @@ impl core::marker::Freeze for aya_obj::EbpfSectionKind
 impl core::marker::Send for aya_obj::EbpfSectionKind
 impl core::marker::Sync for aya_obj::EbpfSectionKind
 impl core::marker::Unpin for aya_obj::EbpfSectionKind
+impl core::marker::UnsafeUnpin for aya_obj::EbpfSectionKind
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::EbpfSectionKind
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::EbpfSectionKind
 impl<T, U> core::convert::Into<U> for aya_obj::EbpfSectionKind where U: core::convert::From<T>
@@ -8589,6 +8775,7 @@ impl core::marker::Freeze for aya_obj::ParseError
 impl core::marker::Send for aya_obj::ParseError
 impl core::marker::Sync for aya_obj::ParseError
 impl core::marker::Unpin for aya_obj::ParseError
+impl core::marker::UnsafeUnpin for aya_obj::ParseError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::ParseError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::ParseError
 impl<T, U> core::convert::Into<U> for aya_obj::ParseError where U: core::convert::From<T>
@@ -8664,6 +8851,7 @@ impl core::marker::Freeze for aya_obj::ProgramSection
 impl core::marker::Send for aya_obj::ProgramSection
 impl core::marker::Sync for aya_obj::ProgramSection
 impl core::marker::Unpin for aya_obj::ProgramSection
+impl core::marker::UnsafeUnpin for aya_obj::ProgramSection
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::ProgramSection
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::ProgramSection
 impl<T, U> core::convert::Into<U> for aya_obj::ProgramSection where U: core::convert::From<T>
@@ -8690,14 +8878,14 @@ impl<T> core::convert::From<T> for aya_obj::ProgramSection
 pub fn aya_obj::ProgramSection::from(t: T) -> T
 pub struct aya_obj::obj::Features
 impl aya_obj::Features
-pub fn aya_obj::Features::bpf_cookie(&self) -> bool
-pub fn aya_obj::Features::bpf_global_data(&self) -> bool
-pub fn aya_obj::Features::bpf_name(&self) -> bool
-pub fn aya_obj::Features::bpf_perf_link(&self) -> bool
-pub fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
-pub fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
-pub fn aya_obj::Features::cpumap_prog_id(&self) -> bool
-pub fn aya_obj::Features::devmap_prog_id(&self) -> bool
+pub const fn aya_obj::Features::bpf_cookie(&self) -> bool
+pub const fn aya_obj::Features::bpf_global_data(&self) -> bool
+pub const fn aya_obj::Features::bpf_name(&self) -> bool
+pub const fn aya_obj::Features::bpf_perf_link(&self) -> bool
+pub const fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
+pub const fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
+pub const fn aya_obj::Features::cpumap_prog_id(&self) -> bool
+pub const fn aya_obj::Features::devmap_prog_id(&self) -> bool
 impl core::default::Default for aya_obj::Features
 pub fn aya_obj::Features::default() -> aya_obj::Features
 impl core::fmt::Debug for aya_obj::Features
@@ -8706,6 +8894,7 @@ impl core::marker::Freeze for aya_obj::Features
 impl core::marker::Send for aya_obj::Features
 impl core::marker::Sync for aya_obj::Features
 impl core::marker::Unpin for aya_obj::Features
+impl core::marker::UnsafeUnpin for aya_obj::Features
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Features
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::Features
 impl<T, U> core::convert::Into<U> for aya_obj::Features where U: core::convert::From<T>
@@ -8742,6 +8931,7 @@ impl core::marker::Freeze for aya_obj::Function
 impl core::marker::Send for aya_obj::Function
 impl core::marker::Sync for aya_obj::Function
 impl core::marker::Unpin for aya_obj::Function
+impl core::marker::UnsafeUnpin for aya_obj::Function
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Function
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::Function
 impl<T, U> core::convert::Into<U> for aya_obj::Function where U: core::convert::From<T>
@@ -8772,6 +8962,7 @@ impl<T> core::marker::Freeze for aya_obj::InvalidTypeBinding<T> where T: core::m
 impl<T> core::marker::Send for aya_obj::InvalidTypeBinding<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_obj::InvalidTypeBinding<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya_obj::InvalidTypeBinding<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya_obj::InvalidTypeBinding<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya_obj::InvalidTypeBinding<T> where U: core::convert::From<T>
@@ -8819,6 +9010,7 @@ impl core::marker::Freeze for aya_obj::Object
 impl core::marker::Send for aya_obj::Object
 impl core::marker::Sync for aya_obj::Object
 impl core::marker::Unpin for aya_obj::Object
+impl core::marker::UnsafeUnpin for aya_obj::Object
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Object
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::Object
 impl<T, U> core::convert::Into<U> for aya_obj::Object where U: core::convert::From<T>
@@ -8850,7 +9042,7 @@ pub aya_obj::obj::Program::license: alloc::ffi::c_str::CString
 pub aya_obj::obj::Program::section: aya_obj::ProgramSection
 pub aya_obj::obj::Program::section_index: usize
 impl aya_obj::Program
-pub fn aya_obj::Program::function_key(&self) -> (usize, u64)
+pub const fn aya_obj::Program::function_key(&self) -> (usize, u64)
 impl core::clone::Clone for aya_obj::Program
 pub fn aya_obj::Program::clone(&self) -> aya_obj::Program
 impl core::fmt::Debug for aya_obj::Program
@@ -8859,6 +9051,7 @@ impl core::marker::Freeze for aya_obj::Program
 impl core::marker::Send for aya_obj::Program
 impl core::marker::Sync for aya_obj::Program
 impl core::marker::Unpin for aya_obj::Program
+impl core::marker::UnsafeUnpin for aya_obj::Program
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Program
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::Program
 impl<T, U> core::convert::Into<U> for aya_obj::Program where U: core::convert::From<T>
@@ -8884,7 +9077,7 @@ pub unsafe fn aya_obj::Program::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::Program
 pub fn aya_obj::Program::from(t: T) -> T
 pub fn aya_obj::obj::copy_instructions(data: &[u8]) -> core::result::Result<alloc::vec::Vec<aya_obj::generated::bpf_insn>, aya_obj::ParseError>
-pub fn aya_obj::obj::parse_map_info(info: aya_obj::generated::bpf_map_info, pinned: aya_obj::maps::PinningType) -> aya_obj::maps::Map
+pub const fn aya_obj::obj::parse_map_info(info: aya_obj::generated::bpf_map_info, pinned: aya_obj::maps::PinningType) -> aya_obj::maps::Map
 pub mod aya_obj::programs
 pub mod aya_obj::programs::cgroup_sock
 pub enum aya_obj::programs::cgroup_sock::CgroupSockAttachType
@@ -8905,6 +9098,7 @@ impl core::marker::Freeze for aya_obj::programs::cgroup_sock::CgroupSockAttachTy
 impl core::marker::Send for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::marker::Unpin for aya_obj::programs::cgroup_sock::CgroupSockAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl<T, U> core::convert::Into<U> for aya_obj::programs::cgroup_sock::CgroupSockAttachType where U: core::convert::From<T>
@@ -8954,6 +9148,7 @@ impl core::marker::Freeze for aya_obj::programs::cgroup_sock_addr::CgroupSockAdd
 impl core::marker::Send for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::marker::Unpin for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl<T, U> core::convert::Into<U> for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType where U: core::convert::From<T>
@@ -8993,6 +9188,7 @@ impl core::marker::Freeze for aya_obj::programs::cgroup_sockopt::CgroupSockoptAt
 impl core::marker::Send for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::marker::Unpin for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl<T, U> core::convert::Into<U> for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType where U: core::convert::From<T>
@@ -9033,6 +9229,7 @@ impl core::marker::Freeze for aya_obj::programs::xdp::XdpAttachType
 impl core::marker::Send for aya_obj::programs::xdp::XdpAttachType
 impl core::marker::Sync for aya_obj::programs::xdp::XdpAttachType
 impl core::marker::Unpin for aya_obj::programs::xdp::XdpAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::xdp::XdpAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::xdp::XdpAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::xdp::XdpAttachType
 impl<T, U> core::convert::Into<U> for aya_obj::programs::xdp::XdpAttachType where U: core::convert::From<T>
@@ -9081,6 +9278,7 @@ impl core::marker::Freeze for aya_obj::programs::cgroup_sock_addr::CgroupSockAdd
 impl core::marker::Send for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::marker::Unpin for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl<T, U> core::convert::Into<U> for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType where U: core::convert::From<T>
@@ -9123,6 +9321,7 @@ impl core::marker::Freeze for aya_obj::programs::cgroup_sock::CgroupSockAttachTy
 impl core::marker::Send for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::marker::Unpin for aya_obj::programs::cgroup_sock::CgroupSockAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl<T, U> core::convert::Into<U> for aya_obj::programs::cgroup_sock::CgroupSockAttachType where U: core::convert::From<T>
@@ -9161,6 +9360,7 @@ impl core::marker::Freeze for aya_obj::programs::cgroup_sockopt::CgroupSockoptAt
 impl core::marker::Send for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::marker::Unpin for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl<T, U> core::convert::Into<U> for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType where U: core::convert::From<T>
@@ -9200,6 +9400,7 @@ impl core::marker::Freeze for aya_obj::programs::xdp::XdpAttachType
 impl core::marker::Send for aya_obj::programs::xdp::XdpAttachType
 impl core::marker::Sync for aya_obj::programs::xdp::XdpAttachType
 impl core::marker::Unpin for aya_obj::programs::xdp::XdpAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::xdp::XdpAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::xdp::XdpAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::xdp::XdpAttachType
 impl<T, U> core::convert::Into<U> for aya_obj::programs::xdp::XdpAttachType where U: core::convert::From<T>
@@ -9250,6 +9451,7 @@ impl core::marker::Freeze for aya_obj::relocation::RelocationError
 impl core::marker::Send for aya_obj::relocation::RelocationError
 impl core::marker::Sync for aya_obj::relocation::RelocationError
 impl core::marker::Unpin for aya_obj::relocation::RelocationError
+impl core::marker::UnsafeUnpin for aya_obj::relocation::RelocationError
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::relocation::RelocationError
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::relocation::RelocationError
 impl<T, U> core::convert::Into<U> for aya_obj::relocation::RelocationError where U: core::convert::From<T>
@@ -9281,6 +9483,7 @@ impl core::marker::Freeze for aya_obj::relocation::EbpfRelocationError
 impl core::marker::Send for aya_obj::relocation::EbpfRelocationError
 impl core::marker::Sync for aya_obj::relocation::EbpfRelocationError
 impl core::marker::Unpin for aya_obj::relocation::EbpfRelocationError
+impl core::marker::UnsafeUnpin for aya_obj::relocation::EbpfRelocationError
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::relocation::EbpfRelocationError
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::relocation::EbpfRelocationError
 impl<T, U> core::convert::Into<U> for aya_obj::relocation::EbpfRelocationError where U: core::convert::From<T>
@@ -9327,6 +9530,7 @@ impl core::marker::Freeze for aya_obj::EbpfSectionKind
 impl core::marker::Send for aya_obj::EbpfSectionKind
 impl core::marker::Sync for aya_obj::EbpfSectionKind
 impl core::marker::Unpin for aya_obj::EbpfSectionKind
+impl core::marker::UnsafeUnpin for aya_obj::EbpfSectionKind
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::EbpfSectionKind
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::EbpfSectionKind
 impl<T, U> core::convert::Into<U> for aya_obj::EbpfSectionKind where U: core::convert::From<T>
@@ -9357,17 +9561,17 @@ pub aya_obj::Map::Legacy(aya_obj::maps::LegacyMap)
 impl aya_obj::maps::Map
 pub fn aya_obj::maps::Map::data(&self) -> &[u8]
 pub fn aya_obj::maps::Map::data_mut(&mut self) -> &mut alloc::vec::Vec<u8>
-pub fn aya_obj::maps::Map::key_size(&self) -> u32
-pub fn aya_obj::maps::Map::map_flags(&self) -> u32
-pub fn aya_obj::maps::Map::map_type(&self) -> u32
-pub fn aya_obj::maps::Map::max_entries(&self) -> u32
-pub fn aya_obj::maps::Map::pinning(&self) -> aya_obj::maps::PinningType
-pub fn aya_obj::maps::Map::section_index(&self) -> usize
-pub fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::EbpfSectionKind
-pub fn aya_obj::maps::Map::set_max_entries(&mut self, v: u32)
-pub fn aya_obj::maps::Map::set_value_size(&mut self, size: u32)
-pub fn aya_obj::maps::Map::symbol_index(&self) -> core::option::Option<usize>
-pub fn aya_obj::maps::Map::value_size(&self) -> u32
+pub const fn aya_obj::maps::Map::key_size(&self) -> u32
+pub const fn aya_obj::maps::Map::map_flags(&self) -> u32
+pub const fn aya_obj::maps::Map::map_type(&self) -> u32
+pub const fn aya_obj::maps::Map::max_entries(&self) -> u32
+pub const fn aya_obj::maps::Map::pinning(&self) -> aya_obj::maps::PinningType
+pub const fn aya_obj::maps::Map::section_index(&self) -> usize
+pub const fn aya_obj::maps::Map::section_kind(&self) -> aya_obj::EbpfSectionKind
+pub const fn aya_obj::maps::Map::set_max_entries(&mut self, v: u32)
+pub const fn aya_obj::maps::Map::set_value_size(&mut self, size: u32)
+pub const fn aya_obj::maps::Map::symbol_index(&self) -> core::option::Option<usize>
+pub const fn aya_obj::maps::Map::value_size(&self) -> u32
 impl core::clone::Clone for aya_obj::maps::Map
 pub fn aya_obj::maps::Map::clone(&self) -> aya_obj::maps::Map
 impl core::fmt::Debug for aya_obj::maps::Map
@@ -9376,6 +9580,7 @@ impl core::marker::Freeze for aya_obj::maps::Map
 impl core::marker::Send for aya_obj::maps::Map
 impl core::marker::Sync for aya_obj::maps::Map
 impl core::marker::Unpin for aya_obj::maps::Map
+impl core::marker::UnsafeUnpin for aya_obj::maps::Map
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::Map
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::Map
 impl<T, U> core::convert::Into<U> for aya_obj::maps::Map where U: core::convert::From<T>
@@ -9452,6 +9657,7 @@ impl core::marker::Freeze for aya_obj::ParseError
 impl core::marker::Send for aya_obj::ParseError
 impl core::marker::Sync for aya_obj::ParseError
 impl core::marker::Unpin for aya_obj::ParseError
+impl core::marker::UnsafeUnpin for aya_obj::ParseError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::ParseError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::ParseError
 impl<T, U> core::convert::Into<U> for aya_obj::ParseError where U: core::convert::From<T>
@@ -9527,6 +9733,7 @@ impl core::marker::Freeze for aya_obj::ProgramSection
 impl core::marker::Send for aya_obj::ProgramSection
 impl core::marker::Sync for aya_obj::ProgramSection
 impl core::marker::Unpin for aya_obj::ProgramSection
+impl core::marker::UnsafeUnpin for aya_obj::ProgramSection
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::ProgramSection
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::ProgramSection
 impl<T, U> core::convert::Into<U> for aya_obj::ProgramSection where U: core::convert::From<T>
@@ -9553,14 +9760,14 @@ impl<T> core::convert::From<T> for aya_obj::ProgramSection
 pub fn aya_obj::ProgramSection::from(t: T) -> T
 pub struct aya_obj::Features
 impl aya_obj::Features
-pub fn aya_obj::Features::bpf_cookie(&self) -> bool
-pub fn aya_obj::Features::bpf_global_data(&self) -> bool
-pub fn aya_obj::Features::bpf_name(&self) -> bool
-pub fn aya_obj::Features::bpf_perf_link(&self) -> bool
-pub fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
-pub fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
-pub fn aya_obj::Features::cpumap_prog_id(&self) -> bool
-pub fn aya_obj::Features::devmap_prog_id(&self) -> bool
+pub const fn aya_obj::Features::bpf_cookie(&self) -> bool
+pub const fn aya_obj::Features::bpf_global_data(&self) -> bool
+pub const fn aya_obj::Features::bpf_name(&self) -> bool
+pub const fn aya_obj::Features::bpf_perf_link(&self) -> bool
+pub const fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
+pub const fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
+pub const fn aya_obj::Features::cpumap_prog_id(&self) -> bool
+pub const fn aya_obj::Features::devmap_prog_id(&self) -> bool
 impl core::default::Default for aya_obj::Features
 pub fn aya_obj::Features::default() -> aya_obj::Features
 impl core::fmt::Debug for aya_obj::Features
@@ -9569,6 +9776,7 @@ impl core::marker::Freeze for aya_obj::Features
 impl core::marker::Send for aya_obj::Features
 impl core::marker::Sync for aya_obj::Features
 impl core::marker::Unpin for aya_obj::Features
+impl core::marker::UnsafeUnpin for aya_obj::Features
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Features
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::Features
 impl<T, U> core::convert::Into<U> for aya_obj::Features where U: core::convert::From<T>
@@ -9605,6 +9813,7 @@ impl core::marker::Freeze for aya_obj::Function
 impl core::marker::Send for aya_obj::Function
 impl core::marker::Sync for aya_obj::Function
 impl core::marker::Unpin for aya_obj::Function
+impl core::marker::UnsafeUnpin for aya_obj::Function
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Function
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::Function
 impl<T, U> core::convert::Into<U> for aya_obj::Function where U: core::convert::From<T>
@@ -9635,6 +9844,7 @@ impl<T> core::marker::Freeze for aya_obj::InvalidTypeBinding<T> where T: core::m
 impl<T> core::marker::Send for aya_obj::InvalidTypeBinding<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_obj::InvalidTypeBinding<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya_obj::InvalidTypeBinding<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya_obj::InvalidTypeBinding<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya_obj::InvalidTypeBinding<T> where U: core::convert::From<T>
@@ -9682,6 +9892,7 @@ impl core::marker::Freeze for aya_obj::Object
 impl core::marker::Send for aya_obj::Object
 impl core::marker::Sync for aya_obj::Object
 impl core::marker::Unpin for aya_obj::Object
+impl core::marker::UnsafeUnpin for aya_obj::Object
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Object
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::Object
 impl<T, U> core::convert::Into<U> for aya_obj::Object where U: core::convert::From<T>
@@ -9713,7 +9924,7 @@ pub aya_obj::Program::license: alloc::ffi::c_str::CString
 pub aya_obj::Program::section: aya_obj::ProgramSection
 pub aya_obj::Program::section_index: usize
 impl aya_obj::Program
-pub fn aya_obj::Program::function_key(&self) -> (usize, u64)
+pub const fn aya_obj::Program::function_key(&self) -> (usize, u64)
 impl core::clone::Clone for aya_obj::Program
 pub fn aya_obj::Program::clone(&self) -> aya_obj::Program
 impl core::fmt::Debug for aya_obj::Program
@@ -9722,6 +9933,7 @@ impl core::marker::Freeze for aya_obj::Program
 impl core::marker::Send for aya_obj::Program
 impl core::marker::Sync for aya_obj::Program
 impl core::marker::Unpin for aya_obj::Program
+impl core::marker::UnsafeUnpin for aya_obj::Program
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Program
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::Program
 impl<T, U> core::convert::Into<U> for aya_obj::Program where U: core::convert::From<T>
@@ -9748,7 +9960,7 @@ impl<T> core::convert::From<T> for aya_obj::Program
 pub fn aya_obj::Program::from(t: T) -> T
 pub struct aya_obj::VerifierLog(_)
 impl aya_obj::VerifierLog
-pub fn aya_obj::VerifierLog::new(log: alloc::string::String) -> Self
+pub const fn aya_obj::VerifierLog::new(log: alloc::string::String) -> Self
 impl core::fmt::Debug for aya_obj::VerifierLog
 pub fn aya_obj::VerifierLog::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya_obj::VerifierLog
@@ -9757,6 +9969,7 @@ impl core::marker::Freeze for aya_obj::VerifierLog
 impl core::marker::Send for aya_obj::VerifierLog
 impl core::marker::Sync for aya_obj::VerifierLog
 impl core::marker::Unpin for aya_obj::VerifierLog
+impl core::marker::UnsafeUnpin for aya_obj::VerifierLog
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::VerifierLog
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::VerifierLog
 impl<T, U> core::convert::Into<U> for aya_obj::VerifierLog where U: core::convert::From<T>
@@ -9778,4 +9991,4 @@ pub fn aya_obj::VerifierLog::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_obj::VerifierLog
 pub fn aya_obj::VerifierLog::from(t: T) -> T
 pub fn aya_obj::copy_instructions(data: &[u8]) -> core::result::Result<alloc::vec::Vec<aya_obj::generated::bpf_insn>, aya_obj::ParseError>
-pub fn aya_obj::parse_map_info(info: aya_obj::generated::bpf_map_info, pinned: aya_obj::maps::PinningType) -> aya_obj::maps::Map
+pub const fn aya_obj::parse_map_info(info: aya_obj::generated::bpf_map_info, pinned: aya_obj::maps::PinningType) -> aya_obj::maps::Map

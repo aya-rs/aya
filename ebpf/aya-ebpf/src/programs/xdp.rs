@@ -7,7 +7,7 @@ pub struct XdpContext {
 }
 
 impl XdpContext {
-    pub fn new(ctx: *mut xdp_md) -> Self {
+    pub const fn new(ctx: *mut xdp_md) -> Self {
         Self { ctx }
     }
 
@@ -21,13 +21,13 @@ impl XdpContext {
         unsafe { (*self.ctx).data_end as usize }
     }
 
-    /// Return the raw address of the XdpContext metadata.
+    /// Return the raw address of the [`XdpContext`] metadata.
     #[inline(always)]
     pub fn metadata(&self) -> usize {
         unsafe { (*self.ctx).data_meta as usize }
     }
 
-    /// Return the raw address immediately after the XdpContext's metadata.
+    /// Return the raw address immediately after the [`XdpContext`]'s metadata.
     #[inline(always)]
     pub fn metadata_end(&self) -> usize {
         self.data()

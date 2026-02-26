@@ -20,13 +20,13 @@ pub enum CgroupSockAddrAttachType {
     GetSockName4,
     /// Attach to IPv6 getsockname events.
     GetSockName6,
-    /// Attach to IPv4 udp_sendmsg events.
+    /// Attach to IPv4 `udp_sendmsg` events.
     UDPSendMsg4,
-    /// Attach to IPv6 udp_sendmsg events.
+    /// Attach to IPv6 `udp_sendmsg` events.
     UDPSendMsg6,
-    /// Attach to IPv4 udp_recvmsg events.
+    /// Attach to IPv4 `udp_recvmsg` events.
     UDPRecvMsg4,
-    /// Attach to IPv6 udp_recvmsg events.
+    /// Attach to IPv6 `udp_recvmsg` events.
     UDPRecvMsg6,
 }
 

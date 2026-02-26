@@ -11,6 +11,10 @@ on:
 env:
   CARGO_TERM_COLOR: always
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:
@@ -38,7 +42,14 @@ jobs:
 
       - run: cargo +nightly fmt --all -- --check
 
-      - run: ./clippy.sh
+      - name: Install libbpf-rs prerequisites
+        run: |
+          set -euxo pipefail
+
+          sudo apt update
+          sudo apt -y install autopoint
+
+      - run: cargo xtask clippy
 
       # On the `aya-rs/aya` repository, regenerate the public API on a schedule.
       #
@@ -102,7 +113,19 @@ jobs:
         with:
           target: ${{ matrix.arch }}
 
+      - name: Install libbpf-rs prerequisites
+        run: |
+          set -euxo pipefail
+
+          sudo apt update
+          sudo apt -y install autopoint
+
       - name: Build
+        env:
+          # Fix for 32-bit ARM: Ubuntu 24.04 GCC defines _TIME_BITS=64 as a built-in,
+          # which requires _FILE_OFFSET_BITS=64 (glibc requirement). We must unset
+          # _TIME_BITS first because the built-in is seen before -D flags by libbpf-sys.
+          CFLAGS_armv7_unknown_linux_gnueabi: "-U_TIME_BITS -D_FILE_OFFSET_BITS=64"
         run: |
           set -euxo pipefail
           cargo hack build --all-targets --feature-powerset \
@@ -154,7 +177,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker --features llvm-21
+      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker
 
       - uses: taiki-e/install-action@cargo-hack
 
@@ -262,7 +285,12 @@ jobs:
           sudo udevadm trigger --name-match=kvm || true # kvm is not available on arm64.
 
           sudo apt update
+          # linux-libc-dev provides kernel UAPI headers for libbpf-sys cross-compilation.
+          #
+          # See https://github.com/libbpf/libbpf-sys/issues/137.
           sudo apt -y install \
+            autopoint \
+            linux-libc-dev \
             liblzma-dev \
             lynx \
             musl-tools \
@@ -349,7 +377,7 @@ jobs:
       - run: |
           cargo install \
             --git https://github.com/aya-rs/bpf-linker.git bpf-linker \
-            --no-default-features --features "llvm-21,${LLVM_LINK_FEATURE}" --force
+            --no-default-features --features "llvm-22,${LLVM_LINK_FEATURE}" --force
 
       - uses: actions/cache@v5
         with:
@@ -374,6 +402,7 @@ jobs:
         if: matrix.download-kernel-images != 'local'
         run: |
           set -euxo pipefail
+
           find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
             cargo xtask integration-test vm --cache-dir test/.tmp \
               --github-api-token ${{ secrets.GITHUB_TOKEN }}

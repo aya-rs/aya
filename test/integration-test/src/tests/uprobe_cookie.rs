@@ -1,6 +1,15 @@
-use aya::{EbpfLoader, maps::ring_buf::RingBuf, programs::UProbe, util::KernelVersion};
+use aya::{
+    EbpfLoader,
+    maps::ring_buf::RingBuf,
+    programs::{UProbe, uprobe::UProbeAttachPoint},
+    util::KernelVersion,
+};
 
 #[test_log::test]
+#[expect(
+    clippy::little_endian_bytes,
+    reason = "the eBPF program writes the cookie as little-endian bytes"
+)]
 fn test_uprobe_cookie() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 15, 0) {
@@ -25,9 +34,16 @@ fn test_uprobe_cookie() {
     prog.load().unwrap();
     const PROG_A: &str = "uprobe_cookie_trigger_ebpf_program_a";
     const PROG_B: &str = "uprobe_cookie_trigger_ebpf_program_b";
-    let attach = |prog: &mut UProbe, fn_name, cookie| {
-        prog.attach(fn_name, "/proc/self/exe", None, Some(cookie))
-            .unwrap()
+    let attach = |prog: &mut UProbe, fn_name: &str, cookie| {
+        prog.attach(
+            UProbeAttachPoint {
+                location: fn_name.into(),
+                cookie: Some(cookie),
+            },
+            "/proc/self/exe",
+            None,
+        )
+        .unwrap()
     };
 
     // Note that the arguments we pass to the functions are meaningless, but we

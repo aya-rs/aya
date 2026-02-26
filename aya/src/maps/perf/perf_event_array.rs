@@ -162,6 +162,10 @@ pub struct PerfEventArray<T> {
 }
 
 impl<T: Borrow<MapData>> PerfEventArray<T> {
+    #[expect(
+        clippy::unnecessary_wraps,
+        reason = "keeps constructor signatures consistent across map types"
+    )]
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         Ok(Self {
             map: Arc::new(map),
@@ -197,7 +201,7 @@ impl<T: BorrowMut<MapData>> PerfEventArray<T> {
 
         Ok(PerfEventArrayBuffer {
             buf,
-            _map: self.map.clone(),
+            _map: Arc::clone(&self.map),
         })
     }
 }

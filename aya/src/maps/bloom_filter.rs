@@ -30,8 +30,8 @@ use crate::{
 ///
 /// bloom_filter.insert(1, 0)?;
 ///
-/// assert_matches!(bloom_filter.contains(&1, 0), Ok(()));
-/// assert_matches!(bloom_filter.contains(&2, 0), Err(MapError::ElementNotFound));
+/// assert_matches!(bloom_filter.contains(&mut 1, 0), Ok(()));
+/// assert_matches!(bloom_filter.contains(&mut 2, 0), Err(MapError::ElementNotFound));
 ///
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
@@ -54,15 +54,15 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     }
 
     /// Query the existence of the element.
-    pub fn contains(&self, mut value: &V, flags: u64) -> Result<(), MapError> {
+    pub fn contains(&self, value: &mut V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
 
-        match bpf_map_lookup_elem_ptr::<u32, _>(fd, None, &mut value, flags).map_err(
-            |io_error| SyscallError {
+        match bpf_map_lookup_elem_ptr::<u32, _>(fd, None, value, flags).map_err(|io_error| {
+            SyscallError {
                 call: "bpf_map_lookup_elem",
                 io_error,
-            },
-        )? {
+            }
+        })? {
             None => Err(MapError::ElementNotFound),
             Some(()) => Ok(()),
         }
@@ -87,10 +87,7 @@ mod tests {
     use std::io;
 
     use assert_matches::assert_matches;
-    use aya_obj::generated::{
-        bpf_cmd,
-        bpf_map_type::{BPF_MAP_TYPE_ARRAY, BPF_MAP_TYPE_BLOOM_FILTER},
-    };
+    use aya_obj::generated::{bpf_cmd, bpf_map_type};
     use libc::{EFAULT, ENOENT};
 
     use super::*;
@@ -103,7 +100,7 @@ mod tests {
     };
 
     fn new_obj_map() -> aya_obj::Map {
-        test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_BLOOM_FILTER)
+        test_utils::new_obj_map::<u32>(bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER)
     }
 
     fn sys_error(value: i32) -> SysResult {
@@ -124,7 +121,9 @@ mod tests {
 
     #[test]
     fn test_try_from_wrong_map() {
-        let map = new_map(test_utils::new_obj_map::<u32>(BPF_MAP_TYPE_ARRAY));
+        let map = new_map(test_utils::new_obj_map::<u32>(
+            bpf_map_type::BPF_MAP_TYPE_ARRAY,
+        ));
         let map = Map::Array(map);
 
         assert_matches!(
@@ -145,7 +144,7 @@ mod tests {
         let map = new_map(new_obj_map());
 
         let map = Map::BloomFilter(map);
-        let _: BloomFilter<_, u32> = map.try_into().unwrap();
+        let _unused: BloomFilter<_, u32> = map.try_into().unwrap();
     }
 
     #[test]
@@ -185,7 +184,7 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
 
         assert_matches!(
-            bloom_filter.contains(&1, 0),
+            bloom_filter.contains(&mut 1, 0),
             Err(MapError::SyscallError(SyscallError { call: "bpf_map_lookup_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
         );
     }
@@ -203,6 +202,9 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert_matches!(bloom_filter.contains(&1, 0), Err(MapError::ElementNotFound));
+        assert_matches!(
+            bloom_filter.contains(&mut 1, 0),
+            Err(MapError::ElementNotFound)
+        );
     }
 }

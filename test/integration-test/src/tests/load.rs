@@ -3,14 +3,16 @@ use std::{convert::TryInto as _, fs::remove_file, path::Path, thread, time::Dura
 use assert_matches::assert_matches;
 use aya::{
     Ebpf,
-    maps::Array,
+    maps::{Array, RingBuf},
     pin::PinError,
     programs::{
-        FlowDissector, KProbe, ProbeKind, Program, ProgramError, TracePoint, UProbe, Xdp, XdpFlags,
+        FlowDissector, KProbe, LinkOrder, ProbeKind, Program, ProgramError, SchedClassifier,
+        TcAttachType, TracePoint, UProbe, Xdp, XdpFlags,
         flow_dissector::{FlowDissectorLink, FlowDissectorLinkId},
         kprobe::{KProbeLink, KProbeLinkId},
         links::{FdLink, LinkError, PinnedLink},
         loaded_links, loaded_programs,
+        tc::TcAttachOptions,
         trace_point::{TracePointLink, TracePointLinkId},
         uprobe::{UProbeLink, UProbeLinkId},
         xdp::{XdpLink, XdpLinkId},
@@ -46,6 +48,25 @@ fn memmove() {
 }
 
 #[test_log::test]
+fn ringbuffer_btf_map() {
+    let mut bpf = Ebpf::load(crate::RINGBUF_BTF).unwrap();
+    let ring_buf = bpf.take_map("map").unwrap();
+    let mut ring_buf = RingBuf::try_from(ring_buf).unwrap();
+
+    let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+    prog.attach("trigger_bpf_program", "/proc/self/exe", None)
+        .unwrap();
+
+    trigger_bpf_program();
+
+    let item = ring_buf.next().unwrap();
+    let item: [u8; 4] = (*item).try_into().unwrap();
+    let val = u32::from_ne_bytes(item);
+    assert_eq!(val, 0xdeadbeef);
+}
+
+#[test_log::test]
 fn multiple_btf_maps() {
     let mut bpf = Ebpf::load(crate::MULTIMAP_BTF).unwrap();
 
@@ -56,7 +77,7 @@ fn multiple_btf_maps() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_bpf_program", "/proc/self/exe", None, None)
+    prog.attach("trigger_bpf_program", "/proc/self/exe", None)
         .unwrap();
 
     trigger_bpf_program();
@@ -106,7 +127,7 @@ fn pin_lifecycle_multiple_btf_maps() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_bpf_program", "/proc/self/exe", None, None)
+    prog.attach("trigger_bpf_program", "/proc/self/exe", None)
         .unwrap();
 
     trigger_bpf_program();
@@ -151,7 +172,7 @@ fn poll_loaded_program_id(name: &str) -> impl Iterator<Item = Option<u32>> + '_ 
             // Ignore race failures which can happen when the tests delete a
             // program in the middle of a `loaded_programs()` call.
             loaded_programs()
-                .filter_map(|prog| prog.ok())
+                .filter_map(Result::ok)
                 .find_map(|prog| (prog.name() == name.as_bytes()).then(|| prog.id()))
         })
 }
@@ -172,7 +193,7 @@ fn assert_loaded_and_linked(name: &str) {
             // Ignore race failures which can happen when the tests delete a
             // program in the middle of a `loaded_programs()` call.
             loaded_links()
-                .filter_map(|link| link.ok())
+                .filter_map(Result::ok)
                 .find_map(|link| (link.program_id() == prog_id).then_some(link.id()))
         });
     assert!(
@@ -336,7 +357,7 @@ fn basic_uprobe() {
 
     let program_name = "test_uprobe";
     let attach = |prog: &mut P| {
-        prog.attach("uprobe_function", "/proc/self/exe", None, None)
+        prog.attach("uprobe_function", "/proc/self/exe", None)
             .unwrap()
     };
     run_unload_program_test(
@@ -391,6 +412,58 @@ fn pin_link() {
 
     // finally when new_link is dropped we're detached
     drop(new_link);
+    assert_unloaded(program_name);
+}
+
+#[test_log::test]
+fn pin_tcx_link() {
+    // TCX links require kernel >= 6.6
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(6, 6, 0) {
+        eprintln!("skipping pin_tcx_link test on kernel {kernel_version:?}");
+        return;
+    }
+
+    use crate::utils::NetNsGuard;
+    let _netns = NetNsGuard::new();
+
+    let program_name = "tcx_next";
+    let pin_path = "/sys/fs/bpf/aya-tcx-test-lo";
+    let mut bpf = Ebpf::load(crate::TCX).unwrap();
+    let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let link_id = prog
+        .attach_with_options(
+            "lo",
+            TcAttachType::Ingress,
+            TcAttachOptions::TcxOrder(LinkOrder::default()),
+        )
+        .unwrap();
+    let link = prog.take_link(link_id).unwrap();
+    assert_loaded(program_name);
+
+    let fd_link: FdLink = link.try_into().unwrap();
+    fd_link.pin(pin_path).unwrap();
+
+    // Because of the pin, the program is still attached
+    prog.unload().unwrap();
+    assert_loaded(program_name);
+
+    // Load a new program and atomically replace the old one using attach_to_link
+    let mut bpf = Ebpf::load(crate::TCX).unwrap();
+    let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let old_link = PinnedLink::from_pin(pin_path).unwrap();
+    let link = FdLink::from(old_link).try_into().unwrap();
+    let _link_id = prog.attach_to_link(link).unwrap();
+
+    assert_loaded(program_name);
+
+    // Clean up: remove the stale pin file and drop the bpf instance (which drops the program and link)
+    remove_file(pin_path).unwrap();
+    drop(bpf);
     assert_unloaded(program_name);
 }
 
@@ -521,7 +594,7 @@ fn run_pin_program_lifecycle_test<P>(
                 // Unpin the program. It will be unloaded since its link was not pinned.
                 drop(prog);
             }
-        };
+        }
     }
 
     // program should be unloaded
@@ -582,7 +655,7 @@ fn pin_lifecycle_uprobe() {
 
     let program_name = "test_uprobe";
     let attach = |prog: &mut P| {
-        prog.attach("uprobe_function", "/proc/self/exe", None, None)
+        prog.attach("uprobe_function", "/proc/self/exe", None)
             .unwrap()
     };
     let program_pin = "/sys/fs/bpf/aya-uprobe-test-prog";

@@ -3,7 +3,7 @@ use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
 use syn::{ItemFn, spanned::Spanned as _};
 
-use crate::args::{Args, err_on_unknown_args, pop_bool_arg, pop_string_arg};
+use crate::args::Args;
 
 pub(crate) struct Xdp {
     item: ItemFn,
@@ -23,8 +23,8 @@ impl Xdp {
         let span = attrs.span();
         let mut args: Args = syn::parse2(attrs)?;
 
-        let frags = pop_bool_arg(&mut args, "frags");
-        let map = match pop_string_arg(&mut args, "map").as_deref() {
+        let frags = args.pop_bool("frags");
+        let map = match args.pop_string("map").as_deref() {
             Some("cpumap") => Some(XdpMap::CpuMap),
             Some("devmap") => Some(XdpMap::DevMap),
             Some(name) => {
@@ -35,7 +35,7 @@ impl Xdp {
             None => None,
         };
 
-        err_on_unknown_args(&args)?;
+        args.into_error()?;
         Ok(Self { item, frags, map })
     }
 
@@ -52,7 +52,7 @@ impl Xdp {
             Some(XdpMap::CpuMap) => section_name.push("cpumap"),
             Some(XdpMap::DevMap) => section_name.push("devmap"),
             None => (),
-        };
+        }
         let section_name = section_name.join("/");
         let fn_name = &sig.ident;
         quote! {

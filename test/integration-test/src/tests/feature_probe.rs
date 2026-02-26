@@ -13,7 +13,7 @@ use crate::utils::kernel_assert;
 
 #[test_log::test]
 fn probe_supported_programs() {
-    let current = aya::util::KernelVersion::current().unwrap();
+    let current = KernelVersion::current().unwrap();
     let kernel_config = kernel_config().unwrap();
 
     macro_rules! is_supported {

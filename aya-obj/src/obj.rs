@@ -8,7 +8,12 @@ use alloc::{
     vec,
     vec::Vec,
 };
-use core::{ffi::CStr, mem, ptr, slice::from_raw_parts_mut, str::FromStr};
+use core::{
+    ffi::{CStr, FromBytesWithNulError},
+    mem, ptr,
+    slice::from_raw_parts_mut,
+    str::FromStr,
+};
 
 use log::debug;
 use object::{
@@ -22,14 +27,14 @@ use crate::{
         Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,
     },
     generated::{
-        BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K, bpf_func_id::*, bpf_insn, bpf_map_info,
+        BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K, bpf_func_id, bpf_insn, bpf_map_info,
         bpf_map_type::BPF_MAP_TYPE_ARRAY,
     },
     maps::{BtfMap, BtfMapDef, LegacyMap, MINIMUM_MAP_SIZE, Map, PinningType, bpf_map_def},
     programs::{
         CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType, XdpAttachType,
     },
-    relocation::*,
+    relocation::{INS_SIZE, Relocation, Symbol},
     util::HashMap,
 };
 
@@ -50,8 +55,12 @@ pub struct Features {
 
 impl Features {
     #[doc(hidden)]
-    #[expect(clippy::too_many_arguments)]
-    pub fn new(
+    #[expect(
+        clippy::fn_params_excessive_bools,
+        reason = "this interface is terrible"
+    )]
+    #[expect(clippy::too_many_arguments, reason = "this interface is terrible")]
+    pub const fn new(
         bpf_name: bool,
         bpf_probe_read_kernel: bool,
         bpf_perf_link: bool,
@@ -77,42 +86,42 @@ impl Features {
     ///
     /// Although the feature probe performs the check for program name, we can use this to also
     /// detect if map name is supported since they were both introduced in the same commit.
-    pub fn bpf_name(&self) -> bool {
+    pub const fn bpf_name(&self) -> bool {
         self.bpf_name
     }
 
-    /// Returns whether the bpf_probe_read_kernel helper is supported.
-    pub fn bpf_probe_read_kernel(&self) -> bool {
+    /// Returns whether the `bpf_probe_read_kernel` helper is supported.
+    pub const fn bpf_probe_read_kernel(&self) -> bool {
         self.bpf_probe_read_kernel
     }
 
-    /// Returns whether bpf_links are supported for Kprobes/Uprobes/Tracepoints.
-    pub fn bpf_perf_link(&self) -> bool {
+    /// Returns whether `bpf_links` are supported for Kprobes/Uprobes/Tracepoints.
+    pub const fn bpf_perf_link(&self) -> bool {
         self.bpf_perf_link
     }
 
     /// Returns whether BPF program global data is supported.
-    pub fn bpf_global_data(&self) -> bool {
+    pub const fn bpf_global_data(&self) -> bool {
         self.bpf_global_data
     }
 
     /// Returns whether BPF program cookie is supported.
-    pub fn bpf_cookie(&self) -> bool {
+    pub const fn bpf_cookie(&self) -> bool {
         self.bpf_cookie
     }
 
     /// Returns whether XDP CPU Maps support chained program IDs.
-    pub fn cpumap_prog_id(&self) -> bool {
+    pub const fn cpumap_prog_id(&self) -> bool {
         self.cpumap_prog_id
     }
 
     /// Returns whether XDP Device Maps support chained program IDs.
-    pub fn devmap_prog_id(&self) -> bool {
+    pub const fn devmap_prog_id(&self) -> bool {
         self.devmap_prog_id
     }
 
     /// If BTF is supported, returns which BTF features are supported.
-    pub fn btf(&self) -> Option<&BtfFeatures> {
+    pub const fn btf(&self) -> Option<&BtfFeatures> {
         self.btf.as_ref()
     }
 }
@@ -133,7 +142,7 @@ pub struct Object {
     /// Referenced maps
     pub maps: HashMap<String, Map>,
     /// A hash map of programs, using the program names parsed
-    /// in [ProgramSection]s as keys.
+    /// in [`ProgramSection`]s as keys.
     pub programs: HashMap<String, Program>,
     /// Functions
     pub functions: BTreeMap<(usize, u64), Function>,
@@ -162,8 +171,8 @@ pub struct Program {
 }
 
 impl Program {
-    /// The key used by [Object::functions]
-    pub fn function_key(&self) -> (usize, u64) {
+    /// The key used by [`Object::functions`]
+    pub const fn function_key(&self) -> (usize, u64) {
         (self.section_index, self.address)
     }
 }
@@ -197,7 +206,7 @@ pub struct Function {
 ///
 /// Section types are parsed from the section name strings.
 ///
-/// In order for Aya to treat a section as a [ProgramSection],
+/// In order for Aya to treat a section as a [`ProgramSection`],
 /// there are a few requirements:
 /// - The section must be an executable code section.
 /// - The section name must conform to [Program Types and ELF Sections].
@@ -221,7 +230,7 @@ pub struct Function {
 /// - `fmod_ret+`, `fmod_ret.s+`
 /// - `iter+`, `iter.s+`
 #[derive(Debug, Clone)]
-#[expect(missing_docs)]
+#[expect(missing_docs, reason = "TODO")]
 pub enum ProgramSection {
     KRetProbe,
     KProbe,
@@ -575,7 +584,7 @@ impl Object {
                         data_size: data.len(),
                     });
                 }
-                map.data_mut().splice(start..end, data.iter().cloned());
+                map.data_mut().splice(start..end, data.iter().copied());
             } else if must_exist {
                 return Err(ParseError::SymbolNotFound {
                     name: name.to_owned(),
@@ -602,12 +611,11 @@ impl Object {
 
     fn parse_programs(&mut self, section: &Section<'_>) -> Result<(), ParseError> {
         let program_section = ProgramSection::from_str(section.name)?;
-        let syms =
-            self.symbols_by_section
-                .get(&section.index)
-                .ok_or(ParseError::NoSymbolsForSection {
-                    section_name: section.name.to_string(),
-                })?;
+        let syms = self.symbols_by_section.get(&section.index).ok_or_else(|| {
+            ParseError::NoSymbolsForSection {
+                section_name: section.name.to_string(),
+            }
+        })?;
         for symbol_index in syms {
             let symbol = self
                 .symbol_table
@@ -621,7 +629,7 @@ impl Object {
             };
 
             let (p, f) =
-                self.parse_program(section, program_section.clone(), name.to_string(), symbol)?;
+                self.parse_program(section, program_section.clone(), name.clone(), symbol)?;
             let key = p.function_key();
             self.programs.insert(f.name.clone(), p);
             self.functions.insert(key, f);
@@ -644,7 +652,7 @@ impl Object {
         let end = (symbol.address + symbol.size) as usize;
 
         let function = Function {
-            name: name.to_owned(),
+            name,
             address: symbol.address,
             section_index: section.index,
             section_offset: start,
@@ -659,7 +667,7 @@ impl Object {
             Program {
                 license: self.license.clone(),
                 kernel_version: self.kernel_version,
-                section: program_section.clone(),
+                section: program_section,
                 section_index: section.index.0,
                 address: symbol.address,
             },
@@ -746,22 +754,19 @@ impl Object {
         let maps: HashMap<&String, usize> = self
             .symbols_by_section
             .get(&section.index)
-            .ok_or(ParseError::NoSymbolsForSection {
+            .ok_or_else(|| ParseError::NoSymbolsForSection {
                 section_name: section.name.to_owned(),
             })?
             .iter()
             .filter_map(|s| {
-                let symbol = self.symbol_table.get(s).unwrap();
+                let symbol = &self.symbol_table[s];
                 symbol.name.as_ref().map(|name| (name, symbol.index))
             })
             .collect();
 
         for t in btf.types() {
             if let BtfType::DataSec(datasec) = &t {
-                let type_name = match btf.type_name(t) {
-                    Ok(name) => name,
-                    _ => continue,
-                };
+                let type_name = btf.type_name(t)?;
                 if type_name == section.name {
                     // each btf_var_secinfo contains a map
                     for info in &datasec.entries {
@@ -769,7 +774,7 @@ impl Object {
                         let symbol_index =
                             maps.get(&map_name)
                                 .ok_or_else(|| ParseError::SymbolNotFound {
-                                    name: map_name.to_string(),
+                                    name: map_name.clone(),
                                 })?;
                         self.maps.insert(
                             map_name,
@@ -799,9 +804,12 @@ impl Object {
         let mut have_symbols = false;
         // each symbol in the section is a separate map
         for i in symbols {
-            let sym = self.symbol_table.get(i).ok_or(ParseError::SymbolNotFound {
-                name: i.to_string(),
-            })?;
+            let sym = self
+                .symbol_table
+                .get(i)
+                .ok_or_else(|| ParseError::SymbolNotFound {
+                    name: i.to_string(),
+                })?;
             let start = sym.address as usize;
             let end = start + sym.size as usize;
             let data = &section.data[start..end];
@@ -811,7 +819,7 @@ impl Object {
                 .ok_or(ParseError::MapSymbolNameNotFound { i: *i })?;
             let def = parse_map_def(name, data)?;
             maps.insert(
-                name.to_string(),
+                name.clone(),
                 Map::Legacy(LegacyMap {
                     section_index: section.index.0,
                     section_kind: section.kind,
@@ -837,7 +845,7 @@ impl Object {
         match section.kind {
             EbpfSectionKind::Data | EbpfSectionKind::Rodata | EbpfSectionKind::Bss => {
                 self.maps
-                    .insert(section.name.to_string(), parse_data_map_section(&section)?);
+                    .insert(section.name.to_string(), parse_data_map_section(&section));
             }
             EbpfSectionKind::Text => self.parse_text_section(section)?,
             EbpfSectionKind::Btf => self.parse_btf(&section)?,
@@ -853,7 +861,7 @@ impl Object {
                 let symbols = self
                     .symbols_by_section
                     .get(&section.index)
-                    .ok_or(ParseError::NoSymbolsForSection {
+                    .ok_or_else(|| ParseError::NoSymbolsForSection {
                         section_name: section.name.to_owned(),
                     })?
                     .iter();
@@ -892,7 +900,7 @@ impl Object {
     }
 }
 
-fn insn_is_helper_call(ins: &bpf_insn) -> bool {
+fn insn_is_helper_call(ins: bpf_insn) -> bool {
     let klass = u32::from(ins.code & 0x07);
     let op = u32::from(ins.code & 0xF0);
     let src = u32::from(ins.code & 0x08);
@@ -903,17 +911,20 @@ fn insn_is_helper_call(ins: &bpf_insn) -> bool {
 impl Function {
     fn sanitize(&mut self, features: &Features) {
         for inst in &mut self.instructions {
-            if !insn_is_helper_call(inst) {
+            if !insn_is_helper_call(*inst) {
                 continue;
             }
 
             if !features.bpf_probe_read_kernel {
-                const BPF_FUNC_PROBE_READ_KERNEL: i32 = BPF_FUNC_probe_read_kernel as i32;
-                const BPF_FUNC_PROBE_READ_USER: i32 = BPF_FUNC_probe_read_user as i32;
-                const BPF_FUNC_PROBE_READ: i32 = BPF_FUNC_probe_read as i32;
-                const BPF_FUNC_PROBE_READ_KERNEL_STR: i32 = BPF_FUNC_probe_read_kernel_str as i32;
-                const BPF_FUNC_PROBE_READ_USER_STR: i32 = BPF_FUNC_probe_read_user_str as i32;
-                const BPF_FUNC_PROBE_READ_STR: i32 = BPF_FUNC_probe_read_str as i32;
+                const BPF_FUNC_PROBE_READ_KERNEL: i32 =
+                    bpf_func_id::BPF_FUNC_probe_read_kernel as i32;
+                const BPF_FUNC_PROBE_READ_USER: i32 = bpf_func_id::BPF_FUNC_probe_read_user as i32;
+                const BPF_FUNC_PROBE_READ: i32 = bpf_func_id::BPF_FUNC_probe_read as i32;
+                const BPF_FUNC_PROBE_READ_KERNEL_STR: i32 =
+                    bpf_func_id::BPF_FUNC_probe_read_kernel_str as i32;
+                const BPF_FUNC_PROBE_READ_USER_STR: i32 =
+                    bpf_func_id::BPF_FUNC_probe_read_user_str as i32;
+                const BPF_FUNC_PROBE_READ_STR: i32 = bpf_func_id::BPF_FUNC_probe_read_str as i32;
 
                 match inst.imm {
                     BPF_FUNC_PROBE_READ_KERNEL | BPF_FUNC_PROBE_READ_USER => {
@@ -931,7 +942,7 @@ impl Function {
 
 /// Errors caught during parsing the object file
 #[derive(Debug, thiserror::Error)]
-#[expect(missing_docs)]
+#[expect(missing_docs, reason = "TODO")]
 pub enum ParseError {
     #[error("error parsing ELF data")]
     ElfError(object::read::Error),
@@ -973,7 +984,7 @@ pub enum ParseError {
     #[error("unknown symbol in section `{section_index}` at address {address:#X}")]
     UnknownSymbol { section_index: usize, address: u64 },
 
-    #[error("invalid symbol, index `{index}` name: {}", .name.as_ref().unwrap_or(&"[unknown]".into()))]
+    #[error("invalid symbol, index `{index}` name: {}", .name.as_deref().unwrap_or("[unknown]"))]
     InvalidSymbol { index: usize, name: Option<String> },
 
     #[error("symbol {name} has size `{sym_size}`, but provided data is of size `{data_size}`")]
@@ -1124,20 +1135,19 @@ fn parse_license(data: &[u8]) -> Result<CString, ParseError> {
             data: data.to_vec(),
         });
     }
-    if data[data.len() - 1] != 0 {
-        return Err(ParseError::MissingLicenseNullTerminator {
-            data: data.to_vec(),
-        });
-    }
-
-    Ok(CStr::from_bytes_with_nul(data)
-        .map_err(|_| ParseError::InvalidLicense {
-            data: data.to_vec(),
-        })?
-        .to_owned())
+    CStr::from_bytes_with_nul(data)
+        .map_err(|err| match err {
+            FromBytesWithNulError::NotNulTerminated => ParseError::MissingLicenseNullTerminator {
+                data: data.to_vec(),
+            },
+            FromBytesWithNulError::InteriorNul { position: _ } => ParseError::InvalidLicense {
+                data: data.to_vec(),
+            },
+        })
+        .map(alloc::borrow::ToOwned::to_owned)
 }
 
-fn parse_version(data: &[u8], endianness: object::Endianness) -> Result<Option<u32>, ParseError> {
+fn parse_version(data: &[u8], endianness: Endianness) -> Result<Option<u32>, ParseError> {
     let data = match data.len() {
         4 => data.try_into().unwrap(),
         _ => {
@@ -1147,9 +1157,14 @@ fn parse_version(data: &[u8], endianness: object::Endianness) -> Result<Option<u
         }
     };
 
+    #[expect(
+        clippy::big_endian_bytes,
+        clippy::little_endian_bytes,
+        reason = "that's the point"
+    )]
     let v = match endianness {
-        object::Endianness::Big => u32::from_be_bytes(data),
-        object::Endianness::Little => u32::from_le_bytes(data),
+        Endianness::Big => u32::from_be_bytes(data),
+        Endianness::Little => u32::from_le_bytes(data),
     };
 
     Ok(if v == KERNEL_VERSION_ANY {
@@ -1182,14 +1197,14 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
     Ok(arr.len)
 }
 
-// Parsed '.bss' '.data' and '.rodata' sections. These sections are arrays of
+// Parse '.bss' '.data' and '.rodata' sections. These sections are arrays of
 // bytes and are relocated based on their section index.
-fn parse_data_map_section(section: &Section<'_>) -> Result<Map, ParseError> {
+fn parse_data_map_section(section: &Section<'_>) -> Map {
     let (def, data) = match section.kind {
         EbpfSectionKind::Data | EbpfSectionKind::Rodata => {
             let def = bpf_map_def {
                 map_type: BPF_MAP_TYPE_ARRAY as u32,
-                key_size: mem::size_of::<u32>() as u32,
+                key_size: size_of::<u32>() as u32,
                 // We need to use section.size here since
                 // .bss will always have data.len() == 0
                 value_size: section.size as u32,
@@ -1206,7 +1221,7 @@ fn parse_data_map_section(section: &Section<'_>) -> Result<Map, ParseError> {
         EbpfSectionKind::Bss => {
             let def = bpf_map_def {
                 map_type: BPF_MAP_TYPE_ARRAY as u32,
-                key_size: mem::size_of::<u32>() as u32,
+                key_size: size_of::<u32>() as u32,
                 value_size: section.size as u32,
                 max_entries: 1,
                 map_flags: 0,
@@ -1214,16 +1229,19 @@ fn parse_data_map_section(section: &Section<'_>) -> Result<Map, ParseError> {
             };
             (def, vec![0; section.size as usize])
         }
-        _ => unreachable!(),
+        #[expect(clippy::unreachable, reason = "unexpected section kind")]
+        kind => {
+            unreachable!("unexpected section kind: {kind:?}")
+        }
     };
-    Ok(Map::Legacy(LegacyMap {
+    Map::Legacy(LegacyMap {
         section_index: section.index.0,
         section_kind: section.kind,
         // Data maps don't require symbols to be relocated
         symbol_index: None,
         def,
         data,
-    }))
+    })
 }
 
 fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
@@ -1233,7 +1251,7 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
         });
     }
 
-    if data.len() < mem::size_of::<bpf_map_def>() {
+    if data.len() < size_of::<bpf_map_def>() {
         let mut map_def = bpf_map_def::default();
         unsafe {
             let map_def_ptr = from_raw_parts_mut(ptr::from_mut(&mut map_def).cast(), data.len());
@@ -1266,49 +1284,6 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
             });
         }
     };
-
-    // In aya-ebpf, the BTF map definition types are not used directly in the
-    // map variables. Instead, they are wrapped in two nested types:
-    //
-    // * A struct representing the map type (e.g., `Array`, `HashMap`) that
-    //   provides methods for interacting with the map type (e.g.
-    //   `HashMap::get`, `RingBuf::reserve`).
-    //   * It has a single field with name `__0`.
-    // * An `UnsafeCell`, which informs the Rust compiler that the type is
-    //   thread-safe and can be safely mutated even as a global variable. The
-    //   kernel guarantees map operation safety.
-    //   * It has a single field with name `value`.
-    //
-    // Therefore, the traversal to the actual map definition looks like:
-    //
-    //   HashMap -> __0 -> value
-    let mut s = s;
-    for (index, expected_field_name) in ["__0", "value"].into_iter().enumerate() {
-        match s.members.as_slice() {
-            [m] => {
-                let field_name = btf.string_at(m.name_offset)?;
-                if field_name.as_ref() != expected_field_name {
-                    return Err(BtfError::UnexpectedBtfMapWrapperLayout(s.clone()));
-                }
-                s = match btf.type_by_id(m.btf_type)? {
-                    BtfType::Struct(s) => s,
-                    _ => {
-                        return Err(BtfError::UnexpectedBtfType {
-                            type_id: m.btf_type,
-                        });
-                    }
-                };
-            }
-            // If the first wrapper level is missing, use the original struct.
-            _ => {
-                if index == 0 {
-                    break;
-                } else {
-                    return Err(BtfError::UnexpectedBtfMapWrapperLayout(s.clone()));
-                }
-            }
-        }
-    }
 
     for m in &s.members {
         match btf.string_at(m.name_offset)?.as_ref() {
@@ -1358,15 +1333,14 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
             }
             other => {
                 debug!("skipping unknown map section: {other}");
-                continue;
             }
         }
     }
     Ok((map_name.to_string(), map_def))
 }
 
-/// Parses a [bpf_map_info] into a [Map].
-pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
+/// Parses a [`bpf_map_info`] into a [`Map`].
+pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
     if info.btf_key_type_id != 0 {
         Map::Btf(BtfMap {
             def: BtfMapDef {
@@ -1404,11 +1378,11 @@ pub fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
 
 /// Copies a block of eBPF instructions
 pub fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
-    if !data.len().is_multiple_of(mem::size_of::<bpf_insn>()) {
+    if !data.len().is_multiple_of(size_of::<bpf_insn>()) {
         return Err(ParseError::InvalidProgramCode);
     }
     let instructions = data
-        .chunks_exact(mem::size_of::<bpf_insn>())
+        .chunks_exact(size_of::<bpf_insn>())
         .map(|d| unsafe { ptr::read_unaligned(d.as_ptr().cast()) })
         .collect::<Vec<_>>();
     Ok(instructions)
@@ -1541,6 +1515,11 @@ mod tests {
         assert_eq!(parse_license(b"GPL\0").unwrap().to_str().unwrap(), "GPL");
     }
 
+    #[expect(
+        clippy::big_endian_bytes,
+        clippy::little_endian_bytes,
+        reason = "that's the point"
+    )]
     #[test]
     fn test_parse_version() {
         assert_matches!(
@@ -1622,7 +1601,7 @@ mod tests {
             pinning: PinningType::ByName,
         };
         let mut buf = [0u8; 128];
-        unsafe { ptr::write_unaligned(buf.as_mut_ptr().cast(), def) };
+        unsafe { ptr::write_unaligned(buf.as_mut_ptr().cast(), def) }
 
         assert_eq!(parse_map_def("foo", &buf).unwrap(), def);
     }
@@ -1639,7 +1618,7 @@ mod tests {
                     None,
                 ),
             ),
-            Ok(Map::Legacy(LegacyMap {
+            Map::Legacy(LegacyMap {
                 section_index: 0,
                 section_kind: EbpfSectionKind::Data,
                 symbol_index: None,
@@ -1653,7 +1632,7 @@ mod tests {
                     pinning: PinningType::None,
                 },
                 data,
-            })) if data == map_data && value_size == map_data.len() as u32
+            }) if data == map_data && value_size == map_data.len() as u32
         )
     }
 
@@ -1726,7 +1705,7 @@ mod tests {
         ))
         .unwrap();
 
-        let prog_foo = obj.programs.get("foo").unwrap();
+        let prog_foo = &obj.programs["foo"];
 
         assert_matches!(prog_foo, Program {
             license,
@@ -1750,7 +1729,7 @@ mod tests {
     #[test]
     fn test_parse_section_map() {
         let mut obj = fake_obj();
-        fake_sym(&mut obj, 0, 0, "foo", mem::size_of::<bpf_map_def>() as u64);
+        fake_sym(&mut obj, 0, 0, "foo", size_of::<bpf_map_def>() as u64);
         assert_matches!(
             obj.parse_section(fake_section(
                 EbpfSectionKind::Maps,
@@ -1787,10 +1766,10 @@ mod tests {
         ))
         .unwrap();
 
-        let prog_foo = obj.programs.get("foo").unwrap();
-        let function_foo = obj.functions.get(&prog_foo.function_key()).unwrap();
-        let prog_bar = obj.programs.get("bar").unwrap();
-        let function_bar = obj.functions.get(&prog_bar.function_key()).unwrap();
+        let prog_foo = &obj.programs["foo"];
+        let function_foo = &obj.functions[&prog_foo.function_key()];
+        let prog_bar = &obj.programs["bar"];
+        let function_bar = &obj.functions[&prog_bar.function_key()];
 
         assert_matches!(prog_foo, Program {
             license,
@@ -1832,9 +1811,9 @@ mod tests {
     #[test]
     fn test_parse_section_multiple_maps() {
         let mut obj = fake_obj();
-        fake_sym(&mut obj, 0, 0, "foo", mem::size_of::<bpf_map_def>() as u64);
-        fake_sym(&mut obj, 0, 28, "bar", mem::size_of::<bpf_map_def>() as u64);
-        fake_sym(&mut obj, 0, 60, "baz", mem::size_of::<bpf_map_def>() as u64);
+        fake_sym(&mut obj, 0, 0, "foo", size_of::<bpf_map_def>() as u64);
+        fake_sym(&mut obj, 0, 28, "bar", size_of::<bpf_map_def>() as u64);
+        fake_sym(&mut obj, 0, 60, "baz", size_of::<bpf_map_def>() as u64);
         let def = &bpf_map_def {
             map_type: 1,
             key_size: 2,
@@ -2643,7 +2622,7 @@ mod tests {
             Map::Legacy(LegacyMap {
                 def: bpf_map_def {
                     map_type: BPF_MAP_TYPE_ARRAY as u32,
-                    key_size: mem::size_of::<u32>() as u32,
+                    key_size: size_of::<u32>() as u32,
                     value_size: 3,
                     max_entries: 1,
                     map_flags: BPF_F_RDONLY_PROG,
@@ -2676,7 +2655,7 @@ mod tests {
         ]))
         .unwrap();
 
-        let map = obj.maps.get(".rodata").unwrap();
+        let map = &obj.maps[".rodata"];
         assert_eq!(test_data, map.data());
     }
 
@@ -2842,7 +2821,7 @@ mod tests {
         let map_section = fake_section(EbpfSectionKind::BtfMaps, ".maps", &[], None);
         obj.parse_section(map_section).unwrap();
 
-        let map = obj.maps.get("map_1").unwrap();
+        let map = &obj.maps["map_1"];
         assert_matches!(map, Map::Btf(m) => {
             assert_eq!(m.def.key_size, 4);
             assert_eq!(m.def.value_size, 8);
