@@ -18,7 +18,12 @@ pub struct SockMap {
 impl SockMap {
     map_constructors!(u32, u32, BPF_MAP_TYPE_SOCKMAP);
 
-    #[expect(clippy::missing_safety_doc, reason = "TODO")]
+    /// Update the map entry at `index` with the socket associated with `sk_ops`.
+    ///
+    /// # Safety
+    ///
+    /// `sk_ops` must point to a valid `bpf_sock_ops` struct, which is typically the context
+    /// pointer passed to a `sock_ops` eBPF program.
     pub unsafe fn update(
         &self,
         mut index: u32,
@@ -36,12 +41,24 @@ impl SockMap {
         if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
-    #[expect(clippy::missing_safety_doc, reason = "TODO")]
+    /// Redirect the message associated with `ctx` to the socket at `index` in this map.
+    ///
+    /// # Safety
+    ///
+    /// The safety requirements come from the underlying `bpf_msg_redirect_map` helper.
+    /// Calling this may redirect the message and prevent the rest of the current program
+    /// from executing.
     pub unsafe fn redirect_msg(&self, ctx: &SkMsgContext, index: u32, flags: u64) -> i64 {
         unsafe { bpf_msg_redirect_map(ctx.as_ptr().cast(), self.def.as_ptr().cast(), index, flags) }
     }
 
-    #[expect(clippy::missing_safety_doc, reason = "TODO")]
+    /// Redirect the packet associated with `ctx` to the socket at `index` in this map.
+    ///
+    /// # Safety
+    ///
+    /// The safety requirements come from the underlying `bpf_sk_redirect_map` helper.
+    /// Calling this may redirect the packet and prevent the rest of the current program
+    /// from executing.
     pub unsafe fn redirect_skb(&self, ctx: &SkBuffContext, index: u32, flags: u64) -> i64 {
         unsafe { bpf_sk_redirect_map(ctx.as_ptr().cast(), self.def.as_ptr().cast(), index, flags) }
     }
