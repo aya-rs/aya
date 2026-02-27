@@ -113,5 +113,9 @@ name = "uprobe_cookie"
 path = "src/uprobe_cookie.rs"
 
 [[bin]]
+name = "uprobe_multi"
+path = "src/uprobe_multi.rs"
+
+[[bin]]
 name = "perf_event_bp"
 path = "src/perf_event_bp.rs"
