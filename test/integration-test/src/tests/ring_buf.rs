@@ -1,4 +1,5 @@
 use std::{
+    ops::ControlFlow,
     os::fd::AsRawFd as _,
     path::Path,
     sync::{
@@ -9,7 +10,6 @@ use std::{
     time::Duration,
 };
 
-use anyhow::Context as _;
 use assert_matches::assert_matches;
 use aya::{
     Ebpf, EbpfLoader,
@@ -147,21 +147,13 @@ fn ring_buf(n: usize) {
             }
         }
 
-        let mut seen = Vec::<u64>::new();
-        while seen.len() < expected.len() {
-            if let Some(read) = ring_buf.next() {
-                let read: [u8; 8] = (*read)
-                    .try_into()
-                    .with_context(|| format!("data: {:?}", read.len()))
-                    .unwrap();
-                let arg = u64::from_ne_bytes(read);
-                assert_eq!(arg % 2, 0, "got {arg} from probe");
-                seen.push(arg);
-            }
-        }
-
-        // Make sure that there is nothing else in the ring_buf.
-        assert_matches!(ring_buf.next(), None);
+        let mut seen = Vec::with_capacity(expected.len());
+        ring_buf.for_each(|read| {
+            let read = read.try_into().unwrap();
+            let arg = u64::from_ne_bytes(read);
+            assert_eq!(arg % 2, 0, "got {arg} from probe");
+            seen.push(arg);
+        });
 
         // Ensure that the data that was read matches what was passed, and the rejected count was set
         // properly.
@@ -202,13 +194,13 @@ fn ring_buf_mismatch_size<T>(
     prog.attach(trigger_symbol, "/proc/self/exe", None).unwrap();
 
     trigger(value.into());
-    {
-        let read = ring_buf.next().unwrap();
+    let mut items = Vec::new();
+    ring_buf.for_each(|read| {
         assert_eq!(read.len(), size_of::<T>());
-        let decoded = decode(read.as_ref());
-        assert_eq!(decoded, value);
-    }
-    assert_matches!(ring_buf.next(), None);
+        let decoded = decode(read);
+        items.push(decoded);
+    });
+    assert_eq!(items, &[value]);
 }
 
 #[test_log::test]
@@ -221,8 +213,8 @@ fn ring_buf_mismatch_small() {
         ring_buf_trigger_ebpf_program,
         value,
         |read| {
-            let bytes: [u8; 2] = read.try_into().unwrap();
-            u16::from_ne_bytes(bytes)
+            let read = read.try_into().unwrap();
+            u16::from_ne_bytes(read)
         },
     );
 }
@@ -237,8 +229,8 @@ fn ring_buf_mismatch_large() {
         ring_buf_trigger_ebpf_program,
         value,
         |read| {
-            let bytes: [u8; 8] = read.try_into().unwrap();
-            u64::from_ne_bytes(bytes)
+            let read = read.try_into().unwrap();
+            u64::from_ne_bytes(read)
         },
     );
 }
@@ -266,15 +258,12 @@ async fn ring_buf_async_with_drops() {
         // Construct an AsyncFd from the RingBuf in order to receive readiness notifications.
         let mut seen = 0;
         let mut process_ring_buf = |ring_buf: &mut RingBuf<_>| {
-            while let Some(read) = ring_buf.next() {
-                let read: [u8; 8] = (*read)
-                    .try_into()
-                    .with_context(|| format!("data: {:?}", read.len()))
-                    .unwrap();
+            ring_buf.for_each(|read| {
+                let read = read.try_into().unwrap();
                 let arg = u64::from_ne_bytes(read);
                 assert_eq!(arg % 2, 0, "got {arg} from probe");
                 seen += 1;
-            }
+            });
         };
         let mut writer =
             futures::future::try_join_all(data.chunks(8).map(ToOwned::to_owned).map(|v| {
@@ -314,9 +303,6 @@ async fn ring_buf_async_with_drops() {
                 }
             }
         }
-
-        // Make sure that there is nothing else in the ring_buf.
-        assert_matches!(async_fd.into_inner().next(), None);
 
         let max_dropped: u64 =
             u64::try_from(data.len().saturating_sub(RING_BUF_MAX_ENTRIES - 1)).unwrap();
@@ -388,23 +374,17 @@ async fn ring_buf_async_no_drop() {
             while seen.len() < expected_len {
                 let mut guard = async_fd.readable_mut().await.unwrap();
                 let ring_buf = guard.get_inner_mut();
-                while let Some(read) = ring_buf.next() {
-                    let read: [u8; 8] = (*read)
-                        .try_into()
-                        .with_context(|| format!("data: {:?}", read.len()))
-                        .unwrap();
+                ring_buf.for_each(|read| {
+                    let read = read.try_into().unwrap();
                     let arg = u64::from_ne_bytes(read);
                     seen.push(arg);
-                }
+                });
                 guard.clear_ready();
             }
-            (seen, async_fd.into_inner())
+            seen
         };
-        let (writer, (seen, mut ring_buf)) = futures::future::join(writer, reader).await;
+        let (writer, seen) = futures::future::join(writer, reader).await;
         writer.unwrap();
-
-        // Make sure that there is nothing else in the ring_buf.
-        assert_matches!(ring_buf.next(), None);
 
         // Ensure that the data that was read matches what was passed.
         assert_eq!(&seen, &expected);
@@ -443,10 +423,10 @@ fn ring_buf_epoll_wakeup() {
         let writer = WriterThread::spawn();
         while total_events < WriterThread::NUM_MESSAGES {
             epoll::wait(epoll_fd, -1, &mut epoll_event_buf).unwrap();
-            while let Some(read) = ring_buf.next() {
+            ring_buf.for_each(|read| {
                 assert_eq!(read.len(), 8);
                 total_events += 1;
-            }
+            });
         }
         writer.join();
     }
@@ -468,11 +448,11 @@ async fn ring_buf_asyncfd_events() {
         let writer = WriterThread::spawn();
         while total_events < WriterThread::NUM_MESSAGES {
             let mut guard = async_fd.readable_mut().await.unwrap();
-            let rb = guard.get_inner_mut();
-            while let Some(read) = rb.next() {
+            let ring_buf = guard.get_inner_mut();
+            ring_buf.for_each(|read| {
                 assert_eq!(read.len(), 8);
                 total_events += 1;
-            }
+            });
             guard.clear_ready();
         }
         writer.join();
@@ -546,11 +526,22 @@ async fn ring_buf_pinned() {
             ring_buf_trigger_ebpf_program(v);
         }
         let (to_read_before_reopen, to_read_after_reopen) = to_write_before_reopen.split_at(2);
-        for v in to_read_before_reopen {
-            let item = ring_buf.next().unwrap();
-            let item: [u8; 8] = item.as_ref().try_into().unwrap();
-            assert_eq!(item, v.to_ne_bytes());
-        }
+
+        assert_matches!(
+            ring_buf.try_fold(to_read_before_reopen, |to_read, item| {
+                assert_matches!(to_read, [v, to_read @ ..] => {
+                    let item: [u8; 8] = item.as_ref().try_into().unwrap();
+                    assert_eq!(item, v.to_ne_bytes());
+                    if to_read.is_empty() {
+                        ControlFlow::Break(())
+                    } else {
+                        ControlFlow::Continue(to_read)
+                    }
+                })
+            }),
+            ControlFlow::Break(())
+        );
+
         drop(ring_buf);
         drop(bpf);
 
@@ -574,15 +565,17 @@ async fn ring_buf_pinned() {
         }
         // Read both the data that was written before the ring buffer was reopened and the data that
         // was written after it was reopened.
-        for v in to_read_after_reopen
-            .iter()
-            .chain(to_write_after_reopen.iter())
-        {
-            let item = ring_buf.next().unwrap();
-            let item: [u8; 8] = item.as_ref().try_into().unwrap();
-            assert_eq!(item, v.to_ne_bytes());
-        }
-        // Make sure there is nothing else in the ring buffer.
-        assert_matches!(ring_buf.next(), None);
+        let mut iter = ring_buf.fold(
+            to_read_after_reopen
+                .iter()
+                .chain(to_write_after_reopen.iter()),
+            |mut iter, item| {
+                let v = iter.next().unwrap();
+                let item = item.try_into().unwrap();
+                assert_eq!(u64::from_ne_bytes(item), *v);
+                iter
+            },
+        );
+        assert_eq!(iter.next(), None);
     }
 }

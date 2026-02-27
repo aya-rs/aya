@@ -563,7 +563,10 @@ pub fn aya::maps::queue::Queue<T, V>::from(t: T) -> T
 pub mod aya::maps::ring_buf
 pub struct aya::maps::ring_buf::RingBuf<T>
 impl<T> aya::maps::ring_buf::RingBuf<T>
+pub fn aya::maps::ring_buf::RingBuf<T>::fold<C, F>(&mut self, init: C, f: F) -> C where F: core::ops::function::FnMut(C, &[u8]) -> C
+pub fn aya::maps::ring_buf::RingBuf<T>::for_each<F>(&mut self, f: F) where F: core::ops::function::FnMut(&[u8])
 pub fn aya::maps::ring_buf::RingBuf<T>::next(&mut self) -> core::option::Option<aya::maps::ring_buf::RingBufItem<'_>>
+pub fn aya::maps::ring_buf::RingBuf<T>::try_fold<B, C, F>(&mut self, init: C, f: F) -> core::ops::control_flow::ControlFlow<B, C> where F: core::ops::function::FnMut(C, &[u8]) -> core::ops::control_flow::ControlFlow<B, C>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ring_buf::RingBuf<aya::maps::MapData>
 pub type aya::maps::ring_buf::RingBuf<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::ring_buf::RingBuf<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -2246,7 +2249,10 @@ impl<T> core::convert::From<T> for aya::maps::queue::Queue<T, V>
 pub fn aya::maps::queue::Queue<T, V>::from(t: T) -> T
 pub struct aya::maps::RingBuf<T>
 impl<T> aya::maps::ring_buf::RingBuf<T>
+pub fn aya::maps::ring_buf::RingBuf<T>::fold<C, F>(&mut self, init: C, f: F) -> C where F: core::ops::function::FnMut(C, &[u8]) -> C
+pub fn aya::maps::ring_buf::RingBuf<T>::for_each<F>(&mut self, f: F) where F: core::ops::function::FnMut(&[u8])
 pub fn aya::maps::ring_buf::RingBuf<T>::next(&mut self) -> core::option::Option<aya::maps::ring_buf::RingBufItem<'_>>
+pub fn aya::maps::ring_buf::RingBuf<T>::try_fold<B, C, F>(&mut self, init: C, f: F) -> core::ops::control_flow::ControlFlow<B, C> where F: core::ops::function::FnMut(C, &[u8]) -> core::ops::control_flow::ControlFlow<B, C>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ring_buf::RingBuf<aya::maps::MapData>
 pub type aya::maps::ring_buf::RingBuf<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::ring_buf::RingBuf<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>

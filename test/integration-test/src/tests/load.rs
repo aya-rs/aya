@@ -60,10 +60,13 @@ fn ringbuffer_btf_map() {
 
     trigger_bpf_program();
 
-    let item = ring_buf.next().unwrap();
-    let item: [u8; 4] = (*item).try_into().unwrap();
-    let val = u32::from_ne_bytes(item);
-    assert_eq!(val, 0xdeadbeef);
+    let mut items = Vec::new();
+    ring_buf.for_each(|item| {
+        let item = item.try_into().unwrap();
+        let val = u32::from_ne_bytes(item);
+        items.push(val);
+    });
+    assert_eq!(items, &[0xdeadbeef]);
 }
 
 #[test_log::test]
