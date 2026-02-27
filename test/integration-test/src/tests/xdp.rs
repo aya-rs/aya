@@ -4,13 +4,35 @@ use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::{Array, CpuMap, XskMap},
-    programs::{ProgramError, Xdp, XdpError, XdpFlags, xdp::XdpLinkId},
+    programs::{ProgramError, Xdp, XdpError, XdpFlags},
     util::KernelVersion,
 };
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
-use crate::utils::NetNsGuard;
+use crate::utils::{NetNsGuard, PeerNsGuard};
+
+// Sanity-check the veth + PeerNsGuard plumbing without any BPF programs.
+#[test_log::test]
+fn veth_connectivity() {
+    // peer must be declared after netns so it drops first (see PeerNsGuard docs).
+    let netns = NetNsGuard::new();
+    let peer = PeerNsGuard::new(&netns);
+
+    let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::IFACE_ADDR)).unwrap();
+    let addr = sock.local_addr().unwrap();
+    sock.set_read_timeout(Some(Duration::from_secs(10)))
+        .unwrap();
+
+    peer.run(|| {
+        let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::PEER_ADDR)).unwrap();
+        sock.send_to(b"veth ok", addr).unwrap();
+    });
+
+    let mut buf = [0u8; 16];
+    let n = sock.recv(&mut buf).unwrap();
+    assert_eq!(&buf[..n], b"veth ok");
+}
 
 #[test_log::test]
 #[expect(
@@ -18,7 +40,9 @@ use crate::utils::NetNsGuard;
     reason = "packet headers are encoded in network byte order"
 )]
 fn af_xdp() {
-    let _netns = NetNsGuard::new();
+    // peer must be declared after netns so it drops first (see PeerNsGuard docs).
+    let netns = NetNsGuard::new();
+    let peer = PeerNsGuard::new(&netns);
 
     let mut bpf = Ebpf::load(crate::REDIRECT).unwrap();
     let mut socks: XskMap<_> = bpf.take_map("SOCKS").unwrap().try_into().unwrap();
@@ -29,7 +53,7 @@ fn af_xdp() {
         .try_into()
         .unwrap();
     xdp.load().unwrap();
-    xdp.attach("lo", XdpFlags::default()).unwrap();
+    xdp.attach(NetNsGuard::IFACE, XdpFlags::default()).unwrap();
 
     const SIZE: usize = 2 * 4096;
 
@@ -47,7 +71,7 @@ fn af_xdp() {
     };
 
     let mut iface = IfInfo::invalid();
-    iface.from_name(c"lo").unwrap();
+    iface.from_name(c"veth0").unwrap();
     let sock = match Socket::with_shared(&iface, &umem) {
         Ok(sock) => sock,
         Err(err) => {
@@ -81,9 +105,13 @@ fn af_xdp() {
     writer.insert_once(frame1.offset);
     writer.commit();
 
-    let sock = UdpSocket::bind("127.0.0.1:0").unwrap();
-    let port = sock.local_addr().unwrap().port();
-    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    let dst = format!("{}:1777", NetNsGuard::IFACE_ADDR);
+    let port = peer.run(|| {
+        let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::PEER_ADDR)).unwrap();
+        let port = sock.local_addr().unwrap().port();
+        sock.send_to(b"hello AF_XDP", &dst).unwrap();
+        port
+    });
 
     assert_eq!(rx.available(), 1);
     let desc = rx.receive(1).read().unwrap();
@@ -97,20 +125,26 @@ fn af_xdp() {
     assert_eq!(ip[9], 17); // UDP
     let (udp, payload) = buf.split_at(8);
     let ports = &udp[..4];
-    let (src, dst) = ports.split_at(2);
+    let (src, dst_port) = ports.split_at(2);
     assert_eq!(src, port.to_be_bytes().as_slice()); // Source
-    assert_eq!(dst, 1777u16.to_be_bytes().as_slice()); // Dest
+    assert_eq!(dst_port, 1777u16.to_be_bytes().as_slice()); // Dest
     assert_eq!(payload, b"hello AF_XDP");
 
     assert_eq!(rx.available(), 1);
     // Removes socket from map, no more packets will be redirected.
     socks.unset(0).unwrap();
     assert_eq!(rx.available(), 1);
-    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    peer.run(|| {
+        let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::PEER_ADDR)).unwrap();
+        sock.send_to(b"hello AF_XDP", &dst).unwrap();
+    });
     assert_eq!(rx.available(), 1);
     // Adds socket to map again, packets will be redirected again.
     socks.set(0, rx.as_raw_fd(), 0).unwrap();
-    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    peer.run(|| {
+        let sock = UdpSocket::bind(format!("{}:0", NetNsGuard::PEER_ADDR)).unwrap();
+        sock.send_to(b"hello AF_XDP", &dst).unwrap();
+    });
     assert_eq!(rx.available(), 2);
 }
 
@@ -182,34 +216,35 @@ fn cpumap_chain() {
     };
     cpus.set(0, 2048, Some(xdp_chain_fd), 0).unwrap();
 
-    // Load the main program
+    // Load the main program and attach to loopback (generic/SKB-mode XDP).
+    // We use loopback instead of veth because cpumap chaining does not
+    // reliably deliver packets through veth on arm64.
     let xdp: &mut Xdp = bpf.program_mut("redirect_cpu").unwrap().try_into().unwrap();
     xdp.load().unwrap();
-    let result = xdp.attach("lo", XdpFlags::default());
+
     // Generic devices did not support cpumap XDP programs until 5.15.
-    //
     // See https://github.com/torvalds/linux/commit/11941f8a85362f612df61f4aaab0e41b64d2111d.
+    let result = xdp.attach("lo", XdpFlags::default());
     if KernelVersion::current().unwrap() < KernelVersion::new(5, 15, 0) {
         assert_matches!(result, Err(ProgramError::XdpError(XdpError::NetlinkError(err))) => {
             assert_eq!(err.raw_os_error(), Some(libc::EINVAL))
         });
-        eprintln!(
-            "skipping test - cpumap attachment not supported on generic (loopback) interface"
-        );
+        eprintln!("skipping test - cpumap on generic XDP requires kernel >= 5.15");
         return;
     }
-    let _unused: XdpLinkId = result.unwrap();
+    result.unwrap();
 
     const PAYLOAD: &str = "hello cpumap";
 
+    // Send a UDP packet to ourselves over loopback so it hits our XDP program.
     let sock = UdpSocket::bind("127.0.0.1:0").unwrap();
     let addr = sock.local_addr().unwrap();
     sock.set_read_timeout(Some(Duration::from_secs(60)))
         .unwrap();
     sock.send_to(PAYLOAD.as_bytes(), addr).unwrap();
 
-    // Read back the packet to ensure it went through the entire network stack, including our two
-    // probes.
+    // Read back the packet to ensure it traversed the full XDP pipeline:
+    // redirect_cpu -> cpumap -> redirect_cpu_chain -> network stack.
     let mut buf = [0u8; PAYLOAD.len() + 1];
     let n = sock.recv(&mut buf).unwrap();
 

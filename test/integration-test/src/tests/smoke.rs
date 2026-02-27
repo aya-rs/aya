@@ -16,7 +16,7 @@ fn modprobe() {
     // correctly within the test environment.
     let _netns = NetNsGuard::new();
 
-    tc::qdisc_add_clsact("lo").unwrap();
+    tc::qdisc_add_clsact(NetNsGuard::IFACE).unwrap();
 }
 
 #[test_log::test]
@@ -34,7 +34,9 @@ fn xdp() {
     let mut bpf = Ebpf::load(crate::PASS).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
-    dispatcher.attach("lo", XdpFlags::default()).unwrap();
+    dispatcher
+        .attach(NetNsGuard::IFACE, XdpFlags::default())
+        .unwrap();
 }
 
 #[test_log::test]
@@ -72,7 +74,7 @@ fn extension() {
     let mut bpf = Ebpf::load(crate::MAIN).unwrap();
     let pass: &mut Xdp = bpf.program_mut("xdp_pass").unwrap().try_into().unwrap();
     pass.load().unwrap();
-    pass.attach("lo", XdpFlags::default()).unwrap();
+    pass.attach(NetNsGuard::IFACE, XdpFlags::default()).unwrap();
 
     let mut bpf = EbpfLoader::new()
         .extension("xdp_drop")

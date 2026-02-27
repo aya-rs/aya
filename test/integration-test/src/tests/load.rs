@@ -21,11 +21,15 @@ use aya::{
 };
 use aya_obj::programs::XdpAttachType;
 
+use crate::utils::NetNsGuard;
+
 const MAX_RETRIES: usize = 100;
 pub(crate) const RETRY_DURATION: Duration = Duration::from_millis(10);
 
 #[test_log::test]
 fn long_name() {
+    let _netns = NetNsGuard::new();
+
     let mut bpf = Ebpf::load(crate::NAME_TEST).unwrap();
     let name_prog: &mut Xdp = bpf
         .program_mut("ihaveaverylongname")
@@ -33,7 +37,9 @@ fn long_name() {
         .try_into()
         .unwrap();
     name_prog.load().unwrap();
-    name_prog.attach("lo", XdpFlags::default()).unwrap();
+    name_prog
+        .attach(NetNsGuard::IFACE, XdpFlags::default())
+        .unwrap();
 
     // We used to be able to assert with bpftool that the program name was short.
     // It seem though that it now uses the name from the ELF symbol table instead.
@@ -263,10 +269,12 @@ impl_unload_program_ops!(FlowDissector, FlowDissectorLinkId, FlowDissectorLink);
 
 #[test_log::test]
 fn unload_xdp() {
+    let _netns = NetNsGuard::new();
+
     type P = Xdp;
 
     let program_name = "pass";
-    let attach = |prog: &mut P| prog.attach("lo", XdpFlags::default()).unwrap();
+    let attach = |prog: &mut P| prog.attach(NetNsGuard::IFACE, XdpFlags::default()).unwrap();
     run_unload_program_test(
         crate::TEST,
         program_name,
@@ -387,10 +395,12 @@ fn basic_flow_dissector() {
 
 #[test_log::test]
 fn pin_link() {
+    let _netns = NetNsGuard::new();
+
     type P = Xdp;
 
     let program_name = "pass";
-    let attach = |prog: &mut P| prog.attach("lo", XdpFlags::default()).unwrap();
+    let attach = |prog: &mut P| prog.attach(NetNsGuard::IFACE, XdpFlags::default()).unwrap();
 
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
@@ -400,7 +410,7 @@ fn pin_link() {
     assert_loaded(program_name);
 
     let fd_link: FdLink = link.try_into().unwrap();
-    let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
+    let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-veth0").unwrap();
 
     // because of the pin, the program is still attached
     prog.unload().unwrap();
@@ -424,18 +434,17 @@ fn pin_tcx_link() {
         return;
     }
 
-    use crate::utils::NetNsGuard;
     let _netns = NetNsGuard::new();
 
     let program_name = "tcx_next";
-    let pin_path = "/sys/fs/bpf/aya-tcx-test-lo";
+    let pin_path = "/sys/fs/bpf/aya-tcx-test-veth0";
     let mut bpf = Ebpf::load(crate::TCX).unwrap();
     let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
     let link_id = prog
         .attach_with_options(
-            "lo",
+            NetNsGuard::IFACE,
             TcAttachType::Ingress,
             TcAttachOptions::TcxOrder(LinkOrder::default()),
         )
@@ -493,12 +502,14 @@ impl_pin_program_ops!(UProbe);
 
 #[test_log::test]
 fn pin_lifecycle() {
+    let _netns = NetNsGuard::new();
+
     type P = Xdp;
 
     let program_name = "pass";
-    let attach = |prog: &mut P| prog.attach("lo", XdpFlags::default()).unwrap();
+    let attach = |prog: &mut P| prog.attach(NetNsGuard::IFACE, XdpFlags::default()).unwrap();
     let program_pin = "/sys/fs/bpf/aya-xdp-test-prog";
-    let link_pin = "/sys/fs/bpf/aya-xdp-test-lo";
+    let link_pin = "/sys/fs/bpf/aya-xdp-test-veth0";
     let from_pin = |program_pin: &str| P::from_pin(program_pin, XdpAttachType::Interface).unwrap();
 
     let kernel_version = KernelVersion::current().unwrap();
