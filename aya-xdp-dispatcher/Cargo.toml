@@ -16,14 +16,14 @@ workspace = true
 [dependencies]
 aya = { path = "../aya", version = "0.13.2" }
 aya-xdp-dispatcher-ebpf = { path = "../ebpf/aya-xdp-dispatcher-ebpf", version = "0.1.0" }
-nix = { workspace = true, features = ["fs"] }
-uuid = { workspace = true, features = ["v4"] }
-thiserror = { workspace = true }
-log = { workspace = true }
 bytemuck = { workspace = true }
+log = { workspace = true }
+nix = { workspace = true, features = ["fs"] }
+thiserror = { workspace = true }
+uuid = { workspace = true, features = ["v4"] }
 
 [build-dependencies]
+anyhow = { workspace = true }
 aya-build = { path = "../aya-build", version = "0.1.3" }
 aya-xdp-dispatcher-ebpf = { path = "../ebpf/aya-xdp-dispatcher-ebpf", version = "0.1.0" }
-anyhow = { workspace = true }
 cargo_metadata = { workspace = true }
