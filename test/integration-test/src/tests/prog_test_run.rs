@@ -1,0 +1,230 @@
+use aya::{
+    Ebpf, TestRunOptions,
+    maps::Array,
+    programs::{SchedClassifier, SocketFilter, TestRun as _, Xdp},
+    util::KernelVersion,
+};
+use integration_common::test_run::{IF_INDEX, XDP_MODIGY_LEN, XDP_MODIGY_VAL};
+
+// https://github.com/torvalds/linux/blob/8fdb05de0e2db89d8f56144c60ab784812e8c3b7/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L48
+const PKT_V4_SIZE: usize = 14 + 20 + 20;
+const DATA_IN_SIZE: usize = PKT_V4_SIZE + size_of::<u32>();
+
+fn require_version(major: u8, minor: u8, patch: u16) -> bool {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(major, minor, patch) {
+        eprintln!(
+            "skipping test on kernel {kernel_version:?}, requires kernel >= {major}.{minor}.{patch}",
+        );
+        return false;
+    }
+    true
+}
+
+#[test_log::test]
+fn test_xdp_test_run() {
+    if !require_version(5, 18, 0) {
+        return;
+    }
+
+    let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
+    let prog: &mut Xdp = bpf.program_mut("test_xdp").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let data_in = vec![0u8; DATA_IN_SIZE];
+    let mut data_out = vec![0u8; DATA_IN_SIZE];
+
+    let mut opts = TestRunOptions::new();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
+
+    let result = prog.test_run(opts).unwrap();
+
+    assert_eq!(result.return_value, 2, "Expected XDP_PASS (2)");
+    assert!(result.duration > 0, "Expected non-zero duration");
+}
+
+#[test_log::test]
+fn test_xdp_modify_packet() {
+    if !require_version(5, 18, 0) {
+        return;
+    }
+
+    let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
+    let prog: &mut Xdp = bpf
+        .program_mut("test_xdp_modify")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+
+    let data_in = vec![0u8; DATA_IN_SIZE];
+    let mut data_out = vec![0u8; DATA_IN_SIZE];
+
+    let mut opts = TestRunOptions::new();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
+
+    let result = prog.test_run(opts).unwrap();
+
+    assert_eq!(result.return_value, 2, "Expected XDP_PASS (2)");
+    assert!(result.duration > 0, "Expected non-zero duration");
+
+    let expected_pattern: Vec<u8> = vec![XDP_MODIGY_VAL; XDP_MODIGY_LEN];
+    assert_eq!(&data_out[..XDP_MODIGY_LEN], &*expected_pattern);
+    assert_eq!(&data_out[XDP_MODIGY_LEN..], &data_in[XDP_MODIGY_LEN..]);
+}
+
+#[test_log::test]
+fn test_socket_filter_test_run() {
+    if !require_version(5, 18, 0) {
+        return;
+    }
+
+    let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
+    let prog: &mut SocketFilter = bpf
+        .program_mut("test_sock_filter")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+
+    let data_in = vec![0u8; DATA_IN_SIZE];
+    let mut data_out = vec![0u8; DATA_IN_SIZE];
+
+    let mut opts = TestRunOptions::new();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
+
+    let result = prog.test_run(opts).unwrap();
+
+    // Ethernet header size = 14 bytes
+    let expected_len = DATA_IN_SIZE - 14;
+    assert_eq!(
+        result.return_value as usize, expected_len,
+        "Expected return value to be packet length minus Ethernet header"
+    );
+    assert!(result.duration > 0, "Expected non-zero duration");
+}
+
+#[test_log::test]
+fn test_classifier_test_run() {
+    if !require_version(4, 12, 0) {
+        return;
+    }
+
+    let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
+    let prog: &mut SchedClassifier = bpf
+        .program_mut("test_classifier")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+
+    let data_in = vec![0u8; DATA_IN_SIZE];
+    let mut data_out = vec![0u8; DATA_IN_SIZE];
+
+    let mut opts = TestRunOptions::new();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
+
+    let result = prog.test_run(opts).unwrap();
+
+    assert_eq!(result.return_value, 1, "Expected SK_PASS(1)");
+    assert!(result.duration > 0, "Expected non-zero duration");
+}
+
+#[test_log::test]
+fn test_run_repeat() {
+    if !require_version(5, 18, 0) {
+        return;
+    }
+
+    let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
+
+    let mut exec_count: Array<_, u64> = bpf.take_map("EXEC_COUNT").unwrap().try_into().unwrap();
+
+    exec_count.set(0, 0, 0).unwrap();
+
+    let prog: &mut SocketFilter = bpf
+        .program_mut("test_count_exec")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+
+    let data_in = vec![0u8; DATA_IN_SIZE];
+    let mut data_out = vec![0u8; DATA_IN_SIZE];
+
+    // Run the test 50 times
+    let repeat_count = 50;
+    let mut opts = TestRunOptions::new();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
+    opts.repeat = repeat_count;
+    let _result = prog.test_run(opts).unwrap();
+
+    let final_count: u64 = exec_count.get(&0, 0).unwrap();
+    assert_eq!(final_count, repeat_count.into());
+}
+
+#[test_log::test]
+fn test_xdp_context() {
+    if !require_version(5, 18, 0) {
+        return;
+    }
+
+    let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
+    let prog: &mut Xdp = bpf
+        .program_mut("test_xdp_context")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+
+    let data_in = vec![0u8; DATA_IN_SIZE];
+    let mut data_out = vec![0u8; DATA_IN_SIZE];
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct XdpMd {
+        data: u32,
+        data_end: u32,
+        data_meta: u32,
+        ingress_ifindex: u32,
+        rx_queue_index: u32,
+        egress_ifindex: u32,
+    }
+
+    // see: https://github.com/torvalds/linux/blob/63804fed149a6750ffd28610c5c1c98cce6bd377/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L92
+    // for more details.
+    let ctx = XdpMd {
+        data: 0,
+        data_end: data_in.len() as u32,
+        data_meta: 0,
+        ingress_ifindex: IF_INDEX,
+        // RX queue cannot be specified without specifying an ingress
+        rx_queue_index: 0,
+        // egress cannot be specified
+        egress_ifindex: 0,
+    };
+
+    let size = size_of::<XdpMd>();
+    let ctx_bytes = unsafe { std::slice::from_raw_parts((&raw const ctx).cast::<u8>(), size) };
+    let mut ctx_out = vec![0u8; size];
+
+    let mut opts = TestRunOptions::new();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
+    opts.ctx_in = Some(ctx_bytes);
+    opts.ctx_out = Some(&mut ctx_out);
+
+    let result = prog.test_run(opts).unwrap();
+
+    // XDP_PASS is 2 - should pass when rx_queue_index matches expected value
+    assert_eq!(
+        result.return_value, 2,
+        "Expected XDP_PASS (2) when rx_queue_index matches"
+    );
+    assert!(result.duration > 0, "Expected non-zero duration");
+}

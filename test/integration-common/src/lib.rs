@@ -118,3 +118,9 @@ pub mod sk_storage {
     #[cfg(feature = "user")]
     unsafe impl aya::Pod for Value {}
 }
+
+pub mod test_run {
+    pub const XDP_MODIGY_VAL: u8 = 0xAA;
+    pub const IF_INDEX: u32 = 1;
+    pub const XDP_MODIGY_LEN: usize = 16;
+}
