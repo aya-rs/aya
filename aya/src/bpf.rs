@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    fs, io,
+    fs, io, iter,
     os::fd::{AsFd as _, AsRawFd as _},
     path::{Path, PathBuf},
     sync::{Arc, LazyLock},
@@ -497,38 +497,93 @@ impl<'a> EbpfLoader<'a> {
         if let Some(btf) = &btf {
             obj.relocate_btf(btf)?;
         }
-        let mut maps = HashMap::new();
-        for (name, mut obj) in obj.maps.drain() {
+
+        const fn is_map_of_maps(map_type: bpf_map_type) -> bool {
+            matches!(
+                map_type,
+                bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS | bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS
+            )
+        }
+
+        // The kernel requires inner_map_fd when creating map-of-maps, so inner
+        // maps must be created first. Partition into regular maps and map-of-maps.
+        let mut regular_maps: Vec<(String, aya_obj::Map)> = Vec::new();
+        let mut maps_of_maps: Vec<(String, aya_obj::Map)> = Vec::new();
+
+        for (name, map_obj) in obj.maps.drain() {
             if let (false, EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata) =
-                (FEATURES.bpf_global_data(), obj.section_kind())
+                (FEATURES.bpf_global_data(), map_obj.section_kind())
             {
                 continue;
             }
+            let map_type: bpf_map_type = map_obj.map_type().try_into().map_err(MapError::from)?;
+            if is_map_of_maps(map_type) {
+                maps_of_maps.push((name, map_obj));
+            } else {
+                regular_maps.push((name, map_obj));
+            }
+        }
+
+        let mut maps: HashMap<String, MapData> = HashMap::new();
+
+        // Regular maps first, so they're available as inner maps below.
+        for ((name, mut map_obj), is_map_of_maps) in regular_maps
+            .into_iter()
+            .zip(iter::repeat(false))
+            .chain(maps_of_maps.into_iter().zip(iter::repeat(true)))
+        {
             let num_cpus = || {
                 Ok(nr_cpus().map_err(|(path, error)| EbpfError::FileError {
                     path: PathBuf::from(path),
                     error,
                 })? as u32)
             };
-            let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
-            if let Some(max_entries) = max_entries_override(
+            let map_type: bpf_map_type = map_obj.map_type().try_into().map_err(MapError::from)?;
+            if let Some(max_entries_val) = max_entries_override(
                 map_type,
                 max_entries.get(name.as_str()).copied(),
-                || obj.max_entries(),
+                || map_obj.max_entries(),
                 num_cpus,
                 || page_size() as u32,
             )? {
-                obj.set_max_entries(max_entries)
+                map_obj.set_max_entries(max_entries_val)
             }
             if let Some(value_size) = value_size_override(map_type) {
-                obj.set_value_size(value_size)
+                map_obj.set_value_size(value_size)
             }
+
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
-            let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
-                MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd)?
+
+            // The kernel requires an inner map fd when creating a map-of-maps.
+            let btf_inner_map;
+            let inner_map_fd = if is_map_of_maps {
+                if let Some(inner) = map_obj.inner() {
+                    // Try using a BTF definition of the inner map.
+                    btf_inner_map = MapData::create(inner, &format!("{name}.inner"), btf_fd)?;
+                    Some(btf_inner_map.fd().as_fd())
+                } else {
+                    // No BTF inner definition; fall back to the `.maps.inner` binding.
+                    let inner_name = obj.inner_map_binding(&name).ok_or_else(|| {
+                        EbpfError::MapError(MapError::MissingInnerMapBinding { name: name.clone() })
+                    })?;
+                    let inner_map = maps.get(inner_name).ok_or_else(|| {
+                        EbpfError::MapError(MapError::InnerMapNotFound {
+                            name: name.clone(),
+                            inner_name: inner_name.to_owned(),
+                        })
+                    })?;
+                    Some(inner_map.fd().as_fd())
+                }
             } else {
-                match obj.pinning() {
-                    PinningType::None => MapData::create(obj, &name, btf_fd)?,
+                None
+            };
+            let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
+                MapData::create_pinned_by_name(pin_path, map_obj, &name, btf_fd, inner_map_fd)?
+            } else {
+                match map_obj.pinning() {
+                    PinningType::None => {
+                        MapData::create_with_inner_map_fd(map_obj, &name, btf_fd, inner_map_fd)?
+                    }
                     PinningType::ByName => {
                         // pin maps in /sys/fs/bpf by default to align with libbpf
                         // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
@@ -537,7 +592,7 @@ impl<'a> EbpfLoader<'a> {
                             .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
                         let path = path.join(&name);
 
-                        MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
+                        MapData::create_pinned_by_name(path, map_obj, &name, btf_fd, inner_map_fd)?
                     }
                 }
             };
@@ -778,6 +833,8 @@ fn parse_map(
         bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
         bpf_map_type::BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
         bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Map::SkStorage(map),
+        bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Map::ArrayOfMaps(map),
+        bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Map::HashOfMaps(map),
         m_type => {
             if allow_unsupported_maps {
                 Map::Unsupported(map)
