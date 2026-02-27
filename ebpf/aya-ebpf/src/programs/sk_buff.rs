@@ -86,6 +86,10 @@ impl SkBuff {
         let len = usize::try_from(self.len()).map_err(|core::num::TryFromIntError { .. }| -1)?;
         let len = len.checked_sub(offset).ok_or(-1)?;
         let len = len.min(dst.len());
+        if len == 0 {
+            return Ok(0);
+        }
+
         let len_u32 = u32::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
         let ret = unsafe {
             bpf_skb_load_bytes(
