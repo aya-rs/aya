@@ -10,16 +10,12 @@ license = "GPL-2.0-only OR BSD-2-Clause"
 repository.workspace = true
 rust-version.workspace = true
 
-lints.workspace = true
-
-[lints.rust]
-unused_crate_dependencies = "allow"
-
 [target.'cfg(target_arch = "bpf")'.dependencies]
 aya-ebpf = { version = "^0.1.2", path = "../aya-ebpf" }
 
 [target.'cfg(not(target_arch = "bpf"))'.dependencies]
 aya = { version = "^0.13.2", path = "../../aya" }
+bytemuck = { workspace = true, features = ["derive"] }
 
 [build-dependencies]
 which = { workspace = true, features = ["real-sys"] }

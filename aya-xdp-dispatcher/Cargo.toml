@@ -16,9 +16,11 @@ workspace = true
 [dependencies]
 aya = { path = "../aya", version = "0.13.2" }
 aya-xdp-dispatcher-ebpf = { path = "../ebpf/aya-xdp-dispatcher-ebpf", version = "0.1.0" }
-named-lock = { workspace = true }
+nix = { workspace = true, features = ["fs"] }
 uuid = { workspace = true, features = ["v4"] }
 thiserror = { workspace = true }
+log = { workspace = true }
+bytemuck = { workspace = true }
 
 [build-dependencies]
 aya-build = { path = "../aya-build", version = "0.1.3" }

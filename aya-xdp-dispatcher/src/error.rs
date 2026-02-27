@@ -17,10 +17,16 @@ pub enum Error {
     Pin(#[from] PinError),
     #[error("{0}")]
     Program(#[from] ProgramError),
-    #[error("failed to acquire lock on dispatcher {0}")]
-    Lock(#[from] named_lock::Error),
     #[error("failed to create a bpf link {0}")]
     Link(#[from] LinkError),
+    #[error("failed to acquire flock on XDP directory: {0}")]
+    Lock(nix::errno::Errno),
+    #[error("dispatcher config file is invalid")]
+    InvalidConfig,
+    #[error("concurrent modification detected, retry required")]
+    ConcurrentModification,
+    #[error("XDP link is not an fd-based link; cannot pin")]
+    NoFdLink,
 }
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;

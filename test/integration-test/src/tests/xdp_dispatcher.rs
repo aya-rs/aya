@@ -7,66 +7,56 @@ use uuid::Uuid;
 
 use crate::utils::NetNsGuard;
 
-const RTDIR_FS_XDP: &str = "/sys/fs/bpf/xdp-dispatcher";
+const RTDIR_FS_XDP: &str = "/sys/fs/bpf/xdp";
 
 fn get_lo_ifindex() -> u32 {
     let lo = CString::new("lo").unwrap();
     let idx = unsafe { if_nametoindex(lo.as_ptr()) };
     if idx == 0 {
-        panic!(
-            "interface `lo` not found: {}",
-            io::Error::last_os_error()
-        );
+        panic!("interface `lo` not found: {}", io::Error::last_os_error());
     }
     idx
 }
 
-fn count_pinned_extensions(if_index: u32) -> usize {
-    let dispatcher_dir = format!("{RTDIR_FS_XDP}/dispatcher_{if_index}");
-
-    // Find the current revision directory
-    let Ok(entries) = fs::read_dir(&dispatcher_dir) else {
-        return 0;
-    };
-
-    let mut max_rev = 0usize;
+/// Find the dispatcher directory for `if_index` (named `dispatch-{if_index}-{did}`).
+fn find_dispatcher_dir(if_index: u32) -> Option<std::path::PathBuf> {
+    let prefix = format!("dispatch-{if_index}-");
+    let entries = fs::read_dir(RTDIR_FS_XDP).ok()?;
     for entry in entries.flatten() {
-        if let Ok(ftype) = entry.file_type() {
-            if ftype.is_dir() {
-                if let Some(rev) = entry
-                    .file_name()
-                    .to_str()
-                    .and_then(|f| f.parse::<usize>().ok())
-                {
-                    max_rev = max_rev.max(rev);
-                }
-            }
+        if entry
+            .file_name()
+            .to_str()
+            .is_some_and(|s| s.starts_with(&prefix))
+        {
+            return Some(entry.path());
         }
     }
+    None
+}
 
-    if max_rev == 0 {
-        return 0;
-    }
-
-    let ext_dir = format!("{dispatcher_dir}/{max_rev}");
-    let Ok(entries) = fs::read_dir(&ext_dir) else {
+/// Count pinned extension programs (`prog{i}-prog`) in the current dispatcher directory.
+fn count_pinned_extensions(if_index: u32) -> usize {
+    let Some(dir) = find_dispatcher_dir(if_index) else {
         return 0;
     };
-
+    let Ok(entries) = fs::read_dir(&dir) else {
+        return 0;
+    };
     entries
         .flatten()
         .filter(|entry| {
             entry
                 .file_name()
                 .to_str()
-                .is_some_and(|name| name.starts_with("extension_"))
+                .is_some_and(|name| name.ends_with("-prog"))
         })
         .count()
 }
 
 fn cleanup_dispatcher(if_index: u32) {
-    let dispatcher_dir = format!("{RTDIR_FS_XDP}/dispatcher_{if_index}");
-    let _ = fs::remove_dir_all(&dispatcher_dir);
+    if let Some(dir) = find_dispatcher_dir(if_index) {
+        let _ = fs::remove_dir_all(&dir);
+    }
 }
 
 #[test_log::test]
@@ -78,20 +68,13 @@ fn xdp_dispatcher_single_program() {
     cleanup_dispatcher(if_index);
 
     let ebpf_id = Uuid::new_v4();
-    let mut programs = EbpfPrograms::new(
-        ebpf_id,
-        EbpfLoader::new(),
-        crate::XDP_DISPATCHER_TEST,
-    )
-    .set_priority("xdp_dispatcher_a", 10);
+    let mut programs = EbpfPrograms::new(ebpf_id, EbpfLoader::new(), crate::XDP_DISPATCHER_TEST)
+        .set_priority("xdp_dispatcher_a", 10);
 
     {
-        let _dispatcher = XdpDispatcher::new_with_programs(
-            if_index,
-            XdpFlags::default(),
-            vec![&mut programs],
-        )
-        .expect("failed to create dispatcher with single program");
+        let _dispatcher =
+            XdpDispatcher::new_with_programs(if_index, XdpFlags::default(), vec![&mut programs])
+                .expect("failed to create dispatcher with single program");
 
         // Verify one extension is pinned
         assert_eq!(
@@ -117,21 +100,14 @@ fn xdp_dispatcher_multiple_programs_same_loader() {
     cleanup_dispatcher(if_index);
 
     let ebpf_id = Uuid::new_v4();
-    let mut programs = EbpfPrograms::new(
-        ebpf_id,
-        EbpfLoader::new(),
-        crate::XDP_DISPATCHER_TEST,
-    )
-    .set_priority("xdp_dispatcher_a", 10)
-    .set_priority("xdp_dispatcher_b", 20);
+    let mut programs = EbpfPrograms::new(ebpf_id, EbpfLoader::new(), crate::XDP_DISPATCHER_TEST)
+        .set_priority("xdp_dispatcher_a", 10)
+        .set_priority("xdp_dispatcher_b", 20);
 
     {
-        let _dispatcher = XdpDispatcher::new_with_programs(
-            if_index,
-            XdpFlags::default(),
-            vec![&mut programs],
-        )
-        .expect("failed to create dispatcher with multiple programs");
+        let _dispatcher =
+            XdpDispatcher::new_with_programs(if_index, XdpFlags::default(), vec![&mut programs])
+                .expect("failed to create dispatcher with multiple programs");
 
         assert_eq!(
             count_pinned_extensions(if_index),
@@ -156,20 +132,13 @@ fn xdp_dispatcher_two_dispatchers_ownership() {
 
     // Dispatcher 1 loads programs A and B
     let ebpf_id1 = Uuid::new_v4();
-    let mut programs1 = EbpfPrograms::new(
-        ebpf_id1,
-        EbpfLoader::new(),
-        crate::XDP_DISPATCHER_TEST,
-    )
-    .set_priority("xdp_dispatcher_a", 10)
-    .set_priority("xdp_dispatcher_b", 20);
+    let mut programs1 = EbpfPrograms::new(ebpf_id1, EbpfLoader::new(), crate::XDP_DISPATCHER_TEST)
+        .set_priority("xdp_dispatcher_a", 10)
+        .set_priority("xdp_dispatcher_b", 20);
 
-    let dispatcher1 = XdpDispatcher::new_with_programs(
-        if_index,
-        XdpFlags::default(),
-        vec![&mut programs1],
-    )
-    .expect("failed to create dispatcher1");
+    let dispatcher1 =
+        XdpDispatcher::new_with_programs(if_index, XdpFlags::default(), vec![&mut programs1])
+            .expect("failed to create dispatcher1");
 
     assert_eq!(
         count_pinned_extensions(if_index),
@@ -179,19 +148,12 @@ fn xdp_dispatcher_two_dispatchers_ownership() {
 
     // Dispatcher 2 loads program C
     let ebpf_id2 = Uuid::new_v4();
-    let mut programs2 = EbpfPrograms::new(
-        ebpf_id2,
-        EbpfLoader::new(),
-        crate::XDP_DISPATCHER_TEST,
-    )
-    .set_priority("xdp_dispatcher_c", 30);
+    let mut programs2 = EbpfPrograms::new(ebpf_id2, EbpfLoader::new(), crate::XDP_DISPATCHER_TEST)
+        .set_priority("xdp_dispatcher_c", 30);
 
-    let dispatcher2 = XdpDispatcher::new_with_programs(
-        if_index,
-        XdpFlags::default(),
-        vec![&mut programs2],
-    )
-    .expect("failed to create dispatcher2");
+    let dispatcher2 =
+        XdpDispatcher::new_with_programs(if_index, XdpFlags::default(), vec![&mut programs2])
+            .expect("failed to create dispatcher2");
 
     // Total should be A, B, C = 3 programs
     assert_eq!(
@@ -229,23 +191,16 @@ fn xdp_dispatcher_priority_ordering() {
 
     // Load programs with specific priorities to test ordering
     let ebpf_id = Uuid::new_v4();
-    let mut programs = EbpfPrograms::new(
-        ebpf_id,
-        EbpfLoader::new(),
-        crate::XDP_DISPATCHER_TEST,
-    )
-    // Programs with different priorities - they should be ordered by priority
-    .set_priority("xdp_dispatcher_c", 5)   // lowest priority, runs first
-    .set_priority("xdp_dispatcher_a", 15)  // medium priority
-    .set_priority("xdp_dispatcher_b", 25); // highest priority, runs last
+    let mut programs = EbpfPrograms::new(ebpf_id, EbpfLoader::new(), crate::XDP_DISPATCHER_TEST)
+        // Programs with different priorities - they should be ordered by priority
+        .set_priority("xdp_dispatcher_c", 5) // lowest priority, runs first
+        .set_priority("xdp_dispatcher_a", 15) // medium priority
+        .set_priority("xdp_dispatcher_b", 25); // highest priority, runs last
 
     {
-        let _dispatcher = XdpDispatcher::new_with_programs(
-            if_index,
-            XdpFlags::default(),
-            vec![&mut programs],
-        )
-        .expect("failed to create dispatcher with priority ordering");
+        let _dispatcher =
+            XdpDispatcher::new_with_programs(if_index, XdpFlags::default(), vec![&mut programs])
+                .expect("failed to create dispatcher with priority ordering");
 
         assert_eq!(
             count_pinned_extensions(if_index),
@@ -270,53 +225,32 @@ fn xdp_dispatcher_interleaved_drops() {
 
     // Create three dispatchers with different programs
     let ebpf_id1 = Uuid::new_v4();
-    let mut programs1 = EbpfPrograms::new(
-        ebpf_id1,
-        EbpfLoader::new(),
-        crate::XDP_DISPATCHER_TEST,
-    )
-    .set_priority("xdp_dispatcher_a", 10);
+    let mut programs1 = EbpfPrograms::new(ebpf_id1, EbpfLoader::new(), crate::XDP_DISPATCHER_TEST)
+        .set_priority("xdp_dispatcher_a", 10);
 
-    let dispatcher1 = XdpDispatcher::new_with_programs(
-        if_index,
-        XdpFlags::default(),
-        vec![&mut programs1],
-    )
-    .expect("failed to create dispatcher1");
+    let dispatcher1 =
+        XdpDispatcher::new_with_programs(if_index, XdpFlags::default(), vec![&mut programs1])
+            .expect("failed to create dispatcher1");
 
     assert_eq!(count_pinned_extensions(if_index), 1);
 
     let ebpf_id2 = Uuid::new_v4();
-    let mut programs2 = EbpfPrograms::new(
-        ebpf_id2,
-        EbpfLoader::new(),
-        crate::XDP_DISPATCHER_TEST,
-    )
-    .set_priority("xdp_dispatcher_b", 20);
+    let mut programs2 = EbpfPrograms::new(ebpf_id2, EbpfLoader::new(), crate::XDP_DISPATCHER_TEST)
+        .set_priority("xdp_dispatcher_b", 20);
 
-    let dispatcher2 = XdpDispatcher::new_with_programs(
-        if_index,
-        XdpFlags::default(),
-        vec![&mut programs2],
-    )
-    .expect("failed to create dispatcher2");
+    let dispatcher2 =
+        XdpDispatcher::new_with_programs(if_index, XdpFlags::default(), vec![&mut programs2])
+            .expect("failed to create dispatcher2");
 
     assert_eq!(count_pinned_extensions(if_index), 2);
 
     let ebpf_id3 = Uuid::new_v4();
-    let mut programs3 = EbpfPrograms::new(
-        ebpf_id3,
-        EbpfLoader::new(),
-        crate::XDP_DISPATCHER_TEST,
-    )
-    .set_priority("xdp_dispatcher_c", 30);
+    let mut programs3 = EbpfPrograms::new(ebpf_id3, EbpfLoader::new(), crate::XDP_DISPATCHER_TEST)
+        .set_priority("xdp_dispatcher_c", 30);
 
-    let dispatcher3 = XdpDispatcher::new_with_programs(
-        if_index,
-        XdpFlags::default(),
-        vec![&mut programs3],
-    )
-    .expect("failed to create dispatcher3");
+    let dispatcher3 =
+        XdpDispatcher::new_with_programs(if_index, XdpFlags::default(), vec![&mut programs3])
+            .expect("failed to create dispatcher3");
 
     assert_eq!(count_pinned_extensions(if_index), 3);
 

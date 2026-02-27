@@ -72,6 +72,7 @@ assert_matches = { version = "1.5.0", default-features = false }
 base64 = { version = "0.22.1", default-features = false }
 bindgen = { version = "0.72", default-features = false }
 bitflags = { version = "2.2.1", default-features = false }
+bytemuck = { version = "1.25.0", default-features = false}
 bytes = { version = "1", default-features = false }
 cargo_metadata = { version = "0.23.0", default-features = false }
 clap = { version = "4", default-features = false }
@@ -87,7 +88,6 @@ indoc = { version = "2.0", default-features = false }
 libbpf-rs = { version = "0.26", default-features = false }
 libc = { version = "0.2.105", default-features = false }
 log = { version = "0.4", default-features = false }
-named-lock = { version = "0.4.1", default-features = false }
 network-types = { version = "0.1.0", default-features = false }
 nix = { version = "0.31.1", default-features = false }
 num_enum = { version = "0.7", default-features = false }

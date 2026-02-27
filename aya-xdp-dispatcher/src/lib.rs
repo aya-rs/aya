@@ -1,46 +1,68 @@
 mod error;
 use std::{
-    borrow::BorrowMut,
-    collections::{BTreeMap, HashMap},
-    env::temp_dir,
-    fs,
+    collections::HashMap,
+    fs::{self, File, OpenOptions},
+    os::unix::fs::OpenOptionsExt as _,
+    path::{Path, PathBuf},
 };
 
 use aya::{
-    Ebpf, EbpfLoader,
+    Ebpf, EbpfLoader, include_bytes_aligned,
     programs::{
         Extension, Xdp, XdpFlags,
         links::{FdLink, PinnedLink},
     },
 };
-use aya_xdp_dispatcher_ebpf::XdpDispatcherConfig;
+use aya_xdp_dispatcher_ebpf::{
+    MAX_DISPATCHER_ACTIONS, XDP_DISPATCHER_MAGIC, XDP_DISPATCHER_RETVAL, XDP_DISPATCHER_VERSION,
+    XdpDispatcherConfig,
+};
+use bytemuck::try_pod_read_unaligned;
 pub use error::*;
-use named_lock::NamedLock;
+use nix::fcntl::{Flock, FlockArg};
 use uuid::Uuid;
 
-const AYA_XDP_DISPATCHER_EBPF_PROGRAM: &[u8] = &[];
+const AYA_XDP_DISPATCHER_EBPF_PROGRAM: &[u8] =
+    include_bytes_aligned!(concat!(env!("OUT_DIR"), "/aya-xdp-dispatcher-ebpf"));
 
-const RTDIR_FS_XDP: &str = "/sys/fs/bpf/xdp-dispatcher";
+const RTDIR_FS_XDP: &str = "/sys/fs/bpf/xdp";
 
-pub const MAX_PROGARMS: usize = 10;
+pub const MAX_PROGRAMS: usize = MAX_DISPATCHER_ACTIONS;
 
-fn default_proceed_on_mask() -> u32 {
-    let mut proceed_on_mask: u32 = 0;
-    for action in [2, 31] {
-        proceed_on_mask |= 1 << action;
+pub const DEFAULT_PRIORITY: u32 = 50;
+
+// XDP action values (matching kernel xdp_action enum).
+const XDP_PASS: u32 = 2;
+
+const DEFAULT_CHAIN_CALL_ACTIONS: u32 = (1 << XDP_PASS) | (1 << XDP_DISPATCHER_RETVAL);
+
+pub struct ProgramConfig {
+    /// Run priority (lower = runs first). Default: 50.
+    pub priority: u32,
+    pub chain_call_actions: u32,
+    /// Whether this program was loaded with `BPF_F_XDP_HAS_FRAGS`.
+    pub has_frags: bool,
+}
+
+impl Default for ProgramConfig {
+    fn default() -> Self {
+        Self {
+            priority: DEFAULT_PRIORITY,
+            chain_call_actions: DEFAULT_CHAIN_CALL_ACTIONS,
+            has_frags: false,
+        }
     }
-    proceed_on_mask
 }
 
 pub struct EbpfPrograms<'a> {
     pub ebpf_id: Uuid,
     pub loader: EbpfLoader<'a>,
-    programs: Vec<(&'a str, u8)>,
+    programs: Vec<(&'a str, ProgramConfig)>,
     bpf_bytes: &'a [u8],
 }
 
 impl<'a> EbpfPrograms<'a> {
-    pub fn new(ebpf_id: Uuid, loader: EbpfLoader<'a>, bpf_bytes: &'a [u8]) -> Self {
+    pub const fn new(ebpf_id: Uuid, loader: EbpfLoader<'a>, bpf_bytes: &'a [u8]) -> Self {
         Self {
             ebpf_id,
             loader,
@@ -49,317 +71,388 @@ impl<'a> EbpfPrograms<'a> {
         }
     }
 
-    pub fn set_priority(mut self, program: &'a str, priority: u8) -> Self {
-        self.programs.push((program, priority));
+    #[must_use]
+    pub fn set_priority(mut self, program: &'a str, priority: u32) -> Self {
+        self.programs.push((
+            program,
+            ProgramConfig {
+                priority,
+                ..Default::default()
+            },
+        ));
+        self
+    }
+
+    #[must_use]
+    pub fn with_config(mut self, program: &'a str, config: ProgramConfig) -> Self {
+        self.programs.push((program, config));
         self
     }
 }
 
 #[derive(Clone)]
-struct ExtensionAttrs {
-    priority: u8,
-    ebpf_id: Uuid,
-    program_name: String,
-    loaded: bool,
-}
-
-impl ExtensionAttrs {
-    fn from_pin_name(pin: &str) -> Option<Self> {
-        // program format is extension_<priority>_<ebpfid>_<program_name>
-        let attrs = pin.strip_prefix("extension_")?;
-        let mut split_iter = attrs.splitn(3, '_');
-        let priority = split_iter.next()?.parse().ok()?;
-        let ebpf_id = split_iter.next()?.parse().ok()?;
-        let program_name = split_iter.next()?.to_owned();
-
-        Some(Self {
-            priority,
-            ebpf_id,
-            program_name,
-            loaded: true,
-        })
-    }
-
-    fn to_pin_name(&self) -> String {
-        format!(
-            "extension_{}_{}_{}",
-            self.priority, self.ebpf_id, self.program_name
-        )
-    }
+struct SlotEntry {
+    priority: u32,
+    chain_call_actions: u32,
+    program_flags: u32,
+    ebpf_id: Option<Uuid>,
+    program_name: Option<String>,
+    existing_prog_path: Option<PathBuf>,
 }
 
 pub struct XdpDispatcher {
     if_index: u32,
     xdp_flags: XdpFlags,
     owned_ebpfs: HashMap<Uuid, Ebpf>,
-    owned_extension_priorities: HashMap<(Uuid, String), u8>,
+    owned_prog_ids: Vec<u32>,
 }
 
 impl XdpDispatcher {
-    fn cleanup_prev_revision(path: &str) -> Result<()> {
-        std::fs::remove_dir_all(path)?;
+    fn lock_xdp_dir() -> Result<Flock<File>> {
+        fs::create_dir_all(RTDIR_FS_XDP)?;
+        let f = OpenOptions::new()
+            .read(true)
+            .custom_flags(nix::libc::O_DIRECTORY)
+            .open(RTDIR_FS_XDP)?;
+        Flock::lock(f, FlockArg::LockExclusive).map_err(|(_, e)| Error::Lock(e))
+    }
 
+    fn find_existing_dir(if_index: u32) -> Result<Option<PathBuf>> {
+        let prefix = format!("dispatch-{if_index}-");
+        for entry in fs::read_dir(RTDIR_FS_XDP)? {
+            let entry = entry?;
+            if entry
+                .file_name()
+                .to_str()
+                .is_some_and(|s| s.starts_with(&prefix))
+            {
+                return Ok(Some(entry.path()));
+            }
+        }
+        Ok(None)
+    }
+
+    fn read_config(dispatcher_dir: &Path) -> Result<XdpDispatcherConfig> {
+        let bytes = fs::read(dispatcher_dir.join("config"))?;
+        try_pod_read_unaligned(&bytes).map_err(|_pod| Error::InvalidConfig)
+    }
+
+    fn write_config(dispatcher_dir: &Path, config: &XdpDispatcherConfig) -> Result<()> {
+        let bytes = bytemuck::bytes_of(config);
+        fs::write(dispatcher_dir.join("config"), bytes)?;
         Ok(())
     }
 
-    fn current_rev(dispatcher_dir: &str) -> Result<usize> {
-        let mut current_rev = 0;
-        for entry in fs::read_dir(dispatcher_dir)? {
-            let Ok(entry) = entry else {
-                continue;
-            };
-            let Ok(ftype) = entry.file_type() else {
-                continue;
-            };
-            if !ftype.is_dir() {
-                continue;
-            }
+    fn read_existing_slots(dispatcher_dir: &Path, config: &XdpDispatcherConfig) -> Vec<SlotEntry> {
+        (0..MAX_PROGRAMS)
+            .filter_map(|i| {
+                let prog_path = dispatcher_dir.join(format!("prog{i}-prog"));
+                prog_path.exists().then_some(SlotEntry {
+                    priority: config.run_prios[i],
+                    chain_call_actions: config.chain_call_actions[i],
+                    program_flags: config.program_flags[i],
+                    ebpf_id: None,
+                    program_name: None,
+                    existing_prog_path: Some(prog_path),
+                })
+            })
+            .collect()
+    }
 
-            let Some(rev) = entry
-                .file_name()
-                .to_str()
-                .and_then(|f| f.parse::<usize>().ok())
-            else {
-                continue;
-            };
-            current_rev = rev.max(current_rev);
+    /// Core loader: build a new dispatcher with `slots`, pin everything in bpffs, then attach.
+    ///
+    /// On success returns `(new_dispatcher_dir, ext_prog_ids)`.
+    /// On concurrent-modification the caller should retry.
+    fn do_load(
+        if_index: u32,
+        xdp_flags: XdpFlags,
+        mut slots: Vec<SlotEntry>,
+        owned_ebpfs: &mut HashMap<Uuid, Ebpf>,
+        existing_dir: Option<&Path>,
+    ) -> Result<Vec<u32>> {
+        slots.sort_by_key(|s| s.priority);
+
+        let num_progs = slots.len() as u8;
+        let is_xdp_frags =
+            u8::from(!slots.is_empty() && slots.iter().all(|s| s.program_flags != 0));
+
+        let mut chain_call_actions = [DEFAULT_CHAIN_CALL_ACTIONS; MAX_DISPATCHER_ACTIONS];
+        let mut run_prios = [DEFAULT_PRIORITY; MAX_DISPATCHER_ACTIONS];
+        let mut program_flags = [0u32; MAX_DISPATCHER_ACTIONS];
+        for (i, slot) in slots.iter().enumerate() {
+            // Spec: XDP_DISPATCHER_RETVAL must always be set.
+            chain_call_actions[i] = slot.chain_call_actions | (1 << XDP_DISPATCHER_RETVAL);
+            run_prios[i] = slot.priority;
+            program_flags[i] = slot.program_flags;
         }
 
-        Ok(current_rev)
-    }
+        let config = XdpDispatcherConfig {
+            magic: XDP_DISPATCHER_MAGIC,
+            dispatcher_version: XDP_DISPATCHER_VERSION,
+            num_progs_enabled: num_progs,
+            is_xdp_frags,
+            chain_call_actions,
+            run_prios,
+            program_flags,
+        };
 
-    fn existing_extensions_iter(
-        ext_dir: &str,
-    ) -> Result<impl Iterator<Item = (ExtensionAttrs, Extension)>> {
-        Ok(fs::read_dir(ext_dir)?.filter_map(|entry| {
-            let entry = entry.ok()?;
-            let fname = entry.file_name();
-            let file_name = fname.to_str()?;
-            // program format is extension_<priority>_<ebpfid>_<program_name>
-            let attrs = ExtensionAttrs::from_pin_name(file_name)?;
-
-            let extension = Extension::from_pin(entry.path()).ok()?;
-            Some((attrs, extension))
-        }))
-    }
-
-    fn load_xdp_dispatcher_with_exts<Ext: BorrowMut<Extension>>(
-        total_programs: u8,
-        if_index: u32,
-        dispatcher_dir: &str,
-        current_ext_dir: &str,
-        next_ext_dir: &str,
-        extensions: impl IntoIterator<Item = Vec<(ExtensionAttrs, Ext)>>,
-        xdp_flags: XdpFlags,
-    ) -> Result<()> {
         let mut dispatcher_bpf = EbpfLoader::new()
-            .override_global(
-                "CONFIG",
-                &XdpDispatcherConfig {
-                    num_progs_enabled: total_programs,
-                    chain_call_actions: [default_proceed_on_mask(); 10],
-                },
-                true,
-            )
+            .override_global("conf", &config, true)
             .load(AYA_XDP_DISPATCHER_EBPF_PROGRAM)?;
+
         let dispatcher_xdp: &mut Xdp = dispatcher_bpf
-            .program_mut("dispatcher")
+            .program_mut("xdp_dispatcher")
             .unwrap()
             .try_into()
             .unwrap();
         dispatcher_xdp.load()?;
 
-        for (i, (attrs, mut ext)) in extensions.into_iter().flatten().enumerate() {
-            let ext = ext.borrow_mut();
-            let link_id = if !attrs.loaded {
-                ext.load(dispatcher_xdp.fd()?.try_clone()?, &format!("prog{i}"))?;
-                ext.attach()?
+        let dispatcher_fd = dispatcher_xdp.fd()?.try_clone()?;
+
+        let did = dispatcher_xdp.info()?.id();
+        let new_dir = PathBuf::from(RTDIR_FS_XDP).join(format!("dispatch-{if_index}-{did}"));
+        fs::create_dir_all(&new_dir)?;
+        let rtdir_guard = FolderFailureGuard(&new_dir);
+
+        let mut ext_prog_ids: Vec<u32> = Vec::new();
+        for (i, slot) in slots.iter_mut().enumerate() {
+            let func_name = format!("prog{i}");
+            let prog_pin = new_dir.join(format!("prog{i}-prog"));
+            let link_pin = new_dir.join(format!("prog{i}-link"));
+
+            let ext_prog_id = if let Some(prog_path) = &slot.existing_prog_path {
+                let mut ext = Extension::from_pin(prog_path)?;
+                let prog_id = ext.info()?.id();
+                let link_id = ext.attach_to_program(&dispatcher_fd, &func_name)?;
+                let link_o = ext.take_link(link_id)?;
+                let link_fd: FdLink = link_o.into();
+                link_fd.pin(&link_pin)?;
+                ext.pin(&prog_pin)?;
+                prog_id
             } else {
-                ext.attach_to_program(dispatcher_xdp.fd()?, &format!("prog{i}"))?
+                let ebpf_id = slot.ebpf_id.unwrap();
+                let prog_name = slot.program_name.as_deref().unwrap();
+                let ebpf = owned_ebpfs.get_mut(&ebpf_id).unwrap();
+                let ext: &mut Extension = ebpf.program_mut(prog_name).unwrap().try_into().unwrap();
+                ext.load(dispatcher_fd.try_clone()?, &func_name)?;
+                let prog_id = ext.info()?.id();
+                let link_id = ext.attach()?;
+                let link_o = ext.take_link(link_id)?;
+                let link_fd: FdLink = link_o.into();
+                link_fd.pin(&link_pin)?;
+                ext.pin(&prog_pin)?;
+                prog_id
             };
-            let link_o = ext.take_link(link_id)?;
-            let link_fd: FdLink = link_o.into();
-            link_fd.pin(format!("{next_ext_dir}/link_{i}"))?;
-            ext.pin(format!("{next_ext_dir}/{}", attrs.to_pin_name()))?;
-        }
-        dispatcher_xdp.pin(format!("{next_ext_dir}/dispatcher_pin"))?;
 
-        let dispatcher_link = format!("{dispatcher_dir}/dispatcher_link");
-        if let Ok(pinned_link) = PinnedLink::from_pin(&dispatcher_link) {
-            let pinned_link: FdLink = pinned_link.into();
-            dispatcher_xdp.attach_to_link(pinned_link.try_into()?)?;
-            Self::cleanup_prev_revision(current_ext_dir)?;
+            ext_prog_ids.push(ext_prog_id);
+        }
+
+        Self::write_config(&new_dir, &config)?;
+
+        let new_link_pin = new_dir.join("link");
+        if let Some(existing_dir) = existing_dir {
+            let existing_link_pin = existing_dir.join("link");
+            let pinned_link = PinnedLink::from_pin(&existing_link_pin)?;
+            let pinned_fd: FdLink = pinned_link.into();
+            let xdp_link = pinned_fd.try_into()?;
+            let link_id = dispatcher_xdp.attach_to_link(xdp_link)?;
+            let link_o = dispatcher_xdp.take_link(link_id)?;
+            let link_fd: FdLink = link_o.try_into().map_err(|_link_err| Error::NoFdLink)?;
+            link_fd.pin(&new_link_pin)?;
         } else {
-            let link = dispatcher_xdp.attach_to_if_index(if_index, xdp_flags)?;
-            let link_o = dispatcher_xdp.take_link(link)?;
-            let link_fd: FdLink = link_o.try_into().unwrap();
-            link_fd.pin(&dispatcher_link)?;
+            let attach_flags = xdp_flags | XdpFlags::UPDATE_IF_NOEXIST;
+            match dispatcher_xdp.attach_to_if_index(if_index, attach_flags) {
+                Ok(link_id) => {
+                    let link_o = dispatcher_xdp.take_link(link_id)?;
+                    let link_fd: FdLink = link_o.try_into().map_err(|_link_err| Error::NoFdLink)?;
+                    link_fd.pin(&new_link_pin)?;
+                }
+                Err(e) => {
+                    return if is_eexist(&e) {
+                        Err(Error::ConcurrentModification)
+                    } else {
+                        Err(e.into())
+                    };
+                }
+            }
         }
 
-        Ok(())
+        rtdir_guard.disarm();
+        Ok(ext_prog_ids)
     }
 
-    fn dispatcher_lock(if_index: u32) -> Result<NamedLock> {
-        let lock_path = temp_dir().join(format!("dispatcher_{if_index}_lock"));
-        Ok(NamedLock::with_path(lock_path)?)
-    }
-
+    /// Load and attach `bpfs` onto the XDP dispatcher for `if_index`.
+    ///
+    /// If programs already exist on the interface (loaded by a previous call), they are
+    /// preserved and the new programs are merged in by priority. The dispatcher is then
+    /// atomically replaced on the interface.
     pub fn new_with_programs(
         if_index: u32,
         xdp_flags: XdpFlags,
         bpfs: Vec<&'_ mut EbpfPrograms<'_>>,
     ) -> Result<Self> {
-        let dispatcher_dir = format!("{RTDIR_FS_XDP}/dispatcher_{if_index}");
-        fs::create_dir_all(&dispatcher_dir)?;
-
-        // implicit: drop order is important here! _lock_guard must be dropped before `this`
-        // else it will cause a deadlock if `new_with_programs` fails
-        let mut this = Self {
-            if_index,
-            owned_ebpfs: HashMap::new(),
-            owned_extension_priorities: HashMap::new(),
-            xdp_flags,
-        };
-
-        let lock = Self::dispatcher_lock(if_index)?;
-        let _lock_guard = lock.lock()?;
-
-        let current_rev = Self::current_rev(&dispatcher_dir)?;
-
-        let current_ext_dir = format!("{dispatcher_dir}/{current_rev}");
-        let next_ext_dir = format!("{dispatcher_dir}/{}", current_rev + 1);
-        fs::create_dir_all(&next_ext_dir)?;
-
-        let mut ext_o: Vec<_>;
-        let mut extensions = BTreeMap::new();
-        if fs::exists(&current_ext_dir)? {
-            ext_o = Self::existing_extensions_iter(&current_ext_dir)?.collect();
-            for (attrs, ext) in ext_o.iter_mut() {
-                extensions
-                    .entry(attrs.priority)
-                    .or_insert(vec![])
-                    .push((attrs.clone(), ext));
-            }
-        }
-
-        let mut total_programs = extensions.len();
-        for bpf in bpfs.iter() {
-            total_programs += bpf.programs.len();
-            if total_programs > MAX_PROGARMS {
-                return Err(Error::MaxPrograms(MAX_PROGARMS));
-            }
-        }
+        let mut owned_ebpfs: HashMap<Uuid, Ebpf> = HashMap::new();
+        let mut new_slots: Vec<SlotEntry> = Vec::new();
 
         for bpf in bpfs {
-            for (program, _) in &bpf.programs {
-                bpf.loader.extension(program);
+            for (name, _) in &bpf.programs {
+                bpf.loader.extension(name);
             }
             let ebpf = bpf.loader.load(bpf.bpf_bytes)?;
-            this.owned_ebpfs.insert(bpf.ebpf_id, ebpf);
-            for (program, priority) in &bpf.programs {
-                this.owned_extension_priorities
-                    .insert((bpf.ebpf_id, program.to_string()), *priority);
+            owned_ebpfs.insert(bpf.ebpf_id, ebpf);
+            for (name, cfg) in &bpf.programs {
+                new_slots.push(SlotEntry {
+                    priority: cfg.priority,
+                    chain_call_actions: cfg.chain_call_actions,
+                    program_flags: cfg.has_frags.into(),
+                    ebpf_id: Some(bpf.ebpf_id),
+                    program_name: Some((*name).to_string()),
+                    existing_prog_path: None,
+                });
             }
         }
-        for (ebpf_id, ebpf) in this.owned_ebpfs.iter_mut() {
-            for (program_name, program) in ebpf.programs_mut() {
-                if !this
-                    .owned_extension_priorities
-                    .contains_key(&(*ebpf_id, program_name.to_string()))
-                {
-                    continue;
+
+        let owned_prog_ids = loop {
+            let _lock = Self::lock_xdp_dir()?;
+
+            let existing_dir = Self::find_existing_dir(if_index)?;
+            let mut all_slots = new_slots.clone();
+
+            if let Some(dir) = existing_dir.as_ref() {
+                if let Ok(config) = Self::read_config(dir) {
+                    if config.magic == XDP_DISPATCHER_MAGIC
+                        && config.dispatcher_version == XDP_DISPATCHER_VERSION
+                    {
+                        all_slots.extend(Self::read_existing_slots(dir, &config));
+                    }
                 }
-                let ext: &mut Extension = program.try_into().unwrap();
-                let priority = *this
-                    .owned_extension_priorities
-                    .get(&(*ebpf_id, program_name.to_owned()))
-                    .unwrap();
-
-                extensions.entry(priority).or_default().push((
-                    ExtensionAttrs {
-                        priority,
-                        ebpf_id: *ebpf_id,
-                        program_name: program_name.to_string(),
-                        loaded: false,
-                    },
-                    ext,
-                ));
             }
-        }
 
-        Self::load_xdp_dispatcher_with_exts(
-            total_programs as u8,
+            if all_slots.len() > MAX_PROGRAMS {
+                return Err(Error::MaxPrograms(MAX_PROGRAMS));
+            }
+
+            match Self::do_load(
+                if_index,
+                xdp_flags,
+                all_slots,
+                &mut owned_ebpfs,
+                existing_dir.as_deref(),
+            ) {
+                Ok(ids) => {
+                    if let Some(old_dir) = existing_dir.as_ref() {
+                        drop(fs::remove_dir_all(old_dir));
+                    }
+                    break ids;
+                }
+                Err(Error::ConcurrentModification) => (),
+                Err(e) => return Err(e),
+            }
+        };
+        Ok(Self {
             if_index,
-            &dispatcher_dir,
-            &current_ext_dir,
-            &next_ext_dir,
-            extensions.into_values(),
             xdp_flags,
-        )?;
-
-        Ok(this)
+            owned_ebpfs,
+            owned_prog_ids,
+        })
     }
 
+    /// Access the loaded `Ebpf` object for the given ID.
     pub fn ebpf_mut(&mut self, ebpf_id: Uuid) -> Option<&mut Ebpf> {
         self.owned_ebpfs.get_mut(&ebpf_id)
     }
 
-    fn cleanup(&mut self) -> Result<()> {
-        let dispatcher_dir = format!("{RTDIR_FS_XDP}/dispatcher_{}", self.if_index);
+    /// Remove our programs from the dispatcher, replacing it with a new one containing
+    /// only the remaining programs. Called on drop.
+    fn cleanup(&self) -> Result<()> {
+        let _lock = Self::lock_xdp_dir()?;
 
-        let lock = Self::dispatcher_lock(self.if_index)?;
-        let _lock_guard = lock.lock();
+        let Some(existing_dir) = Self::find_existing_dir(self.if_index)? else {
+            return Ok(());
+        };
 
-        let current_rev = Self::current_rev(&dispatcher_dir)?;
-        let current_ext_dir = format!("{dispatcher_dir}/{current_rev}");
+        let Ok(config) = Self::read_config(&existing_dir) else {
+            return Ok(());
+        };
 
-        let mut extensions = BTreeMap::new();
-        for (attrs, ext) in Self::existing_extensions_iter(&current_ext_dir)? {
-            if self
-                .owned_extension_priorities
-                .get(&(attrs.ebpf_id, attrs.program_name.to_owned()))
-                .copied()
-                == Some(attrs.priority)
-            {
-                continue;
+        let remaining: Vec<SlotEntry> = Self::read_existing_slots(&existing_dir, &config)
+            .into_iter()
+            .filter(|slot| {
+                let Some(path) = slot.existing_prog_path.as_ref() else {
+                    return true;
+                };
+                let id = aya::programs::ProgramInfo::from_pin(path)
+                    .map(|info| info.id())
+                    .unwrap_or(0);
+                !self.owned_prog_ids.contains(&id)
+            })
+            .collect();
+
+        if remaining.is_empty() {
+            let link_pin = existing_dir.join("link");
+            if link_pin.exists() {
+                // Opening the pin keeps the link alive during our cleanup
+                // the PinnedLink decrements its reference count and detaches.
+                drop(PinnedLink::from_pin(&link_pin));
+                drop(fs::remove_file(&link_pin));
             }
-            extensions
-                .entry(attrs.priority)
-                .or_insert(vec![])
-                .push((attrs, ext));
-        }
-
-        if extensions.is_empty() {
-            let dispatcher_link = format!("{dispatcher_dir}/dispatcher_link");
-            if fs::exists(&dispatcher_link)? {
-                fs::remove_file(dispatcher_link)?;
-            }
-            Self::cleanup_prev_revision(&current_ext_dir)?;
-
+            drop(fs::remove_dir_all(&existing_dir));
             return Ok(());
         }
 
-        let next_ext_dir = format!("{dispatcher_dir}/{}", current_rev + 1);
-        fs::create_dir_all(&next_ext_dir)?;
-
-        Self::load_xdp_dispatcher_with_exts(
-            extensions.len() as u8,
+        let mut no_ebpfs: HashMap<Uuid, Ebpf> = HashMap::new();
+        match Self::do_load(
             self.if_index,
-            &dispatcher_dir,
-            &current_ext_dir,
-            &next_ext_dir,
-            extensions.into_values(),
             self.xdp_flags,
-        )?;
-
-        Ok(())
+            remaining,
+            &mut no_ebpfs,
+            Some(&existing_dir),
+        ) {
+            Ok(_) => {
+                fs::remove_dir_all(&existing_dir)?;
+                Ok(())
+            }
+            Err(e) => Err(e),
+        }
     }
 }
 
 impl Drop for XdpDispatcher {
     fn drop(&mut self) {
         if let Err(e) = self.cleanup() {
-            eprintln!("failed to cleanup dispatcher {e}");
+            log::error!("aya-xdp-dispatcher: cleanup failed: {e}");
         }
     }
+}
+
+#[must_use = "must disarm the guard on success to avoid deleting the directory"]
+struct FolderFailureGuard<'a>(&'a Path);
+
+impl FolderFailureGuard<'_> {
+    const fn disarm(self) {
+        #[expect(
+            clippy::mem_forget,
+            reason = "we specifically want to avoid running the destructor when disarmed"
+        )]
+        std::mem::forget(self)
+    }
+}
+
+impl Drop for FolderFailureGuard<'_> {
+    fn drop(&mut self) {
+        if let Err(e) = fs::remove_dir_all(self.0) {
+            log::error!(
+                "aya-xdp-dispatcher: failed to remove directory {}: {e}",
+                self.0.display()
+            );
+        }
+    }
+}
+
+fn is_eexist(err: &aya::programs::ProgramError) -> bool {
+    use aya::programs::ProgramError;
+    if let ProgramError::SyscallError(sc) = err {
+        return sc.io_error.raw_os_error() == Some(nix::libc::EEXIST);
+    }
+    false
 }
