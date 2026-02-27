@@ -737,66 +737,63 @@ impl Btf {
                     ty.set_signed(false);
                 }
                 // Sanitize ENUM64.
-                BtfType::Enum64(ty) => {
+                BtfType::Enum64(ty) if !features.btf_enum64 => {
                     // Kernels before 6.0 do not support ENUM64. See
                     // https://github.com/torvalds/linux/commit/6089fb325cf737eeb2c4d236c94697112ca860da.
-                    if !features.btf_enum64 {
-                        debug!("{kind}: not supported. replacing with UNION");
+                    debug!("{kind}: not supported. replacing with UNION");
 
-                        // `ty` is borrowed from `types` and we use that borrow
-                        // below, so we must not borrow it again in the
-                        // get_or_init closure.
-                        let is_signed = ty.is_signed();
-                        let Enum64 {
-                            name_offset,
-                            size,
-                            variants,
-                            ..
-                        } = ty;
-                        let (name_offset, size, variants) =
-                            (*name_offset, *size, mem::take(variants));
+                    // `ty` is borrowed from `types` and we use that borrow
+                    // below, so we must not borrow it again in the
+                    // get_or_init closure.
+                    let is_signed = ty.is_signed();
+                    let Enum64 {
+                        name_offset,
+                        size,
+                        variants,
+                        ..
+                    } = ty;
+                    let (name_offset, size, variants) = (*name_offset, *size, mem::take(variants));
 
-                        let fallback = Enum64Fallback {
-                            signed: is_signed,
-                            variants: variants
-                                .iter()
-                                .copied()
-                                .map(
-                                    |BtfEnum64 {
-                                         name_offset,
-                                         value_high,
-                                         value_low,
-                                     }| Enum64VariantFallback {
-                                        name_offset,
-                                        value: (u64::from(value_high) << 32) | u64::from(value_low),
-                                    },
-                                )
-                                .collect(),
-                        };
-
-                        // The rewritten UNION still needs a concrete member type. Share a single
-                        // synthetic INT placeholder between every downgraded ENUM64.
-                        let placeholder_id = enum64_placeholder_id.get_or_init(|| {
-                            let placeholder_name = self.add_string("enum64_placeholder");
-                            add_type(
-                                &mut self.header,
-                                &mut types,
-                                BtfType::Int(Int::new(placeholder_name, 1, IntEncoding::None, 0)),
-                            )
-                        });
-                        let members: Vec<BtfMember> = variants
+                    let fallback = Enum64Fallback {
+                        signed: is_signed,
+                        variants: variants
                             .iter()
-                            .map(|v| BtfMember {
-                                name_offset: v.name_offset,
-                                btf_type: *placeholder_id,
-                                offset: 0,
-                            })
-                            .collect();
+                            .copied()
+                            .map(
+                                |BtfEnum64 {
+                                     name_offset,
+                                     value_high,
+                                     value_low,
+                                 }| Enum64VariantFallback {
+                                    name_offset,
+                                    value: (u64::from(value_high) << 32) | u64::from(value_low),
+                                },
+                            )
+                            .collect(),
+                    };
 
-                        // Must reborrow here because we borrow `types` above.
-                        let t = &mut types.types[i];
-                        *t = BtfType::Union(Union::new(name_offset, size, members, Some(fallback)));
-                    }
+                    // The rewritten UNION still needs a concrete member type. Share a single
+                    // synthetic INT placeholder between every downgraded ENUM64.
+                    let placeholder_id = enum64_placeholder_id.get_or_init(|| {
+                        let placeholder_name = self.add_string("enum64_placeholder");
+                        add_type(
+                            &mut self.header,
+                            &mut types,
+                            BtfType::Int(Int::new(placeholder_name, 1, IntEncoding::None, 0)),
+                        )
+                    });
+                    let members: Vec<BtfMember> = variants
+                        .iter()
+                        .map(|v| BtfMember {
+                            name_offset: v.name_offset,
+                            btf_type: *placeholder_id,
+                            offset: 0,
+                        })
+                        .collect();
+
+                    // Must reborrow here because we borrow `types` above.
+                    let t = &mut types.types[i];
+                    *t = BtfType::Union(Union::new(name_offset, size, members, Some(fallback)));
                 }
                 // The type does not need fixing up or sanitization.
                 _ => {}
