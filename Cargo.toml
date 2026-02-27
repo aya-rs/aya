@@ -7,6 +7,7 @@ members = [
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
+    "aya-xdp-dispatcher",
     "ebpf-panic",
     "test-distro",
     "test/integration-common",
@@ -21,6 +22,7 @@ members = [
     "ebpf/aya-ebpf",
     "ebpf/aya-ebpf-bindings",
     "ebpf/aya-log-ebpf",
+    "ebpf/aya-xdp-dispatcher-ebpf",
     "test/integration-ebpf",
 ]
 
@@ -34,6 +36,7 @@ default-members = [
     "aya-log-parser",
     "aya-obj",
     "aya-tool",
+    "aya-xdp-dispatcher",
     "ebpf-panic",
     "test-distro",
     "test/integration-common",
@@ -69,6 +72,7 @@ assert_matches = { version = "1.5.0", default-features = false }
 base64 = { version = "0.22.1", default-features = false }
 bindgen = { version = "0.72", default-features = false }
 bitflags = { version = "2.2.1", default-features = false }
+bytemuck = { version = "1.25.0", default-features = false }
 bytes = { version = "1", default-features = false }
 cargo_metadata = { version = "0.23.0", default-features = false }
 clap = { version = "4", default-features = false }
@@ -109,6 +113,7 @@ test-log = { version = "0.2.13", default-features = false }
 testing_logger = { version = "0.1.1", default-features = false }
 thiserror = { version = "2.0.3", default-features = false }
 tokio = { version = "1.24.0", default-features = false }
+uuid = { version = "1.19.0", default-features = false }
 walkdir = { version = "2", default-features = false }
 which = { version = "8.0.0", default-features = false }
 xdpilone = { version = "1.0.5", default-features = false }
