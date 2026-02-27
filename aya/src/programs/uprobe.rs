@@ -59,8 +59,52 @@ pub enum UProbeAttachLocation<'a> {
     /// The location of the target function in the target object file, offset by
     /// the given number of bytes.
     SymbolOffset(&'a str, u64),
-    /// The offset in the target object file, in bytes.
+    /// The **file** offset in the target object file, in bytes.
     AbsoluteOffset(u64),
+    /// Transform symbol's virtual address (absolute for binaries and relative
+    /// for shared libs) into file offset, which is what kernel is expecting for
+    /// uprobe/uretprobe attachment.
+    /// See Documentation/trace/uprobetracer.rst for more details. This is done
+    /// by looking up symbol's containing section's header and using iter's
+    /// virtual address (`sh_addr`) and corresponding file offset (`sh_offset`)
+    /// to transform `st_value` (virtual address) into desired final file
+    /// offset.
+    ///
+    /// ## Formula:
+    /// ```
+    /// symbol_file_offset = st_value - sh_addr + sh_offset
+    /// ```
+    ///
+    /// ## References:
+    /// * [libbpf](https://github.com/libbpf/libbpf/blob/master/src/elf.c#L259C1-L270C2)
+    /// * [StackOverflow](https://stackoverflow.com/questions/79478284/uprobe-symbol-adress-mapping-offset)
+    ElfSymOffset {
+        /// The symbol's value (virtual address)
+        ///
+        /// ```text
+        /// ❯ readelf -Ws libart.so | c++filt | grep -i DeleteLocalRef
+        ///    Num:    Value          Size Type Bind   Vis        Ndx Name
+        ///   1208: 0000000000601300    26 FUNC GLOBAL PROTECTED  14  art::JNIEnvExt::DeleteLocalRef(_jobject*)
+        /// ```
+        /// Symbol `art::JNIEnvExt::DeleteLocalRef(_jobject*)` in `libart.so` at virtual address `0x601300`
+        st_value: u64,
+        /// The section's memory address
+        ///
+        /// ```text
+        /// ❯ readelf -S --wide libart.so
+        /// There are 29 section headers, starting at offset 0x89be68:
+        ///
+        /// Section Headers:
+        ///   [Nr] Name              Type            Address          Off    Size   ES Flg Lk Inf Al
+        ///   [14] .text             PROGBITS        000000000035ff00 15ff00 5df958 00  AX  0   0 128
+        /// ```
+        /// ELF `.text` section in `libart.so` starts at **virtual address** `0x35ff00`
+        sh_addr: u64,
+        /// The section's file offset
+        ///
+        /// ELF `.text` section in `libart.so` starts at **file** offset `0x15ff00`. See `sh_addr`
+        sh_offset: u64,
+    },
 }
 
 impl<'a> From<&'a str> for UProbeAttachLocation<'a> {
@@ -140,6 +184,11 @@ impl UProbe {
             UProbeAttachLocation::Symbol(s) => (Some(s), 0),
             UProbeAttachLocation::SymbolOffset(s, offset) => (Some(s), offset),
             UProbeAttachLocation::AbsoluteOffset(offset) => (None, offset),
+            UProbeAttachLocation::ElfSymOffset {
+                st_value,
+                sh_addr,
+                sh_offset,
+            } => (None, st_value - sh_addr + sh_offset),
         };
         let offset = if let Some(symbol) = symbol {
             let symbol_offset =
