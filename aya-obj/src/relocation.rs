@@ -6,14 +6,14 @@ use log::debug;
 use object::{SectionIndex, SymbolKind};
 
 use crate::{
-    EbpfSectionKind,
     generated::{
-        BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
-        BPF_PSEUDO_MAP_VALUE, bpf_insn,
+        bpf_insn, BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
+        BPF_PSEUDO_MAP_VALUE,
     },
     maps::Map,
     obj::{Function, Object},
     util::{HashMap, HashSet},
+    EbpfSectionKind,
 };
 
 #[cfg(feature = "std")]
@@ -87,7 +87,7 @@ pub enum RelocationError {
 
     /// Unsupported relocation
     #[error(
-        "unsupported relocation target: symbol kind `{symbol_kind:?}` at symbol address #{relocation_number}"
+        "unsupported relocation target `{symbol_kind:?}` applying relocation #{relocation_number}"
     )]
     UnsupportedRelocationTarget {
         /// The symbol kind
@@ -404,21 +404,12 @@ impl<'a> FunctionLinker<'a> {
                     }
                     // R_BPF_64_64 this is a ld_imm64 text relocation
                     SymbolKind::Section if rel.size == 64 => sym.address + ins.imm as u64,
-<<<<<<< HEAD
                     symbol_kind => {
                         return Err(RelocationError::UnsupportedRelocationTarget {
                             symbol_kind,
                             relocation_number: rel_num,
                         });
                     }
-=======
-                    symbol_kind => {
-                        return Err(RelocationError::UnsupportedRelocationTarget {
-                            symbol_kind,
-                            relocation_number: rel_num,
-                        });
-                    }
->>>>>>> ebc2b625 (fix: replace panics with proper error handling)
                 };
                 (sym.section_index.unwrap(), address)
             } else {
