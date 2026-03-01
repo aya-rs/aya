@@ -28,6 +28,28 @@ use crate::{
 
 const NLA_HDR_LEN: usize = align_to(size_of::<nlattr>(), NLA_ALIGNTO as usize);
 
+/// `CLS_BPF_NAME_LEN` from the Linux kernel.
+/// <https://github.com/torvalds/linux/blob/v6.19/net/sched/cls_bpf.c#L28>
+const CLS_BPF_NAME_LEN: usize = 256;
+
+// Size of the attribute buffer needed by write_tc_attach_attrs:
+// TCA_KIND + nested TCA_OPTIONS containing TCA_BPF_FD, TCA_BPF_NAME, TCA_BPF_FLAGS.
+const fn tc_request_attrs_size() -> usize {
+    let al = NLA_ALIGNTO as usize;
+    // TCA_KIND
+    NLA_HDR_LEN + align_to(c"bpf".count_bytes() + 1, al)
+    // TCA_OPTIONS header
+    + NLA_HDR_LEN
+    // TCA_BPF_FD
+    + NLA_HDR_LEN + align_to(size_of::<i32>(), al)
+    // TCA_BPF_NAME
+    + NLA_HDR_LEN + align_to(CLS_BPF_NAME_LEN, al)
+    // TCA_BPF_FLAGS
+    + NLA_HDR_LEN + align_to(size_of::<u32>(), al)
+}
+
+const _: () = assert!(tc_request_attrs_size() == 288);
+
 /// A private error type for internal use in this module.
 #[derive(Error, Debug)]
 pub(crate) enum NetlinkErrorInternal {
@@ -154,6 +176,26 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), Netli
     Ok(())
 }
 
+fn write_tc_attach_attrs(
+    req: &mut TcRequest,
+    nlmsg_len: usize,
+    prog_fd: i32,
+    prog_name: &[u8],
+) -> Result<(), io::Error> {
+    let attrs_buf = unsafe { request_attributes(req, nlmsg_len) };
+
+    let kind_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, c"bpf".to_bytes_with_nul())?;
+
+    let mut options = NestedAttrs::new(&mut attrs_buf[kind_len..], TCA_OPTIONS as u16);
+    options.write_attr(TCA_BPF_FD as u16, prog_fd)?;
+    options.write_attr_bytes(TCA_BPF_NAME as u16, prog_name)?;
+    options.write_attr(TCA_BPF_FLAGS as u16, TCA_BPF_FLAG_ACT_DIRECT)?;
+    let options_len = options.finish()?;
+
+    req.header.nlmsg_len += align_to(kind_len + options_len, NLA_ALIGNTO as usize) as u32;
+    Ok(())
+}
+
 pub(crate) unsafe fn netlink_qdisc_attach(
     if_index: i32,
     attach_type: &TcAttachType,
@@ -197,29 +239,13 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         u32::from(htons(ETH_P_ALL as u16)),
     );
 
-    let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
-
-    // add TCA_KIND
-    let kind_len = write_attr_bytes(attrs_buf, 0, TCA_KIND as u16, b"bpf\0")
-        .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-
-    // add TCA_OPTIONS which includes TCA_BPF_FD, TCA_BPF_NAME and TCA_BPF_FLAGS
-    let mut options = NestedAttrs::new(&mut attrs_buf[kind_len..], TCA_OPTIONS as u16);
-    options
-        .write_attr(TCA_BPF_FD as u16, prog_fd.as_raw_fd())
-        .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    options
-        .write_attr_bytes(TCA_BPF_NAME as u16, prog_name.to_bytes_with_nul())
-        .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    let flags: u32 = TCA_BPF_FLAG_ACT_DIRECT;
-    options
-        .write_attr(TCA_BPF_FLAGS as u16, flags)
-        .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    let options_len = options
-        .finish()
-        .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-
-    req.header.nlmsg_len += align_to(kind_len + options_len, NLA_ALIGNTO as usize) as u32;
+    write_tc_attach_attrs(
+        &mut req,
+        nlmsg_len,
+        prog_fd.as_raw_fd(),
+        prog_name.to_bytes_with_nul(),
+    )
+    .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
 
     // find the RTM_NEWTFILTER reply and read the tcm_info and tcm_handle fields
@@ -369,7 +395,8 @@ unsafe impl Pod for Request {}
 struct TcRequest {
     header: nlmsghdr,
     tc_info: tcmsg,
-    attrs: [u8; 64],
+    // Must fit all netlink attributes written by write_tc_attach_attrs.
+    attrs: [u8; tc_request_attrs_size()],
 }
 
 unsafe impl Pod for TcRequest {}
@@ -727,6 +754,8 @@ unsafe fn request_attributes<T>(req: &mut T, msg_len: usize) -> &mut [u8] {
 mod tests {
     use std::ffi::CString;
 
+    use assert_matches::assert_matches;
+
     use super::*;
 
     #[test]
@@ -851,5 +880,37 @@ mod tests {
         );
         let name = CStr::from_bytes_with_nul(inner.data).unwrap();
         assert_eq!(name.to_str().unwrap(), "foo");
+    }
+
+    fn tc_request(name: &[u8]) -> io::Result<()> {
+        let mut req = unsafe { mem::zeroed::<TcRequest>() };
+        let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
+        req.header.nlmsg_len = nlmsg_len as u32;
+
+        write_tc_attach_attrs(&mut req, nlmsg_len, 0, name)
+    }
+
+    /// Verify that [`TcRequest`] fits all the attributes [`write_tc_attach_attrs`]
+    /// writes, even with the kernel's maximum TC name length (`CLS_BPF_NAME_LEN`).
+    ///
+    /// Before the buffer was enlarged, serializing the netlink attributes for
+    /// long names failed with "no space left".
+    #[test]
+    fn tc_request_fits_max_length_name() {
+        assert_matches!(tc_request(&[b'a'; CLS_BPF_NAME_LEN]), Ok(()));
+    }
+
+    /// Verify that a name exceeding `CLS_BPF_NAME_LEN` is rejected.
+    #[test]
+    fn tc_request_rejects_oversized_name() {
+        // One byte over the kernel's maximum — the attribute buffer is sized
+        // exactly for CLS_BPF_NAME_LEN, so this should fail with "no space left".
+        assert_matches!(
+            tc_request(&[b'a'; CLS_BPF_NAME_LEN + 1]),
+            Err(err) => {
+                assert_eq!(err.kind(), io::ErrorKind::Other);
+                assert_eq!(err.to_string(), "no space left");
+            }
+        );
     }
 }

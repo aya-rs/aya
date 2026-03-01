@@ -31,6 +31,7 @@ impl<T, V> core::marker::Freeze for aya::maps::array::Array<T, V> where T: core:
 impl<T, V> core::marker::Send for aya::maps::array::Array<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::array::Array<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::array::Array<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::array::Array<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::array::Array<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::array::Array<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::array::Array<T, V> where U: core::convert::From<T>
@@ -74,6 +75,7 @@ impl<T, V> core::marker::Freeze for aya::maps::PerCpuArray<T, V> where T: core::
 impl<T, V> core::marker::Send for aya::maps::PerCpuArray<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::PerCpuArray<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::PerCpuArray<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::PerCpuArray<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::PerCpuArray<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::PerCpuArray<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::PerCpuArray<T, V> where U: core::convert::From<T>
@@ -113,6 +115,7 @@ impl<T> core::marker::Freeze for aya::maps::ProgramArray<T> where T: core::marke
 impl<T> core::marker::Send for aya::maps::ProgramArray<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::ProgramArray<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::ProgramArray<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::ProgramArray<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ProgramArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::ProgramArray<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::ProgramArray<T> where U: core::convert::From<T>
@@ -134,7 +137,7 @@ pub fn aya::maps::ProgramArray<T>::from(t: T) -> T
 pub mod aya::maps::bloom_filter
 pub struct aya::maps::bloom_filter::BloomFilter<T, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
-pub fn aya::maps::bloom_filter::BloomFilter<T, V>::contains(&self, value: &V, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+pub fn aya::maps::bloom_filter::BloomFilter<T, V>::contains(&self, value: &mut V, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
@@ -154,6 +157,7 @@ impl<T, V> core::marker::Freeze for aya::maps::bloom_filter::BloomFilter<T, V> w
 impl<T, V> core::marker::Send for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::bloom_filter::BloomFilter<T, V> where U: core::convert::From<T>
@@ -205,6 +209,7 @@ impl<T, K, V> core::marker::Freeze for aya::maps::hash_map::HashMap<T, K, V> whe
 impl<T, K, V> core::marker::Send for aya::maps::hash_map::HashMap<T, K, V> where T: core::marker::Send, K: core::marker::Send, V: core::marker::Send
 impl<T, K, V> core::marker::Sync for aya::maps::hash_map::HashMap<T, K, V> where T: core::marker::Sync, K: core::marker::Sync, V: core::marker::Sync
 impl<T, K, V> core::marker::Unpin for aya::maps::hash_map::HashMap<T, K, V> where T: core::marker::Unpin, K: core::marker::Unpin, V: core::marker::Unpin
+impl<T, K, V> core::marker::UnsafeUnpin for aya::maps::hash_map::HashMap<T, K, V> where T: core::marker::UnsafeUnpin
 impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::hash_map::HashMap<T, K, V> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::hash_map::HashMap<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::hash_map::HashMap<T, K, V> where U: core::convert::From<T>
@@ -253,6 +258,7 @@ impl<T, K, V> core::marker::Freeze for aya::maps::hash_map::PerCpuHashMap<T, K, 
 impl<T, K, V> core::marker::Send for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Send, K: core::marker::Send, V: core::marker::Send
 impl<T, K, V> core::marker::Sync for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Sync, K: core::marker::Sync, V: core::marker::Sync
 impl<T, K, V> core::marker::Unpin for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Unpin, K: core::marker::Unpin, V: core::marker::Unpin
+impl<T, K, V> core::marker::UnsafeUnpin for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::UnsafeUnpin
 impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::hash_map::PerCpuHashMap<T, K, V> where U: core::convert::From<T>
@@ -288,6 +294,7 @@ impl<K> core::marker::Freeze for aya::maps::lpm_trie::Key<K> where K: core::mark
 impl<K> core::marker::Send for aya::maps::lpm_trie::Key<K> where K: core::marker::Send
 impl<K> core::marker::Sync for aya::maps::lpm_trie::Key<K> where K: core::marker::Sync
 impl<K> core::marker::Unpin for aya::maps::lpm_trie::Key<K> where K: core::marker::Unpin
+impl<K> core::marker::UnsafeUnpin for aya::maps::lpm_trie::Key<K> where K: core::marker::UnsafeUnpin
 impl<K> core::panic::unwind_safe::RefUnwindSafe for aya::maps::lpm_trie::Key<K> where K: core::panic::unwind_safe::RefUnwindSafe
 impl<K> core::panic::unwind_safe::UnwindSafe for aya::maps::lpm_trie::Key<K> where K: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::lpm_trie::Key<K> where U: core::convert::From<T>
@@ -344,6 +351,7 @@ impl<T, K, V> core::marker::Freeze for aya::maps::lpm_trie::LpmTrie<T, K, V> whe
 impl<T, K, V> core::marker::Send for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::marker::Send, K: core::marker::Send, V: core::marker::Send
 impl<T, K, V> core::marker::Sync for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::marker::Sync, K: core::marker::Sync, V: core::marker::Sync
 impl<T, K, V> core::marker::Unpin for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::marker::Unpin, K: core::marker::Unpin, V: core::marker::Unpin
+impl<T, K, V> core::marker::UnsafeUnpin for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::marker::UnsafeUnpin
 impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::lpm_trie::LpmTrie<T, K, V> where U: core::convert::From<T>
@@ -388,6 +396,7 @@ impl core::marker::Freeze for aya::maps::perf::PerfBufferError
 impl core::marker::Send for aya::maps::perf::PerfBufferError
 impl core::marker::Sync for aya::maps::perf::PerfBufferError
 impl core::marker::Unpin for aya::maps::perf::PerfBufferError
+impl core::marker::UnsafeUnpin for aya::maps::perf::PerfBufferError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfBufferError
 impl !core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfBufferError
 impl<T, U> core::convert::Into<U> for aya::maps::perf::PerfBufferError where U: core::convert::From<T>
@@ -421,6 +430,7 @@ impl core::marker::Freeze for aya::maps::perf::Events
 impl core::marker::Send for aya::maps::perf::Events
 impl core::marker::Sync for aya::maps::perf::Events
 impl core::marker::Unpin for aya::maps::perf::Events
+impl core::marker::UnsafeUnpin for aya::maps::perf::Events
 impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::Events
 impl core::panic::unwind_safe::UnwindSafe for aya::maps::perf::Events
 impl<Q, K> equivalent::Equivalent<K> for aya::maps::perf::Events where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -459,6 +469,7 @@ impl<T> core::marker::Freeze for aya::maps::perf::PerfEventArray<T>
 impl<T> core::marker::Send for aya::maps::perf::PerfEventArray<T> where T: core::marker::Sync + core::marker::Send
 impl<T> core::marker::Sync for aya::maps::perf::PerfEventArray<T> where T: core::marker::Sync + core::marker::Send
 impl<T> core::marker::Unpin for aya::maps::perf::PerfEventArray<T>
+impl<T> core::marker::UnsafeUnpin for aya::maps::perf::PerfEventArray<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfEventArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfEventArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::perf::PerfEventArray<T> where U: core::convert::From<T>
@@ -489,6 +500,7 @@ impl<T> core::marker::Freeze for aya::maps::perf::PerfEventArrayBuffer<T>
 impl<T> core::marker::Send for aya::maps::perf::PerfEventArrayBuffer<T> where T: core::marker::Sync + core::marker::Send
 impl<T> core::marker::Sync for aya::maps::perf::PerfEventArrayBuffer<T> where T: core::marker::Sync + core::marker::Send
 impl<T> core::marker::Unpin for aya::maps::perf::PerfEventArrayBuffer<T>
+impl<T> core::marker::UnsafeUnpin for aya::maps::perf::PerfEventArrayBuffer<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfEventArrayBuffer<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfEventArrayBuffer<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::perf::PerfEventArrayBuffer<T> where U: core::convert::From<T>
@@ -529,6 +541,7 @@ impl<T, V> core::marker::Freeze for aya::maps::queue::Queue<T, V> where T: core:
 impl<T, V> core::marker::Send for aya::maps::queue::Queue<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::queue::Queue<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::queue::Queue<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::queue::Queue<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::queue::Queue<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::queue::Queue<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::queue::Queue<T, V> where U: core::convert::From<T>
@@ -568,6 +581,7 @@ impl<T> core::marker::Freeze for aya::maps::ring_buf::RingBuf<T> where T: core::
 impl<T> core::marker::Send for aya::maps::ring_buf::RingBuf<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::ring_buf::RingBuf<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::ring_buf::RingBuf<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::ring_buf::RingBuf<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ring_buf::RingBuf<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::ring_buf::RingBuf<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::ring_buf::RingBuf<T> where U: core::convert::From<T>
@@ -598,6 +612,7 @@ impl<'a> core::marker::Freeze for aya::maps::ring_buf::RingBufItem<'a>
 impl<'a> core::marker::Send for aya::maps::ring_buf::RingBufItem<'a>
 impl<'a> core::marker::Sync for aya::maps::ring_buf::RingBufItem<'a>
 impl<'a> core::marker::Unpin for aya::maps::ring_buf::RingBufItem<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::maps::ring_buf::RingBufItem<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ring_buf::RingBufItem<'a>
 impl<'a> !core::panic::unwind_safe::UnwindSafe for aya::maps::ring_buf::RingBufItem<'a>
 impl<P, T> core::ops::deref::Receiver for aya::maps::ring_buf::RingBufItem<'a> where P: core::ops::deref::Deref<Target = T> + ?core::marker::Sized, T: ?core::marker::Sized
@@ -642,6 +657,7 @@ impl<T, V> core::marker::Freeze for aya::maps::sk_storage::SkStorage<T, V> where
 impl<T, V> core::marker::Send for aya::maps::sk_storage::SkStorage<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::sk_storage::SkStorage<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::sk_storage::SkStorage<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::sk_storage::SkStorage<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::sk_storage::SkStorage<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::sk_storage::SkStorage<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::sk_storage::SkStorage<T, V> where U: core::convert::From<T>
@@ -692,6 +708,7 @@ impl<T, K> core::marker::Freeze for aya::maps::SockHash<T, K> where T: core::mar
 impl<T, K> core::marker::Send for aya::maps::SockHash<T, K> where T: core::marker::Send, K: core::marker::Send
 impl<T, K> core::marker::Sync for aya::maps::SockHash<T, K> where T: core::marker::Sync, K: core::marker::Sync
 impl<T, K> core::marker::Unpin for aya::maps::SockHash<T, K> where T: core::marker::Unpin, K: core::marker::Unpin
+impl<T, K> core::marker::UnsafeUnpin for aya::maps::SockHash<T, K> where T: core::marker::UnsafeUnpin
 impl<T, K> core::panic::unwind_safe::RefUnwindSafe for aya::maps::SockHash<T, K> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe
 impl<T, K> core::panic::unwind_safe::UnwindSafe for aya::maps::SockHash<T, K> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::SockHash<T, K> where U: core::convert::From<T>
@@ -732,6 +749,7 @@ impl<T> core::marker::Freeze for aya::maps::SockMap<T> where T: core::marker::Fr
 impl<T> core::marker::Send for aya::maps::SockMap<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::SockMap<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::SockMap<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::SockMap<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::SockMap<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::SockMap<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::SockMap<T> where U: core::convert::From<T>
@@ -759,6 +777,7 @@ impl core::marker::Freeze for aya::maps::sock::SockMapFd
 impl core::marker::Send for aya::maps::sock::SockMapFd
 impl core::marker::Sync for aya::maps::sock::SockMapFd
 impl core::marker::Unpin for aya::maps::sock::SockMapFd
+impl core::marker::UnsafeUnpin for aya::maps::sock::SockMapFd
 impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::sock::SockMapFd
 impl core::panic::unwind_safe::UnwindSafe for aya::maps::sock::SockMapFd
 impl<T, U> core::convert::Into<U> for aya::maps::sock::SockMapFd where U: core::convert::From<T>
@@ -799,6 +818,7 @@ impl<T, V> core::marker::Freeze for aya::maps::stack::Stack<T, V> where T: core:
 impl<T, V> core::marker::Send for aya::maps::stack::Stack<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::stack::Stack<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::stack::Stack<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::stack::Stack<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::stack::Stack<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::stack::Stack<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::stack::Stack<T, V> where U: core::convert::From<T>
@@ -824,6 +844,7 @@ impl core::marker::Freeze for aya::maps::stack_trace::StackFrame
 impl core::marker::Send for aya::maps::stack_trace::StackFrame
 impl core::marker::Sync for aya::maps::stack_trace::StackFrame
 impl core::marker::Unpin for aya::maps::stack_trace::StackFrame
+impl core::marker::UnsafeUnpin for aya::maps::stack_trace::StackFrame
 impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::stack_trace::StackFrame
 impl core::panic::unwind_safe::UnwindSafe for aya::maps::stack_trace::StackFrame
 impl<T, U> core::convert::Into<U> for aya::maps::stack_trace::StackFrame where U: core::convert::From<T>
@@ -853,6 +874,7 @@ impl core::marker::Freeze for aya::maps::stack_trace::StackTrace
 impl core::marker::Send for aya::maps::stack_trace::StackTrace
 impl core::marker::Sync for aya::maps::stack_trace::StackTrace
 impl core::marker::Unpin for aya::maps::stack_trace::StackTrace
+impl core::marker::UnsafeUnpin for aya::maps::stack_trace::StackTrace
 impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::stack_trace::StackTrace
 impl core::panic::unwind_safe::UnwindSafe for aya::maps::stack_trace::StackTrace
 impl<T, U> core::convert::Into<U> for aya::maps::stack_trace::StackTrace where U: core::convert::From<T>
@@ -902,6 +924,7 @@ impl<T> core::marker::Freeze for aya::maps::stack_trace::StackTraceMap<T> where 
 impl<T> core::marker::Send for aya::maps::stack_trace::StackTraceMap<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::stack_trace::StackTraceMap<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::stack_trace::StackTraceMap<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::stack_trace::StackTraceMap<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::stack_trace::StackTraceMap<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::stack_trace::StackTraceMap<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::stack_trace::StackTraceMap<T> where U: core::convert::From<T>
@@ -936,6 +959,7 @@ impl core::marker::Freeze for aya::maps::xdp::XdpMapError
 impl core::marker::Send for aya::maps::xdp::XdpMapError
 impl core::marker::Sync for aya::maps::xdp::XdpMapError
 impl core::marker::Unpin for aya::maps::xdp::XdpMapError
+impl core::marker::UnsafeUnpin for aya::maps::xdp::XdpMapError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::maps::xdp::XdpMapError
 impl !core::panic::unwind_safe::UnwindSafe for aya::maps::xdp::XdpMapError
 impl<T, U> core::convert::Into<U> for aya::maps::xdp::XdpMapError where U: core::convert::From<T>
@@ -978,6 +1002,7 @@ impl<T> core::marker::Freeze for aya::maps::CpuMap<T> where T: core::marker::Fre
 impl<T> core::marker::Send for aya::maps::CpuMap<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::CpuMap<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::CpuMap<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::CpuMap<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::CpuMap<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::CpuMap<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::CpuMap<T> where U: core::convert::From<T>
@@ -1018,6 +1043,7 @@ impl<T> core::marker::Freeze for aya::maps::DevMap<T> where T: core::marker::Fre
 impl<T> core::marker::Send for aya::maps::DevMap<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::DevMap<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::DevMap<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::DevMap<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::DevMap<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::DevMap<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::DevMap<T> where U: core::convert::From<T>
@@ -1063,6 +1089,7 @@ impl<T> core::marker::Freeze for aya::maps::DevMapHash<T> where T: core::marker:
 impl<T> core::marker::Send for aya::maps::DevMapHash<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::DevMapHash<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::DevMapHash<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::DevMapHash<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::DevMapHash<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::DevMapHash<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::DevMapHash<T> where U: core::convert::From<T>
@@ -1102,6 +1129,7 @@ impl<T> core::marker::Freeze for aya::maps::XskMap<T> where T: core::marker::Fre
 impl<T> core::marker::Send for aya::maps::XskMap<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::XskMap<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::XskMap<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::XskMap<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::XskMap<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::XskMap<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::XskMap<T> where U: core::convert::From<T>
@@ -1323,6 +1351,7 @@ impl core::marker::Freeze for aya::maps::Map
 impl core::marker::Send for aya::maps::Map
 impl core::marker::Sync for aya::maps::Map
 impl core::marker::Unpin for aya::maps::Map
+impl core::marker::UnsafeUnpin for aya::maps::Map
 impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::Map
 impl core::panic::unwind_safe::UnwindSafe for aya::maps::Map
 impl<T, U> core::convert::Into<U> for aya::maps::Map where U: core::convert::From<T>
@@ -1396,6 +1425,7 @@ impl core::marker::Freeze for aya::maps::MapError
 impl core::marker::Send for aya::maps::MapError
 impl core::marker::Sync for aya::maps::MapError
 impl core::marker::Unpin for aya::maps::MapError
+impl core::marker::UnsafeUnpin for aya::maps::MapError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapError
 impl !core::panic::unwind_safe::UnwindSafe for aya::maps::MapError
 impl<T, U> core::convert::Into<U> for aya::maps::MapError where U: core::convert::From<T>
@@ -1466,6 +1496,7 @@ impl core::marker::Freeze for aya::maps::MapType
 impl core::marker::Send for aya::maps::MapType
 impl core::marker::Sync for aya::maps::MapType
 impl core::marker::Unpin for aya::maps::MapType
+impl core::marker::UnsafeUnpin for aya::maps::MapType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapType
 impl core::panic::unwind_safe::UnwindSafe for aya::maps::MapType
 impl<T, U> core::convert::Into<U> for aya::maps::MapType where U: core::convert::From<T>
@@ -1515,6 +1546,7 @@ impl<T, V> core::marker::Freeze for aya::maps::array::Array<T, V> where T: core:
 impl<T, V> core::marker::Send for aya::maps::array::Array<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::array::Array<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::array::Array<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::array::Array<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::array::Array<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::array::Array<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::array::Array<T, V> where U: core::convert::From<T>
@@ -1535,7 +1567,7 @@ impl<T> core::convert::From<T> for aya::maps::array::Array<T, V>
 pub fn aya::maps::array::Array<T, V>::from(t: T) -> T
 pub struct aya::maps::BloomFilter<T, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
-pub fn aya::maps::bloom_filter::BloomFilter<T, V>::contains(&self, value: &V, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+pub fn aya::maps::bloom_filter::BloomFilter<T, V>::contains(&self, value: &mut V, flags: u64) -> core::result::Result<(), aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
@@ -1555,6 +1587,7 @@ impl<T, V> core::marker::Freeze for aya::maps::bloom_filter::BloomFilter<T, V> w
 impl<T, V> core::marker::Send for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::bloom_filter::BloomFilter<T, V> where U: core::convert::From<T>
@@ -1595,6 +1628,7 @@ impl<T> core::marker::Freeze for aya::maps::CpuMap<T> where T: core::marker::Fre
 impl<T> core::marker::Send for aya::maps::CpuMap<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::CpuMap<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::CpuMap<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::CpuMap<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::CpuMap<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::CpuMap<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::CpuMap<T> where U: core::convert::From<T>
@@ -1635,6 +1669,7 @@ impl<T> core::marker::Freeze for aya::maps::DevMap<T> where T: core::marker::Fre
 impl<T> core::marker::Send for aya::maps::DevMap<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::DevMap<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::DevMap<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::DevMap<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::DevMap<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::DevMap<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::DevMap<T> where U: core::convert::From<T>
@@ -1680,6 +1715,7 @@ impl<T> core::marker::Freeze for aya::maps::DevMapHash<T> where T: core::marker:
 impl<T> core::marker::Send for aya::maps::DevMapHash<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::DevMapHash<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::DevMapHash<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::DevMapHash<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::DevMapHash<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::DevMapHash<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::DevMapHash<T> where U: core::convert::From<T>
@@ -1730,6 +1766,7 @@ impl<T, K, V> core::marker::Freeze for aya::maps::hash_map::HashMap<T, K, V> whe
 impl<T, K, V> core::marker::Send for aya::maps::hash_map::HashMap<T, K, V> where T: core::marker::Send, K: core::marker::Send, V: core::marker::Send
 impl<T, K, V> core::marker::Sync for aya::maps::hash_map::HashMap<T, K, V> where T: core::marker::Sync, K: core::marker::Sync, V: core::marker::Sync
 impl<T, K, V> core::marker::Unpin for aya::maps::hash_map::HashMap<T, K, V> where T: core::marker::Unpin, K: core::marker::Unpin, V: core::marker::Unpin
+impl<T, K, V> core::marker::UnsafeUnpin for aya::maps::hash_map::HashMap<T, K, V> where T: core::marker::UnsafeUnpin
 impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::hash_map::HashMap<T, K, V> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::hash_map::HashMap<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::hash_map::HashMap<T, K, V> where U: core::convert::From<T>
@@ -1780,6 +1817,7 @@ impl<T, K, V> core::marker::Freeze for aya::maps::lpm_trie::LpmTrie<T, K, V> whe
 impl<T, K, V> core::marker::Send for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::marker::Send, K: core::marker::Send, V: core::marker::Send
 impl<T, K, V> core::marker::Sync for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::marker::Sync, K: core::marker::Sync, V: core::marker::Sync
 impl<T, K, V> core::marker::Unpin for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::marker::Unpin, K: core::marker::Unpin, V: core::marker::Unpin
+impl<T, K, V> core::marker::UnsafeUnpin for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::marker::UnsafeUnpin
 impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::lpm_trie::LpmTrie<T, K, V> where U: core::convert::From<T>
@@ -1813,6 +1851,7 @@ impl core::marker::Freeze for aya::maps::MapData
 impl core::marker::Send for aya::maps::MapData
 impl core::marker::Sync for aya::maps::MapData
 impl core::marker::Unpin for aya::maps::MapData
+impl core::marker::UnsafeUnpin for aya::maps::MapData
 impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapData
 impl core::panic::unwind_safe::UnwindSafe for aya::maps::MapData
 impl<T, U> core::convert::Into<U> for aya::maps::MapData where U: core::convert::From<T>
@@ -1840,6 +1879,7 @@ impl core::marker::Freeze for aya::maps::MapFd
 impl core::marker::Send for aya::maps::MapFd
 impl core::marker::Sync for aya::maps::MapFd
 impl core::marker::Unpin for aya::maps::MapFd
+impl core::marker::UnsafeUnpin for aya::maps::MapFd
 impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapFd
 impl core::panic::unwind_safe::UnwindSafe for aya::maps::MapFd
 impl<T, U> core::convert::Into<U> for aya::maps::MapFd where U: core::convert::From<T>
@@ -1877,6 +1917,7 @@ impl core::marker::Freeze for aya::maps::MapInfo
 impl core::marker::Send for aya::maps::MapInfo
 impl core::marker::Sync for aya::maps::MapInfo
 impl core::marker::Unpin for aya::maps::MapInfo
+impl core::marker::UnsafeUnpin for aya::maps::MapInfo
 impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapInfo
 impl core::panic::unwind_safe::UnwindSafe for aya::maps::MapInfo
 impl<T, U> core::convert::Into<U> for aya::maps::MapInfo where U: core::convert::From<T>
@@ -1903,6 +1944,7 @@ impl<'coll, K, V, I> core::marker::Freeze for aya::maps::MapIter<'coll, K, V, I>
 impl<'coll, K, V, I> core::marker::Send for aya::maps::MapIter<'coll, K, V, I> where I: core::marker::Sync, V: core::marker::Send, K: core::marker::Send
 impl<'coll, K, V, I> core::marker::Sync for aya::maps::MapIter<'coll, K, V, I> where I: core::marker::Sync, V: core::marker::Sync, K: core::marker::Sync
 impl<'coll, K, V, I> core::marker::Unpin for aya::maps::MapIter<'coll, K, V, I> where V: core::marker::Unpin, K: core::marker::Unpin
+impl<'coll, K, V, I> core::marker::UnsafeUnpin for aya::maps::MapIter<'coll, K, V, I> where K: core::marker::UnsafeUnpin
 impl<'coll, K, V, I> core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapIter<'coll, K, V, I> where I: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe
 impl<'coll, K, V, I> core::panic::unwind_safe::UnwindSafe for aya::maps::MapIter<'coll, K, V, I> where I: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe
 impl<I> core::iter::traits::collect::IntoIterator for aya::maps::MapIter<'coll, K, V, I> where I: core::iter::traits::iterator::Iterator
@@ -1933,6 +1975,7 @@ impl<'coll, K> core::marker::Freeze for aya::maps::MapKeys<'coll, K> where K: co
 impl<'coll, K> core::marker::Send for aya::maps::MapKeys<'coll, K> where K: core::marker::Send
 impl<'coll, K> core::marker::Sync for aya::maps::MapKeys<'coll, K> where K: core::marker::Sync
 impl<'coll, K> core::marker::Unpin for aya::maps::MapKeys<'coll, K> where K: core::marker::Unpin
+impl<'coll, K> core::marker::UnsafeUnpin for aya::maps::MapKeys<'coll, K> where K: core::marker::UnsafeUnpin
 impl<'coll, K> core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapKeys<'coll, K> where K: core::panic::unwind_safe::RefUnwindSafe
 impl<'coll, K> core::panic::unwind_safe::UnwindSafe for aya::maps::MapKeys<'coll, K> where K: core::panic::unwind_safe::UnwindSafe
 impl<I> core::iter::traits::collect::IntoIterator for aya::maps::MapKeys<'coll, K> where I: core::iter::traits::iterator::Iterator
@@ -1980,6 +2023,7 @@ impl<T, V> core::marker::Freeze for aya::maps::PerCpuArray<T, V> where T: core::
 impl<T, V> core::marker::Send for aya::maps::PerCpuArray<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::PerCpuArray<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::PerCpuArray<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::PerCpuArray<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::PerCpuArray<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::PerCpuArray<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::PerCpuArray<T, V> where U: core::convert::From<T>
@@ -2028,6 +2072,7 @@ impl<T, K, V> core::marker::Freeze for aya::maps::hash_map::PerCpuHashMap<T, K, 
 impl<T, K, V> core::marker::Send for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Send, K: core::marker::Send, V: core::marker::Send
 impl<T, K, V> core::marker::Sync for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Sync, K: core::marker::Sync, V: core::marker::Sync
 impl<T, K, V> core::marker::Unpin for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::Unpin, K: core::marker::Unpin, V: core::marker::Unpin
+impl<T, K, V> core::marker::UnsafeUnpin for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::marker::UnsafeUnpin
 impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::hash_map::PerCpuHashMap<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::hash_map::PerCpuHashMap<T, K, V> where U: core::convert::From<T>
@@ -2065,6 +2110,7 @@ impl<T> core::marker::Freeze for aya::maps::PerCpuValues<T>
 impl<T> core::marker::Send for aya::maps::PerCpuValues<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::PerCpuValues<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::PerCpuValues<T>
+impl<T> core::marker::UnsafeUnpin for aya::maps::PerCpuValues<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::PerCpuValues<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::PerCpuValues<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<P, T> core::ops::deref::Receiver for aya::maps::PerCpuValues<T> where P: core::ops::deref::Deref<Target = T> + ?core::marker::Sized, T: ?core::marker::Sized
@@ -2103,6 +2149,7 @@ impl<T> core::marker::Freeze for aya::maps::perf::PerfEventArray<T>
 impl<T> core::marker::Send for aya::maps::perf::PerfEventArray<T> where T: core::marker::Sync + core::marker::Send
 impl<T> core::marker::Sync for aya::maps::perf::PerfEventArray<T> where T: core::marker::Sync + core::marker::Send
 impl<T> core::marker::Unpin for aya::maps::perf::PerfEventArray<T>
+impl<T> core::marker::UnsafeUnpin for aya::maps::perf::PerfEventArray<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfEventArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfEventArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::perf::PerfEventArray<T> where U: core::convert::From<T>
@@ -2142,6 +2189,7 @@ impl<T> core::marker::Freeze for aya::maps::ProgramArray<T> where T: core::marke
 impl<T> core::marker::Send for aya::maps::ProgramArray<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::ProgramArray<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::ProgramArray<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::ProgramArray<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ProgramArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::ProgramArray<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::ProgramArray<T> where U: core::convert::From<T>
@@ -2181,6 +2229,7 @@ impl<T, V> core::marker::Freeze for aya::maps::queue::Queue<T, V> where T: core:
 impl<T, V> core::marker::Send for aya::maps::queue::Queue<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::queue::Queue<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::queue::Queue<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::queue::Queue<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::queue::Queue<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::queue::Queue<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::queue::Queue<T, V> where U: core::convert::From<T>
@@ -2219,6 +2268,7 @@ impl<T> core::marker::Freeze for aya::maps::ring_buf::RingBuf<T> where T: core::
 impl<T> core::marker::Send for aya::maps::ring_buf::RingBuf<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::ring_buf::RingBuf<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::ring_buf::RingBuf<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::ring_buf::RingBuf<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ring_buf::RingBuf<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::ring_buf::RingBuf<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::ring_buf::RingBuf<T> where U: core::convert::From<T>
@@ -2260,6 +2310,7 @@ impl<T, V> core::marker::Freeze for aya::maps::sk_storage::SkStorage<T, V> where
 impl<T, V> core::marker::Send for aya::maps::sk_storage::SkStorage<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::sk_storage::SkStorage<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::sk_storage::SkStorage<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::sk_storage::SkStorage<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::sk_storage::SkStorage<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::sk_storage::SkStorage<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::sk_storage::SkStorage<T, V> where U: core::convert::From<T>
@@ -2309,6 +2360,7 @@ impl<T, K> core::marker::Freeze for aya::maps::SockHash<T, K> where T: core::mar
 impl<T, K> core::marker::Send for aya::maps::SockHash<T, K> where T: core::marker::Send, K: core::marker::Send
 impl<T, K> core::marker::Sync for aya::maps::SockHash<T, K> where T: core::marker::Sync, K: core::marker::Sync
 impl<T, K> core::marker::Unpin for aya::maps::SockHash<T, K> where T: core::marker::Unpin, K: core::marker::Unpin
+impl<T, K> core::marker::UnsafeUnpin for aya::maps::SockHash<T, K> where T: core::marker::UnsafeUnpin
 impl<T, K> core::panic::unwind_safe::RefUnwindSafe for aya::maps::SockHash<T, K> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe
 impl<T, K> core::panic::unwind_safe::UnwindSafe for aya::maps::SockHash<T, K> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::SockHash<T, K> where U: core::convert::From<T>
@@ -2349,6 +2401,7 @@ impl<T> core::marker::Freeze for aya::maps::SockMap<T> where T: core::marker::Fr
 impl<T> core::marker::Send for aya::maps::SockMap<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::SockMap<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::SockMap<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::SockMap<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::SockMap<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::SockMap<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::SockMap<T> where U: core::convert::From<T>
@@ -2388,6 +2441,7 @@ impl<T, V> core::marker::Freeze for aya::maps::stack::Stack<T, V> where T: core:
 impl<T, V> core::marker::Send for aya::maps::stack::Stack<T, V> where T: core::marker::Send, V: core::marker::Send
 impl<T, V> core::marker::Sync for aya::maps::stack::Stack<T, V> where T: core::marker::Sync, V: core::marker::Sync
 impl<T, V> core::marker::Unpin for aya::maps::stack::Stack<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::stack::Stack<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::stack::Stack<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::stack::Stack<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::stack::Stack<T, V> where U: core::convert::From<T>
@@ -2437,6 +2491,7 @@ impl<T> core::marker::Freeze for aya::maps::stack_trace::StackTraceMap<T> where 
 impl<T> core::marker::Send for aya::maps::stack_trace::StackTraceMap<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::stack_trace::StackTraceMap<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::stack_trace::StackTraceMap<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::stack_trace::StackTraceMap<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::stack_trace::StackTraceMap<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::stack_trace::StackTraceMap<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::stack_trace::StackTraceMap<T> where U: core::convert::From<T>
@@ -2476,6 +2531,7 @@ impl<T> core::marker::Freeze for aya::maps::XskMap<T> where T: core::marker::Fre
 impl<T> core::marker::Send for aya::maps::XskMap<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya::maps::XskMap<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya::maps::XskMap<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::XskMap<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::XskMap<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::XskMap<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya::maps::XskMap<T> where U: core::convert::From<T>
@@ -2539,6 +2595,7 @@ impl core::marker::Freeze for aya::pin::PinError
 impl core::marker::Send for aya::pin::PinError
 impl core::marker::Sync for aya::pin::PinError
 impl core::marker::Unpin for aya::pin::PinError
+impl core::marker::UnsafeUnpin for aya::pin::PinError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::pin::PinError
 impl !core::panic::unwind_safe::UnwindSafe for aya::pin::PinError
 impl<T, U> core::convert::Into<U> for aya::pin::PinError where U: core::convert::From<T>
@@ -2600,6 +2657,7 @@ impl core::marker::Freeze for aya::programs::cgroup_device::CgroupDevice
 impl core::marker::Send for aya::programs::cgroup_device::CgroupDevice
 impl core::marker::Sync for aya::programs::cgroup_device::CgroupDevice
 impl core::marker::Unpin for aya::programs::cgroup_device::CgroupDevice
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_device::CgroupDevice
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_device::CgroupDevice
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_device::CgroupDevice
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_device::CgroupDevice where U: core::convert::From<T>
@@ -2638,6 +2696,7 @@ impl core::marker::Freeze for aya::programs::cgroup_device::CgroupDeviceLink
 impl core::marker::Send for aya::programs::cgroup_device::CgroupDeviceLink
 impl core::marker::Sync for aya::programs::cgroup_device::CgroupDeviceLink
 impl core::marker::Unpin for aya::programs::cgroup_device::CgroupDeviceLink
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_device::CgroupDeviceLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_device::CgroupDeviceLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_device::CgroupDeviceLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_device::CgroupDeviceLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -2673,6 +2732,7 @@ impl core::marker::Freeze for aya::programs::cgroup_device::CgroupDeviceLinkId
 impl core::marker::Send for aya::programs::cgroup_device::CgroupDeviceLinkId
 impl core::marker::Sync for aya::programs::cgroup_device::CgroupDeviceLinkId
 impl core::marker::Unpin for aya::programs::cgroup_device::CgroupDeviceLinkId
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_device::CgroupDeviceLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_device::CgroupDeviceLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_device::CgroupDeviceLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_device::CgroupDeviceLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -2706,6 +2766,7 @@ impl core::marker::Freeze for aya::programs::cgroup_skb::CgroupSkbAttachType
 impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkbAttachType
 impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkbAttachType
 impl core::marker::Unpin for aya::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_skb::CgroupSkbAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_skb::CgroupSkbAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_skb::CgroupSkbAttachType
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_skb::CgroupSkbAttachType where U: core::convert::From<T>
@@ -2765,6 +2826,7 @@ impl core::marker::Freeze for aya::programs::cgroup_skb::CgroupSkb
 impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkb
 impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkb
 impl core::marker::Unpin for aya::programs::cgroup_skb::CgroupSkb
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_skb::CgroupSkb
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_skb::CgroupSkb
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_skb::CgroupSkb
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_skb::CgroupSkb where U: core::convert::From<T>
@@ -2806,6 +2868,7 @@ impl core::marker::Freeze for aya::programs::cgroup_skb::CgroupSkbLink
 impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkbLink
 impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkbLink
 impl core::marker::Unpin for aya::programs::cgroup_skb::CgroupSkbLink
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_skb::CgroupSkbLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_skb::CgroupSkbLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_skb::CgroupSkbLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_skb::CgroupSkbLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -2841,6 +2904,7 @@ impl core::marker::Freeze for aya::programs::cgroup_skb::CgroupSkbLinkId
 impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkbLinkId
 impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkbLinkId
 impl core::marker::Unpin for aya::programs::cgroup_skb::CgroupSkbLinkId
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_skb::CgroupSkbLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_skb::CgroupSkbLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_skb::CgroupSkbLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_skb::CgroupSkbLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -2895,6 +2959,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sock::CgroupSock
 impl core::marker::Send for aya::programs::cgroup_sock::CgroupSock
 impl core::marker::Sync for aya::programs::cgroup_sock::CgroupSock
 impl core::marker::Unpin for aya::programs::cgroup_sock::CgroupSock
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sock::CgroupSock
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock::CgroupSock
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock::CgroupSock
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sock::CgroupSock where U: core::convert::From<T>
@@ -2936,6 +3001,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sock::CgroupSockLink
 impl core::marker::Send for aya::programs::cgroup_sock::CgroupSockLink
 impl core::marker::Sync for aya::programs::cgroup_sock::CgroupSockLink
 impl core::marker::Unpin for aya::programs::cgroup_sock::CgroupSockLink
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sock::CgroupSockLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock::CgroupSockLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock::CgroupSockLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sock::CgroupSockLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -2971,6 +3037,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sock::CgroupSockLinkId
 impl core::marker::Send for aya::programs::cgroup_sock::CgroupSockLinkId
 impl core::marker::Sync for aya::programs::cgroup_sock::CgroupSockLinkId
 impl core::marker::Unpin for aya::programs::cgroup_sock::CgroupSockLinkId
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sock::CgroupSockLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock::CgroupSockLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock::CgroupSockLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sock::CgroupSockLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3025,6 +3092,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::marker::Send for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::marker::Sync for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::marker::Unpin for aya::programs::cgroup_sock_addr::CgroupSockAddr
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sock_addr::CgroupSockAddr where U: core::convert::From<T>
@@ -3066,6 +3134,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sock_addr::CgroupSockAddrLin
 impl core::marker::Send for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 impl core::marker::Sync for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 impl core::marker::Unpin for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sock_addr::CgroupSockAddrLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3101,6 +3170,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sock_addr::CgroupSockAddrLin
 impl core::marker::Send for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 impl core::marker::Sync for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 impl core::marker::Unpin for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3157,6 +3227,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::marker::Send for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::marker::Sync for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::marker::Unpin for aya::programs::cgroup_sockopt::CgroupSockopt
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sockopt::CgroupSockopt
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sockopt::CgroupSockopt where U: core::convert::From<T>
@@ -3195,6 +3266,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sockopt::CgroupSockoptLink
 impl core::marker::Send for aya::programs::cgroup_sockopt::CgroupSockoptLink
 impl core::marker::Sync for aya::programs::cgroup_sockopt::CgroupSockoptLink
 impl core::marker::Unpin for aya::programs::cgroup_sockopt::CgroupSockoptLink
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sockopt::CgroupSockoptLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sockopt::CgroupSockoptLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sockopt::CgroupSockoptLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sockopt::CgroupSockoptLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3230,6 +3302,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 impl core::marker::Send for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 impl core::marker::Sync for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 impl core::marker::Unpin for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sockopt::CgroupSockoptLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3286,6 +3359,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::marker::Send for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::marker::Sync for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::marker::Unpin for aya::programs::cgroup_sysctl::CgroupSysctl
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctl
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sysctl::CgroupSysctl where U: core::convert::From<T>
@@ -3324,6 +3398,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sysctl::CgroupSysctlLink
 impl core::marker::Send for aya::programs::cgroup_sysctl::CgroupSysctlLink
 impl core::marker::Sync for aya::programs::cgroup_sysctl::CgroupSysctlLink
 impl core::marker::Unpin for aya::programs::cgroup_sysctl::CgroupSysctlLink
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sysctl::CgroupSysctlLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctlLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctlLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sysctl::CgroupSysctlLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3359,6 +3434,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl core::marker::Send for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl core::marker::Sync for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl core::marker::Unpin for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::cgroup_sysctl::CgroupSysctlLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3393,6 +3469,7 @@ impl core::marker::Freeze for aya::programs::extension::ExtensionError
 impl core::marker::Send for aya::programs::extension::ExtensionError
 impl core::marker::Sync for aya::programs::extension::ExtensionError
 impl core::marker::Unpin for aya::programs::extension::ExtensionError
+impl core::marker::UnsafeUnpin for aya::programs::extension::ExtensionError
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::extension::ExtensionError
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::extension::ExtensionError
 impl<T, U> core::convert::Into<U> for aya::programs::extension::ExtensionError where U: core::convert::From<T>
@@ -3449,6 +3526,7 @@ impl core::marker::Freeze for aya::programs::extension::Extension
 impl core::marker::Send for aya::programs::extension::Extension
 impl core::marker::Sync for aya::programs::extension::Extension
 impl core::marker::Unpin for aya::programs::extension::Extension
+impl core::marker::UnsafeUnpin for aya::programs::extension::Extension
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::extension::Extension
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::extension::Extension
 impl<T, U> core::convert::Into<U> for aya::programs::extension::Extension where U: core::convert::From<T>
@@ -3491,6 +3569,7 @@ impl core::marker::Freeze for aya::programs::extension::ExtensionLink
 impl core::marker::Send for aya::programs::extension::ExtensionLink
 impl core::marker::Sync for aya::programs::extension::ExtensionLink
 impl core::marker::Unpin for aya::programs::extension::ExtensionLink
+impl core::marker::UnsafeUnpin for aya::programs::extension::ExtensionLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::extension::ExtensionLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::extension::ExtensionLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::extension::ExtensionLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3526,6 +3605,7 @@ impl core::marker::Freeze for aya::programs::extension::ExtensionLinkId
 impl core::marker::Send for aya::programs::extension::ExtensionLinkId
 impl core::marker::Sync for aya::programs::extension::ExtensionLinkId
 impl core::marker::Unpin for aya::programs::extension::ExtensionLinkId
+impl core::marker::UnsafeUnpin for aya::programs::extension::ExtensionLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::extension::ExtensionLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::extension::ExtensionLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::extension::ExtensionLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3582,6 +3662,7 @@ impl core::marker::Freeze for aya::programs::fentry::FEntry
 impl core::marker::Send for aya::programs::fentry::FEntry
 impl core::marker::Sync for aya::programs::fentry::FEntry
 impl core::marker::Unpin for aya::programs::fentry::FEntry
+impl core::marker::UnsafeUnpin for aya::programs::fentry::FEntry
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fentry::FEntry
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::fentry::FEntry
 impl<T, U> core::convert::Into<U> for aya::programs::fentry::FEntry where U: core::convert::From<T>
@@ -3624,6 +3705,7 @@ impl core::marker::Freeze for aya::programs::fentry::FEntryLink
 impl core::marker::Send for aya::programs::fentry::FEntryLink
 impl core::marker::Sync for aya::programs::fentry::FEntryLink
 impl core::marker::Unpin for aya::programs::fentry::FEntryLink
+impl core::marker::UnsafeUnpin for aya::programs::fentry::FEntryLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fentry::FEntryLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::fentry::FEntryLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::fentry::FEntryLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3659,6 +3741,7 @@ impl core::marker::Freeze for aya::programs::fentry::FEntryLinkId
 impl core::marker::Send for aya::programs::fentry::FEntryLinkId
 impl core::marker::Sync for aya::programs::fentry::FEntryLinkId
 impl core::marker::Unpin for aya::programs::fentry::FEntryLinkId
+impl core::marker::UnsafeUnpin for aya::programs::fentry::FEntryLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fentry::FEntryLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::fentry::FEntryLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::fentry::FEntryLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3715,6 +3798,7 @@ impl core::marker::Freeze for aya::programs::fexit::FExit
 impl core::marker::Send for aya::programs::fexit::FExit
 impl core::marker::Sync for aya::programs::fexit::FExit
 impl core::marker::Unpin for aya::programs::fexit::FExit
+impl core::marker::UnsafeUnpin for aya::programs::fexit::FExit
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fexit::FExit
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::fexit::FExit
 impl<T, U> core::convert::Into<U> for aya::programs::fexit::FExit where U: core::convert::From<T>
@@ -3757,6 +3841,7 @@ impl core::marker::Freeze for aya::programs::fexit::FExitLink
 impl core::marker::Send for aya::programs::fexit::FExitLink
 impl core::marker::Sync for aya::programs::fexit::FExitLink
 impl core::marker::Unpin for aya::programs::fexit::FExitLink
+impl core::marker::UnsafeUnpin for aya::programs::fexit::FExitLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fexit::FExitLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::fexit::FExitLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::fexit::FExitLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3792,6 +3877,7 @@ impl core::marker::Freeze for aya::programs::fexit::FExitLinkId
 impl core::marker::Send for aya::programs::fexit::FExitLinkId
 impl core::marker::Sync for aya::programs::fexit::FExitLinkId
 impl core::marker::Unpin for aya::programs::fexit::FExitLinkId
+impl core::marker::UnsafeUnpin for aya::programs::fexit::FExitLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fexit::FExitLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::fexit::FExitLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::fexit::FExitLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3846,6 +3932,7 @@ impl core::marker::Freeze for aya::programs::flow_dissector::FlowDissector
 impl core::marker::Send for aya::programs::flow_dissector::FlowDissector
 impl core::marker::Sync for aya::programs::flow_dissector::FlowDissector
 impl core::marker::Unpin for aya::programs::flow_dissector::FlowDissector
+impl core::marker::UnsafeUnpin for aya::programs::flow_dissector::FlowDissector
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::flow_dissector::FlowDissector
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::flow_dissector::FlowDissector
 impl<T, U> core::convert::Into<U> for aya::programs::flow_dissector::FlowDissector where U: core::convert::From<T>
@@ -3887,6 +3974,7 @@ impl core::marker::Freeze for aya::programs::flow_dissector::FlowDissectorLink
 impl core::marker::Send for aya::programs::flow_dissector::FlowDissectorLink
 impl core::marker::Sync for aya::programs::flow_dissector::FlowDissectorLink
 impl core::marker::Unpin for aya::programs::flow_dissector::FlowDissectorLink
+impl core::marker::UnsafeUnpin for aya::programs::flow_dissector::FlowDissectorLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::flow_dissector::FlowDissectorLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::flow_dissector::FlowDissectorLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::flow_dissector::FlowDissectorLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3922,6 +4010,7 @@ impl core::marker::Freeze for aya::programs::flow_dissector::FlowDissectorLinkId
 impl core::marker::Send for aya::programs::flow_dissector::FlowDissectorLinkId
 impl core::marker::Sync for aya::programs::flow_dissector::FlowDissectorLinkId
 impl core::marker::Unpin for aya::programs::flow_dissector::FlowDissectorLinkId
+impl core::marker::UnsafeUnpin for aya::programs::flow_dissector::FlowDissectorLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::flow_dissector::FlowDissectorLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::flow_dissector::FlowDissectorLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::flow_dissector::FlowDissectorLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -3978,6 +4067,7 @@ impl core::marker::Freeze for aya::programs::iter::Iter
 impl core::marker::Send for aya::programs::iter::Iter
 impl core::marker::Sync for aya::programs::iter::Iter
 impl core::marker::Unpin for aya::programs::iter::Iter
+impl core::marker::UnsafeUnpin for aya::programs::iter::Iter
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::iter::Iter
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::Iter
 impl<T, U> core::convert::Into<U> for aya::programs::iter::Iter where U: core::convert::From<T>
@@ -4005,6 +4095,7 @@ impl core::marker::Freeze for aya::programs::iter::IterFd
 impl core::marker::Send for aya::programs::iter::IterFd
 impl core::marker::Sync for aya::programs::iter::IterFd
 impl core::marker::Unpin for aya::programs::iter::IterFd
+impl core::marker::UnsafeUnpin for aya::programs::iter::IterFd
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::iter::IterFd
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::IterFd
 impl<T, U> core::convert::Into<U> for aya::programs::iter::IterFd where U: core::convert::From<T>
@@ -4051,6 +4142,7 @@ impl core::marker::Freeze for aya::programs::iter::IterLink
 impl core::marker::Send for aya::programs::iter::IterLink
 impl core::marker::Sync for aya::programs::iter::IterLink
 impl core::marker::Unpin for aya::programs::iter::IterLink
+impl core::marker::UnsafeUnpin for aya::programs::iter::IterLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::iter::IterLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::IterLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::iter::IterLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -4086,6 +4178,7 @@ impl core::marker::Freeze for aya::programs::iter::IterLinkId
 impl core::marker::Send for aya::programs::iter::IterLinkId
 impl core::marker::Sync for aya::programs::iter::IterLinkId
 impl core::marker::Unpin for aya::programs::iter::IterLinkId
+impl core::marker::UnsafeUnpin for aya::programs::iter::IterLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::iter::IterLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::IterLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::iter::IterLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -4123,6 +4216,7 @@ impl core::marker::Freeze for aya::programs::kprobe::KProbeError
 impl core::marker::Send for aya::programs::kprobe::KProbeError
 impl core::marker::Sync for aya::programs::kprobe::KProbeError
 impl core::marker::Unpin for aya::programs::kprobe::KProbeError
+impl core::marker::UnsafeUnpin for aya::programs::kprobe::KProbeError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::kprobe::KProbeError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbeError
 impl<T, U> core::convert::Into<U> for aya::programs::kprobe::KProbeError where U: core::convert::From<T>
@@ -4178,6 +4272,7 @@ impl core::marker::Freeze for aya::programs::kprobe::KProbe
 impl core::marker::Send for aya::programs::kprobe::KProbe
 impl core::marker::Sync for aya::programs::kprobe::KProbe
 impl core::marker::Unpin for aya::programs::kprobe::KProbe
+impl core::marker::UnsafeUnpin for aya::programs::kprobe::KProbe
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::kprobe::KProbe
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbe
 impl<T, U> core::convert::Into<U> for aya::programs::kprobe::KProbe where U: core::convert::From<T>
@@ -4222,6 +4317,7 @@ impl core::marker::Freeze for aya::programs::kprobe::KProbeLink
 impl core::marker::Send for aya::programs::kprobe::KProbeLink
 impl core::marker::Sync for aya::programs::kprobe::KProbeLink
 impl core::marker::Unpin for aya::programs::kprobe::KProbeLink
+impl core::marker::UnsafeUnpin for aya::programs::kprobe::KProbeLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::kprobe::KProbeLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbeLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::kprobe::KProbeLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -4257,6 +4353,7 @@ impl core::marker::Freeze for aya::programs::kprobe::KProbeLinkId
 impl core::marker::Send for aya::programs::kprobe::KProbeLinkId
 impl core::marker::Sync for aya::programs::kprobe::KProbeLinkId
 impl core::marker::Unpin for aya::programs::kprobe::KProbeLinkId
+impl core::marker::UnsafeUnpin for aya::programs::kprobe::KProbeLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::kprobe::KProbeLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbeLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::kprobe::KProbeLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -4295,6 +4392,7 @@ impl core::marker::Freeze for aya::programs::links::CgroupAttachMode
 impl core::marker::Send for aya::programs::links::CgroupAttachMode
 impl core::marker::Sync for aya::programs::links::CgroupAttachMode
 impl core::marker::Unpin for aya::programs::links::CgroupAttachMode
+impl core::marker::UnsafeUnpin for aya::programs::links::CgroupAttachMode
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::CgroupAttachMode
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::CgroupAttachMode
 impl<T, U> core::convert::Into<U> for aya::programs::links::CgroupAttachMode where U: core::convert::From<T>
@@ -4338,6 +4436,7 @@ impl core::marker::Freeze for aya::programs::links::LinkError
 impl core::marker::Send for aya::programs::links::LinkError
 impl core::marker::Sync for aya::programs::links::LinkError
 impl core::marker::Unpin for aya::programs::links::LinkError
+impl core::marker::UnsafeUnpin for aya::programs::links::LinkError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::LinkError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::links::LinkError
 impl<T, U> core::convert::Into<U> for aya::programs::links::LinkError where U: core::convert::From<T>
@@ -4388,6 +4487,7 @@ impl core::marker::Freeze for aya::programs::links::LinkType
 impl core::marker::Send for aya::programs::links::LinkType
 impl core::marker::Sync for aya::programs::links::LinkType
 impl core::marker::Unpin for aya::programs::links::LinkType
+impl core::marker::UnsafeUnpin for aya::programs::links::LinkType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::LinkType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::LinkType
 impl<T, U> core::convert::Into<U> for aya::programs::links::LinkType where U: core::convert::From<T>
@@ -4527,6 +4627,7 @@ impl core::marker::Freeze for aya::programs::links::FdLink
 impl core::marker::Send for aya::programs::links::FdLink
 impl core::marker::Sync for aya::programs::links::FdLink
 impl core::marker::Unpin for aya::programs::links::FdLink
+impl core::marker::UnsafeUnpin for aya::programs::links::FdLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::FdLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::FdLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::links::FdLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -4562,6 +4663,7 @@ impl core::marker::Freeze for aya::programs::links::FdLinkId
 impl core::marker::Send for aya::programs::links::FdLinkId
 impl core::marker::Sync for aya::programs::links::FdLinkId
 impl core::marker::Unpin for aya::programs::links::FdLinkId
+impl core::marker::UnsafeUnpin for aya::programs::links::FdLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::FdLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::FdLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::links::FdLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -4591,6 +4693,7 @@ impl core::marker::Freeze for aya::programs::links::LinkInfo
 impl core::marker::Send for aya::programs::links::LinkInfo
 impl core::marker::Sync for aya::programs::links::LinkInfo
 impl core::marker::Unpin for aya::programs::links::LinkInfo
+impl core::marker::UnsafeUnpin for aya::programs::links::LinkInfo
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::LinkInfo
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::LinkInfo
 impl<T, U> core::convert::Into<U> for aya::programs::links::LinkInfo where U: core::convert::From<T>
@@ -4627,6 +4730,7 @@ impl core::marker::Freeze for aya::programs::links::LinkOrder
 impl core::marker::Send for aya::programs::links::LinkOrder
 impl core::marker::Sync for aya::programs::links::LinkOrder
 impl core::marker::Unpin for aya::programs::links::LinkOrder
+impl core::marker::UnsafeUnpin for aya::programs::links::LinkOrder
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::LinkOrder
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::LinkOrder
 impl<T, U> core::convert::Into<U> for aya::programs::links::LinkOrder where U: core::convert::From<T>
@@ -4657,6 +4761,7 @@ impl core::marker::Freeze for aya::programs::links::PinnedLink
 impl core::marker::Send for aya::programs::links::PinnedLink
 impl core::marker::Sync for aya::programs::links::PinnedLink
 impl core::marker::Unpin for aya::programs::links::PinnedLink
+impl core::marker::UnsafeUnpin for aya::programs::links::PinnedLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::PinnedLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::PinnedLink
 impl<T, U> core::convert::Into<U> for aya::programs::links::PinnedLink where U: core::convert::From<T>
@@ -4701,6 +4806,7 @@ impl core::marker::Freeze for aya::programs::links::ProgAttachLink
 impl core::marker::Send for aya::programs::links::ProgAttachLink
 impl core::marker::Sync for aya::programs::links::ProgAttachLink
 impl core::marker::Unpin for aya::programs::links::ProgAttachLink
+impl core::marker::UnsafeUnpin for aya::programs::links::ProgAttachLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::ProgAttachLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::ProgAttachLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::links::ProgAttachLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -4736,6 +4842,7 @@ impl core::marker::Freeze for aya::programs::links::ProgAttachLinkId
 impl core::marker::Send for aya::programs::links::ProgAttachLinkId
 impl core::marker::Sync for aya::programs::links::ProgAttachLinkId
 impl core::marker::Unpin for aya::programs::links::ProgAttachLinkId
+impl core::marker::UnsafeUnpin for aya::programs::links::ProgAttachLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::ProgAttachLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::ProgAttachLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::links::ProgAttachLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -4897,6 +5004,7 @@ impl core::marker::Freeze for aya::programs::lirc_mode2::LircLink
 impl core::marker::Send for aya::programs::lirc_mode2::LircLink
 impl core::marker::Sync for aya::programs::lirc_mode2::LircLink
 impl core::marker::Unpin for aya::programs::lirc_mode2::LircLink
+impl core::marker::UnsafeUnpin for aya::programs::lirc_mode2::LircLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lirc_mode2::LircLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lirc_mode2::LircLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::lirc_mode2::LircLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -4932,6 +5040,7 @@ impl core::marker::Freeze for aya::programs::lirc_mode2::LircLinkId
 impl core::marker::Send for aya::programs::lirc_mode2::LircLinkId
 impl core::marker::Sync for aya::programs::lirc_mode2::LircLinkId
 impl core::marker::Unpin for aya::programs::lirc_mode2::LircLinkId
+impl core::marker::UnsafeUnpin for aya::programs::lirc_mode2::LircLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lirc_mode2::LircLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lirc_mode2::LircLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::lirc_mode2::LircLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -4987,6 +5096,7 @@ impl core::marker::Freeze for aya::programs::lirc_mode2::LircMode2
 impl core::marker::Send for aya::programs::lirc_mode2::LircMode2
 impl core::marker::Sync for aya::programs::lirc_mode2::LircMode2
 impl core::marker::Unpin for aya::programs::lirc_mode2::LircMode2
+impl core::marker::UnsafeUnpin for aya::programs::lirc_mode2::LircMode2
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lirc_mode2::LircMode2
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lirc_mode2::LircMode2
 impl<T, U> core::convert::Into<U> for aya::programs::lirc_mode2::LircMode2 where U: core::convert::From<T>
@@ -5041,6 +5151,7 @@ impl core::marker::Freeze for aya::programs::lsm::Lsm
 impl core::marker::Send for aya::programs::lsm::Lsm
 impl core::marker::Sync for aya::programs::lsm::Lsm
 impl core::marker::Unpin for aya::programs::lsm::Lsm
+impl core::marker::UnsafeUnpin for aya::programs::lsm::Lsm
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm::Lsm
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm::Lsm
 impl<T, U> core::convert::Into<U> for aya::programs::lsm::Lsm where U: core::convert::From<T>
@@ -5083,6 +5194,7 @@ impl core::marker::Freeze for aya::programs::lsm::LsmLink
 impl core::marker::Send for aya::programs::lsm::LsmLink
 impl core::marker::Sync for aya::programs::lsm::LsmLink
 impl core::marker::Unpin for aya::programs::lsm::LsmLink
+impl core::marker::UnsafeUnpin for aya::programs::lsm::LsmLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm::LsmLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm::LsmLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::lsm::LsmLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -5118,6 +5230,7 @@ impl core::marker::Freeze for aya::programs::lsm::LsmLinkId
 impl core::marker::Send for aya::programs::lsm::LsmLinkId
 impl core::marker::Sync for aya::programs::lsm::LsmLinkId
 impl core::marker::Unpin for aya::programs::lsm::LsmLinkId
+impl core::marker::UnsafeUnpin for aya::programs::lsm::LsmLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm::LsmLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm::LsmLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::lsm::LsmLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -5170,6 +5283,7 @@ impl core::marker::Freeze for aya::programs::lsm_cgroup::LsmCgroup
 impl core::marker::Send for aya::programs::lsm_cgroup::LsmCgroup
 impl core::marker::Sync for aya::programs::lsm_cgroup::LsmCgroup
 impl core::marker::Unpin for aya::programs::lsm_cgroup::LsmCgroup
+impl core::marker::UnsafeUnpin for aya::programs::lsm_cgroup::LsmCgroup
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm_cgroup::LsmCgroup
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm_cgroup::LsmCgroup
 impl<T, U> core::convert::Into<U> for aya::programs::lsm_cgroup::LsmCgroup where U: core::convert::From<T>
@@ -5212,6 +5326,7 @@ impl core::marker::Freeze for aya::programs::lsm_cgroup::LsmLink
 impl core::marker::Send for aya::programs::lsm_cgroup::LsmLink
 impl core::marker::Sync for aya::programs::lsm_cgroup::LsmLink
 impl core::marker::Unpin for aya::programs::lsm_cgroup::LsmLink
+impl core::marker::UnsafeUnpin for aya::programs::lsm_cgroup::LsmLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm_cgroup::LsmLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm_cgroup::LsmLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::lsm_cgroup::LsmLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -5247,6 +5362,7 @@ impl core::marker::Freeze for aya::programs::lsm_cgroup::LsmLinkId
 impl core::marker::Send for aya::programs::lsm_cgroup::LsmLinkId
 impl core::marker::Sync for aya::programs::lsm_cgroup::LsmLinkId
 impl core::marker::Unpin for aya::programs::lsm_cgroup::LsmLinkId
+impl core::marker::UnsafeUnpin for aya::programs::lsm_cgroup::LsmLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm_cgroup::LsmLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm_cgroup::LsmLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::lsm_cgroup::LsmLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -5281,6 +5397,7 @@ impl core::marker::Freeze for aya::programs::perf_attach::PerfLinkId
 impl core::marker::Send for aya::programs::perf_attach::PerfLinkId
 impl core::marker::Sync for aya::programs::perf_attach::PerfLinkId
 impl core::marker::Unpin for aya::programs::perf_attach::PerfLinkId
+impl core::marker::UnsafeUnpin for aya::programs::perf_attach::PerfLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_attach::PerfLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_attach::PerfLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::perf_attach::PerfLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -5318,6 +5435,7 @@ impl core::marker::Freeze for aya::programs::perf_event::BreakpointConfig
 impl core::marker::Send for aya::programs::perf_event::BreakpointConfig
 impl core::marker::Sync for aya::programs::perf_event::BreakpointConfig
 impl core::marker::Unpin for aya::programs::perf_event::BreakpointConfig
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::BreakpointConfig
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::BreakpointConfig
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::BreakpointConfig
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::BreakpointConfig where U: core::convert::From<T>
@@ -5362,6 +5480,7 @@ impl core::marker::Freeze for aya::programs::perf_event::HardwareEvent
 impl core::marker::Send for aya::programs::perf_event::HardwareEvent
 impl core::marker::Sync for aya::programs::perf_event::HardwareEvent
 impl core::marker::Unpin for aya::programs::perf_event::HardwareEvent
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::HardwareEvent
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::HardwareEvent
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::HardwareEvent
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::HardwareEvent where U: core::convert::From<T>
@@ -5403,6 +5522,7 @@ impl core::marker::Freeze for aya::programs::perf_event::HwCacheEvent
 impl core::marker::Send for aya::programs::perf_event::HwCacheEvent
 impl core::marker::Sync for aya::programs::perf_event::HwCacheEvent
 impl core::marker::Unpin for aya::programs::perf_event::HwCacheEvent
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::HwCacheEvent
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::HwCacheEvent
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::HwCacheEvent
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::HwCacheEvent where U: core::convert::From<T>
@@ -5440,6 +5560,7 @@ impl core::marker::Freeze for aya::programs::perf_event::HwCacheOp
 impl core::marker::Send for aya::programs::perf_event::HwCacheOp
 impl core::marker::Sync for aya::programs::perf_event::HwCacheOp
 impl core::marker::Unpin for aya::programs::perf_event::HwCacheOp
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::HwCacheOp
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::HwCacheOp
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::HwCacheOp
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::HwCacheOp where U: core::convert::From<T>
@@ -5476,6 +5597,7 @@ impl core::marker::Freeze for aya::programs::perf_event::HwCacheResult
 impl core::marker::Send for aya::programs::perf_event::HwCacheResult
 impl core::marker::Sync for aya::programs::perf_event::HwCacheResult
 impl core::marker::Unpin for aya::programs::perf_event::HwCacheResult
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::HwCacheResult
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::HwCacheResult
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::HwCacheResult
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::HwCacheResult where U: core::convert::From<T>
@@ -5514,6 +5636,7 @@ impl core::marker::Freeze for aya::programs::perf_event::PerfBreakpointLength
 impl core::marker::Send for aya::programs::perf_event::PerfBreakpointLength
 impl core::marker::Sync for aya::programs::perf_event::PerfBreakpointLength
 impl core::marker::Unpin for aya::programs::perf_event::PerfBreakpointLength
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfBreakpointLength
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfBreakpointLength
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfBreakpointLength
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::PerfBreakpointLength where U: core::convert::From<T>
@@ -5551,6 +5674,7 @@ impl core::marker::Freeze for aya::programs::perf_event::PerfBreakpointType
 impl core::marker::Send for aya::programs::perf_event::PerfBreakpointType
 impl core::marker::Sync for aya::programs::perf_event::PerfBreakpointType
 impl core::marker::Unpin for aya::programs::perf_event::PerfBreakpointType
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfBreakpointType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfBreakpointType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfBreakpointType
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::PerfBreakpointType where U: core::convert::From<T>
@@ -5599,6 +5723,7 @@ impl core::marker::Freeze for aya::programs::perf_event::PerfEventConfig
 impl core::marker::Send for aya::programs::perf_event::PerfEventConfig
 impl core::marker::Sync for aya::programs::perf_event::PerfEventConfig
 impl core::marker::Unpin for aya::programs::perf_event::PerfEventConfig
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfEventConfig
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEventConfig
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEventConfig
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::PerfEventConfig where U: core::convert::From<T>
@@ -5640,6 +5765,7 @@ impl core::marker::Freeze for aya::programs::perf_event::PerfEventScope
 impl core::marker::Send for aya::programs::perf_event::PerfEventScope
 impl core::marker::Sync for aya::programs::perf_event::PerfEventScope
 impl core::marker::Unpin for aya::programs::perf_event::PerfEventScope
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfEventScope
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEventScope
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEventScope
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::PerfEventScope where U: core::convert::From<T>
@@ -5676,6 +5802,7 @@ impl core::marker::Freeze for aya::programs::perf_event::SamplePolicy
 impl core::marker::Send for aya::programs::perf_event::SamplePolicy
 impl core::marker::Sync for aya::programs::perf_event::SamplePolicy
 impl core::marker::Unpin for aya::programs::perf_event::SamplePolicy
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::SamplePolicy
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::SamplePolicy
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::SamplePolicy
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::SamplePolicy where U: core::convert::From<T>
@@ -5722,6 +5849,7 @@ impl core::marker::Freeze for aya::programs::perf_event::SoftwareEvent
 impl core::marker::Send for aya::programs::perf_event::SoftwareEvent
 impl core::marker::Sync for aya::programs::perf_event::SoftwareEvent
 impl core::marker::Unpin for aya::programs::perf_event::SoftwareEvent
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::SoftwareEvent
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::SoftwareEvent
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::SoftwareEvent
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::SoftwareEvent where U: core::convert::From<T>
@@ -5781,6 +5909,7 @@ impl core::marker::Freeze for aya::programs::perf_event::PerfEvent
 impl core::marker::Send for aya::programs::perf_event::PerfEvent
 impl core::marker::Sync for aya::programs::perf_event::PerfEvent
 impl core::marker::Unpin for aya::programs::perf_event::PerfEvent
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfEvent
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEvent
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEvent
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::PerfEvent where U: core::convert::From<T>
@@ -5825,6 +5954,7 @@ impl core::marker::Freeze for aya::programs::perf_event::PerfEventLink
 impl core::marker::Send for aya::programs::perf_event::PerfEventLink
 impl core::marker::Sync for aya::programs::perf_event::PerfEventLink
 impl core::marker::Unpin for aya::programs::perf_event::PerfEventLink
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfEventLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEventLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEventLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::perf_event::PerfEventLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -5860,6 +5990,7 @@ impl core::marker::Freeze for aya::programs::perf_event::PerfEventLinkId
 impl core::marker::Send for aya::programs::perf_event::PerfEventLinkId
 impl core::marker::Sync for aya::programs::perf_event::PerfEventLinkId
 impl core::marker::Unpin for aya::programs::perf_event::PerfEventLinkId
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfEventLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEventLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEventLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::perf_event::PerfEventLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -5916,6 +6047,7 @@ impl core::marker::Freeze for aya::programs::raw_trace_point::RawTracePoint
 impl core::marker::Send for aya::programs::raw_trace_point::RawTracePoint
 impl core::marker::Sync for aya::programs::raw_trace_point::RawTracePoint
 impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePoint
+impl core::marker::UnsafeUnpin for aya::programs::raw_trace_point::RawTracePoint
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePoint
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePoint
 impl<T, U> core::convert::Into<U> for aya::programs::raw_trace_point::RawTracePoint where U: core::convert::From<T>
@@ -5958,6 +6090,7 @@ impl core::marker::Freeze for aya::programs::raw_trace_point::RawTracePointLink
 impl core::marker::Send for aya::programs::raw_trace_point::RawTracePointLink
 impl core::marker::Sync for aya::programs::raw_trace_point::RawTracePointLink
 impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePointLink
+impl core::marker::UnsafeUnpin for aya::programs::raw_trace_point::RawTracePointLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePointLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePointLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::raw_trace_point::RawTracePointLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -5993,6 +6126,7 @@ impl core::marker::Freeze for aya::programs::raw_trace_point::RawTracePointLinkI
 impl core::marker::Send for aya::programs::raw_trace_point::RawTracePointLinkId
 impl core::marker::Sync for aya::programs::raw_trace_point::RawTracePointLinkId
 impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePointLinkId
+impl core::marker::UnsafeUnpin for aya::programs::raw_trace_point::RawTracePointLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePointLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePointLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::raw_trace_point::RawTracePointLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -6049,6 +6183,7 @@ impl core::marker::Freeze for aya::programs::sk_lookup::SkLookup
 impl core::marker::Send for aya::programs::sk_lookup::SkLookup
 impl core::marker::Sync for aya::programs::sk_lookup::SkLookup
 impl core::marker::Unpin for aya::programs::sk_lookup::SkLookup
+impl core::marker::UnsafeUnpin for aya::programs::sk_lookup::SkLookup
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_lookup::SkLookup
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_lookup::SkLookup
 impl<T, U> core::convert::Into<U> for aya::programs::sk_lookup::SkLookup where U: core::convert::From<T>
@@ -6091,6 +6226,7 @@ impl core::marker::Freeze for aya::programs::sk_lookup::SkLookupLink
 impl core::marker::Send for aya::programs::sk_lookup::SkLookupLink
 impl core::marker::Sync for aya::programs::sk_lookup::SkLookupLink
 impl core::marker::Unpin for aya::programs::sk_lookup::SkLookupLink
+impl core::marker::UnsafeUnpin for aya::programs::sk_lookup::SkLookupLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_lookup::SkLookupLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_lookup::SkLookupLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::sk_lookup::SkLookupLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -6126,6 +6262,7 @@ impl core::marker::Freeze for aya::programs::sk_lookup::SkLookupLinkId
 impl core::marker::Send for aya::programs::sk_lookup::SkLookupLinkId
 impl core::marker::Sync for aya::programs::sk_lookup::SkLookupLinkId
 impl core::marker::Unpin for aya::programs::sk_lookup::SkLookupLinkId
+impl core::marker::UnsafeUnpin for aya::programs::sk_lookup::SkLookupLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_lookup::SkLookupLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_lookup::SkLookupLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::sk_lookup::SkLookupLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -6182,6 +6319,7 @@ impl core::marker::Freeze for aya::programs::sk_msg::SkMsg
 impl core::marker::Send for aya::programs::sk_msg::SkMsg
 impl core::marker::Sync for aya::programs::sk_msg::SkMsg
 impl core::marker::Unpin for aya::programs::sk_msg::SkMsg
+impl core::marker::UnsafeUnpin for aya::programs::sk_msg::SkMsg
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_msg::SkMsg
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsg
 impl<T, U> core::convert::Into<U> for aya::programs::sk_msg::SkMsg where U: core::convert::From<T>
@@ -6224,6 +6362,7 @@ impl core::marker::Freeze for aya::programs::sk_msg::SkMsgLink
 impl core::marker::Send for aya::programs::sk_msg::SkMsgLink
 impl core::marker::Sync for aya::programs::sk_msg::SkMsgLink
 impl core::marker::Unpin for aya::programs::sk_msg::SkMsgLink
+impl core::marker::UnsafeUnpin for aya::programs::sk_msg::SkMsgLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_msg::SkMsgLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsgLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::sk_msg::SkMsgLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -6259,6 +6398,7 @@ impl core::marker::Freeze for aya::programs::sk_msg::SkMsgLinkId
 impl core::marker::Send for aya::programs::sk_msg::SkMsgLinkId
 impl core::marker::Sync for aya::programs::sk_msg::SkMsgLinkId
 impl core::marker::Unpin for aya::programs::sk_msg::SkMsgLinkId
+impl core::marker::UnsafeUnpin for aya::programs::sk_msg::SkMsgLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_msg::SkMsgLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsgLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::sk_msg::SkMsgLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -6292,6 +6432,7 @@ impl core::marker::Freeze for aya::programs::sk_skb::SkSkbKind
 impl core::marker::Send for aya::programs::sk_skb::SkSkbKind
 impl core::marker::Sync for aya::programs::sk_skb::SkSkbKind
 impl core::marker::Unpin for aya::programs::sk_skb::SkSkbKind
+impl core::marker::UnsafeUnpin for aya::programs::sk_skb::SkSkbKind
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkbKind
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkbKind
 impl<T, U> core::convert::Into<U> for aya::programs::sk_skb::SkSkbKind where U: core::convert::From<T>
@@ -6350,6 +6491,7 @@ impl core::marker::Freeze for aya::programs::sk_skb::SkSkb
 impl core::marker::Send for aya::programs::sk_skb::SkSkb
 impl core::marker::Sync for aya::programs::sk_skb::SkSkb
 impl core::marker::Unpin for aya::programs::sk_skb::SkSkb
+impl core::marker::UnsafeUnpin for aya::programs::sk_skb::SkSkb
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkb
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkb
 impl<T, U> core::convert::Into<U> for aya::programs::sk_skb::SkSkb where U: core::convert::From<T>
@@ -6392,6 +6534,7 @@ impl core::marker::Freeze for aya::programs::sk_skb::SkSkbLink
 impl core::marker::Send for aya::programs::sk_skb::SkSkbLink
 impl core::marker::Sync for aya::programs::sk_skb::SkSkbLink
 impl core::marker::Unpin for aya::programs::sk_skb::SkSkbLink
+impl core::marker::UnsafeUnpin for aya::programs::sk_skb::SkSkbLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkbLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkbLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::sk_skb::SkSkbLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -6427,6 +6570,7 @@ impl core::marker::Freeze for aya::programs::sk_skb::SkSkbLinkId
 impl core::marker::Send for aya::programs::sk_skb::SkSkbLinkId
 impl core::marker::Sync for aya::programs::sk_skb::SkSkbLinkId
 impl core::marker::Unpin for aya::programs::sk_skb::SkSkbLinkId
+impl core::marker::UnsafeUnpin for aya::programs::sk_skb::SkSkbLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkbLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkbLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::sk_skb::SkSkbLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -6483,6 +6627,7 @@ impl core::marker::Freeze for aya::programs::sock_ops::SockOps
 impl core::marker::Send for aya::programs::sock_ops::SockOps
 impl core::marker::Sync for aya::programs::sock_ops::SockOps
 impl core::marker::Unpin for aya::programs::sock_ops::SockOps
+impl core::marker::UnsafeUnpin for aya::programs::sock_ops::SockOps
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOps
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOps
 impl<T, U> core::convert::Into<U> for aya::programs::sock_ops::SockOps where U: core::convert::From<T>
@@ -6524,6 +6669,7 @@ impl core::marker::Freeze for aya::programs::sock_ops::SockOpsLink
 impl core::marker::Send for aya::programs::sock_ops::SockOpsLink
 impl core::marker::Sync for aya::programs::sock_ops::SockOpsLink
 impl core::marker::Unpin for aya::programs::sock_ops::SockOpsLink
+impl core::marker::UnsafeUnpin for aya::programs::sock_ops::SockOpsLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOpsLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOpsLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::sock_ops::SockOpsLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -6559,6 +6705,7 @@ impl core::marker::Freeze for aya::programs::sock_ops::SockOpsLinkId
 impl core::marker::Send for aya::programs::sock_ops::SockOpsLinkId
 impl core::marker::Sync for aya::programs::sock_ops::SockOpsLinkId
 impl core::marker::Unpin for aya::programs::sock_ops::SockOpsLinkId
+impl core::marker::UnsafeUnpin for aya::programs::sock_ops::SockOpsLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOpsLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOpsLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::sock_ops::SockOpsLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -6595,6 +6742,7 @@ impl core::marker::Freeze for aya::programs::socket_filter::SocketFilterError
 impl core::marker::Send for aya::programs::socket_filter::SocketFilterError
 impl core::marker::Sync for aya::programs::socket_filter::SocketFilterError
 impl core::marker::Unpin for aya::programs::socket_filter::SocketFilterError
+impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilterError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterError
 impl<T, U> core::convert::Into<U> for aya::programs::socket_filter::SocketFilterError where U: core::convert::From<T>
@@ -6647,6 +6795,7 @@ impl core::marker::Freeze for aya::programs::socket_filter::SocketFilter
 impl core::marker::Send for aya::programs::socket_filter::SocketFilter
 impl core::marker::Sync for aya::programs::socket_filter::SocketFilter
 impl core::marker::Unpin for aya::programs::socket_filter::SocketFilter
+impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilter
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilter
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilter
 impl<T, U> core::convert::Into<U> for aya::programs::socket_filter::SocketFilter where U: core::convert::From<T>
@@ -6683,6 +6832,7 @@ impl core::marker::Freeze for aya::programs::socket_filter::SocketFilterLink
 impl core::marker::Send for aya::programs::socket_filter::SocketFilterLink
 impl core::marker::Sync for aya::programs::socket_filter::SocketFilterLink
 impl core::marker::Unpin for aya::programs::socket_filter::SocketFilterLink
+impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilterLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::socket_filter::SocketFilterLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -6718,6 +6868,7 @@ impl core::marker::Freeze for aya::programs::socket_filter::SocketFilterLinkId
 impl core::marker::Send for aya::programs::socket_filter::SocketFilterLinkId
 impl core::marker::Sync for aya::programs::socket_filter::SocketFilterLinkId
 impl core::marker::Unpin for aya::programs::socket_filter::SocketFilterLinkId
+impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilterLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::socket_filter::SocketFilterLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -6748,6 +6899,7 @@ impl core::marker::Freeze for aya::programs::tc::TcAttachOptions
 impl core::marker::Send for aya::programs::tc::TcAttachOptions
 impl core::marker::Sync for aya::programs::tc::TcAttachOptions
 impl core::marker::Unpin for aya::programs::tc::TcAttachOptions
+impl core::marker::UnsafeUnpin for aya::programs::tc::TcAttachOptions
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcAttachOptions
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttachOptions
 impl<T, U> core::convert::Into<U> for aya::programs::tc::TcAttachOptions where U: core::convert::From<T>
@@ -6785,6 +6937,7 @@ impl core::marker::Freeze for aya::programs::tc::TcAttachType
 impl core::marker::Send for aya::programs::tc::TcAttachType
 impl core::marker::Sync for aya::programs::tc::TcAttachType
 impl core::marker::Unpin for aya::programs::tc::TcAttachType
+impl core::marker::UnsafeUnpin for aya::programs::tc::TcAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttachType
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::tc::TcAttachType where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -6834,6 +6987,7 @@ impl core::marker::Freeze for aya::programs::tc::TcError
 impl core::marker::Send for aya::programs::tc::TcError
 impl core::marker::Sync for aya::programs::tc::TcError
 impl core::marker::Unpin for aya::programs::tc::TcError
+impl core::marker::UnsafeUnpin for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcError
 impl<T, U> core::convert::Into<U> for aya::programs::tc::TcError where U: core::convert::From<T>
@@ -6871,6 +7025,7 @@ impl core::marker::Freeze for aya::programs::tc::NlOptions
 impl core::marker::Send for aya::programs::tc::NlOptions
 impl core::marker::Sync for aya::programs::tc::NlOptions
 impl core::marker::Unpin for aya::programs::tc::NlOptions
+impl core::marker::UnsafeUnpin for aya::programs::tc::NlOptions
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::NlOptions
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::NlOptions
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::tc::NlOptions where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -6930,6 +7085,7 @@ impl core::marker::Freeze for aya::programs::tc::SchedClassifier
 impl core::marker::Send for aya::programs::tc::SchedClassifier
 impl core::marker::Sync for aya::programs::tc::SchedClassifier
 impl core::marker::Unpin for aya::programs::tc::SchedClassifier
+impl core::marker::UnsafeUnpin for aya::programs::tc::SchedClassifier
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::SchedClassifier
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifier
 impl<T, U> core::convert::Into<U> for aya::programs::tc::SchedClassifier where U: core::convert::From<T>
@@ -6984,6 +7140,7 @@ impl core::marker::Freeze for aya::programs::tc::SchedClassifierLink
 impl core::marker::Send for aya::programs::tc::SchedClassifierLink
 impl core::marker::Sync for aya::programs::tc::SchedClassifierLink
 impl core::marker::Unpin for aya::programs::tc::SchedClassifierLink
+impl core::marker::UnsafeUnpin for aya::programs::tc::SchedClassifierLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::SchedClassifierLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifierLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::tc::SchedClassifierLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -7019,6 +7176,7 @@ impl core::marker::Freeze for aya::programs::tc::SchedClassifierLinkId
 impl core::marker::Send for aya::programs::tc::SchedClassifierLinkId
 impl core::marker::Sync for aya::programs::tc::SchedClassifierLinkId
 impl core::marker::Unpin for aya::programs::tc::SchedClassifierLinkId
+impl core::marker::UnsafeUnpin for aya::programs::tc::SchedClassifierLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::SchedClassifierLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifierLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::tc::SchedClassifierLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -7077,6 +7235,7 @@ impl core::marker::Freeze for aya::programs::tp_btf::BtfTracePoint
 impl core::marker::Send for aya::programs::tp_btf::BtfTracePoint
 impl core::marker::Sync for aya::programs::tp_btf::BtfTracePoint
 impl core::marker::Unpin for aya::programs::tp_btf::BtfTracePoint
+impl core::marker::UnsafeUnpin for aya::programs::tp_btf::BtfTracePoint
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tp_btf::BtfTracePoint
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tp_btf::BtfTracePoint
 impl<T, U> core::convert::Into<U> for aya::programs::tp_btf::BtfTracePoint where U: core::convert::From<T>
@@ -7119,6 +7278,7 @@ impl core::marker::Freeze for aya::programs::tp_btf::BtfTracePointLink
 impl core::marker::Send for aya::programs::tp_btf::BtfTracePointLink
 impl core::marker::Sync for aya::programs::tp_btf::BtfTracePointLink
 impl core::marker::Unpin for aya::programs::tp_btf::BtfTracePointLink
+impl core::marker::UnsafeUnpin for aya::programs::tp_btf::BtfTracePointLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tp_btf::BtfTracePointLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tp_btf::BtfTracePointLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::tp_btf::BtfTracePointLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -7154,6 +7314,7 @@ impl core::marker::Freeze for aya::programs::tp_btf::BtfTracePointLinkId
 impl core::marker::Send for aya::programs::tp_btf::BtfTracePointLinkId
 impl core::marker::Sync for aya::programs::tp_btf::BtfTracePointLinkId
 impl core::marker::Unpin for aya::programs::tp_btf::BtfTracePointLinkId
+impl core::marker::UnsafeUnpin for aya::programs::tp_btf::BtfTracePointLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tp_btf::BtfTracePointLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tp_btf::BtfTracePointLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::tp_btf::BtfTracePointLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -7191,6 +7352,7 @@ impl core::marker::Freeze for aya::programs::trace_point::TracePointError
 impl core::marker::Send for aya::programs::trace_point::TracePointError
 impl core::marker::Sync for aya::programs::trace_point::TracePointError
 impl core::marker::Unpin for aya::programs::trace_point::TracePointError
+impl core::marker::UnsafeUnpin for aya::programs::trace_point::TracePointError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::trace_point::TracePointError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TracePointError
 impl<T, U> core::convert::Into<U> for aya::programs::trace_point::TracePointError where U: core::convert::From<T>
@@ -7246,6 +7408,7 @@ impl core::marker::Freeze for aya::programs::trace_point::TracePoint
 impl core::marker::Send for aya::programs::trace_point::TracePoint
 impl core::marker::Sync for aya::programs::trace_point::TracePoint
 impl core::marker::Unpin for aya::programs::trace_point::TracePoint
+impl core::marker::UnsafeUnpin for aya::programs::trace_point::TracePoint
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::trace_point::TracePoint
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TracePoint
 impl<T, U> core::convert::Into<U> for aya::programs::trace_point::TracePoint where U: core::convert::From<T>
@@ -7290,6 +7453,7 @@ impl core::marker::Freeze for aya::programs::trace_point::TracePointLink
 impl core::marker::Send for aya::programs::trace_point::TracePointLink
 impl core::marker::Sync for aya::programs::trace_point::TracePointLink
 impl core::marker::Unpin for aya::programs::trace_point::TracePointLink
+impl core::marker::UnsafeUnpin for aya::programs::trace_point::TracePointLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::trace_point::TracePointLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TracePointLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::trace_point::TracePointLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -7325,6 +7489,7 @@ impl core::marker::Freeze for aya::programs::trace_point::TracePointLinkId
 impl core::marker::Send for aya::programs::trace_point::TracePointLinkId
 impl core::marker::Sync for aya::programs::trace_point::TracePointLinkId
 impl core::marker::Unpin for aya::programs::trace_point::TracePointLinkId
+impl core::marker::UnsafeUnpin for aya::programs::trace_point::TracePointLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::trace_point::TracePointLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TracePointLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::trace_point::TracePointLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -7362,6 +7527,7 @@ impl core::marker::Freeze for aya::programs::uprobe::ProcMapError
 impl core::marker::Send for aya::programs::uprobe::ProcMapError
 impl core::marker::Sync for aya::programs::uprobe::ProcMapError
 impl core::marker::Unpin for aya::programs::uprobe::ProcMapError
+impl core::marker::UnsafeUnpin for aya::programs::uprobe::ProcMapError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::ProcMapError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::ProcMapError
 impl<T, U> core::convert::Into<U> for aya::programs::uprobe::ProcMapError where U: core::convert::From<T>
@@ -7394,6 +7560,7 @@ impl<'a> core::marker::Freeze for aya::programs::uprobe::UProbeAttachLocation<'a
 impl<'a> core::marker::Send for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::marker::Sync for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::marker::Unpin for aya::programs::uprobe::UProbeAttachLocation<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<T, U> core::convert::Into<U> for aya::programs::uprobe::UProbeAttachLocation<'a> where U: core::convert::From<T>
@@ -7438,6 +7605,7 @@ impl core::marker::Freeze for aya::programs::uprobe::UProbeError
 impl core::marker::Send for aya::programs::uprobe::UProbeError
 impl core::marker::Sync for aya::programs::uprobe::UProbeError
 impl core::marker::Unpin for aya::programs::uprobe::UProbeError
+impl core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeError
 impl<T, U> core::convert::Into<U> for aya::programs::uprobe::UProbeError where U: core::convert::From<T>
@@ -7493,6 +7661,7 @@ impl core::marker::Freeze for aya::programs::uprobe::UProbe
 impl core::marker::Send for aya::programs::uprobe::UProbe
 impl core::marker::Sync for aya::programs::uprobe::UProbe
 impl core::marker::Unpin for aya::programs::uprobe::UProbe
+impl core::marker::UnsafeUnpin for aya::programs::uprobe::UProbe
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbe
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbe
 impl<T, U> core::convert::Into<U> for aya::programs::uprobe::UProbe where U: core::convert::From<T>
@@ -7520,6 +7689,7 @@ impl<'a> core::marker::Freeze for aya::programs::uprobe::UProbeAttachPoint<'a>
 impl<'a> core::marker::Send for aya::programs::uprobe::UProbeAttachPoint<'a>
 impl<'a> core::marker::Sync for aya::programs::uprobe::UProbeAttachPoint<'a>
 impl<'a> core::marker::Unpin for aya::programs::uprobe::UProbeAttachPoint<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeAttachPoint<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeAttachPoint<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeAttachPoint<'a>
 impl<T, U> core::convert::Into<U> for aya::programs::uprobe::UProbeAttachPoint<'a> where U: core::convert::From<T>
@@ -7564,6 +7734,7 @@ impl core::marker::Freeze for aya::programs::uprobe::UProbeLink
 impl core::marker::Send for aya::programs::uprobe::UProbeLink
 impl core::marker::Sync for aya::programs::uprobe::UProbeLink
 impl core::marker::Unpin for aya::programs::uprobe::UProbeLink
+impl core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::uprobe::UProbeLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -7599,6 +7770,7 @@ impl core::marker::Freeze for aya::programs::uprobe::UProbeLinkId
 impl core::marker::Send for aya::programs::uprobe::UProbeLinkId
 impl core::marker::Sync for aya::programs::uprobe::UProbeLinkId
 impl core::marker::Unpin for aya::programs::uprobe::UProbeLinkId
+impl core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::uprobe::UProbeLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -7634,6 +7806,7 @@ impl core::marker::Freeze for aya::programs::xdp::XdpError
 impl core::marker::Send for aya::programs::xdp::XdpError
 impl core::marker::Sync for aya::programs::xdp::XdpError
 impl core::marker::Unpin for aya::programs::xdp::XdpError
+impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpError
 impl<T, U> core::convert::Into<U> for aya::programs::xdp::XdpError where U: core::convert::From<T>
@@ -7690,6 +7863,7 @@ impl core::marker::Freeze for aya::programs::xdp::Xdp
 impl core::marker::Send for aya::programs::xdp::Xdp
 impl core::marker::Sync for aya::programs::xdp::Xdp
 impl core::marker::Unpin for aya::programs::xdp::Xdp
+impl core::marker::UnsafeUnpin for aya::programs::xdp::Xdp
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::Xdp
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::Xdp
 impl<T, U> core::convert::Into<U> for aya::programs::xdp::Xdp where U: core::convert::From<T>
@@ -7797,6 +7971,7 @@ impl core::marker::Freeze for aya::programs::xdp::XdpFlags
 impl core::marker::Send for aya::programs::xdp::XdpFlags
 impl core::marker::Sync for aya::programs::xdp::XdpFlags
 impl core::marker::Unpin for aya::programs::xdp::XdpFlags
+impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpFlags
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpFlags
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpFlags
 impl<T, U> core::convert::Into<U> for aya::programs::xdp::XdpFlags where U: core::convert::From<T>
@@ -7847,6 +8022,7 @@ impl core::marker::Freeze for aya::programs::xdp::XdpLink
 impl core::marker::Send for aya::programs::xdp::XdpLink
 impl core::marker::Sync for aya::programs::xdp::XdpLink
 impl core::marker::Unpin for aya::programs::xdp::XdpLink
+impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpLink
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpLink
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpLink
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::xdp::XdpLink where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -7882,6 +8058,7 @@ impl core::marker::Freeze for aya::programs::xdp::XdpLinkId
 impl core::marker::Send for aya::programs::xdp::XdpLinkId
 impl core::marker::Sync for aya::programs::xdp::XdpLinkId
 impl core::marker::Unpin for aya::programs::xdp::XdpLinkId
+impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpLinkId
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::xdp::XdpLinkId where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -7919,6 +8096,7 @@ impl core::marker::Freeze for aya::programs::links::CgroupAttachMode
 impl core::marker::Send for aya::programs::links::CgroupAttachMode
 impl core::marker::Sync for aya::programs::links::CgroupAttachMode
 impl core::marker::Unpin for aya::programs::links::CgroupAttachMode
+impl core::marker::UnsafeUnpin for aya::programs::links::CgroupAttachMode
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::CgroupAttachMode
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::CgroupAttachMode
 impl<T, U> core::convert::Into<U> for aya::programs::links::CgroupAttachMode where U: core::convert::From<T>
@@ -7955,6 +8133,7 @@ impl core::marker::Freeze for aya::programs::cgroup_skb::CgroupSkbAttachType
 impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkbAttachType
 impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkbAttachType
 impl core::marker::Unpin for aya::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_skb::CgroupSkbAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_skb::CgroupSkbAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_skb::CgroupSkbAttachType
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_skb::CgroupSkbAttachType where U: core::convert::From<T>
@@ -7992,6 +8171,7 @@ impl core::marker::Freeze for aya::programs::extension::ExtensionError
 impl core::marker::Send for aya::programs::extension::ExtensionError
 impl core::marker::Sync for aya::programs::extension::ExtensionError
 impl core::marker::Unpin for aya::programs::extension::ExtensionError
+impl core::marker::UnsafeUnpin for aya::programs::extension::ExtensionError
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::extension::ExtensionError
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::extension::ExtensionError
 impl<T, U> core::convert::Into<U> for aya::programs::extension::ExtensionError where U: core::convert::From<T>
@@ -8028,6 +8208,7 @@ impl core::marker::Freeze for aya::programs::kprobe::KProbeError
 impl core::marker::Send for aya::programs::kprobe::KProbeError
 impl core::marker::Sync for aya::programs::kprobe::KProbeError
 impl core::marker::Unpin for aya::programs::kprobe::KProbeError
+impl core::marker::UnsafeUnpin for aya::programs::kprobe::KProbeError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::kprobe::KProbeError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbeError
 impl<T, U> core::convert::Into<U> for aya::programs::kprobe::KProbeError where U: core::convert::From<T>
@@ -8064,6 +8245,7 @@ impl core::marker::Freeze for aya::programs::LsmAttachType
 impl core::marker::Send for aya::programs::LsmAttachType
 impl core::marker::Sync for aya::programs::LsmAttachType
 impl core::marker::Unpin for aya::programs::LsmAttachType
+impl core::marker::UnsafeUnpin for aya::programs::LsmAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::LsmAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::LsmAttachType
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::LsmAttachType where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -8102,6 +8284,7 @@ impl core::marker::Freeze for aya::programs::ProbeKind
 impl core::marker::Send for aya::programs::ProbeKind
 impl core::marker::Sync for aya::programs::ProbeKind
 impl core::marker::Unpin for aya::programs::ProbeKind
+impl core::marker::UnsafeUnpin for aya::programs::ProbeKind
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::ProbeKind
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::ProbeKind
 impl<T, U> core::convert::Into<U> for aya::programs::ProbeKind where U: core::convert::From<T>
@@ -8328,6 +8511,7 @@ impl core::marker::Freeze for aya::programs::Program
 impl core::marker::Send for aya::programs::Program
 impl core::marker::Sync for aya::programs::Program
 impl core::marker::Unpin for aya::programs::Program
+impl core::marker::UnsafeUnpin for aya::programs::Program
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::Program
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::Program
 impl<T, U> core::convert::Into<U> for aya::programs::Program where U: core::convert::From<T>
@@ -8413,6 +8597,7 @@ impl core::marker::Freeze for aya::programs::ProgramError
 impl core::marker::Send for aya::programs::ProgramError
 impl core::marker::Sync for aya::programs::ProgramError
 impl core::marker::Unpin for aya::programs::ProgramError
+impl core::marker::UnsafeUnpin for aya::programs::ProgramError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::ProgramError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::ProgramError
 impl<T, U> core::convert::Into<U> for aya::programs::ProgramError where U: core::convert::From<T>
@@ -8481,6 +8666,7 @@ impl core::marker::Freeze for aya::programs::ProgramType
 impl core::marker::Send for aya::programs::ProgramType
 impl core::marker::Sync for aya::programs::ProgramType
 impl core::marker::Unpin for aya::programs::ProgramType
+impl core::marker::UnsafeUnpin for aya::programs::ProgramType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::ProgramType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::ProgramType
 impl<T, U> core::convert::Into<U> for aya::programs::ProgramType where U: core::convert::From<T>
@@ -8517,6 +8703,7 @@ impl core::marker::Freeze for aya::programs::sk_skb::SkSkbKind
 impl core::marker::Send for aya::programs::sk_skb::SkSkbKind
 impl core::marker::Sync for aya::programs::sk_skb::SkSkbKind
 impl core::marker::Unpin for aya::programs::sk_skb::SkSkbKind
+impl core::marker::UnsafeUnpin for aya::programs::sk_skb::SkSkbKind
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkbKind
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkbKind
 impl<T, U> core::convert::Into<U> for aya::programs::sk_skb::SkSkbKind where U: core::convert::From<T>
@@ -8556,6 +8743,7 @@ impl core::marker::Freeze for aya::programs::socket_filter::SocketFilterError
 impl core::marker::Send for aya::programs::socket_filter::SocketFilterError
 impl core::marker::Sync for aya::programs::socket_filter::SocketFilterError
 impl core::marker::Unpin for aya::programs::socket_filter::SocketFilterError
+impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilterError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterError
 impl<T, U> core::convert::Into<U> for aya::programs::socket_filter::SocketFilterError where U: core::convert::From<T>
@@ -8595,6 +8783,7 @@ impl core::marker::Freeze for aya::programs::tc::TcAttachType
 impl core::marker::Send for aya::programs::tc::TcAttachType
 impl core::marker::Sync for aya::programs::tc::TcAttachType
 impl core::marker::Unpin for aya::programs::tc::TcAttachType
+impl core::marker::UnsafeUnpin for aya::programs::tc::TcAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttachType
 impl<Q, K> equivalent::Equivalent<K> for aya::programs::tc::TcAttachType where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -8644,6 +8833,7 @@ impl core::marker::Freeze for aya::programs::tc::TcError
 impl core::marker::Send for aya::programs::tc::TcError
 impl core::marker::Sync for aya::programs::tc::TcError
 impl core::marker::Unpin for aya::programs::tc::TcError
+impl core::marker::UnsafeUnpin for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcError
 impl<T, U> core::convert::Into<U> for aya::programs::tc::TcError where U: core::convert::From<T>
@@ -8680,6 +8870,7 @@ impl core::marker::Freeze for aya::programs::trace_point::TracePointError
 impl core::marker::Send for aya::programs::trace_point::TracePointError
 impl core::marker::Sync for aya::programs::trace_point::TracePointError
 impl core::marker::Unpin for aya::programs::trace_point::TracePointError
+impl core::marker::UnsafeUnpin for aya::programs::trace_point::TracePointError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::trace_point::TracePointError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TracePointError
 impl<T, U> core::convert::Into<U> for aya::programs::trace_point::TracePointError where U: core::convert::From<T>
@@ -8726,6 +8917,7 @@ impl core::marker::Freeze for aya::programs::uprobe::UProbeError
 impl core::marker::Send for aya::programs::uprobe::UProbeError
 impl core::marker::Sync for aya::programs::uprobe::UProbeError
 impl core::marker::Unpin for aya::programs::uprobe::UProbeError
+impl core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeError
 impl<T, U> core::convert::Into<U> for aya::programs::uprobe::UProbeError where U: core::convert::From<T>
@@ -8760,6 +8952,7 @@ impl core::marker::Freeze for aya::programs::xdp::XdpError
 impl core::marker::Send for aya::programs::xdp::XdpError
 impl core::marker::Sync for aya::programs::xdp::XdpError
 impl core::marker::Unpin for aya::programs::xdp::XdpError
+impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpError
 impl<T, U> core::convert::Into<U> for aya::programs::xdp::XdpError where U: core::convert::From<T>
@@ -8815,6 +9008,7 @@ impl core::marker::Freeze for aya::programs::tp_btf::BtfTracePoint
 impl core::marker::Send for aya::programs::tp_btf::BtfTracePoint
 impl core::marker::Sync for aya::programs::tp_btf::BtfTracePoint
 impl core::marker::Unpin for aya::programs::tp_btf::BtfTracePoint
+impl core::marker::UnsafeUnpin for aya::programs::tp_btf::BtfTracePoint
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tp_btf::BtfTracePoint
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tp_btf::BtfTracePoint
 impl<T, U> core::convert::Into<U> for aya::programs::tp_btf::BtfTracePoint where U: core::convert::From<T>
@@ -8869,6 +9063,7 @@ impl core::marker::Freeze for aya::programs::cgroup_device::CgroupDevice
 impl core::marker::Send for aya::programs::cgroup_device::CgroupDevice
 impl core::marker::Sync for aya::programs::cgroup_device::CgroupDevice
 impl core::marker::Unpin for aya::programs::cgroup_device::CgroupDevice
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_device::CgroupDevice
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_device::CgroupDevice
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_device::CgroupDevice
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_device::CgroupDevice where U: core::convert::From<T>
@@ -8922,6 +9117,7 @@ impl core::marker::Freeze for aya::programs::cgroup_skb::CgroupSkb
 impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkb
 impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkb
 impl core::marker::Unpin for aya::programs::cgroup_skb::CgroupSkb
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_skb::CgroupSkb
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_skb::CgroupSkb
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_skb::CgroupSkb
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_skb::CgroupSkb where U: core::convert::From<T>
@@ -8972,6 +9168,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sock::CgroupSock
 impl core::marker::Send for aya::programs::cgroup_sock::CgroupSock
 impl core::marker::Sync for aya::programs::cgroup_sock::CgroupSock
 impl core::marker::Unpin for aya::programs::cgroup_sock::CgroupSock
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sock::CgroupSock
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock::CgroupSock
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock::CgroupSock
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sock::CgroupSock where U: core::convert::From<T>
@@ -9022,6 +9219,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::marker::Send for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::marker::Sync for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::marker::Unpin for aya::programs::cgroup_sock_addr::CgroupSockAddr
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sock_addr::CgroupSockAddr where U: core::convert::From<T>
@@ -9074,6 +9272,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::marker::Send for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::marker::Sync for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::marker::Unpin for aya::programs::cgroup_sockopt::CgroupSockopt
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sockopt::CgroupSockopt
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sockopt::CgroupSockopt
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sockopt::CgroupSockopt where U: core::convert::From<T>
@@ -9127,6 +9326,7 @@ impl core::marker::Freeze for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::marker::Send for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::marker::Sync for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::marker::Unpin for aya::programs::cgroup_sysctl::CgroupSysctl
+impl core::marker::UnsafeUnpin for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctl
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctl
 impl<T, U> core::convert::Into<U> for aya::programs::cgroup_sysctl::CgroupSysctl where U: core::convert::From<T>
@@ -9181,6 +9381,7 @@ impl core::marker::Freeze for aya::programs::extension::Extension
 impl core::marker::Send for aya::programs::extension::Extension
 impl core::marker::Sync for aya::programs::extension::Extension
 impl core::marker::Unpin for aya::programs::extension::Extension
+impl core::marker::UnsafeUnpin for aya::programs::extension::Extension
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::extension::Extension
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::extension::Extension
 impl<T, U> core::convert::Into<U> for aya::programs::extension::Extension where U: core::convert::From<T>
@@ -9234,6 +9435,7 @@ impl core::marker::Freeze for aya::programs::fentry::FEntry
 impl core::marker::Send for aya::programs::fentry::FEntry
 impl core::marker::Sync for aya::programs::fentry::FEntry
 impl core::marker::Unpin for aya::programs::fentry::FEntry
+impl core::marker::UnsafeUnpin for aya::programs::fentry::FEntry
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fentry::FEntry
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::fentry::FEntry
 impl<T, U> core::convert::Into<U> for aya::programs::fentry::FEntry where U: core::convert::From<T>
@@ -9287,6 +9489,7 @@ impl core::marker::Freeze for aya::programs::fexit::FExit
 impl core::marker::Send for aya::programs::fexit::FExit
 impl core::marker::Sync for aya::programs::fexit::FExit
 impl core::marker::Unpin for aya::programs::fexit::FExit
+impl core::marker::UnsafeUnpin for aya::programs::fexit::FExit
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fexit::FExit
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::fexit::FExit
 impl<T, U> core::convert::Into<U> for aya::programs::fexit::FExit where U: core::convert::From<T>
@@ -9338,6 +9541,7 @@ impl core::marker::Freeze for aya::programs::flow_dissector::FlowDissector
 impl core::marker::Send for aya::programs::flow_dissector::FlowDissector
 impl core::marker::Sync for aya::programs::flow_dissector::FlowDissector
 impl core::marker::Unpin for aya::programs::flow_dissector::FlowDissector
+impl core::marker::UnsafeUnpin for aya::programs::flow_dissector::FlowDissector
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::flow_dissector::FlowDissector
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::flow_dissector::FlowDissector
 impl<T, U> core::convert::Into<U> for aya::programs::flow_dissector::FlowDissector where U: core::convert::From<T>
@@ -9391,6 +9595,7 @@ impl core::marker::Freeze for aya::programs::iter::Iter
 impl core::marker::Send for aya::programs::iter::Iter
 impl core::marker::Sync for aya::programs::iter::Iter
 impl core::marker::Unpin for aya::programs::iter::Iter
+impl core::marker::UnsafeUnpin for aya::programs::iter::Iter
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::iter::Iter
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::Iter
 impl<T, U> core::convert::Into<U> for aya::programs::iter::Iter where U: core::convert::From<T>
@@ -9444,6 +9649,7 @@ impl core::marker::Freeze for aya::programs::kprobe::KProbe
 impl core::marker::Send for aya::programs::kprobe::KProbe
 impl core::marker::Sync for aya::programs::kprobe::KProbe
 impl core::marker::Unpin for aya::programs::kprobe::KProbe
+impl core::marker::UnsafeUnpin for aya::programs::kprobe::KProbe
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::kprobe::KProbe
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbe
 impl<T, U> core::convert::Into<U> for aya::programs::kprobe::KProbe where U: core::convert::From<T>
@@ -9480,6 +9686,7 @@ impl core::marker::Freeze for aya::programs::links::LinkOrder
 impl core::marker::Send for aya::programs::links::LinkOrder
 impl core::marker::Sync for aya::programs::links::LinkOrder
 impl core::marker::Unpin for aya::programs::links::LinkOrder
+impl core::marker::UnsafeUnpin for aya::programs::links::LinkOrder
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::LinkOrder
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::LinkOrder
 impl<T, U> core::convert::Into<U> for aya::programs::links::LinkOrder where U: core::convert::From<T>
@@ -9533,6 +9740,7 @@ impl core::marker::Freeze for aya::programs::lirc_mode2::LircMode2
 impl core::marker::Send for aya::programs::lirc_mode2::LircMode2
 impl core::marker::Sync for aya::programs::lirc_mode2::LircMode2
 impl core::marker::Unpin for aya::programs::lirc_mode2::LircMode2
+impl core::marker::UnsafeUnpin for aya::programs::lirc_mode2::LircMode2
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lirc_mode2::LircMode2
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lirc_mode2::LircMode2
 impl<T, U> core::convert::Into<U> for aya::programs::lirc_mode2::LircMode2 where U: core::convert::From<T>
@@ -9586,6 +9794,7 @@ impl core::marker::Freeze for aya::programs::lsm::Lsm
 impl core::marker::Send for aya::programs::lsm::Lsm
 impl core::marker::Sync for aya::programs::lsm::Lsm
 impl core::marker::Unpin for aya::programs::lsm::Lsm
+impl core::marker::UnsafeUnpin for aya::programs::lsm::Lsm
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm::Lsm
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm::Lsm
 impl<T, U> core::convert::Into<U> for aya::programs::lsm::Lsm where U: core::convert::From<T>
@@ -9635,6 +9844,7 @@ impl core::marker::Freeze for aya::programs::lsm_cgroup::LsmCgroup
 impl core::marker::Send for aya::programs::lsm_cgroup::LsmCgroup
 impl core::marker::Sync for aya::programs::lsm_cgroup::LsmCgroup
 impl core::marker::Unpin for aya::programs::lsm_cgroup::LsmCgroup
+impl core::marker::UnsafeUnpin for aya::programs::lsm_cgroup::LsmCgroup
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm_cgroup::LsmCgroup
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm_cgroup::LsmCgroup
 impl<T, U> core::convert::Into<U> for aya::programs::lsm_cgroup::LsmCgroup where U: core::convert::From<T>
@@ -9688,6 +9898,7 @@ impl core::marker::Freeze for aya::programs::perf_event::PerfEvent
 impl core::marker::Send for aya::programs::perf_event::PerfEvent
 impl core::marker::Sync for aya::programs::perf_event::PerfEvent
 impl core::marker::Unpin for aya::programs::perf_event::PerfEvent
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfEvent
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEvent
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEvent
 impl<T, U> core::convert::Into<U> for aya::programs::perf_event::PerfEvent where U: core::convert::From<T>
@@ -9717,6 +9928,7 @@ impl core::marker::Freeze for aya::programs::ProgramFd
 impl core::marker::Send for aya::programs::ProgramFd
 impl core::marker::Sync for aya::programs::ProgramFd
 impl core::marker::Unpin for aya::programs::ProgramFd
+impl core::marker::UnsafeUnpin for aya::programs::ProgramFd
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::ProgramFd
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::ProgramFd
 impl<T, U> core::convert::Into<U> for aya::programs::ProgramFd where U: core::convert::From<T>
@@ -9742,6 +9954,7 @@ impl core::marker::Freeze for aya::programs::ProgramId
 impl core::marker::Send for aya::programs::ProgramId
 impl core::marker::Sync for aya::programs::ProgramId
 impl core::marker::Unpin for aya::programs::ProgramId
+impl core::marker::UnsafeUnpin for aya::programs::ProgramId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::ProgramId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::ProgramId
 impl<T, U> core::convert::Into<U> for aya::programs::ProgramId where U: core::convert::From<T>
@@ -9786,6 +9999,7 @@ impl core::marker::Freeze for aya::programs::ProgramInfo
 impl core::marker::Send for aya::programs::ProgramInfo
 impl core::marker::Sync for aya::programs::ProgramInfo
 impl core::marker::Unpin for aya::programs::ProgramInfo
+impl core::marker::UnsafeUnpin for aya::programs::ProgramInfo
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::ProgramInfo
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::ProgramInfo
 impl<T, U> core::convert::Into<U> for aya::programs::ProgramInfo where U: core::convert::From<T>
@@ -9839,6 +10053,7 @@ impl core::marker::Freeze for aya::programs::raw_trace_point::RawTracePoint
 impl core::marker::Send for aya::programs::raw_trace_point::RawTracePoint
 impl core::marker::Sync for aya::programs::raw_trace_point::RawTracePoint
 impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePoint
+impl core::marker::UnsafeUnpin for aya::programs::raw_trace_point::RawTracePoint
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePoint
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePoint
 impl<T, U> core::convert::Into<U> for aya::programs::raw_trace_point::RawTracePoint where U: core::convert::From<T>
@@ -9896,6 +10111,7 @@ impl core::marker::Freeze for aya::programs::tc::SchedClassifier
 impl core::marker::Send for aya::programs::tc::SchedClassifier
 impl core::marker::Sync for aya::programs::tc::SchedClassifier
 impl core::marker::Unpin for aya::programs::tc::SchedClassifier
+impl core::marker::UnsafeUnpin for aya::programs::tc::SchedClassifier
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::SchedClassifier
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifier
 impl<T, U> core::convert::Into<U> for aya::programs::tc::SchedClassifier where U: core::convert::From<T>
@@ -9949,6 +10165,7 @@ impl core::marker::Freeze for aya::programs::sk_lookup::SkLookup
 impl core::marker::Send for aya::programs::sk_lookup::SkLookup
 impl core::marker::Sync for aya::programs::sk_lookup::SkLookup
 impl core::marker::Unpin for aya::programs::sk_lookup::SkLookup
+impl core::marker::UnsafeUnpin for aya::programs::sk_lookup::SkLookup
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_lookup::SkLookup
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_lookup::SkLookup
 impl<T, U> core::convert::Into<U> for aya::programs::sk_lookup::SkLookup where U: core::convert::From<T>
@@ -10002,6 +10219,7 @@ impl core::marker::Freeze for aya::programs::sk_msg::SkMsg
 impl core::marker::Send for aya::programs::sk_msg::SkMsg
 impl core::marker::Sync for aya::programs::sk_msg::SkMsg
 impl core::marker::Unpin for aya::programs::sk_msg::SkMsg
+impl core::marker::UnsafeUnpin for aya::programs::sk_msg::SkMsg
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_msg::SkMsg
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsg
 impl<T, U> core::convert::Into<U> for aya::programs::sk_msg::SkMsg where U: core::convert::From<T>
@@ -10054,6 +10272,7 @@ impl core::marker::Freeze for aya::programs::sk_skb::SkSkb
 impl core::marker::Send for aya::programs::sk_skb::SkSkb
 impl core::marker::Sync for aya::programs::sk_skb::SkSkb
 impl core::marker::Unpin for aya::programs::sk_skb::SkSkb
+impl core::marker::UnsafeUnpin for aya::programs::sk_skb::SkSkb
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkb
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkb
 impl<T, U> core::convert::Into<U> for aya::programs::sk_skb::SkSkb where U: core::convert::From<T>
@@ -10107,6 +10326,7 @@ impl core::marker::Freeze for aya::programs::sock_ops::SockOps
 impl core::marker::Send for aya::programs::sock_ops::SockOps
 impl core::marker::Sync for aya::programs::sock_ops::SockOps
 impl core::marker::Unpin for aya::programs::sock_ops::SockOps
+impl core::marker::UnsafeUnpin for aya::programs::sock_ops::SockOps
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOps
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOps
 impl<T, U> core::convert::Into<U> for aya::programs::sock_ops::SockOps where U: core::convert::From<T>
@@ -10157,6 +10377,7 @@ impl core::marker::Freeze for aya::programs::socket_filter::SocketFilter
 impl core::marker::Send for aya::programs::socket_filter::SocketFilter
 impl core::marker::Sync for aya::programs::socket_filter::SocketFilter
 impl core::marker::Unpin for aya::programs::socket_filter::SocketFilter
+impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilter
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilter
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilter
 impl<T, U> core::convert::Into<U> for aya::programs::socket_filter::SocketFilter where U: core::convert::From<T>
@@ -10210,6 +10431,7 @@ impl core::marker::Freeze for aya::programs::trace_point::TracePoint
 impl core::marker::Send for aya::programs::trace_point::TracePoint
 impl core::marker::Sync for aya::programs::trace_point::TracePoint
 impl core::marker::Unpin for aya::programs::trace_point::TracePoint
+impl core::marker::UnsafeUnpin for aya::programs::trace_point::TracePoint
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::trace_point::TracePoint
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TracePoint
 impl<T, U> core::convert::Into<U> for aya::programs::trace_point::TracePoint where U: core::convert::From<T>
@@ -10263,6 +10485,7 @@ impl core::marker::Freeze for aya::programs::uprobe::UProbe
 impl core::marker::Send for aya::programs::uprobe::UProbe
 impl core::marker::Sync for aya::programs::uprobe::UProbe
 impl core::marker::Unpin for aya::programs::uprobe::UProbe
+impl core::marker::UnsafeUnpin for aya::programs::uprobe::UProbe
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbe
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbe
 impl<T, U> core::convert::Into<U> for aya::programs::uprobe::UProbe where U: core::convert::From<T>
@@ -10317,6 +10540,7 @@ impl core::marker::Freeze for aya::programs::xdp::Xdp
 impl core::marker::Send for aya::programs::xdp::Xdp
 impl core::marker::Sync for aya::programs::xdp::Xdp
 impl core::marker::Unpin for aya::programs::xdp::Xdp
+impl core::marker::UnsafeUnpin for aya::programs::xdp::Xdp
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::Xdp
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::Xdp
 impl<T, U> core::convert::Into<U> for aya::programs::xdp::Xdp where U: core::convert::From<T>
@@ -10424,6 +10648,7 @@ impl core::marker::Freeze for aya::programs::xdp::XdpFlags
 impl core::marker::Send for aya::programs::xdp::XdpFlags
 impl core::marker::Sync for aya::programs::xdp::XdpFlags
 impl core::marker::Unpin for aya::programs::xdp::XdpFlags
+impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpFlags
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpFlags
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpFlags
 impl<T, U> core::convert::Into<U> for aya::programs::xdp::XdpFlags where U: core::convert::From<T>
@@ -10592,6 +10817,7 @@ impl core::marker::Freeze for aya::sys::Stats
 impl core::marker::Send for aya::sys::Stats
 impl core::marker::Sync for aya::sys::Stats
 impl core::marker::Unpin for aya::sys::Stats
+impl core::marker::UnsafeUnpin for aya::sys::Stats
 impl core::panic::unwind_safe::RefUnwindSafe for aya::sys::Stats
 impl core::panic::unwind_safe::UnwindSafe for aya::sys::Stats
 impl<T, U> core::convert::Into<U> for aya::sys::Stats where U: core::convert::From<T>
@@ -10637,6 +10863,7 @@ impl core::marker::Freeze for aya::sys::SyscallError
 impl core::marker::Send for aya::sys::SyscallError
 impl core::marker::Sync for aya::sys::SyscallError
 impl core::marker::Unpin for aya::sys::SyscallError
+impl core::marker::UnsafeUnpin for aya::sys::SyscallError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::sys::SyscallError
 impl !core::panic::unwind_safe::UnwindSafe for aya::sys::SyscallError
 impl<T, U> core::convert::Into<U> for aya::sys::SyscallError where U: core::convert::From<T>
@@ -10683,6 +10910,7 @@ impl core::marker::Freeze for aya::util::KernelVersion
 impl core::marker::Send for aya::util::KernelVersion
 impl core::marker::Sync for aya::util::KernelVersion
 impl core::marker::Unpin for aya::util::KernelVersion
+impl core::marker::UnsafeUnpin for aya::util::KernelVersion
 impl core::panic::unwind_safe::RefUnwindSafe for aya::util::KernelVersion
 impl core::panic::unwind_safe::UnwindSafe for aya::util::KernelVersion
 impl<Q, K> equivalent::Equivalent<K> for aya::util::KernelVersion where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -10751,6 +10979,7 @@ impl core::marker::Freeze for aya::EbpfError
 impl core::marker::Send for aya::EbpfError
 impl core::marker::Sync for aya::EbpfError
 impl core::marker::Unpin for aya::EbpfError
+impl core::marker::UnsafeUnpin for aya::EbpfError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::EbpfError
 impl !core::panic::unwind_safe::UnwindSafe for aya::EbpfError
 impl<T, U> core::convert::Into<U> for aya::EbpfError where U: core::convert::From<T>
@@ -10791,6 +11020,7 @@ impl core::marker::Freeze for aya::Ebpf
 impl core::marker::Send for aya::Ebpf
 impl core::marker::Sync for aya::Ebpf
 impl core::marker::Unpin for aya::Ebpf
+impl core::marker::UnsafeUnpin for aya::Ebpf
 impl core::panic::unwind_safe::RefUnwindSafe for aya::Ebpf
 impl core::panic::unwind_safe::UnwindSafe for aya::Ebpf
 impl<T, U> core::convert::Into<U> for aya::Ebpf where U: core::convert::From<T>
@@ -10832,6 +11062,7 @@ impl<'a> core::marker::Freeze for aya::EbpfLoader<'a>
 impl<'a> core::marker::Send for aya::EbpfLoader<'a>
 impl<'a> core::marker::Sync for aya::EbpfLoader<'a>
 impl<'a> core::marker::Unpin for aya::EbpfLoader<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::EbpfLoader<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::EbpfLoader<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya::EbpfLoader<'a>
 impl<T, U> core::convert::Into<U> for aya::EbpfLoader<'a> where U: core::convert::From<T>
@@ -10859,6 +11090,7 @@ impl<'a> core::marker::Freeze for aya::GlobalData<'a>
 impl<'a> core::marker::Send for aya::GlobalData<'a>
 impl<'a> core::marker::Sync for aya::GlobalData<'a>
 impl<'a> core::marker::Unpin for aya::GlobalData<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::GlobalData<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::GlobalData<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya::GlobalData<'a>
 impl<T, U> core::convert::Into<U> for aya::GlobalData<'a> where U: core::convert::From<T>
@@ -10965,6 +11197,7 @@ impl core::marker::Freeze for aya::VerifierLogLevel
 impl core::marker::Send for aya::VerifierLogLevel
 impl core::marker::Sync for aya::VerifierLogLevel
 impl core::marker::Unpin for aya::VerifierLogLevel
+impl core::marker::UnsafeUnpin for aya::VerifierLogLevel
 impl core::panic::unwind_safe::RefUnwindSafe for aya::VerifierLogLevel
 impl core::panic::unwind_safe::UnwindSafe for aya::VerifierLogLevel
 impl<T, U> core::convert::Into<U> for aya::VerifierLogLevel where U: core::convert::From<T>

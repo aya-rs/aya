@@ -6,7 +6,7 @@ use aya::{
     programs::{ProgramType, SocketFilter},
     sys::{is_map_supported, is_program_supported},
 };
-use rand::Rng as _;
+use rand::RngExt as _;
 use scopeguard::defer;
 
 #[test_log::test]

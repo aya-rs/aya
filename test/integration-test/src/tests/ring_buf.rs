@@ -18,7 +18,7 @@ use aya::{
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
 use integration_common::ring_buf::Registers;
-use rand::Rng as _;
+use rand::RngExt as _;
 use scopeguard::defer;
 use tokio::io::{Interest, unix::AsyncFd};
 

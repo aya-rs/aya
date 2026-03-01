@@ -9,6 +9,7 @@ impl<'a> core::marker::Freeze for aya_build::Toolchain<'a>
 impl<'a> core::marker::Send for aya_build::Toolchain<'a>
 impl<'a> core::marker::Sync for aya_build::Toolchain<'a>
 impl<'a> core::marker::Unpin for aya_build::Toolchain<'a>
+impl<'a> core::marker::UnsafeUnpin for aya_build::Toolchain<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya_build::Toolchain<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya_build::Toolchain<'a>
 impl<T, U> core::convert::Into<U> for aya_build::Toolchain<'a> where U: core::convert::From<T>
@@ -38,6 +39,7 @@ impl<'a> core::marker::Freeze for aya_build::Package<'a>
 impl<'a> core::marker::Send for aya_build::Package<'a>
 impl<'a> core::marker::Sync for aya_build::Package<'a>
 impl<'a> core::marker::Unpin for aya_build::Package<'a>
+impl<'a> core::marker::UnsafeUnpin for aya_build::Package<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya_build::Package<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya_build::Package<'a>
 impl<T, U> core::convert::Into<U> for aya_build::Package<'a> where U: core::convert::From<T>
