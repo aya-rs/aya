@@ -19,6 +19,7 @@ impl core::marker::Freeze for aya_log::Error
 impl core::marker::Send for aya_log::Error
 impl core::marker::Sync for aya_log::Error
 impl core::marker::Unpin for aya_log::Error
+impl core::marker::UnsafeUnpin for aya_log::Error
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_log::Error
 impl !core::panic::unwind_safe::UnwindSafe for aya_log::Error
 impl<T, U> core::convert::Into<U> for aya_log::Error where U: core::convert::From<T>
@@ -46,6 +47,7 @@ impl core::marker::Freeze for aya_log::DefaultFormatter
 impl core::marker::Send for aya_log::DefaultFormatter
 impl core::marker::Sync for aya_log::DefaultFormatter
 impl core::marker::Unpin for aya_log::DefaultFormatter
+impl core::marker::UnsafeUnpin for aya_log::DefaultFormatter
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log::DefaultFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::DefaultFormatter
 impl<T, U> core::convert::Into<U> for aya_log::DefaultFormatter where U: core::convert::From<T>
@@ -80,6 +82,7 @@ impl<T> core::marker::Freeze for aya_log::EbpfLogger<T> where T: core::marker::F
 impl<T> core::marker::Send for aya_log::EbpfLogger<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_log::EbpfLogger<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya_log::EbpfLogger<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya_log::EbpfLogger<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_log::EbpfLogger<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_log::EbpfLogger<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya_log::EbpfLogger<T> where U: core::convert::From<T>
@@ -105,6 +108,7 @@ impl core::marker::Freeze for aya_log::Ipv4Formatter
 impl core::marker::Send for aya_log::Ipv4Formatter
 impl core::marker::Sync for aya_log::Ipv4Formatter
 impl core::marker::Unpin for aya_log::Ipv4Formatter
+impl core::marker::UnsafeUnpin for aya_log::Ipv4Formatter
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log::Ipv4Formatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::Ipv4Formatter
 impl<T, U> core::convert::Into<U> for aya_log::Ipv4Formatter where U: core::convert::From<T>
@@ -130,6 +134,7 @@ impl core::marker::Freeze for aya_log::Ipv6Formatter
 impl core::marker::Send for aya_log::Ipv6Formatter
 impl core::marker::Sync for aya_log::Ipv6Formatter
 impl core::marker::Unpin for aya_log::Ipv6Formatter
+impl core::marker::UnsafeUnpin for aya_log::Ipv6Formatter
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log::Ipv6Formatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::Ipv6Formatter
 impl<T, U> core::convert::Into<U> for aya_log::Ipv6Formatter where U: core::convert::From<T>
@@ -155,6 +160,7 @@ impl core::marker::Freeze for aya_log::LowerHexBytesFormatter
 impl core::marker::Send for aya_log::LowerHexBytesFormatter
 impl core::marker::Sync for aya_log::LowerHexBytesFormatter
 impl core::marker::Unpin for aya_log::LowerHexBytesFormatter
+impl core::marker::UnsafeUnpin for aya_log::LowerHexBytesFormatter
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log::LowerHexBytesFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::LowerHexBytesFormatter
 impl<T, U> core::convert::Into<U> for aya_log::LowerHexBytesFormatter where U: core::convert::From<T>
@@ -180,6 +186,7 @@ impl core::marker::Freeze for aya_log::LowerHexFormatter
 impl core::marker::Send for aya_log::LowerHexFormatter
 impl core::marker::Sync for aya_log::LowerHexFormatter
 impl core::marker::Unpin for aya_log::LowerHexFormatter
+impl core::marker::UnsafeUnpin for aya_log::LowerHexFormatter
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log::LowerHexFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::LowerHexFormatter
 impl<T, U> core::convert::Into<U> for aya_log::LowerHexFormatter where U: core::convert::From<T>
@@ -205,6 +212,7 @@ impl core::marker::Freeze for aya_log::LowerMacFormatter
 impl core::marker::Send for aya_log::LowerMacFormatter
 impl core::marker::Sync for aya_log::LowerMacFormatter
 impl core::marker::Unpin for aya_log::LowerMacFormatter
+impl core::marker::UnsafeUnpin for aya_log::LowerMacFormatter
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log::LowerMacFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::LowerMacFormatter
 impl<T, U> core::convert::Into<U> for aya_log::LowerMacFormatter where U: core::convert::From<T>
@@ -232,6 +240,7 @@ impl core::marker::Freeze for aya_log::PointerFormatter
 impl core::marker::Send for aya_log::PointerFormatter
 impl core::marker::Sync for aya_log::PointerFormatter
 impl core::marker::Unpin for aya_log::PointerFormatter
+impl core::marker::UnsafeUnpin for aya_log::PointerFormatter
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log::PointerFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::PointerFormatter
 impl<T, U> core::convert::Into<U> for aya_log::PointerFormatter where U: core::convert::From<T>
@@ -257,6 +266,7 @@ impl core::marker::Freeze for aya_log::UpperHexBytesFormatter
 impl core::marker::Send for aya_log::UpperHexBytesFormatter
 impl core::marker::Sync for aya_log::UpperHexBytesFormatter
 impl core::marker::Unpin for aya_log::UpperHexBytesFormatter
+impl core::marker::UnsafeUnpin for aya_log::UpperHexBytesFormatter
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log::UpperHexBytesFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::UpperHexBytesFormatter
 impl<T, U> core::convert::Into<U> for aya_log::UpperHexBytesFormatter where U: core::convert::From<T>
@@ -282,6 +292,7 @@ impl core::marker::Freeze for aya_log::UpperHexFormatter
 impl core::marker::Send for aya_log::UpperHexFormatter
 impl core::marker::Sync for aya_log::UpperHexFormatter
 impl core::marker::Unpin for aya_log::UpperHexFormatter
+impl core::marker::UnsafeUnpin for aya_log::UpperHexFormatter
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log::UpperHexFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::UpperHexFormatter
 impl<T, U> core::convert::Into<U> for aya_log::UpperHexFormatter where U: core::convert::From<T>
@@ -307,6 +318,7 @@ impl core::marker::Freeze for aya_log::UpperMacFormatter
 impl core::marker::Send for aya_log::UpperMacFormatter
 impl core::marker::Sync for aya_log::UpperMacFormatter
 impl core::marker::Unpin for aya_log::UpperMacFormatter
+impl core::marker::UnsafeUnpin for aya_log::UpperMacFormatter
 impl core::panic::unwind_safe::RefUnwindSafe for aya_log::UpperMacFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::UpperMacFormatter
 impl<T, U> core::convert::Into<U> for aya_log::UpperMacFormatter where U: core::convert::From<T>

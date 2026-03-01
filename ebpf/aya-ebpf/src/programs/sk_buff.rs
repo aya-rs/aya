@@ -1,8 +1,4 @@
-use core::{
-    ffi::c_void,
-    mem::{self, MaybeUninit},
-    ptr,
-};
+use core::{ffi::c_void, mem::MaybeUninit, ptr};
 
 use aya_ebpf_bindings::helpers::{
     bpf_clone_redirect, bpf_get_socket_uid, bpf_l3_csum_replace, bpf_l4_csum_replace,
@@ -18,11 +14,10 @@ pub struct SkBuff {
 }
 
 impl SkBuff {
-    pub fn new(skb: *mut __sk_buff) -> Self {
+    pub const fn new(skb: *mut __sk_buff) -> Self {
         Self { skb }
     }
 
-    #[expect(clippy::len_without_is_empty)]
     #[inline]
     pub fn len(&self) -> u32 {
         unsafe { (*self.skb).len }
@@ -64,10 +59,10 @@ impl SkBuff {
         unsafe {
             let mut data = MaybeUninit::<T>::uninit();
             let ret = bpf_skb_load_bytes(
-                self.skb as *const _,
+                self.skb.cast(),
                 offset as u32,
                 ptr::from_mut(&mut data).cast(),
-                mem::size_of_val(&data) as u32,
+                size_of_val(&data) as u32,
             );
             if ret == 0 {
                 Ok(data.assume_init())
@@ -110,7 +105,7 @@ impl SkBuff {
                 self.skb.cast(),
                 offset as u32,
                 ptr::from_ref(v).cast(),
-                mem::size_of_val(v) as u32,
+                size_of_val(v) as u32,
                 flags,
             );
             if ret == 0 { Ok(()) } else { Err(ret) }
@@ -180,7 +175,7 @@ impl SkBuff {
         if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
-    pub(crate) fn as_ptr(&self) -> *mut c_void {
+    pub(crate) const fn as_ptr(&self) -> *mut c_void {
         self.skb.cast()
     }
 
@@ -230,12 +225,11 @@ pub struct SkBuffContext {
 }
 
 impl SkBuffContext {
-    pub fn new(skb: *mut __sk_buff) -> Self {
+    pub const fn new(skb: *mut __sk_buff) -> Self {
         let skb = SkBuff { skb };
         Self { skb }
     }
 
-    #[expect(clippy::len_without_is_empty)]
     #[inline]
     pub fn len(&self) -> u32 {
         self.skb.len()
@@ -243,7 +237,7 @@ impl SkBuffContext {
 
     #[inline]
     pub fn set_mark(&mut self, mark: u32) {
-        self.skb.set_mark(mark)
+        self.skb.set_mark(mark);
     }
 
     #[inline]

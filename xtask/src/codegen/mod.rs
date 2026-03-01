@@ -31,11 +31,11 @@ pub(crate) enum Architecture {
 }
 
 impl Architecture {
-    pub(crate) fn supported() -> &'static [Self] {
+    pub(crate) const fn supported() -> &'static [Self] {
         SUPPORTED_ARCHS
     }
 
-    pub(crate) fn target(&self) -> &'static str {
+    pub(crate) const fn target(self) -> &'static str {
         match self {
             Self::AArch64 => "aarch64-unknown-linux-gnu",
             Self::ARMv7 => "armv7-unknown-linux-gnu",
@@ -85,6 +85,10 @@ impl std::fmt::Display for Architecture {
 // sysroot options. Default to ubuntu headers installed by the
 // libc6-dev-{arm64,armel}-cross packages.
 #[derive(Parser)]
+#[expect(
+    clippy::struct_field_names,
+    reason = "the sysroot suffix clarifies the meaning of each field"
+)]
 pub(crate) struct SysrootOptions {
     #[arg(long, default_value = "/usr/aarch64-linux-gnu/include", action)]
     aarch64_sysroot: PathBuf,
@@ -134,17 +138,15 @@ pub(crate) fn codegen(opts: Options, libbpf_dir: &Path) -> Result<()> {
         command,
     } = opts;
 
-    match command {
-        Some(command) => match command {
+    if let Some(command) = command {
+        match command {
             Target::Aya => aya::codegen(&sysroot_options, libbpf_dir).context("aya"),
             Target::AyaEbpfBindings => aya_ebpf_bindings::codegen(&sysroot_options, libbpf_dir)
                 .context("aya_ebpf_bindings"),
-        },
-        None => {
-            aya::codegen(&sysroot_options, libbpf_dir).context("aya")?;
-            aya_ebpf_bindings::codegen(&sysroot_options, libbpf_dir)
-                .context("aya_ebpf_bindings")?;
-            Ok(())
         }
+    } else {
+        aya::codegen(&sysroot_options, libbpf_dir).context("aya")?;
+        aya_ebpf_bindings::codegen(&sysroot_options, libbpf_dir).context("aya_ebpf_bindings")?;
+        Ok(())
     }
 }

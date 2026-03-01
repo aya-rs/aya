@@ -1,4 +1,4 @@
-//! An array of AF_XDP sockets.
+//! An array of `AF_XDP` sockets.
 
 use std::{
     borrow::{Borrow, BorrowMut},
@@ -7,10 +7,10 @@ use std::{
 
 use crate::maps::{MapData, MapError, check_bounds, check_kv_size, hash_map};
 
-/// An array of AF_XDP sockets.
+/// An array of `AF_XDP` sockets.
 ///
 /// XDP programs can use this map to redirect packets to a target
-/// AF_XDP socket using the `XDP_REDIRECT` action.
+/// `AF_XDP` socket using the `XDP_REDIRECT` action.
 ///
 /// # Minimum kernel version
 ///
@@ -47,7 +47,6 @@ impl<T: Borrow<MapData>> XskMap<T> {
     /// Returns the number of elements in the array.
     ///
     /// This corresponds to the value of `bpf_map_def::max_entries` on the eBPF side.
-    #[expect(clippy::len_without_is_empty)]
     pub fn len(&self) -> u32 {
         self.inner.borrow().obj.max_entries()
     }

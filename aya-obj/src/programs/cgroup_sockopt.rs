@@ -4,9 +4,9 @@ use crate::generated::bpf_attach_type;
 /// Defines where to attach a `CgroupSockopt` program.
 #[derive(Copy, Clone, Debug)]
 pub enum CgroupSockoptAttachType {
-    /// Attach to GetSockopt.
+    /// Attach to `GetSockopt`.
     Get,
-    /// Attach to SetSockopt.
+    /// Attach to `SetSockopt`.
     Set,
 }
 

@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{ItemFn, Result};
 
-use crate::args::{Args, err_on_unknown_args, pop_string_arg};
+use crate::args::Args;
 
 pub(crate) struct BtfTracePoint {
     item: ItemFn,
@@ -15,8 +15,8 @@ impl BtfTracePoint {
     pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self> {
         let item = syn::parse2(item)?;
         let mut args: Args = syn::parse2(attrs)?;
-        let function = pop_string_arg(&mut args, "function");
-        err_on_unknown_args(&args)?;
+        let function = args.pop_string("function");
+        args.into_error()?;
 
         Ok(Self { item, function })
     }

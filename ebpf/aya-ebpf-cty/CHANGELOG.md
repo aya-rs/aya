@@ -5,65 +5,15 @@ This project adheres to $[Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v0.2.1] - 2019-11-16
+## v0.2.3 (2025-11-17)
 
-### Added
+### New Features
 
-- Support for the `xtensa`, `riscv32` and `riscv64` architectures
+ - <csr-id-2eaae09c31add79103331aa551e8f74de86cd037/>, <csr-id-6252b4c9722c7c2ee2458741ae328dcc0c3c5234/> Added the missing MIPS and LoongArch definitions so the cty shim covers every architecture supported by Aya.
 
-## [v0.2.0] - 2019-02-06
+### Maintenance
 
-### Changed
-
-- [breaking-change] `cty::c_void` is now a type alias of `core::ffi::c_void`.
-
-## [v0.1.5] - 2017-05-29
-
-### Added
-
-- More types like `int32_t`
-
-## [v0.1.4] - 2017-05-29
-
-### Added
-
-- Support for the `msp430` architecture.
-
-### Fixed
-
-- [breaking-change] The type definitions of `c_long` and `c_ulong`.
-
-## [v0.1.3] - 2017-05-29 - YANKED
-
-### Added
-
-- Support for the `nvptx` and `nvptx64` architectures.
-
-## [v0.1.2] - 2017-05-29 - YANKED
-
-### Fixed
-
-- [breaking-change] The type definitions of `c_int` and `c_uint`.
-
-## [v0.1.1] - 2017-05-29 - YANKED
-
-### Fixed
-
-- [breaking-change] The type definitions of `c_long`, `c_ulong` and
-  `c_longlong`.
-
-## v0.1.0 - 2017-05-24 - YANKED
-
-- Initial release
-
-[Unreleased]: https://github.com/japaric/cty/compare/v0.2.1...HEAD
-[v0.2.1]: https://github.com/japaric/cty/compare/v0.2.0...v0.2.1
-[v0.2.0]: https://github.com/japaric/cty/compare/v0.1.5...v0.2.0
-[v0.1.5]: https://github.com/japaric/cty/compare/v0.1.4...v0.1.5
-[v0.1.4]: https://github.com/japaric/cty/compare/v0.1.3...v0.1.4
-[v0.1.3]: https://github.com/japaric/cty/compare/v0.1.2...v0.1.3
-[v0.1.2]: https://github.com/japaric/cty/compare/v0.1.1...v0.1.2
-[v0.1.1]: https://github.com/japaric/cty/compare/v0.1.0...v0.1.1
+ - <csr-id-1fe12b99907dda6553a6069fa462d6241d3fa171/>, <csr-id-09eefd366f7410c2f4744bb2bae533d9ce92ae20/> Tidied the crate (removing the abandoned Travis setup) and refreshed the bindings so downstream riscv64 builds stay green.
 
 ## v0.2.2 (2024-10-09)
 

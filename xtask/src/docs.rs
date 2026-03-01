@@ -71,7 +71,7 @@ pub(crate) fn docs(metadata: Metadata) -> Result<()> {
 
     fs::write(
         site.join("robots.txt"),
-        indoc! {r"
+        indoc! {"
     User-Agent:*
     Disallow: /
     "},
@@ -96,11 +96,11 @@ pub(crate) fn docs(metadata: Metadata) -> Result<()> {
         .context("write to string")?;
     }
 
-    writedoc! {&mut index, r#"
+    writedoc! {&mut index, "
               </ul>
             </body>
         </html>
-    "#}
+    "}
     .context("write to index.html")?;
 
     Ok(())

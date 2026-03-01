@@ -1,17 +1,20 @@
 //! User space probes.
 use std::{
+    borrow::Cow,
     error::Error,
     ffi::{CStr, OsStr, OsString},
+    fmt::{self, Write},
     fs,
     io::{self, BufRead as _, Cursor, Read as _},
-    mem,
-    os::{fd::AsFd as _, unix::ffi::OsStrExt as _},
+    os::{
+        fd::AsFd as _,
+        unix::ffi::{OsStrExt as _, OsStringExt as _},
+    },
     path::{Path, PathBuf},
     sync::LazyLock,
 };
 
 use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE};
-use libc::pid_t;
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, Symbol};
 use thiserror::Error;
 
@@ -21,7 +24,7 @@ use crate::{
         FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
         impl_try_into_fdlink, load_program,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
-        probe::{OsStringExt as _, ProbeKind, attach},
+        probe::{OsStringExt as _, Probe, ProbeKind, attach},
     },
     sys::bpf_link_get_info_by_fd,
     util::MMap,
@@ -72,6 +75,23 @@ impl From<u64> for UProbeAttachLocation<'static> {
     }
 }
 
+/// Describes a single attachment point along with its optional cookie.
+pub struct UProbeAttachPoint<'a> {
+    /// The actual target location.
+    pub location: UProbeAttachLocation<'a>,
+    /// Optional cookie available via `bpf_get_attach_cookie()`.
+    pub cookie: Option<u64>,
+}
+
+impl<'a, L: Into<UProbeAttachLocation<'a>>> From<L> for UProbeAttachPoint<'a> {
+    fn from(location: L) -> Self {
+        Self {
+            location: location.into(),
+            cookie: None,
+        }
+    }
+}
+
 impl UProbe {
     /// The type of the program according to the kernel.
     pub const PROGRAM_TYPE: ProgramType = ProgramType::KProbe;
@@ -81,18 +101,18 @@ impl UProbe {
         load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
     }
 
-    /// Returns `UProbe` if the program is a `uprobe`, or `URetProbe` if the
-    /// program is a `uretprobe`.
-    pub fn kind(&self) -> ProbeKind {
+    /// Returns [`ProbeKind::Entry`] if the program is a `uprobe`, or
+    /// [`ProbeKind::Return`] if the program is a `uretprobe`.
+    pub const fn kind(&self) -> ProbeKind {
         self.kind
     }
 
     /// Attaches the program.
     ///
     /// Attaches the uprobe to the function `fn_name` defined in the `target`.
-    /// If `offset` is non-zero, it is added to the address of the target
-    /// function. If `pid` is not `None`, the program executes only when the
-    /// target function is executed by the given `pid`.
+    /// If the attach point specifies an offset, it is added to the address of
+    /// the target function. If `pid` is not `None`, the program executes only
+    /// when the target function is executed by the given `pid`.
     ///
     /// The `target` argument can be an absolute path to a binary or library, or
     /// a library name (eg: `"libc"`).
@@ -101,20 +121,22 @@ impl UProbe {
     /// the target function.  Instead if the program is a `uretprobe`, it is
     /// attached to the return address of the target function.
     ///
-    /// The returned value can be used to detach, see [UProbe::detach].
+    /// The returned value can be used to detach, see [`UProbe::detach`].
     ///
     /// The cookie is supported since kernel 5.15, and it is made available to
-    /// the eBPF program via the `bpf_get_attach_cookie()` helper.
-    pub fn attach<'loc, T: AsRef<Path>, Loc: Into<UProbeAttachLocation<'loc>>>(
+    /// the eBPF program via the `bpf_get_attach_cookie()` helper. The `point`
+    /// argument may be just a location (no cookie) or a [`UProbeAttachPoint`],
+    /// only the latter sets the cookie explicitly.
+    pub fn attach<'a, T: AsRef<Path>, Point: Into<UProbeAttachPoint<'a>>>(
         &mut self,
-        location: Loc,
+        point: Point,
         target: T,
-        pid: Option<pid_t>,
-        cookie: Option<u64>,
+        pid: Option<u32>,
     ) -> Result<UProbeLinkId, ProgramError> {
+        let UProbeAttachPoint { location, cookie } = point.into();
         let proc_map = pid.map(ProcMap::new).transpose()?;
         let path = resolve_attach_path(target.as_ref(), proc_map.as_ref())?;
-        let (symbol, offset) = match location.into() {
+        let (symbol, offset) = match location {
             UProbeAttachLocation::Symbol(s) => (Some(s), 0),
             UProbeAttachLocation::SymbolOffset(s, offset) => (Some(s), offset),
             UProbeAttachLocation::AbsoluteOffset(offset) => (None, offset),
@@ -130,8 +152,9 @@ impl UProbe {
             offset
         };
 
+        let Self { data, kind } = self;
         let path = path.as_os_str();
-        attach(&mut self.data, self.kind, path, offset, pid, cookie)
+        attach::<Self, _>(data, *kind, path, offset, pid, cookie)
     }
 
     /// Creates a program from a pinned entry on a bpffs.
@@ -143,6 +166,20 @@ impl UProbe {
     pub fn from_pin<P: AsRef<Path>>(path: P, kind: ProbeKind) -> Result<Self, ProgramError> {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data, kind })
+    }
+}
+
+impl Probe for UProbe {
+    const PMU: &'static str = "uprobe";
+
+    type Error = UProbeError;
+
+    fn file_error(filename: PathBuf, io_error: io::Error) -> Self::Error {
+        UProbeError::FileError { filename, io_error }
+    }
+
+    fn write_offset<W: Write>(w: &mut W, _: ProbeKind, offset: u64) -> fmt::Result {
+        write!(w, ":{offset:#x}")
     }
 }
 
@@ -159,9 +196,10 @@ where
         .and_then(|proc_map| {
             proc_map
                 .find_library_path_by_name(target)
-                .map_err(|source| UProbeError::ProcMap {
-                    pid: proc_map.pid,
-                    source,
+                .map_err(|source| {
+                    let ProcMap { pid, data: _ } = proc_map;
+                    let pid = *pid;
+                    UProbeError::ProcMap { pid, source }
                 })
                 .transpose()
         })
@@ -178,49 +216,6 @@ where
                 path: target.to_owned(),
             })
         })
-}
-
-// Only run this test on linux with glibc because only in that configuration do we know that we'll
-// be dynamically linked to libc and can exercise resolving the path to libc via the current
-// process's memory map.
-#[test]
-#[cfg_attr(
-    any(miri, not(all(target_os = "linux", target_env = "gnu"))),
-    ignore = "requires glibc, doesn't work in miri"
-)]
-fn test_resolve_attach_path() {
-    // Look up the current process's pid.
-    let pid = std::process::id().try_into().unwrap();
-    let proc_map = ProcMap::new(pid).unwrap();
-
-    // Now let's resolve the path to libc. It should exist in the current process's memory map and
-    // then in the ld.so.cache.
-    let libc_path = resolve_attach_path("libc".as_ref(), Some(&proc_map)).unwrap_or_else(|err| {
-        match err.source() {
-            Some(source) => panic!("{err}: {source}"),
-            None => panic!("{err}"),
-        }
-    });
-
-    // Make sure we got a path that contains libc.
-    assert_matches::assert_matches!(
-        libc_path.to_str(),
-        Some(libc_path) if libc_path.contains("libc"),
-        "libc_path: {}", libc_path.display()
-    );
-
-    // If we pass an absolute path that doesn't match anything in /proc/<pid>/maps, we should fall
-    // back to the provided path instead of erroring out. Using a synthetic absolute path keeps the
-    // test hermetic.
-    let synthetic_absolute = Path::new("/tmp/.aya-test-resolve-attach-absolute");
-    let absolute_path =
-        resolve_attach_path(synthetic_absolute, Some(&proc_map)).unwrap_or_else(|err| {
-            match err.source() {
-                Some(source) => panic!("{err}: {source}"),
-                None => panic!("{err}"),
-            }
-        });
-    assert_eq!(absolute_path, synthetic_absolute);
 }
 
 define_link_wrapper!(
@@ -287,7 +282,7 @@ pub enum UProbeError {
     #[error("error fetching libs for {pid}")]
     ProcMap {
         /// The pid.
-        pid: i32,
+        pid: u32,
         /// The [`ProcMapError`] that caused the error.
         #[source]
         source: ProcMapError,
@@ -302,32 +297,60 @@ pub enum ProcMapError {
     ReadFile(#[from] io::Error),
 
     /// Error parsing a line of /proc/pid/maps.
-    #[error("could not parse {:?}", OsStr::from_bytes(line))]
+    #[error("could not parse {}", line.display())]
     ParseLine {
         /// The line that could not be parsed.
-        line: Vec<u8>,
+        line: OsString,
     },
 }
 
 /// A entry that has been parsed from /proc/`pid`/maps.
 ///
 /// This contains information about a mapped portion of memory
-/// for the process, ranging from address to address_end.
-#[derive(Debug)]
+/// for the process, ranging from address to `address_end`.
+#[cfg_attr(test, derive(Debug, PartialEq))]
 struct ProcMapEntry<'a> {
-    #[cfg_attr(not(test), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code, reason = "parsed but not exposed"))]
     address: u64,
-    #[cfg_attr(not(test), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code, reason = "parsed but not exposed"))]
     address_end: u64,
-    #[cfg_attr(not(test), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code, reason = "parsed but not exposed"))]
     perms: &'a OsStr,
-    #[cfg_attr(not(test), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code, reason = "parsed but not exposed"))]
     offset: u64,
-    #[cfg_attr(not(test), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code, reason = "parsed but not exposed"))]
     dev: &'a OsStr,
-    #[cfg_attr(not(test), expect(dead_code))]
+    #[cfg_attr(not(test), expect(dead_code, reason = "parsed but not exposed"))]
     inode: u32,
-    path: Option<&'a Path>,
+    path: Option<&'a OsStr>,
+}
+
+/// Split a byte slice on ASCII whitespace up to `n` times.
+///
+/// The last item yielded contains the remainder of the slice and may itself
+/// contain whitespace.
+fn split_ascii_whitespace_n(s: &[u8], mut n: usize) -> impl Iterator<Item = &[u8]> {
+    let mut s = s.trim_ascii_end();
+
+    std::iter::from_fn(move || {
+        if n == 0 {
+            None
+        } else {
+            s = s.trim_ascii_start();
+
+            n -= 1;
+            Some(if n == 0 {
+                s
+            } else if let Some(i) = s.iter().position(u8::is_ascii_whitespace) {
+                let (next, rest) = s.split_at(i);
+                s = rest;
+                next
+            } else {
+                n = 0;
+                s
+            })
+        }
+    })
 }
 
 impl<'a> ProcMapEntry<'a> {
@@ -335,11 +358,12 @@ impl<'a> ProcMapEntry<'a> {
         use std::os::unix::ffi::OsStrExt as _;
 
         let err = || ProcMapError::ParseLine {
-            line: line.to_vec(),
+            line: OsString::from_vec(line.to_vec()),
         };
 
-        let mut parts = line
-            .split(|b| b.is_ascii_whitespace())
+        let mut parts =
+            // address, perms, offset, dev, inode, path = 6.
+            split_ascii_whitespace_n(line, 6)
             .filter(|part| !part.is_empty());
 
         let mut next = || parts.next().ok_or_else(err);
@@ -382,20 +406,7 @@ impl<'a> ProcMapEntry<'a> {
             .parse()
             .map_err(|std::num::ParseIntError { .. }| err())?;
 
-        let path = parts
-            .next()
-            .and_then(|path| match path {
-                [b'[', .., b']'] => None,
-                path => {
-                    let path = Path::new(OsStr::from_bytes(path));
-                    if !path.is_absolute() {
-                        Some(Err(err()))
-                    } else {
-                        Some(Ok(path))
-                    }
-                }
-            })
-            .transpose()?;
+        let path = parts.next().map(OsStr::from_bytes);
 
         if let Some(_part) = parts.next() {
             return Err(err());
@@ -419,12 +430,12 @@ impl<'a> ProcMapEntry<'a> {
 ///
 /// The information here may be used to resolve addresses to paths.
 struct ProcMap<T> {
-    pid: pid_t,
+    pid: u32,
     data: T,
 }
 
 impl ProcMap<Vec<u8>> {
-    fn new(pid: pid_t) -> Result<Self, UProbeError> {
+    fn new(pid: u32) -> Result<Self, UProbeError> {
         let filename = PathBuf::from(format!("/proc/{pid}/maps"));
         let data = fs::read(&filename)
             .map_err(|io_error| UProbeError::FileError { filename, io_error })?;
@@ -436,10 +447,10 @@ impl<T: AsRef<[u8]>> ProcMap<T> {
     fn libs(&self) -> impl Iterator<Item = Result<ProcMapEntry<'_>, ProcMapError>> {
         let Self { pid: _, data } = self;
 
+        // /proc/<pid>/maps ends with '\n', so split() yields a trailing empty slice without this.
         data.as_ref()
+            .trim_ascii()
             .split(|&b| b == b'\n')
-            // /proc/<pid>/maps ends with '\n', so split() yields a trailing empty slice.
-            .filter(|line| !line.is_empty())
             .map(ProcMapEntry::parse)
     }
 
@@ -462,6 +473,7 @@ impl<T: AsRef<[u8]>> ProcMap<T> {
                 path,
             } = entry?;
             if let Some(path) = path {
+                let path = Path::new(path);
                 if let Some(filename) = path.file_name() {
                     if let Some(suffix) = filename.strip_prefix(lib) {
                         if suffix.is_empty()
@@ -500,14 +512,14 @@ impl LdSoCache {
         let mut cursor = Cursor::new(data);
 
         let read_u32 = |cursor: &mut Cursor<_>| -> Result<u32, io::Error> {
-            let mut buf = [0u8; mem::size_of::<u32>()];
+            let mut buf = [0u8; size_of::<u32>()];
             cursor.read_exact(&mut buf)?;
 
             Ok(u32::from_ne_bytes(buf))
         };
 
         let read_i32 = |cursor: &mut Cursor<_>| -> Result<i32, io::Error> {
-            let mut buf = [0u8; mem::size_of::<i32>()];
+            let mut buf = [0u8; size_of::<i32>()];
             cursor.read_exact(&mut buf)?;
 
             Ok(i32::from_ne_bytes(buf))
@@ -542,44 +554,44 @@ impl LdSoCache {
         let num_entries = read_u32(&mut cursor)?;
 
         if new_format {
-            cursor.consume(6 * mem::size_of::<u32>());
+            cursor.consume(6 * size_of::<u32>());
         }
 
-        let offset = if !new_format {
-            cursor.position() as usize + num_entries as usize * 12
-        } else {
+        let offset = if new_format {
             0
+        } else {
+            cursor.position() as usize + num_entries as usize * 12
         };
 
-        let entries = (0..num_entries)
-            .map(|_: u32| {
-                let flags = read_i32(&mut cursor)?;
-                let k_pos = read_u32(&mut cursor)? as usize;
-                let v_pos = read_u32(&mut cursor)? as usize;
+        let entries = std::iter::repeat_with(|| {
+            let flags = read_i32(&mut cursor)?;
+            let k_pos = read_u32(&mut cursor)? as usize;
+            let v_pos = read_u32(&mut cursor)? as usize;
 
-                if new_format {
-                    cursor.consume(12);
-                }
+            if new_format {
+                cursor.consume(12);
+            }
 
-                let read_str = |pos| {
-                    use std::os::unix::ffi::OsStrExt as _;
-                    OsStr::from_bytes(
-                        unsafe { CStr::from_ptr(cursor.get_ref()[offset + pos..].as_ptr().cast()) }
-                            .to_bytes(),
-                    )
-                    .to_owned()
-                };
+            let read_str = |pos| {
+                use std::os::unix::ffi::OsStrExt as _;
+                OsStr::from_bytes(
+                    unsafe { CStr::from_ptr(cursor.get_ref()[offset + pos..].as_ptr().cast()) }
+                        .to_bytes(),
+                )
+                .to_owned()
+            };
 
-                let key = read_str(k_pos);
-                let value = read_str(v_pos);
+            let key = read_str(k_pos);
+            let value = read_str(v_pos);
 
-                Ok::<_, io::Error>(CacheEntry {
-                    key,
-                    value,
-                    _flags: flags,
-                })
+            Ok::<_, io::Error>(CacheEntry {
+                key,
+                value,
+                _flags: flags,
             })
-            .collect::<Result<_, _>>()?;
+        })
+        .take(num_entries as usize)
+        .collect::<Result<_, _>>()?;
 
         Ok(Self { entries })
     }
@@ -593,11 +605,10 @@ impl LdSoCache {
         entries
             .iter()
             .find_map(|CacheEntry { key, value, _flags }| {
-                key.strip_prefix(lib).and_then(|suffix| {
-                    suffix
-                        .starts_with(OsStr::new(".so"))
-                        .then_some(Path::new(value.as_os_str()))
-                })
+                let suffix = key.strip_prefix(lib)?;
+                suffix
+                    .starts_with(OsStr::new(".so"))
+                    .then_some(Path::new(value.as_os_str()))
             })
     }
 }
@@ -626,19 +637,19 @@ enum ResolveSymbolError {
     BuildIdMismatch(String),
 }
 
-fn construct_debuglink_path(filename: &[u8], main_path: &Path) -> PathBuf {
+fn construct_debuglink_path<'a>(filename: &'a [u8], main_path: &Path) -> Cow<'a, Path> {
     let filename_str = OsStr::from_bytes(filename);
     let debuglink_path = Path::new(filename_str);
 
     if debuglink_path.is_relative() {
         // If the debug path is relative, resolve it against the parent of the main path
         main_path.parent().map_or_else(
-            || PathBuf::from(debuglink_path), // Use original if no parent
-            |parent| parent.join(debuglink_path),
+            || debuglink_path.into(), // Use original if no parent
+            |parent| parent.join(debuglink_path).into(),
         )
     } else {
         // If the path is not relative, just use original
-        PathBuf::from(debuglink_path)
+        debuglink_path.into()
     }
 }
 
@@ -663,10 +674,10 @@ fn verify_build_ids<'a>(
 }
 
 fn find_debug_path_in_object<'a>(
-    obj: &'a object::File<'a>,
+    obj: &object::File<'a>,
     main_path: &Path,
     symbol: &str,
-) -> Result<PathBuf, ResolveSymbolError> {
+) -> Result<Cow<'a, Path>, ResolveSymbolError> {
     match obj.gnu_debuglink() {
         Ok(Some((filename, _))) => Ok(construct_debuglink_path(filename, main_path)),
         Ok(None) => Err(ResolveSymbolError::Unknown(symbol.to_string())),
@@ -677,7 +688,7 @@ fn find_debug_path_in_object<'a>(
 fn find_symbol_in_object<'a>(obj: &'a object::File<'a>, symbol: &str) -> Option<Symbol<'a, 'a>> {
     obj.dynamic_symbols()
         .chain(obj.symbols())
-        .find(|sym| sym.name().map(|name| name == symbol).unwrap_or(false))
+        .find(|sym| sym.name().is_ok_and(|name| name == symbol))
 }
 
 fn resolve_symbol(path: &Path, symbol: &str) -> Result<u64, ResolveSymbolError> {
@@ -690,7 +701,7 @@ fn resolve_symbol(path: &Path, symbol: &str) -> Result<u64, ResolveSymbolError> 
         // Only search in the debug object if the symbol was not found in the main object
         let debug_path = find_debug_path_in_object(&obj, path, symbol)?;
         let debug_data = MMap::map_copy_read_only(&debug_path)
-            .map_err(|e| ResolveSymbolError::DebuglinkAccessError(debug_path, e))?;
+            .map_err(|e| ResolveSymbolError::DebuglinkAccessError(debug_path.into_owned(), e))?;
         let debug_obj = object::read::File::parse(debug_data.as_ref())?;
 
         verify_build_ids(&obj, &debug_obj, symbol)?;
@@ -711,9 +722,7 @@ fn symbol_translated_address(
         obj.kind(),
         object::ObjectKind::Dynamic | object::ObjectKind::Executable
     );
-    if !needs_addr_translation {
-        Ok(sym.address())
-    } else {
+    if needs_addr_translation {
         let index = sym
             .section_index()
             .ok_or_else(|| ResolveSymbolError::NotInSection(symbol_name.to_string()))?;
@@ -725,6 +734,8 @@ fn symbol_translated_address(
             )
         })?;
         Ok(sym.address() - section.address() + offset)
+    } else {
+        Ok(sym.address())
     }
 }
 
@@ -732,8 +743,46 @@ fn symbol_translated_address(
 mod tests {
     use assert_matches::assert_matches;
     use object::{Architecture, BinaryFormat, Endianness, write::SectionKind};
+    use test_case::test_case;
 
     use super::*;
+
+    // Only run this test on with libc dynamically linked so that it can
+    // exercise resolving the path to libc via the current process's memory map.
+    #[test]
+    #[cfg_attr(
+        any(miri, not(target_os = "linux"), target_feature = "crt-static"),
+        ignore = "requires dynamic linkage of libc"
+    )]
+    fn test_resolve_attach_path() {
+        // Look up the current process's pid.
+        let pid = std::process::id();
+        let proc_map = ProcMap::new(pid).expect("failed to get proc map");
+
+        // Now let's resolve the path to libc. It should exist in the current process's memory map and
+        // then in the ld.so.cache.
+        assert_matches!(
+            resolve_attach_path("libc".as_ref(), Some(&proc_map)),
+            Ok(path) => {
+                // Make sure we got a path that contains libc.
+                assert_matches!(
+                    path.to_str(),
+                    Some(path) if path.contains("libc"), "path: {}", path.display()
+                );
+            }
+        );
+
+        // If we pass an absolute path that doesn't match anything in /proc/<pid>/maps, we should fall
+        // back to the provided path instead of erroring out. Using a synthetic absolute path keeps the
+        // test hermetic.
+        let synthetic_absolute = Path::new("/tmp/.aya-test-resolve-attach-absolute");
+        assert_matches!(
+            resolve_attach_path(synthetic_absolute, Some(&proc_map)),
+            Ok(path) => {
+                assert_eq!(path, synthetic_absolute, "path: {}", path.display());
+            }
+        );
+    }
 
     #[test]
     fn test_relative_path_with_parent() {
@@ -774,6 +823,10 @@ mod tests {
         );
     }
 
+    #[expect(
+        clippy::little_endian_bytes,
+        reason = "ELF debuglink fields are encoded as little-endian"
+    )]
     fn create_elf_with_debuglink(
         debug_filename: &[u8],
         crc: u32,
@@ -801,6 +854,10 @@ mod tests {
         obj.write()
     }
 
+    #[expect(
+        clippy::little_endian_bytes,
+        reason = "ELF note headers are encoded as little-endian"
+    )]
     fn create_elf_with_build_id(build_id: &[u8]) -> Result<Vec<u8>, object::write::Error> {
         let mut obj =
             object::write::Object::new(BinaryFormat::Elf, Architecture::X86_64, Endianness::Little);
@@ -841,7 +898,7 @@ mod tests {
 
         let ptr = vec.as_ptr() as usize;
 
-        let aligned_ptr = (ptr + alignment - 1) & !(alignment - 1);
+        let aligned_ptr = ptr.next_multiple_of(alignment);
 
         let offset = aligned_ptr - ptr;
 
@@ -862,9 +919,13 @@ mod tests {
         let main_obj = object::File::parse(&*align_bytes).expect("got main obj");
 
         let main_path = Path::new("/path/to/main");
-        let result = find_debug_path_in_object(&main_obj, main_path, "symbol");
 
-        assert_eq!(result.unwrap(), Path::new("/path/to/main.debug"));
+        assert_matches!(
+            find_debug_path_in_object(&main_obj, main_path, "symbol"),
+            Ok(path) => {
+                assert_eq!(&*path, "/path/to/main.debug", "path: {}", path.display());
+            }
+        );
     }
 
     #[test]
@@ -878,7 +939,10 @@ mod tests {
         let align_bytes = aligned_slice(&mut debug_bytes);
         let debug_obj = object::File::parse(&*align_bytes).expect("got debug obj");
 
-        verify_build_ids(&main_obj, &debug_obj, "symbol_name").unwrap();
+        assert_matches!(
+            verify_build_ids(&main_obj, &debug_obj, "symbol_name"),
+            Ok(())
+        );
     }
 
     #[test]
@@ -892,99 +956,174 @@ mod tests {
         let align_bytes = aligned_slice(&mut debug_bytes);
         let debug_obj = object::File::parse(&*align_bytes).expect("got debug obj");
 
-        assert!(matches!(
+        assert_matches!(
             verify_build_ids(&main_obj, &debug_obj, "symbol_name"),
-            Err(ResolveSymbolError::BuildIdMismatch(_))
-        ));
-    }
-
-    #[test]
-    fn test_parse_proc_map_entry_shared_lib() {
-        assert_matches!(
-            ProcMapEntry::parse(b"7ffd6fbea000-7ffd6fbec000	r-xp	00000000	00:00	0	[vdso]"),
-            Ok(ProcMapEntry {
-                address: 0x7ffd6fbea000,
-                address_end: 0x7ffd6fbec000,
-                perms,
-                offset: 0,
-                dev,
-                inode: 0,
-                path: None,
-            }) if perms == "r-xp" && dev == "00:00"
+            Err(ResolveSymbolError::BuildIdMismatch(symbol_name)) if symbol_name == "symbol_name"
         );
     }
 
-    #[test]
-    fn test_parse_proc_map_entry_absolute_path() {
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca83a000-7f1bca83c000	rw-p	00036000	fd:01	2895508	/usr/lib64/ld-linux-x86-64.so.2"),
-            Ok(ProcMapEntry {
-                address: 0x7f1bca83a000,
-                address_end: 0x7f1bca83c000,
-                perms,
-                offset: 0x00036000,
-                dev,
-                inode: 2895508,
-                path: Some(path),
-            }) if perms == "rw-p" && dev == "fd:01" && path == Path::new("/usr/lib64/ld-linux-x86-64.so.2")
-        );
+    #[derive(Debug, Clone, Copy)]
+    struct ExpectedProcMapEntry {
+        address: u64,
+        address_end: u64,
+        perms: &'static str,
+        offset: u64,
+        dev: &'static str,
+        inode: u32,
+        path: Option<&'static str>,
     }
 
-    #[test]
-    fn test_parse_proc_map_entry_all_zeros() {
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f9000-7f1bca601000	rw-p	00000000	00:00	0"),
-            Ok(ProcMapEntry {
-                address: 0x7f1bca5f9000,
-                address_end: 0x7f1bca601000,
-                perms,
-                offset: 0,
-                dev,
-                inode: 0,
-                path: None,
-            }) if perms == "rw-p" && dev == "00:00"
-        );
+    #[test_case(
+        b"7ffd6fbea000-7ffd6fbec000  r-xp  00000000  00:00  0  [vdso]",
+        ExpectedProcMapEntry {
+            address: 0x7ffd6fbea000,
+            address_end: 0x7ffd6fbec000,
+            perms: "r-xp",
+            offset: 0,
+            dev: "00:00",
+            inode: 0,
+            path: Some("[vdso]"),
+        };
+        "bracketed_name"
+    )]
+    #[test_case(
+        b"7f1bca83a000-7f1bca83c000  rw-p  00036000  fd:01  2895508  /usr/lib64/ld-linux-x86-64.so.2",
+        ExpectedProcMapEntry {
+            address: 0x7f1bca83a000,
+            address_end: 0x7f1bca83c000,
+            perms: "rw-p",
+            offset: 0x00036000,
+            dev: "fd:01",
+            inode: 2895508,
+            path: Some("/usr/lib64/ld-linux-x86-64.so.2"),
+        };
+        "absolute_path"
+    )]
+    #[test_case(
+        b"7f1bca5f9000-7f1bca601000  rw-p  00000000  00:00  0",
+        ExpectedProcMapEntry {
+            address: 0x7f1bca5f9000,
+            address_end: 0x7f1bca601000,
+            perms: "rw-p",
+            offset: 0,
+            dev: "00:00",
+            inode: 0,
+            path: None,
+        };
+        "no_path"
+    )]
+    #[test_case(
+        b"7f1bca5f9000-7f1bca601000  rw-p  00000000  00:00  0  deadbeef",
+        ExpectedProcMapEntry {
+            address: 0x7f1bca5f9000,
+            address_end: 0x7f1bca601000,
+            perms: "rw-p",
+            offset: 0,
+            dev: "00:00",
+            inode: 0,
+            path: Some("deadbeef"),
+        };
+        "relative_path_token"
+    )]
+    #[test_case(
+        b"7f1bca83a000-7f1bca83c000  rw-p  00036000  fd:01  2895508  /usr/lib/libc.so.6 (deleted)",
+        ExpectedProcMapEntry {
+            address: 0x7f1bca83a000,
+            address_end: 0x7f1bca83c000,
+            perms: "rw-p",
+            offset: 0x00036000,
+            dev: "fd:01",
+            inode: 2895508,
+            path: Some("/usr/lib/libc.so.6 (deleted)"),
+        };
+        "deleted_suffix_in_path"
+    )]
+    // The path field is the remainder of the line. It may contain whitespace and arbitrary tokens.
+    #[test_case(
+        b"71064dc000-71064df000 ---p 00000000 00:00 0  [page size compat] extra",
+        ExpectedProcMapEntry {
+            address: 0x71064dc000,
+            address_end: 0x71064df000,
+            perms: "---p",
+            offset: 0,
+            dev: "00:00",
+            inode: 0,
+            path: Some("[page size compat] extra"),
+        };
+        "path_remainder_with_spaces"
+    )]
+    #[test_case(
+        b"724a0000-72aab000 rw-p 00000000 00:00 0 [anon:dalvik-zygote space] (deleted) extra",
+        ExpectedProcMapEntry {
+            address: 0x724a0000,
+            address_end: 0x72aab000,
+            perms: "rw-p",
+            offset: 0,
+            dev: "00:00",
+            inode: 0,
+            path: Some("[anon:dalvik-zygote space] (deleted) extra"),
+        };
+        "bracketed_name_with_spaces"
+    )]
+    #[test_case(
+        b"5ba3b000-5da3b000 r--s 00000000 00:01 1033 /memfd:jit-zygote-cache (deleted)",
+        ExpectedProcMapEntry {
+            address: 0x5ba3b000,
+            address_end: 0x5da3b000,
+            perms: "r--s",
+            offset: 0,
+            dev: "00:01",
+            inode: 1033,
+            path: Some("/memfd:jit-zygote-cache (deleted)"),
+        };
+        "memfd_deleted"
+    )]
+    #[test_case(
+        b"6cd539c000-6cd559c000 rw-s 00000000 00:01 7215 /dev/ashmem/CursorWindow: /data/user/0/package/databases/kitefly.db (deleted)",
+        ExpectedProcMapEntry {
+            address: 0x6cd539c000,
+            address_end: 0x6cd559c000,
+            perms: "rw-s",
+            offset: 0,
+            dev: "00:01",
+            inode: 7215,
+            path: Some("/dev/ashmem/CursorWindow: /data/user/0/package/databases/kitefly.db (deleted)"),
+        };
+        "ashmem_with_spaces"
+    )]
+    fn test_parse_proc_map_entry_ok(line: &'static [u8], expected: ExpectedProcMapEntry) {
+        use std::ffi::OsStr;
+
+        let ExpectedProcMapEntry {
+            address,
+            address_end,
+            perms,
+            offset,
+            dev,
+            inode,
+            path,
+        } = expected;
+
+        assert_matches!(ProcMapEntry::parse(line), Ok(entry) if entry == ProcMapEntry {
+            address,
+            address_end,
+            perms: OsStr::new(perms),
+            offset,
+            dev: OsStr::new(dev),
+            inode,
+            path: path.map(OsStr::new),
+        });
     }
 
-    #[test]
-    fn test_parse_proc_map_entry_parse_errors() {
+    #[test_case(b"zzzz-7ffd6fbea000  r-xp  00000000  00:00  0  [vdso]"; "bad_address")]
+    #[test_case(b"7f1bca5f9000-7f1bca601000  r-xp  zzzz  00:00  0  [vdso]"; "bad_offset")]
+    #[test_case(b"7f1bca5f9000-7f1bca601000  r-xp  00000000  00:00  zzzz  [vdso]"; "bad_inode")]
+    #[test_case(b"7f1bca5f90007ffd6fbea000  r-xp  00000000  00:00  0  [vdso]"; "bad_address_range")]
+    #[test_case(b"7f1bca5f9000-7f1bca601000  r-xp  00000000"; "missing_fields")]
+    #[test_case(b"7f1bca5f9000-7f1bca601000-deadbeef  rw-p  00000000  00:00  0"; "bad_address_delimiter")]
+    fn test_parse_proc_map_entry_err(line: &'static [u8]) {
         assert_matches!(
-            ProcMapEntry::parse(b"zzzz-7ffd6fbea000	r-xp	00000000	00:00	0	[vdso]"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"zzzz-7ffd6fbea000	r-xp	00000000	00:00	0	[vdso]"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f9000-7f1bca601000	r-xp	zzzz	00:00	0	[vdso]"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f9000-7f1bca601000	r-xp	00000000	00:00	zzzz	[vdso]"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f90007ffd6fbea000	r-xp	00000000	00:00	0	[vdso]"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f9000-7f1bca601000	r-xp	00000000"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f9000-7f1bca601000-deadbeef	rw-p	00000000	00:00	0"),
-            Err(ProcMapError::ParseLine { line: _ })
-        );
-
-        assert_matches!(
-            ProcMapEntry::parse(b"7f1bca5f9000-7f1bca601000	rw-p	00000000	00:00	0	deadbeef"),
+            ProcMapEntry::parse(line),
             Err(ProcMapError::ParseLine { line: _ })
         );
     }
@@ -993,12 +1132,16 @@ mod tests {
     fn test_proc_map_find_lib_by_name() {
         let proc_map_libs = ProcMap {
             pid: 0xdead,
-            data: b"7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libcrypto.so.3.0.9",
+            data: b"
+7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libcrypto.so.3.0.9
+",
         };
 
         assert_matches!(
             proc_map_libs.find_library_path_by_name(Path::new("libcrypto.so.3.0.9")),
-            Ok(Some(path)) if path == Path::new("/usr/lib64/libcrypto.so.3.0.9")
+            Ok(Some(path)) => {
+                assert_eq!(path, "/usr/lib64/libcrypto.so.3.0.9", "path: {}", path.display());
+            }
         );
     }
 
@@ -1006,12 +1149,16 @@ mod tests {
     fn test_proc_map_find_lib_by_partial_name() {
         let proc_map_libs = ProcMap {
             pid: 0xdead,
-            data: b"7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libcrypto.so.3.0.9",
+            data: b"
+7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libcrypto.so.3.0.9
+",
         };
 
         assert_matches!(
             proc_map_libs.find_library_path_by_name(Path::new("libcrypto")),
-            Ok(Some(path)) if path == Path::new("/usr/lib64/libcrypto.so.3.0.9")
+            Ok(Some(path)) => {
+                assert_eq!(path, "/usr/lib64/libcrypto.so.3.0.9", "path: {}", path.display());
+            }
         );
     }
 
@@ -1019,18 +1166,20 @@ mod tests {
     fn test_proc_map_with_multiple_lib_entries() {
         let proc_map_libs = ProcMap {
             pid: 0xdead,
-            data: br#"
+            data: b"
 7f372868000-7f3722869000	r--p	00000000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
 7f3722869000-7f372288f000	r-xp	00001000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
 7f372288f000-7f3722899000	r--p	00027000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
 7f3722899000-7f372289b000	r--p	00030000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
 7f372289b000-7f372289d000	rw-p	00032000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
-"#,
+",
         };
 
         assert_matches!(
             proc_map_libs.find_library_path_by_name(Path::new("ld-linux-x86-64.so.2")),
-            Ok(Some(path)) if path == Path::new("/usr/lib64/ld-linux-x86-64.so.2")
+            Ok(Some(path)) => {
+                assert_eq!(path, "/usr/lib64/ld-linux-x86-64.so.2", "path: {}", path.display());
+            }
         );
     }
 }

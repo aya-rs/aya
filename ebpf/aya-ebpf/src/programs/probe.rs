@@ -7,7 +7,7 @@ pub struct ProbeContext {
 }
 
 impl ProbeContext {
-    pub fn new(ctx: *mut c_void) -> Self {
+    pub const fn new(ctx: *mut c_void) -> Self {
         Self { regs: ctx.cast() }
     }
 

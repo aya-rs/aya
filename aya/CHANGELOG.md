@@ -7,21 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.13.2 (2025-11-17)
+
 ### Breaking Changes
 
- - Remove `AsyncPerfEventArray` and `AsyncPerfEventArrayBuffer` These types have been removed to
-   avoid maintaining support for multiple async runtimes. Use `PerfEventArrayBuffer`, which
-   implements `As{,Raw}Fd` for integration with async executors.
- - Rename `EbpfLoader::map_pin_path` to `EbpfLoader::default_map_pin_directory`.
- - Rename `EbpfLoader::set_global` to `EbpfLoader::override_global`.
- - Rename `EbpfLoader::set_max_entries` to `EbpfLoader::map_max_entries`.
+ - <csr-id-35332f2288b0bbb8981233ae464715ea9217b081/> Removed `AsyncPerfEventArray{,Buffer}` so Aya no longer needs to juggle multiple async runtimes. Use `PerfEventArrayBuffer`, which still implements `As{,Raw}Fd`, when integrating with an executor.
+ - <csr-id-1c924bb421dd731a7557ae4140f3bed7982894d2/> `EbpfLoader::map_pin_path` is now `EbpfLoader::default_map_pin_directory`, clarifying that the value represents a base directory.
+ - <csr-id-03e84871773e09badf08bdef8e83b4f1256850a4/> The loader’s `set_*` helpers were renamed to builder-style APIs (`override_global`/`map_max_entries`). Deprecated shims remain for one release to ease migration.
 
-### Other
+### New Features
 
- - Provide deprecated aliases to ease migration, these will be removed in a future release;
-    - `EbpfLoader::set_global` calls `EbpfLoader::override_global`, and
-    - `EbpfLoader::set_max_entries` calls `EbpfLoader::map_max_entries`.
- 
+ - <csr-id-bf2164c92f5280e8b9c7178b9cbf338931ce778d/>, <csr-id-119049f2a21045b4f990523ccc95265ef4233d41/> Added the iterator program type and auto-generated `take_link`/`detach` helpers so iterator programs can be loaded and detached like any other attachment.
+ - <csr-id-77b1c6194c8f9bb69ffc6a60c3b8189b73e00e8f/>, <csr-id-82aec2696394f953c886f146f02673753a94cb0d/> Added Flow Dissector program support, including ordered link attachment and full `FdLink` conversions for the new program type.
+ - <csr-id-263e864cd9e09848a9861a967763cf1069ae01c8/>, <csr-id-73a34e1571a606124c7e89ecf71ff001508643dc/>, <csr-id-5802dc7a23ac878105b55710df6c75cb5e030c3a/> Made pinned maps easier to manage with `Map::from_map_data()`, `XskMap::unset()`, and the ability to pick a custom map pin directory.
+ - <csr-id-7dba5a41ade97a3744c4cb71a22d7c81699a69e3/>, <csr-id-22c8f783e7d5dd2ddc8d973885e1895a6e842440/>, <csr-id-3f02127b6b16f618aa2ccb444fcd1402c887ffaf/> Exposed additional metadata and handles: `LinkInfo`/`loaded_links` are now public, program names can be `&'static str`, and ring buffers implement `AsFd`.
+ - <csr-id-23bc5b5836c3b8383f2f8a78bd3902e193a7a176/>, <csr-id-bd492860f585ad8b9612ef9c8addde2fb8d5e814/>, <csr-id-de42b80c74883f512542875e7cfa96b8634a8991/> Expanded and cached feature probing, reducing redundant syscalls and adding built-in support for `BPF_MAP_TYPE_SK_STORAGE`.
+ - <csr-id-d8f5497884a23bd63f9264dbe3f80081b76f360d/>, <csr-id-ab38afe95d16226f5a703bbb37c7842ee441c364/> Added `Ebpf::maps_disjoint_mut()` plus perf-event hardware breakpoint support to give loaders safer and more capable instrumentation hooks.
+
+### Bug Fixes
+
+ - <csr-id-39cf6c12f27f02c945e70efb24b89c1bc372aac0/> Netlink helpers now surface the kernel’s error message instead of returning opaque failures.
+ - <csr-id-9e1bcd0ab87f69bcd323eef680957a534b655fac/> Fixed `PerCpuHashMap::get()` returning `KeyNotFound` when CPU slots were missing; Flow Dissector links now always convert into `FdLink` thanks to <csr-id-82aec2696394f953c886f146f02673753a94cb0d/>.
+ - <csr-id-17171647f7e447698f0d4733a3dbb144ded53466/> Stabilised ring-buffer producer tracking so first events are no longer dropped, and `/proc/$pid/maps` parsing now tolerates trailing newlines (<csr-id-ea76e0f62dbdff618789dfc9a9d8604a89f61f13/>, <csr-id-4fbce44b6a49dd189a7a3520c66db45baf3832ea/>).
+ - <csr-id-f48b5a4a84a858dd3a24101a83a3b03c314f1c5c/>, <csr-id-ab182be622acb245db0adef58591978208bcdb2c/> Map names are forced to be NULL-terminated and `construct_debuglink_path()` no longer fails due to missing components.
+
+### Maintenance
+
+ - <csr-id-f6df60fa7072dfd7cfb09d0bc3bb1dad0f965940/>, <csr-id-055e36e8d92c79c1a9cf61f1a08d2d9be4e74d14/>, <csr-id-de1e80c1d1bab7fd73acc97e5adb0985712c35c7/> Documented the exact bpf/perf syscall contracts inside Aya and automatically raise `RLIMIT_MEMLOCK` on kernels <5.11 to smooth out program loading.
+ - Continued to invest in documentation, resolver clean-ups, and lint/clippy hygiene across the crate so day-to-day maintenance stays manageable.
+
 ## 0.13.1 (2024-11-01)
 
 ### Chore

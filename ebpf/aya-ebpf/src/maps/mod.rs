@@ -1,8 +1,78 @@
-#[repr(u32)]
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub(crate) enum PinningType {
-    None = 0,
-    ByName = 1,
+pub(crate) mod def {
+    use core::cell::UnsafeCell;
+
+    use aya_ebpf_cty::c_void;
+
+    use crate::bindings::bpf_map_def;
+
+    #[repr(u32)]
+    pub(crate) enum PinningType {
+        None = 0,
+        ByName = 1,
+    }
+
+    #[repr(transparent)]
+    pub(crate) struct MapDef(UnsafeCell<bpf_map_def>);
+
+    unsafe impl Sync for MapDef {}
+
+    impl MapDef {
+        pub(crate) const fn new<K, V>(
+            type_: u32,
+            max_entries: u32,
+            map_flags: u32,
+            pinning: PinningType,
+        ) -> Self {
+            let key_size = size_of::<K>() as u32;
+            let value_size = size_of::<V>() as u32;
+            Self(UnsafeCell::new(bpf_map_def {
+                type_,
+                key_size,
+                value_size,
+                max_entries,
+                map_flags,
+                id: 0,
+                pinning: pinning as u32,
+            }))
+        }
+
+        pub(crate) const fn as_ptr(&self) -> *mut c_void {
+            self.0.get().cast()
+        }
+    }
+}
+
+pub(crate) use def::{MapDef, PinningType};
+
+macro_rules! map_constructors {
+    (
+        $key:ty,
+        $value:ty,
+        $map_type:expr
+        $(, extra_flags $extra_flags:expr)?
+        $(, phantom $phantom:ident)?
+        $(, with_docs { $($with_doc:tt)* })?
+        $(, pinned_docs { $($pinned_doc:tt)* })?
+        $(,)?
+    ) => {
+        $($($with_doc)*)?
+        pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
+            Self::new(max_entries, flags, PinningType::None)
+        }
+
+        $($($pinned_doc)*)?
+        pub const fn pinned(max_entries: u32, flags: u32) -> Self {
+            Self::new(max_entries, flags, PinningType::ByName)
+        }
+
+        const fn new(max_entries: u32, flags: u32, pinning: PinningType) -> Self {
+            $(let flags = flags | $extra_flags;)?
+            Self {
+                def: MapDef::new::<$key, $value>($map_type, max_entries, flags, pinning),
+                $($phantom: core::marker::PhantomData,)?
+            }
+        }
+    };
 }
 
 pub mod array;

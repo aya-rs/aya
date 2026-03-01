@@ -1,54 +1,58 @@
 //! Map struct and type bindings.
 
 use alloc::vec::Vec;
-use core::mem;
 
-use crate::{EbpfSectionKind, InvalidTypeBinding};
+use crate::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type};
 
-impl TryFrom<u32> for crate::generated::bpf_map_type {
+impl TryFrom<u32> for bpf_map_type {
     type Error = InvalidTypeBinding<u32>;
 
     fn try_from(map_type: u32) -> Result<Self, Self::Error> {
-        use crate::generated::bpf_map_type::*;
         Ok(match map_type {
-            x if x == BPF_MAP_TYPE_UNSPEC as u32 => BPF_MAP_TYPE_UNSPEC,
-            x if x == BPF_MAP_TYPE_HASH as u32 => BPF_MAP_TYPE_HASH,
-            x if x == BPF_MAP_TYPE_ARRAY as u32 => BPF_MAP_TYPE_ARRAY,
-            x if x == BPF_MAP_TYPE_PROG_ARRAY as u32 => BPF_MAP_TYPE_PROG_ARRAY,
-            x if x == BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 => BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-            x if x == BPF_MAP_TYPE_PERCPU_HASH as u32 => BPF_MAP_TYPE_PERCPU_HASH,
-            x if x == BPF_MAP_TYPE_PERCPU_ARRAY as u32 => BPF_MAP_TYPE_PERCPU_ARRAY,
-            x if x == BPF_MAP_TYPE_STACK_TRACE as u32 => BPF_MAP_TYPE_STACK_TRACE,
-            x if x == BPF_MAP_TYPE_CGROUP_ARRAY as u32 => BPF_MAP_TYPE_CGROUP_ARRAY,
-            x if x == BPF_MAP_TYPE_LRU_HASH as u32 => BPF_MAP_TYPE_LRU_HASH,
-            x if x == BPF_MAP_TYPE_LRU_PERCPU_HASH as u32 => BPF_MAP_TYPE_LRU_PERCPU_HASH,
-            x if x == BPF_MAP_TYPE_LPM_TRIE as u32 => BPF_MAP_TYPE_LPM_TRIE,
-            x if x == BPF_MAP_TYPE_ARRAY_OF_MAPS as u32 => BPF_MAP_TYPE_ARRAY_OF_MAPS,
-            x if x == BPF_MAP_TYPE_HASH_OF_MAPS as u32 => BPF_MAP_TYPE_HASH_OF_MAPS,
-            x if x == BPF_MAP_TYPE_DEVMAP as u32 => BPF_MAP_TYPE_DEVMAP,
-            x if x == BPF_MAP_TYPE_SOCKMAP as u32 => BPF_MAP_TYPE_SOCKMAP,
-            x if x == BPF_MAP_TYPE_CPUMAP as u32 => BPF_MAP_TYPE_CPUMAP,
-            x if x == BPF_MAP_TYPE_XSKMAP as u32 => BPF_MAP_TYPE_XSKMAP,
-            x if x == BPF_MAP_TYPE_SOCKHASH as u32 => BPF_MAP_TYPE_SOCKHASH,
-            x if x == BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED as u32 => {
-                BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED
+            x if x == Self::BPF_MAP_TYPE_UNSPEC as u32 => Self::BPF_MAP_TYPE_UNSPEC,
+            x if x == Self::BPF_MAP_TYPE_HASH as u32 => Self::BPF_MAP_TYPE_HASH,
+            x if x == Self::BPF_MAP_TYPE_ARRAY as u32 => Self::BPF_MAP_TYPE_ARRAY,
+            x if x == Self::BPF_MAP_TYPE_PROG_ARRAY as u32 => Self::BPF_MAP_TYPE_PROG_ARRAY,
+            x if x == Self::BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 => {
+                Self::BPF_MAP_TYPE_PERF_EVENT_ARRAY
             }
-            x if x == BPF_MAP_TYPE_REUSEPORT_SOCKARRAY as u32 => BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
-            x if x == BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED as u32 => {
-                BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED
+            x if x == Self::BPF_MAP_TYPE_PERCPU_HASH as u32 => Self::BPF_MAP_TYPE_PERCPU_HASH,
+            x if x == Self::BPF_MAP_TYPE_PERCPU_ARRAY as u32 => Self::BPF_MAP_TYPE_PERCPU_ARRAY,
+            x if x == Self::BPF_MAP_TYPE_STACK_TRACE as u32 => Self::BPF_MAP_TYPE_STACK_TRACE,
+            x if x == Self::BPF_MAP_TYPE_CGROUP_ARRAY as u32 => Self::BPF_MAP_TYPE_CGROUP_ARRAY,
+            x if x == Self::BPF_MAP_TYPE_LRU_HASH as u32 => Self::BPF_MAP_TYPE_LRU_HASH,
+            x if x == Self::BPF_MAP_TYPE_LRU_PERCPU_HASH as u32 => {
+                Self::BPF_MAP_TYPE_LRU_PERCPU_HASH
             }
-            x if x == BPF_MAP_TYPE_QUEUE as u32 => BPF_MAP_TYPE_QUEUE,
-            x if x == BPF_MAP_TYPE_STACK as u32 => BPF_MAP_TYPE_STACK,
-            x if x == BPF_MAP_TYPE_SK_STORAGE as u32 => BPF_MAP_TYPE_SK_STORAGE,
-            x if x == BPF_MAP_TYPE_DEVMAP_HASH as u32 => BPF_MAP_TYPE_DEVMAP_HASH,
-            x if x == BPF_MAP_TYPE_STRUCT_OPS as u32 => BPF_MAP_TYPE_STRUCT_OPS,
-            x if x == BPF_MAP_TYPE_RINGBUF as u32 => BPF_MAP_TYPE_RINGBUF,
-            x if x == BPF_MAP_TYPE_INODE_STORAGE as u32 => BPF_MAP_TYPE_INODE_STORAGE,
-            x if x == BPF_MAP_TYPE_TASK_STORAGE as u32 => BPF_MAP_TYPE_TASK_STORAGE,
-            x if x == BPF_MAP_TYPE_BLOOM_FILTER as u32 => BPF_MAP_TYPE_BLOOM_FILTER,
-            x if x == BPF_MAP_TYPE_USER_RINGBUF as u32 => BPF_MAP_TYPE_USER_RINGBUF,
-            x if x == BPF_MAP_TYPE_CGRP_STORAGE as u32 => BPF_MAP_TYPE_CGRP_STORAGE,
-            x if x == BPF_MAP_TYPE_ARENA as u32 => BPF_MAP_TYPE_ARENA,
+            x if x == Self::BPF_MAP_TYPE_LPM_TRIE as u32 => Self::BPF_MAP_TYPE_LPM_TRIE,
+            x if x == Self::BPF_MAP_TYPE_ARRAY_OF_MAPS as u32 => Self::BPF_MAP_TYPE_ARRAY_OF_MAPS,
+            x if x == Self::BPF_MAP_TYPE_HASH_OF_MAPS as u32 => Self::BPF_MAP_TYPE_HASH_OF_MAPS,
+            x if x == Self::BPF_MAP_TYPE_DEVMAP as u32 => Self::BPF_MAP_TYPE_DEVMAP,
+            x if x == Self::BPF_MAP_TYPE_SOCKMAP as u32 => Self::BPF_MAP_TYPE_SOCKMAP,
+            x if x == Self::BPF_MAP_TYPE_CPUMAP as u32 => Self::BPF_MAP_TYPE_CPUMAP,
+            x if x == Self::BPF_MAP_TYPE_XSKMAP as u32 => Self::BPF_MAP_TYPE_XSKMAP,
+            x if x == Self::BPF_MAP_TYPE_SOCKHASH as u32 => Self::BPF_MAP_TYPE_SOCKHASH,
+            x if x == Self::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED as u32 => {
+                Self::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED
+            }
+            x if x == Self::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY as u32 => {
+                Self::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY
+            }
+            x if x == Self::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED as u32 => {
+                Self::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED
+            }
+            x if x == Self::BPF_MAP_TYPE_QUEUE as u32 => Self::BPF_MAP_TYPE_QUEUE,
+            x if x == Self::BPF_MAP_TYPE_STACK as u32 => Self::BPF_MAP_TYPE_STACK,
+            x if x == Self::BPF_MAP_TYPE_SK_STORAGE as u32 => Self::BPF_MAP_TYPE_SK_STORAGE,
+            x if x == Self::BPF_MAP_TYPE_DEVMAP_HASH as u32 => Self::BPF_MAP_TYPE_DEVMAP_HASH,
+            x if x == Self::BPF_MAP_TYPE_STRUCT_OPS as u32 => Self::BPF_MAP_TYPE_STRUCT_OPS,
+            x if x == Self::BPF_MAP_TYPE_RINGBUF as u32 => Self::BPF_MAP_TYPE_RINGBUF,
+            x if x == Self::BPF_MAP_TYPE_INODE_STORAGE as u32 => Self::BPF_MAP_TYPE_INODE_STORAGE,
+            x if x == Self::BPF_MAP_TYPE_TASK_STORAGE as u32 => Self::BPF_MAP_TYPE_TASK_STORAGE,
+            x if x == Self::BPF_MAP_TYPE_BLOOM_FILTER as u32 => Self::BPF_MAP_TYPE_BLOOM_FILTER,
+            x if x == Self::BPF_MAP_TYPE_USER_RINGBUF as u32 => Self::BPF_MAP_TYPE_USER_RINGBUF,
+            x if x == Self::BPF_MAP_TYPE_CGRP_STORAGE as u32 => Self::BPF_MAP_TYPE_CGRP_STORAGE,
+            x if x == Self::BPF_MAP_TYPE_ARENA as u32 => Self::BPF_MAP_TYPE_ARENA,
             _ => return Err(InvalidTypeBinding { value: map_type }),
         })
     }
@@ -83,7 +87,7 @@ pub enum PinningType {
     ByName = 1,
 }
 
-/// The error type returned when failing to parse a [PinningType]
+/// The error type returned when failing to parse a [`PinningType`].
 #[derive(Debug, thiserror::Error)]
 pub enum PinningError {
     /// Unsupported pinning type
@@ -113,7 +117,7 @@ pub struct bpf_map_def {
     // minimum features required by old BPF programs
     /// The map type
     pub map_type: u32,
-    /// The key_size
+    /// The key size
     pub key_size: u32,
     /// The value size
     pub value_size: u32,
@@ -129,7 +133,7 @@ pub struct bpf_map_def {
 }
 
 /// The first five __u32 of `bpf_map_def` must be defined.
-pub(crate) const MINIMUM_MAP_SIZE: usize = mem::size_of::<u32>() * 5;
+pub(crate) const MINIMUM_MAP_SIZE: usize = size_of::<u32>() * 5;
 
 /// Map data defined in `maps` or `.maps` sections
 #[derive(Debug, Clone)]
@@ -142,7 +146,7 @@ pub enum Map {
 
 impl Map {
     /// Returns the map type
-    pub fn map_type(&self) -> u32 {
+    pub const fn map_type(&self) -> u32 {
         match self {
             Self::Legacy(m) => m.def.map_type,
             Self::Btf(m) => m.def.map_type,
@@ -150,7 +154,7 @@ impl Map {
     }
 
     /// Returns the key size in bytes
-    pub fn key_size(&self) -> u32 {
+    pub const fn key_size(&self) -> u32 {
         match self {
             Self::Legacy(m) => m.def.key_size,
             Self::Btf(m) => m.def.key_size,
@@ -158,7 +162,7 @@ impl Map {
     }
 
     /// Returns the value size in bytes
-    pub fn value_size(&self) -> u32 {
+    pub const fn value_size(&self) -> u32 {
         match self {
             Self::Legacy(m) => m.def.value_size,
             Self::Btf(m) => m.def.value_size,
@@ -166,7 +170,7 @@ impl Map {
     }
 
     /// Set the value size in bytes
-    pub fn set_value_size(&mut self, size: u32) {
+    pub const fn set_value_size(&mut self, size: u32) {
         match self {
             Self::Legacy(m) => m.def.value_size = size,
             Self::Btf(m) => m.def.value_size = size,
@@ -174,7 +178,7 @@ impl Map {
     }
 
     /// Returns the max entry number
-    pub fn max_entries(&self) -> u32 {
+    pub const fn max_entries(&self) -> u32 {
         match self {
             Self::Legacy(m) => m.def.max_entries,
             Self::Btf(m) => m.def.max_entries,
@@ -182,7 +186,7 @@ impl Map {
     }
 
     /// Sets the max entry number
-    pub fn set_max_entries(&mut self, v: u32) {
+    pub const fn set_max_entries(&mut self, v: u32) {
         match self {
             Self::Legacy(m) => m.def.max_entries = v,
             Self::Btf(m) => m.def.max_entries = v,
@@ -190,7 +194,7 @@ impl Map {
     }
 
     /// Returns the map flags
-    pub fn map_flags(&self) -> u32 {
+    pub const fn map_flags(&self) -> u32 {
         match self {
             Self::Legacy(m) => m.def.map_flags,
             Self::Btf(m) => m.def.map_flags,
@@ -198,7 +202,7 @@ impl Map {
     }
 
     /// Returns the pinning type of the map
-    pub fn pinning(&self) -> PinningType {
+    pub const fn pinning(&self) -> PinningType {
         match self {
             Self::Legacy(m) => m.def.pinning,
             Self::Btf(m) => m.def.pinning,
@@ -222,7 +226,7 @@ impl Map {
     }
 
     /// Returns the section index
-    pub fn section_index(&self) -> usize {
+    pub const fn section_index(&self) -> usize {
         match self {
             Self::Legacy(m) => m.section_index,
             Self::Btf(m) => m.section_index,
@@ -230,7 +234,7 @@ impl Map {
     }
 
     /// Returns the section kind.
-    pub fn section_kind(&self) -> EbpfSectionKind {
+    pub const fn section_kind(&self) -> EbpfSectionKind {
         match self {
             Self::Legacy(m) => m.section_kind,
             Self::Btf(_) => EbpfSectionKind::BtfMaps,
@@ -241,7 +245,7 @@ impl Map {
     ///
     /// This is `None` for data maps (.bss, .data and .rodata) since those don't
     /// need symbols in order to be relocated.
-    pub fn symbol_index(&self) -> Option<usize> {
+    pub const fn symbol_index(&self) -> Option<usize> {
         match self {
             Self::Legacy(m) => m.symbol_index,
             Self::Btf(m) => Some(m.symbol_index),

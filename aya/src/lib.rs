@@ -76,24 +76,24 @@ impl MockableFd {
     }
 
     #[cfg(not(test))]
-    fn from_fd(fd: OwnedFd) -> Self {
+    const fn from_fd(fd: OwnedFd) -> Self {
         Self { fd }
     }
 
     #[cfg(test)]
-    fn from_fd(fd: OwnedFd) -> Self {
+    const fn from_fd(fd: OwnedFd) -> Self {
         let fd = Some(fd);
         Self { fd }
     }
 
     #[cfg(not(test))]
-    fn inner(&self) -> &OwnedFd {
+    const fn inner(&self) -> &OwnedFd {
         let Self { fd } = self;
         fd
     }
 
     #[cfg(test)]
-    fn inner(&self) -> &OwnedFd {
+    const fn inner(&self) -> &OwnedFd {
         let Self { fd } = self;
         fd.as_ref().unwrap()
     }
@@ -147,14 +147,14 @@ impl FromRawFd for MockableFd {
 #[cfg(test)]
 impl Drop for MockableFd {
     fn drop(&mut self) {
-        use std::os::fd::AsRawFd as _;
+        use std::os::fd::{AsRawFd as _, IntoRawFd as _};
 
         let Self { fd } = self;
         let fd = fd.take().unwrap();
         if fd.as_raw_fd() < Self::mock_signed_fd() {
-            std::mem::drop(fd)
+            drop(fd)
         } else {
-            std::mem::forget(fd)
+            let _raw_fd = fd.into_raw_fd();
         }
     }
 }

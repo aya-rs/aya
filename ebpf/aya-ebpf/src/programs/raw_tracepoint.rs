@@ -7,7 +7,7 @@ pub struct RawTracePointContext {
 }
 
 impl RawTracePointContext {
-    pub fn new(ctx: *mut c_void) -> Self {
+    pub const fn new(ctx: *mut c_void) -> Self {
         Self { ctx: ctx.cast() }
     }
 

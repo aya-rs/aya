@@ -1,7 +1,7 @@
 [package]
 description = "Proc macros used by aya-ebpf"
 name = "aya-ebpf-macros"
-version = "0.1.1"
+version = "0.1.2"
 
 authors.workspace = true
 edition.workspace = true

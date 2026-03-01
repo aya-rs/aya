@@ -73,7 +73,7 @@ impl Lsm {
 
     /// Attaches the program.
     ///
-    /// The returned value can be used to detach, see [Lsm::detach].
+    /// The returned value can be used to detach, see [`Lsm::detach`].
     pub fn attach(&mut self) -> Result<LsmLinkId, ProgramError> {
         attach_raw_tracepoint(&mut self.data, None)
     }

@@ -1,7 +1,7 @@
 [package]
 description = "Logging for eBPF programs"
 name = "aya-log-ebpf"
-version = "0.1.1"
+version = "0.1.2"
 
 authors.workspace = true
 edition.workspace = true
@@ -14,6 +14,6 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-aya-ebpf = { version = "^0.1.1", path = "../aya-ebpf" }
-aya-log-common = { version = "^0.1.15", path = "../../aya-log-common" }
-aya-log-ebpf-macros = { version = "^0.1.0", path = "../../aya-log-ebpf-macros" }
+aya-ebpf = { version = "^0.1.2", path = "../aya-ebpf" }
+aya-log-common = { version = "^0.1.16", path = "../../aya-log-common" }
+aya-log-ebpf-macros = { version = "^0.1.1", path = "../../aya-log-ebpf-macros" }

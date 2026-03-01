@@ -7,10 +7,10 @@ use aya_ebpf::{macros::tracepoint, programs::TracePointContext};
 extern crate ebpf_panic;
 
 #[tracepoint]
-fn test_tracepoint_one(_ctx: TracePointContext) -> u32 {
+const fn test_tracepoint_one(_ctx: TracePointContext) -> u32 {
     0
 }
 #[tracepoint]
-fn test_tracepoint_two(_ctx: TracePointContext) -> u32 {
+const fn test_tracepoint_two(_ctx: TracePointContext) -> u32 {
     0
 }

@@ -102,6 +102,15 @@ impl<T: Borrow<MapData>> DevMapHash<T> {
     }
 }
 
+impl<'a, T: Borrow<MapData>> IntoIterator for &'a DevMapHash<T> {
+    type Item = Result<(u32, DevMapValue), MapError>;
+    type IntoIter = MapIter<'a, u32, DevMapValue, DevMapHash<T>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
 impl<T: BorrowMut<MapData>> DevMapHash<T> {
     /// Inserts an ifindex and optionally a chained program in the map.
     ///

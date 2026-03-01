@@ -10,12 +10,14 @@ on:
 
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   codegen:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -40,14 +42,14 @@ jobs:
         working-directory: xtask/libbpf
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - uses: peter-evans/create-pull-request@v7
+      - uses: peter-evans/create-pull-request@v8
         if: ${{ github.repository == 'aya-rs/aya' }}
         with:
           # GitHub actions aren't allowed to trigger other actions to prevent
           # abuse; the canonical workaround is to use a sufficiently authorized
           # token.
           #
-          # See https://github.com/peter-evans/create-pull-request/issues/48.
+          # See https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#workarounds-to-trigger-further-workflow-runs.
           token: ${{ secrets.CRABBY_GITHUB_TOKEN }}
           branch: create-pull-request/codegen
           commit-message: |

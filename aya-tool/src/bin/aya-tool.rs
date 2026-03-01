@@ -1,6 +1,6 @@
 #![expect(unused_crate_dependencies, reason = "used in lib")]
 
-use std::{path::PathBuf, process::exit};
+use std::path::PathBuf;
 
 use aya_tool::generate::{InputFile, generate};
 use clap::Parser;
@@ -27,30 +27,24 @@ enum Command {
     },
 }
 
-fn main() {
-    if let Err(e) = try_main() {
-        eprintln!("{e:#}");
-        exit(1);
-    }
-}
+fn main() -> Result<(), anyhow::Error> {
+    use std::io::Write as _;
 
-fn try_main() -> Result<(), anyhow::Error> {
-    let opts = Options::parse();
-    match opts.command {
+    let Options { command } = Parser::parse();
+    let bindings = match command {
         Command::Generate {
             btf,
             header,
             names,
             bindgen_args,
         } => {
-            let bindings: String = if let Some(header) = header {
-                generate(InputFile::Header(header), &names, &bindgen_args)?
+            if let Some(header) = header {
+                generate(InputFile::Header(header), &names, &bindgen_args)
             } else {
-                generate(InputFile::Btf(btf), &names, &bindgen_args)?
-            };
-            println!("{bindings}");
+                generate(InputFile::Btf(btf), &names, &bindgen_args)
+            }
         }
-    };
-
+    }?;
+    std::io::stdout().write_all(bindings.as_bytes())?;
     Ok(())
 }

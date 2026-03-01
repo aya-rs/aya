@@ -10,14 +10,23 @@
 )]
 #![cfg_attr(
     generic_const_exprs,
-    expect(incomplete_features),
-    expect(unstable_features),
+    expect(
+        incomplete_features,
+        reason = "generic_const_exprs requires incomplete features"
+    ),
+    expect(
+        unstable_features,
+        reason = "generic_const_exprs requires unstable features"
+    ),
     feature(generic_const_exprs)
 )]
 #![cfg_attr(
     target_arch = "bpf",
     expect(unused_crate_dependencies, reason = "compiler_builtins"),
-    expect(unstable_features),
+    expect(
+        unstable_features,
+        reason = "asm_experimental_arch requires unstable features"
+    ),
     feature(asm_experimental_arch)
 )]
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
@@ -25,18 +34,26 @@
 
 mod args;
 pub mod bindings;
+#[cfg(generic_const_exprs)]
+mod const_assert;
 pub use args::Argument;
 pub mod btf_maps;
-#[expect(clippy::missing_safety_doc)]
+#[expect(
+    clippy::missing_safety_doc,
+    reason = "helpers mirror kernel helpers with implicit safety contracts"
+)]
 pub mod helpers;
 pub mod maps;
 pub mod programs;
 
-use core::ptr::{self, NonNull};
+use core::{
+    mem::MaybeUninit,
+    ptr::{self, NonNull},
+};
 
 pub use aya_ebpf_cty as cty;
 pub use aya_ebpf_macros as macros;
-use cty::{c_long, c_void};
+use cty::c_void;
 use helpers::{
     bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid, bpf_map_delete_elem,
     bpf_map_lookup_elem, bpf_map_update_elem,
@@ -48,7 +65,7 @@ pub trait EbpfContext {
     fn as_ptr(&self) -> *mut c_void;
 
     #[inline]
-    fn command(&self) -> Result<[u8; TASK_COMM_LEN], c_long> {
+    fn command(&self) -> Result<[u8; TASK_COMM_LEN], i32> {
         bpf_get_current_comm()
     }
 
@@ -74,7 +91,7 @@ mod intrinsics {
 
     #[unsafe(no_mangle)]
     unsafe extern "C" fn memset(s: *mut u8, c: c_int, n: usize) {
-        #[expect(clippy::cast_sign_loss)]
+        #[expect(clippy::cast_sign_loss, reason = "architecture-specific")]
         let b = c as u8;
         for i in 0..n {
             unsafe { *s.add(i) = b }
@@ -132,36 +149,84 @@ pub fn check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool {
         in_bounds == 1
     }
     // We only need this for doc tests which are compiled for the host target
+    #[expect(clippy::unreachable, reason = "only used for doc tests")]
     #[cfg(not(target_arch = "bpf"))]
     {
-        let _ = value;
-        let _ = lower;
-        let _ = upper;
-        unimplemented!()
+        unreachable!("value={value} lower={lower} upper={upper}");
     }
 }
 
 #[inline]
-fn insert<K, V>(def: *mut c_void, key: &K, value: &V, flags: u64) -> Result<(), c_long> {
+fn insert<K, V>(def: *mut c_void, key: &K, value: &V, flags: u64) -> Result<(), i32> {
     let key = ptr::from_ref(key);
     let value = ptr::from_ref(value);
-    match unsafe { bpf_map_update_elem(def.cast(), key.cast(), value.cast(), flags) } {
+    match unsafe { bpf_map_update_elem(def, key.cast(), value.cast(), flags) } {
         0 => Ok(()),
-        ret => Err(ret),
+        ret => Err(ret as i32),
     }
 }
 
 #[inline]
-fn remove<K>(def: *mut c_void, key: &K) -> Result<(), c_long> {
+fn remove<K>(def: *mut c_void, key: &K) -> Result<(), i32> {
     let key = ptr::from_ref(key);
-    match unsafe { bpf_map_delete_elem(def.cast(), key.cast()) } {
+    match unsafe { bpf_map_delete_elem(def, key.cast()) } {
         0 => Ok(()),
-        ret => Err(ret),
+        ret => Err(ret as i32),
     }
 }
 
 #[inline]
 fn lookup<K, V>(def: *mut c_void, key: &K) -> Option<NonNull<V>> {
     let key = ptr::from_ref(key);
-    NonNull::new(unsafe { bpf_map_lookup_elem(def.cast(), key.cast()) }.cast())
+    NonNull::new(unsafe { bpf_map_lookup_elem(def, key.cast()) }.cast())
+}
+
+/// A read-only global value that may be initialized by the loader.
+///
+/// Prefer using this to a plain `static` variable to avoid compiler optimizations eliding reads.
+///
+/// Use `EbpfLoader::override_global` to override the value at load time from userspace.
+/// # Example
+/// ```
+/// # use aya_ebpf::EbpfGlobal;
+/// #[unsafe(no_mangle)]
+/// static VERSION: EbpfGlobal<i32> = EbpfGlobal::new(0);
+///
+/// # fn loadit() {
+/// let version = VERSION.load();
+/// # }
+/// ```
+#[repr(transparent)]
+pub struct EbpfGlobal<T> {
+    // `MaybeUninit` is used to inhibit compiler analysis and optimizations that may
+    // cause unexpected behavior; in reality, this value is always be initialized with a valid `T`.
+    value: MaybeUninit<T>,
+}
+
+impl<T> EbpfGlobal<T> {
+    /// Returns a new [`EbpfGlobal`] which may be overridden at load
+    /// time by the loader.
+    pub const fn new(value: T) -> Self {
+        Self {
+            value: MaybeUninit::new(value),
+        }
+    }
+}
+
+impl<T: Default> Default for EbpfGlobal<T> {
+    fn default() -> Self {
+        Self::new(T::default())
+    }
+}
+
+impl<T> EbpfGlobal<T>
+where
+    T: Copy,
+{
+    /// Load the contents of this global variable. Internally, uses a [volatile read](ptr::read_volatile) to avoid
+    /// compiler optimizations reordering/removing loads (as would normally be done for a read-only static).
+    #[inline]
+    pub fn load(&self) -> T {
+        unsafe { ptr::read_volatile(self.value.as_ptr()) }
+    }
 }

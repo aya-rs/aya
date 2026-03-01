@@ -27,7 +27,7 @@ cargo xtask integration-test local
 ### Virtualized
 
 ```bash
-cargo xtask integration-test vm --cache-dir <CACHE_DIR> <KERNEL_IMAGE>...
+cargo xtask integration-test vm --cache-dir <CACHE_DIR> <KERNEL_ARCHIVES>...
 ```
 
 ### Writing an integration test

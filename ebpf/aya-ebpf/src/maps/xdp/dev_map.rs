@@ -1,12 +1,12 @@
-use core::{cell::UnsafeCell, mem, num::NonZeroU32};
+use core::num::NonZeroU32;
 
 use aya_ebpf_bindings::bindings::bpf_devmap_val;
 
 use super::try_redirect_map;
 use crate::{
-    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_DEVMAP},
+    bindings::bpf_map_type::BPF_MAP_TYPE_DEVMAP,
     lookup,
-    maps::PinningType,
+    maps::{MapDef, PinningType},
 };
 
 /// An array of network devices.
@@ -32,60 +32,40 @@ use crate::{
 /// ```
 #[repr(transparent)]
 pub struct DevMap {
-    def: UnsafeCell<bpf_map_def>,
+    def: MapDef,
 }
 
-unsafe impl Sync for DevMap {}
-
 impl DevMap {
-    /// Creates a [`DevMap`] with a set maximum number of elements.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// use aya_ebpf::{macros::map, maps::DevMap};
-    ///
-    /// #[map]
-    /// static MAP: DevMap = DevMap::with_max_entries(8, 0);
-    /// ```
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> Self {
-        Self {
-            def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_DEVMAP,
-                key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<bpf_devmap_val>() as u32,
-                max_entries,
-                map_flags: flags,
-                id: 0,
-                pinning: PinningType::None as u32,
-            }),
-        }
-    }
-
-    /// Creates a [`DevMap`] with a set maximum number of elements that can be pinned to the BPF
-    /// File System (bpffs).
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// use aya_ebpf::{macros::map, maps::DevMap};
-    ///
-    /// #[map]
-    /// static MAP: DevMap = DevMap::pinned(8, 0);
-    /// ```
-    pub const fn pinned(max_entries: u32, flags: u32) -> Self {
-        Self {
-            def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_DEVMAP,
-                key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<bpf_devmap_val>() as u32,
-                max_entries,
-                map_flags: flags,
-                id: 0,
-                pinning: PinningType::ByName as u32,
-            }),
-        }
-    }
+    map_constructors!(
+        u32,
+        bpf_devmap_val,
+        BPF_MAP_TYPE_DEVMAP,
+        with_docs {
+            /// Creates a [`DevMap`] with a set maximum number of elements.
+            ///
+            /// # Examples
+            ///
+            /// ```rust,no_run
+            /// use aya_ebpf::{macros::map, maps::DevMap};
+            ///
+            /// #[map]
+            /// static MAP: DevMap = DevMap::with_max_entries(8, 0);
+            /// ```
+        },
+        pinned_docs {
+            /// Creates a [`DevMap`] with a set maximum number of elements that can be pinned to
+            /// the BPF File System (bpffs).
+            ///
+            /// # Examples
+            ///
+            /// ```rust,no_run
+            /// use aya_ebpf::{macros::map, maps::DevMap};
+            ///
+            /// #[map]
+            /// static MAP: DevMap = DevMap::pinned(8, 0);
+            /// ```
+        },
+    );
 
     /// Retrieves the interface index at `index` in the array.
     ///
@@ -105,7 +85,7 @@ impl DevMap {
     /// ```
     #[inline(always)]
     pub fn get(&self, index: u32) -> Option<DevMapValue> {
-        let value = lookup(self.def.get().cast(), &index)?;
+        let value = lookup(self.def.as_ptr(), &index)?;
         let value: &bpf_devmap_val = unsafe { value.as_ref() };
         Some(DevMapValue {
             if_index: value.ifindex,
@@ -135,11 +115,15 @@ impl DevMap {
     /// ```
     #[inline(always)]
     pub fn redirect(&self, index: u32, flags: u64) -> Result<u32, u32> {
-        try_redirect_map(&self.def, index, flags)
+        try_redirect_map(self.def.as_ptr(), index, flags)
     }
 }
 
 #[derive(Clone, Copy)]
+#[expect(
+    unnameable_types,
+    reason = "this value type is exposed via the map API, not by path"
+)]
 /// The value of a device map.
 pub struct DevMapValue {
     /// Target interface index to redirect to.

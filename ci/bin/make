@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+
+set -eux
+
+# Wrapper to override AR/RANLIB for cross-compilation from macOS to Linux musl.
+# zlib's configure sets AR=libtool on Darwin (Mach-O format, not ELF).
+# See https://github.com/madler/zlib/issues/331
+exec /usr/bin/make AR=x86_64-linux-musl-ar ARFLAGS=rcs RANLIB=x86_64-linux-musl-ranlib "$@"

@@ -9,7 +9,7 @@ extern crate ebpf_panic;
 macro_rules! probe {
     ($name:ident, ($($arg:ident $(= $value:literal)?),*) ) => {
         #[xdp($($arg $(= $value)?),*)]
-        fn $name(_ctx: XdpContext) -> u32 {
+        const fn $name(_ctx: XdpContext) -> u32 {
             XDP_PASS
         }
     };

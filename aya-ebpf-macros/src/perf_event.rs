@@ -29,7 +29,7 @@ impl PerfEvent {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "perf_event")]
             #vis fn #fn_name(ctx: *mut ::core::ffi::c_void) -> u32 {
-               let _ = #fn_name(::aya_ebpf::programs::PerfEventContext::new(ctx));
+               let _ = #fn_name(::aya_ebpf::programs::PerfEventContext::new(ctx.cast()));
                return 0;
 
                #item
@@ -60,7 +60,7 @@ mod tests {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "perf_event")]
             fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-               let _ = foo(::aya_ebpf::programs::PerfEventContext::new(ctx));
+               let _ = foo(::aya_ebpf::programs::PerfEventContext::new(ctx.cast()));
                return 0;
 
                fn foo(ctx: PerfEventContext) -> i32 {

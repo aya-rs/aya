@@ -8,6 +8,6 @@ extern crate ebpf_panic;
 
 // Introduced in kernel v3.19.
 #[socket_filter]
-fn simple_prog(_ctx: SkBuffContext) -> i64 {
+const fn simple_prog(_ctx: SkBuffContext) -> i64 {
     0
 }

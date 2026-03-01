@@ -5,7 +5,7 @@ use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
 use syn::{ItemFn, spanned::Spanned as _};
 
-use crate::args::{err_on_unknown_args, pop_bool_arg, pop_string_arg};
+use crate::args::Args;
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) enum UProbeKind {
@@ -15,10 +15,9 @@ pub(crate) enum UProbeKind {
 
 impl std::fmt::Display for UProbeKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use UProbeKind::*;
         match self {
-            UProbe => write!(f, "uprobe"),
-            URetProbe => write!(f, "uretprobe"),
+            Self::UProbe => write!(f, "uprobe"),
+            Self::URetProbe => write!(f, "uretprobe"),
         }
     }
 }
@@ -40,22 +39,23 @@ impl UProbe {
     ) -> Result<Self, Diagnostic> {
         let item = syn::parse2(item)?;
         let span = attrs.span();
-        let mut args = syn::parse2(attrs)?;
-        let path = pop_string_arg(&mut args, "path");
-        let function = pop_string_arg(&mut args, "function");
-        let offset = pop_string_arg(&mut args, "offset")
+        let mut args: Args = syn::parse2(attrs)?;
+        let path = args.pop_string("path");
+        let function = args.pop_string("function");
+        let offset = args
+            .pop_string("offset")
             .as_deref()
             .map(str::parse)
             .transpose()
             .map_err(|err| span.error(format!("failed to parse `offset` argument: {err}")))?;
-        let sleepable = pop_bool_arg(&mut args, "sleepable");
-        err_on_unknown_args(&args)?;
+        let sleepable = args.pop_bool("sleepable");
+        args.into_error()?;
         Ok(Self {
             kind,
-            item,
             path,
             function,
             offset,
+            item,
             sleepable,
         })
     }
@@ -86,7 +86,7 @@ impl UProbe {
                 // TODO: check this in parse instead.
                 let function = function
                     .as_deref()
-                    .ok_or(item.sig.span().error("expected `function` attribute"))?;
+                    .ok_or_else(|| item.sig.span().error("expected `function` attribute"))?;
                 match offset {
                     None => format!("{prefix}/{path}:{function}").into(),
                     Some(offset) => format!("{prefix}/{path}:{function}+{offset}").into(),

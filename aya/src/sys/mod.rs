@@ -14,7 +14,7 @@ use std::{
     os::fd::{BorrowedFd, OwnedFd},
 };
 
-use aya_obj::generated::{bpf_attr, bpf_cmd, perf_event_attr};
+use aya_obj::generated::{bpf_attr, bpf_cmd, bpf_stats_type, perf_event_attr};
 pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
@@ -27,7 +27,7 @@ use thiserror::Error;
 
 pub(crate) type SysResult = Result<i64, (i64, io::Error)>;
 
-#[cfg_attr(test, expect(dead_code))]
+#[cfg_attr(test, expect(dead_code, reason = "test stubs cut above this"))]
 #[derive(Debug)]
 pub(crate) enum PerfEventIoctlRequest<'a> {
     Enable,
@@ -35,7 +35,7 @@ pub(crate) enum PerfEventIoctlRequest<'a> {
     SetBpf(BorrowedFd<'a>),
 }
 
-#[cfg_attr(test, expect(dead_code))]
+#[cfg_attr(test, expect(dead_code, reason = "test stubs cut above this"))]
 pub(crate) enum Syscall<'a> {
     Ebpf {
         cmd: bpf_cmd,
@@ -107,7 +107,7 @@ fn syscall(call: Syscall<'_>) -> SysResult {
         let ret = unsafe {
             match call {
                 Syscall::Ebpf { cmd, attr } => {
-                    libc::syscall(libc::SYS_bpf, cmd, attr, std::mem::size_of::<bpf_attr>())
+                    libc::syscall(libc::SYS_bpf, cmd, attr, size_of::<bpf_attr>())
                 }
                 Syscall::PerfEventOpen {
                     attr,
@@ -142,7 +142,8 @@ fn syscall(call: Syscall<'_>) -> SysResult {
             }
         };
         // c_long is i32 on armv7.
-        #[allow(clippy::useless_conversion)]
+        #[expect(clippy::allow_attributes, reason = "architecture specific")]
+        #[allow(clippy::useless_conversion, reason = "architecture specific")]
         let ret: i64 = ret.into();
 
         match ret {
@@ -152,7 +153,10 @@ fn syscall(call: Syscall<'_>) -> SysResult {
     }
 }
 
-#[cfg_attr(test, expect(unused_variables))]
+#[cfg_attr(
+    test,
+    expect(unused_variables, reason = "TODO: we should validate all arguments")
+)]
 pub(crate) unsafe fn mmap(
     addr: *mut c_void,
     len: usize,
@@ -174,7 +178,11 @@ pub(crate) unsafe fn mmap(
     }
 }
 
-#[cfg_attr(test, expect(unused_variables))]
+#[cfg_attr(
+    test,
+    expect(clippy::missing_const_for_fn, reason = "only const in cfg(test)"),
+    expect(unused_variables, reason = "TODO: we should validate all arguments")
+)]
 pub(crate) unsafe fn munmap(addr: *mut c_void, len: usize) -> c_int {
     #[cfg(test)]
     {
@@ -198,12 +206,10 @@ pub enum Stats {
     RunTime,
 }
 
-impl From<Stats> for aya_obj::generated::bpf_stats_type {
+impl From<Stats> for bpf_stats_type {
     fn from(value: Stats) -> Self {
-        use aya_obj::generated::bpf_stats_type::*;
-
         match value {
-            Stats::RunTime => BPF_STATS_RUN_TIME,
+            Stats::RunTime => Self::BPF_STATS_RUN_TIME,
         }
     }
 }
@@ -235,5 +241,5 @@ impl From<Stats> for aya_obj::generated::bpf_stats_type {
 /// ```
 #[doc(alias = "BPF_ENABLE_STATS")]
 pub fn enable_stats(stats_type: Stats) -> Result<OwnedFd, SyscallError> {
-    bpf_enable_stats(stats_type.into()).map(|fd| fd.into_inner())
+    bpf_enable_stats(stats_type.into()).map(super::MockableFd::into_inner)
 }

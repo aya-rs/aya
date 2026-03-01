@@ -1,6 +1,6 @@
 //! BTF loading, parsing and relocation.
 
-#[expect(clippy::module_inception)]
+#[expect(clippy::module_inception, reason = "TODO")]
 mod btf;
 mod info;
 mod relocation;

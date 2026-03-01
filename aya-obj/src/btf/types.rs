@@ -1,7 +1,8 @@
-#![expect(missing_docs)]
+#![expect(clippy::unused_self, reason = "these APIs are horrible")]
+#![expect(missing_docs, reason = "TODO")]
 
 use alloc::{string::ToString as _, vec, vec::Vec};
-use core::{fmt::Display, mem, ptr};
+use core::{fmt::Display, ptr};
 
 use object::Endianness;
 
@@ -44,12 +45,12 @@ impl Fwd {
         bytes_of::<Self>(self).to_vec()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Fwd
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Self>()
     }
 }
 
@@ -66,15 +67,15 @@ impl Const {
         bytes_of::<Self>(self).to_vec()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Const
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Self>()
     }
 
-    pub(crate) fn new(btf_type: u32) -> Self {
+    pub(crate) const fn new(btf_type: u32) -> Self {
         let info = (BtfKind::Const as u32) << 24;
         Self {
             name_offset: 0,
@@ -97,12 +98,12 @@ impl Volatile {
         bytes_of::<Self>(self).to_vec()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Volatile
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Self>()
     }
 }
 
@@ -118,12 +119,12 @@ impl Restrict {
         bytes_of::<Self>(self).to_vec()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Restrict
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Self>()
     }
 }
 
@@ -140,15 +141,15 @@ impl Ptr {
         bytes_of::<Self>(self).to_vec()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Ptr
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Self>()
     }
 
-    pub fn new(name_offset: u32, btf_type: u32) -> Self {
+    pub const fn new(name_offset: u32, btf_type: u32) -> Self {
         let info = (BtfKind::Ptr as u32) << 24;
         Self {
             name_offset,
@@ -171,15 +172,15 @@ impl Typedef {
         bytes_of::<Self>(self).to_vec()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Typedef
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Self>()
     }
 
-    pub(crate) fn new(name_offset: u32, btf_type: u32) -> Self {
+    pub(crate) const fn new(name_offset: u32, btf_type: u32) -> Self {
         let info = (BtfKind::Typedef as u32) << 24;
         Self {
             name_offset,
@@ -202,14 +203,14 @@ impl Float {
         bytes_of::<Self>(self).to_vec()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Float
     }
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Self>()
     }
 
-    pub fn new(name_offset: u32, size: u32) -> Self {
+    pub const fn new(name_offset: u32, size: u32) -> Self {
         let info = (BtfKind::Float as u32) << 24;
         Self {
             name_offset,
@@ -252,14 +253,14 @@ impl Func {
         bytes_of::<Self>(self).to_vec()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Func
     }
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Self>()
     }
 
-    pub fn new(name_offset: u32, proto: u32, linkage: FuncLinkage) -> Self {
+    pub const fn new(name_offset: u32, proto: u32, linkage: FuncLinkage) -> Self {
         let mut info = (BtfKind::Func as u32) << 24;
         info |= (linkage as u32) & 0xFFFF;
         Self {
@@ -273,7 +274,7 @@ impl Func {
         (self.info & 0xFFF).into()
     }
 
-    pub(crate) fn set_linkage(&mut self, linkage: FuncLinkage) {
+    pub(crate) const fn set_linkage(&mut self, linkage: FuncLinkage) {
         self.info = (self.info & 0xFFFF0000) | (linkage as u32) & 0xFFFF;
     }
 }
@@ -291,15 +292,15 @@ impl TypeTag {
         bytes_of::<Self>(self).to_vec()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::TypeTag
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Self>()
     }
 
-    pub fn new(name_offset: u32, btf_type: u32) -> Self {
+    pub const fn new(name_offset: u32, btf_type: u32) -> Self {
         let info = (BtfKind::TypeTag as u32) << 24;
         Self {
             name_offset,
@@ -357,14 +358,14 @@ impl Int {
         .concat()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Int
     }
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Self>()
     }
 
-    pub fn new(name_offset: u32, size: u32, encoding: IntEncoding, offset: u32) -> Self {
+    pub const fn new(name_offset: u32, size: u32, encoding: IntEncoding, offset: u32) -> Self {
         let info = (BtfKind::Int as u32) << 24;
         let mut data = 0u32;
         data |= (encoding as u32 & 0x0f) << 24;
@@ -382,13 +383,13 @@ impl Int {
         ((self.data & 0x0f000000) >> 24).into()
     }
 
-    pub(crate) fn offset(&self) -> u32 {
+    pub(crate) const fn offset(&self) -> u32 {
         (self.data & 0x00ff0000) >> 16
     }
 
     // TODO: Remove directive this when this crate is pub
     #[cfg(test)]
-    pub(crate) fn bits(&self) -> u32 {
+    pub(crate) const fn bits(&self) -> u32 {
         self.data & 0x000000ff
     }
 }
@@ -401,7 +402,7 @@ pub struct BtfEnum {
 }
 
 impl BtfEnum {
-    pub fn new(name_offset: u32, value: u32) -> Self {
+    pub const fn new(name_offset: u32, value: u32) -> Self {
         Self { name_offset, value }
     }
 }
@@ -437,15 +438,15 @@ impl Enum {
         .collect()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Enum
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Fwd>() + mem::size_of::<BtfEnum>() * self.variants.len()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Fwd>() + size_of::<BtfEnum>() * self.variants.len()
     }
 
-    pub fn new(name_offset: u32, signed: bool, variants: Vec<BtfEnum>) -> Self {
+    pub const fn new(name_offset: u32, signed: bool, variants: Vec<BtfEnum>) -> Self {
         let mut info = (BtfKind::Enum as u32) << 24;
         info |= (variants.len() as u32) & 0xFFFF;
         if signed {
@@ -459,11 +460,11 @@ impl Enum {
         }
     }
 
-    pub(crate) fn is_signed(&self) -> bool {
+    pub(crate) const fn is_signed(&self) -> bool {
         self.info >> 31 == 1
     }
 
-    pub(crate) fn set_signed(&mut self, signed: bool) {
+    pub(crate) const fn set_signed(&mut self, signed: bool) {
         if signed {
             self.info |= 1 << 31;
         } else {
@@ -481,7 +482,7 @@ pub struct BtfEnum64 {
 }
 
 impl BtfEnum64 {
-    pub fn new(name_offset: u32, value: u64) -> Self {
+    pub const fn new(name_offset: u32, value: u64) -> Self {
         Self {
             name_offset,
             value_low: value as u32,
@@ -531,23 +532,23 @@ impl Enum64 {
         .collect()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Enum64
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Fwd>() + mem::size_of::<BtfEnum64>() * self.variants.len()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Fwd>() + size_of::<BtfEnum64>() * self.variants.len()
     }
 
-    pub(crate) fn is_signed(&self) -> bool {
+    pub(crate) const fn is_signed(&self) -> bool {
         self.info >> 31 == 1
     }
 
-    pub fn new(name_offset: u32, signed: bool, variants: Vec<BtfEnum64>) -> Self {
+    pub const fn new(name_offset: u32, signed: bool, variants: Vec<BtfEnum64>) -> Self {
         let mut info = (BtfKind::Enum64 as u32) << 24;
         if signed {
             info |= 1 << 31
-        };
+        }
         info |= (variants.len() as u32) & 0xFFFF;
         Self {
             name_offset,
@@ -613,15 +614,15 @@ impl Struct {
         .collect()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Struct
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Fwd>() + mem::size_of::<BtfMember>() * self.members.len()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Fwd>() + size_of::<BtfMember>() * self.members.len()
     }
 
-    pub(crate) fn new(name_offset: u32, members: Vec<BtfMember>, size: u32) -> Self {
+    pub(crate) const fn new(name_offset: u32, members: Vec<BtfMember>, size: u32) -> Self {
         let mut info = (BtfKind::Struct as u32) << 24;
         info |= (members.len() as u32) & 0xFFFF;
         Self {
@@ -632,7 +633,7 @@ impl Struct {
         }
     }
 
-    pub(crate) fn member_bit_offset(&self, member: &BtfMember) -> usize {
+    pub(crate) const fn member_bit_offset(&self, member: &BtfMember) -> usize {
         let k_flag = self.info >> 31 == 1;
         let bit_offset = if k_flag {
             member.offset & 0xFFFFFF
@@ -643,7 +644,7 @@ impl Struct {
         bit_offset as usize
     }
 
-    pub(crate) fn member_bit_field_size(&self, member: &BtfMember) -> usize {
+    pub(crate) const fn member_bit_field_size(&self, member: &BtfMember) -> usize {
         let k_flag = (self.info >> 31) == 1;
         let size = if k_flag { member.offset >> 24 } else { 0 };
 
@@ -678,7 +679,7 @@ pub struct Union {
 }
 
 impl Union {
-    pub(crate) fn new(
+    pub(crate) const fn new(
         name_offset: u32,
         size: u32,
         members: Vec<BtfMember>,
@@ -727,15 +728,15 @@ impl Union {
         .collect()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Union
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Fwd>() + mem::size_of::<BtfMember>() * self.members.len()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Fwd>() + size_of::<BtfMember>() * self.members.len()
     }
 
-    pub(crate) fn member_bit_offset(&self, member: &BtfMember) -> usize {
+    pub(crate) const fn member_bit_offset(&self, member: &BtfMember) -> usize {
         let k_flag = self.info >> 31 == 1;
         let bit_offset = if k_flag {
             member.offset & 0xFFFFFF
@@ -746,7 +747,7 @@ impl Union {
         bit_offset as usize
     }
 
-    pub(crate) fn member_bit_field_size(&self, member: &BtfMember) -> usize {
+    pub(crate) const fn member_bit_field_size(&self, member: &BtfMember) -> usize {
         let k_flag = (self.info >> 31) == 1;
         let size = if k_flag { member.offset >> 24 } else { 0 };
 
@@ -768,6 +769,7 @@ pub struct Array {
     pub(crate) name_offset: u32,
     info: u32,
     _unused: u32,
+    #[expect(clippy::struct_field_names, reason = "TODO")]
     pub(crate) array: BtfArray,
 }
 
@@ -782,22 +784,28 @@ impl Array {
         [
             bytes_of::<u32>(name_offset),
             bytes_of::<u32>(info),
+            #[expect(clippy::used_underscore_binding, reason = "need them bytes")]
             bytes_of::<u32>(_unused),
             bytes_of::<BtfArray>(array),
         ]
         .concat()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Array
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Self>()
     }
 
     #[cfg(test)]
-    pub(crate) fn new(name_offset: u32, element_type: u32, index_type: u32, len: u32) -> Self {
+    pub(crate) const fn new(
+        name_offset: u32,
+        element_type: u32,
+        index_type: u32,
+        len: u32,
+    ) -> Self {
         let info = (BtfKind::Array as u32) << 24;
         Self {
             name_offset,
@@ -853,15 +861,15 @@ impl FuncProto {
         .collect()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::FuncProto
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Fwd>() + mem::size_of::<BtfParam>() * self.params.len()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Fwd>() + size_of::<BtfParam>() * self.params.len()
     }
 
-    pub fn new(params: Vec<BtfParam>, return_type: u32) -> Self {
+    pub const fn new(params: Vec<BtfParam>, return_type: u32) -> Self {
         let mut info = (BtfKind::FuncProto as u32) << 24;
         info |= (params.len() as u32) & 0xFFFF;
         Self {
@@ -919,15 +927,15 @@ impl Var {
         .concat()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::Var
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Self>()
     }
 
-    pub fn new(name_offset: u32, btf_type: u32, linkage: VarLinkage) -> Self {
+    pub const fn new(name_offset: u32, btf_type: u32, linkage: VarLinkage) -> Self {
         let info = (BtfKind::Var as u32) << 24;
         Self {
             name_offset,
@@ -987,15 +995,15 @@ impl DataSec {
         .collect()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::DataSec
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Fwd>() + mem::size_of::<DataSecEntry>() * self.entries.len()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Fwd>() + size_of::<DataSecEntry>() * self.entries.len()
     }
 
-    pub fn new(name_offset: u32, entries: Vec<DataSecEntry>, size: u32) -> Self {
+    pub const fn new(name_offset: u32, entries: Vec<DataSecEntry>, size: u32) -> Self {
         let mut info = (BtfKind::DataSec as u32) << 24;
         info |= (entries.len() as u32) & 0xFFFF;
         Self {
@@ -1033,15 +1041,15 @@ impl DeclTag {
         .concat()
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         BtfKind::DeclTag
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
-        mem::size_of::<Self>()
+    pub(crate) const fn type_info_size(&self) -> usize {
+        size_of::<Self>()
     }
 
-    pub fn new(name_offset: u32, btf_type: u32, component_index: i32) -> Self {
+    pub const fn new(name_offset: u32, btf_type: u32, component_index: i32) -> Self {
         let info = (BtfKind::DeclTag as u32) << 24;
         Self {
             name_offset,
@@ -1082,28 +1090,27 @@ impl TryFrom<u32> for BtfKind {
     type Error = BtfError;
 
     fn try_from(v: u32) -> Result<Self, Self::Error> {
-        use BtfKind::*;
         Ok(match v {
-            0 => Unknown,
-            1 => Int,
-            2 => Ptr,
-            3 => Array,
-            4 => Struct,
-            5 => Union,
-            6 => Enum,
-            7 => Fwd,
-            8 => Typedef,
-            9 => Volatile,
-            10 => Const,
-            11 => Restrict,
-            12 => Func,
-            13 => FuncProto,
-            14 => Var,
-            15 => DataSec,
-            16 => Float,
-            17 => DeclTag,
-            18 => TypeTag,
-            19 => Enum64,
+            0 => Self::Unknown,
+            1 => Self::Int,
+            2 => Self::Ptr,
+            3 => Self::Array,
+            4 => Self::Struct,
+            5 => Self::Union,
+            6 => Self::Enum,
+            7 => Self::Fwd,
+            8 => Self::Typedef,
+            9 => Self::Volatile,
+            10 => Self::Const,
+            11 => Self::Restrict,
+            12 => Self::Func,
+            13 => Self::FuncProto,
+            14 => Self::Var,
+            15 => Self::DataSec,
+            16 => Self::Float,
+            17 => Self::DeclTag,
+            18 => Self::TypeTag,
+            19 => Self::Enum64,
             kind => return Err(BtfError::InvalidTypeKind { kind }),
         })
     }
@@ -1136,8 +1143,8 @@ impl Display for BtfKind {
     }
 }
 
-unsafe fn read<T>(data: &[u8]) -> Result<T, BtfError> {
-    if mem::size_of::<T>() > data.len() {
+const unsafe fn read<T>(data: &[u8]) -> Result<T, BtfError> {
+    if size_of::<T>() > data.len() {
         return Err(BtfError::InvalidTypeInfo);
     }
 
@@ -1145,12 +1152,12 @@ unsafe fn read<T>(data: &[u8]) -> Result<T, BtfError> {
 }
 
 unsafe fn read_array<T>(data: &[u8], len: usize) -> Result<Vec<T>, BtfError> {
-    if mem::size_of::<T>() * len > data.len() {
+    if size_of::<T>() * len > data.len() {
         return Err(BtfError::InvalidTypeInfo);
     }
-    let data = &data[0..mem::size_of::<T>() * len];
+    let data = &data[0..size_of::<T>() * len];
     let r = data
-        .chunks(mem::size_of::<T>())
+        .chunks(size_of::<T>())
         .map(|chunk| unsafe { ptr::read_unaligned(chunk.as_ptr().cast()) })
         .collect();
     Ok(r)
@@ -1159,7 +1166,7 @@ unsafe fn read_array<T>(data: &[u8], len: usize) -> Result<Vec<T>, BtfError> {
 impl BtfType {
     pub(crate) unsafe fn read(data: &[u8], endianness: Endianness) -> Result<Self, BtfError> {
         let ty = unsafe { read_array::<u32>(data, 3)? };
-        let data = &data[mem::size_of::<u32>() * 3..];
+        let data = &data[size_of::<u32>() * 3..];
         let vlen = type_vlen(ty[1]);
         Ok(match type_kind(ty[1])? {
             BtfKind::Unknown => Self::Unknown,
@@ -1199,7 +1206,7 @@ impl BtfType {
                 btf_type: ty[2],
             }),
             BtfKind::Int => {
-                if mem::size_of::<u32>() > data.len() {
+                if size_of::<u32>() > data.len() {
                     return Err(BtfError::InvalidTypeInfo);
                 }
                 let read_u32 = if endianness == Endianness::Little {
@@ -1211,7 +1218,7 @@ impl BtfType {
                     name_offset: ty[0],
                     info: ty[1],
                     size: ty[2],
-                    data: read_u32(data[..mem::size_of::<u32>()].try_into().unwrap()),
+                    data: read_u32(data[..size_of::<u32>()].try_into().unwrap()),
                 })
             }
             BtfKind::Float => Self::Float(Float {
@@ -1307,7 +1314,7 @@ impl BtfType {
         }
     }
 
-    pub(crate) fn size(&self) -> Option<u32> {
+    pub(crate) const fn size(&self) -> Option<u32> {
         match self {
             Self::Int(t) => Some(t.size),
             Self::Float(t) => Some(t.size),
@@ -1316,12 +1323,12 @@ impl BtfType {
             Self::Struct(t) => Some(t.size),
             Self::Union(t) => Some(t.size),
             Self::DataSec(t) => Some(t.size),
-            Self::Ptr(_) => Some(mem::size_of::<&()>() as u32),
+            Self::Ptr(_) => Some(size_of::<&()>() as u32),
             _ => None,
         }
     }
 
-    pub(crate) fn btf_type(&self) -> Option<u32> {
+    pub(crate) const fn btf_type(&self) -> Option<u32> {
         match self {
             Self::Const(t) => Some(t.btf_type),
             Self::Volatile(t) => Some(t.btf_type),
@@ -1337,9 +1344,9 @@ impl BtfType {
         }
     }
 
-    pub(crate) fn type_info_size(&self) -> usize {
+    pub(crate) const fn type_info_size(&self) -> usize {
         match self {
-            Self::Unknown => mem::size_of::<Fwd>(),
+            Self::Unknown => size_of::<Fwd>(),
             Self::Fwd(t) => t.type_info_size(),
             Self::Const(t) => t.type_info_size(),
             Self::Volatile(t) => t.type_info_size(),
@@ -1362,7 +1369,7 @@ impl BtfType {
         }
     }
 
-    pub(crate) fn name_offset(&self) -> u32 {
+    pub(crate) const fn name_offset(&self) -> u32 {
         match self {
             Self::Unknown => 0,
             Self::Fwd(t) => t.name_offset,
@@ -1387,7 +1394,7 @@ impl BtfType {
         }
     }
 
-    pub(crate) fn kind(&self) -> BtfKind {
+    pub(crate) const fn kind(&self) -> BtfKind {
         match self {
             Self::Unknown => BtfKind::Unknown,
             Self::Fwd(t) => t.kind(),
@@ -1412,7 +1419,7 @@ impl BtfType {
         }
     }
 
-    pub(crate) fn is_composite(&self) -> bool {
+    pub(crate) const fn is_composite(&self) -> bool {
         matches!(self, Self::Struct(_) | Self::Union(_))
     }
 
@@ -1424,7 +1431,7 @@ impl BtfType {
         }
     }
 
-    pub(crate) fn member_bit_field_size(&self, member: &BtfMember) -> Option<usize> {
+    pub(crate) const fn member_bit_field_size(&self, member: &BtfMember) -> Option<usize> {
         match self {
             Self::Struct(t) => Some(t.member_bit_field_size(member)),
             Self::Union(t) => Some(t.member_bit_field_size(member)),
@@ -1432,7 +1439,7 @@ impl BtfType {
         }
     }
 
-    pub(crate) fn member_bit_offset(&self, member: &BtfMember) -> Option<usize> {
+    pub(crate) const fn member_bit_offset(&self, member: &BtfMember) -> Option<usize> {
         match self {
             Self::Struct(t) => Some(t.member_bit_offset(member)),
             Self::Union(t) => Some(t.member_bit_offset(member)),
@@ -1456,7 +1463,7 @@ fn type_kind(info: u32) -> Result<BtfKind, BtfError> {
     ((info >> 24) & 0x1F).try_into()
 }
 
-fn type_vlen(info: u32) -> usize {
+const fn type_vlen(info: u32) -> usize {
     (info & 0xFFFF) as usize
 }
 
@@ -1502,14 +1509,12 @@ pub(crate) fn types_are_compatible(
                 if let BtfType::Ptr(target) = target_ty {
                     local_id = local.btf_type;
                     target_id = target.btf_type;
-                    continue;
                 }
             }
             BtfType::Array(Array { array: local, .. }) => {
                 if let BtfType::Array(Array { array: target, .. }) = target_ty {
                     local_id = local.element_type;
                     target_id = target.element_type;
-                    continue;
                 }
             }
             BtfType::FuncProto(local) => {
@@ -1528,10 +1533,10 @@ pub(crate) fn types_are_compatible(
 
                     local_id = local.return_type;
                     target_id = target.return_type;
-                    continue;
                 }
             }
-            local_ty => panic!("unexpected type {:?}", local_ty),
+            #[expect(clippy::unreachable, reason = "unexpected type")]
+            local_ty => unreachable!("unexpected type {:?}", local_ty),
         }
     }
 
@@ -1579,17 +1584,17 @@ pub(crate) fn fields_are_compatible(
                 if let BtfType::Array(Array { array: target, .. }) = target_ty {
                     local_id = local.element_type;
                     target_id = target.element_type;
-                    continue;
                 }
             }
-            local_ty => panic!("unexpected type {:?}", local_ty),
+            #[expect(clippy::unreachable, reason = "unexpected type")]
+            local_ty => unreachable!("unexpected type {:?}", local_ty),
         }
     }
 
     Err(BtfError::MaximumTypeDepthReached { type_id: local_id })
 }
 
-fn bytes_of<T>(val: &T) -> &[u8] {
+const fn bytes_of<T>(val: &T) -> &[u8] {
     // Safety: all btf types are POD
     //
     // TODO: This is a fragile assumption and we should stop doing this. We should also remove

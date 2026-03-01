@@ -1,12 +1,12 @@
 use std::{
-    io, mem,
+    io,
     os::fd::{AsFd, BorrowedFd},
     ptr, slice,
     sync::atomic::{self, Ordering},
 };
 
 use aya_obj::generated::{
-    perf_event_header, perf_event_mmap_page,
+    PERF_FLAG_FD_CLOEXEC, perf_event_header, perf_event_mmap_page,
     perf_event_type::{PERF_RECORD_LOST, PERF_RECORD_SAMPLE},
 };
 use bytes::BytesMut;
@@ -14,7 +14,10 @@ use libc::{MAP_SHARED, PROT_READ, PROT_WRITE};
 use thiserror::Error;
 
 use crate::{
-    sys::{PerfEventIoctlRequest, SyscallError, perf_event_ioctl, perf_event_open_bpf},
+    programs::perf_event::{
+        PerfEventConfig, PerfEventScope, SamplePolicy, SoftwareEvent, WakeupPolicy,
+    },
+    sys::{PerfEventIoctlRequest, SyscallError, perf_event_ioctl, perf_event_open},
     util::MMap,
 };
 
@@ -92,7 +95,7 @@ pub(crate) struct PerfBuffer {
 
 impl PerfBuffer {
     pub(crate) fn open(
-        cpu_id: u32,
+        cpu: u32,
         page_size: usize,
         page_count: usize,
     ) -> Result<Self, PerfBufferError> {
@@ -100,8 +103,15 @@ impl PerfBuffer {
             return Err(PerfBufferError::InvalidPageCount { page_count });
         }
 
-        let fd = perf_event_open_bpf(cpu_id as i32)
-            .map_err(|io_error| PerfBufferError::OpenError { io_error })?;
+        let fd = perf_event_open(
+            PerfEventConfig::Software(SoftwareEvent::BpfOutput),
+            PerfEventScope::AllProcessesOneCpu { cpu },
+            SamplePolicy::Period(1),
+            WakeupPolicy::Events(1),
+            false,
+            PERF_FLAG_FD_CLOEXEC,
+        )
+        .map_err(|io_error| PerfBufferError::OpenError { io_error })?;
         let size = page_size * page_count;
         let mmap = MMap::new(
             fd.as_fd(),
@@ -125,7 +135,7 @@ impl PerfBuffer {
         Ok(perf_buf)
     }
 
-    fn buf(&self) -> ptr::NonNull<perf_event_mmap_page> {
+    const fn buf(&self) -> ptr::NonNull<perf_event_mmap_page> {
         self.mmap.ptr().cast()
     }
 
@@ -169,9 +179,9 @@ impl PerfBuffer {
         let read_event = |event_start, event_type, base, buf: &mut BytesMut| {
             let sample_size = match event_type {
                 x if x == PERF_RECORD_SAMPLE as u32 || x == PERF_RECORD_LOST as u32 => {
-                    let mut size = [0u8; mem::size_of::<u32>()];
+                    let mut size = [0u8; size_of::<u32>()];
                     fill_buf(
-                        event_start + mem::size_of::<perf_event_header>(),
+                        event_start + size_of::<perf_event_header>(),
                         base,
                         self.size,
                         &mut size,
@@ -182,23 +192,22 @@ impl PerfBuffer {
             } as usize;
 
             let sample_start =
-                (event_start + mem::size_of::<perf_event_header>() + mem::size_of::<u32>())
-                    % self.size;
+                (event_start + size_of::<perf_event_header>() + size_of::<u32>()) % self.size;
 
             match event_type {
                 x if x == PERF_RECORD_SAMPLE as u32 => {
                     buf.clear();
                     buf.reserve(sample_size);
-                    unsafe { buf.set_len(sample_size) };
+                    unsafe { buf.set_len(sample_size) }
 
                     fill_buf(sample_start, base, self.size, buf);
 
                     Ok(Some((1, 0)))
                 }
                 x if x == PERF_RECORD_LOST as u32 => {
-                    let mut count = [0u8; mem::size_of::<u64>()];
+                    let mut count = [0u8; size_of::<u64>()];
                     fill_buf(
-                        event_start + mem::size_of::<perf_event_header>() + mem::size_of::<u64>(),
+                        event_start + size_of::<perf_event_header>() + size_of::<u64>(),
                         base,
                         self.size,
                         &mut count,
@@ -245,7 +254,7 @@ impl PerfBuffer {
         };
 
         atomic::fence(Ordering::SeqCst);
-        unsafe { (*header).data_tail = tail as u64 };
+        unsafe { (*header).data_tail = tail as u64 }
 
         result.map(|()| events)
     }
@@ -259,7 +268,8 @@ impl AsFd for PerfBuffer {
 
 impl Drop for PerfBuffer {
     fn drop(&mut self) {
-        let _: io::Result<()> = perf_event_ioctl(self.fd.as_fd(), PerfEventIoctlRequest::Disable);
+        let _unused: io::Result<()> =
+            perf_event_ioctl(self.fd.as_fd(), PerfEventIoctlRequest::Disable);
     }
 }
 
@@ -280,6 +290,7 @@ mod tests {
     }
 
     const PAGE_SIZE: usize = 4096;
+    #[repr(C)]
     union MMappedBuf {
         mmap_page: perf_event_mmap_page,
         data: [u8; PAGE_SIZE * 2],
@@ -290,7 +301,7 @@ mod tests {
         override_syscall(|call| match call {
             Syscall::PerfEventOpen { .. } => Ok(crate::MockableFd::mock_signed_fd().into()),
             Syscall::PerfEventIoctl { .. } => Ok(0),
-            call => panic!("unexpected syscall: {call:?}"),
+            call @ Syscall::Ebpf { .. } => panic!("unexpected syscall: {call:?}"),
         });
         TEST_MMAP_RET.with(|ret| *ret.borrow_mut() = buf.cast());
     }
@@ -341,7 +352,7 @@ mod tests {
 
     fn write<T: Debug>(mmapped_buf: &mut MMappedBuf, offset: usize, value: T) -> usize {
         let dst: *mut _ = mmapped_buf;
-        let head = offset + mem::size_of::<T>();
+        let head = offset + size_of::<T>();
         unsafe {
             ptr::write_unaligned(dst.byte_add(PAGE_SIZE + offset).cast(), value);
             mmapped_buf.mmap_page.data_head = head as u64;
@@ -370,7 +381,7 @@ mod tests {
                 header: perf_event_header {
                     type_: PERF_RECORD_LOST as u32,
                     misc: 0,
-                    size: mem::size_of::<LostSamples>() as u16,
+                    size: size_of::<LostSamples>() as u16,
                 },
                 id: 1,
                 count: 0xCAFEBABE,
@@ -401,9 +412,9 @@ mod tests {
                     header: perf_event_header {
                         type_: PERF_RECORD_SAMPLE as u32,
                         misc: 0,
-                        size: mem::size_of::<PerfSample<T>>() as u16,
+                        size: size_of::<PerfSample<T>>() as u16,
                     },
-                    size: mem::size_of::<T>() as u32,
+                    size: size_of::<T>() as u32,
                 },
                 value,
             },
@@ -485,7 +496,7 @@ mod tests {
             data: [0; PAGE_SIZE * 2],
         };
 
-        let offset = PAGE_SIZE - mem::size_of::<PerfSample<u32>>();
+        let offset = PAGE_SIZE - size_of::<PerfSample<u32>>();
         write_sample(&mut mmapped_buf, offset, 0xCAFEBABEu32);
         mmapped_buf.mmap_page.data_tail = offset as u64;
 
@@ -505,14 +516,14 @@ mod tests {
             data: [0; PAGE_SIZE * 2],
         };
 
-        let offset = PAGE_SIZE - mem::size_of::<perf_event_header>() - 2;
+        let offset = PAGE_SIZE - size_of::<perf_event_header>() - 2;
         write(
             &mut mmapped_buf,
             offset,
             perf_event_header {
                 type_: PERF_RECORD_SAMPLE as u32,
                 misc: 0,
-                size: mem::size_of::<PerfSample<u64>>() as u16,
+                size: size_of::<PerfSample<u64>>() as u16,
             },
         );
         mmapped_buf.mmap_page.data_tail = offset as u64;
@@ -548,7 +559,7 @@ mod tests {
             (0xBAADCAFEu32, 0xCAFEBABEu32)
         };
 
-        let offset = PAGE_SIZE - mem::size_of::<PerfSample<u32>>();
+        let offset = PAGE_SIZE - size_of::<PerfSample<u32>>();
         write(
             &mut mmapped_buf,
             offset,
@@ -557,9 +568,9 @@ mod tests {
                     header: perf_event_header {
                         type_: PERF_RECORD_SAMPLE as u32,
                         misc: 0,
-                        size: mem::size_of::<PerfSample<u64>>() as u16,
+                        size: size_of::<PerfSample<u64>>() as u16,
                     },
-                    size: mem::size_of::<u64>() as u32,
+                    size: size_of::<u64>() as u32,
                 },
                 value: left,
             },

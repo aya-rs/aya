@@ -67,7 +67,7 @@ impl FExit {
 
     /// Attaches the program.
     ///
-    /// The returned value can be used to detach, see [FExit::detach].
+    /// The returned value can be used to detach, see [`FExit::detach`].
     pub fn attach(&mut self) -> Result<FExitLinkId, ProgramError> {
         attach_raw_tracepoint(&mut self.data, None)
     }
