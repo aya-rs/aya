@@ -87,7 +87,7 @@ pub enum RelocationError {
 
     /// Unsupported relocation
     #[error(
-        "unsupported relocation target: symbol kind `{symbol_kind:?}` at symbol address #{relocation_number}"
+        "unsupported relocation target `{symbol_kind:?}` applying relocation #{relocation_number}"
     )]
     UnsupportedRelocationTarget {
         /// The symbol kind
