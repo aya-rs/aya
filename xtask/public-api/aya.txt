@@ -1397,7 +1397,7 @@ pub aya::maps::MapError::ProgIdNotSupported
 pub aya::maps::MapError::ProgramNotLoaded
 pub aya::maps::MapError::SyscallError(aya::sys::SyscallError)
 pub aya::maps::MapError::Unsupported
-pub aya::maps::MapError::Unsupported::map_type: aya_obj::generated::linux_bindings_x86_64::bpf_map_type
+pub aya::maps::MapError::Unsupported::map_type: aya_obj::generated::linux_bindings_aarch64::bpf_map_type
 pub aya::maps::MapError::Unsupported::name: alloc::string::String
 impl core::convert::From<aya::maps::MapError> for aya::EbpfError
 pub fn aya::EbpfError::from(source: aya::maps::MapError) -> Self
@@ -1481,9 +1481,9 @@ impl core::clone::Clone for aya::maps::MapType
 pub fn aya::maps::MapType::clone(&self) -> aya::maps::MapType
 impl core::cmp::PartialEq for aya::maps::MapType
 pub fn aya::maps::MapType::eq(&self, other: &aya::maps::MapType) -> bool
-impl core::convert::TryFrom<aya_obj::generated::linux_bindings_x86_64::bpf_map_type> for aya::maps::MapType
+impl core::convert::TryFrom<aya_obj::generated::linux_bindings_aarch64::bpf_map_type> for aya::maps::MapType
 pub type aya::maps::MapType::Error = aya::maps::MapError
-pub fn aya::maps::MapType::try_from(map_type: aya_obj::generated::linux_bindings_x86_64::bpf_map_type) -> core::result::Result<Self, Self::Error>
+pub fn aya::maps::MapType::try_from(map_type: aya_obj::generated::linux_bindings_aarch64::bpf_map_type) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::maps::MapType
 pub fn aya::maps::MapType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::maps::MapType
@@ -4469,9 +4469,9 @@ impl core::clone::Clone for aya::programs::links::LinkType
 pub fn aya::programs::links::LinkType::clone(&self) -> aya::programs::links::LinkType
 impl core::cmp::PartialEq for aya::programs::links::LinkType
 pub fn aya::programs::links::LinkType::eq(&self, other: &aya::programs::links::LinkType) -> bool
-impl core::convert::TryFrom<aya_obj::generated::linux_bindings_x86_64::bpf_link_type> for aya::programs::links::LinkType
+impl core::convert::TryFrom<aya_obj::generated::linux_bindings_aarch64::bpf_link_type> for aya::programs::links::LinkType
 pub type aya::programs::links::LinkType::Error = aya::programs::links::LinkError
-pub fn aya::programs::links::LinkType::try_from(link_type: aya_obj::generated::linux_bindings_x86_64::bpf_link_type) -> core::result::Result<Self, Self::Error>
+pub fn aya::programs::links::LinkType::try_from(link_type: aya_obj::generated::linux_bindings_aarch64::bpf_link_type) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::programs::links::LinkType
 pub fn aya::programs::links::LinkType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::links::LinkType
@@ -8642,8 +8642,8 @@ impl core::clone::Clone for aya::programs::ProgramType
 pub fn aya::programs::ProgramType::clone(&self) -> aya::programs::ProgramType
 impl core::cmp::PartialEq for aya::programs::ProgramType
 pub fn aya::programs::ProgramType::eq(&self, other: &aya::programs::ProgramType) -> bool
-impl core::convert::From<aya::programs::ProgramType> for aya_obj::generated::linux_bindings_x86_64::bpf_prog_type
-pub fn aya_obj::generated::linux_bindings_x86_64::bpf_prog_type::from(value: aya::programs::ProgramType) -> Self
+impl core::convert::From<aya::programs::ProgramType> for aya_obj::generated::linux_bindings_aarch64::bpf_prog_type
+pub fn aya_obj::generated::linux_bindings_aarch64::bpf_prog_type::from(value: aya::programs::ProgramType) -> Self
 impl core::fmt::Debug for aya::programs::ProgramType
 pub fn aya::programs::ProgramType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::ProgramType
@@ -9972,7 +9972,7 @@ pub fn aya::programs::ProgramInfo::map_ids(&self) -> core::result::Result<core::
 pub fn aya::programs::ProgramInfo::memory_locked(&self) -> core::result::Result<u32, aya::programs::ProgramError>
 pub fn aya::programs::ProgramInfo::name(&self) -> &[u8]
 pub fn aya::programs::ProgramInfo::name_as_str(&self) -> core::option::Option<&str>
-pub fn aya::programs::ProgramInfo::program_type(&self) -> aya_obj::generated::linux_bindings_x86_64::bpf_prog_type
+pub fn aya::programs::ProgramInfo::program_type(&self) -> aya_obj::generated::linux_bindings_aarch64::bpf_prog_type
 pub const fn aya::programs::ProgramInfo::run_count(&self) -> u64
 pub const fn aya::programs::ProgramInfo::run_time(&self) -> core::time::Duration
 pub const fn aya::programs::ProgramInfo::size_jitted(&self) -> u32
@@ -10794,8 +10794,8 @@ pub mod aya::sys
 pub aya::sys::Stats::RunTime
 impl core::clone::Clone for aya::sys::Stats
 pub fn aya::sys::Stats::clone(&self) -> aya::sys::Stats
-impl core::convert::From<aya::sys::Stats> for aya_obj::generated::linux_bindings_x86_64::bpf_stats_type
-pub fn aya_obj::generated::linux_bindings_x86_64::bpf_stats_type::from(value: aya::sys::Stats) -> Self
+impl core::convert::From<aya::sys::Stats> for aya_obj::generated::linux_bindings_aarch64::bpf_stats_type
+pub fn aya_obj::generated::linux_bindings_aarch64::bpf_stats_type::from(value: aya::sys::Stats) -> Self
 impl core::fmt::Debug for aya::sys::Stats
 pub fn aya::sys::Stats::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::sys::Stats
@@ -10936,6 +10936,7 @@ pub aya::EbpfError::BtfRelocationError(aya_obj::btf::relocation::BtfRelocationEr
 pub aya::EbpfError::FileError
 pub aya::EbpfError::FileError::error: std::io::error::Error
 pub aya::EbpfError::FileError::path: std::path::PathBuf
+pub aya::EbpfError::KsymsError(aya_obj::extern_types::KsymsError)
 pub aya::EbpfError::MapError(aya::maps::MapError)
 pub aya::EbpfError::NoBTF
 pub aya::EbpfError::ParseError(aya_obj::obj::ParseError)
@@ -10951,6 +10952,8 @@ impl core::convert::From<aya_obj::btf::btf::BtfError> for aya::EbpfError
 pub fn aya::EbpfError::from(source: aya_obj::btf::btf::BtfError) -> Self
 impl core::convert::From<aya_obj::btf::relocation::BtfRelocationError> for aya::EbpfError
 pub fn aya::EbpfError::from(source: aya_obj::btf::relocation::BtfRelocationError) -> Self
+impl core::convert::From<aya_obj::extern_types::KsymsError> for aya::EbpfError
+pub fn aya::EbpfError::from(source: aya_obj::extern_types::KsymsError) -> Self
 impl core::convert::From<aya_obj::obj::ParseError> for aya::EbpfError
 pub fn aya::EbpfError::from(source: aya_obj::obj::ParseError) -> Self
 impl core::convert::From<aya_obj::relocation::EbpfRelocationError> for aya::EbpfError
@@ -11209,8 +11212,8 @@ pub unsafe fn aya::VerifierLogLevel::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::from(t: T) -> T
 pub unsafe trait aya::Pod: core::marker::Copy + 'static
-impl aya::Pod for aya_obj::generated::linux_bindings_x86_64::bpf_cpumap_val
-impl aya::Pod for aya_obj::generated::linux_bindings_x86_64::bpf_devmap_val
+impl aya::Pod for aya_obj::generated::linux_bindings_aarch64::bpf_cpumap_val
+impl aya::Pod for aya_obj::generated::linux_bindings_aarch64::bpf_devmap_val
 impl aya::Pod for i128
 impl aya::Pod for i16
 impl aya::Pod for i32

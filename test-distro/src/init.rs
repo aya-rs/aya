@@ -135,7 +135,6 @@ fn run() -> anyhow::Result<()> {
             format!("mount({source}, {target}, {fstype}, {flags:?}, {data:?}) failed")
         })?;
     }
-
     // By contract we run everything in /bin and assume they're rust test binaries.
     //
     // If the user requested command line arguments, they're named init.arg={}.

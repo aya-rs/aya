@@ -40,6 +40,8 @@ pub aya_obj::btf::BtfError::UnknownSectionSize
 pub aya_obj::btf::BtfError::UnknownSectionSize::section_name: alloc::string::String
 impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::ParseError
 pub fn aya_obj::ParseError::from(source: aya_obj::btf::BtfError) -> Self
+impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::extern_types::KsymsError
+pub fn aya_obj::extern_types::KsymsError::from(source: aya_obj::btf::BtfError) -> Self
 impl core::error::Error for aya_obj::btf::BtfError
 pub fn aya_obj::btf::BtfError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya_obj::btf::BtfError
@@ -1409,6 +1411,142 @@ impl<T> core::clone::CloneToUninit for aya_obj::btf::Volatile where T: core::clo
 pub unsafe fn aya_obj::btf::Volatile::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::btf::Volatile
 pub fn aya_obj::btf::Volatile::from(t: T) -> T
+pub mod aya_obj::extern_types
+pub enum aya_obj::extern_types::ExternType
+pub aya_obj::extern_types::ExternType::Kconfig
+pub aya_obj::extern_types::ExternType::Ksym
+impl core::clone::Clone for aya_obj::extern_types::ExternType
+pub fn aya_obj::extern_types::ExternType::clone(&self) -> aya_obj::extern_types::ExternType
+impl core::cmp::Eq for aya_obj::extern_types::ExternType
+impl core::cmp::PartialEq for aya_obj::extern_types::ExternType
+pub fn aya_obj::extern_types::ExternType::eq(&self, other: &aya_obj::extern_types::ExternType) -> bool
+impl core::fmt::Debug for aya_obj::extern_types::ExternType
+pub fn aya_obj::extern_types::ExternType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::extern_types::ExternType
+impl core::marker::StructuralPartialEq for aya_obj::extern_types::ExternType
+impl core::marker::Freeze for aya_obj::extern_types::ExternType
+impl core::marker::Send for aya_obj::extern_types::ExternType
+impl core::marker::Sync for aya_obj::extern_types::ExternType
+impl core::marker::Unpin for aya_obj::extern_types::ExternType
+impl core::marker::UnsafeUnpin for aya_obj::extern_types::ExternType
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::extern_types::ExternType
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::extern_types::ExternType
+impl<T, U> core::convert::Into<U> for aya_obj::extern_types::ExternType where U: core::convert::From<T>
+pub fn aya_obj::extern_types::ExternType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::extern_types::ExternType where U: core::convert::Into<T>
+pub type aya_obj::extern_types::ExternType::Error = core::convert::Infallible
+pub fn aya_obj::extern_types::ExternType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::extern_types::ExternType where U: core::convert::TryFrom<T>
+pub type aya_obj::extern_types::ExternType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::extern_types::ExternType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::extern_types::ExternType where T: core::clone::Clone
+pub type aya_obj::extern_types::ExternType::Owned = T
+pub fn aya_obj::extern_types::ExternType::clone_into(&self, target: &mut T)
+pub fn aya_obj::extern_types::ExternType::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::extern_types::ExternType where T: 'static + ?core::marker::Sized
+pub fn aya_obj::extern_types::ExternType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::extern_types::ExternType where T: ?core::marker::Sized
+pub fn aya_obj::extern_types::ExternType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::extern_types::ExternType where T: ?core::marker::Sized
+pub fn aya_obj::extern_types::ExternType::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_obj::extern_types::ExternType where T: core::clone::Clone
+pub unsafe fn aya_obj::extern_types::ExternType::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_obj::extern_types::ExternType
+pub fn aya_obj::extern_types::ExternType::from(t: T) -> T
+pub enum aya_obj::extern_types::KsymsError
+pub aya_obj::extern_types::KsymsError::AmbiguousResolution
+pub aya_obj::extern_types::KsymsError::AmbiguousResolution::first_addr: u64
+pub aya_obj::extern_types::KsymsError::AmbiguousResolution::name: alloc::string::String
+pub aya_obj::extern_types::KsymsError::AmbiguousResolution::second_addr: u64
+pub aya_obj::extern_types::KsymsError::BtfError(aya_obj::btf::BtfError)
+pub aya_obj::extern_types::KsymsError::FunctionNotFound
+pub aya_obj::extern_types::KsymsError::FunctionNotFound::name: alloc::string::String
+pub aya_obj::extern_types::KsymsError::IncompatibleFunctionSignature
+pub aya_obj::extern_types::KsymsError::IncompatibleFunctionSignature::name: alloc::string::String
+pub aya_obj::extern_types::KsymsError::IncompatibleVariableType
+pub aya_obj::extern_types::KsymsError::IncompatibleVariableType::name: alloc::string::String
+pub aya_obj::extern_types::KsymsError::InvalidExternType
+pub aya_obj::extern_types::KsymsError::InvalidExternType::name: alloc::string::String
+pub aya_obj::extern_types::KsymsError::KallsymsParseError(alloc::string::String)
+pub aya_obj::extern_types::KsymsError::KallsymsReadError(std::io::error::Error)
+pub aya_obj::extern_types::KsymsError::NoBtf
+pub aya_obj::extern_types::KsymsError::UnresolvedExtern
+pub aya_obj::extern_types::KsymsError::UnresolvedExtern::name: alloc::string::String
+pub aya_obj::extern_types::KsymsError::VariableNotFound
+pub aya_obj::extern_types::KsymsError::VariableNotFound::name: alloc::string::String
+impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::extern_types::KsymsError
+pub fn aya_obj::extern_types::KsymsError::from(source: aya_obj::btf::BtfError) -> Self
+impl core::convert::From<aya_obj::extern_types::KsymsError> for aya_obj::ParseError
+pub fn aya_obj::ParseError::from(source: aya_obj::extern_types::KsymsError) -> Self
+impl core::convert::From<std::io::error::Error> for aya_obj::extern_types::KsymsError
+pub fn aya_obj::extern_types::KsymsError::from(source: std::io::error::Error) -> Self
+impl core::error::Error for aya_obj::extern_types::KsymsError
+pub fn aya_obj::extern_types::KsymsError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya_obj::extern_types::KsymsError
+pub fn aya_obj::extern_types::KsymsError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya_obj::extern_types::KsymsError
+pub fn aya_obj::extern_types::KsymsError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya_obj::extern_types::KsymsError
+impl core::marker::Send for aya_obj::extern_types::KsymsError
+impl core::marker::Sync for aya_obj::extern_types::KsymsError
+impl core::marker::Unpin for aya_obj::extern_types::KsymsError
+impl core::marker::UnsafeUnpin for aya_obj::extern_types::KsymsError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::extern_types::KsymsError
+impl !core::panic::unwind_safe::UnwindSafe for aya_obj::extern_types::KsymsError
+impl<T, U> core::convert::Into<U> for aya_obj::extern_types::KsymsError where U: core::convert::From<T>
+pub fn aya_obj::extern_types::KsymsError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::extern_types::KsymsError where U: core::convert::Into<T>
+pub type aya_obj::extern_types::KsymsError::Error = core::convert::Infallible
+pub fn aya_obj::extern_types::KsymsError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::extern_types::KsymsError where U: core::convert::TryFrom<T>
+pub type aya_obj::extern_types::KsymsError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::extern_types::KsymsError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::string::ToString for aya_obj::extern_types::KsymsError where T: core::fmt::Display + ?core::marker::Sized
+pub fn aya_obj::extern_types::KsymsError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for aya_obj::extern_types::KsymsError where T: 'static + ?core::marker::Sized
+pub fn aya_obj::extern_types::KsymsError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::extern_types::KsymsError where T: ?core::marker::Sized
+pub fn aya_obj::extern_types::KsymsError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::extern_types::KsymsError where T: ?core::marker::Sized
+pub fn aya_obj::extern_types::KsymsError::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::extern_types::KsymsError
+pub fn aya_obj::extern_types::KsymsError::from(t: T) -> T
+pub struct aya_obj::extern_types::ExternCollection
+impl core::clone::Clone for aya_obj::extern_types::ExternCollection
+pub fn aya_obj::extern_types::ExternCollection::clone(&self) -> aya_obj::extern_types::ExternCollection
+impl core::default::Default for aya_obj::extern_types::ExternCollection
+pub fn aya_obj::extern_types::ExternCollection::default() -> aya_obj::extern_types::ExternCollection
+impl core::fmt::Debug for aya_obj::extern_types::ExternCollection
+pub fn aya_obj::extern_types::ExternCollection::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya_obj::extern_types::ExternCollection
+impl core::marker::Send for aya_obj::extern_types::ExternCollection
+impl core::marker::Sync for aya_obj::extern_types::ExternCollection
+impl core::marker::Unpin for aya_obj::extern_types::ExternCollection
+impl core::marker::UnsafeUnpin for aya_obj::extern_types::ExternCollection
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::extern_types::ExternCollection
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::extern_types::ExternCollection
+impl<T, U> core::convert::Into<U> for aya_obj::extern_types::ExternCollection where U: core::convert::From<T>
+pub fn aya_obj::extern_types::ExternCollection::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::extern_types::ExternCollection where U: core::convert::Into<T>
+pub type aya_obj::extern_types::ExternCollection::Error = core::convert::Infallible
+pub fn aya_obj::extern_types::ExternCollection::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::extern_types::ExternCollection where U: core::convert::TryFrom<T>
+pub type aya_obj::extern_types::ExternCollection::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::extern_types::ExternCollection::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::extern_types::ExternCollection where T: core::clone::Clone
+pub type aya_obj::extern_types::ExternCollection::Owned = T
+pub fn aya_obj::extern_types::ExternCollection::clone_into(&self, target: &mut T)
+pub fn aya_obj::extern_types::ExternCollection::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::extern_types::ExternCollection where T: 'static + ?core::marker::Sized
+pub fn aya_obj::extern_types::ExternCollection::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::extern_types::ExternCollection where T: ?core::marker::Sized
+pub fn aya_obj::extern_types::ExternCollection::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::extern_types::ExternCollection where T: ?core::marker::Sized
+pub fn aya_obj::extern_types::ExternCollection::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_obj::extern_types::ExternCollection where T: core::clone::Clone
+pub unsafe fn aya_obj::extern_types::ExternCollection::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_obj::extern_types::ExternCollection
+pub fn aya_obj::extern_types::ExternCollection::from(t: T) -> T
 pub mod aya_obj::generated
 pub mod aya_obj::generated::bpf_core_relo_kind
 pub const aya_obj::generated::bpf_core_relo_kind::BPF_CORE_ENUMVAL_EXISTS: aya_obj::generated::bpf_core_relo_kind::Type
@@ -8725,11 +8863,18 @@ impl<T> core::convert::From<T> for aya_obj::EbpfSectionKind
 pub fn aya_obj::EbpfSectionKind::from(t: T) -> T
 pub enum aya_obj::obj::ParseError
 pub aya_obj::obj::ParseError::BtfError(aya_obj::btf::BtfError)
+pub aya_obj::obj::ParseError::DuplicateExtern
+pub aya_obj::obj::ParseError::DuplicateExtern::name: alloc::string::String
 pub aya_obj::obj::ParseError::ElfError(object::read::Error)
+pub aya_obj::obj::ParseError::FuncInKconfig
+pub aya_obj::obj::ParseError::FuncInKconfig::name: alloc::string::String
+pub aya_obj::obj::ParseError::FuncInKconfig::section: alloc::string::String
 pub aya_obj::obj::ParseError::InvalidGlobalData
 pub aya_obj::obj::ParseError::InvalidGlobalData::data_size: usize
 pub aya_obj::obj::ParseError::InvalidGlobalData::name: alloc::string::String
 pub aya_obj::obj::ParseError::InvalidGlobalData::sym_size: u64
+pub aya_obj::obj::ParseError::InvalidKconfigSize
+pub aya_obj::obj::ParseError::InvalidKconfigSize::name: alloc::string::String
 pub aya_obj::obj::ParseError::InvalidKernelVersion
 pub aya_obj::obj::ParseError::InvalidKernelVersion::data: alloc::vec::Vec<u8>
 pub aya_obj::obj::ParseError::InvalidLicense
@@ -8742,6 +8887,7 @@ pub aya_obj::obj::ParseError::InvalidProgramSection::section: alloc::string::Str
 pub aya_obj::obj::ParseError::InvalidSymbol
 pub aya_obj::obj::ParseError::InvalidSymbol::index: usize
 pub aya_obj::obj::ParseError::InvalidSymbol::name: core::option::Option<alloc::string::String>
+pub aya_obj::obj::ParseError::KsymsError(aya_obj::extern_types::KsymsError)
 pub aya_obj::obj::ParseError::MapNotFound
 pub aya_obj::obj::ParseError::MapNotFound::index: usize
 pub aya_obj::obj::ParseError::MapSymbolNameNotFound
@@ -8763,8 +8909,12 @@ pub aya_obj::obj::ParseError::UnknownSymbol
 pub aya_obj::obj::ParseError::UnknownSymbol::address: u64
 pub aya_obj::obj::ParseError::UnknownSymbol::section_index: usize
 pub aya_obj::obj::ParseError::UnsupportedRelocationTarget
+pub aya_obj::obj::ParseError::WeakFuncNotSupported
+pub aya_obj::obj::ParseError::WeakFuncNotSupported::name: alloc::string::String
 impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::ParseError
 pub fn aya_obj::ParseError::from(source: aya_obj::btf::BtfError) -> Self
+impl core::convert::From<aya_obj::extern_types::KsymsError> for aya_obj::ParseError
+pub fn aya_obj::ParseError::from(source: aya_obj::extern_types::KsymsError) -> Self
 impl core::error::Error for aya_obj::ParseError
 pub fn aya_obj::ParseError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya_obj::ParseError
@@ -8991,6 +9141,8 @@ pub aya_obj::obj::Object::license: alloc::ffi::c_str::CString
 pub aya_obj::obj::Object::maps: std::collections::hash::map::HashMap<alloc::string::String, aya_obj::maps::Map>
 pub aya_obj::obj::Object::programs: std::collections::hash::map::HashMap<alloc::string::String, aya_obj::Program>
 impl aya_obj::Object
+pub fn aya_obj::Object::collect_ksyms_from_btf(&mut self) -> core::result::Result<(), aya_obj::extern_types::KsymsError>
+impl aya_obj::Object
 pub fn aya_obj::Object::fixup_and_sanitize_btf(&mut self, features: &aya_obj::btf::BtfFeatures) -> core::result::Result<core::option::Option<&aya_obj::btf::Btf>, aya_obj::btf::BtfError>
 impl aya_obj::Object
 pub fn aya_obj::Object::has_btf_relocations(&self) -> bool
@@ -9001,7 +9153,11 @@ impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, target_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+pub fn aya_obj::Object::relocate_externs(&mut self) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+impl aya_obj::Object
+pub fn aya_obj::Object::resolve_typed_externs(&mut self, kernel_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::extern_types::KsymsError>
+pub fn aya_obj::Object::resolve_typeless_externs(&mut self) -> core::result::Result<(), aya_obj::extern_types::KsymsError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object
@@ -9427,6 +9583,8 @@ impl<T> core::convert::From<T> for aya_obj::programs::xdp::XdpAttachType
 pub fn aya_obj::programs::xdp::XdpAttachType::from(t: T) -> T
 pub mod aya_obj::relocation
 pub enum aya_obj::relocation::RelocationError
+pub aya_obj::relocation::RelocationError::ExternNotFound
+pub aya_obj::relocation::RelocationError::ExternNotFound::name: alloc::string::String
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::offset: u64
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::relocation_number: usize
@@ -9442,6 +9600,8 @@ pub aya_obj::relocation::RelocationError::UnknownProgram::address: u64
 pub aya_obj::relocation::RelocationError::UnknownProgram::section_index: usize
 pub aya_obj::relocation::RelocationError::UnknownSymbol
 pub aya_obj::relocation::RelocationError::UnknownSymbol::index: usize
+pub aya_obj::relocation::RelocationError::UnresolvableSymbol
+pub aya_obj::relocation::RelocationError::UnresolvableSymbol::name: alloc::string::String
 impl core::error::Error for aya_obj::relocation::RelocationError
 impl core::fmt::Debug for aya_obj::relocation::RelocationError
 pub fn aya_obj::relocation::RelocationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -9555,6 +9715,64 @@ impl<T> core::clone::CloneToUninit for aya_obj::EbpfSectionKind where T: core::c
 pub unsafe fn aya_obj::EbpfSectionKind::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::EbpfSectionKind
 pub fn aya_obj::EbpfSectionKind::from(t: T) -> T
+pub enum aya_obj::KsymsError
+pub aya_obj::KsymsError::AmbiguousResolution
+pub aya_obj::KsymsError::AmbiguousResolution::first_addr: u64
+pub aya_obj::KsymsError::AmbiguousResolution::name: alloc::string::String
+pub aya_obj::KsymsError::AmbiguousResolution::second_addr: u64
+pub aya_obj::KsymsError::BtfError(aya_obj::btf::BtfError)
+pub aya_obj::KsymsError::FunctionNotFound
+pub aya_obj::KsymsError::FunctionNotFound::name: alloc::string::String
+pub aya_obj::KsymsError::IncompatibleFunctionSignature
+pub aya_obj::KsymsError::IncompatibleFunctionSignature::name: alloc::string::String
+pub aya_obj::KsymsError::IncompatibleVariableType
+pub aya_obj::KsymsError::IncompatibleVariableType::name: alloc::string::String
+pub aya_obj::KsymsError::InvalidExternType
+pub aya_obj::KsymsError::InvalidExternType::name: alloc::string::String
+pub aya_obj::KsymsError::KallsymsParseError(alloc::string::String)
+pub aya_obj::KsymsError::KallsymsReadError(std::io::error::Error)
+pub aya_obj::KsymsError::NoBtf
+pub aya_obj::KsymsError::UnresolvedExtern
+pub aya_obj::KsymsError::UnresolvedExtern::name: alloc::string::String
+pub aya_obj::KsymsError::VariableNotFound
+pub aya_obj::KsymsError::VariableNotFound::name: alloc::string::String
+impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::extern_types::KsymsError
+pub fn aya_obj::extern_types::KsymsError::from(source: aya_obj::btf::BtfError) -> Self
+impl core::convert::From<aya_obj::extern_types::KsymsError> for aya_obj::ParseError
+pub fn aya_obj::ParseError::from(source: aya_obj::extern_types::KsymsError) -> Self
+impl core::convert::From<std::io::error::Error> for aya_obj::extern_types::KsymsError
+pub fn aya_obj::extern_types::KsymsError::from(source: std::io::error::Error) -> Self
+impl core::error::Error for aya_obj::extern_types::KsymsError
+pub fn aya_obj::extern_types::KsymsError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya_obj::extern_types::KsymsError
+pub fn aya_obj::extern_types::KsymsError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya_obj::extern_types::KsymsError
+pub fn aya_obj::extern_types::KsymsError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya_obj::extern_types::KsymsError
+impl core::marker::Send for aya_obj::extern_types::KsymsError
+impl core::marker::Sync for aya_obj::extern_types::KsymsError
+impl core::marker::Unpin for aya_obj::extern_types::KsymsError
+impl core::marker::UnsafeUnpin for aya_obj::extern_types::KsymsError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::extern_types::KsymsError
+impl !core::panic::unwind_safe::UnwindSafe for aya_obj::extern_types::KsymsError
+impl<T, U> core::convert::Into<U> for aya_obj::extern_types::KsymsError where U: core::convert::From<T>
+pub fn aya_obj::extern_types::KsymsError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::extern_types::KsymsError where U: core::convert::Into<T>
+pub type aya_obj::extern_types::KsymsError::Error = core::convert::Infallible
+pub fn aya_obj::extern_types::KsymsError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::extern_types::KsymsError where U: core::convert::TryFrom<T>
+pub type aya_obj::extern_types::KsymsError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::extern_types::KsymsError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::string::ToString for aya_obj::extern_types::KsymsError where T: core::fmt::Display + ?core::marker::Sized
+pub fn aya_obj::extern_types::KsymsError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for aya_obj::extern_types::KsymsError where T: 'static + ?core::marker::Sized
+pub fn aya_obj::extern_types::KsymsError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::extern_types::KsymsError where T: ?core::marker::Sized
+pub fn aya_obj::extern_types::KsymsError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::extern_types::KsymsError where T: ?core::marker::Sized
+pub fn aya_obj::extern_types::KsymsError::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_obj::extern_types::KsymsError
+pub fn aya_obj::extern_types::KsymsError::from(t: T) -> T
 pub enum aya_obj::Map
 pub aya_obj::Map::Btf(aya_obj::maps::BtfMap)
 pub aya_obj::Map::Legacy(aya_obj::maps::LegacyMap)
@@ -9607,11 +9825,18 @@ impl<T> core::convert::From<T> for aya_obj::maps::Map
 pub fn aya_obj::maps::Map::from(t: T) -> T
 pub enum aya_obj::ParseError
 pub aya_obj::ParseError::BtfError(aya_obj::btf::BtfError)
+pub aya_obj::ParseError::DuplicateExtern
+pub aya_obj::ParseError::DuplicateExtern::name: alloc::string::String
 pub aya_obj::ParseError::ElfError(object::read::Error)
+pub aya_obj::ParseError::FuncInKconfig
+pub aya_obj::ParseError::FuncInKconfig::name: alloc::string::String
+pub aya_obj::ParseError::FuncInKconfig::section: alloc::string::String
 pub aya_obj::ParseError::InvalidGlobalData
 pub aya_obj::ParseError::InvalidGlobalData::data_size: usize
 pub aya_obj::ParseError::InvalidGlobalData::name: alloc::string::String
 pub aya_obj::ParseError::InvalidGlobalData::sym_size: u64
+pub aya_obj::ParseError::InvalidKconfigSize
+pub aya_obj::ParseError::InvalidKconfigSize::name: alloc::string::String
 pub aya_obj::ParseError::InvalidKernelVersion
 pub aya_obj::ParseError::InvalidKernelVersion::data: alloc::vec::Vec<u8>
 pub aya_obj::ParseError::InvalidLicense
@@ -9624,6 +9849,7 @@ pub aya_obj::ParseError::InvalidProgramSection::section: alloc::string::String
 pub aya_obj::ParseError::InvalidSymbol
 pub aya_obj::ParseError::InvalidSymbol::index: usize
 pub aya_obj::ParseError::InvalidSymbol::name: core::option::Option<alloc::string::String>
+pub aya_obj::ParseError::KsymsError(aya_obj::extern_types::KsymsError)
 pub aya_obj::ParseError::MapNotFound
 pub aya_obj::ParseError::MapNotFound::index: usize
 pub aya_obj::ParseError::MapSymbolNameNotFound
@@ -9645,8 +9871,12 @@ pub aya_obj::ParseError::UnknownSymbol
 pub aya_obj::ParseError::UnknownSymbol::address: u64
 pub aya_obj::ParseError::UnknownSymbol::section_index: usize
 pub aya_obj::ParseError::UnsupportedRelocationTarget
+pub aya_obj::ParseError::WeakFuncNotSupported
+pub aya_obj::ParseError::WeakFuncNotSupported::name: alloc::string::String
 impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::ParseError
 pub fn aya_obj::ParseError::from(source: aya_obj::btf::BtfError) -> Self
+impl core::convert::From<aya_obj::extern_types::KsymsError> for aya_obj::ParseError
+pub fn aya_obj::ParseError::from(source: aya_obj::extern_types::KsymsError) -> Self
 impl core::error::Error for aya_obj::ParseError
 pub fn aya_obj::ParseError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya_obj::ParseError
@@ -9873,6 +10103,8 @@ pub aya_obj::Object::license: alloc::ffi::c_str::CString
 pub aya_obj::Object::maps: std::collections::hash::map::HashMap<alloc::string::String, aya_obj::maps::Map>
 pub aya_obj::Object::programs: std::collections::hash::map::HashMap<alloc::string::String, aya_obj::Program>
 impl aya_obj::Object
+pub fn aya_obj::Object::collect_ksyms_from_btf(&mut self) -> core::result::Result<(), aya_obj::extern_types::KsymsError>
+impl aya_obj::Object
 pub fn aya_obj::Object::fixup_and_sanitize_btf(&mut self, features: &aya_obj::btf::BtfFeatures) -> core::result::Result<core::option::Option<&aya_obj::btf::Btf>, aya_obj::btf::BtfError>
 impl aya_obj::Object
 pub fn aya_obj::Object::has_btf_relocations(&self) -> bool
@@ -9883,7 +10115,11 @@ impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, target_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_calls(&mut self, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+pub fn aya_obj::Object::relocate_externs(&mut self) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, maps: I, text_sections: &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+impl aya_obj::Object
+pub fn aya_obj::Object::resolve_typed_externs(&mut self, kernel_btf: &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::extern_types::KsymsError>
+pub fn aya_obj::Object::resolve_typeless_externs(&mut self) -> core::result::Result<(), aya_obj::extern_types::KsymsError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object
