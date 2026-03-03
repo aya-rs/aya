@@ -266,6 +266,7 @@ impl<T> core::clone::CloneToUninit for aya_ebpf::helpers::PrintkArg where T: cor
 pub unsafe fn aya_ebpf::helpers::PrintkArg::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_ebpf::helpers::PrintkArg
 pub fn aya_ebpf::helpers::PrintkArg::from(t: T) -> T
+pub const aya_ebpf::helpers::TASK_COMM_LEN: usize
 pub fn aya_ebpf::helpers::bpf_get_current_comm() -> core::result::Result<[u8; 16], i32>
 pub fn aya_ebpf::helpers::bpf_get_current_pid_tgid() -> u64
 pub fn aya_ebpf::helpers::bpf_get_current_uid_gid() -> u64

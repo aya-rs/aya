@@ -54,12 +54,11 @@ use core::{
 pub use aya_ebpf_cty as cty;
 pub use aya_ebpf_macros as macros;
 use cty::c_void;
+pub use helpers::TASK_COMM_LEN;
 use helpers::{
     bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid, bpf_map_delete_elem,
     bpf_map_lookup_elem, bpf_map_update_elem,
 };
-
-pub const TASK_COMM_LEN: usize = 16;
 
 pub trait EbpfContext {
     fn as_ptr(&self) -> *mut c_void;
