@@ -146,7 +146,7 @@ pub fn build_ebpf<'a>(
             &target,
         ]);
 
-        if channel == Channel::Nightly {
+        if channel == Channel::Nightly || env::var_os("RUSTC_BOOTSTRAP").is_some() {
             cmd.args(["-Z", "build-std=core"]);
         }
 
