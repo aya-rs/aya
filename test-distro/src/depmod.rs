@@ -5,9 +5,10 @@
 //! the constraints of the test environment. Not for production use.
 
 use std::{
+    borrow::Cow,
     fs::File,
     io::{BufWriter, Write as _},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use anyhow::{Context as _, anyhow};
@@ -25,8 +26,8 @@ struct Args {
 fn main() -> anyhow::Result<()> {
     let Args { base_dir } = Parser::parse();
 
-    let modules_dir = if let Some(base_dir) = base_dir {
-        base_dir
+    let modules_dir: Cow<'static, Path> = if let Some(base_dir) = base_dir {
+        base_dir.into()
     } else {
         resolve_modules_dir().context("failed to resolve modules dir")?
     };
