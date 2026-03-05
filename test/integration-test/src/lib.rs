@@ -12,6 +12,8 @@ bpf_file!(
     MAIN => "main.bpf.o",
     MULTIMAP_BTF => "multimap-btf.bpf.o",
     RINGBUF_BTF => "ringbuf-btf.bpf.o",
+    KSYMS => "ksyms.bpf.o",
+    KSYMS_STRONG => "ksyms_strong.bpf.o",
 
     ENUM_SIGNED_32_RELOC_BPF => "enum_signed_32_reloc.bpf.o",
     ENUM_SIGNED_32_RELOC_BTF => "enum_signed_32_reloc.bpf.target.o",
