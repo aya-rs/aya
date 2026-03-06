@@ -17,10 +17,7 @@ fn libbpf_can_load_btf_maps() {
     // Verify libbpf can see the BTF_ARRAY map.
 
     // Materialize the maps because `OpenMap::name` returns the wrong lifetime.
-    //
-    // TODO(https://github.com/libbpf/libbpf-rs/commit/9622223): remove the `collect` when this commit is released.
-    let maps = obj.maps().collect::<Vec<_>>();
-    let map_names: Vec<_> = maps.iter().map(libbpf_rs::OpenMapImpl::name).collect();
+    let map_names: Vec<_> = obj.maps().map(|map| map.name()).collect();
     if !map_names.iter().any(|name| *name == "BTF_ARRAY") {
         let display_map_names = map_names.join(std::ffi::OsStr::new(", "));
         panic!(

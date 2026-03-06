@@ -1,7 +1,5 @@
 use core::hint::unreachable_unchecked;
 
-use aya_ebpf_cty::c_long;
-
 use crate::{
     EbpfContext,
     bindings::bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY,
@@ -14,13 +12,13 @@ use crate::{
 /// # Examples
 ///
 /// ```no_run
-/// use aya_ebpf::{macros::map, maps::ProgramArray, cty::c_long};
+/// use aya_ebpf::{macros::map, maps::ProgramArray};
 /// # use aya_ebpf::{programs::LsmContext};
 ///
 /// #[map]
 /// static JUMP_TABLE: ProgramArray = ProgramArray::with_max_entries(16, 0);
 ///
-/// # unsafe fn try_test(ctx: &LsmContext) -> Result<(), c_long> {
+/// # unsafe fn try_test(ctx: &LsmContext) -> Result<(), i32> {
 /// let index: u32 = 13;
 ///
 /// unsafe {
@@ -55,10 +53,10 @@ impl ProgramArray {
         &self,
         ctx: &C,
         index: u32,
-    ) -> Result<core::convert::Infallible, c_long> {
+    ) -> Result<core::convert::Infallible, i32> {
         let res = unsafe { bpf_tail_call(ctx.as_ptr(), self.def.as_ptr().cast(), index) };
-        if res != 0 {
-            Err(res)
+        if res < 0 {
+            Err(res as i32)
         } else {
             unsafe { unreachable_unchecked() }
         }

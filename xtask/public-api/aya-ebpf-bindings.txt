@@ -529,6 +529,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty
 impl !core::marker::Send for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_1 where U: core::convert::From<T>
@@ -562,6 +563,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty
 impl !core::marker::Send for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::__sk_buff__bindgen_ty_2 where U: core::convert::From<T>
@@ -610,6 +612,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr where U: core::convert::From<T>
@@ -640,6 +643,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_1 where U: core::convert::From<T>
@@ -670,6 +674,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10__bindgen_ty_2 where U: core::convert::From<T>
@@ -700,6 +705,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_1 where U: core::convert::From<T>
@@ -730,6 +736,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2 where U: core::convert::From<T>
@@ -767,6 +774,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3 where U: core::convert::From<T>
@@ -797,6 +805,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1 where U: core::convert::From<T>
@@ -827,6 +836,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1 where U: core::convert::From<T>
@@ -857,6 +867,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1 where U: core::convert::From<T>
@@ -887,6 +898,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2 where U: core::convert::From<T>
@@ -917,6 +929,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2__bindgen_ty_1 where U: core::convert::From<T>
@@ -947,6 +960,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4__bindgen_ty_1 where U: core::convert::From<T>
@@ -977,6 +991,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_1 where U: core::convert::From<T>
@@ -1007,6 +1022,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6__bindgen_ty_2 where U: core::convert::From<T>
@@ -1040,6 +1056,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1 where U: core::convert::From<T>
@@ -1070,6 +1087,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_cpumap_val__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_cpumap_val__bindgen_ty_1 where U: core::convert::From<T>
@@ -1100,6 +1118,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_devmap_val__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_devmap_val__bindgen_ty_1 where U: core::convert::From<T>
@@ -1130,6 +1149,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_1 where U: core::convert::From<T>
@@ -1161,6 +1181,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_2 where U: core::convert::From<T>
@@ -1191,6 +1212,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_3 where U: core::convert::From<T>
@@ -1221,6 +1243,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_4 where U: core::convert::From<T>
@@ -1251,6 +1274,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5 where U: core::convert::From<T>
@@ -1281,6 +1305,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_flow_keys__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1 where U: core::convert::From<T>
@@ -1312,6 +1337,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_iter_link_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_iter_link_info
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_iter_link_info
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_iter_link_info
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_iter_link_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_iter_link_info
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_iter_link_info
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_iter_link_info where U: core::convert::From<T>
@@ -1353,6 +1379,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1 where U: core::convert::From<T>
@@ -1385,6 +1412,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1 where U: core::convert::From<T>
@@ -1414,6 +1442,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1 where U: core::convert::From<T>
@@ -1444,6 +1473,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2 where U: core::convert::From<T>
@@ -1474,6 +1504,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8__bindgen_ty_1 where U: core::convert::From<T>
@@ -1504,6 +1535,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_redir_neigh__bind
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_redir_neigh__bindgen_ty_1 where U: core::convert::From<T>
@@ -1534,6 +1566,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindge
 impl !core::marker::Send for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1 where U: core::convert::From<T>
@@ -1567,6 +1600,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindge
 impl !core::marker::Send for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1 where U: core::convert::From<T>
@@ -1600,6 +1634,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock_addr__bindge
 impl !core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sock_addr__bindgen_ty_1 where U: core::convert::From<T>
@@ -1631,6 +1666,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_1 where U: core::convert::From<T>
@@ -1664,6 +1700,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen
 impl !core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_2 where U: core::convert::From<T>
@@ -1697,6 +1734,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen
 impl !core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_3 where U: core::convert::From<T>
@@ -1730,6 +1768,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen
 impl !core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sock_ops__bindgen_ty_4 where U: core::convert::From<T>
@@ -1760,6 +1799,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1 where U: core::convert::From<T>
@@ -1793,6 +1833,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_
 impl !core::marker::Send for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_1 where U: core::convert::From<T>
@@ -1826,6 +1867,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_
 impl !core::marker::Send for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_2 where U: core::convert::From<T>
@@ -1859,6 +1901,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_
 impl !core::marker::Send for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sockopt__bindgen_ty_3 where U: core::convert::From<T>
@@ -1889,6 +1932,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_stack_build_id__b
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_stack_build_id__bindgen_ty_1 where U: core::convert::From<T>
@@ -1919,6 +1963,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1 where U: core::convert::From<T>
@@ -1949,6 +1994,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2 where U: core::convert::From<T>
@@ -1979,6 +2025,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_3 where U: core::convert::From<T>
@@ -2009,6 +2056,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_xfrm_state__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_xfrm_state__bindgen_ty_1 where U: core::convert::From<T>
@@ -2042,6 +2090,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty
 impl !core::marker::Send for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_1 where U: core::convert::From<T>
@@ -2075,6 +2124,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty
 impl !core::marker::Send for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_2 where U: core::convert::From<T>
@@ -2108,6 +2158,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty
 impl !core::marker::Send for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::sk_msg_md__bindgen_ty_3 where U: core::convert::From<T>
@@ -2141,6 +2192,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::sk_reuseport_md__bind
 impl !core::marker::Send for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_1 where U: core::convert::From<T>
@@ -2174,6 +2226,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::sk_reuseport_md__bind
 impl !core::marker::Send for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_2 where U: core::convert::From<T>
@@ -2207,6 +2260,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::sk_reuseport_md__bind
 impl !core::marker::Send for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_3 where U: core::convert::From<T>
@@ -2240,6 +2294,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::sk_reuseport_md__bind
 impl !core::marker::Send for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4 where U: core::convert::From<T>
@@ -2293,6 +2348,7 @@ impl<Storage> core::marker::Freeze for aya_ebpf_bindings::bindings::__BindgenBit
 impl<Storage> core::marker::Send for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Send
 impl<Storage> core::marker::Sync for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Sync
 impl<Storage> core::marker::Unpin for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Unpin
+impl<Storage> core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::marker::UnsafeUnpin
 impl<Storage> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::panic::unwind_safe::RefUnwindSafe
 impl<Storage> core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where U: core::convert::From<T>
@@ -2328,6 +2384,7 @@ impl<T> core::marker::Freeze for aya_ebpf_bindings::bindings::__IncompleteArrayF
 impl<T> core::marker::Send for aya_ebpf_bindings::bindings::__IncompleteArrayField<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_ebpf_bindings::bindings::__IncompleteArrayField<T> where T: core::marker::Sync
 impl<T> core::marker::Unpin for aya_ebpf_bindings::bindings::__IncompleteArrayField<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::__IncompleteArrayField<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::__IncompleteArrayField<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::__IncompleteArrayField<T> where T: core::panic::unwind_safe::UnwindSafe
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::__IncompleteArrayField<T> where U: core::convert::From<T>
@@ -2392,6 +2449,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::__sk_buff
 impl !core::marker::Send for aya_ebpf_bindings::bindings::__sk_buff
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::__sk_buff
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::__sk_buff
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::__sk_buff
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::__sk_buff
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::__sk_buff
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::__sk_buff where U: core::convert::From<T>
@@ -2438,6 +2496,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1 where U: core::convert::From<T>
@@ -2480,6 +2539,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10 where U: core::convert::From<T>
@@ -2517,6 +2577,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11 where U: core::convert::From<T>
@@ -2555,6 +2616,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12 where U: core::convert::From<T>
@@ -2594,6 +2656,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13 where U: core::convert::From<T>
@@ -2627,6 +2690,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14 where U: core::convert::From<T>
@@ -2659,6 +2723,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1 where U: core::convert::From<T>
@@ -2690,6 +2755,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2 where U: core::convert::From<T>
@@ -2725,6 +2791,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3 where U: core::convert::From<T>
@@ -2757,6 +2824,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4 where U: core::convert::From<T>
@@ -2791,6 +2859,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5 where U: core::convert::From<T>
@@ -2821,6 +2890,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6 where U: core::convert::From<T>
@@ -2858,6 +2928,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7 where U: core::convert::From<T>
@@ -2888,6 +2959,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8 where U: core::convert::From<T>
@@ -2920,6 +2992,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15 where U: core::convert::From<T>
@@ -2951,6 +3024,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16 where U: core::convert::From<T>
@@ -2982,6 +3056,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17 where U: core::convert::From<T>
@@ -3014,6 +3089,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18 where U: core::convert::From<T>
@@ -3047,6 +3123,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19 where U: core::convert::From<T>
@@ -3079,6 +3156,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2 where U: core::convert::From<T>
@@ -3111,6 +3189,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20 where U: core::convert::From<T>
@@ -3149,6 +3228,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3 where U: core::convert::From<T>
@@ -3204,6 +3284,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4 where U: core::convert::From<T>
@@ -3238,6 +3319,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5 where U: core::convert::From<T>
@@ -3273,6 +3355,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_6 where U: core::convert::From<T>
@@ -3318,6 +3401,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7 where U: core::convert::From<T>
@@ -3349,6 +3433,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8 where U: core::convert::From<T>
@@ -3382,6 +3467,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9 where U: core::convert::From<T>
@@ -3418,6 +3504,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_btf_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_btf_info
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_btf_info
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_btf_info
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_btf_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_btf_info
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_btf_info
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_btf_info where U: core::convert::From<T>
@@ -3451,6 +3538,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx where U: core::convert::From<T>
@@ -3483,6 +3571,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_cgroup_storage_ke
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key where U: core::convert::From<T>
@@ -3517,6 +3606,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_core_relo
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_core_relo
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_core_relo
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_core_relo
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_core_relo
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_core_relo
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_core_relo
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_core_relo where U: core::convert::From<T>
@@ -3547,6 +3637,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_cpumap_val
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_cpumap_val
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_cpumap_val
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_cpumap_val
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_cpumap_val
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_cpumap_val
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_cpumap_val
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_cpumap_val where U: core::convert::From<T>
@@ -3577,6 +3668,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_devmap_val
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_devmap_val
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_devmap_val
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_devmap_val
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_devmap_val
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_devmap_val
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_devmap_val
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_devmap_val where U: core::convert::From<T>
@@ -3608,6 +3700,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_dynptr
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_dynptr
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_dynptr
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_dynptr
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_dynptr
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_dynptr
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_dynptr
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_dynptr where U: core::convert::From<T>
@@ -3648,6 +3741,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_fib_lookup
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_fib_lookup
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_fib_lookup
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_fib_lookup
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_fib_lookup
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_fib_lookup where U: core::convert::From<T>
@@ -3680,6 +3774,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1 where U: core::convert::From<T>
@@ -3721,6 +3816,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_flow_keys
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_flow_keys
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_flow_keys
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_flow_keys
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_flow_keys
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_flow_keys
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_flow_keys
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_flow_keys where U: core::convert::From<T>
@@ -3753,6 +3849,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_flow_keys__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1 where U: core::convert::From<T>
@@ -3785,6 +3882,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_flow_keys__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2 where U: core::convert::From<T>
@@ -3817,6 +3915,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_func_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_func_info
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_func_info
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_func_info
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_func_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_func_info
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_func_info
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_func_info where U: core::convert::From<T>
@@ -3862,6 +3961,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_insn
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_insn
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_insn
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_insn
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_insn
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_insn
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_insn
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_insn where U: core::convert::From<T>
@@ -3893,6 +3993,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_iter_link_info__b
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1 where U: core::convert::From<T>
@@ -3926,6 +4027,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_iter_link_info__b
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2 where U: core::convert::From<T>
@@ -3959,6 +4061,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_iter_link_info__b
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3 where U: core::convert::From<T>
@@ -3990,6 +4093,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_iter_num
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_iter_num
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_iter_num
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_iter_num
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_iter_num
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_iter_num
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_iter_num
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_iter_num where U: core::convert::From<T>
@@ -4024,6 +4128,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_line_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_line_info
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_line_info
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_line_info
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_line_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_line_info
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_line_info
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_line_info where U: core::convert::From<T>
@@ -4056,6 +4161,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info where U: core::convert::From<T>
@@ -4088,6 +4194,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1 where U: core::convert::From<T>
@@ -4126,6 +4233,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10 where U: core::convert::From<T>
@@ -4160,6 +4268,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11 where U: core::convert::From<T>
@@ -4194,6 +4303,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1 where U: core::convert::From<T>
@@ -4230,6 +4340,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2 where U: core::convert::From<T>
@@ -4267,6 +4378,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3 where U: core::convert::From<T>
@@ -4304,6 +4416,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4 where U: core::convert::From<T>
@@ -4336,6 +4449,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12 where U: core::convert::From<T>
@@ -4368,6 +4482,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13 where U: core::convert::From<T>
@@ -4401,6 +4516,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2 where U: core::convert::From<T>
@@ -4433,6 +4549,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3 where U: core::convert::From<T>
@@ -4465,6 +4582,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4 where U: core::convert::From<T>
@@ -4496,6 +4614,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1 where U: core::convert::From<T>
@@ -4528,6 +4647,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1 where U: core::convert::From<T>
@@ -4560,6 +4680,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2 where U: core::convert::From<T>
@@ -4592,6 +4713,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5 where U: core::convert::From<T>
@@ -4623,6 +4745,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6 where U: core::convert::From<T>
@@ -4654,6 +4777,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7 where U: core::convert::From<T>
@@ -4688,6 +4812,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8 where U: core::convert::From<T>
@@ -4723,6 +4848,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindge
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9 where U: core::convert::From<T>
@@ -4754,6 +4880,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_list_head
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_list_head
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_list_head
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_list_head
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_list_head
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_list_head
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_list_head
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_list_head where U: core::convert::From<T>
@@ -4785,6 +4912,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_list_node
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_list_node
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_list_node
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_list_node
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_list_node
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_list_node
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_list_node
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_list_node where U: core::convert::From<T>
@@ -4814,6 +4942,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_lpm_trie_key
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_lpm_trie_key
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_lpm_trie_key
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_lpm_trie_key
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_lpm_trie_key
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_lpm_trie_key
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_lpm_trie_key
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_lpm_trie_key where U: core::convert::From<T>
@@ -4843,6 +4972,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr where U: core::convert::From<T>
@@ -4870,6 +5000,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_u8 where U: core::convert::From<T>
@@ -4900,6 +5031,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_map_def
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_map_def
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_map_def
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_map_def
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_map_def
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_map_def
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_map_def
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_map_def where U: core::convert::From<T>
@@ -4944,6 +5076,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_map_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_map_info
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_map_info
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_map_info
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_map_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_map_info
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_map_info
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_map_info where U: core::convert::From<T>
@@ -4977,6 +5110,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_perf_event_data
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_perf_event_data
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_perf_event_data
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_perf_event_data
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_perf_event_data
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_perf_event_data
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_perf_event_data
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_perf_event_data where U: core::convert::From<T>
@@ -5010,6 +5144,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_perf_event_value
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_perf_event_value
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_perf_event_value
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_perf_event_value
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_perf_event_value
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_perf_event_value
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_perf_event_value
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_perf_event_value where U: core::convert::From<T>
@@ -5042,6 +5177,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_pidns_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_pidns_info
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_pidns_info
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_pidns_info
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_pidns_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_pidns_info
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_pidns_info
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_pidns_info where U: core::convert::From<T>
@@ -5117,6 +5253,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_prog_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_prog_info
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_prog_info
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_prog_info
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_prog_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_prog_info
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_prog_info
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_prog_info where U: core::convert::From<T>
@@ -5145,6 +5282,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_ar
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args where U: core::convert::From<T>
@@ -5174,6 +5312,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_rb_node
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_rb_node
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_rb_node
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_rb_node
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_rb_node
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_rb_node
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_rb_node
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_rb_node where U: core::convert::From<T>
@@ -5205,6 +5344,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_rb_root
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_rb_root
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_rb_root
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_rb_root
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_rb_root
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_rb_root
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_rb_root
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_rb_root where U: core::convert::From<T>
@@ -5235,6 +5375,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_redir_neigh
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_redir_neigh
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_redir_neigh
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_redir_neigh
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_redir_neigh
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_redir_neigh
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_redir_neigh
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_redir_neigh where U: core::convert::From<T>
@@ -5266,6 +5407,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_refcount
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_refcount
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_refcount
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_refcount
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_refcount
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_refcount
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_refcount
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_refcount where U: core::convert::From<T>
@@ -5308,6 +5450,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sk_lookup
 impl !core::marker::Send for aya_ebpf_bindings::bindings::bpf_sk_lookup
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sk_lookup
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sk_lookup
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sk_lookup
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sk_lookup
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sk_lookup
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sk_lookup where U: core::convert::From<T>
@@ -5356,6 +5499,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sock
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sock
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sock
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sock
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sock
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sock where U: core::convert::From<T>
@@ -5394,6 +5538,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock_addr
 impl !core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock_addr
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sock_addr
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sock_addr
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sock_addr
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_addr
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_addr
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sock_addr where U: core::convert::From<T>
@@ -5463,6 +5608,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock_ops
 impl !core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock_ops
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sock_ops
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sock_ops
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sock_ops
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_ops
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_ops
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sock_ops where U: core::convert::From<T>
@@ -5492,6 +5638,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock_tuple
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock_tuple
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sock_tuple
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sock_tuple
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sock_tuple
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_tuple
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_tuple
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sock_tuple where U: core::convert::From<T>
@@ -5526,6 +5673,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1 where U: core::convert::From<T>
@@ -5560,6 +5708,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindg
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2 where U: core::convert::From<T>
@@ -5595,6 +5744,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sockopt
 impl !core::marker::Send for aya_ebpf_bindings::bindings::bpf_sockopt
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sockopt
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sockopt
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sockopt
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sockopt
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sockopt
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sockopt where U: core::convert::From<T>
@@ -5626,6 +5776,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_spin_lock
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_spin_lock
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_spin_lock
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_spin_lock
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_spin_lock
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_spin_lock
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_spin_lock
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_spin_lock where U: core::convert::From<T>
@@ -5657,6 +5808,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_stack_build_id
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_stack_build_id
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_stack_build_id
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_stack_build_id
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_stack_build_id
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_stack_build_id
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_stack_build_id
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_stack_build_id where U: core::convert::From<T>
@@ -5689,6 +5841,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sysctl
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_sysctl
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_sysctl
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sysctl
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sysctl
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sysctl
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sysctl
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_sysctl where U: core::convert::From<T>
@@ -5745,6 +5898,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_tcp_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_tcp_sock
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_tcp_sock
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_tcp_sock
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_tcp_sock
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_tcp_sock
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_tcp_sock
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_tcp_sock where U: core::convert::From<T>
@@ -5776,6 +5930,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_timer
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_timer
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_timer
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_timer
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_timer
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_timer
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_timer
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_timer where U: core::convert::From<T>
@@ -5811,6 +5966,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_tunnel_key
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_tunnel_key
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_tunnel_key
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_tunnel_key
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_tunnel_key
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_tunnel_key
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_tunnel_key
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_tunnel_key where U: core::convert::From<T>
@@ -5842,6 +5998,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_xdp_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_xdp_sock
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_xdp_sock
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_xdp_sock
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_xdp_sock
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_xdp_sock
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_xdp_sock
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_xdp_sock where U: core::convert::From<T>
@@ -5875,6 +6032,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_xfrm_state
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_xfrm_state
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_xfrm_state
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_xfrm_state
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_xfrm_state
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_xfrm_state
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_xfrm_state
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::bpf_xfrm_state where U: core::convert::From<T>
@@ -5908,6 +6066,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::btf_ptr
 impl !core::marker::Send for aya_ebpf_bindings::bindings::btf_ptr
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::btf_ptr
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::btf_ptr
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::btf_ptr
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::btf_ptr
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::btf_ptr
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::btf_ptr where U: core::convert::From<T>
@@ -5938,6 +6097,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::cgroup
 impl core::marker::Send for aya_ebpf_bindings::bindings::cgroup
 impl core::marker::Sync for aya_ebpf_bindings::bindings::cgroup
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::cgroup
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::cgroup
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::cgroup
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::cgroup
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::cgroup where U: core::convert::From<T>
@@ -5968,6 +6128,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::file
 impl core::marker::Send for aya_ebpf_bindings::bindings::file
 impl core::marker::Sync for aya_ebpf_bindings::bindings::file
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::file
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::file
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::file
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::file
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::file where U: core::convert::From<T>
@@ -5998,6 +6159,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::inode
 impl core::marker::Send for aya_ebpf_bindings::bindings::inode
 impl core::marker::Sync for aya_ebpf_bindings::bindings::inode
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::inode
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::inode
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::inode
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::inode
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::inode where U: core::convert::From<T>
@@ -6028,6 +6190,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::iphdr
 impl core::marker::Send for aya_ebpf_bindings::bindings::iphdr
 impl core::marker::Sync for aya_ebpf_bindings::bindings::iphdr
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::iphdr
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::iphdr
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::iphdr
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::iphdr
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::iphdr where U: core::convert::From<T>
@@ -6058,6 +6221,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::ipv6hdr
 impl core::marker::Send for aya_ebpf_bindings::bindings::ipv6hdr
 impl core::marker::Sync for aya_ebpf_bindings::bindings::ipv6hdr
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::ipv6hdr
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::ipv6hdr
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::ipv6hdr
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::ipv6hdr
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::ipv6hdr where U: core::convert::From<T>
@@ -6088,6 +6252,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::linux_binprm
 impl core::marker::Send for aya_ebpf_bindings::bindings::linux_binprm
 impl core::marker::Sync for aya_ebpf_bindings::bindings::linux_binprm
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::linux_binprm
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::linux_binprm
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::linux_binprm
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::linux_binprm
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::linux_binprm where U: core::convert::From<T>
@@ -6118,6 +6283,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::mptcp_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::mptcp_sock
 impl core::marker::Sync for aya_ebpf_bindings::bindings::mptcp_sock
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::mptcp_sock
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::mptcp_sock
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::mptcp_sock
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::mptcp_sock
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::mptcp_sock where U: core::convert::From<T>
@@ -6148,6 +6314,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::path
 impl core::marker::Send for aya_ebpf_bindings::bindings::path
 impl core::marker::Sync for aya_ebpf_bindings::bindings::path
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::path
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::path
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::path
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::path
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::path where U: core::convert::From<T>
@@ -6199,6 +6366,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::pt_regs
 impl core::marker::Send for aya_ebpf_bindings::bindings::pt_regs
 impl core::marker::Sync for aya_ebpf_bindings::bindings::pt_regs
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::pt_regs
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::pt_regs
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::pt_regs
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::pt_regs
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::pt_regs where U: core::convert::From<T>
@@ -6229,6 +6397,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::seq_file
 impl core::marker::Send for aya_ebpf_bindings::bindings::seq_file
 impl core::marker::Sync for aya_ebpf_bindings::bindings::seq_file
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::seq_file
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::seq_file
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::seq_file
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::seq_file
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::seq_file where U: core::convert::From<T>
@@ -6268,6 +6437,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::sk_msg_md
 impl !core::marker::Send for aya_ebpf_bindings::bindings::sk_msg_md
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::sk_msg_md
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::sk_msg_md
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::sk_msg_md
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::sk_msg_md
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::sk_msg_md
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::sk_msg_md where U: core::convert::From<T>
@@ -6305,6 +6475,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::sk_reuseport_md
 impl !core::marker::Send for aya_ebpf_bindings::bindings::sk_reuseport_md
 impl !core::marker::Sync for aya_ebpf_bindings::bindings::sk_reuseport_md
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::sk_reuseport_md
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::sk_reuseport_md
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::sk_reuseport_md
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::sk_reuseport_md
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::sk_reuseport_md where U: core::convert::From<T>
@@ -6337,6 +6508,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::sockaddr
 impl core::marker::Send for aya_ebpf_bindings::bindings::sockaddr
 impl core::marker::Sync for aya_ebpf_bindings::bindings::sockaddr
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::sockaddr
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::sockaddr
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::sockaddr
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::sockaddr
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::sockaddr where U: core::convert::From<T>
@@ -6367,6 +6539,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::socket
 impl core::marker::Send for aya_ebpf_bindings::bindings::socket
 impl core::marker::Sync for aya_ebpf_bindings::bindings::socket
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::socket
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::socket
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::socket
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::socket
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::socket where U: core::convert::From<T>
@@ -6397,6 +6570,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::task_struct
 impl core::marker::Send for aya_ebpf_bindings::bindings::task_struct
 impl core::marker::Sync for aya_ebpf_bindings::bindings::task_struct
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::task_struct
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::task_struct
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::task_struct
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::task_struct
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::task_struct where U: core::convert::From<T>
@@ -6427,6 +6601,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::tcp6_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::tcp6_sock
 impl core::marker::Sync for aya_ebpf_bindings::bindings::tcp6_sock
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::tcp6_sock
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::tcp6_sock
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::tcp6_sock
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::tcp6_sock
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::tcp6_sock where U: core::convert::From<T>
@@ -6457,6 +6632,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::tcp_request_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::tcp_request_sock
 impl core::marker::Sync for aya_ebpf_bindings::bindings::tcp_request_sock
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::tcp_request_sock
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::tcp_request_sock
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::tcp_request_sock
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::tcp_request_sock
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::tcp_request_sock where U: core::convert::From<T>
@@ -6487,6 +6663,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::tcp_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::tcp_sock
 impl core::marker::Sync for aya_ebpf_bindings::bindings::tcp_sock
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::tcp_sock
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::tcp_sock
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::tcp_sock
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::tcp_sock
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::tcp_sock where U: core::convert::From<T>
@@ -6517,6 +6694,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::tcp_timewait_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::tcp_timewait_sock
 impl core::marker::Sync for aya_ebpf_bindings::bindings::tcp_timewait_sock
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::tcp_timewait_sock
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::tcp_timewait_sock
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::tcp_timewait_sock
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::tcp_timewait_sock
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::tcp_timewait_sock where U: core::convert::From<T>
@@ -6547,6 +6725,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::tcphdr
 impl core::marker::Send for aya_ebpf_bindings::bindings::tcphdr
 impl core::marker::Sync for aya_ebpf_bindings::bindings::tcphdr
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::tcphdr
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::tcphdr
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::tcphdr
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::tcphdr
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::tcphdr where U: core::convert::From<T>
@@ -6577,6 +6756,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::udp6_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::udp6_sock
 impl core::marker::Sync for aya_ebpf_bindings::bindings::udp6_sock
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::udp6_sock
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::udp6_sock
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::udp6_sock
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::udp6_sock
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::udp6_sock where U: core::convert::From<T>
@@ -6607,6 +6787,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::unix_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::unix_sock
 impl core::marker::Sync for aya_ebpf_bindings::bindings::unix_sock
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::unix_sock
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::unix_sock
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::unix_sock
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::unix_sock
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::unix_sock where U: core::convert::From<T>
@@ -6643,6 +6824,7 @@ impl core::marker::Freeze for aya_ebpf_bindings::bindings::xdp_md
 impl core::marker::Send for aya_ebpf_bindings::bindings::xdp_md
 impl core::marker::Sync for aya_ebpf_bindings::bindings::xdp_md
 impl core::marker::Unpin for aya_ebpf_bindings::bindings::xdp_md
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::xdp_md
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::xdp_md
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::xdp_md
 impl<T, U> core::convert::Into<U> for aya_ebpf_bindings::bindings::xdp_md where U: core::convert::From<T>
