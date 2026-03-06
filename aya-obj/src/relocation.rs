@@ -84,6 +84,17 @@ pub enum RelocationError {
         /// The relocation number
         relocation_number: usize,
     },
+
+    /// Unsupported relocation
+    #[error(
+        "unsupported relocation target `{symbol_kind:?}` applying relocation #{relocation_number}"
+    )]
+    UnsupportedRelocationTarget {
+        /// The symbol kind
+        symbol_kind: SymbolKind,
+        /// The relocation number
+        relocation_number: u64,
+    },
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -358,16 +369,19 @@ impl<'a> FunctionLinker<'a> {
 
             let rel = relocations
                 .and_then(|relocations| {
+                    let relocation_number =
+                        (fun.section_offset + (ins_index - start_ins) * INS_SIZE) as u64;
                     relocations
-                        .get(&((fun.section_offset + (ins_index - start_ins) * INS_SIZE) as u64))
+                        .get(&relocation_number)
+                        .map(|rel| (relocation_number, rel))
                 })
-                .and_then(|rel| {
+                .and_then(|(rel_num, rel): (u64, &Relocation)| {
                     // get the symbol for the relocation
                     self.symbol_table
                         .get(&rel.symbol_index)
-                        .map(|sym| (rel, sym))
+                        .map(|sym| (rel_num, rel, sym))
                 })
-                .filter(|(_rel, sym)| {
+                .filter(|(_rel_num, _rel, sym)| {
                     // only consider text relocations, data relocations are
                     // relocated in relocate_maps()
                     sym.kind == SymbolKind::Text
@@ -381,7 +395,7 @@ impl<'a> FunctionLinker<'a> {
                 continue;
             }
 
-            let (callee_section_index, callee_address) = if let Some((rel, sym)) = rel {
+            let (callee_section_index, callee_address) = if let Some((rel_num, rel, sym)) = rel {
                 let address = match sym.kind {
                     SymbolKind::Text => sym.address,
                     // R_BPF_64_32 this is a call
@@ -390,8 +404,12 @@ impl<'a> FunctionLinker<'a> {
                     }
                     // R_BPF_64_64 this is a ld_imm64 text relocation
                     SymbolKind::Section if rel.size == 64 => sym.address + ins.imm as u64,
-                    #[expect(clippy::todo, reason = "TODO")]
-                    kind => todo!("FIXME: return an error here for kind={kind:?}"),
+                    symbol_kind => {
+                        return Err(RelocationError::UnsupportedRelocationTarget {
+                            symbol_kind,
+                            relocation_number: rel_num,
+                        });
+                    }
                 };
                 (sym.section_index.unwrap(), address)
             } else {
