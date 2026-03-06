@@ -17,6 +17,7 @@ mod elf;
 mod feature_probe;
 mod info;
 mod iter;
+mod kprobe;
 mod linear_data_structures;
 mod load;
 mod log;
