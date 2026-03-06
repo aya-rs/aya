@@ -10,7 +10,7 @@ use aya_obj::{
 use crate::{
     VerifierLogLevel,
     programs::{FdLink, FdLinkId, ProgramData, ProgramError, define_link_wrapper, load_program},
-    sys::{BpfLinkCreateArgs, LinkTarget, SyscallError, bpf_link_create},
+    sys::{LinkTarget, SyscallError, bpf_link_create},
 };
 
 /// A program that attaches to Linux LSM hooks with per-cgroup attachment type. Used to implement security policy and
@@ -99,13 +99,14 @@ impl LsmCgroup {
         //
         // In all cases, expected_attach_type is guaranteed to be Some(_).
         let attach_type = self.data.expected_attach_type.unwrap();
-        let btf_id = self.data.attach_btf_id.ok_or(ProgramError::NotLoaded)?;
         let link_fd = bpf_link_create(
             prog_fd,
             LinkTarget::Fd(cgroup_fd),
             attach_type,
             0,
-            Some(BpfLinkCreateArgs::TargetBtfId(btf_id)),
+            // LSM cgroup links identify the hook through attach_btf_id at program load time.
+            // The link_create union slot is reserved for cgroup anchor metadata instead.
+            None,
         )
         .map_err(|io_error| SyscallError {
             call: "bpf_link_create",
