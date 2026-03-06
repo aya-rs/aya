@@ -13,7 +13,6 @@ use std::{
 };
 
 use aya_obj::generated::ifinfomsg;
-
 use libc::{
     AF_INET, AF_NETLINK, AF_UNSPEC, IFA_ADDRESS, IFA_LOCAL, IFF_UP, IFLA_ADDRESS, IFLA_IFNAME,
     IFLA_INFO_DATA, IFLA_INFO_KIND, IFLA_LINKINFO, IFLA_NET_NS_FD, NDA_DST, NDA_LLADDR,

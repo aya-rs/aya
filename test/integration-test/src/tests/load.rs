@@ -37,9 +37,7 @@ fn long_name() {
         .try_into()
         .unwrap();
     name_prog.load().unwrap();
-    name_prog
-        .attach("lo", XdpFlags::default())
-        .unwrap();
+    name_prog.attach("lo", XdpFlags::default()).unwrap();
 
     // We used to be able to assert with bpftool that the program name was short.
     // It seem though that it now uses the name from the ELF symbol table instead.
