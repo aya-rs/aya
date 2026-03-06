@@ -1,18 +1,9 @@
-#![cfg_attr(
-    target_arch = "bpf",
-    expect(
-        internal_features,
-        reason = "core_intrinsics is required for atomic_xadd on BPF targets"
-    ),
-    expect(
-        unstable_features,
-        reason = "core_intrinsics is required for atomic_xadd on BPF targets"
-    ),
-    feature(core_intrinsics)
-)]
 #![no_std]
 #![no_main]
 #![expect(unused_crate_dependencies, reason = "used in other bins")]
+#![expect(internal_features, reason = "atomic_xadd is unstable")]
+#![expect(unstable_features, reason = "atomic_xadd is unstable")]
+#![feature(core_intrinsics)]
 
 use aya_ebpf::{
     EbpfContext as _, Global,
@@ -46,14 +37,11 @@ fn test_kprobe_trigger(ctx: ProbeContext) -> u32 {
         return 0;
     };
 
-    #[cfg(target_arch = "bpf")]
     unsafe {
         core::intrinsics::atomic_xadd::<u64, u64, { core::intrinsics::AtomicOrdering::Relaxed }>(
             hits, 1,
         );
     }
-
-    let _: *mut u64 = hits;
 
     0
 }
