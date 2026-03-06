@@ -187,23 +187,23 @@ fn lookup<K, V>(def: *mut c_void, key: &K) -> Option<NonNull<V>> {
 /// Use `EbpfLoader::override_global` to override the value at load time from userspace.
 /// # Example
 /// ```
-/// # use aya_ebpf::EbpfGlobal;
+/// # use aya_ebpf::Global;
 /// #[unsafe(no_mangle)]
-/// static VERSION: EbpfGlobal<i32> = EbpfGlobal::new(0);
+/// static VERSION: Global<i32> = Global::new(0);
 ///
 /// # fn loadit() {
 /// let version = VERSION.load();
 /// # }
 /// ```
 #[repr(transparent)]
-pub struct EbpfGlobal<T> {
+pub struct Global<T> {
     // `MaybeUninit` is used to inhibit compiler analysis and optimizations that may
     // cause unexpected behavior; in reality, this value is always be initialized with a valid `T`.
     value: MaybeUninit<T>,
 }
 
-impl<T> EbpfGlobal<T> {
-    /// Returns a new [`EbpfGlobal`] which may be overridden at load
+impl<T> Global<T> {
+    /// Returns a new [`Global`] which may be overridden at load
     /// time by the loader.
     pub const fn new(value: T) -> Self {
         Self {
@@ -212,13 +212,13 @@ impl<T> EbpfGlobal<T> {
     }
 }
 
-impl<T: Default> Default for EbpfGlobal<T> {
+impl<T: Default> Default for Global<T> {
     fn default() -> Self {
         Self::new(T::default())
     }
 }
 
-impl<T> EbpfGlobal<T>
+impl<T> Global<T>
 where
     T: Copy,
 {
