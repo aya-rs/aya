@@ -251,6 +251,7 @@ jobs:
           - arm64 5.10
           - arm64 6.1
           - arm64 6.12
+          - arm64 6.17
         skip-local:
           - true
         include:
@@ -262,7 +263,7 @@ jobs:
 
           # We don't use ubuntu-latest because we care about the apt packages available.
           - os: ubuntu-24.04
-            download-kernel-images: amd64 5.10 6.1 6.12
+            download-kernel-images: amd64 5.10 6.1 6.12 6.17
           - os: ubuntu-24.04-arm
             # Native arm runner for local tests only; arm runners don't support
             # nested virtualization so running them here would be slow.
