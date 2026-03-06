@@ -605,8 +605,8 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         // Github arm64 runners do not support nested
                         // virtualization. Since we aren't doing our own KVM/HVF
                         // detection (we let QEMU pick the best accelerator), we
-                        // use "max" instead.
-                        Some("max"),
+                        // use "cortex-a72" instead.
+                        Some("cortex-a72"),
                         "ttyAMA0",
                     ),
                     "x86" => (
