@@ -92,7 +92,8 @@ fn tcx() {
     .map(|program| program.info().unwrap().id())
     .collect::<Vec<_>>();
 
-    let (revision, got_order) = SchedClassifier::query_tcx("lo", TcAttachType::Ingress).unwrap();
+    let (revision, got_order) =
+        SchedClassifier::query_tcx("lo", TcAttachType::Ingress).unwrap();
     assert_eq!(revision, (expected_order.len() + 1) as u64);
     assert_eq!(
         got_order

@@ -26,7 +26,7 @@ impl ProbeContext {
     /// unsafe fn try_kprobe_try_to_wake_up(ctx: ProbeContext) -> Result<u32, u32> {
     ///     let tp: *const task_struct = ctx.arg(0).ok_or(1u32)?;
     ///     let pid = unsafe {
-    ///         bpf_probe_read(core::ptr::addr_of!((*tp).pid))
+    ///         bpf_probe_read(&raw const (*tp).pid)
     ///     }.map_err(|err| err as u32)?;
     ///
     ///     // Do something with pid or something else with tp

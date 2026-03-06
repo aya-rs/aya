@@ -62,22 +62,6 @@ pub mod ring_buf {
         pub rejected: u64,
     }
 
-    impl core::ops::Add for Registers {
-        type Output = Self;
-        fn add(self, rhs: Self) -> Self::Output {
-            Self {
-                dropped: self.dropped + rhs.dropped,
-                rejected: self.rejected + rhs.rejected,
-            }
-        }
-    }
-
-    impl<'a> core::iter::Sum<&'a Self> for Registers {
-        fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-            iter.fold(Default::default(), |a, b| a + *b)
-        }
-    }
-
     #[cfg(feature = "user")]
     unsafe impl aya::Pod for Registers {}
 }

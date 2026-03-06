@@ -597,7 +597,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         // Some(if cfg!(target_arch = "aarch64") {
                         //   "host"
                         // } else {
-                        //   "max"
+                        //   "neoverse-n1"
                         // }))
                         // ```
                         //
@@ -605,8 +605,13 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         // Github arm64 runners do not support nested
                         // virtualization. Since we aren't doing our own KVM/HVF
                         // detection (we let QEMU pick the best accelerator), we
-                        // use "max" instead.
-                        Some("max"),
+                        // hardcode the emulated cpu.
+                        //
+                        // We use neoverse-n1 since it's relatively new but not
+                        // too new. We used to use "max" and let QEMU pick the
+                        // newest available cpu, until one day that triggered a
+                        // QEMU bug that broke CI.
+                        Some("neoverse-n1"),
                         "ttyAMA0",
                     ),
                     "x86" => (

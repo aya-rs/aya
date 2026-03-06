@@ -569,8 +569,11 @@ pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), 
     if ret == 0 { Ok(()) } else { Err(ret as i32) }
 }
 
-/// Read the `comm` field associated with the current task struct
-/// as a `[u8; 16]`.
+pub const TASK_COMM_LEN: usize = 16;
+
+/// Read the `comm` field associated with the current task struct.
+///
+/// The return value is always null terminated.
 ///
 /// # Examples
 ///
@@ -585,8 +588,8 @@ pub unsafe fn bpf_probe_write_user<T>(dst: *mut T, src: *const T) -> Result<(), 
 ///
 /// On failure, this function returns a negative value wrapped in an `Err`.
 #[inline]
-pub fn bpf_get_current_comm() -> Result<[u8; 16], i32> {
-    let mut comm: [u8; 16usize] = [0; 16];
+pub fn bpf_get_current_comm() -> Result<[u8; TASK_COMM_LEN], i32> {
+    let mut comm = [0; TASK_COMM_LEN];
     let ret = unsafe {
         generated::bpf_get_current_comm(comm.as_mut_ptr().cast(), size_of_val(&comm) as u32)
     };
