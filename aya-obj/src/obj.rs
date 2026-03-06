@@ -236,9 +236,11 @@ pub enum ProgramSection {
     KProbe,
     UProbe {
         sleepable: bool,
+        multi: bool,
     },
     URetProbe {
         sleepable: bool,
+        multi: bool,
     },
     TracePoint,
     SocketFilter,
@@ -306,10 +308,38 @@ impl FromStr for ProgramSection {
         Ok(match kind {
             "kprobe" => Self::KProbe,
             "kretprobe" => Self::KRetProbe,
-            "uprobe" => Self::UProbe { sleepable: false },
-            "uprobe.s" => Self::UProbe { sleepable: true },
-            "uretprobe" => Self::URetProbe { sleepable: false },
-            "uretprobe.s" => Self::URetProbe { sleepable: true },
+            "uprobe" => Self::UProbe {
+                sleepable: false,
+                multi: false,
+            },
+            "uprobe.s" => Self::UProbe {
+                sleepable: true,
+                multi: false,
+            },
+            "uprobe.multi" => Self::UProbe {
+                sleepable: false,
+                multi: true,
+            },
+            "uprobe.multi.s" => Self::UProbe {
+                sleepable: true,
+                multi: true,
+            },
+            "uretprobe" => Self::URetProbe {
+                sleepable: false,
+                multi: false,
+            },
+            "uretprobe.s" => Self::URetProbe {
+                sleepable: true,
+                multi: false,
+            },
+            "uretprobe.multi" => Self::URetProbe {
+                sleepable: false,
+                multi: true,
+            },
+            "uretprobe.multi.s" => Self::URetProbe {
+                sleepable: true,
+                multi: true,
+            },
             "xdp" | "xdp.frags" => Self::Xdp {
                 frags: kind == "xdp.frags",
                 attach_type: match pieces.next() {
