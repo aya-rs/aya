@@ -4,15 +4,11 @@
 //! This implementation is incredibly naive and is only designed to work within
 //! the constraints of the test environment. Not for production use.
 
-use std::{
-    fs::File,
-    io::{BufWriter, Write as _},
-    path::PathBuf,
-};
+use std::{io::BufWriter, path::PathBuf};
 
 use anyhow::{Context as _, anyhow};
 use clap::Parser;
-use object::{Object, ObjectSection, ObjectSymbol, Section};
+use object::{Object, ObjectSection, Section};
 use test_distro::{read_to_end, resolve_modules_dir};
 use walkdir::WalkDir;
 
@@ -77,7 +73,7 @@ fn main() -> anyhow::Result<()> {
 fn read_aliases_from_module(
     contents: &[u8],
     module_name: &str,
-    output: &mut BufWriter<&File>,
+    output: &mut impl std::io::Write,
 ) -> Result<(), anyhow::Error> {
     let obj = object::read::File::parse(contents).context("failed to parse")?;
 
@@ -93,32 +89,74 @@ fn read_aliases_from_module(
         Ok(None)
     })()?;
     let section = section.context("failed to find .modinfo section")?;
-    let section_idx = section.index();
     let data = section
         .data()
         .context("failed to get modinfo section data")?;
 
-    for s in obj.symbols() {
-        if s.section_index() != Some(section_idx) {
-            continue;
-        }
-        let name = s
-            .name()
-            .with_context(|| format!("failed to get name of symbol idx {}", s.index()))?;
-        if name.contains("alias") {
-            let start = s.address() as usize;
-            let end = start + s.size() as usize;
-            let sym_data = &data[start..end];
-            let cstr = std::ffi::CStr::from_bytes_with_nul(sym_data)
-                .with_context(|| format!("failed to convert {sym_data:?} to cstr"))?;
-            let sym_str = cstr
-                .to_str()
-                .with_context(|| format!("failed to convert {cstr:?} to str"))?;
-            let alias = sym_str
-                .strip_prefix("alias=")
-                .with_context(|| format!("failed to strip prefix 'alias=' from {sym_str}"))?;
+    write_aliases_from_modinfo(data, module_name, output)
+}
+
+fn modinfo_entries(data: &[u8]) -> Result<Vec<&str>, anyhow::Error> {
+    data.split(|byte| *byte == 0)
+        .filter(|entry| !entry.is_empty())
+        .map(|entry| {
+            std::str::from_utf8(entry)
+                .with_context(|| format!("failed to convert .modinfo entry {entry:?} to str"))
+        })
+        .collect()
+}
+
+fn write_aliases_from_modinfo(
+    data: &[u8],
+    module_name: &str,
+    output: &mut impl std::io::Write,
+) -> Result<(), anyhow::Error> {
+    for entry in modinfo_entries(data).context("failed to iterate .modinfo entries")? {
+        if let Some(alias) = entry.strip_prefix("alias=") {
             writeln!(output, "alias {alias} {module_name}").expect("write");
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{modinfo_entries, write_aliases_from_modinfo};
+
+    #[test]
+    fn modinfo_entries_reads_nul_delimited_records() {
+        let entries = modinfo_entries(
+            b"description=test module\0alias=net-sch-clsact\0alias=net-sch-ingress\0",
+        )
+        .unwrap();
+
+        assert_eq!(
+            entries,
+            vec![
+                "description=test module",
+                "alias=net-sch-clsact",
+                "alias=net-sch-ingress"
+            ]
+        );
+    }
+
+    #[test]
+    fn modinfo_entries_rejects_invalid_utf8() {
+        let err = modinfo_entries(b"alias=\xff\0").unwrap_err();
+
+        assert!(format!("{err:#}").contains("failed to convert .modinfo entry"));
+    }
+
+    #[test]
+    fn write_aliases_from_modinfo_extracts_multiple_aliases() {
+        let modinfo =
+            b"description=test module\0alias=net-sch-clsact\0alias=net-sch-ingress\0name=sch_ingress\0";
+        let mut output = Vec::new();
+
+        write_aliases_from_modinfo(modinfo, "sch_ingress", &mut output).unwrap();
+
+        let output = String::from_utf8(output).unwrap();
+        assert!(output.contains("alias net-sch-clsact sch_ingress"));
+        assert!(output.contains("alias net-sch-ingress sch_ingress"));
+    }
 }
