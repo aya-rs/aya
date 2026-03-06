@@ -118,4 +118,7 @@ pub mod bindings {
         pub id: ::aya_ebpf_cty::c_uint,
         pub pinning: ::aya_ebpf_cty::c_uint,
     }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for bpf_spin_lock {}
 }
