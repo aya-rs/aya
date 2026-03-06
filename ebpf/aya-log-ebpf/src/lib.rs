@@ -11,7 +11,7 @@ pub use aya_log_ebpf_macros::{debug, error, info, log, trace, warn};
 pub mod macro_support {
     #[cfg(target_arch = "bpf")]
     use aya_ebpf::macros::map;
-    use aya_ebpf::{EbpfGlobal, maps::RingBuf};
+    use aya_ebpf::{Global, maps::RingBuf};
     pub use aya_log_common::{
         Argument, DefaultFormatter, DisplayHint, Field, Header, IpFormatter, Level, LogValueLength,
         LowerHexFormatter, LowerMacFormatter, PointerFormatter, UpperHexFormatter,
@@ -34,7 +34,7 @@ pub mod macro_support {
     ///
     /// Userspace may patch this symbol before load via `EbpfLoader::override_global`.
     #[unsafe(no_mangle)]
-    pub static AYA_LOG_LEVEL: EbpfGlobal<u8> = EbpfGlobal::new(0xff);
+    pub static AYA_LOG_LEVEL: Global<u8> = Global::new(0xff);
 
     /// Returns `true` if the provided level is enabled according to [`AYA_LOG_LEVEL`].
     #[inline(always)]

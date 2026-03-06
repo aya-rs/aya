@@ -15,7 +15,7 @@
 #![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use aya_ebpf::{
-    EbpfContext as _, EbpfGlobal,
+    EbpfContext as _, Global,
     macros::{kprobe, map},
     maps::Array,
     programs::ProbeContext,
@@ -26,7 +26,7 @@ extern crate ebpf_panic;
 const INDEX: u32 = 0;
 
 #[unsafe(no_mangle)]
-static TARGET_TGID: EbpfGlobal<u32> = EbpfGlobal::new(0);
+static TARGET_TGID: Global<u32> = Global::new(0);
 
 #[map]
 static HITS: Array<u64> = Array::with_max_entries(1, 0);
