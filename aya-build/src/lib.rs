@@ -146,7 +146,15 @@ pub fn build_ebpf<'a>(
             &target,
         ]);
 
-        if channel == Channel::Nightly {
+        let rustc_bootstrap = env::var("RUSTC_BOOTSTRAP").unwrap_or_default();
+        let use_build_std = if rustc_bootstrap == "-1" {
+            false
+        } else if rustc_bootstrap == "1" || rustc_bootstrap == name {
+            true
+        } else {
+            channel == Channel::Nightly
+        };
+        if use_build_std {
             cmd.args(["-Z", "build-std=core"]);
         }
 
