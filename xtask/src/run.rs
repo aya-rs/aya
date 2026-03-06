@@ -606,7 +606,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         // virtualization. Since we aren't doing our own KVM/HVF
                         // detection (we let QEMU pick the best accelerator), we
                         // use "max" instead.
-                        Some("max"),
+                        Some("cortex-a72"),
                         "ttyAMA0",
                     ),
                     "x86" => (
