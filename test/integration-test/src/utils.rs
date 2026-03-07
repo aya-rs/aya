@@ -3,6 +3,7 @@
 use std::{
     borrow::Cow,
     cell::OnceCell,
+    ffi::CStr,
     fs,
     io::{self, Write as _},
     net::Ipv4Addr,
@@ -268,16 +269,18 @@ pub(crate) struct PeerNsGuard {
 }
 
 impl PeerNsGuard {
-    const IFACE: &str = "veth0";
-    const PEER_IFACE: &str = "veth1";
+    const IFACE: &CStr = c"veth0";
+    const PEER_IFACE: &CStr = c"veth1";
     const IFACE_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 1);
     const PEER_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 2);
     const IFACE_ADDR: &str = "10.0.0.1";
 
+    #[expect(clippy::unused_self, reason = "access requires a live PeerNsGuard")]
     pub(crate) fn iface(&self) -> &'static str {
-        Self::IFACE
+        Self::IFACE.to_str().unwrap()
     }
 
+    #[expect(clippy::unused_self, reason = "access requires a live PeerNsGuard")]
     pub(crate) fn iface_addr(&self) -> &'static str {
         Self::IFACE_ADDR
     }
@@ -288,7 +291,7 @@ impl PeerNsGuard {
         // Create a veth pair for tests that attach XDP/TC programs. Veth supports
         // native XDP (unlike loopback which only supports SKB/generic mode), so tests
         // exercise the same code path used in production.
-        netlink::create_veth_pair(c"veth0", c"veth1").unwrap_or_else(|e| {
+        netlink::create_veth_pair(Self::IFACE, Self::PEER_IFACE).unwrap_or_else(|e| {
             panic!(
                 "failed to create veth pair {}/{} in netns {}: {e}",
                 Self::IFACE,
@@ -299,18 +302,18 @@ impl PeerNsGuard {
 
         // Bring up veth0.
         unsafe {
-            let idx = if_nametoindex(c"veth0".as_ptr());
+            let idx = if_nametoindex(Self::IFACE.as_ptr());
             assert_ne!(
                 idx,
                 0,
-                "interface `{}` not found in netns {}: {}",
+                "interface `{:?}` not found in netns {}: {}",
                 Self::IFACE,
                 netns.name,
                 io::Error::last_os_error()
             );
             netlink::set_link_up(idx as i32).unwrap_or_else(|e| {
                 panic!(
-                    "failed to set `{}` up in netns {}: {e}",
+                    "failed to set `{:?}` up in netns {}: {e}",
                     Self::IFACE,
                     netns.name
                 )
@@ -344,51 +347,51 @@ impl PeerNsGuard {
         let peer_ns = fs::File::open(&ns_path)
             .unwrap_or_else(|e| panic!("open(\"{}\"): {e}", ns_path.display()));
         unsafe {
-            let idx = if_nametoindex(c"veth1".as_ptr());
+            let idx = if_nametoindex(Self::PEER_IFACE.as_ptr());
             assert_ne!(
                 idx,
                 0,
-                "interface `{}` not found: {}",
+                "interface `{:?}` not found: {}",
                 Self::PEER_IFACE,
                 io::Error::last_os_error()
             );
             netlink::set_link_ns(idx as i32, peer_ns.as_raw_fd()).unwrap_or_else(|e| {
-                panic!("failed to move `{}` to netns {name}: {e}", Self::PEER_IFACE)
+                panic!("failed to move `{:?}` to netns {name}: {e}", Self::PEER_IFACE)
             });
         }
 
         // Assign IP to veth0 in test netns.
         unsafe {
-            let idx = if_nametoindex(c"veth0".as_ptr());
+            let idx = if_nametoindex(Self::IFACE.as_ptr());
             assert_ne!(
                 idx,
                 0,
-                "interface `{}` not found: {}",
+                "interface `{:?}` not found: {}",
                 Self::IFACE,
                 io::Error::last_os_error()
             );
             netlink::add_addr_v4(idx as i32, Self::IFACE_IP, 24)
-                .unwrap_or_else(|e| panic!("failed to add addr to `{}`: {e}", Self::IFACE));
+                .unwrap_or_else(|e| panic!("failed to add addr to `{:?}`: {e}", Self::IFACE));
         }
 
         // Configure veth1 in peer netns: add addr, set link up, set lo up, get MAC.
         let veth1_mac = run_in_netns(&peer_ns, || unsafe {
-            let idx = if_nametoindex(c"veth1".as_ptr());
+            let idx = if_nametoindex(Self::PEER_IFACE.as_ptr());
             assert_ne!(
                 idx,
                 0,
-                "interface `{}` not found in peer netns: {}",
+                "interface `{:?}` not found in peer netns: {}",
                 Self::PEER_IFACE,
                 io::Error::last_os_error()
             );
             netlink::add_addr_v4(idx as i32, Self::PEER_IP, 24).unwrap_or_else(|e| {
                 panic!(
-                    "failed to add addr to `{}` in peer netns: {e}",
+                    "failed to add addr to `{:?}` in peer netns: {e}",
                     Self::PEER_IFACE
                 )
             });
             netlink::set_link_up(idx as i32).unwrap_or_else(|e| {
-                panic!("failed to set `{}` up in peer netns: {e}", Self::PEER_IFACE)
+                panic!("failed to set `{:?}` up in peer netns: {e}", Self::PEER_IFACE)
             });
 
             let lo_idx = if_nametoindex(c"lo".as_ptr());
@@ -402,29 +405,29 @@ impl PeerNsGuard {
                 .unwrap_or_else(|e| panic!("failed to set `lo` up in peer netns: {e}"));
 
             netlink::get_link_mac(idx as i32)
-                .unwrap_or_else(|e| panic!("failed to get MAC of `{}`: {e}", Self::PEER_IFACE))
+                .unwrap_or_else(|e| panic!("failed to get MAC of `{:?}`: {e}", Self::PEER_IFACE))
         });
 
         // Read veth0 MAC in test netns.
         let veth0_mac = unsafe {
-            let idx = if_nametoindex(c"veth0".as_ptr());
+            let idx = if_nametoindex(Self::IFACE.as_ptr());
             assert_ne!(
                 idx,
                 0,
-                "interface `{}` not found: {}",
+                "interface `{:?}` not found: {}",
                 Self::IFACE,
                 io::Error::last_os_error()
             );
             netlink::get_link_mac(idx as i32)
-                .unwrap_or_else(|e| panic!("failed to get MAC of `{}`: {e}", Self::IFACE))
+                .unwrap_or_else(|e| panic!("failed to get MAC of `{:?}`: {e}", Self::IFACE))
         };
 
         // Static ARP in test netns: peer IP -> veth1 MAC.
         unsafe {
-            let idx = if_nametoindex(c"veth0".as_ptr());
+            let idx = if_nametoindex(Self::IFACE.as_ptr());
             netlink::add_neigh_v4(idx as i32, Self::PEER_IP, veth1_mac).unwrap_or_else(|e| {
                 panic!(
-                    "failed to add neigh entry for {} on `{}`: {e}",
+                    "failed to add neigh entry for {} on `{:?}`: {e}",
                     Self::PEER_IP,
                     Self::IFACE
                 )
@@ -433,17 +436,17 @@ impl PeerNsGuard {
 
         // Static ARP in peer netns: test IP -> veth0 MAC.
         run_in_netns(&peer_ns, || unsafe {
-            let idx = if_nametoindex(c"veth1".as_ptr());
+            let idx = if_nametoindex(Self::PEER_IFACE.as_ptr());
             assert_ne!(
                 idx,
                 0,
-                "interface `{}` not found in peer netns: {}",
+                "interface `{:?}` not found in peer netns: {}",
                 Self::PEER_IFACE,
                 io::Error::last_os_error()
             );
             netlink::add_neigh_v4(idx as i32, Self::IFACE_IP, veth0_mac).unwrap_or_else(|e| {
                 panic!(
-                    "failed to add neigh entry for {} on `{}`: {e}",
+                    "failed to add neigh entry for {} on `{:?}`: {e}",
                     Self::IFACE_IP,
                     Self::PEER_IFACE
                 )
