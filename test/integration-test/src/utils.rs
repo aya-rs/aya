@@ -272,11 +272,7 @@ impl PeerNsGuard {
     const PEER_IFACE: &str = "veth1";
     const IFACE_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 1);
     const PEER_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 2);
-    const IFACE_ADDR: &str = "10.0.0.1";
-
-    pub(crate) fn iface_addr(&self) -> &'static str {
-        Self::IFACE_ADDR
-    }
+    pub(crate) const IFACE_ADDR: &str = "10.0.0.1";
 
     pub(crate) fn new(netns: &NetNsGuard) -> Self {
         let name = format!("{}-peer", netns.name);
