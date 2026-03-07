@@ -20,7 +20,7 @@ fn veth_connectivity() {
 
     const PAYLOAD: &[u8] = b"veth ok";
 
-    let sock = UdpSocket::bind((PeerNsGuard::IFACE_ADDR, 0)).unwrap();
+    let sock = UdpSocket::bind((peer.iface_addr(), 0)).unwrap();
     let addr = sock.local_addr().unwrap();
     sock.set_read_timeout(Some(Duration::from_secs(10)))
         .unwrap();
@@ -53,7 +53,7 @@ fn af_xdp() {
         .try_into()
         .unwrap();
     xdp.load().unwrap();
-    xdp.attach(PeerNsGuard::IFACE, XdpFlags::default()).unwrap();
+    xdp.attach(peer.iface(), XdpFlags::default()).unwrap();
 
     const SIZE: usize = 2 * 4096;
 
@@ -105,7 +105,7 @@ fn af_xdp() {
     writer.insert_once(frame1.offset);
     writer.commit();
 
-    let dst = (PeerNsGuard::IFACE_ADDR, 1777u16);
+    let dst = (peer.iface_addr(), 1777u16);
     let port = peer.run(|| {
         let sock = UdpSocket::bind(("0.0.0.0", 0)).unwrap();
         let port = sock.local_addr().unwrap().port();

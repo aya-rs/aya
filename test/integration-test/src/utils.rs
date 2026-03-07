@@ -268,11 +268,19 @@ pub(crate) struct PeerNsGuard {
 }
 
 impl PeerNsGuard {
-    pub(crate) const IFACE: &str = "veth0";
+    const IFACE: &str = "veth0";
     const PEER_IFACE: &str = "veth1";
     const IFACE_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 1);
     const PEER_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 2);
-    pub(crate) const IFACE_ADDR: &str = "10.0.0.1";
+    const IFACE_ADDR: &str = "10.0.0.1";
+
+    pub(crate) fn iface(&self) -> &'static str {
+        Self::IFACE
+    }
+
+    pub(crate) fn iface_addr(&self) -> &'static str {
+        Self::IFACE_ADDR
+    }
 
     pub(crate) fn new(netns: &NetNsGuard) -> Self {
         let name = format!("{}-peer", netns.name);
