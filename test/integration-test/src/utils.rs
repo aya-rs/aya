@@ -293,7 +293,7 @@ impl PeerNsGuard {
         // exercise the same code path used in production.
         netlink::create_veth_pair(Self::IFACE, Self::PEER_IFACE).unwrap_or_else(|e| {
             panic!(
-                "failed to create veth pair {}/{} in netns {}: {e}",
+                "failed to create veth pair {:?}/{:?} in netns {}: {e}",
                 Self::IFACE,
                 Self::PEER_IFACE,
                 netns.name
