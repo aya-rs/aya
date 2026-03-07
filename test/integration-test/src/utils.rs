@@ -356,7 +356,10 @@ impl PeerNsGuard {
                 io::Error::last_os_error()
             );
             netlink::set_link_ns(idx as i32, peer_ns.as_raw_fd()).unwrap_or_else(|e| {
-                panic!("failed to move `{:?}` to netns {name}: {e}", Self::PEER_IFACE)
+                panic!(
+                    "failed to move `{:?}` to netns {name}: {e}",
+                    Self::PEER_IFACE
+                )
             });
         }
 
@@ -391,7 +394,10 @@ impl PeerNsGuard {
                 )
             });
             netlink::set_link_up(idx as i32).unwrap_or_else(|e| {
-                panic!("failed to set `{:?}` up in peer netns: {e}", Self::PEER_IFACE)
+                panic!(
+                    "failed to set `{:?}` up in peer netns: {e}",
+                    Self::PEER_IFACE
+                )
             });
 
             let lo_idx = if_nametoindex(c"lo".as_ptr());
