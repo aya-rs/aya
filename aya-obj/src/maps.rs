@@ -282,8 +282,6 @@ impl Map {
     }
 
     /// Creates a new legacy map definition programmatically.
-    ///
-    /// This is useful for creating inner maps dynamically for map-of-maps types.
     pub const fn new_legacy(
         map_type: u32,
         key_size: u32,

@@ -10,7 +10,7 @@ btf_map_def!(
     ///
     /// # Minimum kernel version
     ///
-    /// The minimum kernel version required to use this feature is 4.12.
+    /// The minimum kernel version required to use this feature is 5.7.
     ///
     /// # Example
     ///
@@ -45,5 +45,28 @@ impl<V, const MAX_ENTRIES: usize, const FLAGS: usize> ArrayOfMaps<V, MAX_ENTRIES
     #[inline(always)]
     unsafe fn lookup(&self, index: u32) -> Option<NonNull<V>> {
         lookup(self.as_ptr(), &index)
+    }
+}
+
+impl<V: crate::btf_maps::MapDef, const MAX_ENTRIES: usize, const FLAGS: usize>
+    ArrayOfMaps<V, MAX_ENTRIES, FLAGS>
+{
+    /// Looks up a value directly in the inner map at `outer_index`.
+    ///
+    /// Performs both the outer and inner `bpf_map_lookup_elem` calls in a
+    /// single method, producing fewer BPF instructions between the two
+    /// helpers. This reduces verifier state explosion in tight loops.
+    #[inline(always)]
+    pub fn get_value(&self, outer_index: u32, inner_key: &V::Key) -> Option<&V::Value> {
+        let inner = lookup(self.as_ptr(), &outer_index)?;
+        // SAFETY: Array lookups are safe (no BPF_F_NO_PREALLOC aliasing concern).
+        unsafe { crate::btf_maps::lookup_inner(inner, inner_key) }
+    }
+
+    /// Same as [`get_value`](Self::get_value) but returns a mutable pointer.
+    #[inline(always)]
+    pub fn get_value_ptr_mut(&self, outer_index: u32, inner_key: &V::Key) -> Option<*mut V::Value> {
+        let inner = lookup(self.as_ptr(), &outer_index)?;
+        crate::btf_maps::lookup_inner_ptr_mut(inner, inner_key)
     }
 }

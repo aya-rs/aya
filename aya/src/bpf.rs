@@ -557,25 +557,13 @@ impl<'a> EbpfLoader<'a> {
             // The kernel requires an inner map fd when creating a map-of-maps.
             let btf_inner_map;
             let inner_map_fd = if is_map_of_maps {
-                if let Some(inner) = map_obj.inner() {
-                    // Try using a BTF definition of the inner map.
-                    btf_inner_map = MapData::create(inner, &format!("{name}.inner"), btf_fd)?;
-                    Some(btf_inner_map.fd().as_fd())
-                } else {
-                    // No BTF inner definition; fall back to the `.maps.inner` binding.
-                    let inner_name = obj.inner_map_binding(&name).ok_or_else(|| {
-                        EbpfError::MapError(MapError::MissingInnerMapBinding {
-                            outer_name: name.clone(),
-                        })
-                    })?;
-                    let inner_map = maps.get(inner_name).ok_or_else(|| {
-                        EbpfError::MapError(MapError::InnerMapNotFound {
-                            outer_name: name.clone(),
-                            inner_name: inner_name.to_owned(),
-                        })
-                    })?;
-                    Some(inner_map.fd().as_fd())
-                }
+                let inner = map_obj.inner().ok_or_else(|| {
+                    EbpfError::MapError(MapError::MissingInnerMapDefinition {
+                        outer_name: name.clone(),
+                    })
+                })?;
+                btf_inner_map = MapData::create(inner, &format!("{name}.inner"), btf_fd)?;
+                Some(btf_inner_map.fd().as_fd())
             } else {
                 None
             };

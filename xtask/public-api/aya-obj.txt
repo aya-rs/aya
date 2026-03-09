@@ -8689,7 +8689,6 @@ pub aya_obj::obj::EbpfSectionKind::BtfMaps
 pub aya_obj::obj::EbpfSectionKind::Data
 pub aya_obj::obj::EbpfSectionKind::License
 pub aya_obj::obj::EbpfSectionKind::Maps
-pub aya_obj::obj::EbpfSectionKind::MapsInner
 pub aya_obj::obj::EbpfSectionKind::Program
 pub aya_obj::obj::EbpfSectionKind::Rodata
 pub aya_obj::obj::EbpfSectionKind::Text
@@ -8746,9 +8745,6 @@ pub aya_obj::obj::ParseError::InvalidLicense
 pub aya_obj::obj::ParseError::InvalidLicense::data: alloc::vec::Vec<u8>
 pub aya_obj::obj::ParseError::InvalidMapDefinition
 pub aya_obj::obj::ParseError::InvalidMapDefinition::name: alloc::string::String
-pub aya_obj::obj::ParseError::InvalidMapsInnerSection
-pub aya_obj::obj::ParseError::InvalidMapsInnerSection::msg: &'static str
-pub aya_obj::obj::ParseError::InvalidMapsInnerSection::offset: usize
 pub aya_obj::obj::ParseError::InvalidProgramCode
 pub aya_obj::obj::ParseError::InvalidProgramSection
 pub aya_obj::obj::ParseError::InvalidProgramSection::section: alloc::string::String
@@ -9007,7 +9003,6 @@ impl aya_obj::Object
 pub fn aya_obj::Object::fixup_and_sanitize_btf(&mut self, features: &aya_obj::btf::BtfFeatures) -> core::result::Result<core::option::Option<&aya_obj::btf::Btf>, aya_obj::btf::BtfError>
 impl aya_obj::Object
 pub fn aya_obj::Object::has_btf_relocations(&self) -> bool
-pub fn aya_obj::Object::inner_map_binding(&self, outer: &str) -> core::option::Option<&str>
 pub fn aya_obj::Object::parse(data: &[u8]) -> core::result::Result<Self, aya_obj::ParseError>
 pub fn aya_obj::Object::patch_map_data(&mut self, globals: std::collections::hash::map::HashMap<&str, (&[u8], bool)>) -> core::result::Result<(), aya_obj::ParseError>
 pub fn aya_obj::Object::sanitize_functions(&mut self, features: &aya_obj::Features)
@@ -9526,7 +9521,6 @@ pub aya_obj::EbpfSectionKind::BtfMaps
 pub aya_obj::EbpfSectionKind::Data
 pub aya_obj::EbpfSectionKind::License
 pub aya_obj::EbpfSectionKind::Maps
-pub aya_obj::EbpfSectionKind::MapsInner
 pub aya_obj::EbpfSectionKind::Program
 pub aya_obj::EbpfSectionKind::Rodata
 pub aya_obj::EbpfSectionKind::Text
@@ -9635,9 +9629,6 @@ pub aya_obj::ParseError::InvalidLicense
 pub aya_obj::ParseError::InvalidLicense::data: alloc::vec::Vec<u8>
 pub aya_obj::ParseError::InvalidMapDefinition
 pub aya_obj::ParseError::InvalidMapDefinition::name: alloc::string::String
-pub aya_obj::ParseError::InvalidMapsInnerSection
-pub aya_obj::ParseError::InvalidMapsInnerSection::msg: &'static str
-pub aya_obj::ParseError::InvalidMapsInnerSection::offset: usize
 pub aya_obj::ParseError::InvalidProgramCode
 pub aya_obj::ParseError::InvalidProgramSection
 pub aya_obj::ParseError::InvalidProgramSection::section: alloc::string::String
@@ -9896,7 +9887,6 @@ impl aya_obj::Object
 pub fn aya_obj::Object::fixup_and_sanitize_btf(&mut self, features: &aya_obj::btf::BtfFeatures) -> core::result::Result<core::option::Option<&aya_obj::btf::Btf>, aya_obj::btf::BtfError>
 impl aya_obj::Object
 pub fn aya_obj::Object::has_btf_relocations(&self) -> bool
-pub fn aya_obj::Object::inner_map_binding(&self, outer: &str) -> core::option::Option<&str>
 pub fn aya_obj::Object::parse(data: &[u8]) -> core::result::Result<Self, aya_obj::ParseError>
 pub fn aya_obj::Object::patch_map_data(&mut self, globals: std::collections::hash::map::HashMap<&str, (&[u8], bool)>) -> core::result::Result<(), aya_obj::ParseError>
 pub fn aya_obj::Object::sanitize_functions(&mut self, features: &aya_obj::Features)

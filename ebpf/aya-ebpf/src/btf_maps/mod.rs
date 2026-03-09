@@ -10,6 +10,55 @@ pub use hash_of_maps::HashOfMaps;
 pub use ring_buf::RingBuf;
 pub use sk_storage::SkStorage;
 
+mod private {
+    /// Sealed trait exposing the key and value types of a BTF map definition.
+    #[expect(
+        unnameable_types,
+        reason = "sealed trait pattern requires pub trait in private mod"
+    )]
+    pub trait MapDef {
+        /// The key type of this map.
+        type Key;
+        /// The value type of this map.
+        type Value;
+    }
+}
+
+/// Key and value types of a BTF map definition.
+///
+/// Used by map-of-maps types to perform fused lookups that combine the outer
+/// and inner `bpf_map_lookup_elem` calls in a single method.
+///
+/// This trait is sealed and cannot be implemented outside this crate.
+pub trait MapDef: private::MapDef {}
+
+impl<T: private::MapDef> MapDef for T {}
+
+/// Performs the inner half of a fused map-of-maps lookup, returning a shared reference.
+///
+/// # Safety
+///
+/// The caller must ensure the returned reference does not alias a mutable
+/// pointer obtained from the same map element.
+#[inline(always)]
+pub(crate) unsafe fn lookup_inner<'a, K, V>(
+    inner_map: core::ptr::NonNull<core::ffi::c_void>,
+    key: &K,
+) -> Option<&'a V> {
+    // SAFETY: Both pointers are returned by BPF helpers and are valid for
+    // the duration of the program. We only produce a shared reference.
+    unsafe { crate::lookup::<K, V>(inner_map.as_ptr(), key).map(|p| p.as_ref()) }
+}
+
+/// Same as [`lookup_inner`] but returns a mutable pointer.
+#[inline(always)]
+pub(crate) fn lookup_inner_ptr_mut<K, V>(
+    inner_map: core::ptr::NonNull<core::ffi::c_void>,
+    key: &K,
+) -> Option<*mut V> {
+    crate::lookup::<K, V>(inner_map.as_ptr(), key).map(core::ptr::NonNull::as_ptr)
+}
+
 /// Defines a BTF-compatible map struct with flat `#[repr(C)]` layout.
 ///
 /// This macro generates a map definition struct that produces BTF metadata
