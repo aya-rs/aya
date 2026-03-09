@@ -102,3 +102,28 @@ fn tcx() {
         expected_order
     );
 }
+
+#[test_log::test]
+fn tcx_mutability() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(6, 6, 0) {
+        eprintln!("skipping tcx_mutability test on kernel {kernel_version:?}");
+        return;
+    }
+
+    let _netns = NetNsGuard::new();
+    let mut ebpf = Ebpf::load(crate::TCX).unwrap();
+
+    // Verify that methods which modify the underlying sk_buff can be called with
+    // an immutable reference (&self). This is sound at the Rust level because
+    // these methods do not expose Rust references into the packet data; they
+    // rely on eBPF helper calls whose allowed accesses are validated by the verifier.
+    let program: &mut SchedClassifier = ebpf
+        .program_mut("tcx_mutability")
+        .unwrap()
+        .try_into()
+        .unwrap();
+
+    program.load().unwrap();
+    program.attach("lo", TcAttachType::Ingress).unwrap();
+}
