@@ -14,5 +14,5 @@ use super::{FromMapData, MapData, MapError};
 /// the typed map via [`FromMapData`].
 fn map_from_id<M: FromMapData>(id: u32) -> Result<M, MapError> {
     let map_data = MapData::from_id(id)?;
-    <M as FromMapData>::from_map_data(map_data)
+    M::from_map_data(map_data)
 }
