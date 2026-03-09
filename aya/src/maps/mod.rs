@@ -103,37 +103,17 @@ pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
 
 /// Trait for constructing a typed map from [`MapData`].
 ///
-/// This is used by map-of-maps types ([`ArrayOfMaps`], [`HashOfMaps`]) to
-/// let callers specify the expected inner map type when retrieving entries.
-///
 /// This trait is sealed and cannot be implemented outside of this crate.
-pub trait FromMapData: Sized + sealed::FromMapData {
-    /// Constructs a typed map from raw [`MapData`].
-    fn from_map_data(map_data: MapData) -> Result<Self, MapError>;
-}
+pub trait FromMapData: Sized + sealed::FromMapData {}
 
-impl<T: sealed::FromMapData> FromMapData for T {
-    fn from_map_data(map_data: MapData) -> Result<Self, MapError> {
-        <Self as sealed::FromMapData>::from_map_data(map_data)
-    }
-}
+impl<T: sealed::FromMapData> FromMapData for T {}
 
 /// Marker for map types that the kernel supports as inner maps.
 ///
-/// Types implementing this trait can be passed to
-/// [`ArrayOfMaps::set`] and [`HashOfMaps::insert`].
-///
 /// This trait is sealed and cannot be implemented outside of this crate.
-pub trait InnerMap: sealed::InnerMap {
-    /// Returns the map file descriptor.
-    fn fd(&self) -> &MapFd;
-}
+pub trait InnerMap: sealed::InnerMap {}
 
-impl<T: sealed::InnerMap> InnerMap for T {
-    fn fd(&self) -> &MapFd {
-        sealed::InnerMap::inner_map_fd(self)
-    }
-}
+impl<T: sealed::InnerMap> InnerMap for T {}
 
 mod sealed {
     use super::{MapData, MapError, MapFd};
@@ -147,7 +127,7 @@ mod sealed {
     #[expect(unnameable_types, reason = "intentionally unnameable sealed trait")]
     pub trait InnerMap {
         /// Returns the map file descriptor.
-        fn inner_map_fd(&self) -> &MapFd;
+        fn fd(&self) -> &MapFd;
     }
 }
 
@@ -156,19 +136,19 @@ mod sealed {
 pub enum MapError {
     /// Missing inner map binding for a map-of-maps.
     #[error(
-        "map `{name}` is a map-of-maps but has no inner map binding; \
+        "map `{outer_name}` is a map-of-maps but has no inner map binding; \
              use #[map(inner = \"<template>\")] or ensure the BTF definition includes a `values` field"
     )]
     MissingInnerMapBinding {
-        /// The map name.
-        name: String,
+        /// The outer map name.
+        outer_name: String,
     },
 
     /// Inner map not found for a map-of-maps.
-    #[error("inner map `{inner_name}` not found for map-of-maps `{name}`")]
+    #[error("inner map `{inner_name}` not found for map-of-maps `{outer_name}`")]
     InnerMapNotFound {
         /// The outer map name.
-        name: String,
+        outer_name: String,
         /// The inner map name.
         inner_name: String,
     },
@@ -638,7 +618,7 @@ impl_try_from_map!((K, V) {
     PerCpuHashMap from PerCpuHashMap|PerCpuLruHashMap,
 });
 
-// ArrayOfMaps and HashOfMaps need an unconstrained V in TryFrom conversions.
+// ArrayOfMaps and HashOfMaps require V: InnerMap in TryFrom conversions.
 // Delegates to the @impl arm of impl_try_from_map to avoid duplicating the
 // match body.
 macro_rules! impl_try_from_map_of_maps {
@@ -646,18 +626,16 @@ macro_rules! impl_try_from_map_of_maps {
         impl_try_from_map_of_maps!($ty <>);
     };
     ($ty:ident <$($pre:ident : $pre_bound:path),*>) => {
-        impl_try_from_map!(@impl <'a> ($($pre: $pre_bound,)* V) $ty from $ty);
-        impl_try_from_map!(@impl <'a mut> ($($pre: $pre_bound,)* V) $ty from $ty);
-        impl_try_from_map!(@impl <> ($($pre: $pre_bound,)* V) $ty from $ty);
+        impl_try_from_map!(@impl <'a> ($($pre: $pre_bound,)* V: InnerMap) $ty from $ty);
+        impl_try_from_map!(@impl <'a mut> ($($pre: $pre_bound,)* V: InnerMap) $ty from $ty);
+        impl_try_from_map!(@impl <> ($($pre: $pre_bound,)* V: InnerMap) $ty from $ty);
     };
 }
 
 impl_try_from_map_of_maps!(ArrayOfMaps);
 impl_try_from_map_of_maps!(HashOfMaps<K: Pod>);
 
-// Implements `sealed::FromMapData` for map types that the kernel supports as inner maps.
-// Excluded: ProgramArray (no map_meta_equal), ArrayOfMaps/HashOfMaps (multi-level nesting
-// forbidden).
+// Implements `sealed::FromMapData` and `sealed::InnerMap` for a map type.
 macro_rules! impl_from_map_data {
     ($ty_param:tt { $($ty:ident),+ $(,)? }) => {
         $(impl_from_map_data!(<$ty_param> $ty);)+
@@ -669,13 +647,16 @@ macro_rules! impl_from_map_data {
             }
         }
         impl<$($ty_param: Pod),*> sealed::InnerMap for $ty<MapData, $($ty_param),*> {
-            fn inner_map_fd(&self) -> &MapFd {
+            fn fd(&self) -> &MapFd {
                 self.inner.fd()
             }
         }
     };
 }
 
+// Map types that the kernel supports as inner maps.
+// Excluded: ProgramArray (no map_meta_equal), ArrayOfMaps/HashOfMaps (multi-level nesting
+// forbidden).
 impl_from_map_data!(() {
     CpuMap, DevMap, DevMapHash,
     SockMap, StackTraceMap, XskMap,
@@ -689,7 +670,7 @@ impl sealed::FromMapData for PerfEventArray<MapData> {
     }
 }
 impl sealed::InnerMap for PerfEventArray<MapData> {
-    fn inner_map_fd(&self) -> &MapFd {
+    fn fd(&self) -> &MapFd {
         self.map_data().fd()
     }
 }
@@ -700,7 +681,7 @@ impl sealed::FromMapData for RingBuf<MapData> {
     }
 }
 impl sealed::InnerMap for RingBuf<MapData> {
-    fn inner_map_fd(&self) -> &MapFd {
+    fn fd(&self) -> &MapFd {
         self.map_data().fd()
     }
 }
@@ -721,13 +702,13 @@ impl sealed::FromMapData for MapData {
 }
 
 impl sealed::InnerMap for MapData {
-    fn inner_map_fd(&self) -> &MapFd {
+    fn fd(&self) -> &MapFd {
         self.fd()
     }
 }
 
 impl sealed::InnerMap for MapFd {
-    fn inner_map_fd(&self) -> &MapFd {
+    fn fd(&self) -> &MapFd {
         self
     }
 }
