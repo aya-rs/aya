@@ -34,7 +34,7 @@ impl SkBuff {
     }
 
     #[inline]
-    pub fn set_mark(&mut self, mark: u32) {
+    pub fn set_mark(&self, mark: u32) {
         unsafe { (*self.skb).mark = mark }
     }
 
@@ -43,6 +43,11 @@ impl SkBuff {
         unsafe { &(*self.skb).cb }
     }
 
+    /// Returns a mutable slice to the control buffer (cb).
+    ///
+    /// This method requires a mutable reference (`&mut self`) to prevent
+    /// aliasing violations in Rust. Returning a mutable slice (`&mut [u32]`)
+    /// from an immutable reference would lead to Undefined Behavior.
     #[inline]
     pub fn cb_mut(&mut self) -> &mut [u32] {
         unsafe { &mut (*self.skb).cb }
@@ -99,7 +104,7 @@ impl SkBuff {
     }
 
     #[inline]
-    pub fn store<T>(&mut self, offset: usize, v: &T, flags: u64) -> Result<(), c_long> {
+    pub fn store<T>(&self, offset: usize, v: &T, flags: u64) -> Result<(), c_long> {
         unsafe {
             let ret = bpf_skb_store_bytes(
                 self.skb.cast(),
@@ -236,7 +241,7 @@ impl SkBuffContext {
     }
 
     #[inline]
-    pub fn set_mark(&mut self, mark: u32) {
+    pub fn set_mark(&self, mark: u32) {
         self.skb.set_mark(mark);
     }
 
@@ -313,7 +318,7 @@ impl SkBuffContext {
     }
 
     #[inline]
-    pub fn store<T>(&mut self, offset: usize, v: &T, flags: u64) -> Result<(), c_long> {
+    pub fn store<T>(&self, offset: usize, v: &T, flags: u64) -> Result<(), c_long> {
         self.skb.store(offset, v, flags)
     }
 

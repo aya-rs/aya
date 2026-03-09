@@ -28,7 +28,7 @@ impl TcContext {
     }
 
     #[inline]
-    pub fn set_mark(&mut self, mark: u32) {
+    pub fn set_mark(&self, mark: u32) {
         self.skb.set_mark(mark);
     }
 
@@ -37,6 +37,9 @@ impl TcContext {
         self.skb.cb()
     }
 
+    /// Returns a mutable slice to the control buffer (cb).
+    ///
+    /// See [`SkBuff::cb_mut`] for details on why this requires `&mut self`.
     #[inline]
     pub fn cb_mut(&mut self) -> &mut [u32] {
         self.skb.cb_mut()
@@ -105,7 +108,7 @@ impl TcContext {
     }
 
     #[inline]
-    pub fn store<T>(&mut self, offset: usize, v: &T, flags: u64) -> Result<(), c_long> {
+    pub fn store<T>(&self, offset: usize, v: &T, flags: u64) -> Result<(), c_long> {
         self.skb.store(offset, v, flags)
     }
 
