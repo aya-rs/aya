@@ -564,11 +564,13 @@ impl<'a> EbpfLoader<'a> {
                 } else {
                     // No BTF inner definition; fall back to the `.maps.inner` binding.
                     let inner_name = obj.inner_map_binding(&name).ok_or_else(|| {
-                        EbpfError::MapError(MapError::MissingInnerMapBinding { name: name.clone() })
+                        EbpfError::MapError(MapError::MissingInnerMapBinding {
+                            outer_name: name.clone(),
+                        })
                     })?;
                     let inner_map = maps.get(inner_name).ok_or_else(|| {
                         EbpfError::MapError(MapError::InnerMapNotFound {
-                            name: name.clone(),
+                            outer_name: name.clone(),
                             inner_name: inner_name.to_owned(),
                         })
                     })?;

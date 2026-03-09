@@ -12,44 +12,39 @@ use aya_ebpf::{
     macros::{btf_map, uprobe},
     programs::ProbeContext,
 };
+use integration_common::btf_map_of_maps::TestResult;
 
 #[cfg(not(test))]
 extern crate ebpf_panic;
 
 // The inner map definition is parsed from the BTF `values` field at load time.
 #[btf_map]
-static OUTER: ArrayOfMaps<Array<u32, 10>, 4> = ArrayOfMaps::new();
+static ARRAY_OF_MAPS: ArrayOfMaps<Array<u32, 10>, 4> = ArrayOfMaps::new();
 
 // Result array to verify values from userspace.
 #[btf_map]
-static RESULTS: Array<u32, 4> = Array::new();
+static RESULTS: Array<TestResult, 1> = Array::new();
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-#[expect(
-    clippy::missing_const_for_fn,
-    reason = "extern functions cannot be const"
-)]
-pub extern "C" fn trigger_btf_map_of_maps() {
+pub const extern "C" fn trigger_btf_map_of_maps() {
     core::hint::black_box(());
 }
 
 /// Reads a value from an inner array selected via the outer map and stores the result.
 #[uprobe]
 pub(crate) fn test_btf_array_of_maps(_ctx: ProbeContext) -> u32 {
-    if let Some(inner) = OUTER.get(0) {
-        if let Some(val) = inner.get(0) {
-            if let Some(ptr) = RESULTS.get_ptr_mut(0) {
+    if let Some(ptr) = RESULTS.get_ptr_mut(0) {
+        if let Some(inner) = ARRAY_OF_MAPS.get(0) {
+            if let Some(val) = inner.get(0) {
                 unsafe {
-                    *ptr = *val;
+                    (*ptr).value = *val;
                 }
             }
         }
-    }
-    // Mark test ran.
-    if let Some(ptr) = RESULTS.get_ptr_mut(1) {
+        // Mark test ran.
         unsafe {
-            *ptr = 1;
+            (*ptr).ran = 1;
         }
     }
     0
