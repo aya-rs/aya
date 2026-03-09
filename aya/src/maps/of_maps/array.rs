@@ -151,7 +151,7 @@ mod tests {
     fn test_wrong_key_size() {
         let map = new_map(test_utils::new_obj_map::<u8>(BPF_MAP_TYPE_ARRAY_OF_MAPS));
         assert_matches!(
-            ArrayOfMaps::<_, MapData>::new(&map),
+            ArrayOfMaps::<_>::new(&map),
             Err(MapError::InvalidKeySize {
                 size: 4,
                 expected: 1
@@ -166,7 +166,7 @@ mod tests {
         ));
         let map = Map::HashMap(map);
         assert_matches!(
-            ArrayOfMaps::<_, MapData>::try_from(&map),
+            ArrayOfMaps::<_>::try_from(&map),
             Err(MapError::InvalidMapType { .. })
         );
     }
@@ -232,7 +232,7 @@ mod tests {
     #[test]
     fn test_get_syscall_error() {
         let map = new_map(new_obj_map());
-        let arr = ArrayOfMaps::<_, MapData>::new(&map).unwrap();
+        let arr: ArrayOfMaps<_> = ArrayOfMaps::new(&map).unwrap();
 
         override_syscall(|_| sys_error(EFAULT));
 
@@ -248,7 +248,7 @@ mod tests {
     #[test]
     fn test_get_not_found() {
         let map = new_map(new_obj_map());
-        let arr = ArrayOfMaps::<_, MapData>::new(&map).unwrap();
+        let arr: ArrayOfMaps<_> = ArrayOfMaps::new(&map).unwrap();
 
         override_syscall(|call| match call {
             Syscall::Ebpf {
@@ -264,7 +264,7 @@ mod tests {
     #[test]
     fn test_get_out_of_bounds() {
         let map = new_map(new_obj_map());
-        let arr = ArrayOfMaps::<_, MapData>::new(&map).unwrap();
+        let arr: ArrayOfMaps<_> = ArrayOfMaps::new(&map).unwrap();
 
         assert_matches!(arr.get(&1024, 0), Err(MapError::OutOfBounds { .. }));
     }
