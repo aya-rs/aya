@@ -58,7 +58,7 @@ impl SockOpsContext {
         unsafe { (*self.ops).__bindgen_anon_1.args[n] }
     }
 
-    pub fn set_reply(&mut self, reply: u32) {
+    pub fn set_reply(&self, reply: u32) {
         unsafe { (*self.ops).__bindgen_anon_1.reply = reply }
     }
 }
