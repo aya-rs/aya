@@ -147,8 +147,6 @@ pub struct Object {
     pub programs: HashMap<String, Program>,
     /// Functions
     pub functions: BTreeMap<(usize, u64), Function>,
-    /// Inner map bindings: maps outer map name to inner (template) map name.
-    pub(crate) inner_map_bindings: HashMap<String, String>,
     pub(crate) relocations: HashMap<SectionIndex, HashMap<u64, Relocation>>,
     pub(crate) symbol_table: HashMap<usize, Symbol>,
     pub(crate) symbols_by_section: HashMap<SectionIndex, Vec<usize>>,
@@ -533,7 +531,6 @@ impl Object {
             maps: HashMap::new(),
             programs: HashMap::new(),
             functions: BTreeMap::new(),
-            inner_map_bindings: HashMap::new(),
             relocations: HashMap::new(),
             symbol_table: HashMap::new(),
             symbols_by_section: HashMap::new(),
@@ -892,84 +889,10 @@ impl Object {
                     );
                 }
             }
-            EbpfSectionKind::MapsInner => self.parse_maps_inner(&section)?,
             EbpfSectionKind::Undefined | EbpfSectionKind::License | EbpfSectionKind::Version => {}
         }
 
         Ok(())
-    }
-
-    /// Parses the `.maps.inner` section which contains outer->inner map bindings.
-    ///
-    /// This is an aya-specific mechanism for declaring inner map bindings at compile time,
-    /// used by the legacy `#[map(inner = "...")]` macro. This mechanism is NOT compatible
-    /// with libbpf loaders.
-    ///
-    /// Unlike libbpf which uses BTF relocations within the `.maps` section
-    /// (see <https://patchwork.ozlabs.org/comment/2418417/>), this legacy system uses a
-    /// separate section containing null-terminated string pairs.
-    ///
-    /// For libbpf compatibility, use `#[btf_map]` with `aya_ebpf::btf_maps::{ArrayOfMaps, HashOfMaps}`
-    /// which use BTF relocations that both aya and libbpf can process.
-    ///
-    /// Format: `"outer_name\0inner_name\0"` pairs, emitted by the `#[map(inner = "...")]` macro.
-    fn parse_maps_inner(&mut self, section: &Section<'_>) -> Result<(), ParseError> {
-        let data = section.data;
-        let mut offset = 0;
-
-        while offset < data.len() {
-            // Read outer map name (null-terminated).
-            let Some(outer_len) = data[offset..].iter().position(|&b| b == 0) else {
-                return Err(ParseError::InvalidMapsInnerSection {
-                    offset,
-                    msg: "unterminated outer map name",
-                });
-            };
-
-            let outer_name =
-                core::str::from_utf8(&data[offset..offset + outer_len]).map_err(|_utf8_err| {
-                    ParseError::InvalidMapsInnerSection {
-                        offset,
-                        msg: "invalid UTF-8 in outer map name",
-                    }
-                })?;
-            offset += outer_len + 1; // skip null terminator
-
-            // Read inner map name (null-terminated).
-            let Some(inner_len) = data[offset..].iter().position(|&b| b == 0) else {
-                return Err(ParseError::InvalidMapsInnerSection {
-                    offset,
-                    msg: "unterminated inner map name",
-                });
-            };
-
-            let inner_name =
-                core::str::from_utf8(&data[offset..offset + inner_len]).map_err(|_utf8_err| {
-                    ParseError::InvalidMapsInnerSection {
-                        offset,
-                        msg: "invalid UTF-8 in inner map name",
-                    }
-                })?;
-            offset += inner_len + 1; // skip null terminator
-
-            if outer_name.is_empty() || inner_name.is_empty() {
-                return Err(ParseError::InvalidMapsInnerSection {
-                    offset,
-                    msg: "empty outer or inner map name",
-                });
-            }
-
-            self.inner_map_bindings
-                .insert(outer_name.to_owned(), inner_name.to_owned());
-        }
-
-        Ok(())
-    }
-
-    /// Returns the inner (template) map name bound to the given outer map, if
-    /// any.  These bindings are parsed from the `.maps.inner` ELF section.
-    pub fn inner_map_binding(&self, outer: &str) -> Option<&str> {
-        self.inner_map_bindings.get(outer).map(String::as_str)
     }
 
     /// Sanitize BPF functions.
@@ -1089,15 +1012,6 @@ pub enum ParseError {
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]
     NoBTF,
-
-    /// Invalid `.maps.inner` section data.
-    #[error("invalid `.maps.inner` section at offset {offset}: {msg}")]
-    InvalidMapsInnerSection {
-        /// Byte offset within the section where the error occurred.
-        offset: usize,
-        /// Description of the error.
-        msg: &'static str,
-    },
 }
 
 /// Invalid bindings to the bpf type from the parsed/received value.
@@ -1115,8 +1029,6 @@ pub enum EbpfSectionKind {
     Maps,
     /// `.maps`
     BtfMaps,
-    /// `.maps.inner`
-    MapsInner,
     /// A program section
     Program,
     /// `.data`
@@ -1145,10 +1057,6 @@ impl EbpfSectionKind {
             Self::Version
         } else if name.starts_with("maps") {
             Self::Maps
-        // NB: `.maps.inner` must be matched before `.maps` to avoid being
-        // swallowed by the `.starts_with(".maps")` arm below.
-        } else if name == ".maps.inner" {
-            Self::MapsInner
         } else if name.starts_with(".maps") {
             Self::BtfMaps
         } else if name.starts_with(".text") {
