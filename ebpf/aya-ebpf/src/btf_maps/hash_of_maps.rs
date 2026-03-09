@@ -10,7 +10,7 @@ btf_map_def!(
     ///
     /// # Minimum kernel version
     ///
-    /// The minimum kernel version required to use this feature is 4.12.
+    /// The minimum kernel version required to use this feature is 5.7.
     ///
     /// # Example
     ///
@@ -49,5 +49,40 @@ impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> HashOfMaps<K, V, MAX_EN
     #[inline(always)]
     unsafe fn lookup(&self, key: &K) -> Option<NonNull<V>> {
         lookup(self.as_ptr(), key)
+    }
+}
+
+impl<K, V: crate::btf_maps::MapDef, const MAX_ENTRIES: usize, const FLAGS: usize>
+    HashOfMaps<K, V, MAX_ENTRIES, FLAGS>
+{
+    /// Looks up a value directly in the inner map associated with `outer_key`.
+    ///
+    /// Performs both the outer and inner `bpf_map_lookup_elem` calls in a
+    /// single method, producing fewer BPF instructions between the two
+    /// helpers. This reduces verifier state explosion in tight loops.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe for the same reasons as [`get`](Self::get).
+    #[inline(always)]
+    pub unsafe fn get_value(&self, outer_key: &K, inner_key: &V::Key) -> Option<&V::Value> {
+        let inner = lookup(self.as_ptr(), outer_key)?;
+        // SAFETY: The caller upholds the aliasing invariants (see `get`).
+        unsafe { crate::btf_maps::lookup_inner(inner, inner_key) }
+    }
+
+    /// Same as [`get_value`](Self::get_value) but returns a mutable pointer.
+    ///
+    /// # Safety
+    ///
+    /// See [`get_value`](Self::get_value).
+    #[inline(always)]
+    pub unsafe fn get_value_ptr_mut(
+        &self,
+        outer_key: &K,
+        inner_key: &V::Key,
+    ) -> Option<*mut V::Value> {
+        let inner = lookup(self.as_ptr(), outer_key)?;
+        crate::btf_maps::lookup_inner_ptr_mut(inner, inner_key)
     }
 }

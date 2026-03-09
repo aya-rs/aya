@@ -1538,9 +1538,6 @@ pub aya::maps::MapError::CreateError
 pub aya::maps::MapError::CreateError::io_error: std::io::error::Error
 pub aya::maps::MapError::CreateError::name: alloc::string::String
 pub aya::maps::MapError::ElementNotFound
-pub aya::maps::MapError::InnerMapNotFound
-pub aya::maps::MapError::InnerMapNotFound::inner_name: alloc::string::String
-pub aya::maps::MapError::InnerMapNotFound::outer_name: alloc::string::String
 pub aya::maps::MapError::InvalidKeySize
 pub aya::maps::MapError::InvalidKeySize::expected: usize
 pub aya::maps::MapError::InvalidKeySize::size: usize
@@ -1553,8 +1550,8 @@ pub aya::maps::MapError::InvalidValueSize::expected: usize
 pub aya::maps::MapError::InvalidValueSize::size: usize
 pub aya::maps::MapError::IoError(std::io::error::Error)
 pub aya::maps::MapError::KeyNotFound
-pub aya::maps::MapError::MissingInnerMapBinding
-pub aya::maps::MapError::MissingInnerMapBinding::outer_name: alloc::string::String
+pub aya::maps::MapError::MissingInnerMapDefinition
+pub aya::maps::MapError::MissingInnerMapDefinition::outer_name: alloc::string::String
 pub aya::maps::MapError::OutOfBounds
 pub aya::maps::MapError::OutOfBounds::index: u32
 pub aya::maps::MapError::OutOfBounds::max_entries: u32

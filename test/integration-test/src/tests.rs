@@ -11,6 +11,7 @@
 mod array;
 mod bloom_filter;
 mod bpf_probe_read;
+mod btf_map_of_maps;
 mod btf_maps;
 mod btf_relocations;
 mod elf;
@@ -23,7 +24,6 @@ mod load;
 mod log;
 mod lpm_trie;
 mod lsm;
-mod map_of_maps;
 mod map_pin;
 mod maps_disjoint;
 mod per_cpu_array;

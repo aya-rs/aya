@@ -74,7 +74,6 @@ bpf_file!(
     PROG_ARRAY => "prog_array",
     STACK_TRACE => "stack_trace",
     STACK_TRACE_LSM => "stack_trace_lsm",
-    MAP_OF_MAPS => "map_of_maps",
     BTF_MAP_OF_MAPS => "btf_map_of_maps",
 );
 
