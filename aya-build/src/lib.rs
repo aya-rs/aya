@@ -146,6 +146,12 @@ pub fn build_ebpf<'a>(
             &target,
         ]);
 
+        // RUSTC_BOOTSTRAP controls whether unstable features (-Z flags) are available:
+        //   "1"           – enable for all crates
+        //   "<crate>"     – enable only for the named crate
+        //   "-1"          – force stable behavior even on nightly (explicit opt-out)
+        //   (unset/other) – follow the actual compiler channel
+        // See: https://doc.rust-lang.org/beta/unstable-book/compiler-environment-variables/RUSTC_BOOTSTRAP.html
         let rustc_bootstrap = env::var("RUSTC_BOOTSTRAP").unwrap_or_default();
         let use_build_std = if rustc_bootstrap == "-1" {
             false
