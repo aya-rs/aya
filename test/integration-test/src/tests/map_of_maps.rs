@@ -263,7 +263,7 @@ fn btf_array_of_maps() {
     // Insert the inner array into the outer ArrayOfMaps at index 0.
     {
         let mut outer: ArrayOfMaps<&mut MapData, Array<MapData, u32>> =
-            ebpf.map_mut("OUTER").unwrap().try_into().unwrap();
+            ebpf.map_mut("ARRAY_OF_MAPS").unwrap().try_into().unwrap();
         outer.set(0, &inner_array, 0).unwrap();
     }
 
@@ -283,7 +283,9 @@ fn btf_array_of_maps() {
     trigger_btf_map_of_maps();
 
     // Verify the eBPF program read from the inner map and wrote to RESULTS.
-    let results: Array<&MapData, u32> = ebpf.map("RESULTS").unwrap().try_into().unwrap();
-    assert_eq!(results.get(&0, 0).unwrap(), 42);
-    assert_eq!(results.get(&1, 0).unwrap(), 1);
+    let results: Array<&MapData, integration_common::btf_map_of_maps::TestResult> =
+        ebpf.map("RESULTS").unwrap().try_into().unwrap();
+    let result = results.get(&0, 0).unwrap();
+    assert_eq!(result.value, 42);
+    assert_eq!(result.ran, 1);
 }

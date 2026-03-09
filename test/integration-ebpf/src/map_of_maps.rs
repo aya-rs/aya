@@ -36,41 +36,25 @@ static RESULTS: Array<u32> = Array::with_max_entries(4, 0);
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-#[expect(
-    clippy::missing_const_for_fn,
-    reason = "extern functions cannot be const"
-)]
-pub extern "C" fn trigger_array_of_maps() {
+pub const extern "C" fn trigger_array_of_maps() {
     core::hint::black_box(());
 }
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-#[expect(
-    clippy::missing_const_for_fn,
-    reason = "extern functions cannot be const"
-)]
-pub extern "C" fn trigger_hash_of_maps() {
+pub const extern "C" fn trigger_hash_of_maps() {
     core::hint::black_box(());
 }
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-#[expect(
-    clippy::missing_const_for_fn,
-    reason = "extern functions cannot be const"
-)]
-pub extern "C" fn trigger_array_of_maps_get_value() {
+pub const extern "C" fn trigger_array_of_maps_get_value() {
     core::hint::black_box(());
 }
 
 #[unsafe(no_mangle)]
 #[inline(never)]
-#[expect(
-    clippy::missing_const_for_fn,
-    reason = "extern functions cannot be const"
-)]
-pub extern "C" fn trigger_hash_of_maps_get_value() {
+pub const extern "C" fn trigger_hash_of_maps_get_value() {
     core::hint::black_box(());
 }
 
