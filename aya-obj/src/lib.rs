@@ -100,7 +100,7 @@ pub mod relocation;
 mod util;
 
 pub use extern_types::KsymsError;
-pub use maps::Map;
+pub use maps::{Map, StructOpsMap};
 pub use obj::*;
 
 /// An error returned from the verifier.

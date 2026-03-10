@@ -148,7 +148,8 @@ pub(crate) struct EbpfLoadProgramAttrs<'a> {
     pub(crate) insns: &'a [bpf_insn],
     pub(crate) license: &'a CStr,
     pub(crate) kernel_version: u32,
-    pub(crate) expected_attach_type: Option<bpf_attach_type>,
+    // Struct ops uses this field for a raw struct member index.
+    pub(crate) expected_attach_type: Option<u32>,
     pub(crate) prog_btf_fd: Option<BorrowedFd<'a>>,
     pub(crate) attach_btf_obj_fd: Option<BorrowedFd<'a>>,
     pub(crate) attach_btf_id: Option<u32>,
@@ -179,7 +180,7 @@ pub(crate) fn bpf_load_program(
     u.prog_flags = aya_attr.flags;
     u.prog_type = aya_attr.ty as u32;
     if let Some(v) = aya_attr.expected_attach_type {
-        u.expected_attach_type = v as u32;
+        u.expected_attach_type = v;
     }
     u.insns = aya_attr.insns.as_ptr().expose_provenance() as u64;
     u.insn_cnt = aya_attr.insns.len() as u32;
@@ -994,7 +995,7 @@ fn with_raised_rlimit_retry<T, F: FnMut() -> io::Result<T>>(
     result
 }
 
-pub(super) fn bpf_map_create(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
+pub(crate) fn bpf_map_create(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
     // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
     with_raised_rlimit_retry(
         || unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, attr) },
