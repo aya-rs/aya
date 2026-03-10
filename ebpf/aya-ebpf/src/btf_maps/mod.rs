@@ -42,21 +42,22 @@ impl<T: private::MapDef> MapDef for T {}
 /// pointer obtained from the same map element.
 #[inline(always)]
 pub(crate) unsafe fn lookup_inner<'a, M: private::MapDef>(
-    inner_map: core::ptr::NonNull<core::ffi::c_void>,
+    inner_map: core::ptr::NonNull<M>,
     key: &M::Key,
 ) -> Option<&'a M::Value> {
     // SAFETY: Both pointers are returned by BPF helpers and are valid for
     // the duration of the program. We only produce a shared reference.
-    unsafe { crate::lookup::<M::Key, M::Value>(inner_map.as_ptr(), key).map(|p| p.as_ref()) }
+    unsafe { crate::lookup::<M::Key, M::Value>(inner_map.as_ptr().cast(), key).map(|p| p.as_ref()) }
 }
 
 /// Same as [`lookup_inner`] but returns a mutable pointer.
 #[inline(always)]
 pub(crate) fn lookup_inner_ptr_mut<M: private::MapDef>(
-    inner_map: core::ptr::NonNull<core::ffi::c_void>,
+    inner_map: core::ptr::NonNull<M>,
     key: &M::Key,
 ) -> Option<*mut M::Value> {
-    crate::lookup::<M::Key, M::Value>(inner_map.as_ptr(), key).map(core::ptr::NonNull::as_ptr)
+    crate::lookup::<M::Key, M::Value>(inner_map.as_ptr().cast(), key)
+        .map(core::ptr::NonNull::as_ptr)
 }
 
 /// Defines a BTF-compatible map struct with flat `#[repr(C)]` layout.
