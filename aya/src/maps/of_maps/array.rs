@@ -150,9 +150,8 @@ mod tests {
     #[test]
     fn test_wrong_key_size() {
         let map = new_map(test_utils::new_obj_map::<u8>(BPF_MAP_TYPE_ARRAY_OF_MAPS));
-        let result: Result<ArrayOfMaps<&MapData>, _> = ArrayOfMaps::new(&map);
         assert_matches!(
-            result,
+            ArrayOfMaps::<_>::new(&map),
             Err(MapError::InvalidKeySize {
                 size: 4,
                 expected: 1
@@ -166,8 +165,10 @@ mod tests {
             aya_obj::generated::bpf_map_type::BPF_MAP_TYPE_HASH,
         ));
         let map = Map::HashMap(map);
-        let result: Result<ArrayOfMaps<&MapData>, _> = ArrayOfMaps::try_from(&map);
-        assert_matches!(result, Err(MapError::InvalidMapType { .. }));
+        assert_matches!(
+            ArrayOfMaps::<_>::try_from(&map),
+            Err(MapError::InvalidMapType { .. })
+        );
     }
 
     #[test]

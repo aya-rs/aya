@@ -68,7 +68,7 @@ impl<K, V: crate::btf_maps::MapDef, const MAX_ENTRIES: usize, const FLAGS: usize
     pub unsafe fn get_value(&self, outer_key: &K, inner_key: &V::Key) -> Option<&V::Value> {
         let inner = lookup(self.as_ptr(), outer_key)?;
         // SAFETY: The caller upholds the aliasing invariants (see `get`).
-        unsafe { crate::btf_maps::lookup_inner(inner, inner_key) }
+        unsafe { crate::btf_maps::lookup_inner::<V>(inner, inner_key) }
     }
 
     /// Same as [`get_value`](Self::get_value) but returns a mutable pointer.
@@ -83,6 +83,6 @@ impl<K, V: crate::btf_maps::MapDef, const MAX_ENTRIES: usize, const FLAGS: usize
         inner_key: &V::Key,
     ) -> Option<*mut V::Value> {
         let inner = lookup(self.as_ptr(), outer_key)?;
-        crate::btf_maps::lookup_inner_ptr_mut(inner, inner_key)
+        crate::btf_maps::lookup_inner_ptr_mut::<V>(inner, inner_key)
     }
 }
