@@ -1,6 +1,6 @@
 use aya::{
     Ebpf,
-    maps::{Array, ArrayOfMaps, HashOfMaps, MapData},
+    maps::{Array, ArrayOfMaps, CreatableMap, HashOfMaps, MapData},
     programs::UProbe,
 };
 

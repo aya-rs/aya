@@ -115,6 +115,20 @@ pub trait InnerMap: sealed::InnerMap {}
 
 impl<T: sealed::InnerMap> InnerMap for T {}
 
+/// Trait for map types that can be created standalone from userspace.
+///
+/// This is used to create inner maps for map-of-maps types.
+///
+/// This trait is sealed and cannot be implemented outside of this crate.
+pub trait CreatableMap: sealed::CreatableMap {
+    /// Creates a standalone map with the given `max_entries` capacity and `flags`.
+    fn create(max_entries: u32, flags: u32) -> Result<Self, MapError> {
+        <Self as sealed::CreatableMap>::create(max_entries, flags)
+    }
+}
+
+impl<T: sealed::CreatableMap> CreatableMap for T {}
+
 mod sealed {
     use super::{MapData, MapError, MapFd};
 
@@ -130,24 +144,9 @@ mod sealed {
         fn fd(&self) -> &MapFd;
     }
 
-    pub(super) trait CreatableMap: Sized {
-        const MAP_TYPE: u32;
-        const KEY_SIZE: u32;
-        const VALUE_SIZE: u32;
-        const CREATE_NAME: &'static str;
-
-        fn new_from_map_data(map_data: MapData) -> Result<Self, MapError>;
-
-        fn create(max_entries: u32, flags: u32) -> Result<Self, MapError> {
-            let obj = aya_obj::Map::new_legacy(
-                Self::MAP_TYPE,
-                Self::KEY_SIZE,
-                Self::VALUE_SIZE,
-                max_entries,
-                flags,
-            );
-            Self::new_from_map_data(MapData::create(obj, Self::CREATE_NAME, None)?)
-        }
+    #[expect(unnameable_types, reason = "intentionally unnameable sealed trait")]
+    pub trait CreatableMap: Sized {
+        fn create(max_entries: u32, flags: u32) -> Result<Self, MapError>;
     }
 }
 
@@ -718,105 +717,35 @@ impl sealed::InnerMap for MapFd {
     }
 }
 
-impl<V: Pod> sealed::CreatableMap for Array<MapData, V> {
-    const MAP_TYPE: u32 = bpf_map_type::BPF_MAP_TYPE_ARRAY as u32;
-    const KEY_SIZE: u32 = size_of::<u32>() as u32;
-    const VALUE_SIZE: u32 = size_of::<V>() as u32;
-    const CREATE_NAME: &'static str = "standalone_array";
-    fn new_from_map_data(map_data: MapData) -> Result<Self, MapError> {
-        Self::new(map_data)
-    }
-}
-
-impl<V: Pod> sealed::CreatableMap for PerCpuArray<MapData, V> {
-    const MAP_TYPE: u32 = bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY as u32;
-    const KEY_SIZE: u32 = size_of::<u32>() as u32;
-    const VALUE_SIZE: u32 = size_of::<V>() as u32;
-    const CREATE_NAME: &'static str = "standalone_percpu_array";
-    fn new_from_map_data(map_data: MapData) -> Result<Self, MapError> {
-        Self::new(map_data)
-    }
-}
-
-impl<V: Pod> sealed::CreatableMap for BloomFilter<MapData, V> {
-    const MAP_TYPE: u32 = bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER as u32;
-    const KEY_SIZE: u32 = 0;
-    const VALUE_SIZE: u32 = size_of::<V>() as u32;
-    const CREATE_NAME: &'static str = "standalone_bloom_filter";
-    fn new_from_map_data(map_data: MapData) -> Result<Self, MapError> {
-        Self::new(map_data)
-    }
-}
-
-impl<V: Pod> sealed::CreatableMap for Queue<MapData, V> {
-    const MAP_TYPE: u32 = bpf_map_type::BPF_MAP_TYPE_QUEUE as u32;
-    const KEY_SIZE: u32 = 0;
-    const VALUE_SIZE: u32 = size_of::<V>() as u32;
-    const CREATE_NAME: &'static str = "standalone_queue";
-    fn new_from_map_data(map_data: MapData) -> Result<Self, MapError> {
-        Self::new(map_data)
-    }
-}
-
-impl<V: Pod> sealed::CreatableMap for Stack<MapData, V> {
-    const MAP_TYPE: u32 = bpf_map_type::BPF_MAP_TYPE_STACK as u32;
-    const KEY_SIZE: u32 = 0;
-    const VALUE_SIZE: u32 = size_of::<V>() as u32;
-    const CREATE_NAME: &'static str = "standalone_stack";
-    fn new_from_map_data(map_data: MapData) -> Result<Self, MapError> {
-        Self::new(map_data)
-    }
-}
-
-impl<K: Pod, V: Pod> sealed::CreatableMap for HashMap<MapData, K, V> {
-    const MAP_TYPE: u32 = bpf_map_type::BPF_MAP_TYPE_HASH as u32;
-    const KEY_SIZE: u32 = size_of::<K>() as u32;
-    const VALUE_SIZE: u32 = size_of::<V>() as u32;
-    const CREATE_NAME: &'static str = "standalone_hash";
-    fn new_from_map_data(map_data: MapData) -> Result<Self, MapError> {
-        Self::new(map_data)
-    }
-}
-
-impl<K: Pod, V: Pod> sealed::CreatableMap for PerCpuHashMap<MapData, K, V> {
-    const MAP_TYPE: u32 = bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH as u32;
-    const KEY_SIZE: u32 = size_of::<K>() as u32;
-    const VALUE_SIZE: u32 = size_of::<V>() as u32;
-    const CREATE_NAME: &'static str = "standalone_percpu_hash";
-    fn new_from_map_data(map_data: MapData) -> Result<Self, MapError> {
-        Self::new(map_data)
-    }
-}
-
-impl<K: Pod, V: Pod> sealed::CreatableMap for LpmTrie<MapData, K, V> {
-    const MAP_TYPE: u32 = bpf_map_type::BPF_MAP_TYPE_LPM_TRIE as u32;
-    const KEY_SIZE: u32 = size_of::<lpm_trie::Key<K>>() as u32;
-    const VALUE_SIZE: u32 = size_of::<V>() as u32;
-    const CREATE_NAME: &'static str = "standalone_lpm_trie";
-    fn new_from_map_data(map_data: MapData) -> Result<Self, MapError> {
-        Self::new(map_data)
-    }
-}
-
-macro_rules! impl_create_map {
-    ($ty:ident < MapData $(, $param:ident : Pod)* >) => {
-        impl<$($param: Pod),*> $ty<MapData, $($param),*> {
-            /// Creates a standalone map with the given `max_entries` capacity and `flags`.
-            pub fn create(max_entries: u32, flags: u32) -> Result<Self, MapError> {
-                <Self as sealed::CreatableMap>::create(max_entries, flags)
+macro_rules! impl_creatable_map {
+    ($ty:ident<MapData $(, $p:ident: Pod)*>, $map_type:expr, $key_size:expr, $value_size:expr, $name:expr) => {
+        impl<$($p: Pod),*> sealed::CreatableMap for $ty<MapData, $($p),*> {
+            fn create(max_entries: u32, flags: u32) -> Result<Self, MapError> {
+                let obj = aya_obj::Map::new_from_params(
+                    $map_type as u32, $key_size, $value_size, max_entries, flags,
+                );
+                Self::new(MapData::create(obj, $name, None)?)
             }
         }
     };
 }
 
-impl_create_map!(Array<MapData, V: Pod>);
-impl_create_map!(PerCpuArray<MapData, V: Pod>);
-impl_create_map!(BloomFilter<MapData, V: Pod>);
-impl_create_map!(Queue<MapData, V: Pod>);
-impl_create_map!(Stack<MapData, V: Pod>);
-impl_create_map!(HashMap<MapData, K: Pod, V: Pod>);
-impl_create_map!(PerCpuHashMap<MapData, K: Pod, V: Pod>);
-impl_create_map!(LpmTrie<MapData, K: Pod, V: Pod>);
+impl_creatable_map!(Array<MapData, V: Pod>,
+    bpf_map_type::BPF_MAP_TYPE_ARRAY, size_of::<u32>() as u32, size_of::<V>() as u32, "standalone_array");
+impl_creatable_map!(PerCpuArray<MapData, V: Pod>,
+    bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY, size_of::<u32>() as u32, size_of::<V>() as u32, "standalone_percpu_array");
+impl_creatable_map!(BloomFilter<MapData, V: Pod>,
+    bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, 0, size_of::<V>() as u32, "standalone_bloom_filter");
+impl_creatable_map!(Queue<MapData, V: Pod>,
+    bpf_map_type::BPF_MAP_TYPE_QUEUE, 0, size_of::<V>() as u32, "standalone_queue");
+impl_creatable_map!(Stack<MapData, V: Pod>,
+    bpf_map_type::BPF_MAP_TYPE_STACK, 0, size_of::<V>() as u32, "standalone_stack");
+impl_creatable_map!(HashMap<MapData, K: Pod, V: Pod>,
+    bpf_map_type::BPF_MAP_TYPE_HASH, size_of::<K>() as u32, size_of::<V>() as u32, "standalone_hash");
+impl_creatable_map!(PerCpuHashMap<MapData, K: Pod, V: Pod>,
+    bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH, size_of::<K>() as u32, size_of::<V>() as u32, "standalone_percpu_hash");
+impl_creatable_map!(LpmTrie<MapData, K: Pod, V: Pod>,
+    bpf_map_type::BPF_MAP_TYPE_LPM_TRIE, size_of::<lpm_trie::Key<K>>() as u32, size_of::<V>() as u32, "standalone_lpm_trie");
 
 pub(crate) const fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
     let max_entries = map.obj.max_entries();
