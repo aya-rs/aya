@@ -567,10 +567,14 @@ impl Enum64 {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct BtfMember {
-    pub(crate) name_offset: u32,
-    pub(crate) btf_type: u32,
-    pub(crate) offset: u32,
+/// A BTF struct member
+pub struct BtfMember {
+    /// Name offset in the string table
+    pub name_offset: u32,
+    /// Type ID of the member
+    pub btf_type: u32,
+    /// Bit offset of the member
+    pub offset: u32,
 }
 
 #[repr(C)]
@@ -578,8 +582,10 @@ pub(crate) struct BtfMember {
 pub struct Struct {
     pub(crate) name_offset: u32,
     info: u32,
-    pub(crate) size: u32,
-    pub(crate) members: Vec<BtfMember>,
+    /// Size of the struct in bytes
+    pub size: u32,
+    /// Members of the struct
+    pub members: Vec<BtfMember>,
 }
 
 impl Struct {
