@@ -281,8 +281,8 @@ impl Map {
         }
     }
 
-    /// Creates a new legacy map definition programmatically.
-    pub const fn new_legacy(
+    /// Creates a new map definition from raw parameters.
+    pub const fn new_from_params(
         map_type: u32,
         key_size: u32,
         value_size: u32,
