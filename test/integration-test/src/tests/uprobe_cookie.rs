@@ -6,10 +6,6 @@ use aya::{
 };
 
 #[test_log::test]
-#[expect(
-    clippy::little_endian_bytes,
-    reason = "the eBPF program writes the cookie as little-endian bytes"
-)]
 fn test_uprobe_cookie() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 15, 0) {
@@ -63,7 +59,7 @@ fn test_uprobe_cookie() {
     while let Some(read) = ring_buf.next() {
         let read = read.as_ref();
         match read.try_into() {
-            Ok(read) => seen.push(u64::from_le_bytes(read)),
+            Ok(read) => seen.push(u64::from_ne_bytes(read)),
             Err(std::array::TryFromSliceError { .. }) => {
                 panic!("invalid ring buffer data: {read:x?}")
             }
