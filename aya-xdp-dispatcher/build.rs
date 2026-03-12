@@ -9,7 +9,7 @@ fn main() -> anyhow::Result<()> {
     println!("cargo:rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
 
     let build_integration_bpf = env::var_os(AYA_BUILD_INTEGRATION_BPF)
-        .map(|build_integration_bpf| {
+        .map(|build_integration_bpf| -> anyhow::Result<bool> {
             let build_integration_bpf = std::str::from_utf8(
                 build_integration_bpf.as_encoded_bytes(),
             )
@@ -19,7 +19,7 @@ fn main() -> anyhow::Result<()> {
                     build_integration_bpf.display()
                 )
             })?;
-            let build_integration_bpf: bool = build_integration_bpf
+            let build_integration_bpf = build_integration_bpf
                 .parse()
                 .with_context(|| format!("{AYA_BUILD_INTEGRATION_BPF}={build_integration_bpf}"))?;
             Ok(build_integration_bpf)
