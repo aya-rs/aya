@@ -4,5 +4,8 @@
 #![no_std]
 #![no_main]
 
+#[cfg(not(test))]
+extern crate ebpf_panic;
+
 #[cfg(target_arch = "bpf")]
 pub mod prog;

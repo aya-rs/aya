@@ -10,6 +10,9 @@ license = "GPL-2.0-only OR BSD-2-Clause"
 repository.workspace = true
 rust-version.workspace = true
 
+[dependencies]
+ebpf-panic = { path = "../../ebpf-panic" }
+
 [target.'cfg(target_arch = "bpf")'.dependencies]
 aya-ebpf = { version = "^0.1.2", path = "../aya-ebpf" }
 
@@ -19,3 +22,4 @@ bytemuck = { workspace = true, features = ["derive"] }
 
 [build-dependencies]
 which = { workspace = true, features = ["real-sys"] }
+xtask = { path = "../../xtask" }

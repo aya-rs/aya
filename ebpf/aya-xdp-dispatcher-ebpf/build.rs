@@ -1,4 +1,7 @@
+use std::env;
+
 use which::which;
+use xtask::AYA_BUILD_INTEGRATION_BPF;
 
 /// Building this crate has an undeclared dependency on the `bpf-linker` binary. This would be
 /// better expressed by [artifact-dependencies][bindeps] but issues such as
@@ -12,6 +15,15 @@ use which::which;
 ///
 /// [bindeps]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html?highlight=feature#artifact-dependencies
 fn main() {
-    let bpf_linker = which("bpf-linker").unwrap();
-    println!("cargo:rerun-if-changed={}", bpf_linker.to_str().unwrap());
+    println!("cargo:rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
+
+    let build_integration_bpf = env::var(AYA_BUILD_INTEGRATION_BPF)
+        .as_deref()
+        .map(str::parse)
+        .is_ok_and(Result::unwrap);
+
+    if build_integration_bpf {
+        let bpf_linker = which("bpf-linker").unwrap();
+        println!("cargo:rerun-if-changed={}", bpf_linker.to_str().unwrap());
+    }
 }
