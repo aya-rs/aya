@@ -12,9 +12,11 @@ const RTDIR_FS_XDP: &str = "/sys/fs/bpf/xdp";
 fn get_lo_ifindex() -> u32 {
     let lo = CString::new("lo").unwrap();
     let idx = unsafe { if_nametoindex(lo.as_ptr()) };
-    if idx == 0 {
-        panic!("interface `lo` not found: {}", io::Error::last_os_error());
-    }
+    assert!(
+        idx != 0,
+        "interface `lo` not found: {}",
+        io::Error::last_os_error()
+    );
     idx
 }
 
@@ -55,7 +57,7 @@ fn count_pinned_extensions(if_index: u32) -> usize {
 
 fn cleanup_dispatcher(if_index: u32) {
     if let Some(dir) = find_dispatcher_dir(if_index) {
-        let _ = fs::remove_dir_all(&dir);
+        drop(fs::remove_dir_all(&dir));
     }
 }
 
