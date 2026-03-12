@@ -11031,6 +11031,7 @@ pub const fn aya::EbpfLoader<'a>::allow_unsupported_maps(&mut self) -> &mut Self
 pub fn aya::EbpfLoader<'a>::btf(&mut self, btf: core::option::Option<&'a aya_obj::btf::btf::Btf>) -> &mut Self
 pub fn aya::EbpfLoader<'a>::default_map_pin_directory<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> &mut Self
 pub fn aya::EbpfLoader<'a>::extension(&mut self, name: &'a str) -> &mut Self
+pub fn aya::EbpfLoader<'a>::kconfig(&mut self, kconfig: aya::KConfig) -> &mut Self
 pub fn aya::EbpfLoader<'a>::load(&mut self, data: &[u8]) -> core::result::Result<aya::Ebpf, aya::EbpfError>
 pub fn aya::EbpfLoader<'a>::load_file<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<aya::Ebpf, aya::EbpfError>
 pub fn aya::EbpfLoader<'a>::map_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self
@@ -11095,6 +11096,41 @@ impl<T> core::borrow::BorrowMut<T> for aya::GlobalData<'a> where T: ?core::marke
 pub fn aya::GlobalData<'a>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::GlobalData<'a>
 pub fn aya::GlobalData<'a>::from(t: T) -> T
+pub struct aya::KConfig
+impl aya::KConfig
+pub fn aya::KConfig::current() -> Self
+impl core::clone::Clone for aya::KConfig
+pub fn aya::KConfig::clone(&self) -> aya::KConfig
+impl core::fmt::Debug for aya::KConfig
+pub fn aya::KConfig::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::KConfig
+impl core::marker::Send for aya::KConfig
+impl core::marker::Sync for aya::KConfig
+impl core::marker::Unpin for aya::KConfig
+impl core::panic::unwind_safe::RefUnwindSafe for aya::KConfig
+impl core::panic::unwind_safe::UnwindSafe for aya::KConfig
+impl<T, U> core::convert::Into<U> for aya::KConfig where U: core::convert::From<T>
+pub fn aya::KConfig::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::KConfig where U: core::convert::Into<T>
+pub type aya::KConfig::Error = core::convert::Infallible
+pub fn aya::KConfig::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::KConfig where U: core::convert::TryFrom<T>
+pub type aya::KConfig::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::KConfig::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya::KConfig where T: core::clone::Clone
+pub type aya::KConfig::Owned = T
+pub fn aya::KConfig::clone_into(&self, target: &mut T)
+pub fn aya::KConfig::to_owned(&self) -> T
+impl<T> core::any::Any for aya::KConfig where T: 'static + ?core::marker::Sized
+pub fn aya::KConfig::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::KConfig where T: ?core::marker::Sized
+pub fn aya::KConfig::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::KConfig where T: ?core::marker::Sized
+pub fn aya::KConfig::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya::KConfig where T: core::clone::Clone
+pub unsafe fn aya::KConfig::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya::KConfig
+pub fn aya::KConfig::from(t: T) -> T
 pub struct aya::VerifierLogLevel(_)
 impl aya::VerifierLogLevel
 pub const aya::VerifierLogLevel::DEBUG: Self
