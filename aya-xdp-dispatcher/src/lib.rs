@@ -381,9 +381,7 @@ impl XdpDispatcher {
                 let Some(path) = slot.existing_prog_path.as_ref() else {
                     return true;
                 };
-                let id = aya::programs::ProgramInfo::from_pin(path)
-                    .map(|info| info.id())
-                    .unwrap_or(0);
+                let id = aya::programs::ProgramInfo::from_pin(path).map_or(0, |info| info.id());
                 !self.owned_prog_ids.contains(&id)
             })
             .collect();
