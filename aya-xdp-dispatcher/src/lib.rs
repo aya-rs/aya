@@ -18,7 +18,7 @@ use aya_xdp_dispatcher_ebpf::{
     XdpDispatcherConfig,
 };
 use bytemuck::try_pod_read_unaligned;
-pub use error::*;
+pub use error::{Error, Result};
 use nix::fcntl::{Flock, FlockArg};
 use uuid::Uuid;
 
@@ -381,9 +381,7 @@ impl XdpDispatcher {
                 let Some(path) = slot.existing_prog_path.as_ref() else {
                     return true;
                 };
-                let id = aya::programs::ProgramInfo::from_pin(path)
-                    .map(|info| info.id())
-                    .unwrap_or(0);
+                let id = aya::programs::ProgramInfo::from_pin(path).map_or(0, |info| info.id());
                 !self.owned_prog_ids.contains(&id)
             })
             .collect();
@@ -401,19 +399,15 @@ impl XdpDispatcher {
         }
 
         let mut no_ebpfs: HashMap<Uuid, Ebpf> = HashMap::new();
-        match Self::do_load(
+        Self::do_load(
             self.if_index,
             self.xdp_flags,
             remaining,
             &mut no_ebpfs,
             Some(&existing_dir),
-        ) {
-            Ok(_) => {
-                fs::remove_dir_all(&existing_dir)?;
-                Ok(())
-            }
-            Err(e) => Err(e),
-        }
+        )?;
+        fs::remove_dir_all(&existing_dir)?;
+        Ok(())
     }
 }
 

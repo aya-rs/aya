@@ -34,7 +34,7 @@ macro_rules! stub_program {
             if ctx.is_null() {
                 return xdp_action::XDP_ABORTED;
             }
-            return ret;
+            ret
         }
     };
 }
@@ -77,11 +77,4 @@ pub(crate) fn xdp_dispatcher(ctx: XdpContext) -> u32 {
     stub_handler!(8, prog8);
     stub_handler!(9, prog9);
     xdp_action::XDP_PASS
-}
-
-#[cfg(not(test))]
-#[panic_handler]
-fn panic(_info: &core::panic::PanicInfo<'_>) -> ! {
-    #[allow(clippy::empty_loop)]
-    loop {}
 }
