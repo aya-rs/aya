@@ -578,6 +578,18 @@ macro_rules! impl_try_into_fdlink {
             }
         }
     };
+    ($wrapper:ident, $inner:ident, $method:ident) => {
+        impl TryFrom<$wrapper> for $crate::programs::FdLink {
+            type Error = $crate::programs::LinkError;
+
+            fn try_from(value: $wrapper) -> Result<Self, Self::Error> {
+                value
+                    .into_inner()
+                    .$method()
+                    .map_err(|_| $crate::programs::LinkError::InvalidLink)
+            }
+        }
+    };
 }
 
 pub(crate) use impl_try_into_fdlink;
