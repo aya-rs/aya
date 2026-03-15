@@ -109,7 +109,11 @@ impl TryFrom<u32> for PinningType {
     }
 }
 
-/// Map definition in legacy BPF map declaration style
+/// Map definition in legacy BPF map declaration style.
+///
+/// This mirrors `struct bpf_elf_map`, the layout used by iproute2/tc's
+/// legacy BPF loader. See
+/// <https://git.kernel.org/pub/scm/linux/kernel/git/jkirsher/iproute2.git/tree/include/bpf_elf.h>.
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub struct bpf_map_def {
@@ -127,8 +131,17 @@ pub struct bpf_map_def {
     // optional features
     /// Id
     pub id: u32,
-    /// Pinning type
+    /// Pinning type. Only [`PinningType::None`] is supported for legacy maps.
     pub pinning: PinningType,
+    /// Inner map id. In `bpf_elf_map`, `inner_id` and `inner_idx` wire up a
+    /// map-of-maps: a non-zero `inner_id` identifies another map in the same
+    /// object to use as the inner map type. Aya does not implement
+    /// map-of-maps for legacy maps, so parsing rejects a non-zero `inner_id`
+    /// or `inner_idx` with
+    /// [`ParseError::UnsupportedLegacyMapInMap`](crate::ParseError::UnsupportedLegacyMapInMap).
+    pub inner_id: u32,
+    /// Inner map index; see [`inner_id`](Self::inner_id).
+    pub inner_idx: u32,
 }
 
 /// The first five __u32 of `bpf_map_def` must be defined.
@@ -304,6 +317,8 @@ impl Map {
                 map_flags: flags,
                 id: 0,
                 pinning: PinningType::None,
+                inner_id: 0,
+                inner_idx: 0,
             },
             inner_def: None,
             section_index: 0,
