@@ -109,6 +109,55 @@ fn test_run_repeat() {
 }
 
 #[test_log::test]
+fn tc_legacy_map_run() {
+    let kernel_version = aya::util::KernelVersion::current().unwrap();
+    // BPF_PROG_TEST_RUN was introduced in v4.12 (1cf1cae963c2, "bpf: introduce
+    // BPF_PROG_TEST_RUN command") with support for sched_cls (used here).
+    if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
+        return;
+    }
+
+    // tc_legacy_map.bpf.o declares its maps using iproute2/tc's 36-byte
+    // bpf_elf_map layout. Load it, run the classifier, and read the maps back to
+    // prove the legacy definitions are parsed correctly and the maps are usable
+    // by the loaded program at runtime.
+    let mut bpf = Ebpf::load(crate::TC_LEGACY_MAP).unwrap();
+
+    // Take the maps before running so we can read what the program wrote. The
+    // two maps have distinct max_entries (1 and 2), which are read from adjacent
+    // fields of the 36-byte definitions.
+    let map_1: Array<_, u32> = bpf.take_map("tc_map_1").unwrap().try_into().unwrap();
+    let map_2: Array<_, u32> = bpf.take_map("tc_map_2").unwrap().try_into().unwrap();
+    assert_eq!(map_1.len(), 1);
+    assert_eq!(map_2.len(), 2);
+
+    let prog: &mut SchedClassifier = bpf.program_mut("tc_pass").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let data_in = vec![0u8; PKT_V4_SIZE];
+    let mut data_out = vec![0u8; PKT_V4_SIZE];
+    let opts = TestRunOptions {
+        data_in: Some(&data_in),
+        data_out: Some(&mut data_out),
+        ..TestRunOptions::default()
+    };
+    let TestRunResult {
+        return_value,
+        duration,
+        data_size_out,
+        ctx_size_out,
+    } = prog.test_run(opts).unwrap();
+
+    // tc_pass writes 42 to key 0 of both maps and returns 0.
+    assert_eq!(return_value, 0);
+    assert!(!duration.is_zero());
+    assert_eq!(data_size_out as usize, PKT_V4_SIZE);
+    assert_eq!(ctx_size_out, 0);
+    assert_eq!(map_1.get(&0, 0).unwrap(), 42);
+    assert_eq!(map_2.get(&0, 0).unwrap(), 42);
+}
+
+#[test_log::test]
 fn test_xdp_modify_packet() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
     // Two separate kernel requirements combine to set this guard at v5.8:
