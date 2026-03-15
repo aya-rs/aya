@@ -1,5 +1,7 @@
 //! Map struct and type bindings.
 
+use std::num::NonZeroU32;
+
 use crate::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type};
 
 impl TryFrom<u32> for bpf_map_type {
@@ -109,7 +111,11 @@ impl TryFrom<u32> for PinningType {
     }
 }
 
-/// Map definition in legacy BPF map declaration style
+/// Map definition in legacy BPF map declaration style.
+///
+/// This mirrors `struct bpf_elf_map`, the layout used by iproute2/tc's legacy
+/// BPF loader.
+/// <https://github.com/iproute2/iproute2/blob/v7.2.0/include/bpf_elf.h#L32-L42>
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
 pub struct bpf_map_def {
@@ -127,9 +133,26 @@ pub struct bpf_map_def {
     // optional features
     /// Id
     pub id: u32,
-    /// Pinning type
-    pub pinning: PinningType,
+    /// Pinning mode: `PIN_OBJECT_NS`, `PIN_GLOBAL_NS`, or any other value,
+    /// which tc looks up in its custom pinning table. Aya supports none of
+    /// them, so parsing rejects a set value with
+    /// [`ParseError::UnsupportedLegacyPinning`](crate::ParseError::UnsupportedLegacyPinning).
+    /// <https://github.com/iproute2/iproute2/blob/v7.2.0/include/bpf_elf.h#L27-L29>
+    /// <https://github.com/iproute2/iproute2/blob/v7.2.0/lib/bpf_legacy.c#L1359-L1371>
+    pub pinning: Option<NonZeroU32>,
+    /// Inner map id. tc sets this on a map-of-maps and matches it against
+    /// another map's [`id`](Self::id), whose `inner_idx` gives the slot it
+    /// occupies. Aya does not implement map-of-maps for legacy maps, so parsing
+    /// rejects a set `inner_id` or `inner_idx` with
+    /// [`ParseError::UnsupportedLegacyMapInMap`](crate::ParseError::UnsupportedLegacyMapInMap).
+    /// <https://github.com/iproute2/iproute2/blob/v7.2.0/lib/bpf_legacy.c#L1799-L1822>
+    pub inner_id: Option<NonZeroU32>,
+    /// Inner map index, set on the map referenced by an
+    /// [`inner_id`](Self::inner_id).
+    pub inner_idx: Option<NonZeroU32>,
 }
+
+const _: () = assert!(size_of::<bpf_map_def>() == 36);
 
 /// The first five __u32 of `bpf_map_def` must be defined.
 pub(crate) const MINIMUM_MAP_SIZE: usize = size_of::<u32>() * 5;
@@ -211,7 +234,13 @@ impl Map {
     /// Returns the pinning type of the map
     pub const fn pinning(&self) -> PinningType {
         match self {
-            Self::Legacy(m) => m.def.pinning,
+            // Legacy maps declaring pinning are rejected at parse time, so the
+            // only value stored here comes from `parse_map_info`, which writes
+            // a `PinningType`.
+            Self::Legacy(m) => match m.def.pinning {
+                None => PinningType::None,
+                Some(_) => PinningType::ByName,
+            },
             Self::Btf(m) => m.def.pinning,
         }
     }
@@ -303,7 +332,9 @@ impl Map {
                 max_entries,
                 map_flags: flags,
                 id: 0,
-                pinning: PinningType::None,
+                pinning: None,
+                inner_id: None,
+                inner_idx: None,
             },
             inner_def: None,
             section_index: 0,
