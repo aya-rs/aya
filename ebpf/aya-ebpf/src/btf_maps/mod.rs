@@ -1,10 +1,64 @@
 pub mod array;
+pub mod array_of_maps;
+pub mod hash_of_maps;
 pub mod ring_buf;
 pub mod sk_storage;
 
 pub use array::Array;
+pub use array_of_maps::ArrayOfMaps;
+pub use hash_of_maps::HashOfMaps;
 pub use ring_buf::RingBuf;
 pub use sk_storage::SkStorage;
+
+mod private {
+    /// Sealed trait exposing the key and value types of a BTF map definition.
+    #[expect(
+        unnameable_types,
+        reason = "sealed trait pattern requires pub trait in private mod"
+    )]
+    pub trait MapDef {
+        /// The key type of this map.
+        type Key;
+        /// The value type of this map.
+        type Value;
+    }
+}
+
+/// Key and value types of a BTF map definition.
+///
+/// Used by map-of-maps types to perform fused lookups that combine the outer
+/// and inner `bpf_map_lookup_elem` calls in a single method.
+///
+/// This trait is sealed and cannot be implemented outside this crate.
+pub trait MapDef: private::MapDef {}
+
+impl<T: private::MapDef> MapDef for T {}
+
+/// Performs the inner half of a fused map-of-maps lookup, returning a shared reference.
+///
+/// # Safety
+///
+/// The caller must ensure the returned reference does not alias a mutable
+/// pointer obtained from the same map element.
+#[inline(always)]
+pub(crate) unsafe fn lookup_inner<'a, M: private::MapDef>(
+    inner_map: core::ptr::NonNull<M>,
+    key: &M::Key,
+) -> Option<&'a M::Value> {
+    // SAFETY: Both pointers are returned by BPF helpers and are valid for
+    // the duration of the program. We only produce a shared reference.
+    unsafe { crate::lookup::<M::Key, M::Value>(inner_map.as_ptr().cast(), key).map(|p| p.as_ref()) }
+}
+
+/// Same as [`lookup_inner`] but returns a mutable pointer.
+#[inline(always)]
+pub(crate) fn lookup_inner_ptr_mut<M: private::MapDef>(
+    inner_map: core::ptr::NonNull<M>,
+    key: &M::Key,
+) -> Option<*mut M::Value> {
+    crate::lookup::<M::Key, M::Value>(inner_map.as_ptr().cast(), key)
+        .map(core::ptr::NonNull::as_ptr)
+}
 
 /// Defines a BTF-compatible map struct with flat `#[repr(C)]` layout.
 ///
@@ -18,7 +72,60 @@ pub use sk_storage::SkStorage;
 /// Generics are limited to type parameters (with optional defaults) followed by
 /// a semicolon and const parameters (with optional defaults). Lifetimes and
 /// bounds are not supported.
+///
+/// # Map-of-maps support
+///
+/// For map-of-maps types (`ArrayOfMaps`, `HashOfMaps`), add an `inner_map` clause:
+///
+/// ```ignore
+/// btf_map_def!(
+///     pub struct HashOfMaps<K, V; const MAX_ENTRIES: usize, const FLAGS: usize = 0>,
+///     map_type: BPF_MAP_TYPE_HASH_OF_MAPS,
+///     max_entries: MAX_ENTRIES,
+///     map_flags: FLAGS,
+///     key_type: K,
+///     value_type: u32,
+///     inner_map: V,
+/// );
+/// ```
+///
+/// This generates a `values: [*const V; 0]` field for BTF relocation. The inner
+/// map type `V` is encoded in BTF so that loaders can resolve the inner map
+/// template.
 macro_rules! btf_map_def {
+    // Map-of-maps (with inner_map) - rewrites into the regular arm with a
+    // `values` extra field whose initializer is `[]` (a zero-length array).
+    (
+        $(#[$attr:meta])*
+        $vis:vis struct $name:ident<
+            $($ty_gen:ident $(= $ty_default:ty)?),+
+            $(; $(const $const_gen:ident : $const_ty:ty $(= $const_default:tt)?),+)?
+            $(,)?
+        >,
+        map_type: $map_type:ident,
+        max_entries: $max_entries:expr,
+        map_flags: $map_flags:expr,
+        key_type: $key_ty:ty,
+        value_type: $value_ty:ty,
+        inner_map: $inner_ty:ty
+        $(,)?
+    ) => {
+        $crate::btf_maps::btf_map_def!(
+            $(#[$attr])*
+            $vis struct $name<
+                $($ty_gen $(= $ty_default)?),+
+                $(; $(const $const_gen : $const_ty $(= $const_default)?),+)?
+            >,
+            map_type: $map_type,
+            max_entries: $max_entries,
+            map_flags: $map_flags,
+            key_type: $key_ty,
+            value_type: $value_ty,
+            values: [*const $inner_ty; 0] = []
+        );
+    };
+
+    // Regular map (with optional extra fields and initializers)
     (
         $(#[$attr:meta])*
         $vis:vis struct $name:ident<
@@ -31,7 +138,7 @@ macro_rules! btf_map_def {
         map_flags: $map_flags:expr,
         key_type: $key_ty:ty,
         value_type: $value_ty:ty
-        $(, $extra_field:ident : $extra_ty:ty)*
+        $(, $extra_field:ident : $extra_ty:ty = $extra_init:expr)*
         $(,)?
     ) => {
         $(#[$attr])*
@@ -88,7 +195,7 @@ macro_rules! btf_map_def {
                     max_entries: ::core::ptr::null(),
                     map_flags: ::core::ptr::null(),
 
-                    $($extra_field: ::core::ptr::null(),)*
+                    $($extra_field: $extra_init,)*
                 }
             }
 
