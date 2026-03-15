@@ -1,7 +1,3 @@
-#![cfg_attr(
-    target_arch = "bpf",
-    expect(unused_crate_dependencies, reason = "compiler_builtins")
-)]
 #![no_std]
 
 use core::{

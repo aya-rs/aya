@@ -22,7 +22,6 @@
 )]
 #![cfg_attr(
     target_arch = "bpf",
-    expect(unused_crate_dependencies, reason = "compiler_builtins"),
     expect(
         unstable_features,
         reason = "asm_experimental_arch requires unstable features"
