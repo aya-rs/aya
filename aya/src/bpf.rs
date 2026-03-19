@@ -22,9 +22,8 @@ use crate::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
         CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe,
         LircMode2, Lsm, LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError,
-        RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SkSkbKind,
-        SockOps, SocketFilter,
-        TracePoint, UProbe, Xdp,
+        RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SkSkbKind, SockOps,
+        SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -473,7 +472,7 @@ impl<'a> EbpfLoader<'a> {
                                 | ProgramSection::PerfEvent
                                 | ProgramSection::RawTracePoint
                                 | ProgramSection::SkLookup
-                                | ProgramSection::SkReuseport
+                                | ProgramSection::SkReuseport { attach_type: _ }
                                 | ProgramSection::FlowDissector
                                 | ProgramSection::CgroupSock { attach_type: _ }
                                 | ProgramSection::CgroupDevice => {}
@@ -721,9 +720,12 @@ impl<'a> EbpfLoader<'a> {
                         ProgramSection::SkLookup => Program::SkLookup(SkLookup {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                         }),
-                        ProgramSection::SkReuseport => Program::SkReuseport(SkReuseport {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                        }),
+                        ProgramSection::SkReuseport { attach_type } => {
+                            let mut data =
+                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
+                            data.expected_attach_type = Some((*attach_type).into());
+                            Program::SkReuseport(SkReuseport { data })
+                        }
                         ProgramSection::CgroupSock { attach_type, .. } => {
                             Program::CgroupSock(CgroupSock {
                                 data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
