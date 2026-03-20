@@ -1,0 +1,22 @@
+[package]
+description = "Library shared across eBPF and user-space"
+documentation = "https://docs.rs/aya-common"
+keywords = ["bpf", "ebpf", "common"]
+name = "aya-common"
+version = "0.1.0"
+
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+aya-ebpf-bindings = { version = "^0.1.2", path = "../ebpf/aya-ebpf-bindings" }
+
+[features]
+user = ["aya-ebpf-bindings/user"]
