@@ -77,6 +77,7 @@ dialoguer = { version = "0.12", default-features = false }
 diff = { version = "0.1.13", default-features = false }
 env_logger = { version = "0.11", default-features = false }
 epoll = { version = "4.3.3", default-features = false }
+flate2 = { version = "1.0", default-features = false }
 futures = { version = "0.3.28", default-features = false }
 glob = { version = "0.3.0", default-features = false }
 hashbrown = { version = "0.16.0", default-features = false }
