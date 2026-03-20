@@ -25,6 +25,7 @@ use object::{
 use crate::{
     btf::{
         Array, Btf, BtfError, BtfExt, BtfFeatures, BtfType, DataSecEntry, FuncSecInfo, LineSecInfo,
+        Struct,
     },
     generated::{
         BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K, bpf_func_id, bpf_insn, bpf_map_info,
@@ -770,7 +771,7 @@ impl Object {
                 if type_name == section.name {
                     // each btf_var_secinfo contains a map
                     for info in &datasec.entries {
-                        let (map_name, def) = parse_btf_map_def(btf, info)?;
+                        let (map_name, def, inner_def) = parse_btf_map_def(btf, info)?;
                         let symbol_index =
                             maps.get(&map_name)
                                 .ok_or_else(|| ParseError::SymbolNotFound {
@@ -780,6 +781,7 @@ impl Object {
                             map_name,
                             Map::Btf(BtfMap {
                                 def,
+                                inner_def,
                                 section_index: section.index.0,
                                 symbol_index: *symbol_index,
                                 data: Vec::new(),
@@ -825,6 +827,7 @@ impl Object {
                     section_kind: section.kind,
                     symbol_index: Some(sym.index),
                     def,
+                    inner_def: None,
                     data: Vec::new(),
                 }),
             );
@@ -1240,6 +1243,7 @@ fn parse_data_map_section(section: &Section<'_>) -> Map {
         // Data maps don't require symbols to be relocated
         symbol_index: None,
         def,
+        inner_def: None,
         data,
     })
 }
@@ -1263,7 +1267,10 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
     }
 }
 
-fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDef), BtfError> {
+fn parse_btf_map_def(
+    btf: &Btf,
+    info: &DataSecEntry,
+) -> Result<(String, BtfMapDef, Option<BtfMapDef>), BtfError> {
     let ty = match btf.type_by_id(info.btf_type)? {
         BtfType::Var(var) => var,
         other => {
@@ -1273,7 +1280,6 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
         }
     };
     let map_name = btf.string_at(ty.name_offset)?;
-    let mut map_def = BtfMapDef::default();
 
     let root_type = btf.resolve_type(ty.btf_type)?;
     let s = match btf.type_by_id(root_type)? {
@@ -1284,6 +1290,23 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
             });
         }
     };
+
+    let (map_def, inner_def) = parse_btf_map_struct(btf, s, &map_name, false)?;
+    Ok((map_name.to_string(), map_def, inner_def))
+}
+
+/// Parses BTF struct members into a map definition.
+///
+/// When `is_inner` is true, rejects `values` and `pinning` fields, matching
+/// libbpf behavior for inner map definitions.
+fn parse_btf_map_struct(
+    btf: &Btf,
+    s: &Struct,
+    map_name: &str,
+    is_inner: bool,
+) -> Result<(BtfMapDef, Option<BtfMapDef>), BtfError> {
+    let mut map_def = BtfMapDef::default();
+    let mut inner_map_def = None;
 
     for m in &s.members {
         match btf.string_at(m.name_offset)?.as_ref() {
@@ -1325,18 +1348,67 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
                 map_def.map_flags = get_map_field(btf, m.btf_type)?;
             }
             "pinning" => {
+                if is_inner {
+                    return Err(BtfError::InnerMapCannotBePinned {
+                        name: map_name.to_owned(),
+                    });
+                }
                 let pinning = get_map_field(btf, m.btf_type)?;
                 map_def.pinning = PinningType::try_from(pinning).unwrap_or_else(|_| {
                     debug!("{pinning} is not a valid pin type. using PIN_NONE");
                     PinningType::None
                 });
             }
+            "values" => {
+                if is_inner {
+                    return Err(BtfError::MultiLevelMapInMapNotSupported {
+                        name: map_name.to_owned(),
+                    });
+                }
+                // The inner map type is encoded as a zero-length array of pointers
+                // to the inner struct, matching libbpf's parse_btf_map_def().
+                let arr = match btf.type_by_id(m.btf_type)? {
+                    BtfType::Array(Array { array, .. }) => array,
+                    other => {
+                        return Err(BtfError::UnexpectedBtfType {
+                            type_id: other.btf_type().unwrap_or(0),
+                        });
+                    }
+                };
+                if arr.len != 0 {
+                    return Err(BtfError::InvalidValuesSpec {
+                        name: map_name.to_owned(),
+                    });
+                }
+                let elem_type_id = btf.resolve_type(arr.element_type)?;
+                let ptr = match btf.type_by_id(elem_type_id)? {
+                    BtfType::Ptr(ptr) => ptr,
+                    other => {
+                        return Err(BtfError::UnexpectedBtfType {
+                            type_id: other.btf_type().unwrap_or(0),
+                        });
+                    }
+                };
+                let inner_struct_id = btf.resolve_type(ptr.btf_type)?;
+                let inner_s = match btf.type_by_id(inner_struct_id)? {
+                    BtfType::Struct(s) => s,
+                    other => {
+                        return Err(BtfError::UnexpectedBtfType {
+                            type_id: other.btf_type().unwrap_or(0),
+                        });
+                    }
+                };
+                let (inner_def, _) = parse_btf_map_struct(btf, inner_s, map_name, true)?;
+                inner_map_def = Some(inner_def);
+                // Map-of-maps value is always an fd (u32).
+                map_def.value_size = size_of::<u32>() as u32;
+            }
             other => {
                 debug!("skipping unknown map section: {other}");
             }
         }
     }
-    Ok((map_name.to_string(), map_def))
+    Ok((map_def, inner_map_def))
 }
 
 /// Parses a [`bpf_map_info`] into a [`Map`].
@@ -1353,6 +1425,7 @@ pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
                 btf_key_type_id: info.btf_key_type_id,
                 btf_value_type_id: info.btf_value_type_id,
             },
+            inner_def: None,
             section_index: 0,
             symbol_index: 0,
             data: Vec::new(),
@@ -1368,6 +1441,7 @@ pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
                 pinning: pinned,
                 id: info.id,
             },
+            inner_def: None,
             section_index: 0,
             symbol_index: None,
             section_kind: EbpfSectionKind::Undefined,
@@ -1632,6 +1706,7 @@ mod tests {
                     pinning: PinningType::None,
                 },
                 data,
+                ..
             }) if data == map_data && value_size == map_data.len() as u32
         )
     }
@@ -2629,6 +2704,7 @@ mod tests {
                     id: 1,
                     pinning: PinningType::None,
                 },
+                inner_def: None,
                 section_index: 1,
                 section_kind: EbpfSectionKind::Rodata,
                 symbol_index: Some(1),

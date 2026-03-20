@@ -80,6 +80,18 @@ pub mod linear_data_structures {
     pub const POP_INDEX: u32 = 1;
 }
 
+pub mod btf_map_of_maps {
+    #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+    #[repr(C)]
+    pub struct TestResult {
+        pub value: u32,
+        pub ran: u32,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
+
 pub mod sk_storage {
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
     #[repr(C)]
