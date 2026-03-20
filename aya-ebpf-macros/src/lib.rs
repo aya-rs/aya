@@ -20,6 +20,7 @@ mod perf_event;
 mod raw_tracepoint;
 mod sk_lookup;
 mod sk_msg;
+mod sk_reuseport;
 mod sk_skb;
 mod sock_ops;
 mod socket_filter;
@@ -48,6 +49,7 @@ use proc_macro::TokenStream;
 use raw_tracepoint::RawTracePoint;
 use sk_lookup::SkLookup;
 use sk_msg::SkMsg;
+use sk_reuseport::SkReuseport;
 use sk_skb::{SkSkb, SkSkbKind};
 use sock_ops::SockOps;
 use socket_filter::SocketFilter;
@@ -667,6 +669,89 @@ pub fn flow_dissector(attrs: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SkLookup::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.emit_as_expr_tokens(),
+    }
+    .into()
+}
+
+/// Marks a function as an eBPF Socket Reuseport program that can be attached to
+/// a socket with `SO_REUSEPORT` set.
+///
+/// Pass `migrate` to generate a `sk_reuseport/migrate` program section. These
+/// programs use the `BPF_SK_REUSEPORT_SELECT_OR_MIGRATE` attach type, so the
+/// kernel may invoke them both for normal reuseport selection and for
+/// listener-close migration paths. The `migrate` section and
+/// [`SkReuseportContext::sk`](../aya_ebpf/programs/struct.SkReuseportContext.html#method.sk) /
+/// [`SkReuseportContext::migrating_sk`](../aya_ebpf/programs/struct.SkReuseportContext.html#method.migrating_sk)
+/// accessors require Linux 5.14 or later.
+///
+/// # Minimum kernel version
+///
+/// The minimum kernel version required to use this feature is 4.19
+///
+/// # Examples
+///
+/// Basic usage allowing kernel to handle socket selection:
+///
+/// ```no_run
+/// use aya_ebpf::{macros::sk_reuseport, programs::{SkReuseportContext, SK_PASS}};
+///
+/// #[sk_reuseport]
+/// pub fn select_socket(_ctx: SkReuseportContext) -> u32 {
+///     SK_PASS
+/// }
+/// ```
+///
+/// Advanced usage with explicit socket selection:
+///
+/// ```no_run
+/// use aya_ebpf::{
+///     macros::{sk_reuseport, map},
+///     maps::ReusePortSockArray,
+///     programs::{SkReuseportContext, SK_DROP, SK_PASS},
+/// };
+///
+/// const IPPROTO_TCP: u32 = 6;
+/// const SOCKET_COUNT: u32 = 4;
+///
+/// #[map(name = "SOCKETS")]
+/// // Userspace must populate this map with sockets from the same `SO_REUSEPORT`
+/// // group before the program calls `select_reuseport()`.
+/// static SOCKETS: ReusePortSockArray = ReusePortSockArray::with_max_entries(SOCKET_COUNT, 0);
+///
+/// #[sk_reuseport]
+/// pub fn load_balance(ctx: SkReuseportContext) -> u32 {
+///     if ctx.ip_protocol() != IPPROTO_TCP {
+///         return SK_PASS;
+///     }
+///
+///     let socket_idx = ctx.hash() % SOCKET_COUNT;
+///     match ctx.select_reuseport(&SOCKETS, socket_idx, 0) {
+///         Ok(()) => SK_PASS,
+///         Err(_) => SK_DROP,
+///     }
+/// }
+/// ```
+///
+/// Declaring a migrate-capable program:
+///
+/// ```no_run
+/// use aya_ebpf::{macros::sk_reuseport, programs::{SkReuseportContext, SK_PASS}};
+///
+/// // Linux 5.14+ only.
+/// #[sk_reuseport(migrate)]
+/// pub fn select_or_migrate(ctx: SkReuseportContext) -> u32 {
+///     if ctx.migrating_sk().is_some() {
+///         // Handle listener-close migration.
+///     }
+///
+///     SK_PASS
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn sk_reuseport(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match SkReuseport::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
         Err(err) => err.emit_as_expr_tokens(),
     }
