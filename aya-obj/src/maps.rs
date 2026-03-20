@@ -130,6 +130,10 @@ pub struct bpf_map_def {
     pub id: u32,
     /// Pinning type
     pub pinning: PinningType,
+    /// Inner map id
+    pub inner_id: u32,
+    /// Inner map index
+    pub inner_idx: u32,
 }
 
 /// The first five __u32 of `bpf_map_def` must be defined.
