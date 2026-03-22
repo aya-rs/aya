@@ -19,10 +19,17 @@ use crate::{
     },
 };
 
+/// Internal identifier for a logical link backed by one or more perf-style
+/// links.
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub(crate) enum PerfLinkIdInner {
-    Single(PerfLinkIdInnerInner),
-    Multi(Vec<PerfLinkIdInnerInner>),
+    /// A single underlying perf-style link id.
+    One(PerfLinkIdInnerInner),
+    /// Many underlying perf-style link ids grouped under one logical link.
+    ///
+    /// This is currently used by `UProbe` when it falls back to the legacy
+    /// per-point attach path.
+    Many(Vec<PerfLinkIdInnerInner>),
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]
@@ -66,28 +73,36 @@ impl Link for PerfLinkLeaf {
 
 id_as_key!(PerfLinkLeaf, PerfLinkIdInnerInner);
 
+/// Internal representation of a logical link backed by one or more perf-style
+/// links.
 #[derive(Debug)]
 pub(crate) enum PerfLinkInner {
-    Single(PerfLinkLeaf),
-    Multi(Vec<PerfLinkLeaf>),
+    /// A single perf-style link.
+    One(PerfLinkLeaf),
+    /// Many perf-style links grouped under one logical link.
+    ///
+    /// This is currently used by `UProbe` when it falls back to the legacy
+    /// per-point attach path, where each attach point gets its own perf-style
+    /// link.
+    Many(Vec<PerfLinkLeaf>),
 }
 
 impl PerfLinkInner {
     pub(crate) fn into_fd_link(self) -> Result<FdLink, Self> {
         match self {
-            Self::Single(PerfLinkLeaf::Fd(link)) => Ok(link),
-            Self::Single(link) => Err(Self::Single(link)),
-            Self::Multi(links) => Err(Self::Multi(links)),
+            Self::One(PerfLinkLeaf::Fd(link)) => Ok(link),
+            Self::One(link) => Err(Self::One(link)),
+            Self::Many(links) => Err(Self::Many(links)),
         }
     }
 
     pub(crate) fn into_fd_links(self) -> Result<Vec<FdLink>, Self> {
         match self {
-            Self::Single(link) => link
+            Self::One(link) => link
                 .into_fd_link()
                 .map(|link| vec![link])
-                .map_err(Self::Single),
-            Self::Multi(links) => {
+                .map_err(Self::One),
+            Self::Many(links) => {
                 let mut fd_links = Vec::with_capacity(links.len());
                 let mut pending = links.into_iter();
 
@@ -101,7 +116,7 @@ impl PerfLinkInner {
                                 .collect::<Vec<_>>();
                             links.push(link);
                             links.extend(pending);
-                            return Err(Self::Multi(links));
+                            return Err(Self::Many(links));
                         }
                     }
                 }
@@ -114,7 +129,7 @@ impl PerfLinkInner {
 
 impl From<PerfLinkIdInnerInner> for PerfLinkIdInner {
     fn from(link_id: PerfLinkIdInnerInner) -> Self {
-        Self::Single(link_id)
+        Self::One(link_id)
     }
 }
 
@@ -126,7 +141,7 @@ impl From<FdLink> for PerfLinkLeaf {
 
 impl From<PerfLinkLeaf> for PerfLinkInner {
     fn from(link: PerfLinkLeaf) -> Self {
-        Self::Single(link)
+        Self::One(link)
     }
 }
 
@@ -141,15 +156,15 @@ impl Link for PerfLinkInner {
 
     fn id(&self) -> Self::Id {
         match self {
-            Self::Single(link) => link.id().into(),
-            Self::Multi(links) => PerfLinkIdInner::Multi(links.iter().map(Link::id).collect()),
+            Self::One(link) => link.id().into(),
+            Self::Many(links) => PerfLinkIdInner::Many(links.iter().map(Link::id).collect()),
         }
     }
 
     fn detach(self) -> Result<(), ProgramError> {
         match self {
-            Self::Single(link) => link.detach(),
-            Self::Multi(links) => {
+            Self::One(link) => link.detach(),
+            Self::Many(links) => {
                 // Best-effort cleanup: keep detaching remaining links even if one fails.
                 let mut errors = Vec::new();
                 for link in links {
@@ -169,7 +184,7 @@ pub(crate) fn collect_link_detach_errors(errors: Vec<ProgramError>) -> Result<()
     if errors.is_empty() {
         Ok(())
     } else {
-        Err(UProbeError::CompositeLinkDetachFailed {
+        Err(UProbeError::LegacyPerfDetachError {
             error: UProbeLinkDetachErrors::new(errors),
         }
         .into())
@@ -298,7 +313,7 @@ mod tests {
 
         assert_matches!(
             error,
-            ProgramError::UProbeError(UProbeError::CompositeLinkDetachFailed { error })
+            ProgramError::UProbeError(UProbeError::LegacyPerfDetachError { error })
                 if matches!(error.as_slice(), [ProgramError::AlreadyLoaded])
         );
     }
@@ -313,7 +328,7 @@ mod tests {
 
         assert_matches!(
             error,
-            ProgramError::UProbeError(UProbeError::CompositeLinkDetachFailed { error })
+            ProgramError::UProbeError(UProbeError::LegacyPerfDetachError { error })
                 if matches!(
                     error.as_slice(),
                     [ProgramError::AlreadyAttached, ProgramError::NotAttached]

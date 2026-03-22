@@ -331,7 +331,7 @@ impl UProbe {
                 Ok(link) => links.push(link),
                 Err(error) => {
                     let cleanup_error = detach_links(links).err().map(Box::new);
-                    return Err(UProbeError::LegacyPerfAttachPointFailed {
+                    return Err(UProbeError::LegacyPerfAttachPointError {
                         index,
                         point: format_attach_point(point),
                         resolved_offset: offset,
@@ -344,7 +344,7 @@ impl UProbe {
         }
 
         data.links
-            .insert(UProbeLink::from(PerfLinkInner::Multi(links)))
+            .insert(UProbeLink::from(PerfLinkInner::Many(links)))
     }
 
     fn attach_multi_impl<T>(
@@ -916,7 +916,7 @@ pub enum UProbeError {
     )]
     // Box the nested ProgramError values to avoid the recursive
     // `ProgramError -> UProbeError -> ProgramError` type.
-    LegacyPerfAttachPointFailed {
+    LegacyPerfAttachPointError {
         /// Index of the attach point within the caller input slice.
         index: usize,
         /// Human-readable point description, including cookie when present.
@@ -932,7 +932,7 @@ pub enum UProbeError {
 
     /// Detaching a composite legacy perf link failed for one or more points.
     #[error("legacy perf composite link detach failed: {error}")]
-    CompositeLinkDetachFailed {
+    LegacyPerfDetachError {
         /// Errors returned while detaching the individual perf links.
         #[source]
         error: UProbeLinkDetachErrors,
@@ -1394,8 +1394,8 @@ mod tests {
     }
 
     #[test]
-    fn test_uprobe_link_into_fd_links_multi() {
-        let link = UProbeLink::from(PerfLinkInner::Multi(vec![
+    fn test_uprobe_link_into_fd_links_many() {
+        let link = UProbeLink::from(PerfLinkInner::Many(vec![
             PerfLinkLeaf::from(mock_fd_link(crate::MockableFd::mock_signed_fd())),
             PerfLinkLeaf::from(mock_fd_link(crate::MockableFd::mock_signed_fd() + 1)),
         ]));
