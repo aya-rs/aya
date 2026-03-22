@@ -60,6 +60,7 @@ pub(crate) fn bpf_create_map(
     u.value_size = def.value_size();
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
+    u.map_extra = def.map_extra();
 
     if let aya_obj::Map::Btf(m) = def {
         // Mimic https://github.com/libbpf/libbpf/issues/355
@@ -269,6 +270,25 @@ pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
         u.key = ptr::from_ref(key) as u64;
     }
     u.__bindgen_anon_1.value = value as u64;
+    u.flags = flags;
+
+    match unit_sys_bpf(bpf_cmd::BPF_MAP_LOOKUP_ELEM, &mut attr) {
+        Ok(()) => Ok(Some(())),
+        Err(io_error) if io_error.raw_os_error() == Some(ENOENT) => Ok(None),
+        Err(e) => Err(e),
+    }
+}
+
+pub(crate) fn bpf_map_peek_elem<V: Pod>(
+    fd: BorrowedFd<'_>,
+    value: &V,
+    flags: u64,
+) -> io::Result<Option<()>> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    let u = unsafe { &mut attr.__bindgen_anon_2 };
+    u.map_fd = fd.as_raw_fd() as u32;
+    u.__bindgen_anon_1.value = ptr::from_ref(value) as u64;
     u.flags = flags;
 
     match unit_sys_bpf(bpf_cmd::BPF_MAP_LOOKUP_ELEM, &mut attr) {
