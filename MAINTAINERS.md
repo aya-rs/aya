@@ -18,7 +18,6 @@ an audit trail in the git history.
 - @astoycos
 - @dave-tucker
 - @davibe
-- @marysaka
 - @tamird
 - @vadorovsky
 
