@@ -27,9 +27,8 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, Link as _, LinkError, ProgramData, ProgramError, ProgramInfo, ProgramType,
-        define_link_wrapper, impl_try_into_fdlink, load_program_with_attach_type,
-        load_program_without_attach_type,
+        FdLink, Link as _, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+        impl_try_into_fdlink, load_program_with_attach_type, load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner, PerfLinkLeaf, collect_link_detach_errors},
         probe::{self, OsStringExt as _, Probe, ProbeKind},
     },
@@ -247,50 +246,6 @@ impl UProbe {
     /// the program being unloaded from the kernel if it is still pinned.
     pub fn from_pin<P: AsRef<Path>>(path: P, kind: ProbeKind) -> Result<Self, ProgramError> {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
-        Ok(Self {
-            data,
-            kind,
-            attach_mode: AttachMode::Unknown,
-        })
-    }
-
-    /// Constructs an instance of a [`Self`] from a [`ProgramInfo`].
-    ///
-    /// This allows the caller to get a handle to an already loaded program from
-    /// the kernel without having to load it again.
-    ///
-    /// As with [`Self::from_pin`], this constructor starts in unknown mode
-    /// because it does not know whether the original program came from an
-    /// `uprobe` or `uprobe.multi` section. As a result, [`Self::attach`]
-    /// performs runtime mode selection.
-    ///
-    /// # Errors
-    ///
-    /// - If the program type reported by the kernel does not match
-    ///   [`ProgramType::KProbe`].
-    /// - If the file descriptor of the program cannot be cloned.
-    ///
-    /// # Safety
-    ///
-    /// Caller must ensure the info actually describes a uprobe/uretprobe.
-    pub unsafe fn from_program_info(
-        info: ProgramInfo,
-        name: Cow<'static, str>,
-        kind: ProbeKind,
-    ) -> Result<Self, ProgramError> {
-        if info.program_type() != Self::PROGRAM_TYPE.into() {
-            return Err(ProgramError::UnexpectedProgramType {});
-        }
-        let fd = info.fd()?;
-        let fd = fd.as_fd().try_clone_to_owned()?;
-        let ProgramInfo(bpf_program_info) = info;
-        let data = ProgramData::from_bpf_prog_info(
-            Some(name),
-            crate::MockableFd::from_fd(fd),
-            Path::new(""),
-            bpf_program_info,
-            VerifierLogLevel::default(),
-        )?;
         Ok(Self {
             data,
             kind,
