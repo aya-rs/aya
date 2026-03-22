@@ -7638,7 +7638,6 @@ impl aya::programs::uprobe::UProbe
 pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::uprobe::UProbe::attach<'a, T, P>(&mut self, points: P, target: T, pid: core::option::Option<u32>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError> where T: core::convert::AsRef<std::path::Path>, aya::programs::uprobe::UProbeAttachPoints<'a>: core::convert::From<P>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
-pub unsafe fn aya::programs::uprobe::UProbe::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub const fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
@@ -7646,6 +7645,8 @@ pub fn aya::programs::uprobe::UProbe::detach(&mut self, link_id: aya::programs::
 pub fn aya::programs::uprobe::UProbe::take_link(&mut self, link_id: aya::programs::uprobe::UProbeLinkId) -> core::result::Result<aya::programs::uprobe::UProbeLink, aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::uprobe::UProbe
+pub unsafe fn aya::programs::uprobe::UProbe::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
@@ -10534,7 +10535,6 @@ impl aya::programs::uprobe::UProbe
 pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::uprobe::UProbe::attach<'a, T, P>(&mut self, points: P, target: T, pid: core::option::Option<u32>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError> where T: core::convert::AsRef<std::path::Path>, aya::programs::uprobe::UProbeAttachPoints<'a>: core::convert::From<P>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
-pub unsafe fn aya::programs::uprobe::UProbe::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub const fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
@@ -10542,6 +10542,8 @@ pub fn aya::programs::uprobe::UProbe::detach(&mut self, link_id: aya::programs::
 pub fn aya::programs::uprobe::UProbe::take_link(&mut self, link_id: aya::programs::uprobe::UProbeLinkId) -> core::result::Result<aya::programs::uprobe::UProbeLink, aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::uprobe::UProbe
+pub unsafe fn aya::programs::uprobe::UProbe::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
 pub fn aya::programs::uprobe::UProbe::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::uprobe::UProbe
