@@ -60,35 +60,45 @@ pub(crate) fn bpf_create_map(
     u.value_size = def.value_size();
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
+    u.map_extra = def.map_extra();
 
     if let aya_obj::Map::Btf(m) = def {
         // Mimic https://github.com/libbpf/libbpf/issues/355
         // Currently a bunch of (usually pretty specialized) BPF maps do not support
         // specifying BTF types for the key and value.
-        if let Ok(
-            bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY
-            | bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY
-            | bpf_map_type::BPF_MAP_TYPE_STACK_TRACE
-            | bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS
-            | bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS
-            | bpf_map_type::BPF_MAP_TYPE_DEVMAP
-            | bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH
-            | bpf_map_type::BPF_MAP_TYPE_CPUMAP
-            | bpf_map_type::BPF_MAP_TYPE_XSKMAP
-            | bpf_map_type::BPF_MAP_TYPE_SOCKMAP
-            | bpf_map_type::BPF_MAP_TYPE_SOCKHASH
-            | bpf_map_type::BPF_MAP_TYPE_QUEUE
-            | bpf_map_type::BPF_MAP_TYPE_STACK
-            | bpf_map_type::BPF_MAP_TYPE_RINGBUF,
-        ) = u.map_type.try_into()
-        {
-            u.btf_key_type_id = 0;
-            u.btf_value_type_id = 0;
-            u.btf_fd = 0;
-        } else {
-            u.btf_key_type_id = m.def.btf_key_type_id;
-            u.btf_value_type_id = m.def.btf_value_type_id;
-            u.btf_fd = btf_fd.map(|fd| fd.as_raw_fd()).unwrap_or_default() as u32;
+        match u.map_type.try_into() {
+            Ok(
+                bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY
+                | bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY
+                | bpf_map_type::BPF_MAP_TYPE_STACK_TRACE
+                | bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS
+                | bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS
+                | bpf_map_type::BPF_MAP_TYPE_DEVMAP
+                | bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH
+                | bpf_map_type::BPF_MAP_TYPE_CPUMAP
+                | bpf_map_type::BPF_MAP_TYPE_XSKMAP
+                | bpf_map_type::BPF_MAP_TYPE_SOCKMAP
+                | bpf_map_type::BPF_MAP_TYPE_SOCKHASH
+                | bpf_map_type::BPF_MAP_TYPE_QUEUE
+                | bpf_map_type::BPF_MAP_TYPE_STACK
+                | bpf_map_type::BPF_MAP_TYPE_RINGBUF,
+            ) => {
+                u.btf_key_type_id = 0;
+                u.btf_value_type_id = 0;
+                u.btf_fd = 0;
+            }
+            Ok(bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER) => {
+                // Bloom filters are keyless maps, so the kernel expects a void
+                // key type even when a value BTF type is provided.
+                u.btf_key_type_id = 0;
+                u.btf_value_type_id = m.def.btf_value_type_id;
+                u.btf_fd = btf_fd.map(|fd| fd.as_raw_fd()).unwrap_or_default() as u32;
+            }
+            _ => {
+                u.btf_key_type_id = m.def.btf_key_type_id;
+                u.btf_value_type_id = m.def.btf_value_type_id;
+                u.btf_fd = btf_fd.map(|fd| fd.as_raw_fd()).unwrap_or_default() as u32;
+            }
         }
     }
 
@@ -269,6 +279,25 @@ pub(crate) fn bpf_map_lookup_elem_ptr<K: Pod, V>(
         u.key = ptr::from_ref(key) as u64;
     }
     u.__bindgen_anon_1.value = value as u64;
+    u.flags = flags;
+
+    match unit_sys_bpf(bpf_cmd::BPF_MAP_LOOKUP_ELEM, &mut attr) {
+        Ok(()) => Ok(Some(())),
+        Err(io_error) if io_error.raw_os_error() == Some(ENOENT) => Ok(None),
+        Err(e) => Err(e),
+    }
+}
+
+pub(crate) fn bpf_map_peek_elem<V: Pod>(
+    fd: BorrowedFd<'_>,
+    value: &V,
+    flags: u64,
+) -> io::Result<Option<()>> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    let u = unsafe { &mut attr.__bindgen_anon_2 };
+    u.map_fd = fd.as_raw_fd() as u32;
+    u.__bindgen_anon_1.value = ptr::from_ref(value) as u64;
     u.flags = flags;
 
     match unit_sys_bpf(bpf_cmd::BPF_MAP_LOOKUP_ELEM, &mut attr) {
@@ -1314,6 +1343,9 @@ pub(crate) fn retry_with_verifier_logs<T>(
 
 #[cfg(test)]
 mod tests {
+    use aya_obj::{
+        generated::bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, maps::PinningType, obj::parse_map_info,
+    };
     use libc::EINVAL;
 
     use super::*;
@@ -1407,5 +1439,41 @@ mod tests {
 bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
     fn test_prog_id_supported_reject_types() {
         is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_HASH);
+    }
+
+    #[test]
+    fn test_bloom_filter_btf_map_create_uses_void_key_type() {
+        const BTF_FD: i32 = 42;
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                attr,
+            } => {
+                let u = unsafe { attr.__bindgen_anon_1 };
+                assert_eq!(u.map_type, BPF_MAP_TYPE_BLOOM_FILTER as u32);
+                assert_eq!(u.key_size, 0);
+                assert_eq!(u.btf_key_type_id, 0);
+                assert_eq!(u.btf_value_type_id, 7);
+                assert_eq!(u.btf_fd, BTF_FD as u32);
+                assert_eq!(u.map_extra, 3);
+                Ok(crate::MockableFd::mock_signed_fd().into())
+            }
+            _ => Err((-1, io::Error::from_raw_os_error(EINVAL))),
+        });
+
+        let mut info = unsafe { mem::zeroed::<bpf_map_info>() };
+        info.type_ = BPF_MAP_TYPE_BLOOM_FILTER as u32;
+        info.key_size = 0;
+        info.value_size = 4;
+        info.max_entries = 64;
+        info.map_extra = 3;
+        info.btf_key_type_id = 99;
+        info.btf_value_type_id = 7;
+        let map = parse_map_info(info, PinningType::None);
+
+        let name = CString::new("FILTER").unwrap();
+        let btf_fd = unsafe { BorrowedFd::borrow_raw(BTF_FD) };
+        bpf_create_map(&name, &map, Some(btf_fd)).unwrap();
     }
 }
