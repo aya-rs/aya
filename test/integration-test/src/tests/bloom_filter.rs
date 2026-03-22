@@ -22,6 +22,20 @@ extern "C" fn trigger_bloom_contains(result_index: u32, value: u32) {
     core::hint::black_box(value);
 }
 
+#[unsafe(no_mangle)]
+#[inline(never)]
+extern "C" fn trigger_btf_bloom_insert(result_index: u32, value: u32) {
+    core::hint::black_box(result_index);
+    core::hint::black_box(value);
+}
+
+#[unsafe(no_mangle)]
+#[inline(never)]
+extern "C" fn trigger_btf_bloom_contains(result_index: u32, value: u32) {
+    core::hint::black_box(result_index);
+    core::hint::black_box(value);
+}
+
 #[test_log::test]
 fn bloom_filter_basic() {
     if !is_map_supported(MapType::BloomFilter).unwrap() {
@@ -69,11 +83,11 @@ fn bloom_filter_basic() {
         "unexpected BloomFilter result for absent value: {absent_status}"
     );
 
-    let mut present_query = PRESENT;
-    filter.contains(&mut present_query, 0).unwrap();
+    let present_query = PRESENT;
+    filter.contains(&present_query, 0).unwrap();
 
-    let mut user_absent = USER_ABSENT;
-    match filter.contains(&mut user_absent, 0) {
+    let user_absent = USER_ABSENT;
+    match filter.contains(&user_absent, 0) {
         Ok(())
         // Bloom filters can yield false positives; treat both a miss and a hit as valid.
         | Err(MapError::ElementNotFound) => {}
@@ -81,9 +95,72 @@ fn bloom_filter_basic() {
     }
 
     filter.insert(USER_PRESENT, 0).unwrap();
-    let mut user_present = USER_PRESENT;
-    filter.contains(&mut user_present, 0).unwrap();
+    let user_present = USER_PRESENT;
+    filter.contains(&user_present, 0).unwrap();
 
     trigger_bloom_contains(CONTAINS_PRESENT_INDEX, USER_PRESENT);
+    assert_eq!(array.get(&CONTAINS_PRESENT_INDEX, 0).unwrap(), 0);
+}
+
+#[test_log::test]
+fn btf_bloom_filter_basic() {
+    if !is_map_supported(MapType::BloomFilter).unwrap() {
+        eprintln!("skipping test - bloom filter map not supported");
+        return;
+    }
+
+    let mut bpf = EbpfLoader::new()
+        .load(crate::BTF_BLOOM_FILTER)
+        .expect("load btf_bloom_filter program");
+
+    for (prog_name, symbol) in [
+        ("btf_bloom_filter_insert", "trigger_btf_bloom_insert"),
+        ("btf_bloom_filter_contains", "trigger_btf_bloom_contains"),
+    ] {
+        let prog: &mut UProbe = bpf
+            .program_mut(prog_name)
+            .unwrap_or_else(|| panic!("missing program {prog_name}"))
+            .try_into()
+            .unwrap_or_else(|_| panic!("program {prog_name} is not a uprobe"));
+        prog.load()
+            .unwrap_or_else(|err| panic!("load {prog_name}: {err}"));
+        prog.attach(symbol, "/proc/self/exe", None)
+            .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
+    }
+
+    let array = Array::<_, i32>::try_from(bpf.take_map("RESULT").unwrap()).unwrap();
+    let mut filter = BloomFilter::<_, u32>::try_from(bpf.take_map("FILTER").unwrap()).unwrap();
+    const PRESENT: u32 = 2_024;
+    const ABSENT: u32 = 20_242_024;
+    const USER_PRESENT: u32 = 55_555;
+    const USER_ABSENT: u32 = 8_888_888;
+
+    trigger_btf_bloom_insert(INSERT_INDEX, PRESENT);
+    assert_eq!(array.get(&INSERT_INDEX, 0).unwrap(), 0);
+
+    trigger_btf_bloom_contains(CONTAINS_PRESENT_INDEX, PRESENT);
+    assert_eq!(array.get(&CONTAINS_PRESENT_INDEX, 0).unwrap(), 0);
+
+    trigger_btf_bloom_contains(CONTAINS_ABSENT_INDEX, ABSENT);
+    let absent_status = array.get(&CONTAINS_ABSENT_INDEX, 0).unwrap();
+    assert!(
+        absent_status == -libc::ENOENT || absent_status == 0,
+        "unexpected BTF BloomFilter result for absent value: {absent_status}"
+    );
+
+    let present_query = PRESENT;
+    filter.contains(&present_query, 0).unwrap();
+
+    let user_absent = USER_ABSENT;
+    match filter.contains(&user_absent, 0) {
+        Ok(()) | Err(MapError::ElementNotFound) => {}
+        Err(err) => panic!("unexpected BTF BloomFilter::contains result for absent value: {err}"),
+    }
+
+    filter.insert(USER_PRESENT, 0).unwrap();
+    let user_present = USER_PRESENT;
+    filter.contains(&user_present, 0).unwrap();
+
+    trigger_btf_bloom_contains(CONTAINS_PRESENT_INDEX, USER_PRESENT);
     assert_eq!(array.get(&CONTAINS_PRESENT_INDEX, 0).unwrap(), 0);
 }

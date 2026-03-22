@@ -41,6 +41,10 @@ name = "btf_maps_plain"
 path = "src/btf_maps_plain.rs"
 
 [[bin]]
+name = "btf_bloom_filter"
+path = "src/btf_bloom_filter.rs"
+
+[[bin]]
 name = "kprobe"
 path = "src/kprobe.rs"
 
