@@ -20,7 +20,7 @@
       Feel free to flag anything you thing needs a reviewer's attention.
 -->
 
-# Related Issues
+## Related Issues
 <!--
 For example:
 
@@ -28,7 +28,7 @@ For example:
 - Relates To: #1234
 -->
 
-# Added/updated tests?
+## Added/updated tests?
 
 _We strongly encourage you to add a test for your changes._
 
@@ -37,7 +37,7 @@ _We strongly encourage you to add a test for your changes._
       have not been included_
 - [ ] I need help with writing tests
 
-# Checklist
+## Checklist
 
 - [ ] Rust code has been formatted with `cargo +nightly fmt`.
 - [ ] All clippy lints have been fixed.
@@ -48,4 +48,4 @@ _We strongly encourage you to add a test for your changes._
 
 [Integration tests]: https://github.com/aya-rs/aya/blob/main/test/README.md
 
-# (Optional) What GIF best describes this PR or how it makes you feel?
+## (Optional) What GIF best describes this PR or how it makes you feel?
