@@ -107,13 +107,6 @@ impl AsFd for IterFd {
 #[derive(Debug)]
 struct IterLinkInner(FdLink);
 
-impl IterLinkInner {
-    fn into_fd_link(self) -> FdLink {
-        let Self(fd_link) = self;
-        fd_link
-    }
-}
-
 impl From<FdLink> for IterLinkInner {
     fn from(fd_link: FdLink) -> Self {
         Self(fd_link)
@@ -150,7 +143,8 @@ impl TryFrom<IterLink> for FdLink {
     type Error = LinkError;
 
     fn try_from(value: IterLink) -> Result<Self, Self::Error> {
-        Ok(value.into_inner().into_fd_link())
+        let IterLinkInner(fd_link) = value.into_inner();
+        Ok(fd_link)
     }
 }
 
@@ -160,7 +154,7 @@ impl IterLink {
     /// Converts [`IterLink`] into a [`File`] that can be used to retrieve the
     /// outputs of the iterator program.
     pub fn into_file(self) -> Result<File, LinkError> {
-        let fd = self.into_inner().into_fd_link();
+        let IterLinkInner(fd) = self.into_inner();
         let fd = bpf_create_iter(fd.fd.as_fd()).map_err(|io_error| {
             LinkError::SyscallError(SyscallError {
                 call: "bpf_iter_create",

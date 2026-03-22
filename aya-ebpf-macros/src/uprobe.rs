@@ -280,4 +280,34 @@ mod tests {
             .to_string()
         );
     }
+
+    #[test]
+    fn test_uprobe_multi() {
+        let uprobe = UProbe::parse(
+            UProbeKind::UProbe,
+            parse_quote! {multi},
+            parse_quote! {
+                fn foo(ctx: ProbeContext) -> u32 {
+                    0
+                }
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            uprobe.expand().unwrap().to_string(),
+            quote! {
+                #[unsafe(no_mangle)]
+                #[unsafe(link_section = "uprobe.multi")]
+                fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
+                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
+                    return 0;
+
+                    fn foo(ctx: ProbeContext) -> u32 {
+                        0
+                    }
+                }
+            }
+            .to_string()
+        );
+    }
 }
