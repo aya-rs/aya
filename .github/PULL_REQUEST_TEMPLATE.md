@@ -24,10 +24,13 @@
 
 # Related Issues
 <!--
-      For example:
+      If your changes address an issue, link it with the *Fixes* tag so
+      the issue gets closed when the PR is merged, for example:
 
-      - Closes: #1234
-      - Relates To: #1234
+      Fixes: #1234
+
+      If you are only referencing an issue without fully addressing it, feel
+      free to link it anywhere in the summary.
 -->
 
 # Added/updated tests?
