@@ -22,10 +22,10 @@
 
 # Related Issues
 <!--
-For example:
+      For example:
 
-- Closes: #1234
-- Relates To: #1234
+      - Closes: #1234
+      - Relates To: #1234
 -->
 
 # Added/updated tests?
