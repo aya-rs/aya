@@ -15,9 +15,11 @@
 
 # Summary
 <!---
-      Summarize the changes you're making here.
-      Detailed information belongs in the Git Commit messages.
-      Feel free to flag anything you thing needs a reviewer's attention.
+      Summarize the changes you're making here. Detailed information belongs in
+      the Git commit messages. If your pull request contains just one commit,
+      it's best to use its message as a summary. Otherwise, if there are multiple
+      atomic commits, write a summary for the entire PR. Feel free to flag
+      anything you think needs a reviewer's attention.
 -->
 
 # Related Issues
