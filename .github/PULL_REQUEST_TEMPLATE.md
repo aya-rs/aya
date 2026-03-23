@@ -13,7 +13,6 @@
 
 -->
 
-# Summary
 <!---
       Summarize the changes you're making here. Detailed information belongs in
       the Git commit messages. If your pull request contains just one commit,
@@ -22,7 +21,6 @@
       anything you think needs a reviewer's attention.
 -->
 
-# Related Issues
 <!--
       If your changes address an issue, link it with the *Fixes* tag so
       the issue gets closed when the PR is merged, for example:
