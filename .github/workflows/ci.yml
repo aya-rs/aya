@@ -177,8 +177,8 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - run: cargo install --git https://github.com/aya-rs/bpf-linker.git bpf-linker
-
+      - uses: taiki-e/install-action@cargo-binstall
+      - uses: taiki-e/install-action@bpf-linker
       - uses: taiki-e/install-action@cargo-hack
 
       - name: Build & test for all BPF architectures
@@ -325,60 +325,8 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
-      - name: Install libLLVM
-        # Download libLLVM from Rust CI to ensure that the libLLVM version
-        # matches exactly with the version used by the current Rust nightly. A
-        # mismatch between libLLVM (used by bpf-linker) and Rust's LLVM version
-        # can lead to linking issues.
-        run: |
-          set -euxo pipefail
-          # Get the partial SHA from Rust nightly.
-          rustc_sha=$(rustc +nightly --version | grep -oE '[a-f0-9]{7,40}')
-          # Get the full SHA from GitHub.
-          rustc_sha=$(curl -sfSL https://api.github.com/repos/rust-lang/rust/commits/$rustc_sha \
-            --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-            --header 'content-type: application/json' \
-            | jq -r '.sha')
-          mkdir -p /tmp/rustc-llvm
-          case "${{ runner.arch }}" in
-            ARM64)
-              arch=aarch64
-              ;;
-            X64)
-              arch=x86_64
-              ;;
-            *)
-              echo "::error::Unsupported runner architecture: ${{ runner.arch }}"
-              exit 1
-              ;;
-          esac
-          case "${{ runner.os }}" in
-            Linux)
-              target=${arch}-unknown-linux-gnu
-              ;;
-            macOS)
-              target=${arch}-apple-darwin
-              echo "LLVM_LINK_FEATURE=llvm-link-static" >> $GITHUB_ENV
-              ;;
-            *)
-              echo "::error::Unsupported runner OS: ${{ runner.os }}"
-              exit 1
-              ;;
-          esac
-          curl -sfSL https://ci-artifacts.rust-lang.org/rustc-builds/$rustc_sha/rust-dev-nightly-${target}.tar.xz | \
-            tar -xJ --strip-components 2 -C /tmp/rustc-llvm
-          echo /tmp/rustc-llvm/bin >> $GITHUB_PATH
-
-      # NB: rustc doesn't ship libLLVM.so on macOS, so disable proxying (default feature). We also
-      # --force so that bpf-linker gets always relinked against the latest LLVM downloaded above.
-      #
-      # Add the downloaded LLVM to PATH for this build step.
-      #
-      # Do this on all system (not just macOS) to avoid relying on rustc-provided libLLVM.so.
-      - run: |
-          cargo install \
-            --git https://github.com/aya-rs/bpf-linker.git bpf-linker \
-            --no-default-features --features "llvm-22,${LLVM_LINK_FEATURE}" --force
+      - uses: taiki-e/install-action@cargo-binstall
+      - uses: taiki-e/install-action@bpf-linker
 
       - uses: actions/cache@v5
         with:
