@@ -1014,33 +1014,42 @@ impl Object {
                 .unwrap_or(0)
                 + 1;
 
-            let symbols = self
+            let extern_symbols_by_name = self
                 .symbol_table
-                .iter_mut()
+                .iter()
                 .filter(|(_, s)| s.name.is_some() && s.section_index.is_none() && s.is_external)
-                .map(|(_, s)| (s.name.as_ref().unwrap().clone(), s));
+                .map(|(index, s)| (s.name.as_ref().unwrap().clone(), *index))
+                .collect::<HashMap<_, _>>();
 
             let mut kconfig_data = Vec::new();
             let mut offset = 0u64;
 
-            for (name, symbol) in symbols {
-                let Some(var) = kconfig_var_index.get(&name) else {
-                    // Only handle externs backed by the .kconfig datasec.
+            for (name, var) in &kconfig_var_index {
+                let Some(symbol_index) = extern_symbols_by_name.get(name) else {
                     continue;
                 };
                 if var.linkage != VarLinkage::Extern {
-                    return Err(BtfError::InvalidExternalSymbol { symbol_name: name });
+                    return Err(BtfError::InvalidExternalSymbol {
+                        symbol_name: name.clone(),
+                    });
                 }
 
                 let (type_align, data) = prepare_kconfig_value(
                     obj_btf,
                     var,
-                    &name,
-                    externs.get(&name),
-                    symbol.is_weak,
+                    name,
+                    externs.get(name),
+                    self.symbol_table
+                        .get(symbol_index)
+                        .expect("extern symbol index must resolve to a symbol")
+                        .is_weak,
                     self.endianness,
                 )?;
                 let aligned_address = (offset + (type_align - 1)) & !(type_align - 1);
+                let symbol = self
+                    .symbol_table
+                    .get_mut(symbol_index)
+                    .expect("extern symbol index must resolve to a symbol");
                 symbol.address = aligned_address;
                 symbol.section_index = Some(kconfig_map_index);
 
@@ -1048,7 +1057,8 @@ impl Object {
                     kconfig_data.resize(aligned_address as usize, 0);
                 }
 
-                self.symbol_offset_by_name.insert(name, symbol.address);
+                self.symbol_offset_by_name
+                    .insert(name.clone(), symbol.address);
                 // Undefined externs often have size 0; use BTF type size for kconfig.
                 symbol.size = data.len() as u64;
                 kconfig_data.extend_from_slice(&data);
