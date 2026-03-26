@@ -115,6 +115,20 @@ pub trait InnerMap: sealed::InnerMap {}
 
 impl<T: sealed::InnerMap> InnerMap for T {}
 
+/// Trait for map types that can be created standalone from userspace.
+///
+/// This is used to create inner maps for map-of-maps types.
+///
+/// This trait is sealed and cannot be implemented outside of this crate.
+pub trait CreatableMap: sealed::CreatableMap {
+    /// Creates a standalone map with the given `max_entries` capacity and `flags`.
+    fn create(max_entries: u32, flags: u32) -> Result<Self, MapError> {
+        <Self as sealed::CreatableMap>::create(max_entries, flags)
+    }
+}
+
+impl<T: sealed::CreatableMap> CreatableMap for T {}
+
 mod sealed {
     use super::{MapData, MapError, MapFd};
 
@@ -128,6 +142,11 @@ mod sealed {
     pub trait InnerMap {
         /// Returns the map file descriptor.
         fn fd(&self) -> &MapFd;
+    }
+
+    #[expect(unnameable_types, reason = "intentionally unnameable sealed trait")]
+    pub trait CreatableMap: Sized {
+        fn create(max_entries: u32, flags: u32) -> Result<Self, MapError>;
     }
 }
 
@@ -700,9 +719,8 @@ impl sealed::InnerMap for MapFd {
 
 macro_rules! impl_creatable_map {
     ($ty:ident<MapData $(, $p:ident: Pod)*>, $map_type:expr, $key_size:expr, $value_size:expr, $name:expr) => {
-        impl<$($p: Pod),*> $ty<MapData, $($p),*> {
-            /// Creates a standalone map with the given `max_entries` capacity and `flags`.
-            pub fn create(max_entries: u32, flags: u32) -> Result<Self, MapError> {
+        impl<$($p: Pod),*> sealed::CreatableMap for $ty<MapData, $($p),*> {
+            fn create(max_entries: u32, flags: u32) -> Result<Self, MapError> {
                 let obj = aya_obj::Map::new_from_params(
                     $map_type as u32, $key_size, $value_size, max_entries, flags,
                 );

@@ -58,15 +58,15 @@ impl<V: crate::btf_maps::MapDef, const MAX_ENTRIES: usize, const FLAGS: usize>
     /// helpers. This reduces verifier state explosion in tight loops.
     #[inline(always)]
     pub fn get_value(&self, outer_index: u32, inner_key: &V::Key) -> Option<&V::Value> {
-        let inner = lookup(self.as_ptr(), &outer_index)?;
+        let inner: NonNull<V> = lookup(self.as_ptr(), &outer_index)?;
         // SAFETY: Array lookups are safe (no BPF_F_NO_PREALLOC aliasing concern).
-        unsafe { crate::btf_maps::lookup_inner::<V>(inner, inner_key) }
+        unsafe { crate::btf_maps::lookup_inner(inner, inner_key) }
     }
 
     /// Same as [`get_value`](Self::get_value) but returns a mutable pointer.
     #[inline(always)]
     pub fn get_value_ptr_mut(&self, outer_index: u32, inner_key: &V::Key) -> Option<*mut V::Value> {
-        let inner = lookup(self.as_ptr(), &outer_index)?;
-        crate::btf_maps::lookup_inner_ptr_mut::<V>(inner, inner_key)
+        let inner: NonNull<V> = lookup(self.as_ptr(), &outer_index)?;
+        crate::btf_maps::lookup_inner_ptr_mut(inner, inner_key)
     }
 }
