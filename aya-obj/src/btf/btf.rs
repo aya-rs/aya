@@ -175,10 +175,6 @@ pub enum BtfError {
         /// name of the symbol
         symbol_name: String,
     },
-
-    /// BTF map wrapper's layout is unexpected
-    #[error("BTF map wrapper's layout is unexpected: {0:?}")]
-    UnexpectedBtfMapWrapperLayout(Struct),
 }
 
 /// Available BTF features
