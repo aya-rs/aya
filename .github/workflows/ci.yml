@@ -180,7 +180,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-binstall,cargo-hack
-      - run: cargo binstall bpf-linker
+      - run: cargo binstall --force bpf-linker
 
       - name: Build & test for all BPF architectures
         env:
@@ -328,7 +328,7 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-binstall,cargo-hack
-      - run: cargo binstall bpf-linker
+      - run: cargo binstall --force bpf-linker
 
       - uses: actions/cache@v5
         with:
