@@ -475,7 +475,7 @@ impl<'a> FunctionLinker<'a> {
             });
 
             program.line_info.line_info.extend(line_info);
-            program.line_info.num_info = program.func_info.func_info.len() as u32;
+            program.line_info.num_info = program.line_info.line_info.len() as u32;
         }
     }
 }
