@@ -890,6 +890,89 @@ impl Default for Btf {
     }
 }
 
+fn adjust_kconfig_value(value: &[u8], type_size: usize, endianness: Endianness) -> Vec<u8> {
+    if value.len() == type_size {
+        return value.to_vec();
+    }
+
+    if value.len() == size_of::<u64>() && type_size <= size_of::<u64>() {
+        let start = match endianness {
+            Endianness::Little => 0,
+            Endianness::Big => value.len() - type_size,
+        };
+        return value[start..start + type_size].to_vec();
+    }
+
+    if value.len() < type_size {
+        let mut padded = vec![0u8; type_size];
+        match endianness {
+            Endianness::Little => {
+                padded[..value.len()].copy_from_slice(value);
+            }
+            Endianness::Big => {
+                let start = type_size.saturating_sub(value.len());
+                padded[start..start + value.len()].copy_from_slice(value);
+            }
+        }
+        return padded;
+    }
+
+    value[..type_size].to_vec()
+}
+
+fn prepare_kconfig_value(
+    obj_btf: &Btf,
+    var: &Var,
+    symbol_name: &str,
+    external_value: Option<&Vec<u8>>,
+    symbol_is_weak: bool,
+    endianness: Endianness,
+) -> Result<(u64, Vec<u8>), BtfError> {
+    let type_size = obj_btf.type_size(var.btf_type)?;
+    let type_align = obj_btf.type_align(var.btf_type)? as u64;
+    let is_char_array = match obj_btf.type_by_id(obj_btf.resolve_type(var.btf_type)?)? {
+        BtfType::Array(Array { array, .. }) => {
+            let element_type = obj_btf.resolve_type(array.element_type)?;
+            matches!(
+                obj_btf.type_by_id(element_type)?,
+                BtfType::Int(Int { size, .. }) if *size == 1
+            )
+        }
+        _ => false,
+    };
+
+    let mut external_value = external_value;
+    let empty_data = vec![0; type_size];
+
+    // Weak kconfig externs are optional: if CONFIG_* is missing,
+    // follow libbpf semantics and use a zero-filled value.
+    if external_value.is_none() && symbol_is_weak {
+        external_value = Some(&empty_data);
+    }
+
+    let Some(data) = external_value else {
+        return Err(BtfError::ExternalSymbolNotFound {
+            symbol_name: symbol_name.into(),
+        });
+    };
+
+    let data = if is_char_array {
+        let mut value = data.clone();
+        if type_size > 0 {
+            if value.len() < type_size {
+                value.resize(type_size, 0);
+            } else if value.len() > type_size {
+                value.truncate(type_size);
+            }
+        }
+        value
+    } else {
+        adjust_kconfig_value(data, type_size, endianness)
+    };
+
+    Ok((type_align, data))
+}
+
 impl Object {
     fn prepare_kconfig_section_internal(
         &mut self,
@@ -939,36 +1022,6 @@ impl Object {
 
             let mut kconfig_data = Vec::new();
             let mut offset = 0u64;
-            let endianness = self.endianness;
-            let adjust_kconfig_value = |value: &[u8], type_size: usize| -> Vec<u8> {
-                if value.len() == type_size {
-                    return value.to_vec();
-                }
-
-                if value.len() == size_of::<u64>() && type_size <= size_of::<u64>() {
-                    let start = match endianness {
-                        Endianness::Little => 0,
-                        Endianness::Big => value.len() - type_size,
-                    };
-                    return value[start..start + type_size].to_vec();
-                }
-
-                if value.len() < type_size {
-                    let mut padded = vec![0u8; type_size];
-                    match endianness {
-                        Endianness::Little => {
-                            padded[..value.len()].copy_from_slice(value);
-                        }
-                        Endianness::Big => {
-                            let start = type_size.saturating_sub(value.len());
-                            padded[start..start + value.len()].copy_from_slice(value);
-                        }
-                    }
-                    return padded;
-                }
-
-                value[..type_size].to_vec()
-            };
 
             for (name, symbol) in symbols {
                 let Some((datasec_name, var)) = datasec_var_index.get(&name) else {
@@ -982,61 +1035,27 @@ impl Object {
                     return Err(BtfError::InvalidExternalSymbol { symbol_name: name });
                 }
 
-                {
-                    let type_size = obj_btf.type_size(var.btf_type)?;
-                    let type_align = obj_btf.type_align(var.btf_type)? as u64;
-                    let is_char_array =
-                        match obj_btf.type_by_id(obj_btf.resolve_type(var.btf_type)?)? {
-                            BtfType::Array(Array { array, .. }) => {
-                                let element_type = obj_btf.resolve_type(array.element_type)?;
-                                matches!(
-                                    obj_btf.type_by_id(element_type)?,
-                                    BtfType::Int(Int { size, .. }) if *size == 1
-                                )
-                            }
-                            _ => false,
-                        };
+                let (type_align, data) = prepare_kconfig_value(
+                    obj_btf,
+                    var,
+                    &name,
+                    externs.get(&name),
+                    symbol.is_weak,
+                    self.endianness,
+                )?;
+                let aligned_address = (offset + (type_align - 1)) & !(type_align - 1);
+                symbol.address = aligned_address;
+                symbol.section_index = Some(kconfig_map_index);
 
-                    let mut external_value = externs.get(&name);
-                    let empty_data = vec![0; type_size];
-
-                    // Weak kconfig externs are optional: if CONFIG_* is missing,
-                    // follow libbpf semantics and use a zero-filled value.
-                    if external_value.is_none() && symbol.is_weak {
-                        external_value = Some(&empty_data);
-                    }
-
-                    if let Some(data) = external_value {
-                        let aligned_address = (offset + (type_align - 1)) & !(type_align - 1);
-                        symbol.address = aligned_address;
-                        symbol.section_index = Some(kconfig_map_index);
-
-                        if kconfig_data.len() < aligned_address as usize {
-                            kconfig_data.resize(aligned_address as usize, 0);
-                        }
-
-                        self.symbol_offset_by_name.insert(name, symbol.address);
-                        let data = if is_char_array {
-                            let mut value = data.clone();
-                            if type_size > 0 {
-                                if value.len() < type_size {
-                                    value.resize(type_size, 0);
-                                } else if value.len() > type_size {
-                                    value.truncate(type_size);
-                                }
-                            }
-                            value
-                        } else {
-                            adjust_kconfig_value(data, type_size)
-                        };
-                        // Undefined externs often have size 0; use BTF type size for kconfig.
-                        symbol.size = data.len() as u64;
-                        kconfig_data.extend_from_slice(&data);
-                        offset = aligned_address + data.len() as u64;
-                    } else {
-                        return Err(BtfError::ExternalSymbolNotFound { symbol_name: name });
-                    }
+                if kconfig_data.len() < aligned_address as usize {
+                    kconfig_data.resize(aligned_address as usize, 0);
                 }
+
+                self.symbol_offset_by_name.insert(name, symbol.address);
+                // Undefined externs often have size 0; use BTF type size for kconfig.
+                symbol.size = data.len() as u64;
+                kconfig_data.extend_from_slice(&data);
+                offset = aligned_address + data.len() as u64;
             }
 
             if !kconfig_data.is_empty() {
