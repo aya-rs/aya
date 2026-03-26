@@ -983,20 +983,20 @@ impl Object {
                 return Ok(None);
             }
 
-            // Build a single-pass index of all VARs contained in DATASEC types:
-            // var_name -> (datasec_name, var)
-            let mut datasec_var_index = HashMap::new();
+            let mut kconfig_var_index = HashMap::new();
             for t in &obj_btf.types.types {
                 let BtfType::DataSec(d) = t else {
                     continue;
                 };
-                let sec_name = obj_btf.string_at(d.name_offset)?.into_owned();
+                if obj_btf.string_at(d.name_offset)?.as_ref() != ".kconfig" {
+                    continue;
+                }
                 for entry in &d.entries {
                     let BtfType::Var(var) = obj_btf.types.type_by_id(entry.btf_type)? else {
                         continue;
                     };
                     let var_name = obj_btf.string_at(var.name_offset)?.into_owned();
-                    datasec_var_index.insert(var_name, (sec_name.clone(), var.clone()));
+                    kconfig_var_index.insert(var_name, var.clone());
                 }
             }
 
@@ -1024,13 +1024,10 @@ impl Object {
             let mut offset = 0u64;
 
             for (name, symbol) in symbols {
-                let Some((datasec_name, var)) = datasec_var_index.get(&name) else {
+                let Some(var) = kconfig_var_index.get(&name) else {
                     // Only handle externs backed by the .kconfig datasec.
                     continue;
                 };
-                if datasec_name != ".kconfig" {
-                    continue;
-                }
                 if var.linkage != VarLinkage::Extern {
                     return Err(BtfError::InvalidExternalSymbol { symbol_name: name });
                 }
