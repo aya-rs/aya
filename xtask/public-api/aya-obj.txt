@@ -2325,6 +2325,8 @@ impl core::convert::From<aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAtta
 pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> Self
 impl core::convert::From<aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType> for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> Self
+impl core::convert::From<aya_obj::programs::sk_reuseport::SkReuseportAttachType> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(value: aya_obj::programs::sk_reuseport::SkReuseportAttachType) -> Self
 impl core::convert::From<aya_obj::programs::xdp::XdpAttachType> for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::from(value: aya_obj::programs::xdp::XdpAttachType) -> Self
 impl core::convert::TryFrom<u32> for aya_obj::generated::bpf_attach_type
@@ -8828,6 +8830,8 @@ pub aya_obj::obj::ProgramSection::RawTracePoint
 pub aya_obj::obj::ProgramSection::SchedClassifier
 pub aya_obj::obj::ProgramSection::SkLookup
 pub aya_obj::obj::ProgramSection::SkMsg
+pub aya_obj::obj::ProgramSection::SkReuseport
+pub aya_obj::obj::ProgramSection::SkReuseport::attach_type: aya_obj::programs::sk_reuseport::SkReuseportAttachType
 pub aya_obj::obj::ProgramSection::SkSkbStreamParser
 pub aya_obj::obj::ProgramSection::SkSkbStreamVerdict
 pub aya_obj::obj::ProgramSection::SockOps
@@ -9213,6 +9217,46 @@ impl<T> core::clone::CloneToUninit for aya_obj::programs::cgroup_sockopt::Cgroup
 pub unsafe fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::from(t: T) -> T
+pub mod aya_obj::programs::sk_reuseport
+pub enum aya_obj::programs::sk_reuseport::SkReuseportAttachType
+pub aya_obj::programs::sk_reuseport::SkReuseportAttachType::Select
+pub aya_obj::programs::sk_reuseport::SkReuseportAttachType::SelectOrMigrate
+impl core::clone::Clone for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::clone(&self) -> aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::convert::From<aya_obj::programs::sk_reuseport::SkReuseportAttachType> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(value: aya_obj::programs::sk_reuseport::SkReuseportAttachType) -> Self
+impl core::fmt::Debug for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Freeze for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Send for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Sync for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Unpin for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl<T, U> core::convert::Into<U> for aya_obj::programs::sk_reuseport::SkReuseportAttachType where U: core::convert::From<T>
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::programs::sk_reuseport::SkReuseportAttachType where U: core::convert::Into<T>
+pub type aya_obj::programs::sk_reuseport::SkReuseportAttachType::Error = core::convert::Infallible
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::programs::sk_reuseport::SkReuseportAttachType where U: core::convert::TryFrom<T>
+pub type aya_obj::programs::sk_reuseport::SkReuseportAttachType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::programs::sk_reuseport::SkReuseportAttachType where T: core::clone::Clone
+pub type aya_obj::programs::sk_reuseport::SkReuseportAttachType::Owned = T
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::clone_into(&self, target: &mut T)
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::programs::sk_reuseport::SkReuseportAttachType where T: 'static + ?core::marker::Sized
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::programs::sk_reuseport::SkReuseportAttachType where T: ?core::marker::Sized
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::programs::sk_reuseport::SkReuseportAttachType where T: ?core::marker::Sized
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_obj::programs::sk_reuseport::SkReuseportAttachType where T: core::clone::Clone
+pub unsafe fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::from(t: T) -> T
 pub mod aya_obj::programs::xdp
 pub enum aya_obj::programs::xdp::XdpAttachType
 pub aya_obj::programs::xdp::XdpAttachType::CpuMap
@@ -9385,6 +9429,45 @@ impl<T> core::clone::CloneToUninit for aya_obj::programs::cgroup_sockopt::Cgroup
 pub unsafe fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::from(t: T) -> T
+pub enum aya_obj::programs::SkReuseportAttachType
+pub aya_obj::programs::SkReuseportAttachType::Select
+pub aya_obj::programs::SkReuseportAttachType::SelectOrMigrate
+impl core::clone::Clone for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::clone(&self) -> aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::convert::From<aya_obj::programs::sk_reuseport::SkReuseportAttachType> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(value: aya_obj::programs::sk_reuseport::SkReuseportAttachType) -> Self
+impl core::fmt::Debug for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Freeze for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Send for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Sync for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Unpin for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl<T, U> core::convert::Into<U> for aya_obj::programs::sk_reuseport::SkReuseportAttachType where U: core::convert::From<T>
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::programs::sk_reuseport::SkReuseportAttachType where U: core::convert::Into<T>
+pub type aya_obj::programs::sk_reuseport::SkReuseportAttachType::Error = core::convert::Infallible
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::programs::sk_reuseport::SkReuseportAttachType where U: core::convert::TryFrom<T>
+pub type aya_obj::programs::sk_reuseport::SkReuseportAttachType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::programs::sk_reuseport::SkReuseportAttachType where T: core::clone::Clone
+pub type aya_obj::programs::sk_reuseport::SkReuseportAttachType::Owned = T
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::clone_into(&self, target: &mut T)
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::programs::sk_reuseport::SkReuseportAttachType where T: 'static + ?core::marker::Sized
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::programs::sk_reuseport::SkReuseportAttachType where T: ?core::marker::Sized
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::programs::sk_reuseport::SkReuseportAttachType where T: ?core::marker::Sized
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_obj::programs::sk_reuseport::SkReuseportAttachType where T: core::clone::Clone
+pub unsafe fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::from(t: T) -> T
 pub enum aya_obj::programs::XdpAttachType
 pub aya_obj::programs::XdpAttachType::CpuMap
 pub aya_obj::programs::XdpAttachType::DevMap
@@ -9710,6 +9793,8 @@ pub aya_obj::ProgramSection::RawTracePoint
 pub aya_obj::ProgramSection::SchedClassifier
 pub aya_obj::ProgramSection::SkLookup
 pub aya_obj::ProgramSection::SkMsg
+pub aya_obj::ProgramSection::SkReuseport
+pub aya_obj::ProgramSection::SkReuseport::attach_type: aya_obj::programs::sk_reuseport::SkReuseportAttachType
 pub aya_obj::ProgramSection::SkSkbStreamParser
 pub aya_obj::ProgramSection::SkSkbStreamVerdict
 pub aya_obj::ProgramSection::SockOps
