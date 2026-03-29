@@ -41,6 +41,7 @@ bpf_file!(
 
     ARRAY => "array",
     BLOOM_FILTER => "bloom_filter",
+    BTF_BLOOM_FILTER => "btf_bloom_filter",
     BPF_PROBE_READ => "bpf_probe_read",
     BTF_MAPS_PLAIN => "btf_maps_plain",
     KPROBE => "kprobe",
