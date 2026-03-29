@@ -12,6 +12,11 @@ pub struct Queue<T> {
     _t: PhantomData<T>,
 }
 
+impl<T> super::private::Map for Queue<T> {
+    type Key = ();
+    type Value = T;
+}
+
 impl<T> Queue<T> {
     map_constructors!((), T, BPF_MAP_TYPE_QUEUE, phantom _t);
 
