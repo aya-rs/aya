@@ -54,6 +54,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
         "aya-ebpf",
         "aya-ebpf-bindings",
         "aya-log-ebpf",
+        "aya-xdp-dispatcher-ebpf",
         "integration-ebpf",
     ];
 
