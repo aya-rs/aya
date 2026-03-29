@@ -34,4 +34,5 @@ mod smoke;
 mod strncmp;
 mod tcx;
 mod uprobe_cookie;
+mod uprobe_multi;
 mod xdp;
