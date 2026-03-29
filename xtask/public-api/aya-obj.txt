@@ -8625,6 +8625,8 @@ impl<T> core::convert::From<T> for aya_obj::maps::LegacyMap
 pub fn aya_obj::maps::LegacyMap::from(t: T) -> T
 #[repr(C)] pub struct aya_obj::maps::bpf_map_def
 pub aya_obj::maps::bpf_map_def::id: u32
+pub aya_obj::maps::bpf_map_def::inner_id: u32
+pub aya_obj::maps::bpf_map_def::inner_idx: u32
 pub aya_obj::maps::bpf_map_def::key_size: u32
 pub aya_obj::maps::bpf_map_def::map_flags: u32
 pub aya_obj::maps::bpf_map_def::map_type: u32

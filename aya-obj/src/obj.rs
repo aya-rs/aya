@@ -1367,6 +1367,8 @@ pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
                 map_flags: info.map_flags,
                 pinning: pinned,
                 id: info.id,
+                inner_id: 0,
+                inner_idx: 0,
             },
             section_index: 0,
             symbol_index: None,
@@ -1566,6 +1568,8 @@ mod tests {
             map_flags: 5,
             id: 0,
             pinning: PinningType::None,
+            inner_id: 0,
+            inner_idx: 0,
         };
 
         assert_eq!(
@@ -1584,6 +1588,8 @@ mod tests {
             map_flags: 5,
             id: 6,
             pinning: PinningType::ByName,
+            inner_id: 0,
+            inner_idx: 0,
         };
 
         assert_eq!(parse_map_def("foo", bytes_of(&def)).unwrap(), def);
@@ -1599,6 +1605,8 @@ mod tests {
             map_flags: 5,
             id: 6,
             pinning: PinningType::ByName,
+            inner_id: 0,
+            inner_idx: 0,
         };
         let mut buf = [0u8; 128];
         unsafe { ptr::write_unaligned(buf.as_mut_ptr().cast(), def) }
@@ -1630,6 +1638,8 @@ mod tests {
                     map_flags: 0,
                     id: 0,
                     pinning: PinningType::None,
+                    inner_id: 0,
+                    inner_idx: 0,
                 },
                 data,
             }) if data == map_data && value_size == map_data.len() as u32
@@ -1809,17 +1819,59 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_section_multiple_maps() {
+    fn test_parse_section_multiple_maps_v1_legacy() {
         let mut obj = fake_obj();
-        fake_sym(&mut obj, 0, 0, "foo", size_of::<bpf_map_def>() as u64);
-        fake_sym(&mut obj, 0, 28, "bar", size_of::<bpf_map_def>() as u64);
-        fake_sym(&mut obj, 0, 60, "baz", size_of::<bpf_map_def>() as u64);
+        fake_sym(&mut obj, 0, 0, "foo", 28);
+        fake_sym(&mut obj, 0, 28, "bar", 28);
+        fake_sym(&mut obj, 0, 60, "baz", 28);
         let def = &bpf_map_def {
             map_type: 1,
             key_size: 2,
             value_size: 3,
             max_entries: 4,
             map_flags: 5,
+            ..Default::default()
+        };
+        let map_data = bytes_of(def)[..28].to_vec();
+        let mut buf = vec![];
+        buf.extend(&map_data);
+        buf.extend(&map_data);
+        // throw in some padding
+        buf.extend([0, 0, 0, 0]);
+        buf.extend(&map_data);
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Maps,
+                "maps",
+                buf.as_slice(),
+                None
+            )),
+            Ok(())
+        );
+        assert!(obj.maps.contains_key("foo"));
+        assert!(obj.maps.contains_key("bar"));
+        assert!(obj.maps.contains_key("baz"));
+        for map in obj.maps.values() {
+            assert_matches!(map, Map::Legacy(m) => {
+                assert_eq!(&m.def, def);
+            })
+        }
+    }
+
+    #[test]
+    fn test_parse_section_multiple_maps_v2_legacy_tc() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", size_of::<bpf_map_def>() as u64);
+        fake_sym(&mut obj, 0, 36, "bar", size_of::<bpf_map_def>() as u64);
+        fake_sym(&mut obj, 0, 76, "baz", size_of::<bpf_map_def>() as u64);
+        let def = &bpf_map_def {
+            map_type: 1,
+            key_size: 2,
+            value_size: 3,
+            max_entries: 4,
+            map_flags: 5,
+            inner_id: 6,
+            inner_idx: 7,
             ..Default::default()
         };
         let map_data = bytes_of(def).to_vec();
@@ -2628,6 +2680,8 @@ mod tests {
                     map_flags: BPF_F_RDONLY_PROG,
                     id: 1,
                     pinning: PinningType::None,
+                    inner_id: 0,
+                    inner_idx: 0,
                 },
                 section_index: 1,
                 section_kind: EbpfSectionKind::Rodata,
