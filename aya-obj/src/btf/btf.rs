@@ -1010,7 +1010,7 @@ impl Object {
                 .unwrap_or(0)
                 + 1;
 
-            let extern_symbols_by_name = self
+            let external_symbols_by_name = self
                 .symbol_table
                 .iter()
                 .filter(|(_, s)| s.name.is_some() && s.section_index.is_none() && s.is_external)
@@ -1021,7 +1021,7 @@ impl Object {
             let mut offset = 0u64;
 
             for (name, var) in &kconfig_var_index {
-                let Some(symbol_index) = extern_symbols_by_name.get(name) else {
+                let Some(symbol_index) = external_symbols_by_name.get(name) else {
                     continue;
                 };
                 if var.linkage != VarLinkage::Extern {
