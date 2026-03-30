@@ -1075,30 +1075,25 @@ pub(crate) fn is_bpf_syscall_wrapper_supported() -> bool {
 
 const fn candidate_sys_bpf_symbols() -> &'static [&'static str] {
     if cfg!(target_arch = "x86_64") {
-        &[
-            "__x64_sys_bpf",
-            "__ia32_sys_bpf",
-            "__x32_sys_bpf",
-            "sys_bpf",
-        ]
+        &["__x64_sys_bpf", "__ia32_sys_bpf", "__x32_sys_bpf"]
     } else if cfg!(target_arch = "x86") {
-        &["__ia32_sys_bpf", "sys_bpf"]
+        &["__ia32_sys_bpf"]
     } else if cfg!(target_arch = "aarch64") {
-        &["__arm64_sys_bpf", "sys_bpf"]
+        &["__arm64_sys_bpf"]
     } else if cfg!(target_arch = "arm") {
-        &["__arm_sys_bpf", "sys_bpf"]
+        &["__arm_sys_bpf"]
     } else if cfg!(target_arch = "powerpc64") {
-        &["__powerpc64_sys_bpf", "sys_bpf"]
+        &["__powerpc64_sys_bpf"]
     } else if cfg!(target_arch = "powerpc") {
-        &["__powerpc_sys_bpf", "sys_bpf"]
+        &["__powerpc_sys_bpf"]
     } else if cfg!(target_arch = "riscv32") || cfg!(target_arch = "riscv64") {
-        &["__riscv_sys_bpf", "sys_bpf"]
+        &["__riscv_sys_bpf"]
     } else if cfg!(target_arch = "s390x") {
-        &["__s390x_sys_bpf", "sys_bpf"]
+        &["__s390x_sys_bpf"]
     } else if cfg!(target_arch = "mips") || cfg!(target_arch = "mips64") {
-        &["__mips_sys_bpf", "sys_bpf"]
+        &["__mips_sys_bpf"]
     } else {
-        &["sys_bpf"]
+        &[]
     }
 }
 
