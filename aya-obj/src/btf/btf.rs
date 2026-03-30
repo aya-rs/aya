@@ -1000,12 +1000,6 @@ impl Object {
                 .section_infos
                 .values()
                 .map(|(index, _)| index.0)
-                .chain(self.maps.values().map(Map::section_index))
-                .chain(
-                    self.symbol_table
-                        .values()
-                        .filter_map(|sym| sym.section_index),
-                )
                 .max()
                 .unwrap_or(0)
                 + 1;
