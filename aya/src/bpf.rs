@@ -7,6 +7,8 @@ use std::{
     path::{Path, PathBuf},
     sync::{Arc, LazyLock},
 };
+#[cfg(feature = "kconfig-gz")]
+use std::{fs::File, io::Read as _};
 
 use aya_obj::{
     EbpfSectionKind, Features, Object, ParseError, ProgramSection,
@@ -18,8 +20,6 @@ use aya_obj::{
 use flate2::read::GzDecoder;
 use log::{debug, warn};
 use thiserror::Error;
-#[cfg(feature = "kconfig-gz")]
-use std::{fs::File, io::Read as _};
 
 use crate::{
     maps::{Map, MapData, MapError},
