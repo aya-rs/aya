@@ -88,6 +88,14 @@ pub struct KConfig {
     data: HashMap<String, Vec<u8>>,
 }
 
+/// The error type returned by [`KConfig::parse`].
+#[derive(Debug, Error)]
+pub enum KConfigError {
+    /// The provided kernel config is not valid UTF-8.
+    #[error("kernel config is not valid UTF-8")]
+    InvalidUtf8(#[from] std::str::Utf8Error),
+}
+
 impl KConfig {
     /// Creates a new `KConfig` by reading kernel configuration from the system.
     ///
@@ -96,8 +104,19 @@ impl KConfig {
     /// feature detection information.
     pub fn current() -> Self {
         Self {
-            data: compute_kconfig_definition(&FEATURES),
+            data: compute_kconfig_definition(&FEATURES, read_kconfig().as_deref()),
         }
+    }
+
+    /// Creates a new `KConfig` from kernel configuration data provided by the caller.
+    ///
+    /// The provided bytes should contain the textual contents of a kernel config file.
+    /// This still populates the synthetic libbpf-compatible externs from local feature
+    /// detection and kernel version discovery.
+    pub fn parse(data: &[u8]) -> Result<Self, KConfigError> {
+        Ok(Self {
+            data: compute_kconfig_definition(&FEATURES, Some(std::str::from_utf8(data)?)),
+        })
     }
 
     /// Returns a reference to the underlying configuration data.
@@ -139,7 +158,10 @@ pub fn features() -> &'static Features {
     &FEATURES
 }
 
-fn compute_kconfig_definition(features: &Features) -> HashMap<String, Vec<u8>> {
+fn compute_kconfig_definition(
+    features: &Features,
+    raw_config: Option<&str>,
+) -> HashMap<String, Vec<u8>> {
     let mut result = HashMap::new();
 
     if let Ok(version_code) = KernelVersion::current().map(KernelVersion::code) {
@@ -162,59 +184,62 @@ fn compute_kconfig_definition(features: &Features) -> HashMap<String, Vec<u8>> {
             .to_vec(),
     );
 
-    if let Some(raw_config) = read_kconfig() {
-        for line in raw_config.lines() {
-            if let Some(name) = line
-                .strip_prefix("# CONFIG_")
-                .and_then(|rest| rest.strip_suffix(" is not set"))
-            {
-                // libbpf treats unresolved weak CONFIG_ externs (including "is not set") as 0.
-                // https://github.com/torvalds/linux/blob/4334f30ebf395b204c6cbeabf371a5a998d6ba7c/tools/lib/bpf/libbpf.c#L4666-L4673
-                result.insert(format!("CONFIG_{name}"), 0u64.to_ne_bytes().to_vec());
-                continue;
-            }
-
-            if !line.starts_with("CONFIG_") {
-                continue;
-            }
-
-            let parts = line.split_once('=');
-            let Some((key, raw_value)) = parts else {
-                continue;
-            };
-
-            let value = match raw_value.chars().next() {
-                Some('n') => 0u64.to_ne_bytes().to_vec(),
-                Some('y') => 1u64.to_ne_bytes().to_vec(),
-                Some('m') => 2u64.to_ne_bytes().to_vec(),
-                Some('"') => {
-                    if raw_value.len() < 2 || !raw_value.ends_with('"') {
-                        continue;
-                    }
-
-                    let raw_value = &raw_value[1..raw_value.len() - 1];
-                    raw_value
-                        .as_bytes()
-                        .iter()
-                        .chain(std::iter::once(&0u8))
-                        .copied()
-                        .collect()
-                }
-                Some(_) => {
-                    if let Some(value) = parse_kconfig_numeric(raw_value) {
-                        value.to_ne_bytes().to_vec()
-                    } else {
-                        continue;
-                    }
-                }
-                None => continue,
-            };
-
-            result.insert(key.to_string(), value);
-        }
+    if let Some(raw_config) = raw_config {
+        parse_kconfig_values(raw_config, &mut result);
     }
 
     result
+}
+
+fn parse_kconfig_values(raw_config: &str, result: &mut HashMap<String, Vec<u8>>) {
+    for line in raw_config.lines() {
+        if let Some(name) = line
+            .strip_prefix("# CONFIG_")
+            .and_then(|rest| rest.strip_suffix(" is not set"))
+        {
+            // libbpf treats unresolved weak CONFIG_ externs (including "is not set") as 0.
+            // https://github.com/torvalds/linux/blob/4334f30ebf395b204c6cbeabf371a5a998d6ba7c/tools/lib/bpf/libbpf.c#L4666-L4673
+            result.insert(format!("CONFIG_{name}"), 0u64.to_ne_bytes().to_vec());
+            continue;
+        }
+
+        if !line.starts_with("CONFIG_") {
+            continue;
+        }
+
+        let Some((key, raw_value)) = line.split_once('=') else {
+            continue;
+        };
+
+        let value = match raw_value.chars().next() {
+            Some('n') => 0u64.to_ne_bytes().to_vec(),
+            Some('y') => 1u64.to_ne_bytes().to_vec(),
+            Some('m') => 2u64.to_ne_bytes().to_vec(),
+            Some('"') => {
+                if raw_value.len() < 2 || !raw_value.ends_with('"') {
+                    continue;
+                }
+
+                let raw_value = &raw_value[1..raw_value.len() - 1];
+                raw_value
+                    .as_bytes()
+                    .iter()
+                    .chain(std::iter::once(&0u8))
+                    .copied()
+                    .collect()
+            }
+            Some(_) => {
+                if let Some(value) = parse_kconfig_numeric(raw_value) {
+                    value.to_ne_bytes().to_vec()
+                } else {
+                    continue;
+                }
+            }
+            None => continue,
+        };
+
+        result.insert(key.to_string(), value);
+    }
 }
 
 fn parse_kconfig_numeric(raw_value: &str) -> Option<u64> {

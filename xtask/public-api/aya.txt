@@ -10986,6 +10986,41 @@ impl<T> core::borrow::BorrowMut<T> for aya::EbpfError where T: ?core::marker::Si
 pub fn aya::EbpfError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::EbpfError
 pub fn aya::EbpfError::from(t: T) -> T
+pub enum aya::KConfigError
+pub aya::KConfigError::InvalidUtf8(core::str::error::Utf8Error)
+impl core::convert::From<core::str::error::Utf8Error> for aya::KConfigError
+pub fn aya::KConfigError::from(source: core::str::error::Utf8Error) -> Self
+impl core::error::Error for aya::KConfigError
+pub fn aya::KConfigError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::KConfigError
+pub fn aya::KConfigError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::KConfigError
+pub fn aya::KConfigError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::KConfigError
+impl core::marker::Send for aya::KConfigError
+impl core::marker::Sync for aya::KConfigError
+impl core::marker::Unpin for aya::KConfigError
+impl core::marker::UnsafeUnpin for aya::KConfigError
+impl core::panic::unwind_safe::RefUnwindSafe for aya::KConfigError
+impl core::panic::unwind_safe::UnwindSafe for aya::KConfigError
+impl<T, U> core::convert::Into<U> for aya::KConfigError where U: core::convert::From<T>
+pub fn aya::KConfigError::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::KConfigError where U: core::convert::Into<T>
+pub type aya::KConfigError::Error = core::convert::Infallible
+pub fn aya::KConfigError::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::KConfigError where U: core::convert::TryFrom<T>
+pub type aya::KConfigError::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::KConfigError::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::string::ToString for aya::KConfigError where T: core::fmt::Display + ?core::marker::Sized
+pub fn aya::KConfigError::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for aya::KConfigError where T: 'static + ?core::marker::Sized
+pub fn aya::KConfigError::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::KConfigError where T: ?core::marker::Sized
+pub fn aya::KConfigError::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::KConfigError where T: ?core::marker::Sized
+pub fn aya::KConfigError::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::KConfigError
+pub fn aya::KConfigError::from(t: T) -> T
 pub struct aya::Ebpf
 impl aya::Ebpf
 pub fn aya::Ebpf::load(data: &[u8]) -> core::result::Result<Self, aya::EbpfError>
@@ -11099,6 +11134,7 @@ pub fn aya::GlobalData<'a>::from(t: T) -> T
 pub struct aya::KConfig
 impl aya::KConfig
 pub fn aya::KConfig::current() -> Self
+pub fn aya::KConfig::parse(data: &[u8]) -> core::result::Result<Self, aya::KConfigError>
 impl core::clone::Clone for aya::KConfig
 pub fn aya::KConfig::clone(&self) -> aya::KConfig
 impl core::fmt::Debug for aya::KConfig
