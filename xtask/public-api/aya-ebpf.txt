@@ -39,6 +39,36 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::btf_maps::array::Array<T, MAX_E
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::from(t: T) -> T
+pub mod aya_ebpf::btf_maps::reuseport_sock_array
+#[repr(C)] pub struct aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, const MAX_ENTRIES: usize, const FLAGS: usize>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::default() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T, U> core::convert::Into<U> for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS> where U: core::convert::From<T>
+pub fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS> where U: core::convert::Into<T>
+pub type aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::Error = core::convert::Infallible
+pub fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS> where U: core::convert::TryFrom<T>
+pub type aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS> where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS> where T: ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS> where T: ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::from(t: T) -> T
+pub type aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArray<const MAX_ENTRIES: usize, const FLAGS: usize> = aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<u32, MAX_ENTRIES, FLAGS>
 pub mod aya_ebpf::btf_maps::ring_buf
 #[repr(C)] pub struct aya_ebpf::btf_maps::ring_buf::RingBuf<T, const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
@@ -206,6 +236,7 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::btf_maps::sk_storage::SkStorage
 pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::btf_maps::sk_storage::SkStorage<T>
 pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::from(t: T) -> T
+pub type aya_ebpf::btf_maps::ReusePortSockArray<const MAX_ENTRIES: usize, const FLAGS: usize> = aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<u32, MAX_ENTRIES, FLAGS>
 pub mod aya_ebpf::helpers
 pub use aya_ebpf::helpers::generated
 pub macro aya_ebpf::helpers::bpf_printk!
@@ -2218,7 +2249,7 @@ pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::is_empty(&self) -> 
 pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::len(&self) -> usize
 pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::migrating_sk(&self) -> core::option::Option<aya_ebpf::programs::sock::SockContext>
 pub const fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::new(md: *mut aya_ebpf_bindings::x86_64::bindings::sk_reuseport_md) -> Self
-pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::select_reuseport(&self, map: &aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray, key: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::select_reuseport<M: ReusePortMap>(&self, map: &M, key: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::sk(&self) -> aya_ebpf::programs::sock::SockContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_reuseport::SkReuseportContext
 pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
@@ -3081,7 +3112,7 @@ pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::is_empty(&self) -> 
 pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::len(&self) -> usize
 pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::migrating_sk(&self) -> core::option::Option<aya_ebpf::programs::sock::SockContext>
 pub const fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::new(md: *mut aya_ebpf_bindings::x86_64::bindings::sk_reuseport_md) -> Self
-pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::select_reuseport(&self, map: &aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray, key: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::select_reuseport<M: ReusePortMap>(&self, map: &M, key: u32, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::sk(&self) -> aya_ebpf::programs::sock::SockContext
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_reuseport::SkReuseportContext
 pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void

@@ -7,9 +7,39 @@ use crate::{
     bindings::sk_reuseport_md,
     cty::{c_long, c_void},
     helpers::bpf_sk_select_reuseport,
-    maps::ReusePortSockArray,
     programs::SockContext,
 };
+
+mod sealed {
+    use crate::{
+        btf_maps::ReusePortSockArray as BtfReusePortSockArray, cty::c_void,
+        maps::ReusePortSockArray as LegacyReusePortSockArray,
+    };
+
+    #[expect(unnameable_types, reason = "this is the sealed trait pattern")]
+    pub trait ReusePortMap {
+        fn as_map_ptr(&self) -> *mut c_void;
+    }
+
+    impl ReusePortMap for LegacyReusePortSockArray {
+        fn as_map_ptr(&self) -> *mut c_void {
+            self.as_ptr()
+        }
+    }
+
+    impl<const MAX_ENTRIES: usize, const FLAGS: usize> ReusePortMap
+        for BtfReusePortSockArray<MAX_ENTRIES, FLAGS>
+    {
+        fn as_map_ptr(&self) -> *mut c_void {
+            self.as_ptr()
+        }
+    }
+}
+
+#[doc(hidden)]
+pub trait ReusePortMap: sealed::ReusePortMap {}
+
+impl<T: sealed::ReusePortMap> ReusePortMap for T {}
 
 /// Allow the kernel's default `SO_REUSEPORT` socket selection.
 pub const SK_PASS: u32 = 1;
@@ -104,7 +134,9 @@ impl SkReuseportContext {
 
     /// Selects a socket from `map` using `key`.
     ///
-    /// Userspace must populate `map` with sockets from the same `SO_REUSEPORT`
+    /// `map` may be a legacy [`maps::ReusePortSockArray`](crate::maps::ReusePortSockArray)
+    /// or a BTF-compatible [`btf_maps::ReusePortSockArray`](crate::btf_maps::ReusePortSockArray).
+    /// Userspace must populate it with sockets from the same `SO_REUSEPORT`
     /// group before calling this helper.
     ///
     /// The `flags` argument is forwarded to `bpf_sk_select_reuseport()`.
@@ -139,9 +171,9 @@ impl SkReuseportContext {
     /// }
     /// ```
     #[inline]
-    pub fn select_reuseport(
+    pub fn select_reuseport<M: ReusePortMap>(
         &self,
-        map: &ReusePortSockArray,
+        map: &M,
         key: u32,
         flags: u64,
     ) -> Result<(), c_long> {
@@ -149,7 +181,7 @@ impl SkReuseportContext {
         let ret = unsafe {
             bpf_sk_select_reuseport(
                 self.as_ptr().cast(),
-                map.as_ptr(),
+                map.as_map_ptr(),
                 ptr::from_mut(&mut key).cast(),
                 flags,
             )

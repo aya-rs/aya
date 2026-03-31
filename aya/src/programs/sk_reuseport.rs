@@ -1,24 +1,19 @@
 //! Socket load balancing with `SO_REUSEPORT`.
-use std::io;
-#[cfg(target_os = "linux")]
 use std::{
+    io,
     os::fd::{AsFd, AsRawFd as _, RawFd},
     ptr,
 };
 
-#[cfg(target_os = "linux")]
 use aya_obj::generated::{
     bpf_attach_type::BPF_SK_REUSEPORT_SELECT, bpf_prog_type::BPF_PROG_TYPE_SK_REUSEPORT,
 };
-#[cfg(target_os = "linux")]
 use libc::{SOL_SOCKET, setsockopt};
 use thiserror::Error;
 
 use crate::programs::{ProgramData, ProgramError, ProgramType, links::FdLink, load_program};
 
-#[cfg(target_os = "linux")]
 const SO_ATTACH_REUSEPORT_EBPF: libc::c_int = 52;
-#[cfg(target_os = "linux")]
 const SO_DETACH_REUSEPORT_BPF: libc::c_int = 68;
 
 /// The type returned when attaching a [`SkReuseport`] fails.
@@ -80,63 +75,33 @@ pub enum SkReuseportError {
 /// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use std::{
 ///     io,
-///     mem::{size_of, size_of_val},
-///     net::TcpListener,
-///     os::fd::{AsRawFd, FromRawFd, OwnedFd},
-///     ptr,
+///     net::{Ipv4Addr, SocketAddrV4, TcpListener},
+///     os::fd::AsRawFd,
 /// };
 ///
 /// use aya::programs::SkReuseport;
-/// use libc::{
-///     AF_INET, SO_REUSEPORT, SOCK_STREAM, SOL_SOCKET, bind, in_addr, listen, setsockopt,
-///     sockaddr, sockaddr_in, socket, socklen_t,
+/// use nix::sys::socket::{
+///     AddressFamily, Backlog, SockFlag, SockType, SockaddrIn, bind, listen, setsockopt,
+///     socket, sockopt::ReusePort,
 /// };
 ///
 /// // `SO_REUSEPORT` must be enabled after `socket(2)` and before `bind(2)`.
-/// // `TcpListener::bind()` does not expose that pre-bind socket setup step,
-/// // so this example uses `libc` to configure the socket before binding it.
+/// // `std::net::TcpListener` does not expose that pre-bind socket setup step,
+/// // so this example uses `nix` to create and configure the socket directly.
 /// fn reuseport_listener(port: u16) -> io::Result<TcpListener> {
-///     let fd = unsafe { socket(AF_INET, SOCK_STREAM, 0) };
-///     if fd < 0 {
-///         return Err(io::Error::last_os_error());
-///     }
+///     let fd = socket(
+///         AddressFamily::Inet,
+///         SockType::Stream,
+///         SockFlag::empty(),
+///         None,
+///     )
+///     .map_err(io::Error::other)?;
 ///
-///     let fd = unsafe { OwnedFd::from_raw_fd(fd) };
-///     let enable = 1i32;
-///     if unsafe {
-///         setsockopt(
-///             fd.as_raw_fd(),
-///             SOL_SOCKET,
-///             SO_REUSEPORT,
-///             ptr::from_ref(&enable).cast(),
-///             size_of_val(&enable) as socklen_t,
-///         )
-///     } < 0
-///     {
-///         return Err(io::Error::last_os_error());
-///     }
+///     setsockopt(&fd, ReusePort, &true).map_err(io::Error::other)?;
 ///
-///     let addr = sockaddr_in {
-///         sin_family: AF_INET as u16,
-///         sin_port: port.to_be(),
-///         sin_addr: in_addr {
-///             s_addr: u32::from_ne_bytes([127, 0, 0, 1]),
-///         },
-///         sin_zero: [0; 8],
-///     };
-///     if unsafe {
-///         bind(
-///             fd.as_raw_fd(),
-///             ptr::from_ref(&addr).cast::<sockaddr>(),
-///             size_of::<sockaddr_in>() as socklen_t,
-///         )
-///     } < 0
-///     {
-///         return Err(io::Error::last_os_error());
-///     }
-///     if unsafe { listen(fd.as_raw_fd(), 1024) } < 0 {
-///         return Err(io::Error::last_os_error());
-///     }
+///     let addr = SockaddrIn::from(SocketAddrV4::new(Ipv4Addr::LOCALHOST, port));
+///     bind(fd.as_raw_fd(), &addr).map_err(io::Error::other)?;
+///     listen(&fd, Backlog::MAXCONN).map_err(io::Error::other)?;
 ///
 ///     Ok(TcpListener::from(fd))
 /// }
@@ -159,7 +124,32 @@ impl SkReuseport {
     /// The type of the program according to the kernel.
     pub const PROGRAM_TYPE: ProgramType = ProgramType::SkReuseport;
 
-    #[cfg(target_os = "linux")]
+    #[inline]
+    fn set_reuseport_sockopt<T: AsFd>(
+        &self,
+        socket: T,
+        sockopt: libc::c_int,
+        map_err: fn(io::Error) -> SkReuseportError,
+    ) -> Result<(), ProgramError> {
+        let socket = socket.as_fd().as_raw_fd();
+        let prog_fd = self.fd()?.as_fd().as_raw_fd();
+
+        let ret = unsafe {
+            setsockopt(
+                socket,
+                SOL_SOCKET,
+                sockopt,
+                ptr::from_ref(&prog_fd).cast(),
+                size_of::<RawFd>() as u32,
+            )
+        };
+        if ret < 0 {
+            return Err(map_err(io::Error::last_os_error()).into());
+        }
+
+        Ok(())
+    }
+
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         self.data
@@ -168,7 +158,6 @@ impl SkReuseport {
         load_program(BPF_PROG_TYPE_SK_REUSEPORT, &mut self.data)
     }
 
-    #[cfg(target_os = "linux")]
     /// Attaches the program to the `SO_REUSEPORT` group containing `socket`.
     ///
     /// The socket must already be configured with `SO_REUSEPORT`.
@@ -179,32 +168,11 @@ impl SkReuseport {
     /// [`SkReuseport::detach`] with any socket from the same group to remove it
     /// again, or close all sockets in the group.
     pub fn attach<T: AsFd>(&self, socket: T) -> Result<(), ProgramError> {
-        let prog_fd = self.fd()?;
-        let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
-        let socket = socket.as_fd();
-        let socket = socket.as_raw_fd();
-
-        let ret = unsafe {
-            setsockopt(
-                socket,
-                SOL_SOCKET,
-                SO_ATTACH_REUSEPORT_EBPF,
-                ptr::from_ref(&prog_fd).cast(),
-                size_of::<RawFd>() as u32,
-            )
-        };
-        if ret < 0 {
-            return Err(SkReuseportError::SoAttachReuseportEbpfError {
-                io_error: io::Error::last_os_error(),
-            }
-            .into());
-        }
-
-        Ok(())
+        self.set_reuseport_sockopt(socket, SO_ATTACH_REUSEPORT_EBPF, |io_error| {
+            SkReuseportError::SoAttachReuseportEbpfError { io_error }
+        })
     }
 
-    #[cfg(target_os = "linux")]
     /// Detaches the current reuseport program from the `SO_REUSEPORT` group
     /// containing `socket`.
     ///
@@ -212,26 +180,8 @@ impl SkReuseport {
     /// from the entire group, regardless of which socket in that group was
     /// used to attach it.
     pub fn detach<T: AsFd>(&self, socket: T) -> Result<(), ProgramError> {
-        let socket = socket.as_fd();
-        let socket = socket.as_raw_fd();
-        let prog_fd = self.fd()?;
-        let prog_fd = prog_fd.as_fd();
-        let prog_fd = prog_fd.as_raw_fd();
-        let ret = unsafe {
-            setsockopt(
-                socket,
-                SOL_SOCKET,
-                SO_DETACH_REUSEPORT_BPF,
-                ptr::from_ref(&prog_fd).cast(),
-                size_of::<RawFd>() as u32,
-            )
-        };
-        if ret < 0 {
-            return Err(SkReuseportError::SoDetachReuseportBpfError {
-                io_error: io::Error::last_os_error(),
-            }
-            .into());
-        }
-        Ok(())
+        self.set_reuseport_sockopt(socket, SO_DETACH_REUSEPORT_BPF, |io_error| {
+            SkReuseportError::SoDetachReuseportBpfError { io_error }
+        })
     }
 }
