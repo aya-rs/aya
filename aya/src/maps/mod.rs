@@ -843,7 +843,7 @@ impl MapData {
         obj: aya_obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
-        inner_map_fd: Option<BorrowedFd<'_>>,
+        inner_map_obj: Option<aya_obj::Map>,
     ) -> Result<Self, MapError> {
         use std::os::unix::ffi::OsStrExt as _;
 
@@ -867,6 +867,13 @@ impl MapData {
                 fd: MapFd::from_fd(fd),
             })
         } else {
+            let inner_map;
+            let inner_map_fd = if let Some(inner) = inner_map_obj {
+                inner_map = Self::create(inner, &format!("{name}.inner"), btf_fd)?;
+                Some(inner_map.fd().as_fd())
+            } else {
+                None
+            };
             let map = Self::create_with_inner_map_fd(obj, name, btf_fd, inner_map_fd)?;
             map.pin(path).map_err(|error| MapError::PinError {
                 name: Some(name.into()),

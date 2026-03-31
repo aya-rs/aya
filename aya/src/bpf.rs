@@ -554,24 +554,29 @@ impl<'a> EbpfLoader<'a> {
 
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
 
-            // The kernel requires an inner map fd when creating a map-of-maps.
-            let btf_inner_map;
-            let inner_map_fd = if is_map_of_maps {
-                let inner = map_obj.inner().ok_or_else(|| {
+            // Defer inner map creation to avoid a BPF_MAP_CREATE when the outer map is already pinned.
+            let inner_map_obj = if is_map_of_maps {
+                Some(map_obj.inner().ok_or_else(|| {
                     EbpfError::MapError(MapError::MissingInnerMapDefinition {
                         outer_name: name.clone(),
                     })
-                })?;
-                btf_inner_map = MapData::create(inner, &format!("{name}.inner"), btf_fd)?;
-                Some(btf_inner_map.fd().as_fd())
+                })?)
             } else {
                 None
             };
             let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
-                MapData::create_pinned_by_name(pin_path, map_obj, &name, btf_fd, inner_map_fd)?
+                MapData::create_pinned_by_name(pin_path, map_obj, &name, btf_fd, inner_map_obj)?
             } else {
                 match map_obj.pinning() {
                     PinningType::None => {
+                        let btf_inner_map;
+                        let inner_map_fd = if let Some(inner) = inner_map_obj {
+                            btf_inner_map =
+                                MapData::create(inner, &format!("{name}.inner"), btf_fd)?;
+                            Some(btf_inner_map.fd().as_fd())
+                        } else {
+                            None
+                        };
                         MapData::create_with_inner_map_fd(map_obj, &name, btf_fd, inner_map_fd)?
                     }
                     PinningType::ByName => {
@@ -582,7 +587,7 @@ impl<'a> EbpfLoader<'a> {
                             .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
                         let path = path.join(&name);
 
-                        MapData::create_pinned_by_name(path, map_obj, &name, btf_fd, inner_map_fd)?
+                        MapData::create_pinned_by_name(path, map_obj, &name, btf_fd, inner_map_obj)?
                     }
                 }
             };
