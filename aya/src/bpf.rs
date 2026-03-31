@@ -1,8 +1,7 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    fs,
-    io,
+    fs, io,
     os::fd::{AsFd as _, AsRawFd as _},
     path::{Path, PathBuf},
     sync::{Arc, LazyLock},
