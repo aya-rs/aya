@@ -1009,6 +1009,9 @@ pub enum ParseError {
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]
     NoBTF,
+
+    #[error("map `{name}` uses unsupported legacy pinning")]
+    UnsupportedLegacyPinning { name: String },
 }
 
 /// Invalid bindings to the bpf type from the parsed/received value.
@@ -1251,16 +1254,23 @@ fn parse_map_def(name: &str, data: &[u8]) -> Result<bpf_map_def, ParseError> {
         });
     }
 
-    if data.len() < size_of::<bpf_map_def>() {
+    let map_def = if data.len() < size_of::<bpf_map_def>() {
         let mut map_def = bpf_map_def::default();
         unsafe {
             let map_def_ptr = from_raw_parts_mut(ptr::from_mut(&mut map_def).cast(), data.len());
             map_def_ptr.copy_from_slice(data);
         }
-        Ok(map_def)
+        map_def
     } else {
-        Ok(unsafe { ptr::read_unaligned(data.as_ptr().cast()) })
+        unsafe { ptr::read_unaligned(data.as_ptr().cast()) }
+    };
+
+    if map_def.pinning != PinningType::None {
+        return Err(ParseError::UnsupportedLegacyPinning {
+            name: name.to_owned(),
+        });
     }
+    Ok(map_def)
 }
 
 fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDef), BtfError> {
@@ -1579,6 +1589,25 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_map_def_unsupported_pinning() {
+        let def = bpf_map_def {
+            map_type: 1,
+            key_size: 2,
+            value_size: 3,
+            max_entries: 4,
+            map_flags: 5,
+            id: 0,
+            pinning: PinningType::ByName,
+            inner_id: 0,
+            inner_idx: 0,
+        };
+        assert_matches!(
+            parse_map_def("foo", bytes_of(&def)),
+            Err(ParseError::UnsupportedLegacyPinning { .. })
+        );
+    }
+
+    #[test]
     fn test_parse_map_def() {
         let def = bpf_map_def {
             map_type: 1,
@@ -1587,7 +1616,7 @@ mod tests {
             max_entries: 4,
             map_flags: 5,
             id: 6,
-            pinning: PinningType::ByName,
+            pinning: PinningType::None,
             inner_id: 0,
             inner_idx: 0,
         };
@@ -1604,7 +1633,7 @@ mod tests {
             max_entries: 4,
             map_flags: 5,
             id: 6,
-            pinning: PinningType::ByName,
+            pinning: PinningType::None,
             inner_id: 0,
             inner_idx: 0,
         };
