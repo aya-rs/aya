@@ -1,8 +1,8 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    fs::{self, File},
-    io::{self, Read as _},
+    fs,
+    io,
     os::fd::{AsFd as _, AsRawFd as _},
     path::{Path, PathBuf},
     sync::{Arc, LazyLock},
@@ -14,9 +14,12 @@ use aya_obj::{
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
 };
+#[cfg(feature = "kconfig-gz")]
 use flate2::read::GzDecoder;
 use log::{debug, warn};
 use thiserror::Error;
+#[cfg(feature = "kconfig-gz")]
+use std::{fs::File, io::Read as _};
 
 use crate::{
     maps::{Map, MapData, MapError},
@@ -88,8 +91,9 @@ pub struct KConfig {
 impl KConfig {
     /// Creates a new `KConfig` by reading kernel configuration from the system.
     ///
-    /// This will attempt to read `/proc/config.gz` or `/boot/config-<release>` and
-    /// populate the configuration with kernel version and feature detection information.
+    /// This will attempt to read `/proc/config.gz` when gzip support is enabled, otherwise
+    /// `/boot/config-<release>`, and populate the configuration with kernel version and
+    /// feature detection information.
     pub fn current() -> Self {
         Self {
             data: compute_kconfig_definition(&FEATURES),
@@ -225,10 +229,13 @@ fn parse_kconfig_numeric(raw_value: &str) -> Option<u64> {
 }
 
 fn read_kconfig() -> Option<String> {
-    let config_path = PathBuf::from("/proc/config.gz");
-    if config_path.exists() {
-        debug!("Found kernel config at {}", config_path.to_string_lossy());
-        return read_kconfig_file(&config_path, true);
+    #[cfg(feature = "kconfig-gz")]
+    {
+        let config_path = PathBuf::from("/proc/config.gz");
+        if config_path.exists() {
+            debug!("Found kernel config at {}", config_path.to_string_lossy());
+            return read_kconfig_file(&config_path, true);
+        }
     }
 
     let Ok(release) = sys::kernel_release() else {
@@ -248,9 +255,16 @@ fn read_kconfig_file(path: &PathBuf, gzip: bool) -> Option<String> {
     let mut output = String::new();
 
     let res = if gzip {
-        File::open(path)
-            .map(GzDecoder::new)
-            .and_then(|mut file| file.read_to_string(&mut output))
+        #[cfg(feature = "kconfig-gz")]
+        {
+            File::open(path)
+                .map(GzDecoder::new)
+                .and_then(|mut file| file.read_to_string(&mut output))
+        }
+        #[cfg(not(feature = "kconfig-gz"))]
+        {
+            return None;
+        }
     } else {
         fs::read_to_string(path).map(|s| {
             output = s;
