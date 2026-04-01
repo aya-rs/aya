@@ -392,12 +392,13 @@ pub(crate) const fn tc_handler_make(major: u32, minor: u32) -> u32 {
 #[macro_export]
 macro_rules! include_bytes_aligned {
     ($path:expr) => {{
-        #[repr(align(32))]
-        pub struct Aligned32;
+        // The alignment of 8 bytes is sufficient for ELF64 and will also work for ELF32.
+        #[repr(align(8))]
+        pub struct Aligned8;
 
         #[repr(C)]
         pub struct Aligned<Bytes: ?Sized> {
-            pub _align: [Aligned32; 0],
+            pub _align: [Aligned8; 0],
             pub bytes: Bytes,
         }
 
