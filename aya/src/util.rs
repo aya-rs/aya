@@ -392,17 +392,14 @@ pub(crate) const fn tc_handler_make(major: u32, minor: u32) -> u32 {
 #[macro_export]
 macro_rules! include_bytes_aligned {
     ($path:expr) => {{
-        #[repr(align(32))]
-        pub struct Aligned32;
-
-        #[repr(C)]
+        // All eBPF programs are ELF64 objects (regardless of host target) with 8-byte
+        // aligned headers and all eBPF instructions are 8 bytes each.
+        #[repr(C, align(8))]
         pub struct Aligned<Bytes: ?Sized> {
-            pub _align: [Aligned32; 0],
             pub bytes: Bytes,
         }
 
         const ALIGNED: &Aligned<[u8]> = &Aligned {
-            _align: [],
             bytes: *include_bytes!($path),
         };
 
