@@ -162,9 +162,7 @@ impl From<BpfAttachType> for bpf_attach_type {
             BpfAttachType::Xdp => Self::BPF_XDP,
             BpfAttachType::SkSkbVerdict => Self::BPF_SK_SKB_VERDICT,
             BpfAttachType::SkReuseportSelect => Self::BPF_SK_REUSEPORT_SELECT,
-            BpfAttachType::SkReuseportSelectOrMigrate => {
-                Self::BPF_SK_REUSEPORT_SELECT_OR_MIGRATE
-            }
+            BpfAttachType::SkReuseportSelectOrMigrate => Self::BPF_SK_REUSEPORT_SELECT_OR_MIGRATE,
             BpfAttachType::PerfEvent => Self::BPF_PERF_EVENT,
             BpfAttachType::TraceKprobeMulti => Self::BPF_TRACE_KPROBE_MULTI,
             BpfAttachType::LsmCgroup => Self::BPF_LSM_CGROUP,

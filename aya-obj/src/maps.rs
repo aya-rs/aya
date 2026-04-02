@@ -99,9 +99,7 @@ impl From<BpfMapType> for bpf_map_type {
             BpfMapType::Cpumap => Self::BPF_MAP_TYPE_CPUMAP,
             BpfMapType::Xskmap => Self::BPF_MAP_TYPE_XSKMAP,
             BpfMapType::Sockhash => Self::BPF_MAP_TYPE_SOCKHASH,
-            BpfMapType::CgroupStorageDeprecated => {
-                Self::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED
-            }
+            BpfMapType::CgroupStorageDeprecated => Self::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED,
             BpfMapType::ReuseportSockarray => Self::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
             BpfMapType::PerCpuCgroupStorageDeprecated => {
                 Self::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED
