@@ -29,7 +29,7 @@ fn require_kernel_6_9() -> bool {
 }
 
 /// Try to create a BPF token from the given path.
-/// Returns None (skip) if blocked by an LSM like AppArmor 4.x (EOPNOTSUPP).
+/// Returns `None` (skip) if blocked by an LSM like `AppArmor` 4.x (`EOPNOTSUPP`).
 fn try_create_token(path: &str) -> Option<BpfToken> {
     match BpfToken::create(path) {
         Ok(token) => Some(token),
@@ -69,7 +69,7 @@ fn setup_bpffs(path: &str, perms: aya::token::FilesystemPermissions) -> Option<(
 // that token + CAP_BPF are both required. Here we test the API end-to-end.
 
 /// Mirrors kernel selftest `userns_map_create`:
-/// create a BPFFS with MAP_CREATE delegation, obtain token, create map.
+/// create a BPFFS with `MAP_CREATE` delegation, obtain token, create map.
 #[test_log::test]
 fn token_map_create() {
     if !require_kernel_6_9() {
@@ -121,7 +121,7 @@ fn token_map_create() {
 // Tests that BTF can be loaded using a token with BPF_BTF_LOAD delegated.
 
 /// Mirrors kernel selftest `userns_btf_load`:
-/// create a BPFFS with BTF_LOAD delegation, obtain token, load BTF via EbpfLoader.
+/// create a BPFFS with `BTF_LOAD` delegation, obtain token, load BTF via `EbpfLoader`.
 #[test_log::test]
 fn token_btf_load() {
     if !require_kernel_6_9() {
@@ -196,7 +196,7 @@ fn token_prog_load_and_attach() {
 // The kernel selftest doesn't test this directly, but it's the foundation:
 // feature detection should work with a token_fd.
 
-/// Tests that detect_features_with_token produces valid features.
+/// Tests that `detect_features_with_token` produces valid features.
 #[test_log::test]
 fn token_feature_detection() {
     if !require_kernel_6_9() {
@@ -237,9 +237,9 @@ fn token_feature_detection() {
 // ---- Kernel selftest: create_bpffs_fd + materialize_bpffs_fd ----
 // Tests the BPFFS creation and mount sequence.
 
-/// Tests that create_bpf_filesystem produces a valid BPFFS mount,
-/// mirroring the kernel selftest's create_bpffs_fd() + materialize_bpffs_fd()
-/// + sys_fsmount() + sys_move_mount() sequence.
+/// Tests that `create_bpf_filesystem` produces a valid BPFFS mount,
+/// mirroring the kernel selftest's `create_bpffs_fd()` + `materialize_bpffs_fd()`
+/// + `sys_fsmount()` + `sys_move_mount()` sequence.
 #[test_log::test]
 fn token_bpffs_mount() {
     if !require_kernel_6_9() {
@@ -275,7 +275,7 @@ fn token_bpffs_mount() {
 // Tests the raw BPF_TOKEN_CREATE syscall.
 
 /// Tests BPF token creation directly from a BPFFS,
-/// mirroring the kernel selftest's bpf_token_create() call.
+/// mirroring the kernel selftest's `bpf_token_create()` call.
 #[test_log::test]
 fn token_direct_create() {
     if !require_kernel_6_9() {
@@ -300,7 +300,7 @@ fn token_direct_create() {
 
 // ---- Error path tests (not in kernel selftest but important for robustness) ----
 
-/// Tests that BpfToken::create fails gracefully on a non-existent path.
+/// Tests that `BpfToken::create` fails gracefully on a non-existent path.
 #[test_log::test]
 fn token_create_nonexistent_path() {
     if !require_kernel_6_9() {
@@ -314,7 +314,7 @@ fn token_create_nonexistent_path() {
     );
 }
 
-/// Tests that BpfToken::create fails on a regular directory (not a BPFFS).
+/// Tests that `BpfToken::create` fails on a regular directory (not a BPFFS).
 #[test_log::test]
 fn token_create_non_bpffs() {
     if !require_kernel_6_9() {
@@ -384,7 +384,7 @@ fn token_multiple_from_same_bpffs() {
 // but we can test that different delegation masks produce valid tokens.
 
 /// Tests that a BPFFS with all delegation masks set works for full program loading.
-/// Mirrors userns_obj_priv_btf_success: all commands delegated → success.
+/// Mirrors `userns_obj_priv_btf_success`: all commands delegated → success.
 #[test_log::test]
 fn token_full_delegation() {
     if !require_kernel_6_9() {
@@ -420,7 +420,7 @@ fn token_full_delegation() {
     cleanup(path);
 }
 
-/// Tests uid/gid options on FilesystemPermissionsBuilder.
+/// Tests uid/gid options on `FilesystemPermissionsBuilder`.
 #[test_log::test]
 fn token_bpffs_with_uid_gid() {
     if !require_kernel_6_9() {
