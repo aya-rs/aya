@@ -6,8 +6,9 @@ use std::{
 
 use aya_obj::generated::bpf_attach_type::BPF_PERF_EVENT;
 
+use aya_obj::Features;
+
 use crate::{
-    FEATURES,
     programs::{FdLink, Link, ProgramError, id_as_key, probe::ProbeEvent},
     sys::{
         BpfLinkCreateArgs, LinkTarget, PerfEventIoctlRequest, SyscallError, bpf_link_create,
@@ -85,11 +86,12 @@ pub(crate) fn perf_attach(
     prog_fd: BorrowedFd<'_>,
     perf_fd: crate::MockableFd,
     cookie: Option<u64>,
+    features: &Features,
 ) -> Result<PerfLinkInner, ProgramError> {
-    if cookie.is_some() && (!is_bpf_cookie_supported() || !FEATURES.bpf_perf_link()) {
+    if cookie.is_some() && (!is_bpf_cookie_supported() || !features.bpf_perf_link()) {
         return Err(ProgramError::AttachCookieNotSupported);
     }
-    if FEATURES.bpf_perf_link() {
+    if features.bpf_perf_link() {
         let link_fd = bpf_link_create(
             prog_fd,
             LinkTarget::Fd(perf_fd.as_fd()),

@@ -528,6 +528,8 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<ProgramFd>,
     pub(crate) btf_fd: Option<Arc<crate::MockableFd>>,
+    pub(crate) token_fd: Option<Arc<crate::MockableFd>>,
+    pub(crate) features: aya_obj::Features,
     pub(crate) verifier_log_level: VerifierLogLevel,
     pub(crate) path: Option<PathBuf>,
     pub(crate) flags: u32,
@@ -539,6 +541,8 @@ impl<T: Link> ProgramData<T> {
         obj: (aya_obj::Program, aya_obj::Function),
         btf_fd: Option<Arc<crate::MockableFd>>,
         verifier_log_level: VerifierLogLevel,
+        token_fd: Option<Arc<crate::MockableFd>>,
+        features: aya_obj::Features,
     ) -> Self {
         Self {
             name,
@@ -550,6 +554,8 @@ impl<T: Link> ProgramData<T> {
             attach_btf_id: None,
             attach_prog_fd: None,
             btf_fd,
+            token_fd,
+            features,
             verifier_log_level,
             path: None,
             flags: 0,
@@ -562,6 +568,8 @@ impl<T: Link> ProgramData<T> {
         path: &Path,
         info: bpf_prog_info,
         verifier_log_level: VerifierLogLevel,
+        token_fd: Option<Arc<crate::MockableFd>>,
+        features: aya_obj::Features,
     ) -> Result<Self, ProgramError> {
         let attach_btf_id = (info.attach_btf_id > 0).then_some(info.attach_btf_id);
         let attach_btf_obj_fd = (info.attach_btf_obj_id != 0)
@@ -578,6 +586,8 @@ impl<T: Link> ProgramData<T> {
             attach_btf_id,
             attach_prog_fd: None,
             btf_fd: None,
+            token_fd,
+            features,
             verifier_log_level,
             path: Some(path.to_path_buf()),
             flags: 0,
@@ -587,6 +597,8 @@ impl<T: Link> ProgramData<T> {
     pub(crate) fn from_pinned_path<P: AsRef<Path>>(
         path: P,
         verifier_log_level: VerifierLogLevel,
+        token_fd: Option<Arc<crate::MockableFd>>,
+        features: aya_obj::Features,
     ) -> Result<Self, ProgramError> {
         use std::os::unix::ffi::OsStrExt as _;
 
@@ -599,7 +611,7 @@ impl<T: Link> ProgramData<T> {
 
         let info = ProgramInfo::new_from_fd(fd.as_fd())?;
         let name = info.name_as_str().map(ToOwned::to_owned).map(Into::into);
-        Self::from_bpf_prog_info(name, fd, path.as_ref(), info.0, verifier_log_level)
+        Self::from_bpf_prog_info(name, fd, path.as_ref(), info.0, verifier_log_level, token_fd, features)
     }
 }
 
@@ -654,6 +666,8 @@ fn load_program<T: Link>(
         attach_btf_id,
         attach_prog_fd,
         btf_fd,
+        token_fd,
+        features: _,
         verifier_log_level,
         path: _,
         flags,
@@ -712,6 +726,7 @@ fn load_program<T: Link>(
         line_info_rec_size: *line_info_rec_size,
         line_info: line_info.clone(),
         flags: *flags,
+        token_fd: token_fd.as_ref().map(|f| f.as_fd()),
     };
 
     let (ret, verifier_log) = retry_with_verifier_logs(10, |logger| {
@@ -987,7 +1002,7 @@ macro_rules! impl_from_pin {
                 /// On drop, any managed links are detached and the program is unloaded. This will not result in
                 /// the program being unloaded from the kernel if it is still pinned.
                 pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
-                    let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+                    let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default(), None, crate::FEATURES.clone())?;
                     Ok(Self { data })
                 }
             }
@@ -1056,6 +1071,8 @@ macro_rules! impl_from_prog_info {
                         Path::new(""),
                         bpf_progam_info,
                         VerifierLogLevel::default(),
+                        None,
+                        crate::FEATURES.clone(),
                     )?,
                     $($var,)?
                 })
