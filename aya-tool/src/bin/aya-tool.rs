@@ -2,8 +2,6 @@
 
 use std::path::PathBuf;
 
-use aya::token::{FilesystemPermissionsBuilder, create_bpf_filesystem};
-use aya_obj::cmd::BpfCommand;
 use aya_tool::generate::{InputFile, generate};
 use clap::Parser;
 
@@ -27,7 +25,8 @@ enum Command {
         #[clap(last = true, action)]
         bindgen_args: Vec<String>,
     },
-    /// Create a BPF filesystem with token delegation options
+    /// Create a BPF filesystem with token delegation options (Linux only)
+    #[cfg(target_os = "linux")]
     #[clap(name = "create-fs", action)]
     CreateFs {
         /// Path to mount the BPF filesystem
@@ -69,6 +68,7 @@ fn main() -> Result<(), anyhow::Error> {
             }?;
             std::io::stdout().write_all(bindings.as_bytes())?;
         }
+        #[cfg(target_os = "linux")]
         Command::CreateFs {
             path,
             prog: _,
@@ -77,7 +77,9 @@ fn main() -> Result<(), anyhow::Error> {
             uid,
             gid,
         } => {
-            // Build permissions with common defaults for token usage.
+            use aya::token::{FilesystemPermissionsBuilder, create_bpf_filesystem};
+            use aya_obj::cmd::BpfCommand;
+
             let mut builder = FilesystemPermissionsBuilder::default()
                 .allow_cmd(BpfCommand::MapCreate)
                 .allow_cmd(BpfCommand::ProgLoad)
@@ -88,8 +90,7 @@ fn main() -> Result<(), anyhow::Error> {
                 .allow_cmd(BpfCommand::ProgGetFdById)
                 .allow_cmd(BpfCommand::MapGetFdById)
                 .allow_cmd(BpfCommand::ObjPin)
-                .allow_cmd(BpfCommand::ObjGet)
-                .allow_cmd(BpfCommand::TokenCreate);
+                .allow_cmd(BpfCommand::ObjGet);
 
             if let Some(uid) = uid {
                 builder = builder.uid(uid);
