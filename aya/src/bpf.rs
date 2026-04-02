@@ -240,6 +240,7 @@ impl<'a> EbpfLoader<'a> {
     ///     .load_file("file.o")?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
+    #[cfg(target_os = "linux")]
     pub fn token(&mut self, token: &crate::token::BpfToken) -> &mut Self {
         let fd = token.as_fd();
         // We need to dup the fd so the token can outlive the borrow.
