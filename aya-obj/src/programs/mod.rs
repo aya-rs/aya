@@ -115,9 +115,7 @@ impl From<BpfProgType> for bpf_prog_type {
             BpfProgType::SkReuseport => Self::BPF_PROG_TYPE_SK_REUSEPORT,
             BpfProgType::FlowDissector => Self::BPF_PROG_TYPE_FLOW_DISSECTOR,
             BpfProgType::CgroupSysctl => Self::BPF_PROG_TYPE_CGROUP_SYSCTL,
-            BpfProgType::RawTracepointWritable => {
-                Self::BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE
-            }
+            BpfProgType::RawTracepointWritable => Self::BPF_PROG_TYPE_RAW_TRACEPOINT_WRITABLE,
             BpfProgType::CgroupSockopt => Self::BPF_PROG_TYPE_CGROUP_SOCKOPT,
             BpfProgType::Tracing => Self::BPF_PROG_TYPE_TRACING,
             BpfProgType::StructOps => Self::BPF_PROG_TYPE_STRUCT_OPS,
