@@ -75,7 +75,9 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+pub mod attach;
 pub mod btf;
+pub mod cmd;
 #[expect(
     clippy::all,
     clippy::as_pointer_underscore,

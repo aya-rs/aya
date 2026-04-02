@@ -34,5 +34,6 @@ mod sk_storage;
 mod smoke;
 mod strncmp;
 mod tcx;
+mod token;
 mod uprobe_cookie;
 mod xdp;

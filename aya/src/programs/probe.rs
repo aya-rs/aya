@@ -154,7 +154,7 @@ pub(crate) fn attach<P: Probe, T: Link + From<PerfLinkInner>>(
     let prog_fd = prog_fd.as_fd();
     let link = if KernelVersion::at_least(4, 17, 0) {
         let perf_fd = create_as_probe::<P>(kind, fn_name, offset, pid)?;
-        perf_attach(prog_fd, perf_fd, cookie)
+        perf_attach(prog_fd, perf_fd, cookie, &program_data.features)
     } else {
         if cookie.is_some() {
             return Err(ProgramError::AttachCookieNotSupported);

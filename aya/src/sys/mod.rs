@@ -15,6 +15,7 @@ use std::{
 };
 
 use aya_obj::generated::{bpf_attr, bpf_cmd, bpf_stats_type, perf_event_attr};
+pub use bpf::detect_features_with_token;
 pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
