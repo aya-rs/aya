@@ -41,20 +41,20 @@ pub enum BpfLinkType {
 impl From<BpfLinkType> for bpf_link_type {
     fn from(value: BpfLinkType) -> Self {
         match value {
-            BpfLinkType::Unspecified => bpf_link_type::BPF_LINK_TYPE_UNSPEC,
-            BpfLinkType::RawTracepoint => bpf_link_type::BPF_LINK_TYPE_RAW_TRACEPOINT,
-            BpfLinkType::Tracing => bpf_link_type::BPF_LINK_TYPE_TRACING,
-            BpfLinkType::Cgroup => bpf_link_type::BPF_LINK_TYPE_CGROUP,
-            BpfLinkType::Iter => bpf_link_type::BPF_LINK_TYPE_ITER,
-            BpfLinkType::Netns => bpf_link_type::BPF_LINK_TYPE_NETNS,
-            BpfLinkType::Xdp => bpf_link_type::BPF_LINK_TYPE_XDP,
-            BpfLinkType::PerfEvent => bpf_link_type::BPF_LINK_TYPE_PERF_EVENT,
-            BpfLinkType::KprobeMulti => bpf_link_type::BPF_LINK_TYPE_KPROBE_MULTI,
-            BpfLinkType::StructOps => bpf_link_type::BPF_LINK_TYPE_STRUCT_OPS,
-            BpfLinkType::Netfilter => bpf_link_type::BPF_LINK_TYPE_NETFILTER,
-            BpfLinkType::Tcx => bpf_link_type::BPF_LINK_TYPE_TCX,
-            BpfLinkType::UprobeMulti => bpf_link_type::BPF_LINK_TYPE_UPROBE_MULTI,
-            BpfLinkType::Netkit => bpf_link_type::BPF_LINK_TYPE_NETKIT,
+            BpfLinkType::Unspecified => Self::BPF_LINK_TYPE_UNSPEC,
+            BpfLinkType::RawTracepoint => Self::BPF_LINK_TYPE_RAW_TRACEPOINT,
+            BpfLinkType::Tracing => Self::BPF_LINK_TYPE_TRACING,
+            BpfLinkType::Cgroup => Self::BPF_LINK_TYPE_CGROUP,
+            BpfLinkType::Iter => Self::BPF_LINK_TYPE_ITER,
+            BpfLinkType::Netns => Self::BPF_LINK_TYPE_NETNS,
+            BpfLinkType::Xdp => Self::BPF_LINK_TYPE_XDP,
+            BpfLinkType::PerfEvent => Self::BPF_LINK_TYPE_PERF_EVENT,
+            BpfLinkType::KprobeMulti => Self::BPF_LINK_TYPE_KPROBE_MULTI,
+            BpfLinkType::StructOps => Self::BPF_LINK_TYPE_STRUCT_OPS,
+            BpfLinkType::Netfilter => Self::BPF_LINK_TYPE_NETFILTER,
+            BpfLinkType::Tcx => Self::BPF_LINK_TYPE_TCX,
+            BpfLinkType::UprobeMulti => Self::BPF_LINK_TYPE_UPROBE_MULTI,
+            BpfLinkType::Netkit => Self::BPF_LINK_TYPE_NETKIT,
         }
     }
 }
