@@ -12,11 +12,7 @@ use aya::{
     token::{BpfToken, FilesystemPermissionsBuilder, create_bpf_filesystem},
     util::KernelVersion,
 };
-use aya_obj::{
-    cmd::BpfCommand,
-    maps::BpfMapType,
-    programs::BpfProgType,
-};
+use aya_obj::{cmd::BpfCommand, maps::BpfMapType, programs::BpfProgType};
 
 fn cleanup(path: &str) {
     drop(Command::new("umount").arg(path).output());
@@ -26,9 +22,7 @@ fn cleanup(path: &str) {
 fn require_kernel_6_9() -> bool {
     let version = KernelVersion::current().unwrap();
     if version < KernelVersion::new(6, 9, 0) {
-        eprintln!(
-            "skipping BPF token test on kernel {version:?}, BPF token requires >= 6.9"
-        );
+        eprintln!("skipping BPF token test on kernel {version:?}, BPF token requires >= 6.9");
         return false;
     }
     true
@@ -52,10 +46,7 @@ fn try_create_token(path: &str) -> Option<BpfToken> {
 
 /// Helper: mount a BPFFS with given permissions, skip test on EPERM.
 /// Returns None if the test should be skipped.
-fn setup_bpffs(
-    path: &str,
-    perms: aya::token::FilesystemPermissions,
-) -> Option<()> {
+fn setup_bpffs(path: &str, perms: aya::token::FilesystemPermissions) -> Option<()> {
     cleanup(path);
     fs::create_dir_all(path).unwrap();
     match create_bpf_filesystem(path, perms) {
@@ -157,7 +148,10 @@ fn token_btf_load() {
     // the program will load successfully (BTF is loaded as part of the
     // EbpfLoader::load() pipeline).
     let bpf = EbpfLoader::new().token(&token).load(crate::PASS);
-    assert!(bpf.is_ok(), "EbpfLoader with token should load BTF successfully");
+    assert!(
+        bpf.is_ok(),
+        "EbpfLoader with token should load BTF successfully"
+    );
 
     cleanup(path);
 }
@@ -232,7 +226,10 @@ fn token_feature_detection() {
     // We don't assert specific values because it depends on kernel config,
     // but the features struct should be successfully created.
     // At minimum, prog_name support (kernel 4.15+) should be true.
-    assert!(features.bpf_name(), "bpf_name should be supported on kernel >= 6.9");
+    assert!(
+        features.bpf_name(),
+        "bpf_name should be supported on kernel >= 6.9"
+    );
 
     cleanup(path);
 }
@@ -286,8 +283,7 @@ fn token_direct_create() {
     }
 
     let path = "/tmp/aya-test-token-direct-create";
-    let perms = FilesystemPermissionsBuilder::default()
-        .build();
+    let perms = FilesystemPermissionsBuilder::default().build();
 
     if setup_bpffs(path, perms).is_none() {
         return;
@@ -312,7 +308,10 @@ fn token_create_nonexistent_path() {
     }
 
     let result = BpfToken::create("/nonexistent/bpffs/path");
-    assert!(result.is_err(), "BpfToken::create should fail for nonexistent path");
+    assert!(
+        result.is_err(),
+        "BpfToken::create should fail for nonexistent path"
+    );
 }
 
 /// Tests that BpfToken::create fails on a regular directory (not a BPFFS).

@@ -611,7 +611,15 @@ impl<T: Link> ProgramData<T> {
 
         let info = ProgramInfo::new_from_fd(fd.as_fd())?;
         let name = info.name_as_str().map(ToOwned::to_owned).map(Into::into);
-        Self::from_bpf_prog_info(name, fd, path.as_ref(), info.0, verifier_log_level, token_fd, features)
+        Self::from_bpf_prog_info(
+            name,
+            fd,
+            path.as_ref(),
+            info.0,
+            verifier_log_level,
+            token_fd,
+            features,
+        )
     }
 }
 

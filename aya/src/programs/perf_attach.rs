@@ -4,9 +4,7 @@ use std::{
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
 };
 
-use aya_obj::generated::bpf_attach_type::BPF_PERF_EVENT;
-
-use aya_obj::Features;
+use aya_obj::{Features, generated::bpf_attach_type::BPF_PERF_EVENT};
 
 use crate::{
     programs::{FdLink, Link, ProgramError, id_as_key, probe::ProbeEvent},

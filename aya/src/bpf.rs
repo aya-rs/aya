@@ -573,10 +573,19 @@ impl<'a> EbpfLoader<'a> {
             }
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
             let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
-                MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd, token_fd, features.clone())?
+                MapData::create_pinned_by_name(
+                    pin_path,
+                    obj,
+                    &name,
+                    btf_fd,
+                    token_fd,
+                    features.clone(),
+                )?
             } else {
                 match obj.pinning() {
-                    PinningType::None => MapData::create(obj, &name, btf_fd, token_fd, features.clone())?,
+                    PinningType::None => {
+                        MapData::create(obj, &name, btf_fd, token_fd, features.clone())?
+                    }
                     PinningType::ByName => {
                         // pin maps in /sys/fs/bpf by default to align with libbpf
                         // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
@@ -585,7 +594,14 @@ impl<'a> EbpfLoader<'a> {
                             .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
                         let path = path.join(&name);
 
-                        MapData::create_pinned_by_name(path, obj, &name, btf_fd, token_fd, features.clone())?
+                        MapData::create_pinned_by_name(
+                            path,
+                            obj,
+                            &name,
+                            btf_fd,
+                            token_fd,
+                            features.clone(),
+                        )?
                     }
                 }
             };
@@ -620,21 +636,48 @@ impl<'a> EbpfLoader<'a> {
                 let btf_fd = btf_fd.as_ref().map(Arc::clone);
                 let program = if extensions.contains(name.as_str()) {
                     Program::Extension(Extension {
-                        data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                        data: ProgramData::new(
+                            prog_name,
+                            obj,
+                            btf_fd,
+                            *verifier_log_level,
+                            token.clone(),
+                            features.clone(),
+                        ),
                     })
                 } else {
                     match &section {
                         ProgramSection::KProbe => Program::KProbe(KProbe {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                             kind: ProbeKind::Entry,
                         }),
                         ProgramSection::KRetProbe => Program::KProbe(KProbe {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                             kind: ProbeKind::Return,
                         }),
                         ProgramSection::UProbe { sleepable } => {
-                            let mut data =
-                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone());
+                            let mut data = ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            );
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
@@ -644,8 +687,14 @@ impl<'a> EbpfLoader<'a> {
                             })
                         }
                         ProgramSection::URetProbe { sleepable } => {
-                            let mut data =
-                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone());
+                            let mut data = ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            );
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
@@ -655,16 +704,36 @@ impl<'a> EbpfLoader<'a> {
                             })
                         }
                         ProgramSection::TracePoint => Program::TracePoint(TracePoint {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::SocketFilter => Program::SocketFilter(SocketFilter {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::Xdp {
                             frags, attach_type, ..
                         } => {
-                            let mut data =
-                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone());
+                            let mut data = ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            );
                             if *frags {
                                 data.flags = BPF_F_XDP_HAS_FRAGS;
                             }
@@ -674,111 +743,282 @@ impl<'a> EbpfLoader<'a> {
                             })
                         }
                         ProgramSection::SkMsg => Program::SkMsg(SkMsg {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::CgroupSysctl => Program::CgroupSysctl(CgroupSysctl {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::CgroupSockopt { attach_type, .. } => {
                             Program::CgroupSockopt(CgroupSockopt {
-                                data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                                data: ProgramData::new(
+                                    prog_name,
+                                    obj,
+                                    btf_fd,
+                                    *verifier_log_level,
+                                    token.clone(),
+                                    features.clone(),
+                                ),
                                 attach_type: *attach_type,
                             })
                         }
                         ProgramSection::SkSkbStreamParser => Program::SkSkb(SkSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                             kind: SkSkbKind::StreamParser,
                         }),
                         ProgramSection::SkSkbStreamVerdict => Program::SkSkb(SkSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                             kind: SkSkbKind::StreamVerdict,
                         }),
                         ProgramSection::SockOps => Program::SockOps(SockOps {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::SchedClassifier => {
                             Program::SchedClassifier(SchedClassifier {
-                                data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                                data: ProgramData::new(
+                                    prog_name,
+                                    obj,
+                                    btf_fd,
+                                    *verifier_log_level,
+                                    token.clone(),
+                                    features.clone(),
+                                ),
                             })
                         }
                         ProgramSection::CgroupSkb => Program::CgroupSkb(CgroupSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                             attach_type: None,
                         }),
                         ProgramSection::CgroupSkbIngress => Program::CgroupSkb(CgroupSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                             attach_type: Some(CgroupSkbAttachType::Ingress),
                         }),
                         ProgramSection::CgroupSkbEgress => Program::CgroupSkb(CgroupSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                             attach_type: Some(CgroupSkbAttachType::Egress),
                         }),
                         ProgramSection::CgroupSockAddr { attach_type, .. } => {
                             Program::CgroupSockAddr(CgroupSockAddr {
-                                data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                                data: ProgramData::new(
+                                    prog_name,
+                                    obj,
+                                    btf_fd,
+                                    *verifier_log_level,
+                                    token.clone(),
+                                    features.clone(),
+                                ),
                                 attach_type: *attach_type,
                             })
                         }
                         ProgramSection::LircMode2 => Program::LircMode2(LircMode2 {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::PerfEvent => Program::PerfEvent(PerfEvent {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::RawTracePoint => Program::RawTracePoint(RawTracePoint {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::Lsm { sleepable } => {
-                            let mut data =
-                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone());
+                            let mut data = ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            );
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
                             Program::Lsm(Lsm { data })
                         }
                         ProgramSection::LsmCgroup => Program::LsmCgroup(LsmCgroup {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::BtfTracePoint => Program::BtfTracePoint(BtfTracePoint {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::FEntry { sleepable } => {
-                            let mut data =
-                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone());
+                            let mut data = ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            );
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
                             Program::FEntry(FEntry { data })
                         }
                         ProgramSection::FExit { sleepable } => {
-                            let mut data =
-                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone());
+                            let mut data = ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            );
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
                             Program::FExit(FExit { data })
                         }
                         ProgramSection::FlowDissector => Program::FlowDissector(FlowDissector {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::Extension => Program::Extension(Extension {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::SkLookup => Program::SkLookup(SkLookup {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::CgroupSock { attach_type, .. } => {
                             Program::CgroupSock(CgroupSock {
-                                data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                                data: ProgramData::new(
+                                    prog_name,
+                                    obj,
+                                    btf_fd,
+                                    *verifier_log_level,
+                                    token.clone(),
+                                    features.clone(),
+                                ),
                                 attach_type: *attach_type,
                             })
                         }
                         ProgramSection::CgroupDevice => Program::CgroupDevice(CgroupDevice {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone()),
+                            data: ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            ),
                         }),
                         ProgramSection::Iter { sleepable } => {
-                            let mut data =
-                                ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level, token.clone(), features.clone());
+                            let mut data = ProgramData::new(
+                                prog_name,
+                                obj,
+                                btf_fd,
+                                *verifier_log_level,
+                                token.clone(),
+                                features.clone(),
+                            );
                             if *sleepable {
                                 data.flags = BPF_F_SLEEPABLE;
                             }
@@ -864,9 +1104,7 @@ fn max_entries_override(
 /// based on the rules for that map type.
 const fn value_size_override(map_type: bpf_map_type, features: &Features) -> Option<u32> {
     match map_type {
-        bpf_map_type::BPF_MAP_TYPE_CPUMAP => {
-            Some(if features.cpumap_prog_id() { 8 } else { 4 })
-        }
+        bpf_map_type::BPF_MAP_TYPE_CPUMAP => Some(if features.cpumap_prog_id() { 8 } else { 4 }),
         bpf_map_type::BPF_MAP_TYPE_DEVMAP | bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => {
             Some(if features.devmap_prog_id() { 8 } else { 4 })
         }

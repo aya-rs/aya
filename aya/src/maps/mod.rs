@@ -58,7 +58,9 @@ use std::{
     ptr,
 };
 
-use aya_obj::{EbpfSectionKind, Features, InvalidTypeBinding, generated::bpf_map_type, parse_map_info};
+use aya_obj::{
+    EbpfSectionKind, Features, InvalidTypeBinding, generated::bpf_map_type, parse_map_info,
+};
 use thiserror::Error;
 
 use crate::{
@@ -1189,7 +1191,8 @@ mod tests {
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
         });
 
-        let map_data = MapData::create(new_obj_map(), TEST_NAME, None, None, Default::default()).unwrap();
+        let map_data =
+            MapData::create(new_obj_map(), TEST_NAME, None, None, Default::default()).unwrap();
         assert_eq!(TEST_NAME, map_data.info().unwrap().name_as_str().unwrap());
     }
 

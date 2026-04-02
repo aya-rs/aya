@@ -227,7 +227,9 @@ pub fn create_bpf_filesystem<P: AsRef<Path>>(
     let bpf_fs = c"bpf";
 
     // fsopen("bpf", FSOPEN_CLOEXEC)
-    let fs_fd = unsafe { libc::syscall(SYS_FSOPEN, bpf_fs.as_ptr(), 1u32 /* FSOPEN_CLOEXEC */) };
+    let fs_fd = unsafe {
+        libc::syscall(SYS_FSOPEN, bpf_fs.as_ptr(), 1u32 /* FSOPEN_CLOEXEC */)
+    };
     if fs_fd < 0 {
         return Err(io::Error::last_os_error());
     }

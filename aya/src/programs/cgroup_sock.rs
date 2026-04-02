@@ -115,7 +115,12 @@ impl CgroupSock {
         path: P,
         attach_type: CgroupSockAttachType,
     ) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default(), None, crate::FEATURES.clone())?;
+        let data = ProgramData::from_pinned_path(
+            path,
+            VerifierLogLevel::default(),
+            None,
+            crate::FEATURES.clone(),
+        )?;
         Ok(Self { data, attach_type })
     }
 }

@@ -116,7 +116,12 @@ impl CgroupSockAddr {
         path: P,
         attach_type: CgroupSockAddrAttachType,
     ) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default(), None, crate::FEATURES.clone())?;
+        let data = ProgramData::from_pinned_path(
+            path,
+            VerifierLogLevel::default(),
+            None,
+            crate::FEATURES.clone(),
+        )?;
         Ok(Self { data, attach_type })
     }
 }

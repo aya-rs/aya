@@ -182,7 +182,12 @@ impl Xdp {
         path: P,
         attach_type: XdpAttachType,
     ) -> Result<Self, ProgramError> {
-        let mut data = ProgramData::from_pinned_path(path, VerifierLogLevel::default(), None, crate::FEATURES.clone())?;
+        let mut data = ProgramData::from_pinned_path(
+            path,
+            VerifierLogLevel::default(),
+            None,
+            crate::FEATURES.clone(),
+        )?;
         data.expected_attach_type = Some(attach_type.into());
         Ok(Self { data, attach_type })
     }

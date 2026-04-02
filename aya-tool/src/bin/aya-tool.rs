@@ -100,7 +100,7 @@ fn main() -> Result<(), anyhow::Error> {
 
             create_bpf_filesystem(path, builder.build())?;
         }
-    };
+    }
 
     Ok(())
 }

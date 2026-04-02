@@ -1074,10 +1074,7 @@ pub(crate) fn is_prog_id_supported(map_type: bpf_map_type) -> bool {
     is_prog_id_supported_inner(map_type, None)
 }
 
-fn is_prog_id_supported_inner(
-    map_type: bpf_map_type,
-    token_fd: Option<BorrowedFd<'_>>,
-) -> bool {
+fn is_prog_id_supported_inner(map_type: bpf_map_type, token_fd: Option<BorrowedFd<'_>>) -> bool {
     assert_matches!(
         map_type,
         bpf_map_type::BPF_MAP_TYPE_CPUMAP
@@ -1220,7 +1217,13 @@ fn is_btf_datasec_zero_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool
     let datasec_type = BtfType::DataSec(DataSec::new(name_offset, Vec::new(), 0));
     btf.add_type(datasec_type);
 
-    bpf_load_btf(btf.to_bytes().as_slice(), &mut [], Default::default(), token_fd).is_ok()
+    bpf_load_btf(
+        btf.to_bytes().as_slice(),
+        &mut [],
+        Default::default(),
+        token_fd,
+    )
+    .is_ok()
 }
 
 pub(crate) fn is_btf_enum64_supported() -> bool {
