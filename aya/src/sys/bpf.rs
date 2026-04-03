@@ -756,7 +756,7 @@ fn with_raised_rlimit_retry<T, F: FnMut() -> io::Result<T>>(mut op: F) -> io::Re
     result
 }
 
-pub(super) fn bpf_map_create(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
+pub(crate) fn bpf_map_create(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
     // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
     with_raised_rlimit_retry(|| unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, attr) })
 }

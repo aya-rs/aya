@@ -8,8 +8,8 @@ use object::{SectionIndex, SymbolKind};
 use crate::{
     EbpfSectionKind,
     generated::{
-        BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_MAP_FD,
-        BPF_PSEUDO_MAP_VALUE, bpf_insn,
+        BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC, BPF_PSEUDO_KFUNC_CALL,
+        BPF_PSEUDO_MAP_FD, BPF_PSEUDO_MAP_VALUE, bpf_insn,
     },
     maps::Map,
     obj::{Function, Object},
@@ -356,11 +356,29 @@ impl<'a> FunctionLinker<'a> {
             let ins = program.instructions[ins_index];
             let is_call = insn_is_call(ins);
 
-            let rel = relocations
-                .and_then(|relocations| {
-                    relocations
-                        .get(&((fun.section_offset + (ins_index - start_ins) * INS_SIZE) as u64))
-                })
+            // Look up the raw relocation for this instruction
+            let raw_rel = relocations.and_then(|relocations| {
+                relocations
+                    .get(&((fun.section_offset + (ins_index - start_ins) * INS_SIZE) as u64))
+            });
+
+            // Check if this is a call to an extern/undefined symbol (e.g. kfunc).
+            // Patch these from BPF_PSEUDO_CALL to BPF_PSEUDO_KFUNC_CALL so the
+            // kernel verifier resolves them against vmlinux BTF.
+            if is_call {
+                if let Some(rel) = raw_rel {
+                    if let Some(sym) = self.symbol_table.get(&rel.symbol_index) {
+                        if !sym.is_definition && sym.section_index.is_none() {
+                            let ins = &mut program.instructions[ins_index];
+                            ins.set_src_reg(BPF_PSEUDO_KFUNC_CALL as u8);
+                            ins.imm = 0; // kernel resolves by BTF func name
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            let rel = raw_rel
                 .and_then(|rel| {
                     // get the symbol for the relocation
                     self.symbol_table
