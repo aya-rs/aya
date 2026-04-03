@@ -64,11 +64,10 @@ impl Lsm {
     /// * `lsm_hook_name` - full name of the LSM hook that the program should
     ///   be attached to
     pub fn load(&mut self, lsm_hook_name: &str, btf: &Btf) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_LSM_MAC);
         let type_name = format!("bpf_lsm_{lsm_hook_name}");
         self.data.attach_btf_id =
             Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Func)?);
-        load_program(BPF_PROG_TYPE_LSM, &mut self.data)
+        load_program(BPF_PROG_TYPE_LSM, Some(BPF_LSM_MAC), &mut self.data)
     }
 
     /// Attaches the program.

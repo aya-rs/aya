@@ -60,9 +60,12 @@ impl FEntry {
     /// is entered. The `btf` argument must contain the BTF info for the
     /// running kernel.
     pub fn load(&mut self, fn_name: &str, btf: &Btf) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_TRACE_FENTRY);
         self.data.attach_btf_id = Some(btf.id_by_type_name_kind(fn_name, BtfKind::Func)?);
-        load_program(BPF_PROG_TYPE_TRACING, &mut self.data)
+        load_program(
+            BPF_PROG_TYPE_TRACING,
+            Some(BPF_TRACE_FENTRY),
+            &mut self.data,
+        )
     }
 
     /// Attaches the program.

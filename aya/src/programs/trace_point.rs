@@ -65,7 +65,7 @@ impl TracePoint {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_TRACEPOINT, &mut self.data)
+        load_program(BPF_PROG_TYPE_TRACEPOINT, None, &mut self.data)
     }
 
     /// Attaches to a given trace point.

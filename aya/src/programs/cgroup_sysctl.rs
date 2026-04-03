@@ -60,7 +60,7 @@ impl CgroupSysctl {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_CGROUP_SYSCTL, &mut self.data)
+        load_program(BPF_PROG_TYPE_CGROUP_SYSCTL, None, &mut self.data)
     }
 
     /// Attaches the program to the given cgroup.

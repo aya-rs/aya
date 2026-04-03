@@ -156,7 +156,7 @@ impl SchedClassifier {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SCHED_CLS, &mut self.data)
+        load_program(BPF_PROG_TYPE_SCHED_CLS, None, &mut self.data)
     }
 
     /// Attaches the program to the given `interface`.

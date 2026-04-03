@@ -69,7 +69,7 @@ impl SocketFilter {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SOCKET_FILTER, &mut self.data)
+        load_program(BPF_PROG_TYPE_SOCKET_FILTER, None, &mut self.data)
     }
 
     /// Attaches the filter on the given socket.

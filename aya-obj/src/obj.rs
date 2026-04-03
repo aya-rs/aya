@@ -32,7 +32,8 @@ use crate::{
     },
     maps::{BtfMap, BtfMapDef, LegacyMap, MINIMUM_MAP_SIZE, Map, PinningType, bpf_map_def},
     programs::{
-        CgroupSockAddrAttachType, CgroupSockAttachType, CgroupSockoptAttachType, XdpAttachType,
+        CgroupSkbAttachType, CgroupSockAddrAttachType, CgroupSockAttachType,
+        CgroupSockoptAttachType, XdpAttachType,
     },
     relocation::{INS_SIZE, Relocation, Symbol},
     util::HashMap,
@@ -251,9 +252,9 @@ pub enum ProgramSection {
     SkSkbStreamVerdict,
     SockOps,
     SchedClassifier,
-    CgroupSkb,
-    CgroupSkbIngress,
-    CgroupSkbEgress,
+    CgroupSkb {
+        attach_type: Option<CgroupSkbAttachType>,
+    },
     CgroupSockAddr {
         attach_type: CgroupSockAddrAttachType,
     },
@@ -343,20 +344,21 @@ impl FromStr for ProgramSection {
             "classifier" => Self::SchedClassifier,
             "cgroup_skb" => {
                 let name = next()?;
-                match name {
-                    "ingress" => Self::CgroupSkbIngress,
-                    "egress" => Self::CgroupSkbEgress,
+                let attach_type = Some(match name {
+                    "ingress" => CgroupSkbAttachType::Ingress,
+                    "egress" => CgroupSkbAttachType::Egress,
                     _ => {
                         return Err(ParseError::InvalidProgramSection {
                             section: section.to_owned(),
                         });
                     }
-                }
+                });
+                Self::CgroupSkb { attach_type }
             }
             "cgroup" => {
                 let name = next()?;
                 match name {
-                    "skb" => Self::CgroupSkb,
+                    "skb" => Self::CgroupSkb { attach_type: None },
                     "sysctl" => Self::CgroupSysctl,
                     "dev" => Self::CgroupDevice,
                     "getsockopt" => Self::CgroupSockopt {
@@ -2435,7 +2437,9 @@ mod tests {
         assert_matches!(
             obj.programs.get("ingress"),
             Some(Program {
-                section: ProgramSection::CgroupSkbIngress,
+                section: ProgramSection::CgroupSkb {
+                    attach_type: Some(CgroupSkbAttachType::Ingress),
+                },
                 ..
             })
         );
@@ -2458,7 +2462,9 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::CgroupSkbIngress,
+                section: ProgramSection::CgroupSkb {
+                    attach_type: Some(CgroupSkbAttachType::Ingress),
+                },
                 ..
             })
         );
@@ -2481,7 +2487,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("skb"),
             Some(Program {
-                section: ProgramSection::CgroupSkb,
+                section: ProgramSection::CgroupSkb { attach_type: None },
                 ..
             })
         );
@@ -2504,7 +2510,7 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::CgroupSkb,
+                section: ProgramSection::CgroupSkb { attach_type: None },
                 ..
             })
         );

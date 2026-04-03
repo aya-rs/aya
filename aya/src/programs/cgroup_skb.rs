@@ -2,10 +2,8 @@
 
 use std::{hash::Hash, os::fd::AsFd, path::Path};
 
-use aya_obj::generated::{
-    bpf_attach_type::{BPF_CGROUP_INET_EGRESS, BPF_CGROUP_INET_INGRESS},
-    bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB,
-};
+use aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB;
+pub use aya_obj::programs::CgroupSkbAttachType;
 
 use crate::{
     VerifierLogLevel,
@@ -66,11 +64,8 @@ impl CgroupSkb {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = self.attach_type.map(|attach_type| match attach_type {
-            CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
-            CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
-        });
-        load_program(BPF_PROG_TYPE_CGROUP_SKB, &mut self.data)
+        let Self { data, attach_type } = self;
+        load_program(BPF_PROG_TYPE_CGROUP_SKB, attach_type.map(Into::into), data)
     }
 
     /// Returns the expected attach type of the program.
@@ -95,11 +90,7 @@ impl CgroupSkb {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
-
-        let attach_type = match attach_type {
-            CgroupSkbAttachType::Ingress => BPF_CGROUP_INET_INGRESS,
-            CgroupSkbAttachType::Egress => BPF_CGROUP_INET_EGRESS,
-        };
+        let attach_type = attach_type.into();
         if KernelVersion::at_least(5, 7, 0) {
             let link_fd = bpf_link_create(
                 prog_fd,
@@ -185,12 +176,3 @@ define_link_wrapper!(
 );
 
 impl_try_into_fdlink!(CgroupSkbLink, CgroupSkbLinkInner);
-
-/// Defines where to attach a [`CgroupSkb`] program.
-#[derive(Copy, Clone, Debug)]
-pub enum CgroupSkbAttachType {
-    /// Attach to ingress.
-    Ingress,
-    /// Attach to egress.
-    Egress,
-}

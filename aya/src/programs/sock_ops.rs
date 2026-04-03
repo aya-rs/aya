@@ -59,7 +59,7 @@ impl SockOps {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SOCK_OPS, &mut self.data)
+        load_program(BPF_PROG_TYPE_SOCK_OPS, None, &mut self.data)
     }
 
     /// Attaches the program to the given cgroup.

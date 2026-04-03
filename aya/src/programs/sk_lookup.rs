@@ -59,8 +59,7 @@ impl SkLookup {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_SK_LOOKUP);
-        load_program(BPF_PROG_TYPE_SK_LOOKUP, &mut self.data)
+        load_program(BPF_PROG_TYPE_SK_LOOKUP, Some(BPF_SK_LOOKUP), &mut self.data)
     }
 
     /// Attaches the program to the given network namespace.

@@ -61,7 +61,7 @@ impl LircMode2 {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_LIRC_MODE2, &mut self.data)
+        load_program(BPF_PROG_TYPE_LIRC_MODE2, None, &mut self.data)
     }
 
     /// Attaches the program to the given lirc device.

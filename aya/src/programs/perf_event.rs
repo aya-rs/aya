@@ -437,7 +437,7 @@ impl PerfEvent {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_PERF_EVENT, &mut self.data)
+        load_program(BPF_PROG_TYPE_PERF_EVENT, None, &mut self.data)
     }
 
     /// Attaches to the given perf event.

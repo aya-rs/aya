@@ -65,11 +65,10 @@ impl Iter {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self, iter_type: &str, btf: &Btf) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_TRACE_ITER);
         let type_name = format!("bpf_iter_{iter_type}");
         self.data.attach_btf_id =
             Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Func)?);
-        load_program(BPF_PROG_TYPE_TRACING, &mut self.data)
+        load_program(BPF_PROG_TYPE_TRACING, Some(BPF_TRACE_ITER), &mut self.data)
     }
 
     /// Attaches the program.

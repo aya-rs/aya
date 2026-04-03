@@ -70,8 +70,11 @@ impl FlowDissector {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_FLOW_DISSECTOR);
-        load_program(BPF_PROG_TYPE_FLOW_DISSECTOR, &mut self.data)
+        load_program(
+            BPF_PROG_TYPE_FLOW_DISSECTOR,
+            Some(BPF_FLOW_DISSECTOR),
+            &mut self.data,
+        )
     }
 
     /// Attaches the program to the given network namespace.

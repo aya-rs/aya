@@ -57,7 +57,7 @@ impl KProbe {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
+        load_program(BPF_PROG_TYPE_KPROBE, None, &mut self.data)
     }
 
     /// Returns [`ProbeKind::Entry`] if the program is a `kprobe`, or

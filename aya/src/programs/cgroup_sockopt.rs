@@ -61,8 +61,12 @@ impl CgroupSockopt {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(self.attach_type.into());
-        load_program(BPF_PROG_TYPE_CGROUP_SOCKOPT, &mut self.data)
+        let Self { data, attach_type } = self;
+        load_program(
+            BPF_PROG_TYPE_CGROUP_SOCKOPT,
+            Some((*attach_type).into()),
+            data,
+        )
     }
 
     /// Attaches the program to the given cgroup.
@@ -76,7 +80,7 @@ impl CgroupSockopt {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
-        let attach_type = self.data.expected_attach_type.unwrap();
+        let attach_type = self.attach_type.into();
         if KernelVersion::at_least(5, 7, 0) {
             let link_fd = bpf_link_create(
                 prog_fd,

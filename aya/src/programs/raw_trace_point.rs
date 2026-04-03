@@ -44,7 +44,7 @@ impl RawTracePoint {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_RAW_TRACEPOINT, &mut self.data)
+        load_program(BPF_PROG_TYPE_RAW_TRACEPOINT, None, &mut self.data)
     }
 
     /// Attaches the program to the given tracepoint.

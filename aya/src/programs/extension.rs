@@ -82,7 +82,7 @@ impl Extension {
         self.data.attach_btf_obj_fd = Some(btf_fd);
         self.data.attach_prog_fd = Some(program);
         self.data.attach_btf_id = Some(btf_id);
-        load_program(BPF_PROG_TYPE_EXT, &mut self.data)
+        load_program(BPF_PROG_TYPE_EXT, None, &mut self.data)
     }
 
     /// Attaches the extension.
