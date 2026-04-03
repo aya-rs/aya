@@ -530,7 +530,6 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) obj: Option<(aya_obj::Program, aya_obj::Function)>,
     pub(crate) fd: Option<ProgramFd>,
     pub(crate) links: Links<T>,
-    pub(crate) expected_attach_type: Option<bpf_attach_type>,
     pub(crate) attach_btf_obj_fd: Option<crate::MockableFd>,
     pub(crate) attach_btf_id: Option<u32>,
     pub(crate) attach_prog_fd: Option<ProgramFd>,
@@ -552,7 +551,6 @@ impl<T: Link> ProgramData<T> {
             obj: Some(obj),
             fd: None,
             links: Links::new(),
-            expected_attach_type: None,
             attach_btf_obj_fd: None,
             attach_btf_id: None,
             attach_prog_fd: None,
@@ -580,7 +578,6 @@ impl<T: Link> ProgramData<T> {
             obj: None,
             fd: Some(ProgramFd(fd)),
             links: Links::new(),
-            expected_attach_type: None,
             attach_btf_obj_fd,
             attach_btf_id,
             attach_prog_fd: None,
@@ -647,8 +644,24 @@ fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Resul
     Ok(())
 }
 
+fn load_program_without_attach_type<T: Link>(
+    prog_type: bpf_prog_type,
+    data: &mut ProgramData<T>,
+) -> Result<(), ProgramError> {
+    load_program(prog_type, None, data)
+}
+
+fn load_program_with_attach_type<A: Into<bpf_attach_type>, T: Link>(
+    prog_type: bpf_prog_type,
+    expected_attach_type: A,
+    data: &mut ProgramData<T>,
+) -> Result<(), ProgramError> {
+    load_program(prog_type, Some(expected_attach_type.into()), data)
+}
+
 fn load_program<T: Link>(
     prog_type: bpf_prog_type,
+    expected_attach_type: Option<bpf_attach_type>,
     data: &mut ProgramData<T>,
 ) -> Result<(), ProgramError> {
     let ProgramData {
@@ -656,7 +669,6 @@ fn load_program<T: Link>(
         obj,
         fd,
         links: _,
-        expected_attach_type,
         attach_btf_obj_fd,
         attach_btf_id,
         attach_prog_fd,
@@ -709,7 +721,7 @@ fn load_program<T: Link>(
         insns: instructions,
         license,
         kernel_version: target_kernel_version,
-        expected_attach_type: *expected_attach_type,
+        expected_attach_type,
         prog_btf_fd: btf_fd.as_ref().map(|f| f.as_fd()),
         attach_btf_obj_fd: attach_btf_obj_fd.as_ref().map(|fd| fd.as_fd()),
         attach_btf_id: *attach_btf_id,

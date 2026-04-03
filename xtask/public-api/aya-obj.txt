@@ -2323,12 +2323,16 @@ pub fn aya_obj::generated::bpf_attach_type::clone(&self) -> aya_obj::generated::
 impl core::cmp::Eq for aya_obj::generated::bpf_attach_type
 impl core::cmp::PartialEq for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::eq(&self, other: &aya_obj::generated::bpf_attach_type) -> bool
+impl core::convert::From<aya_obj::programs::cgroup_skb::CgroupSkbAttachType> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_skb::CgroupSkbAttachType) -> Self
 impl core::convert::From<aya_obj::programs::cgroup_sock::CgroupSockAttachType> for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> Self
 impl core::convert::From<aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType> for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> Self
 impl core::convert::From<aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType> for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> Self
+impl core::convert::From<aya_obj::programs::sk_skb::SkSkbKind> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::sk_skb::SkSkbKind) -> Self
 impl core::convert::From<aya_obj::programs::xdp::XdpAttachType> for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::from(value: aya_obj::programs::xdp::XdpAttachType) -> Self
 impl core::convert::TryFrom<u32> for aya_obj::generated::bpf_attach_type
@@ -8804,8 +8808,7 @@ pub enum aya_obj::obj::ProgramSection
 pub aya_obj::obj::ProgramSection::BtfTracePoint
 pub aya_obj::obj::ProgramSection::CgroupDevice
 pub aya_obj::obj::ProgramSection::CgroupSkb
-pub aya_obj::obj::ProgramSection::CgroupSkbEgress
-pub aya_obj::obj::ProgramSection::CgroupSkbIngress
+pub aya_obj::obj::ProgramSection::CgroupSkb::attach_type: core::option::Option<aya_obj::programs::cgroup_skb::CgroupSkbAttachType>
 pub aya_obj::obj::ProgramSection::CgroupSock
 pub aya_obj::obj::ProgramSection::CgroupSock::attach_type: aya_obj::programs::cgroup_sock::CgroupSockAttachType
 pub aya_obj::obj::ProgramSection::CgroupSockAddr
@@ -8832,8 +8835,8 @@ pub aya_obj::obj::ProgramSection::RawTracePoint
 pub aya_obj::obj::ProgramSection::SchedClassifier
 pub aya_obj::obj::ProgramSection::SkLookup
 pub aya_obj::obj::ProgramSection::SkMsg
-pub aya_obj::obj::ProgramSection::SkSkbStreamParser
-pub aya_obj::obj::ProgramSection::SkSkbStreamVerdict
+pub aya_obj::obj::ProgramSection::SkSkbStream
+pub aya_obj::obj::ProgramSection::SkSkbStream::kind: aya_obj::programs::sk_skb::SkSkbKind
 pub aya_obj::obj::ProgramSection::SockOps
 pub aya_obj::obj::ProgramSection::SocketFilter
 pub aya_obj::obj::ProgramSection::TracePoint
@@ -9085,6 +9088,46 @@ pub fn aya_obj::Program::from(t: T) -> T
 pub fn aya_obj::obj::copy_instructions(data: &[u8]) -> core::result::Result<alloc::vec::Vec<aya_obj::generated::bpf_insn>, aya_obj::ParseError>
 pub const fn aya_obj::obj::parse_map_info(info: aya_obj::generated::bpf_map_info, pinned: aya_obj::maps::PinningType) -> aya_obj::maps::Map
 pub mod aya_obj::programs
+pub mod aya_obj::programs::cgroup_skb
+pub enum aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+pub aya_obj::programs::cgroup_skb::CgroupSkbAttachType::Egress
+pub aya_obj::programs::cgroup_skb::CgroupSkbAttachType::Ingress
+impl core::clone::Clone for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::clone(&self) -> aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::convert::From<aya_obj::programs::cgroup_skb::CgroupSkbAttachType> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_skb::CgroupSkbAttachType) -> Self
+impl core::fmt::Debug for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::Freeze for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::Send for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::Sync for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::Unpin for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl<T, U> core::convert::Into<U> for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where U: core::convert::From<T>
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where U: core::convert::Into<T>
+pub type aya_obj::programs::cgroup_skb::CgroupSkbAttachType::Error = core::convert::Infallible
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where U: core::convert::TryFrom<T>
+pub type aya_obj::programs::cgroup_skb::CgroupSkbAttachType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where T: core::clone::Clone
+pub type aya_obj::programs::cgroup_skb::CgroupSkbAttachType::Owned = T
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::clone_into(&self, target: &mut T)
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where T: 'static + ?core::marker::Sized
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where T: ?core::marker::Sized
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where T: ?core::marker::Sized
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where T: core::clone::Clone
+pub unsafe fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::from(t: T) -> T
 pub mod aya_obj::programs::cgroup_sock
 pub enum aya_obj::programs::cgroup_sock::CgroupSockAttachType
 pub aya_obj::programs::cgroup_sock::CgroupSockAttachType::PostBind4
@@ -9219,6 +9262,46 @@ impl<T> core::clone::CloneToUninit for aya_obj::programs::cgroup_sockopt::Cgroup
 pub unsafe fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::from(t: T) -> T
+pub mod aya_obj::programs::sk_skb
+pub enum aya_obj::programs::sk_skb::SkSkbKind
+pub aya_obj::programs::sk_skb::SkSkbKind::StreamParser
+pub aya_obj::programs::sk_skb::SkSkbKind::StreamVerdict
+impl core::clone::Clone for aya_obj::programs::sk_skb::SkSkbKind
+pub fn aya_obj::programs::sk_skb::SkSkbKind::clone(&self) -> aya_obj::programs::sk_skb::SkSkbKind
+impl core::convert::From<aya_obj::programs::sk_skb::SkSkbKind> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::sk_skb::SkSkbKind) -> Self
+impl core::fmt::Debug for aya_obj::programs::sk_skb::SkSkbKind
+pub fn aya_obj::programs::sk_skb::SkSkbKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::programs::sk_skb::SkSkbKind
+impl core::marker::Freeze for aya_obj::programs::sk_skb::SkSkbKind
+impl core::marker::Send for aya_obj::programs::sk_skb::SkSkbKind
+impl core::marker::Sync for aya_obj::programs::sk_skb::SkSkbKind
+impl core::marker::Unpin for aya_obj::programs::sk_skb::SkSkbKind
+impl core::marker::UnsafeUnpin for aya_obj::programs::sk_skb::SkSkbKind
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::sk_skb::SkSkbKind
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::sk_skb::SkSkbKind
+impl<T, U> core::convert::Into<U> for aya_obj::programs::sk_skb::SkSkbKind where U: core::convert::From<T>
+pub fn aya_obj::programs::sk_skb::SkSkbKind::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::programs::sk_skb::SkSkbKind where U: core::convert::Into<T>
+pub type aya_obj::programs::sk_skb::SkSkbKind::Error = core::convert::Infallible
+pub fn aya_obj::programs::sk_skb::SkSkbKind::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::programs::sk_skb::SkSkbKind where U: core::convert::TryFrom<T>
+pub type aya_obj::programs::sk_skb::SkSkbKind::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::programs::sk_skb::SkSkbKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::programs::sk_skb::SkSkbKind where T: core::clone::Clone
+pub type aya_obj::programs::sk_skb::SkSkbKind::Owned = T
+pub fn aya_obj::programs::sk_skb::SkSkbKind::clone_into(&self, target: &mut T)
+pub fn aya_obj::programs::sk_skb::SkSkbKind::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::programs::sk_skb::SkSkbKind where T: 'static + ?core::marker::Sized
+pub fn aya_obj::programs::sk_skb::SkSkbKind::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::programs::sk_skb::SkSkbKind where T: ?core::marker::Sized
+pub fn aya_obj::programs::sk_skb::SkSkbKind::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::programs::sk_skb::SkSkbKind where T: ?core::marker::Sized
+pub fn aya_obj::programs::sk_skb::SkSkbKind::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_obj::programs::sk_skb::SkSkbKind where T: core::clone::Clone
+pub unsafe fn aya_obj::programs::sk_skb::SkSkbKind::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_obj::programs::sk_skb::SkSkbKind
+pub fn aya_obj::programs::sk_skb::SkSkbKind::from(t: T) -> T
 pub mod aya_obj::programs::xdp
 pub enum aya_obj::programs::xdp::XdpAttachType
 pub aya_obj::programs::xdp::XdpAttachType::CpuMap
@@ -9260,6 +9343,45 @@ impl<T> core::clone::CloneToUninit for aya_obj::programs::xdp::XdpAttachType whe
 pub unsafe fn aya_obj::programs::xdp::XdpAttachType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::programs::xdp::XdpAttachType
 pub fn aya_obj::programs::xdp::XdpAttachType::from(t: T) -> T
+pub enum aya_obj::programs::CgroupSkbAttachType
+pub aya_obj::programs::CgroupSkbAttachType::Egress
+pub aya_obj::programs::CgroupSkbAttachType::Ingress
+impl core::clone::Clone for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::clone(&self) -> aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::convert::From<aya_obj::programs::cgroup_skb::CgroupSkbAttachType> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_skb::CgroupSkbAttachType) -> Self
+impl core::fmt::Debug for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::Freeze for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::Send for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::Sync for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::Unpin for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl<T, U> core::convert::Into<U> for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where U: core::convert::From<T>
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where U: core::convert::Into<T>
+pub type aya_obj::programs::cgroup_skb::CgroupSkbAttachType::Error = core::convert::Infallible
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where U: core::convert::TryFrom<T>
+pub type aya_obj::programs::cgroup_skb::CgroupSkbAttachType::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where T: core::clone::Clone
+pub type aya_obj::programs::cgroup_skb::CgroupSkbAttachType::Owned = T
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::clone_into(&self, target: &mut T)
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where T: 'static + ?core::marker::Sized
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where T: ?core::marker::Sized
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where T: ?core::marker::Sized
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_obj::programs::cgroup_skb::CgroupSkbAttachType where T: core::clone::Clone
+pub unsafe fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::from(t: T) -> T
 pub enum aya_obj::programs::CgroupSockAddrAttachType
 pub aya_obj::programs::CgroupSockAddrAttachType::Bind4
 pub aya_obj::programs::CgroupSockAddrAttachType::Bind6
@@ -9391,6 +9513,45 @@ impl<T> core::clone::CloneToUninit for aya_obj::programs::cgroup_sockopt::Cgroup
 pub unsafe fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::from(t: T) -> T
+pub enum aya_obj::programs::SkSkbKind
+pub aya_obj::programs::SkSkbKind::StreamParser
+pub aya_obj::programs::SkSkbKind::StreamVerdict
+impl core::clone::Clone for aya_obj::programs::sk_skb::SkSkbKind
+pub fn aya_obj::programs::sk_skb::SkSkbKind::clone(&self) -> aya_obj::programs::sk_skb::SkSkbKind
+impl core::convert::From<aya_obj::programs::sk_skb::SkSkbKind> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::sk_skb::SkSkbKind) -> Self
+impl core::fmt::Debug for aya_obj::programs::sk_skb::SkSkbKind
+pub fn aya_obj::programs::sk_skb::SkSkbKind::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::programs::sk_skb::SkSkbKind
+impl core::marker::Freeze for aya_obj::programs::sk_skb::SkSkbKind
+impl core::marker::Send for aya_obj::programs::sk_skb::SkSkbKind
+impl core::marker::Sync for aya_obj::programs::sk_skb::SkSkbKind
+impl core::marker::Unpin for aya_obj::programs::sk_skb::SkSkbKind
+impl core::marker::UnsafeUnpin for aya_obj::programs::sk_skb::SkSkbKind
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::sk_skb::SkSkbKind
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::sk_skb::SkSkbKind
+impl<T, U> core::convert::Into<U> for aya_obj::programs::sk_skb::SkSkbKind where U: core::convert::From<T>
+pub fn aya_obj::programs::sk_skb::SkSkbKind::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_obj::programs::sk_skb::SkSkbKind where U: core::convert::Into<T>
+pub type aya_obj::programs::sk_skb::SkSkbKind::Error = core::convert::Infallible
+pub fn aya_obj::programs::sk_skb::SkSkbKind::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_obj::programs::sk_skb::SkSkbKind where U: core::convert::TryFrom<T>
+pub type aya_obj::programs::sk_skb::SkSkbKind::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_obj::programs::sk_skb::SkSkbKind::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_obj::programs::sk_skb::SkSkbKind where T: core::clone::Clone
+pub type aya_obj::programs::sk_skb::SkSkbKind::Owned = T
+pub fn aya_obj::programs::sk_skb::SkSkbKind::clone_into(&self, target: &mut T)
+pub fn aya_obj::programs::sk_skb::SkSkbKind::to_owned(&self) -> T
+impl<T> core::any::Any for aya_obj::programs::sk_skb::SkSkbKind where T: 'static + ?core::marker::Sized
+pub fn aya_obj::programs::sk_skb::SkSkbKind::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_obj::programs::sk_skb::SkSkbKind where T: ?core::marker::Sized
+pub fn aya_obj::programs::sk_skb::SkSkbKind::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_obj::programs::sk_skb::SkSkbKind where T: ?core::marker::Sized
+pub fn aya_obj::programs::sk_skb::SkSkbKind::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_obj::programs::sk_skb::SkSkbKind where T: core::clone::Clone
+pub unsafe fn aya_obj::programs::sk_skb::SkSkbKind::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_obj::programs::sk_skb::SkSkbKind
+pub fn aya_obj::programs::sk_skb::SkSkbKind::from(t: T) -> T
 pub enum aya_obj::programs::XdpAttachType
 pub aya_obj::programs::XdpAttachType::CpuMap
 pub aya_obj::programs::XdpAttachType::DevMap
@@ -9688,8 +9849,7 @@ pub enum aya_obj::ProgramSection
 pub aya_obj::ProgramSection::BtfTracePoint
 pub aya_obj::ProgramSection::CgroupDevice
 pub aya_obj::ProgramSection::CgroupSkb
-pub aya_obj::ProgramSection::CgroupSkbEgress
-pub aya_obj::ProgramSection::CgroupSkbIngress
+pub aya_obj::ProgramSection::CgroupSkb::attach_type: core::option::Option<aya_obj::programs::cgroup_skb::CgroupSkbAttachType>
 pub aya_obj::ProgramSection::CgroupSock
 pub aya_obj::ProgramSection::CgroupSock::attach_type: aya_obj::programs::cgroup_sock::CgroupSockAttachType
 pub aya_obj::ProgramSection::CgroupSockAddr
@@ -9716,8 +9876,8 @@ pub aya_obj::ProgramSection::RawTracePoint
 pub aya_obj::ProgramSection::SchedClassifier
 pub aya_obj::ProgramSection::SkLookup
 pub aya_obj::ProgramSection::SkMsg
-pub aya_obj::ProgramSection::SkSkbStreamParser
-pub aya_obj::ProgramSection::SkSkbStreamVerdict
+pub aya_obj::ProgramSection::SkSkbStream
+pub aya_obj::ProgramSection::SkSkbStream::kind: aya_obj::programs::sk_skb::SkSkbKind
 pub aya_obj::ProgramSection::SockOps
 pub aya_obj::ProgramSection::SocketFilter
 pub aya_obj::ProgramSection::TracePoint

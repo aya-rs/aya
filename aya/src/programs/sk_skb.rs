@@ -2,28 +2,17 @@
 
 use std::{os::fd::AsFd as _, path::Path};
 
-use aya_obj::generated::{
-    bpf_attach_type::{BPF_SK_SKB_STREAM_PARSER, BPF_SK_SKB_STREAM_VERDICT},
-    bpf_prog_type::BPF_PROG_TYPE_SK_SKB,
-};
+use aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_SK_SKB;
+pub use aya_obj::programs::SkSkbKind;
 
 use crate::{
     VerifierLogLevel,
     maps::sock::SockMapFd,
     programs::{
         CgroupAttachMode, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, load_program,
+        define_link_wrapper, load_program_without_attach_type,
     },
 };
-
-/// The kind of [`SkSkb`] program.
-#[derive(Copy, Clone, Debug)]
-pub enum SkSkbKind {
-    /// A Stream Parser
-    StreamParser,
-    /// A Stream Verdict
-    StreamVerdict,
-}
 
 /// A program used to intercept ingress socket buffers.
 ///
@@ -79,25 +68,20 @@ impl SkSkb {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SK_SKB, &mut self.data)
+        let Self { data, kind: _ } = self;
+        load_program_without_attach_type(BPF_PROG_TYPE_SK_SKB, data)
     }
 
     /// Attaches the program to the given socket map.
     ///
     /// The returned value can be used to detach, see [`SkSkb::detach`].
     pub fn attach(&mut self, map: &SockMapFd) -> Result<SkSkbLinkId, ProgramError> {
-        let prog_fd = self.fd()?;
+        let Self { data, kind } = self;
+        let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
+        let link = ProgAttachLink::attach(prog_fd, map.as_fd(), *kind, CgroupAttachMode::Single)?;
 
-        let attach_type = match self.kind {
-            SkSkbKind::StreamParser => BPF_SK_SKB_STREAM_PARSER,
-            SkSkbKind::StreamVerdict => BPF_SK_SKB_STREAM_VERDICT,
-        };
-
-        let link =
-            ProgAttachLink::attach(prog_fd, map.as_fd(), attach_type, CgroupAttachMode::Single)?;
-
-        self.data.links.insert(SkSkbLink::new(link))
+        data.links.insert(SkSkbLink::new(link))
     }
 
     /// Creates a program from a pinned entry on a bpffs.

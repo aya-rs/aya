@@ -11,7 +11,7 @@ use thiserror::Error;
 use crate::{
     programs::{
         FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        impl_try_into_fdlink, load_program,
+        impl_try_into_fdlink, load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
         utils::find_tracefs_path,
     },
@@ -65,7 +65,8 @@ impl TracePoint {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_TRACEPOINT, &mut self.data)
+        let Self { data } = self;
+        load_program_without_attach_type(BPF_PROG_TYPE_TRACEPOINT, data)
     }
 
     /// Attaches to a given trace point.

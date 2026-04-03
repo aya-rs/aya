@@ -271,7 +271,7 @@ impl Func {
     }
 
     pub(crate) fn linkage(&self) -> FuncLinkage {
-        (self.info & 0xFFF).into()
+        (self.info & 0xFFFF).into()
     }
 
     pub(crate) const fn set_linkage(&mut self, linkage: FuncLinkage) {

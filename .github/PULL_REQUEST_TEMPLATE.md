@@ -1,3 +1,5 @@
+<!-- markdownlint-disable first-line-heading -->
+
 <!--
     Thank you for your contribution to Aya! 🎉
 
@@ -13,22 +15,25 @@
 
 -->
 
-# Summary
 <!---
-      Summarize the changes you're making here.
-      Detailed information belongs in the Git Commit messages.
-      Feel free to flag anything you thing needs a reviewer's attention.
+      Summarize the changes you're making here. Detailed information belongs in
+      the Git commit messages. If your pull request contains just one commit,
+      it's best to use its message as a summary. Otherwise, if there are multiple
+      atomic commits, write a summary for the entire PR. Feel free to flag
+      anything you think needs a reviewer's attention.
 -->
 
-# Related Issues
 <!--
-For example:
+      If your changes address an issue, link it with the *Fixes* tag so
+      the issue gets closed when the PR is merged, for example:
 
-- Closes: #1234
-- Relates To: #1234
+      Fixes: #1234
+
+      If you are only referencing an issue without fully addressing it, feel
+      free to link it anywhere in the summary.
 -->
 
-# Added/updated tests?
+### Added/updated tests?
 
 _We strongly encourage you to add a test for your changes._
 
@@ -37,7 +42,7 @@ _We strongly encourage you to add a test for your changes._
       have not been included_
 - [ ] I need help with writing tests
 
-# Checklist
+### Checklist
 
 - [ ] Rust code has been formatted with `cargo +nightly fmt`.
 - [ ] All clippy lints have been fixed.
@@ -48,4 +53,4 @@ _We strongly encourage you to add a test for your changes._
 
 [Integration tests]: https://github.com/aya-rs/aya/blob/main/test/README.md
 
-# (Optional) What GIF best describes this PR or how it makes you feel?
+### (Optional) What GIF best describes this PR or how it makes you feel?

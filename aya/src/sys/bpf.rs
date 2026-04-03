@@ -397,7 +397,7 @@ pub(crate) enum BpfLinkCreateArgs<'a> {
 pub(crate) fn bpf_link_create(
     prog_fd: BorrowedFd<'_>,
     target: LinkTarget<'_>,
-    attach_type: bpf_attach_type,
+    attach_type: impl Into<bpf_attach_type>,
     flags: u32,
     args: Option<BpfLinkCreateArgs<'_>>,
 ) -> io::Result<crate::MockableFd> {
@@ -418,7 +418,7 @@ pub(crate) fn bpf_link_create(
         // https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/bpf_iter.c#L517-L518
         LinkTarget::Iter => {}
     }
-    attr.link_create.attach_type = attach_type as u32;
+    attr.link_create.attach_type = attach_type.into() as u32;
     attr.link_create.flags = flags;
 
     if let Some(args) = args {
@@ -479,14 +479,14 @@ pub(crate) fn bpf_link_update(
 pub(crate) fn bpf_prog_attach(
     prog_fd: BorrowedFd<'_>,
     target_fd: BorrowedFd<'_>,
-    attach_type: bpf_attach_type,
+    attach_type: impl Into<bpf_attach_type>,
     flags: u32,
 ) -> Result<(), SyscallError> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
     attr.__bindgen_anon_5.attach_bpf_fd = prog_fd.as_raw_fd() as u32;
     attr.__bindgen_anon_5.__bindgen_anon_1.target_fd = target_fd.as_raw_fd() as u32;
-    attr.__bindgen_anon_5.attach_type = attach_type as u32;
+    attr.__bindgen_anon_5.attach_type = attach_type.into() as u32;
     attr.__bindgen_anon_5.attach_flags = flags;
 
     unit_sys_bpf(bpf_cmd::BPF_PROG_ATTACH, &mut attr).map_err(|io_error| SyscallError {

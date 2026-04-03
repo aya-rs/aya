@@ -24,11 +24,10 @@ use thiserror::Error;
 use crate::{
     maps::{Map, MapData, MapError},
     programs::{
-        BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
-        CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe,
-        LircMode2, Lsm, LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError,
-        RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkSkb, SkSkbKind, SockOps, SocketFilter,
-        TracePoint, UProbe, Xdp,
+        BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSock, CgroupSockAddr, CgroupSockopt,
+        CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe, LircMode2, Lsm,
+        LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
+        SchedClassifier, SkLookup, SkMsg, SkSkb, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
         self, bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -702,13 +701,10 @@ impl<'a> EbpfLoader<'a> {
                                     attach_type: _,
                                 }
                                 | ProgramSection::SkMsg
-                                | ProgramSection::SkSkbStreamParser
-                                | ProgramSection::SkSkbStreamVerdict
+                                | ProgramSection::SkSkbStream { kind: _ }
                                 | ProgramSection::SockOps
                                 | ProgramSection::SchedClassifier
-                                | ProgramSection::CgroupSkb
-                                | ProgramSection::CgroupSkbIngress
-                                | ProgramSection::CgroupSkbEgress
+                                | ProgramSection::CgroupSkb { attach_type: _ }
                                 | ProgramSection::CgroupSockAddr { attach_type: _ }
                                 | ProgramSection::CgroupSysctl
                                 | ProgramSection::CgroupSockopt { attach_type: _ }
@@ -881,13 +877,9 @@ impl<'a> EbpfLoader<'a> {
                                 attach_type: *attach_type,
                             })
                         }
-                        ProgramSection::SkSkbStreamParser => Program::SkSkb(SkSkb {
+                        ProgramSection::SkSkbStream { kind } => Program::SkSkb(SkSkb {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            kind: SkSkbKind::StreamParser,
-                        }),
-                        ProgramSection::SkSkbStreamVerdict => Program::SkSkb(SkSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            kind: SkSkbKind::StreamVerdict,
+                            kind: *kind,
                         }),
                         ProgramSection::SockOps => Program::SockOps(SockOps {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
@@ -897,18 +889,12 @@ impl<'a> EbpfLoader<'a> {
                                 data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             })
                         }
-                        ProgramSection::CgroupSkb => Program::CgroupSkb(CgroupSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            attach_type: None,
-                        }),
-                        ProgramSection::CgroupSkbIngress => Program::CgroupSkb(CgroupSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            attach_type: Some(CgroupSkbAttachType::Ingress),
-                        }),
-                        ProgramSection::CgroupSkbEgress => Program::CgroupSkb(CgroupSkb {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            attach_type: Some(CgroupSkbAttachType::Egress),
-                        }),
+                        ProgramSection::CgroupSkb { attach_type } => {
+                            Program::CgroupSkb(CgroupSkb {
+                                data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
+                                attach_type: *attach_type,
+                            })
+                        }
                         ProgramSection::CgroupSockAddr { attach_type, .. } => {
                             Program::CgroupSockAddr(CgroupSockAddr {
                                 data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),

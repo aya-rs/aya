@@ -13,7 +13,7 @@ use crate::{
     Btf,
     programs::{
         FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd, ProgramType, define_link_wrapper,
-        load_program,
+        load_program_without_attach_type,
     },
     sys::{self, BpfLinkCreateArgs, LinkTarget, SyscallError, bpf_link_create},
 };
@@ -77,12 +77,13 @@ impl Extension {
     /// There are no restrictions on what functions may be replaced, so you could replace
     /// the main entry point of your program with an extension.
     pub fn load(&mut self, program: ProgramFd, func_name: &str) -> Result<(), ProgramError> {
+        let Self { data } = self;
         let (btf_fd, btf_id) = get_btf_info(program.as_fd(), func_name)?;
 
-        self.data.attach_btf_obj_fd = Some(btf_fd);
-        self.data.attach_prog_fd = Some(program);
-        self.data.attach_btf_id = Some(btf_id);
-        load_program(BPF_PROG_TYPE_EXT, &mut self.data)
+        data.attach_btf_obj_fd = Some(btf_fd);
+        data.attach_prog_fd = Some(program);
+        data.attach_btf_id = Some(btf_id);
+        load_program_without_attach_type(BPF_PROG_TYPE_EXT, data)
     }
 
     /// Attaches the extension.
