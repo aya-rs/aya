@@ -81,19 +81,13 @@ impl FlowDissector {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let netns_fd = netns.as_fd();
-
+        let attach_type = BPF_FLOW_DISSECTOR;
         if KernelVersion::at_least(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(netns_fd),
-                BPF_FLOW_DISSECTOR,
-                0,
-                None,
-            )
-            .map_err(|io_error| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+            let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(netns_fd), attach_type, 0, None)
+                .map_err(|io_error| SyscallError {
+                    call: "bpf_link_create",
+                    io_error,
+                })?;
             self.data
                 .links
                 .insert(FlowDissectorLink::new(FlowDissectorLinkInner::Fd(
@@ -103,7 +97,7 @@ impl FlowDissector {
             let link = ProgAttachLink::attach(
                 prog_fd,
                 netns_fd,
-                BPF_FLOW_DISSECTOR,
+                attach_type,
                 CgroupAttachMode::default(),
             )?;
 
