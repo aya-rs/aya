@@ -34,13 +34,28 @@ jobs:
           sudo apt -y install libelf-dev libc6-dev libc6-dev-{arm64,armel,loong64,riscv64,ppc64el,s390x,mips}-cross
 
       - run: cargo xtask codegen
-      # aya-ebpf-bindings aren't emitted directly from bindgen and so aren't formatted.
+      # aya-ebpf-bindings aren't emitted directly from bindgen and so aren't
+      # formatted.
       - run: cargo fmt --all
-      - run: cargo xtask public-api --bless
+      # avoid blessing if there are no changes; this avoids triggering PRs on
+      # PRs whose authors neglected to bless.
+      - run: git diff --quiet || cargo xtask public-api --bless
 
       - id: libbpf
         working-directory: xtask/libbpf
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - id: branch
+        run: |
+          set -euo pipefail
+
+          # Use a stable full-ref hash instead of embedding `github.ref`
+          # directly. Raw ref paths can conflict in Git's ref namespace when
+          # one source branch name is a path prefix of another, e.g. `release`
+          # and `release/1.2`, and hashing the full ref keeps branch and tag
+          # refs with the same short name distinct.
+          ref_hash=$(printf '%s' "$GITHUB_REF" | sha256sum | cut -d ' ' -f1)
+          echo "name=create-pull-request/codegen-$ref_hash" >> "$GITHUB_OUTPUT"
 
       - uses: peter-evans/create-pull-request@v8
         if: ${{ github.repository == 'aya-rs/aya' }}
@@ -51,7 +66,9 @@ jobs:
           #
           # See https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#workarounds-to-trigger-further-workflow-runs.
           token: ${{ secrets.CRABBY_GITHUB_TOKEN }}
-          branch: create-pull-request/codegen
+          # Keep one generated PR branch per source ref so pushes to unrelated
+          # branches do not overwrite each other's codegen PRs.
+          branch: ${{ steps.branch.outputs.name }}
           commit-message: |
             aya-obj, aya-ebpf-bindings: regenerate
 
