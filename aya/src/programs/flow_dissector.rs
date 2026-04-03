@@ -9,7 +9,7 @@ use aya_obj::generated::{
 use crate::{
     programs::{
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program,
+        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
@@ -70,8 +70,8 @@ impl FlowDissector {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_FLOW_DISSECTOR);
-        load_program(BPF_PROG_TYPE_FLOW_DISSECTOR, &mut self.data)
+        let Self { data } = self;
+        load_program_with_attach_type(BPF_PROG_TYPE_FLOW_DISSECTOR, BPF_FLOW_DISSECTOR, data)
     }
 
     /// Attaches the program to the given network namespace.

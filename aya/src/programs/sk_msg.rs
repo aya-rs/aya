@@ -10,7 +10,7 @@ use crate::{
     maps::sock::SockMapFd,
     programs::{
         CgroupAttachMode, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, load_program,
+        define_link_wrapper, load_program_without_attach_type,
     },
 };
 
@@ -77,7 +77,8 @@ impl SkMsg {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SK_MSG, &mut self.data)
+        let Self { data } = self;
+        load_program_without_attach_type(BPF_PROG_TYPE_SK_MSG, data)
     }
 
     /// Attaches the program to the given sockmap.

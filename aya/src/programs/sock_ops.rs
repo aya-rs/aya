@@ -8,7 +8,7 @@ use aya_obj::generated::{
 use crate::{
     programs::{
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program,
+        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program_without_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
@@ -59,7 +59,8 @@ impl SockOps {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SOCK_OPS, &mut self.data)
+        let Self { data } = self;
+        load_program_without_attach_type(BPF_PROG_TYPE_SOCK_OPS, data)
     }
 
     /// Attaches the program to the given cgroup.
