@@ -4,6 +4,122 @@ use alloc::vec::Vec;
 
 use crate::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type};
 
+/// The type of BPF Map
+#[derive(Copy, Clone, Debug)]
+pub enum BpfMapType {
+    /// Not Specified
+    Unspecified,
+    /// Hash
+    Hash,
+    /// Array
+    Array,
+    /// Prog Array
+    ProgArray,
+    /// Perf Event Array
+    PerfEventArray,
+    /// Per-CPU Hash
+    PerCpuHash,
+    /// Per-CPU Array
+    PerCpuArray,
+    /// Stack Trace
+    StackTrace,
+    /// Cgroup Array
+    CgroupArray,
+    /// LRU Hash
+    LruHash,
+    /// LRU Per-CPU Hash
+    LruPerCpuHash,
+    /// LPM Trie
+    LpmTrie,
+    /// Array of Maps
+    ArrayOfMaps,
+    /// Hash of Maps
+    HashOfMaps,
+    /// Devmap
+    Devmap,
+    /// Sockmap
+    Sockmap,
+    /// Cpumap
+    Cpumap,
+    /// Xskmap
+    Xskmap,
+    /// Sockhash
+    Sockhash,
+    /// Cgroup Storage (deprecated)
+    CgroupStorageDeprecated,
+    /// Reuseport Sockarray
+    ReuseportSockarray,
+    /// Per-CPU Cgroup Storage (deprecated)
+    PerCpuCgroupStorageDeprecated,
+    /// Queue
+    Queue,
+    /// Stack
+    Stack,
+    /// Sk Storage
+    SkStorage,
+    /// Devmap Hash
+    DevmapHash,
+    /// Struct Ops
+    StructOps,
+    /// Ringbuf
+    Ringbuf,
+    /// Inode Storage
+    InodeStorage,
+    /// Task Storage
+    TaskStorage,
+    /// Bloom Filter
+    BloomFilter,
+    /// User Ringbuf
+    UserRingbuf,
+    /// Cgroup Storage
+    CgroupStorage,
+    /// Arena
+    Arena,
+}
+
+impl From<BpfMapType> for bpf_map_type {
+    fn from(value: BpfMapType) -> Self {
+        match value {
+            BpfMapType::Unspecified => Self::BPF_MAP_TYPE_UNSPEC,
+            BpfMapType::Hash => Self::BPF_MAP_TYPE_HASH,
+            BpfMapType::Array => Self::BPF_MAP_TYPE_ARRAY,
+            BpfMapType::ProgArray => Self::BPF_MAP_TYPE_PROG_ARRAY,
+            BpfMapType::PerfEventArray => Self::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+            BpfMapType::PerCpuHash => Self::BPF_MAP_TYPE_PERCPU_HASH,
+            BpfMapType::PerCpuArray => Self::BPF_MAP_TYPE_PERCPU_ARRAY,
+            BpfMapType::StackTrace => Self::BPF_MAP_TYPE_STACK_TRACE,
+            BpfMapType::CgroupArray => Self::BPF_MAP_TYPE_CGROUP_ARRAY,
+            BpfMapType::LruHash => Self::BPF_MAP_TYPE_LRU_HASH,
+            BpfMapType::LruPerCpuHash => Self::BPF_MAP_TYPE_LRU_PERCPU_HASH,
+            BpfMapType::LpmTrie => Self::BPF_MAP_TYPE_LPM_TRIE,
+            BpfMapType::ArrayOfMaps => Self::BPF_MAP_TYPE_ARRAY_OF_MAPS,
+            BpfMapType::HashOfMaps => Self::BPF_MAP_TYPE_HASH_OF_MAPS,
+            BpfMapType::Devmap => Self::BPF_MAP_TYPE_DEVMAP,
+            BpfMapType::Sockmap => Self::BPF_MAP_TYPE_SOCKMAP,
+            BpfMapType::Cpumap => Self::BPF_MAP_TYPE_CPUMAP,
+            BpfMapType::Xskmap => Self::BPF_MAP_TYPE_XSKMAP,
+            BpfMapType::Sockhash => Self::BPF_MAP_TYPE_SOCKHASH,
+            BpfMapType::CgroupStorageDeprecated => Self::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED,
+            BpfMapType::ReuseportSockarray => Self::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
+            BpfMapType::PerCpuCgroupStorageDeprecated => {
+                Self::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED
+            }
+            BpfMapType::Queue => Self::BPF_MAP_TYPE_QUEUE,
+            BpfMapType::Stack => Self::BPF_MAP_TYPE_STACK,
+            BpfMapType::SkStorage => Self::BPF_MAP_TYPE_SK_STORAGE,
+            BpfMapType::DevmapHash => Self::BPF_MAP_TYPE_DEVMAP_HASH,
+            BpfMapType::StructOps => Self::BPF_MAP_TYPE_STRUCT_OPS,
+            BpfMapType::Ringbuf => Self::BPF_MAP_TYPE_RINGBUF,
+            BpfMapType::InodeStorage => Self::BPF_MAP_TYPE_INODE_STORAGE,
+            BpfMapType::TaskStorage => Self::BPF_MAP_TYPE_TASK_STORAGE,
+            BpfMapType::BloomFilter => Self::BPF_MAP_TYPE_BLOOM_FILTER,
+            BpfMapType::UserRingbuf => Self::BPF_MAP_TYPE_USER_RINGBUF,
+            BpfMapType::CgroupStorage => Self::BPF_MAP_TYPE_CGRP_STORAGE,
+            BpfMapType::Arena => Self::BPF_MAP_TYPE_ARENA,
+        }
+    }
+}
+
 impl TryFrom<u32> for bpf_map_type {
     type Error = InvalidTypeBinding<u32>;
 

@@ -20,3 +20,7 @@ bindgen = { workspace = true, default-features = true }
 clap = { workspace = true, default-features = true, features = ["derive"] }
 tempfile = { workspace = true }
 thiserror = { workspace = true }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+aya = { path = "../aya", version = "0.13" }
+aya-obj = { path = "../aya-obj", version = "0.2" }
