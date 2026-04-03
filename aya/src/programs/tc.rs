@@ -14,7 +14,7 @@ use crate::{
     VerifierLogLevel,
     programs::{
         Link, LinkError, LinkOrder, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        id_as_key, impl_try_into_fdlink, load_program, query,
+        id_as_key, impl_try_into_fdlink, load_program_without_attach_type, query,
     },
     sys::{
         BpfLinkCreateArgs, LinkTarget, NetlinkError, NetlinkSocket, ProgQueryTarget, SyscallError,
@@ -156,7 +156,8 @@ impl SchedClassifier {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_SCHED_CLS, &mut self.data)
+        let Self { data } = self;
+        load_program_without_attach_type(BPF_PROG_TYPE_SCHED_CLS, data)
     }
 
     /// Attaches the program to the given `interface`.

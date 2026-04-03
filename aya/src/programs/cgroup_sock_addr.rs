@@ -9,7 +9,7 @@ use crate::{
     VerifierLogLevel,
     programs::{
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program,
+        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
@@ -64,8 +64,8 @@ impl CgroupSockAddr {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(self.attach_type.into());
-        load_program(BPF_PROG_TYPE_CGROUP_SOCK_ADDR, &mut self.data)
+        let Self { data, attach_type } = self;
+        load_program_with_attach_type(BPF_PROG_TYPE_CGROUP_SOCK_ADDR, *attach_type, data)
     }
 
     /// Attaches the program to the given cgroup.
@@ -76,15 +76,15 @@ impl CgroupSockAddr {
         cgroup: T,
         mode: CgroupAttachMode,
     ) -> Result<CgroupSockAddrLinkId, ProgramError> {
-        let prog_fd = self.fd()?;
+        let Self { data, attach_type } = self;
+        let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
-        let attach_type = self.data.expected_attach_type.unwrap();
         if KernelVersion::at_least(5, 7, 0) {
             let link_fd = bpf_link_create(
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),
-                attach_type,
+                *attach_type,
                 mode.into(),
                 None,
             )
@@ -92,15 +92,14 @@ impl CgroupSockAddr {
                 call: "bpf_link_create",
                 io_error,
             })?;
-            self.data
-                .links
+            data.links
                 .insert(CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
+            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, *attach_type, mode)?;
 
-            self.data.links.insert(CgroupSockAddrLink::new(
+            data.links.insert(CgroupSockAddrLink::new(
                 CgroupSockAddrLinkInner::ProgAttach(link),
             ))
         }

@@ -9,7 +9,8 @@ use aya_obj::generated::{
 use crate::{
     programs::{
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramFd,
-        ProgramType, bpf_prog_get_fd_by_id, define_link_wrapper, id_as_key, load_program, query,
+        ProgramType, bpf_prog_get_fd_by_id, define_link_wrapper, id_as_key,
+        load_program_without_attach_type, query,
     },
     sys::{LinkTarget, ProgQueryTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
@@ -61,7 +62,8 @@ impl CgroupDevice {
 
     /// Loads the program inside the kernel
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_CGROUP_DEVICE, &mut self.data)
+        let Self { data } = self;
+        load_program_without_attach_type(BPF_PROG_TYPE_CGROUP_DEVICE, data)
     }
 
     /// Attaches the program to the given cgroup.

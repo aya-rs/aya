@@ -10,7 +10,7 @@ use std::{
 use aya_obj::{
     generated::{
         XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE,
-        XDP_FLAGS_UPDATE_IF_NOEXIST, bpf_link_type, bpf_prog_type,
+        XDP_FLAGS_UPDATE_IF_NOEXIST, bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_XDP,
     },
     programs::XdpAttachType,
 };
@@ -20,7 +20,7 @@ use crate::{
     VerifierLogLevel,
     programs::{
         FdLink, Link, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        id_as_key, impl_try_into_fdlink, load_program,
+        id_as_key, impl_try_into_fdlink, load_program_with_attach_type,
     },
     sys::{
         LinkTarget, NetlinkError, SyscallError, bpf_link_create, bpf_link_get_info_by_fd,
@@ -88,8 +88,8 @@ impl Xdp {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(self.attach_type.into());
-        load_program(bpf_prog_type::BPF_PROG_TYPE_XDP, &mut self.data)
+        let Self { data, attach_type } = self;
+        load_program_with_attach_type(BPF_PROG_TYPE_XDP, *attach_type, data)
     }
 
     /// Attaches the program to the given `interface`.
@@ -128,21 +128,13 @@ impl Xdp {
         if_index: u32,
         flags: XdpFlags,
     ) -> Result<XdpLinkId, ProgramError> {
-        let prog_fd = self.fd()?;
+        let Self { data, attach_type } = self;
+        let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
-
-        // Unwrap invariant: the function starts with `self.fd()?` that will succeed if and only
-        // if the program has been loaded, i.e. there is an fd. We get one by:
-        // - Using `Xdp::from_pin` that sets `expected_attach_type`
-        // - Calling `Xdp::attach` that sets `expected_attach_type`, as geting an `Xdp`
-        //   instance through `Xdp:try_from(Program)` does not set any fd.
-        // So, in all cases where we have an fd, we have an expected_attach_type. Thus, if we
-        // reach this point, expected_attach_type is guaranteed to be Some(_).
-        let attach_type = self.data.expected_attach_type.unwrap();
         let link = match bpf_link_create(
             prog_fd,
             LinkTarget::IfIndex(if_index),
-            attach_type,
+            *attach_type,
             flags.bits(),
             None,
         ) {
@@ -169,7 +161,7 @@ impl Xdp {
                 })
             }
         };
-        self.data.links.insert(XdpLink::new(link))
+        data.links.insert(XdpLink::new(link))
     }
 
     /// Creates a program from a pinned entry on a bpffs.
@@ -182,8 +174,7 @@ impl Xdp {
         path: P,
         attach_type: XdpAttachType,
     ) -> Result<Self, ProgramError> {
-        let mut data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
-        data.expected_attach_type = Some(attach_type.into());
+        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data, attach_type })
     }
 
