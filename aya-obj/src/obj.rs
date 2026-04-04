@@ -1328,6 +1328,9 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
             "map_flags" => {
                 map_def.map_flags = get_map_field(btf, m.btf_type)?;
             }
+            "map_extra" => {
+                map_def.map_extra = get_map_field(btf, m.btf_type)?.into();
+            }
             "pinning" => {
                 let pinning = get_map_field(btf, m.btf_type)?;
                 map_def.pinning = PinningType::try_from(pinning).unwrap_or_else(|_| {
@@ -1345,7 +1348,7 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
 
 /// Parses a [`bpf_map_info`] into a [`Map`].
 pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
-    if info.btf_key_type_id != 0 {
+    if info.btf_key_type_id != 0 || info.btf_value_type_id != 0 {
         Map::Btf(BtfMap {
             def: BtfMapDef {
                 map_type: info.type_,
@@ -1353,6 +1356,7 @@ pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
                 value_size: info.value_size,
                 max_entries: info.max_entries,
                 map_flags: info.map_flags,
+                map_extra: info.map_extra,
                 pinning: pinned,
                 btf_key_type_id: info.btf_key_type_id,
                 btf_value_type_id: info.btf_value_type_id,
@@ -1443,7 +1447,7 @@ mod tests {
     use assert_matches::assert_matches;
 
     use super::*;
-    use crate::generated::btf_ext_header;
+    use crate::generated::{bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, btf_ext_header};
 
     const FAKE_INS_LEN: u64 = 8;
 
@@ -1498,6 +1502,27 @@ mod tests {
     fn bytes_of<T>(val: &T) -> &[u8] {
         // Safety: This is for testing only
         unsafe { crate::util::bytes_of(val) }
+    }
+
+    #[test]
+    fn test_parse_map_info_keyless_btf_map() {
+        let mut info = unsafe { mem::zeroed::<bpf_map_info>() };
+        info.type_ = BPF_MAP_TYPE_BLOOM_FILTER as u32;
+        info.value_size = 4;
+        info.max_entries = 64;
+        info.map_extra = 3;
+        info.btf_value_type_id = 7;
+
+        let map = parse_map_info(info, PinningType::None);
+        assert_matches!(map, Map::Btf(m) => {
+            assert_eq!(m.def.map_type, BPF_MAP_TYPE_BLOOM_FILTER as u32);
+            assert_eq!(m.def.key_size, 0);
+            assert_eq!(m.def.value_size, 4);
+            assert_eq!(m.def.max_entries, 64);
+            assert_eq!(m.def.map_extra, 3);
+            assert_eq!(m.def.btf_key_type_id, 0);
+            assert_eq!(m.def.btf_value_type_id, 7);
+        });
     }
 
     #[test]
