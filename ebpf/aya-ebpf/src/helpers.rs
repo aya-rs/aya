@@ -718,13 +718,13 @@ impl PrintkArg {
     }
 }
 
-macro_rules! impl_unsigned_promotion {
-    ($($ty:ty),* $(,)?) => {$(
-        /// Create `printk` arguments from unsigned integer types.
+macro_rules! impl_integer_promotion {
+    ($($ty:ty : via $via:ty $(=> $cast:ident)?),* $(,)?) => {$(
+        /// Create `printk` arguments from integer types.
         impl From<$ty> for PrintkArg {
             #[inline]
             fn from(x: $ty) -> Self {
-                Self(x as $via as u64)
+                Self((x as $via)$(.$cast())?)
             }
         }
     )*}
@@ -737,11 +737,11 @@ impl_integer_promotion!(
   u32:   via u64,
   u64:   via u64,
   usize: via u64,
-  i8:    via i64,
-  i16:   via i64,
-  i32:   via i64,
-  i64:   via i64,
-  isize: via i64,
+  i8:    via i64 => cast_unsigned,
+  i16:   via i64 => cast_unsigned,
+  i32:   via i64 => cast_unsigned,
+  i64:   via i64 => cast_unsigned,
+  isize: via i64 => cast_unsigned,
 );
 
 /// Construct `printk` BPF helper arguments from constant pointers.
