@@ -708,7 +708,6 @@ pub use bpf_printk;
 /// by value in a register.
 #[repr(transparent)]
 #[derive(Copy, Clone)]
-#[doc(hidden)]
 pub struct PrintkArg(u64);
 
 impl PrintkArg {
@@ -725,52 +724,25 @@ macro_rules! impl_unsigned_promotion {
         impl From<$ty> for PrintkArg {
             #[inline]
             fn from(x: $ty) -> Self {
-                Self(u64::from(x))
+                Self(x as $via as u64)
             }
         }
     )*}
 }
 
-impl_unsigned_promotion!(u8, u16, u32);
-
-/// Create `printk` arguments from `u64`.
-impl From<u64> for PrintkArg {
-    #[inline]
-    fn from(x: u64) -> Self {
-        Self(x)
-    }
-}
-
-/// Create `printk` arguments from `usize`.
-impl From<usize> for PrintkArg {
-    #[inline]
-    fn from(x: usize) -> Self {
-        Self(x as u64)
-    }
-}
-
-/// Create `printk` arguments from `char`.
-impl From<char> for PrintkArg {
-    #[inline]
-    fn from(x: char) -> Self {
-        Self(u64::from(u32::from(x)))
-    }
-}
-
-macro_rules! impl_signed_promotion {
-    ($($ty:ty),* $(,)?) => {$(
-        /// Create `printk` arguments from signed integer types.
-        impl From<$ty> for PrintkArg {
-            #[inline]
-            #[expect(clippy::cast_sign_loss, reason = "signed integers are passed as their bit pattern")]
-            fn from(x: $ty) -> Self {
-                Self(x as u64)
-            }
-        }
-    )*}
-}
-
-impl_signed_promotion!(i8, i16, i32, i64, isize);
+impl_integer_promotion!(
+  char:  via u64,
+  u8:    via u64,
+  u16:   via u64,
+  u32:   via u64,
+  u64:   via u64,
+  usize: via u64,
+  i8:    via i64,
+  i16:   via i64,
+  i32:   via i64,
+  i64:   via i64,
+  isize: via i64,
+);
 
 /// Construct `printk` BPF helper arguments from constant pointers.
 impl<T> From<*const T> for PrintkArg {
