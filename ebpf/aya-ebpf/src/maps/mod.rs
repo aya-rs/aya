@@ -17,6 +17,7 @@ pub(crate) mod def {
     unsafe impl Sync for MapDef {}
 
     impl MapDef {
+        /// Creates a new map definition with key type `K` and value type `V`.
         pub(crate) const fn new<K, V>(
             type_: u32,
             max_entries: u32,
@@ -104,3 +105,24 @@ pub use sock_map::SockMap;
 pub use stack::Stack;
 pub use stack_trace::StackTrace;
 pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
+
+mod private {
+    /// Sealed trait to prevent external implementations of [`super::Map`].
+    #[expect(
+        unnameable_types,
+        reason = "sealed trait pattern requires pub trait in private mod"
+    )]
+    pub trait Map {
+        /// The key type declared in this map's definition.
+        type Key;
+        /// The value type declared in this map's definition.
+        type Value;
+    }
+}
+
+/// Marker trait for all eBPF maps that can be used in a map of maps.
+///
+/// This trait is sealed and cannot be implemented outside this crate.
+pub trait Map: private::Map {}
+
+impl<T: private::Map> Map for T {}

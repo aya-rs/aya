@@ -519,6 +519,7 @@ mod test {
     fn fake_legacy_map(symbol_index: usize) -> Map {
         Map::Legacy(LegacyMap {
             def: Default::default(),
+            inner_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Undefined,
             symbol_index: Some(symbol_index),
@@ -529,6 +530,7 @@ mod test {
     fn fake_btf_map(symbol_index: usize) -> Map {
         Map::Btf(BtfMap {
             def: Default::default(),
+            inner_def: None,
             section_index: 0,
             symbol_index,
             data: Vec::new(),
