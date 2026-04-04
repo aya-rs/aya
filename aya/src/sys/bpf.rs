@@ -32,7 +32,7 @@ use log::warn;
 use crate::{
     Btf, Pod, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
-    programs::{LsmAttachType, ProgramType, links::LinkRef},
+    programs::{LsmAttachType, ProgramType, TestRunOptions, TestRunResult, links::LinkRef},
     sys::{Syscall, SyscallError, syscall},
     util::KernelVersion,
 };
@@ -564,6 +564,66 @@ pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<crate::MockableFd, S
             call: "bpf_prog_get_fd_by_id",
             io_error,
         }
+    })
+}
+
+/// Run a loaded BPF program with test data.
+///
+/// Introduced in kernel v4.12.
+pub(crate) fn bpf_prog_test_run(
+    prog_fd: BorrowedFd<'_>,
+    opts: TestRunOptions<'_>,
+) -> Result<TestRunResult, SyscallError> {
+    let TestRunOptions {
+        data_in,
+        data_out,
+        ctx_in,
+        ctx_out,
+        repeat,
+        cpu,
+        batch_size,
+        flags,
+    } = opts;
+
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    let test = unsafe { &mut attr.test };
+    test.prog_fd = prog_fd.as_raw_fd() as u32;
+    test.repeat = repeat;
+    test.flags = flags;
+    test.cpu = cpu;
+    test.batch_size = batch_size;
+
+    if let Some(data_in) = data_in {
+        test.data_in = data_in.as_ptr() as u64;
+        test.data_size_in = data_in.len() as u32;
+    }
+
+    if let Some(data_out) = data_out {
+        test.data_out = data_out.as_ptr() as u64;
+        test.data_size_out = data_out.len() as u32;
+    }
+
+    if let Some(ctx_in) = ctx_in {
+        test.ctx_in = ctx_in.as_ptr() as u64;
+        test.ctx_size_in = ctx_in.len() as u32;
+    }
+
+    if let Some(ctx_out) = ctx_out {
+        test.ctx_out = ctx_out.as_ptr() as u64;
+        test.ctx_size_out = ctx_out.len() as u32;
+    }
+
+    unit_sys_bpf(bpf_cmd::BPF_PROG_TEST_RUN, &mut attr).map_err(|io_error| SyscallError {
+        call: "bpf_prog_test_run",
+        io_error,
+    })?;
+
+    Ok(TestRunResult {
+        return_value: unsafe { attr.test.retval },
+        duration: unsafe { attr.test.duration },
+        data_size_out: unsafe { attr.test.data_size_out },
+        ctx_size_out: unsafe { attr.test.ctx_size_out },
     })
 }
 
