@@ -107,6 +107,39 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::btf_maps::sk_storage::SkStorage
 pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::btf_maps::sk_storage::SkStorage<T>
 pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::from(t: T) -> T
+pub mod aya_ebpf::btf_maps::task_storage
+#[repr(C)] pub struct aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+impl<T> aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+pub unsafe fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::delete(&self, task: core::option::Option<*mut aya_ebpf_bindings::x86_64::bindings::task_struct>) -> core::result::Result<(), i32>
+pub unsafe fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::get_or_insert_ptr_mut(&self, task: core::option::Option<*mut aya_ebpf_bindings::x86_64::bindings::task_struct>, value: core::option::Option<&mut T>) -> *mut T
+pub unsafe fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::get_ptr_mut(&self, task: core::option::Option<*mut aya_ebpf_bindings::x86_64::bindings::task_struct>) -> *mut T
+impl<T> aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+pub const fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::new() -> Self
+impl<T> core::default::Default for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::default() -> Self
+impl<T> core::marker::Sync for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+impl<T> core::marker::Freeze for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+impl<T> !core::marker::Send for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+impl<T> core::marker::Unpin for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+impl<T> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T, U> core::convert::Into<U> for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where U: core::convert::From<T>
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where U: core::convert::Into<T>
+pub type aya_ebpf::btf_maps::task_storage::TaskStorage<T>::Error = core::convert::Infallible
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where U: core::convert::TryFrom<T>
+pub type aya_ebpf::btf_maps::task_storage::TaskStorage<T>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where T: ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where T: ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::from(t: T) -> T
 #[repr(C)] pub struct aya_ebpf::btf_maps::Array<T, const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::get(&self, index: u32) -> core::option::Option<&T>
@@ -206,6 +239,38 @@ impl<T> core::borrow::BorrowMut<T> for aya_ebpf::btf_maps::sk_storage::SkStorage
 pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya_ebpf::btf_maps::sk_storage::SkStorage<T>
 pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::from(t: T) -> T
+#[repr(C)] pub struct aya_ebpf::btf_maps::TaskStorage<T>
+impl<T> aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+pub unsafe fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::delete(&self, task: core::option::Option<*mut aya_ebpf_bindings::x86_64::bindings::task_struct>) -> core::result::Result<(), i32>
+pub unsafe fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::get_or_insert_ptr_mut(&self, task: core::option::Option<*mut aya_ebpf_bindings::x86_64::bindings::task_struct>, value: core::option::Option<&mut T>) -> *mut T
+pub unsafe fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::get_ptr_mut(&self, task: core::option::Option<*mut aya_ebpf_bindings::x86_64::bindings::task_struct>) -> *mut T
+impl<T> aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+pub const fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::new() -> Self
+impl<T> core::default::Default for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::default() -> Self
+impl<T> core::marker::Sync for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+impl<T> core::marker::Freeze for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+impl<T> !core::marker::Send for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+impl<T> core::marker::Unpin for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+impl<T> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T, U> core::convert::Into<U> for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where U: core::convert::From<T>
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where U: core::convert::Into<T>
+pub type aya_ebpf::btf_maps::task_storage::TaskStorage<T>::Error = core::convert::Infallible
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where U: core::convert::TryFrom<T>
+pub type aya_ebpf::btf_maps::task_storage::TaskStorage<T>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where T: ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::btf_maps::task_storage::TaskStorage<T> where T: ?core::marker::Sized
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_ebpf::btf_maps::task_storage::TaskStorage<T>
+pub fn aya_ebpf::btf_maps::task_storage::TaskStorage<T>::from(t: T) -> T
 pub mod aya_ebpf::helpers
 pub use aya_ebpf::helpers::generated
 pub macro aya_ebpf::helpers::bpf_printk!
