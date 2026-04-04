@@ -1,0 +1,55 @@
+pub mod aya_xdp_dispatcher_ebpf
+#[repr(C)] pub struct aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+pub aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::chain_call_actions: [u32; 10]
+pub aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::dispatcher_version: u8
+pub aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::is_xdp_frags: u8
+pub aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::magic: u8
+pub aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::num_progs_enabled: u8
+pub aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::program_flags: [u32; 10]
+pub aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::run_prios: [u32; 10]
+impl aya::bpf::Pod for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+impl bytemuck::pod::Pod for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+impl bytemuck::zeroable::Zeroable for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+impl core::clone::Clone for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+pub fn aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::clone(&self) -> aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+impl core::fmt::Debug for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+pub fn aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+impl core::marker::Freeze for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+impl core::marker::Send for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+impl core::marker::Sync for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+impl core::marker::Unpin for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+impl core::marker::UnsafeUnpin for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+impl core::panic::unwind_safe::RefUnwindSafe for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+impl core::panic::unwind_safe::UnwindSafe for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+impl<T, U> core::convert::Into<U> for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig where U: core::convert::From<T>
+pub fn aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig where U: core::convert::Into<T>
+pub type aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::Error = core::convert::Infallible
+pub fn aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig where U: core::convert::TryFrom<T>
+pub type aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig where T: core::clone::Clone
+pub type aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::Owned = T
+pub fn aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::clone_into(&self, target: &mut T)
+pub fn aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::to_owned(&self) -> T
+impl<T> bytemuck::anybitpattern::AnyBitPattern for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig where T: bytemuck::pod::Pod
+impl<T> bytemuck::checked::CheckedBitPattern for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig where T: bytemuck::anybitpattern::AnyBitPattern
+pub type aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::Bits = T
+pub fn aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::is_valid_bit_pattern(_bits: &T) -> bool
+impl<T> bytemuck::no_uninit::NoUninit for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig where T: bytemuck::pod::Pod
+impl<T> core::any::Any for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig where T: 'static + ?core::marker::Sized
+pub fn aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig where T: ?core::marker::Sized
+pub fn aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig where T: ?core::marker::Sized
+pub fn aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig where T: core::clone::Clone
+pub unsafe fn aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_xdp_dispatcher_ebpf::XdpDispatcherConfig
+pub fn aya_xdp_dispatcher_ebpf::XdpDispatcherConfig::from(t: T) -> T
+pub const aya_xdp_dispatcher_ebpf::MAX_DISPATCHER_ACTIONS: usize
+pub const aya_xdp_dispatcher_ebpf::XDP_DISPATCHER_MAGIC: u8
+pub const aya_xdp_dispatcher_ebpf::XDP_DISPATCHER_RETVAL: u32
+pub const aya_xdp_dispatcher_ebpf::XDP_DISPATCHER_VERSION: u8

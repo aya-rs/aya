@@ -80,6 +80,7 @@ jobs:
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
+            --exclude aya-xdp-dispatcher-ebpf \
             --exclude integration-ebpf \
             --exclude integration-test \
             --workspace
@@ -132,6 +133,7 @@ jobs:
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
+            --exclude aya-xdp-dispatcher-ebpf \
             --exclude integration-ebpf \
             --exclude xtask \
             --workspace
@@ -145,6 +147,7 @@ jobs:
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
+            --exclude aya-xdp-dispatcher-ebpf \
             --exclude integration-ebpf \
             --exclude integration-test \
             --feature-powerset
@@ -158,6 +161,7 @@ jobs:
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
+            --exclude aya-xdp-dispatcher-ebpf \
             --exclude integration-ebpf \
             --exclude integration-test \
             --feature-powerset
@@ -207,6 +211,7 @@ jobs:
                   --package aya-ebpf \
                   --package aya-ebpf-bindings \
                   --package aya-log-ebpf \
+                  --package aya-xdp-dispatcher-ebpf \
                   --package integration-ebpf \
                   --feature-powerset
               ); then
@@ -219,6 +224,7 @@ jobs:
                 --package aya-ebpf \
                 --package aya-ebpf-bindings \
                 --package aya-log-ebpf \
+                --package aya-xdp-dispatcher-ebpf \
                 --package integration-ebpf \
                 --feature-powerset
             ); then

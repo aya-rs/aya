@@ -1,0 +1,144 @@
+pub mod aya_xdp_dispatcher
+pub enum aya_xdp_dispatcher::Error
+pub aya_xdp_dispatcher::Error::ConcurrentModification
+pub aya_xdp_dispatcher::Error::Ebpf(aya::bpf::EbpfError)
+pub aya_xdp_dispatcher::Error::InvalidConfig
+pub aya_xdp_dispatcher::Error::Io(std::io::error::Error)
+pub aya_xdp_dispatcher::Error::Link(aya::programs::links::LinkError)
+pub aya_xdp_dispatcher::Error::Lock(nix::errno::consts::Errno)
+pub aya_xdp_dispatcher::Error::MaxPrograms(usize)
+pub aya_xdp_dispatcher::Error::NoFdLink
+pub aya_xdp_dispatcher::Error::Pin(aya::pin::PinError)
+pub aya_xdp_dispatcher::Error::Program(aya::programs::ProgramError)
+impl core::convert::From<aya::bpf::EbpfError> for aya_xdp_dispatcher::Error
+pub fn aya_xdp_dispatcher::Error::from(source: aya::bpf::EbpfError) -> Self
+impl core::convert::From<aya::pin::PinError> for aya_xdp_dispatcher::Error
+pub fn aya_xdp_dispatcher::Error::from(source: aya::pin::PinError) -> Self
+impl core::convert::From<aya::programs::ProgramError> for aya_xdp_dispatcher::Error
+pub fn aya_xdp_dispatcher::Error::from(source: aya::programs::ProgramError) -> Self
+impl core::convert::From<aya::programs::links::LinkError> for aya_xdp_dispatcher::Error
+pub fn aya_xdp_dispatcher::Error::from(source: aya::programs::links::LinkError) -> Self
+impl core::convert::From<std::io::error::Error> for aya_xdp_dispatcher::Error
+pub fn aya_xdp_dispatcher::Error::from(source: std::io::error::Error) -> Self
+impl core::error::Error for aya_xdp_dispatcher::Error
+pub fn aya_xdp_dispatcher::Error::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya_xdp_dispatcher::Error
+pub fn aya_xdp_dispatcher::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya_xdp_dispatcher::Error
+pub fn aya_xdp_dispatcher::Error::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya_xdp_dispatcher::Error
+impl core::marker::Send for aya_xdp_dispatcher::Error
+impl core::marker::Sync for aya_xdp_dispatcher::Error
+impl core::marker::Unpin for aya_xdp_dispatcher::Error
+impl core::marker::UnsafeUnpin for aya_xdp_dispatcher::Error
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_xdp_dispatcher::Error
+impl !core::panic::unwind_safe::UnwindSafe for aya_xdp_dispatcher::Error
+impl<T, U> core::convert::Into<U> for aya_xdp_dispatcher::Error where U: core::convert::From<T>
+pub fn aya_xdp_dispatcher::Error::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_xdp_dispatcher::Error where U: core::convert::Into<T>
+pub type aya_xdp_dispatcher::Error::Error = core::convert::Infallible
+pub fn aya_xdp_dispatcher::Error::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_xdp_dispatcher::Error where U: core::convert::TryFrom<T>
+pub type aya_xdp_dispatcher::Error::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_xdp_dispatcher::Error::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::string::ToString for aya_xdp_dispatcher::Error where T: core::fmt::Display + ?core::marker::Sized
+pub fn aya_xdp_dispatcher::Error::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for aya_xdp_dispatcher::Error where T: 'static + ?core::marker::Sized
+pub fn aya_xdp_dispatcher::Error::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_xdp_dispatcher::Error where T: ?core::marker::Sized
+pub fn aya_xdp_dispatcher::Error::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_xdp_dispatcher::Error where T: ?core::marker::Sized
+pub fn aya_xdp_dispatcher::Error::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_xdp_dispatcher::Error
+pub fn aya_xdp_dispatcher::Error::from(t: T) -> T
+pub struct aya_xdp_dispatcher::EbpfPrograms<'a>
+pub aya_xdp_dispatcher::EbpfPrograms::ebpf_id: uuid::Uuid
+pub aya_xdp_dispatcher::EbpfPrograms::loader: aya::bpf::EbpfLoader<'a>
+impl<'a> aya_xdp_dispatcher::EbpfPrograms<'a>
+pub const fn aya_xdp_dispatcher::EbpfPrograms<'a>::new(ebpf_id: uuid::Uuid, loader: aya::bpf::EbpfLoader<'a>, bpf_bytes: &'a [u8]) -> Self
+pub fn aya_xdp_dispatcher::EbpfPrograms<'a>::set_priority(self, program: &'a str, priority: u32) -> Self
+pub fn aya_xdp_dispatcher::EbpfPrograms<'a>::with_config(self, program: &'a str, config: aya_xdp_dispatcher::ProgramConfig) -> Self
+impl<'a> core::marker::Freeze for aya_xdp_dispatcher::EbpfPrograms<'a>
+impl<'a> core::marker::Send for aya_xdp_dispatcher::EbpfPrograms<'a>
+impl<'a> core::marker::Sync for aya_xdp_dispatcher::EbpfPrograms<'a>
+impl<'a> core::marker::Unpin for aya_xdp_dispatcher::EbpfPrograms<'a>
+impl<'a> core::marker::UnsafeUnpin for aya_xdp_dispatcher::EbpfPrograms<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya_xdp_dispatcher::EbpfPrograms<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya_xdp_dispatcher::EbpfPrograms<'a>
+impl<T, U> core::convert::Into<U> for aya_xdp_dispatcher::EbpfPrograms<'a> where U: core::convert::From<T>
+pub fn aya_xdp_dispatcher::EbpfPrograms<'a>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_xdp_dispatcher::EbpfPrograms<'a> where U: core::convert::Into<T>
+pub type aya_xdp_dispatcher::EbpfPrograms<'a>::Error = core::convert::Infallible
+pub fn aya_xdp_dispatcher::EbpfPrograms<'a>::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_xdp_dispatcher::EbpfPrograms<'a> where U: core::convert::TryFrom<T>
+pub type aya_xdp_dispatcher::EbpfPrograms<'a>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_xdp_dispatcher::EbpfPrograms<'a>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_xdp_dispatcher::EbpfPrograms<'a> where T: 'static + ?core::marker::Sized
+pub fn aya_xdp_dispatcher::EbpfPrograms<'a>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_xdp_dispatcher::EbpfPrograms<'a> where T: ?core::marker::Sized
+pub fn aya_xdp_dispatcher::EbpfPrograms<'a>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_xdp_dispatcher::EbpfPrograms<'a> where T: ?core::marker::Sized
+pub fn aya_xdp_dispatcher::EbpfPrograms<'a>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_xdp_dispatcher::EbpfPrograms<'a>
+pub fn aya_xdp_dispatcher::EbpfPrograms<'a>::from(t: T) -> T
+pub struct aya_xdp_dispatcher::ProgramConfig
+pub aya_xdp_dispatcher::ProgramConfig::chain_call_actions: u32
+pub aya_xdp_dispatcher::ProgramConfig::has_frags: bool
+pub aya_xdp_dispatcher::ProgramConfig::priority: u32
+impl core::default::Default for aya_xdp_dispatcher::ProgramConfig
+pub fn aya_xdp_dispatcher::ProgramConfig::default() -> Self
+impl core::marker::Freeze for aya_xdp_dispatcher::ProgramConfig
+impl core::marker::Send for aya_xdp_dispatcher::ProgramConfig
+impl core::marker::Sync for aya_xdp_dispatcher::ProgramConfig
+impl core::marker::Unpin for aya_xdp_dispatcher::ProgramConfig
+impl core::marker::UnsafeUnpin for aya_xdp_dispatcher::ProgramConfig
+impl core::panic::unwind_safe::RefUnwindSafe for aya_xdp_dispatcher::ProgramConfig
+impl core::panic::unwind_safe::UnwindSafe for aya_xdp_dispatcher::ProgramConfig
+impl<T, U> core::convert::Into<U> for aya_xdp_dispatcher::ProgramConfig where U: core::convert::From<T>
+pub fn aya_xdp_dispatcher::ProgramConfig::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_xdp_dispatcher::ProgramConfig where U: core::convert::Into<T>
+pub type aya_xdp_dispatcher::ProgramConfig::Error = core::convert::Infallible
+pub fn aya_xdp_dispatcher::ProgramConfig::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_xdp_dispatcher::ProgramConfig where U: core::convert::TryFrom<T>
+pub type aya_xdp_dispatcher::ProgramConfig::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_xdp_dispatcher::ProgramConfig::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_xdp_dispatcher::ProgramConfig where T: 'static + ?core::marker::Sized
+pub fn aya_xdp_dispatcher::ProgramConfig::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_xdp_dispatcher::ProgramConfig where T: ?core::marker::Sized
+pub fn aya_xdp_dispatcher::ProgramConfig::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_xdp_dispatcher::ProgramConfig where T: ?core::marker::Sized
+pub fn aya_xdp_dispatcher::ProgramConfig::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_xdp_dispatcher::ProgramConfig
+pub fn aya_xdp_dispatcher::ProgramConfig::from(t: T) -> T
+pub struct aya_xdp_dispatcher::XdpDispatcher
+impl aya_xdp_dispatcher::XdpDispatcher
+pub fn aya_xdp_dispatcher::XdpDispatcher::ebpf_mut(&mut self, ebpf_id: uuid::Uuid) -> core::option::Option<&mut aya::bpf::Ebpf>
+pub fn aya_xdp_dispatcher::XdpDispatcher::new_with_programs(if_index: u32, xdp_flags: aya::programs::xdp::XdpFlags, bpfs: alloc::vec::Vec<&mut aya_xdp_dispatcher::EbpfPrograms<'_>>) -> aya_xdp_dispatcher::Result<Self>
+impl core::ops::drop::Drop for aya_xdp_dispatcher::XdpDispatcher
+pub fn aya_xdp_dispatcher::XdpDispatcher::drop(&mut self)
+impl core::marker::Freeze for aya_xdp_dispatcher::XdpDispatcher
+impl core::marker::Send for aya_xdp_dispatcher::XdpDispatcher
+impl core::marker::Sync for aya_xdp_dispatcher::XdpDispatcher
+impl core::marker::Unpin for aya_xdp_dispatcher::XdpDispatcher
+impl core::marker::UnsafeUnpin for aya_xdp_dispatcher::XdpDispatcher
+impl core::panic::unwind_safe::RefUnwindSafe for aya_xdp_dispatcher::XdpDispatcher
+impl core::panic::unwind_safe::UnwindSafe for aya_xdp_dispatcher::XdpDispatcher
+impl<T, U> core::convert::Into<U> for aya_xdp_dispatcher::XdpDispatcher where U: core::convert::From<T>
+pub fn aya_xdp_dispatcher::XdpDispatcher::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_xdp_dispatcher::XdpDispatcher where U: core::convert::Into<T>
+pub type aya_xdp_dispatcher::XdpDispatcher::Error = core::convert::Infallible
+pub fn aya_xdp_dispatcher::XdpDispatcher::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_xdp_dispatcher::XdpDispatcher where U: core::convert::TryFrom<T>
+pub type aya_xdp_dispatcher::XdpDispatcher::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_xdp_dispatcher::XdpDispatcher::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_xdp_dispatcher::XdpDispatcher where T: 'static + ?core::marker::Sized
+pub fn aya_xdp_dispatcher::XdpDispatcher::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_xdp_dispatcher::XdpDispatcher where T: ?core::marker::Sized
+pub fn aya_xdp_dispatcher::XdpDispatcher::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_xdp_dispatcher::XdpDispatcher where T: ?core::marker::Sized
+pub fn aya_xdp_dispatcher::XdpDispatcher::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya_xdp_dispatcher::XdpDispatcher
+pub fn aya_xdp_dispatcher::XdpDispatcher::from(t: T) -> T
+pub const aya_xdp_dispatcher::DEFAULT_PRIORITY: u32
+pub const aya_xdp_dispatcher::MAX_PROGRAMS: usize
+pub type aya_xdp_dispatcher::Result<T, E> = core::result::Result<T, E>
