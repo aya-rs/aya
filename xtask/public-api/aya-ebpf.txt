@@ -209,6 +209,63 @@ pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::from(t: T) -> T
 pub mod aya_ebpf::helpers
 pub use aya_ebpf::helpers::generated
 pub macro aya_ebpf::helpers::bpf_printk!
+#[repr(transparent)] pub struct aya_ebpf::helpers::PrintkArg(_)
+impl aya_ebpf::helpers::PrintkArg
+pub const fn aya_ebpf::helpers::PrintkArg::from_raw(x: u64) -> Self
+impl core::clone::Clone for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::clone(&self) -> aya_ebpf::helpers::PrintkArg
+impl core::convert::From<char> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(x: char) -> Self
+impl core::convert::From<i16> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(x: i16) -> Self
+impl core::convert::From<i32> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(x: i32) -> Self
+impl core::convert::From<i64> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(x: i64) -> Self
+impl core::convert::From<i8> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(x: i8) -> Self
+impl core::convert::From<isize> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(x: isize) -> Self
+impl core::convert::From<u16> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(x: u16) -> Self
+impl core::convert::From<u32> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(x: u32) -> Self
+impl core::convert::From<u64> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(x: u64) -> Self
+impl core::convert::From<u8> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(x: u8) -> Self
+impl core::convert::From<usize> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(x: usize) -> Self
+impl core::marker::Copy for aya_ebpf::helpers::PrintkArg
+impl<T> core::convert::From<*const T> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(x: *const T) -> Self
+impl<T> core::convert::From<*mut T> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(x: *mut T) -> Self
+impl core::marker::Freeze for aya_ebpf::helpers::PrintkArg
+impl core::marker::Send for aya_ebpf::helpers::PrintkArg
+impl core::marker::Sync for aya_ebpf::helpers::PrintkArg
+impl core::marker::Unpin for aya_ebpf::helpers::PrintkArg
+impl core::marker::UnsafeUnpin for aya_ebpf::helpers::PrintkArg
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::helpers::PrintkArg
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::helpers::PrintkArg
+impl<T, U> core::convert::Into<U> for aya_ebpf::helpers::PrintkArg where U: core::convert::From<T>
+pub fn aya_ebpf::helpers::PrintkArg::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya_ebpf::helpers::PrintkArg where U: core::convert::Into<T>
+pub type aya_ebpf::helpers::PrintkArg::Error = core::convert::Infallible
+pub fn aya_ebpf::helpers::PrintkArg::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya_ebpf::helpers::PrintkArg where U: core::convert::TryFrom<T>
+pub type aya_ebpf::helpers::PrintkArg::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya_ebpf::helpers::PrintkArg::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya_ebpf::helpers::PrintkArg where T: 'static + ?core::marker::Sized
+pub fn aya_ebpf::helpers::PrintkArg::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya_ebpf::helpers::PrintkArg where T: ?core::marker::Sized
+pub fn aya_ebpf::helpers::PrintkArg::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya_ebpf::helpers::PrintkArg where T: ?core::marker::Sized
+pub fn aya_ebpf::helpers::PrintkArg::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for aya_ebpf::helpers::PrintkArg where T: core::clone::Clone
+pub unsafe fn aya_ebpf::helpers::PrintkArg::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for aya_ebpf::helpers::PrintkArg
+pub fn aya_ebpf::helpers::PrintkArg::from(t: T) -> T
 pub const aya_ebpf::helpers::TASK_COMM_LEN: usize
 pub fn aya_ebpf::helpers::bpf_get_current_comm() -> core::result::Result<[u8; 16], i32>
 pub fn aya_ebpf::helpers::bpf_get_current_pid_tgid() -> u64
