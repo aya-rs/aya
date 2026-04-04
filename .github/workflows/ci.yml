@@ -12,7 +12,21 @@ env:
   CARGO_TERM_COLOR: always
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Cancel older runs for the same branch/PR head.
+  #
+  # `github.ref` differs between push and pull_request events for the same PR
+  # branch (`refs/heads/<branch>` vs `refs/pull/<n>/merge`), so select the
+  # branch key by event type explicitly.
+  group: >-
+    ${{ github.workflow }}-${{ fromJSON(format(
+      '{{"pull_request":{0},"push":{1},"schedule":{1}}}',
+      toJSON(github.event.pull_request.head.repo.full_name),
+      toJSON(github.repository)
+    ))[github.event_name] }}-${{ fromJSON(format(
+      '{{"pull_request":{0},"push":{1},"schedule":{1}}}',
+      toJSON(github.head_ref),
+      toJSON(github.ref_name)
+    ))[github.event_name] }}
   cancel-in-progress: true
 
 permissions: {}
