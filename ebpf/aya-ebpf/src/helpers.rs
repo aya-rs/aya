@@ -689,7 +689,7 @@ macro_rules! bpf_printk {
     ($fmt:literal $(,)? $($arg:expr),* $(,)?) => {{
         use $crate::helpers::PrintkArg;
         const FMT: [u8; { $fmt.len() + 1 }] = $crate::helpers::zero_pad_array::<
-            { $fmt.len() }, { $fmt.len() + 1 }>(*$fmt);
+            { $fmt.len() }, { $fmt.len() + 1 }>($fmt);
         let data = [$(PrintkArg::from($arg)),*];
         $crate::helpers::bpf_printk_impl(&FMT, &data)
     }};
@@ -794,7 +794,7 @@ impl<T> From<*mut T> for PrintkArg {
 /// This function serves as a helper for the [`bpf_printk!`] macro.
 #[doc(hidden)]
 pub const fn zero_pad_array<const SRC_LEN: usize, const DST_LEN: usize>(
-    src: [u8; SRC_LEN],
+    src: &[u8; SRC_LEN],
 ) -> [u8; DST_LEN] {
     let mut out: [u8; DST_LEN] = [0u8; DST_LEN];
 
