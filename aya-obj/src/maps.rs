@@ -128,8 +128,12 @@ pub struct bpf_map_def {
     // optional features
     /// Id
     pub id: u32,
-    /// Pinning type
+    /// Pinning type. Only [`PinningType::None`] is supported for legacy maps.
     pub pinning: PinningType,
+    /// Inner map id. Map-of-maps is not supported for legacy maps.
+    pub inner_id: u32,
+    /// Inner map index. Map-of-maps is not supported for legacy maps.
+    pub inner_idx: u32,
 }
 
 /// The first five __u32 of `bpf_map_def` must be defined.
