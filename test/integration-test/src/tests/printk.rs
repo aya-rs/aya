@@ -146,11 +146,11 @@ async fn bpf_printk(
 
                 trace_lines.push(buf.to_string());
 
-                read_buf.drain(..start + end + 1);
+                read_buf.drain(..=(start + end));
             }
             // Discard unrelated lines.
             while let Some(i) = read_buf.find('\n') {
-                read_buf.drain(..i + 1);
+                read_buf.drain(..=i);
             }
         }
     })
