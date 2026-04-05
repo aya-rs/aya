@@ -25,20 +25,20 @@ fn test_bpf_printk(_ctx: ProbeContext) {
         //  * primitive type
         //  * pointer type (*const i8, to be specific)
         //    * %s reads c-style string from the pased pointer
-        bpf_printk!(b"%s_CHAR_AS_U32:%x", m, TEST_CHAR);
-        bpf_printk!(b"%s_U8:%u", m, TEST_U8);
-        bpf_printk!(b"%s_U16:%u", m, TEST_U16);
-        bpf_printk!(b"%s_U32:%x", m, TEST_U32);
-        bpf_printk!(b"%s_U64:%llx", m, TEST_U64);
-        bpf_printk!(b"%s_USIZE:%llu", m, TEST_USIZE);
-        bpf_printk!(b"%s_I8:%d", m, TEST_I8);
-        bpf_printk!(b"%s_I16:%d", m, TEST_I16);
-        bpf_printk!(b"%s_I32:%x", m, TEST_I32);
-        bpf_printk!(b"%s_I64:%llx", m, TEST_I64);
-        bpf_printk!(b"%s_ISIZE:%lld", m, TEST_ISIZE);
+        bpf_printk!(c"%s_CHAR_AS_U32:%x", m, TEST_CHAR);
+        bpf_printk!(c"%s_U8:%u", m, TEST_U8);
+        bpf_printk!(c"%s_U16:%u", m, TEST_U16);
+        bpf_printk!(c"%s_U32:%x", m, TEST_U32);
+        bpf_printk!(c"%s_U64:%llx", m, TEST_U64);
+        bpf_printk!(c"%s_USIZE:%llu", m, TEST_USIZE);
+        bpf_printk!(c"%s_I8:%d", m, TEST_I8);
+        bpf_printk!(c"%s_I16:%d", m, TEST_I16);
+        bpf_printk!(c"%s_I32:%x", m, TEST_I32);
+        bpf_printk!(c"%s_I64:%llx", m, TEST_I64);
+        bpf_printk!(c"%s_ISIZE:%lld", m, TEST_ISIZE);
 
         // test multiple args (# of args <= 3); resulting in bpf_trace_printk()
-        bpf_printk!(b"%s_MULTI_printk:%x,%x", m, TEST_U8, TEST_I32);
+        bpf_printk!(c"%s_MULTI_printk:%x,%x", m, TEST_U8, TEST_I32);
     }
 }
 
@@ -48,7 +48,7 @@ fn test_bpf_printk_for_many_args(_ctx: ProbeContext) {
     unsafe {
         // test multiple args (# of args >= 4); resulting in bpf_trace_vprintk()
         bpf_printk!(
-            b"%s_MULTI_vprintk:%u,%u,%d,%d",
+            c"%s_MULTI_vprintk:%u,%u,%d,%d",
             m,
             TEST_U8,
             TEST_U16,

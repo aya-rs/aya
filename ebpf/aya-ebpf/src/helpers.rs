@@ -648,9 +648,8 @@ pub fn bpf_get_current_uid_gid() -> u64 {
 /// Prints a debug message to the BPF debugging pipe.
 ///
 /// The [format string syntax][fmt] is the same as that of the `printk` kernel
-/// function. It is passed in as a fixed-size byte array (`&[u8; N]`), so you
-/// will have to prefix your string literal with a `b`. A terminating zero byte
-/// is appended automatically.
+/// function. The underlying machinery requires that it is nul-terminated so you
+/// must pass a [`CStr`].
 ///
 /// The macro can read from arbitrary pointers, so it must be used in an `unsafe`
 /// scope in order to compile.
@@ -679,19 +678,21 @@ pub fn bpf_get_current_uid_gid() -> u64 {
 /// ```no_run
 /// # use aya_ebpf::helpers::bpf_printk;
 /// unsafe {
-///   bpf_printk!(b"hi there! dec: %d, hex: 0x%08X", 42, 0x1234);
+///   bpf_printk!(c"hi there! dec: %d, hex: 0x%08X", 42, 0x1234);
 /// }
 /// ```
 ///
 /// [fmt]: https://www.kernel.org/doc/html/latest/core-api/printk-formats.html#printk-specifiers
 #[macro_export]
 macro_rules! bpf_printk {
-    ($fmt:literal $(,)? $($arg:expr),* $(,)?) => {{
-        use $crate::helpers::PrintkArg;
-        const FMT: [u8; { $fmt.len() + 1 }] = $crate::helpers::zero_pad_array::<
-            { $fmt.len() }, { $fmt.len() + 1 }>($fmt);
-        let data = [$(PrintkArg::from($arg)),*];
-        $crate::helpers::bpf_printk_impl(&FMT, &data)
+    ($fmt:expr) => { bpf_printk!($fmt,) };
+    ($fmt:expr, $($arg:expr),+ $(,)?) => {{
+        const FMT: &[u8] = {
+            const FMT: &core::ffi::CStr = $fmt;
+            FMT.to_bytes_with_nul()
+        };
+        let data = [$($crate::helpers::PrintkArg::from($arg)),+];
+        $crate::helpers::bpf_printk_impl::<{FMT.len()}, _>(FMT.as_ptr(), &data)
     }};
 }
 
@@ -760,27 +761,6 @@ impl<T> From<*mut T> for PrintkArg {
     }
 }
 
-/// Expands the given byte array to `DST_LEN`, right-padding it with zeros. If
-/// `DST_LEN` is smaller than `SRC_LEN`, the array is instead truncated.
-///
-/// This function serves as a helper for the [`bpf_printk!`] macro.
-#[doc(hidden)]
-pub const fn zero_pad_array<const SRC_LEN: usize, const DST_LEN: usize>(
-    src: &[u8; SRC_LEN],
-) -> [u8; DST_LEN] {
-    let mut out: [u8; DST_LEN] = [0u8; DST_LEN];
-
-    // The `min` function is not `const`. Hand-roll it.
-    let mut i = if DST_LEN > SRC_LEN { SRC_LEN } else { DST_LEN };
-
-    while i > 0 {
-        i -= 1;
-        out[i] = src[i];
-    }
-
-    out
-}
-
 /// Internal helper function for the [`bpf_printk!`] macro.
 ///
 /// The BPF helpers require the length for both the format string as well as
@@ -789,7 +769,7 @@ pub const fn zero_pad_array<const SRC_LEN: usize, const DST_LEN: usize>(
 #[inline]
 #[doc(hidden)]
 pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
-    fmt: &[u8; FMT_LEN],
+    fmt_ptr: *const u8,
     args: &[PrintkArg; NUM_ARGS],
 ) -> i64 {
     // This function can't be wrapped in `helpers.rs` because it has variadic
@@ -799,8 +779,8 @@ pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
     let printk: extern "C" fn(fmt: *const c_char, fmt_size: u32, ...) -> c_long =
         unsafe { mem::transmute(6usize) };
 
-    let fmt_ptr = fmt.as_ptr().cast();
-    let fmt_size = fmt.len() as u32;
+    let fmt_ptr = fmt_ptr.cast();
+    let fmt_size = FMT_LEN as u32;
 
     match NUM_ARGS {
         0 => printk(fmt_ptr, fmt_size),
