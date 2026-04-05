@@ -709,6 +709,7 @@ pub use bpf_printk;
 /// by value in a register.
 #[repr(transparent)]
 #[derive(Copy, Clone)]
+#[doc(hidden)]
 pub struct PrintkArg(u64);
 
 impl PrintkArg {
