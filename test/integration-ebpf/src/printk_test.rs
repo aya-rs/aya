@@ -20,11 +20,8 @@ extern crate ebpf_panic;
 #[uprobe]
 fn test_bpf_printk(_ctx: ProbeContext) {
     let m = C_MARKER.as_ptr();
+    // SAFETY: format strings match the argument types and counts.
     unsafe {
-        // test impl of From<T> trait where T is
-        //  * primitive type
-        //  * pointer type (*const i8, to be specific)
-        //    * %s reads c-style string from the pased pointer
         bpf_printk!(c"%s_CHAR_AS_U32:%x", m, TEST_CHAR);
         bpf_printk!(c"%s_U8:%u", m, TEST_U8);
         bpf_printk!(c"%s_U16:%u", m, TEST_U16);
@@ -36,8 +33,6 @@ fn test_bpf_printk(_ctx: ProbeContext) {
         bpf_printk!(c"%s_I32:%x", m, TEST_I32);
         bpf_printk!(c"%s_I64:%llx", m, TEST_I64);
         bpf_printk!(c"%s_ISIZE:%lld", m, TEST_ISIZE);
-
-        // test multiple args (# of args <= 3); resulting in bpf_trace_printk()
         bpf_printk!(c"%s_MULTI_printk:%x,%x", m, TEST_U8, TEST_I32);
     }
 }
@@ -45,8 +40,8 @@ fn test_bpf_printk(_ctx: ProbeContext) {
 #[uprobe]
 fn test_bpf_printk_for_many_args(_ctx: ProbeContext) {
     let m = C_MARKER.as_ptr();
+    // SAFETY: format strings match the argument types and counts.
     unsafe {
-        // test multiple args (# of args >= 4); resulting in bpf_trace_vprintk()
         bpf_printk!(
             c"%s_MULTI_vprintk:%u,%u,%d,%d",
             m,
