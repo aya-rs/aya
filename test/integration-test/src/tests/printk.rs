@@ -30,6 +30,7 @@ use tokio::{
     None,
     "test_bpf_printk",
     vec![
+        format!("{MARKER}"),
         format!("{MARKER}_CHAR_AS_U32:{:x}", TEST_CHAR as u32),
         format!("{MARKER}_U8:{TEST_U8}"),
         format!("{MARKER}_U16:{TEST_U16}"),

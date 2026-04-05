@@ -686,12 +686,12 @@ pub fn bpf_get_current_uid_gid() -> u64 {
 #[macro_export]
 macro_rules! bpf_printk {
     ($fmt:expr) => { bpf_printk!($fmt,) };
-    ($fmt:expr, $($arg:expr),+ $(,)?) => {{
+    ($fmt:expr, $($arg:expr),* $(,)?) => {{
         const FMT: &[u8] = {
             const FMT: &core::ffi::CStr = $fmt;
             FMT.to_bytes_with_nul()
         };
-        let data = [$($crate::helpers::PrintkArg::from($arg)),+];
+        let data = [$($crate::helpers::PrintkArg::from($arg)),*];
         $crate::helpers::bpf_printk_impl::<{FMT.len()}, _>(FMT.as_ptr(), &data)
     }};
 }

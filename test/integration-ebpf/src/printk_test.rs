@@ -17,6 +17,8 @@ fn test_bpf_printk(_ctx: ProbeContext) {
     let m = C_MARKER.as_ptr();
     // SAFETY: format strings match the argument types and counts.
     unsafe {
+        bpf_printk!(C_MARKER);
+
         bpf_printk!(c"%s_CHAR_AS_U32:%x", m, TEST_CHAR);
         bpf_printk!(c"%s_U8:%u", m, TEST_U8);
         bpf_printk!(c"%s_U16:%u", m, TEST_U16);
