@@ -39,7 +39,13 @@ fn test_bpf_printk(_ctx: ProbeContext) {
 
         // test multiple args (# of args <= 3); resulting in bpf_trace_printk()
         bpf_printk!(b"%s_MULTI_printk:%x,%x", m, TEST_U8, TEST_I32);
+    }
+}
 
+#[uprobe]
+fn test_bpf_printk_for_many_args(_ctx: ProbeContext) {
+    let m = MARKER.as_ptr();
+    unsafe {
         // test multiple args (# of args >= 4); resulting in bpf_trace_vprintk()
         bpf_printk!(
             b"%s_MULTI_vprintk:%u,%u,%d,%d",
