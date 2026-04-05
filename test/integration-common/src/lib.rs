@@ -81,7 +81,13 @@ pub mod linear_data_structures {
 }
 
 pub mod printk {
-    pub const MARKER: &core::ffi::CStr = c"PRINTK_TEST";
+    pub const C_MARKER: &core::ffi::CStr = c"PRINTK_TEST";
+    pub const MARKER: &str = {
+        match C_MARKER.to_str() {
+            Ok(marker) => marker,
+            Err(_) => panic!("C_MARKER.to_str()"),
+        }
+    };
     pub const TEST_CHAR: char = '\u{3042}'; // i.e. 'あ'
     pub const TEST_U8: u8 = 42;
     pub const TEST_U16: u16 = 0x1234;

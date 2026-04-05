@@ -11,7 +11,7 @@
 
 use aya_ebpf::{helpers::bpf_printk, macros::uprobe, programs::ProbeContext};
 use integration_common::printk::{
-    MARKER, TEST_CHAR, TEST_I8, TEST_I16, TEST_I32, TEST_I64, TEST_ISIZE, TEST_U8, TEST_U16,
+    C_MARKER, TEST_CHAR, TEST_I8, TEST_I16, TEST_I32, TEST_I64, TEST_ISIZE, TEST_U8, TEST_U16,
     TEST_U32, TEST_U64, TEST_USIZE,
 };
 #[cfg(not(test))]
@@ -19,7 +19,7 @@ extern crate ebpf_panic;
 
 #[uprobe]
 fn test_bpf_printk(_ctx: ProbeContext) {
-    let m = MARKER.as_ptr();
+    let m = C_MARKER.as_ptr();
     unsafe {
         // test impl of From<T> trait where T is
         //  * primitive type
@@ -44,7 +44,7 @@ fn test_bpf_printk(_ctx: ProbeContext) {
 
 #[uprobe]
 fn test_bpf_printk_for_many_args(_ctx: ProbeContext) {
-    let m = MARKER.as_ptr();
+    let m = C_MARKER.as_ptr();
     unsafe {
         // test multiple args (# of args >= 4); resulting in bpf_trace_vprintk()
         bpf_printk!(
