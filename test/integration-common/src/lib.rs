@@ -80,6 +80,27 @@ pub mod linear_data_structures {
     pub const POP_INDEX: u32 = 1;
 }
 
+pub mod printk {
+    pub const C_MARKER: &core::ffi::CStr = c"PRINTK_TEST";
+    pub const MARKER: &str = {
+        match C_MARKER.to_str() {
+            Ok(marker) => marker,
+            Err(_) => panic!("C_MARKER.to_str()"),
+        }
+    };
+    pub const TEST_CHAR: char = '\u{3042}'; // i.e. 'あ'
+    pub const TEST_U8: u8 = 42;
+    pub const TEST_U16: u16 = 0x1234;
+    pub const TEST_U32: u32 = 0xDEAD_BEEF;
+    pub const TEST_U64: u64 = 0x0123_4567_89AB_CDEF;
+    pub const TEST_USIZE: usize = usize::MAX;
+    pub const TEST_I8: i8 = -127;
+    pub const TEST_I16: i16 = -32768;
+    pub const TEST_I32: i32 = -0x0808_CAFE;
+    pub const TEST_I64: i64 = -0x0123_4567_89AB_CDEF;
+    pub const TEST_ISIZE: isize = isize::MIN;
+}
+
 pub mod sk_storage {
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
     #[repr(C)]

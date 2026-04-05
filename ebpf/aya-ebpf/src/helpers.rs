@@ -648,9 +648,8 @@ pub fn bpf_get_current_uid_gid() -> u64 {
 /// Prints a debug message to the BPF debugging pipe.
 ///
 /// The [format string syntax][fmt] is the same as that of the `printk` kernel
-/// function. It is passed in as a fixed-size byte array (`&[u8; N]`), so you
-/// will have to prefix your string literal with a `b`. A terminating zero byte
-/// is appended automatically.
+/// function. The underlying machinery requires that it is nul-terminated so you
+/// must pass a [`CStr`].
 ///
 /// The macro can read from arbitrary pointers, so it must be used in an `unsafe`
 /// scope in order to compile.
@@ -679,19 +678,21 @@ pub fn bpf_get_current_uid_gid() -> u64 {
 /// ```no_run
 /// # use aya_ebpf::helpers::bpf_printk;
 /// unsafe {
-///   bpf_printk!(b"hi there! dec: %d, hex: 0x%08X", 42, 0x1234);
+///   bpf_printk!(c"hi there! dec: %d, hex: 0x%08X", 42, 0x1234);
 /// }
 /// ```
 ///
 /// [fmt]: https://www.kernel.org/doc/html/latest/core-api/printk-formats.html#printk-specifiers
 #[macro_export]
 macro_rules! bpf_printk {
-    ($fmt:literal $(,)? $($arg:expr),* $(,)?) => {{
-        use $crate::helpers::PrintkArg;
-        const FMT: [u8; { $fmt.len() + 1 }] = $crate::helpers::zero_pad_array::<
-            { $fmt.len() }, { $fmt.len() + 1 }>(*$fmt);
-        let data = [$(PrintkArg::from($arg)),*];
-        $crate::helpers::bpf_printk_impl(&FMT, &data)
+    ($fmt:expr) => { bpf_printk!($fmt,) };
+    ($fmt:expr, $($arg:expr),* $(,)?) => {{
+        const FMT: &[u8] = {
+            const FMT: &core::ffi::CStr = $fmt;
+            FMT.to_bytes_with_nul()
+        };
+        let data = [$($crate::helpers::PrintkArg::from($arg)),*];
+        $crate::helpers::bpf_printk_impl::<{FMT.len()}, _>(FMT.as_ptr(), &data)
     }};
 }
 
@@ -700,51 +701,56 @@ macro_rules! bpf_printk {
 pub use bpf_printk;
 
 /// Argument ready to be passed to `printk` BPF helper.
+///
+/// This wraps a `u64` directly (not `[u8; 8]`) to ensure correct ABI handling
+/// when passed as a variadic argument to `bpf_trace_printk`. The C ABI for
+/// variadic functions may handle arrays differently than scalar types, causing
+/// incorrect values to be printed. Using `u64` ensures the value is passed
+/// by value in a register.
 #[repr(transparent)]
 #[derive(Copy, Clone)]
-pub struct PrintkArg([u8; 8]);
+#[doc(hidden)]
+pub struct PrintkArg(u64);
 
 impl PrintkArg {
     /// Manually construct a `printk` BPF helper argument.
     #[inline]
     pub const fn from_raw(x: u64) -> Self {
-        Self(x.to_ne_bytes())
+        Self(x)
     }
 }
 
 macro_rules! impl_integer_promotion {
-    ($($ty:ty : via $via:ty),* $(,)?) => {$(
+    ($($ty:ty : $(via $via:ty)? $(=> $cast:ident)?),* $(,)?) => {$(
         /// Create `printk` arguments from integer types.
         impl From<$ty> for PrintkArg {
             #[inline]
-            #[expect(clippy::allow_attributes, reason = "macro")]
-            #[allow(trivial_numeric_casts, reason = "macro")]
             fn from(x: $ty) -> Self {
-                Self((x as $via).to_ne_bytes())
+                Self((x $(as $via)?)$(.$cast())?)
             }
         }
     )*}
 }
 
 impl_integer_promotion!(
-  char:  via usize,
-  u8:    via usize,
-  u16:   via usize,
-  u32:   via usize,
-  u64:   via usize,
-  usize: via usize,
-  i8:    via isize,
-  i16:   via isize,
-  i32:   via isize,
-  i64:   via isize,
-  isize: via isize,
+  char:  via u64,
+  u8:    via u64,
+  u16:   via u64,
+  u32:   via u64,
+  u64:,
+  usize: via u64,
+  i8:    via i64 => cast_unsigned,
+  i16:   via i64 => cast_unsigned,
+  i32:   via i64 => cast_unsigned,
+  i64:           => cast_unsigned,
+  isize: via i64 => cast_unsigned,
 );
 
 /// Construct `printk` BPF helper arguments from constant pointers.
 impl<T> From<*const T> for PrintkArg {
     #[inline]
     fn from(x: *const T) -> Self {
-        Self((x as usize).to_ne_bytes())
+        Self(x as usize as u64)
     }
 }
 
@@ -752,29 +758,8 @@ impl<T> From<*const T> for PrintkArg {
 impl<T> From<*mut T> for PrintkArg {
     #[inline]
     fn from(x: *mut T) -> Self {
-        Self((x as usize).to_ne_bytes())
+        Self(x as usize as u64)
     }
-}
-
-/// Expands the given byte array to `DST_LEN`, right-padding it with zeros. If
-/// `DST_LEN` is smaller than `SRC_LEN`, the array is instead truncated.
-///
-/// This function serves as a helper for the [`bpf_printk!`] macro.
-#[doc(hidden)]
-pub const fn zero_pad_array<const SRC_LEN: usize, const DST_LEN: usize>(
-    src: [u8; SRC_LEN],
-) -> [u8; DST_LEN] {
-    let mut out: [u8; DST_LEN] = [0u8; DST_LEN];
-
-    // The `min` function is not `const`. Hand-roll it.
-    let mut i = if DST_LEN > SRC_LEN { SRC_LEN } else { DST_LEN };
-
-    while i > 0 {
-        i -= 1;
-        out[i] = src[i];
-    }
-
-    out
 }
 
 /// Internal helper function for the [`bpf_printk!`] macro.
@@ -785,7 +770,7 @@ pub const fn zero_pad_array<const SRC_LEN: usize, const DST_LEN: usize>(
 #[inline]
 #[doc(hidden)]
 pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
-    fmt: &[u8; FMT_LEN],
+    fmt_ptr: *const u8,
     args: &[PrintkArg; NUM_ARGS],
 ) -> i64 {
     // This function can't be wrapped in `helpers.rs` because it has variadic
@@ -795,8 +780,8 @@ pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
     let printk: extern "C" fn(fmt: *const c_char, fmt_size: u32, ...) -> c_long =
         unsafe { mem::transmute(6usize) };
 
-    let fmt_ptr = fmt.as_ptr().cast();
-    let fmt_size = fmt.len() as u32;
+    let fmt_ptr = fmt_ptr.cast();
+    let fmt_size = FMT_LEN as u32;
 
     match NUM_ARGS {
         0 => printk(fmt_ptr, fmt_size),
