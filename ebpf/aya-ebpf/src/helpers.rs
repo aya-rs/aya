@@ -719,12 +719,12 @@ impl PrintkArg {
 }
 
 macro_rules! impl_integer_promotion {
-    ($($ty:ty : via $via:ty $(=> $cast:ident)?),* $(,)?) => {$(
+    ($($ty:ty : $(via $via:ty)? $(=> $cast:ident)?),* $(,)?) => {$(
         /// Create `printk` arguments from integer types.
         impl From<$ty> for PrintkArg {
             #[inline]
             fn from(x: $ty) -> Self {
-                Self((x as $via)$(.$cast())?)
+                Self((x $(as $via)?)$(.$cast())?)
             }
         }
     )*}
@@ -735,12 +735,12 @@ impl_integer_promotion!(
   u8:    via u64,
   u16:   via u64,
   u32:   via u64,
-  u64:   via u64,
+  u64:,
   usize: via u64,
   i8:    via i64 => cast_unsigned,
   i16:   via i64 => cast_unsigned,
   i32:   via i64 => cast_unsigned,
-  i64:   via i64 => cast_unsigned,
+  i64:           => cast_unsigned,
   isize: via i64 => cast_unsigned,
 );
 
