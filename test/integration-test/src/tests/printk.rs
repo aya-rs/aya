@@ -1,12 +1,12 @@
 //! Integration test for `bpf_printk` argument passing.
 //!
-//! This test verifies that `PrintkArg` correctly passes values to `bpf_trace_printk` and
-//! `bpf_trace_vprintk`. It reads trace events from `trace_pipe` to verify that `bpf-printk()`-ed
-//! values match.
+//! This test verifies that `PrintkArg` correctly passes values to
+//! `bpf_trace_printk` and `bpf_trace_vprintk`. It reads trace events from
+//! `trace_pipe` to verify that `bpf-printk()`-ed values match.
 //!
-//! NOTE: This test requires that no other process is opening `trace_pipe`, as that would prevent
-//! this test from opening the file. The kernel makes sure that only one instance of open fd refers
-//! to the file across the system.
+//! NOTE: This test requires that no other process is opening `trace_pipe`, as
+//! that would prevent this test from opening the file. The kernel makes sure
+//! that only one instance of open fd refers to the file across the system.
 
 use std::{
     fs::File,

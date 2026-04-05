@@ -1,9 +1,4 @@
 //! Integration test for `bpf_printk` argument passing.
-//!
-//! This mainly tests that `PrintkArg` correctly passes values to the variadic `bpf_trace_printk`
-//! helper. It was defined as `PrintkArg([u8;8])` but C doesn't have an array value same way Rust
-//! does, so [u8; 8] passed as an argument to `bpf_trace_printk()` is actually received as &[u8; 8]
-//! resulting in garbage in tracing output.
 
 #![no_std]
 #![no_main]
