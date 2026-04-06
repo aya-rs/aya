@@ -58,7 +58,7 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
         let fd = self.inner.borrow().fd().as_fd();
 
         match bpf_map_peek_elem(fd, value.borrow(), flags).map_err(|io_error| SyscallError {
-            call: "bpf_map_lookup_elem",
+            call: "bpf_map_peek_elem",
             io_error,
         })? {
             None => Err(MapError::ElementNotFound),
@@ -183,7 +183,7 @@ mod tests {
 
         assert_matches!(
             bloom_filter.contains(1, 0),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_lookup_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
+            Err(MapError::SyscallError(SyscallError { call: "bpf_map_peek_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
         );
     }
 
