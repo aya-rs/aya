@@ -52,7 +52,7 @@ use core::{
 
 pub use aya_ebpf_cty as cty;
 pub use aya_ebpf_macros as macros;
-use cty::c_void;
+use cty::{c_long, c_void};
 pub use helpers::TASK_COMM_LEN;
 use helpers::{
     bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid, bpf_map_delete_elem,
@@ -144,7 +144,7 @@ pub const fn bpf_f_adj_room_encap_l2(len: u64) -> u64 {
 /// Check if a value is within a range, using conditional forms compatible with
 /// the verifier.
 #[inline(always)]
-pub fn check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool {
+pub fn check_bounds_signed(value: c_long, lower: c_long, upper: c_long) -> bool {
     #[cfg(target_arch = "bpf")]
     unsafe {
         let mut in_bounds = 0u64;
