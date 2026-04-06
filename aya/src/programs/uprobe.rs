@@ -16,9 +16,7 @@ use std::{
 };
 
 use aya_obj::generated::{
-    bpf_attach_type::{self, BPF_TRACE_UPROBE_MULTI},
-    bpf_link_type,
-    bpf_prog_type::BPF_PROG_TYPE_KPROBE,
+    bpf_attach_type::BPF_TRACE_UPROBE_MULTI, bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE,
 };
 use libc::{EINVAL, ENOTSUP, EOPNOTSUPP};
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, Symbol};
@@ -347,7 +345,7 @@ impl UProbe {
                 Ok(link) => links.push(link),
                 Err(error) => {
                     let cleanup_error = detach_links(links).err().map(Box::new);
-                    return Err(UProbeError::LegacyPerfAttachPointFailed {
+                    return Err(UProbeError::LegacyPerfAttachPointError {
                         index,
                         point: format_attach_point(point),
                         resolved_offset: offset,
@@ -360,7 +358,7 @@ impl UProbe {
         }
 
         data.links
-            .insert(UProbeLink::from(PerfLinkInner::Multi(links)))
+            .insert(UProbeLink::from(PerfLinkInner::Many(links)))
     }
 
     fn attach_multi_impl<T>(
@@ -770,7 +768,7 @@ fn try_attach_uprobe_multi_link(
     let link_fd = bpf_link_create(
         prog_fd,
         LinkTarget::None,
-        bpf_attach_type::BPF_TRACE_UPROBE_MULTI,
+        BPF_TRACE_UPROBE_MULTI,
         0,
         Some(args),
     )
@@ -932,7 +930,7 @@ pub enum UProbeError {
     )]
     // Box the nested ProgramError values to avoid the recursive
     // `ProgramError -> UProbeError -> ProgramError` type.
-    LegacyPerfAttachPointFailed {
+    LegacyPerfAttachPointError {
         /// Index of the attach point within the caller input slice.
         index: usize,
         /// Human-readable point description, including cookie when present.
@@ -948,7 +946,7 @@ pub enum UProbeError {
 
     /// Detaching a composite legacy perf link failed for one or more points.
     #[error("legacy perf composite link detach failed: {error}")]
-    CompositeLinkDetachFailed {
+    LegacyPerfDetachError {
         /// Errors returned while detaching the individual perf links.
         #[source]
         error: UProbeLinkDetachErrors,
@@ -1410,8 +1408,8 @@ mod tests {
     }
 
     #[test]
-    fn test_uprobe_link_into_fd_links_multi() {
-        let link = UProbeLink::from(PerfLinkInner::Multi(vec![
+    fn test_uprobe_link_into_fd_links_many() {
+        let link = UProbeLink::from(PerfLinkInner::Many(vec![
             PerfLinkLeaf::from(mock_fd_link(crate::MockableFd::mock_signed_fd())),
             PerfLinkLeaf::from(mock_fd_link(crate::MockableFd::mock_signed_fd() + 1)),
         ]));

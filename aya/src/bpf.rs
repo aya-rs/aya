@@ -10,7 +10,7 @@ use std::{
 use aya_obj::{
     EbpfSectionKind, Features, Object, ParseError, ProgramSection,
     btf::{Btf, BtfError, BtfFeatures, BtfRelocationError},
-    generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_attach_type, bpf_map_type},
+    generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
 };
 use log::{debug, warn};
