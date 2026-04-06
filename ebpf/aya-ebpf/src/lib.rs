@@ -144,7 +144,10 @@ pub const fn bpf_f_adj_room_encap_l2(len: u64) -> u64 {
 /// Check if a value is within a range, using conditional forms compatible with
 /// the verifier.
 #[inline(always)]
-pub fn check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool {
+pub fn check_bounds_signed<T: Into<i64>>(value: T, lower: T, upper: T) -> bool {
+    let value = value.into();
+    let lower = lower.into();
+    let upper = upper.into();
     #[cfg(target_arch = "bpf")]
     unsafe {
         let mut in_bounds = 0u64;

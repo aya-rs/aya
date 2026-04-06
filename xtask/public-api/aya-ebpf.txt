@@ -26,8 +26,8 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::
 pub mod aya_ebpf::btf_maps::bloom_filter
 #[repr(C)] pub struct aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
-pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::contains(&self, value: impl core::borrow::Borrow<T>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::insert(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::contains(&self, value: impl core::borrow::Borrow<T>) -> core::result::Result<(), i32>
+pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::insert(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
 pub const fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::new() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> core::default::Default for aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
@@ -44,8 +44,8 @@ pub mod aya_ebpf::btf_maps::ring_buf
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::new() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
-pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::output(&self, data: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
-pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::output_untyped<U: ?core::marker::Sized>(&self, data: impl core::borrow::Borrow<U>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::output(&self, data: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
+pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::output_untyped<U: ?core::marker::Sized>(&self, data: impl core::borrow::Borrow<U>, flags: u64) -> core::result::Result<(), i32>
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::reserve(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where T: 'static
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::reserve_bytes(&self, size: usize, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufBytes<'_>>
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::reserve_untyped<U: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<U>>
@@ -94,8 +94,8 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
 #[repr(C)] pub struct aya_ebpf::btf_maps::BloomFilter<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
-pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::contains(&self, value: impl core::borrow::Borrow<T>) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::insert(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::contains(&self, value: impl core::borrow::Borrow<T>) -> core::result::Result<(), i32>
+pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::insert(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
 pub const fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::new() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> core::default::Default for aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
@@ -111,8 +111,8 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> c
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::new() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
-pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::output(&self, data: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
-pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::output_untyped<U: ?core::marker::Sized>(&self, data: impl core::borrow::Borrow<U>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::output(&self, data: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
+pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::output_untyped<U: ?core::marker::Sized>(&self, data: impl core::borrow::Borrow<U>, flags: u64) -> core::result::Result<(), i32>
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::reserve(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where T: 'static
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::reserve_bytes(&self, size: usize, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufBytes<'_>>
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::reserve_untyped<U: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<U>>
@@ -181,8 +181,8 @@ impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::array::Array<T>
 pub mod aya_ebpf::maps::bloom_filter
 #[repr(transparent)] pub struct aya_ebpf::maps::bloom_filter::BloomFilter<T>
 impl<T> aya_ebpf::maps::bloom_filter::BloomFilter<T>
-pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::contains(&self, value: impl core::borrow::Borrow<T>) -> core::result::Result<(), i64>
-pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::insert(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::contains(&self, value: impl core::borrow::Borrow<T>) -> core::result::Result<(), i32>
+pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::insert(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::bloom_filter::BloomFilter<T>
@@ -345,7 +345,7 @@ impl<T> aya_ebpf::maps::queue::Queue<T>
 pub fn aya_ebpf::maps::queue::Queue<T>::peek(&self) -> core::option::Option<T>
 pub const fn aya_ebpf::maps::queue::Queue<T>::pinned(max_entries: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::queue::Queue<T>::pop(&self) -> core::option::Option<T>
-pub fn aya_ebpf::maps::queue::Queue<T>::push(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::queue::Queue<T>::push(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::queue::Queue<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::queue::Queue<T>
 impl<T> core::marker::Send for aya_ebpf::maps::queue::Queue<T> where T: core::marker::Send
@@ -357,7 +357,7 @@ impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::queue::Queue<T>
 pub mod aya_ebpf::maps::ring_buf
 #[repr(transparent)] pub struct aya_ebpf::maps::ring_buf::RingBuf
 impl aya_ebpf::maps::ring_buf::RingBuf
-pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
 pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>>
@@ -406,10 +406,10 @@ pub mod aya_ebpf::maps::sock_hash
 #[repr(transparent)] pub struct aya_ebpf::maps::sock_hash::SockHash<K>
 impl<K> aya_ebpf::maps::sock_hash::SockHash<K>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_msg(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_msg::SkMsgContext>, key: impl core::borrow::BorrowMut<K>, flags: u64) -> i64
+pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_msg(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_msg::SkMsgContext>, key: impl core::borrow::BorrowMut<K>, flags: u64) -> aya_ebpf_cty::od::c_long
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_sk_lookup(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_lookup::SkLookupContext>, key: impl core::borrow::Borrow<K>, flags: u64) -> core::result::Result<(), u32>
-pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_skb(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_buff::SkBuffContext>, key: impl core::borrow::BorrowMut<K>, flags: u64) -> i64
-pub fn aya_ebpf::maps::sock_hash::SockHash<K>::update(&self, key: impl core::borrow::BorrowMut<K>, sk_ops: impl core::borrow::BorrowMut<aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_skb(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_buff::SkBuffContext>, key: impl core::borrow::BorrowMut<K>, flags: u64) -> aya_ebpf_cty::od::c_long
+pub fn aya_ebpf::maps::sock_hash::SockHash<K>::update(&self, key: impl core::borrow::BorrowMut<K>, sk_ops: impl core::borrow::BorrowMut<aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K> !core::marker::Freeze for aya_ebpf::maps::sock_hash::SockHash<K>
 impl<K> core::marker::Send for aya_ebpf::maps::sock_hash::SockHash<K> where K: core::marker::Send
@@ -422,10 +422,10 @@ pub mod aya_ebpf::maps::sock_map
 #[repr(transparent)] pub struct aya_ebpf::maps::sock_map::SockMap
 impl aya_ebpf::maps::sock_map::SockMap
 pub const fn aya_ebpf::maps::sock_map::SockMap::pinned(max_entries: u32, flags: u32) -> Self
-pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, index: u32, flags: u64) -> i64
+pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, index: u32, flags: u64) -> aya_ebpf_cty::od::c_long
 pub fn aya_ebpf::maps::sock_map::SockMap::redirect_sk_lookup(&self, ctx: &aya_ebpf::programs::sk_lookup::SkLookupContext, index: u32, flags: u64) -> core::result::Result<(), u32>
-pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, ctx: &aya_ebpf::programs::sk_buff::SkBuffContext, index: u32, flags: u64) -> i64
-pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, index: u32, sk_ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
+pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, ctx: &aya_ebpf::programs::sk_buff::SkBuffContext, index: u32, flags: u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, index: u32, sk_ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::sock_map::SockMap::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::sock_map::SockMap
 impl core::marker::Send for aya_ebpf::maps::sock_map::SockMap
@@ -440,7 +440,7 @@ impl<T> aya_ebpf::maps::stack::Stack<T>
 pub fn aya_ebpf::maps::stack::Stack<T>::peek(&self) -> core::option::Option<T>
 pub const fn aya_ebpf::maps::stack::Stack<T>::pinned(max_entries: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::stack::Stack<T>::pop(&self) -> core::option::Option<T>
-pub fn aya_ebpf::maps::stack::Stack<T>::push(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::stack::Stack<T>::push(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::stack::Stack<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::stack::Stack<T>
 impl<T> core::marker::Send for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Send
@@ -452,7 +452,7 @@ impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::stack::Stack<T>
 pub mod aya_ebpf::maps::stack_trace
 #[repr(transparent)] pub struct aya_ebpf::maps::stack_trace::StackTrace
 impl aya_ebpf::maps::stack_trace::StackTrace
-pub unsafe fn aya_ebpf::maps::stack_trace::StackTrace::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: impl core::borrow::Borrow<C>, flags: u64) -> core::result::Result<i64, i64>
+pub unsafe fn aya_ebpf::maps::stack_trace::StackTrace::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: impl core::borrow::Borrow<C>, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::stack_trace::StackTrace
@@ -531,8 +531,8 @@ impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::array::Arra
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::array::Array<T> where T: core::panic::unwind_safe::UnwindSafe
 #[repr(transparent)] pub struct aya_ebpf::maps::BloomFilter<T>
 impl<T> aya_ebpf::maps::bloom_filter::BloomFilter<T>
-pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::contains(&self, value: impl core::borrow::Borrow<T>) -> core::result::Result<(), i64>
-pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::insert(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::contains(&self, value: impl core::borrow::Borrow<T>) -> core::result::Result<(), i32>
+pub fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::insert(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::bloom_filter::BloomFilter<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::bloom_filter::BloomFilter<T>
@@ -715,7 +715,7 @@ impl<T> aya_ebpf::maps::queue::Queue<T>
 pub fn aya_ebpf::maps::queue::Queue<T>::peek(&self) -> core::option::Option<T>
 pub const fn aya_ebpf::maps::queue::Queue<T>::pinned(max_entries: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::queue::Queue<T>::pop(&self) -> core::option::Option<T>
-pub fn aya_ebpf::maps::queue::Queue<T>::push(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::queue::Queue<T>::push(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::queue::Queue<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::queue::Queue<T>
 impl<T> core::marker::Send for aya_ebpf::maps::queue::Queue<T> where T: core::marker::Send
@@ -726,7 +726,7 @@ impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::queue::Queu
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::queue::Queue<T> where T: core::panic::unwind_safe::UnwindSafe
 #[repr(transparent)] pub struct aya_ebpf::maps::RingBuf
 impl aya_ebpf::maps::ring_buf::RingBuf
-pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::ring_buf::RingBuf::pinned(byte_size: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::ring_buf::RingBuf::query(&self, flags: u64) -> u64
 pub fn aya_ebpf::maps::ring_buf::RingBuf::reserve<T: 'static>(&self, flags: u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>>
@@ -742,10 +742,10 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::ring_buf::RingBuf
 #[repr(transparent)] pub struct aya_ebpf::maps::SockHash<K>
 impl<K> aya_ebpf::maps::sock_hash::SockHash<K>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::pinned(max_entries: u32, flags: u32) -> Self
-pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_msg(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_msg::SkMsgContext>, key: impl core::borrow::BorrowMut<K>, flags: u64) -> i64
+pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_msg(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_msg::SkMsgContext>, key: impl core::borrow::BorrowMut<K>, flags: u64) -> aya_ebpf_cty::od::c_long
 pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_sk_lookup(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_lookup::SkLookupContext>, key: impl core::borrow::Borrow<K>, flags: u64) -> core::result::Result<(), u32>
-pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_skb(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_buff::SkBuffContext>, key: impl core::borrow::BorrowMut<K>, flags: u64) -> i64
-pub fn aya_ebpf::maps::sock_hash::SockHash<K>::update(&self, key: impl core::borrow::BorrowMut<K>, sk_ops: impl core::borrow::BorrowMut<aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::sock_hash::SockHash<K>::redirect_skb(&self, ctx: impl core::borrow::Borrow<aya_ebpf::programs::sk_buff::SkBuffContext>, key: impl core::borrow::BorrowMut<K>, flags: u64) -> aya_ebpf_cty::od::c_long
+pub fn aya_ebpf::maps::sock_hash::SockHash<K>::update(&self, key: impl core::borrow::BorrowMut<K>, sk_ops: impl core::borrow::BorrowMut<aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::sock_hash::SockHash<K>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<K> !core::marker::Freeze for aya_ebpf::maps::sock_hash::SockHash<K>
 impl<K> core::marker::Send for aya_ebpf::maps::sock_hash::SockHash<K> where K: core::marker::Send
@@ -757,10 +757,10 @@ impl<K> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::sock_hash::Sock
 #[repr(transparent)] pub struct aya_ebpf::maps::SockMap
 impl aya_ebpf::maps::sock_map::SockMap
 pub const fn aya_ebpf::maps::sock_map::SockMap::pinned(max_entries: u32, flags: u32) -> Self
-pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, index: u32, flags: u64) -> i64
+pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, ctx: &aya_ebpf::programs::sk_msg::SkMsgContext, index: u32, flags: u64) -> aya_ebpf_cty::od::c_long
 pub fn aya_ebpf::maps::sock_map::SockMap::redirect_sk_lookup(&self, ctx: &aya_ebpf::programs::sk_lookup::SkLookupContext, index: u32, flags: u64) -> core::result::Result<(), u32>
-pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, ctx: &aya_ebpf::programs::sk_buff::SkBuffContext, index: u32, flags: u64) -> i64
-pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, index: u32, sk_ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i64>
+pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, ctx: &aya_ebpf::programs::sk_buff::SkBuffContext, index: u32, flags: u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, index: u32, sk_ops: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::sock_map::SockMap::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::sock_map::SockMap
 impl core::marker::Send for aya_ebpf::maps::sock_map::SockMap
@@ -774,7 +774,7 @@ impl<T> aya_ebpf::maps::stack::Stack<T>
 pub fn aya_ebpf::maps::stack::Stack<T>::peek(&self) -> core::option::Option<T>
 pub const fn aya_ebpf::maps::stack::Stack<T>::pinned(max_entries: u32, flags: u32) -> Self
 pub fn aya_ebpf::maps::stack::Stack<T>::pop(&self) -> core::option::Option<T>
-pub fn aya_ebpf::maps::stack::Stack<T>::push(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::maps::stack::Stack<T>::push(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::stack::Stack<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::stack::Stack<T>
 impl<T> core::marker::Send for aya_ebpf::maps::stack::Stack<T> where T: core::marker::Send
@@ -785,7 +785,7 @@ impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::stack::Stac
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::stack::Stack<T> where T: core::panic::unwind_safe::UnwindSafe
 #[repr(transparent)] pub struct aya_ebpf::maps::StackTrace
 impl aya_ebpf::maps::stack_trace::StackTrace
-pub unsafe fn aya_ebpf::maps::stack_trace::StackTrace::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: impl core::borrow::Borrow<C>, flags: u64) -> core::result::Result<i64, i64>
+pub unsafe fn aya_ebpf::maps::stack_trace::StackTrace::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: impl core::borrow::Borrow<C>, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::stack_trace::StackTrace
@@ -1078,8 +1078,8 @@ impl aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::data(&self) -> usize
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::data_end(&self) -> usize
 pub const fn aya_ebpf::programs::sk_msg::SkMsgContext::new(msg: *mut aya_ebpf_bindings::x86_64::bindings::sk_msg_md) -> Self
-pub fn aya_ebpf::programs::sk_msg::SkMsgContext::pop_data(&self, start: u32, len: u32, flags: u64) -> core::result::Result<(), i64>
-pub fn aya_ebpf::programs::sk_msg::SkMsgContext::push_data(&self, start: u32, len: u32, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::pop_data(&self, start: u32, len: u32, flags: u64) -> core::result::Result<(), i32>
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::push_data(&self, start: u32, len: u32, flags: u64) -> core::result::Result<(), i32>
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::size(&self) -> u32
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1148,7 +1148,7 @@ pub fn aya_ebpf::programs::sock_ops::SockOpsContext::op(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_ip4(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_ip6(&self) -> [u32; 4]
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_port(&self) -> u32
-pub fn aya_ebpf::programs::sock_ops::SockOpsContext::set_cb_flags(&self, flags: i32) -> core::result::Result<(), i64>
+pub fn aya_ebpf::programs::sock_ops::SockOpsContext::set_cb_flags(&self, flags: i32) -> core::result::Result<(), i32>
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::set_reply(&self, reply: u32)
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1542,8 +1542,8 @@ impl aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::data(&self) -> usize
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::data_end(&self) -> usize
 pub const fn aya_ebpf::programs::sk_msg::SkMsgContext::new(msg: *mut aya_ebpf_bindings::x86_64::bindings::sk_msg_md) -> Self
-pub fn aya_ebpf::programs::sk_msg::SkMsgContext::pop_data(&self, start: u32, len: u32, flags: u64) -> core::result::Result<(), i64>
-pub fn aya_ebpf::programs::sk_msg::SkMsgContext::push_data(&self, start: u32, len: u32, flags: u64) -> core::result::Result<(), i64>
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::pop_data(&self, start: u32, len: u32, flags: u64) -> core::result::Result<(), i32>
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::push_data(&self, start: u32, len: u32, flags: u64) -> core::result::Result<(), i32>
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::size(&self) -> u32
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1609,7 +1609,7 @@ pub fn aya_ebpf::programs::sock_ops::SockOpsContext::op(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_ip4(&self) -> u32
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_ip6(&self) -> [u32; 4]
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::remote_port(&self) -> u32
-pub fn aya_ebpf::programs::sock_ops::SockOpsContext::set_cb_flags(&self, flags: i32) -> core::result::Result<(), i64>
+pub fn aya_ebpf::programs::sock_ops::SockOpsContext::set_cb_flags(&self, flags: i32) -> core::result::Result<(), i32>
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::set_reply(&self, reply: u32)
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock_ops::SockOpsContext
 pub fn aya_ebpf::programs::sock_ops::SockOpsContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -1911,4 +1911,4 @@ pub fn aya_ebpf::programs::xdp::XdpContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::xdp::XdpContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::xdp::XdpContext::uid(&self) -> u32
 pub const fn aya_ebpf::bpf_f_adj_room_encap_l2(len: u64) -> u64
-pub fn aya_ebpf::check_bounds_signed(value: i64, lower: i64, upper: i64) -> bool
+pub fn aya_ebpf::check_bounds_signed<T: core::convert::Into<i64>>(value: T, lower: T, upper: T) -> bool
