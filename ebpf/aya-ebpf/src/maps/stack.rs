@@ -15,7 +15,7 @@ pub struct Stack<T> {
 impl<T> Stack<T> {
     map_constructors!((), T, BPF_MAP_TYPE_STACK, phantom _t);
 
-    pub fn push(&self, value: impl Borrow<T>, flags: u64) -> Result<(), i64> {
+    pub fn push(&self, value: impl Borrow<T>, flags: u64) -> Result<(), i32> {
         let ret = unsafe {
             bpf_map_push_elem(
                 self.def.as_ptr().cast(),
@@ -23,7 +23,7 @@ impl<T> Stack<T> {
                 flags,
             )
         };
-        (ret == 0).then_some(()).ok_or(ret)
+        (ret == 0).then_some(()).ok_or(ret as i32)
     }
 
     pub fn pop(&self) -> Option<T> {

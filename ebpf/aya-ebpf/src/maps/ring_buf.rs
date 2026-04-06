@@ -192,7 +192,7 @@ impl RingBuf {
     ///
     /// [`reserve`]: RingBuf::reserve
     /// [`submit`]: RingBufEntry::submit
-    pub fn output<T: ?Sized>(&self, data: impl Borrow<T>, flags: u64) -> Result<(), i64> {
+    pub fn output<T: ?Sized>(&self, data: impl Borrow<T>, flags: u64) -> Result<(), i32> {
         let data = data.borrow();
         assert_eq!(8 % align_of_val(data), 0);
         let ret = unsafe {
@@ -203,7 +203,7 @@ impl RingBuf {
                 flags,
             )
         };
-        if ret < 0 { Err(ret) } else { Ok(()) }
+        if ret < 0 { Err(ret as i32) } else { Ok(()) }
     }
 
     /// Query various information about the ring buffer.
