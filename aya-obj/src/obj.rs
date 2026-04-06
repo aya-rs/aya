@@ -1348,7 +1348,10 @@ fn parse_btf_map_def(btf: &Btf, info: &DataSecEntry) -> Result<(String, BtfMapDe
 
 /// Parses a [`bpf_map_info`] into a [`Map`].
 pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
-    if info.btf_key_type_id != 0 || info.btf_value_type_id != 0 {
+    // Some BTF maps are keyless, for example bloom filters, and may only set
+    // `btf_value_type_id`. Checking the value type avoids treating those maps
+    // as legacy maps.
+    if info.btf_value_type_id != 0 {
         Map::Btf(BtfMap {
             def: BtfMapDef {
                 map_type: info.type_,
