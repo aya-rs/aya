@@ -1008,10 +1008,7 @@ pub trait TestRun {
     /// println!("Program returned: {}, took {} ns", result.return_value, result.duration);
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    fn test_run(
-        &self,
-        opts: TestRunOptions<'_>,
-    ) -> Result<TestRunResult, ProgramError>;
+    fn test_run(&self, opts: TestRunOptions<'_>) -> Result<TestRunResult, ProgramError>;
 }
 
 macro_rules! impl_program_test_run {

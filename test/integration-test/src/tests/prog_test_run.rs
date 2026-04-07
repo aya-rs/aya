@@ -2,28 +2,19 @@ use aya::{
     Ebpf, TestRunOptions,
     maps::Array,
     programs::{SchedClassifier, SocketFilter, TestRun as _, Xdp},
-    util::KernelVersion,
 };
 use integration_common::test_run::{IF_INDEX, XDP_MODIGY_LEN, XDP_MODIGY_VAL};
 
-// https://github.com/torvalds/linux/blob/8fdb05de0e2db89d8f56144c60ab784812e8c3b7/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L48
+// https://github.com/torvalds/linux/blob/8fdb05de/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L48
+// `sizeof(pkt_v4)` = Size(Ethernet) + Size(IPv4) + Size(TCP) = 14 + 20 + 20
 const PKT_V4_SIZE: usize = 14 + 20 + 20;
 const DATA_IN_SIZE: usize = PKT_V4_SIZE + size_of::<u32>();
 
-fn require_version(major: u8, minor: u8, patch: u16) -> bool {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(major, minor, patch) {
-        eprintln!(
-            "skipping test on kernel {kernel_version:?}, requires kernel >= {major}.{minor}.{patch}",
-        );
-        return false;
-    }
-    true
-}
-
 #[test_log::test]
 fn test_xdp_test_run() {
-    if !require_version(5, 18, 0) {
+    let kernel_version = aya::util::KernelVersion::current().unwrap();
+    if kernel_version < aya::util::KernelVersion::new(5, 10, 0) {
+        eprintln!("skipping: XDP support in BPF_PROG_TEST_RUN requires kernel >= 5.10");
         return;
     }
 
@@ -46,7 +37,9 @@ fn test_xdp_test_run() {
 
 #[test_log::test]
 fn test_xdp_modify_packet() {
-    if !require_version(5, 18, 0) {
+    let kernel_version = aya::util::KernelVersion::current().unwrap();
+    if kernel_version < aya::util::KernelVersion::new(5, 6, 0) {
+        eprintln!("skipping: XDP support in BPF_PROG_TEST_RUN requires kernel >= 5.6");
         return;
     }
 
@@ -77,7 +70,9 @@ fn test_xdp_modify_packet() {
 
 #[test_log::test]
 fn test_socket_filter_test_run() {
-    if !require_version(5, 18, 0) {
+    let kernel_version = aya::util::KernelVersion::current().unwrap();
+    if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
+        eprintln!("skipping: socket_filter in BPF_PROG_TEST_RUN requires kernel >= 4.12");
         return;
     }
 
@@ -109,10 +104,11 @@ fn test_socket_filter_test_run() {
 
 #[test_log::test]
 fn test_classifier_test_run() {
-    if !require_version(4, 12, 0) {
+    let kernel_version = aya::util::KernelVersion::current().unwrap();
+    if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
+        eprintln!("skipping: sched_cls in BPF_PROG_TEST_RUN requires kernel >= 4.12");
         return;
     }
-
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
     let prog: &mut SchedClassifier = bpf
         .program_mut("test_classifier")
@@ -136,7 +132,9 @@ fn test_classifier_test_run() {
 
 #[test_log::test]
 fn test_run_repeat() {
-    if !require_version(5, 18, 0) {
+    let kernel_version = aya::util::KernelVersion::current().unwrap();
+    if kernel_version < aya::util::KernelVersion::new(4, 15, 0) {
+        eprintln!("skipping: repeat in BPF_PROG_TEST_RUN requires kernel >= 4.15");
         return;
     }
 
@@ -170,7 +168,9 @@ fn test_run_repeat() {
 
 #[test_log::test]
 fn test_xdp_context() {
-    if !require_version(5, 18, 0) {
+    let kernel_version = aya::util::KernelVersion::current().unwrap();
+    if kernel_version < aya::util::KernelVersion::new(5, 18, 0) {
+        eprintln!("skipping: ctx_in/ctx_out for XDP in BPF_PROG_TEST_RUN requires kernel >= 5.18");
         return;
     }
 
