@@ -8,7 +8,7 @@ use aya_ebpf::{
     maps::Array,
     programs::{SkBuffContext, TcContext, XdpContext},
 };
-use integration_common::test_run::{IF_INDEX, XDP_MODIGY_LEN, XDP_MODIGY_VAL};
+use integration_common::test_run::{IF_INDEX, XDP_MODIFY_LEN, XDP_MODIFY_VAL};
 #[cfg(not(test))]
 extern crate ebpf_panic;
 
@@ -45,14 +45,14 @@ fn test_xdp_modify(ctx: XdpContext) -> u32 {
     let data = ctx.data();
     let data_end = ctx.data_end();
 
-    if data + XDP_MODIGY_LEN > data_end {
+    if data + XDP_MODIFY_LEN > data_end {
         return xdp_action::XDP_PASS;
     }
 
     let packet = data as *mut u8;
-    for i in 0..XDP_MODIGY_LEN {
+    for i in 0..XDP_MODIFY_LEN {
         unsafe {
-            *packet.add(i) = XDP_MODIGY_VAL;
+            *packet.add(i) = XDP_MODIFY_VAL;
         }
     }
 
