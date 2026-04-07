@@ -9,6 +9,11 @@ use integration_common::test_run::{IF_INDEX, XDP_MODIFY_LEN, XDP_MODIFY_VAL};
 // `sizeof(pkt_v4)` = Size(Ethernet) + Size(IPv4) + Size(TCP) = 14 + 20 + 20
 const PKT_V4_SIZE: usize = 14 + 20 + 20;
 
+fn bytes_of<T: Sized>(val: &T) -> &[u8] {
+    let size = core::mem::size_of::<T>();
+    unsafe { core::slice::from_raw_parts((val as *const T).cast::<u8>(), size) }
+}
+
 #[test_log::test]
 fn test_xdp_test_run() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
@@ -220,7 +225,7 @@ fn test_xdp_context() {
     };
 
     let size = size_of::<XdpMd>();
-    let ctx_bytes = unsafe { core::slice::from_raw_parts((&raw const ctx).cast::<u8>(), size) };
+    let ctx_bytes = bytes_of(&ctx);
     let mut ctx_out = vec![0u8; size];
 
     let opts = TestRunOptions {
