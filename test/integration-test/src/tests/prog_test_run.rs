@@ -53,6 +53,9 @@ fn test_classifier_test_run() {
 #[test_log::test]
 fn test_run_repeat() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
+    // BPF_PROG_TEST_RUN was introduced in v4.12 (1cf1cae963c2, "bpf: introduce
+    // BPF_PROG_TEST_RUN command") with support for sched_cls (used here) and
+    // sched_act program types.
     // The `repeat` field in the BPF_PROG_TEST_RUN attribute struct was present from v4.12
     if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
         return;
