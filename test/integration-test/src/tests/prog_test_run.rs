@@ -171,12 +171,8 @@ fn test_classifier_test_run() {
 #[test_log::test]
 fn test_run_repeat() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
-    // This test uses a SocketFilter program, which requires v4.16 for
-    // BPF_PROG_TEST_RUN support (see test_socket_filter_test_run). The `repeat`
-    // field in the BPF_PROG_TEST_RUN attribute struct was present from v4.12, but
-    // because socket_filter support was not added until v4.16 (61f3c964dfd2), the
-    // entire test must be skipped on earlier kernels.
-    if kernel_version < aya::util::KernelVersion::new(4, 16, 0) {
+    // The `repeat` field in the BPF_PROG_TEST_RUN attribute struct was present from v4.12
+    if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
         return;
     }
 
@@ -186,7 +182,7 @@ fn test_run_repeat() {
 
     exec_count.set(0, 0, 0).unwrap();
 
-    let prog: &mut SocketFilter = bpf
+    let prog: &mut SchedClassifier = bpf
         .program_mut("test_count_exec")
         .unwrap()
         .try_into()
