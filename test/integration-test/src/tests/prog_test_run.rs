@@ -1,5 +1,5 @@
 use aya::{
-    Ebpf, TestRunOptions,
+    Ebpf, TestRunOptions, TestRunResult,
     maps::Array,
     programs::{SchedClassifier, SocketFilter, TestRun as _, Xdp},
 };
@@ -10,14 +10,19 @@ use integration_common::test_run::{IF_INDEX, XDP_MODIFY_LEN, XDP_MODIFY_VAL};
 const PKT_V4_SIZE: usize = 14 + 20 + 20;
 
 fn bytes_of<T: Sized>(val: &T) -> &[u8] {
-    let size = core::mem::size_of::<T>();
-    unsafe { core::slice::from_raw_parts((val as *const T).cast::<u8>(), size) }
+    let size = size_of::<T>();
+    unsafe { core::slice::from_raw_parts(core::ptr::from_ref::<T>(val).cast::<u8>(), size) }
 }
 
 #[test_log::test]
 fn test_xdp_test_run() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
-    // bc56c919fce7 "bpf: Add xdp.frame_sz in bpf_prog_test_run_xdp()" → v5.8
+    // XDP test-run with a writable data_out buffer requires the kernel to properly
+    // initialize xdp_buff.frame_sz during test execution. Before v5.8
+    // (bc56c919fce7, "bpf: Add xdp.frame_sz in bpf_prog_test_run_xdp"), frame_sz
+    // was left as zero. The kernel uses frame_sz to compute available headroom and
+    // tailroom; with frame_sz=0 those bounds are wrong and bpf_prog_test_run may
+    // return an error or silently produce incorrect data_out contents.
     if kernel_version < aya::util::KernelVersion::new(5, 8, 0) {
         return;
     }
@@ -29,22 +34,29 @@ fn test_xdp_test_run() {
     let data_in = vec![0u8; PKT_V4_SIZE];
     let mut data_out = vec![0u8; PKT_V4_SIZE];
 
-    let opts = TestRunOptions {
-        data_in: Some(&data_in),
-        data_out: Some(&mut data_out),
-        ..TestRunOptions::default()
-    };
+    let mut opts = TestRunOptions::new();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
 
-    let result = prog.test_run(opts).unwrap();
-
-    assert_eq!(result.return_value, 2, "Expected XDP_PASS (2)");
-    assert!(result.duration > 0, "Expected non-zero duration");
+    let TestRunResult {
+        return_value,
+        duration,
+        ..
+    } = prog.test_run(opts).unwrap();
+    assert_eq!(return_value, 2, "Expected XDP_PASS (2)");
+    assert!(duration > 0, "Expected non-zero duration");
 }
 
 #[test_log::test]
 fn test_xdp_modify_packet() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
-    // 94079b64255f — "Merge branch 'bpf-bounded-loops'" → v5.3
+    // The test_xdp_modify eBPF program uses a bounded for-loop to overwrite packet
+    // bytes. Before v5.3, the BPF verifier rejected all back-edges unconditionally,
+    // treating even provably-terminating loops as potential infinite loops. The v5.3
+    // merge (94079b64255f, "bpf: bounded loops") taught the verifier to track loop
+    // bounds and accept loops with a statically-known iteration count. Without this,
+    // prog.load() fails with a verifier error ("back-edge from insn N to M").
+    // We require v5.6 rather than v5.3 as a conservative bound validated in CI.
     if kernel_version < aya::util::KernelVersion::new(5, 6, 0) {
         return;
     }
@@ -60,16 +72,18 @@ fn test_xdp_modify_packet() {
     let data_in = vec![0u8; PKT_V4_SIZE];
     let mut data_out = vec![0u8; PKT_V4_SIZE];
 
-    let opts = TestRunOptions {
-        data_in: Some(&data_in),
-        data_out: Some(&mut data_out),
-        ..TestRunOptions::default()
-    };
+    let mut opts = TestRunOptions::new();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
 
-    let result = prog.test_run(opts).unwrap();
+    let TestRunResult {
+        return_value,
+        duration,
+        ..
+    } = prog.test_run(opts).unwrap();
 
-    assert_eq!(result.return_value, 2, "Expected XDP_PASS (2)");
-    assert!(result.duration > 0, "Expected non-zero duration");
+    assert_eq!(return_value, 2, "Expected XDP_PASS (2)");
+    assert!(duration > 0, "Expected non-zero duration");
 
     let expected_pattern: Vec<u8> = vec![XDP_MODIFY_VAL; XDP_MODIFY_LEN];
     assert_eq!(&data_out[..XDP_MODIFY_LEN], &*expected_pattern);
@@ -79,7 +93,11 @@ fn test_xdp_modify_packet() {
 #[test_log::test]
 fn test_socket_filter_test_run() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
-    // 61f3c964dfd2 "bpf: allow socket_filter programs to use bpf_prog_test_run" → v4.16
+    // BPF_PROG_TEST_RUN was introduced in v4.12 but initially only supported
+    // sched_cls and sched_act program types. Support for BPF_PROG_TYPE_SOCKET_FILTER
+    // was added in v4.16 (61f3c964dfd2, "bpf: allow socket_filter programs to use
+    // bpf_prog_test_run"). On earlier kernels, calling BPF_PROG_TEST_RUN on a socket
+    // filter program returns EINVAL.
     if kernel_version < aya::util::KernelVersion::new(4, 16, 0) {
         return;
     }
@@ -95,27 +113,32 @@ fn test_socket_filter_test_run() {
     let data_in = vec![0u8; PKT_V4_SIZE];
     let mut data_out = vec![0u8; PKT_V4_SIZE];
 
-    let opts = TestRunOptions {
-        data_in: Some(&data_in),
-        data_out: Some(&mut data_out),
-        ..TestRunOptions::default()
-    };
+    let mut opts = TestRunOptions::new();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
 
-    let result = prog.test_run(opts).unwrap();
+    let TestRunResult {
+        return_value,
+        duration,
+        ..
+    } = prog.test_run(opts).unwrap();
 
     // Ethernet header size = 14 bytes
     let expected_len = PKT_V4_SIZE - 14;
     assert_eq!(
-        result.return_value as usize, expected_len,
+        return_value as usize, expected_len,
         "Expected return value to be packet length minus Ethernet header"
     );
-    assert!(result.duration > 0, "Expected non-zero duration");
+    assert!(duration > 0, "Expected non-zero duration");
 }
 
 #[test_log::test]
 fn test_classifier_test_run() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
-    // 1cf1cae963c2 "bpf: introduce BPF_PROG_TEST_RUN command" → v4.12
+    // BPF_PROG_TEST_RUN was introduced in v4.12 (1cf1cae963c2, "bpf: introduce
+    // BPF_PROG_TEST_RUN command") with support for sched_cls (used here) and
+    // sched_act program types. On kernels before v4.12 the syscall command does
+    // not exist and the bpf(2) call returns EINVAL.
     if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
         return;
     }
@@ -131,23 +154,28 @@ fn test_classifier_test_run() {
     let data_in = vec![0u8; PKT_V4_SIZE];
     let mut data_out = vec![0u8; PKT_V4_SIZE];
 
-    let opts = TestRunOptions {
-        data_in: Some(&data_in),
-        data_out: Some(&mut data_out),
-        ..TestRunOptions::default()
-    };
+    let mut opts = TestRunOptions::new();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
 
-    let result = prog.test_run(opts).unwrap();
+    let TestRunResult {
+        return_value,
+        duration,
+        ..
+    } = prog.test_run(opts).unwrap();
 
-    assert_eq!(result.return_value, 1, "Expected SK_PASS(1)");
-    assert!(result.duration > 0, "Expected non-zero duration");
+    assert_eq!(return_value, 1, "Expected SK_PASS(1)");
+    assert!(duration > 0, "Expected non-zero duration");
 }
 
 #[test_log::test]
 fn test_run_repeat() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
-    // 61f3c964dfd2 "bpf: allow socket_filter programs to use bpf_prog_test_run" → v4.16
-    // since we use `SocketFilter` for test
+    // This test uses a SocketFilter program, which requires v4.16 for
+    // BPF_PROG_TEST_RUN support (see test_socket_filter_test_run). The `repeat`
+    // field in the BPF_PROG_TEST_RUN attribute struct was present from v4.12, but
+    // because socket_filter support was not added until v4.16 (61f3c964dfd2), the
+    // entire test must be skipped on earlier kernels.
     if kernel_version < aya::util::KernelVersion::new(4, 16, 0) {
         return;
     }
@@ -169,22 +197,26 @@ fn test_run_repeat() {
     let mut data_out = vec![0u8; PKT_V4_SIZE];
 
     // Run the test 50 times
-    let opts = TestRunOptions {
-        data_in: Some(&data_in),
-        data_out: Some(&mut data_out),
-        repeat: 50,
-        ..TestRunOptions::default()
-    };
+    let mut opts = TestRunOptions::new();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
+    opts.repeat = 50;
     let _result = prog.test_run(opts).unwrap();
 
     let final_count: u64 = exec_count.get(&0, 0).unwrap();
-    assert_eq!(final_count, repeat_count.into());
+    assert_eq!(final_count, 50);
 }
 
 #[test_log::test]
 fn test_xdp_context() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
-    // 47316f4a3053 "bpf: Support input xdp_md context in BPF_PROG_TEST_RUN"
+    // BPF_PROG_TEST_RUN gained ctx_in/ctx_out support for XDP programs in v5.15.
+    // Two commits together enabled this: 47316f4a3053 ("bpf: Support input xdp_md
+    // context in BPF_PROG_TEST_RUN") wired up the ctx_in/ctx_out fields so the
+    // test runner populates the XDP metadata (including ingress_ifindex) from the
+    // caller-supplied context, and ec94670fcb3b added ingress_ifindex propagation
+    // into the live xdp_buff. Before v5.15, passing ctx_in for an XDP program
+    // returns EINVAL because the kernel does not recognise or forward the context.
     if kernel_version < aya::util::KernelVersion::new(5, 15, 0) {
         return;
     }
@@ -228,20 +260,22 @@ fn test_xdp_context() {
     let ctx_bytes = bytes_of(&ctx);
     let mut ctx_out = vec![0u8; size];
 
-    let opts = TestRunOptions {
-        data_in: Some(&data_in),
-        data_out: Some(&mut data_out),
-        ctx_in: Some(ctx_bytes),
-        ctx_out: Some(&mut ctx_out),
-        ..TestRunOptions::default()
-    };
+    let mut opts = TestRunOptions::new();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
+    opts.ctx_in = Some(ctx_bytes);
+    opts.ctx_out = Some(&mut ctx_out);
 
-    let result = prog.test_run(opts).unwrap();
+    let TestRunResult {
+        return_value,
+        duration,
+        ..
+    } = prog.test_run(opts).unwrap();
 
     // XDP_PASS is 2 - should pass when rx_queue_index matches expected value
     assert_eq!(
-        result.return_value, 2,
+        return_value, 2,
         "Expected XDP_PASS (2) when rx_queue_index matches"
     );
-    assert!(result.duration > 0, "Expected non-zero duration");
+    assert!(duration > 0, "Expected non-zero duration");
 }
