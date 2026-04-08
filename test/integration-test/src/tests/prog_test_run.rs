@@ -15,20 +15,22 @@ fn bytes_of<T: Sized>(val: &T) -> &[u8] {
 }
 
 #[test_log::test]
-fn test_xdp_test_run() {
+fn test_classifier_test_run() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
-    // XDP test-run with a writable data_out buffer requires the kernel to properly
-    // initialize xdp_buff.frame_sz during test execution. Before v5.8
-    // (bc56c919fce7, "bpf: Add xdp.frame_sz in bpf_prog_test_run_xdp"), frame_sz
-    // was left as zero. The kernel uses frame_sz to compute available headroom and
-    // tailroom; with frame_sz=0 those bounds are wrong and bpf_prog_test_run may
-    // return an error or silently produce incorrect data_out contents.
-    if kernel_version < aya::util::KernelVersion::new(5, 8, 0) {
+    // BPF_PROG_TEST_RUN was introduced in v4.12 (1cf1cae963c2, "bpf: introduce
+    // BPF_PROG_TEST_RUN command") with support for sched_cls (used here) and
+    // sched_act program types. On kernels before v4.12 the syscall command does
+    // not exist and the bpf(2) call returns EINVAL.
+    if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
         return;
     }
 
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
-    let prog: &mut Xdp = bpf.program_mut("test_xdp").unwrap().try_into().unwrap();
+    let prog: &mut SchedClassifier = bpf
+        .program_mut("test_classifier")
+        .unwrap()
+        .try_into()
+        .unwrap();
     prog.load().unwrap();
 
     let data_in = vec![0u8; PKT_V4_SIZE];
@@ -43,8 +45,44 @@ fn test_xdp_test_run() {
         duration,
         ..
     } = prog.test_run(opts).unwrap();
-    assert_eq!(return_value, 2, "Expected XDP_PASS (2)");
+
+    assert_eq!(return_value, 1, "Expected SK_PASS(1)");
     assert!(duration > 0, "Expected non-zero duration");
+}
+
+#[test_log::test]
+fn test_run_repeat() {
+    let kernel_version = aya::util::KernelVersion::current().unwrap();
+    // The `repeat` field in the BPF_PROG_TEST_RUN attribute struct was present from v4.12
+    if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
+        return;
+    }
+
+    let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
+
+    let mut exec_count: Array<_, u64> = bpf.take_map("EXEC_COUNT").unwrap().try_into().unwrap();
+
+    exec_count.set(0, 0, 0).unwrap();
+
+    let prog: &mut SchedClassifier = bpf
+        .program_mut("test_count_exec")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+
+    let data_in = vec![0u8; PKT_V4_SIZE];
+    let mut data_out = vec![0u8; PKT_V4_SIZE];
+
+    // Run the test 50 times
+    let mut opts = TestRunOptions::new();
+    opts.data_in = Some(&data_in);
+    opts.data_out = Some(&mut data_out);
+    opts.repeat = 50;
+    let _result = prog.test_run(opts).unwrap();
+
+    let final_count: u64 = exec_count.get(&0, 0).unwrap();
+    assert_eq!(final_count, 50);
 }
 
 #[test_log::test]
@@ -133,22 +171,20 @@ fn test_socket_filter_test_run() {
 }
 
 #[test_log::test]
-fn test_classifier_test_run() {
+fn test_xdp_test_run() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
-    // BPF_PROG_TEST_RUN was introduced in v4.12 (1cf1cae963c2, "bpf: introduce
-    // BPF_PROG_TEST_RUN command") with support for sched_cls (used here) and
-    // sched_act program types. On kernels before v4.12 the syscall command does
-    // not exist and the bpf(2) call returns EINVAL.
-    if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
+    // XDP test-run with a writable data_out buffer requires the kernel to properly
+    // initialize xdp_buff.frame_sz during test execution. Before v5.8
+    // (bc56c919fce7, "bpf: Add xdp.frame_sz in bpf_prog_test_run_xdp"), frame_sz
+    // was left as zero. The kernel uses frame_sz to compute available headroom and
+    // tailroom; with frame_sz=0 those bounds are wrong and bpf_prog_test_run may
+    // return an error or silently produce incorrect data_out contents.
+    if kernel_version < aya::util::KernelVersion::new(5, 8, 0) {
         return;
     }
 
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
-    let prog: &mut SchedClassifier = bpf
-        .program_mut("test_classifier")
-        .unwrap()
-        .try_into()
-        .unwrap();
+    let prog: &mut Xdp = bpf.program_mut("test_xdp").unwrap().try_into().unwrap();
     prog.load().unwrap();
 
     let data_in = vec![0u8; PKT_V4_SIZE];
@@ -163,44 +199,8 @@ fn test_classifier_test_run() {
         duration,
         ..
     } = prog.test_run(opts).unwrap();
-
-    assert_eq!(return_value, 1, "Expected SK_PASS(1)");
+    assert_eq!(return_value, 2, "Expected XDP_PASS (2)");
     assert!(duration > 0, "Expected non-zero duration");
-}
-
-#[test_log::test]
-fn test_run_repeat() {
-    let kernel_version = aya::util::KernelVersion::current().unwrap();
-    // The `repeat` field in the BPF_PROG_TEST_RUN attribute struct was present from v4.12
-    if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
-        return;
-    }
-
-    let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
-
-    let mut exec_count: Array<_, u64> = bpf.take_map("EXEC_COUNT").unwrap().try_into().unwrap();
-
-    exec_count.set(0, 0, 0).unwrap();
-
-    let prog: &mut SchedClassifier = bpf
-        .program_mut("test_count_exec")
-        .unwrap()
-        .try_into()
-        .unwrap();
-    prog.load().unwrap();
-
-    let data_in = vec![0u8; PKT_V4_SIZE];
-    let mut data_out = vec![0u8; PKT_V4_SIZE];
-
-    // Run the test 50 times
-    let mut opts = TestRunOptions::new();
-    opts.data_in = Some(&data_in);
-    opts.data_out = Some(&mut data_out);
-    opts.repeat = 50;
-    let _result = prog.test_run(opts).unwrap();
-
-    let final_count: u64 = exec_count.get(&0, 0).unwrap();
-    assert_eq!(final_count, 50);
 }
 
 #[test_log::test]
