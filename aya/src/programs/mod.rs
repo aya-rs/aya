@@ -967,6 +967,7 @@ pub struct TestRunResult {
     /// Size of context written to `ctx_out`.
     pub ctx_size_out: u32,
 }
+
 /// Trait for BPF programs that support test execution via `BPF_PROG_TEST_RUN`.
 pub trait TestRun {
     /// Runs the program with test input data and returns the result.
@@ -980,7 +981,7 @@ pub trait TestRun {
     ///
     /// # Returns
     ///
-    /// Returns a [`crate::sys::TestRunResult`] containing:
+    /// Returns a [`crate::TestRunResult`] containing:
     /// - `return_value`: The value returned by the program
     /// - `duration`: Execution time in nanoseconds
     /// - `data_size_out`: Size of data written to output buffer
