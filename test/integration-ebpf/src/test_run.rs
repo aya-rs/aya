@@ -30,14 +30,14 @@ const fn test_classifier(_ctx: TcContext) -> i32 {
     SK_PASS as i32
 }
 
-#[socket_filter]
-fn test_count_exec(_ctx: SkBuffContext) -> i64 {
+#[classifier]
+fn test_count_exec(_ctx: TcContext) -> i32 {
     if let Some(count) = EXEC_COUNT.get_ptr_mut(0) {
         unsafe {
             *count += 1;
         }
     }
-    0
+    SK_PASS as i32
 }
 
 #[xdp]
