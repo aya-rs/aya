@@ -50,10 +50,8 @@ fn test_xdp_modify(ctx: XdpContext) -> u32 {
     }
 
     let packet = data as *mut u8;
-    for i in 0..XDP_MODIFY_LEN {
-        unsafe {
-            *packet.add(i) = XDP_MODIFY_VAL;
-        }
+    unsafe {
+        packet.write_bytes(XDP_MODIFY_VAL, XDP_MODIFY_LEN);
     }
 
     xdp_action::XDP_PASS
