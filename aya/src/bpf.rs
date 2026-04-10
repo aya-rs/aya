@@ -1,6 +1,7 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
+    ffi::OsString,
     fs, io,
     os::fd::{AsFd as _, AsRawFd as _},
     path::{Path, PathBuf},
@@ -29,7 +30,7 @@ use crate::{
         SchedClassifier, SkLookup, SkMsg, SkSkb, SockOps, SocketFilter, TracePoint, UProbe, Xdp,
     },
     sys::{
-        self, bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
+        bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
         is_bpf_syscall_wrapper_supported, is_btf_datasec_supported, is_btf_datasec_zero_supported,
         is_btf_decl_tag_supported, is_btf_enum64_supported, is_btf_float_supported,
         is_btf_func_global_supported, is_btf_func_supported, is_btf_supported,
@@ -265,17 +266,36 @@ fn read_kconfig() -> Option<String> {
         }
     }
 
-    let Ok(release) = sys::kernel_release() else {
-        return None;
-    };
-
-    let config_path = PathBuf::from("/boot").join(format!("config-{release}"));
+    let release = kernel_release();
+    let mut config_name = OsString::from("config-");
+    config_name.push(release);
+    let config_path = PathBuf::from("/boot").join(config_name);
     if config_path.exists() {
         debug!("Found kernel config at {}", config_path.to_string_lossy());
         return read_kconfig_file(&config_path, false);
     }
 
     None
+}
+
+#[cfg(test)]
+fn kernel_release() -> OsString {
+    OsString::from("unknown")
+}
+
+#[cfg(not(test))]
+fn kernel_release() -> OsString {
+    use std::{ffi::CStr, os::unix::ffi::OsStringExt as _};
+
+    unsafe {
+        let mut v = std::mem::zeroed::<libc::utsname>();
+        if libc::uname(std::ptr::from_mut(&mut v)) != 0 {
+            return OsString::from("unknown");
+        }
+
+        let release = CStr::from_ptr(v.release.as_ptr());
+        OsString::from_vec(release.to_bytes().to_vec())
+    }
 }
 
 fn read_kconfig_file(path: &PathBuf, gzip: bool) -> Option<String> {
