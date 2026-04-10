@@ -647,98 +647,93 @@ impl Btf {
                         };
                         debug!("{kind} {name}: fixup size to {size}");
                         d.size = *size as u32;
-
-                        // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
-                        // that need to have their offsets adjusted. To do this,
-                        // we need to get the offset from the ELF file.
-                        // This was also cached during initial parsing and
-                        // we can query by name in symbol_offsets.
-                        let old_size = d.type_info_size();
-                        let mut entries = mem::take(&mut d.entries);
-                        let mut section_size = d.size;
-                        let name_offset = d.name_offset;
-
-                        // Kernels before 5.12 reject zero-length DATASEC. See
-                        // https://github.com/torvalds/linux/commit/13ca51d5eb358edcb673afccb48c3440b9fda21b.
-                        if entries.is_empty() && !features.btf_datasec_zero {
-                            let filler_var_id = *filler_var_id.get_or_init(|| {
-                                let filler_type_name = self.add_string("__aya_datasec_filler_type");
-                                let filler_type_id = add_type(
-                                    &mut self.header,
-                                    &mut types,
-                                    BtfType::Int(Int::new(
-                                        filler_type_name,
-                                        1,
-                                        IntEncoding::None,
-                                        0,
-                                    )),
-                                );
-
-                                let filler_var_name = self.add_string("__aya_datasec_filler");
-                                add_type(
-                                    &mut self.header,
-                                    &mut types,
-                                    BtfType::Var(Var::new(
-                                        filler_var_name,
-                                        filler_type_id,
-                                        VarLinkage::Static,
-                                    )),
-                                )
-                            });
-                            let filler_len = section_size.max(1);
-                            debug!(
-                                "{kind} {name}: injecting filler entry for zero-length DATASEC (len={filler_len})"
-                            );
-                            entries.push(DataSecEntry {
-                                btf_type: filler_var_id,
-                                offset: 0,
-                                size: filler_len,
-                            });
-                            if section_size == 0 {
-                                section_size = filler_len;
-                            }
-                        }
-
-                        for e in &mut entries {
-                            if let BtfType::Var(var) = types.type_by_id(e.btf_type)? {
-                                let var_name = self.string_at(var.name_offset)?;
-                                if var.linkage == VarLinkage::Static {
-                                    debug!("{kind} {name}: VAR {var_name}: fixup not required");
-                                    continue;
-                                }
-
-                                let Some(offset) = symbol_offsets.get(var_name.as_ref()) else {
-                                    return Err(BtfError::SymbolOffsetNotFound {
-                                        symbol_name: var_name.into_owned(),
-                                    });
-                                };
-                                e.offset = *offset as u32;
-
-                                // For kconfig support
-                                if is_kconfig_section && var.linkage == VarLinkage::Extern {
-                                    let mut var = var.clone();
-                                    var.linkage = VarLinkage::Global;
-
-                                    types.types[e.btf_type as usize] = BtfType::Var(var);
-                                }
-
-                                debug!("{kind} {name}: VAR {var_name}: fixup offset {offset}");
-                            } else {
-                                return Err(BtfError::InvalidDatasec);
-                            }
-                        }
-                        let fixed_section = DataSec::new(name_offset, entries, section_size);
-                        let new_size = fixed_section.type_info_size();
-                        if new_size != old_size {
-                            self.header.type_len =
-                                self.header.type_len - old_size as u32 + new_size as u32;
-                            self.header.str_off = self.header.type_len;
-                        }
-
-                        // Must reborrow here because we borrow `types` above.
-                        let t = &mut types.types[i];
-                        *t = BtfType::DataSec(fixed_section);
                     }
+
+                    // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
+                    // that need to have their offsets adjusted. To do this,
+                    // we need to get the offset from the ELF file.
+                    // This was also cached during initial parsing and
+                    // we can query by name in symbol_offsets.
+                    let old_size = d.type_info_size();
+                    let mut entries = mem::take(&mut d.entries);
+                    let mut section_size = d.size;
+                    let name_offset = d.name_offset;
+
+                    // Kernels before 5.12 reject zero-length DATASEC. See
+                    // https://github.com/torvalds/linux/commit/13ca51d5eb358edcb673afccb48c3440b9fda21b.
+                    if entries.is_empty() && !features.btf_datasec_zero {
+                        let filler_var_id = *filler_var_id.get_or_init(|| {
+                            let filler_type_name = self.add_string("__aya_datasec_filler_type");
+                            let filler_type_id = add_type(
+                                &mut self.header,
+                                &mut types,
+                                BtfType::Int(Int::new(filler_type_name, 1, IntEncoding::None, 0)),
+                            );
+
+                            let filler_var_name = self.add_string("__aya_datasec_filler");
+                            add_type(
+                                &mut self.header,
+                                &mut types,
+                                BtfType::Var(Var::new(
+                                    filler_var_name,
+                                    filler_type_id,
+                                    VarLinkage::Static,
+                                )),
+                            )
+                        });
+                        let filler_len = section_size.max(1);
+                        debug!(
+                            "{kind} {name}: injecting filler entry for zero-length DATASEC (len={filler_len})"
+                        );
+                        entries.push(DataSecEntry {
+                            btf_type: filler_var_id,
+                            offset: 0,
+                            size: filler_len,
+                        });
+                        if section_size == 0 {
+                            section_size = filler_len;
+                        }
+                    }
+
+                    for e in &mut entries {
+                        if let BtfType::Var(var) = types.type_by_id(e.btf_type)? {
+                            let var_name = self.string_at(var.name_offset)?;
+                            if var.linkage == VarLinkage::Static {
+                                debug!("{kind} {name}: VAR {var_name}: fixup not required");
+                                continue;
+                            }
+
+                            let Some(offset) = symbol_offsets.get(var_name.as_ref()) else {
+                                return Err(BtfError::SymbolOffsetNotFound {
+                                    symbol_name: var_name.into_owned(),
+                                });
+                            };
+                            e.offset = *offset as u32;
+
+                            // For kconfig support
+                            if is_kconfig_section && var.linkage == VarLinkage::Extern {
+                                let mut var = var.clone();
+                                var.linkage = VarLinkage::Global;
+
+                                types.types[e.btf_type as usize] = BtfType::Var(var);
+                            }
+
+                            debug!("{kind} {name}: VAR {var_name}: fixup offset {offset}");
+                        } else {
+                            return Err(BtfError::InvalidDatasec);
+                        }
+                    }
+                    let fixed_section = DataSec::new(name_offset, entries, section_size);
+                    let new_size = fixed_section.type_info_size();
+                    if new_size != old_size {
+                        self.header.type_len =
+                            self.header.type_len - old_size as u32 + new_size as u32;
+                        self.header.str_off = self.header.type_len;
+                    }
+
+                    // Must reborrow here because we borrow `types` above.
+                    let t = &mut types.types[i];
+                    *t = BtfType::DataSec(fixed_section);
                 }
                 // Fixup FUNC_PROTO.
                 BtfType::FuncProto(ty) if features.btf_func => {
