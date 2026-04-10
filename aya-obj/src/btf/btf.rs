@@ -974,23 +974,6 @@ impl Object {
                 return Ok(None);
             }
 
-            let mut kconfig_var_index = HashMap::new();
-            for t in &obj_btf.types.types {
-                let BtfType::DataSec(d) = t else {
-                    continue;
-                };
-                if obj_btf.string_at(d.name_offset)?.as_ref() != ".kconfig" {
-                    continue;
-                }
-                for entry in &d.entries {
-                    let BtfType::Var(var) = obj_btf.types.type_by_id(entry.btf_type)? else {
-                        continue;
-                    };
-                    let var_name = obj_btf.string_at(var.name_offset)?.into_owned();
-                    kconfig_var_index.insert(var_name, var.clone());
-                }
-            }
-
             let kconfig_map_index = self
                 .section_infos
                 .values()
@@ -1009,45 +992,56 @@ impl Object {
             let mut kconfig_data = Vec::new();
             let mut offset = 0u64;
 
-            for (name, var) in &kconfig_var_index {
-                let Some(symbol_index) = external_symbols_by_name.get(name) else {
+            for t in &obj_btf.types.types {
+                let BtfType::DataSec(d) = t else {
                     continue;
                 };
-                if var.linkage != VarLinkage::Extern {
-                    return Err(BtfError::InvalidExternalSymbol {
-                        symbol_name: name.clone(),
-                    });
+                if obj_btf.string_at(d.name_offset)?.as_ref() != ".kconfig" {
+                    continue;
                 }
 
-                let (type_align, data) = Self::prepare_kconfig_value(
-                    obj_btf,
-                    var,
-                    name,
-                    externs.get(name).map(Vec::as_slice),
-                    self.symbol_table
-                        .get(symbol_index)
-                        .expect("extern symbol index must resolve to a symbol")
-                        .is_weak,
-                    self.endianness,
-                )?;
-                let aligned_address = (offset + (type_align - 1)) & !(type_align - 1);
-                let symbol = self
-                    .symbol_table
-                    .get_mut(symbol_index)
-                    .expect("extern symbol index must resolve to a symbol");
-                symbol.address = aligned_address;
-                symbol.section_index = Some(kconfig_map_index);
+                for entry in &d.entries {
+                    let BtfType::Var(var) = obj_btf.types.type_by_id(entry.btf_type)? else {
+                        continue;
+                    };
+                    let name = obj_btf.string_at(var.name_offset)?.into_owned();
 
-                if kconfig_data.len() < aligned_address as usize {
-                    kconfig_data.resize(aligned_address as usize, 0);
+                    let Some(symbol_index) = external_symbols_by_name.get(name.as_str()) else {
+                        continue;
+                    };
+                    if var.linkage != VarLinkage::Extern {
+                        return Err(BtfError::InvalidExternalSymbol { symbol_name: name });
+                    }
+
+                    let (type_align, data) = Self::prepare_kconfig_value(
+                        obj_btf,
+                        var,
+                        &name,
+                        externs.get(&name).map(Vec::as_slice),
+                        self.symbol_table
+                            .get(symbol_index)
+                            .expect("extern symbol index must resolve to a symbol")
+                            .is_weak,
+                        self.endianness,
+                    )?;
+                    let aligned_address = (offset + (type_align - 1)) & !(type_align - 1);
+                    let symbol = self
+                        .symbol_table
+                        .get_mut(symbol_index)
+                        .expect("extern symbol index must resolve to a symbol");
+                    symbol.address = aligned_address;
+                    symbol.section_index = Some(kconfig_map_index);
+
+                    if kconfig_data.len() < aligned_address as usize {
+                        kconfig_data.resize(aligned_address as usize, 0);
+                    }
+
+                    self.symbol_offset_by_name.insert(name, symbol.address);
+                    // Undefined externs often have size 0; use BTF type size for kconfig.
+                    symbol.size = data.len() as u64;
+                    kconfig_data.extend_from_slice(&data);
+                    offset = aligned_address + data.len() as u64;
                 }
-
-                self.symbol_offset_by_name
-                    .insert(name.clone(), symbol.address);
-                // Undefined externs often have size 0; use BTF type size for kconfig.
-                symbol.size = data.len() as u64;
-                kconfig_data.extend_from_slice(&data);
-                offset = aligned_address + data.len() as u64;
             }
 
             if !kconfig_data.is_empty() {
