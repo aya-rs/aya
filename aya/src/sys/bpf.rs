@@ -32,7 +32,7 @@ use log::warn;
 use crate::{
     Btf, Pod, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
-    programs::{LsmAttachType, ProgramType, links::LinkRef, test_kprobe_creation},
+    programs::{KProbe, LsmAttachType, ProbeKind, ProgramType, create_as_probe, links::LinkRef},
     sys::{Syscall, SyscallError, syscall},
     util::KernelVersion,
 };
@@ -1065,7 +1065,14 @@ pub(crate) fn is_bpf_syscall_wrapper_supported() -> bool {
     }
 
     for syscall_name in candidate_sys_bpf_symbols() {
-        if test_kprobe_creation(OsStr::new(syscall_name), 0).is_ok() {
+        if create_as_probe::<KProbe>(
+            ProbeKind::Entry,
+            OsStr::new(syscall_name),
+            0,
+            Some(std::process::id()),
+        )
+        .is_ok()
+        {
             return true;
         }
     }

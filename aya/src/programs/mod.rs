@@ -74,7 +74,7 @@ pub mod xdp;
 
 use std::{
     borrow::Cow,
-    ffi::{CString, OsStr},
+    ffi::CString,
     io,
     os::fd::{AsFd, BorrowedFd},
     path::{Path, PathBuf},
@@ -90,6 +90,7 @@ use aya_obj::{
 use info::impl_info;
 pub use info::{LsmAttachType, ProgramInfo, ProgramType, loaded_programs};
 use libc::ENOSPC;
+pub(crate) use probe::create_as_probe;
 use tc::SchedClassifierLink;
 use thiserror::Error;
 
@@ -125,13 +126,6 @@ pub use crate::programs::{
     uprobe::{UProbe, UProbeError},
     xdp::{Xdp, XdpError, XdpFlags},
 };
-
-pub(crate) fn test_kprobe_creation(
-    fn_name: &OsStr,
-    offset: u64,
-) -> Result<crate::MockableFd, ProgramError> {
-    probe::create_as_probe::<KProbe>(ProbeKind::Entry, fn_name, offset, None)
-}
 use crate::{
     VerifierLogLevel,
     maps::MapError,
