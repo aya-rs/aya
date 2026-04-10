@@ -57,6 +57,7 @@ bpf_file!(
     RING_BUF => "ring_buf",
     SIMPLE_PROG => "simple_prog",
     SK_STORAGE => "sk_storage",
+    SPIN_LOCK => "spin_lock",
     STRNCMP => "strncmp",
     TCX => "tcx",
     TEST => "test",
