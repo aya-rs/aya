@@ -10973,6 +10973,7 @@ pub fn aya::EbpfError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::EbpfError
 pub fn aya::EbpfError::from(t: T) -> T
 pub enum aya::KConfigError
+pub aya::KConfigError::ConfigNotFound
 pub aya::KConfigError::InvalidUtf8(core::str::error::Utf8Error)
 impl core::convert::From<core::str::error::Utf8Error> for aya::KConfigError
 pub fn aya::KConfigError::from(source: core::str::error::Utf8Error) -> Self
@@ -11119,7 +11120,7 @@ impl<T> core::convert::From<T> for aya::GlobalData<'a>
 pub fn aya::GlobalData<'a>::from(t: T) -> T
 pub struct aya::KConfig
 impl aya::KConfig
-pub fn aya::KConfig::current() -> Self
+pub fn aya::KConfig::current() -> core::result::Result<Self, aya::KConfigError>
 pub fn aya::KConfig::parse(data: &[u8]) -> core::result::Result<Self, aya::KConfigError>
 impl core::clone::Clone for aya::KConfig
 pub fn aya::KConfig::clone(&self) -> aya::KConfig

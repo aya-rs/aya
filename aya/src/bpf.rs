@@ -77,7 +77,7 @@ pub(crate) static FEATURES: LazyLock<Features> = LazyLock::new(detect_features);
 /// use aya::{EbpfLoader, KConfig};
 ///
 /// // Load kconfig from the system
-/// let kconfig = KConfig::current();
+/// let kconfig = KConfig::current()?;
 /// let mut loader = EbpfLoader::new();
 /// let bpf = loader.kconfig(kconfig).load_file("file.o")?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
@@ -90,6 +90,10 @@ pub struct KConfig {
 /// The error type returned by [`KConfig::parse`].
 #[derive(Debug, Error)]
 pub enum KConfigError {
+    /// No kernel config file could be found on the system.
+    #[error("kernel config not found at /proc/config.gz or /boot/config-<release>")]
+    ConfigNotFound,
+
     /// The provided kernel config is not valid UTF-8.
     #[error("kernel config is not valid UTF-8")]
     InvalidUtf8(#[from] std::str::Utf8Error),
@@ -101,10 +105,11 @@ impl KConfig {
     /// This will attempt to read `/proc/config.gz` when gzip support is enabled, otherwise
     /// `/boot/config-<release>`, and populate the configuration with kernel version and
     /// feature detection information.
-    pub fn current() -> Self {
-        Self {
-            data: compute_kconfig_definition(&FEATURES, read_kconfig().as_deref()),
-        }
+    pub fn current() -> Result<Self, KConfigError> {
+        let raw_config = read_kconfig().ok_or(KConfigError::ConfigNotFound)?;
+        Ok(Self {
+            data: compute_kconfig_definition(&FEATURES, Some(&raw_config)),
+        })
     }
 
     /// Creates a new `KConfig` from kernel configuration data provided by the caller.
@@ -419,7 +424,7 @@ impl<'a> EbpfLoader<'a> {
     /// ```no_run
     /// use aya::{EbpfLoader, KConfig};
     ///
-    /// let kconfig = KConfig::current();
+    /// let kconfig = KConfig::current()?;
     /// let mut loader = EbpfLoader::new();
     /// let bpf = loader.kconfig(kconfig).load_file("file.o")?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())

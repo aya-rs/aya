@@ -96,7 +96,7 @@ fn kconfig() {
         return;
     }
     let _netns = NetNsGuard::new();
-    let kconfig = KConfig::current();
+    let kconfig = KConfig::current().unwrap();
     let mut loader = EbpfLoader::new();
     let mut bpf = loader.kconfig(kconfig).load(crate::KCONFIG).unwrap();
     let pass: &mut Xdp = bpf.program_mut("kconfig").unwrap().try_into().unwrap();
