@@ -266,7 +266,7 @@ fn read_kconfig() -> Option<String> {
         }
     }
 
-    let release = kernel_release();
+    let release = kernel_release()?;
     let mut config_name = OsString::from("config-");
     config_name.push(release);
     let config_path = PathBuf::from("/boot").join(config_name);
@@ -279,22 +279,22 @@ fn read_kconfig() -> Option<String> {
 }
 
 #[cfg(test)]
-fn kernel_release() -> OsString {
-    OsString::from("unknown")
+fn kernel_release() -> Option<OsString> {
+    std::env::var_os("AYA_TEST_KERNEL_RELEASE").or_else(|| Some(OsString::from("unknown")))
 }
 
 #[cfg(not(test))]
-fn kernel_release() -> OsString {
+fn kernel_release() -> Option<OsString> {
     use std::{ffi::CStr, os::unix::ffi::OsStringExt as _};
 
     unsafe {
         let mut v = std::mem::zeroed::<libc::utsname>();
         if libc::uname(std::ptr::from_mut(&mut v)) != 0 {
-            return OsString::from("unknown");
+            return None;
         }
 
         let release = CStr::from_ptr(v.release.as_ptr());
-        OsString::from_vec(release.to_bytes().to_vec())
+        Some(OsString::from_vec(release.to_bytes().to_vec()))
     }
 }
 
