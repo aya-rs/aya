@@ -1,6 +1,6 @@
 use std::{
     cmp,
-    ffi::{CStr, CString, c_char},
+    ffi::{CStr, CString, OsStr, c_char},
     fmt, io, iter,
     mem::{self, MaybeUninit},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, RawFd},
@@ -32,7 +32,7 @@ use log::warn;
 use crate::{
     Btf, Pod, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
-    programs::{LsmAttachType, ProgramType, links::LinkRef},
+    programs::{KProbe, LsmAttachType, ProbeKind, ProgramType, create_as_probe, links::LinkRef},
     sys::{Syscall, SyscallError, syscall},
     util::KernelVersion,
 };
@@ -1056,6 +1056,52 @@ pub(crate) fn is_prog_id_supported(map_type: bpf_map_type) -> bool {
     u.map_flags = 0;
 
     bpf_map_create(&mut attr).is_ok()
+}
+
+pub(crate) fn is_bpf_syscall_wrapper_supported() -> bool {
+    if cfg!(miri) {
+        // Miri runs with isolation; avoid filesystem/probe checks.
+        return true;
+    }
+
+    for syscall_name in candidate_sys_bpf_symbols() {
+        if create_as_probe::<KProbe>(
+            ProbeKind::Entry,
+            OsStr::new(syscall_name),
+            0,
+            Some(std::process::id()),
+        )
+        .is_ok()
+        {
+            return true;
+        }
+    }
+
+    false
+}
+
+const fn candidate_sys_bpf_symbols() -> &'static [&'static str] {
+    if cfg!(target_arch = "x86_64") {
+        &["__x64_sys_bpf", "__ia32_sys_bpf", "__x32_sys_bpf"]
+    } else if cfg!(target_arch = "x86") {
+        &["__ia32_sys_bpf"]
+    } else if cfg!(target_arch = "aarch64") {
+        &["__arm64_sys_bpf"]
+    } else if cfg!(target_arch = "arm") {
+        &["__arm_sys_bpf"]
+    } else if cfg!(target_arch = "powerpc64") {
+        &["__powerpc64_sys_bpf"]
+    } else if cfg!(target_arch = "powerpc") {
+        &["__powerpc_sys_bpf"]
+    } else if cfg!(target_arch = "riscv32") || cfg!(target_arch = "riscv64") {
+        &["__riscv_sys_bpf"]
+    } else if cfg!(target_arch = "s390x") {
+        &["__s390x_sys_bpf"]
+    } else if cfg!(target_arch = "mips") || cfg!(target_arch = "mips64") {
+        &["__mips_sys_bpf"]
+    } else {
+        &[]
+    }
 }
 
 pub(crate) fn is_btf_supported() -> bool {
