@@ -1013,35 +1013,33 @@ impl Object {
                         return Err(BtfError::InvalidExternalSymbol { symbol_name: name });
                     }
 
-                    let (type_align, data) = Self::prepare_kconfig_value(
-                        obj_btf,
-                        var,
-                        &name,
-                        externs.get(&name).map(Vec::as_slice),
-                        self.symbol_table
-                            .get(symbol_index)
-                            .ok_or_else(|| BtfError::InvalidExternalSymbol {
+                    let (data, aligned_address) = {
+                        let symbol = self.symbol_table.get_mut(symbol_index).ok_or_else(|| {
+                            BtfError::InvalidExternalSymbol {
                                 symbol_name: name.clone(),
-                            })?
-                            .is_weak,
-                        self.endianness,
-                    )?;
-                    let aligned_address = (offset + (type_align - 1)) & !(type_align - 1);
-                    let symbol = self.symbol_table.get_mut(symbol_index).ok_or_else(|| {
-                        BtfError::InvalidExternalSymbol {
-                            symbol_name: name.clone(),
-                        }
-                    })?;
-                    symbol.address = aligned_address;
-                    symbol.section_index = Some(kconfig_map_index);
+                            }
+                        })?;
+                        let (type_align, data) = Self::prepare_kconfig_value(
+                            obj_btf,
+                            var,
+                            &name,
+                            externs.get(&name).map(Vec::as_slice),
+                            symbol.is_weak,
+                            self.endianness,
+                        )?;
+                        let aligned_address = (offset + (type_align - 1)) & !(type_align - 1);
+                        symbol.address = aligned_address;
+                        symbol.section_index = Some(kconfig_map_index);
+                        // Undefined externs often have size 0; use BTF type size for kconfig.
+                        symbol.size = data.len() as u64;
+                        (data, aligned_address)
+                    };
 
                     if kconfig_data.len() < aligned_address as usize {
                         kconfig_data.resize(aligned_address as usize, 0);
                     }
 
-                    self.symbol_offset_by_name.insert(name, symbol.address);
-                    // Undefined externs often have size 0; use BTF type size for kconfig.
-                    symbol.size = data.len() as u64;
+                    self.symbol_offset_by_name.insert(name, aligned_address);
                     kconfig_data.extend_from_slice(&data);
                     offset = aligned_address + data.len() as u64;
                 }
