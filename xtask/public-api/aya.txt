@@ -1836,7 +1836,7 @@ impl<T> core::convert::From<T> for aya::maps::lpm_trie::LpmTrie<T, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::from(t: T) -> T
 pub struct aya::maps::MapData
 impl aya::maps::MapData
-pub fn aya::maps::MapData::create(obj: aya_obj::maps::Map, name: &str, btf_fd: core::option::Option<std::os::fd::owned::BorrowedFd<'_>>) -> core::result::Result<Self, aya::maps::MapError>
+pub fn aya::maps::MapData::create(obj: aya_obj::maps::Map, name: &str, btf_fd: core::option::Option<std::os::fd::owned::BorrowedFd<'_>>, token_fd: core::option::Option<std::os::fd::owned::BorrowedFd<'_>>, features: aya_obj::obj::Features) -> core::result::Result<Self, aya::maps::MapError>
 pub const fn aya::maps::MapData::fd(&self) -> &aya::maps::MapFd
 pub fn aya::maps::MapData::from_fd(fd: std::os::fd::owned::OwnedFd) -> core::result::Result<Self, aya::maps::MapError>
 pub fn aya::maps::MapData::from_id(id: u32) -> core::result::Result<Self, aya::maps::MapError>
@@ -10854,9 +10854,103 @@ impl<T> core::borrow::BorrowMut<T> for aya::sys::SyscallError where T: ?core::ma
 pub fn aya::sys::SyscallError::borrow_mut(&mut self) -> &mut T
 impl<T> core::convert::From<T> for aya::sys::SyscallError
 pub fn aya::sys::SyscallError::from(t: T) -> T
+pub fn aya::sys::detect_features_with_token(token_fd: std::os::fd::owned::BorrowedFd<'_>) -> aya_obj::obj::Features
 pub fn aya::sys::enable_stats(stats_type: aya::sys::Stats) -> core::result::Result<std::os::fd::owned::OwnedFd, aya::sys::SyscallError>
 pub fn aya::sys::is_map_supported(map_type: aya::maps::MapType) -> core::result::Result<bool, aya::sys::SyscallError>
 pub fn aya::sys::is_program_supported(program_type: aya::programs::ProgramType) -> core::result::Result<bool, aya::programs::ProgramError>
+pub mod aya::token
+pub struct aya::token::BpfToken
+impl aya::token::BpfToken
+pub fn aya::token::BpfToken::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
+pub fn aya::token::BpfToken::create<P: core::convert::AsRef<std::path::Path>>(bpffs_path: P) -> core::result::Result<Self, std::io::error::Error>
+impl core::marker::Freeze for aya::token::BpfToken
+impl core::marker::Send for aya::token::BpfToken
+impl core::marker::Sync for aya::token::BpfToken
+impl core::marker::Unpin for aya::token::BpfToken
+impl core::marker::UnsafeUnpin for aya::token::BpfToken
+impl core::panic::unwind_safe::RefUnwindSafe for aya::token::BpfToken
+impl core::panic::unwind_safe::UnwindSafe for aya::token::BpfToken
+impl<T, U> core::convert::Into<U> for aya::token::BpfToken where U: core::convert::From<T>
+pub fn aya::token::BpfToken::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::token::BpfToken where U: core::convert::Into<T>
+pub type aya::token::BpfToken::Error = core::convert::Infallible
+pub fn aya::token::BpfToken::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::token::BpfToken where U: core::convert::TryFrom<T>
+pub type aya::token::BpfToken::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::token::BpfToken::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::token::BpfToken where T: 'static + ?core::marker::Sized
+pub fn aya::token::BpfToken::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::token::BpfToken where T: ?core::marker::Sized
+pub fn aya::token::BpfToken::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::token::BpfToken where T: ?core::marker::Sized
+pub fn aya::token::BpfToken::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::token::BpfToken
+pub fn aya::token::BpfToken::from(t: T) -> T
+pub struct aya::token::FilesystemPermissions
+impl core::default::Default for aya::token::FilesystemPermissions
+pub fn aya::token::FilesystemPermissions::default() -> aya::token::FilesystemPermissions
+impl core::fmt::Debug for aya::token::FilesystemPermissions
+pub fn aya::token::FilesystemPermissions::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::token::FilesystemPermissions
+impl core::marker::Send for aya::token::FilesystemPermissions
+impl core::marker::Sync for aya::token::FilesystemPermissions
+impl core::marker::Unpin for aya::token::FilesystemPermissions
+impl core::marker::UnsafeUnpin for aya::token::FilesystemPermissions
+impl core::panic::unwind_safe::RefUnwindSafe for aya::token::FilesystemPermissions
+impl core::panic::unwind_safe::UnwindSafe for aya::token::FilesystemPermissions
+impl<T, U> core::convert::Into<U> for aya::token::FilesystemPermissions where U: core::convert::From<T>
+pub fn aya::token::FilesystemPermissions::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::token::FilesystemPermissions where U: core::convert::Into<T>
+pub type aya::token::FilesystemPermissions::Error = core::convert::Infallible
+pub fn aya::token::FilesystemPermissions::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::token::FilesystemPermissions where U: core::convert::TryFrom<T>
+pub type aya::token::FilesystemPermissions::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::token::FilesystemPermissions::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::token::FilesystemPermissions where T: 'static + ?core::marker::Sized
+pub fn aya::token::FilesystemPermissions::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::token::FilesystemPermissions where T: ?core::marker::Sized
+pub fn aya::token::FilesystemPermissions::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::token::FilesystemPermissions where T: ?core::marker::Sized
+pub fn aya::token::FilesystemPermissions::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::token::FilesystemPermissions
+pub fn aya::token::FilesystemPermissions::from(t: T) -> T
+pub struct aya::token::FilesystemPermissionsBuilder
+impl aya::token::FilesystemPermissionsBuilder
+pub fn aya::token::FilesystemPermissionsBuilder::allow_attach_type(self, attach_type: aya_obj::attach::BpfAttachType) -> Self
+pub fn aya::token::FilesystemPermissionsBuilder::allow_cmd(self, cmd: aya_obj::cmd::BpfCommand) -> Self
+pub fn aya::token::FilesystemPermissionsBuilder::allow_map_type(self, map_type: aya_obj::maps::BpfMapType) -> Self
+pub fn aya::token::FilesystemPermissionsBuilder::allow_prog_type(self, prog_type: aya_obj::programs::BpfProgType) -> Self
+pub const fn aya::token::FilesystemPermissionsBuilder::build(self) -> aya::token::FilesystemPermissions
+pub const fn aya::token::FilesystemPermissionsBuilder::gid(self, gid: u32) -> Self
+pub const fn aya::token::FilesystemPermissionsBuilder::uid(self, uid: u32) -> Self
+impl core::default::Default for aya::token::FilesystemPermissionsBuilder
+pub fn aya::token::FilesystemPermissionsBuilder::default() -> aya::token::FilesystemPermissionsBuilder
+impl core::fmt::Debug for aya::token::FilesystemPermissionsBuilder
+pub fn aya::token::FilesystemPermissionsBuilder::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::token::FilesystemPermissionsBuilder
+impl core::marker::Send for aya::token::FilesystemPermissionsBuilder
+impl core::marker::Sync for aya::token::FilesystemPermissionsBuilder
+impl core::marker::Unpin for aya::token::FilesystemPermissionsBuilder
+impl core::marker::UnsafeUnpin for aya::token::FilesystemPermissionsBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for aya::token::FilesystemPermissionsBuilder
+impl core::panic::unwind_safe::UnwindSafe for aya::token::FilesystemPermissionsBuilder
+impl<T, U> core::convert::Into<U> for aya::token::FilesystemPermissionsBuilder where U: core::convert::From<T>
+pub fn aya::token::FilesystemPermissionsBuilder::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for aya::token::FilesystemPermissionsBuilder where U: core::convert::Into<T>
+pub type aya::token::FilesystemPermissionsBuilder::Error = core::convert::Infallible
+pub fn aya::token::FilesystemPermissionsBuilder::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for aya::token::FilesystemPermissionsBuilder where U: core::convert::TryFrom<T>
+pub type aya::token::FilesystemPermissionsBuilder::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn aya::token::FilesystemPermissionsBuilder::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for aya::token::FilesystemPermissionsBuilder where T: 'static + ?core::marker::Sized
+pub fn aya::token::FilesystemPermissionsBuilder::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for aya::token::FilesystemPermissionsBuilder where T: ?core::marker::Sized
+pub fn aya::token::FilesystemPermissionsBuilder::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for aya::token::FilesystemPermissionsBuilder where T: ?core::marker::Sized
+pub fn aya::token::FilesystemPermissionsBuilder::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for aya::token::FilesystemPermissionsBuilder
+pub fn aya::token::FilesystemPermissionsBuilder::from(t: T) -> T
+pub fn aya::token::create_bpf_filesystem<P: core::convert::AsRef<std::path::Path>>(path: P, perms: aya::token::FilesystemPermissions) -> core::result::Result<(), std::io::error::Error>
 pub mod aya::util
 pub struct aya::util::KernelVersion
 impl aya::util::KernelVersion
@@ -11025,6 +11119,7 @@ pub fn aya::EbpfLoader<'a>::new() -> Self
 pub fn aya::EbpfLoader<'a>::override_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T, must_exist: bool) -> &mut Self
 pub fn aya::EbpfLoader<'a>::set_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, name: &'a str, value: T, must_exist: bool) -> &mut Self
 pub fn aya::EbpfLoader<'a>::set_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self
+pub fn aya::EbpfLoader<'a>::token(&mut self, token: &aya::token::BpfToken) -> &mut Self
 pub const fn aya::EbpfLoader<'a>::verifier_log_level(&mut self, level: aya::VerifierLogLevel) -> &mut Self
 impl core::default::Default for aya::EbpfLoader<'_>
 pub fn aya::EbpfLoader<'_>::default() -> Self
