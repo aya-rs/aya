@@ -228,7 +228,7 @@ fn parse_kconfig_values(raw_config: &str, result: &mut HashMap<String, Vec<u8>>)
             }
             Some(_) => {
                 if let Some(value) = parse_kconfig_numeric(raw_value) {
-                    value.to_ne_bytes().to_vec()
+                    value.to_vec()
                 } else {
                     continue;
                 }
@@ -240,14 +240,18 @@ fn parse_kconfig_values(raw_config: &str, result: &mut HashMap<String, Vec<u8>>)
     }
 }
 
-fn parse_kconfig_numeric(raw_value: &str) -> Option<u64> {
+fn parse_kconfig_numeric(raw_value: &str) -> Option<[u8; 8]> {
+    if raw_value.starts_with('-') {
+        return raw_value.parse::<i64>().ok().map(i64::to_ne_bytes);
+    }
+
     if let Some(value) = raw_value
         .strip_prefix("0x")
         .or_else(|| raw_value.strip_prefix("0X"))
     {
-        u64::from_str_radix(value, 16).ok()
+        u64::from_str_radix(value, 16).ok().map(u64::to_ne_bytes)
     } else {
-        raw_value.parse::<u64>().ok()
+        raw_value.parse::<u64>().ok().map(u64::to_ne_bytes)
     }
 }
 
