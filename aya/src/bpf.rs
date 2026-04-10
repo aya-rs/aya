@@ -298,29 +298,26 @@ fn kernel_release() -> OsString {
     }
 }
 
-fn read_kconfig_file(path: &PathBuf, gzip: bool) -> Option<String> {
-    let mut output = String::new();
-
+fn read_kconfig_file(path: &Path, gzip: bool) -> Option<String> {
     let res = if gzip {
         #[cfg(feature = "kconfig-gz")]
         {
-            File::open(path)
-                .map(GzDecoder::new)
-                .and_then(|mut file| file.read_to_string(&mut output))
+            let mut output = String::new();
+            File::open(path).map(GzDecoder::new).and_then(|mut file| {
+                file.read_to_string(&mut output)?;
+                Ok(output)
+            })
         }
         #[cfg(not(feature = "kconfig-gz"))]
         {
             return None;
         }
     } else {
-        fs::read_to_string(path).map(|s| {
-            output = s;
-            output.len()
-        })
+        fs::read_to_string(path)
     };
 
     match res {
-        Ok(_) => Some(output),
+        Ok(output) => Some(output),
         Err(e) => {
             warn!(
                 "Unable to read kernel config {}: {:?}",
