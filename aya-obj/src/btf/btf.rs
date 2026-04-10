@@ -921,7 +921,7 @@ impl Object {
         obj_btf: &Btf,
         var: &Var,
         symbol_name: &str,
-        external_value: Option<&Vec<u8>>,
+        external_value: Option<&[u8]>,
         symbol_is_weak: bool,
         endianness: Endianness,
     ) -> Result<(u64, Vec<u8>), BtfError> {
@@ -944,7 +944,7 @@ impl Object {
         // Weak kconfig externs are optional: if CONFIG_* is missing,
         // follow libbpf semantics and use a zero-filled value.
         if external_value.is_none() && symbol_is_weak {
-            external_value = Some(&empty_data);
+            external_value = Some(empty_data.as_slice());
         }
 
         let Some(data) = external_value else {
@@ -954,7 +954,7 @@ impl Object {
         };
 
         let data = if is_char_array {
-            let mut value = data.clone();
+            let mut value = data.to_vec();
             if type_size > 0 {
                 if value.len() < type_size {
                     value.resize(type_size, 0);
@@ -1028,7 +1028,7 @@ impl Object {
                     obj_btf,
                     var,
                     name,
-                    externs.get(name),
+                    externs.get(name).map(Vec::as_slice),
                     self.symbol_table
                         .get(symbol_index)
                         .expect("extern symbol index must resolve to a symbol")
