@@ -1020,15 +1020,18 @@ impl Object {
                         externs.get(&name).map(Vec::as_slice),
                         self.symbol_table
                             .get(symbol_index)
-                            .expect("extern symbol index must resolve to a symbol")
+                            .ok_or_else(|| BtfError::InvalidExternalSymbol {
+                                symbol_name: name.clone(),
+                            })?
                             .is_weak,
                         self.endianness,
                     )?;
                     let aligned_address = (offset + (type_align - 1)) & !(type_align - 1);
-                    let symbol = self
-                        .symbol_table
-                        .get_mut(symbol_index)
-                        .expect("extern symbol index must resolve to a symbol");
+                    let symbol = self.symbol_table.get_mut(symbol_index).ok_or_else(|| {
+                        BtfError::InvalidExternalSymbol {
+                            symbol_name: name.clone(),
+                        }
+                    })?;
                     symbol.address = aligned_address;
                     symbol.section_index = Some(kconfig_map_index);
 
