@@ -46,7 +46,7 @@ _We strongly encourage you to add a test for your changes._
 
 - [ ] Rust code has been formatted with `cargo +nightly fmt`.
 - [ ] All clippy lints have been fixed.
-      You can find failing lints with `./clippy.sh`.
+      You can find failing lints with `cargo xtask clippy`.
 - [ ] Unit tests are passing locally with `cargo test`.
 - [ ] The [Integration tests] are passing locally.
 - [ ] I have blessed any API changes with `cargo xtask public-api --bless`.
