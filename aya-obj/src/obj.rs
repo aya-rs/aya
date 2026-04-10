@@ -1461,7 +1461,10 @@ mod tests {
     use assert_matches::assert_matches;
 
     use super::*;
-    use crate::generated::{bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, btf_ext_header};
+    use crate::{
+        btf::{DataSec, Int, IntEncoding, Var, VarLinkage},
+        generated::{bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, btf_ext_header},
+    };
 
     const FAKE_INS_LEN: u64 = 8;
 
@@ -1683,6 +1686,50 @@ mod tests {
 
     fn fake_obj() -> Object {
         Object::new(Endianness::Little, CString::new("GPL").unwrap(), None)
+    }
+
+    fn add_external_data_symbol(obj: &mut Object, name: &str, is_weak: bool) {
+        let idx = obj.symbol_table.len() + 1;
+        obj.symbol_table.insert(
+            idx,
+            Symbol {
+                index: idx,
+                section_index: None,
+                name: Some(name.to_string()),
+                address: 0,
+                size: 0,
+                is_definition: false,
+                is_external: true,
+                is_weak,
+                kind: SymbolKind::Data,
+            },
+        );
+    }
+
+    fn add_kconfig_var(
+        btf: &mut Btf,
+        entries: &mut Vec<DataSecEntry>,
+        name: &str,
+        btf_type: u32,
+        size: u32,
+    ) {
+        let name_offset = btf.add_string(name);
+        let var_type_id = btf.add_type(BtfType::Var(Var::new(
+            name_offset,
+            btf_type,
+            VarLinkage::Extern,
+        )));
+        entries.push(DataSecEntry {
+            btf_type: var_type_id,
+            offset: 0,
+            size,
+        });
+    }
+
+    fn fake_kconfig_obj(btf: Btf) -> Object {
+        let mut obj = fake_obj();
+        obj.btf = Some(btf);
+        obj
     }
 
     #[test]
@@ -2712,6 +2759,101 @@ mod tests {
 
         let map = &obj.maps[".rodata"];
         assert_eq!(test_data, map.data());
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_requires_strong_externs() {
+        let mut btf = Btf::new();
+        let int_name = btf.add_string("u32");
+        let int_type_id = btf.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::None, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(&mut btf, &mut entries, "required", int_type_id, 4);
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "required", false);
+
+        assert_matches!(
+            obj.prepare_kconfig_section(&HashMap::new()),
+            Err(BtfError::ExternalSymbolNotFound { symbol_name }) if symbol_name == "required"
+        );
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_zero_fills_missing_weak_externs() {
+        let mut btf = Btf::new();
+        let int_name = btf.add_string("u32");
+        let int_type_id = btf.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::None, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(&mut btf, &mut entries, "optional", int_type_id, 4);
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "optional", true);
+
+        obj.prepare_kconfig_section(&HashMap::new()).unwrap();
+
+        assert_eq!(obj.maps[".kconfig"].data(), &[0, 0, 0, 0]);
+        assert_matches!(obj.symbol_table.get(&1), Some(symbol) => {
+            assert_eq!(symbol.address, 0);
+            assert_eq!(symbol.size, 4);
+            assert_eq!(symbol.section_index, Some(1));
+        });
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_aligns_and_adjusts_scalars() {
+        let mut btf = Btf::new();
+        let u8_name = btf.add_string("u8");
+        let u8_type_id = btf.add_type(BtfType::Int(Int::new(u8_name, 1, IntEncoding::None, 0)));
+        let u32_name = btf.add_string("u32");
+        let u32_type_id = btf.add_type(BtfType::Int(Int::new(u32_name, 4, IntEncoding::None, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(&mut btf, &mut entries, "byte", u8_type_id, 1);
+        add_kconfig_var(&mut btf, &mut entries, "trimmed", u32_type_id, 4);
+        add_kconfig_var(&mut btf, &mut entries, "padded", u32_type_id, 4);
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "byte", false);
+        add_external_data_symbol(&mut obj, "trimmed", false);
+        add_external_data_symbol(&mut obj, "padded", false);
+
+        obj.prepare_kconfig_section(&HashMap::from([
+            ("byte".to_owned(), vec![0xaa]),
+            (
+                "trimmed".to_owned(),
+                vec![0x44, 0x33, 0x22, 0x11, 0, 0, 0, 0],
+            ),
+            ("padded".to_owned(), vec![0x55, 0x66]),
+        ]))
+        .unwrap();
+
+        assert_eq!(
+            obj.maps[".kconfig"].data(),
+            &[0xaa, 0, 0, 0, 0x44, 0x33, 0x22, 0x11, 0x55, 0x66, 0, 0]
+        );
+        assert_matches!(obj.symbol_table.get(&1), Some(symbol) => {
+            assert_eq!(symbol.address, 0);
+            assert_eq!(symbol.size, 1);
+            assert_eq!(symbol.section_index, Some(1));
+        });
+        assert_matches!(obj.symbol_table.get(&2), Some(symbol) => {
+            assert_eq!(symbol.address, 4);
+            assert_eq!(symbol.size, 4);
+            assert_eq!(symbol.section_index, Some(1));
+        });
+        assert_matches!(obj.symbol_table.get(&3), Some(symbol) => {
+            assert_eq!(symbol.address, 8);
+            assert_eq!(symbol.size, 4);
+            assert_eq!(symbol.section_index, Some(1));
+        });
     }
 
     #[test]
