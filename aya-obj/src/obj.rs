@@ -486,6 +486,7 @@ impl Object {
                     size: symbol.size(),
                     is_definition: symbol.is_definition(),
                     kind: symbol.kind(),
+                    is_weak: symbol.is_weak(),
                 };
                 bpf_obj.symbol_table.insert(symbol.index().0, sym);
                 if let Some(section_idx) = symbol.section().index() {
@@ -509,6 +510,8 @@ impl Object {
             if let Some(s) = obj.section_by_name(".BTF.ext") {
                 bpf_obj.parse_section(Section::try_from(&s)?)?;
             }
+
+            bpf_obj.collect_ksyms_from_btf()?;
         }
 
         for s in obj.sections() {
@@ -517,7 +520,6 @@ impl Object {
                     continue;
                 }
             }
-
             bpf_obj.parse_section(Section::try_from(&s)?)?;
         }
 
@@ -1013,6 +1015,24 @@ pub enum ParseError {
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]
     NoBTF,
+
+    /// Extern weak function not supported
+    #[error("extern weak function '{name}' is not supported in this implementation")]
+    WeakFuncNotSupported { name: String },
+
+    /// Extern function in kconfig section not supported.
+    #[error(
+        "extern function '{name}' cannot be used in {section} section (only variables allowed)"
+    )]
+    FuncInKconfig { name: String, section: String },
+
+    /// Duplicate extern symbol found in extern section.
+    #[error("duplicate extern symbol '{name}' found in extern section")]
+    DuplicateExtern { name: String },
+
+    /// Invalid kconfig variable size
+    #[error("extern kconfig variable '{name}' has invalid or zero size")]
+    InvalidKconfigSize { name: String },
 }
 
 /// Invalid bindings to the bpf type from the parsed/received value.
@@ -1494,6 +1514,7 @@ mod tests {
                 size,
                 is_definition: false,
                 kind: SymbolKind::Text,
+                is_weak: false,
             },
         );
         obj.symbols_by_section
@@ -2685,6 +2706,7 @@ mod tests {
                 size: 3,
                 is_definition: true,
                 kind: SymbolKind::Data,
+                is_weak: false,
             },
         );
 
