@@ -1,307 +1,423 @@
-use std::{net::TcpListener, os::fd::{AsFd as _, AsRawFd as _, FromRawFd as _}, time::Duration};
+use std::{
+    io,
+    io::{ErrorKind, Read as _, Write as _},
+    net::{Ipv4Addr, SocketAddrV4, TcpListener, TcpStream},
+    os::fd::AsRawFd as _,
+    thread,
+    time::{Duration, Instant},
+};
 
 use aya::{
     Ebpf,
-    maps::ReusePortSockArray,
-    programs::{SkReuseport, loaded_programs},
+    maps::{Array, MapData, ReusePortSockArray},
+    programs::{ProgramError, SkReuseport, SkReuseportError},
+    util::KernelVersion,
 };
-use libc::{setsockopt, SOL_SOCKET, SO_REUSEPORT, socket, bind, listen, AF_INET, SOCK_STREAM, sockaddr_in};
-use tokio::time::sleep;
+use libc::{EINVAL, ENOENT};
+use nix::sys::socket::{
+    AddressFamily, Backlog, Shutdown, SockFlag, SockType, SockaddrIn, bind, listen, setsockopt,
+    shutdown, socket, sockopt::ReusePort,
+};
 
 use crate::utils::NetNsGuard;
 
-#[tokio::test]
-async fn sk_reuseport_load() {
-    let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
-    let prog: &mut SkReuseport = ebpf
-        .program_mut("select_socket")
-        .unwrap()
-        .try_into()
-        .unwrap();
+const RETRY_DURATION: Duration = Duration::from_millis(10);
+const ACCEPT_TIMEOUT: Duration = Duration::from_secs(2);
+const HITS_TIMEOUT: Duration = Duration::from_secs(2);
+const IO_TIMEOUT: Duration = Duration::from_secs(1);
+// Keep these indices aligned with the eBPF-side counters in
+// `test/integration-ebpf/src/sk_reuseport.rs`; the userspace tests and the
+// eBPF test program are compiled separately, so the constants are duplicated on
+// purpose.
+const SELECT_HITS_INDEX: u32 = 0;
+const MIGRATE_HITS_INDEX: u32 = 1;
+const CLEAR_FALLBACK_HITS_INDEX: u32 = 2;
+const SELECT_SOCKET_INDEX: u32 = 0;
+const MIGRATE_SOCKET_INDEX: u32 = 2;
 
-    // Test that the program loads successfully
-    prog.load().unwrap();
-
-    // Test that it's properly loaded
-    let info = prog.info().unwrap();
-    assert_eq!(
-        info.program_type().unwrap(),
-        aya::programs::ProgramType::SkReuseport
-    );
+#[derive(Clone, Copy)]
+struct SkReuseportVariant {
+    label: &'static str,
+    socket_map: &'static str,
+    select_prog: &'static str,
+    clear_prog: &'static str,
+    migrate_prog: &'static str,
 }
 
-#[tokio::test]
-async fn sk_reuseport_loaded_programs_iteration() {
-    let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
-    let prog: &mut SkReuseport = ebpf
-        .program_mut("select_socket")
-        .unwrap()
-        .try_into()
-        .unwrap();
+const SK_REUSEPORT_VARIANTS: &[SkReuseportVariant] = &[
+    SkReuseportVariant {
+        label: "legacy",
+        socket_map: "socket_map",
+        select_prog: "select_socket",
+        clear_prog: "select_socket_after_clear",
+        migrate_prog: "select_or_migrate_socket",
+    },
+    SkReuseportVariant {
+        label: "btf",
+        socket_map: "socket_map_btf",
+        select_prog: "select_socket_btf",
+        clear_prog: "select_socket_after_clear_btf",
+        migrate_prog: "select_or_migrate_socket_btf",
+    },
+];
 
-    let programs = loaded_programs().collect::<Result<Vec<_>, _>>().unwrap();
-    assert!(!programs.iter().any(|p| matches!(
-        p.program_type().unwrap(),
-        aya::programs::ProgramType::SkReuseport
-    )));
+fn reuseport_listener(port: u16) -> io::Result<TcpListener> {
+    // `SO_REUSEPORT` must be enabled after `socket(2)` and before `bind(2)`.
+    // `std::net::TcpListener` does not expose that pre-bind socket setup step,
+    // so the test uses `nix` to create and configure the socket directly.
+    let fd = socket(
+        AddressFamily::Inet,
+        SockType::Stream,
+        SockFlag::empty(),
+        None,
+    )
+    .map_err(io::Error::other)?;
 
-    prog.load().unwrap();
-    sleep(Duration::from_millis(500)).await;
+    setsockopt(&fd, ReusePort, &true).map_err(io::Error::other)?;
 
-    let programs = loaded_programs().collect::<Result<Vec<_>, _>>().unwrap();
-    assert!(programs.iter().any(|p| matches!(
-        p.program_type().unwrap(),
-        aya::programs::ProgramType::SkReuseport
-    )));
+    let addr = SockaddrIn::from(SocketAddrV4::new(Ipv4Addr::LOCALHOST, port));
+    bind(fd.as_raw_fd(), &addr).map_err(io::Error::other)?;
+    listen(&fd, Backlog::MAXCONN).map_err(io::Error::other)?;
+
+    Ok(TcpListener::from(fd))
 }
 
-#[tokio::test]
-async fn sk_reuseport_map_operations() {
-    let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
-    
-    // Test that we can access the ReusePortSockArray map
-    // Note: This test checks map creation and basic operations
-    // In a real scenario, you would need actual SO_REUSEPORT sockets
-    let map: ReusePortSockArray<_> = ebpf.take_map("socket_map")
-        .expect("socket_map should exist")
-        .try_into()
-        .expect("map should convert to ReusePortSockArray");
-    
-    // Test that the map has the correct properties
-    let fd = map.fd();
-    assert!(!fd.as_fd().as_raw_fd() < 0, "Map fd should be valid");
-    
-    // Test indices iterator (array maps have all indices pre-allocated)
-    let indices_count = map.indices().count();
-    assert_eq!(indices_count, 10, "Array map should have all 10 indices available");
+fn reuseport_group(size: usize) -> io::Result<Vec<TcpListener>> {
+    let first = reuseport_listener(0)?;
+    let port = first.local_addr()?.port();
+    let mut listeners = vec![first];
+    for _ in 1..size {
+        listeners.push(reuseport_listener(port)?);
+    }
+    Ok(listeners)
+}
+
+fn set_nonblocking(listeners: &[&TcpListener]) {
+    for listener in listeners {
+        listener.set_nonblocking(true).unwrap();
+    }
+}
+
+fn configure_tcp_migrate_req() -> io::Result<()> {
+    std::fs::write("/proc/sys/net/ipv4/tcp_migrate_req", "1")
+}
+
+fn read_hits(hits: &Array<MapData, u64>, index: u32) -> u64 {
+    hits.get(&index, 0).unwrap()
+}
+
+fn wait_for_hits(hits: &Array<MapData, u64>, index: u32) -> bool {
+    let deadline = Instant::now() + HITS_TIMEOUT;
+    loop {
+        if read_hits(hits, index) > 0 {
+            return true;
+        }
+
+        if Instant::now() >= deadline {
+            return false;
+        }
+
+        thread::sleep(RETRY_DURATION);
+    }
+}
+
+fn wait_for_accept(listeners: &[&TcpListener]) -> io::Result<(usize, TcpStream)> {
+    let deadline = Instant::now() + ACCEPT_TIMEOUT;
+    loop {
+        for (idx, listener) in listeners.iter().enumerate() {
+            match listener.accept() {
+                Ok((stream, _)) => return Ok((idx, stream)),
+                Err(err) if err.kind() == ErrorKind::WouldBlock => {}
+                Err(err) => return Err(err),
+            }
+        }
+
+        if Instant::now() >= deadline {
+            return Err(io::Error::new(
+                ErrorKind::TimedOut,
+                "timed out waiting for accepted connection",
+            ));
+        }
+
+        thread::sleep(RETRY_DURATION);
+    }
+}
+
+fn assert_connection_works(client: &mut TcpStream, server: &mut TcpStream) {
+    client.set_write_timeout(Some(IO_TIMEOUT)).unwrap();
+    server.set_read_timeout(Some(IO_TIMEOUT)).unwrap();
+
+    client.write_all(b"aya").unwrap();
+    let mut buf = [0; 3];
+    server.read_exact(&mut buf).unwrap();
+    assert_eq!(&buf, b"aya");
 }
 
 #[test_log::test]
-fn sk_reuseport_attach_detach() {
-    let _netns = NetNsGuard::new();
-    
-    let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
-    let prog: &mut SkReuseport = ebpf
-        .program_mut("select_socket")
-        .unwrap()
-        .try_into()
-        .unwrap();
-    
-    prog.load().unwrap();
-    
-    // Create a socket with SO_REUSEPORT enabled - a simpler approach
-    // First create a normal listener to get a port, then create SO_REUSEPORT sockets
-    let temp_listener = TcpListener::bind("127.0.0.1:0").unwrap();
-    let local_addr = temp_listener.local_addr().unwrap();
-    drop(temp_listener); // Release the port
-    
-    // Create socket with SO_REUSEPORT before binding
-    let socket_fd = unsafe { socket(AF_INET, SOCK_STREAM, 0) };
-    assert!(socket_fd >= 0, "Failed to create socket");
-    
-    let enable = 1i32;
-    unsafe {
-        let ret = setsockopt(
-            socket_fd,
-            SOL_SOCKET,
-            SO_REUSEPORT,
-            &enable as *const _ as *const _,
-            std::mem::size_of_val(&enable) as u32,
+fn sk_reuseport_selects_expected_listener() {
+    for &variant in SK_REUSEPORT_VARIANTS {
+        let _netns = NetNsGuard::new();
+
+        let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
+        let mut socket_array: ReusePortSockArray<_> = ebpf
+            .take_map(variant.socket_map)
+            .unwrap()
+            .try_into()
+            .unwrap();
+        let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
+        let listeners = reuseport_group(3).unwrap();
+        let addr = listeners[SELECT_SOCKET_INDEX as usize]
+            .local_addr()
+            .unwrap();
+
+        for (index, listener) in listeners.iter().enumerate() {
+            socket_array.set(index as u32, listener, 0).unwrap();
+        }
+        set_nonblocking(&[&listeners[0], &listeners[1], &listeners[2]]);
+
+        {
+            // Limit the mutable borrow of `ebpf` from `program_mut()` to this block.
+            let prog: &mut SkReuseport = ebpf
+                .program_mut(variant.select_prog)
+                .unwrap()
+                .try_into()
+                .unwrap();
+            prog.load().unwrap();
+            prog.attach(&listeners[0]).unwrap();
+        }
+
+        let mut client = TcpStream::connect(addr).unwrap();
+        let (accepted_idx, mut server) =
+            wait_for_accept(&[&listeners[0], &listeners[1], &listeners[2]]).unwrap();
+        assert_eq!(
+            accepted_idx,
+            SELECT_SOCKET_INDEX as usize,
+            "{label}: connection should be steered to listener A",
+            label = variant.label,
         );
-        assert_eq!(ret, 0, "Failed to set SO_REUSEPORT");
+
+        // Confirm that the BPF select path ran, not just the kernel's default
+        // SO_REUSEPORT selection logic landing on listener A by chance.
+        assert!(
+            wait_for_hits(&path_hits, SELECT_HITS_INDEX),
+            "{label}: select path did not run",
+            label = variant.label,
+        );
+        assert_eq!(read_hits(&path_hits, MIGRATE_HITS_INDEX), 0);
+        assert_eq!(read_hits(&path_hits, CLEAR_FALLBACK_HITS_INDEX), 0);
+        assert_connection_works(&mut client, &mut server);
+
+        let prog: &mut SkReuseport = ebpf
+            .program_mut(variant.select_prog)
+            .unwrap()
+            .try_into()
+            .unwrap();
+
+        // `SkReuseport` attachments are group-scoped: detaching through any socket in
+        // the reuseport group removes the program from the whole group, even if that
+        // socket was not used for attach, so a second detach through listener A yields
+        // ENOENT.
+        prog.detach(&listeners[1]).unwrap();
+
+        let err = prog.detach(&listeners[0]).unwrap_err();
+        match err {
+            ProgramError::SkReuseportError(SkReuseportError::SoDetachReuseportBpfError {
+                io_error,
+            }) => {
+                assert_eq!(io_error.raw_os_error(), Some(ENOENT));
+            }
+            err => panic!("unexpected error for {}: {err:?}", variant.label),
+        }
     }
-    
-    // Manually bind and listen
-    let addr = sockaddr_in {
-        sin_family: AF_INET as u16,
-        sin_port: local_addr.port().to_be(),
-        sin_addr: libc::in_addr {
-            s_addr: u32::from_be_bytes([127, 0, 0, 1]).to_be(),
-        },
-        sin_zero: [0; 8],
-    };
-    
-    let bind_result = unsafe {
-        bind(
-            socket_fd,
-            &addr as *const _ as *const libc::sockaddr,
-            std::mem::size_of::<sockaddr_in>() as u32,
-        )
-    };
-    assert_eq!(bind_result, 0, "Failed to bind socket");
-    
-    let listen_result = unsafe { listen(socket_fd, 1024) };
-    assert_eq!(listen_result, 0, "Failed to listen on socket");
-    
-    // Convert to TcpListener
-    let listener = unsafe { TcpListener::from_raw_fd(socket_fd) };
-    
-    // Test program attachment
-    let link_id = prog.attach(&listener).unwrap();
-    
-    // Test program detachment
-    prog.detach(link_id).unwrap();
 }
 
 #[test_log::test]
-fn sk_reuseport_socket_array_operations() {
-    let _netns = NetNsGuard::new();
-    
-    let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
-    
-    // Get the socket array map
-    let mut socket_array: ReusePortSockArray<_> = ebpf
-        .take_map("socket_map")
-        .unwrap()
-        .try_into()
-        .unwrap();
-    
-    // Create multiple SO_REUSEPORT sockets that bind to the same port
-    let temp_listener = TcpListener::bind("127.0.0.1:0").unwrap();
-    let local_addr = temp_listener.local_addr().unwrap();
-    drop(temp_listener); // Release the port
-    
-    // Create first socket with SO_REUSEPORT
-    let socket1_fd = unsafe { socket(AF_INET, SOCK_STREAM, 0) };
-    assert!(socket1_fd >= 0, "Failed to create socket1");
-    
-    // Create second socket with SO_REUSEPORT  
-    let socket2_fd = unsafe { socket(AF_INET, SOCK_STREAM, 0) };
-    assert!(socket2_fd >= 0, "Failed to create socket2");
-    
-    let enable = 1i32;
-    // Set SO_REUSEPORT on both sockets before binding
-    unsafe {
-        let ret1 = setsockopt(
-            socket1_fd,
-            SOL_SOCKET,
-            SO_REUSEPORT,
-            &enable as *const _ as *const _,
-            std::mem::size_of_val(&enable) as u32,
+fn sk_reuseport_clear_index_changes_selection() {
+    for &variant in SK_REUSEPORT_VARIANTS {
+        let _netns = NetNsGuard::new();
+
+        let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
+        let mut socket_array: ReusePortSockArray<_> = ebpf
+            .take_map(variant.socket_map)
+            .unwrap()
+            .try_into()
+            .unwrap();
+        let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
+        let [listener_a, listener_b, listener_c] = reuseport_group(3)
+            .unwrap()
+            .try_into()
+            .unwrap_or_else(|_: Vec<_>| panic!("expected exactly 3 listeners"));
+        let addr = listener_a.local_addr().unwrap();
+
+        for (index, listener) in [&listener_a, &listener_b, &listener_c]
+            .into_iter()
+            .enumerate()
+        {
+            socket_array.set(index as u32, listener, 0).unwrap();
+        }
+        set_nonblocking(&[&listener_a, &listener_b, &listener_c]);
+
+        {
+            // Limit the mutable borrow of `ebpf` from `program_mut()` to this block.
+            let prog: &mut SkReuseport = ebpf
+                .program_mut(variant.clear_prog)
+                .unwrap()
+                .try_into()
+                .unwrap();
+            prog.load().unwrap();
+            prog.attach(&listener_a).unwrap();
+        }
+
+        let mut first_client = TcpStream::connect(addr).unwrap();
+        let (first_accepted_idx, mut first_server) =
+            wait_for_accept(&[&listener_a, &listener_b, &listener_c]).unwrap();
+        assert_eq!(
+            first_accepted_idx,
+            SELECT_SOCKET_INDEX as usize,
+            "{label}: before clearing key 0, the program should steer to listener A",
+            label = variant.label,
         );
-        let ret2 = setsockopt(
-            socket2_fd,
-            SOL_SOCKET,
-            SO_REUSEPORT,
-            &enable as *const _ as *const _,
-            std::mem::size_of_val(&enable) as u32,
+        assert!(
+            wait_for_hits(&path_hits, SELECT_HITS_INDEX),
+            "{label}: select path did not run before clear",
+            label = variant.label,
         );
-        assert_eq!(ret1, 0, "Failed to set SO_REUSEPORT on socket1");
-        assert_eq!(ret2, 0, "Failed to set SO_REUSEPORT on socket2");
+        assert_eq!(read_hits(&path_hits, MIGRATE_HITS_INDEX), 0);
+        assert_eq!(read_hits(&path_hits, CLEAR_FALLBACK_HITS_INDEX), 0);
+        assert_connection_works(&mut first_client, &mut first_server);
+
+        socket_array.clear_index(&SELECT_SOCKET_INDEX).unwrap();
+
+        let mut second_client = TcpStream::connect(addr).unwrap();
+        let (second_accepted_idx, mut second_server) =
+            wait_for_accept(&[&listener_a, &listener_b, &listener_c]).unwrap();
+        assert_eq!(
+            second_accepted_idx,
+            MIGRATE_SOCKET_INDEX as usize,
+            "{label}: after clearing key 0, the program should fall back to listener C",
+            label = variant.label,
+        );
+        assert_eq!(read_hits(&path_hits, MIGRATE_HITS_INDEX), 0);
+        // Confirm that the test program observed the missing primary key and
+        // explicitly selected listener C, rather than relying on the kernel's
+        // default SO_REUSEPORT selection logic.
+        assert!(
+            wait_for_hits(&path_hits, CLEAR_FALLBACK_HITS_INDEX),
+            "{label}: clear fallback path did not run",
+            label = variant.label,
+        );
+        assert_connection_works(&mut second_client, &mut second_server);
     }
-    
-    // Bind both sockets to the same address to create SO_REUSEPORT group
-    let addr = sockaddr_in {
-        sin_family: AF_INET as u16,
-        sin_port: local_addr.port().to_be(),
-        sin_addr: libc::in_addr {
-            s_addr: u32::from_be_bytes([127, 0, 0, 1]).to_be(),
-        },
-        sin_zero: [0; 8],
-    };
-    
-    unsafe {
-        let bind_result1 = bind(
-            socket1_fd,
-            &addr as *const _ as *const libc::sockaddr,
-            std::mem::size_of::<sockaddr_in>() as u32,
-        );
-        let bind_result2 = bind(
-            socket2_fd,
-            &addr as *const _ as *const libc::sockaddr,
-            std::mem::size_of::<sockaddr_in>() as u32,
-        );
-        assert_eq!(bind_result1, 0, "Failed to bind socket1");
-        assert_eq!(bind_result2, 0, "Failed to bind socket2");
-        
-        let listen_result1 = listen(socket1_fd, 1024);
-        let listen_result2 = listen(socket2_fd, 1024);
-        assert_eq!(listen_result1, 0, "Failed to listen on socket1");
-        assert_eq!(listen_result2, 0, "Failed to listen on socket2");
-    }
-    
-    // Convert to TcpListeners
-    let listener1 = unsafe { TcpListener::from_raw_fd(socket1_fd) };
-    let listener2 = unsafe { TcpListener::from_raw_fd(socket2_fd) };
-    
-    // Test storing sockets in the array
-    socket_array.set(0, &listener1, 0).unwrap();
-    socket_array.set(1, &listener2, 0).unwrap();
-    
-    // Test removing sockets from the array
-    socket_array.clear_index(&0).unwrap();
-    socket_array.clear_index(&1).unwrap();
 }
 
 #[test_log::test]
-fn sk_reuseport_error_conditions() {
-    let _netns = NetNsGuard::new();
-    
-    let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
-    
-    // Get the socket array map
-    let mut socket_array: ReusePortSockArray<_> = ebpf
-        .take_map("socket_map")
-        .unwrap()
-        .try_into()
-        .unwrap();
-    
-    let socket = TcpListener::bind("127.0.0.1:0").unwrap();
-    
-    // Test bounds checking - should fail for out-of-bounds index
-    let result = socket_array.set(100, &socket, 0);
-    assert!(result.is_err(), "Setting socket at out-of-bounds index should fail");
-    
-    let result = socket_array.clear_index(&100);
-    assert!(result.is_err(), "Clearing out-of-bounds index should fail");
-}
+fn sk_reuseport_migrates_to_expected_listener() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 14, 0) {
+        eprintln!("skipping test on kernel {kernel_version:?}, sk_reuseport/migrate requires 5.14");
+        return;
+    }
 
-#[tokio::test]
-async fn sk_reuseport_context_access() {
-    let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
-    let prog: &mut SkReuseport = ebpf
-        .program_mut("test_context_access")
-        .unwrap()
-        .try_into()
-        .unwrap();
+    match configure_tcp_migrate_req() {
+        Ok(()) => {}
+        Err(err)
+            if matches!(
+                err.kind(),
+                ErrorKind::NotFound | ErrorKind::PermissionDenied | ErrorKind::ReadOnlyFilesystem
+            ) =>
+        {
+            eprintln!("skipping test - tcp_migrate_req not configurable: {err}");
+            return;
+        }
+        Err(err) => panic!("unexpected error configuring tcp_migrate_req: {err}"),
+    }
 
-    // Test that the program loads successfully with context field access
-    prog.load().unwrap();
+    for &variant in SK_REUSEPORT_VARIANTS {
+        let _netns = NetNsGuard::new();
 
-    // Test that it's properly loaded
-    let info = prog.info().unwrap();
-    assert_eq!(
-        info.program_type().unwrap(),
-        aya::programs::ProgramType::SkReuseport
-    );
-}
+        let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
+        let mut socket_array: ReusePortSockArray<_> = ebpf
+            .take_map(variant.socket_map)
+            .unwrap()
+            .try_into()
+            .unwrap();
+        let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
+        let [listener_a, listener_b, listener_c] = reuseport_group(3)
+            .unwrap()
+            .try_into()
+            .unwrap_or_else(|_: Vec<_>| panic!("expected exactly 3 listeners"));
 
-#[tokio::test] 
-async fn sk_reuseport_helper_usage() {
-    let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
-    let prog: &mut SkReuseport = ebpf
-        .program_mut("test_helper_usage")
-        .unwrap()
-        .try_into()
-        .unwrap();
+        for (index, listener) in [&listener_a, &listener_b, &listener_c]
+            .into_iter()
+            .enumerate()
+        {
+            socket_array.set(index as u32, listener, 0).unwrap();
+        }
 
-    // Test that the program loads successfully with helper usage
-    prog.load().unwrap();
+        let prog: &mut SkReuseport = ebpf
+            .program_mut(variant.migrate_prog)
+            .unwrap()
+            .try_into()
+            .unwrap();
+        match prog.load() {
+            Ok(()) => {}
+            Err(ProgramError::LoadError { io_error, .. })
+                if io_error.raw_os_error() == Some(EINVAL) =>
+            {
+                eprintln!(
+                    "skipping {label} test - kernel rejected BPF_SK_REUSEPORT_SELECT_OR_MIGRATE at load",
+                    label = variant.label,
+                );
+                continue;
+            }
+            Err(err) => panic!(
+                "unexpected error loading sk_reuseport/migrate program for {}: {err}",
+                variant.label
+            ),
+        }
 
-    // Test that it's properly loaded  
-    let info = prog.info().unwrap();
-    assert_eq!(
-        info.program_type().unwrap(),
-        aya::programs::ProgramType::SkReuseport
-    );
+        {
+            // Limit the mutable borrow of `ebpf` from `program_mut()` to this block.
+            let prog: &mut SkReuseport = ebpf
+                .program_mut(variant.migrate_prog)
+                .unwrap()
+                .try_into()
+                .unwrap();
+            prog.attach(&listener_a).unwrap();
+        }
 
-    // Test that we can access the socket map used by the helper
-    let map: ReusePortSockArray<_> = ebpf.take_map("socket_map")
-        .expect("socket_map should exist")
-        .try_into()
-        .expect("map should convert to ReusePortSockArray");
-    
-    // Verify map properties
-    let indices_count = map.indices().count();
-    assert_eq!(indices_count, 10, "Array map should have all 10 indices available");
+        let addr = listener_b.local_addr().unwrap();
+        set_nonblocking(&[&listener_b, &listener_c]);
+
+        // Leave the connection pending on the listener side so listener shutdown
+        // exercises the kernel's reuseport migration path instead of handing an
+        // already-accepted socket to userspace.
+        let mut client = TcpStream::connect(addr).unwrap();
+        assert!(
+            wait_for_hits(&path_hits, SELECT_HITS_INDEX),
+            "{label}: initial selection path did not run",
+            label = variant.label,
+        );
+
+        shutdown(listener_a.as_raw_fd(), Shutdown::Both).unwrap();
+
+        // Confirm that the migrate-capable BPF path ran, not just the kernel's
+        // default SO_REUSEPORT selection logic choosing a surviving listener.
+        assert!(
+            wait_for_hits(&path_hits, MIGRATE_HITS_INDEX),
+            "{label}: migration path did not run",
+            label = variant.label,
+        );
+        assert_eq!(read_hits(&path_hits, CLEAR_FALLBACK_HITS_INDEX), 0);
+        let surviving_listeners = [&listener_b, &listener_c];
+        let surviving_group_indices = [1u32, MIGRATE_SOCKET_INDEX];
+        let (accepted_idx, mut server) = wait_for_accept(&surviving_listeners).unwrap();
+        assert_eq!(
+            surviving_group_indices[accepted_idx],
+            MIGRATE_SOCKET_INDEX,
+            "{label}: migration should steer the connection to listener C",
+            label = variant.label,
+        );
+        assert_connection_works(&mut client, &mut server);
+    }
 }
