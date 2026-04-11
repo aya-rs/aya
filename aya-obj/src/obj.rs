@@ -237,9 +237,11 @@ pub enum ProgramSection {
     KProbe,
     UProbe {
         sleepable: bool,
+        multi: bool,
     },
     URetProbe {
         sleepable: bool,
+        multi: bool,
     },
     TracePoint,
     SocketFilter,
@@ -308,10 +310,38 @@ impl FromStr for ProgramSection {
         Ok(match kind {
             "kprobe" => Self::KProbe,
             "kretprobe" => Self::KRetProbe,
-            "uprobe" => Self::UProbe { sleepable: false },
-            "uprobe.s" => Self::UProbe { sleepable: true },
-            "uretprobe" => Self::URetProbe { sleepable: false },
-            "uretprobe.s" => Self::URetProbe { sleepable: true },
+            "uprobe" => Self::UProbe {
+                sleepable: false,
+                multi: false,
+            },
+            "uprobe.s" => Self::UProbe {
+                sleepable: true,
+                multi: false,
+            },
+            "uprobe.multi" => Self::UProbe {
+                sleepable: false,
+                multi: true,
+            },
+            "uprobe.multi.s" => Self::UProbe {
+                sleepable: true,
+                multi: true,
+            },
+            "uretprobe" => Self::URetProbe {
+                sleepable: false,
+                multi: false,
+            },
+            "uretprobe.s" => Self::URetProbe {
+                sleepable: true,
+                multi: false,
+            },
+            "uretprobe.multi" => Self::URetProbe {
+                sleepable: false,
+                multi: true,
+            },
+            "uretprobe.multi.s" => Self::URetProbe {
+                sleepable: true,
+                multi: true,
+            },
             "xdp" | "xdp.frags" => Self::Xdp {
                 frags: kind == "xdp.frags",
                 attach_type: match pieces.next() {
@@ -2012,6 +2042,58 @@ mod tests {
     }
 
     #[test]
+    fn test_parse_section_uprobe_multi() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                "uprobe.multi/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::UProbe {
+                    sleepable: false,
+                    multi: true,
+                },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_uprobe_multi_sleepable() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                "uprobe.multi.s/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::UProbe {
+                    sleepable: true,
+                    multi: true,
+                },
+                ..
+            })
+        );
+    }
+
+    #[test]
     fn test_parse_section_uretprobe() {
         let mut obj = fake_obj();
         fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
@@ -2054,6 +2136,58 @@ mod tests {
                 section: ProgramSection::URetProbe {
                     sleepable: true,
                     ..
+                },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_uretprobe_multi() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                "uretprobe.multi/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::URetProbe {
+                    sleepable: false,
+                    multi: true,
+                },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_uretprobe_multi_sleepable() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                "uretprobe.multi.s/foo",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::URetProbe {
+                    sleepable: true,
+                    multi: true,
                 },
                 ..
             })
