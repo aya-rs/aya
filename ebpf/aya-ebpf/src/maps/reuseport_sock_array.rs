@@ -1,60 +1,52 @@
-use core::{cell::UnsafeCell, mem};
+use core::ptr;
+
+use aya_ebpf_cty::{c_long, c_void};
 
 use crate::{
-    bindings::{bpf_map_def, bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY},
-    maps::PinningType,
+    EbpfContext as _,
+    bindings::bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
+    helpers::bpf_sk_select_reuseport,
+    maps::{MapDef, PinningType},
+    programs::SkReuseportContext,
 };
 
-/// An array of sockets for use with SO_REUSEPORT socket selection.
+/// An array of sockets for use with `SO_REUSEPORT` socket selection.
 ///
-/// `ReusePortSockArray` is used to store sockets that participate in SO_REUSEPORT
-/// groups. eBPF programs of type `BPF_PROG_TYPE_SK_REUSEPORT` can use this map
-/// with the `bpf_sk_select_reuseport()` helper to select specific sockets for
-/// incoming connections.
+/// `ReusePortSockArray` stores sockets that participate in `SO_REUSEPORT`
+/// groups. [`ReusePortSockArray::select_reuseport`] uses this map to choose
+/// which socket should receive the packet.
 ///
 /// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 4.19.
 #[repr(transparent)]
 pub struct ReusePortSockArray {
-    def: UnsafeCell<bpf_map_def>,
+    def: MapDef,
 }
 
-unsafe impl Sync for ReusePortSockArray {}
-
 impl ReusePortSockArray {
-    /// Creates a new `ReusePortSockArray` with the specified maximum number of entries.
-    pub const fn with_max_entries(max_entries: u32, flags: u32) -> ReusePortSockArray {
-        ReusePortSockArray {
-            def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
-                key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<u32>() as u32,
-                max_entries,
-                map_flags: flags,
-                id: 0,
-                pinning: PinningType::None as u32,
-            }),
-        }
+    map_constructors!(u32, u32, BPF_MAP_TYPE_REUSEPORT_SOCKARRAY);
+
+    /// Selects a socket from this map using `key`.
+    ///
+    /// The map must be populated with sockets from the same `SO_REUSEPORT`
+    /// group before calling this helper. The kernel does not currently define
+    /// any flags for `bpf_sk_select_reuseport()`, so this wrapper always
+    /// passes `0`.
+    #[inline]
+    pub fn select_reuseport(&self, ctx: &SkReuseportContext, mut key: u32) -> Result<(), c_long> {
+        let ret = unsafe {
+            bpf_sk_select_reuseport(
+                ctx.as_ptr().cast(),
+                self.as_ptr(),
+                ptr::from_mut(&mut key).cast(),
+                0,
+            )
+        };
+        if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
-    /// Creates a new pinned `ReusePortSockArray` with the specified maximum number of entries.
-    pub const fn pinned(max_entries: u32, flags: u32) -> ReusePortSockArray {
-        ReusePortSockArray {
-            def: UnsafeCell::new(bpf_map_def {
-                type_: BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
-                key_size: mem::size_of::<u32>() as u32,
-                value_size: mem::size_of::<u32>() as u32,
-                max_entries,
-                map_flags: flags,
-                id: 0,
-                pinning: PinningType::ByName as u32,
-            }),
-        }
-    }
-
-    /// Returns a raw pointer to the map definition for use with helpers.
-    pub fn as_ptr(&self) -> *mut ::aya_ebpf_cty::c_void {
-        self.def.get() as *mut _
+    pub(crate) const fn as_ptr(&self) -> *mut c_void {
+        self.def.as_ptr()
     }
 }

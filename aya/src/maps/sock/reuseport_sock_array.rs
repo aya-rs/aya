@@ -1,4 +1,4 @@
-//! An array of sockets for SO_REUSEPORT selection.
+//! An array of sockets for `SO_REUSEPORT` selection.
 
 use std::{
     borrow::{Borrow, BorrowMut},
@@ -6,16 +6,15 @@ use std::{
 };
 
 use crate::{
-    maps::{MapData, MapError, MapFd, MapKeys, check_bounds, check_kv_size, sock::SockMapFd},
+    maps::{MapData, MapError, MapFd, MapKeys, check_bounds, check_kv_size},
     sys::{SyscallError, bpf_map_delete_elem, bpf_map_update_elem},
 };
 
 /// An array of sockets that can be shared between eBPF programs and user space.
 ///
-/// `ReusePortSockArray` stores sockets that participate in SO_REUSEPORT groups.
-/// eBPF programs of type `BPF_PROG_TYPE_SK_REUSEPORT` can use this map with the
-/// `bpf_sk_select_reuseport()` helper to select specific sockets for incoming
-/// connections.
+/// `ReusePortSockArray` stores sockets that participate in `SO_REUSEPORT` groups.
+/// `BPF_PROG_TYPE_SK_REUSEPORT` programs can use sockets stored in this map to
+/// steer incoming packets to specific listeners within a reuseport group.
 ///
 /// # Minimum kernel version
 ///
@@ -23,90 +22,27 @@ use crate::{
 ///
 /// # Examples
 ///
-/// ```no_run
-/// # let mut bpf = aya::Ebpf::load(&[])?;
-/// use aya::maps::ReusePortSockArray;
-/// use aya::programs::SkReuseport;
-/// use std::os::fd::{AsRawFd, FromRawFd};
-/// use std::net::TcpListener;
-/// use libc::{socket, setsockopt, bind, listen, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEPORT, sockaddr_in};
-///
-/// // Create socket with SO_REUSEPORT enabled
-/// let socket_fd = unsafe { socket(AF_INET, SOCK_STREAM, 0) };
-/// let enable = 1i32;
-/// unsafe {
-///     setsockopt(
-///         socket_fd,
-///         SOL_SOCKET,
-///         SO_REUSEPORT,
-///         &enable as *const _ as *const _,
-///         std::mem::size_of_val(&enable) as u32,
-///     );
-/// }
-/// 
-/// // Bind and listen (setup details omitted for brevity)
-/// // ... bind(socket_fd, &addr, addr_len) and listen(socket_fd, backlog) ...
-/// let socket = unsafe { TcpListener::from_raw_fd(socket_fd) };
-///
-/// // Load the socket array map and populate it
-/// let mut socket_array: ReusePortSockArray<_> = bpf.take_map("socket_map").unwrap().try_into()?;
-/// socket_array.set(0, &socket, 0)?;
-///
-/// // Load and attach the SK_REUSEPORT program
-/// let prog: &mut SkReuseport = bpf.program_mut("select_socket").unwrap().try_into()?;
-/// prog.load()?;
-/// prog.attach(&socket)?;
-/// # Ok::<(), Box<dyn std::error::Error>>(())
-/// ```
-///
-/// # Complete Setup Example
-///
-/// This example shows proper SO_REUSEPORT socket group setup:
+/// Populate the map with sockets from the same `SO_REUSEPORT` group. For a
+/// complete listener setup example, see
+/// [`SkReuseport`](crate::programs::SkReuseport).
 ///
 /// ```no_run
 /// # let mut bpf = aya::Ebpf::load(&[])?;
+/// # use std::{io, net::TcpListener};
+///
 /// use aya::maps::ReusePortSockArray;
-/// use aya::programs::SkReuseport;
-/// use std::net::TcpListener;
-/// use std::os::fd::{AsRawFd, FromRawFd};
-/// use libc::{socket, setsockopt, bind, listen, AF_INET, SOCK_STREAM, SOL_SOCKET, SO_REUSEPORT, sockaddr_in};
 ///
-/// // Create multiple sockets in SO_REUSEPORT group
-/// let port = 8080u16;
-/// let addr = sockaddr_in {
-///     sin_family: AF_INET as u16,
-///     sin_port: port.to_be(),
-///     sin_addr: libc::in_addr { s_addr: u32::from_be_bytes([127, 0, 0, 1]).to_be() },
-///     sin_zero: [0; 8],
-/// };
+/// # fn reuseport_listener(_port: u16) -> io::Result<TcpListener> {
+/// #     todo!("see SkReuseport docs for the full listener setup")
+/// # }
+/// # let first = reuseport_listener(0)?;
+/// # let port = first.local_addr()?.port();
+/// # let sockets = [first, reuseport_listener(port)?];
 ///
-/// let enable = 1i32;
-/// let mut sockets = Vec::new();
-///
-/// // Create 4 SO_REUSEPORT sockets
-/// for _ in 0..4 {
-///     let socket_fd = unsafe { socket(AF_INET, SOCK_STREAM, 0) };
-///     unsafe {
-///         // Set SO_REUSEPORT before binding (required for reuseport groups)
-///         setsockopt(socket_fd, SOL_SOCKET, SO_REUSEPORT, 
-///                   &enable as *const _ as *const _, std::mem::size_of_val(&enable) as u32);
-///         bind(socket_fd, &addr as *const _ as *const libc::sockaddr, 
-///              std::mem::size_of::<sockaddr_in>() as u32);
-///         listen(socket_fd, 1024);
-///     }
-///     sockets.push(unsafe { TcpListener::from_raw_fd(socket_fd) });
-/// }
-///
-/// // Load and populate the socket array map
 /// let mut socket_array: ReusePortSockArray<_> = bpf.take_map("socket_map").unwrap().try_into()?;
-/// for (i, socket) in sockets.iter().enumerate() {
-///     socket_array.set(i as u32, socket, 0)?;
+/// for (index, socket) in sockets.iter().enumerate() {
+///     socket_array.set(index as u32, socket, 0)?;
 /// }
-///
-/// // Load and attach the SK_REUSEPORT program to first socket in group
-/// let prog: &mut SkReuseport = bpf.program_mut("load_balancer").unwrap().try_into()?;
-/// prog.load()?;
-/// prog.attach(&sockets[0])?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_REUSEPORT_SOCKARRAY")]
@@ -130,12 +66,10 @@ impl<T: Borrow<MapData>> ReusePortSockArray<T> {
 
     /// Returns the map's file descriptor.
     ///
-    /// The returned file descriptor can be used with [`SkReuseport`](crate::programs::SkReuseport) programs.
-    pub fn fd(&self) -> &SockMapFd {
-        let fd: &MapFd = self.inner.borrow().fd();
-        // TODO(https://github.com/rust-lang/rfcs/issues/3066): avoid this unsafe.
-        // SAFETY: `SockMapFd` is #[repr(transparent)] over `MapFd`.
-        unsafe { std::mem::transmute(fd) }
+    /// The returned file descriptor can be used with lower-level map APIs for
+    /// this `REUSEPORT_SOCKARRAY`.
+    pub fn fd(&self) -> &MapFd {
+        self.inner.borrow().fd()
     }
 }
 

@@ -33,7 +33,7 @@ pub use retprobe::RetProbeContext;
 pub use sk_buff::SkBuffContext;
 pub use sk_lookup::SkLookupContext;
 pub use sk_msg::SkMsgContext;
-pub use sk_reuseport::{SK_DROP, SK_PASS, SkReuseportContext};
+pub use sk_reuseport::SkReuseportContext;
 pub use sock::SockContext;
 pub use sock_addr::SockAddrContext;
 pub use sock_ops::SockOpsContext;
