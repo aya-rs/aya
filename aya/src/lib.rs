@@ -39,6 +39,11 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(missing_docs)]
 
+// Used by sk_reuseport doctests; keeps clippy's
+// `unused-crate-dependencies` check happy under `cargo clippy --all-targets`.
+#[cfg(test)]
+use nix as _;
+
 mod bpf;
 pub mod maps;
 pub mod pin;

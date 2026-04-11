@@ -27,7 +27,7 @@ integration-common = { path = "../integration-common", features = ["user"] }
 libbpf-rs = { workspace = true, features = ["static", "vendored"] }
 libc = { workspace = true }
 log = { workspace = true }
-nix = { workspace = true, features = ["mount", "sched"] }
+nix = { workspace = true, features = ["mount", "net", "sched", "socket"] }
 object = { workspace = true, features = ["elf", "read_core", "std"] }
 procfs = { workspace = true, features = ["flate2"] }
 rand = { workspace = true, features = ["thread_rng"] }

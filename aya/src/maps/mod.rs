@@ -381,7 +381,7 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::Unsupported(map_data),
-            bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::ReusePortSockArray(map_data),
             bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Self::SkStorage(map_data),
             bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE => Self::Unsupported(map_data),
@@ -427,6 +427,7 @@ macro_rules! impl_map_pin {
 
 impl_map_pin!(() {
     ProgramArray,
+    ReusePortSockArray,
     SockMap,
     StackTraceMap,
     CpuMap,
@@ -1264,5 +1265,37 @@ mod tests {
                 assert_eq!(io_error.raw_os_error(), Some(EFAULT));
             }
         );
+    }
+
+    #[test]
+    fn test_from_map_data_reuseport_sock_array() {
+        let map_data = test_utils::new_map(test_utils::new_obj_map::<u32>(
+            bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
+        ));
+
+        let map = Map::from_map_data(map_data).unwrap();
+        let typed: ReusePortSockArray<_> = map.try_into().unwrap();
+        assert_eq!(
+            typed.fd().as_fd().as_raw_fd(),
+            crate::MockableFd::mock_signed_fd()
+        );
+    }
+
+    #[test]
+    fn test_reuseport_sock_array_pin() {
+        let map = ReusePortSockArray::new(test_utils::new_map(test_utils::new_obj_map::<u32>(
+            bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
+        )))
+        .unwrap();
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_PIN,
+                ..
+            } => Ok(0),
+            _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
+        });
+
+        assert_matches!(map.pin("/sys/fs/bpf/socket_map"), Ok(()));
     }
 }

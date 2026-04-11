@@ -1151,6 +1151,8 @@ impl core::convert::From<aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAtta
 pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> Self
 impl core::convert::From<aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType> for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> Self
+impl core::convert::From<aya_obj::programs::sk_reuseport::SkReuseportAttachType> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(value: aya_obj::programs::sk_reuseport::SkReuseportAttachType) -> Self
 impl core::convert::From<aya_obj::programs::sk_skb::SkSkbKind> for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::from(s: aya_obj::programs::sk_skb::SkSkbKind) -> Self
 impl core::convert::From<aya_obj::programs::xdp::XdpAttachType> for aya_obj::generated::bpf_attach_type
@@ -4728,6 +4730,8 @@ pub aya_obj::obj::ProgramSection::RawTracePoint
 pub aya_obj::obj::ProgramSection::SchedClassifier
 pub aya_obj::obj::ProgramSection::SkLookup
 pub aya_obj::obj::ProgramSection::SkMsg
+pub aya_obj::obj::ProgramSection::SkReuseport
+pub aya_obj::obj::ProgramSection::SkReuseport::attach_type: aya_obj::programs::sk_reuseport::SkReuseportAttachType
 pub aya_obj::obj::ProgramSection::SkSkbStream
 pub aya_obj::obj::ProgramSection::SkSkbStream::kind: aya_obj::programs::sk_skb::SkSkbKind
 pub aya_obj::obj::ProgramSection::SockOps
@@ -4945,6 +4949,24 @@ impl core::marker::Unpin for aya_obj::programs::cgroup_sockopt::CgroupSockoptAtt
 impl core::marker::UnsafeUnpin for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
+pub mod aya_obj::programs::sk_reuseport
+pub enum aya_obj::programs::sk_reuseport::SkReuseportAttachType
+pub aya_obj::programs::sk_reuseport::SkReuseportAttachType::Select
+pub aya_obj::programs::sk_reuseport::SkReuseportAttachType::SelectOrMigrate
+impl core::clone::Clone for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::clone(&self) -> aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::convert::From<aya_obj::programs::sk_reuseport::SkReuseportAttachType> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(value: aya_obj::programs::sk_reuseport::SkReuseportAttachType) -> Self
+impl core::fmt::Debug for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Freeze for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Send for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Sync for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Unpin for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::sk_reuseport::SkReuseportAttachType
 pub mod aya_obj::programs::sk_skb
 pub enum aya_obj::programs::sk_skb::SkSkbKind
 pub aya_obj::programs::sk_skb::SkSkbKind::StreamParser
@@ -5064,6 +5086,23 @@ impl core::marker::Unpin for aya_obj::programs::cgroup_sockopt::CgroupSockoptAtt
 impl core::marker::UnsafeUnpin for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
+pub enum aya_obj::programs::SkReuseportAttachType
+pub aya_obj::programs::SkReuseportAttachType::Select
+pub aya_obj::programs::SkReuseportAttachType::SelectOrMigrate
+impl core::clone::Clone for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::clone(&self) -> aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::convert::From<aya_obj::programs::sk_reuseport::SkReuseportAttachType> for aya_obj::generated::bpf_attach_type
+pub fn aya_obj::generated::bpf_attach_type::from(value: aya_obj::programs::sk_reuseport::SkReuseportAttachType) -> Self
+impl core::fmt::Debug for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Freeze for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Send for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Sync for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Unpin for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::UnsafeUnpin for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::sk_reuseport::SkReuseportAttachType
 pub enum aya_obj::programs::SkSkbKind
 pub aya_obj::programs::SkSkbKind::StreamParser
 pub aya_obj::programs::SkSkbKind::StreamVerdict
@@ -5286,6 +5325,8 @@ pub aya_obj::ProgramSection::RawTracePoint
 pub aya_obj::ProgramSection::SchedClassifier
 pub aya_obj::ProgramSection::SkLookup
 pub aya_obj::ProgramSection::SkMsg
+pub aya_obj::ProgramSection::SkReuseport
+pub aya_obj::ProgramSection::SkReuseport::attach_type: aya_obj::programs::sk_reuseport::SkReuseportAttachType
 pub aya_obj::ProgramSection::SkSkbStream
 pub aya_obj::ProgramSection::SkSkbStream::kind: aya_obj::programs::sk_skb::SkSkbKind
 pub aya_obj::ProgramSection::SockOps

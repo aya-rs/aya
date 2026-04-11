@@ -62,9 +62,9 @@ bpf_file!(
     TCX => "tcx",
     TEST => "test",
     TWO_PROGS => "two_progs",
+    XDP_SEC => "xdp_sec",
     UPROBE_COOKIE => "uprobe_cookie",
     PRINTK_TEST => "printk_test",
-    XDP_SEC => "xdp_sec",
 );
 
 #[cfg(test)]
