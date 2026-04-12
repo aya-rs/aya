@@ -370,7 +370,7 @@ pub struct EbpfLoader<'a> {
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
     allow_unsupported_maps: bool,
-    kconfig: Option<KConfig>,
+    kconfig: Option<Option<KConfig>>,
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -417,7 +417,8 @@ impl<'a> EbpfLoader<'a> {
     /// Sets the kernel configuration data for extern variables.
     ///
     /// This allows you to provide kernel configuration values that will be used to patch
-    /// extern variables in eBPF programs. If not set, extern variables will not be patched.
+    /// extern variables in eBPF programs. If not set, the loader will use
+    /// [`KConfig::current`]. Pass `None` to disable kconfig patching.
     ///
     /// # Examples
     ///
@@ -430,8 +431,8 @@ impl<'a> EbpfLoader<'a> {
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     #[must_use]
-    pub fn kconfig(&mut self, kconfig: KConfig) -> &mut Self {
-        self.kconfig = Some(kconfig);
+    pub fn kconfig(&mut self, kconfig: impl Into<Option<KConfig>>) -> &mut Self {
+        self.kconfig = Some(kconfig.into());
         self
     }
 
@@ -694,7 +695,18 @@ impl<'a> EbpfLoader<'a> {
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
-        if let Some(kconfig) = &kconfig {
+        let auto_kconfig = if kconfig.is_none() {
+            Some(KConfig::current().map_err(EbpfError::from)?)
+        } else {
+            None
+        };
+        let kconfig = match (kconfig.as_ref(), auto_kconfig.as_ref()) {
+            (Some(Some(kconfig)), _) => Some(kconfig),
+            (Some(None), _) => None,
+            (None, Some(kconfig)) => Some(kconfig),
+            (None, None) => unreachable!(),
+        };
+        if let Some(kconfig) = kconfig {
             obj.prepare_kconfig_section(kconfig.as_map())?;
         }
 
@@ -1459,6 +1471,10 @@ pub enum EbpfError {
     #[error("program error: {0}")]
     /// A program error
     ProgramError(#[from] ProgramError),
+
+    #[error("kconfig error: {0}")]
+    /// An error while loading kernel configuration for extern patching.
+    KConfigError(#[from] KConfigError),
 }
 
 /// The error type returned by [`Bpf::load_file`] and [`Bpf::load`].

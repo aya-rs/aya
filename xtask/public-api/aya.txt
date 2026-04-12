@@ -10922,6 +10922,7 @@ pub aya::EbpfError::BtfRelocationError(aya_obj::btf::relocation::BtfRelocationEr
 pub aya::EbpfError::FileError
 pub aya::EbpfError::FileError::error: std::io::error::Error
 pub aya::EbpfError::FileError::path: std::path::PathBuf
+pub aya::EbpfError::KConfigError(aya::KConfigError)
 pub aya::EbpfError::MapError(aya::maps::MapError)
 pub aya::EbpfError::NoBTF
 pub aya::EbpfError::ParseError(aya_obj::obj::ParseError)
@@ -10929,6 +10930,8 @@ pub aya::EbpfError::ProgramError(aya::programs::ProgramError)
 pub aya::EbpfError::RelocationError(aya_obj::relocation::EbpfRelocationError)
 pub aya::EbpfError::UnexpectedPinningType
 pub aya::EbpfError::UnexpectedPinningType::name: u32
+impl core::convert::From<aya::KConfigError> for aya::EbpfError
+pub fn aya::EbpfError::from(source: aya::KConfigError) -> Self
 impl core::convert::From<aya::maps::MapError> for aya::EbpfError
 pub fn aya::EbpfError::from(source: aya::maps::MapError) -> Self
 impl core::convert::From<aya::programs::ProgramError> for aya::EbpfError
@@ -11053,7 +11056,7 @@ pub const fn aya::EbpfLoader<'a>::allow_unsupported_maps(&mut self) -> &mut Self
 pub fn aya::EbpfLoader<'a>::btf(&mut self, btf: core::option::Option<&'a aya_obj::btf::btf::Btf>) -> &mut Self
 pub fn aya::EbpfLoader<'a>::default_map_pin_directory<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> &mut Self
 pub fn aya::EbpfLoader<'a>::extension(&mut self, name: &'a str) -> &mut Self
-pub fn aya::EbpfLoader<'a>::kconfig(&mut self, kconfig: aya::KConfig) -> &mut Self
+pub fn aya::EbpfLoader<'a>::kconfig(&mut self, kconfig: impl core::convert::Into<core::option::Option<aya::KConfig>>) -> &mut Self
 pub fn aya::EbpfLoader<'a>::load(&mut self, data: &[u8]) -> core::result::Result<aya::Ebpf, aya::EbpfError>
 pub fn aya::EbpfLoader<'a>::load_file<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<aya::Ebpf, aya::EbpfError>
 pub fn aya::EbpfLoader<'a>::map_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self
