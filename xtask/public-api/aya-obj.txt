@@ -4588,6 +4588,8 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::LegacyMap
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::LegacyMap
 #[repr(C)] pub struct aya_obj::maps::bpf_map_def
 pub aya_obj::maps::bpf_map_def::id: u32
+pub aya_obj::maps::bpf_map_def::inner_id: u32
+pub aya_obj::maps::bpf_map_def::inner_idx: u32
 pub aya_obj::maps::bpf_map_def::key_size: u32
 pub aya_obj::maps::bpf_map_def::map_flags: u32
 pub aya_obj::maps::bpf_map_def::map_type: u32
@@ -4681,6 +4683,8 @@ pub aya_obj::obj::ParseError::SymbolTableConflict::section_index: usize
 pub aya_obj::obj::ParseError::UnknownSymbol
 pub aya_obj::obj::ParseError::UnknownSymbol::address: u64
 pub aya_obj::obj::ParseError::UnknownSymbol::section_index: usize
+pub aya_obj::obj::ParseError::UnsupportedLegacyPinning
+pub aya_obj::obj::ParseError::UnsupportedLegacyPinning::name: alloc::string::String
 pub aya_obj::obj::ParseError::UnsupportedRelocationTarget
 impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::ParseError
 pub fn aya_obj::ParseError::from(source: aya_obj::btf::BtfError) -> Self
@@ -5239,6 +5243,8 @@ pub aya_obj::ParseError::SymbolTableConflict::section_index: usize
 pub aya_obj::ParseError::UnknownSymbol
 pub aya_obj::ParseError::UnknownSymbol::address: u64
 pub aya_obj::ParseError::UnknownSymbol::section_index: usize
+pub aya_obj::ParseError::UnsupportedLegacyPinning
+pub aya_obj::ParseError::UnsupportedLegacyPinning::name: alloc::string::String
 pub aya_obj::ParseError::UnsupportedRelocationTarget
 impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::ParseError
 pub fn aya_obj::ParseError::from(source: aya_obj::btf::BtfError) -> Self
