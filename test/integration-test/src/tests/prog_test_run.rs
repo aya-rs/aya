@@ -79,16 +79,16 @@ fn test_run_repeat() {
     let data_in = vec![0u8; PKT_V4_SIZE];
     let mut data_out = vec![0u8; PKT_V4_SIZE];
 
-    // Run the test 50 times
     let opts = TestRunOptions {
         data_in: Some(&data_in),
         data_out: Some(&mut data_out),
         repeat: 50,
         ..TestRunOptions::default()
     };
-    let _result = prog.test_run(opts).unwrap();
+    let TestRunResult { return_value, .. } = prog.test_run(opts).unwrap();
 
     let final_count: u64 = exec_count.get(&0, 0).unwrap();
+    assert_eq!(return_value, 1, "Expected SK_PASS(1)");
     assert_eq!(final_count, 50);
 }
 

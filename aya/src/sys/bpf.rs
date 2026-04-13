@@ -30,7 +30,7 @@ use libc::{
 use log::warn;
 
 use crate::{
-    Btf, Pod, VerifierLogLevel,
+    Btf, Pod, TestRunAttrs, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
     programs::{LsmAttachType, ProgramType, TestRunOptions, TestRunResult, links::LinkRef},
     sys::{Syscall, SyscallError, syscall},
@@ -609,7 +609,11 @@ pub(crate) fn bpf_prog_test_run(
         ctx_in,
         ctx_out,
         repeat,
-        attrs,
+        attrs: TestRunAttrs {
+            cpu,
+            batch_size,
+            flags,
+        },
     } = opts;
 
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
@@ -617,9 +621,9 @@ pub(crate) fn bpf_prog_test_run(
     let test = unsafe { &mut attr.test };
     test.prog_fd = prog_fd.as_raw_fd() as u32;
     test.repeat = repeat;
-    test.flags = attrs.flags;
-    test.cpu = attrs.cpu;
-    test.batch_size = attrs.batch_size;
+    test.flags = flags;
+    test.cpu = cpu;
+    test.batch_size = batch_size;
 
     if let Some(data_in) = data_in {
         test.data_in = data_in.as_ptr() as u64;
