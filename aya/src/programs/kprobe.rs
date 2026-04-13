@@ -14,7 +14,7 @@ use crate::{
     VerifierLogLevel,
     programs::{
         FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        impl_try_into_fdlink, load_program,
+        impl_try_into_fdlink, load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{Probe, ProbeKind, attach},
     },
@@ -57,7 +57,8 @@ impl KProbe {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_KPROBE, &mut self.data)
+        let Self { data, kind: _ } = self;
+        load_program_without_attach_type(BPF_PROG_TYPE_KPROBE, data)
     }
 
     /// Returns [`ProbeKind::Entry`] if the program is a `kprobe`, or

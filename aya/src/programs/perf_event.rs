@@ -13,7 +13,7 @@ use crate::{
     programs::{
         FdLink, LinkError, ProgramData, ProgramError, ProgramType, impl_try_into_fdlink,
         links::define_link_wrapper,
-        load_program,
+        load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
     },
     sys::{SyscallError, bpf_link_get_info_by_fd, perf_event_open},
@@ -437,7 +437,8 @@ impl PerfEvent {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_PERF_EVENT, &mut self.data)
+        let Self { data } = self;
+        load_program_without_attach_type(BPF_PROG_TYPE_PERF_EVENT, data)
     }
 
     /// Attaches to the given perf event.

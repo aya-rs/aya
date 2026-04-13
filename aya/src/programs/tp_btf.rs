@@ -6,8 +6,8 @@ use aya_obj::{
 };
 
 use crate::programs::{
-    FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper, load_program,
-    utils::attach_raw_tracepoint,
+    FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+    load_program_with_attach_type, utils::attach_raw_tracepoint,
 };
 
 /// Marks a function as a [BTF-enabled raw tracepoint][1] eBPF program that can be attached at
@@ -62,11 +62,10 @@ impl BtfTracePoint {
     /// * `tracepoint` - full name of the tracepoint that we should attach to
     /// * `btf` - btf information for the target system
     pub fn load(&mut self, tracepoint: &str, btf: &Btf) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_TRACE_RAW_TP);
+        let Self { data } = self;
         let type_name = format!("btf_trace_{tracepoint}");
-        self.data.attach_btf_id =
-            Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Typedef)?);
-        load_program(BPF_PROG_TYPE_TRACING, &mut self.data)
+        data.attach_btf_id = Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Typedef)?);
+        load_program_with_attach_type(BPF_PROG_TYPE_TRACING, BPF_TRACE_RAW_TP, data)
     }
 
     /// Attaches the program.

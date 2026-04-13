@@ -398,7 +398,7 @@ impl ProgAttachLink {
     pub(crate) fn attach(
         prog_fd: BorrowedFd<'_>,
         target_fd: BorrowedFd<'_>,
-        attach_type: bpf_attach_type,
+        attach_type: impl Into<bpf_attach_type>,
         mode: CgroupAttachMode,
     ) -> Result<Self, ProgramError> {
         // The link is going to own this new file descriptor so we are
@@ -409,6 +409,7 @@ impl ProgAttachLink {
         let prog_fd = crate::MockableFd::from_fd(prog_fd);
         let target_fd = target_fd.try_clone_to_owned()?;
         let target_fd = crate::MockableFd::from_fd(target_fd);
+        let attach_type = attach_type.into();
         bpf_prog_attach(prog_fd.as_fd(), target_fd.as_fd(), attach_type, mode.into())?;
 
         let prog_fd = ProgramFd(prog_fd);

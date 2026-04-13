@@ -9,7 +9,7 @@ use aya_obj::generated::{
 use crate::{
     programs::{
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, load_program,
+        define_link_wrapper, id_as_key, load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
@@ -60,7 +60,8 @@ impl CgroupSysctl {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_CGROUP_SYSCTL, &mut self.data)
+        let Self { data } = self;
+        load_program_with_attach_type(BPF_PROG_TYPE_CGROUP_SYSCTL, BPF_CGROUP_SYSCTL, data)
     }
 
     /// Attaches the program to the given cgroup.
@@ -74,12 +75,12 @@ impl CgroupSysctl {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
-
+        let attach_type = BPF_CGROUP_SYSCTL;
         if KernelVersion::at_least(5, 7, 0) {
             let link_fd = bpf_link_create(
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),
-                BPF_CGROUP_SYSCTL,
+                attach_type,
                 mode.into(),
                 None,
             )
@@ -93,7 +94,7 @@ impl CgroupSysctl {
                     FdLink::new(link_fd),
                 )))
         } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, BPF_CGROUP_SYSCTL, mode)?;
+            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
 
             self.data
                 .links

@@ -121,6 +121,8 @@ pub fn build_ebpf<'a>(
     } = rustc_version::VersionMeta::for_command(cmd("rustc"))
         .context("failed to get rustc version meta")?;
 
+    let rustc_bootstrap = env::var_os("RUSTC_BOOTSTRAP");
+
     for Package {
         name,
         root_dir,
@@ -146,7 +148,26 @@ pub fn build_ebpf<'a>(
             &target,
         ]);
 
-        if channel == Channel::Nightly {
+        // RUSTC_BOOTSTRAP controls whether unstable features (-Z flags) are available:
+        //   "1"           – enable for all crates
+        //   "<crate>"     – enable only for the named crate
+        //   "-1"          – force stable behavior even on nightly (explicit opt-out)
+        //   (unset/other) – follow the actual compiler channel
+        // See: https://doc.rust-lang.org/beta/unstable-book/compiler-environment-variables/RUSTC_BOOTSTRAP.html
+        let use_build_std = match rustc_bootstrap.as_ref() {
+            Some(rustc_bootstrap) => {
+                if rustc_bootstrap == "1" || rustc_bootstrap == name {
+                    true
+                } else if rustc_bootstrap == "-1" {
+                    false
+                } else {
+                    channel == Channel::Nightly
+                }
+            }
+            None => channel == Channel::Nightly,
+        };
+
+        if use_build_std {
             cmd.args(["-Z", "build-std=core"]);
         }
 

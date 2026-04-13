@@ -41,6 +41,10 @@ name = "btf_maps_plain"
 path = "src/btf_maps_plain.rs"
 
 [[bin]]
+name = "kprobe"
+path = "src/kprobe.rs"
+
+[[bin]]
 name = "linear_data_structures"
 path = "src/linear_data_structures.rs"
 
@@ -115,3 +119,7 @@ path = "src/uprobe_cookie.rs"
 [[bin]]
 name = "perf_event_bp"
 path = "src/perf_event_bp.rs"
+
+[[bin]]
+name = "printk_test"
+path = "src/printk_test.rs"

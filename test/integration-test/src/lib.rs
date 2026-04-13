@@ -43,6 +43,7 @@ bpf_file!(
     BLOOM_FILTER => "bloom_filter",
     BPF_PROBE_READ => "bpf_probe_read",
     BTF_MAPS_PLAIN => "btf_maps_plain",
+    KPROBE => "kprobe",
     LINEAR_DATA_STRUCTURES => "linear_data_structures",
     LOG => "log",
     MAP_TEST => "map_test",
@@ -62,6 +63,7 @@ bpf_file!(
     TWO_PROGS => "two_progs",
     XDP_SEC => "xdp_sec",
     UPROBE_COOKIE => "uprobe_cookie",
+    PRINTK_TEST => "printk_test",
 );
 
 #[cfg(test)]

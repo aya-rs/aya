@@ -23,6 +23,7 @@ path = "src/depmod.rs"
 
 [dependencies]
 anyhow = { workspace = true, features = ["std"] }
+assert_matches = { workspace = true }
 clap = { workspace = true, default-features = true, features = ["derive"] }
 glob = { workspace = true }
 nix = { workspace = true, features = [

@@ -22,7 +22,6 @@
 )]
 #![cfg_attr(
     target_arch = "bpf",
-    expect(unused_crate_dependencies, reason = "compiler_builtins"),
     expect(
         unstable_features,
         reason = "asm_experimental_arch requires unstable features"
@@ -54,12 +53,11 @@ use core::{
 pub use aya_ebpf_cty as cty;
 pub use aya_ebpf_macros as macros;
 use cty::c_void;
+pub use helpers::TASK_COMM_LEN;
 use helpers::{
     bpf_get_current_comm, bpf_get_current_pid_tgid, bpf_get_current_uid_gid, bpf_map_delete_elem,
     bpf_map_lookup_elem, bpf_map_update_elem,
 };
-
-pub const TASK_COMM_LEN: usize = 16;
 
 pub trait EbpfContext {
     fn as_ptr(&self) -> *mut c_void;
@@ -130,6 +128,19 @@ mod intrinsics {
     }
 }
 
+/// Builds a flag for [`SkBuffContext::adjust_room`](programs::SkBuffContext::adjust_room)
+/// that defines L2 encapsulation, using `len` as the inner MAC header length.
+///
+/// Equivalent to the [`BPF_F_ADJ_ROOM_ENCAP_L2`][uapi-bpf-adj-room-encap-l2] macro
+/// in the Linux user-space API.
+///
+/// [uapi-bpf-adj-room-encap-l2]: https://github.com/torvalds/linux/blob/v6.17/include/uapi/linux/bpf.h#L6181
+#[doc(alias = "BPF_F_ADJ_ROOM_ENCAP_L2")]
+#[inline(always)]
+pub const fn bpf_f_adj_room_encap_l2(len: u64) -> u64 {
+    (len & bindings::BPF_ADJ_ROOM_ENCAP_L2_MASK as u64) << bindings::BPF_ADJ_ROOM_ENCAP_L2_SHIFT
+}
+
 /// Check if a value is within a range, using conditional forms compatible with
 /// the verifier.
 #[inline(always)]
@@ -188,23 +199,23 @@ fn lookup<K, V>(def: *mut c_void, key: &K) -> Option<NonNull<V>> {
 /// Use `EbpfLoader::override_global` to override the value at load time from userspace.
 /// # Example
 /// ```
-/// # use aya_ebpf::EbpfGlobal;
+/// # use aya_ebpf::Global;
 /// #[unsafe(no_mangle)]
-/// static VERSION: EbpfGlobal<i32> = EbpfGlobal::new(0);
+/// static VERSION: Global<i32> = Global::new(0);
 ///
 /// # fn loadit() {
 /// let version = VERSION.load();
 /// # }
 /// ```
 #[repr(transparent)]
-pub struct EbpfGlobal<T> {
+pub struct Global<T> {
     // `MaybeUninit` is used to inhibit compiler analysis and optimizations that may
     // cause unexpected behavior; in reality, this value is always be initialized with a valid `T`.
     value: MaybeUninit<T>,
 }
 
-impl<T> EbpfGlobal<T> {
-    /// Returns a new [`EbpfGlobal`] which may be overridden at load
+impl<T> Global<T> {
+    /// Returns a new [`Global`] which may be overridden at load
     /// time by the loader.
     pub const fn new(value: T) -> Self {
         Self {
@@ -213,13 +224,13 @@ impl<T> EbpfGlobal<T> {
     }
 }
 
-impl<T: Default> Default for EbpfGlobal<T> {
+impl<T: Default> Default for Global<T> {
     fn default() -> Self {
         Self::new(T::default())
     }
 }
 
-impl<T> EbpfGlobal<T>
+impl<T> Global<T>
 where
     T: Copy,
 {

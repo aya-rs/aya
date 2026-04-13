@@ -9,7 +9,7 @@ use aya_obj::generated::{
 use crate::{
     programs::{
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program,
+        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
@@ -70,8 +70,8 @@ impl FlowDissector {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_FLOW_DISSECTOR);
-        load_program(BPF_PROG_TYPE_FLOW_DISSECTOR, &mut self.data)
+        let Self { data } = self;
+        load_program_with_attach_type(BPF_PROG_TYPE_FLOW_DISSECTOR, BPF_FLOW_DISSECTOR, data)
     }
 
     /// Attaches the program to the given network namespace.
@@ -81,19 +81,13 @@ impl FlowDissector {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let netns_fd = netns.as_fd();
-
+        let attach_type = BPF_FLOW_DISSECTOR;
         if KernelVersion::at_least(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(netns_fd),
-                BPF_FLOW_DISSECTOR,
-                0,
-                None,
-            )
-            .map_err(|io_error| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+            let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(netns_fd), attach_type, 0, None)
+                .map_err(|io_error| SyscallError {
+                    call: "bpf_link_create",
+                    io_error,
+                })?;
             self.data
                 .links
                 .insert(FlowDissectorLink::new(FlowDissectorLinkInner::Fd(
@@ -103,7 +97,7 @@ impl FlowDissector {
             let link = ProgAttachLink::attach(
                 prog_fd,
                 netns_fd,
-                BPF_FLOW_DISSECTOR,
+                attach_type,
                 CgroupAttachMode::default(),
             )?;
 

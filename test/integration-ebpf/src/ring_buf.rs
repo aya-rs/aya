@@ -1,11 +1,14 @@
 #![no_std]
 #![no_main]
 #![expect(unused_crate_dependencies, reason = "used in other bins")]
+#![expect(internal_features, reason = "atomic_xadd is unstable")]
+#![expect(unstable_features, reason = "atomic_xadd is unstable")]
+#![feature(core_intrinsics)]
 
 use aya_ebpf::{
     btf_maps::RingBuf as BtfRingBuf,
     macros::{btf_map, map, uprobe},
-    maps::{PerCpuArray, RingBuf as LegacyRingBuf},
+    maps::{Array, RingBuf as LegacyRingBuf},
     programs::ProbeContext,
 };
 use integration_common::ring_buf::Registers;
@@ -21,26 +24,27 @@ static RING_BUF_MISMATCH: BtfRingBuf<u32, 0, 0> = BtfRingBuf::new();
 #[map]
 static RING_BUF_LEGACY: LegacyRingBuf = LegacyRingBuf::with_byte_size(0, 0);
 
-// Use a PerCpuArray to store the registers so that we can update the values from multiple CPUs
-// without needing synchronization. Atomics exist [1], but aren't exposed.
-//
-// [1]: https://lwn.net/Articles/838884/
 #[map]
-static REGISTERS: PerCpuArray<Registers> = PerCpuArray::with_max_entries(1, 0);
+static REGISTERS: Array<Registers> = Array::with_max_entries(1, 0);
 
 #[map]
-static REGISTERS_LEGACY: PerCpuArray<Registers> = PerCpuArray::with_max_entries(1, 0);
+static REGISTERS_LEGACY: Array<Registers> = Array::with_max_entries(1, 0);
 
 macro_rules! define_ring_buf_test {
     ($registers:ident, $name:ident, $reserve:expr) => {
         #[uprobe]
         fn $name(ctx: ProbeContext) {
-            let Registers { dropped, rejected } = match $registers.get_ptr_mut(0) {
-                Some(regs) => unsafe { &mut *regs },
-                None => return,
+            let Some(regs) = $registers.get_ptr_mut(0) else {
+                return;
             };
             let Some(mut entry) = $reserve else {
-                *dropped += 1;
+                unsafe {
+                    core::intrinsics::atomic_xadd::<
+                        u64,
+                        u64,
+                        { core::intrinsics::AtomicOrdering::Relaxed },
+                    >(&raw mut (*regs).dropped, 1);
+                }
                 return;
             };
             // Write the first argument to the function back out to RING_BUF if it is even,
@@ -53,7 +57,13 @@ macro_rules! define_ring_buf_test {
                 entry.write(arg);
                 entry.submit(0);
             } else {
-                *rejected += 1;
+                unsafe {
+                    core::intrinsics::atomic_xadd::<
+                        u64,
+                        u64,
+                        { core::intrinsics::AtomicOrdering::Relaxed },
+                    >(&raw mut (*regs).rejected, 1);
+                }
                 entry.discard(0);
             }
         }

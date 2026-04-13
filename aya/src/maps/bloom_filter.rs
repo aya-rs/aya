@@ -9,7 +9,7 @@ use std::{
 use crate::{
     Pod,
     maps::{MapData, MapError, check_v_size},
-    sys::{SyscallError, bpf_map_lookup_elem_ptr, bpf_map_push_elem},
+    sys::{SyscallError, bpf_map_peek_elem, bpf_map_push_elem},
 };
 
 /// A Bloom Filter.
@@ -30,8 +30,8 @@ use crate::{
 ///
 /// bloom_filter.insert(1, 0)?;
 ///
-/// assert_matches!(bloom_filter.contains(&mut 1, 0), Ok(()));
-/// assert_matches!(bloom_filter.contains(&mut 2, 0), Err(MapError::ElementNotFound));
+/// assert_matches!(bloom_filter.contains(1, 0), Ok(()));
+/// assert_matches!(bloom_filter.contains(2, 0), Err(MapError::ElementNotFound));
 ///
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
@@ -54,14 +54,12 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     }
 
     /// Query the existence of the element.
-    pub fn contains(&self, value: &mut V, flags: u64) -> Result<(), MapError> {
+    pub fn contains(&self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
 
-        match bpf_map_lookup_elem_ptr::<u32, _>(fd, None, value, flags).map_err(|io_error| {
-            SyscallError {
-                call: "bpf_map_lookup_elem",
-                io_error,
-            }
+        match bpf_map_peek_elem(fd, value.borrow(), flags).map_err(|io_error| SyscallError {
+            call: "bpf_map_peek_elem",
+            io_error,
         })? {
             None => Err(MapError::ElementNotFound),
             Some(()) => Ok(()),
@@ -184,8 +182,8 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
 
         assert_matches!(
-            bloom_filter.contains(&mut 1, 0),
-            Err(MapError::SyscallError(SyscallError { call: "bpf_map_lookup_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
+            bloom_filter.contains(1, 0),
+            Err(MapError::SyscallError(SyscallError { call: "bpf_map_peek_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
         );
     }
 
@@ -202,9 +200,27 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert_matches!(
-            bloom_filter.contains(&mut 1, 0),
-            Err(MapError::ElementNotFound)
-        );
+        assert_matches!(bloom_filter.contains(1, 0), Err(MapError::ElementNotFound));
+    }
+
+    #[test]
+    fn test_contains_passes_value_bytes() {
+        const QUERY: u32 = 123;
+        let map = new_map(new_obj_map());
+        let bloom_filter = BloomFilter::<_, u32>::new(&map).unwrap();
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
+                attr,
+            } => {
+                let value = unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.value } as *const u32;
+                assert_eq!(unsafe { *value }, QUERY);
+                Ok(0)
+            }
+            _ => sys_error(EFAULT),
+        });
+
+        assert_matches!(bloom_filter.contains(QUERY, 0), Ok(()));
     }
 }

@@ -8,7 +8,7 @@ use aya_obj::generated::{
 use crate::{
     programs::{
         CgroupAttachMode, Link, ProgramData, ProgramError, ProgramFd, ProgramInfo, ProgramType,
-        id_as_key, load_program, query,
+        id_as_key, load_program_with_attach_type, query,
     },
     sys::{ProgQueryTarget, bpf_prog_attach, bpf_prog_detach, bpf_prog_get_fd_by_id},
 };
@@ -61,7 +61,8 @@ impl LircMode2 {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_LIRC_MODE2, &mut self.data)
+        let Self { data } = self;
+        load_program_with_attach_type(BPF_PROG_TYPE_LIRC_MODE2, BPF_LIRC_MODE2, data)
     }
 
     /// Attaches the program to the given lirc device.

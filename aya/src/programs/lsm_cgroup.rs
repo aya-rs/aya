@@ -9,8 +9,11 @@ use aya_obj::{
 
 use crate::{
     VerifierLogLevel,
-    programs::{FdLink, FdLinkId, ProgramData, ProgramError, define_link_wrapper, load_program},
-    sys::{BpfLinkCreateArgs, LinkTarget, SyscallError, bpf_link_create},
+    programs::{
+        FdLink, FdLinkId, ProgramData, ProgramError, define_link_wrapper,
+        load_program_with_attach_type,
+    },
+    sys::{LinkTarget, SyscallError, bpf_link_create},
 };
 
 /// A program that attaches to Linux LSM hooks with per-cgroup attachment type. Used to implement security policy and
@@ -66,11 +69,10 @@ impl LsmCgroup {
     /// * `lsm_hook_name` - full name of the LSM hook that the program should
     ///   be attached to
     pub fn load(&mut self, lsm_hook_name: &str, btf: &Btf) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_LSM_CGROUP);
+        let Self { data } = self;
         let type_name = format!("bpf_lsm_{lsm_hook_name}");
-        self.data.attach_btf_id =
-            Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Func)?);
-        load_program(BPF_PROG_TYPE_LSM, &mut self.data)
+        data.attach_btf_id = Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Func)?);
+        load_program_with_attach_type(BPF_PROG_TYPE_LSM, BPF_LSM_CGROUP, data)
     }
 
     /// Creates a program from a pinned entry on a bpffs.
@@ -80,8 +82,7 @@ impl LsmCgroup {
     /// On drop, any managed links are detached and the program is unloaded. This will not result in
     /// the program being unloaded from the kernel if it is still pinned.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
-        let mut data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
-        data.expected_attach_type = Some(BPF_LSM_CGROUP);
+        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data })
     }
 
@@ -92,20 +93,15 @@ impl LsmCgroup {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
-        // Unwrap invariant: the function starts with `self.fd()?` that will succeed if and only
-        // if the program has been loaded, i.e. there is an fd. That happens if:
-        // - LsmCgroup::load has been called
-        // - LsmCgroup::from_pin has been called
-        //
-        // In all cases, expected_attach_type is guaranteed to be Some(_).
-        let attach_type = self.data.expected_attach_type.unwrap();
-        let btf_id = self.data.attach_btf_id.ok_or(ProgramError::NotLoaded)?;
         let link_fd = bpf_link_create(
             prog_fd,
             LinkTarget::Fd(cgroup_fd),
-            attach_type,
+            BPF_LSM_CGROUP,
             0,
-            Some(BpfLinkCreateArgs::TargetBtfId(btf_id)),
+            // LSM cgroup links identify the hook through attach_btf_id at program load time. The
+            // link_create union slot is reserved for cgroup anchor metadata instead, see
+            // https://github.com/torvalds/linux/blob/5ee8dbf54602dc340d6235b1d6aa17c0f283f48c/kernel/bpf/cgroup.c#L1506-L1510
+            None,
         )
         .map_err(|io_error| SyscallError {
             call: "bpf_link_create",

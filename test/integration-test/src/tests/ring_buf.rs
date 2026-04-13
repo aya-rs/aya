@@ -13,7 +13,7 @@ use anyhow::Context as _;
 use assert_matches::assert_matches;
 use aya::{
     Ebpf, EbpfLoader,
-    maps::{MapData, array::PerCpuArray, ring_buf::RingBuf},
+    maps::{Array, MapData, ring_buf::RingBuf},
     programs::UProbe,
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
@@ -25,7 +25,7 @@ use tokio::io::{Interest, unix::AsyncFd};
 struct RingBufTest {
     bpf: Ebpf,
     ring_buf: RingBuf<MapData>,
-    regs: PerCpuArray<MapData, Registers>,
+    regs: Array<MapData, Registers>,
 }
 
 const RING_BUF: &str = "RING_BUF";
@@ -87,7 +87,7 @@ impl RingBufTest {
         let ring_buf = bpf.take_map(variant.map).unwrap();
         let ring_buf = RingBuf::try_from(ring_buf).unwrap();
         let regs = bpf.take_map(variant.regs).unwrap();
-        let regs = PerCpuArray::<_, Registers>::try_from(regs).unwrap();
+        let regs = Array::<_, Registers>::try_from(regs).unwrap();
         let prog: &mut UProbe = bpf.program_mut(variant.prog).unwrap().try_into().unwrap();
         prog.load().unwrap();
         prog.attach("ring_buf_trigger_ebpf_program", "/proc/self/exe", None)
@@ -166,7 +166,7 @@ fn ring_buf(n: usize) {
         // Ensure that the data that was read matches what was passed, and the rejected count was set
         // properly.
         assert_eq!(seen, expected);
-        let Registers { dropped, rejected } = regs.get(&0, 0).unwrap().iter().sum();
+        let Registers { dropped, rejected } = regs.get(&0, 0).unwrap();
         assert_eq!(dropped, expected_dropped);
         assert_eq!(rejected, expected_rejected);
     }
@@ -322,7 +322,7 @@ async fn ring_buf_async_with_drops() {
             u64::try_from(data.len().saturating_sub(RING_BUF_MAX_ENTRIES - 1)).unwrap();
         let max_seen = u64::try_from(data.iter().filter(|v| *v % 2 == 0).count()).unwrap();
         let max_rejected = u64::try_from(data.len()).unwrap() - max_seen;
-        let Registers { dropped, rejected } = regs.get(&0, 0).unwrap().iter().sum();
+        let Registers { dropped, rejected } = regs.get(&0, 0).unwrap();
         let total = u64::try_from(data.len()).unwrap();
         let min_seen = max_seen.saturating_sub(max_dropped);
         let min_rejected = max_rejected.saturating_sub(dropped);
@@ -408,7 +408,7 @@ async fn ring_buf_async_no_drop() {
 
         // Ensure that the data that was read matches what was passed.
         assert_eq!(&seen, &expected);
-        let Registers { dropped, rejected } = regs.get(&0, 0).unwrap().iter().sum();
+        let Registers { dropped, rejected } = regs.get(&0, 0).unwrap();
         assert_eq!(dropped, 0);
         assert_eq!(rejected, (data.len() - expected.len()).try_into().unwrap());
     }
