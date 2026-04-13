@@ -50,11 +50,8 @@ fn test_classifier_test_run() {
     } = prog.test_run(opts).unwrap();
 
     assert_eq!(return_value, 1, "Expected SK_PASS(1)");
-    assert!(!duration.is_zero(), "Expected non-zero duration");
-    assert_eq!(
-        data_size_out as usize, PKT_V4_SIZE,
-        "Expected data_size_out == PKT_V4_SIZE"
-    );
+    assert!(!duration.is_zero());
+    assert_eq!(data_size_out as usize, PKT_V4_SIZE);
     assert_eq!(ctx_size_out, 0);
 }
 
@@ -101,11 +98,8 @@ fn test_run_repeat() {
     let final_count: u64 = exec_count.get(&0, 0).unwrap();
     assert_eq!(return_value, 1, "Expected SK_PASS(1)");
     assert_eq!(final_count, 50);
-    assert!(!duration.is_zero(), "Expected non-zero duration");
-    assert_eq!(
-        data_size_out as usize, PKT_V4_SIZE,
-        "Expected data_size_out == PKT_V4_SIZE"
-    );
+    assert!(!duration.is_zero());
+    assert_eq!(data_size_out as usize, PKT_V4_SIZE);
     assert_eq!(ctx_size_out, 0);
 }
 
@@ -147,12 +141,10 @@ fn test_xdp_modify_packet() {
         ctx_size_out,
     } = prog.test_run(opts).unwrap();
 
-    assert_eq!(return_value, 2, "Expected XDP_PASS (2)");
-    assert!(!duration.is_zero(), "Expected non-zero duration");
-    assert_eq!(
-        data_size_out as usize, PKT_V4_SIZE,
-        "Expected data_size_out == PKT_V4_SIZE"
-    );
+    // Expect XDP_PASS (2)
+    assert_eq!(return_value, 2);
+    assert!(!duration.is_zero());
+    assert_eq!(data_size_out as usize, PKT_V4_SIZE);
     assert_eq!(ctx_size_out, 0);
 
     let expected_pattern: Vec<u8> = vec![XDP_MODIFY_VAL; XDP_MODIFY_LEN];
@@ -197,16 +189,9 @@ fn test_socket_filter_test_run() {
     } = prog.test_run(opts).unwrap();
 
     // Ethernet header size = 14 bytes
-    let expected_len = PKT_V4_SIZE - 14;
-    assert_eq!(
-        return_value as usize, expected_len,
-        "Expected return value to be packet length minus Ethernet header"
-    );
-    assert!(!duration.is_zero(), "Expected non-zero duration");
-    assert_eq!(
-        data_size_out as usize, PKT_V4_SIZE,
-        "Expected data_size_out == PKT_V4_SIZE"
-    );
+    assert_eq!(return_value as usize, PKT_V4_SIZE - 14);
+    assert!(!duration.is_zero());
+    assert_eq!(data_size_out as usize, PKT_V4_SIZE);
     assert_eq!(ctx_size_out, 0);
 }
 
@@ -242,12 +227,10 @@ fn test_xdp_test_run() {
         data_size_out,
         ctx_size_out,
     } = prog.test_run(opts).unwrap();
-    assert_eq!(return_value, 2, "Expected XDP_PASS (2)");
-    assert!(!duration.is_zero(), "Expected non-zero duration");
-    assert_eq!(
-        data_size_out as usize, PKT_V4_SIZE,
-        "Expected data_size_out == PKT_V4_SIZE"
-    );
+    // Expect XDP_PASS = 2
+    assert_eq!(return_value, 2);
+    assert!(!duration.is_zero());
+    assert_eq!(data_size_out as usize, PKT_V4_SIZE);
     assert_eq!(ctx_size_out, 0);
 }
 
@@ -319,15 +302,9 @@ fn test_xdp_context() {
         ctx_size_out,
     } = prog.test_run(opts).unwrap();
 
-    // XDP_PASS is 2 - should pass when rx_queue_index matches expected value
-    assert_eq!(
-        return_value, 2,
-        "Expected XDP_PASS (2) when rx_queue_index matches"
-    );
-    assert!(!duration.is_zero(), "Expected non-zero duration");
-    assert_eq!(
-        data_size_out as usize, PKT_V4_SIZE,
-        "Expected data_size_out == PKT_V4_SIZE"
-    );
+    // XDP_PASS is 2
+    assert_eq!(return_value, 2);
+    assert!(!duration.is_zero());
+    assert_eq!(data_size_out as usize, PKT_V4_SIZE);
     assert_eq!(ctx_size_out as usize, size_of::<XdpMd>());
 }
