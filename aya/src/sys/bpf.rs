@@ -650,7 +650,7 @@ pub(crate) fn bpf_prog_test_run(
         io_error,
     })?;
 
-    let test = &unsafe { attr.test };
+    let test = unsafe { &attr.test };
 
     Ok(TestRunResult {
         return_value: test.retval,
