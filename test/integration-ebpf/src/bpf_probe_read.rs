@@ -2,8 +2,10 @@
 #![no_main]
 #![expect(unused_crate_dependencies, reason = "used in other bins")]
 
+use core::ffi::CStr;
+
 use aya_ebpf::{
-    helpers::{bpf_probe_read_kernel_str_bytes, bpf_probe_read_user_str_bytes},
+    helpers::{bpf_probe_read_kernel_str, bpf_probe_read_user_str},
     macros::{map, uprobe},
     maps::Array,
     programs::ProbeContext,
@@ -12,8 +14,8 @@ use integration_common::bpf_probe_read::{RESULT_BUF_LEN, TestResult};
 #[cfg(not(test))]
 extern crate ebpf_panic;
 
-fn read_str_bytes(
-    fun: unsafe fn(*const u8, &mut [u8]) -> Result<&[u8], i32>,
+fn read_str(
+    fun: unsafe fn(*const u8, &mut [u8]) -> Result<&CStr, i32>,
     iptr: Option<*const u8>,
     ilen: Option<usize>,
 ) {
@@ -45,7 +47,7 @@ fn read_str_bytes(
         return;
     };
 
-    *len = Some(unsafe { fun(iptr, buf) }.map(<[_]>::len));
+    *len = Some(unsafe { fun(iptr, buf) }.map(|s| s.to_bytes().len()));
 }
 
 #[map]
@@ -55,18 +57,18 @@ static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);
 static KERNEL_BUFFER: Array<[u8; RESULT_BUF_LEN]> = Array::with_max_entries(1, 0);
 
 #[uprobe]
-fn test_bpf_probe_read_user_str_bytes(ctx: ProbeContext) {
-    read_str_bytes(
-        bpf_probe_read_user_str_bytes,
+fn test_bpf_probe_read_user_str(ctx: ProbeContext) {
+    read_str(
+        bpf_probe_read_user_str,
         ctx.arg::<*const u8>(0),
         ctx.arg::<usize>(1),
     );
 }
 
 #[uprobe]
-fn test_bpf_probe_read_kernel_str_bytes(ctx: ProbeContext) {
-    read_str_bytes(
-        bpf_probe_read_kernel_str_bytes,
+fn test_bpf_probe_read_kernel_str(ctx: ProbeContext) {
+    read_str(
+        bpf_probe_read_kernel_str,
         KERNEL_BUFFER
             .get_ptr(0)
             .and_then(|ptr| unsafe { ptr.as_ref() })
