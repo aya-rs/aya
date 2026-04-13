@@ -55,10 +55,7 @@ fn test_classifier_test_run() {
         data_size_out as usize, PKT_V4_SIZE,
         "Expected data_size_out == PKT_V4_SIZE"
     );
-    assert_eq!(
-        ctx_size_out, 0,
-        "Expected ctx_size_out == 0 (no ctx_out provided)"
-    );
+    assert_eq!(ctx_size_out, 0);
 }
 
 #[test_log::test]
@@ -109,10 +106,7 @@ fn test_run_repeat() {
         data_size_out as usize, PKT_V4_SIZE,
         "Expected data_size_out == PKT_V4_SIZE"
     );
-    assert_eq!(
-        ctx_size_out, 0,
-        "Expected ctx_size_out == 0 (no ctx_out provided)"
-    );
+    assert_eq!(ctx_size_out, 0);
 }
 
 #[test_log::test]
@@ -159,10 +153,7 @@ fn test_xdp_modify_packet() {
         data_size_out as usize, PKT_V4_SIZE,
         "Expected data_size_out == PKT_V4_SIZE"
     );
-    assert_eq!(
-        ctx_size_out, 0,
-        "Expected ctx_size_out == 0 (no ctx_out provided)"
-    );
+    assert_eq!(ctx_size_out, 0);
 
     let expected_pattern: Vec<u8> = vec![XDP_MODIFY_VAL; XDP_MODIFY_LEN];
     assert_eq!(&data_out[..XDP_MODIFY_LEN], &*expected_pattern);
@@ -216,10 +207,7 @@ fn test_socket_filter_test_run() {
         data_size_out as usize, PKT_V4_SIZE,
         "Expected data_size_out == PKT_V4_SIZE"
     );
-    assert_eq!(
-        ctx_size_out, 0,
-        "Expected ctx_size_out == 0 (no ctx_out provided)"
-    );
+    assert_eq!(ctx_size_out, 0);
 }
 
 #[test_log::test]
@@ -260,10 +248,7 @@ fn test_xdp_test_run() {
         data_size_out as usize, PKT_V4_SIZE,
         "Expected data_size_out == PKT_V4_SIZE"
     );
-    assert_eq!(
-        ctx_size_out, 0,
-        "Expected ctx_size_out == 0 (no ctx_out provided)"
-    );
+    assert_eq!(ctx_size_out, 0);
 }
 
 #[test_log::test]
@@ -344,9 +329,5 @@ fn test_xdp_context() {
         data_size_out as usize, PKT_V4_SIZE,
         "Expected data_size_out == PKT_V4_SIZE"
     );
-    assert_eq!(
-        ctx_size_out as usize,
-        size_of::<XdpMd>(),
-        "Expected ctx_size_out == size_of::<XdpMd>()"
-    );
+    assert_eq!(ctx_size_out as usize, size_of::<XdpMd>());
 }
