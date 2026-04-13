@@ -609,9 +609,7 @@ pub(crate) fn bpf_prog_test_run(
         ctx_in,
         ctx_out,
         repeat,
-        cpu,
-        batch_size,
-        flags,
+        attrs,
     } = opts;
 
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
@@ -619,9 +617,9 @@ pub(crate) fn bpf_prog_test_run(
     let test = unsafe { &mut attr.test };
     test.prog_fd = prog_fd.as_raw_fd() as u32;
     test.repeat = repeat;
-    test.flags = flags;
-    test.cpu = cpu;
-    test.batch_size = batch_size;
+    test.flags = attrs.flags;
+    test.cpu = attrs.cpu;
+    test.batch_size = attrs.batch_size;
 
     if let Some(data_in) = data_in {
         test.data_in = data_in.as_ptr() as u64;

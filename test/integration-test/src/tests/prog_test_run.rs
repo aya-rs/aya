@@ -36,9 +36,11 @@ fn test_classifier_test_run() {
     let data_in = vec![0u8; PKT_V4_SIZE];
     let mut data_out = vec![0u8; PKT_V4_SIZE];
 
-    let mut opts = TestRunOptions::new();
-    opts.data_in = Some(&data_in);
-    opts.data_out = Some(&mut data_out);
+    let opts = TestRunOptions {
+        data_in: Some(&data_in),
+        data_out: Some(&mut data_out),
+        ..TestRunOptions::default()
+    };
 
     let TestRunResult {
         return_value,
@@ -78,10 +80,12 @@ fn test_run_repeat() {
     let mut data_out = vec![0u8; PKT_V4_SIZE];
 
     // Run the test 50 times
-    let mut opts = TestRunOptions::new();
-    opts.data_in = Some(&data_in);
-    opts.data_out = Some(&mut data_out);
-    opts.repeat = 50;
+    let opts = TestRunOptions {
+        data_in: Some(&data_in),
+        data_out: Some(&mut data_out),
+        repeat: 50,
+        ..TestRunOptions::default()
+    };
     let _result = prog.test_run(opts).unwrap();
 
     let final_count: u64 = exec_count.get(&0, 0).unwrap();
@@ -113,9 +117,11 @@ fn test_xdp_modify_packet() {
     let data_in = vec![0u8; PKT_V4_SIZE];
     let mut data_out = vec![0u8; PKT_V4_SIZE];
 
-    let mut opts = TestRunOptions::new();
-    opts.data_in = Some(&data_in);
-    opts.data_out = Some(&mut data_out);
+    let opts = TestRunOptions {
+        data_in: Some(&data_in),
+        data_out: Some(&mut data_out),
+        ..TestRunOptions::default()
+    };
 
     let TestRunResult {
         return_value,
@@ -154,9 +160,11 @@ fn test_socket_filter_test_run() {
     let data_in = vec![0u8; PKT_V4_SIZE];
     let mut data_out = vec![0u8; PKT_V4_SIZE];
 
-    let mut opts = TestRunOptions::new();
-    opts.data_in = Some(&data_in);
-    opts.data_out = Some(&mut data_out);
+    let opts = TestRunOptions {
+        data_in: Some(&data_in),
+        data_out: Some(&mut data_out),
+        ..TestRunOptions::default()
+    };
 
     let TestRunResult {
         return_value,
@@ -193,9 +201,11 @@ fn test_xdp_test_run() {
     let data_in = vec![0u8; PKT_V4_SIZE];
     let mut data_out = vec![0u8; PKT_V4_SIZE];
 
-    let mut opts = TestRunOptions::new();
-    opts.data_in = Some(&data_in);
-    opts.data_out = Some(&mut data_out);
+    let opts = TestRunOptions {
+        data_in: Some(&data_in),
+        data_out: Some(&mut data_out),
+        ..TestRunOptions::default()
+    };
 
     let TestRunResult {
         return_value,
@@ -259,11 +269,13 @@ fn test_xdp_context() {
     let ctx_bytes = bytes_of(&ctx);
     let mut ctx_out = vec![0u8; size];
 
-    let mut opts = TestRunOptions::new();
-    opts.data_in = Some(&data_in);
-    opts.data_out = Some(&mut data_out);
-    opts.ctx_in = Some(ctx_bytes);
-    opts.ctx_out = Some(&mut ctx_out);
+    let opts = TestRunOptions {
+        data_in: Some(&data_in),
+        data_out: Some(&mut data_out),
+        ctx_in: Some(ctx_bytes),
+        ctx_out: Some(&mut ctx_out),
+        ..TestRunOptions::default()
+    };
 
     let TestRunResult {
         return_value,

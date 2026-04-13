@@ -6486,7 +6486,24 @@ impl core::marker::Unpin for aya::programs::socket_filter::SocketFilter
 impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilter
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilter
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilter
+pub struct aya::programs::TestRunAttrs
+impl aya::programs::TestRunAttrs
+pub const fn aya::programs::TestRunAttrs::new() -> Self
+pub const fn aya::programs::TestRunAttrs::run_on_cpu(self, cpu: u32) -> Self
+pub const fn aya::programs::TestRunAttrs::xdp_live_frames(self, batch_size: u32) -> Self
+impl core::default::Default for aya::programs::TestRunAttrs
+pub fn aya::programs::TestRunAttrs::default() -> Self
+impl core::fmt::Debug for aya::programs::TestRunAttrs
+pub fn aya::programs::TestRunAttrs::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::TestRunAttrs
+impl core::marker::Send for aya::programs::TestRunAttrs
+impl core::marker::Sync for aya::programs::TestRunAttrs
+impl core::marker::Unpin for aya::programs::TestRunAttrs
+impl core::marker::UnsafeUnpin for aya::programs::TestRunAttrs
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::TestRunAttrs
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunAttrs
 pub struct aya::programs::TestRunOptions<'a>
+pub aya::programs::TestRunOptions::attrs: aya::programs::TestRunAttrs
 pub aya::programs::TestRunOptions::ctx_in: core::option::Option<&'a [u8]>
 pub aya::programs::TestRunOptions::ctx_out: core::option::Option<&'a mut [u8]>
 pub aya::programs::TestRunOptions::data_in: core::option::Option<&'a [u8]>
@@ -6494,8 +6511,6 @@ pub aya::programs::TestRunOptions::data_out: core::option::Option<&'a mut [u8]>
 pub aya::programs::TestRunOptions::repeat: u32
 impl aya::programs::TestRunOptions<'_>
 pub const fn aya::programs::TestRunOptions<'_>::new() -> Self
-pub const fn aya::programs::TestRunOptions<'_>::run_on_cpu(self, cpu: u32) -> Self
-pub const fn aya::programs::TestRunOptions<'_>::xdp_live_frames(self, batch_size: u32) -> Self
 impl core::default::Default for aya::programs::TestRunOptions<'_>
 pub fn aya::programs::TestRunOptions<'_>::default() -> Self
 impl<'a> core::fmt::Debug for aya::programs::TestRunOptions<'a>
@@ -7054,7 +7069,24 @@ impl<'a> core::marker::Unpin for aya::GlobalData<'a>
 impl<'a> core::marker::UnsafeUnpin for aya::GlobalData<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::GlobalData<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya::GlobalData<'a>
+pub struct aya::TestRunAttrs
+impl aya::programs::TestRunAttrs
+pub const fn aya::programs::TestRunAttrs::new() -> Self
+pub const fn aya::programs::TestRunAttrs::run_on_cpu(self, cpu: u32) -> Self
+pub const fn aya::programs::TestRunAttrs::xdp_live_frames(self, batch_size: u32) -> Self
+impl core::default::Default for aya::programs::TestRunAttrs
+pub fn aya::programs::TestRunAttrs::default() -> Self
+impl core::fmt::Debug for aya::programs::TestRunAttrs
+pub fn aya::programs::TestRunAttrs::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::TestRunAttrs
+impl core::marker::Send for aya::programs::TestRunAttrs
+impl core::marker::Sync for aya::programs::TestRunAttrs
+impl core::marker::Unpin for aya::programs::TestRunAttrs
+impl core::marker::UnsafeUnpin for aya::programs::TestRunAttrs
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::TestRunAttrs
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunAttrs
 pub struct aya::TestRunOptions<'a>
+pub aya::TestRunOptions::attrs: aya::programs::TestRunAttrs
 pub aya::TestRunOptions::ctx_in: core::option::Option<&'a [u8]>
 pub aya::TestRunOptions::ctx_out: core::option::Option<&'a mut [u8]>
 pub aya::TestRunOptions::data_in: core::option::Option<&'a [u8]>
@@ -7062,8 +7094,6 @@ pub aya::TestRunOptions::data_out: core::option::Option<&'a mut [u8]>
 pub aya::TestRunOptions::repeat: u32
 impl aya::programs::TestRunOptions<'_>
 pub const fn aya::programs::TestRunOptions<'_>::new() -> Self
-pub const fn aya::programs::TestRunOptions<'_>::run_on_cpu(self, cpu: u32) -> Self
-pub const fn aya::programs::TestRunOptions<'_>::xdp_live_frames(self, batch_size: u32) -> Self
 impl core::default::Default for aya::programs::TestRunOptions<'_>
 pub fn aya::programs::TestRunOptions<'_>::default() -> Self
 impl<'a> core::fmt::Debug for aya::programs::TestRunOptions<'a>

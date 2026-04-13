@@ -891,41 +891,21 @@ impl_fd!(
     Iter,
 );
 
-/// Options for running a BPF program test.
+/// Kernel-side execution attributes for [`TestRunOptions`].
 ///
-/// see [ebpf.io](https://docs.ebpf.io/linux/syscall/BPF_PROG_TEST_RUN/) for detailed usages.
+/// Controls *how* the kernel runs the test (CPU pinning, XDP batch size, and
+/// the associated flag bits), as opposed to *what* data is passed.
 #[derive(Debug)]
-pub struct TestRunOptions<'a> {
-    /// Input data to pass to the program.
-    pub data_in: Option<&'a [u8]>,
-    /// Output buffer for data modified by the program.
-    pub data_out: Option<&'a mut [u8]>,
-    /// Input context to pass to the program.
-    pub ctx_in: Option<&'a [u8]>,
-    /// Output buffer for context modified by the program.
-    pub ctx_out: Option<&'a mut [u8]>,
-    /// Number of times to repeat the test.
-    pub repeat: u32,
+pub struct TestRunAttrs {
     pub(crate) cpu: u32,
     pub(crate) batch_size: u32,
     pub(crate) flags: u32,
 }
 
-impl Default for TestRunOptions<'_> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl TestRunOptions<'_> {
-    /// Creates a new `TestRunOptions` with default values.
+impl TestRunAttrs {
+    /// Creates a new `TestRunAttrs` with default values.
     pub const fn new() -> Self {
         Self {
-            data_in: None,
-            data_out: None,
-            ctx_in: None,
-            ctx_out: None,
-            repeat: 1,
             cpu: 0,
             batch_size: 0,
             flags: 0,
@@ -952,6 +932,51 @@ impl TestRunOptions<'_> {
         self.batch_size = batch_size;
         self.flags |= BPF_F_TEST_XDP_LIVE_FRAMES;
         self
+    }
+}
+
+impl Default for TestRunAttrs {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Options for running a BPF program test.
+///
+/// see [ebpf.io](https://docs.ebpf.io/linux/syscall/BPF_PROG_TEST_RUN/) for detailed usages.
+#[derive(Debug)]
+pub struct TestRunOptions<'a> {
+    /// Input data to pass to the program.
+    pub data_in: Option<&'a [u8]>,
+    /// Output buffer for data modified by the program.
+    pub data_out: Option<&'a mut [u8]>,
+    /// Input context to pass to the program.
+    pub ctx_in: Option<&'a [u8]>,
+    /// Output buffer for context modified by the program.
+    pub ctx_out: Option<&'a mut [u8]>,
+    /// Number of times to repeat the test.
+    pub repeat: u32,
+    /// Kernel execution attributes (CPU pinning, XDP batch size).
+    pub attrs: TestRunAttrs,
+}
+
+impl Default for TestRunOptions<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TestRunOptions<'_> {
+    /// Creates a new `TestRunOptions` with default values.
+    pub const fn new() -> Self {
+        Self {
+            data_in: None,
+            data_out: None,
+            ctx_in: None,
+            ctx_out: None,
+            repeat: 1,
+            attrs: TestRunAttrs::new(),
+        }
     }
 }
 
