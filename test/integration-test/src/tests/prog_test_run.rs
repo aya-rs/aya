@@ -7,8 +7,10 @@ use integration_common::test_run::{IF_INDEX, XDP_MODIFY_LEN, XDP_MODIFY_VAL};
 
 // https://github.com/torvalds/linux/blob/8fdb05de/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L48
 // `sizeof(pkt_v4)` = Size(Ethernet) + Size(IPv4) + Size(TCP) = 14 + 20 + 20
-const PKT_V4_SIZE: usize = 14 + 20 + 20;
-const PKT_ETH_SIZE: usize = 14;
+const PKT_ETH_HDR_SIZE: usize = 14;
+const PKT_IP4_HDR_SIZE: usize = 20;
+const PKT_TCP_HDR_SIZE: usize = 20;
+const PKT_V4_SIZE: usize = PKT_ETH_HDR_SIZE + PKT_IP4_HDR_SIZE + PKT_TCP_HDR_SIZE;
 
 fn bytes_of<T: Sized>(val: &T) -> &[u8] {
     let size = size_of::<T>();
@@ -142,8 +144,7 @@ fn test_xdp_modify_packet() {
         ctx_size_out,
     } = prog.test_run(opts).unwrap();
 
-    // Expect XDP_PASS (2)
-    assert_eq!(return_value, 2);
+    assert_eq!(return_value, 2, "Expected XDP_PASS(2)");
     assert!(!duration.is_zero());
     assert_eq!(data_size_out as usize, PKT_V4_SIZE);
     assert_eq!(ctx_size_out, 0);
@@ -189,7 +190,7 @@ fn test_socket_filter_test_run() {
         ctx_size_out,
     } = prog.test_run(opts).unwrap();
 
-    assert_eq!(return_value as usize, PKT_V4_SIZE - PKT_ETH_SIZE);
+    assert_eq!(return_value as usize, PKT_V4_SIZE - PKT_ETH_HDR_SIZE);
     assert!(!duration.is_zero());
     assert_eq!(data_size_out as usize, PKT_V4_SIZE);
     assert_eq!(ctx_size_out, 0);
@@ -227,8 +228,8 @@ fn test_xdp_test_run() {
         data_size_out,
         ctx_size_out,
     } = prog.test_run(opts).unwrap();
-    // Expect XDP_PASS = 2
-    assert_eq!(return_value, 2);
+
+    assert_eq!(return_value, 2, "Expected XDP_PASS(2)");
     assert!(!duration.is_zero());
     assert_eq!(data_size_out as usize, PKT_V4_SIZE);
     assert_eq!(ctx_size_out, 0);
@@ -302,8 +303,7 @@ fn test_xdp_context() {
         ctx_size_out,
     } = prog.test_run(opts).unwrap();
 
-    // XDP_PASS is 2
-    assert_eq!(return_value, 2);
+    assert_eq!(return_value, 2, "Expected XDP_PASS(2)");
     assert!(!duration.is_zero());
     assert_eq!(data_size_out as usize, PKT_V4_SIZE);
     assert_eq!(ctx_size_out as usize, size_of::<XdpMd>());
