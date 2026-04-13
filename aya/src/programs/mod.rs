@@ -986,7 +986,7 @@ pub struct TestRunResult {
     /// Return value from the program.
     pub return_value: u32,
     /// Duration of the test run in nanoseconds.
-    pub duration: u32,
+    pub duration: std::time::Duration,
     /// Size of data written to `data_out`.
     pub data_size_out: u32,
     /// Size of context written to `ctx_out`.
