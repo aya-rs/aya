@@ -650,11 +650,13 @@ pub(crate) fn bpf_prog_test_run(
         io_error,
     })?;
 
-    Ok(TestRunResult {
-        return_value: unsafe { attr.test.retval },
-        duration: unsafe { std::time::Duration::from_nanos(u64::from(attr.test.duration)) },
-        data_size_out: unsafe { attr.test.data_size_out },
-        ctx_size_out: unsafe { attr.test.ctx_size_out },
+    Ok(unsafe {
+        TestRunResult {
+            return_value: attr.test.retval,
+            duration: std::time::Duration::from_nanos(u64::from(attr.test.duration)),
+            data_size_out: attr.test.data_size_out,
+            ctx_size_out: attr.test.ctx_size_out,
+        }
     })
 }
 
