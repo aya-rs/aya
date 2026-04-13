@@ -19,10 +19,7 @@ pub use aya_ebpf_bindings::helpers as generated;
 #[doc(hidden)]
 pub use generated::*;
 
-use crate::{
-    check_bounds_signed,
-    cty::{c_char, c_long},
-};
+use crate::cty::{c_char, c_long};
 
 // TODO: Add a static assertion that `MAX_ERRNO`[0] fits in `i32`, to prove the
 // correctness of using `i32` as an error type and catch eventual changes of
@@ -221,101 +218,39 @@ pub unsafe fn bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> Resul
     if ret == 0 { Ok(()) } else { Err(ret as i32) }
 }
 
-/// Read a null-terminated string stored at `src` into `dest`.
-///
-/// Generally speaking, the more specific [`bpf_probe_read_user_str`] and
-/// [`bpf_probe_read_kernel_str`] should be preferred over this function.
-///
-/// In case the length of `dest` is smaller then the length of `src`, the read bytes will
-/// be truncated to the size of `dest`.
-///
-/// # Examples
-///
-/// ```no_run
-/// # #[expect(deprecated)]
-/// # use aya_ebpf::{helpers::bpf_probe_read_str};
-/// # fn try_test() -> Result<(), i32> {
-/// # let kernel_ptr: *const u8 = 0 as _;
-/// let mut my_str = [0u8; 16];
-/// # #[expect(deprecated)]
-/// let num_read = unsafe { bpf_probe_read_str(kernel_ptr, &mut my_str)? };
-///
-/// // Do something with num_read and my_str
-/// # Ok::<(), i32>(())
-/// # }
-/// ```
-///
-/// # Errors
-///
-/// On failure, this function returns Err(-1).
-#[deprecated(
-    note = "Use `bpf_probe_read_user_str_bytes` or `bpf_probe_read_kernel_str_bytes` instead"
-)]
-#[inline]
-pub unsafe fn bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> Result<usize, i32> {
-    let len = unsafe {
-        generated::bpf_probe_read_str(dest.as_mut_ptr().cast(), dest.len() as u32, src.cast())
-    };
+fn read_str(dest: &mut [u8], f: impl FnOnce(&mut [u8]) -> i64) -> Result<&CStr, i32> {
+    let len = f(dest);
     let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
-    // this can never happen, it's needed to tell the verifier that len is bounded.
-    Ok(len.min(dest.len()))
+    // len includes the NULL terminator but not for b"\0" for which the kernel
+    // returns len=0.
+    let len = if len == 0 { 1 } else { len };
+    let bytes = dest.get(..len).ok_or(-1)?;
+    // Successful bpf_probe_read_{user,kernel}_str calls always write a
+    // NUL-terminated destination. Avoid CStr::from_bytes_with_nul here: its
+    // validation scans with pointer-alignment arithmetic that older verifiers
+    // reject for map-value pointers.
+    Ok(unsafe { CStr::from_bytes_with_nul_unchecked(bytes) })
 }
 
-/// Read a null-terminated string from _user space_ stored at `src` into `dest`.
+/// Returns a C string read from _user space_ address `src`.
 ///
-/// In case the length of `dest` is smaller then the length of `src`, the read bytes will
-/// be truncated to the size of `dest`.
+/// Reads at most `dest.len()` bytes from the `src` address, truncating if the
+/// length of the source string is larger than `dest`. On success, the
+/// destination buffer is always null terminated.
 ///
 /// # Examples
 ///
+/// With an array allocated on the stack (not recommended for bigger strings,
+/// eBPF stack limit is 512 bytes):
+///
 /// ```no_run
-/// # #[expect(deprecated)]
 /// # use aya_ebpf::{helpers::bpf_probe_read_user_str};
 /// # fn try_test() -> Result<(), i32> {
 /// # let user_ptr: *const u8 = 0 as _;
-/// let mut my_str = [0u8; 16];
-/// # #[expect(deprecated)]
-/// let num_read = unsafe { bpf_probe_read_user_str(user_ptr, &mut my_str)? };
-///
-/// // Do something with num_read and my_str
-/// # Ok::<(), i32>(())
-/// # }
-/// ```
-///
-/// # Errors
-///
-/// On failure, this function returns Err(-1).
-#[deprecated(note = "Use `bpf_probe_read_user_str_bytes` instead")]
-#[inline]
-pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result<usize, i32> {
-    let len = unsafe {
-        generated::bpf_probe_read_user_str(dest.as_mut_ptr().cast(), dest.len() as u32, src.cast())
-    };
-    let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
-    // this can never happen, it's needed to tell the verifier that len is bounded.
-    Ok(len.min(dest.len()))
-}
-
-/// Returns a byte slice read from _user space_ address `src`.
-///
-/// Reads at most `dest.len()` bytes from the `src` address, truncating if the
-/// length of the source string is larger than `dest`. On success, the
-/// destination buffer is always null terminated, and the returned slice
-/// includes the bytes up to and not including NULL.
-///
-/// # Examples
-///
-/// With an array allocated on the stack (not recommended for bigger strings,
-/// eBPF stack limit is 512 bytes):
-///
-/// ```no_run
-/// # use aya_ebpf::{helpers::bpf_probe_read_user_str_bytes};
-/// # fn try_test() -> Result<(), i32> {
-/// # let user_ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
-/// let my_str_bytes = unsafe { bpf_probe_read_user_str_bytes(user_ptr, &mut buf)? };
+/// let my_str = unsafe { bpf_probe_read_user_str(user_ptr, &mut buf)? };
 ///
-/// // Do something with my_str_bytes
+/// // Do something with my_str
 /// # Ok::<(), i32>(())
 /// # }
 /// ```
@@ -323,7 +258,7 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 /// With a `PerCpuArray` (with size defined by us):
 ///
 /// ```no_run
-/// # use aya_ebpf::{helpers::bpf_probe_read_user_str_bytes};
+/// # use aya_ebpf::{helpers::bpf_probe_read_user_str};
 /// use aya_ebpf::{macros::map, maps::PerCpuArray};
 ///
 /// #[repr(C)]
@@ -340,18 +275,17 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 ///     let ptr = BUF.get_ptr_mut(0).ok_or(0)?;
 ///     &mut *ptr
 /// };
-/// let my_str_bytes = unsafe { bpf_probe_read_user_str_bytes(user_ptr, &mut buf.buf)? };
+/// let my_str = unsafe { bpf_probe_read_user_str(user_ptr, &mut buf.buf)? };
 ///
-/// // Do something with my_str_bytes
+/// // Do something with my_str
 /// # Ok::<(), i32>(())
 /// # }
 /// ```
 ///
-/// You can also convert the resulted bytes slice into `&str` using
-/// [`core::str::from_utf8_unchecked`]:
+/// You can also access the non-null bytes using [`CStr::to_bytes`]:
 ///
 /// ```no_run
-/// # use aya_ebpf::{helpers::bpf_probe_read_user_str_bytes};
+/// # use aya_ebpf::{helpers::bpf_probe_read_user_str};
 /// # use aya_ebpf::{macros::map, maps::PerCpuArray};
 /// # #[repr(C)]
 /// # pub struct Buf {
@@ -365,11 +299,9 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 /// #     let ptr = BUF.get_ptr_mut(0).ok_or(0)?;
 /// #     &mut *ptr
 /// # };
-/// let my_str = unsafe {
-///     core::str::from_utf8_unchecked(bpf_probe_read_user_str_bytes(user_ptr, &mut buf.buf)?)
-/// };
+/// let my_bytes = unsafe { bpf_probe_read_user_str(user_ptr, &mut buf.buf)? }.to_bytes();
 ///
-/// // Do something with my_str
+/// // Do something with my_bytes
 /// # Ok::<(), i32>(())
 /// # }
 /// ```
@@ -378,90 +310,31 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 ///
 /// On failure, this function returns Err(-1).
 #[inline]
-pub unsafe fn bpf_probe_read_user_str_bytes(src: *const u8, dest: &mut [u8]) -> Result<&[u8], i32> {
-    let len = unsafe {
+pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result<&CStr, i32> {
+    read_str(dest, |dest| unsafe {
         generated::bpf_probe_read_user_str(dest.as_mut_ptr().cast(), dest.len() as u32, src.cast())
-    };
-
-    read_str_bytes(len, dest)
+    })
 }
 
-fn read_str_bytes(len: i64, dest: &[u8]) -> Result<&[u8], i32> {
-    // The lower bound is 0, since it's what is returned for b"\0". See the
-    // bpf_probe_read_user_[user|kernel]_bytes_empty integration tests.  The upper bound
-    // check is not needed since the helper truncates, but the verifier doesn't
-    // know that so we show it the upper bound.
-    if !check_bounds_signed(len, 0, dest.len() as i64) {
-        return Err(-1);
-    }
-
-    // len includes the NULL terminator but not for b"\0" for which the kernel
-    // returns len=0. So we do a saturating sub and for b"\0" we return the
-    // empty slice, for all other cases we omit the terminator.
-    let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
-    let len = len.saturating_sub(1);
-    dest.get(..len).ok_or(-1)
-}
-
-/// Read a null-terminated string from _kernel space_ stored at `src` into `dest`.
+/// Returns a C string read from _kernel space_ address `src`.
 ///
-/// In case the length of `dest` is smaller then the length of `src`, the read bytes will
-/// be truncated to the size of `dest`.
+/// Reads at most `dest.len()` bytes from the `src` address, truncating if the
+/// length of the source string is larger than `dest`. On success, the
+/// destination buffer is always null terminated.
 ///
 /// # Examples
 ///
+/// With an array allocated on the stack (not recommended for bigger strings,
+/// eBPF stack limit is 512 bytes):
+///
 /// ```no_run
-/// # #[expect(deprecated)]
 /// # use aya_ebpf::{helpers::bpf_probe_read_kernel_str};
 /// # fn try_test() -> Result<(), i32> {
 /// # let kernel_ptr: *const u8 = 0 as _;
-/// let mut my_str = [0u8; 16];
-/// # #[expect(deprecated)]
-/// let num_read = unsafe { bpf_probe_read_kernel_str(kernel_ptr, &mut my_str)? };
-///
-/// // Do something with num_read and my_str
-/// # Ok::<(), i32>(())
-/// # }
-/// ```
-///
-/// # Errors
-///
-/// On failure, this function returns Err(-1).
-#[deprecated(note = "Use bpf_probe_read_kernel_str_bytes instead")]
-#[inline]
-pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Result<usize, i32> {
-    let len = unsafe {
-        generated::bpf_probe_read_kernel_str(
-            dest.as_mut_ptr().cast(),
-            dest.len() as u32,
-            src.cast(),
-        )
-    };
-    let len = usize::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
-    // this can never happen, it's needed to tell the verifier that len is bounded.
-    Ok(len.min(dest.len()))
-}
-
-/// Returns a byte slice read from _kernel space_ address `src`.
-///
-/// Reads at most `dest.len()` bytes from the `src` address, truncating if the
-/// length of the source string is larger than `dest`. On success, the
-/// destination buffer is always null terminated, and the returned slice
-/// includes the bytes up to and not including NULL.
-///
-/// # Examples
-///
-/// With an array allocated on the stack (not recommended for bigger strings,
-/// eBPF stack limit is 512 bytes):
-///
-/// ```no_run
-/// # use aya_ebpf::{helpers::bpf_probe_read_kernel_str_bytes};
-/// # fn try_test() -> Result<(), i32> {
-/// # let kernel_ptr: *const u8 = 0 as _;
 /// let mut buf = [0u8; 16];
-/// let my_str_bytes = unsafe { bpf_probe_read_kernel_str_bytes(kernel_ptr, &mut buf)? };
+/// let my_str = unsafe { bpf_probe_read_kernel_str(kernel_ptr, &mut buf)? };
 ///
-/// // Do something with my_str_bytes
+/// // Do something with my_str
 /// # Ok::<(), i32>(())
 /// # }
 /// ```
@@ -469,7 +342,7 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 /// With a `PerCpuArray` (with size defined by us):
 ///
 /// ```no_run
-/// # use aya_ebpf::{helpers::bpf_probe_read_kernel_str_bytes};
+/// # use aya_ebpf::{helpers::bpf_probe_read_kernel_str};
 /// use aya_ebpf::{macros::map, maps::PerCpuArray};
 ///
 /// #[repr(C)]
@@ -486,18 +359,17 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 ///     let ptr = BUF.get_ptr_mut(0).ok_or(0)?;
 ///     &mut *ptr
 /// };
-/// let my_str_bytes = unsafe { bpf_probe_read_kernel_str_bytes(kernel_ptr, &mut buf.buf)? };
+/// let my_str = unsafe { bpf_probe_read_kernel_str(kernel_ptr, &mut buf.buf)? };
 ///
-/// // Do something with my_str_bytes
+/// // Do something with my_str
 /// # Ok::<(), i32>(())
 /// # }
 /// ```
 ///
-/// You can also convert the resulted bytes slice into `&str` using
-/// [`core::str::from_utf8_unchecked`]:
+/// You can also access the non-null bytes using [`CStr::to_bytes`]:
 ///
 /// ```no_run
-/// # use aya_ebpf::{helpers::bpf_probe_read_kernel_str_bytes};
+/// # use aya_ebpf::{helpers::bpf_probe_read_kernel_str};
 /// # use aya_ebpf::{macros::map, maps::PerCpuArray};
 /// # #[repr(C)]
 /// # pub struct Buf {
@@ -511,11 +383,9 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 /// #     let ptr = BUF.get_ptr_mut(0).ok_or(0)?;
 /// #     &mut *ptr
 /// # };
-/// let my_str = unsafe {
-///     core::str::from_utf8_unchecked(bpf_probe_read_kernel_str_bytes(kernel_ptr, &mut buf.buf)?)
-/// };
+/// let my_bytes = unsafe { bpf_probe_read_kernel_str(kernel_ptr, &mut buf.buf)? }.to_bytes();
 ///
-/// // Do something with my_str
+/// // Do something with my_bytes
 /// # Ok::<(), i32>(())
 /// # }
 /// ```
@@ -524,19 +394,14 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 ///
 /// On failure, this function returns Err(-1).
 #[inline]
-pub unsafe fn bpf_probe_read_kernel_str_bytes(
-    src: *const u8,
-    dest: &mut [u8],
-) -> Result<&[u8], i32> {
-    let len = unsafe {
+pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Result<&CStr, i32> {
+    read_str(dest, |dest| unsafe {
         generated::bpf_probe_read_kernel_str(
             dest.as_mut_ptr().cast(),
             dest.len() as u32,
             src.cast(),
         )
-    };
-
-    read_str_bytes(len, dest)
+    })
 }
 
 /// Write bytes to the _user space_ pointer `src` and store them as a `T`.
