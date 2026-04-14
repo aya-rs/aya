@@ -1065,10 +1065,8 @@ impl_program_test_run!(
     SchedClassifier,
     Xdp,
     CgroupSkb,
-    SkMsg,
-    SkSkb,
-    SockOps,
     FlowDissector,
+    TracePoint,
     RawTracePoint,
 );
 
