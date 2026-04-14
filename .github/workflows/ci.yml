@@ -47,7 +47,7 @@ jobs:
           set -euxo pipefail
 
           sudo apt update
-          sudo apt -y install autopoint
+          sudo apt -y install autoconf automake autopoint libtool
 
       - run: cargo xtask clippy
 
@@ -118,7 +118,7 @@ jobs:
           set -euxo pipefail
 
           sudo apt update
-          sudo apt -y install autopoint
+          sudo apt -y install autoconf automake autopoint libtool
 
       - name: Build
         env:
@@ -293,7 +293,10 @@ jobs:
           #
           # See https://github.com/libbpf/libbpf-sys/issues/137.
           sudo apt -y install \
+            autoconf \
+            automake \
             autopoint \
+            libtool \
             linux-libc-dev \
             liblzma-dev \
             llvm \
