@@ -20,6 +20,7 @@ pub use aya_ebpf_bindings::helpers as generated;
 pub use generated::*;
 
 use crate::{
+    bindings::path,
     check_bounds_signed,
     cty::{c_char, c_long},
 };
@@ -818,3 +819,33 @@ pub fn bpf_strncmp<const N: usize>(s1: &[u8; N], s2: &CStr) -> Ordering {
     // usage of strncmp in C programs.
     unsafe { generated::bpf_strncmp(s1.as_ptr().cast(), N as u32, s2.as_ptr().cast()) }.cmp(&0)
 }
+
+/// Returns the path of a given `path` structure.
+///
+/// Returns a byte slice containing the path.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use aya_ebpf::{helpers::bpf_d_path, bindings::path};
+/// # fn try_test(p: *const path) -> Result<(), i64> {
+/// let mut buf = [0u8; 128];
+/// let path_bytes = unsafe { bpf_d_path(p, &mut buf)? };
+///
+/// // Do something with path_bytes
+/// # Ok::<(), i64>(())
+/// # }
+/// ```
+///
+/// # Errors
+///
+/// On failure, this function returns a negative value wrapped in an `Err`.
+#[inline]
+pub unsafe fn bpf_d_path(path: *const path, dest: &mut [u8]) -> Result<&[u8], c_long> {
+    let len = unsafe {
+        generated::bpf_d_path(path as *mut _, dest.as_mut_ptr().cast(), dest.len() as u32)
+    };
+
+    Ok(read_str_bytes(len, dest)?)
+}
+
