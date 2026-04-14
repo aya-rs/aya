@@ -943,18 +943,29 @@ impl Default for TestRunAttrs {
 
 /// Options for running a BPF program test.
 ///
-/// see [ebpf.io](https://docs.ebpf.io/linux/syscall/BPF_PROG_TEST_RUN/) for detailed usages.
+/// see [kernel doc](https://docs.kernel.org/bpf/bpf_prog_run.html)
+/// and [ebpf.io](https://docs.ebpf.io/linux/syscall/BPF_PROG_TEST_RUN/) for detailed usages.
 #[derive(Debug)]
 pub struct TestRunOptions<'a> {
     /// Input data to pass to the program.
+    ///
+    /// Must be `None` for [`RawTracePoint`] programs; the kernel returns
+    /// `EINVAL` otherwise.
     pub data_in: Option<&'a [u8]>,
     /// Output buffer for data modified by the program.
+    ///
+    /// Must be `None` for [`RawTracePoint`] programs; the kernel returns
+    /// `EINVAL` otherwise.
     pub data_out: Option<&'a mut [u8]>,
     /// Input context to pass to the program.
     pub ctx_in: Option<&'a [u8]>,
     /// Output buffer for context modified by the program.
     pub ctx_out: Option<&'a mut [u8]>,
-    /// Number of times to repeat the test.
+    /// Number of times to repeat the test. Defaults to `1`.
+    ///
+    /// Must be `0` for [`RawTracePoint`] programs. The kernel's
+    /// `bpf_prog_test_run_raw_tp` treats any non-zero `repeat` value as an error,
+    /// returning `EINVAL`.
     pub repeat: u32,
     /// Kernel execution attributes (CPU pinning, XDP batch size).
     pub attrs: TestRunAttrs,
@@ -1029,9 +1040,9 @@ pub trait TestRun {
     ///     repeat: 1,
     ///     ..Default::default()
     /// };
-    ///
+    ///¬
     /// let result = program.test_run(&mut opts)?;
-    /// println!("Program returned: {}, took {} ns", result.return_value, result.duration);
+    /// println!("Program returned: {}, took {} ns", result.return_value, result.duration.as_nanos());
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     fn test_run(&self, opts: TestRunOptions<'_>) -> Result<TestRunResult, ProgramError>;

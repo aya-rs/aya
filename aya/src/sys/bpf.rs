@@ -631,7 +631,7 @@ pub(crate) fn bpf_prog_test_run(
     }
 
     if let Some(data_out) = data_out {
-        test.data_out = data_out.as_ptr() as u64;
+        test.data_out = data_out.as_mut_ptr() as u64;
         test.data_size_out = data_out.len() as u32;
     }
 
@@ -641,7 +641,7 @@ pub(crate) fn bpf_prog_test_run(
     }
 
     if let Some(ctx_out) = ctx_out {
-        test.ctx_out = ctx_out.as_ptr() as u64;
+        test.ctx_out = ctx_out.as_mut_ptr() as u64;
         test.ctx_size_out = ctx_out.len() as u32;
     }
 
