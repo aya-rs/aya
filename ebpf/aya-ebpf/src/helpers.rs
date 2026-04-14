@@ -843,8 +843,8 @@ pub fn bpf_strncmp<const N: usize>(s1: &[u8; N], s2: &CStr) -> Ordering {
 #[inline]
 pub unsafe fn bpf_d_path(path: *const path, dest: &mut [u8]) -> Result<&[u8], c_long> {
     let len = unsafe {
-        generated::bpf_d_path(path as *mut _, dest.as_mut_ptr().cast(), dest.len() as u32)
+        generated::bpf_d_path(path.cast_mut(), dest.as_mut_ptr().cast(), dest.len() as u32)
     };
 
-    Ok(read_str_bytes(len, dest)?)
+    read_str_bytes(len, dest).map_err(c_long::from)
 }

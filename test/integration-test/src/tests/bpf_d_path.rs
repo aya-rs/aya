@@ -7,12 +7,32 @@ use integration_common::bpf_d_path::TestResult;
 fn bpf_d_path_basic() {
     let btf = Btf::from_sys_fs().unwrap();
     let mut bpf = Ebpf::load(crate::BPF_D_PATH).unwrap();
+
+    {
+        let mut pid_map = Array::<_, u32>::try_from(bpf.map_mut("PID").unwrap()).unwrap();
+        pid_map.set(0, std::process::id(), 0).unwrap();
+    }
+    {
+        let mut result_map =
+            Array::<_, TestResult>::try_from(bpf.map_mut("RESULT").unwrap()).unwrap();
+        result_map
+            .set(
+                0,
+                TestResult {
+                    buf: [0; integration_common::bpf_d_path::PATH_BUF_LEN],
+                    len: 0,
+                },
+                0,
+            )
+            .unwrap();
+    }
+
     let prog: &mut FEntry = bpf
-        .program_mut("test_vfs_open")
+        .program_mut("test_dentry_open")
         .unwrap()
         .try_into()
         .unwrap();
-    prog.load("vfs_open", &btf).unwrap();
+    prog.load("dentry_open", &btf).unwrap();
     prog.attach().unwrap();
 
     let file = File::open("/dev/null").unwrap();
@@ -20,7 +40,11 @@ fn bpf_d_path_basic() {
     let result = get_result(&bpf);
 
     let path_len = result.len;
-    assert!(path_len > 0, "Path length should be greater than 0");
+    assert!(
+        path_len > 0,
+        "Path length should be greater than 0. If it's 0, the BPF program might not have been triggered for this PID ({}) by File::open() or bpf_d_path failed.",
+        std::process::id()
+    );
     assert!(
         path_len <= result.buf.len(),
         "Path length should not exceed buffer size"
