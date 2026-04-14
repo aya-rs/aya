@@ -6,10 +6,7 @@ use std::{
     fmt::{self, Write},
     fs,
     io::{self, BufRead as _, Cursor, Read as _},
-    os::{
-        fd::AsFd as _,
-        unix::ffi::{OsStrExt as _, OsStringExt as _},
-    },
+    os::unix::ffi::{OsStrExt as _, OsStringExt as _},
     path::{Path, PathBuf},
     sync::LazyLock,
 };
@@ -21,12 +18,11 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+        ProgramData, ProgramError, ProgramType, define_link_wrapper, impl_try_from_fdlink,
         impl_try_into_fdlink, load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{OsStringExt as _, Probe, ProbeKind, attach},
     },
-    sys::bpf_link_get_info_by_fd,
     util::MMap,
 };
 
@@ -228,18 +224,11 @@ define_link_wrapper!(
 );
 
 impl_try_into_fdlink!(UProbeLink, PerfLinkInner);
-
-impl TryFrom<FdLink> for UProbeLink {
-    type Error = LinkError;
-
-    fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
-        if info.type_ == (bpf_link_type::BPF_LINK_TYPE_TRACING as u32) {
-            return Ok(Self::new(PerfLinkInner::Fd(fd_link)));
-        }
-        Err(LinkError::InvalidLink)
-    }
-}
+impl_try_from_fdlink!(
+    UProbeLink,
+    PerfLinkInner,
+    bpf_link_type::BPF_LINK_TYPE_PERF_EVENT
+);
 
 /// The type returned when attaching an [`UProbe`] fails.
 #[derive(Debug, Error)]
