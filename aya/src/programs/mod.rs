@@ -1034,14 +1034,14 @@ pub trait TestRun {
     /// let input_data = [0u8; 64];
     /// let mut output_data = [0u8; 64];
     ///
-    /// let mut opts = TestRunOptions {
+    /// let opts = TestRunOptions {
     ///     data_in: Some(&input_data),
     ///     data_out: Some(&mut output_data),
     ///     repeat: 1,
     ///     ..Default::default()
     /// };
-    ///¬
-    /// let result = program.test_run(&mut opts)?;
+    ///
+    /// let result = program.test_run(opts)?;
     /// println!("Program returned: {}, took {} ns", result.return_value, result.duration.as_nanos());
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
