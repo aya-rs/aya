@@ -6525,7 +6525,7 @@ impl<'a> !core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunOptions
 pub struct aya::programs::TestRunResult
 pub aya::programs::TestRunResult::ctx_size_out: u32
 pub aya::programs::TestRunResult::data_size_out: u32
-pub aya::programs::TestRunResult::duration: u32
+pub aya::programs::TestRunResult::duration: core::time::Duration
 pub aya::programs::TestRunResult::return_value: u32
 impl core::fmt::Debug for aya::programs::TestRunResult
 pub fn aya::programs::TestRunResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -7108,7 +7108,7 @@ impl<'a> !core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunOptions
 pub struct aya::TestRunResult
 pub aya::TestRunResult::ctx_size_out: u32
 pub aya::TestRunResult::data_size_out: u32
-pub aya::TestRunResult::duration: u32
+pub aya::TestRunResult::duration: core::time::Duration
 pub aya::TestRunResult::return_value: u32
 impl core::fmt::Debug for aya::programs::TestRunResult
 pub fn aya::programs::TestRunResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
