@@ -19,12 +19,12 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, Link, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        id_as_key, impl_try_into_fdlink, load_program_with_attach_type,
+        FdLink, Link, ProgramData, ProgramError, ProgramType, define_link_wrapper, id_as_key,
+        impl_try_from_fdlink, impl_try_into_fdlink, load_program_with_attach_type,
     },
     sys::{
-        LinkTarget, NetlinkError, SyscallError, bpf_link_create, bpf_link_get_info_by_fd,
-        bpf_link_update, netlink_set_xdp_fd,
+        LinkTarget, NetlinkError, SyscallError, bpf_link_create, bpf_link_update,
+        netlink_set_xdp_fd,
     },
     util::KernelVersion,
 };
@@ -294,18 +294,6 @@ impl Link for XdpLinkInner {
 id_as_key!(XdpLinkInner, XdpLinkIdInner);
 
 impl_try_into_fdlink!(XdpLink, XdpLinkInner);
-
-impl TryFrom<FdLink> for XdpLink {
-    type Error = LinkError;
-
-    fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        // unwrap of fd_link.fd will not panic since it's only None when being dropped.
-        let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
-        if info.type_ == (bpf_link_type::BPF_LINK_TYPE_XDP as u32) {
-            return Ok(Self::new(XdpLinkInner::Fd(fd_link)));
-        }
-        Err(LinkError::InvalidLink)
-    }
-}
+impl_try_from_fdlink!(XdpLink, XdpLinkInner, bpf_link_type::BPF_LINK_TYPE_XDP);
 
 define_link_wrapper!(XdpLink, XdpLinkId, XdpLinkInner, XdpLinkIdInner, Xdp);
