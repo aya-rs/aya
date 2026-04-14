@@ -1,6 +1,7 @@
 #[cfg(any(
     bpf_target_arch = "arm",
     bpf_target_arch = "mips",
+    bpf_target_arch = "mips64",
     bpf_target_arch = "powerpc64",
     bpf_target_arch = "x86_64",
 ))]

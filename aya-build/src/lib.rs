@@ -350,6 +350,7 @@ pub fn emit_bpf_target_arch_cfg() -> Result<()> {
         "arm",
         "loongarch64",
         "mips",
+        "mips64",
         "powerpc64",
         "riscv64",
         "s390x",

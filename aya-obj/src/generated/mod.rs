@@ -14,6 +14,8 @@ mod linux_bindings_armv7;
 mod linux_bindings_loongarch64;
 #[cfg(target_arch = "mips")]
 mod linux_bindings_mips;
+#[cfg(target_arch = "mips64")]
+mod linux_bindings_mips64;
 #[cfg(target_arch = "powerpc64")]
 mod linux_bindings_powerpc64;
 #[cfg(target_arch = "riscv64")]
@@ -31,6 +33,8 @@ pub use linux_bindings_armv7::*;
 pub use linux_bindings_loongarch64::*;
 #[cfg(target_arch = "mips")]
 pub use linux_bindings_mips::*;
+#[cfg(target_arch = "mips64")]
+pub use linux_bindings_mips64::*;
 #[cfg(target_arch = "powerpc64")]
 pub use linux_bindings_powerpc64::*;
 #[cfg(target_arch = "riscv64")]
