@@ -47,7 +47,7 @@ default-members = [
 
     # ebpf crates are omitted; they must be built with:
     #
-    # RUSTFLAGS="--cfg bpf_target_arch={aarch64,arm,loongarch64,mips,powerpc64,riscv64,s390x,x86_64}"
+    # RUSTFLAGS="--cfg bpf_target_arch={aarch64,arm,loongarch64,mips,mips64,powerpc64,riscv64,s390x,x86_64}"
     # ...
     # --target bpfe{b,l}-unknown-none
 ]
