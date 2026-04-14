@@ -122,7 +122,7 @@ impl PtRegsLayout for pt_regs {
     }
 }
 
-#[cfg(bpf_target_arch = "mips")]
+#[cfg(any(bpf_target_arch = "mips", bpf_target_arch = "mips64"))]
 impl PtRegsLayout for pt_regs {
     type Reg = crate::bindings::__u64;
 

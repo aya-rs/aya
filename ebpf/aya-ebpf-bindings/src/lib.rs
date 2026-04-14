@@ -47,6 +47,11 @@ mod mips {
     pub mod bindings;
     pub mod helpers;
 }
+#[cfg(bpf_target_arch = "mips64")]
+mod mips64 {
+    pub mod bindings;
+    pub mod helpers;
+}
 #[cfg(bpf_target_arch = "powerpc64")]
 mod powerpc64 {
     pub mod bindings;
@@ -77,6 +82,8 @@ mod generated {
     pub use super::loongarch64::*;
     #[cfg(bpf_target_arch = "mips")]
     pub use super::mips::*;
+    #[cfg(bpf_target_arch = "mips64")]
+    pub use super::mips64::*;
     #[cfg(bpf_target_arch = "powerpc64")]
     pub use super::powerpc64::*;
     #[cfg(bpf_target_arch = "riscv64")]

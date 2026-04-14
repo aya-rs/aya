@@ -62,6 +62,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
         "arm",
         "loongarch64",
         "mips",
+        "mips64",
         "powerpc64",
         "riscv64",
         "s390x",
