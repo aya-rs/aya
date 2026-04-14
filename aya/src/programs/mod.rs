@@ -1040,7 +1040,7 @@ pub trait TestRun {
     ///     repeat: 1,
     ///     ..Default::default()
     /// };
-    ///¬
+    ///
     /// let result = program.test_run(&mut opts)?;
     /// println!("Program returned: {}, took {} ns", result.return_value, result.duration.as_nanos());
     /// # Ok::<(), Box<dyn std::error::Error>>(())
