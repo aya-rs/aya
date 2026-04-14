@@ -14,13 +14,13 @@ use crate::{
     VerifierLogLevel,
     programs::{
         Link, LinkError, LinkOrder, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        id_as_key, impl_try_into_fdlink, load_program_without_attach_type, query,
+        id_as_key, impl_try_from_fdlink, impl_try_into_fdlink, load_program_without_attach_type,
+        query,
     },
     sys::{
         BpfLinkCreateArgs, LinkTarget, NetlinkError, NetlinkSocket, ProgQueryTarget, SyscallError,
-        bpf_link_create, bpf_link_get_info_by_fd, bpf_link_update, bpf_prog_get_fd_by_id,
-        netlink_find_filter_with_name, netlink_qdisc_add_clsact, netlink_qdisc_attach,
-        netlink_qdisc_detach,
+        bpf_link_create, bpf_link_update, bpf_prog_get_fd_by_id, netlink_find_filter_with_name,
+        netlink_qdisc_add_clsact, netlink_qdisc_attach, netlink_qdisc_detach,
     },
     util::{KernelVersion, ifindex_from_ifname, tc_handler_make},
 };
@@ -488,18 +488,11 @@ impl<'a> TryFrom<&'a SchedClassifierLink> for &'a FdLink {
 }
 
 impl_try_into_fdlink!(SchedClassifierLink, TcLinkInner);
-
-impl TryFrom<FdLink> for SchedClassifierLink {
-    type Error = LinkError;
-
-    fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
-        if info.type_ == (bpf_link_type::BPF_LINK_TYPE_TCX as u32) {
-            return Ok(Self::new(TcLinkInner::Fd(fd_link)));
-        }
-        Err(LinkError::InvalidLink)
-    }
-}
+impl_try_from_fdlink!(
+    SchedClassifierLink,
+    TcLinkInner,
+    bpf_link_type::BPF_LINK_TYPE_TCX
+);
 
 define_link_wrapper!(
     SchedClassifierLink,

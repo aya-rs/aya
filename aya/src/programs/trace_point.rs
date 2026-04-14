@@ -10,12 +10,12 @@ use thiserror::Error;
 
 use crate::{
     programs::{
-        FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+        ProgramData, ProgramError, ProgramType, define_link_wrapper, impl_try_from_fdlink,
         impl_try_into_fdlink, load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
         utils::find_tracefs_path,
     },
-    sys::{SyscallError, bpf_link_get_info_by_fd, perf_event_open_trace_point},
+    sys::{SyscallError, perf_event_open_trace_point},
 };
 
 /// The type returned when attaching a [`TracePoint`] fails.
@@ -99,18 +99,11 @@ define_link_wrapper!(
 );
 
 impl_try_into_fdlink!(TracePointLink, PerfLinkInner);
-
-impl TryFrom<FdLink> for TracePointLink {
-    type Error = LinkError;
-
-    fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
-        if info.type_ == (bpf_link_type::BPF_LINK_TYPE_TRACING as u32) {
-            return Ok(Self::new(PerfLinkInner::Fd(fd_link)));
-        }
-        Err(LinkError::InvalidLink)
-    }
-}
+impl_try_from_fdlink!(
+    TracePointLink,
+    PerfLinkInner,
+    bpf_link_type::BPF_LINK_TYPE_PERF_EVENT
+);
 
 pub(crate) fn read_sys_fs_trace_point_id(
     tracefs: &Path,
