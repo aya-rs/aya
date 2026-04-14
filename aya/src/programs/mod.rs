@@ -129,12 +129,9 @@ use crate::{
     VerifierLogLevel,
     maps::MapError,
     pin::PinError,
-    programs::{
-        links::{
-            FdLink, FdLinkId, LinkError, LinkInfo, Links, ProgAttachLink, ProgAttachLinkId,
-            define_link_wrapper, id_as_key, impl_try_into_fdlink,
-        },
-        perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach, perf_attach_debugfs},
+    programs::links::{
+        FdLink, FdLinkId, LinkError, LinkInfo, Links, ProgAttachLink, ProgAttachLinkId,
+        define_link_wrapper, id_as_key, impl_try_into_fdlink,
     },
     sys::{
         EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget, SyscallError, bpf_btf_get_fd_by_id,
@@ -1030,11 +1027,17 @@ impl_from_pin!(
 
 macro_rules! impl_from_prog_info {
     (
-        $(#[$doc:meta])*
+        @docs
+            [$($doc:meta)*]
+        @safety_docs
+            [$($safety_doc:meta)*]
         @safety
             [$($safety:tt)?]
         @rest
-            $struct_name:ident $($var:ident : $var_ty:ty)?
+            $struct_name:ident
+            $($var:ident : $var_ty:ty,)?
+        @extra_fields
+            [$($extra_field:ident : $extra_value:expr),* $(,)?]
     ) => {
         impl $struct_name {
             /// Constructs an instance of a [`Self`] from a [`ProgramInfo`].
@@ -1042,12 +1045,14 @@ macro_rules! impl_from_prog_info {
             /// This allows the caller to get a handle to an already loaded
             /// program from the kernel without having to load it again.
             ///
+            $(#[$doc])*
+            ///
             /// # Errors
             ///
             /// - If the program type reported by the kernel does not match
             ///   [`Self::PROGRAM_TYPE`].
             /// - If the file descriptor of the program cannot be cloned.
-            $(#[$doc])*
+            $(#[$safety_doc])*
             pub $($safety)?
             fn from_program_info(
                 info: ProgramInfo,
@@ -1070,6 +1075,7 @@ macro_rules! impl_from_prog_info {
                         VerifierLogLevel::default(),
                     )?,
                     $($var,)?
+                    $($extra_field: $extra_value,)*
                 })
             }
         }
@@ -1077,30 +1083,45 @@ macro_rules! impl_from_prog_info {
 
     // Handle unsafe cases and pass a safety doc section
     (
-        unsafe $struct_name:ident $($var:ident : $var_ty:ty)? $(, $($rest:tt)*)?
+        $(#[$doc:meta])*
+        unsafe $struct_name:ident
+        $($var:ident : $var_ty:ty)?
+        $(=> { $($extra_field:ident : $extra_value:expr),+ $(,)? })?
+        $(, $($rest:tt)*)?
     ) => {
         impl_from_prog_info! {
-            ///
-            /// # Safety
-            ///
-            /// The runtime type of this program, as used by the kernel, is
-            /// overloaded. We assert the program type matches the runtime type
-            /// but we're unable to perform further checks. Therefore, the caller
-            /// must ensure that the program type is correct or the behavior is
-            /// undefined.
+            @docs [$($doc)*]
+            @safety_docs [
+                doc = ""
+                doc = "# Safety"
+                doc = ""
+                doc = "The runtime type of this program, as used by the kernel, is"
+                doc = "overloaded. We assert the program type matches the runtime type"
+                doc = "but we're unable to perform further checks. Therefore, the caller"
+                doc = "must ensure that the program type is correct or the behavior is"
+                doc = "undefined."
+            ]
             @safety [unsafe]
-            @rest $struct_name $($var : $var_ty)?
+            @rest $struct_name $($var : $var_ty,)?
+            @extra_fields [$($($extra_field : $extra_value),+)?]
         }
         $( impl_from_prog_info!($($rest)*); )?
     };
 
     // Handle non-unsafe cases and omit safety doc section
     (
-        $struct_name:ident $($var:ident : $var_ty:ty)? $(, $($rest:tt)*)?
+        $(#[$doc:meta])*
+        $struct_name:ident
+        $($var:ident : $var_ty:ty)?
+        $(=> { $($extra_field:ident : $extra_value:expr),+ $(,)? })?
+        $(, $($rest:tt)*)?
     ) => {
         impl_from_prog_info! {
+            @docs [$($doc)*]
+            @safety_docs []
             @safety []
-            @rest $struct_name $($var : $var_ty)?
+            @rest $struct_name $($var : $var_ty,)?
+            @extra_fields [$($($extra_field : $extra_value),+)?]
         }
         $( impl_from_prog_info!($($rest)*); )?
     };
@@ -1113,7 +1134,11 @@ macro_rules! impl_from_prog_info {
 
 impl_from_prog_info!(
     unsafe KProbe kind : ProbeKind,
-    unsafe UProbe kind : ProbeKind,
+    /// As with [`Self::from_pin`], this constructor starts in unknown mode
+    /// because it does not know whether the original program came from an
+    /// `uprobe` or `uprobe.multi` section. As a result, [`Self::attach`]
+    /// performs runtime mode selection.
+    unsafe UProbe kind : ProbeKind => { attach_mode: uprobe::AttachMode::Unknown },
     TracePoint,
     Xdp attach_type : XdpAttachType,
     SkMsg,
