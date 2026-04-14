@@ -105,7 +105,7 @@ impl TryFrom<FdLink> for TracePointLink {
 
     fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
         let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
-        if info.type_ == (bpf_link_type::BPF_LINK_TYPE_TRACING as u32) {
+        if info.type_ == (bpf_link_type::BPF_LINK_TYPE_PERF_EVENT as u32) {
             return Ok(Self::new(PerfLinkInner::Fd(fd_link)));
         }
         Err(LinkError::InvalidLink)
