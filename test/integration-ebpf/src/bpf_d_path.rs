@@ -43,7 +43,7 @@ fn try_vfs_open(ctx: FEntryContext) -> Result<(), c_long> {
         )
     };
 
-    result.len = dest.len();
+    result.len = data.len();
 
     RESULT.set(0, &result, 0)?;
 
