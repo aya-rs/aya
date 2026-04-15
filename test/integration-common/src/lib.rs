@@ -123,3 +123,19 @@ pub mod sk_storage {
     #[cfg(feature = "user")]
     unsafe impl aya::Pod for Value {}
 }
+
+pub mod lpm_trie {
+    pub const LPM_MATCH_SLOT: u32 = 0;
+    pub const NO_MATCH_SLOT: u32 = 1;
+    pub const REMOVE_SLOT: u32 = 2;
+
+    #[repr(C)]
+    #[derive(Clone, Copy, Default)]
+    pub struct TestResult {
+        pub value: u32,
+        pub ran: u32,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
