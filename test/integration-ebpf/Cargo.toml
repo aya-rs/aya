@@ -53,6 +53,10 @@ name = "log"
 path = "src/log.rs"
 
 [[bin]]
+name = "lpm_trie"
+path = "src/lpm_trie.rs"
+
+[[bin]]
 name = "map_test"
 path = "src/map_test.rs"
 

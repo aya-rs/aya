@@ -46,6 +46,7 @@ bpf_file!(
     KPROBE => "kprobe",
     LINEAR_DATA_STRUCTURES => "linear_data_structures",
     LOG => "log",
+    LPM_TRIE => "lpm_trie",
     MAP_TEST => "map_test",
     MEMMOVE_TEST => "memmove_test",
     NAME_TEST => "name_test",
