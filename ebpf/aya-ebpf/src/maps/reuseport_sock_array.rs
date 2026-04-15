@@ -1,11 +1,8 @@
-use core::ptr;
-
 use aya_ebpf_cty::{c_long, c_void};
 
 use crate::{
-    EbpfContext as _,
     bindings::bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY,
-    helpers::bpf_sk_select_reuseport,
+    helpers::{ReusePortSockArrayMap, sk_select_reuseport},
     maps::{MapDef, PinningType},
     programs::SkReuseportContext,
 };
@@ -34,19 +31,17 @@ impl ReusePortSockArray {
     /// any flags for `bpf_sk_select_reuseport()`, so this wrapper always
     /// passes `0`.
     #[inline]
-    pub fn select_reuseport(&self, ctx: &SkReuseportContext, mut key: u32) -> Result<(), c_long> {
-        let ret = unsafe {
-            bpf_sk_select_reuseport(
-                ctx.as_ptr().cast(),
-                self.as_ptr(),
-                ptr::from_mut(&mut key).cast(),
-                0,
-            )
-        };
-        if ret == 0 { Ok(()) } else { Err(ret) }
+    pub fn select_reuseport(&self, ctx: &SkReuseportContext, key: u32) -> Result<(), c_long> {
+        sk_select_reuseport(ctx, self, key)
     }
 
     pub(crate) const fn as_ptr(&self) -> *mut c_void {
         self.def.as_ptr()
+    }
+}
+
+impl ReusePortSockArrayMap for ReusePortSockArray {
+    fn as_ptr(&self) -> *mut c_void {
+        Self::as_ptr(self)
     }
 }
