@@ -132,7 +132,7 @@ use crate::{
     programs::{
         links::{
             FdLink, FdLinkId, LinkError, LinkInfo, Links, ProgAttachLink, ProgAttachLinkId,
-            define_link_wrapper, id_as_key, impl_try_into_fdlink,
+            define_link_wrapper, id_as_key, impl_try_from_fdlink, impl_try_into_fdlink,
         },
         perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach, perf_attach_debugfs},
     },

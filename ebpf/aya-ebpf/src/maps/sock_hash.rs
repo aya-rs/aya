@@ -7,6 +7,7 @@ use core::{
 use crate::{
     EbpfContext as _,
     bindings::{bpf_map_type::BPF_MAP_TYPE_SOCKHASH, bpf_sock_ops},
+    cty::c_long,
     helpers::{
         bpf_msg_redirect_hash, bpf_sk_assign, bpf_sk_redirect_hash, bpf_sk_release,
         bpf_sock_hash_update,
@@ -30,7 +31,7 @@ impl<K> SockHash<K> {
         mut key: impl BorrowMut<K>,
         mut sk_ops: impl BorrowMut<bpf_sock_ops>,
         flags: u64,
-    ) -> Result<(), i64> {
+    ) -> Result<(), i32> {
         let ret = unsafe {
             bpf_sock_hash_update(
                 ptr::from_mut(sk_ops.borrow_mut()),
@@ -39,7 +40,7 @@ impl<K> SockHash<K> {
                 flags,
             )
         };
-        (ret == 0).then_some(()).ok_or(ret)
+        (ret == 0).then_some(()).ok_or(ret as i32)
     }
 
     pub fn redirect_msg(
@@ -47,7 +48,7 @@ impl<K> SockHash<K> {
         ctx: impl Borrow<SkMsgContext>,
         mut key: impl BorrowMut<K>,
         flags: u64,
-    ) -> i64 {
+    ) -> c_long {
         unsafe {
             bpf_msg_redirect_hash(
                 ctx.borrow().msg,
@@ -63,7 +64,7 @@ impl<K> SockHash<K> {
         ctx: impl Borrow<SkBuffContext>,
         mut key: impl BorrowMut<K>,
         flags: u64,
-    ) -> i64 {
+    ) -> c_long {
         unsafe {
             bpf_sk_redirect_hash(
                 ctx.borrow().skb.skb,
@@ -82,7 +83,7 @@ impl<K> SockHash<K> {
     ) -> Result<(), u32> {
         let sk = lookup(self.def.as_ptr(), key.borrow()).ok_or(1u32)?;
         let ret = unsafe { bpf_sk_assign(ctx.borrow().as_ptr().cast(), sk.as_ptr(), flags) };
-        let _: i64 = unsafe { bpf_sk_release(sk.as_ptr()) };
+        let _: c_long = unsafe { bpf_sk_release(sk.as_ptr()) };
         match ret {
             0 => Ok(()),
             _ret => Err(1),

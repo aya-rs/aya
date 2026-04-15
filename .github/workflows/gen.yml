@@ -31,7 +31,7 @@ jobs:
         run: |
           set -euxo pipefail
           sudo apt -y update
-          sudo apt -y install libelf-dev libc6-dev libc6-dev-{arm64,armel,loong64,riscv64,ppc64el,s390x,mips}-cross
+          sudo apt -y install libelf-dev libc6-dev libc6-dev-{arm64,armel,loong64,riscv64,ppc64el,s390x,mips,mips64}-cross
 
       - run: cargo xtask codegen
       # aya-ebpf-bindings aren't emitted directly from bindgen and so aren't

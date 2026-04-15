@@ -27,14 +27,14 @@ impl SkMsgContext {
         unsafe { (*self.msg).__bindgen_anon_2.data_end as usize }
     }
 
-    pub fn push_data(&self, start: u32, len: u32, flags: u64) -> Result<(), i64> {
+    pub fn push_data(&self, start: u32, len: u32, flags: u64) -> Result<(), i32> {
         let ret = unsafe { bpf_msg_push_data(self.msg, start, len, flags) };
-        if ret == 0 { Ok(()) } else { Err(ret) }
+        if ret == 0 { Ok(()) } else { Err(ret as i32) }
     }
 
-    pub fn pop_data(&self, start: u32, len: u32, flags: u64) -> Result<(), i64> {
+    pub fn pop_data(&self, start: u32, len: u32, flags: u64) -> Result<(), i32> {
         let ret = unsafe { bpf_msg_pop_data(self.msg, start, len, flags) };
-        if ret == 0 { Ok(()) } else { Err(ret) }
+        if ret == 0 { Ok(()) } else { Err(ret as i32) }
     }
 }
 

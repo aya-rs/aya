@@ -9,6 +9,7 @@ use clap::Parser;
 
 const SUPPORTED_ARCHS: &[Architecture] = &[
     Architecture::Mips,
+    Architecture::Mips64,
     Architecture::X86_64,
     Architecture::ARMv7,
     Architecture::AArch64,
@@ -27,6 +28,7 @@ pub(crate) enum Architecture {
     PowerPC64,
     S390X,
     Mips,
+    Mips64,
     LoongArch64,
 }
 
@@ -41,6 +43,7 @@ impl Architecture {
             Self::ARMv7 => "armv7-unknown-linux-gnu",
             Self::LoongArch64 => "loongarch64-unknown-linux-gnu",
             Self::Mips => "mips-unknown-linux-gnu",
+            Self::Mips64 => "mips64-unknown-linux-gnuabi64",
             Self::PowerPC64 => "powerpc64le-unknown-linux-gnu",
             Self::RISCV64 => "riscv64-unknown-linux-gnu",
             Self::S390X => "s390x-unknown-linux-gnu",
@@ -58,6 +61,7 @@ impl std::str::FromStr for Architecture {
             "armv7" => Self::ARMv7,
             "loongarch64" => Self::LoongArch64,
             "mips" => Self::Mips,
+            "mips64" => Self::Mips64,
             "powerpc64" => Self::PowerPC64,
             "riscv64" => Self::RISCV64,
             "s390x" => Self::S390X,
@@ -74,6 +78,7 @@ impl std::fmt::Display for Architecture {
             Self::ARMv7 => "armv7",
             Self::LoongArch64 => "loongarch64",
             Self::Mips => "mips",
+            Self::Mips64 => "mips64",
             Self::PowerPC64 => "powerpc64",
             Self::RISCV64 => "riscv64",
             Self::S390X => "s390x",
@@ -101,6 +106,9 @@ pub(crate) struct SysrootOptions {
 
     #[arg(long, default_value = "/usr/mips-linux-gnu/include", action)]
     mips_sysroot: PathBuf,
+
+    #[arg(long, default_value = "/usr/mips64-linux-gnuabi64/include", action)]
+    mips64_sysroot: PathBuf,
 
     #[arg(long, default_value = "/usr/powerpc64le-linux-gnu/include", action)]
     powerpc64_sysroot: PathBuf,

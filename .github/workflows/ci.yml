@@ -194,7 +194,7 @@ jobs:
           # because the time spent doing useful work per target is about equal
           # to the overhead of setting up the job - so this saves a bunch of
           # machine time.
-          for arch in aarch64 arm loongarch64 mips powerpc64 riscv64 s390x x86_64; do
+          for arch in aarch64 arm loongarch64 mips mips64 powerpc64 riscv64 s390x x86_64; do
             echo "::group::arch=$arch"
             export RUSTFLAGS="--cfg bpf_target_arch=\"$arch\""
             for target in bpfeb-unknown-none bpfel-unknown-none; do

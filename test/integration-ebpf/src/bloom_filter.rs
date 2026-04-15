@@ -7,7 +7,6 @@ extern crate ebpf_panic;
 
 use aya_ebpf::{
     btf_maps::{Array as BtfArray, BloomFilter as BtfBloomFilter},
-    cty::c_long,
     macros::{btf_map, map, uprobe},
     maps::{Array as LegacyArray, BloomFilter as LegacyBloomFilter},
     programs::ProbeContext,
@@ -29,10 +28,10 @@ static RESULT_LEGACY: LegacyArray<i32> = LegacyArray::<i32>::with_max_entries(RE
 static FILTER_LEGACY: LegacyBloomFilter<u32> = LegacyBloomFilter::with_max_entries(64, 0);
 
 #[inline(always)]
-const fn map_result(result: Result<(), c_long>) -> i32 {
+const fn map_result(result: Result<(), i32>) -> i32 {
     match result {
         Ok(()) => 0,
-        Err(err) => err as i32,
+        Err(err) => err,
     }
 }
 
