@@ -84,7 +84,10 @@ use std::{
 use aya_obj::{
     VerifierLog,
     btf::BtfError,
-    generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
+    generated::{
+        BPF_F_TEST_RUN_ON_CPU, BPF_F_TEST_XDP_LIVE_FRAMES, bpf_attach_type, bpf_prog_info,
+        bpf_prog_type,
+    },
     programs::XdpAttachType,
 };
 use info::impl_info;
@@ -606,6 +609,22 @@ impl<T: Link> ProgramData<T> {
     }
 }
 
+fn test_run<T: Link>(
+    data: &ProgramData<T>,
+    opts: TestRunOptions<'_>,
+) -> Result<TestRunResult, ProgramError> {
+    let fd = data.fd()?.as_fd();
+    crate::sys::bpf_prog_test_run(fd, opts).map_err(Into::into)
+}
+
+fn test_run_raw_tp<T: Link>(
+    data: &ProgramData<T>,
+    opts: RawTracePointRunOptions,
+) -> Result<RawTracePointTestRunResult, ProgramError> {
+    let fd = data.fd()?.as_fd();
+    crate::sys::bpf_prog_test_run_raw_tp(fd, opts).map_err(Into::into)
+}
+
 fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError> {
     data.links.remove_all()?;
     data.fd
@@ -879,6 +898,255 @@ impl_fd!(
     CgroupDevice,
     Iter,
 );
+
+/// Kernel-side execution attributes for [`TestRunOptions`].
+///
+/// Controls *how* the kernel runs the test (CPU pinning, XDP batch size, and
+/// the associated flag bits), as opposed to *what* data is passed.
+#[derive(Debug)]
+pub struct TestRunAttrs {
+    pub(crate) cpu: u32,
+    pub(crate) batch_size: u32,
+    pub(crate) flags: u32,
+}
+
+impl TestRunAttrs {
+    /// Creates a new `TestRunAttrs` with default values.
+    pub const fn new() -> Self {
+        Self {
+            cpu: 0,
+            batch_size: 0,
+            flags: 0,
+        }
+    }
+
+    /// Sets the CPU to run the test on.
+    ///
+    /// This automatically sets the `BPF_F_TEST_RUN_ON_CPU` flag.
+    /// This option only works with `RawTracePoint` programs.
+    #[must_use]
+    pub const fn run_on_cpu(mut self, cpu: u32) -> Self {
+        self.cpu = cpu;
+        self.flags |= BPF_F_TEST_RUN_ON_CPU;
+        self
+    }
+
+    /// Sets the batch size for XDP live frames testing.
+    ///
+    /// This automatically sets the `BPF_F_TEST_XDP_LIVE_FRAMES` flag.
+    /// This option only works with `XDP` programs.
+    #[must_use]
+    pub const fn xdp_live_frames(mut self, batch_size: u32) -> Self {
+        self.batch_size = batch_size;
+        self.flags |= BPF_F_TEST_XDP_LIVE_FRAMES;
+        self
+    }
+}
+
+impl Default for TestRunAttrs {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Options for running a BPF program test.
+///
+/// see [kernel doc](https://docs.kernel.org/bpf/bpf_prog_run.html)
+/// and [ebpf.io](https://docs.ebpf.io/linux/syscall/BPF_PROG_TEST_RUN/) for detailed usages.
+#[derive(Debug)]
+pub struct TestRunOptions<'a> {
+    /// Input packet data to pass to the program.
+    pub data_in: Option<&'a [u8]>,
+    /// Output buffer for packet data modified by the program.
+    pub data_out: Option<&'a mut [u8]>,
+    /// Input context to pass to the program.
+    pub ctx_in: Option<&'a [u8]>,
+    /// Output buffer for context written back by the program.
+    pub ctx_out: Option<&'a mut [u8]>,
+    /// Number of times to repeat the test. Defaults to `1`.
+    pub repeat: u32,
+    /// Kernel execution attributes (CPU pinning, XDP batch size).
+    pub attrs: TestRunAttrs,
+}
+
+impl Default for TestRunOptions<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TestRunOptions<'_> {
+    /// Creates a new `TestRunOptions` with default values.
+    pub const fn new() -> Self {
+        Self {
+            data_in: None,
+            data_out: None,
+            ctx_in: None,
+            ctx_out: None,
+            repeat: 1,
+            attrs: TestRunAttrs::new(),
+        }
+    }
+}
+
+/// Options for running a [`RawTracePoint`] program test via `BPF_PROG_TEST_RUN`.
+///
+/// The kernel's `bpf_prog_test_run_raw_tp` handler (v5.10, commit `b84e6faeed1`)
+/// is far more restrictive than the skb/XDP path:
+///
+/// - `data_in`, `data_out`, `ctx_out`, `repeat`, `batch_size` must all be zero/NULL;
+///   passing any of them returns `EINVAL`.
+/// - `ctx_in` is the only data path: a packed array of `u64` values that the
+///   kernel presents to the program as raw tracepoint arguments (registers r1–r5).
+/// - CPU pinning via `BPF_F_TEST_RUN_ON_CPU` is supported and is the primary
+///   reason to use `BPF_PROG_TEST_RUN` with raw tracepoints.
+///
+/// This struct deliberately omits the forbidden fields so misuse is a
+/// compile-time error rather than a runtime `EINVAL`.
+#[derive(Debug, Default)]
+pub struct RawTracePointRunOptions {
+    /// Fake tracepoint arguments, up to 12 `u64` values.
+    ///
+    /// Each element corresponds to one tracepoint argument in order. The kernel
+    /// copies the entire array into `ctx_in` before calling the program, which
+    /// reads them via `ctx.arg(n)`. Unused slots default to zero.
+    ///
+    /// The array size of 12 matches the kernel's maximum: the longest tracepoint
+    /// in the kernel takes 12 arguments. See
+    /// [`net/bpf/test_run.c`](https://github.com/torvalds/linux/blob/d91a46d680/net/bpf/test_run.c#L762).
+    pub args: [u64; 12],
+    /// If `Some(cpu)`, pin execution to that CPU via `BPF_F_TEST_RUN_ON_CPU`.
+    ///
+    /// The only flag the kernel accepts for raw tracepoints; `batch_size` and
+    /// all other [`TestRunAttrs`] knobs return `EINVAL`.
+    pub cpu: Option<u32>,
+}
+
+impl RawTracePointRunOptions {
+    /// Creates a new `RawTracePointRunOptions` with all arguments zeroed.
+    pub const fn new() -> Self {
+        Self {
+            args: [0; 12],
+            cpu: None,
+        }
+    }
+
+    /// Sets the tracepoint argument at `idx` to `value`.
+    #[must_use]
+    pub fn arg(self, idx: usize, value: u64) -> Self {
+        assert!(idx < 12);
+        let Self { mut args, cpu } = self;
+        args[idx] = value;
+        Self { args, cpu }
+    }
+}
+
+/// Result of running a BPF program test.
+#[derive(Debug)]
+pub struct TestRunResult {
+    /// Return value from the program.
+    pub return_value: u32,
+    /// Duration of the test run.
+    pub duration: std::time::Duration,
+    /// Size of data written to `data_out`.
+    pub data_size_out: u32,
+    /// Size of context written to `ctx_out`.
+    pub ctx_size_out: u32,
+}
+
+/// Result of running a BPF program test for [`RawTracePoint`]
+/// program type
+///
+/// the duration field omitted since it's always [`std::time::Duration::ZERO`]
+#[derive(Debug)]
+pub struct RawTracePointTestRunResult {
+    /// Return value from the program.
+    pub return_value: u32,
+    /// Size of data written to `data_out`.
+    pub data_size_out: u32,
+    /// Size of context written to `ctx_out`.
+    pub ctx_size_out: u32,
+}
+
+/// Trait for BPF programs that support test execution via `BPF_PROG_TEST_RUN`.
+pub trait TestRun {
+    /// The options type used to configure a single test invocation.
+    ///
+    /// Different program types require different options: skb/XDP programs use
+    /// [`TestRunOptions`], while [`RawTracePoint`] programs use
+    /// [`RawTracePointRunOptions`].
+    type Opts<'a>;
+
+    /// The Result type for a single test invocation.
+    type Result;
+
+    /// Runs the program with test input data and returns the result.
+    ///
+    /// This function uses the kernel's `BPF_PROG_TEST_RUN` command to execute
+    /// the program in a test environment with provided input data.
+    ///
+    /// # Arguments
+    ///
+    /// * `opts` - Test run options including input/output data and context
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`crate::TestRunResult`] containing:
+    /// - `return_value`: The value returned by the program
+    /// - `duration`: Execution time in nanoseconds
+    /// - `data_size_out`: Size of data written to output buffer
+    /// - `ctx_size_out`: Size of context written to output buffer
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError::SyscallError`] if the underlying syscall fails.
+    /// Common errors include `-ENOSPC` if output buffers are too small.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let input_data = [0u8; 64];
+    /// let mut output_data = [0u8; 64];
+    ///
+    /// let opts = TestRunOptions {
+    ///     data_in: Some(&input_data),
+    ///     data_out: Some(&mut output_data),
+    ///     repeat: 1,
+    ///     ..Default::default()
+    /// };
+    ///
+    /// let result = program.test_run(opts)?;
+    /// println!("Program returned: {}, took {} ns", result.return_value, result.duration.as_nanos());
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    fn test_run(&self, opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError>;
+}
+
+macro_rules! impl_program_test_run {
+    ($($struct_name:ident), + $(,)?) => {
+        $(
+            impl TestRun for $struct_name {
+                type Opts<'a> = TestRunOptions<'a>;
+                type Result = TestRunResult;
+
+                fn test_run(&self, opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError> {
+                    test_run(&self.data, opts)
+                }
+            }
+        )+
+    }
+}
+
+impl_program_test_run!(SocketFilter, SchedClassifier, Xdp, CgroupSkb, FlowDissector);
+
+impl TestRun for RawTracePoint {
+    type Opts<'a> = RawTracePointRunOptions;
+    type Result = RawTracePointTestRunResult;
+
+    fn test_run(&self, opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError> {
+        test_run_raw_tp(&self.data, opts)
+    }
+}
 
 /// Trait implemented by the [`Program`] types which support the kernel's
 /// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f235dc3f69d13375b32f4209228e1cb96).
