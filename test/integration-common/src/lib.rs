@@ -80,6 +80,22 @@ pub mod linear_data_structures {
     pub const POP_INDEX: u32 = 1;
 }
 
+pub mod btf_lpm_trie {
+    pub const LPM_MATCH_SLOT: u32 = 0;
+    pub const NO_MATCH_SLOT: u32 = 1;
+    pub const REMOVE_SLOT: u32 = 2;
+
+    #[repr(C)]
+    #[derive(Clone, Copy, Default)]
+    pub struct TestResult {
+        pub value: u32,
+        pub ran: u32,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
+
 pub mod printk {
     pub const C_MARKER: &core::ffi::CStr = c"PRINTK_TEST";
     pub const MARKER: &str = {

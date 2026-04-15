@@ -37,6 +37,10 @@ name = "bpf_probe_read"
 path = "src/bpf_probe_read.rs"
 
 [[bin]]
+name = "btf_lpm_trie"
+path = "src/btf_lpm_trie.rs"
+
+[[bin]]
 name = "btf_maps_plain"
 path = "src/btf_maps_plain.rs"
 
