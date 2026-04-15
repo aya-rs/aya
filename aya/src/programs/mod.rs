@@ -1014,6 +1014,8 @@ pub struct RawTracePointRunOptions<'a> {
     ///
     /// You only need to supply as many elements as the highest argument index
     /// your program reads. If not, the verifier will reject it.
+    /// It must not exceed 12, since the longest tracepoint has 12 args.
+    /// See [kernel code](https://github.com/torvalds/linux/blob/d91a46d680/net/bpf/test_run.c#L762)
     pub args: Option<&'a [u64]>,
     /// If `Some(cpu)`, pin execution to that CPU via `BPF_F_TEST_RUN_ON_CPU`.
     ///
