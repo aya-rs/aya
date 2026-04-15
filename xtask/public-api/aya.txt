@@ -1778,7 +1778,8 @@ impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
 pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
+pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_skb::CgroupSkb
@@ -2453,7 +2454,8 @@ impl aya::programs::flow_dissector::FlowDissector
 pub fn aya::programs::flow_dissector::FlowDissector::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::flow_dissector::FlowDissector
 pub type aya::programs::flow_dissector::FlowDissector::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::flow_dissector::FlowDissector::Result = aya::programs::TestRunResult
+pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::flow_dissector::FlowDissector
 pub fn aya::programs::flow_dissector::FlowDissector::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::flow_dissector::FlowDissector
@@ -3727,8 +3729,9 @@ pub fn aya::programs::raw_trace_point::RawTracePoint::unpin(&mut self) -> core::
 impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::raw_trace_point::RawTracePoint
-pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions<'a>
-pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions
+pub type aya::programs::raw_trace_point::RawTracePoint::Result = aya::programs::RawTracePointTestRunResult
+pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::raw_trace_point::RawTracePoint
@@ -4165,7 +4168,8 @@ impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::socket_filter::SocketFilter
 pub type aya::programs::socket_filter::SocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::socket_filter::SocketFilter::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::socket_filter::SocketFilter::Result = aya::programs::TestRunResult
+pub fn aya::programs::socket_filter::SocketFilter::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::socket_filter::SocketFilter
@@ -4330,7 +4334,8 @@ impl aya::programs::MultiProgram for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::tc::SchedClassifier
 pub type aya::programs::tc::SchedClassifier::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::tc::SchedClassifier::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::tc::SchedClassifier::Result = aya::programs::TestRunResult
+pub fn aya::programs::tc::SchedClassifier::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::tc::SchedClassifier
@@ -4799,7 +4804,8 @@ impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::xdp::Xdp
 pub type aya::programs::xdp::Xdp::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::xdp::Xdp::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::xdp::Xdp::Result = aya::programs::TestRunResult
+pub fn aya::programs::xdp::Xdp::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::xdp::Xdp
@@ -5595,7 +5601,8 @@ impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
 pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
+pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_skb::CgroupSkb
@@ -5894,7 +5901,8 @@ impl aya::programs::flow_dissector::FlowDissector
 pub fn aya::programs::flow_dissector::FlowDissector::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::flow_dissector::FlowDissector
 pub type aya::programs::flow_dissector::FlowDissector::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::flow_dissector::FlowDissector::Result = aya::programs::TestRunResult
+pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::flow_dissector::FlowDissector
 pub fn aya::programs::flow_dissector::FlowDissector::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::flow_dissector::FlowDissector
@@ -6232,8 +6240,9 @@ pub fn aya::programs::raw_trace_point::RawTracePoint::unpin(&mut self) -> core::
 impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::raw_trace_point::RawTracePoint
-pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions<'a>
-pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions
+pub type aya::programs::raw_trace_point::RawTracePoint::Result = aya::programs::RawTracePointTestRunResult
+pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::raw_trace_point::RawTracePoint
@@ -6251,20 +6260,36 @@ impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePoint
 impl core::marker::UnsafeUnpin for aya::programs::raw_trace_point::RawTracePoint
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePoint
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePoint
-pub struct aya::programs::RawTracePointRunOptions<'a>
+pub struct aya::programs::RawTracePointRunOptions
+pub aya::programs::RawTracePointRunOptions::args: [u64; 12]
 pub aya::programs::RawTracePointRunOptions::cpu: core::option::Option<u32>
-pub aya::programs::RawTracePointRunOptions::ctx_in: core::option::Option<&'a [u8]>
-impl<'a> core::default::Default for aya::programs::RawTracePointRunOptions<'a>
-pub fn aya::programs::RawTracePointRunOptions<'a>::default() -> aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::fmt::Debug for aya::programs::RawTracePointRunOptions<'a>
-pub fn aya::programs::RawTracePointRunOptions<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<'a> core::marker::Freeze for aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::marker::Send for aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::marker::Sync for aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::marker::Unpin for aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::marker::UnsafeUnpin for aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointRunOptions<'a>
+impl aya::programs::RawTracePointRunOptions
+pub fn aya::programs::RawTracePointRunOptions::arg(self, idx: usize, value: u64) -> Self
+pub const fn aya::programs::RawTracePointRunOptions::new() -> Self
+impl core::default::Default for aya::programs::RawTracePointRunOptions
+pub fn aya::programs::RawTracePointRunOptions::default() -> aya::programs::RawTracePointRunOptions
+impl core::fmt::Debug for aya::programs::RawTracePointRunOptions
+pub fn aya::programs::RawTracePointRunOptions::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::RawTracePointRunOptions
+impl core::marker::Send for aya::programs::RawTracePointRunOptions
+impl core::marker::Sync for aya::programs::RawTracePointRunOptions
+impl core::marker::Unpin for aya::programs::RawTracePointRunOptions
+impl core::marker::UnsafeUnpin for aya::programs::RawTracePointRunOptions
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePointRunOptions
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointRunOptions
+pub struct aya::programs::RawTracePointTestRunResult
+pub aya::programs::RawTracePointTestRunResult::ctx_size_out: u32
+pub aya::programs::RawTracePointTestRunResult::data_size_out: u32
+pub aya::programs::RawTracePointTestRunResult::return_value: u32
+impl core::fmt::Debug for aya::programs::RawTracePointTestRunResult
+pub fn aya::programs::RawTracePointTestRunResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::RawTracePointTestRunResult
+impl core::marker::Send for aya::programs::RawTracePointTestRunResult
+impl core::marker::Sync for aya::programs::RawTracePointTestRunResult
+impl core::marker::Unpin for aya::programs::RawTracePointTestRunResult
+impl core::marker::UnsafeUnpin for aya::programs::RawTracePointTestRunResult
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePointTestRunResult
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointTestRunResult
 pub struct aya::programs::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub const aya::programs::tc::SchedClassifier::PROGRAM_TYPE: aya::programs::ProgramType
@@ -6292,7 +6317,8 @@ impl aya::programs::MultiProgram for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::tc::SchedClassifier
 pub type aya::programs::tc::SchedClassifier::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::tc::SchedClassifier::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::tc::SchedClassifier::Result = aya::programs::TestRunResult
+pub fn aya::programs::tc::SchedClassifier::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::tc::SchedClassifier
@@ -6481,7 +6507,8 @@ impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::socket_filter::SocketFilter
 pub type aya::programs::socket_filter::SocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::socket_filter::SocketFilter::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::socket_filter::SocketFilter::Result = aya::programs::TestRunResult
+pub fn aya::programs::socket_filter::SocketFilter::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::socket_filter::SocketFilter
@@ -6649,7 +6676,8 @@ impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::xdp::Xdp
 pub type aya::programs::xdp::Xdp::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::xdp::Xdp::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::xdp::Xdp::Result = aya::programs::TestRunResult
+pub fn aya::programs::xdp::Xdp::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::xdp::Xdp
@@ -6889,25 +6917,32 @@ impl aya::programs::MultiProgram for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
 pub trait aya::programs::TestRun
 pub type aya::programs::TestRun::Opts<'a>
-pub fn aya::programs::TestRun::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::TestRun::Result
+pub fn aya::programs::TestRun::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
 pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
+pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::flow_dissector::FlowDissector
 pub type aya::programs::flow_dissector::FlowDissector::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::flow_dissector::FlowDissector::Result = aya::programs::TestRunResult
+pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::raw_trace_point::RawTracePoint
-pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions<'a>
-pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions
+pub type aya::programs::raw_trace_point::RawTracePoint::Result = aya::programs::RawTracePointTestRunResult
+pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::socket_filter::SocketFilter
 pub type aya::programs::socket_filter::SocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::socket_filter::SocketFilter::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::socket_filter::SocketFilter::Result = aya::programs::TestRunResult
+pub fn aya::programs::socket_filter::SocketFilter::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::tc::SchedClassifier
 pub type aya::programs::tc::SchedClassifier::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::tc::SchedClassifier::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::tc::SchedClassifier::Result = aya::programs::TestRunResult
+pub fn aya::programs::tc::SchedClassifier::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::xdp::Xdp
 pub type aya::programs::xdp::Xdp::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::xdp::Xdp::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::xdp::Xdp::Result = aya::programs::TestRunResult
+pub fn aya::programs::xdp::Xdp::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 pub fn aya::programs::loaded_links() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::links::LinkInfo, aya::programs::links::LinkError>>
 pub fn aya::programs::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>
 pub mod aya::sys
@@ -7084,20 +7119,36 @@ impl<'a> core::marker::Unpin for aya::GlobalData<'a>
 impl<'a> core::marker::UnsafeUnpin for aya::GlobalData<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::GlobalData<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya::GlobalData<'a>
-pub struct aya::RawTracePointRunOptions<'a>
+pub struct aya::RawTracePointRunOptions
+pub aya::RawTracePointRunOptions::args: [u64; 12]
 pub aya::RawTracePointRunOptions::cpu: core::option::Option<u32>
-pub aya::RawTracePointRunOptions::ctx_in: core::option::Option<&'a [u8]>
-impl<'a> core::default::Default for aya::programs::RawTracePointRunOptions<'a>
-pub fn aya::programs::RawTracePointRunOptions<'a>::default() -> aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::fmt::Debug for aya::programs::RawTracePointRunOptions<'a>
-pub fn aya::programs::RawTracePointRunOptions<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<'a> core::marker::Freeze for aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::marker::Send for aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::marker::Sync for aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::marker::Unpin for aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::marker::UnsafeUnpin for aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePointRunOptions<'a>
-impl<'a> core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointRunOptions<'a>
+impl aya::programs::RawTracePointRunOptions
+pub fn aya::programs::RawTracePointRunOptions::arg(self, idx: usize, value: u64) -> Self
+pub const fn aya::programs::RawTracePointRunOptions::new() -> Self
+impl core::default::Default for aya::programs::RawTracePointRunOptions
+pub fn aya::programs::RawTracePointRunOptions::default() -> aya::programs::RawTracePointRunOptions
+impl core::fmt::Debug for aya::programs::RawTracePointRunOptions
+pub fn aya::programs::RawTracePointRunOptions::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::RawTracePointRunOptions
+impl core::marker::Send for aya::programs::RawTracePointRunOptions
+impl core::marker::Sync for aya::programs::RawTracePointRunOptions
+impl core::marker::Unpin for aya::programs::RawTracePointRunOptions
+impl core::marker::UnsafeUnpin for aya::programs::RawTracePointRunOptions
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePointRunOptions
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointRunOptions
+pub struct aya::RawTracePointTestRunResult
+pub aya::RawTracePointTestRunResult::ctx_size_out: u32
+pub aya::RawTracePointTestRunResult::data_size_out: u32
+pub aya::RawTracePointTestRunResult::return_value: u32
+impl core::fmt::Debug for aya::programs::RawTracePointTestRunResult
+pub fn aya::programs::RawTracePointTestRunResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::RawTracePointTestRunResult
+impl core::marker::Send for aya::programs::RawTracePointTestRunResult
+impl core::marker::Sync for aya::programs::RawTracePointTestRunResult
+impl core::marker::Unpin for aya::programs::RawTracePointTestRunResult
+impl core::marker::UnsafeUnpin for aya::programs::RawTracePointTestRunResult
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePointTestRunResult
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointTestRunResult
 pub struct aya::TestRunAttrs
 impl aya::programs::TestRunAttrs
 pub const fn aya::programs::TestRunAttrs::new() -> Self
@@ -7257,25 +7308,32 @@ impl<K: aya::Pod> aya::Pod for aya::maps::lpm_trie::Key<K>
 impl<T: aya::Pod, const N: usize> aya::Pod for [T; N]
 pub trait aya::TestRun
 pub type aya::TestRun::Opts<'a>
-pub fn aya::TestRun::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::TestRun::Result
+pub fn aya::TestRun::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
 pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
+pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::flow_dissector::FlowDissector
 pub type aya::programs::flow_dissector::FlowDissector::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::flow_dissector::FlowDissector::Result = aya::programs::TestRunResult
+pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::raw_trace_point::RawTracePoint
-pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions<'a>
-pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions
+pub type aya::programs::raw_trace_point::RawTracePoint::Result = aya::programs::RawTracePointTestRunResult
+pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::socket_filter::SocketFilter
 pub type aya::programs::socket_filter::SocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::socket_filter::SocketFilter::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::socket_filter::SocketFilter::Result = aya::programs::TestRunResult
+pub fn aya::programs::socket_filter::SocketFilter::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::tc::SchedClassifier
 pub type aya::programs::tc::SchedClassifier::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::tc::SchedClassifier::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::tc::SchedClassifier::Result = aya::programs::TestRunResult
+pub fn aya::programs::tc::SchedClassifier::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::xdp::Xdp
 pub type aya::programs::xdp::Xdp::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub fn aya::programs::xdp::Xdp::test_run(&self, opts: Self::Opts) -> core::result::Result<aya::programs::TestRunResult, aya::programs::ProgramError>
+pub type aya::programs::xdp::Xdp::Result = aya::programs::TestRunResult
+pub fn aya::programs::xdp::Xdp::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 pub fn aya::features() -> &'static aya_obj::obj::Features
 pub type aya::Bpf = aya::Ebpf
 pub type aya::BpfError = aya::EbpfError

@@ -33,8 +33,8 @@ use crate::{
     Btf, Pod, TestRunAttrs, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
     programs::{
-        LsmAttachType, ProgramType, RawTracePointRunOptions, TestRunOptions, TestRunResult,
-        links::LinkRef,
+        LsmAttachType, ProgramType, RawTracePointRunOptions, RawTracePointTestRunResult,
+        TestRunOptions, TestRunResult, links::LinkRef,
     },
     sys::{Syscall, SyscallError, syscall},
     util::KernelVersion,
@@ -675,8 +675,8 @@ pub(crate) fn bpf_prog_test_run(
 /// `cpu`/`BPF_F_TEST_RUN_ON_CPU`.
 pub(crate) fn bpf_prog_test_run_raw_tp(
     prog_fd: BorrowedFd<'_>,
-    opts: RawTracePointRunOptions<'_>,
-) -> Result<TestRunResult, SyscallError> {
+    opts: RawTracePointRunOptions,
+) -> Result<RawTracePointTestRunResult, SyscallError> {
     let RawTracePointRunOptions { args, cpu } = opts;
 
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
@@ -684,10 +684,8 @@ pub(crate) fn bpf_prog_test_run_raw_tp(
     let test = unsafe { &mut attr.test };
     test.prog_fd = prog_fd.as_raw_fd() as u32;
 
-    if let Some(args) = args {
-        test.ctx_in = args.as_ptr() as u64;
-        test.ctx_size_in = size_of_val(args) as u32;
-    }
+    test.ctx_in = args.as_ptr() as u64;
+    test.ctx_size_in = size_of_val(&args) as u32;
 
     if let Some(cpu) = cpu {
         test.cpu = cpu;
@@ -700,11 +698,8 @@ pub(crate) fn bpf_prog_test_run_raw_tp(
     })?;
 
     let test = unsafe { &attr.test };
-    Ok(TestRunResult {
+    Ok(RawTracePointTestRunResult {
         return_value: test.retval,
-        // bpf_prog_test_run_raw_tp does not fill in duration; it is always 0.
-        // see https://github.com/torvalds/linux/blob/d91a46d6/net/bpf/test_run.c#L796
-        duration: std::time::Duration::ZERO,
         data_size_out: 0,
         ctx_size_out: 0,
     })

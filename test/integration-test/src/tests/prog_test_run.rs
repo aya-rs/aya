@@ -1,7 +1,9 @@
 use aya::{
     Ebpf, RawTracePointRunOptions, TestRunOptions, TestRunResult,
     maps::Array,
-    programs::{RawTracePoint, SchedClassifier, SocketFilter, TestRun as _, Xdp},
+    programs::{
+        RawTracePoint, RawTracePointTestRunResult, SchedClassifier, SocketFilter, TestRun as _, Xdp,
+    },
 };
 use integration_common::test_run::{IF_INDEX, XDP_MODIFY_LEN, XDP_MODIFY_VAL};
 
@@ -267,14 +269,10 @@ fn test_raw_tracepoint_test_run() {
     // one element.
     const SENTINEL: u64 = 0xdead_beef_cafe_babe;
 
-    let opts = RawTracePointRunOptions {
-        args: Some(&[SENTINEL]),
-        cpu: None,
-    };
+    let opts = RawTracePointRunOptions::default().arg(0, SENTINEL);
 
-    let TestRunResult {
+    let RawTracePointTestRunResult {
         return_value,
-        duration,
         data_size_out,
         ctx_size_out,
     } = prog.test_run(opts).unwrap();
@@ -282,9 +280,6 @@ fn test_raw_tracepoint_test_run() {
     let stored: u64 = last_arg.get(&0, 0).unwrap();
     assert_eq!(stored, SENTINEL);
     assert_eq!(return_value, 0);
-    // bpf_prog_test_run_raw_tp never fills in the duration field; it is
-    // always zero unlike skb/XDP handlers which do report elapsed time.
-    assert_eq!(duration, std::time::Duration::ZERO);
     assert_eq!(data_size_out, 0);
     assert_eq!(ctx_size_out, 0);
 }

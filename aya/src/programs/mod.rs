@@ -619,8 +619,8 @@ fn test_run<T: Link>(
 
 fn test_run_raw_tp<T: Link>(
     data: &ProgramData<T>,
-    opts: RawTracePointRunOptions<'_>,
-) -> Result<TestRunResult, ProgramError> {
+    opts: RawTracePointRunOptions,
+) -> Result<RawTracePointTestRunResult, ProgramError> {
     let fd = data.fd()?.as_fd();
     crate::sys::bpf_prog_test_run_raw_tp(fd, opts).map_err(Into::into)
 }
@@ -1003,41 +1003,41 @@ impl TestRunOptions<'_> {
 ///
 /// This struct deliberately omits the forbidden fields so misuse is a
 /// compile-time error rather than a runtime `EINVAL`.
-#[derive(Debug)]
-pub struct RawTracePointRunOptions<'a> {
-    /// Fake tracepoint arguments.
+#[derive(Debug, Default)]
+pub struct RawTracePointRunOptions {
+    /// Fake tracepoint arguments, up to 12 `u64` values.
     ///
-    /// Each element maps to one tracepoint argument (BPF registers r1–r5 in
-    /// order). The kernel copies them into the BPF register file before calling
-    /// the program, simulating a real tracepoint firing with the given argument
-    /// values. `None` means all arguments are zero.
+    /// Each element corresponds to one tracepoint argument in order. The kernel
+    /// copies the entire array into `ctx_in` before calling the program, which
+    /// reads them via `ctx.arg(n)`. Unused slots default to zero.
     ///
-    /// You only need to supply as many elements as the highest argument index
-    /// your program reads. If not, the verifier will reject it.
-    /// It must not exceed 12, since the longest tracepoint has 12 args.
-    /// See [kernel code](https://github.com/torvalds/linux/blob/d91a46d680/net/bpf/test_run.c#L762)
-    pub args: Option<&'a [u64]>,
+    /// The array size of 12 matches the kernel's maximum: the longest tracepoint
+    /// in the kernel takes 12 arguments. See
+    /// [`net/bpf/test_run.c`](https://github.com/torvalds/linux/blob/d91a46d680/net/bpf/test_run.c#L762).
+    pub args: [u64; 12],
     /// If `Some(cpu)`, pin execution to that CPU via `BPF_F_TEST_RUN_ON_CPU`.
     ///
-    /// This is the *only* [`TestRunAttrs`] knob the kernel accepts for raw
-    /// tracepoints. `batch_size` and all other flags return `EINVAL`, so
-    /// [`TestRunAttrs`] is not exposed here.
+    /// The only flag the kernel accepts for raw tracepoints; `batch_size` and
+    /// all other [`TestRunAttrs`] knobs return `EINVAL`.
     pub cpu: Option<u32>,
 }
 
-impl Default for RawTracePointRunOptions<'_> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl RawTracePointRunOptions<'_> {
-    /// Creates a new `RawTracePointRunOptions` with default values.
+impl RawTracePointRunOptions {
+    /// Creates a new `RawTracePointRunOptions` with all arguments zeroed.
     pub const fn new() -> Self {
         Self {
-            args: None,
+            args: [0; 12],
             cpu: None,
         }
+    }
+
+    /// Sets the tracepoint argument at `idx` to `value`.
+    #[must_use]
+    pub fn arg(self, idx: usize, value: u64) -> Self {
+        assert!(idx < 12);
+        let Self { mut args, cpu } = self;
+        args[idx] = value;
+        Self { args, cpu }
     }
 }
 
@@ -1047,10 +1047,21 @@ pub struct TestRunResult {
     /// Return value from the program.
     pub return_value: u32,
     /// Duration of the test run.
-    ///
-    /// Always [`std::time::Duration::ZERO`] for [`RawTracePoint`] programs
-    /// (the kernel will defaults this field to 0 for [`RawTracePoint`] programs)
     pub duration: std::time::Duration,
+    /// Size of data written to `data_out`.
+    pub data_size_out: u32,
+    /// Size of context written to `ctx_out`.
+    pub ctx_size_out: u32,
+}
+
+/// Result of running a BPF program test for [`RawTracePoint`]
+/// program type
+///
+/// the duration field omitted since it's always [`std::time::Duration::ZERO`]
+#[derive(Debug)]
+pub struct RawTracePointTestRunResult {
+    /// Return value from the program.
+    pub return_value: u32,
     /// Size of data written to `data_out`.
     pub data_size_out: u32,
     /// Size of context written to `ctx_out`.
@@ -1065,6 +1076,9 @@ pub trait TestRun {
     /// [`TestRunOptions`], while [`RawTracePoint`] programs use
     /// [`RawTracePointRunOptions`].
     type Opts<'a>;
+
+    /// The Result type for a single test invocation.
+    type Result;
 
     /// Runs the program with test input data and returns the result.
     ///
@@ -1105,43 +1119,34 @@ pub trait TestRun {
     /// println!("Program returned: {}, took {} ns", result.return_value, result.duration.as_nanos());
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
-    fn test_run(&self, opts: Self::Opts<'_>) -> Result<TestRunResult, ProgramError>;
+    fn test_run(&self, opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError>;
 }
 
 macro_rules! impl_program_test_run {
-    ($($struct_name:ident, $opt_ty:ident, $runner:path),+ $(,)?) => {
+    ($($struct_name:ident), + $(,)?) => {
         $(
             impl TestRun for $struct_name {
-                type Opts<'a> = $opt_ty<'a>;
+                type Opts<'a> = TestRunOptions<'a>;
+                type Result = TestRunResult;
 
-                fn test_run(&self, opts: Self::Opts<'_>) -> Result<TestRunResult, ProgramError> {
-                    $runner(&self.data, opts)
+                fn test_run(&self, opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError> {
+                    test_run(&self.data, opts)
                 }
             }
         )+
     }
 }
 
-impl_program_test_run!(
-    SocketFilter,
-    TestRunOptions,
-    test_run,
-    SchedClassifier,
-    TestRunOptions,
-    test_run,
-    Xdp,
-    TestRunOptions,
-    test_run,
-    CgroupSkb,
-    TestRunOptions,
-    test_run,
-    FlowDissector,
-    TestRunOptions,
-    test_run,
-    RawTracePoint,
-    RawTracePointRunOptions,
-    test_run_raw_tp,
-);
+impl_program_test_run!(SocketFilter, SchedClassifier, Xdp, CgroupSkb, FlowDissector);
+
+impl TestRun for RawTracePoint {
+    type Opts<'a> = RawTracePointRunOptions;
+    type Result = RawTracePointTestRunResult;
+
+    fn test_run(&self, opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError> {
+        test_run_raw_tp(&self.data, opts)
+    }
+}
 
 /// Trait implemented by the [`Program`] types which support the kernel's
 /// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f235dc3f69d13375b32f4209228e1cb96).
