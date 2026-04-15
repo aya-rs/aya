@@ -1005,12 +1005,16 @@ impl TestRunOptions<'_> {
 /// compile-time error rather than a runtime `EINVAL`.
 #[derive(Debug)]
 pub struct RawTracePointRunOptions<'a> {
-    /// Fake tracepoint arguments as a packed `[u64]` byte slice.
+    /// Fake tracepoint arguments.
     ///
-    /// The kernel copies these bytes into the BPF register file (r1–r5) before
-    /// calling the program, simulating a real tracepoint firing with the given
-    /// argument values. `None` means all arguments are zero.
-    pub ctx_in: Option<&'a [u8]>,
+    /// Each element maps to one tracepoint argument (BPF registers r1–r5 in
+    /// order). The kernel copies them into the BPF register file before calling
+    /// the program, simulating a real tracepoint firing with the given argument
+    /// values. `None` means all arguments are zero.
+    ///
+    /// You only need to supply as many elements as the highest argument index
+    /// your program reads. If not, the verifier will reject it.
+    pub args: Option<&'a [u64]>,
     /// If `Some(cpu)`, pin execution to that CPU via `BPF_F_TEST_RUN_ON_CPU`.
     ///
     /// This is the *only* [`TestRunAttrs`] knob the kernel accepts for raw
@@ -1029,7 +1033,7 @@ impl RawTracePointRunOptions<'_> {
     /// Creates a new `RawTracePointRunOptions` with default values.
     pub const fn new() -> Self {
         Self {
-            ctx_in: None,
+            args: None,
             cpu: None,
         }
     }
@@ -1040,7 +1044,10 @@ impl RawTracePointRunOptions<'_> {
 pub struct TestRunResult {
     /// Return value from the program.
     pub return_value: u32,
-    /// Duration of the test run in nanoseconds.
+    /// Duration of the test run.
+    ///
+    /// Always [`std::time::Duration::ZERO`] for [`RawTracePoint`] programs
+    /// (the kernel will defaults this field to 0 for [`RawTracePoint`] programs)
     pub duration: std::time::Duration,
     /// Size of data written to `data_out`.
     pub data_size_out: u32,

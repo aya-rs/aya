@@ -264,12 +264,11 @@ fn test_raw_tracepoint_test_run() {
     // Pass a sentinel as arg0 via ctx_in. The kernel requires ctx_size_in to
     // be at least max_ctx_offset bytes; since the program reads arg(0), the
     // verifier sets max_ctx_offset = 8 (one u64), so we must supply at least
-    // 8 bytes.
+    // one element.
     const SENTINEL: u64 = 0xdead_beef_cafe_babe;
-    let ctx_in = SENTINEL.to_ne_bytes();
 
     let opts = RawTracePointRunOptions {
-        ctx_in: Some(&ctx_in),
+        args: Some(&[SENTINEL]),
         cpu: None,
     };
 

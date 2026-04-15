@@ -677,16 +677,16 @@ pub(crate) fn bpf_prog_test_run_raw_tp(
     prog_fd: BorrowedFd<'_>,
     opts: RawTracePointRunOptions<'_>,
 ) -> Result<TestRunResult, SyscallError> {
-    let RawTracePointRunOptions { ctx_in, cpu } = opts;
+    let RawTracePointRunOptions { args, cpu } = opts;
 
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     // repeat, data_in, data_out, ctx_out, batch_size intentionally left as 0/NULL.
     let test = unsafe { &mut attr.test };
     test.prog_fd = prog_fd.as_raw_fd() as u32;
 
-    if let Some(ctx_in) = ctx_in {
-        test.ctx_in = ctx_in.as_ptr() as u64;
-        test.ctx_size_in = ctx_in.len() as u32;
+    if let Some(args) = args {
+        test.ctx_in = args.as_ptr() as u64;
+        test.ctx_size_in = size_of_val(args) as u32;
     }
 
     if let Some(cpu) = cpu {
@@ -703,6 +703,7 @@ pub(crate) fn bpf_prog_test_run_raw_tp(
     Ok(TestRunResult {
         return_value: test.retval,
         // bpf_prog_test_run_raw_tp does not fill in duration; it is always 0.
+        // see https://github.com/torvalds/linux/blob/d91a46d6/net/bpf/test_run.c#L796
         duration: std::time::Duration::ZERO,
         data_size_out: 0,
         ctx_size_out: 0,
