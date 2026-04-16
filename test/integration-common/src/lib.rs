@@ -143,3 +143,11 @@ pub mod lpm_trie {
     #[cfg(feature = "user")]
     unsafe impl aya::Pod for TestResult {}
 }
+
+pub mod sk_reuseport {
+    pub const SELECT_HITS_INDEX: u32 = 0;
+    pub const MIGRATE_HITS_INDEX: u32 = 1;
+    pub const CLEAR_FALLBACK_HITS_INDEX: u32 = 2;
+    pub const SELECT_SOCKET_INDEX: u32 = 0;
+    pub const MIGRATE_SOCKET_INDEX: u32 = 2;
+}

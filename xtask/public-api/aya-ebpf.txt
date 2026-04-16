@@ -86,6 +86,22 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for ay
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
+pub mod aya_ebpf::btf_maps::reuseport_sock_array
+#[repr(C)] pub struct aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, const MAX_ENTRIES: usize, const FLAGS: usize>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<u32, MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<u32, MAX_ENTRIES, FLAGS>::select_reuseport(&self, ctx: &aya_ebpf::programs::sk_reuseport::SkReuseportContext, key: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::default() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
+pub type aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArray<const MAX_ENTRIES: usize, const FLAGS: usize> = aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<u32, MAX_ENTRIES, FLAGS>
 pub mod aya_ebpf::btf_maps::ring_buf
 #[repr(C)] pub struct aya_ebpf::btf_maps::ring_buf::RingBuf<T, const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
@@ -221,6 +237,7 @@ impl<T> core::marker::Unpin for aya_ebpf::btf_maps::sk_storage::SkStorage<T>
 impl<T> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::sk_storage::SkStorage<T>
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::sk_storage::SkStorage<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::sk_storage::SkStorage<T> where T: core::panic::unwind_safe::RefUnwindSafe
+pub type aya_ebpf::btf_maps::ReusePortSockArray<const MAX_ENTRIES: usize, const FLAGS: usize> = aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<u32, MAX_ENTRIES, FLAGS>
 pub mod aya_ebpf::helpers
 pub use aya_ebpf::helpers::generated
 pub macro aya_ebpf::helpers::bpf_printk!
@@ -435,6 +452,19 @@ impl<T> core::marker::Unpin for aya_ebpf::maps::queue::Queue<T> where T: core::m
 impl<T> core::marker::UnsafeUnpin for aya_ebpf::maps::queue::Queue<T>
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::queue::Queue<T>
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::queue::Queue<T> where T: core::panic::unwind_safe::UnwindSafe
+pub mod aya_ebpf::maps::reuseport_sock_array
+#[repr(transparent)] pub struct aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+impl aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+pub const fn aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray::pinned(max_entries: u32, flags: u32) -> Self
+pub fn aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray::select_reuseport(&self, ctx: &aya_ebpf::programs::sk_reuseport::SkReuseportContext, key: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub const fn aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray::with_max_entries(max_entries: u32, flags: u32) -> Self
+impl !core::marker::Freeze for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+impl core::marker::Send for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+impl core::marker::Sync for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+impl core::marker::Unpin for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+impl core::marker::UnsafeUnpin for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
 pub mod aya_ebpf::maps::ring_buf
 #[repr(transparent)] pub struct aya_ebpf::maps::ring_buf::RingBuf
 impl aya_ebpf::maps::ring_buf::RingBuf
@@ -806,6 +836,18 @@ impl<T> core::marker::Unpin for aya_ebpf::maps::queue::Queue<T> where T: core::m
 impl<T> core::marker::UnsafeUnpin for aya_ebpf::maps::queue::Queue<T>
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::queue::Queue<T>
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::queue::Queue<T> where T: core::panic::unwind_safe::UnwindSafe
+#[repr(transparent)] pub struct aya_ebpf::maps::ReusePortSockArray
+impl aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+pub const fn aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray::pinned(max_entries: u32, flags: u32) -> Self
+pub fn aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray::select_reuseport(&self, ctx: &aya_ebpf::programs::sk_reuseport::SkReuseportContext, key: u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub const fn aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray::with_max_entries(max_entries: u32, flags: u32) -> Self
+impl !core::marker::Freeze for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+impl core::marker::Send for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+impl core::marker::Sync for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+impl core::marker::Unpin for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+impl core::marker::UnsafeUnpin for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::reuseport_sock_array::ReusePortSockArray
 #[repr(transparent)] pub struct aya_ebpf::maps::RingBuf
 impl aya_ebpf::maps::ring_buf::RingBuf
 pub fn aya_ebpf::maps::ring_buf::RingBuf::output<T: ?core::marker::Sized>(&self, data: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
@@ -1177,6 +1219,35 @@ impl core::marker::Unpin for aya_ebpf::programs::sk_msg::SkMsgContext
 impl core::marker::UnsafeUnpin for aya_ebpf::programs::sk_msg::SkMsgContext
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::sk_msg::SkMsgContext
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::sk_msg::SkMsgContext
+pub mod aya_ebpf::programs::sk_reuseport
+pub struct aya_ebpf::programs::sk_reuseport::SkReuseportContext
+pub aya_ebpf::programs::sk_reuseport::SkReuseportContext::md: *mut aya_ebpf_bindings::x86_64::bindings::sk_reuseport_md
+impl aya_ebpf::programs::sk_reuseport::SkReuseportContext
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::bind_inany(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::data(&self) -> usize
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::data_end(&self) -> usize
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::eth_protocol(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::hash(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::ip_protocol(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::is_empty(&self) -> bool
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::len(&self) -> usize
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::migrating_sk(&self) -> core::option::Option<aya_ebpf::programs::sock::SockContext>
+pub const fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::new(md: *mut aya_ebpf_bindings::x86_64::bindings::sk_reuseport_md) -> Self
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::sk(&self) -> aya_ebpf::programs::sock::SockContext
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::command(&self) -> core::result::Result<[u8; 16], i32>
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::gid(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::pid(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::tgid(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::uid(&self) -> u32
+impl core::marker::Freeze for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+impl !core::marker::Send for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+impl !core::marker::Sync for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+impl core::marker::Unpin for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+impl core::marker::UnsafeUnpin for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::sk_reuseport::SkReuseportContext
 pub mod aya_ebpf::programs::sock
 pub struct aya_ebpf::programs::sock::SockContext
 pub aya_ebpf::programs::sock::SockContext::sock: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock
@@ -1641,6 +1712,34 @@ impl core::marker::Unpin for aya_ebpf::programs::sk_msg::SkMsgContext
 impl core::marker::UnsafeUnpin for aya_ebpf::programs::sk_msg::SkMsgContext
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::sk_msg::SkMsgContext
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::sk_msg::SkMsgContext
+pub struct aya_ebpf::programs::SkReuseportContext
+pub aya_ebpf::programs::SkReuseportContext::md: *mut aya_ebpf_bindings::x86_64::bindings::sk_reuseport_md
+impl aya_ebpf::programs::sk_reuseport::SkReuseportContext
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::bind_inany(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::data(&self) -> usize
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::data_end(&self) -> usize
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::eth_protocol(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::hash(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::ip_protocol(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::is_empty(&self) -> bool
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::len(&self) -> usize
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::migrating_sk(&self) -> core::option::Option<aya_ebpf::programs::sock::SockContext>
+pub const fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::new(md: *mut aya_ebpf_bindings::x86_64::bindings::sk_reuseport_md) -> Self
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::sk(&self) -> aya_ebpf::programs::sock::SockContext
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::command(&self) -> core::result::Result<[u8; 16], i32>
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::gid(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::pid(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::tgid(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::uid(&self) -> u32
+impl core::marker::Freeze for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+impl !core::marker::Send for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+impl !core::marker::Sync for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+impl core::marker::Unpin for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+impl core::marker::UnsafeUnpin for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::sk_reuseport::SkReuseportContext
 pub struct aya_ebpf::programs::SockAddrContext
 pub aya_ebpf::programs::SockAddrContext::sock_addr: *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_addr
 impl aya_ebpf::programs::sock_addr::SockAddrContext
@@ -1929,6 +2028,13 @@ pub fn aya_ebpf::programs::sk_msg::SkMsgContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::uid(&self) -> u32
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_reuseport::SkReuseportContext
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::command(&self) -> core::result::Result<[u8; 16], i32>
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::gid(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::pid(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::tgid(&self) -> u32
+pub fn aya_ebpf::programs::sk_reuseport::SkReuseportContext::uid(&self) -> u32
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sock::SockContext
 pub fn aya_ebpf::programs::sock::SockContext::as_ptr(&self) -> *mut core::ffi::c_void
 pub fn aya_ebpf::programs::sock::SockContext::command(&self) -> core::result::Result<[u8; 16], i32>

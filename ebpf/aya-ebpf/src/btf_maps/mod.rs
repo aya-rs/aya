@@ -2,6 +2,7 @@ pub mod array;
 pub mod bloom_filter;
 pub mod lpm_trie;
 pub mod per_cpu_array;
+pub mod reuseport_sock_array;
 pub mod ring_buf;
 pub mod sk_storage;
 
@@ -9,6 +10,7 @@ pub use array::Array;
 pub use bloom_filter::BloomFilter;
 pub use lpm_trie::LpmTrie;
 pub use per_cpu_array::PerCpuArray;
+pub use reuseport_sock_array::ReusePortSockArray;
 pub use ring_buf::RingBuf;
 pub use sk_storage::SkStorage;
 
