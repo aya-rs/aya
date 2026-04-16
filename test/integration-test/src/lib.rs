@@ -56,6 +56,7 @@ bpf_file!(
     RELOCATIONS => "relocations",
     RING_BUF => "ring_buf",
     SIMPLE_PROG => "simple_prog",
+    SK_REUSEPORT => "sk_reuseport",
     SK_STORAGE => "sk_storage",
     STRNCMP => "strncmp",
     TCX => "tcx",

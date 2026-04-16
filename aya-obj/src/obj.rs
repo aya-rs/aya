@@ -33,7 +33,7 @@ use crate::{
     maps::{BtfMap, BtfMapDef, LegacyMap, MINIMUM_MAP_SIZE, Map, PinningType, bpf_map_def},
     programs::{
         CgroupSkbAttachType, CgroupSockAddrAttachType, CgroupSockAttachType,
-        CgroupSockoptAttachType, SkSkbKind, XdpAttachType,
+        CgroupSockoptAttachType, SkReuseportAttachType, SkSkbKind, XdpAttachType,
     },
     relocation::{INS_SIZE, Relocation, Symbol},
     util::HashMap,
@@ -225,7 +225,6 @@ pub struct Function {
 /// - `lwt_in`, `lwt_out`, `lwt_seg6local`, `lwt_xmit`
 /// - `raw_tp.w+`, `raw_tracepoint.w+`
 /// - `action`
-/// - `sk_reuseport/migrate`, `sk_reuseport`
 /// - `syscall`
 /// - `struct_ops+`
 /// - `fmod_ret+`, `fmod_ret.s+`
@@ -280,6 +279,9 @@ pub enum ProgramSection {
     FlowDissector,
     Extension,
     SkLookup,
+    SkReuseport {
+        attach_type: SkReuseportAttachType,
+    },
     CgroupSock {
         attach_type: CgroupSockAttachType,
     },
@@ -440,6 +442,20 @@ impl FromStr for ProgramSection {
             "flow_dissector" => Self::FlowDissector,
             "freplace" => Self::Extension,
             "sk_lookup" => Self::SkLookup,
+            "sk_reuseport" => {
+                let attach_type = if let Some(attach_type) = pieces.next() {
+                    if attach_type == "migrate" {
+                        SkReuseportAttachType::SelectOrMigrate
+                    } else {
+                        return Err(ParseError::InvalidProgramSection {
+                            section: section.to_owned(),
+                        });
+                    }
+                } else {
+                    SkReuseportAttachType::Select
+                };
+                Self::SkReuseport { attach_type }
+            }
             "iter" => Self::Iter { sleepable: false },
             "iter.s" => Self::Iter { sleepable: true },
             _ => {
@@ -2165,6 +2181,56 @@ mod tests {
             obj.programs.get("foo"),
             Some(Program {
                 section: ProgramSection::Xdp { frags: true, .. },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_sk_reuseport() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                "sk_reuseport",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::SkReuseport {
+                    attach_type: SkReuseportAttachType::Select,
+                },
+                ..
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_section_sk_reuseport_migrate() {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                "sk_reuseport/migrate",
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        assert_matches!(
+            obj.programs.get("foo"),
+            Some(Program {
+                section: ProgramSection::SkReuseport {
+                    attach_type: SkReuseportAttachType::SelectOrMigrate,
+                },
                 ..
             })
         );
