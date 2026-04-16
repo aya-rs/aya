@@ -58,8 +58,7 @@ impl<T: Borrow<MapData>> ProgramArray<T> {
         Ok(Self { inner: map })
     }
 
-    /// An iterator over the indices of the array that point to a program. The iterator item type
-    /// is `Result<u32, MapError>`.
+    /// An iterator over the indices of the array that point to a program.
     pub fn indices(&self) -> MapKeys<'_, u32> {
         MapKeys::new(self.inner.borrow())
     }
