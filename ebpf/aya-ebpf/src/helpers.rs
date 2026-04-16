@@ -13,6 +13,7 @@ use core::{
     cmp::Ordering,
     ffi::CStr,
     mem::{self, MaybeUninit},
+    ptr,
 };
 
 pub use aya_ebpf_bindings::helpers as generated;
@@ -20,9 +21,27 @@ pub use aya_ebpf_bindings::helpers as generated;
 pub use generated::*;
 
 use crate::{
+    EbpfContext as _,
+    btf_maps::reuseport_sock_array::ReusePortSockArrayImpl,
     check_bounds_signed,
-    cty::{c_char, c_long},
+    cty::{c_char, c_long, c_void},
+    programs::SkReuseportContext,
 };
+
+// Internal marker trait for the map types accepted by `sk_select_reuseport()`.
+// This is only a type-safety gate around `bpf_sk_select_reuseport`, not a
+// general pointer conversion API for arbitrary map-like types.
+pub(crate) trait ReusePortSockArrayMap {
+    fn as_ptr(&self) -> *mut c_void;
+}
+
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> ReusePortSockArrayMap
+    for ReusePortSockArrayImpl<u32, MAX_ENTRIES, FLAGS>
+{
+    fn as_ptr(&self) -> *mut c_void {
+        Self::as_ptr(self)
+    }
+}
 
 // TODO: Add a static assertion that `MAX_ERRNO`[0] fits in `i32`, to prove the
 // correctness of using `i32` as an error type and catch eventual changes of
@@ -817,4 +836,26 @@ pub fn bpf_strncmp<const N: usize>(s1: &[u8; N], s2: &CStr) -> Ordering {
     // NB: s1's size must be known at compile time to appease the verifier. This is also the typical
     // usage of strncmp in C programs.
     unsafe { generated::bpf_strncmp(s1.as_ptr().cast(), N as u32, s2.as_ptr().cast()) }.cmp(&0)
+}
+
+/// Selects a socket from `reuseport_sock_array` using `key`.
+///
+/// The map must be populated with sockets from the same `SO_REUSEPORT` group
+/// before calling this helper. The kernel does not currently define any flags
+/// for `bpf_sk_select_reuseport()`, so this wrapper always passes `0`.
+#[inline]
+pub(crate) fn sk_select_reuseport<T: ReusePortSockArrayMap + ?Sized>(
+    ctx: &SkReuseportContext,
+    reuseport_sock_array: &T,
+    mut key: u32,
+) -> Result<(), c_long> {
+    let ret = unsafe {
+        bpf_sk_select_reuseport(
+            ctx.as_ptr().cast(),
+            ReusePortSockArrayMap::as_ptr(reuseport_sock_array),
+            ptr::from_mut(&mut key).cast(),
+            0,
+        )
+    };
+    if ret == 0 { Ok(()) } else { Err(ret) }
 }
