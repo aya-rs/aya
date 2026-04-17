@@ -5,6 +5,8 @@ pub mod array {
     pub const GET_PTR_INDEX: u32 = 1;
     pub const GET_PTR_MUT_INDEX: u32 = 2;
     pub const NUM_SLOTS: u32 = 3;
+    /// Arbitrary number of slots exercised by the array tests.
+    pub const ARRAY_LEN: u32 = 4;
 }
 
 pub mod bloom_filter {
