@@ -73,6 +73,10 @@ name = "pass"
 path = "src/pass.rs"
 
 [[bin]]
+name = "per_cpu_array"
+path = "src/per_cpu_array.rs"
+
+[[bin]]
 name = "raw_tracepoint"
 path = "src/raw_tracepoint.rs"
 
