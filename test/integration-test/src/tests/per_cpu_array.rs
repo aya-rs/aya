@@ -38,7 +38,7 @@ extern "C" fn trigger_set(index: u32, value: u32) {
     "get_legacy",
     "get_ptr_legacy",
     "get_ptr_mut_legacy",
-    None
+    "set_legacy"
     ; "legacy"
 )]
 #[test_case(
@@ -47,7 +47,7 @@ extern "C" fn trigger_set(index: u32, value: u32) {
     "get",
     "get_ptr",
     "get_ptr_mut",
-    Some("set")
+    "set"
     ; "btf"
 )]
 #[test_log::test]
@@ -57,7 +57,7 @@ fn per_cpu_array_basic(
     get_prog: &str,
     get_ptr_prog: &str,
     get_ptr_mut_prog: &str,
-    set_prog: Option<&str>,
+    set_prog: &str,
 ) {
     if !is_map_supported(MapType::PerCpuArray).unwrap() {
         eprintln!("skipping test - per-cpu array map not supported");
@@ -68,16 +68,12 @@ fn per_cpu_array_basic(
         .load(crate::PER_CPU_ARRAY)
         .expect("load per_cpu_array program");
 
-    let probes: &[(&str, &str)] = &[
+    for (prog_name, symbol) in [
         (get_prog, "trigger_get"),
         (get_ptr_prog, "trigger_get_ptr"),
         (get_ptr_mut_prog, "trigger_get_ptr_mut"),
-    ];
-    for (prog_name, symbol) in probes
-        .iter()
-        .copied()
-        .chain(set_prog.map(|name| (name, "trigger_set")))
-    {
+        (set_prog, "trigger_set"),
+    ] {
         let prog: &mut UProbe = bpf
             .program_mut(prog_name)
             .unwrap_or_else(|| panic!("missing program {prog_name}"))
@@ -110,21 +106,19 @@ fn per_cpu_array_basic(
     trigger_get_ptr_mut(INDEX);
     assert_eq!(result.get(&GET_PTR_MUT_INDEX, 0).unwrap(), VALUE);
 
-    if set_prog.is_some() {
-        const NEW_VALUE: u32 = 0x1234;
-        trigger_set(INDEX, NEW_VALUE);
+    const NEW_VALUE: u32 = 0x1234;
+    trigger_set(INDEX, NEW_VALUE);
 
-        // The probe mutates only the executing CPU's slot; every other slot
-        // must still hold the uniform value written from user space.
-        let after = array.get(&INDEX, 0).unwrap();
-        let mut new_count = 0usize;
-        for slot in after.iter() {
-            match *slot {
-                NEW_VALUE => new_count += 1,
-                VALUE => {}
-                other => panic!("unexpected per-CPU slot value: {other:#x}"),
-            }
+    // The probe mutates only the executing CPU's slot; every other slot
+    // must still hold the uniform value written from user space.
+    let after = array.get(&INDEX, 0).unwrap();
+    let mut new_count = 0usize;
+    for slot in after.iter() {
+        match *slot {
+            NEW_VALUE => new_count += 1,
+            VALUE => {}
+            other => panic!("unexpected per-CPU slot value: {other:#x}"),
         }
-        assert_eq!(new_count, 1, "set() should mutate exactly one per-CPU slot");
     }
+    assert_eq!(new_count, 1, "set() should mutate exactly one per-CPU slot");
 }

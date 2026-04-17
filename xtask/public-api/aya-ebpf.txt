@@ -371,6 +371,7 @@ pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::get(&self, index: u32) -> 
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::get_ptr_mut(&self, index: u32) -> core::option::Option<*mut T>
 pub const fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::pinned(max_entries: u32, flags: u32) -> Self
+pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::set(&self, index: u32, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 impl<T> core::marker::Send for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: core::marker::Send
@@ -728,6 +729,7 @@ pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::get(&self, index: u32) -> 
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::get_ptr(&self, index: u32) -> core::option::Option<*const T>
 pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::get_ptr_mut(&self, index: u32) -> core::option::Option<*mut T>
 pub const fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::pinned(max_entries: u32, flags: u32) -> Self
+pub fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::set(&self, index: u32, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::per_cpu_array::PerCpuArray<T>::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl<T> !core::marker::Freeze for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 impl<T> core::marker::Send for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: core::marker::Send

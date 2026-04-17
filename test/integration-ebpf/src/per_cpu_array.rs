@@ -31,8 +31,8 @@ macro_rules! define_per_cpu_array_test {
         $result_set_fn:ident,
         $get_prog:ident,
         $get_ptr_prog:ident,
-        $get_ptr_mut_prog:ident
-        $(, set: $set_prog:ident)?
+        $get_ptr_mut_prog:ident,
+        $set_prog:ident
         $(,)?
     ) => {
         #[inline(always)]
@@ -69,19 +69,17 @@ macro_rules! define_per_cpu_array_test {
             Ok(())
         }
 
-        $(
-            #[uprobe]
-            fn $set_prog(ctx: ProbeContext) -> Result<(), c_long> {
-                let index: u32 = ctx.arg(0).ok_or(-1)?;
-                let value: u32 = ctx.arg(1).ok_or(-1)?;
-                $array_map.set(index, value, 0).map_err(c_long::from)?;
-                Ok(())
-            }
-        )?
+        #[uprobe]
+        fn $set_prog(ctx: ProbeContext) -> Result<(), c_long> {
+            let index: u32 = ctx.arg(0).ok_or(-1)?;
+            let value: u32 = ctx.arg(1).ok_or(-1)?;
+            $array_map.set(index, value, 0).map_err(c_long::from)?;
+            Ok(())
+        }
     };
 }
 
-define_per_cpu_array_test!(RESULT, ARRAY, result_set, get, get_ptr, get_ptr_mut, set: set);
+define_per_cpu_array_test!(RESULT, ARRAY, result_set, get, get_ptr, get_ptr_mut, set);
 define_per_cpu_array_test!(
     RESULT_LEGACY,
     ARRAY_LEGACY,
@@ -89,4 +87,5 @@ define_per_cpu_array_test!(
     get_legacy,
     get_ptr_legacy,
     get_ptr_mut_legacy,
+    set_legacy,
 );
