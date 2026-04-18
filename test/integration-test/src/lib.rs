@@ -66,6 +66,7 @@ bpf_file!(
     XDP_SEC => "xdp_sec",
     UPROBE_COOKIE => "uprobe_cookie",
     PRINTK_TEST => "printk_test",
+    PROG_ARRAY => "prog_array",
 );
 
 #[cfg(test)]

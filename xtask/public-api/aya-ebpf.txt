@@ -411,7 +411,7 @@ pub mod aya_ebpf::maps::program_array
 #[repr(transparent)] pub struct aya_ebpf::maps::program_array::ProgramArray
 impl aya_ebpf::maps::program_array::ProgramArray
 pub const fn aya_ebpf::maps::program_array::ProgramArray::pinned(max_entries: u32, flags: u32) -> Self
-pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<core::convert::Infallible, i32>
+pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32)
 pub const fn aya_ebpf::maps::program_array::ProgramArray::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::program_array::ProgramArray
 impl core::marker::Send for aya_ebpf::maps::program_array::ProgramArray
@@ -783,7 +783,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::PerfEventByteArray
 #[repr(transparent)] pub struct aya_ebpf::maps::ProgramArray
 impl aya_ebpf::maps::program_array::ProgramArray
 pub const fn aya_ebpf::maps::program_array::ProgramArray::pinned(max_entries: u32, flags: u32) -> Self
-pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32) -> core::result::Result<core::convert::Infallible, i32>
+pub unsafe fn aya_ebpf::maps::program_array::ProgramArray::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32)
 pub const fn aya_ebpf::maps::program_array::ProgramArray::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::program_array::ProgramArray
 impl core::marker::Send for aya_ebpf::maps::program_array::ProgramArray

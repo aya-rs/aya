@@ -9,6 +9,15 @@ pub mod array {
     pub const ARRAY_LEN: u32 = 4;
 }
 
+pub mod prog_array {
+    /// Slot written by the uprobe after `tail_call` falls through.
+    pub const RESULT_INDEX: u32 = 0;
+
+    /// Arbitrary non-zero sentinel written by the uprobe to prove control
+    /// returned from a failed `tail_call`.
+    pub const FAILURE_SENTINEL: u32 = 42;
+}
+
 pub mod bloom_filter {
     pub const INSERT_INDEX: u32 = 0;
     pub const CONTAINS_PRESENT_INDEX: u32 = 1;
