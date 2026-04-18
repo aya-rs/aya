@@ -28,6 +28,7 @@ mod maps_disjoint;
 mod per_cpu_array;
 mod perf_event_bp;
 mod printk;
+mod prog_array;
 mod raw_tracepoint;
 mod rbpf;
 mod relocations;
