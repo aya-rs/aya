@@ -131,3 +131,7 @@ path = "src/perf_event_bp.rs"
 [[bin]]
 name = "printk_test"
 path = "src/printk_test.rs"
+
+[[bin]]
+name = "prog_array"
+path = "src/prog_array.rs"
