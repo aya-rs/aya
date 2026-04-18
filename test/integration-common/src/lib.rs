@@ -13,9 +13,15 @@ pub mod prog_array {
     /// Slot written by the uprobe after `tail_call` falls through.
     pub const RESULT_INDEX: u32 = 0;
 
+    /// Slot written by the tail-call target to prove the target ran.
+    pub const SUCCESS_INDEX: u32 = 1;
+
     /// Arbitrary non-zero sentinel written by the uprobe to prove control
     /// returned from a failed `tail_call`.
     pub const FAILURE_SENTINEL: u32 = 42;
+
+    /// Arbitrary non-zero sentinel written by the tail-call target program.
+    pub const SUCCESS_SENTINEL: u32 = 43;
 }
 
 pub mod bloom_filter {

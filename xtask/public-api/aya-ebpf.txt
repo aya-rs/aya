@@ -86,6 +86,21 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for ay
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
+pub mod aya_ebpf::btf_maps::program_array
+#[repr(C)] pub struct aya_ebpf::btf_maps::program_array::ProgramArray<const MAX_ENTRIES: usize, const FLAGS: usize>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+pub unsafe fn aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32)
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>::default() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
 pub mod aya_ebpf::btf_maps::ring_buf
 #[repr(C)] pub struct aya_ebpf::btf_maps::ring_buf::RingBuf<T, const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
@@ -187,6 +202,20 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for ay
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
+#[repr(C)] pub struct aya_ebpf::btf_maps::ProgramArray<const MAX_ENTRIES: usize, const FLAGS: usize>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+pub unsafe fn aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>::tail_call<C: aya_ebpf::EbpfContext>(&self, ctx: &C, index: u32)
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>::default() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
 #[repr(C)] pub struct aya_ebpf::btf_maps::RingBuf<T, const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::new() -> Self
