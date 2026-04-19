@@ -3,8 +3,8 @@
 #![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use aya_ebpf::{
+    Global,
     bindings::path,
-    cty::c_long,
     helpers::{bpf_d_path, bpf_get_current_pid_tgid},
     macros::{fentry, map},
     maps::Array,
@@ -18,46 +18,40 @@ extern crate ebpf_panic;
 #[map]
 static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);
 
-#[map]
-static TID: Array<u32> = Array::with_max_entries(1, 0);
+#[unsafe(no_mangle)]
+static TARGET_TID: Global<u32> = Global::new(0);
 
 #[fentry]
 fn test_vfs_open(ctx: FEntryContext) -> u32 {
-    match try_vfs_open(ctx) {
-        Ok(_) => 0,
-        Err(_) => 1,
-    }
-}
-
-fn try_vfs_open(ctx: FEntryContext) -> Result<(), c_long> {
-    let target_tid = TID.get(0).copied().unwrap_or(0);
+    let target_tid = TARGET_TID.load();
     if target_tid != 0 {
         let tid = bpf_get_current_pid_tgid() as u32;
         if tid != target_tid {
-            return Ok(());
+            return 0;
         }
     }
 
     let pathptr: *const path = ctx.arg(0);
     if pathptr.is_null() {
-        return Ok(());
+        return 0;
     }
 
-    if let Some(result) = RESULT.get_ptr_mut(0) {
-        let result = unsafe { &mut *result };
-        result.seen = result.seen.saturating_add(1);
+    let Some(result) = RESULT.get_ptr_mut(0) else {
+        return 0;
+    };
+    let result = unsafe { &mut *result };
+    result.seen = result.seen.saturating_add(1);
 
-        match unsafe { bpf_d_path(pathptr, &mut result.buf) } {
-            Ok(data) => {
-                result.len = data.len();
-                result.status = 0;
-            }
-            Err(err) => {
-                result.len = 0;
-                result.status = err as i64;
-            }
+    match unsafe { bpf_d_path(pathptr, &mut result.buf) } {
+        Ok(data) => {
+            result.len = data.len();
+            result.status = 0;
+        }
+        Err(err) => {
+            result.len = 0;
+            result.status = err;
         }
     }
 
-    Ok(())
+    0
 }

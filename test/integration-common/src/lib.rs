@@ -145,7 +145,8 @@ pub mod lpm_trie {
 }
 
 pub mod bpf_d_path {
-    pub const PATH_BUF_LEN: usize = 128;
+    pub const EXPECTED_PATH: &str = "/dev/null";
+    pub const PATH_BUF_LEN: usize = EXPECTED_PATH.len() + 1;
 
     #[derive(Copy, Clone)]
     #[repr(C)]
@@ -153,7 +154,7 @@ pub mod bpf_d_path {
         pub buf: [u8; PATH_BUF_LEN],
         pub len: usize,
         pub seen: u32,
-        pub status: i64,
+        pub status: i32,
     }
 
     #[cfg(feature = "user")]

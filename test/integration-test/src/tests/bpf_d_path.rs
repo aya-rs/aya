@@ -2,39 +2,21 @@ use assert_matches::assert_matches;
 use std::fs::File;
 
 use aya::{
-    Btf, Ebpf,
+    Btf, Ebpf, EbpfLoader,
     maps::Array,
     programs::{FEntry, ProgramError, ProgramType},
     sys::{SyscallError, is_program_supported},
 };
-use integration_common::bpf_d_path::TestResult;
+use integration_common::bpf_d_path::{EXPECTED_PATH, TestResult};
 
 #[test_log::test]
 fn bpf_d_path_basic() {
     let btf = Btf::from_sys_fs().unwrap();
-    let mut bpf = Ebpf::load(crate::BPF_D_PATH).unwrap();
-
-    {
-        let mut tid_map = Array::<_, u32>::try_from(bpf.map_mut("TID").unwrap()).unwrap();
-        let tid = u32::try_from(nix::unistd::gettid().as_raw()).unwrap();
-        tid_map.set(0, tid, 0).unwrap();
-    }
-    {
-        let mut result_map =
-            Array::<_, TestResult>::try_from(bpf.map_mut("RESULT").unwrap()).unwrap();
-        result_map
-            .set(
-                0,
-                TestResult {
-                    buf: [0; integration_common::bpf_d_path::PATH_BUF_LEN],
-                    len: 0,
-                    seen: 0,
-                    status: 0,
-                },
-                0,
-            )
-            .unwrap();
-    }
+    let tid = u32::try_from(nix::unistd::gettid().as_raw()).unwrap();
+    let mut bpf = EbpfLoader::new()
+        .override_global("TARGET_TID", &tid, true)
+        .load(crate::BPF_D_PATH)
+        .unwrap();
 
     let prog: &mut FEntry = bpf
         .program_mut("test_vfs_open")
@@ -55,7 +37,7 @@ fn bpf_d_path_basic() {
         result.unwrap()
     };
 
-    let file = File::open("/dev/null").unwrap();
+    let file = File::open(EXPECTED_PATH).unwrap();
 
     let result = get_result(&bpf);
 
@@ -70,22 +52,15 @@ fn bpf_d_path_basic() {
         result.status
     );
 
-    let path_len = result.len;
     assert!(
-        path_len > 0,
-        "Path length should be greater than 0 after a successful bpf_d_path call for tid {}.",
-        nix::unistd::gettid(),
-    );
-    assert!(
-        path_len <= result.buf.len(),
+        result.len <= result.buf.len(),
         "Path length should not exceed buffer size"
     );
 
-    let path_str = std::str::from_utf8(&result.buf[..path_len]).unwrap();
-    assert!(
-        path_str.contains("/dev/null"),
-        "Path should contain '/dev/null', got: {}",
-        path_str
+    let path_str = std::str::from_utf8(&result.buf[..result.len]).unwrap();
+    assert_eq!(
+        path_str, EXPECTED_PATH,
+        "unexpected path returned by bpf_d_path"
     );
 
     drop(file);
