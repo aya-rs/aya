@@ -1,7 +1,9 @@
 #include <linux/bpf.h>
 #include <linux/btf.h>
 #include <linux/hw_breakpoint.h>
+#include <linux/if_addr.h>
 #include <linux/if_link.h>
+#include <linux/neighbour.h>
 #include <linux/netfilter.h>
 #include <linux/perf_event.h>
 #include <linux/pkt_cls.h>

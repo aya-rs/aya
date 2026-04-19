@@ -121,7 +121,9 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
             "perf_type_id",
             "perf_event_type",
             // NETLINK
+            "ifaddrmsg",
             "ifinfomsg",
+            "ndmsg",
             "tcmsg",
             "nlmsgerr_attrs",
             // ITER

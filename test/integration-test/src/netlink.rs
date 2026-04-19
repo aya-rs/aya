@@ -27,6 +27,7 @@ const NLA_HDR_LEN: usize = align_to(size_of::<nlattr>(), NLA_ALIGNTO as usize);
 const VETH_INFO_PEER: u16 = 1;
 
 /// `struct ifaddrmsg` from `linux/if_addr.h`.
+/// TODO: import from `aya_obj::generated` once codegen is re-run.
 #[derive(Copy, Clone)]
 #[repr(C)]
 struct Ifaddrmsg {
@@ -38,6 +39,7 @@ struct Ifaddrmsg {
 }
 
 /// `struct ndmsg` from `linux/neighbour.h`.
+/// TODO: import from `aya_obj::generated` once codegen is re-run.
 #[derive(Copy, Clone)]
 #[repr(C)]
 struct Ndmsg {
