@@ -392,21 +392,19 @@ pub(crate) const fn tc_handler_make(major: u32, minor: u32) -> u32 {
 #[macro_export]
 macro_rules! include_bytes_aligned {
     ($path:expr) => {{
-        #[repr(align(32))]
-        pub struct Aligned32;
+        // All eBPF programs are ELF64 objects (regardless of host target) with
+        // 8-byte aligned headers and all eBPF instructions are 8 bytes each.
+        #[repr(C, align(8))]
+        struct Aligned<T: ?Sized>(T);
 
-        #[repr(C)]
-        pub struct Aligned<Bytes: ?Sized> {
-            pub _align: [Aligned32; 0],
-            pub bytes: Bytes,
-        }
+        // Must be a reference because `Aligned<[u8]>` is not `Sized` and we
+        // can't write `Aligned<[u8; N]>` since `N` is not nameable in the type
+        // in this context (even though the compiler knows it at compile time).
+        const ALIGNED: &Aligned<[u8]> = &Aligned(*include_bytes!($path));
 
-        const ALIGNED: &Aligned<[u8]> = &Aligned {
-            _align: [],
-            bytes: *include_bytes!($path),
-        };
+        let &Aligned(ref aligned) = ALIGNED;
 
-        &ALIGNED.bytes
+        aligned
     }};
 }
 

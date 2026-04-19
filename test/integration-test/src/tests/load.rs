@@ -544,7 +544,7 @@ fn run_pin_program_lifecycle_test<P>(
     expect_fd_link: bool,
 ) where
     P: UnloadProgramOps + PinProgramOps,
-    P::OwnedLink: TryInto<FdLink, Error = LinkError>,
+    P::OwnedLink: TryFrom<FdLink, Error = LinkError> + TryInto<FdLink, Error = LinkError>,
     for<'a> &'a mut Program: TryInto<&'a mut P, Error = ProgramError>,
 {
     let mut prog = {
@@ -583,6 +583,10 @@ fn run_pin_program_lifecycle_test<P>(
                 // 4. Load a new version of the program, unpin link, and atomically replace old program
                 {
                     let link = PinnedLink::from_pin(link_pin).unwrap().unpin().unwrap();
+                    let link: P::OwnedLink = link
+                        .try_into()
+                        .expect("pinned link should round-trip through FdLink");
+                    let link: FdLink = link.try_into().unwrap();
                     if let Some(attach_to_link) = attach_to_link {
                         let mut bpf = Ebpf::load(bpf_image).unwrap();
                         let prog: &mut P =

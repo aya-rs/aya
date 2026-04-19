@@ -27,7 +27,11 @@ mod ad {
     ))]
     pub type c_char = super::c_uchar;
 
-    #[cfg(any(bpf_target_arch = "loongarch64", bpf_target_arch = "x86_64"))]
+    #[cfg(any(
+        bpf_target_arch = "loongarch64",
+        bpf_target_arch = "mips64",
+        bpf_target_arch = "x86_64",
+    ))]
     pub type c_char = super::c_schar;
 }
 

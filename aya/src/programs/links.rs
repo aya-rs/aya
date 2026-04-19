@@ -394,7 +394,7 @@ impl ProgAttachLink {
     pub(crate) fn attach(
         prog_fd: BorrowedFd<'_>,
         target_fd: BorrowedFd<'_>,
-        attach_type: bpf_attach_type,
+        attach_type: impl Into<bpf_attach_type>,
         mode: CgroupAttachMode,
     ) -> Result<Self, ProgramError> {
         // The link is going to own this new file descriptor so we are
@@ -405,6 +405,7 @@ impl ProgAttachLink {
         let prog_fd = crate::MockableFd::from_fd(prog_fd);
         let target_fd = target_fd.try_clone_to_owned()?;
         let target_fd = crate::MockableFd::from_fd(target_fd);
+        let attach_type = attach_type.into();
         bpf_prog_attach(prog_fd.as_fd(), target_fd.as_fd(), attach_type, mode.into())?;
 
         let prog_fd = ProgramFd(prog_fd);
@@ -581,6 +582,26 @@ macro_rules! impl_try_into_fdlink {
 }
 
 pub(crate) use impl_try_into_fdlink;
+
+macro_rules! impl_try_from_fdlink {
+    ($wrapper:ident, $inner:ident, $link_type:expr) => {
+        impl TryFrom<$crate::programs::FdLink> for $wrapper {
+            type Error = $crate::programs::LinkError;
+
+            fn try_from(fd_link: $crate::programs::FdLink) -> Result<Self, Self::Error> {
+                use std::os::fd::AsFd as _;
+
+                let info = $crate::sys::bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
+                if info.type_ == ($link_type as u32) {
+                    return Ok(Self::new($inner::Fd(fd_link)));
+                }
+                Err($crate::programs::LinkError::InvalidLink)
+            }
+        }
+    };
+}
+
+pub(crate) use impl_try_from_fdlink;
 
 #[derive(Error, Debug)]
 /// Errors from operations on links.

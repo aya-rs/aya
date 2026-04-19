@@ -66,6 +66,7 @@ pub struct BtfMapDef {
     pub(crate) value_size: u32,
     pub(crate) max_entries: u32,
     pub(crate) map_flags: u32,
+    pub(crate) map_extra: u64,
     pub(crate) pinning: PinningType,
     /// BTF type id of the map key
     pub btf_key_type_id: u32,
@@ -198,6 +199,14 @@ impl Map {
         match self {
             Self::Legacy(m) => m.def.map_flags,
             Self::Btf(m) => m.def.map_flags,
+        }
+    }
+
+    /// Returns per-map-type extra fields.
+    pub const fn map_extra(&self) -> u64 {
+        match self {
+            Self::Legacy(_) => 0,
+            Self::Btf(m) => m.def.map_extra,
         }
     }
 

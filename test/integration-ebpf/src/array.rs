@@ -12,17 +12,19 @@ use aya_ebpf::{
     maps::Array as LegacyArray,
     programs::ProbeContext,
 };
-use integration_common::array::{GET_INDEX, GET_PTR_INDEX, GET_PTR_MUT_INDEX};
+use integration_common::array::{
+    ARRAY_LEN, GET_INDEX, GET_PTR_INDEX, GET_PTR_MUT_INDEX, NUM_SLOTS,
+};
 
 #[btf_map]
-static RESULT: Array<u32, 3 /* max_elements */, 0> = Array::new();
+static RESULT: Array<u32, { NUM_SLOTS as usize }, 0> = Array::new();
 #[btf_map]
-static ARRAY: Array<u32, 10 /* max_elements */, 0> = Array::new();
+static ARRAY: Array<u32, { ARRAY_LEN as usize }, 0> = Array::new();
 
 #[map]
-static RESULT_LEGACY: LegacyArray<u32> = LegacyArray::with_max_entries(3, 0);
+static RESULT_LEGACY: LegacyArray<u32> = LegacyArray::with_max_entries(NUM_SLOTS, 0);
 #[map]
-static ARRAY_LEGACY: LegacyArray<u32> = LegacyArray::with_max_entries(10, 0);
+static ARRAY_LEGACY: LegacyArray<u32> = LegacyArray::with_max_entries(ARRAY_LEN, 0);
 
 macro_rules! define_array_test {
     (

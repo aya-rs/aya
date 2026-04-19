@@ -15,9 +15,10 @@ use aya_obj::{
 use crate::{
     programs::{
         FdLink, LinkError, PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, impl_try_into_fdlink, load_program,
+        define_link_wrapper, impl_try_from_fdlink, impl_try_into_fdlink,
+        load_program_with_attach_type,
     },
-    sys::{LinkTarget, SyscallError, bpf_create_iter, bpf_link_create, bpf_link_get_info_by_fd},
+    sys::{LinkTarget, SyscallError, bpf_create_iter, bpf_link_create},
 };
 
 /// A BPF iterator which allows to dump data from the kernel-space into the
@@ -65,11 +66,10 @@ impl Iter {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self, iter_type: &str, btf: &Btf) -> Result<(), ProgramError> {
-        self.data.expected_attach_type = Some(BPF_TRACE_ITER);
+        let Self { data } = self;
         let type_name = format!("bpf_iter_{iter_type}");
-        self.data.attach_btf_id =
-            Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Func)?);
-        load_program(BPF_PROG_TYPE_TRACING, &mut self.data)
+        data.attach_btf_id = Some(btf.id_by_type_name_kind(type_name.as_str(), BtfKind::Func)?);
+        load_program_with_attach_type(BPF_PROG_TYPE_TRACING, BPF_TRACE_ITER, data)
     }
 
     /// Attaches the program.
@@ -104,19 +104,8 @@ impl AsFd for IterFd {
     }
 }
 
-impl TryFrom<FdLink> for IterLink {
-    type Error = LinkError;
-
-    fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
-        if info.type_ == (BPF_LINK_TYPE_ITER as u32) {
-            return Ok(Self::new(PerfLinkInner::Fd(fd_link)));
-        }
-        Err(LinkError::InvalidLink)
-    }
-}
-
 impl_try_into_fdlink!(IterLink, PerfLinkInner);
+impl_try_from_fdlink!(IterLink, PerfLinkInner, BPF_LINK_TYPE_ITER);
 
 define_link_wrapper!(IterLink, IterLinkId, PerfLinkInner, PerfLinkIdInner, Iter);
 

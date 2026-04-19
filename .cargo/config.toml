@@ -21,3 +21,6 @@ linker = "s390x-linux-gnu-gcc"
 
 [target.mips-unknown-linux-gnu]
 linker = "mips-linux-gnu-gcc"
+
+[target.mips64-unknown-linux-gnuabi64]
+linker = "mips64-linux-gnuabi64-gcc"

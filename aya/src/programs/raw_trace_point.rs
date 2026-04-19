@@ -4,8 +4,8 @@ use std::ffi::CString;
 use aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT;
 
 use crate::programs::{
-    FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper, load_program,
-    utils::attach_raw_tracepoint,
+    FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+    load_program_without_attach_type, utils::attach_raw_tracepoint,
 };
 
 /// A program that can be attached at a pre-defined kernel trace point.
@@ -44,7 +44,8 @@ impl RawTracePoint {
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
-        load_program(BPF_PROG_TYPE_RAW_TRACEPOINT, &mut self.data)
+        let Self { data } = self;
+        load_program_without_attach_type(BPF_PROG_TYPE_RAW_TRACEPOINT, data)
     }
 
     /// Attaches the program to the given tracepoint.
