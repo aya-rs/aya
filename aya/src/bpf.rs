@@ -1,11 +1,14 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
+    ffi::OsString,
     fs, io,
     os::fd::{AsFd as _, AsRawFd as _},
     path::{Path, PathBuf},
     sync::{Arc, LazyLock},
 };
+#[cfg(feature = "flate2")]
+use std::{fs::File, io::Read as _};
 
 use aya_obj::{
     EbpfSectionKind, Features, Object, ParseError, ProgramSection,
@@ -13,6 +16,8 @@ use aya_obj::{
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
 };
+#[cfg(feature = "flate2")]
+use flate2::read::GzDecoder;
 use log::{debug, warn};
 use thiserror::Error;
 
@@ -26,13 +31,13 @@ use crate::{
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
-        is_btf_datasec_supported, is_btf_datasec_zero_supported, is_btf_decl_tag_supported,
-        is_btf_enum64_supported, is_btf_float_supported, is_btf_func_global_supported,
-        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
-        is_probe_read_kernel_supported, is_prog_id_supported, is_prog_name_supported,
-        retry_with_verifier_logs,
+        is_bpf_syscall_wrapper_supported, is_btf_datasec_supported, is_btf_datasec_zero_supported,
+        is_btf_decl_tag_supported, is_btf_enum64_supported, is_btf_float_supported,
+        is_btf_func_global_supported, is_btf_func_supported, is_btf_supported,
+        is_btf_type_tag_supported, is_perf_link_supported, is_probe_read_kernel_supported,
+        is_prog_id_supported, is_prog_name_supported, retry_with_verifier_logs,
     },
-    util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
+    util::{KernelVersion, bytes_of, bytes_of_slice, nr_cpus, page_size},
 };
 
 /// Marker trait for types that can safely be converted to and from byte slices.
@@ -60,6 +65,112 @@ pub use aya_obj::maps::{PinningType, bpf_map_def};
 
 pub(crate) static FEATURES: LazyLock<Features> = LazyLock::new(detect_features);
 
+/// Kernel configuration data for eBPF extern variables.
+///
+/// This type holds kernel configuration values that can be used to patch extern variables
+/// in eBPF programs. It includes both kernel version information and CONFIG_* values from
+/// the kernel configuration.
+///
+/// # Examples
+///
+/// ```no_run
+/// use aya::{EbpfLoader, KConfig};
+///
+/// // Load kconfig from the system
+/// let kconfig = KConfig::current()?;
+/// let mut loader = EbpfLoader::new();
+/// let bpf = loader.kconfig(Some(kconfig)).load_file("file.o")?;
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+#[derive(Debug, Clone)]
+pub struct KConfig {
+    data: HashMap<String, Vec<u8>>,
+}
+
+/// The error type returned by [`KConfig::parse`].
+#[derive(Debug, Error)]
+pub enum KConfigError {
+    /// No kernel config file could be found on the system.
+    #[error("kernel config not found at /boot/config-<release> or /proc/config.gz")]
+    NotFound,
+
+    /// A kernel config file could be found, but could not be read.
+    #[error("failed to read kernel config {path}: {error}")]
+    Read {
+        /// The path that failed to read.
+        path: PathBuf,
+        /// The underlying I/O or decode error.
+        error: io::Error,
+    },
+
+    /// The provided kernel config contains a malformed line.
+    #[error("malformed kernel config line: {line}")]
+    MalformedLine {
+        /// The malformed line.
+        line: String,
+    },
+
+    /// The provided kernel config is not valid UTF-8.
+    #[error("kernel config is not valid UTF-8")]
+    InvalidUtf8(#[from] std::str::Utf8Error),
+}
+
+impl KConfig {
+    fn with_raw_config(raw_config: Option<&str>) -> Result<Self, KConfigError> {
+        Ok(Self {
+            data: compute_kconfig_definition(&FEATURES, raw_config)?,
+        })
+    }
+
+    /// Creates a new `KConfig` by reading kernel configuration from the system.
+    ///
+    /// This will attempt to read `/boot/config-<release>` first, then `/proc/config.gz` when
+    /// gzip support is enabled, and populate the configuration with kernel version and feature
+    /// detection information.
+    pub fn current() -> Result<Self, KConfigError> {
+        let raw_config = read_kconfig()?;
+        Self::with_raw_config(Some(&raw_config))
+    }
+
+    /// Creates a new `KConfig` from kernel configuration data provided by the caller.
+    ///
+    /// The provided bytes should contain the textual contents of a kernel config file.
+    /// This still populates the synthetic libbpf-compatible externs from local feature
+    /// detection and kernel version discovery.
+    pub fn parse(data: &[u8]) -> Result<Self, KConfigError> {
+        Self::with_raw_config(Some(std::str::from_utf8(data)?))
+    }
+
+    /// Returns a reference to the underlying configuration data.
+    pub(crate) const fn as_map(&self) -> &HashMap<String, Vec<u8>> {
+        &self.data
+    }
+}
+
+#[derive(Debug)]
+enum KConfigMode {
+    Auto,
+    Disabled,
+    Explicit(KConfig),
+}
+
+fn resolve_kconfig(
+    mode: &KConfigMode,
+    requires_real_kconfig: bool,
+    load_current: impl FnOnce() -> Result<KConfig, KConfigError>,
+) -> Result<Option<KConfig>, KConfigError> {
+    match mode {
+        KConfigMode::Auto => {
+            if requires_real_kconfig {
+                return load_current().map(Some);
+            }
+            Ok(Some(KConfig::with_raw_config(None)?))
+        }
+        KConfigMode::Disabled => Ok(None),
+        KConfigMode::Explicit(kconfig) => Ok(Some(kconfig.clone())),
+    }
+}
+
 fn detect_features() -> Features {
     let btf = is_btf_supported().then(|| {
         BtfFeatures::new(
@@ -81,6 +192,7 @@ fn detect_features() -> Features {
         is_bpf_cookie_supported(),
         is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP),
         is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_DEVMAP),
+        is_bpf_syscall_wrapper_supported(),
         btf,
     );
     debug!("BPF Feature Detection: {f:#?}");
@@ -90,6 +202,202 @@ fn detect_features() -> Features {
 /// Returns a reference to the detected BPF features.
 pub fn features() -> &'static Features {
     &FEATURES
+}
+
+fn compute_kconfig_definition(
+    features: &Features,
+    raw_config: Option<&str>,
+) -> Result<HashMap<String, Vec<u8>>, KConfigError> {
+    let mut result = HashMap::new();
+
+    if let Ok(version_code) = KernelVersion::current().map(KernelVersion::code) {
+        result.insert(
+            "LINUX_KERNEL_VERSION".to_string(),
+            version_code.to_ne_bytes().to_vec(),
+        );
+    }
+
+    // Mirror libbpf's virtual __kconfig externs, see
+    // https://github.com/libbpf/libbpf/blob/libbpf-1.6.2/src/libbpf.c#L8465-L8468
+    result.insert(
+        "LINUX_HAS_BPF_COOKIE".to_string(),
+        u64::from(features.bpf_cookie()).to_ne_bytes().to_vec(),
+    );
+    result.insert(
+        "LINUX_HAS_SYSCALL_WRAPPER".to_string(),
+        u64::from(features.bpf_syscall_wrapper())
+            .to_ne_bytes()
+            .to_vec(),
+    );
+
+    if let Some(raw_config) = raw_config {
+        parse_kconfig_values(raw_config, &mut result)?;
+    }
+
+    Ok(result)
+}
+
+fn parse_kconfig_values(
+    raw_config: &str,
+    result: &mut HashMap<String, Vec<u8>>,
+) -> Result<(), KConfigError> {
+    for line in raw_config.lines() {
+        if !line.starts_with("CONFIG_") {
+            continue;
+        }
+
+        let Some((key, raw_value)) = line.split_once('=') else {
+            return Err(KConfigError::MalformedLine {
+                line: line.to_owned(),
+            });
+        };
+
+        let value = match raw_value {
+            "n" | "y" | "m" => raw_value.as_bytes().to_vec(),
+            _ if raw_value.starts_with('"') => {
+                if raw_value.len() < 2 || !raw_value.ends_with('"') {
+                    return Err(KConfigError::MalformedLine {
+                        line: line.to_owned(),
+                    });
+                }
+
+                let raw_value = &raw_value[1..raw_value.len() - 1];
+                raw_value
+                    .as_bytes()
+                    .iter()
+                    .chain(std::iter::once(&0u8))
+                    .copied()
+                    .collect()
+            }
+            _ => {
+                if let Some(value) = parse_kconfig_numeric(raw_value) {
+                    value.to_vec()
+                } else {
+                    return Err(KConfigError::MalformedLine {
+                        line: line.to_owned(),
+                    });
+                }
+            }
+        };
+
+        result.insert(key.to_string(), value);
+    }
+
+    Ok(())
+}
+
+fn parse_kconfig_numeric(raw_value: &str) -> Option<[u8; 8]> {
+    if raw_value.starts_with('-') {
+        return raw_value.parse::<i64>().ok().map(i64::to_ne_bytes);
+    }
+
+    if let Some(value) = raw_value
+        .strip_prefix("0x")
+        .or_else(|| raw_value.strip_prefix("0X"))
+    {
+        u64::from_str_radix(value, 16).ok().map(u64::to_ne_bytes)
+    } else {
+        raw_value.parse::<u64>().ok().map(u64::to_ne_bytes)
+    }
+}
+
+fn read_kconfig() -> Result<String, KConfigError> {
+    let release = kernel_release().ok_or(KConfigError::NotFound)?;
+    let mut boot_config_name = OsString::from("config-");
+    boot_config_name.push(release);
+    let boot_config_path = PathBuf::from("/boot").join(boot_config_name);
+
+    #[cfg(feature = "flate2")]
+    let proc_config_path = Some(Path::new("/proc/config.gz"));
+    #[cfg(not(feature = "flate2"))]
+    let proc_config_path = None;
+
+    read_kconfig_from_paths(proc_config_path, Some(&boot_config_path))
+}
+
+fn read_kconfig_from_paths(
+    proc_config_path: Option<&Path>,
+    boot_config_path: Option<&Path>,
+) -> Result<String, KConfigError> {
+    let mut read_error = None;
+
+    if let Some(config_path) = boot_config_path {
+        if config_path.exists() {
+            debug!("Found kernel config at {}", config_path.to_string_lossy());
+            match read_kconfig_file(config_path, false) {
+                Ok(config) => return Ok(config),
+                Err(err @ KConfigError::Read { .. }) => {
+                    read_error.get_or_insert(err);
+                }
+                Err(err) => return Err(err),
+            }
+        }
+    }
+
+    #[cfg(not(feature = "flate2"))]
+    let _: Option<&Path> = proc_config_path;
+
+    #[cfg(feature = "flate2")]
+    if let Some(config_path) = proc_config_path {
+        if config_path.exists() {
+            debug!("Found kernel config at {}", config_path.to_string_lossy());
+            match read_kconfig_file(config_path, true) {
+                Ok(config) => return Ok(config),
+                Err(err @ KConfigError::Read { .. }) => {
+                    read_error.get_or_insert(err);
+                }
+                Err(err) => return Err(err),
+            }
+        }
+    }
+
+    Err(read_error.unwrap_or(KConfigError::NotFound))
+}
+
+#[cfg(test)]
+fn kernel_release() -> Option<OsString> {
+    std::env::var_os("AYA_TEST_KERNEL_RELEASE").or_else(|| Some(OsString::from("unknown")))
+}
+
+#[cfg(not(test))]
+fn kernel_release() -> Option<OsString> {
+    use std::{ffi::CStr, os::unix::ffi::OsStringExt as _};
+
+    unsafe {
+        let mut v = std::mem::zeroed::<libc::utsname>();
+        if libc::uname(std::ptr::from_mut(&mut v)) != 0 {
+            return None;
+        }
+
+        let release = CStr::from_ptr(v.release.as_ptr());
+        Some(OsString::from_vec(release.to_bytes().to_vec()))
+    }
+}
+
+fn read_kconfig_file(path: &Path, gzip: bool) -> Result<String, KConfigError> {
+    let res = if gzip {
+        #[cfg(feature = "flate2")]
+        {
+            let mut output = String::new();
+            File::open(path).map(GzDecoder::new).and_then(|mut file| {
+                file.read_to_string(&mut output)?;
+                Ok(output)
+            })
+        }
+        #[cfg(not(feature = "flate2"))]
+        {
+            return Err(KConfigError::NotFound);
+        }
+    } else {
+        fs::read_to_string(path)
+    };
+
+    let output = res.map_err(|error| KConfigError::Read {
+        path: path.to_owned(),
+        error,
+    })?;
+    KConfig::parse(output.as_bytes())?;
+    Ok(output)
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -128,6 +436,7 @@ pub struct EbpfLoader<'a> {
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
     allow_unsupported_maps: bool,
+    kconfig: KConfigMode,
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -167,7 +476,33 @@ impl<'a> EbpfLoader<'a> {
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
             allow_unsupported_maps: false,
+            kconfig: KConfigMode::Auto,
         }
+    }
+
+    /// Sets the kernel configuration data for extern variables.
+    ///
+    /// This allows you to provide kernel configuration values that will be used to patch
+    /// extern variables in eBPF programs. If not set, the loader will use
+    /// [`KConfig::current`]. Pass `None` to disable kconfig patching.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use aya::{EbpfLoader, KConfig};
+    ///
+    /// let kconfig = KConfig::current()?;
+    /// let mut loader = EbpfLoader::new();
+    /// let bpf = loader.kconfig(Some(kconfig)).load_file("file.o")?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    #[must_use]
+    pub fn kconfig(&mut self, kconfig: Option<KConfig>) -> &mut Self {
+        self.kconfig = match kconfig {
+            Some(kconfig) => KConfigMode::Explicit(kconfig),
+            None => KConfigMode::Disabled,
+        };
+        self
     }
 
     /// Sets the target [BTF](Btf) info.
@@ -425,9 +760,16 @@ impl<'a> EbpfLoader<'a> {
             verifier_log_level,
             allow_unsupported_maps,
             map_pin_path_by_name,
+            kconfig,
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
+        let requires_real_kconfig = obj.has_config_kconfig_externs()?;
+        let kconfig = resolve_kconfig(kconfig, requires_real_kconfig, KConfig::current)
+            .map_err(EbpfError::KConfigError)?;
+        if let Some(kconfig) = kconfig.as_ref() {
+            obj.prepare_kconfig_section(kconfig.as_map())?;
+        }
 
         let btf_fd = if let Some(features) = &FEATURES.btf() {
             if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
@@ -883,6 +1225,170 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn test_resolve_kconfig_auto_uses_current() {
+        let kconfig = super::KConfig::parse(b"CONFIG_TEST=1").unwrap();
+
+        let resolved =
+            super::resolve_kconfig(&super::KConfigMode::Auto, true, || Ok(kconfig.clone()))
+                .unwrap();
+
+        assert_eq!(resolved.unwrap().as_map(), kconfig.as_map());
+    }
+
+    #[test]
+    fn test_resolve_kconfig_auto_uses_virtuals_only_when_real_kconfig_is_not_required() {
+        let resolved = super::resolve_kconfig(&super::KConfigMode::Auto, false, || {
+            Err(super::KConfigError::NotFound)
+        })
+        .unwrap();
+
+        let resolved = resolved.unwrap();
+        let map = resolved.as_map();
+        assert!(map.contains_key("LINUX_KERNEL_VERSION"));
+        assert!(map.contains_key("LINUX_HAS_BPF_COOKIE"));
+        assert!(map.contains_key("LINUX_HAS_SYSCALL_WRAPPER"));
+        assert!(!map.contains_key("CONFIG_TEST"));
+    }
+
+    #[test]
+    fn test_resolve_kconfig_disabled_skips_current() {
+        let resolved = super::resolve_kconfig(&super::KConfigMode::Disabled, true, || {
+            panic!("current kernel config should not be loaded")
+        })
+        .unwrap();
+
+        assert!(resolved.is_none());
+    }
+
+    #[test]
+    fn test_resolve_kconfig_explicit_skips_current() {
+        let kconfig = super::KConfig::parse(b"CONFIG_TEST=1").unwrap();
+
+        let resolved =
+            super::resolve_kconfig(&super::KConfigMode::Explicit(kconfig.clone()), true, || {
+                panic!("current kernel config should not be loaded")
+            })
+            .unwrap();
+
+        assert_eq!(resolved.unwrap().as_map(), kconfig.as_map());
+    }
+
+    #[test]
+    fn test_resolve_kconfig_auto_propagates_errors_when_config_is_needed() {
+        let err = super::resolve_kconfig(&super::KConfigMode::Auto, true, || {
+            Err(super::KConfigError::NotFound)
+        })
+        .unwrap_err();
+
+        assert!(matches!(err, super::KConfigError::NotFound));
+    }
+
+    #[test]
+    #[cfg(feature = "flate2")]
+    #[cfg_attr(
+        miri,
+        ignore = "tempfile uses filesystem operations blocked by Miri isolation"
+    )]
+    fn test_read_kconfig_prefers_boot_config_over_proc_config() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let proc_config_path = tempdir.path().join("config.gz");
+        let boot_config_path = tempdir.path().join("config");
+
+        write_gzip_config(&proc_config_path, "CONFIG_PROC=y\n");
+        std::fs::write(&boot_config_path, b"CONFIG_BOOT=y\n").unwrap();
+
+        let config =
+            super::read_kconfig_from_paths(Some(&proc_config_path), Some(&boot_config_path))
+                .unwrap();
+
+        assert_eq!(config, "CONFIG_BOOT=y\n");
+    }
+
+    #[test]
+    #[cfg(feature = "flate2")]
+    #[cfg_attr(
+        miri,
+        ignore = "tempfile uses filesystem operations blocked by Miri isolation"
+    )]
+    fn test_read_kconfig_falls_back_to_proc_when_boot_config_read_fails() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let proc_config_path = tempdir.path().join("config.gz");
+        let boot_config_path = tempdir.path().join("config");
+
+        std::fs::create_dir(&boot_config_path).unwrap();
+        write_gzip_config(&proc_config_path, "CONFIG_PROC=y\n");
+
+        let config =
+            super::read_kconfig_from_paths(Some(&proc_config_path), Some(&boot_config_path))
+                .unwrap();
+
+        assert_eq!(config, "CONFIG_PROC=y\n");
+    }
+
+    #[test]
+    #[cfg_attr(
+        miri,
+        ignore = "tempfile uses filesystem operations blocked by Miri isolation"
+    )]
+    fn test_read_kconfig_returns_read_error_when_no_candidate_succeeds() {
+        let tempdir = tempfile::tempdir().unwrap();
+        let boot_config_path = tempdir.path().join("config");
+        std::fs::create_dir(&boot_config_path).unwrap();
+
+        let err = super::read_kconfig_from_paths(None, Some(&boot_config_path)).unwrap_err();
+
+        assert!(matches!(err, super::KConfigError::Read { .. }));
+    }
+
+    #[test]
+    fn test_parse_kconfig_ignores_commented_out_keys() {
+        let kconfig =
+            super::KConfig::parse(b"# CONFIG_DISABLED is not set\nCONFIG_ENABLED=y\n").unwrap();
+
+        let map = kconfig.as_map();
+        assert!(!map.contains_key("CONFIG_DISABLED"));
+        assert_eq!(map["CONFIG_ENABLED"], b"y");
+    }
+
+    #[test]
+    fn test_parse_kconfig_preserves_tristate_scalars() {
+        let kconfig =
+            super::KConfig::parse(b"CONFIG_NO=n\nCONFIG_YES=y\nCONFIG_MODULE=m\n").unwrap();
+
+        let map = kconfig.as_map();
+        assert_eq!(map["CONFIG_NO"], b"n");
+        assert_eq!(map["CONFIG_YES"], b"y");
+        assert_eq!(map["CONFIG_MODULE"], b"m");
+    }
+
+    #[test]
+    fn test_parse_kconfig_rejects_malformed_lines() {
+        let err = super::KConfig::parse(b"CONFIG_BROKEN\n").unwrap_err();
+        assert!(matches!(
+            err,
+            super::KConfigError::MalformedLine { line } if line == "CONFIG_BROKEN"
+        ));
+
+        let err = super::KConfig::parse(b"CONFIG_BROKEN=\"unterminated\n").unwrap_err();
+        assert!(matches!(
+            err,
+            super::KConfigError::MalformedLine { line } if line == "CONFIG_BROKEN=\"unterminated"
+        ));
+    }
+
+    #[cfg(feature = "flate2")]
+    fn write_gzip_config(path: &std::path::Path, contents: &str) {
+        use std::io::Write as _;
+
+        use flate2::{Compression, write::GzEncoder};
+
+        let file = std::fs::File::create(path).unwrap();
+        let mut file = GzEncoder::new(file, Compression::default());
+        file.write_all(contents.as_bytes()).unwrap();
+        file.finish().unwrap();
+    }
 }
 
 impl Default for EbpfLoader<'_> {
@@ -1170,6 +1676,10 @@ pub enum EbpfError {
     /// Error parsing BTF object
     #[error("BTF error: {0}")]
     BtfError(#[from] BtfError),
+
+    /// Error reading kernel config data
+    #[error("kernel config error: {0}")]
+    KConfigError(KConfigError),
 
     /// Error performing relocations
     #[error("error relocating function")]
