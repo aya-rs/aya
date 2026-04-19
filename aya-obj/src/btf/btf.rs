@@ -898,6 +898,8 @@ enum KConfigDeclaredType {
 }
 
 impl Object {
+    // Clone the modifier chain above a resolved leaf type so one __kconfig VAR can
+    // point at a per-symbol replacement without mutating a shared BTF type.
     fn clone_kconfig_type_chain_with_replacement(
         obj_btf: &mut Btf,
         type_id: u32,
@@ -968,15 +970,6 @@ impl Object {
         };
 
         Ok(obj_btf.add_type(new_type))
-    }
-
-    fn is_supported_kconfig_symbol_name(symbol_name: &str, symbol_is_weak: bool) -> bool {
-        symbol_name.starts_with("CONFIG_")
-            || matches!(
-                symbol_name,
-                "LINUX_KERNEL_VERSION" | "LINUX_HAS_BPF_COOKIE" | "LINUX_HAS_SYSCALL_WRAPPER"
-            )
-            || (symbol_is_weak && symbol_name.starts_with("LINUX_"))
     }
 
     fn classify_kconfig_type(
@@ -1116,11 +1109,16 @@ impl Object {
         let type_size = obj_btf.type_size(var.btf_type)?;
         let type_align = obj_btf.type_align(var.btf_type)? as u64;
         let resolved_type = obj_btf.type_by_id(obj_btf.resolve_type(var.btf_type)?)?;
-        let Some(declared_type) =
-            Self::is_supported_kconfig_symbol_name(symbol_name, symbol_is_weak)
-                .then(|| Self::classify_kconfig_type(obj_btf, resolved_type))
-                .transpose()?
-                .flatten()
+        let supported_symbol_name = symbol_name.starts_with("CONFIG_")
+            || matches!(
+                symbol_name,
+                "LINUX_KERNEL_VERSION" | "LINUX_HAS_BPF_COOKIE" | "LINUX_HAS_SYSCALL_WRAPPER"
+            )
+            || (symbol_is_weak && symbol_name.starts_with("LINUX_"));
+        let Some(declared_type) = supported_symbol_name
+            .then(|| Self::classify_kconfig_type(obj_btf, resolved_type))
+            .transpose()?
+            .flatten()
         else {
             return Err(BtfError::InvalidExternalSymbol {
                 symbol_name: symbol_name.into(),
