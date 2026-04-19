@@ -70,6 +70,8 @@ bpf_file!(
 );
 
 #[cfg(test)]
+mod netlink;
+#[cfg(test)]
 mod tests;
 #[cfg(test)]
 mod utils;
