@@ -10,6 +10,7 @@ bpf_file!(
     EXT => "ext.bpf.o",
     ITER_TASK => "iter.bpf.o",
     MAIN => "main.bpf.o",
+    KCONFIG => "kconfig.bpf.o",
     RINGBUF_BTF => "ringbuf-btf.bpf.o",
     KSYMS => "ksyms.bpf.o",
     KSYMS_STRONG => "ksyms_strong.bpf.o",
