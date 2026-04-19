@@ -19,21 +19,21 @@ extern crate ebpf_panic;
 static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);
 
 #[map]
-static PID: Array<u32> = Array::with_max_entries(1, 0);
+static TID: Array<u32> = Array::with_max_entries(1, 0);
 
 #[fentry]
-fn test_dentry_open(ctx: FEntryContext) -> u32 {
-    match try_dentry_open(ctx) {
+fn test_vfs_open(ctx: FEntryContext) -> u32 {
+    match try_vfs_open(ctx) {
         Ok(_) => 0,
         Err(_) => 1,
     }
 }
 
-fn try_dentry_open(ctx: FEntryContext) -> Result<(), c_long> {
-    let target_pid = PID.get(0).copied().unwrap_or(0);
-    if target_pid != 0 {
-        let pid = (bpf_get_current_pid_tgid() >> 32) as u32;
-        if pid != target_pid {
+fn try_vfs_open(ctx: FEntryContext) -> Result<(), c_long> {
+    let target_tid = TID.get(0).copied().unwrap_or(0);
+    if target_tid != 0 {
+        let tid = bpf_get_current_pid_tgid() as u32;
+        if tid != target_tid {
             return Ok(());
         }
     }
@@ -45,8 +45,18 @@ fn try_dentry_open(ctx: FEntryContext) -> Result<(), c_long> {
 
     if let Some(result) = RESULT.get_ptr_mut(0) {
         let result = unsafe { &mut *result };
-        let data = unsafe { bpf_d_path(pathptr, &mut result.buf)? };
-        result.len = data.len();
+        result.seen = result.seen.saturating_add(1);
+
+        match unsafe { bpf_d_path(pathptr, &mut result.buf) } {
+            Ok(data) => {
+                result.len = data.len();
+                result.status = 0;
+            }
+            Err(err) => {
+                result.len = 0;
+                result.status = err as i64;
+            }
+        }
     }
 
     Ok(())

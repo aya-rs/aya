@@ -15,8 +15,9 @@ fn bpf_d_path_basic() {
     let mut bpf = Ebpf::load(crate::BPF_D_PATH).unwrap();
 
     {
-        let mut pid_map = Array::<_, u32>::try_from(bpf.map_mut("PID").unwrap()).unwrap();
-        pid_map.set(0, std::process::id(), 0).unwrap();
+        let mut tid_map = Array::<_, u32>::try_from(bpf.map_mut("TID").unwrap()).unwrap();
+        let tid = u32::try_from(nix::unistd::gettid().as_raw()).unwrap();
+        tid_map.set(0, tid, 0).unwrap();
     }
     {
         let mut result_map =
@@ -27,6 +28,8 @@ fn bpf_d_path_basic() {
                 TestResult {
                     buf: [0; integration_common::bpf_d_path::PATH_BUF_LEN],
                     len: 0,
+                    seen: 0,
+                    status: 0,
                 },
                 0,
             )
@@ -34,11 +37,11 @@ fn bpf_d_path_basic() {
     }
 
     let prog: &mut FEntry = bpf
-        .program_mut("test_dentry_open")
+        .program_mut("test_vfs_open")
         .unwrap()
         .try_into()
         .unwrap();
-    prog.load("dentry_open", &btf).unwrap();
+    prog.load("vfs_open", &btf).unwrap();
     let _link_id = {
         let result = prog.attach();
         if !is_program_supported(ProgramType::Tracing).unwrap() {
@@ -56,11 +59,22 @@ fn bpf_d_path_basic() {
 
     let result = get_result(&bpf);
 
+    assert!(
+        result.seen > 0,
+        "The BPF program did not observe any matching vfs_open() call for this test thread (tid {}).",
+        nix::unistd::gettid()
+    );
+    assert_eq!(
+        result.status, 0,
+        "bpf_d_path failed in the BPF program with status {}",
+        result.status
+    );
+
     let path_len = result.len;
     assert!(
         path_len > 0,
-        "Path length should be greater than 0. If it's 0, the BPF program might not have been triggered for this PID ({}) by File::open() or bpf_d_path failed.",
-        std::process::id()
+        "Path length should be greater than 0 after a successful bpf_d_path call for tid {}.",
+        nix::unistd::gettid(),
     );
     assert!(
         path_len <= result.buf.len(),

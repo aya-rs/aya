@@ -152,6 +152,8 @@ pub mod bpf_d_path {
     pub struct TestResult {
         pub buf: [u8; PATH_BUF_LEN],
         pub len: usize,
+        pub seen: u32,
+        pub status: i64,
     }
 
     #[cfg(feature = "user")]
