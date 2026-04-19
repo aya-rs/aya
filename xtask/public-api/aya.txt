@@ -941,6 +941,9 @@ pub aya::maps::MapError::InvalidName::name: alloc::string::String
 pub aya::maps::MapError::InvalidValueSize
 pub aya::maps::MapError::InvalidValueSize::expected: usize
 pub aya::maps::MapError::InvalidValueSize::size: usize
+pub aya::maps::MapError::InvalidValueStride
+pub aya::maps::MapError::InvalidValueStride::size: usize
+pub aya::maps::MapError::InvalidValueStride::stride: usize
 pub aya::maps::MapError::IoError(std::io::error::Error)
 pub aya::maps::MapError::KeyNotFound
 pub aya::maps::MapError::OutOfBounds
@@ -955,6 +958,9 @@ pub aya::maps::MapError::SyscallError(aya::sys::SyscallError)
 pub aya::maps::MapError::Unsupported
 pub aya::maps::MapError::Unsupported::map_type: aya_obj::generated::linux_bindings_x86_64::bpf_map_type
 pub aya::maps::MapError::Unsupported::name: alloc::string::String
+pub aya::maps::MapError::UnsupportedMapFlags
+pub aya::maps::MapError::UnsupportedMapFlags::flags: u32
+pub aya::maps::MapError::UnsupportedMapFlags::reason: &'static str
 impl core::convert::From<aya::maps::MapError> for aya::EbpfError
 pub fn aya::EbpfError::from(source: aya::maps::MapError) -> Self
 impl core::convert::From<aya::maps::MapError> for aya::maps::xdp::XdpMapError
