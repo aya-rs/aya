@@ -7049,6 +7049,7 @@ pub aya::EbpfError::BtfRelocationError(aya_obj::btf::relocation::BtfRelocationEr
 pub aya::EbpfError::FileError
 pub aya::EbpfError::FileError::error: std::io::error::Error
 pub aya::EbpfError::FileError::path: std::path::PathBuf
+pub aya::EbpfError::KConfigError(aya::KConfigError)
 pub aya::EbpfError::MapError(aya::maps::MapError)
 pub aya::EbpfError::NoBTF
 pub aya::EbpfError::ParseError(aya_obj::obj::ParseError)
@@ -7081,6 +7082,29 @@ impl core::marker::Unpin for aya::EbpfError
 impl core::marker::UnsafeUnpin for aya::EbpfError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::EbpfError
 impl !core::panic::unwind_safe::UnwindSafe for aya::EbpfError
+pub enum aya::KConfigError
+pub aya::KConfigError::InvalidUtf8(core::str::error::Utf8Error)
+pub aya::KConfigError::MalformedLine
+pub aya::KConfigError::MalformedLine::line: alloc::string::String
+pub aya::KConfigError::NotFound
+pub aya::KConfigError::Read
+pub aya::KConfigError::Read::error: std::io::error::Error
+pub aya::KConfigError::Read::path: std::path::PathBuf
+impl core::convert::From<core::str::error::Utf8Error> for aya::KConfigError
+pub fn aya::KConfigError::from(source: core::str::error::Utf8Error) -> Self
+impl core::error::Error for aya::KConfigError
+pub fn aya::KConfigError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::KConfigError
+pub fn aya::KConfigError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::KConfigError
+pub fn aya::KConfigError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::KConfigError
+impl core::marker::Send for aya::KConfigError
+impl core::marker::Sync for aya::KConfigError
+impl core::marker::Unpin for aya::KConfigError
+impl core::marker::UnsafeUnpin for aya::KConfigError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya::KConfigError
+impl !core::panic::unwind_safe::UnwindSafe for aya::KConfigError
 pub struct aya::Ebpf
 impl aya::Ebpf
 pub fn aya::Ebpf::load(data: &[u8]) -> core::result::Result<Self, aya::EbpfError>
@@ -7110,6 +7134,7 @@ pub const fn aya::EbpfLoader<'a>::allow_unsupported_maps(&mut self) -> &mut Self
 pub fn aya::EbpfLoader<'a>::btf(&mut self, btf: core::option::Option<&'a aya_obj::btf::btf::Btf>) -> &mut Self
 pub fn aya::EbpfLoader<'a>::default_map_pin_directory<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> &mut Self
 pub fn aya::EbpfLoader<'a>::extension(&mut self, name: &'a str) -> &mut Self
+pub fn aya::EbpfLoader<'a>::kconfig(&mut self, kconfig: core::option::Option<aya::KConfig>) -> &mut Self
 pub fn aya::EbpfLoader<'a>::load(&mut self, data: &[u8]) -> core::result::Result<aya::Ebpf, aya::EbpfError>
 pub fn aya::EbpfLoader<'a>::load_file<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<aya::Ebpf, aya::EbpfError>
 pub fn aya::EbpfLoader<'a>::map_max_entries(&mut self, name: &'a str, size: u32) -> &mut Self
@@ -7142,6 +7167,21 @@ impl<'a> core::marker::Unpin for aya::GlobalData<'a>
 impl<'a> core::marker::UnsafeUnpin for aya::GlobalData<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::GlobalData<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya::GlobalData<'a>
+pub struct aya::KConfig
+impl aya::KConfig
+pub fn aya::KConfig::current() -> core::result::Result<Self, aya::KConfigError>
+pub fn aya::KConfig::parse(data: &[u8]) -> core::result::Result<Self, aya::KConfigError>
+impl core::clone::Clone for aya::KConfig
+pub fn aya::KConfig::clone(&self) -> aya::KConfig
+impl core::fmt::Debug for aya::KConfig
+pub fn aya::KConfig::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::KConfig
+impl core::marker::Send for aya::KConfig
+impl core::marker::Sync for aya::KConfig
+impl core::marker::Unpin for aya::KConfig
+impl core::marker::UnsafeUnpin for aya::KConfig
+impl core::panic::unwind_safe::RefUnwindSafe for aya::KConfig
+impl core::panic::unwind_safe::UnwindSafe for aya::KConfig
 pub struct aya::VerifierLogLevel(_)
 impl aya::VerifierLogLevel
 pub const aya::VerifierLogLevel::DEBUG: Self
