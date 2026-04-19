@@ -44,6 +44,19 @@ pub mod bpf_probe_read {
     unsafe impl aya::Pod for TestResult {}
 }
 
+pub mod kconfig {
+    pub const CONFIG_BPF_INDEX: u32 = 0;
+    pub const PANIC_TIMEOUT_INDEX: u32 = 1;
+    pub const DEFAULT_HUNG_TASK_TIMEOUT_INDEX: u32 = 2;
+    pub const BPF_JIT_INDEX: u32 = 3;
+    pub const DEFAULT_HOSTNAME_INDEX: u32 = 4;
+    pub const DEFAULT_HOSTNAME_LEN: usize = 64;
+    pub const FIRST_STRING_INDEX: u32 = DEFAULT_HOSTNAME_INDEX + DEFAULT_HOSTNAME_LEN as u32;
+    pub const FIRST_STRING_LEN: usize = 2;
+    pub const SECOND_STRING_INDEX: u32 = FIRST_STRING_INDEX + FIRST_STRING_LEN as u32;
+    pub const SECOND_STRING_LEN: usize = 6;
+}
+
 pub mod log {
     pub const BUF_LEN: usize = 1024;
 
