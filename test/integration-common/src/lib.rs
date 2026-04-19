@@ -40,6 +40,18 @@ pub mod kconfig {
     pub const FIRST_STRING_LEN: usize = 2;
     pub const SECOND_STRING_INDEX: u32 = FIRST_STRING_INDEX + FIRST_STRING_LEN as u32;
     pub const SECOND_STRING_LEN: usize = 6;
+    pub const OPTIONAL_INDEX: u32 = SECOND_STRING_INDEX + SECOND_STRING_LEN as u32;
+    pub const BYTE_INDEX: u32 = OPTIONAL_INDEX + 1;
+    pub const TRIMMED_INDEX: u32 = BYTE_INDEX + 1;
+    pub const PADDED_INDEX: u32 = TRIMMED_INDEX + 1;
+    pub const BOOL_VALUE_INDEX: u32 = PADDED_INDEX + 1;
+    pub const CHAR_VALUE_INDEX: u32 = BOOL_VALUE_INDEX + 1;
+    pub const TRISTATE_ENUM_INDEX: u32 = CHAR_VALUE_INDEX + 1;
+    pub const FUTURE_LINUX_INDEX: u32 = TRISTATE_ENUM_INDEX + 1;
+    pub const TRUNCATED_STRING_INDEX: u32 = FUTURE_LINUX_INDEX + 1;
+    pub const TRUNCATED_STRING_LEN: usize = 4;
+    pub const OPTIONAL_STRING_INDEX: u32 = TRUNCATED_STRING_INDEX + TRUNCATED_STRING_LEN as u32;
+    pub const OPTIONAL_STRING_LEN: usize = 1;
 }
 
 pub mod log {

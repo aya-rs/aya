@@ -12,6 +12,7 @@ bpf_file!(
     MAIN => "main.bpf.o",
     MULTIMAP_BTF => "multimap-btf.bpf.o",
     KCONFIG => "kconfig.bpf.o",
+    KCONFIG_CURRENT => "kconfig_current.bpf.o",
     RINGBUF_BTF => "ringbuf-btf.bpf.o",
 
     ENUM_SIGNED_32_RELOC_BPF => "enum_signed_32_reloc.bpf.o",

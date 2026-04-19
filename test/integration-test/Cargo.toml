@@ -22,7 +22,6 @@ assert_matches = { workspace = true }
 aya-log = { path = "../../aya-log", version = "^0.2.2", default-features = false }
 aya-obj = { path = "../../aya-obj", version = "^0.2.2", default-features = false }
 epoll = { workspace = true }
-flate2 = { workspace = true, features = ["rust_backend"] }
 futures = { workspace = true, features = ["alloc"] }
 integration-common = { path = "../integration-common", features = ["user"] }
 libbpf-rs = { workspace = true, features = ["static", "vendored"] }

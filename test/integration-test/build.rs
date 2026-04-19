@@ -94,6 +94,7 @@ fn main() -> Result<()> {
         ("text_64_64_reloc.c", false),
         ("variables_reloc.bpf.c", false),
         ("kconfig.bpf.c", false),
+        ("kconfig_current.bpf.c", false),
     ];
     const C_BPF_HEADERS: &[&str] = &["reloc.h", "struct_with_scalars.h"];
 
