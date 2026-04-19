@@ -409,6 +409,30 @@ impl<T, V> core::marker::UnsafeUnpin for aya::maps::sk_storage::SkStorage<T, V> 
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::sk_storage::SkStorage<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::sk_storage::SkStorage<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 pub mod aya::maps::sock
+pub struct aya::maps::sock::ReusePortSockArray<T>
+impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::ReusePortSockArray<T>
+pub fn aya::maps::ReusePortSockArray<T>::indices(&self) -> aya::maps::MapKeys<'_, u32>
+impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::ReusePortSockArray<T>
+pub fn aya::maps::ReusePortSockArray<T>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::ReusePortSockArray<T>
+pub fn aya::maps::ReusePortSockArray<T>::clear_index(&mut self, index: &u32) -> core::result::Result<(), aya::maps::MapError>
+pub fn aya::maps::ReusePortSockArray<T>::set<I: std::os::fd::raw::AsRawFd>(&mut self, index: u32, socket: &I, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ReusePortSockArray<aya::maps::MapData>
+pub type aya::maps::ReusePortSockArray<aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::ReusePortSockArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::ReusePortSockArray<&'a aya::maps::MapData>
+pub type aya::maps::ReusePortSockArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::ReusePortSockArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::ReusePortSockArray<&'a mut aya::maps::MapData>
+pub type aya::maps::ReusePortSockArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::ReusePortSockArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T> core::marker::Freeze for aya::maps::ReusePortSockArray<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for aya::maps::ReusePortSockArray<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya::maps::ReusePortSockArray<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for aya::maps::ReusePortSockArray<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::ReusePortSockArray<T> where T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ReusePortSockArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::ReusePortSockArray<T> where T: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::sock::SockHash<T, K>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod> aya::maps::SockHash<T, K>
 pub fn aya::maps::SockHash<T, K>::fd(&self) -> &aya::maps::sock::SockMapFd
@@ -701,6 +725,7 @@ pub aya::maps::Map::PerCpuLruHashMap(aya::maps::MapData)
 pub aya::maps::Map::PerfEventArray(aya::maps::MapData)
 pub aya::maps::Map::ProgramArray(aya::maps::MapData)
 pub aya::maps::Map::Queue(aya::maps::MapData)
+pub aya::maps::Map::ReusePortSockArray(aya::maps::MapData)
 pub aya::maps::Map::RingBuf(aya::maps::MapData)
 pub aya::maps::Map::SkStorage(aya::maps::MapData)
 pub aya::maps::Map::SockHash(aya::maps::MapData)
@@ -724,6 +749,9 @@ pub fn aya::maps::DevMapHash<aya::maps::MapData>::try_from(map: aya::maps::Map) 
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ProgramArray<aya::maps::MapData>
 pub type aya::maps::ProgramArray<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::ProgramArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ReusePortSockArray<aya::maps::MapData>
+pub type aya::maps::ReusePortSockArray<aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::ReusePortSockArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::SockMap<aya::maps::MapData>
 pub type aya::maps::SockMap<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::SockMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -813,6 +841,9 @@ pub fn aya::maps::DevMapHash<&'a aya::maps::MapData>::try_from(map: &'a aya::map
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::ProgramArray<&'a aya::maps::MapData>
 pub type aya::maps::ProgramArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::ProgramArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::ReusePortSockArray<&'a aya::maps::MapData>
+pub type aya::maps::ReusePortSockArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::ReusePortSockArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::SockMap<&'a aya::maps::MapData>
 pub type aya::maps::SockMap<&'a aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::SockMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -840,6 +871,9 @@ pub fn aya::maps::DevMapHash<&'a mut aya::maps::MapData>::try_from(map: &'a mut 
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::ProgramArray<&'a mut aya::maps::MapData>
 pub type aya::maps::ProgramArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::ProgramArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::ReusePortSockArray<&'a mut aya::maps::MapData>
+pub type aya::maps::ReusePortSockArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::ReusePortSockArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::SockMap<&'a mut aya::maps::MapData>
 pub type aya::maps::SockMap<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::SockMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1428,6 +1462,30 @@ impl<T, V> core::marker::Unpin for aya::maps::queue::Queue<T, V> where T: core::
 impl<T, V> core::marker::UnsafeUnpin for aya::maps::queue::Queue<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::queue::Queue<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::queue::Queue<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+pub struct aya::maps::ReusePortSockArray<T>
+impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::ReusePortSockArray<T>
+pub fn aya::maps::ReusePortSockArray<T>::indices(&self) -> aya::maps::MapKeys<'_, u32>
+impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::ReusePortSockArray<T>
+pub fn aya::maps::ReusePortSockArray<T>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::ReusePortSockArray<T>
+pub fn aya::maps::ReusePortSockArray<T>::clear_index(&mut self, index: &u32) -> core::result::Result<(), aya::maps::MapError>
+pub fn aya::maps::ReusePortSockArray<T>::set<I: std::os::fd::raw::AsRawFd>(&mut self, index: u32, socket: &I, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ReusePortSockArray<aya::maps::MapData>
+pub type aya::maps::ReusePortSockArray<aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::ReusePortSockArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::ReusePortSockArray<&'a aya::maps::MapData>
+pub type aya::maps::ReusePortSockArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::ReusePortSockArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::ReusePortSockArray<&'a mut aya::maps::MapData>
+pub type aya::maps::ReusePortSockArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::ReusePortSockArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T> core::marker::Freeze for aya::maps::ReusePortSockArray<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for aya::maps::ReusePortSockArray<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya::maps::ReusePortSockArray<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for aya::maps::ReusePortSockArray<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::ReusePortSockArray<T> where T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ReusePortSockArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::ReusePortSockArray<T> where T: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::RingBuf<T>
 impl<T> aya::maps::ring_buf::RingBuf<T>
 pub fn aya::maps::ring_buf::RingBuf<T>::next(&mut self) -> core::option::Option<aya::maps::ring_buf::RingBufItem<'_>>
@@ -1671,6 +1729,7 @@ pub use aya::programs::CgroupSkbAttachType
 pub use aya::programs::CgroupSockAddrAttachType
 pub use aya::programs::CgroupSockAttachType
 pub use aya::programs::CgroupSockoptAttachType
+pub use aya::programs::SkReuseportAttachType
 pub use aya::programs::SkSkbKind
 pub mod aya::programs::cgroup_device
 pub struct aya::programs::cgroup_device::CgroupDevice
@@ -3950,6 +4009,62 @@ impl core::marker::Unpin for aya::programs::sk_msg::SkMsgLinkId
 impl core::marker::UnsafeUnpin for aya::programs::sk_msg::SkMsgLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_msg::SkMsgLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsgLinkId
+pub mod aya::programs::sk_reuseport
+pub use aya::programs::sk_reuseport::SkReuseportAttachType
+pub enum aya::programs::sk_reuseport::SkReuseportError
+pub aya::programs::sk_reuseport::SkReuseportError::SetsockoptError
+pub aya::programs::sk_reuseport::SkReuseportError::SetsockoptError::io_error: std::io::error::Error
+pub aya::programs::sk_reuseport::SkReuseportError::SetsockoptError::option: &'static str
+impl core::convert::From<aya::programs::sk_reuseport::SkReuseportError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(source: aya::programs::sk_reuseport::SkReuseportError) -> Self
+impl core::error::Error for aya::programs::sk_reuseport::SkReuseportError
+pub fn aya::programs::sk_reuseport::SkReuseportError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::programs::sk_reuseport::SkReuseportError
+pub fn aya::programs::sk_reuseport::SkReuseportError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::sk_reuseport::SkReuseportError
+pub fn aya::programs::sk_reuseport::SkReuseportError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::sk_reuseport::SkReuseportError
+impl core::marker::Send for aya::programs::sk_reuseport::SkReuseportError
+impl core::marker::Sync for aya::programs::sk_reuseport::SkReuseportError
+impl core::marker::Unpin for aya::programs::sk_reuseport::SkReuseportError
+impl core::marker::UnsafeUnpin for aya::programs::sk_reuseport::SkReuseportError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_reuseport::SkReuseportError
+impl !core::panic::unwind_safe::UnwindSafe for aya::programs::sk_reuseport::SkReuseportError
+pub struct aya::programs::sk_reuseport::SkReuseport
+impl aya::programs::sk_reuseport::SkReuseport
+pub const aya::programs::sk_reuseport::SkReuseport::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::sk_reuseport::SkReuseport::attach<T: std::os::fd::owned::AsFd>(&mut self, socket: T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_reuseport::SkReuseport::detach<T: std::os::fd::owned::AsFd>(&mut self, socket: T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_reuseport::SkReuseport::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::sk_reuseport::SkReuseportAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::sk_reuseport::SkReuseport::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, attach_type: aya_obj::programs::sk_reuseport::SkReuseportAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::sk_reuseport::SkReuseport::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_reuseport::SkReuseport
+pub type &'a aya::programs::sk_reuseport::SkReuseport::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sk_reuseport::SkReuseport::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_reuseport::SkReuseport, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_reuseport::SkReuseport
+pub type &'a mut aya::programs::sk_reuseport::SkReuseport::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sk_reuseport::SkReuseport::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_reuseport::SkReuseport, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::sk_reuseport::SkReuseport
+impl core::marker::Send for aya::programs::sk_reuseport::SkReuseport
+impl core::marker::Sync for aya::programs::sk_reuseport::SkReuseport
+impl core::marker::Unpin for aya::programs::sk_reuseport::SkReuseport
+impl core::marker::UnsafeUnpin for aya::programs::sk_reuseport::SkReuseport
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_reuseport::SkReuseport
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_reuseport::SkReuseport
 pub mod aya::programs::sk_skb
 pub use aya::programs::sk_skb::SkSkbKind
 pub struct aya::programs::sk_skb::SkSkb
@@ -5049,6 +5164,7 @@ pub aya::programs::Program::RawTracePoint(aya::programs::raw_trace_point::RawTra
 pub aya::programs::Program::SchedClassifier(aya::programs::tc::SchedClassifier)
 pub aya::programs::Program::SkLookup(aya::programs::sk_lookup::SkLookup)
 pub aya::programs::Program::SkMsg(aya::programs::sk_msg::SkMsg)
+pub aya::programs::Program::SkReuseport(aya::programs::sk_reuseport::SkReuseport)
 pub aya::programs::Program::SkSkb(aya::programs::sk_skb::SkSkb)
 pub aya::programs::Program::SockOps(aya::programs::sock_ops::SockOps)
 pub aya::programs::Program::SocketFilter(aya::programs::socket_filter::SocketFilter)
@@ -5120,6 +5236,9 @@ pub fn &'a aya::programs::sk_lookup::SkLookup::try_from(program: &'a aya::progra
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_msg::SkMsg
 pub type &'a aya::programs::sk_msg::SkMsg::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::sk_msg::SkMsg::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_msg::SkMsg, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_reuseport::SkReuseport
+pub type &'a aya::programs::sk_reuseport::SkReuseport::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sk_reuseport::SkReuseport::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_reuseport::SkReuseport, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_skb::SkSkb
 pub type &'a aya::programs::sk_skb::SkSkb::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::sk_skb::SkSkb::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_skb::SkSkb, aya::programs::ProgramError>
@@ -5201,6 +5320,9 @@ pub fn &'a mut aya::programs::sk_lookup::SkLookup::try_from(program: &'a mut aya
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_msg::SkMsg
 pub type &'a mut aya::programs::sk_msg::SkMsg::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::sk_msg::SkMsg::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_msg::SkMsg, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_reuseport::SkReuseport
+pub type &'a mut aya::programs::sk_reuseport::SkReuseport::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sk_reuseport::SkReuseport::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_reuseport::SkReuseport, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_skb::SkSkb
 pub type &'a mut aya::programs::sk_skb::SkSkb::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::sk_skb::SkSkb::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_skb::SkSkb, aya::programs::ProgramError>
@@ -5249,6 +5371,7 @@ pub aya::programs::ProgramError::MapError(aya::maps::MapError)
 pub aya::programs::ProgramError::NetlinkError(aya::sys::netlink::NetlinkError)
 pub aya::programs::ProgramError::NotAttached
 pub aya::programs::ProgramError::NotLoaded
+pub aya::programs::ProgramError::SkReuseportError(aya::programs::sk_reuseport::SkReuseportError)
 pub aya::programs::ProgramError::SocketFilterError(aya::programs::socket_filter::SocketFilterError)
 pub aya::programs::ProgramError::SyscallError(aya::sys::SyscallError)
 pub aya::programs::ProgramError::TcError(aya::programs::tc::TcError)
@@ -5266,6 +5389,8 @@ impl core::convert::From<aya::programs::extension::ExtensionError> for aya::prog
 pub fn aya::programs::ProgramError::from(source: aya::programs::extension::ExtensionError) -> Self
 impl core::convert::From<aya::programs::kprobe::KProbeError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::kprobe::KProbeError) -> Self
+impl core::convert::From<aya::programs::sk_reuseport::SkReuseportError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(source: aya::programs::sk_reuseport::SkReuseportError) -> Self
 impl core::convert::From<aya::programs::socket_filter::SocketFilterError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::socket_filter::SocketFilterError) -> Self
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
@@ -5346,6 +5471,25 @@ impl core::marker::Unpin for aya::programs::ProgramType
 impl core::marker::UnsafeUnpin for aya::programs::ProgramType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::ProgramType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::ProgramType
+pub enum aya::programs::SkReuseportError
+pub aya::programs::SkReuseportError::SetsockoptError
+pub aya::programs::SkReuseportError::SetsockoptError::io_error: std::io::error::Error
+pub aya::programs::SkReuseportError::SetsockoptError::option: &'static str
+impl core::convert::From<aya::programs::sk_reuseport::SkReuseportError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(source: aya::programs::sk_reuseport::SkReuseportError) -> Self
+impl core::error::Error for aya::programs::sk_reuseport::SkReuseportError
+pub fn aya::programs::sk_reuseport::SkReuseportError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::programs::sk_reuseport::SkReuseportError
+pub fn aya::programs::sk_reuseport::SkReuseportError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::sk_reuseport::SkReuseportError
+pub fn aya::programs::sk_reuseport::SkReuseportError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::sk_reuseport::SkReuseportError
+impl core::marker::Send for aya::programs::sk_reuseport::SkReuseportError
+impl core::marker::Sync for aya::programs::sk_reuseport::SkReuseportError
+impl core::marker::Unpin for aya::programs::sk_reuseport::SkReuseportError
+impl core::marker::UnsafeUnpin for aya::programs::sk_reuseport::SkReuseportError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_reuseport::SkReuseportError
+impl !core::panic::unwind_safe::UnwindSafe for aya::programs::sk_reuseport::SkReuseportError
 pub enum aya::programs::SocketFilterError
 pub aya::programs::SocketFilterError::SoAttachEbpfError
 pub aya::programs::SocketFilterError::SoAttachEbpfError::io_error: std::io::error::Error
@@ -6342,6 +6486,41 @@ impl core::marker::Unpin for aya::programs::sk_msg::SkMsg
 impl core::marker::UnsafeUnpin for aya::programs::sk_msg::SkMsg
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_msg::SkMsg
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsg
+pub struct aya::programs::SkReuseport
+impl aya::programs::sk_reuseport::SkReuseport
+pub const aya::programs::sk_reuseport::SkReuseport::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::sk_reuseport::SkReuseport::attach<T: std::os::fd::owned::AsFd>(&mut self, socket: T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_reuseport::SkReuseport::detach<T: std::os::fd::owned::AsFd>(&mut self, socket: T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_reuseport::SkReuseport::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::sk_reuseport::SkReuseportAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::sk_reuseport::SkReuseport::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::from_program_info(info: aya::programs::ProgramInfo, name: alloc::borrow::Cow<'static, str>, attach_type: aya_obj::programs::sk_reuseport::SkReuseportAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, path: P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::sk_reuseport::SkReuseport::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::sk_reuseport::SkReuseport
+pub fn aya::programs::sk_reuseport::SkReuseport::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_reuseport::SkReuseport
+pub type &'a aya::programs::sk_reuseport::SkReuseport::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::sk_reuseport::SkReuseport::try_from(program: &'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_reuseport::SkReuseport, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_reuseport::SkReuseport
+pub type &'a mut aya::programs::sk_reuseport::SkReuseport::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::sk_reuseport::SkReuseport::try_from(program: &'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_reuseport::SkReuseport, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::sk_reuseport::SkReuseport
+impl core::marker::Send for aya::programs::sk_reuseport::SkReuseport
+impl core::marker::Sync for aya::programs::sk_reuseport::SkReuseport
+impl core::marker::Unpin for aya::programs::sk_reuseport::SkReuseport
+impl core::marker::UnsafeUnpin for aya::programs::sk_reuseport::SkReuseport
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_reuseport::SkReuseport
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_reuseport::SkReuseport
 pub struct aya::programs::SkSkb
 impl aya::programs::sk_skb::SkSkb
 pub const aya::programs::sk_skb::SkSkb::PROGRAM_TYPE: aya::programs::ProgramType

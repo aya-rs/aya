@@ -1,0 +1,120 @@
+#![no_std]
+#![no_main]
+#![expect(unused_crate_dependencies, reason = "used in other bins")]
+
+use aya_ebpf::{
+    bindings::sk_action::{SK_DROP, SK_PASS},
+    btf_maps::ReusePortSockArray as BtfReusePortSockArray,
+    macros::{btf_map, map, sk_reuseport},
+    maps::{Array, ReusePortSockArray as LegacyReusePortSockArray},
+    programs::SkReuseportContext,
+};
+use integration_common::sk_reuseport::{
+    CLEAR_FALLBACK_HITS_INDEX, MIGRATE_HITS_INDEX, MIGRATE_SOCKET_INDEX, SELECT_HITS_INDEX,
+    SELECT_SOCKET_INDEX,
+};
+#[cfg(not(test))]
+extern crate ebpf_panic;
+
+const SOCKET_COUNT: u32 = 10;
+const SOCKET_COUNT_USIZE: usize = SOCKET_COUNT as usize;
+const IPPROTO_TCP: u32 = 6;
+
+#[map(name = "socket_map")]
+static SOCKET_MAP: LegacyReusePortSockArray =
+    LegacyReusePortSockArray::with_max_entries(SOCKET_COUNT, 0);
+
+#[btf_map(name = "socket_map_btf")]
+static SOCKET_MAP_BTF: BtfReusePortSockArray<SOCKET_COUNT_USIZE, 0> = BtfReusePortSockArray::new();
+
+#[map(name = "path_hits")]
+// Test-only counters used to verify that the expected BPF path actually ran,
+// instead of the kernel falling back to its default reuseport selection logic.
+static PATH_HITS: Array<u64> = Array::with_max_entries(3, 0);
+
+#[inline]
+fn record_hit(index: u32) {
+    let Some(hit) = PATH_HITS.get_ptr_mut(index) else {
+        return;
+    };
+
+    unsafe {
+        *hit += 1;
+    }
+}
+
+macro_rules! define_reuseport_programs {
+    ($map:ident, $select:ident, $clear:ident, $migrate:ident $(,)?) => {
+        #[sk_reuseport]
+        fn $select(ctx: SkReuseportContext) -> u32 {
+            if ctx.ip_protocol() != IPPROTO_TCP {
+                return SK_PASS;
+            }
+
+            record_hit(SELECT_HITS_INDEX);
+
+            match $map.select_reuseport(&ctx, SELECT_SOCKET_INDEX) {
+                Ok(()) => SK_PASS,
+                Err(_) => SK_DROP,
+            }
+        }
+
+        #[sk_reuseport]
+        fn $clear(ctx: SkReuseportContext) -> u32 {
+            if ctx.ip_protocol() != IPPROTO_TCP {
+                return SK_PASS;
+            }
+
+            match $map.select_reuseport(&ctx, SELECT_SOCKET_INDEX) {
+                Ok(()) => {
+                    record_hit(SELECT_HITS_INDEX);
+                    SK_PASS
+                }
+                Err(_) => match $map.select_reuseport(&ctx, MIGRATE_SOCKET_INDEX) {
+                    Ok(()) => {
+                        record_hit(CLEAR_FALLBACK_HITS_INDEX);
+                        SK_PASS
+                    }
+                    Err(_) => SK_DROP,
+                },
+            }
+        }
+
+        #[sk_reuseport(migrate)]
+        fn $migrate(ctx: SkReuseportContext) -> u32 {
+            if ctx.ip_protocol() != IPPROTO_TCP {
+                return SK_PASS;
+            }
+
+            let sk = ctx.sk();
+            if sk.sock.is_null() {
+                return SK_DROP;
+            }
+            let socket_idx = if ctx.migrating_sk().is_some() {
+                record_hit(MIGRATE_HITS_INDEX);
+                MIGRATE_SOCKET_INDEX
+            } else {
+                record_hit(SELECT_HITS_INDEX);
+                SELECT_SOCKET_INDEX
+            };
+
+            match $map.select_reuseport(&ctx, socket_idx) {
+                Ok(()) => SK_PASS,
+                Err(_) => SK_DROP,
+            }
+        }
+    };
+}
+
+define_reuseport_programs!(
+    SOCKET_MAP,
+    select_socket,
+    select_socket_after_clear,
+    select_or_migrate_socket,
+);
+define_reuseport_programs!(
+    SOCKET_MAP_BTF,
+    select_socket_btf,
+    select_socket_after_clear_btf,
+    select_or_migrate_socket_btf,
+);
