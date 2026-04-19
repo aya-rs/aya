@@ -100,7 +100,11 @@ fn probe_supported_programs() {
     let kern_version = KernelVersion::new(5, 3, 0);
     kernel_assert!(is_supported!(ProgramType::CgroupSockopt), kern_version);
 
-    let kern_version = KernelVersion::new(5, 5, 0);
+    let kern_version = if cfg!(target_arch = "aarch64") {
+        KernelVersion::new(6, 4, 0)
+    } else {
+        KernelVersion::new(5, 5, 0)
+    };
     kernel_assert!(is_supported!(ProgramType::Tracing), kern_version); // Requires `CONFIG_DEBUG_INFO_BTF=y`
 
     let kern_version = KernelVersion::new(5, 6, 0);

@@ -1,6 +1,12 @@
+use assert_matches::assert_matches;
 use std::fs::File;
 
-use aya::{Btf, Ebpf, maps::Array, programs::FEntry};
+use aya::{
+    Btf, Ebpf,
+    maps::Array,
+    programs::{FEntry, ProgramError, ProgramType},
+    sys::{SyscallError, is_program_supported},
+};
 use integration_common::bpf_d_path::TestResult;
 
 #[test_log::test]
@@ -33,7 +39,18 @@ fn bpf_d_path_basic() {
         .try_into()
         .unwrap();
     prog.load("dentry_open", &btf).unwrap();
-    prog.attach().unwrap();
+    let _link_id = {
+        let result = prog.attach();
+        if !is_program_supported(ProgramType::Tracing).unwrap() {
+            assert_matches!(result, Err(ProgramError::SyscallError(SyscallError { call, io_error })) => {
+                assert_eq!(call, "bpf_raw_tracepoint_open");
+                assert_eq!(io_error.raw_os_error(), Some(524));
+            });
+            eprintln!("skipping test - tracing programs not supported at attach");
+            return;
+        }
+        result.unwrap()
+    };
 
     let file = File::open("/dev/null").unwrap();
 
