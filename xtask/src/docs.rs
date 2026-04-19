@@ -44,6 +44,7 @@ pub(crate) fn docs(metadata: Metadata) -> Result<()> {
         Command::new("cargo")
             .current_dir(&workspace_root)
             .env("RUSTDOCFLAGS", rustdocflags)
+            .env("CARGO_INCREMENTAL", "0")
             .args(["+nightly", "doc", "--no-deps", "--all-features"])
             .args(
                 PACKAGE_TO_DESCRIPTION
