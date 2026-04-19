@@ -51,6 +51,7 @@ pub struct Features {
     bpf_cookie: bool,
     cpumap_prog_id: bool,
     devmap_prog_id: bool,
+    bpf_syscall_wrapper: bool,
     btf: Option<BtfFeatures>,
 }
 
@@ -69,6 +70,7 @@ impl Features {
         bpf_cookie: bool,
         cpumap_prog_id: bool,
         devmap_prog_id: bool,
+        bpf_syscall_wrapper: bool,
         btf: Option<BtfFeatures>,
     ) -> Self {
         Self {
@@ -79,6 +81,7 @@ impl Features {
             bpf_cookie,
             cpumap_prog_id,
             devmap_prog_id,
+            bpf_syscall_wrapper,
             btf,
         }
     }
@@ -119,6 +122,11 @@ impl Features {
     /// Returns whether XDP Device Maps support chained program IDs.
     pub const fn devmap_prog_id(&self) -> bool {
         self.devmap_prog_id
+    }
+
+    /// Returns whether BPF syscall wrapper hooking is supported.
+    pub const fn bpf_syscall_wrapper(&self) -> bool {
+        self.bpf_syscall_wrapper
     }
 
     /// If BTF is supported, returns which BTF features are supported.
@@ -501,6 +509,9 @@ impl Object {
                     address: symbol.address(),
                     size: symbol.size(),
                     is_definition: symbol.is_definition(),
+                    // Undefined symbols are external references; defined globals are not.
+                    is_external: symbol.is_undefined(),
+                    is_weak: symbol.is_weak(),
                     kind: symbol.kind(),
                 };
                 bpf_obj.symbol_table.insert(symbol.index().0, sym);
@@ -1466,7 +1477,10 @@ mod tests {
     use assert_matches::assert_matches;
 
     use super::*;
-    use crate::generated::{bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, btf_ext_header};
+    use crate::{
+        btf::{BtfEnum, BtfEnum64, DataSec, Enum, Enum64, Int, IntEncoding, Var, VarLinkage},
+        generated::{bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, btf_ext_header},
+    };
 
     const FAKE_INS_LEN: u64 = 8;
 
@@ -1510,6 +1524,8 @@ mod tests {
                 size,
                 is_definition: false,
                 kind: SymbolKind::Text,
+                is_external: false,
+                is_weak: false,
             },
         );
         obj.symbols_by_section
@@ -1686,6 +1702,50 @@ mod tests {
 
     fn fake_obj() -> Object {
         Object::new(Endianness::Little, CString::new("GPL").unwrap(), None)
+    }
+
+    fn add_external_data_symbol(obj: &mut Object, name: &str, is_weak: bool) {
+        let idx = obj.symbol_table.len() + 1;
+        obj.symbol_table.insert(
+            idx,
+            Symbol {
+                index: idx,
+                section_index: None,
+                name: Some(name.to_string()),
+                address: 0,
+                size: 0,
+                is_definition: false,
+                is_external: true,
+                is_weak,
+                kind: SymbolKind::Data,
+            },
+        );
+    }
+
+    fn add_kconfig_var(
+        btf: &mut Btf,
+        entries: &mut Vec<DataSecEntry>,
+        name: &str,
+        btf_type: u32,
+        size: u32,
+    ) {
+        let name_offset = btf.add_string(name);
+        let var_type_id = btf.add_type(BtfType::Var(Var::new(
+            name_offset,
+            btf_type,
+            VarLinkage::Extern,
+        )));
+        entries.push(DataSecEntry {
+            btf_type: var_type_id,
+            offset: 0,
+            size,
+        });
+    }
+
+    fn fake_kconfig_obj(btf: Btf) -> Object {
+        let mut obj = fake_obj();
+        obj.btf = Some(btf);
+        obj
     }
 
     #[test]
@@ -2750,6 +2810,8 @@ mod tests {
                 address: 0,
                 size: 3,
                 is_definition: true,
+                is_external: false,
+                is_weak: false,
                 kind: SymbolKind::Data,
             },
         );
@@ -2763,6 +2825,712 @@ mod tests {
 
         let map = &obj.maps[".rodata"];
         assert_eq!(test_data, map.data());
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_requires_strong_externs() {
+        let mut btf = Btf::new();
+        let int_name = btf.add_string("u32");
+        let int_type_id = btf.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::None, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(&mut btf, &mut entries, "CONFIG_REQUIRED", int_type_id, 4);
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_REQUIRED", false);
+
+        assert_matches!(
+            obj.prepare_kconfig_section(&HashMap::new()),
+            Err(BtfError::ExternalSymbolNotFound { symbol_name }) if symbol_name == "CONFIG_REQUIRED"
+        );
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_rejects_missing_extern_symbols() {
+        let mut btf = Btf::new();
+        let int_name = btf.add_string("u32");
+        let int_type_id = btf.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::None, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(
+            &mut btf,
+            &mut entries,
+            "CONFIG_MISSING_SYMBOL",
+            int_type_id,
+            4,
+        );
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+
+        assert_matches!(
+            obj.prepare_kconfig_section(&HashMap::new()),
+            Err(BtfError::InvalidExternalSymbol { symbol_name }) if symbol_name == "CONFIG_MISSING_SYMBOL"
+        );
+    }
+
+    #[test]
+    fn test_has_config_kconfig_externs_detects_config_symbols() {
+        let mut btf = Btf::new();
+        let int_name = btf.add_string("u32");
+        let int_type_id = btf.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::None, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(&mut btf, &mut entries, "CONFIG_PRESENT", int_type_id, 4);
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_PRESENT", false);
+
+        assert!(obj.has_config_kconfig_externs().unwrap());
+    }
+
+    #[test]
+    fn test_has_config_kconfig_externs_ignores_virtual_linux_symbols() {
+        let mut btf = Btf::new();
+        let int_name = btf.add_string("u32");
+        let int_type_id = btf.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::None, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(
+            &mut btf,
+            &mut entries,
+            "LINUX_HAS_FUTURE_FEATURE",
+            int_type_id,
+            4,
+        );
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "LINUX_HAS_FUTURE_FEATURE", true);
+
+        assert!(!obj.has_config_kconfig_externs().unwrap());
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_zero_fills_missing_weak_externs() {
+        let mut btf = Btf::new();
+        let int_name = btf.add_string("u32");
+        let int_type_id = btf.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::None, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(&mut btf, &mut entries, "CONFIG_OPTIONAL", int_type_id, 4);
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_OPTIONAL", true);
+
+        obj.prepare_kconfig_section(&HashMap::new()).unwrap();
+
+        assert_eq!(obj.maps[".kconfig"].data(), &[0, 0, 0, 0]);
+        assert_matches!(obj.symbol_table.get(&1), Some(symbol) => {
+            assert_eq!(symbol.address, 0);
+            assert_eq!(symbol.size, 4);
+            assert_eq!(symbol.section_index, Some(1));
+        });
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_rejects_unknown_weak_externs() {
+        let mut btf = Btf::new();
+        let int_name = btf.add_string("u32");
+        let int_type_id = btf.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::None, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(&mut btf, &mut entries, "UNKNOWN_OPTIONAL", int_type_id, 4);
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "UNKNOWN_OPTIONAL", true);
+
+        assert_matches!(
+            obj.prepare_kconfig_section(&HashMap::new()),
+            Err(BtfError::InvalidExternalSymbol { symbol_name }) if symbol_name == "UNKNOWN_OPTIONAL"
+        );
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_zero_fills_unknown_weak_linux_externs() {
+        let mut btf = Btf::new();
+        let int_name = btf.add_string("u32");
+        let int_type_id = btf.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::None, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(
+            &mut btf,
+            &mut entries,
+            "LINUX_HAS_FUTURE_FEATURE",
+            int_type_id,
+            4,
+        );
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "LINUX_HAS_FUTURE_FEATURE", true);
+
+        obj.prepare_kconfig_section(&HashMap::new()).unwrap();
+
+        assert_eq!(obj.maps[".kconfig"].data(), &[0, 0, 0, 0]);
+        assert_matches!(obj.symbol_table.get(&1), Some(symbol) => {
+            assert_eq!(symbol.address, 0);
+            assert_eq!(symbol.size, 4);
+            assert_eq!(symbol.section_index, Some(1));
+        });
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_aligns_and_adjusts_scalars() {
+        let mut btf = Btf::new();
+        let u8_name = btf.add_string("u8");
+        let u8_type_id = btf.add_type(BtfType::Int(Int::new(u8_name, 1, IntEncoding::None, 0)));
+        let u32_name = btf.add_string("u32");
+        let u32_type_id = btf.add_type(BtfType::Int(Int::new(u32_name, 4, IntEncoding::None, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(&mut btf, &mut entries, "CONFIG_BYTE", u8_type_id, 1);
+        add_kconfig_var(&mut btf, &mut entries, "CONFIG_TRIMMED", u32_type_id, 4);
+        add_kconfig_var(&mut btf, &mut entries, "CONFIG_PADDED", u32_type_id, 4);
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_BYTE", false);
+        add_external_data_symbol(&mut obj, "CONFIG_TRIMMED", false);
+        add_external_data_symbol(&mut obj, "CONFIG_PADDED", false);
+
+        obj.prepare_kconfig_section(&HashMap::from([
+            ("CONFIG_BYTE".to_owned(), vec![0xaa]),
+            (
+                "CONFIG_TRIMMED".to_owned(),
+                vec![0x44, 0x33, 0x22, 0x11, 0, 0, 0, 0],
+            ),
+            ("CONFIG_PADDED".to_owned(), vec![0x55, 0x66]),
+        ]))
+        .unwrap();
+
+        assert_eq!(
+            obj.maps[".kconfig"].data(),
+            &[0xaa, 0, 0, 0, 0x44, 0x33, 0x22, 0x11, 0x55, 0x66, 0, 0]
+        );
+        assert_matches!(obj.symbol_table.get(&1), Some(symbol) => {
+            assert_eq!(symbol.address, 0);
+            assert_eq!(symbol.size, 1);
+            assert_eq!(symbol.section_index, Some(1));
+        });
+        assert_matches!(obj.symbol_table.get(&2), Some(symbol) => {
+            assert_eq!(symbol.address, 4);
+            assert_eq!(symbol.size, 4);
+            assert_eq!(symbol.section_index, Some(1));
+        });
+        assert_matches!(obj.symbol_table.get(&3), Some(symbol) => {
+            assert_eq!(symbol.address, 8);
+            assert_eq!(symbol.size, 4);
+            assert_eq!(symbol.section_index, Some(1));
+        });
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_rejects_out_of_range_unsigned_scalars() {
+        let mut btf = Btf::new();
+        let u8_name = btf.add_string("u8");
+        let u8_type_id = btf.add_type(BtfType::Int(Int::new(u8_name, 1, IntEncoding::None, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(&mut btf, &mut entries, "CONFIG_TOO_LARGE", u8_type_id, 1);
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_TOO_LARGE", false);
+
+        assert_matches!(
+            obj.prepare_kconfig_section(&HashMap::from([(
+                "CONFIG_TOO_LARGE".to_owned(),
+                256u64.to_ne_bytes().to_vec(),
+            )])),
+            Err(BtfError::ExternalSymbolValueOutOfRange { symbol_name }) if symbol_name == "CONFIG_TOO_LARGE"
+        );
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_rejects_out_of_range_signed_scalars() {
+        let mut btf = Btf::new();
+        let i8_name = btf.add_string("i8");
+        let i8_type_id = btf.add_type(BtfType::Int(Int::new(i8_name, 1, IntEncoding::Signed, 0)));
+
+        let datasec_name = btf.add_string(".kconfig");
+
+        let mut positive_entries = Vec::new();
+        add_kconfig_var(
+            &mut btf,
+            &mut positive_entries,
+            "CONFIG_TOO_POSITIVE",
+            i8_type_id,
+            1,
+        );
+        btf.add_type(BtfType::DataSec(DataSec::new(
+            datasec_name,
+            positive_entries,
+            0,
+        )));
+
+        let mut positive_obj = fake_kconfig_obj(btf.clone());
+        add_external_data_symbol(&mut positive_obj, "CONFIG_TOO_POSITIVE", false);
+
+        assert_matches!(
+            positive_obj.prepare_kconfig_section(&HashMap::from([(
+                "CONFIG_TOO_POSITIVE".to_owned(),
+                vec![0x80, 0, 0, 0, 0, 0, 0, 0],
+            )])),
+            Err(BtfError::ExternalSymbolValueOutOfRange { symbol_name }) if symbol_name == "CONFIG_TOO_POSITIVE"
+        );
+
+        let mut btf = Btf::new();
+        let i8_name = btf.add_string("i8");
+        let i8_type_id = btf.add_type(BtfType::Int(Int::new(i8_name, 1, IntEncoding::Signed, 0)));
+        let datasec_name = btf.add_string(".kconfig");
+        let mut negative_entries = Vec::new();
+        add_kconfig_var(
+            &mut btf,
+            &mut negative_entries,
+            "CONFIG_TOO_NEGATIVE",
+            i8_type_id,
+            1,
+        );
+        btf.add_type(BtfType::DataSec(DataSec::new(
+            datasec_name,
+            negative_entries,
+            0,
+        )));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_TOO_NEGATIVE", false);
+
+        assert_matches!(
+            obj.prepare_kconfig_section(&HashMap::from([(
+                "CONFIG_TOO_NEGATIVE".to_owned(),
+                vec![0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff],
+            )])),
+            Err(BtfError::ExternalSymbolValueOutOfRange { symbol_name }) if symbol_name == "CONFIG_TOO_NEGATIVE"
+        );
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_rejects_invalid_bool_scalars() {
+        let mut btf = Btf::new();
+        let bool_name = btf.add_string("bool");
+        let bool_type_id = btf.add_type(BtfType::Int(Int::new(bool_name, 1, IntEncoding::Bool, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(&mut btf, &mut entries, "CONFIG_BOOL_VALUE", bool_type_id, 1);
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_BOOL_VALUE", false);
+
+        assert_matches!(
+            obj.prepare_kconfig_section(&HashMap::from([(
+                "CONFIG_BOOL_VALUE".to_owned(),
+                2u64.to_ne_bytes().to_vec(),
+            )])),
+            Err(BtfError::ExternalSymbolValueOutOfRange { symbol_name }) if symbol_name == "CONFIG_BOOL_VALUE"
+        );
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_rejects_unsupported_types() {
+        let mut btf = Btf::new();
+        let u32_name = btf.add_string("u32");
+        let u32_type_id = btf.add_type(BtfType::Int(Int::new(u32_name, 4, IntEncoding::None, 0)));
+        let index_name = btf.add_string("__ARRAY_SIZE_TYPE__");
+        let index_type_id =
+            btf.add_type(BtfType::Int(Int::new(index_name, 4, IntEncoding::None, 0)));
+        let array_type_id =
+            btf.add_type(BtfType::Array(Array::new(0, u32_type_id, index_type_id, 4)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(
+            &mut btf,
+            &mut entries,
+            "CONFIG_UNSUPPORTED_ARRAY",
+            array_type_id,
+            16,
+        );
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_UNSUPPORTED_ARRAY", false);
+
+        assert_matches!(
+            obj.prepare_kconfig_section(&HashMap::from([(
+                "CONFIG_UNSUPPORTED_ARRAY".to_owned(),
+                vec![1, 2, 3, 4],
+            )])),
+            Err(BtfError::InvalidExternalSymbol { symbol_name }) if symbol_name == "CONFIG_UNSUPPORTED_ARRAY"
+        );
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_rejects_odd_width_integers() {
+        let mut btf = Btf::new();
+        let odd_name = btf.add_string("u24");
+        let odd_type_id = btf.add_type(BtfType::Int(Int::new(odd_name, 3, IntEncoding::None, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(&mut btf, &mut entries, "CONFIG_ODD_WIDTH", odd_type_id, 3);
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_ODD_WIDTH", false);
+
+        assert_matches!(
+            obj.prepare_kconfig_section(&HashMap::from([(
+                "CONFIG_ODD_WIDTH".to_owned(),
+                1u64.to_ne_bytes().to_vec(),
+            )])),
+            Err(BtfError::InvalidExternalSymbol { symbol_name }) if symbol_name == "CONFIG_ODD_WIDTH"
+        );
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_accepts_libbpf_tristate_enum() {
+        let mut btf = Btf::new();
+        let tristate_name = btf.add_string("libbpf_tristate");
+        let tri_no = btf.add_string("TRI_NO");
+        let tri_yes = btf.add_string("TRI_YES");
+        let tri_module = btf.add_string("TRI_MODULE");
+        let enum_type_id = btf.add_type(BtfType::Enum(Enum::new(
+            tristate_name,
+            false,
+            vec![
+                BtfEnum::new(tri_no, 0),
+                BtfEnum::new(tri_yes, 1),
+                BtfEnum::new(tri_module, 2),
+            ],
+        )));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(
+            &mut btf,
+            &mut entries,
+            "CONFIG_TRISTATE_ENUM",
+            enum_type_id,
+            4,
+        );
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_TRISTATE_ENUM", false);
+
+        obj.prepare_kconfig_section(&HashMap::from([(
+            "CONFIG_TRISTATE_ENUM".to_owned(),
+            b"m".to_vec(),
+        )]))
+        .unwrap();
+
+        assert_eq!(obj.maps[".kconfig"].data(), &[2, 0, 0, 0]);
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_accepts_libbpf_tristate_enum64() {
+        let mut btf = Btf::new();
+        let tristate_name = btf.add_string("libbpf_tristate");
+        let tri_no = btf.add_string("TRI_NO");
+        let tri_yes = btf.add_string("TRI_YES");
+        let tri_module = btf.add_string("TRI_MODULE");
+        let enum_type_id = btf.add_type(BtfType::Enum64(Enum64::new(
+            tristate_name,
+            false,
+            vec![
+                BtfEnum64::new(tri_no, 0),
+                BtfEnum64::new(tri_yes, 1),
+                BtfEnum64::new(tri_module, 2),
+            ],
+        )));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(
+            &mut btf,
+            &mut entries,
+            "CONFIG_TRISTATE_ENUM64",
+            enum_type_id,
+            8,
+        );
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_TRISTATE_ENUM64", false);
+
+        obj.prepare_kconfig_section(&HashMap::from([(
+            "CONFIG_TRISTATE_ENUM64".to_owned(),
+            b"m".to_vec(),
+        )]))
+        .unwrap();
+
+        assert_eq!(obj.maps[".kconfig"].data(), &[2, 0, 0, 0, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_rejects_non_tristate_enums() {
+        let mut btf = Btf::new();
+        let enum_name = btf.add_string("other_enum");
+        let value_name = btf.add_string("VALUE");
+        let enum_type_id = btf.add_type(BtfType::Enum(Enum::new(
+            enum_name,
+            false,
+            vec![BtfEnum::new(value_name, 1)],
+        )));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(
+            &mut btf,
+            &mut entries,
+            "CONFIG_NOT_TRISTATE",
+            enum_type_id,
+            4,
+        );
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_NOT_TRISTATE", false);
+
+        assert_matches!(
+            obj.prepare_kconfig_section(&HashMap::from([(
+                "CONFIG_NOT_TRISTATE".to_owned(),
+                1u64.to_ne_bytes().to_vec(),
+            )])),
+            Err(BtfError::InvalidExternalSymbol { symbol_name }) if symbol_name == "CONFIG_NOT_TRISTATE"
+        );
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_materializes_unsized_char_arrays() {
+        let mut btf = Btf::new();
+        let char_name = btf.add_string("char");
+        let char_type_id = btf.add_type(BtfType::Int(Int::new(char_name, 1, IntEncoding::Char, 0)));
+        let index_name = btf.add_string("__ARRAY_SIZE_TYPE__");
+        let index_type_id =
+            btf.add_type(BtfType::Int(Int::new(index_name, 4, IntEncoding::None, 0)));
+        let array_type_id = btf.add_type(BtfType::Array(Array::new(
+            0,
+            char_type_id,
+            index_type_id,
+            0,
+        )));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(
+            &mut btf,
+            &mut entries,
+            "CONFIG_DEFAULT_HOSTNAME",
+            array_type_id,
+            0,
+        );
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_DEFAULT_HOSTNAME", false);
+
+        obj.prepare_kconfig_section(&HashMap::from([(
+            "CONFIG_DEFAULT_HOSTNAME".to_owned(),
+            b"(none)\0".to_vec(),
+        )]))
+        .unwrap();
+        obj.fixup_and_sanitize_btf(&BtfFeatures::new(
+            false, false, true, true, false, false, false, false,
+        ))
+        .unwrap();
+
+        assert_eq!(obj.maps[".kconfig"].data(), b"(none)\0");
+
+        let btf = obj.btf.as_ref().unwrap();
+        let datasec = btf
+            .types()
+            .find_map(|t| match t {
+                BtfType::DataSec(datasec)
+                    if btf.string_at(datasec.name_offset).unwrap().as_ref() == ".kconfig" =>
+                {
+                    Some(datasec)
+                }
+                _ => None,
+            })
+            .unwrap();
+        assert_eq!(datasec.entries[0].size, b"(none)\0".len() as u32);
+
+        let BtfType::Var(var) = btf.type_by_id(datasec.entries[0].btf_type).unwrap() else {
+            panic!("expected kconfig entry to point to a VAR");
+        };
+        let resolved_type_id = btf.resolve_type(var.btf_type).unwrap();
+        assert_matches!(btf.type_by_id(resolved_type_id).unwrap(), BtfType::Array(array) => {
+            assert_eq!(array.array.len, b"(none)\0".len() as u32);
+        });
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_truncates_char_arrays_with_trailing_nul() {
+        let mut btf = Btf::new();
+        let char_name = btf.add_string("char");
+        let char_type_id = btf.add_type(BtfType::Int(Int::new(char_name, 1, IntEncoding::Char, 0)));
+        let index_name = btf.add_string("__ARRAY_SIZE_TYPE__");
+        let index_type_id =
+            btf.add_type(BtfType::Int(Int::new(index_name, 4, IntEncoding::None, 0)));
+        let array_type_id = btf.add_type(BtfType::Array(Array::new(
+            0,
+            char_type_id,
+            index_type_id,
+            4,
+        )));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(
+            &mut btf,
+            &mut entries,
+            "CONFIG_TRUNCATED_STRING",
+            array_type_id,
+            4,
+        );
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_TRUNCATED_STRING", false);
+
+        obj.prepare_kconfig_section(&HashMap::from([(
+            "CONFIG_TRUNCATED_STRING".to_owned(),
+            b"abcdef\0".to_vec(),
+        )]))
+        .unwrap();
+
+        assert_eq!(obj.maps[".kconfig"].data(), b"abc\0");
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_zero_fills_missing_weak_unsized_char_arrays() {
+        let mut btf = Btf::new();
+        let char_name = btf.add_string("char");
+        let char_type_id = btf.add_type(BtfType::Int(Int::new(char_name, 1, IntEncoding::Char, 0)));
+        let index_name = btf.add_string("__ARRAY_SIZE_TYPE__");
+        let index_type_id =
+            btf.add_type(BtfType::Int(Int::new(index_name, 4, IntEncoding::None, 0)));
+        let array_type_id = btf.add_type(BtfType::Array(Array::new(
+            0,
+            char_type_id,
+            index_type_id,
+            0,
+        )));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(
+            &mut btf,
+            &mut entries,
+            "CONFIG_OPTIONAL_STRING",
+            array_type_id,
+            0,
+        );
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_OPTIONAL_STRING", true);
+
+        obj.prepare_kconfig_section(&HashMap::new()).unwrap();
+        obj.fixup_and_sanitize_btf(&BtfFeatures::new(
+            false, false, true, true, false, false, false, false,
+        ))
+        .unwrap();
+
+        assert_eq!(obj.maps[".kconfig"].data(), b"\0");
+        assert_matches!(obj.symbol_table.get(&1), Some(symbol) => {
+            assert_eq!(symbol.address, 0);
+            assert_eq!(symbol.size, 1);
+            assert_eq!(symbol.section_index, Some(1));
+        });
+
+        let btf = obj.btf.as_ref().unwrap();
+        let datasec = btf
+            .types()
+            .find_map(|t| match t {
+                BtfType::DataSec(datasec)
+                    if btf.string_at(datasec.name_offset).unwrap().as_ref() == ".kconfig" =>
+                {
+                    Some(datasec)
+                }
+                _ => None,
+            })
+            .unwrap();
+        assert_eq!(datasec.entries[0].size, 1);
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_materializes_char_scalars_from_tristate_values() {
+        let mut btf = Btf::new();
+        let char_name = btf.add_string("char");
+        let char_type_id = btf.add_type(BtfType::Int(Int::new(char_name, 1, IntEncoding::Char, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(&mut btf, &mut entries, "CONFIG_CHAR_VALUE", char_type_id, 1);
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_CHAR_VALUE", false);
+
+        obj.prepare_kconfig_section(&HashMap::from([(
+            "CONFIG_CHAR_VALUE".to_owned(),
+            b"m".to_vec(),
+        )]))
+        .unwrap();
+
+        assert_eq!(obj.maps[".kconfig"].data(), b"m");
+    }
+
+    #[test]
+    fn test_prepare_kconfig_section_materializes_bool_scalars_from_tristate_values() {
+        let mut btf = Btf::new();
+        let bool_name = btf.add_string("bool");
+        let bool_type_id = btf.add_type(BtfType::Int(Int::new(bool_name, 1, IntEncoding::Bool, 0)));
+
+        let mut entries = Vec::new();
+        add_kconfig_var(&mut btf, &mut entries, "CONFIG_BOOL_VALUE", bool_type_id, 1);
+        let datasec_name = btf.add_string(".kconfig");
+        btf.add_type(BtfType::DataSec(DataSec::new(datasec_name, entries, 0)));
+
+        let mut obj = fake_kconfig_obj(btf.clone());
+        add_external_data_symbol(&mut obj, "CONFIG_BOOL_VALUE", false);
+
+        obj.prepare_kconfig_section(&HashMap::from([(
+            "CONFIG_BOOL_VALUE".to_owned(),
+            b"y".to_vec(),
+        )]))
+        .unwrap();
+
+        assert_eq!(obj.maps[".kconfig"].data(), &[1]);
+
+        let mut obj = fake_kconfig_obj(btf);
+        add_external_data_symbol(&mut obj, "CONFIG_BOOL_VALUE", false);
+
+        assert_matches!(
+            obj.prepare_kconfig_section(&HashMap::from([(
+                "CONFIG_BOOL_VALUE".to_owned(),
+                b"m".to_vec(),
+            )])),
+            Err(BtfError::ExternalSymbolValueOutOfRange { symbol_name }) if symbol_name == "CONFIG_BOOL_VALUE"
+        );
     }
 
     #[test]
