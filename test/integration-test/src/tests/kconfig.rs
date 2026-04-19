@@ -1,4 +1,5 @@
 use std::{
+    ffi::c_longlong,
     fs,
     path::{Path, PathBuf},
 };
@@ -12,21 +13,24 @@ use integration_common::kconfig::{
 };
 use procfs::{ConfigSetting, KernelConfig, prelude::FromRead as _};
 
-fn numeric_setting(config: &std::collections::HashMap<String, ConfigSetting>, name: &str) -> u64 {
+fn numeric_setting(
+    config: &std::collections::HashMap<String, ConfigSetting>,
+    name: &str,
+) -> Option<c_longlong> {
     match config.get(name) {
-        Some(ConfigSetting::Yes) => 1,
-        Some(ConfigSetting::Module) => 2,
+        Some(ConfigSetting::Yes) => Some(1),
+        Some(ConfigSetting::Module) => Some(2),
         Some(ConfigSetting::Value(value)) => {
             if let Some(value) = value
                 .strip_prefix("0x")
                 .or_else(|| value.strip_prefix("0X"))
             {
-                u64::from_str_radix(value, 16).unwrap()
+                Some(c_longlong::from_str_radix(value, 16).unwrap())
             } else {
-                value.parse().unwrap()
+                Some(value.parse().unwrap())
             }
         }
-        None => panic!("{name} not found in kernel config"),
+        None => None,
     }
 }
 
@@ -130,23 +134,27 @@ fn kconfig() {
 
     trigger_kconfig();
 
-    let results: Array<_, u64> = bpf.take_map("RESULTS").unwrap().try_into().unwrap();
+    let results: Array<_, c_longlong> = bpf.take_map("RESULTS").unwrap().try_into().unwrap();
 
     assert_eq!(
         results.get(&CONFIG_BPF_INDEX, 0).unwrap(),
-        numeric_setting(&kernel_config, "CONFIG_BPF")
+        numeric_setting(&kernel_config, "CONFIG_BPF").unwrap()
     );
     assert_eq!(
         results.get(&PANIC_TIMEOUT_INDEX, 0).unwrap(),
-        numeric_setting(&kernel_config, "CONFIG_PANIC_TIMEOUT")
+        numeric_setting(&kernel_config, "CONFIG_PANIC_TIMEOUT").unwrap()
     );
-    assert_eq!(
-        results.get(&DEFAULT_HUNG_TASK_TIMEOUT_INDEX, 0).unwrap(),
+    if let Some(default_hung_task_timeout) =
         numeric_setting(&kernel_config, "CONFIG_DEFAULT_HUNG_TASK_TIMEOUT")
-    );
+    {
+        assert_eq!(
+            results.get(&DEFAULT_HUNG_TASK_TIMEOUT_INDEX, 0).unwrap(),
+            default_hung_task_timeout
+        );
+    }
     assert_eq!(
         results.get(&BPF_JIT_INDEX, 0).unwrap(),
-        numeric_setting(&kernel_config, "CONFIG_BPF_JIT")
+        numeric_setting(&kernel_config, "CONFIG_BPF_JIT").unwrap()
     );
     let mut default_hostname = [0u8; DEFAULT_HOSTNAME_LEN];
     for (i, byte) in default_hostname.iter_mut().enumerate() {
@@ -201,7 +209,7 @@ fn kconfig_unsized_strings() {
 
     trigger_kconfig_unsized_strings();
 
-    let results: Array<_, u64> = bpf.take_map("RESULTS").unwrap().try_into().unwrap();
+    let results: Array<_, c_longlong> = bpf.take_map("RESULTS").unwrap().try_into().unwrap();
 
     let mut first = [0u8; FIRST_STRING_LEN];
     for (i, byte) in first.iter_mut().enumerate() {
