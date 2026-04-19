@@ -236,9 +236,10 @@ impl Drop for NetNsGuard {
 
 /// Run a closure inside a network namespace identified by a file handle.
 ///
-/// Uses a scoped thread because `setns` changes the network namespace of the
-/// *calling* thread — running it on a disposable thread avoids polluting the
-/// test thread's namespace.
+/// Runs `f` on a disposable thread so that `setns` does not change the calling
+/// thread's namespace. A scoped thread is used (rather than `std::thread::spawn`)
+/// so that `f` can capture references that are not `'static` — in particular,
+/// data whose lifetime is bound by a [`PeerNsGuard`].
 fn run_in_netns<F, R>(ns_file: &fs::File, f: F) -> R
 where
     F: FnOnce() -> R + Send,
@@ -276,12 +277,12 @@ impl PeerNsGuard {
     const IFACE_ADDR: &str = "10.0.0.1";
 
     #[expect(clippy::unused_self, reason = "access requires a live PeerNsGuard")]
-    pub(crate) fn iface(&self) -> &'static str {
+    pub(crate) fn iface(&self) -> &str {
         Self::IFACE.to_str().unwrap()
     }
 
     #[expect(clippy::unused_self, reason = "access requires a live PeerNsGuard")]
-    pub(crate) fn iface_addr(&self) -> &'static str {
+    pub(crate) fn iface_addr(&self) -> &str {
         Self::IFACE_ADDR
     }
 
@@ -320,13 +321,14 @@ impl PeerNsGuard {
             });
         }
 
-        // Create peer netns: create a persist file, then use a scoped thread
-        // to unshare(CLONE_NEWNET) and bind-mount the new ns over the file.
+        // Create peer netns: create a persist file, then spawn a thread to
+        // unshare(CLONE_NEWNET) and bind-mount the new ns over the file.
         let ns_path = Path::new(NetNsGuard::PERSIST_DIR).join(&name);
         let _unused: fs::File = fs::File::create(&ns_path)
             .unwrap_or_else(|err| panic!("fs::File::create(\"{}\"): {err:?}", ns_path.display()));
-        std::thread::scope(|s| {
-            s.spawn(|| {
+        {
+            let ns_path = ns_path.clone();
+            std::thread::spawn(move || {
                 nix::sched::unshare(nix::sched::CloneFlags::CLONE_NEWNET)
                     .expect("unshare(CLONE_NEWNET) for peer ns");
                 let new_ns_path = format!("/proc/self/task/{}/ns/net", nix::unistd::gettid());
@@ -341,7 +343,7 @@ impl PeerNsGuard {
             })
             .join()
             .unwrap();
-        });
+        }
 
         // Move veth1 into peer netns.
         let peer_ns = fs::File::open(&ns_path)
@@ -464,9 +466,7 @@ impl PeerNsGuard {
 
     /// Run a closure inside the peer network namespace.
     ///
-    /// Uses a scoped thread because `setns` changes the network namespace of the
-    /// *calling* thread — running it on a disposable thread avoids polluting the
-    /// test thread's namespace.
+    /// See [`run_in_netns`] for why this uses a scoped thread.
     pub(crate) fn run<F, R>(&self, f: F) -> R
     where
         F: FnOnce() -> R + Send,

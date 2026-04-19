@@ -165,6 +165,8 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
             "TC_H_MIN_EGRESS",
             // Ringbuf
             "BPF_RINGBUF_.*",
+            // VETH
+            "VETH_INFO_PEER",
             // NETFILTER
             "NFPROTO_.*",
         ];

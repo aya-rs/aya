@@ -12,7 +12,7 @@ use std::{
     ptr, slice,
 };
 
-use aya_obj::generated::ifinfomsg;
+use aya_obj::generated::{NLMSG_ALIGNTO, ifinfomsg};
 use libc::{
     AF_INET, AF_NETLINK, AF_UNSPEC, IFA_ADDRESS, IFA_LOCAL, IFF_UP, IFLA_ADDRESS, IFLA_IFNAME,
     IFLA_INFO_DATA, IFLA_INFO_KIND, IFLA_LINKINFO, IFLA_NET_NS_FD, NDA_DST, NDA_LLADDR,
@@ -21,10 +21,9 @@ use libc::{
     RTM_NEWLINK, RTM_NEWNEIGH, RTM_SETLINK, SOCK_RAW, SOL_NETLINK, nlattr, nlmsgerr, nlmsghdr,
 };
 
-/// `NLMSG_ALIGNTO` from the kernel; value is always 4.
-const NLMSG_ALIGNTO: usize = 4;
 const NLA_HDR_LEN: usize = align_to(size_of::<nlattr>(), NLA_ALIGNTO as usize);
 /// `VETH_INFO_PEER` from `linux/veth.h`; not exported by libc.
+/// TODO: import from `aya_obj::generated` once codegen is re-run with `linux/veth.h`.
 const VETH_INFO_PEER: u16 = 1;
 
 /// `struct ifaddrmsg` from `linux/if_addr.h`.
@@ -107,7 +106,7 @@ unsafe fn bytes_of<T>(val: &T) -> &[u8] {
 unsafe fn request_attributes<T>(req: &mut T, msg_len: usize) -> &mut [u8] {
     let req: *mut u8 = ptr::from_mut(req).cast();
     let attrs_addr = unsafe { req.add(msg_len) };
-    let align_offset = attrs_addr.align_offset(NLMSG_ALIGNTO);
+    let align_offset = attrs_addr.align_offset(NLMSG_ALIGNTO as usize);
     let attrs_addr = unsafe { attrs_addr.add(align_offset) };
     let len = size_of::<T>() - msg_len - align_offset;
     unsafe { slice::from_raw_parts_mut(attrs_addr, len) }
@@ -209,7 +208,7 @@ impl NetlinkSocket {
             let mut offset = 0;
             while offset < len {
                 let message = NetlinkMessage::read(&buf[offset..])?;
-                offset += align_to(message.header.nlmsg_len as usize, NLMSG_ALIGNTO);
+                offset += align_to(message.header.nlmsg_len as usize, NLMSG_ALIGNTO as usize);
                 multipart = (message.header.nlmsg_flags & (libc::NLM_F_MULTI as u16)) != 0;
                 match i32::from(message.header.nlmsg_type) {
                     NLMSG_ERROR => {
@@ -245,7 +244,7 @@ impl NetlinkMessage {
         if msg_len < size_of::<nlmsghdr>() || msg_len > buf.len() {
             return Err(io::Error::other("invalid nlmsg_len"));
         }
-        let data_offset = align_to(size_of::<nlmsghdr>(), NLMSG_ALIGNTO);
+        let data_offset = align_to(size_of::<nlmsghdr>(), NLMSG_ALIGNTO as usize);
         if data_offset >= buf.len() {
             return Err(io::Error::other("need more data"));
         }

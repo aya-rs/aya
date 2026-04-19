@@ -1,4 +1,8 @@
-use std::{net::UdpSocket, num::NonZeroU32, time::Duration};
+use std::{
+    net::{Ipv4Addr, UdpSocket},
+    num::NonZeroU32,
+    time::Duration,
+};
 
 use assert_matches::assert_matches;
 use aya::{
@@ -25,12 +29,14 @@ fn veth_connectivity() {
     sock.set_read_timeout(Some(Duration::from_secs(10)))
         .unwrap();
 
+    // Send from the peer namespace. Bind UNSPECIFIED so the kernel picks the
+    // right source address (10.0.0.2) for the veth route.
     peer.run(|| {
-        let sock = UdpSocket::bind(("0.0.0.0", 0)).unwrap();
+        let sock = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).unwrap();
         sock.send_to(PAYLOAD, addr).unwrap();
     });
 
-    let mut buf = [0u8; PAYLOAD.len()];
+    let mut buf = [0u8; 512];
     let n = sock.recv(&mut buf).unwrap();
     assert_eq!(&buf[..n], PAYLOAD);
 }
@@ -107,7 +113,7 @@ fn af_xdp() {
 
     let dst = (peer.iface_addr(), 1777u16);
     let port = peer.run(|| {
-        let sock = UdpSocket::bind(("0.0.0.0", 0)).unwrap();
+        let sock = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).unwrap();
         let port = sock.local_addr().unwrap().port();
         sock.send_to(b"hello AF_XDP", dst).unwrap();
         port
@@ -135,14 +141,14 @@ fn af_xdp() {
     socks.unset(0).unwrap();
     assert_eq!(rx.available(), 1);
     peer.run(|| {
-        let sock = UdpSocket::bind(("0.0.0.0", 0)).unwrap();
+        let sock = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).unwrap();
         sock.send_to(b"hello AF_XDP", dst).unwrap();
     });
     assert_eq!(rx.available(), 1);
     // Adds socket to map again, packets will be redirected again.
     socks.set(0, rx.as_raw_fd(), 0).unwrap();
     peer.run(|| {
-        let sock = UdpSocket::bind(("0.0.0.0", 0)).unwrap();
+        let sock = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).unwrap();
         sock.send_to(b"hello AF_XDP", dst).unwrap();
     });
     assert_eq!(rx.available(), 2);
