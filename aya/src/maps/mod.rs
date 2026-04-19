@@ -144,6 +144,15 @@ pub enum MapError {
         expected: usize,
     },
 
+    /// Invalid value layout
+    #[error("invalid value size {size}: {reason}")]
+    InvalidValueLayout {
+        /// Size encountered
+        size: usize,
+        /// Description of the required layout
+        reason: &'static str,
+    },
+
     /// Index is out of bounds
     #[error("the index is {index} but `max_entries` is {max_entries}")]
     OutOfBounds {
@@ -196,6 +205,15 @@ pub enum MapError {
         name: String,
         /// The map type
         map_type: bpf_map_type,
+    },
+
+    /// Unsupported map flags
+    #[error("unsupported map flags {flags:#x}: {reason}")]
+    UnsupportedMapFlags {
+        /// The map flags
+        flags: u32,
+        /// The reason
+        reason: &'static str,
     },
 }
 
