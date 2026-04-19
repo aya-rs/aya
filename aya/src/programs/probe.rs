@@ -172,7 +172,7 @@ fn detach_debug_fs<P: Probe>(event_alias: &OsStr) -> Result<(), ProgramError> {
         .map_err(|(filename, io_error)| P::file_error(filename, io_error).into())
 }
 
-fn create_as_probe<P: Probe>(
+pub(crate) fn create_as_probe<P: Probe>(
     kind: ProbeKind,
     fn_name: &OsStr,
     offset: u64,
@@ -197,7 +197,7 @@ fn create_as_probe<P: Probe>(
         .map_err(Into::into)
 }
 
-fn create_as_trace_point<P: Probe>(
+pub(crate) fn create_as_trace_point<P: Probe>(
     kind: ProbeKind,
     name: &OsStr,
     offset: u64,
