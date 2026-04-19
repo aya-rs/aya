@@ -4,11 +4,10 @@
 
 use std::{
     borrow::{Borrow, BorrowMut},
-    fs, io,
     os::fd::AsFd as _,
-    path::Path,
-    str::FromStr,
 };
+
+use aya_obj::generated::BPF_F_STACK_BUILD_ID;
 
 use crate::{
     maps::{IterableMap, MapData, MapError, MapIter, MapKeys, hash_map},
@@ -81,21 +80,36 @@ pub struct StackTraceMap<T> {
 impl<T: Borrow<MapData>> StackTraceMap<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
-        let expected = size_of::<u32>();
-        let size = data.obj.key_size() as usize;
-        if size != expected {
-            return Err(MapError::InvalidKeySize { size, expected });
+
+        let key_size = data.obj.key_size() as usize;
+        let expected_key = size_of::<u32>();
+        if key_size != expected_key {
+            return Err(MapError::InvalidKeySize {
+                size: key_size,
+                expected: expected_key,
+            });
         }
 
-        let max_stack_depth =
-            sysctl::<usize>("kernel/perf_event_max_stack").map_err(|io_error| SyscallError {
-                call: "sysctl",
-                io_error,
-            })?;
-        let size = data.obj.value_size() as usize;
-        if size > max_stack_depth * size_of::<u64>() {
-            return Err(MapError::InvalidValueSize { size, expected });
+        // BPF_F_STACK_BUILD_ID switches stack entries to
+        // `struct bpf_stack_build_id` (32 bytes), which `get` decodes as
+        // `[u64]` and would silently corrupt. Reject it.
+        let flags = data.obj.map_flags();
+        if flags & BPF_F_STACK_BUILD_ID != 0 {
+            return Err(MapError::UnsupportedMapFlags {
+                flags,
+                reason: "StackTraceMap does not support bpf_stack_build_id entries",
+            });
         }
+
+        let value_size = data.obj.value_size() as usize;
+        let expected_stride = size_of::<u64>();
+        if value_size == 0 || !value_size.is_multiple_of(expected_stride) {
+            return Err(MapError::InvalidValueSize {
+                size: value_size,
+                expected: expected_stride,
+            });
+        }
+        let max_stack_depth = value_size / expected_stride;
 
         Ok(Self {
             inner: map,
@@ -191,11 +205,4 @@ impl StackTrace {
 pub struct StackFrame {
     /// The instruction pointer of this frame.
     pub ip: u64,
-}
-
-fn sysctl<T: FromStr>(key: &str) -> Result<T, io::Error> {
-    let val = fs::read_to_string(Path::new("/proc/sys").join(key))?;
-    val.trim()
-        .parse::<T>()
-        .map_err(|_err: T::Err| io::Error::new(io::ErrorKind::InvalidData, val))
 }

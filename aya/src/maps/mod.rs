@@ -197,6 +197,15 @@ pub enum MapError {
         /// The map type
         map_type: bpf_map_type,
     },
+
+    /// Unsupported map flags
+    #[error("unsupported map flags {flags:#x}: {reason}")]
+    UnsupportedMapFlags {
+        /// The map flags
+        flags: u32,
+        /// The reason
+        reason: &'static str,
+    },
 }
 
 impl From<InvalidTypeBinding<u32>> for MapError {
