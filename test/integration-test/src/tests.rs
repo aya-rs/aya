@@ -24,6 +24,7 @@ mod hash_map;
 mod info;
 mod inode_storage;
 mod iter;
+mod kconfig;
 mod kprobe;
 mod linear_data_structures;
 mod load;
