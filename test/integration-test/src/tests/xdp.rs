@@ -31,7 +31,7 @@ fn veth_connectivity() {
         sock.send_to(PAYLOAD, addr).unwrap();
     });
 
-    let mut buf = [0u8; 512];
+    let mut buf = [0u8; PAYLOAD.len() + 1];
     let n = sock.recv(&mut buf).unwrap();
     assert_eq!(&buf[..n], PAYLOAD);
 }

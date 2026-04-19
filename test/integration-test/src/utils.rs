@@ -235,11 +235,6 @@ impl Drop for NetNsGuard {
 }
 
 /// Run a closure inside a network namespace identified by a file handle.
-///
-/// Runs `f` on a disposable thread so that `setns` does not change the calling
-/// thread's namespace. A scoped thread is used (rather than `std::thread::spawn`)
-/// so that `f` can capture references that are not `'static` — in particular,
-/// data whose lifetime is bound by a [`PeerNsGuard`].
 fn run_in_netns<F, R>(ns_file: &fs::File, f: F) -> R
 where
     F: FnOnce() -> R + Send,
@@ -326,14 +321,13 @@ impl PeerNsGuard {
             });
         }
 
-        // Create peer netns: create a persist file, then spawn a thread to
-        // unshare(CLONE_NEWNET) and bind-mount the new ns over the file.
+        // Create peer netns: create a persist file, then use a separate thread
+        // to unshare(CLONE_NEWNET) and bind-mount the new ns over the file.
         let ns_path = Path::new(NetNsGuard::PERSIST_DIR).join(&name);
         let _unused: fs::File = fs::File::create(&ns_path)
             .unwrap_or_else(|err| panic!("fs::File::create(\"{}\"): {err:?}", ns_path.display()));
-        {
-            let ns_path = ns_path.clone();
-            std::thread::spawn(move || {
+        std::thread::scope(|s| {
+            s.spawn(|| {
                 nix::sched::unshare(nix::sched::CloneFlags::CLONE_NEWNET)
                     .expect("unshare(CLONE_NEWNET) for peer ns");
                 let new_ns_path = format!("/proc/self/task/{}/ns/net", nix::unistd::gettid());
@@ -348,7 +342,7 @@ impl PeerNsGuard {
             })
             .join()
             .unwrap();
-        }
+        });
 
         // Move veth1 into peer netns.
         let peer_ns = fs::File::open(&ns_path)
@@ -471,7 +465,9 @@ impl PeerNsGuard {
 
     /// Run a closure inside the peer network namespace.
     ///
-    /// See [`run_in_netns`] for why this uses a scoped thread.
+    /// `f` runs on a separate thread because `setns` affects the calling thread.
+    /// `F` is `Send` but not `'static`, so callers can capture references whose
+    /// lifetime is bound by this guard.
     pub(crate) fn run<F, R>(&self, f: F) -> R
     where
         F: FnOnce() -> R + Send,
