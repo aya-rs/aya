@@ -286,6 +286,11 @@ impl PeerNsGuard {
         Self::IFACE_ADDR
     }
 
+    #[expect(clippy::unused_self, reason = "access requires a live PeerNsGuard")]
+    pub(crate) fn peer_addr(&self) -> Ipv4Addr {
+        Self::PEER_IP
+    }
+
     pub(crate) fn new(netns: &NetNsGuard) -> Self {
         let name = format!("{}-peer", netns.name);
 
