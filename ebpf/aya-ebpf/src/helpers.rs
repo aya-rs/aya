@@ -387,12 +387,12 @@ pub unsafe fn bpf_probe_read_user_str_bytes(src: *const u8, dest: &mut [u8]) -> 
     read_str_bytes(len, dest)
 }
 
-fn read_str_bytes(len: i64, dest: &[u8]) -> Result<&[u8], i32> {
+fn read_str_bytes(len: c_long, dest: &[u8]) -> Result<&[u8], i32> {
     // The lower bound is 0, since it's what is returned for b"\0". See the
     // bpf_probe_read_user_[user|kernel]_bytes_empty integration tests.  The upper bound
     // check is not needed since the helper truncates, but the verifier doesn't
     // know that so we show it the upper bound.
-    if !check_bounds_signed(len, 0, dest.len() as i64) {
+    if !check_bounds_signed(len, 0, dest.len() as c_long) {
         return Err(-1);
     }
 
@@ -773,7 +773,7 @@ impl<T> From<*mut T> for PrintkArg {
 pub unsafe fn bpf_printk_impl<const FMT_LEN: usize, const NUM_ARGS: usize>(
     fmt_ptr: *const u8,
     args: &[PrintkArg; NUM_ARGS],
-) -> i64 {
+) -> c_long {
     // This function can't be wrapped in `helpers.rs` because it has variadic
     // arguments. We also can't turn the definitions in `helpers.rs` into
     // `const`s because MIRI believes casting arbitrary integers to function

@@ -25,9 +25,9 @@ impl SockOpsContext {
         unsafe { (*self.ops).bpf_sock_ops_cb_flags }
     }
 
-    pub fn set_cb_flags(&self, flags: i32) -> Result<(), i64> {
+    pub fn set_cb_flags(&self, flags: i32) -> Result<(), i32> {
         let ret = unsafe { bpf_sock_ops_cb_flags_set(self.ops, flags) };
-        if ret == 0 { Ok(()) } else { Err(ret) }
+        if ret == 0 { Ok(()) } else { Err(ret as i32) }
     }
 
     pub fn remote_ip4(&self) -> u32 {

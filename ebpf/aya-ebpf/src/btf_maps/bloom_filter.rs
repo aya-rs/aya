@@ -1,7 +1,5 @@
 use core::{borrow::Borrow, ptr};
 
-use aya_ebpf_cty::c_long;
-
 use crate::{
     btf_maps::btf_map_def,
     helpers::{bpf_map_peek_elem, bpf_map_push_elem},
@@ -35,20 +33,20 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize>
     BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
 {
     #[inline(always)]
-    pub fn contains(&self, value: impl Borrow<T>) -> Result<(), c_long> {
+    pub fn contains(&self, value: impl Borrow<T>) -> Result<(), i32> {
         let value = ptr::from_ref(value.borrow());
         match unsafe { bpf_map_peek_elem(self.as_ptr(), value.cast_mut().cast()) } {
             0 => Ok(()),
-            ret => Err(ret),
+            ret => Err(ret as i32),
         }
     }
 
     #[inline(always)]
-    pub fn insert(&self, value: impl Borrow<T>, flags: u64) -> Result<(), c_long> {
+    pub fn insert(&self, value: impl Borrow<T>, flags: u64) -> Result<(), i32> {
         let value = ptr::from_ref(value.borrow());
         match unsafe { bpf_map_push_elem(self.as_ptr(), value.cast(), flags) } {
             0 => Ok(()),
-            ret => Err(ret),
+            ret => Err(ret as i32),
         }
     }
 }

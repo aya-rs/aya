@@ -583,6 +583,26 @@ macro_rules! impl_try_into_fdlink {
 
 pub(crate) use impl_try_into_fdlink;
 
+macro_rules! impl_try_from_fdlink {
+    ($wrapper:ident, $inner:ident, $link_type:expr) => {
+        impl TryFrom<$crate::programs::FdLink> for $wrapper {
+            type Error = $crate::programs::LinkError;
+
+            fn try_from(fd_link: $crate::programs::FdLink) -> Result<Self, Self::Error> {
+                use std::os::fd::AsFd as _;
+
+                let info = $crate::sys::bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
+                if info.type_ == ($link_type as u32) {
+                    return Ok(Self::new($inner::Fd(fd_link)));
+                }
+                Err($crate::programs::LinkError::InvalidLink)
+            }
+        }
+    };
+}
+
+pub(crate) use impl_try_from_fdlink;
+
 #[derive(Error, Debug)]
 /// Errors from operations on links.
 pub enum LinkError {

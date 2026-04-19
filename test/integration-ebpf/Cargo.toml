@@ -53,6 +53,10 @@ name = "log"
 path = "src/log.rs"
 
 [[bin]]
+name = "lpm_trie"
+path = "src/lpm_trie.rs"
+
+[[bin]]
 name = "map_test"
 path = "src/map_test.rs"
 
@@ -67,6 +71,10 @@ path = "src/name_test.rs"
 [[bin]]
 name = "pass"
 path = "src/pass.rs"
+
+[[bin]]
+name = "per_cpu_array"
+path = "src/per_cpu_array.rs"
 
 [[bin]]
 name = "raw_tracepoint"
