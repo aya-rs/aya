@@ -101,6 +101,13 @@ fn main() -> Result<()> {
         ("ksyms_typed_missing_kfunc.bpf.c", true),
         ("ksyms_typeless_missing.bpf.c", true),
         ("kconfig.bpf.c", false),
+        ("kconfig_missing_strong.bpf.c", false),
+        ("kconfig_unknown_weak.bpf.c", false),
+        ("kconfig_unsigned_u8.bpf.c", false),
+        ("kconfig_signed_i8.bpf.c", false),
+        ("kconfig_invalid_bool.bpf.c", false),
+        ("kconfig_invalid_array.bpf.c", false),
+        ("kconfig_non_tristate_enum.bpf.c", false),
     ];
     const C_BPF_HEADERS: &[&str] = &["reloc.h", "struct_with_scalars.h"];
 
