@@ -9,8 +9,8 @@ use std::{
 
 use aya_obj::{
     generated::{
-        XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_REPLACE, XDP_FLAGS_SKB_MODE,
-        XDP_FLAGS_UPDATE_IF_NOEXIST, bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_XDP,
+        XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_SKB_MODE, bpf_link_type,
+        bpf_prog_type::BPF_PROG_TYPE_XDP,
     },
     programs::XdpAttachType,
 };
@@ -26,7 +26,6 @@ use crate::{
         LinkTarget, NetlinkError, SyscallError, bpf_link_create, bpf_link_update,
         netlink_set_xdp_fd,
     },
-    util::KernelVersion,
 };
 
 /// An error that occurred while working with an XDP program.
@@ -37,20 +36,28 @@ pub enum XdpError {
     NetlinkError(#[from] NetlinkError),
 }
 
-bitflags::bitflags! {
-    /// Flags passed to [`Xdp::attach()`].
-    #[derive(Clone, Copy, Debug, Default)]
-    pub struct XdpFlags: u32 {
-        /// Skb mode.
-        const SKB_MODE = XDP_FLAGS_SKB_MODE;
-        /// Driver mode.
-        const DRV_MODE = XDP_FLAGS_DRV_MODE;
-        /// Hardware mode.
-        const HW_MODE = XDP_FLAGS_HW_MODE;
-        /// Replace a previously attached XDP program.
-        const REPLACE = XDP_FLAGS_REPLACE;
-        /// Only attach if there isn't another XDP program already attached.
-        const UPDATE_IF_NOEXIST = XDP_FLAGS_UPDATE_IF_NOEXIST;
+/// XDP attachment mode.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub enum XdpMode {
+    /// Let the kernel choose the mode.
+    #[default]
+    Default,
+    /// Generic XDP, executed by the kernel network stack.
+    Skb,
+    /// Native XDP, executed by the network driver.
+    Driver,
+    /// Hardware offload, executed by the network device.
+    Hardware,
+}
+
+impl XdpMode {
+    pub(crate) const fn flags(self) -> u32 {
+        match self {
+            Self::Default => 0,
+            Self::Skb => XDP_FLAGS_SKB_MODE,
+            Self::Driver => XDP_FLAGS_DRV_MODE,
+            Self::Hardware => XDP_FLAGS_HW_MODE,
+        }
     }
 }
 
@@ -69,10 +76,10 @@ bitflags::bitflags! {
 ///
 /// ```no_run
 /// # let mut bpf = Ebpf::load_file("ebpf_programs.o")?;
-/// use aya::{Ebpf, programs::{Xdp, XdpFlags}};
+/// use aya::{Ebpf, programs::{Xdp, XdpMode}};
 ///
 /// let program: &mut Xdp = bpf.program_mut("intercept_packets").unwrap().try_into()?;
-/// program.attach("eth0", XdpFlags::default())?;
+/// program.attach("eth0", XdpMode::default())?;
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[derive(Debug)]
@@ -103,7 +110,7 @@ impl Xdp {
     ///
     /// When `bpf_link_create` is unavailable or rejects the request, the call
     /// transparently falls back to the legacy netlink-based attach path.
-    pub fn attach(&mut self, interface: &str, flags: XdpFlags) -> Result<XdpLinkId, ProgramError> {
+    pub fn attach(&mut self, interface: &str, mode: XdpMode) -> Result<XdpLinkId, ProgramError> {
         // TODO: avoid this unwrap by adding a new error variant.
         let c_interface = CString::new(interface).unwrap();
         let if_index = unsafe { libc::if_nametoindex(c_interface.as_ptr()) };
@@ -112,7 +119,7 @@ impl Xdp {
                 name: interface.to_string(),
             });
         }
-        self.attach_to_if_index(if_index, flags)
+        self.attach_to_if_index(if_index, mode)
     }
 
     /// Attaches the program to the given interface index.
@@ -126,16 +133,17 @@ impl Xdp {
     pub fn attach_to_if_index(
         &mut self,
         if_index: u32,
-        flags: XdpFlags,
+        mode: XdpMode,
     ) -> Result<XdpLinkId, ProgramError> {
         let Self { data, attach_type } = self;
         let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
+        let flags = mode.flags();
         let link = match bpf_link_create(
             prog_fd,
             LinkTarget::IfIndex(if_index),
             *attach_type,
-            flags.bits(),
+            flags,
             None,
         ) {
             Ok(link_fd) => XdpLinkInner::Fd(FdLink::new(link_fd)),
@@ -150,14 +158,14 @@ impl Xdp {
                 // Fall back to netlink-based attachment.
 
                 let if_index = if_index as i32;
-                unsafe { netlink_set_xdp_fd(if_index, Some(prog_fd), None, flags.bits()) }
+                unsafe { netlink_set_xdp_fd(if_index, Some(prog_fd), None, mode) }
                     .map_err(XdpError::NetlinkError)?;
 
                 let prog_fd = prog_fd.as_raw_fd();
                 XdpLinkInner::NlLink(NlLink {
                     if_index,
                     prog_fd,
-                    flags,
+                    mode,
                 })
             }
         };
@@ -198,21 +206,16 @@ impl Xdp {
                     .links
                     .insert(XdpLink::new(XdpLinkInner::Fd(FdLink::new(link_fd))))
             }
-            XdpLinkInner::NlLink(nl_link) => {
-                let if_index = nl_link.if_index;
-                let old_prog_fd = nl_link.prog_fd;
+            XdpLinkInner::NlLink(NlLink {
+                if_index,
+                prog_fd: old_prog_fd,
+                mode,
+            }) => {
                 // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
                 let old_prog_fd = unsafe { BorrowedFd::borrow_raw(old_prog_fd) };
-                let flags = nl_link.flags;
-                let replace_flags = flags | XdpFlags::REPLACE;
                 unsafe {
-                    netlink_set_xdp_fd(
-                        if_index,
-                        Some(prog_fd),
-                        Some(old_prog_fd),
-                        replace_flags.bits(),
-                    )
-                    .map_err(XdpError::NetlinkError)?;
+                    netlink_set_xdp_fd(if_index, Some(prog_fd), Some(old_prog_fd), mode)
+                        .map_err(XdpError::NetlinkError)?;
                 }
 
                 let prog_fd = prog_fd.as_raw_fd();
@@ -221,7 +224,7 @@ impl Xdp {
                     .insert(XdpLink::new(XdpLinkInner::NlLink(NlLink {
                         if_index,
                         prog_fd,
-                        flags,
+                        mode,
                     })))
             }
         }
@@ -232,7 +235,7 @@ impl Xdp {
 pub(crate) struct NlLink {
     if_index: i32,
     prog_fd: RawFd,
-    flags: XdpFlags,
+    mode: XdpMode,
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]
@@ -242,19 +245,24 @@ impl Link for NlLink {
     type Id = NlLinkId;
 
     fn id(&self) -> Self::Id {
-        NlLinkId(self.if_index, self.prog_fd)
+        let Self {
+            if_index,
+            prog_fd,
+            mode: _,
+        } = self;
+        NlLinkId(*if_index, *prog_fd)
     }
 
     fn detach(self) -> Result<(), ProgramError> {
-        let flags = if KernelVersion::at_least(5, 7, 0) {
-            self.flags.bits() | XDP_FLAGS_REPLACE
-        } else {
-            self.flags.bits()
-        };
+        let Self {
+            if_index,
+            prog_fd,
+            mode,
+        } = self;
         // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
-        let prog_fd = unsafe { BorrowedFd::borrow_raw(self.prog_fd) };
+        let prog_fd = unsafe { BorrowedFd::borrow_raw(prog_fd) };
         let _unused: Result<(), NetlinkError> =
-            unsafe { netlink_set_xdp_fd(self.if_index, None, Some(prog_fd), flags) };
+            unsafe { netlink_set_xdp_fd(if_index, None, Some(prog_fd), mode) };
         Ok(())
     }
 }

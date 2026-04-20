@@ -4,7 +4,7 @@ use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::{Array, CpuMap, XskMap},
-    programs::{ProgramError, Xdp, XdpError, XdpFlags, xdp::XdpLinkId},
+    programs::{ProgramError, Xdp, XdpError, XdpMode, xdp::XdpLinkId},
     util::KernelVersion,
 };
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
@@ -29,7 +29,7 @@ fn af_xdp() {
         .try_into()
         .unwrap();
     xdp.load().unwrap();
-    xdp.attach("lo", XdpFlags::default()).unwrap();
+    xdp.attach("lo", XdpMode::default()).unwrap();
 
     const SIZE: usize = 2 * 4096;
 
@@ -185,7 +185,7 @@ fn cpumap_chain() {
     // Load the main program
     let xdp: &mut Xdp = bpf.program_mut("redirect_cpu").unwrap().try_into().unwrap();
     xdp.load().unwrap();
-    let result = xdp.attach("lo", XdpFlags::default());
+    let result = xdp.attach("lo", XdpMode::default());
     // Generic devices did not support cpumap XDP programs until 5.15.
     //
     // See https://github.com/torvalds/linux/commit/11941f8a85362f612df61f4aaab0e41b64d2111d.

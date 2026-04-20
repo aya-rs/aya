@@ -21,8 +21,8 @@ use thiserror::Error;
 
 use crate::{
     Pod,
-    programs::TcAttachType,
-    util::{bytes_of, tc_handler_make},
+    programs::{TcAttachType, XdpMode},
+    util::{KernelVersion, bytes_of, tc_handler_make},
 };
 
 const _: () = assert!(NLA_ALIGNTO < u8::MAX as i32);
@@ -106,8 +106,8 @@ impl NetlinkError {
 pub(crate) unsafe fn netlink_set_xdp_fd(
     if_index: i32,
     fd: Option<BorrowedFd<'_>>,
-    old_fd: Option<BorrowedFd<'_>>,
-    flags: u32,
+    expected_fd: Option<BorrowedFd<'_>>,
+    mode: XdpMode,
 ) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
@@ -132,18 +132,28 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
         .write_attr(IFLA_XDP_FD as u16, fd.map_or(-1, |fd| fd.as_raw_fd()))
         .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
 
-    if flags > 0 {
+    // IFLA_XDP_EXPECTED_FD and XDP_FLAGS_REPLACE were added in 5.7.0. See
+    // https://github.com/torvalds/linux/commit/92234c8f.
+    let expected_fd = if KernelVersion::at_least(5, 7, 0) {
+        expected_fd
+    } else {
+        None
+    };
+
+    let (flags, expected_fd) = match expected_fd {
+        None => (mode.flags(), None),
+        Some(fd) => (mode.flags() | XDP_FLAGS_REPLACE, Some(fd.as_raw_fd())),
+    };
+
+    if flags != 0 {
         attrs
             .write_attr(IFLA_XDP_FLAGS as u16, flags)
             .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
     }
 
-    if flags & XDP_FLAGS_REPLACE != 0 {
+    if let Some(expected_fd) = expected_fd {
         attrs
-            .write_attr(
-                IFLA_XDP_EXPECTED_FD as u16,
-                old_fd.map(|fd| fd.as_raw_fd()).unwrap(),
-            )
+            .write_attr(IFLA_XDP_EXPECTED_FD as u16, expected_fd)
             .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
     }
 
