@@ -21,7 +21,7 @@ use thiserror::Error;
 
 use crate::{
     Pod,
-    programs::TcAttachType,
+    programs::{TcAttachType, XdpMode},
     util::{bytes_of, tc_handler_make},
 };
 
@@ -106,8 +106,8 @@ impl NetlinkError {
 pub(crate) unsafe fn netlink_set_xdp_fd(
     if_index: i32,
     fd: Option<BorrowedFd<'_>>,
-    old_fd: Option<BorrowedFd<'_>>,
-    flags: u32,
+    expected_fd: Option<BorrowedFd<'_>>,
+    mode: XdpMode,
 ) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
@@ -132,18 +132,20 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
         .write_attr(IFLA_XDP_FD as u16, fd.map_or(-1, |fd| fd.as_raw_fd()))
         .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
 
-    if flags > 0 {
+    let (flags, expected_fd) = match expected_fd {
+        None => (mode.flags(), None),
+        Some(fd) => (mode.flags() | XDP_FLAGS_REPLACE, Some(fd.as_raw_fd())),
+    };
+
+    if flags != 0 {
         attrs
             .write_attr(IFLA_XDP_FLAGS as u16, flags)
             .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
     }
 
-    if flags & XDP_FLAGS_REPLACE != 0 {
+    if let Some(expected_fd) = expected_fd {
         attrs
-            .write_attr(
-                IFLA_XDP_EXPECTED_FD as u16,
-                old_fd.map(|fd| fd.as_raw_fd()).unwrap(),
-            )
+            .write_attr(IFLA_XDP_EXPECTED_FD as u16, expected_fd)
             .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
     }
 

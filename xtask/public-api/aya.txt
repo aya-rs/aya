@@ -4897,11 +4897,36 @@ impl core::marker::Unpin for aya::programs::xdp::XdpError
 impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpError
+pub enum aya::programs::xdp::XdpMode
+pub aya::programs::xdp::XdpMode::Default
+pub aya::programs::xdp::XdpMode::Driver
+pub aya::programs::xdp::XdpMode::Hardware
+pub aya::programs::xdp::XdpMode::Skb
+impl core::clone::Clone for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::clone(&self) -> aya::programs::xdp::XdpMode
+impl core::cmp::Eq for aya::programs::xdp::XdpMode
+impl core::cmp::PartialEq for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::eq(&self, other: &aya::programs::xdp::XdpMode) -> bool
+impl core::default::Default for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::default() -> aya::programs::xdp::XdpMode
+impl core::fmt::Debug for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for aya::programs::xdp::XdpMode
+impl core::marker::StructuralPartialEq for aya::programs::xdp::XdpMode
+impl core::marker::Freeze for aya::programs::xdp::XdpMode
+impl core::marker::Send for aya::programs::xdp::XdpMode
+impl core::marker::Sync for aya::programs::xdp::XdpMode
+impl core::marker::Unpin for aya::programs::xdp::XdpMode
+impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpMode
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpMode
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpMode
 pub struct aya::programs::xdp::Xdp
 impl aya::programs::xdp::Xdp
 pub const aya::programs::xdp::Xdp::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::xdp::Xdp::attach(&mut self, interface: &str, flags: aya::programs::xdp::XdpFlags) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
-pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, if_index: u32, flags: aya::programs::xdp::XdpFlags) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::attach(&mut self, interface: &str, mode: aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, if_index: u32, mode: aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::attach_to_link(&mut self, link: aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -4936,98 +4961,6 @@ impl core::marker::Unpin for aya::programs::xdp::Xdp
 impl core::marker::UnsafeUnpin for aya::programs::xdp::Xdp
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::Xdp
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::Xdp
-pub struct aya::programs::xdp::XdpFlags(_)
-impl aya::programs::xdp::XdpFlags
-pub const aya::programs::xdp::XdpFlags::DRV_MODE: Self
-pub const aya::programs::xdp::XdpFlags::HW_MODE: Self
-pub const aya::programs::xdp::XdpFlags::REPLACE: Self
-pub const aya::programs::xdp::XdpFlags::SKB_MODE: Self
-pub const aya::programs::xdp::XdpFlags::UPDATE_IF_NOEXIST: Self
-impl aya::programs::xdp::XdpFlags
-pub const fn aya::programs::xdp::XdpFlags::all() -> Self
-pub const fn aya::programs::xdp::XdpFlags::bits(&self) -> u32
-pub const fn aya::programs::xdp::XdpFlags::complement(self) -> Self
-pub const fn aya::programs::xdp::XdpFlags::contains(&self, other: Self) -> bool
-pub const fn aya::programs::xdp::XdpFlags::difference(self, other: Self) -> Self
-pub const fn aya::programs::xdp::XdpFlags::empty() -> Self
-pub const fn aya::programs::xdp::XdpFlags::from_bits(bits: u32) -> core::option::Option<Self>
-pub const fn aya::programs::xdp::XdpFlags::from_bits_retain(bits: u32) -> Self
-pub const fn aya::programs::xdp::XdpFlags::from_bits_truncate(bits: u32) -> Self
-pub fn aya::programs::xdp::XdpFlags::from_name(name: &str) -> core::option::Option<Self>
-pub fn aya::programs::xdp::XdpFlags::insert(&mut self, other: Self)
-pub const fn aya::programs::xdp::XdpFlags::intersection(self, other: Self) -> Self
-pub const fn aya::programs::xdp::XdpFlags::intersects(&self, other: Self) -> bool
-pub const fn aya::programs::xdp::XdpFlags::is_all(&self) -> bool
-pub const fn aya::programs::xdp::XdpFlags::is_empty(&self) -> bool
-pub fn aya::programs::xdp::XdpFlags::remove(&mut self, other: Self)
-pub fn aya::programs::xdp::XdpFlags::set(&mut self, other: Self, value: bool)
-pub const fn aya::programs::xdp::XdpFlags::symmetric_difference(self, other: Self) -> Self
-pub fn aya::programs::xdp::XdpFlags::toggle(&mut self, other: Self)
-pub const fn aya::programs::xdp::XdpFlags::union(self, other: Self) -> Self
-impl aya::programs::xdp::XdpFlags
-pub const fn aya::programs::xdp::XdpFlags::iter(&self) -> bitflags::iter::Iter<aya::programs::xdp::XdpFlags>
-pub const fn aya::programs::xdp::XdpFlags::iter_names(&self) -> bitflags::iter::IterNames<aya::programs::xdp::XdpFlags>
-impl bitflags::traits::Flags for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Bits = u32
-pub const aya::programs::xdp::XdpFlags::FLAGS: &'static [bitflags::traits::Flag<aya::programs::xdp::XdpFlags>]
-pub fn aya::programs::xdp::XdpFlags::bits(&self) -> u32
-pub fn aya::programs::xdp::XdpFlags::from_bits_retain(bits: u32) -> aya::programs::xdp::XdpFlags
-impl bitflags::traits::PublicFlags for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Internal = InternalBitFlags
-pub type aya::programs::xdp::XdpFlags::Primitive = u32
-impl core::clone::Clone for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::clone(&self) -> aya::programs::xdp::XdpFlags
-impl core::default::Default for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::default() -> aya::programs::xdp::XdpFlags
-impl core::fmt::Binary for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Debug for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Octal for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::iter::traits::collect::Extend<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::extend<T: core::iter::traits::collect::IntoIterator<Item = Self>>(&mut self, iterator: T)
-impl core::iter::traits::collect::FromIterator<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::from_iter<T: core::iter::traits::collect::IntoIterator<Item = Self>>(iterator: T) -> Self
-impl core::iter::traits::collect::IntoIterator for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::IntoIter = bitflags::iter::Iter<aya::programs::xdp::XdpFlags>
-pub type aya::programs::xdp::XdpFlags::Item = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::into_iter(self) -> Self::IntoIter
-impl core::marker::Copy for aya::programs::xdp::XdpFlags
-impl core::ops::arith::Sub for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::sub(self, other: Self) -> Self
-impl core::ops::arith::SubAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::sub_assign(&mut self, other: Self)
-impl core::ops::bit::BitAnd for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitand(self, other: Self) -> Self
-impl core::ops::bit::BitAndAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitand_assign(&mut self, other: Self)
-impl core::ops::bit::BitOr for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitor(self, other: aya::programs::xdp::XdpFlags) -> Self
-impl core::ops::bit::BitOrAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitor_assign(&mut self, other: Self)
-impl core::ops::bit::BitXor for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitxor(self, other: Self) -> Self
-impl core::ops::bit::BitXorAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitxor_assign(&mut self, other: Self)
-impl core::ops::bit::Not for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::not(self) -> Self
-impl core::marker::Freeze for aya::programs::xdp::XdpFlags
-impl core::marker::Send for aya::programs::xdp::XdpFlags
-impl core::marker::Sync for aya::programs::xdp::XdpFlags
-impl core::marker::Unpin for aya::programs::xdp::XdpFlags
-impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpFlags
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpFlags
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpFlags
 pub struct aya::programs::xdp::XdpLink(_)
 impl aya::programs::links::Link for aya::programs::xdp::XdpLink
 pub type aya::programs::xdp::XdpLink::Id = aya::programs::xdp::XdpLinkId
@@ -5643,6 +5576,31 @@ impl core::marker::Unpin for aya::programs::xdp::XdpError
 impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpError
+pub enum aya::programs::XdpMode
+pub aya::programs::XdpMode::Default
+pub aya::programs::XdpMode::Driver
+pub aya::programs::XdpMode::Hardware
+pub aya::programs::XdpMode::Skb
+impl core::clone::Clone for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::clone(&self) -> aya::programs::xdp::XdpMode
+impl core::cmp::Eq for aya::programs::xdp::XdpMode
+impl core::cmp::PartialEq for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::eq(&self, other: &aya::programs::xdp::XdpMode) -> bool
+impl core::default::Default for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::default() -> aya::programs::xdp::XdpMode
+impl core::fmt::Debug for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for aya::programs::xdp::XdpMode
+impl core::marker::StructuralPartialEq for aya::programs::xdp::XdpMode
+impl core::marker::Freeze for aya::programs::xdp::XdpMode
+impl core::marker::Send for aya::programs::xdp::XdpMode
+impl core::marker::Sync for aya::programs::xdp::XdpMode
+impl core::marker::Unpin for aya::programs::xdp::XdpMode
+impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpMode
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpMode
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpMode
 pub struct aya::programs::BtfTracePoint
 impl aya::programs::tp_btf::BtfTracePoint
 pub const aya::programs::tp_btf::BtfTracePoint::PROGRAM_TYPE: aya::programs::ProgramType
@@ -6732,8 +6690,8 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbe
 pub struct aya::programs::Xdp
 impl aya::programs::xdp::Xdp
 pub const aya::programs::xdp::Xdp::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::xdp::Xdp::attach(&mut self, interface: &str, flags: aya::programs::xdp::XdpFlags) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
-pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, if_index: u32, flags: aya::programs::xdp::XdpFlags) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::attach(&mut self, interface: &str, mode: aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, if_index: u32, mode: aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::attach_to_link(&mut self, link: aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -6768,98 +6726,6 @@ impl core::marker::Unpin for aya::programs::xdp::Xdp
 impl core::marker::UnsafeUnpin for aya::programs::xdp::Xdp
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::Xdp
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::Xdp
-pub struct aya::programs::XdpFlags(_)
-impl aya::programs::xdp::XdpFlags
-pub const aya::programs::xdp::XdpFlags::DRV_MODE: Self
-pub const aya::programs::xdp::XdpFlags::HW_MODE: Self
-pub const aya::programs::xdp::XdpFlags::REPLACE: Self
-pub const aya::programs::xdp::XdpFlags::SKB_MODE: Self
-pub const aya::programs::xdp::XdpFlags::UPDATE_IF_NOEXIST: Self
-impl aya::programs::xdp::XdpFlags
-pub const fn aya::programs::xdp::XdpFlags::all() -> Self
-pub const fn aya::programs::xdp::XdpFlags::bits(&self) -> u32
-pub const fn aya::programs::xdp::XdpFlags::complement(self) -> Self
-pub const fn aya::programs::xdp::XdpFlags::contains(&self, other: Self) -> bool
-pub const fn aya::programs::xdp::XdpFlags::difference(self, other: Self) -> Self
-pub const fn aya::programs::xdp::XdpFlags::empty() -> Self
-pub const fn aya::programs::xdp::XdpFlags::from_bits(bits: u32) -> core::option::Option<Self>
-pub const fn aya::programs::xdp::XdpFlags::from_bits_retain(bits: u32) -> Self
-pub const fn aya::programs::xdp::XdpFlags::from_bits_truncate(bits: u32) -> Self
-pub fn aya::programs::xdp::XdpFlags::from_name(name: &str) -> core::option::Option<Self>
-pub fn aya::programs::xdp::XdpFlags::insert(&mut self, other: Self)
-pub const fn aya::programs::xdp::XdpFlags::intersection(self, other: Self) -> Self
-pub const fn aya::programs::xdp::XdpFlags::intersects(&self, other: Self) -> bool
-pub const fn aya::programs::xdp::XdpFlags::is_all(&self) -> bool
-pub const fn aya::programs::xdp::XdpFlags::is_empty(&self) -> bool
-pub fn aya::programs::xdp::XdpFlags::remove(&mut self, other: Self)
-pub fn aya::programs::xdp::XdpFlags::set(&mut self, other: Self, value: bool)
-pub const fn aya::programs::xdp::XdpFlags::symmetric_difference(self, other: Self) -> Self
-pub fn aya::programs::xdp::XdpFlags::toggle(&mut self, other: Self)
-pub const fn aya::programs::xdp::XdpFlags::union(self, other: Self) -> Self
-impl aya::programs::xdp::XdpFlags
-pub const fn aya::programs::xdp::XdpFlags::iter(&self) -> bitflags::iter::Iter<aya::programs::xdp::XdpFlags>
-pub const fn aya::programs::xdp::XdpFlags::iter_names(&self) -> bitflags::iter::IterNames<aya::programs::xdp::XdpFlags>
-impl bitflags::traits::Flags for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Bits = u32
-pub const aya::programs::xdp::XdpFlags::FLAGS: &'static [bitflags::traits::Flag<aya::programs::xdp::XdpFlags>]
-pub fn aya::programs::xdp::XdpFlags::bits(&self) -> u32
-pub fn aya::programs::xdp::XdpFlags::from_bits_retain(bits: u32) -> aya::programs::xdp::XdpFlags
-impl bitflags::traits::PublicFlags for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Internal = InternalBitFlags
-pub type aya::programs::xdp::XdpFlags::Primitive = u32
-impl core::clone::Clone for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::clone(&self) -> aya::programs::xdp::XdpFlags
-impl core::default::Default for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::default() -> aya::programs::xdp::XdpFlags
-impl core::fmt::Binary for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Debug for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Octal for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::iter::traits::collect::Extend<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::extend<T: core::iter::traits::collect::IntoIterator<Item = Self>>(&mut self, iterator: T)
-impl core::iter::traits::collect::FromIterator<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::from_iter<T: core::iter::traits::collect::IntoIterator<Item = Self>>(iterator: T) -> Self
-impl core::iter::traits::collect::IntoIterator for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::IntoIter = bitflags::iter::Iter<aya::programs::xdp::XdpFlags>
-pub type aya::programs::xdp::XdpFlags::Item = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::into_iter(self) -> Self::IntoIter
-impl core::marker::Copy for aya::programs::xdp::XdpFlags
-impl core::ops::arith::Sub for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::sub(self, other: Self) -> Self
-impl core::ops::arith::SubAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::sub_assign(&mut self, other: Self)
-impl core::ops::bit::BitAnd for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitand(self, other: Self) -> Self
-impl core::ops::bit::BitAndAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitand_assign(&mut self, other: Self)
-impl core::ops::bit::BitOr for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitor(self, other: aya::programs::xdp::XdpFlags) -> Self
-impl core::ops::bit::BitOrAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitor_assign(&mut self, other: Self)
-impl core::ops::bit::BitXor for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitxor(self, other: Self) -> Self
-impl core::ops::bit::BitXorAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitxor_assign(&mut self, other: Self)
-impl core::ops::bit::Not for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::not(self) -> Self
-impl core::marker::Freeze for aya::programs::xdp::XdpFlags
-impl core::marker::Send for aya::programs::xdp::XdpFlags
-impl core::marker::Sync for aya::programs::xdp::XdpFlags
-impl core::marker::Unpin for aya::programs::xdp::XdpFlags
-impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpFlags
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpFlags
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpFlags
 pub trait aya::programs::Link: core::fmt::Debug + core::cmp::Eq + core::hash::Hash + 'static
 pub type aya::programs::Link::Id: core::fmt::Debug + core::cmp::Eq + core::hash::Hash + equivalent::Equivalent<Self>
 pub fn aya::programs::Link::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
