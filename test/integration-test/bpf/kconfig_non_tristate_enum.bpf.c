@@ -10,8 +10,6 @@ enum other_enum {
 extern enum other_enum CONFIG_NOT_TRISTATE __kconfig;
 
 SEC("uprobe")
-int test_kconfig_non_tristate_enum(void *ctx) {
-  return CONFIG_NOT_TRISTATE;
-}
+int test_kconfig_non_tristate_enum(void *ctx) { return CONFIG_NOT_TRISTATE; }
 
 char _license[] SEC("license") = "GPL";
