@@ -7236,12 +7236,15 @@ impl core::panic::unwind_safe::UnwindSafe for aya::VerifierLogLevel
 pub unsafe trait aya::Pod: core::marker::Copy + 'static
 impl aya::Pod for aya_obj::generated::linux_bindings_x86_64::bpf_cpumap_val
 impl aya::Pod for aya_obj::generated::linux_bindings_x86_64::bpf_devmap_val
+impl aya::Pod for aya_obj::generated::linux_bindings_x86_64::ifinfomsg
+impl aya::Pod for aya_obj::generated::linux_bindings_x86_64::tcmsg
 impl aya::Pod for i128
 impl aya::Pod for i16
 impl aya::Pod for i32
 impl aya::Pod for i64
 impl aya::Pod for i8
 impl aya::Pod for libc::new::linux_uapi::linux::netlink::nlattr
+impl aya::Pod for libc::new::linux_uapi::linux::netlink::nlmsghdr
 impl aya::Pod for u128
 impl aya::Pod for u16
 impl aya::Pod for u32

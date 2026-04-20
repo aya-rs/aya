@@ -2,20 +2,20 @@ use std::{
     ffi::{CStr, CString, FromBytesWithNulError},
     io, iter, mem,
     os::fd::{AsRawFd as _, BorrowedFd, FromRawFd as _},
-    ptr, slice,
+    ptr,
 };
 
 use aya_obj::generated::{
-    IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD, IFLA_XDP_FLAGS, NLMSG_ALIGNTO, TC_H_CLSACT, TC_H_INGRESS,
-    TC_H_MAJ_MASK, TC_H_UNSPEC, TCA_BPF_FD, TCA_BPF_FLAG_ACT_DIRECT, TCA_BPF_FLAGS, TCA_BPF_NAME,
-    TCA_KIND, TCA_OPTIONS, XDP_FLAGS_REPLACE, ifinfomsg, nlmsgerr_attrs::NLMSGERR_ATTR_MSG, tcmsg,
+    IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD, IFLA_XDP_FLAGS, TC_H_CLSACT, TC_H_INGRESS, TC_H_MAJ_MASK,
+    TC_H_UNSPEC, TCA_BPF_FD, TCA_BPF_FLAG_ACT_DIRECT, TCA_BPF_FLAGS, TCA_BPF_NAME, TCA_KIND,
+    TCA_OPTIONS, XDP_FLAGS_REPLACE, ifinfomsg, nlmsgerr_attrs::NLMSGERR_ATTR_MSG, tcmsg,
 };
 use libc::{
     AF_NETLINK, AF_UNSPEC, ETH_P_ALL, IFF_UP, IFLA_XDP, NETLINK_CAP_ACK, NETLINK_EXT_ACK,
     NETLINK_ROUTE, NLA_ALIGNTO, NLA_F_NESTED, NLA_TYPE_MASK, NLM_F_ACK, NLM_F_CREATE, NLM_F_DUMP,
     NLM_F_ECHO, NLM_F_EXCL, NLM_F_MULTI, NLM_F_REQUEST, NLMSG_DONE, NLMSG_ERROR, RTM_DELTFILTER,
     RTM_GETTFILTER, RTM_NEWQDISC, RTM_NEWTFILTER, RTM_SETLINK, SOCK_RAW, SOL_NETLINK, getsockname,
-    nlattr, nlmsgerr, nlmsghdr, recv, send, setsockopt, sockaddr_nl, socket,
+    iovec, nlattr, nlmsgerr, nlmsghdr, recv, setsockopt, sockaddr_nl, socket, writev,
 };
 use thiserror::Error;
 
@@ -35,31 +35,9 @@ macro_rules! nla_align {
     }};
 }
 
-const NLMSG_HDR_LEN: usize = size_of::<nlmsghdr>();
-const NLMSG_HDR_ALIGN_LEN: usize = nla_align!(NLMSG_HDR_LEN);
-const NLA_HDR_LEN: usize = size_of::<nlattr>();
-const NLA_HDR_ALIGN_LEN: usize = nla_align!(NLA_HDR_LEN);
-
 /// `CLS_BPF_NAME_LEN` from the Linux kernel.
 /// <https://github.com/torvalds/linux/blob/v6.19/net/sched/cls_bpf.c#L28>
 const CLS_BPF_NAME_LEN: usize = 256;
-
-// Size of the attribute buffer needed by write_tc_attach_attrs:
-// TCA_KIND + nested TCA_OPTIONS containing TCA_BPF_FD, TCA_BPF_NAME, TCA_BPF_FLAGS.
-const fn tc_request_attrs_size() -> usize {
-    // TCA_KIND
-    NLA_HDR_ALIGN_LEN + nla_align!(c"bpf".to_bytes_with_nul().len())
-    // TCA_OPTIONS header
-    + NLA_HDR_ALIGN_LEN
-    // TCA_BPF_FD
-    + NLA_HDR_ALIGN_LEN + nla_align!(size_of::<i32>())
-    // TCA_BPF_NAME
-    + NLA_HDR_ALIGN_LEN + nla_align!(CLS_BPF_NAME_LEN)
-    // TCA_BPF_FLAGS
-    + NLA_HDR_ALIGN_LEN + nla_align!(size_of::<u32>())
-}
-
-const _: () = assert!(tc_request_attrs_size() == 288);
 
 /// A private error type for internal use in this module.
 #[derive(Error, Debug)]
@@ -100,9 +78,29 @@ impl NetlinkError {
     }
 }
 
+fn attr_header(attr_type: u16, payload_len: usize) -> [u8; nla_align!(size_of::<nlattr>())] {
+    let attr = nlattr {
+        nla_type: attr_type,
+        nla_len: (size_of::<nlattr>() + payload_len) as u16,
+    };
+    let mut buf = [0; _];
+    buf[..size_of::<nlattr>()].copy_from_slice(bytes_of(&attr));
+    buf
+}
+
+const fn attr_aligned_len(payload_len: usize) -> usize {
+    nla_align!(size_of::<nlattr>() + payload_len)
+}
+
+fn attr_padding(payload_len: usize) -> &'static [u8] {
+    const ZERO_PADDING: [u8; NLA_ALIGNTO as usize] = [0; NLA_ALIGNTO as usize];
+
+    &ZERO_PADDING[..nla_align!(payload_len) - payload_len]
+}
+
 /// # Safety
 ///
-/// This function performs pointer arithmetic to satisfy netlink alignments.
+/// This function uses raw file descriptors supplied by the caller.
 pub(crate) unsafe fn netlink_set_xdp_fd(
     if_index: i32,
     fd: Option<BorrowedFd<'_>>,
@@ -111,48 +109,79 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
 ) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
-    // Safety: Request is POD so this is safe
-    let mut req = unsafe { mem::zeroed::<Request>() };
+    let if_info = ifinfomsg {
+        ifi_family: AF_UNSPEC as u8,
+        ifi_index: if_index,
+        ..unsafe { mem::zeroed() }
+    };
 
-    let nlmsg_len = size_of::<nlmsghdr>() + size_of::<ifinfomsg>();
-    req.header = nlmsghdr {
-        nlmsg_len: nlmsg_len as u32,
+    // write the attrs
+    let xdp_fd = fd.map_or(-1, |fd| fd.as_raw_fd());
+    let xdp_fd_attr = attr_header(IFLA_XDP_FD as u16, size_of_val(&xdp_fd));
+
+    let flags_attr = attr_header(IFLA_XDP_FLAGS as u16, size_of_val(&flags));
+    let flags_len = if flags > 0 {
+        attr_aligned_len(size_of_val(&flags))
+    } else {
+        0
+    };
+
+    let old_fd = if flags & XDP_FLAGS_REPLACE != 0 {
+        old_fd.map(|fd| fd.as_raw_fd()).unwrap()
+    } else {
+        0
+    };
+    let expected_fd_attr = attr_header(IFLA_XDP_EXPECTED_FD as u16, size_of_val(&old_fd));
+    let expected_fd_len = if flags & XDP_FLAGS_REPLACE != 0 {
+        attr_aligned_len(size_of_val(&old_fd))
+    } else {
+        0
+    };
+
+    let xdp_inner_len = attr_aligned_len(size_of_val(&xdp_fd)) + flags_len + expected_fd_len;
+    let xdp_attr = attr_header(NLA_F_NESTED as u16 | IFLA_XDP, xdp_inner_len);
+    let attrs_len = attr_aligned_len(xdp_inner_len);
+    let header = nlmsghdr {
+        nlmsg_len: (size_of::<nlmsghdr>() + size_of_val(&if_info) + attrs_len) as u32,
         nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK) as u16,
         nlmsg_type: RTM_SETLINK,
         nlmsg_pid: 0,
         nlmsg_seq: 1,
     };
-    req.if_info.ifi_family = AF_UNSPEC as u8;
-    req.if_info.ifi_index = if_index;
 
-    // write the attrs
-    let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
-    let mut attrs = NestedAttrs::new(attrs_buf, IFLA_XDP);
-    attrs
-        .write_attr(IFLA_XDP_FD as u16, fd.map_or(-1, |fd| fd.as_raw_fd()))
-        .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
+    let xdp_outer_padding = attr_padding(xdp_inner_len);
+    let fd = bytes_of(&xdp_fd);
+    let flags = bytes_of(&flags);
+    let old_fd = bytes_of(&old_fd);
+    let empty: &[u8] = &[];
 
-    if flags > 0 {
-        attrs
-            .write_attr(IFLA_XDP_FLAGS as u16, flags)
-            .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    }
+    let (flags_attr, flags, flags_padding) = if flags_len == 0 {
+        (empty, empty, empty)
+    } else {
+        (&flags_attr[..], flags, attr_padding(flags.len()))
+    };
 
-    if flags & XDP_FLAGS_REPLACE != 0 {
-        attrs
-            .write_attr(
-                IFLA_XDP_EXPECTED_FD as u16,
-                old_fd.map(|fd| fd.as_raw_fd()).unwrap(),
-            )
-            .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    }
+    let (expected_fd_attr, old_fd, expected_fd_padding) = if expected_fd_len == 0 {
+        (empty, empty, empty)
+    } else {
+        (&expected_fd_attr[..], old_fd, attr_padding(old_fd.len()))
+    };
 
-    let nla_len = attrs
-        .finish()
-        .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    req.header.nlmsg_len += nla_align!(nla_len) as u32;
-
-    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+    sock.send([
+        bytes_of(&header),
+        bytes_of(&if_info),
+        &xdp_attr,
+        &xdp_fd_attr,
+        fd,
+        attr_padding(fd.len()),
+        flags_attr,
+        flags,
+        flags_padding,
+        expected_fd_attr,
+        old_fd,
+        expected_fd_padding,
+        xdp_outer_padding,
+    ])?;
     for msg in sock.recv() {
         msg?;
     }
@@ -162,54 +191,38 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
 pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
-    let mut req = unsafe { mem::zeroed::<TcRequest>() };
+    let tc_info = tcmsg {
+        tcm_family: AF_UNSPEC as u8,
+        tcm_ifindex: if_index,
+        tcm_handle: tc_handler_make(TC_H_CLSACT, TC_H_UNSPEC),
+        tcm_parent: tc_handler_make(TC_H_CLSACT, TC_H_INGRESS),
+        tcm_info: 0,
+        ..unsafe { mem::zeroed() }
+    };
 
-    let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
-    req.header = nlmsghdr {
-        nlmsg_len: nlmsg_len as u32,
+    // add the TCA_KIND attribute
+    let kind = c"clsact".to_bytes_with_nul();
+    let kind_attr = attr_header(TCA_KIND as u16, kind.len());
+    let attrs_len = attr_aligned_len(kind.len());
+    let header = nlmsghdr {
+        nlmsg_len: (size_of::<nlmsghdr>() + size_of_val(&tc_info) + attrs_len) as u32,
         nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE) as u16,
         nlmsg_type: RTM_NEWQDISC,
         nlmsg_pid: 0,
         nlmsg_seq: 1,
     };
-    req.tc_info.tcm_family = AF_UNSPEC as u8;
-    req.tc_info.tcm_ifindex = if_index;
-    req.tc_info.tcm_handle = tc_handler_make(TC_H_CLSACT, TC_H_UNSPEC);
-    req.tc_info.tcm_parent = tc_handler_make(TC_H_CLSACT, TC_H_INGRESS);
-    req.tc_info.tcm_info = 0;
 
-    // add the TCA_KIND attribute
-    let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
-    let (_, attr_len) = write_attr_bytes(attrs_buf, TCA_KIND as u16, c"clsact".to_bytes_with_nul())
-        .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    req.header.nlmsg_len += nla_align!(attr_len) as u32;
-
-    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+    sock.send([
+        bytes_of(&header),
+        bytes_of(&tc_info),
+        &kind_attr,
+        kind,
+        attr_padding(kind.len()),
+    ])?;
     for msg in sock.recv() {
         msg?;
     }
 
-    Ok(())
-}
-
-fn write_tc_attach_attrs(
-    req: &mut TcRequest,
-    nlmsg_len: usize,
-    prog_fd: i32,
-    prog_name: &[u8],
-) -> io::Result<()> {
-    let attrs_buf = unsafe { request_attributes(req, nlmsg_len) };
-
-    let (attrs_buf, kind_len) =
-        write_attr_bytes(attrs_buf, TCA_KIND as u16, c"bpf".to_bytes_with_nul())?;
-
-    let mut options = NestedAttrs::new(attrs_buf, TCA_OPTIONS as u16);
-    options.write_attr(TCA_BPF_FD as u16, prog_fd)?;
-    options.write_attr_bytes(TCA_BPF_NAME as u16, prog_name)?;
-    options.write_attr(TCA_BPF_FLAGS as u16, TCA_BPF_FLAG_ACT_DIRECT)?;
-    let options_len = options.finish()?;
-
-    req.header.nlmsg_len += nla_align!(kind_len + options_len) as u32;
     Ok(())
 }
 
@@ -224,9 +237,6 @@ pub(crate) unsafe fn netlink_qdisc_attach(
 ) -> Result<(u16, u32), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
-    let mut req = unsafe { mem::zeroed::<TcRequest>() };
-
-    let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
     // When create=true, we're creating a new attachment so we must set NLM_F_CREATE. Then we also
     // set NLM_F_EXCL so that attaching fails if there's already a program attached to the given
     // handle.
@@ -240,30 +250,69 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         // NLM_F_REPLACE exists, but seems unused by cls_bpf
         0
     };
-    req.header = nlmsghdr {
-        nlmsg_len: nlmsg_len as u32,
+    let tc_info = tcmsg {
+        tcm_family: AF_UNSPEC as u8,
+        tcm_handle: handle, // auto-assigned, if zero
+        tcm_ifindex: if_index,
+        tcm_parent: attach_type.tc_parent(),
+        tcm_info: tc_handler_make(
+            u32::from(priority) << 16,
+            u32::from(htons(ETH_P_ALL as u16)),
+        ),
+        ..unsafe { mem::zeroed() }
+    };
+
+    let prog_name = prog_name.to_bytes_with_nul();
+    if prog_name.len() > CLS_BPF_NAME_LEN {
+        return Err(NetlinkError(NetlinkErrorInternal::IoError(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "TC BPF name exceeds CLS_BPF_NAME_LEN",
+        ))));
+    }
+
+    let kind = c"bpf".to_bytes_with_nul();
+    let prog_fd = prog_fd.as_raw_fd();
+    let flags = TCA_BPF_FLAG_ACT_DIRECT;
+
+    let kind_attr = attr_header(TCA_KIND as u16, kind.len());
+    let fd_attr = attr_header(TCA_BPF_FD as u16, size_of_val(&prog_fd));
+    let name_attr = attr_header(TCA_BPF_NAME as u16, prog_name.len());
+    let flags_attr = attr_header(TCA_BPF_FLAGS as u16, size_of_val(&flags));
+
+    let options_inner_len = attr_aligned_len(size_of_val(&prog_fd))
+        + attr_aligned_len(prog_name.len())
+        + attr_aligned_len(size_of_val(&flags));
+    let options_attr = attr_header(NLA_F_NESTED as u16 | TCA_OPTIONS as u16, options_inner_len);
+    let options_len = attr_aligned_len(options_inner_len);
+    let attrs_len = attr_aligned_len(kind.len()) + options_len;
+    let header = nlmsghdr {
+        nlmsg_len: (size_of::<nlmsghdr>() + size_of_val(&tc_info) + attrs_len) as u32,
         nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_ECHO | request_flags) as u16,
         nlmsg_type: RTM_NEWTFILTER,
         nlmsg_pid: 0,
         nlmsg_seq: 1,
     };
-    req.tc_info.tcm_family = AF_UNSPEC as u8;
-    req.tc_info.tcm_handle = handle; // auto-assigned, if zero
-    req.tc_info.tcm_ifindex = if_index;
-    req.tc_info.tcm_parent = attach_type.tc_parent();
-    req.tc_info.tcm_info = tc_handler_make(
-        u32::from(priority) << 16,
-        u32::from(htons(ETH_P_ALL as u16)),
-    );
 
-    write_tc_attach_attrs(
-        &mut req,
-        nlmsg_len,
-        prog_fd.as_raw_fd(),
-        prog_name.to_bytes_with_nul(),
-    )
-    .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+    let prog_fd = bytes_of(&prog_fd);
+    let flags = bytes_of(&flags);
+    sock.send([
+        bytes_of(&header),
+        bytes_of(&tc_info),
+        &kind_attr,
+        kind,
+        attr_padding(kind.len()),
+        &options_attr,
+        &fd_attr,
+        prog_fd,
+        attr_padding(prog_fd.len()),
+        &name_attr,
+        prog_name,
+        attr_padding(prog_name.len()),
+        &flags_attr,
+        flags,
+        attr_padding(flags.len()),
+        attr_padding(options_inner_len),
+    ])?;
 
     // find the RTM_NEWTFILTER reply and read the tcm_info and tcm_handle fields
     // which we'll need to detach
@@ -300,26 +349,26 @@ pub(crate) unsafe fn netlink_qdisc_detach(
 ) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
-    let mut req = unsafe { mem::zeroed::<TcRequest>() };
-
-    req.header = nlmsghdr {
-        nlmsg_len: (size_of::<nlmsghdr>() + size_of::<tcmsg>()) as u32,
+    let tc_info = tcmsg {
+        tcm_family: AF_UNSPEC as u8,
+        tcm_handle: handle, // auto-assigned, if zero
+        tcm_info: tc_handler_make(
+            u32::from(priority) << 16,
+            u32::from(htons(ETH_P_ALL as u16)),
+        ),
+        tcm_parent: attach_type.tc_parent(),
+        tcm_ifindex: if_index,
+        ..unsafe { mem::zeroed() }
+    };
+    let header = nlmsghdr {
+        nlmsg_len: (size_of::<nlmsghdr>() + size_of_val(&tc_info)) as u32,
         nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK) as u16,
         nlmsg_type: RTM_DELTFILTER,
         nlmsg_pid: 0,
         nlmsg_seq: 1,
     };
 
-    req.tc_info.tcm_family = AF_UNSPEC as u8;
-    req.tc_info.tcm_handle = handle; // auto-assigned, if zero
-    req.tc_info.tcm_info = tc_handler_make(
-        u32::from(priority) << 16,
-        u32::from(htons(ETH_P_ALL as u16)),
-    );
-    req.tc_info.tcm_parent = attach_type.tc_parent();
-    req.tc_info.tcm_ifindex = if_index;
-
-    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+    sock.send([bytes_of(&header), bytes_of(&tc_info)])?;
 
     for msg in sock.recv() {
         msg?;
@@ -334,22 +383,22 @@ pub(crate) fn netlink_find_filter_with_name(
     attach_type: TcAttachType,
     name: &CStr,
 ) -> Result<impl Iterator<Item = Result<(u16, u32), NetlinkError>>, NetlinkError> {
-    let mut req = unsafe { mem::zeroed::<TcRequest>() };
-
-    let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
-    req.header = nlmsghdr {
-        nlmsg_len: nlmsg_len as u32,
+    let tc_info = tcmsg {
+        tcm_family: AF_UNSPEC as u8,
+        tcm_handle: 0, // auto-assigned, if zero
+        tcm_ifindex: if_index,
+        tcm_parent: attach_type.tc_parent(),
+        ..unsafe { mem::zeroed() }
+    };
+    let header = nlmsghdr {
+        nlmsg_len: (size_of::<nlmsghdr>() + size_of_val(&tc_info)) as u32,
         nlmsg_type: RTM_GETTFILTER,
         nlmsg_flags: (NLM_F_REQUEST | NLM_F_DUMP) as u16,
         nlmsg_pid: 0,
         nlmsg_seq: 1,
     };
-    req.tc_info.tcm_family = AF_UNSPEC as u8;
-    req.tc_info.tcm_handle = 0; // auto-assigned, if zero
-    req.tc_info.tcm_ifindex = if_index;
-    req.tc_info.tcm_parent = attach_type.tc_parent();
 
-    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+    sock.send([bytes_of(&header), bytes_of(&tc_info)])?;
     let mut resp = sock.recv();
 
     Ok(iter::from_fn(move || {
@@ -363,7 +412,7 @@ pub(crate) fn netlink_find_filter_with_name(
 
                 let (tc_msg_buf, attrs_buf) = msg
                     .data
-                    .split_at_checked(size_of::<tcmsg>())
+                    .split_at_checked(size_of_val(&tc_info))
                     .ok_or_else(|| {
                         NetlinkError(NetlinkErrorInternal::IoError(io::Error::other(
                             "RTM_NEWTFILTER payload smaller than tcmsg",
@@ -408,50 +457,28 @@ pub(crate) fn netlink_find_filter_with_name(
 pub unsafe fn netlink_set_link_up(if_index: i32) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
-    // Safety: Request is POD so this is safe
-    let mut req = unsafe { mem::zeroed::<Request>() };
-
-    let nlmsg_len = size_of::<nlmsghdr>() + size_of::<ifinfomsg>();
-    req.header = nlmsghdr {
-        nlmsg_len: nlmsg_len as u32,
+    let if_info = ifinfomsg {
+        ifi_family: AF_UNSPEC as u8,
+        ifi_index: if_index,
+        ifi_flags: IFF_UP as u32,
+        ifi_change: IFF_UP as u32,
+        ..unsafe { mem::zeroed() }
+    };
+    let header = nlmsghdr {
+        nlmsg_len: (size_of::<nlmsghdr>() + size_of_val(&if_info)) as u32,
         nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK) as u16,
         nlmsg_type: RTM_SETLINK,
         nlmsg_pid: 0,
         nlmsg_seq: 1,
     };
-    req.if_info.ifi_family = AF_UNSPEC as u8;
-    req.if_info.ifi_index = if_index;
-    req.if_info.ifi_flags = IFF_UP as u32;
-    req.if_info.ifi_change = IFF_UP as u32;
 
-    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+    sock.send([bytes_of(&header), bytes_of(&if_info)])?;
     for msg in sock.recv() {
         msg?;
     }
 
     Ok(())
 }
-
-#[derive(Copy, Clone)]
-#[repr(C)]
-struct Request {
-    header: nlmsghdr,
-    if_info: ifinfomsg,
-    attrs: [u8; 64],
-}
-
-unsafe impl Pod for Request {}
-
-#[derive(Copy, Clone)]
-#[repr(C)]
-struct TcRequest {
-    header: nlmsghdr,
-    tc_info: tcmsg,
-    // Must fit all netlink attributes written by write_tc_attach_attrs.
-    attrs: [u8; tc_request_attrs_size()],
-}
-
-unsafe impl Pod for TcRequest {}
 
 pub(crate) struct NetlinkSocket {
     sock: crate::MockableFd,
@@ -499,7 +526,7 @@ impl NetlinkSocket {
         // Safety: sockaddr_nl is POD so this is safe
         let mut addr = unsafe { mem::zeroed::<sockaddr_nl>() };
         addr.nl_family = AF_NETLINK as u16;
-        let mut addr_len = size_of::<sockaddr_nl>() as u32;
+        let mut addr_len = size_of_val(&addr) as u32;
         // Safety: libc wrapper
         if unsafe {
             getsockname(
@@ -518,9 +545,31 @@ impl NetlinkSocket {
         })
     }
 
-    fn send(&self, msg: &[u8]) -> Result<(), NetlinkErrorInternal> {
-        if unsafe { send(self.sock.as_raw_fd(), msg.as_ptr().cast(), msg.len(), 0) } < 0 {
+    fn send<const N: usize>(&self, bufs: [&[u8]; N]) -> Result<(), NetlinkErrorInternal> {
+        let iovs = bufs.map(|buf| iovec {
+            iov_base: buf.as_ptr().cast_mut().cast(),
+            iov_len: buf.len(),
+        });
+        let iovcnt = i32::try_from(N).map_err(|std::num::TryFromIntError { .. }| {
+            NetlinkErrorInternal::IoError(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "too many netlink write buffers",
+            ))
+        })?;
+        let expected = bufs.iter().map(|buf| buf.len()).sum();
+        let written = unsafe { writev(self.sock.as_raw_fd(), iovs.as_ptr(), iovcnt) };
+        if written < 0 {
             return Err(NetlinkErrorInternal::IoError(io::Error::last_os_error()));
+        }
+        let written =
+            usize::try_from(written).map_err(|std::num::TryFromIntError { .. }| {
+                NetlinkErrorInternal::IoError(io::Error::last_os_error())
+            })?;
+        if written != expected {
+            return Err(NetlinkErrorInternal::IoError(io::Error::new(
+                io::ErrorKind::WriteZero,
+                "short netlink write",
+            )));
         }
         Ok(())
     }
@@ -600,13 +649,13 @@ struct NetlinkMessage {
 impl NetlinkMessage {
     fn read(buf: &[u8]) -> io::Result<Self> {
         let header_buf = buf
-            .get(..NLMSG_HDR_LEN)
+            .get(..size_of::<nlmsghdr>())
             .ok_or_else(|| io::Error::other("buffer smaller than nlmsghdr"))?;
 
         // Safety: nlmsghdr is POD so read is safe
         let header: nlmsghdr = unsafe { ptr::read_unaligned(header_buf.as_ptr().cast()) };
         let msg_len = header.nlmsg_len as usize;
-        if msg_len < NLMSG_HDR_LEN {
+        if msg_len < size_of::<nlmsghdr>() {
             return Err(io::Error::other("invalid nlmsg_len"));
         }
         let msg = buf
@@ -614,7 +663,7 @@ impl NetlinkMessage {
             .ok_or_else(|| io::Error::other("invalid nlmsg_len"))?;
 
         let data = msg
-            .get(NLMSG_HDR_ALIGN_LEN..)
+            .get(nla_align!(size_of::<nlmsghdr>())..)
             .ok_or_else(|| io::Error::other("need more data"))?;
 
         let (rest, error) = if header.nlmsg_type == NLMSG_ERROR as u16 {
@@ -622,7 +671,7 @@ impl NetlinkMessage {
                 .split_at_checked(size_of::<nlmsgerr>())
                 .ok_or_else(|| io::Error::other("NLMSG_ERROR but not enough space for nlmsgerr"))?;
             // Safety: nlmsgerr is POD so read is safe
-            let err: nlmsgerr = unsafe { ptr::read_unaligned(err_buf.as_ptr().cast()) };
+            let err = unsafe { ptr::read_unaligned(err_buf.as_ptr().cast()) };
             (rest, Some(err))
         } else {
             (data, None)
@@ -640,116 +689,10 @@ const fn htons(u: u16) -> u16 {
     u.to_be()
 }
 
-struct NestedAttrs<'a> {
-    header_buf: &'a mut [u8],
-    rest: &'a mut [u8],
-    top_attr_type: u16,
-    nla_len: usize,
-}
-
-impl<'a> NestedAttrs<'a> {
-    const fn new(buf: &'a mut [u8], top_attr_type: u16) -> Self {
-        const fn empty() -> &'static mut [u8] {
-            &mut []
-        }
-
-        let (header_buf, rest) = match buf.split_at_mut_checked(NLA_HDR_ALIGN_LEN) {
-            Some(parts) => parts,
-            None => (empty(), empty()),
-        };
-        Self {
-            header_buf,
-            rest,
-            top_attr_type,
-            nla_len: NLA_HDR_ALIGN_LEN,
-        }
-    }
-
-    fn write_attr<T: Pod>(&mut self, attr_type: u16, value: T) -> io::Result<()> {
-        let Self {
-            header_buf: _,
-            rest,
-            top_attr_type: _,
-            nla_len,
-        } = self;
-        let buf = mem::take(rest);
-        let (rest, size) = write_attr(buf, attr_type, value)?;
-        *nla_len += size;
-        self.rest = rest;
-        Ok(())
-    }
-
-    fn write_attr_bytes(&mut self, attr_type: u16, value: &[u8]) -> io::Result<()> {
-        let Self {
-            header_buf: _,
-            rest,
-            top_attr_type: _,
-            nla_len,
-        } = self;
-        let buf = mem::take(rest);
-        let (rest, size) = write_attr_bytes(buf, attr_type, value)?;
-        *nla_len += size;
-        self.rest = rest;
-        Ok(())
-    }
-
-    fn finish(self) -> io::Result<usize> {
-        let Self {
-            header_buf,
-            rest: _,
-            top_attr_type: _,
-            nla_len,
-        } = self;
-        let attr = nlattr {
-            nla_type: NLA_F_NESTED as u16 | self.top_attr_type,
-            nla_len: nla_len as u16,
-        };
-
-        let (_, header_len) = write_attr_header(header_buf, attr)?;
-        debug_assert_eq!(header_len, NLA_HDR_ALIGN_LEN);
-        Ok(nla_len)
-    }
-}
-
-fn write_attr<T: Pod>(buf: &mut [u8], attr_type: u16, value: T) -> io::Result<(&mut [u8], usize)> {
-    let value = bytes_of(&value);
-    write_attr_bytes(buf, attr_type, value)
-}
-
-fn write_attr_bytes<'a>(
-    buf: &'a mut [u8],
-    attr_type: u16,
-    value: &[u8],
-) -> io::Result<(&'a mut [u8], usize)> {
-    let attr = nlattr {
-        nla_type: attr_type,
-        nla_len: ((NLA_HDR_LEN + value.len()) as u16),
-    };
-
-    let (buf, header_len) = write_attr_header(buf, attr)?;
-    let (buf, value_len) = write_bytes(buf, value)?;
-
-    Ok((buf, header_len + value_len))
-}
-
+unsafe impl Pod for ifinfomsg {}
 unsafe impl Pod for nlattr {}
-
-fn write_attr_header(buf: &mut [u8], attr: nlattr) -> io::Result<(&mut [u8], usize)> {
-    let attr = bytes_of(&attr);
-    let (buf, header_len) = write_bytes(buf, attr)?;
-    debug_assert_eq!(header_len, NLA_HDR_ALIGN_LEN);
-    Ok((buf, header_len))
-}
-
-fn write_bytes<'a>(buf: &'a mut [u8], value: &[u8]) -> io::Result<(&'a mut [u8], usize)> {
-    let align_len = nla_align!(value.len());
-    let (buf, remaining) = buf
-        .split_at_mut_checked(align_len)
-        .ok_or_else(|| io::Error::other("no space left"))?;
-    buf[..value.len()].copy_from_slice(value);
-
-    Ok((remaining, align_len))
-}
+unsafe impl Pod for nlmsghdr {}
+unsafe impl Pod for tcmsg {}
 
 struct NlAttrsIterator<'a> {
     buf: &'a [u8],
@@ -771,20 +714,22 @@ impl<'a> Iterator for NlAttrsIterator<'a> {
         }
         let buf = mem::take(buf);
 
-        let Some((header_buf, buf)) = buf.split_at_checked(NLA_HDR_LEN) else {
+        let header_len = size_of::<nlattr>();
+
+        let Some((header_buf, buf)) = buf.split_at_checked(header_len) else {
             return Some(Err(NlAttrError::BufferLength {
                 size: buf.len(),
-                expected: NLA_HDR_LEN,
+                expected: header_len,
             }));
         };
 
         let attr: nlattr = unsafe { ptr::read_unaligned(header_buf.as_ptr().cast()) };
-        let len = attr.nla_len as usize;
-        let Some(payload_len) = len.checked_sub(NLA_HDR_LEN) else {
+        let len = usize::from(attr.nla_len);
+        let Some(payload_len) = len.checked_sub(size_of::<nlattr>()) else {
             return Some(Err(NlAttrError::HeaderLength(len)));
         };
         let align_len = nla_align!(len);
-        let payload_align_len = align_len - NLA_HDR_LEN;
+        let payload_align_len = align_len - size_of::<nlattr>();
         let Some((data, buf)) = buf.split_at_checked(payload_align_len) else {
             return Some(Err(NlAttrError::BufferLength {
                 size: buf.len(),
@@ -799,7 +744,7 @@ impl<'a> Iterator for NlAttrsIterator<'a> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct NlAttr<'a> {
     header: nlattr,
     data: &'a [u8],
@@ -817,73 +762,36 @@ pub(crate) enum NlAttrError {
     CStrFromBytesWithNul(#[from] FromBytesWithNulError),
 }
 
-unsafe fn request_attributes<T>(req: &mut T, msg_len: usize) -> &mut [u8] {
-    let req: *mut _ = req;
-    let req: *mut u8 = req.cast();
-    let attrs_addr = unsafe { req.add(msg_len) };
-    let align_offset = attrs_addr.align_offset(NLMSG_ALIGNTO as usize);
-    let attrs_addr = unsafe { attrs_addr.add(align_offset) };
-    let len = size_of::<T>() - msg_len - align_offset;
-    unsafe { slice::from_raw_parts_mut(attrs_addr, len) }
-}
-
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
 
     use super::*;
 
-    #[test]
-    fn test_nested_attrs() {
-        let mut buf = [0; 64];
+    fn append_attr(buf: &mut Vec<u8>, attr_type: u16, value: &[u8]) {
+        let attr = attr_header(attr_type, value.len());
+        buf.extend_from_slice(&attr);
+        buf.extend_from_slice(value);
+        buf.extend_from_slice(attr_padding(value.len()));
+    }
 
-        // write IFLA_XDP with 2 nested attrs
-        let mut attrs = NestedAttrs::new(&mut buf, IFLA_XDP);
-        attrs.write_attr(IFLA_XDP_FD as u16, 42u32).unwrap();
-        attrs
-            .write_attr(IFLA_XDP_EXPECTED_FD as u16, 24u32)
-            .unwrap();
-        let len = attrs.finish().unwrap() as u16;
-
-        // 3 nlattr headers (IFLA_XDP, IFLA_XDP_FD and IFLA_XDP_EXPECTED_FD) + the fd
-        let nla_len = (NLA_HDR_LEN * 3 + size_of::<u32>() * 2) as u16;
-        assert_eq!(len, nla_len);
-
-        // read IFLA_XDP
-        let attr: nlattr = unsafe { ptr::read_unaligned(buf.as_ptr().cast()) };
-        assert_eq!(attr.nla_type, NLA_F_NESTED as u16 | IFLA_XDP);
-        assert_eq!(attr.nla_len, nla_len);
-
-        // read IFLA_XDP_FD + fd
-        let attr: nlattr = unsafe { ptr::read_unaligned(buf[NLA_HDR_LEN..].as_ptr().cast()) };
-        assert_eq!(attr.nla_type, IFLA_XDP_FD as u16);
-        assert_eq!(attr.nla_len, (NLA_HDR_LEN + size_of::<u32>()) as u16);
-        let fd: u32 = unsafe { ptr::read_unaligned(buf[NLA_HDR_LEN * 2..].as_ptr().cast()) };
-        assert_eq!(fd, 42);
-
-        // read IFLA_XDP_EXPECTED_FD + fd
-        let attr: nlattr = unsafe {
-            ptr::read_unaligned(buf[NLA_HDR_LEN * 2 + size_of::<u32>()..].as_ptr().cast())
-        };
-        assert_eq!(attr.nla_type, IFLA_XDP_EXPECTED_FD as u16);
-        assert_eq!(attr.nla_len, (NLA_HDR_LEN + size_of::<u32>()) as u16);
-        let fd: u32 = unsafe {
-            ptr::read_unaligned(buf[NLA_HDR_LEN * 3 + size_of::<u32>()..].as_ptr().cast())
-        };
-        assert_eq!(fd, 24);
+    fn append_nested_attr(buf: &mut Vec<u8>, attr_type: u16, nested: &[u8]) {
+        let attr = attr_header(NLA_F_NESTED as u16 | attr_type, nested.len());
+        buf.extend_from_slice(&attr);
+        buf.extend_from_slice(nested);
+        buf.extend_from_slice(attr_padding(nested.len()));
     }
 
     #[test]
     fn test_nlattr_iterator_empty() {
         let mut iter = NlAttrsIterator::new(&[]);
-        assert!(iter.next().is_none());
+        assert_matches!(iter.next(), None);
     }
 
     #[test]
     fn test_nlattr_iterator_one() {
-        let mut buf = [0; NLA_HDR_LEN + size_of::<u32>()];
-
-        let (_rest, _written) = write_attr(&mut buf, IFLA_XDP_FD as u16, 42u32).unwrap();
+        let mut buf = Vec::new();
+        append_attr(&mut buf, IFLA_XDP_FD as u16, bytes_of(&42u32));
 
         let mut iter = NlAttrsIterator::new(&buf);
         let attr = iter.next().unwrap().unwrap();
@@ -891,15 +799,14 @@ mod tests {
         assert_eq!(attr.data.len(), size_of::<u32>());
         assert_eq!(u32::from_ne_bytes(attr.data.try_into().unwrap()), 42);
 
-        assert!(iter.next().is_none());
+        assert_matches!(iter.next(), None);
     }
 
     #[test]
     fn test_nlattr_iterator_many() {
-        let mut buf = [0; (NLA_HDR_LEN + size_of::<u32>()) * 2];
-
-        let (rest, _) = write_attr(&mut buf, IFLA_XDP_FD as u16, 42u32).unwrap();
-        let (_rest, _written) = write_attr(rest, IFLA_XDP_EXPECTED_FD as u16, 12u32).unwrap();
+        let mut buf = Vec::new();
+        append_attr(&mut buf, IFLA_XDP_FD as u16, bytes_of(&42u32));
+        append_attr(&mut buf, IFLA_XDP_EXPECTED_FD as u16, bytes_of(&12u32));
 
         let mut iter = NlAttrsIterator::new(&buf);
 
@@ -913,23 +820,21 @@ mod tests {
         assert_eq!(attr.data.len(), size_of::<u32>());
         assert_eq!(u32::from_ne_bytes(attr.data.try_into().unwrap()), 12);
 
-        assert!(iter.next().is_none());
+        assert_matches!(iter.next(), None);
     }
 
     #[test]
     fn test_nlattr_iterator_nested() {
-        let mut buf = [0; 1024];
-
-        let mut options = NestedAttrs::new(&mut buf, TCA_OPTIONS as u16);
-        options.write_attr(TCA_BPF_FD as u16, 42).unwrap();
+        let mut inner = Vec::new();
+        append_attr(&mut inner, TCA_BPF_FD as u16, bytes_of(&42i32));
 
         let name = CString::new("foo").unwrap();
-        options
-            .write_attr_bytes(TCA_BPF_NAME as u16, name.to_bytes_with_nul())
-            .unwrap();
-        options.finish().unwrap();
+        append_attr(&mut inner, TCA_BPF_NAME as u16, name.to_bytes_with_nul());
 
-        let mut iter = NlAttrsIterator::new(&buf);
+        let mut outer = Vec::new();
+        append_nested_attr(&mut outer, TCA_OPTIONS as u16, &inner);
+
+        let mut iter = NlAttrsIterator::new(&outer);
         let outer = iter.next().unwrap().unwrap();
         assert_eq!(
             outer.header.nla_type & NLA_TYPE_MASK as u16,
@@ -949,37 +854,92 @@ mod tests {
         );
         let name = CStr::from_bytes_with_nul(inner.data).unwrap();
         assert_eq!(name.to_str().unwrap(), "foo");
+
+        assert_matches!(iter.next(), None);
     }
 
-    fn tc_request(name: &[u8]) -> io::Result<()> {
-        let mut req = unsafe { mem::zeroed::<TcRequest>() };
-        let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
-        req.header.nlmsg_len = nlmsg_len as u32;
-
-        write_tc_attach_attrs(&mut req, nlmsg_len, 0, name)
-    }
-
-    /// Verify that [`TcRequest`] fits all the attributes [`write_tc_attach_attrs`]
-    /// writes, even with the kernel's maximum TC name length (`CLS_BPF_NAME_LEN`).
-    ///
-    /// Before the buffer was enlarged, serializing the netlink attributes for
-    /// long names failed with "no space left".
     #[test]
-    fn tc_request_fits_max_length_name() {
-        assert_matches!(tc_request(&[b'a'; CLS_BPF_NAME_LEN]), Ok(()));
-    }
+    fn xdp_attrs_layout() {
+        let fd = 42i32;
+        let flags = XDP_FLAGS_REPLACE;
+        let old_fd = 24i32;
 
-    /// Verify that a name exceeding `CLS_BPF_NAME_LEN` is rejected.
-    #[test]
-    fn tc_request_rejects_oversized_name() {
-        // One byte over the kernel's maximum — the attribute buffer is sized
-        // exactly for CLS_BPF_NAME_LEN, so this should fail with "no space left".
-        assert_matches!(
-            tc_request(&[b'a'; CLS_BPF_NAME_LEN + 1]),
-            Err(err) => {
-                assert_eq!(err.kind(), io::ErrorKind::Other);
-                assert_eq!(err.to_string(), "no space left");
-            }
+        let mut nested = Vec::new();
+        append_attr(&mut nested, IFLA_XDP_FD as u16, bytes_of(&fd));
+        append_attr(&mut nested, IFLA_XDP_FLAGS as u16, bytes_of(&flags));
+        append_attr(&mut nested, IFLA_XDP_EXPECTED_FD as u16, bytes_of(&old_fd));
+
+        let mut attrs = Vec::new();
+        append_nested_attr(&mut attrs, IFLA_XDP, &nested);
+
+        let mut iter = NlAttrsIterator::new(&attrs);
+        let xdp = iter.next().unwrap().unwrap();
+        assert_eq!(xdp.header.nla_type, NLA_F_NESTED as u16 | IFLA_XDP);
+        assert_eq!(
+            usize::from(xdp.header.nla_len),
+            size_of::<nlattr>() + nested.len()
         );
+        assert_matches!(iter.next(), None);
+
+        let mut iter = NlAttrsIterator::new(xdp.data);
+        let attr = iter.next().unwrap().unwrap();
+        assert_eq!(attr.header.nla_type, IFLA_XDP_FD as u16);
+        assert_eq!(i32::from_ne_bytes(attr.data.try_into().unwrap()), fd);
+
+        let attr = iter.next().unwrap().unwrap();
+        assert_eq!(attr.header.nla_type, IFLA_XDP_FLAGS as u16);
+        assert_eq!(u32::from_ne_bytes(attr.data.try_into().unwrap()), flags);
+
+        let attr = iter.next().unwrap().unwrap();
+        assert_eq!(attr.header.nla_type, IFLA_XDP_EXPECTED_FD as u16);
+        assert_eq!(i32::from_ne_bytes(attr.data.try_into().unwrap()), old_fd);
+        assert_matches!(iter.next(), None);
+    }
+
+    #[test]
+    fn tc_bpf_attrs_layout_accepts_max_name() {
+        let kind = c"bpf".to_bytes_with_nul();
+        let prog_fd = 42i32;
+        let name = [b'a'; CLS_BPF_NAME_LEN];
+        let flags = TCA_BPF_FLAG_ACT_DIRECT;
+
+        let mut options = Vec::new();
+        append_attr(&mut options, TCA_BPF_FD as u16, bytes_of(&prog_fd));
+        append_attr(&mut options, TCA_BPF_NAME as u16, &name);
+        append_attr(&mut options, TCA_BPF_FLAGS as u16, bytes_of(&flags));
+
+        let mut attrs = Vec::new();
+        append_attr(&mut attrs, TCA_KIND as u16, kind);
+        append_nested_attr(&mut attrs, TCA_OPTIONS as u16, &options);
+
+        let mut iter = NlAttrsIterator::new(&attrs);
+        let attr = iter.next().unwrap().unwrap();
+        assert_eq!(attr.header.nla_type, TCA_KIND as u16);
+        assert_eq!(attr.data, kind);
+
+        let attr = iter.next().unwrap().unwrap();
+        assert_eq!(
+            attr.header.nla_type,
+            NLA_F_NESTED as u16 | TCA_OPTIONS as u16
+        );
+        assert_eq!(
+            usize::from(attr.header.nla_len),
+            size_of::<nlattr>() + options.len()
+        );
+        assert_matches!(iter.next(), None);
+
+        let mut iter = NlAttrsIterator::new(attr.data);
+        let attr = iter.next().unwrap().unwrap();
+        assert_eq!(attr.header.nla_type, TCA_BPF_FD as u16);
+        assert_eq!(i32::from_ne_bytes(attr.data.try_into().unwrap()), prog_fd);
+
+        let attr = iter.next().unwrap().unwrap();
+        assert_eq!(attr.header.nla_type, TCA_BPF_NAME as u16);
+        assert_eq!(attr.data, name);
+
+        let attr = iter.next().unwrap().unwrap();
+        assert_eq!(attr.header.nla_type, TCA_BPF_FLAGS as u16);
+        assert_eq!(u32::from_ne_bytes(attr.data.try_into().unwrap()), flags);
+        assert_matches!(iter.next(), None);
     }
 }
