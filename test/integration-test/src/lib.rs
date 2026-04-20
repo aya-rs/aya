@@ -12,6 +12,13 @@ bpf_file!(
     MAIN => "main.bpf.o",
     MULTIMAP_BTF => "multimap-btf.bpf.o",
     KCONFIG => "kconfig.bpf.o",
+    KCONFIG_MISSING_STRONG => "kconfig_missing_strong.bpf.o",
+    KCONFIG_UNKNOWN_WEAK => "kconfig_unknown_weak.bpf.o",
+    KCONFIG_UNSIGNED_U8 => "kconfig_unsigned_u8.bpf.o",
+    KCONFIG_SIGNED_I8 => "kconfig_signed_i8.bpf.o",
+    KCONFIG_INVALID_BOOL => "kconfig_invalid_bool.bpf.o",
+    KCONFIG_INVALID_ARRAY => "kconfig_invalid_array.bpf.o",
+    KCONFIG_NON_TRISTATE_ENUM => "kconfig_non_tristate_enum.bpf.o",
     RINGBUF_BTF => "ringbuf-btf.bpf.o",
 
     ENUM_SIGNED_32_RELOC_BPF => "enum_signed_32_reloc.bpf.o",
