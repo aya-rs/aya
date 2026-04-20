@@ -6,8 +6,6 @@
 extern unsigned int UNKNOWN_OPTIONAL __kconfig __weak;
 
 SEC("uprobe")
-int test_kconfig_unknown_weak(void *ctx) {
-  return UNKNOWN_OPTIONAL != 0;
-}
+int test_kconfig_unknown_weak(void *ctx) { return UNKNOWN_OPTIONAL != 0; }
 
 char _license[] SEC("license") = "GPL";
