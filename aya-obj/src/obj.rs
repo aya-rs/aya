@@ -1470,9 +1470,7 @@ mod tests {
     use assert_matches::assert_matches;
 
     use super::*;
-    use crate::{
-        generated::{bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, btf_ext_header},
-    };
+    use crate::generated::{bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, btf_ext_header};
 
     const FAKE_INS_LEN: u64 = 8;
 
