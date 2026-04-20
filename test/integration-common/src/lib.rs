@@ -166,3 +166,15 @@ pub mod sk_reuseport {
     pub const SELECT_SOCKET_INDEX: u32 = 0;
     pub const MIGRATE_SOCKET_INDEX: u32 = 2;
 }
+
+pub mod stack_trace {
+    #[repr(C)]
+    #[derive(Clone, Copy, Default)]
+    pub struct TestResult {
+        pub stack_id: u32,
+        pub ran: u32,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
