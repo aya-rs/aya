@@ -35,6 +35,101 @@ macro_rules! nla_align {
     }};
 }
 
+macro_rules! payload_len {
+    (value($value:expr)) => {
+        size_of_val(&$value)
+    };
+    (bytes($bytes:expr)) => {
+        $bytes.len()
+    };
+}
+
+macro_rules! payload_buf {
+    (value($value:expr)) => {
+        bytes_of(&$value)
+    };
+    (bytes($bytes:expr)) => {
+        $bytes
+    };
+}
+
+macro_rules! part_len {
+    (attr($attr_type:expr, $payload:ident($arg:expr))) => {
+        attr_aligned_len(payload_len!($payload($arg)))
+    };
+    (nested_attr($attr_type:expr, [$($part:tt)*])) => {
+        attr_aligned_len(parts_len!($($part)*))
+    };
+    ($payload:ident($arg:expr)) => {
+        nla_align!(payload_len!($payload($arg)))
+    };
+}
+
+macro_rules! parts_len {
+    ($($part:ident($($args:tt)*)),* $(,)?) => {
+        0 $(+ part_len!($part($($args)*)))*
+    };
+}
+
+macro_rules! netlink_bufs_acc {
+    ([$($buf:expr,)*]) => {
+        [$($buf,)*]
+    };
+    ([$($buf:expr,)*] ; $padding:expr, $($rest:tt)*) => {
+        netlink_bufs_acc!([$($buf,)* $padding,] $($rest)*)
+    };
+    ([$($buf:expr,)*] $payload:ident($arg:expr), $($rest:tt)*) => {
+        netlink_bufs_acc!(
+            [
+                $($buf,)*
+                payload_buf!($payload($arg)),
+                padding(payload_len!($payload($arg))),
+            ]
+            $($rest)*
+        )
+    };
+    ([$($buf:expr,)*] attr($attr_type:expr, $payload:ident($arg:expr)), $($rest:tt)*) => {
+        netlink_bufs_acc!(
+            [
+                $($buf,)*
+                bytes_of(&attr_header($attr_type, payload_len!($payload($arg)))),
+                payload_buf!($payload($arg)),
+                padding(payload_len!($payload($arg))),
+            ]
+            $($rest)*
+        )
+    };
+    ([$($buf:expr,)*] nested_attr($attr_type:expr, [$($part:tt)*]), $($rest:tt)*) => {
+        netlink_bufs_acc!(
+            [
+                $($buf,)*
+                bytes_of(&attr_header(NLA_F_NESTED as u16 | $attr_type, parts_len!($($part)*))),
+            ]
+            $($part)*
+            ; padding(parts_len!($($part)*)), $($rest)*
+        )
+    };
+}
+
+macro_rules! netlink_bufs {
+    ($header:expr; $($part:ident($($args:tt)*)),* $(,)?) => {
+        netlink_bufs_acc!([bytes_of(&$header),] $($part($($args)*),)*)
+    };
+}
+
+macro_rules! send_netlink {
+    ($sock:expr, $nlmsg_type:expr, $nlmsg_flags:expr, [$($part:ident($($args:tt)*)),* $(,)?]) => {{
+        let header = nlmsghdr {
+            nlmsg_len: (size_of::<nlmsghdr>() + parts_len!($($part($($args)*)),*)) as u32,
+            nlmsg_flags: $nlmsg_flags as u16,
+            nlmsg_type: $nlmsg_type,
+            nlmsg_pid: 0,
+            nlmsg_seq: 1,
+        };
+        $sock.send(netlink_bufs!(header; $($part($($args)*)),*))
+    }};
+}
+
 /// `CLS_BPF_NAME_LEN` from the Linux kernel.
 /// <https://github.com/torvalds/linux/blob/v6.19/net/sched/cls_bpf.c#L28>
 const CLS_BPF_NAME_LEN: usize = 256;
@@ -78,24 +173,21 @@ impl NetlinkError {
     }
 }
 
-fn attr_header(attr_type: u16, payload_len: usize) -> [u8; nla_align!(size_of::<nlattr>())] {
-    let attr = nlattr {
+fn attr_header(attr_type: u16, payload_len: usize) -> nlattr {
+    nlattr {
         nla_type: attr_type,
         nla_len: (size_of::<nlattr>() + payload_len) as u16,
-    };
-    let mut buf = [0; _];
-    buf[..size_of::<nlattr>()].copy_from_slice(bytes_of(&attr));
-    buf
+    }
 }
 
 const fn attr_aligned_len(payload_len: usize) -> usize {
     nla_align!(size_of::<nlattr>() + payload_len)
 }
 
-fn attr_padding(payload_len: usize) -> &'static [u8] {
+fn padding(len: usize) -> &'static [u8] {
     const ZERO_PADDING: [u8; NLA_ALIGNTO as usize] = [0; NLA_ALIGNTO as usize];
 
-    &ZERO_PADDING[..nla_align!(payload_len) - payload_len]
+    &ZERO_PADDING[..nla_align!(len) - len]
 }
 
 /// # Safety
@@ -117,71 +209,44 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
 
     // write the attrs
     let xdp_fd = fd.map_or(-1, |fd| fd.as_raw_fd());
-    let xdp_fd_attr = attr_header(IFLA_XDP_FD as u16, size_of_val(&xdp_fd));
-
     let flags_attr = attr_header(IFLA_XDP_FLAGS as u16, size_of_val(&flags));
-    let flags_len = if flags > 0 {
-        attr_aligned_len(size_of_val(&flags))
-    } else {
-        0
-    };
-
+    let replace = flags & XDP_FLAGS_REPLACE != 0;
     let old_fd = if flags & XDP_FLAGS_REPLACE != 0 {
         old_fd.map(|fd| fd.as_raw_fd()).unwrap()
     } else {
         0
     };
     let expected_fd_attr = attr_header(IFLA_XDP_EXPECTED_FD as u16, size_of_val(&old_fd));
-    let expected_fd_len = if flags & XDP_FLAGS_REPLACE != 0 {
-        attr_aligned_len(size_of_val(&old_fd))
-    } else {
-        0
-    };
-
-    let xdp_inner_len = attr_aligned_len(size_of_val(&xdp_fd)) + flags_len + expected_fd_len;
-    let xdp_attr = attr_header(NLA_F_NESTED as u16 | IFLA_XDP, xdp_inner_len);
-    let attrs_len = attr_aligned_len(xdp_inner_len);
-    let header = nlmsghdr {
-        nlmsg_len: (size_of::<nlmsghdr>() + size_of_val(&if_info) + attrs_len) as u32,
-        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK) as u16,
-        nlmsg_type: RTM_SETLINK,
-        nlmsg_pid: 0,
-        nlmsg_seq: 1,
-    };
-
-    let xdp_outer_padding = attr_padding(xdp_inner_len);
-    let fd = bytes_of(&xdp_fd);
-    let flags = bytes_of(&flags);
-    let old_fd = bytes_of(&old_fd);
     let empty: &[u8] = &[];
-
-    let (flags_attr, flags, flags_padding) = if flags_len == 0 {
-        (empty, empty, empty)
+    let (flags_attr, flags) = if flags == 0 {
+        (empty, empty)
     } else {
-        (&flags_attr[..], flags, attr_padding(flags.len()))
+        (bytes_of(&flags_attr), bytes_of(&flags))
+    };
+    let (expected_fd_attr, old_fd) = if !replace {
+        (empty, empty)
+    } else {
+        (bytes_of(&expected_fd_attr), bytes_of(&old_fd))
     };
 
-    let (expected_fd_attr, old_fd, expected_fd_padding) = if expected_fd_len == 0 {
-        (empty, empty, empty)
-    } else {
-        (&expected_fd_attr[..], old_fd, attr_padding(old_fd.len()))
-    };
-
-    sock.send([
-        bytes_of(&header),
-        bytes_of(&if_info),
-        &xdp_attr,
-        &xdp_fd_attr,
-        fd,
-        attr_padding(fd.len()),
-        flags_attr,
-        flags,
-        flags_padding,
-        expected_fd_attr,
-        old_fd,
-        expected_fd_padding,
-        xdp_outer_padding,
-    ])?;
+    send_netlink!(
+        sock,
+        RTM_SETLINK,
+        NLM_F_REQUEST | NLM_F_ACK,
+        [
+            value(if_info),
+            nested_attr(
+                IFLA_XDP,
+                [
+                    attr(IFLA_XDP_FD as u16, value(xdp_fd)),
+                    bytes(flags_attr),
+                    bytes(flags),
+                    bytes(expected_fd_attr),
+                    bytes(old_fd),
+                ]
+            ),
+        ]
+    )?;
     for msg in sock.recv() {
         msg?;
     }
@@ -202,23 +267,13 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), Netli
 
     // add the TCA_KIND attribute
     let kind = c"clsact".to_bytes_with_nul();
-    let kind_attr = attr_header(TCA_KIND as u16, kind.len());
-    let attrs_len = attr_aligned_len(kind.len());
-    let header = nlmsghdr {
-        nlmsg_len: (size_of::<nlmsghdr>() + size_of_val(&tc_info) + attrs_len) as u32,
-        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE) as u16,
-        nlmsg_type: RTM_NEWQDISC,
-        nlmsg_pid: 0,
-        nlmsg_seq: 1,
-    };
 
-    sock.send([
-        bytes_of(&header),
-        bytes_of(&tc_info),
-        &kind_attr,
-        kind,
-        attr_padding(kind.len()),
-    ])?;
+    send_netlink!(
+        sock,
+        RTM_NEWQDISC,
+        NLM_F_REQUEST | NLM_F_ACK | NLM_F_EXCL | NLM_F_CREATE,
+        [value(tc_info), attr(TCA_KIND as u16, bytes(kind)),]
+    )?;
     for msg in sock.recv() {
         msg?;
     }
@@ -274,45 +329,23 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     let prog_fd = prog_fd.as_raw_fd();
     let flags = TCA_BPF_FLAG_ACT_DIRECT;
 
-    let kind_attr = attr_header(TCA_KIND as u16, kind.len());
-    let fd_attr = attr_header(TCA_BPF_FD as u16, size_of_val(&prog_fd));
-    let name_attr = attr_header(TCA_BPF_NAME as u16, prog_name.len());
-    let flags_attr = attr_header(TCA_BPF_FLAGS as u16, size_of_val(&flags));
-
-    let options_inner_len = attr_aligned_len(size_of_val(&prog_fd))
-        + attr_aligned_len(prog_name.len())
-        + attr_aligned_len(size_of_val(&flags));
-    let options_attr = attr_header(NLA_F_NESTED as u16 | TCA_OPTIONS as u16, options_inner_len);
-    let options_len = attr_aligned_len(options_inner_len);
-    let attrs_len = attr_aligned_len(kind.len()) + options_len;
-    let header = nlmsghdr {
-        nlmsg_len: (size_of::<nlmsghdr>() + size_of_val(&tc_info) + attrs_len) as u32,
-        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_ECHO | request_flags) as u16,
-        nlmsg_type: RTM_NEWTFILTER,
-        nlmsg_pid: 0,
-        nlmsg_seq: 1,
-    };
-
-    let prog_fd = bytes_of(&prog_fd);
-    let flags = bytes_of(&flags);
-    sock.send([
-        bytes_of(&header),
-        bytes_of(&tc_info),
-        &kind_attr,
-        kind,
-        attr_padding(kind.len()),
-        &options_attr,
-        &fd_attr,
-        prog_fd,
-        attr_padding(prog_fd.len()),
-        &name_attr,
-        prog_name,
-        attr_padding(prog_name.len()),
-        &flags_attr,
-        flags,
-        attr_padding(flags.len()),
-        attr_padding(options_inner_len),
-    ])?;
+    send_netlink!(
+        sock,
+        RTM_NEWTFILTER,
+        NLM_F_REQUEST | NLM_F_ACK | NLM_F_ECHO | request_flags,
+        [
+            value(tc_info),
+            attr(TCA_KIND as u16, bytes(kind)),
+            nested_attr(
+                TCA_OPTIONS as u16,
+                [
+                    attr(TCA_BPF_FD as u16, value(prog_fd)),
+                    attr(TCA_BPF_NAME as u16, bytes(prog_name)),
+                    attr(TCA_BPF_FLAGS as u16, value(flags)),
+                ]
+            ),
+        ]
+    )?;
 
     // find the RTM_NEWTFILTER reply and read the tcm_info and tcm_handle fields
     // which we'll need to detach
@@ -360,15 +393,12 @@ pub(crate) unsafe fn netlink_qdisc_detach(
         tcm_ifindex: if_index,
         ..unsafe { mem::zeroed() }
     };
-    let header = nlmsghdr {
-        nlmsg_len: (size_of::<nlmsghdr>() + size_of_val(&tc_info)) as u32,
-        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK) as u16,
-        nlmsg_type: RTM_DELTFILTER,
-        nlmsg_pid: 0,
-        nlmsg_seq: 1,
-    };
-
-    sock.send([bytes_of(&header), bytes_of(&tc_info)])?;
+    send_netlink!(
+        sock,
+        RTM_DELTFILTER,
+        NLM_F_REQUEST | NLM_F_ACK,
+        [value(tc_info),]
+    )?;
 
     for msg in sock.recv() {
         msg?;
@@ -390,15 +420,12 @@ pub(crate) fn netlink_find_filter_with_name(
         tcm_parent: attach_type.tc_parent(),
         ..unsafe { mem::zeroed() }
     };
-    let header = nlmsghdr {
-        nlmsg_len: (size_of::<nlmsghdr>() + size_of_val(&tc_info)) as u32,
-        nlmsg_type: RTM_GETTFILTER,
-        nlmsg_flags: (NLM_F_REQUEST | NLM_F_DUMP) as u16,
-        nlmsg_pid: 0,
-        nlmsg_seq: 1,
-    };
-
-    sock.send([bytes_of(&header), bytes_of(&tc_info)])?;
+    send_netlink!(
+        sock,
+        RTM_GETTFILTER,
+        NLM_F_REQUEST | NLM_F_DUMP,
+        [value(tc_info),]
+    )?;
     let mut resp = sock.recv();
 
     Ok(iter::from_fn(move || {
@@ -464,15 +491,12 @@ pub unsafe fn netlink_set_link_up(if_index: i32) -> Result<(), NetlinkError> {
         ifi_change: IFF_UP as u32,
         ..unsafe { mem::zeroed() }
     };
-    let header = nlmsghdr {
-        nlmsg_len: (size_of::<nlmsghdr>() + size_of_val(&if_info)) as u32,
-        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK) as u16,
-        nlmsg_type: RTM_SETLINK,
-        nlmsg_pid: 0,
-        nlmsg_seq: 1,
-    };
-
-    sock.send([bytes_of(&header), bytes_of(&if_info)])?;
+    send_netlink!(
+        sock,
+        RTM_SETLINK,
+        NLM_F_REQUEST | NLM_F_ACK,
+        [value(if_info),]
+    )?;
     for msg in sock.recv() {
         msg?;
     }
@@ -768,18 +792,21 @@ mod tests {
 
     use super::*;
 
+    fn append_padded(buf: &mut Vec<u8>, bytes: &[u8]) {
+        buf.extend_from_slice(bytes);
+        buf.extend_from_slice(padding(bytes.len()));
+    }
+
     fn append_attr(buf: &mut Vec<u8>, attr_type: u16, value: &[u8]) {
         let attr = attr_header(attr_type, value.len());
-        buf.extend_from_slice(&attr);
-        buf.extend_from_slice(value);
-        buf.extend_from_slice(attr_padding(value.len()));
+        append_padded(buf, bytes_of(&attr));
+        append_padded(buf, value);
     }
 
     fn append_nested_attr(buf: &mut Vec<u8>, attr_type: u16, nested: &[u8]) {
         let attr = attr_header(NLA_F_NESTED as u16 | attr_type, nested.len());
-        buf.extend_from_slice(&attr);
-        buf.extend_from_slice(nested);
-        buf.extend_from_slice(attr_padding(nested.len()));
+        append_padded(buf, bytes_of(&attr));
+        append_padded(buf, nested);
     }
 
     #[test]
