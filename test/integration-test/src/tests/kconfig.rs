@@ -38,13 +38,6 @@ fn load_with_kconfig(bytes: &[u8], config: &[u8]) -> Result<Ebpf, EbpfError> {
         .load(bytes)
 }
 
-fn attach_uprobe(mut bpf: Ebpf, program_name: &str, symbol: &str) -> Ebpf {
-    let prog: &mut UProbe = bpf.program_mut(program_name).unwrap().try_into().unwrap();
-    prog.load().unwrap();
-    prog.attach(symbol, "/proc/self/exe", None).unwrap();
-    bpf
-}
-
 fn read_u8_string<const LEN: usize>(
     results: &Array<aya::maps::MapData, c_longlong>,
     base: u32,
