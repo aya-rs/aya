@@ -36,6 +36,7 @@ mod ring_buf;
 mod sk_reuseport;
 mod sk_storage;
 mod smoke;
+mod stack_trace;
 mod strncmp;
 mod tcx;
 mod uprobe_cookie;

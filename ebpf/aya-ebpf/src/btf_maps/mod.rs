@@ -6,6 +6,7 @@ pub mod program_array;
 pub mod reuseport_sock_array;
 pub mod ring_buf;
 pub mod sk_storage;
+pub mod stack_trace;
 
 pub use array::Array;
 pub use bloom_filter::BloomFilter;
@@ -15,6 +16,7 @@ pub use program_array::ProgramArray;
 pub use reuseport_sock_array::ReusePortSockArray;
 pub use ring_buf::RingBuf;
 pub use sk_storage::SkStorage;
+pub use stack_trace::StackTrace;
 
 /// Defines a BTF-compatible map struct with flat `#[repr(C)]` layout.
 ///

@@ -139,3 +139,7 @@ path = "src/printk_test.rs"
 [[bin]]
 name = "prog_array"
 path = "src/prog_array.rs"
+
+[[bin]]
+name = "stack_trace"
+path = "src/stack_trace.rs"
