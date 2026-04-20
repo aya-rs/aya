@@ -1,6 +1,6 @@
 use std::{
     cmp,
-    ffi::{CStr, CString, OsStr, c_char},
+    ffi::{CStr, CString, c_char},
     fmt, io, iter,
     mem::{self, MaybeUninit},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, RawFd},
