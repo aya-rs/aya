@@ -88,7 +88,7 @@ pub struct KConfig {
     data: HashMap<String, Vec<u8>>,
 }
 
-/// The error type returned by [`KConfig::parse`].
+/// The error type returned by [`KConfig::current`] and [`KConfig::parse`].
 #[derive(Debug, Error)]
 pub enum KConfigError {
     /// No kernel config file could be found on the system.
@@ -303,17 +303,18 @@ fn parse_kconfig_numeric(raw_value: &str) -> Option<[u8; 8]> {
 }
 
 fn read_kconfig() -> Result<String, KConfigError> {
-    let release = kernel_release().ok_or(KConfigError::NotFound)?;
-    let mut boot_config_name = OsString::from("config-");
-    boot_config_name.push(release);
-    let boot_config_path = PathBuf::from("/boot").join(boot_config_name);
+    let boot_config_path = kernel_release().map(|release| {
+        let mut boot_config_name = OsString::from("config-");
+        boot_config_name.push(release);
+        PathBuf::from("/boot").join(boot_config_name)
+    });
 
     #[cfg(feature = "flate2")]
     let proc_config_path = Some(Path::new("/proc/config.gz"));
     #[cfg(not(feature = "flate2"))]
     let proc_config_path = None;
 
-    read_kconfig_from_paths(proc_config_path, Some(&boot_config_path))
+    read_kconfig_from_paths(proc_config_path, boot_config_path.as_deref())
 }
 
 fn read_kconfig_from_paths(
@@ -387,7 +388,10 @@ fn read_kconfig_file(path: &Path, gzip: bool) -> Result<String, KConfigError> {
         }
         #[cfg(not(feature = "flate2"))]
         {
-            return Err(KConfigError::NotFound);
+            return Err(KConfigError::Read {
+                path: path.to_owned(),
+                error: io::Error::new(io::ErrorKind::Unsupported, "gzip support is disabled"),
+            });
         }
     } else {
         fs::read_to_string(path)
