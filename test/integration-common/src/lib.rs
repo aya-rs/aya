@@ -166,3 +166,9 @@ pub mod sk_reuseport {
     pub const SELECT_SOCKET_INDEX: u32 = 0;
     pub const MIGRATE_SOCKET_INDEX: u32 = 2;
 }
+
+pub mod stack_trace {
+    pub const RESULT_RAN: u32 = 0;
+    pub const RESULT_STACKID: u32 = 1;
+    pub const NUM_SLOTS: u32 = 2;
+}

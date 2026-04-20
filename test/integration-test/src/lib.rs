@@ -68,6 +68,7 @@ bpf_file!(
     UPROBE_COOKIE => "uprobe_cookie",
     PRINTK_TEST => "printk_test",
     PROG_ARRAY => "prog_array",
+    STACK_TRACE => "stack_trace",
 );
 
 #[cfg(test)]
