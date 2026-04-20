@@ -91,7 +91,7 @@ use aya_obj::{
 use info::impl_info;
 pub use info::{LsmAttachType, ProgramInfo, ProgramType, loaded_programs};
 use libc::ENOSPC;
-pub(crate) use probe::{create_as_probe, create_as_trace_point};
+pub(crate) use probe::is_syscall_wrapper_supported;
 use tc::SchedClassifierLink;
 use thiserror::Error;
 

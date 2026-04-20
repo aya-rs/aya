@@ -28,12 +28,12 @@ use crate::{
         CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe, LircMode2, Lsm,
         LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
         SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SockOps, SocketFilter, TracePoint,
-        UProbe, Xdp,
+        UProbe, Xdp, is_syscall_wrapper_supported,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
-        is_bpf_syscall_wrapper_supported, is_btf_datasec_supported, is_btf_datasec_zero_supported,
-        is_btf_decl_tag_supported, is_btf_enum64_supported, is_btf_float_supported,
+        is_btf_datasec_supported, is_btf_datasec_zero_supported, is_btf_decl_tag_supported,
+        is_btf_enum64_supported, is_btf_float_supported,
         is_btf_func_global_supported, is_btf_func_supported, is_btf_supported,
         is_btf_type_tag_supported, is_perf_link_supported, is_probe_read_kernel_supported,
         is_prog_id_supported, is_prog_name_supported, retry_with_verifier_logs,
@@ -193,7 +193,7 @@ fn detect_features() -> Features {
         is_bpf_cookie_supported(),
         is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP),
         is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_DEVMAP),
-        is_bpf_syscall_wrapper_supported(),
+        is_syscall_wrapper_supported(),
         btf,
     );
     debug!("BPF Feature Detection: {f:#?}");
