@@ -125,7 +125,7 @@ pub use crate::programs::{
     tp_btf::BtfTracePoint,
     trace_point::{TracePoint, TracePointError},
     uprobe::{UProbe, UProbeError},
-    xdp::{Xdp, XdpError, XdpFlags},
+    xdp::{Xdp, XdpError, XdpMode},
 };
 use crate::{
     VerifierLogLevel,
