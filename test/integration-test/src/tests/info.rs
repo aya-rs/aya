@@ -70,7 +70,7 @@ fn test_loaded_programs() {
     // Ensure we can perform basic operations on the re-created program.
     let res = p
         .attach(
-            "uprobe_function",
+            ["uprobe_function"],
             "/proc/self/exe",
             UProbeScope::AllProcesses,
         )

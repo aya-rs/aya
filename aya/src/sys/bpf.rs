@@ -16,10 +16,10 @@ use aya_obj::{
         VarLinkage,
     },
     generated::{
-        BPF_ADD, BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_IMM, BPF_JMP, BPF_K,
-        BPF_LD, BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_X, bpf_attach_type, bpf_attr,
-        bpf_btf_info, bpf_cmd, bpf_func_id, bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type,
-        bpf_prog_info, bpf_prog_type, bpf_stats_type,
+        BPF_ADD, BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_F_UPROBE_MULTI_RETURN,
+        BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_X,
+        bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_func_id, bpf_insn, bpf_link_info,
+        bpf_map_info, bpf_map_type, bpf_prog_info, bpf_prog_type, bpf_stats_type,
     },
     maps::{LegacyMap, bpf_map_def},
 };
@@ -411,15 +411,26 @@ pub(crate) enum LinkTarget<'f> {
     Fd(BorrowedFd<'f>),
     IfIndex(u32),
     Iter,
+    None,
 }
 
 // Models https://github.com/torvalds/linux/blob/2144da25/include/uapi/linux/bpf.h#L1724-L1782.
 pub(crate) enum BpfLinkCreateArgs<'a> {
     TargetBtfId(u32),
     // since kernel 5.15
-    PerfEvent { bpf_cookie: u64 },
+    PerfEvent {
+        bpf_cookie: u64,
+    },
     // since kernel 6.6
     Tcx(&'a LinkRef),
+    UProbeMulti {
+        path: &'a CStr,
+        offsets: &'a [u64],
+        ref_ctr_offsets: Option<&'a [u64]>,
+        cookies: Option<&'a [u64]>,
+        pid: u32,
+        flags: u32,
+    },
 }
 
 // since kernel 5.7
@@ -445,7 +456,7 @@ pub(crate) fn bpf_link_create(
         // fact, the kernel explicitly rejects non-zero target FDs for
         // iterators:
         // https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/bpf_iter.c#L517-L518
-        LinkTarget::Iter => {}
+        LinkTarget::Iter | LinkTarget::None => {}
     }
     attr.link_create.attach_type = attach_type.into() as u32;
     attr.link_create.flags = flags;
@@ -477,11 +488,62 @@ pub(crate) fn bpf_link_create(
                     );
                 },
             },
+            BpfLinkCreateArgs::UProbeMulti {
+                path,
+                offsets,
+                ref_ctr_offsets,
+                cookies,
+                pid,
+                flags,
+            } => {
+                let multi = unsafe { &mut attr.link_create.__bindgen_anon_3.uprobe_multi };
+                multi.path = path.as_ptr() as u64;
+                multi.offsets = offsets.as_ptr() as u64;
+                multi.cnt = offsets.len() as u32;
+                multi.flags = flags;
+                multi.pid = pid;
+                multi.ref_ctr_offsets = ref_ctr_offsets
+                    .map(|slice| slice.as_ptr() as u64)
+                    .unwrap_or_default();
+                multi.cookies = cookies
+                    .map(|slice| slice.as_ptr() as u64)
+                    .unwrap_or_default();
+            }
         }
     }
 
     // BPF_LINK_CREATE returns a new file descriptor.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) }
+}
+
+pub(crate) fn bpf_link_create_uprobe_multi(
+    prog_fd: BorrowedFd<'_>,
+    path: &CStr,
+    offsets: &[u64],
+    ref_ctr_offsets: Option<&[u64]>,
+    cookies: Option<&[u64]>,
+    pid: u32,
+    retprobe: bool,
+) -> io::Result<crate::MockableFd> {
+    let args = BpfLinkCreateArgs::UProbeMulti {
+        path,
+        offsets,
+        ref_ctr_offsets,
+        cookies,
+        pid,
+        flags: if retprobe {
+            BPF_F_UPROBE_MULTI_RETURN
+        } else {
+            0
+        },
+    };
+    bpf_link_create(
+        prog_fd,
+        LinkTarget::None,
+        bpf_attach_type::BPF_TRACE_UPROBE_MULTI,
+        0,
+        Some(args),
+    )
 }
 
 // since kernel 5.7

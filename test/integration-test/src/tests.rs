@@ -42,4 +42,5 @@ mod stack_trace_lsm;
 mod strncmp;
 mod tcx;
 mod uprobe_cookie;
+mod uprobe_multi;
 mod xdp;

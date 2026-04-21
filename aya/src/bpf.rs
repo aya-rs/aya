@@ -23,7 +23,7 @@ use crate::{
         CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe, LircMode2, Lsm,
         LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
         SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SockOps, SocketFilter, TracePoint,
-        UProbe, Xdp,
+        UProbe, Xdp, uprobe::AttachMode,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -449,8 +449,14 @@ impl<'a> EbpfLoader<'a> {
                                 }
                                 ProgramSection::KRetProbe
                                 | ProgramSection::KProbe
-                                | ProgramSection::UProbe { sleepable: _ }
-                                | ProgramSection::URetProbe { sleepable: _ }
+                                | ProgramSection::UProbe {
+                                    sleepable: _,
+                                    multi: _,
+                                }
+                                | ProgramSection::URetProbe {
+                                    sleepable: _,
+                                    multi: _,
+                                }
                                 | ProgramSection::TracePoint
                                 | ProgramSection::SocketFilter
                                 | ProgramSection::Xdp {
@@ -582,7 +588,7 @@ impl<'a> EbpfLoader<'a> {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             kind: ProbeKind::Return,
                         }),
-                        ProgramSection::UProbe { sleepable } => {
+                        ProgramSection::UProbe { sleepable, multi } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
@@ -591,9 +597,14 @@ impl<'a> EbpfLoader<'a> {
                             Program::UProbe(UProbe {
                                 data,
                                 kind: ProbeKind::Entry,
+                                attach_mode: if *multi {
+                                    AttachMode::Multi
+                                } else {
+                                    AttachMode::Single
+                                },
                             })
                         }
-                        ProgramSection::URetProbe { sleepable } => {
+                        ProgramSection::URetProbe { sleepable, multi } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
@@ -602,6 +613,11 @@ impl<'a> EbpfLoader<'a> {
                             Program::UProbe(UProbe {
                                 data,
                                 kind: ProbeKind::Return,
+                                attach_mode: if *multi {
+                                    AttachMode::Multi
+                                } else {
+                                    AttachMode::Single
+                                },
                             })
                         }
                         ProgramSection::TracePoint => Program::TracePoint(TracePoint {
@@ -1103,7 +1119,7 @@ impl Ebpf {
     ///
     /// let program: &mut UProbe = bpf.program_mut("SSL_read").unwrap().try_into()?;
     /// program.load()?;
-    /// program.attach("SSL_read", "libssl", UProbeScope::AllProcesses)?;
+    /// program.attach(["SSL_read"], "libssl", UProbeScope::AllProcesses)?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn program_mut(&mut self, name: &str) -> Option<&mut Program> {

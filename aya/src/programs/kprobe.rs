@@ -12,9 +12,9 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        ProgramData, ProgramError, ProgramType, define_link_wrapper, impl_try_from_fdlink,
-        impl_try_into_fdlink, load_program_without_attach_type,
-        perf_attach::{PerfLinkIdInner, PerfLinkInner},
+        PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, impl_try_from_fdlink, impl_try_into_fdlink,
+        load_program_without_attach_type,
         probe::{Probe, ProbeKind, attach},
     },
 };
@@ -143,9 +143,5 @@ pub enum KProbeError {
     },
 }
 
-impl_try_into_fdlink!(KProbeLink, PerfLinkInner);
-impl_try_from_fdlink!(
-    KProbeLink,
-    PerfLinkInner,
-    bpf_link_type::BPF_LINK_TYPE_PERF_EVENT
-);
+impl_try_into_fdlink!(KProbeLink, method = into_fd_link);
+impl_try_from_fdlink!(KProbeLink, bpf_link_type::BPF_LINK_TYPE_PERF_EVENT);
