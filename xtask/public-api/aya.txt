@@ -7172,8 +7172,6 @@ pub struct aya::KConfig
 impl aya::KConfig
 pub fn aya::KConfig::current() -> core::result::Result<Self, aya::KConfigError>
 pub fn aya::KConfig::parse(data: &[u8]) -> core::result::Result<Self, aya::KConfigError>
-impl core::clone::Clone for aya::KConfig
-pub fn aya::KConfig::clone(&self) -> aya::KConfig
 impl core::fmt::Debug for aya::KConfig
 pub fn aya::KConfig::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya::KConfig
