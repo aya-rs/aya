@@ -56,7 +56,7 @@ fn load_and_attach(name: &str, bytes: &[u8]) -> Ebpf {
     prog.load().unwrap();
 
     prog.attach(
-        "trigger_relocations_program",
+        ["trigger_relocations_program"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )

@@ -91,7 +91,7 @@ fn hash_basic(
     let prog: &mut UProbe = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
     prog.attach(
-        "trigger_hash_lookup",
+        ["trigger_hash_lookup"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )

@@ -5287,12 +5287,19 @@ pub aya::programs::uprobe::UProbeAttachLocation::Symbol(&'a str)
 pub aya::programs::uprobe::UProbeAttachLocation::SymbolOffset(&'a str, u64)
 impl aya::programs::uprobe::UProbeAttachLocation<'static>
 pub fn aya::programs::uprobe::UProbeAttachLocation<'static>::from_virtual_address(u64, u64, u64) -> core::result::Result<Self, aya::programs::uprobe::UProbeAttachLocationError>
+impl core::convert::From<&u64> for aya::programs::uprobe::UProbeAttachLocation<'static>
+pub fn aya::programs::uprobe::UProbeAttachLocation<'static>::from(&u64) -> Self
 impl core::convert::From<u64> for aya::programs::uprobe::UProbeAttachLocation<'static>
 pub fn aya::programs::uprobe::UProbeAttachLocation<'static>::from(u64) -> Self
+impl<'a> core::clone::Clone for aya::programs::uprobe::UProbeAttachLocation<'a>
+pub fn aya::programs::uprobe::UProbeAttachLocation<'a>::clone(&self) -> aya::programs::uprobe::UProbeAttachLocation<'a>
+impl<'a> core::convert::From<&&'a str> for aya::programs::uprobe::UProbeAttachLocation<'a>
+pub fn aya::programs::uprobe::UProbeAttachLocation<'a>::from(&&'a str) -> Self
 impl<'a> core::convert::From<&'a str> for aya::programs::uprobe::UProbeAttachLocation<'a>
 pub fn aya::programs::uprobe::UProbeAttachLocation<'a>::from(&'a str) -> Self
 impl<'a> core::fmt::Debug for aya::programs::uprobe::UProbeAttachLocation<'a>
 pub fn aya::programs::uprobe::UProbeAttachLocation<'a>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Copy for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::marker::Freeze for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::marker::Send for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::marker::Sync for aya::programs::uprobe::UProbeAttachLocation<'a>
@@ -5321,6 +5328,11 @@ impl core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeAttachLocationEr
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeAttachLocationError
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeAttachLocationError
 pub enum aya::programs::uprobe::UProbeError
+pub aya::programs::uprobe::UProbeError::AttachModeSelectionFailed
+pub aya::programs::uprobe::UProbeError::AttachModeSelectionFailed::multi_error: alloc::boxed::Box<aya::programs::ProgramError>
+pub aya::programs::uprobe::UProbeError::AttachModeSelectionFailed::single_error: alloc::boxed::Box<aya::programs::ProgramError>
+pub aya::programs::uprobe::UProbeError::EmptyPoints
+pub aya::programs::uprobe::UProbeError::EmptyPoints::target: std::path::PathBuf
 pub aya::programs::uprobe::UProbeError::FileError
 pub aya::programs::uprobe::UProbeError::FileError::filename: std::path::PathBuf
 pub aya::programs::uprobe::UProbeError::FileError::io_error: core::io::error::Error
@@ -5328,6 +5340,11 @@ pub aya::programs::uprobe::UProbeError::InvalidLdSoCache
 pub aya::programs::uprobe::UProbeError::InvalidLdSoCache::io_error: &'static core::io::error::Error
 pub aya::programs::uprobe::UProbeError::InvalidTarget
 pub aya::programs::uprobe::UProbeError::InvalidTarget::path: std::path::PathBuf
+pub aya::programs::uprobe::UProbeError::LegacyPerfAttachPointError
+pub aya::programs::uprobe::UProbeError::LegacyPerfAttachPointError::attach_error: alloc::boxed::Box<aya::programs::ProgramError>
+pub aya::programs::uprobe::UProbeError::LegacyPerfAttachPointError::index: usize
+pub aya::programs::uprobe::UProbeError::LegacyPerfAttachPointError::resolved_offset: u64
+pub aya::programs::uprobe::UProbeError::MultiLinkNotSupported
 pub aya::programs::uprobe::UProbeError::ProcMap
 pub aya::programs::uprobe::UProbeError::ProcMap::pid: u32
 pub aya::programs::uprobe::UProbeError::ProcMap::source: aya::programs::uprobe::ProcMapError
@@ -5368,7 +5385,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeScope
 pub struct aya::programs::uprobe::UProbe
 impl aya::programs::uprobe::UProbe
 pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::uprobe::UProbe::attach<'a, T: core::convert::AsRef<std::path::Path>, Point: core::convert::Into<aya::programs::uprobe::UProbeAttachPoint<'a>>>(&mut self, Point, T, aya::programs::uprobe::UProbeScope) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
+pub fn aya::programs::uprobe::UProbe::attach<'a, T, I>(&mut self, I, T, aya::programs::uprobe::UProbeScope) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError> where T: core::convert::AsRef<std::path::Path>, I: core::iter::traits::collect::IntoIterator, <I as core::iter::traits::collect::IntoIterator>::Item: core::convert::Into<aya::programs::uprobe::UProbeAttachPoint<'a>>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub const fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -5406,8 +5423,15 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbe
 pub struct aya::programs::uprobe::UProbeAttachPoint<'a>
 pub aya::programs::uprobe::UProbeAttachPoint::cookie: core::option::Option<u64>
 pub aya::programs::uprobe::UProbeAttachPoint::location: aya::programs::uprobe::UProbeAttachLocation<'a>
+impl core::convert::From<&aya::programs::uprobe::UProbeAttachPoint<'_>> for aya::programs::uprobe::UProbeAttachPoint<'_>
+pub fn aya::programs::uprobe::UProbeAttachPoint<'_>::from(&Self) -> Self
 impl<'a, L: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'a>>> core::convert::From<L> for aya::programs::uprobe::UProbeAttachPoint<'a>
 pub fn aya::programs::uprobe::UProbeAttachPoint<'a>::from(L) -> Self
+impl<'a> core::clone::Clone for aya::programs::uprobe::UProbeAttachPoint<'a>
+pub fn aya::programs::uprobe::UProbeAttachPoint<'a>::clone(&self) -> aya::programs::uprobe::UProbeAttachPoint<'a>
+impl<'a> core::fmt::Debug for aya::programs::uprobe::UProbeAttachPoint<'a>
+pub fn aya::programs::uprobe::UProbeAttachPoint<'a>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Copy for aya::programs::uprobe::UProbeAttachPoint<'a>
 impl<'a> core::marker::Freeze for aya::programs::uprobe::UProbeAttachPoint<'a>
 impl<'a> core::marker::Send for aya::programs::uprobe::UProbeAttachPoint<'a>
 impl<'a> core::marker::Sync for aya::programs::uprobe::UProbeAttachPoint<'a>
@@ -5416,6 +5440,8 @@ impl<'a> core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeAttachPoint<
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeAttachPoint<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeAttachPoint<'a>
 pub struct aya::programs::uprobe::UProbeLink(_)
+impl aya::programs::uprobe::UProbeLink
+pub fn aya::programs::uprobe::UProbeLink::into_fd_links(self) -> core::result::Result<alloc::vec::Vec<aya::programs::links::FdLink>, Self>
 impl aya::programs::links::Link for aya::programs::uprobe::UProbeLink
 pub type aya::programs::uprobe::UProbeLink::Id = aya::programs::uprobe::UProbeLinkId
 pub fn aya::programs::uprobe::UProbeLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -6132,6 +6158,11 @@ impl core::marker::UnsafeUnpin for aya::programs::trace_point::TracePointError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::trace_point::TracePointError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TracePointError
 pub enum aya::programs::UProbeError
+pub aya::programs::UProbeError::AttachModeSelectionFailed
+pub aya::programs::UProbeError::AttachModeSelectionFailed::multi_error: alloc::boxed::Box<aya::programs::ProgramError>
+pub aya::programs::UProbeError::AttachModeSelectionFailed::single_error: alloc::boxed::Box<aya::programs::ProgramError>
+pub aya::programs::UProbeError::EmptyPoints
+pub aya::programs::UProbeError::EmptyPoints::target: std::path::PathBuf
 pub aya::programs::UProbeError::FileError
 pub aya::programs::UProbeError::FileError::filename: std::path::PathBuf
 pub aya::programs::UProbeError::FileError::io_error: core::io::error::Error
@@ -6139,6 +6170,11 @@ pub aya::programs::UProbeError::InvalidLdSoCache
 pub aya::programs::UProbeError::InvalidLdSoCache::io_error: &'static core::io::error::Error
 pub aya::programs::UProbeError::InvalidTarget
 pub aya::programs::UProbeError::InvalidTarget::path: std::path::PathBuf
+pub aya::programs::UProbeError::LegacyPerfAttachPointError
+pub aya::programs::UProbeError::LegacyPerfAttachPointError::attach_error: alloc::boxed::Box<aya::programs::ProgramError>
+pub aya::programs::UProbeError::LegacyPerfAttachPointError::index: usize
+pub aya::programs::UProbeError::LegacyPerfAttachPointError::resolved_offset: u64
+pub aya::programs::UProbeError::MultiLinkNotSupported
 pub aya::programs::UProbeError::ProcMap
 pub aya::programs::UProbeError::ProcMap::pid: u32
 pub aya::programs::UProbeError::ProcMap::source: aya::programs::uprobe::ProcMapError
@@ -7422,7 +7458,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TraceP
 pub struct aya::programs::UProbe
 impl aya::programs::uprobe::UProbe
 pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::uprobe::UProbe::attach<'a, T: core::convert::AsRef<std::path::Path>, Point: core::convert::Into<aya::programs::uprobe::UProbeAttachPoint<'a>>>(&mut self, Point, T, aya::programs::uprobe::UProbeScope) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
+pub fn aya::programs::uprobe::UProbe::attach<'a, T, I>(&mut self, I, T, aya::programs::uprobe::UProbeScope) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError> where T: core::convert::AsRef<std::path::Path>, I: core::iter::traits::collect::IntoIterator, <I as core::iter::traits::collect::IntoIterator>::Item: core::convert::Into<aya::programs::uprobe::UProbeAttachPoint<'a>>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub const fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>

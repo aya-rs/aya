@@ -56,7 +56,7 @@ fn current_task_under_cgroup(
             .unwrap_or_else(|err| panic!("load {prog}: {err}"));
         program
             .attach(
-                "trigger_current_task_under_cgroup",
+                ["trigger_current_task_under_cgroup"],
                 "/proc/self/exe",
                 UProbeScope::AllProcesses,
             )

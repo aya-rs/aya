@@ -82,7 +82,7 @@ async fn bpf_printk<const N: usize>(
         .unwrap();
     prog.load().unwrap();
     prog.attach(
-        "trigger_bpf_printk",
+        ["trigger_bpf_printk"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )

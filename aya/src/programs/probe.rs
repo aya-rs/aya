@@ -3,7 +3,7 @@ use std::{
     fmt::{self, Write},
     fs::{self, OpenOptions},
     io::{self, Write as _},
-    os::fd::AsFd as _,
+    os::fd::{AsFd as _, BorrowedFd},
     path::{Path, PathBuf},
     process,
     sync::atomic::{AtomicUsize, Ordering},
@@ -11,8 +11,9 @@ use std::{
 
 use crate::{
     programs::{
-        Link, ProgramData, ProgramError, perf_attach, perf_attach::PerfLinkInner,
-        perf_attach_debugfs, trace_point::read_sys_fs_trace_point_id, utils::find_tracefs_path,
+        FdLink, Link, PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError, id_as_key,
+        perf_attach, perf_attach_debugfs, trace_point::read_sys_fs_trace_point_id,
+        utils::find_tracefs_path,
     },
     sys::{SyscallError, perf_event_open_probe, perf_event_open_trace_point},
     util::KernelVersion,
@@ -28,6 +29,96 @@ pub enum ProbeKind {
     /// Probe the return of the function
     Return,
 }
+
+#[derive(Debug, Hash, Eq, PartialEq)]
+pub(crate) enum ProbeLinkIdInner {
+    // This includes native multi-probe links: the kernel represents many
+    // attachment points with one BPF link.
+    One(PerfLinkIdInner),
+    // Legacy multi-point fallback creates one perf link per attachment point.
+    Many(Vec<PerfLinkIdInner>),
+}
+
+/// Internal representation shared by probe programs whose logical attachment
+/// may be backed by one native link or several legacy perf links.
+#[derive(Debug)]
+pub(crate) enum ProbeLinkInner {
+    // This includes native multi-probe links: the kernel represents many
+    // attachment points with one BPF link.
+    One(PerfLinkInner),
+    // Legacy multi-point fallback creates one perf link per attachment point.
+    Many(Vec<PerfLinkInner>),
+}
+
+impl ProbeLinkInner {
+    pub(crate) fn into_fd_links(self) -> Result<Vec<FdLink>, Self> {
+        match self {
+            Self::One(PerfLinkInner::Fd(link)) => Ok(vec![link]),
+            Self::One(link @ PerfLinkInner::PerfLink(_)) => Err(Self::One(link)),
+            Self::Many(links) => {
+                let mut fd_links = Vec::with_capacity(links.len());
+                let mut pending = links.into_iter();
+
+                while let Some(link) = pending.next() {
+                    match link {
+                        PerfLinkInner::Fd(link) => fd_links.push(link),
+                        link @ PerfLinkInner::PerfLink(_) => {
+                            let mut links = fd_links
+                                .into_iter()
+                                .map(PerfLinkInner::Fd)
+                                .collect::<Vec<_>>();
+                            links.push(link);
+                            links.extend(pending);
+                            return Err(Self::Many(links));
+                        }
+                    }
+                }
+
+                Ok(fd_links)
+            }
+        }
+    }
+}
+
+impl From<PerfLinkInner> for ProbeLinkInner {
+    fn from(link: PerfLinkInner) -> Self {
+        Self::One(link)
+    }
+}
+
+impl From<FdLink> for ProbeLinkInner {
+    fn from(link: FdLink) -> Self {
+        Self::One(PerfLinkInner::Fd(link))
+    }
+}
+
+impl Link for ProbeLinkInner {
+    type Id = ProbeLinkIdInner;
+
+    fn id(&self) -> Self::Id {
+        match self {
+            Self::One(link) => ProbeLinkIdInner::One(link.id()),
+            Self::Many(links) => ProbeLinkIdInner::Many(links.iter().map(Link::id).collect()),
+        }
+    }
+
+    fn detach(self) -> Result<(), ProgramError> {
+        match self {
+            Self::One(link) => link.detach(),
+            Self::Many(links) => {
+                // FdLink and PerfLink currently always return Ok from detach; Result is only
+                // required by Link's interface. If PerfLink starts returning detach errors, replace
+                // this with best-effort aggregation so every error can be reported.
+                for link in links {
+                    link.detach()?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
+id_as_key!(ProbeLinkInner, ProbeLinkIdInner);
 
 pub(crate) trait Probe {
     const PMU: &'static str;
@@ -152,7 +243,19 @@ pub(crate) fn attach<P: Probe, T: Link + From<PerfLinkInner>>(
     // Use debugfs to create probe
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
-    let link = if KernelVersion::at_least(4, 17, 0) {
+    let link = attach_perf_link::<P>(prog_fd, kind, fn_name, offset, pid, cookie)?;
+    program_data.links.insert(T::from(link))
+}
+
+pub(crate) fn attach_perf_link<P: Probe>(
+    prog_fd: BorrowedFd<'_>,
+    kind: ProbeKind,
+    fn_name: &OsStr,
+    offset: u64,
+    pid: Option<u32>,
+    cookie: Option<u64>,
+) -> Result<PerfLinkInner, ProgramError> {
+    if KernelVersion::at_least(4, 17, 0) {
         let perf_fd = create_as_probe::<P>(kind, fn_name, offset, pid)?;
         perf_attach(prog_fd, perf_fd, cookie)
     } else {
@@ -161,8 +264,7 @@ pub(crate) fn attach<P: Probe, T: Link + From<PerfLinkInner>>(
         }
         let (perf_fd, event) = create_as_trace_point::<P>(kind, fn_name, offset, pid)?;
         perf_attach_debugfs(prog_fd, perf_fd, event)
-    }?;
-    program_data.links.insert(T::from(link))
+    }
 }
 
 fn detach_debug_fs<P: Probe>(event_alias: &OsStr) -> Result<(), ProgramError> {

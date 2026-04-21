@@ -37,7 +37,7 @@ fn record_stackid(#[case] stacks_map: &str, #[case] result_map: &str, #[case] pr
         .unwrap_or_else(|err| panic!("load {prog}: {err}"));
     uprobe
         .attach(
-            "trigger_record_stackid",
+            ["trigger_record_stackid"],
             "/proc/self/exe",
             UProbeScope::AllProcesses,
         )

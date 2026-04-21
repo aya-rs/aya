@@ -68,6 +68,8 @@ impl Link for PerfLink {
     }
 
     fn detach(self) -> Result<(), ProgramError> {
+        // ProbeLinkInner::Many relies on this method being infallible. If errors are surfaced here,
+        // update it to attempt every detach and aggregate all failures.
         let Self { perf_fd, event } = self;
         let _unused: io::Result<()> =
             perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::Disable);
