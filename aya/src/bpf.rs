@@ -93,8 +93,11 @@ pub struct KConfig {
 #[derive(Debug, Error)]
 pub enum KConfigError {
     /// No kernel config file could be found on the system.
-    #[error("kernel config not found at /boot/config-<release> or /proc/config.gz")]
-    NotFound,
+    #[error("kernel config not found in any of {paths:?}")]
+    NotFound {
+        /// The candidate config paths that were tried.
+        paths: Vec<PathBuf>,
+    },
 
     /// A kernel config file could be found, but could not be read.
     #[error("failed to read kernel config {path}: {error}")]
@@ -288,12 +291,14 @@ fn parse_kconfig_numeric(raw_value: &str) -> Option<[u8; 8]> {
 
 fn read_kconfig() -> Result<String, KConfigError> {
     let mut read_error = None;
+    let mut paths = Vec::new();
 
     if let Some(config_path) = kernel_release().map(|release| {
         let mut boot_config_name = OsString::from("config-");
         boot_config_name.push(release);
         PathBuf::from("/boot").join(boot_config_name)
     }) {
+        paths.push(config_path.clone());
         if config_path.exists() {
             debug!("Found kernel config at {}", config_path.to_string_lossy());
             match fs::read_to_string(&config_path) {
@@ -314,6 +319,7 @@ fn read_kconfig() -> Result<String, KConfigError> {
     #[cfg(feature = "flate2")]
     {
         let config_path = Path::new("/proc/config.gz");
+        paths.push(config_path.to_owned());
         if config_path.exists() {
             debug!("Found kernel config at {}", config_path.to_string_lossy());
             let mut config = String::new();
@@ -335,7 +341,7 @@ fn read_kconfig() -> Result<String, KConfigError> {
         }
     }
 
-    Err(read_error.unwrap_or(KConfigError::NotFound))
+    Err(read_error.unwrap_or(KConfigError::NotFound { paths }))
 }
 
 #[cfg(test)]
