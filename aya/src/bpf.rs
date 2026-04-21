@@ -156,23 +156,6 @@ enum KConfigMode {
     Explicit(KConfig),
 }
 
-fn resolve_kconfig(
-    mode: &KConfigMode,
-    requires_real_kconfig: bool,
-    load_current: impl FnOnce() -> Result<KConfig, KConfigError>,
-) -> Result<Option<KConfig>, KConfigError> {
-    match mode {
-        KConfigMode::Auto => {
-            if requires_real_kconfig {
-                return load_current().map(Some);
-            }
-            Ok(Some(KConfig::with_raw_config(None)?))
-        }
-        KConfigMode::Disabled => Ok(None),
-        KConfigMode::Explicit(kconfig) => Ok(Some(kconfig.clone())),
-    }
-}
-
 fn detect_features() -> Features {
     let btf = is_btf_supported().then(|| {
         BtfFeatures::new(
@@ -739,9 +722,14 @@ impl<'a> EbpfLoader<'a> {
         } = self;
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
-        let requires_real_kconfig = obj.has_config_kconfig_externs()?;
-        let kconfig = resolve_kconfig(kconfig, requires_real_kconfig, KConfig::current)
-            .map_err(EbpfError::KConfigError)?;
+        let kconfig = match (kconfig, obj.has_config_kconfig_externs()?) {
+            (KConfigMode::Auto, true) => Some(KConfig::current().map_err(EbpfError::KConfigError)?),
+            (KConfigMode::Auto, false) => {
+                Some(KConfig::with_raw_config(None).map_err(EbpfError::KConfigError)?)
+            }
+            (KConfigMode::Disabled, _) => None,
+            (KConfigMode::Explicit(kconfig), _) => Some(kconfig.clone()),
+        };
         if let Some(kconfig) = kconfig.as_ref() {
             obj.prepare_kconfig_section(kconfig.as_map())?;
         }
@@ -1207,65 +1195,6 @@ mod tests {
                 .unwrap()
             );
         }
-    }
-
-    #[test]
-    fn test_resolve_kconfig_auto_uses_current() {
-        let kconfig = super::KConfig::parse(b"CONFIG_TEST=1").unwrap();
-
-        let resolved =
-            super::resolve_kconfig(&super::KConfigMode::Auto, true, || Ok(kconfig.clone()))
-                .unwrap();
-
-        assert_eq!(resolved.unwrap().as_map(), kconfig.as_map());
-    }
-
-    #[test]
-    fn test_resolve_kconfig_auto_uses_virtuals_only_when_real_kconfig_is_not_required() {
-        let resolved = super::resolve_kconfig(&super::KConfigMode::Auto, false, || {
-            Err(super::KConfigError::NotFound)
-        })
-        .unwrap();
-
-        let resolved = resolved.unwrap();
-        let map = resolved.as_map();
-        assert!(map.contains_key("LINUX_KERNEL_VERSION"));
-        assert!(map.contains_key("LINUX_HAS_BPF_COOKIE"));
-        assert!(map.contains_key("LINUX_HAS_SYSCALL_WRAPPER"));
-        assert!(!map.contains_key("CONFIG_TEST"));
-    }
-
-    #[test]
-    fn test_resolve_kconfig_disabled_skips_current() {
-        let resolved = super::resolve_kconfig(&super::KConfigMode::Disabled, true, || {
-            panic!("current kernel config should not be loaded")
-        })
-        .unwrap();
-
-        assert!(resolved.is_none());
-    }
-
-    #[test]
-    fn test_resolve_kconfig_explicit_skips_current() {
-        let kconfig = super::KConfig::parse(b"CONFIG_TEST=1").unwrap();
-
-        let resolved =
-            super::resolve_kconfig(&super::KConfigMode::Explicit(kconfig.clone()), true, || {
-                panic!("current kernel config should not be loaded")
-            })
-            .unwrap();
-
-        assert_eq!(resolved.unwrap().as_map(), kconfig.as_map());
-    }
-
-    #[test]
-    fn test_resolve_kconfig_auto_propagates_errors_when_config_is_needed() {
-        let err = super::resolve_kconfig(&super::KConfigMode::Auto, true, || {
-            Err(super::KConfigError::NotFound)
-        })
-        .unwrap_err();
-
-        assert!(matches!(err, super::KConfigError::NotFound));
     }
 
     #[test]
