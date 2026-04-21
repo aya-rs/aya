@@ -152,7 +152,8 @@ pub mod lpm_trie {
     #[derive(Clone, Copy, Default)]
     pub struct TestResult {
         pub value: u32,
-        pub ran: u32,
+        /// Distinguishes a recorded result from a zero-initialised slot.
+        pub ran: bool,
     }
 
     #[cfg(feature = "user")]

@@ -44,21 +44,21 @@ fn lpm_trie_basic(prog_name: &str, routes_map: &str, results_map: &str) {
     let results = Array::<_, TestResult>::try_from(bpf.map(results_map).unwrap()).unwrap();
 
     let TestResult { ran, value } = results.get(&LPM_MATCH_SLOT, 0).unwrap();
-    assert_eq!(ran, 1, "LPM-match probe did not run");
+    assert!(ran, "LPM-match probe did not run");
     assert_eq!(
         value, 7,
         "longest-prefix-match should return the /24 value, not the /16"
     );
 
     let TestResult { ran, value } = results.get(&NO_MATCH_SLOT, 0).unwrap();
-    assert_eq!(ran, 1, "no-match probe did not run");
+    assert!(ran, "no-match probe did not run");
     assert_eq!(
         value, 0,
         "get() should return None for a key outside the trie"
     );
 
     let TestResult { ran, value } = results.get(&REMOVE_SLOT, 0).unwrap();
-    assert_eq!(ran, 1, "after-remove probe did not run");
+    assert!(ran, "after-remove probe did not run");
     assert_eq!(
         value, 42,
         "after removing the /24, longest-prefix-match should fall back to the /16"
