@@ -1,5 +1,7 @@
 use core::borrow::Borrow;
 
+use aya_ebpf_bindings::bindings::PERF_MAX_STACK_DEPTH;
+
 use crate::{
     EbpfContext,
     bindings::bpf_map_type::BPF_MAP_TYPE_STACK_TRACE,
@@ -13,10 +15,12 @@ pub struct StackTrace {
     def: MapDef,
 }
 
-const PERF_MAX_STACK_DEPTH: usize = 127;
-
 impl StackTrace {
-    map_constructors!(u32, [u64; PERF_MAX_STACK_DEPTH], BPF_MAP_TYPE_STACK_TRACE);
+    map_constructors!(
+        u32,
+        [u64; PERF_MAX_STACK_DEPTH as usize],
+        BPF_MAP_TYPE_STACK_TRACE
+    );
 
     #[expect(
         clippy::missing_safety_doc,
