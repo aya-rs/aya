@@ -442,7 +442,11 @@ impl<'a> EbpfLoader<'a> {
     ///
     /// This allows you to provide kernel configuration values that will be used to patch
     /// extern variables in eBPF programs. If not set, the loader will use
-    /// [`KConfig::current`]. Pass `None` to disable kconfig patching.
+    /// [`KConfig::current`] when the object requires real `CONFIG_*` values, and otherwise
+    /// synthesize virtual-only `LINUX_*` values without reading system configuration. If set,
+    /// the provided `KConfig` is used as-is; the loader will not automatically load the current
+    /// kernel config, so any required strong `CONFIG_*` externs must be present. Pass `None` to
+    /// disable kconfig patching.
     ///
     /// # Examples
     ///
