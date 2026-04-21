@@ -294,58 +294,54 @@ fn parse_kconfig_numeric(raw_value: &str) -> Option<[u8; 8]> {
 }
 
 fn read_kconfig() -> Result<String, KConfigError> {
-    let mut read_error = None;
     let mut paths = Vec::new();
 
-    if let Some(config_path) = kernel_release().map(|release| {
-        let mut boot_config_name = OsString::from("config-");
-        boot_config_name.push(release);
-        PathBuf::from("/boot").join(boot_config_name)
+    if let Some(path) = kernel_release().map(|release| {
+        let mut config = OsString::from("config-");
+        config.push(release);
+        PathBuf::from("/boot").join(config)
     }) {
-        paths.push(config_path.clone());
-        if config_path.exists() {
-            debug!("Found kernel config at {}", config_path.to_string_lossy());
-            match fs::read_to_string(&config_path) {
-                Ok(config) => {
-                    KConfig::parse(config.as_bytes())?;
-                    return Ok(config);
-                }
-                Err(error) => {
-                    read_error.get_or_insert(KConfigError::Read {
-                        path: config_path,
-                        error,
-                    });
-                }
+        match fs::read_to_string(&path) {
+            Ok(config) => {
+                debug!("Found kernel config at {}", path.to_string_lossy());
+                return Ok(config);
+            }
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                // missing file: try next candidate
+            }
+            Err(error) => {
+                return Err(KConfigError::Read { path, error });
             }
         }
+        paths.push(path.clone());
     }
 
     #[cfg(feature = "flate2")]
     {
-        let config_path = Path::new("/proc/config.gz");
-        paths.push(config_path.to_owned());
-        if config_path.exists() {
-            debug!("Found kernel config at {}", config_path.to_string_lossy());
+        let path = Path::new("/proc/config.gz");
+        match File::open(path).map(GzDecoder::new).and_then(|mut file| {
             let mut config = String::new();
-            match File::open(config_path)
-                .map(GzDecoder::new)
-                .and_then(|mut file| file.read_to_string(&mut config).map(|_| config))
-            {
-                Ok(config) => {
-                    KConfig::parse(config.as_bytes())?;
-                    return Ok(config);
-                }
-                Err(error) => {
-                    read_error.get_or_insert_with(|| KConfigError::Read {
-                        path: config_path.to_owned(),
-                        error,
-                    });
-                }
+            file.read_to_string(&mut config)?;
+            Ok(config)
+        }) {
+            Ok(config) => {
+                debug!("Found kernel config at {}", path.to_string_lossy());
+                return Ok(config);
+            }
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                // missing file: try next candidate
+            }
+            Err(error) => {
+                return Err(KConfigError::Read {
+                    path: path.to_owned(),
+                    error,
+                });
             }
         }
+        paths.push(path.to_owned());
     }
 
-    Err(read_error.unwrap_or(KConfigError::NotFound { paths }))
+    Err(KConfigError::NotFound { paths })
 }
 
 #[cfg(test)]
