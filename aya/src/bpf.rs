@@ -8,7 +8,10 @@ use std::{
     sync::{Arc, LazyLock},
 };
 #[cfg(feature = "flate2")]
-use std::{fs::File, io::Read as _};
+use {
+    flate2::read::GzDecoder,
+    std::{fs::File, io::Read as _},
+};
 
 use aya_obj::{
     EbpfSectionKind, Features, Object, ParseError, ProgramSection,
@@ -16,8 +19,6 @@ use aya_obj::{
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
 };
-#[cfg(feature = "flate2")]
-use flate2::read::GzDecoder;
 use log::{debug, warn};
 use thiserror::Error;
 
@@ -303,52 +304,50 @@ fn parse_kconfig_numeric(raw_value: &str) -> Option<[u8; 8]> {
 }
 
 fn read_kconfig() -> Result<String, KConfigError> {
-    let boot_config_path = kernel_release().map(|release| {
+    let mut read_error = None;
+
+    if let Some(config_path) = kernel_release().map(|release| {
         let mut boot_config_name = OsString::from("config-");
         boot_config_name.push(release);
         PathBuf::from("/boot").join(boot_config_name)
-    });
-
-    #[cfg(feature = "flate2")]
-    let proc_config_path = Some(Path::new("/proc/config.gz"));
-    #[cfg(not(feature = "flate2"))]
-    let proc_config_path = None;
-
-    read_kconfig_from_paths(proc_config_path, boot_config_path.as_deref())
-}
-
-fn read_kconfig_from_paths(
-    proc_config_path: Option<&Path>,
-    boot_config_path: Option<&Path>,
-) -> Result<String, KConfigError> {
-    let mut read_error = None;
-
-    if let Some(config_path) = boot_config_path {
+    }) {
         if config_path.exists() {
             debug!("Found kernel config at {}", config_path.to_string_lossy());
-            match read_kconfig_file(config_path, false) {
-                Ok(config) => return Ok(config),
-                Err(err @ KConfigError::Read { .. }) => {
-                    read_error.get_or_insert(err);
+            match fs::read_to_string(&config_path) {
+                Ok(config) => {
+                    KConfig::parse(config.as_bytes())?;
+                    return Ok(config);
                 }
-                Err(err) => return Err(err),
+                Err(error) => {
+                    read_error.get_or_insert(KConfigError::Read {
+                        path: config_path,
+                        error,
+                    });
+                }
             }
         }
     }
 
-    #[cfg(not(feature = "flate2"))]
-    let _: Option<&Path> = proc_config_path;
-
     #[cfg(feature = "flate2")]
-    if let Some(config_path) = proc_config_path {
+    {
+        let config_path = Path::new("/proc/config.gz");
         if config_path.exists() {
             debug!("Found kernel config at {}", config_path.to_string_lossy());
-            match read_kconfig_file(config_path, true) {
-                Ok(config) => return Ok(config),
-                Err(err @ KConfigError::Read { .. }) => {
-                    read_error.get_or_insert(err);
+            let mut config = String::new();
+            match File::open(config_path)
+                .map(GzDecoder::new)
+                .and_then(|mut file| file.read_to_string(&mut config).map(|_| config))
+            {
+                Ok(config) => {
+                    KConfig::parse(config.as_bytes())?;
+                    return Ok(config);
                 }
-                Err(err) => return Err(err),
+                Err(error) => {
+                    read_error.get_or_insert_with(|| KConfigError::Read {
+                        path: config_path.to_owned(),
+                        error,
+                    });
+                }
             }
         }
     }
@@ -374,35 +373,6 @@ fn kernel_release() -> Option<OsString> {
         let release = CStr::from_ptr(v.release.as_ptr());
         Some(OsString::from_vec(release.to_bytes().to_vec()))
     }
-}
-
-fn read_kconfig_file(path: &Path, gzip: bool) -> Result<String, KConfigError> {
-    let res = if gzip {
-        #[cfg(feature = "flate2")]
-        {
-            let mut output = String::new();
-            File::open(path).map(GzDecoder::new).and_then(|mut file| {
-                file.read_to_string(&mut output)?;
-                Ok(output)
-            })
-        }
-        #[cfg(not(feature = "flate2"))]
-        {
-            return Err(KConfigError::Read {
-                path: path.to_owned(),
-                error: io::Error::new(io::ErrorKind::Unsupported, "gzip support is disabled"),
-            });
-        }
-    } else {
-        fs::read_to_string(path)
-    };
-
-    let output = res.map_err(|error| KConfigError::Read {
-        path: path.to_owned(),
-        error,
-    })?;
-    KConfig::parse(output.as_bytes())?;
-    Ok(output)
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -1299,63 +1269,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "flate2")]
-    #[cfg_attr(
-        miri,
-        ignore = "tempfile uses filesystem operations blocked by Miri isolation"
-    )]
-    fn test_read_kconfig_prefers_boot_config_over_proc_config() {
-        let tempdir = tempfile::tempdir().unwrap();
-        let proc_config_path = tempdir.path().join("config.gz");
-        let boot_config_path = tempdir.path().join("config");
-
-        write_gzip_config(&proc_config_path, "CONFIG_PROC=y\n");
-        std::fs::write(&boot_config_path, b"CONFIG_BOOT=y\n").unwrap();
-
-        let config =
-            super::read_kconfig_from_paths(Some(&proc_config_path), Some(&boot_config_path))
-                .unwrap();
-
-        assert_eq!(config, "CONFIG_BOOT=y\n");
-    }
-
-    #[test]
-    #[cfg(feature = "flate2")]
-    #[cfg_attr(
-        miri,
-        ignore = "tempfile uses filesystem operations blocked by Miri isolation"
-    )]
-    fn test_read_kconfig_falls_back_to_proc_when_boot_config_read_fails() {
-        let tempdir = tempfile::tempdir().unwrap();
-        let proc_config_path = tempdir.path().join("config.gz");
-        let boot_config_path = tempdir.path().join("config");
-
-        std::fs::create_dir(&boot_config_path).unwrap();
-        write_gzip_config(&proc_config_path, "CONFIG_PROC=y\n");
-
-        let config =
-            super::read_kconfig_from_paths(Some(&proc_config_path), Some(&boot_config_path))
-                .unwrap();
-
-        assert_eq!(config, "CONFIG_PROC=y\n");
-    }
-
-    #[test]
-    #[cfg_attr(
-        miri,
-        ignore = "tempfile uses filesystem operations blocked by Miri isolation"
-    )]
-    fn test_read_kconfig_returns_read_error_when_no_candidate_succeeds() {
-        let tempdir = tempfile::tempdir().unwrap();
-        let boot_config_path = tempdir.path().join("config");
-        std::fs::create_dir(&boot_config_path).unwrap();
-
-        let err = super::read_kconfig_from_paths(None, Some(&boot_config_path)).unwrap_err();
-
-        assert!(matches!(err, super::KConfigError::Read { .. }));
-    }
-
-    #[test]
     fn test_parse_kconfig_ignores_commented_out_keys() {
         let kconfig =
             super::KConfig::parse(b"# CONFIG_DISABLED is not set\nCONFIG_ENABLED=y\n").unwrap();
@@ -1389,18 +1302,6 @@ mod tests {
             err,
             super::KConfigError::MalformedLine { line } if line == "CONFIG_BROKEN=\"unterminated"
         ));
-    }
-
-    #[cfg(feature = "flate2")]
-    fn write_gzip_config(path: &std::path::Path, contents: &str) {
-        use std::io::Write as _;
-
-        use flate2::{Compression, write::GzEncoder};
-
-        let file = std::fs::File::create(path).unwrap();
-        let mut file = GzEncoder::new(file, Compression::default());
-        file.write_all(contents.as_bytes()).unwrap();
-        file.finish().unwrap();
     }
 }
 
