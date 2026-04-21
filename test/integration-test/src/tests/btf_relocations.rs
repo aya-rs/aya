@@ -103,7 +103,7 @@ fn assert_relocation(mut bpf: Ebpf, expected: u64) {
     program.load().unwrap();
     program
         .attach(
-            "trigger_btf_relocations_program",
+            ["trigger_btf_relocations_program"],
             "/proc/self/exe",
             UProbeScope::AllProcesses,
         )

@@ -215,6 +215,7 @@ dependencies = [
  "log",
  "object",
  "rbpf",
+ "rstest",
  "thiserror",
 ]
 

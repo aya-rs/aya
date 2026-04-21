@@ -74,7 +74,7 @@ fn log() {
     let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
     prog.load().unwrap();
     prog.attach(
-        "trigger_ebpf_program",
+        ["trigger_ebpf_program"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )
@@ -257,7 +257,7 @@ fn log_level_only_error_warn() {
     let prog: &mut UProbe = bpf.program_mut("test_log").unwrap().try_into().unwrap();
     prog.load().unwrap();
     prog.attach(
-        "trigger_ebpf_program",
+        ["trigger_ebpf_program"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )
@@ -316,7 +316,7 @@ fn log_level_prevents_verif_fail() {
         .unwrap();
     prog.load().unwrap();
     prog.attach(
-        "trigger_ebpf_program",
+        ["trigger_ebpf_program"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )

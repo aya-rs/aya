@@ -53,8 +53,9 @@ fn load_and_attach(ebpf: &mut Ebpf, name: &str) {
         .try_into()
         .unwrap();
     prog.load().unwrap();
+    let symbol = format!("trigger_{name}");
     prog.attach(
-        format!("trigger_{name}").as_str(),
+        [symbol.as_str()],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )

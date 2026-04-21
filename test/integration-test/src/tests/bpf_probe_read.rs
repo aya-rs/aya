@@ -103,7 +103,7 @@ fn load_and_attach_uprobe(prog_name: &str, func_name: &str, bytes: &[u8]) -> Ebp
     let prog: &mut UProbe = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
-    prog.attach(func_name, "/proc/self/exe", UProbeScope::AllProcesses)
+    prog.attach([func_name], "/proc/self/exe", UProbeScope::AllProcesses)
         .unwrap();
 
     bpf
