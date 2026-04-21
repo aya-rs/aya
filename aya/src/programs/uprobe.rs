@@ -109,7 +109,8 @@ impl UProbe {
     /// Attaches the uprobe to the function `fn_name` defined in the `target`.
     /// If the attach point specifies an offset, it is added to the address of
     /// the target function. If `pid` is not `None`, the program executes only
-    /// when the target function is executed by the given `pid`.
+    /// when the target function is executed by the given `pid`; `Some(0)`
+    /// means the calling process/thread.
     ///
     /// The `target` argument can be an absolute path to a binary or library, or
     /// a library name (eg: `"libc"`).
@@ -131,7 +132,10 @@ impl UProbe {
         pid: Option<u32>,
     ) -> Result<UProbeLinkId, ProgramError> {
         let UProbeAttachPoint { location, cookie } = point.into();
-        let proc_map = pid.map(ProcMap::new).transpose()?;
+        // /proc/0/maps does not exist; use the current pid only for ProcMap
+        // resolution and preserve pid=0 for the actual attach semantics.
+        let proc_map_pid = pid.map(|pid| if pid == 0 { std::process::id() } else { pid });
+        let proc_map = proc_map_pid.map(ProcMap::new).transpose()?;
         let path = resolve_attach_path(target.as_ref(), proc_map.as_ref())?;
         let (symbol, offset) = match location {
             UProbeAttachLocation::Symbol(s) => (Some(s), 0),
