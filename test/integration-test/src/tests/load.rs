@@ -369,6 +369,23 @@ fn basic_uprobe() {
 }
 
 #[test_log::test]
+fn basic_uprobe_pid_zero_is_self() {
+    type P = UProbe;
+
+    let program_name = "test_uprobe";
+    let attach = |prog: &mut P| {
+        prog.attach("uprobe_function", "/proc/self/exe", Some(0))
+            .unwrap()
+    };
+    run_unload_program_test(
+        crate::TEST,
+        program_name,
+        attach,
+        aya::features().bpf_perf_link(), // probe uses perf_attach.
+    );
+}
+
+#[test_log::test]
 fn basic_flow_dissector() {
     type P = FlowDissector;
 
