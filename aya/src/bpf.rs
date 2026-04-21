@@ -7,11 +7,6 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
-#[cfg(feature = "flate2")]
-use {
-    flate2::read::GzDecoder,
-    std::{fs::File, io::Read as _},
-};
 
 use aya_obj::{
     EbpfSectionKind, KsymsError, Object, ParseError, ProgramSection,
@@ -21,6 +16,11 @@ use aya_obj::{
 };
 use log::{debug, warn};
 use thiserror::Error;
+#[cfg(feature = "flate2")]
+use {
+    flate2::read::GzDecoder,
+    std::{fs::File, io::Read as _},
+};
 
 use crate::{
     kernel_features::{FEATURES, Feature},
