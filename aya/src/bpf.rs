@@ -8,7 +8,10 @@ use std::{
     sync::Arc,
 };
 #[cfg(feature = "flate2")]
-use std::{fs::File, io::Read as _};
+use {
+    flate2::read::GzDecoder,
+    std::{fs::File, io::Read as _},
+};
 
 use aya_obj::{
     EbpfSectionKind, KsymsError, Object, ParseError, ProgramSection,
@@ -16,8 +19,6 @@ use aya_obj::{
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
 };
-#[cfg(feature = "flate2")]
-use flate2::read::GzDecoder;
 use log::{debug, warn};
 use thiserror::Error;
 
