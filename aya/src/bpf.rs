@@ -309,7 +309,7 @@ fn read_kconfig() -> Result<String, KConfigError> {
                 return Err(KConfigError::Read { path, error });
             }
         }
-        paths.push(path.clone());
+        paths.push(path);
     }
 
     #[cfg(feature = "flate2")]
