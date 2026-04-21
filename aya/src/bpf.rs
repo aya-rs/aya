@@ -84,7 +84,7 @@ pub(crate) static FEATURES: LazyLock<Features> = LazyLock::new(detect_features);
 /// let bpf = loader.kconfig(Some(kconfig)).load_file("file.o")?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct KConfig {
     data: HashMap<String, Vec<u8>>,
 }
@@ -149,6 +149,10 @@ impl KConfig {
     /// Returns a reference to the underlying configuration data.
     pub(crate) const fn as_map(&self) -> &HashMap<String, Vec<u8>> {
         &self.data
+    }
+
+    pub(crate) fn into_map(self) -> HashMap<String, Vec<u8>> {
+        self.data
     }
 }
 
@@ -733,15 +737,21 @@ impl<'a> EbpfLoader<'a> {
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
         let kconfig = match (kconfig, obj.has_config_kconfig_externs()?) {
-            (KConfigMode::Auto, true) => Some(KConfig::current().map_err(EbpfError::KConfigError)?),
-            (KConfigMode::Auto, false) => {
-                Some(KConfig::with_raw_config(None).map_err(EbpfError::KConfigError)?)
-            }
+            (KConfigMode::Auto, true) => Some(Cow::Owned(
+                KConfig::current()
+                    .map_err(EbpfError::KConfigError)?
+                    .into_map(),
+            )),
+            (KConfigMode::Auto, false) => Some(Cow::Owned(
+                KConfig::with_raw_config(None)
+                    .map_err(EbpfError::KConfigError)?
+                    .into_map(),
+            )),
             (KConfigMode::Disabled, _) => None,
-            (KConfigMode::Explicit(kconfig), _) => Some(kconfig.clone()),
+            (KConfigMode::Explicit(kconfig), _) => Some(Cow::Borrowed(kconfig.as_map())),
         };
         if let Some(kconfig) = kconfig.as_ref() {
-            obj.prepare_kconfig_section(kconfig.as_map())?;
+            obj.prepare_kconfig_section(kconfig)?;
         }
 
         let btf_fd = if let Some(features) = &FEATURES.btf() {
