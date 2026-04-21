@@ -233,6 +233,10 @@ impl KConfig {
     pub(crate) const fn as_map(&self) -> &HashMap<String, Vec<u8>> {
         &self.data
     }
+
+    pub(crate) fn into_map(self) -> HashMap<String, Vec<u8>> {
+        self.data
+    }
 }
 
 /// Controls how [`EbpfLoader`] resolves `__kconfig` externs.
