@@ -3448,6 +3448,23 @@ impl core::marker::UnsafeUnpin for aya::programs::lsm_cgroup::LsmLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm_cgroup::LsmLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm_cgroup::LsmLinkId
 pub mod aya::programs::perf_attach
+pub struct aya::programs::perf_attach::PerfLinkDetachError(_)
+impl aya::programs::perf_attach::PerfLinkDetachError
+pub fn aya::programs::perf_attach::PerfLinkDetachError::as_slice(&self) -> &[aya::programs::ProgramError]
+impl core::convert::From<aya::programs::perf_attach::PerfLinkDetachError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(source: aya::programs::perf_attach::PerfLinkDetachError) -> Self
+impl core::error::Error for aya::programs::perf_attach::PerfLinkDetachError
+impl core::fmt::Debug for aya::programs::perf_attach::PerfLinkDetachError
+pub fn aya::programs::perf_attach::PerfLinkDetachError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::perf_attach::PerfLinkDetachError
+pub fn aya::programs::perf_attach::PerfLinkDetachError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::perf_attach::PerfLinkDetachError
+impl core::marker::Send for aya::programs::perf_attach::PerfLinkDetachError
+impl core::marker::Sync for aya::programs::perf_attach::PerfLinkDetachError
+impl core::marker::Unpin for aya::programs::perf_attach::PerfLinkDetachError
+impl core::marker::UnsafeUnpin for aya::programs::perf_attach::PerfLinkDetachError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_attach::PerfLinkDetachError
+impl !core::panic::unwind_safe::UnwindSafe for aya::programs::perf_attach::PerfLinkDetachError
 pub struct aya::programs::perf_attach::PerfLinkId(_)
 impl core::cmp::Eq for aya::programs::perf_attach::PerfLinkId
 impl core::cmp::PartialEq for aya::programs::perf_attach::PerfLinkId
@@ -4738,6 +4755,11 @@ impl<'a> core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeAttachLocati
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeAttachLocation<'a>
 pub enum aya::programs::uprobe::UProbeError
+pub aya::programs::uprobe::UProbeError::AttachModeSelectionFailed
+pub aya::programs::uprobe::UProbeError::AttachModeSelectionFailed::multi_error: alloc::boxed::Box<aya::programs::ProgramError>
+pub aya::programs::uprobe::UProbeError::AttachModeSelectionFailed::single_error: alloc::boxed::Box<aya::programs::ProgramError>
+pub aya::programs::uprobe::UProbeError::EmptyPoints
+pub aya::programs::uprobe::UProbeError::EmptyPoints::target: std::path::PathBuf
 pub aya::programs::uprobe::UProbeError::FileError
 pub aya::programs::uprobe::UProbeError::FileError::filename: std::path::PathBuf
 pub aya::programs::uprobe::UProbeError::FileError::io_error: std::io::error::Error
@@ -4745,12 +4767,18 @@ pub aya::programs::uprobe::UProbeError::InvalidLdSoCache
 pub aya::programs::uprobe::UProbeError::InvalidLdSoCache::io_error: &'static std::io::error::Error
 pub aya::programs::uprobe::UProbeError::InvalidTarget
 pub aya::programs::uprobe::UProbeError::InvalidTarget::path: std::path::PathBuf
+pub aya::programs::uprobe::UProbeError::LegacyPerfAttachPointError
+pub aya::programs::uprobe::UProbeError::LegacyPerfAttachPointError::attach_error: alloc::boxed::Box<aya::programs::ProgramError>
+pub aya::programs::uprobe::UProbeError::LegacyPerfAttachPointError::cleanup_error: core::option::Option<alloc::boxed::Box<aya::programs::ProgramError>>
+pub aya::programs::uprobe::UProbeError::LegacyPerfAttachPointError::index: usize
+pub aya::programs::uprobe::UProbeError::LegacyPerfAttachPointError::resolved_offset: u64
 pub aya::programs::uprobe::UProbeError::ProcMap
 pub aya::programs::uprobe::UProbeError::ProcMap::pid: u32
 pub aya::programs::uprobe::UProbeError::ProcMap::source: aya::programs::uprobe::ProcMapError
 pub aya::programs::uprobe::UProbeError::SymbolError
 pub aya::programs::uprobe::UProbeError::SymbolError::error: alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync)>
 pub aya::programs::uprobe::UProbeError::SymbolError::symbol: alloc::string::String
+pub aya::programs::uprobe::UProbeError::UProbeMultiNotSupported
 impl core::convert::From<aya::programs::uprobe::UProbeError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::uprobe::UProbeError) -> Self
 impl core::error::Error for aya::programs::uprobe::UProbeError
@@ -4785,7 +4813,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeScope
 pub struct aya::programs::uprobe::UProbe
 impl aya::programs::uprobe::UProbe
 pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::uprobe::UProbe::attach<'a, T: core::convert::AsRef<std::path::Path>, Point: core::convert::Into<aya::programs::uprobe::UProbeAttachPoint<'a>>>(&mut self, point: Point, target: T, scope: aya::programs::uprobe::UProbeScope) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
+pub fn aya::programs::uprobe::UProbe::attach<'a, T, I>(&mut self, points: I, target: T, scope: aya::programs::uprobe::UProbeScope) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError> where T: core::convert::AsRef<std::path::Path>, I: core::iter::traits::collect::IntoIterator, <I as core::iter::traits::collect::IntoIterator>::Item: core::convert::Into<aya::programs::uprobe::UProbeAttachPoint<'a>>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub const fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -4833,6 +4861,8 @@ impl<'a> core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeAttachPoint<
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeAttachPoint<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeAttachPoint<'a>
 pub struct aya::programs::uprobe::UProbeLink(_)
+impl aya::programs::uprobe::UProbeLink
+pub fn aya::programs::uprobe::UProbeLink::into_fd_links(self) -> core::result::Result<alloc::vec::Vec<aya::programs::links::FdLink>, Self>
 impl aya::programs::links::Link for aya::programs::uprobe::UProbeLink
 pub type aya::programs::uprobe::UProbeLink::Id = aya::programs::uprobe::UProbeLinkId
 pub fn aya::programs::uprobe::UProbeLink::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -5393,6 +5423,7 @@ pub aya::programs::ProgramError::MapError(aya::maps::MapError)
 pub aya::programs::ProgramError::NetlinkError(aya::sys::netlink::NetlinkError)
 pub aya::programs::ProgramError::NotAttached
 pub aya::programs::ProgramError::NotLoaded
+pub aya::programs::ProgramError::PerfLinkDetachError(aya::programs::perf_attach::PerfLinkDetachError)
 pub aya::programs::ProgramError::SkReuseportError(aya::programs::sk_reuseport::SkReuseportError)
 pub aya::programs::ProgramError::SocketFilterError(aya::programs::socket_filter::SocketFilterError)
 pub aya::programs::ProgramError::SyscallError(aya::sys::SyscallError)
@@ -5411,6 +5442,8 @@ impl core::convert::From<aya::programs::extension::ExtensionError> for aya::prog
 pub fn aya::programs::ProgramError::from(source: aya::programs::extension::ExtensionError) -> Self
 impl core::convert::From<aya::programs::kprobe::KProbeError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::kprobe::KProbeError) -> Self
+impl core::convert::From<aya::programs::perf_attach::PerfLinkDetachError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(source: aya::programs::perf_attach::PerfLinkDetachError) -> Self
 impl core::convert::From<aya::programs::sk_reuseport::SkReuseportError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::sk_reuseport::SkReuseportError) -> Self
 impl core::convert::From<aya::programs::socket_filter::SocketFilterError> for aya::programs::ProgramError
@@ -5598,6 +5631,11 @@ impl core::marker::UnsafeUnpin for aya::programs::trace_point::TracePointError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::trace_point::TracePointError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TracePointError
 pub enum aya::programs::UProbeError
+pub aya::programs::UProbeError::AttachModeSelectionFailed
+pub aya::programs::UProbeError::AttachModeSelectionFailed::multi_error: alloc::boxed::Box<aya::programs::ProgramError>
+pub aya::programs::UProbeError::AttachModeSelectionFailed::single_error: alloc::boxed::Box<aya::programs::ProgramError>
+pub aya::programs::UProbeError::EmptyPoints
+pub aya::programs::UProbeError::EmptyPoints::target: std::path::PathBuf
 pub aya::programs::UProbeError::FileError
 pub aya::programs::UProbeError::FileError::filename: std::path::PathBuf
 pub aya::programs::UProbeError::FileError::io_error: std::io::error::Error
@@ -5605,12 +5643,18 @@ pub aya::programs::UProbeError::InvalidLdSoCache
 pub aya::programs::UProbeError::InvalidLdSoCache::io_error: &'static std::io::error::Error
 pub aya::programs::UProbeError::InvalidTarget
 pub aya::programs::UProbeError::InvalidTarget::path: std::path::PathBuf
+pub aya::programs::UProbeError::LegacyPerfAttachPointError
+pub aya::programs::UProbeError::LegacyPerfAttachPointError::attach_error: alloc::boxed::Box<aya::programs::ProgramError>
+pub aya::programs::UProbeError::LegacyPerfAttachPointError::cleanup_error: core::option::Option<alloc::boxed::Box<aya::programs::ProgramError>>
+pub aya::programs::UProbeError::LegacyPerfAttachPointError::index: usize
+pub aya::programs::UProbeError::LegacyPerfAttachPointError::resolved_offset: u64
 pub aya::programs::UProbeError::ProcMap
 pub aya::programs::UProbeError::ProcMap::pid: u32
 pub aya::programs::UProbeError::ProcMap::source: aya::programs::uprobe::ProcMapError
 pub aya::programs::UProbeError::SymbolError
 pub aya::programs::UProbeError::SymbolError::error: alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync)>
 pub aya::programs::UProbeError::SymbolError::symbol: alloc::string::String
+pub aya::programs::UProbeError::UProbeMultiNotSupported
 impl core::convert::From<aya::programs::uprobe::UProbeError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::uprobe::UProbeError) -> Self
 impl core::error::Error for aya::programs::uprobe::UProbeError
@@ -6694,7 +6738,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TraceP
 pub struct aya::programs::UProbe
 impl aya::programs::uprobe::UProbe
 pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::uprobe::UProbe::attach<'a, T: core::convert::AsRef<std::path::Path>, Point: core::convert::Into<aya::programs::uprobe::UProbeAttachPoint<'a>>>(&mut self, point: Point, target: T, scope: aya::programs::uprobe::UProbeScope) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
+pub fn aya::programs::uprobe::UProbe::attach<'a, T, I>(&mut self, points: I, target: T, scope: aya::programs::uprobe::UProbeScope) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError> where T: core::convert::AsRef<std::path::Path>, I: core::iter::traits::collect::IntoIterator, <I as core::iter::traits::collect::IntoIterator>::Item: core::convert::Into<aya::programs::uprobe::UProbeAttachPoint<'a>>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub const fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>

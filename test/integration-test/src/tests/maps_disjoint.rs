@@ -21,7 +21,7 @@ fn test_maps_disjoint() {
 
     prog.load().unwrap();
     prog.attach(
-        "trigger_ebpf_program_maps_disjoint",
+        ["trigger_ebpf_program_maps_disjoint"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )

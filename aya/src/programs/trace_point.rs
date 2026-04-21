@@ -10,10 +10,9 @@ use thiserror::Error;
 
 use crate::{
     programs::{
-        ProgramData, ProgramError, ProgramType, define_link_wrapper, impl_try_from_fdlink,
-        impl_try_into_fdlink, load_program_without_attach_type,
-        perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
-        utils::find_tracefs_path,
+        PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, impl_try_from_fdlink, impl_try_into_fdlink,
+        load_program_without_attach_type, perf_attach, utils::find_tracefs_path,
     },
     sys::{SyscallError, perf_event_open_trace_point},
 };
@@ -86,7 +85,7 @@ impl TracePoint {
         })?;
 
         let link = perf_attach(prog_fd, perf_fd, None /* cookie */)?;
-        self.data.links.insert(TracePointLink::new(link))
+        self.data.links.insert(TracePointLink::new(link.into()))
     }
 }
 
@@ -98,12 +97,8 @@ define_link_wrapper!(
     TracePoint,
 );
 
-impl_try_into_fdlink!(TracePointLink, PerfLinkInner);
-impl_try_from_fdlink!(
-    TracePointLink,
-    PerfLinkInner,
-    bpf_link_type::BPF_LINK_TYPE_PERF_EVENT
-);
+impl_try_into_fdlink!(TracePointLink, method = into_fd_link);
+impl_try_from_fdlink!(TracePointLink, bpf_link_type::BPF_LINK_TYPE_PERF_EVENT);
 
 pub(crate) fn read_sys_fs_trace_point_id(
     tracefs: &Path,

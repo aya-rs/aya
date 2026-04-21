@@ -579,25 +579,46 @@ macro_rules! impl_try_into_fdlink {
             }
         }
     };
+    ($wrapper:ident, method = $method:ident) => {
+        impl TryFrom<$wrapper> for $crate::programs::FdLink {
+            type Error = $crate::programs::LinkError;
+
+            fn try_from(value: $wrapper) -> Result<Self, Self::Error> {
+                match value.into_inner().$method() {
+                    Ok(fd) => Ok(fd),
+                    Err(_) => Err($crate::programs::LinkError::InvalidLink),
+                }
+            }
+        }
+    };
 }
 
 pub(crate) use impl_try_into_fdlink;
 
 macro_rules! impl_try_from_fdlink {
-    ($wrapper:ident, $inner:ident, $link_type:expr) => {
+    (@impl $wrapper:ident, [$($link_type:expr),+ $(,)?], $fd_link:ident => $inner:expr) => {
         impl TryFrom<$crate::programs::FdLink> for $wrapper {
             type Error = $crate::programs::LinkError;
 
-            fn try_from(fd_link: $crate::programs::FdLink) -> Result<Self, Self::Error> {
+            fn try_from($fd_link: $crate::programs::FdLink) -> Result<Self, Self::Error> {
                 use std::os::fd::AsFd as _;
 
-                let info = $crate::sys::bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
-                if info.type_ == ($link_type as u32) {
-                    return Ok(Self::new($inner::Fd(fd_link)));
+                let info = $crate::sys::bpf_link_get_info_by_fd($fd_link.fd.as_fd())?;
+                if [$(($link_type as u32)),+].contains(&info.type_) {
+                    return Ok(Self::new($inner));
                 }
                 Err($crate::programs::LinkError::InvalidLink)
             }
         }
+    };
+    ($wrapper:ident, $inner:ident, $link_type:expr) => {
+        impl_try_from_fdlink!(@impl $wrapper, [$link_type], fd_link => $inner::Fd(fd_link));
+    };
+    ($wrapper:ident, link_types = [$($link_type:expr),+ $(,)?]) => {
+        impl_try_from_fdlink!(@impl $wrapper, [$($link_type),+], fd_link => fd_link.into());
+    };
+    ($wrapper:ident, $link_type:expr) => {
+        impl_try_from_fdlink!(@impl $wrapper, [$link_type], fd_link => fd_link.into());
     };
 }
 

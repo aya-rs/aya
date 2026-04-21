@@ -87,7 +87,7 @@ impl Iter {
 
         self.data
             .links
-            .insert(IterLink::new(PerfLinkInner::Fd(FdLink::new(link_fd))))
+            .insert(IterLink::new(FdLink::new(link_fd).into()))
     }
 }
 
@@ -104,8 +104,8 @@ impl AsFd for IterFd {
     }
 }
 
-impl_try_into_fdlink!(IterLink, PerfLinkInner);
-impl_try_from_fdlink!(IterLink, PerfLinkInner, BPF_LINK_TYPE_ITER);
+impl_try_into_fdlink!(IterLink, method = into_fd_link);
+impl_try_from_fdlink!(IterLink, BPF_LINK_TYPE_ITER);
 
 define_link_wrapper!(IterLink, IterLinkId, PerfLinkInner, PerfLinkIdInner, Iter);
 
@@ -113,16 +113,16 @@ impl IterLink {
     /// Converts [`IterLink`] into a [`File`] that can be used to retrieve the
     /// outputs of the iterator program.
     pub fn into_file(self) -> Result<File, LinkError> {
-        if let PerfLinkInner::Fd(fd) = self.into_inner() {
-            let fd = bpf_create_iter(fd.fd.as_fd()).map_err(|io_error| {
-                LinkError::SyscallError(SyscallError {
-                    call: "bpf_iter_create",
-                    io_error,
-                })
-            })?;
-            Ok(fd.into_inner().into())
-        } else {
-            Err(LinkError::InvalidLink)
-        }
+        let fd = self
+            .into_inner()
+            .into_fd_link()
+            .map_err(|_inner| LinkError::InvalidLink)?;
+        let fd = bpf_create_iter(fd.fd.as_fd()).map_err(|io_error| {
+            LinkError::SyscallError(SyscallError {
+                call: "bpf_iter_create",
+                io_error,
+            })
+        })?;
+        Ok(fd.into_inner().into())
     }
 }
