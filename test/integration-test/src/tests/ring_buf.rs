@@ -91,7 +91,7 @@ impl RingBufTest {
         let prog: &mut UProbe = bpf.program_mut(variant.prog).unwrap().try_into().unwrap();
         prog.load().unwrap();
         prog.attach(
-            "ring_buf_trigger_ebpf_program",
+            ["ring_buf_trigger_ebpf_program"],
             "/proc/self/exe",
             UProbeScope::AllProcesses,
         )
@@ -203,8 +203,12 @@ fn ring_buf_mismatch_size<T>(
     let mut ring_buf = RingBuf::try_from(ring_buf).unwrap();
     let prog: &mut UProbe = bpf.program_mut(prog).unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach(trigger_symbol, "/proc/self/exe", UProbeScope::AllProcesses)
-        .unwrap();
+    prog.attach(
+        [trigger_symbol],
+        "/proc/self/exe",
+        UProbeScope::AllProcesses,
+    )
+    .unwrap();
 
     trigger(value.into());
     {
