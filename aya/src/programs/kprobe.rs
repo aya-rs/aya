@@ -3,6 +3,7 @@ use std::{
     ffi::OsStr,
     fmt::{self, Write},
     io,
+    os::fd::AsFd as _,
     path::{Path, PathBuf},
 };
 
@@ -12,11 +13,12 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        ProgramData, ProgramError, ProgramType, define_link_wrapper, impl_try_from_fdlink,
+        FdLink, LinkError, ProgramData, ProgramError, ProgramType, define_link_wrapper,
         impl_try_into_fdlink, load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{Probe, ProbeKind, attach},
     },
+    sys::bpf_link_get_info_by_fd,
 };
 
 /// A kernel probe.
@@ -143,9 +145,16 @@ pub enum KProbeError {
     },
 }
 
-impl_try_into_fdlink!(KProbeLink, PerfLinkInner);
-impl_try_from_fdlink!(
-    KProbeLink,
-    PerfLinkInner,
-    bpf_link_type::BPF_LINK_TYPE_PERF_EVENT
-);
+impl_try_into_fdlink!(KProbeLink, PerfLinkInner, into_fd_link);
+
+impl TryFrom<FdLink> for KProbeLink {
+    type Error = LinkError;
+
+    fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
+        let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
+        if info.type_ == (bpf_link_type::BPF_LINK_TYPE_PERF_EVENT as u32) {
+            return Ok(Self::new(fd_link.into()));
+        }
+        Err(LinkError::InvalidLink)
+    }
+}

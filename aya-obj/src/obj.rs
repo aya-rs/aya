@@ -236,9 +236,11 @@ pub enum ProgramSection {
     KProbe,
     UProbe {
         sleepable: bool,
+        multi: bool,
     },
     URetProbe {
         sleepable: bool,
+        multi: bool,
     },
     TracePoint,
     SocketFilter,
@@ -310,10 +312,38 @@ impl FromStr for ProgramSection {
         Ok(match kind {
             "kprobe" => Self::KProbe,
             "kretprobe" => Self::KRetProbe,
-            "uprobe" => Self::UProbe { sleepable: false },
-            "uprobe.s" => Self::UProbe { sleepable: true },
-            "uretprobe" => Self::URetProbe { sleepable: false },
-            "uretprobe.s" => Self::URetProbe { sleepable: true },
+            "uprobe" => Self::UProbe {
+                sleepable: false,
+                multi: false,
+            },
+            "uprobe.s" => Self::UProbe {
+                sleepable: true,
+                multi: false,
+            },
+            "uprobe.multi" => Self::UProbe {
+                sleepable: false,
+                multi: true,
+            },
+            "uprobe.multi.s" => Self::UProbe {
+                sleepable: true,
+                multi: true,
+            },
+            "uretprobe" => Self::URetProbe {
+                sleepable: false,
+                multi: false,
+            },
+            "uretprobe.s" => Self::URetProbe {
+                sleepable: true,
+                multi: false,
+            },
+            "uretprobe.multi" => Self::URetProbe {
+                sleepable: false,
+                multi: true,
+            },
+            "uretprobe.multi.s" => Self::URetProbe {
+                sleepable: true,
+                multi: true,
+            },
             "xdp" | "xdp.frags" => Self::Xdp {
                 frags: kind == "xdp.frags",
                 attach_type: match pieces.next() {
@@ -1464,6 +1494,7 @@ mod tests {
     use alloc::vec;
 
     use assert_matches::assert_matches;
+    use test_case::test_case;
 
     use super::*;
     use crate::generated::{bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, btf_ext_header};
@@ -1978,102 +2009,47 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_parse_section_uprobe() {
-        let mut obj = fake_obj();
-        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
-
-        assert_matches!(
-            obj.parse_section(fake_section(
-                EbpfSectionKind::Program,
-                "uprobe/foo",
-                bytes_of(&fake_ins()),
-                None
-            )),
-            Ok(())
-        );
-        assert_matches!(
-            obj.programs.get("foo"),
-            Some(Program {
-                section: ProgramSection::UProbe { .. },
-                ..
-            })
-        );
+    #[derive(Clone, Copy, Debug)]
+    enum UserProbeKind {
+        Entry,
+        Return,
     }
 
-    #[test]
-    fn test_parse_section_uprobe_sleepable() {
+    #[test_case("uprobe/foo", UserProbeKind::Entry, false, false; "uprobe_plain")]
+    #[test_case("uprobe.s/foo", UserProbeKind::Entry, true, false; "uprobe_sleepable")]
+    #[test_case("uprobe.multi/foo", UserProbeKind::Entry, false, true; "uprobe_multi")]
+    #[test_case("uprobe.multi.s/foo", UserProbeKind::Entry, true, true; "uprobe_multi_sleepable")]
+    #[test_case("uretprobe/foo", UserProbeKind::Return, false, false; "uretprobe_plain")]
+    #[test_case("uretprobe.s/foo", UserProbeKind::Return, true, false; "uretprobe_sleepable")]
+    #[test_case("uretprobe.multi/foo", UserProbeKind::Return, false, true; "uretprobe_multi")]
+    #[test_case("uretprobe.multi.s/foo", UserProbeKind::Return, true, true; "uretprobe_multi_sleepable")]
+    fn test_parse_section_user_probe(
+        section: &str,
+        kind: UserProbeKind,
+        sleepable: bool,
+        multi: bool,
+    ) {
         let mut obj = fake_obj();
         fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
 
         assert_matches!(
             obj.parse_section(fake_section(
                 EbpfSectionKind::Program,
-                "uprobe.s/foo",
+                section,
                 bytes_of(&fake_ins()),
                 None
             )),
             Ok(())
         );
-        assert_matches!(
-            obj.programs.get("foo"),
-            Some(Program {
-                section: ProgramSection::UProbe {
-                    sleepable: true,
-                    ..
-                },
-                ..
-            })
-        );
-    }
-
-    #[test]
-    fn test_parse_section_uretprobe() {
-        let mut obj = fake_obj();
-        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
-
-        assert_matches!(
-            obj.parse_section(fake_section(
-                EbpfSectionKind::Program,
-                "uretprobe/foo",
-                bytes_of(&fake_ins()),
-                None
-            )),
-            Ok(())
-        );
-        assert_matches!(
-            obj.programs.get("foo"),
-            Some(Program {
-                section: ProgramSection::URetProbe { .. },
-                ..
-            })
-        );
-    }
-
-    #[test]
-    fn test_parse_section_uretprobe_sleepable() {
-        let mut obj = fake_obj();
-        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
-
-        assert_matches!(
-            obj.parse_section(fake_section(
-                EbpfSectionKind::Program,
-                "uretprobe.s/foo",
-                bytes_of(&fake_ins()),
-                None
-            )),
-            Ok(())
-        );
-        assert_matches!(
-            obj.programs.get("foo"),
-            Some(Program {
-                section: ProgramSection::URetProbe {
-                    sleepable: true,
-                    ..
-                },
-                ..
-            })
-        );
+        let program = obj.programs.remove("foo").unwrap();
+        let (actual_sleepable, actual_multi) = match (kind, program.section) {
+            (UserProbeKind::Entry, ProgramSection::UProbe { sleepable, multi })
+            | (UserProbeKind::Return, ProgramSection::URetProbe { sleepable, multi }) => {
+                (sleepable, multi)
+            }
+            (_, section) => panic!("unexpected section: {section:?}"),
+        };
+        assert_eq!((actual_sleepable, actual_multi), (sleepable, multi));
     }
 
     #[test]

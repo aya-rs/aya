@@ -37,7 +37,7 @@ fn lpm_trie_basic(prog_name: &str, routes_map: &str, results_map: &str) {
     prog.load()
         .unwrap_or_else(|err| panic!("load {prog_name}: {err}"));
     prog.attach(
-        "trigger_lpm_trie",
+        ["trigger_lpm_trie"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )
