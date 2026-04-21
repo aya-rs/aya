@@ -3824,6 +3824,7 @@ pub const aya_ebpf_bindings::bindings::BPF_X: u32
 pub const aya_ebpf_bindings::bindings::BPF_XADD: u32
 pub const aya_ebpf_bindings::bindings::BPF_XCHG: u32
 pub const aya_ebpf_bindings::bindings::BPF_XOR: u32
+pub const aya_ebpf_bindings::bindings::PERF_MAX_STACK_DEPTH: u32
 pub const aya_ebpf_bindings::bindings::SOL_SOCKET: u32
 pub const aya_ebpf_bindings::bindings::SO_ACCEPTCONN: u32
 pub const aya_ebpf_bindings::bindings::SO_ATTACH_BPF: u32

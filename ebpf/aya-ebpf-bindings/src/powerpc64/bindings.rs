@@ -255,6 +255,7 @@ pub const BPF_F_TEST_XDP_LIVE_FRAMES: u32 = 2;
 pub const BPF_BUILD_ID_SIZE: u32 = 20;
 pub const BPF_OBJ_NAME_LEN: u32 = 16;
 pub const BPF_TAG_SIZE: u32 = 8;
+pub const PERF_MAX_STACK_DEPTH: u32 = 127;
 pub const TC_ACT_UNSPEC: i32 = -1;
 pub const TC_ACT_OK: u32 = 0;
 pub const TC_ACT_RECLASSIFY: u32 = 1;
