@@ -105,14 +105,14 @@ pub enum KConfigError {
         error: io::Error,
     },
 
-    /// The provided kernel config contains a malformed line.
+    /// Kernel config contains a malformed line.
     #[error("malformed kernel config line: {line}")]
     MalformedLine {
         /// The malformed line.
         line: String,
     },
 
-    /// The provided kernel config is not valid UTF-8.
+    /// Kernel config data is not valid UTF-8.
     #[error("kernel config is not valid UTF-8")]
     InvalidUtf8(#[from] std::str::Utf8Error),
 }
