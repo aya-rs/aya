@@ -4332,18 +4332,44 @@ impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilterLin
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterLinkId
 pub mod aya::programs::tc
-pub enum aya::programs::tc::TcAttachOptions
-pub aya::programs::tc::TcAttachOptions::Netlink(aya::programs::tc::NlOptions)
-pub aya::programs::tc::TcAttachOptions::TcxOrder(aya::programs::links::LinkOrder)
-impl core::fmt::Debug for aya::programs::tc::TcAttachOptions
-pub fn aya::programs::tc::TcAttachOptions::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for aya::programs::tc::TcAttachOptions
-impl core::marker::Send for aya::programs::tc::TcAttachOptions
-impl core::marker::Sync for aya::programs::tc::TcAttachOptions
-impl core::marker::Unpin for aya::programs::tc::TcAttachOptions
-impl core::marker::UnsafeUnpin for aya::programs::tc::TcAttachOptions
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcAttachOptions
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttachOptions
+pub enum aya::programs::tc::NetkitAttachType
+pub aya::programs::tc::NetkitAttachType::Peer
+pub aya::programs::tc::NetkitAttachType::Primary
+impl core::clone::Clone for aya::programs::tc::NetkitAttachType
+pub fn aya::programs::tc::NetkitAttachType::clone(&self) -> aya::programs::tc::NetkitAttachType
+impl core::cmp::Eq for aya::programs::tc::NetkitAttachType
+impl core::cmp::PartialEq for aya::programs::tc::NetkitAttachType
+pub fn aya::programs::tc::NetkitAttachType::eq(&self, other: &aya::programs::tc::NetkitAttachType) -> bool
+impl core::fmt::Debug for aya::programs::tc::NetkitAttachType
+pub fn aya::programs::tc::NetkitAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::tc::NetkitAttachType
+pub fn aya::programs::tc::NetkitAttachType::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for aya::programs::tc::NetkitAttachType
+impl core::marker::StructuralPartialEq for aya::programs::tc::NetkitAttachType
+impl core::marker::Freeze for aya::programs::tc::NetkitAttachType
+impl core::marker::Send for aya::programs::tc::NetkitAttachType
+impl core::marker::Sync for aya::programs::tc::NetkitAttachType
+impl core::marker::Unpin for aya::programs::tc::NetkitAttachType
+impl core::marker::UnsafeUnpin for aya::programs::tc::NetkitAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::NetkitAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::NetkitAttachType
+pub enum aya::programs::tc::SchedClassifierAttachment
+pub aya::programs::tc::SchedClassifierAttachment::Netkit
+pub aya::programs::tc::SchedClassifierAttachment::Netkit::attach_type: aya::programs::tc::NetkitAttachType
+pub aya::programs::tc::SchedClassifierAttachment::Netkit::link_order: aya::programs::links::LinkOrder
+pub aya::programs::tc::SchedClassifierAttachment::Tc
+pub aya::programs::tc::SchedClassifierAttachment::Tc::attach_type: aya::programs::tc::TcAttachType
+pub aya::programs::tc::SchedClassifierAttachment::Tc::options: aya::programs::tc::NlOptions
+pub aya::programs::tc::SchedClassifierAttachment::Tcx
+pub aya::programs::tc::SchedClassifierAttachment::Tcx::attach_type: aya::programs::tc::TcxAttachType
+pub aya::programs::tc::SchedClassifierAttachment::Tcx::link_order: aya::programs::links::LinkOrder
+impl core::marker::Freeze for aya::programs::tc::SchedClassifierAttachment
+impl core::marker::Send for aya::programs::tc::SchedClassifierAttachment
+impl core::marker::Sync for aya::programs::tc::SchedClassifierAttachment
+impl core::marker::Unpin for aya::programs::tc::SchedClassifierAttachment
+impl core::marker::UnsafeUnpin for aya::programs::tc::SchedClassifierAttachment
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::SchedClassifierAttachment
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifierAttachment
 pub enum aya::programs::tc::TcAttachType
 pub aya::programs::tc::TcAttachType::Custom(u32)
 pub aya::programs::tc::TcAttachType::Egress
@@ -4369,7 +4395,6 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttachType
 pub enum aya::programs::tc::TcError
 pub aya::programs::tc::TcError::AlreadyAttached
 pub aya::programs::tc::TcError::InvalidLinkOperation
-pub aya::programs::tc::TcError::InvalidTcxAttach(u32)
 pub aya::programs::tc::TcError::IoError(std::io::error::Error)
 pub aya::programs::tc::TcError::NetlinkError(aya::sys::netlink::NetlinkError)
 pub aya::programs::tc::TcError::NulError(alloc::ffi::c_str::NulError)
@@ -4392,6 +4417,27 @@ impl core::marker::Unpin for aya::programs::tc::TcError
 impl core::marker::UnsafeUnpin for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcError
+pub enum aya::programs::tc::TcxAttachType
+pub aya::programs::tc::TcxAttachType::Egress
+pub aya::programs::tc::TcxAttachType::Ingress
+impl core::clone::Clone for aya::programs::tc::TcxAttachType
+pub fn aya::programs::tc::TcxAttachType::clone(&self) -> aya::programs::tc::TcxAttachType
+impl core::cmp::Eq for aya::programs::tc::TcxAttachType
+impl core::cmp::PartialEq for aya::programs::tc::TcxAttachType
+pub fn aya::programs::tc::TcxAttachType::eq(&self, other: &aya::programs::tc::TcxAttachType) -> bool
+impl core::fmt::Debug for aya::programs::tc::TcxAttachType
+pub fn aya::programs::tc::TcxAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::tc::TcxAttachType
+pub fn aya::programs::tc::TcxAttachType::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for aya::programs::tc::TcxAttachType
+impl core::marker::StructuralPartialEq for aya::programs::tc::TcxAttachType
+impl core::marker::Freeze for aya::programs::tc::TcxAttachType
+impl core::marker::Send for aya::programs::tc::TcxAttachType
+impl core::marker::Sync for aya::programs::tc::TcxAttachType
+impl core::marker::Unpin for aya::programs::tc::TcxAttachType
+impl core::marker::UnsafeUnpin for aya::programs::tc::TcxAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcxAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcxAttachType
 pub struct aya::programs::tc::NlOptions
 pub aya::programs::tc::NlOptions::handle: u32
 pub aya::programs::tc::NlOptions::priority: u16
@@ -4415,12 +4461,11 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::NlOptions
 pub struct aya::programs::tc::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub const aya::programs::tc::SchedClassifier::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::tc::SchedClassifier::attach(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::attach(&mut self, interface: &str, attachment: aya::programs::tc::SchedClassifierAttachment) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::attach_to_link(&mut self, link: aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::attach_with_options(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType, options: aya::programs::tc::TcAttachOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::query_tcx(interface: &str, attach_type: aya::programs::tc::TcAttachType) -> core::result::Result<(u64, alloc::vec::Vec<aya::programs::ProgramInfo>), aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::query_tcx(interface: &str, attach_type: aya::programs::tc::TcxAttachType) -> core::result::Result<(u64, alloc::vec::Vec<aya::programs::ProgramInfo>), aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::detach(&mut self, link_id: aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::take_link(&mut self, link_id: aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<aya::programs::tc::SchedClassifierLink, aya::programs::ProgramError>
@@ -5149,6 +5194,27 @@ impl core::marker::Unpin for aya::programs::LsmAttachType
 impl core::marker::UnsafeUnpin for aya::programs::LsmAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::LsmAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::LsmAttachType
+pub enum aya::programs::NetkitAttachType
+pub aya::programs::NetkitAttachType::Peer
+pub aya::programs::NetkitAttachType::Primary
+impl core::clone::Clone for aya::programs::tc::NetkitAttachType
+pub fn aya::programs::tc::NetkitAttachType::clone(&self) -> aya::programs::tc::NetkitAttachType
+impl core::cmp::Eq for aya::programs::tc::NetkitAttachType
+impl core::cmp::PartialEq for aya::programs::tc::NetkitAttachType
+pub fn aya::programs::tc::NetkitAttachType::eq(&self, other: &aya::programs::tc::NetkitAttachType) -> bool
+impl core::fmt::Debug for aya::programs::tc::NetkitAttachType
+pub fn aya::programs::tc::NetkitAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::tc::NetkitAttachType
+pub fn aya::programs::tc::NetkitAttachType::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for aya::programs::tc::NetkitAttachType
+impl core::marker::StructuralPartialEq for aya::programs::tc::NetkitAttachType
+impl core::marker::Freeze for aya::programs::tc::NetkitAttachType
+impl core::marker::Send for aya::programs::tc::NetkitAttachType
+impl core::marker::Sync for aya::programs::tc::NetkitAttachType
+impl core::marker::Unpin for aya::programs::tc::NetkitAttachType
+impl core::marker::UnsafeUnpin for aya::programs::tc::NetkitAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::NetkitAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::NetkitAttachType
 pub enum aya::programs::ProbeKind
 pub aya::programs::ProbeKind::Entry
 pub aya::programs::ProbeKind::Return
@@ -5493,6 +5559,23 @@ impl core::marker::Unpin for aya::programs::ProgramType
 impl core::marker::UnsafeUnpin for aya::programs::ProgramType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::ProgramType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::ProgramType
+pub enum aya::programs::SchedClassifierAttachment
+pub aya::programs::SchedClassifierAttachment::Netkit
+pub aya::programs::SchedClassifierAttachment::Netkit::attach_type: aya::programs::tc::NetkitAttachType
+pub aya::programs::SchedClassifierAttachment::Netkit::link_order: aya::programs::links::LinkOrder
+pub aya::programs::SchedClassifierAttachment::Tc
+pub aya::programs::SchedClassifierAttachment::Tc::attach_type: aya::programs::tc::TcAttachType
+pub aya::programs::SchedClassifierAttachment::Tc::options: aya::programs::tc::NlOptions
+pub aya::programs::SchedClassifierAttachment::Tcx
+pub aya::programs::SchedClassifierAttachment::Tcx::attach_type: aya::programs::tc::TcxAttachType
+pub aya::programs::SchedClassifierAttachment::Tcx::link_order: aya::programs::links::LinkOrder
+impl core::marker::Freeze for aya::programs::tc::SchedClassifierAttachment
+impl core::marker::Send for aya::programs::tc::SchedClassifierAttachment
+impl core::marker::Sync for aya::programs::tc::SchedClassifierAttachment
+impl core::marker::Unpin for aya::programs::tc::SchedClassifierAttachment
+impl core::marker::UnsafeUnpin for aya::programs::tc::SchedClassifierAttachment
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::SchedClassifierAttachment
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifierAttachment
 pub enum aya::programs::SkReuseportError
 pub aya::programs::SkReuseportError::SetsockoptError
 pub aya::programs::SkReuseportError::SetsockoptError::io_error: std::io::error::Error
@@ -5555,7 +5638,6 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttachType
 pub enum aya::programs::TcError
 pub aya::programs::TcError::AlreadyAttached
 pub aya::programs::TcError::InvalidLinkOperation
-pub aya::programs::TcError::InvalidTcxAttach(u32)
 pub aya::programs::TcError::IoError(std::io::error::Error)
 pub aya::programs::TcError::NetlinkError(aya::sys::netlink::NetlinkError)
 pub aya::programs::TcError::NulError(alloc::ffi::c_str::NulError)
@@ -5578,6 +5660,27 @@ impl core::marker::Unpin for aya::programs::tc::TcError
 impl core::marker::UnsafeUnpin for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcError
+pub enum aya::programs::TcxAttachType
+pub aya::programs::TcxAttachType::Egress
+pub aya::programs::TcxAttachType::Ingress
+impl core::clone::Clone for aya::programs::tc::TcxAttachType
+pub fn aya::programs::tc::TcxAttachType::clone(&self) -> aya::programs::tc::TcxAttachType
+impl core::cmp::Eq for aya::programs::tc::TcxAttachType
+impl core::cmp::PartialEq for aya::programs::tc::TcxAttachType
+pub fn aya::programs::tc::TcxAttachType::eq(&self, other: &aya::programs::tc::TcxAttachType) -> bool
+impl core::fmt::Debug for aya::programs::tc::TcxAttachType
+pub fn aya::programs::tc::TcxAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::tc::TcxAttachType
+pub fn aya::programs::tc::TcxAttachType::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for aya::programs::tc::TcxAttachType
+impl core::marker::StructuralPartialEq for aya::programs::tc::TcxAttachType
+impl core::marker::Freeze for aya::programs::tc::TcxAttachType
+impl core::marker::Send for aya::programs::tc::TcxAttachType
+impl core::marker::Sync for aya::programs::tc::TcxAttachType
+impl core::marker::Unpin for aya::programs::tc::TcxAttachType
+impl core::marker::UnsafeUnpin for aya::programs::tc::TcxAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcxAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcxAttachType
 pub enum aya::programs::TracePointError
 pub aya::programs::TracePointError::FileError
 pub aya::programs::TracePointError::FileError::filename: std::path::PathBuf
@@ -6393,12 +6496,11 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::Ra
 pub struct aya::programs::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub const aya::programs::tc::SchedClassifier::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::tc::SchedClassifier::attach(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::attach(&mut self, interface: &str, attachment: aya::programs::tc::SchedClassifierAttachment) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::attach_to_link(&mut self, link: aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::attach_with_options(&mut self, interface: &str, attach_type: aya::programs::tc::TcAttachType, options: aya::programs::tc::TcAttachOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::query_tcx(interface: &str, attach_type: aya::programs::tc::TcAttachType) -> core::result::Result<(u64, alloc::vec::Vec<aya::programs::ProgramInfo>), aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::query_tcx(interface: &str, attach_type: aya::programs::tc::TcxAttachType) -> core::result::Result<(u64, alloc::vec::Vec<aya::programs::ProgramInfo>), aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::detach(&mut self, link_id: aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::take_link(&mut self, link_id: aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<aya::programs::tc::SchedClassifierLink, aya::programs::ProgramError>

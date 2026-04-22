@@ -1,6 +1,8 @@
 use aya::{
     Ebpf,
-    programs::{LinkOrder, ProgramId, SchedClassifier, TcAttachType, tc::TcAttachOptions},
+    programs::{
+        LinkOrder, ProgramId, SchedClassifier, TcxAttachType, tc::SchedClassifierAttachment,
+    },
     util::KernelVersion,
 };
 
@@ -37,20 +39,24 @@ fn tcx() {
         ($program_name:ident, $link_order:expr) => {
             attach_program_with_link_order_inner!($program_name, $link_order);
             $program_name
-                .attach_with_options(
+                .attach(
                     "lo",
-                    TcAttachType::Ingress,
-                    TcAttachOptions::TcxOrder($link_order),
+                    SchedClassifierAttachment::Tcx {
+                        attach_type: TcxAttachType::Ingress,
+                        link_order: $link_order,
+                    },
                 )
                 .unwrap();
         };
         ($program_name:ident, $link_id_name:ident, $link_order:expr) => {
             attach_program_with_link_order_inner!($program_name, $link_order);
             let $link_id_name = $program_name
-                .attach_with_options(
+                .attach(
                     "lo",
-                    TcAttachType::Ingress,
-                    TcAttachOptions::TcxOrder($link_order),
+                    SchedClassifierAttachment::Tcx {
+                        attach_type: TcxAttachType::Ingress,
+                        link_order: $link_order,
+                    },
                 )
                 .unwrap();
         };
@@ -92,7 +98,7 @@ fn tcx() {
     .map(|program| program.info().unwrap().id())
     .collect::<Vec<_>>();
 
-    let (revision, got_order) = SchedClassifier::query_tcx("lo", TcAttachType::Ingress).unwrap();
+    let (revision, got_order) = SchedClassifier::query_tcx("lo", TcxAttachType::Ingress).unwrap();
     assert_eq!(revision, (expected_order.len() + 1) as u64);
     assert_eq!(
         got_order
