@@ -68,8 +68,12 @@ fn test_array(
             .unwrap_or_else(|err| panic!("program {prog_name} is not a uprobe: {err}"));
         prog.load()
             .unwrap_or_else(|err| panic!("load {prog_name}: {err}"));
-        prog.attach(symbol, "/proc/self/exe", None)
-            .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
+        prog.attach(
+            symbol,
+            "/proc/self/exe",
+            aya::programs::uprobe::UProbeScope::AllProcesses,
+        )
+        .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
     }
 
     let result_array = Array::<_, u32>::try_from(ebpf.map(result_map).unwrap()).unwrap();

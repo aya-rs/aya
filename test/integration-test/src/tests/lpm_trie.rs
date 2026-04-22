@@ -36,8 +36,12 @@ fn lpm_trie_basic(prog_name: &str, routes_map: &str, results_map: &str) {
         .unwrap_or_else(|err| panic!("program {prog_name} is not a uprobe: {err}"));
     prog.load()
         .unwrap_or_else(|err| panic!("load {prog_name}: {err}"));
-    prog.attach("trigger_lpm_trie", "/proc/self/exe", None)
-        .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
+    prog.attach(
+        "trigger_lpm_trie",
+        "/proc/self/exe",
+        aya::programs::uprobe::UProbeScope::AllProcesses,
+    )
+    .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
 
     trigger_lpm_trie();
 

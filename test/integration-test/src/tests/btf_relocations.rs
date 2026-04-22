@@ -90,7 +90,11 @@ fn relocation_tests(
     let program: &mut UProbe = bpf.program_mut("program").unwrap().try_into().unwrap();
     program.load().unwrap();
     program
-        .attach("trigger_btf_relocations_program", "/proc/self/exe", None)
+        .attach(
+            "trigger_btf_relocations_program",
+            "/proc/self/exe",
+            aya::programs::uprobe::UProbeScope::AllProcesses,
+        )
         .unwrap();
 
     trigger_btf_relocations_program();

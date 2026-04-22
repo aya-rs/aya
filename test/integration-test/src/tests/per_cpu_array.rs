@@ -81,8 +81,12 @@ fn per_cpu_array_basic(
             .unwrap_or_else(|err| panic!("program {prog_name} is not a uprobe: {err}"));
         prog.load()
             .unwrap_or_else(|err| panic!("load {prog_name}: {err}"));
-        prog.attach(symbol, "/proc/self/exe", None)
-            .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
+        prog.attach(
+            symbol,
+            "/proc/self/exe",
+            aya::programs::uprobe::UProbeScope::AllProcesses,
+        )
+        .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
     }
 
     let mut array: PerCpuArray<_, u32> = bpf.take_map(array_map).unwrap().try_into().unwrap();

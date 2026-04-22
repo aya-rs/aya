@@ -77,8 +77,12 @@ async fn bpf_printk(
         .try_into()
         .unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_bpf_printk", "/proc/self/exe", None)
-        .unwrap();
+    prog.attach(
+        "trigger_bpf_printk",
+        "/proc/self/exe",
+        aya::programs::uprobe::UProbeScope::AllProcesses,
+    )
+    .unwrap();
 
     let tracefs_mount = "/sys/kernel/debug/tracing";
     let tracefs_mount = Path::new(tracefs_mount);

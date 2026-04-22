@@ -4766,10 +4766,30 @@ impl core::marker::Unpin for aya::programs::uprobe::UProbeError
 impl core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeError
+pub enum aya::programs::uprobe::UProbeScope
+pub aya::programs::uprobe::UProbeScope::AllProcesses
+pub aya::programs::uprobe::UProbeScope::CallingProcess
+pub aya::programs::uprobe::UProbeScope::OneProcess(core::num::nonzero::NonZeroU32)
+impl core::clone::Clone for aya::programs::uprobe::UProbeScope
+pub fn aya::programs::uprobe::UProbeScope::clone(&self) -> aya::programs::uprobe::UProbeScope
+impl core::cmp::Eq for aya::programs::uprobe::UProbeScope
+impl core::cmp::PartialEq for aya::programs::uprobe::UProbeScope
+pub fn aya::programs::uprobe::UProbeScope::eq(&self, other: &aya::programs::uprobe::UProbeScope) -> bool
+impl core::fmt::Debug for aya::programs::uprobe::UProbeScope
+pub fn aya::programs::uprobe::UProbeScope::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::uprobe::UProbeScope
+impl core::marker::StructuralPartialEq for aya::programs::uprobe::UProbeScope
+impl core::marker::Freeze for aya::programs::uprobe::UProbeScope
+impl core::marker::Send for aya::programs::uprobe::UProbeScope
+impl core::marker::Sync for aya::programs::uprobe::UProbeScope
+impl core::marker::Unpin for aya::programs::uprobe::UProbeScope
+impl core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeScope
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeScope
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeScope
 pub struct aya::programs::uprobe::UProbe
 impl aya::programs::uprobe::UProbe
 pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::uprobe::UProbe::attach<'a, T: core::convert::AsRef<std::path::Path>, Point: core::convert::Into<aya::programs::uprobe::UProbeAttachPoint<'a>>>(&mut self, point: Point, target: T, pid: core::option::Option<u32>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
+pub fn aya::programs::uprobe::UProbe::attach<'a, T: core::convert::AsRef<std::path::Path>, Point: core::convert::Into<aya::programs::uprobe::UProbeAttachPoint<'a>>>(&mut self, point: Point, target: T, scope: aya::programs::uprobe::UProbeScope) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub const fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -6678,7 +6698,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TraceP
 pub struct aya::programs::UProbe
 impl aya::programs::uprobe::UProbe
 pub const aya::programs::uprobe::UProbe::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::uprobe::UProbe::attach<'a, T: core::convert::AsRef<std::path::Path>, Point: core::convert::Into<aya::programs::uprobe::UProbeAttachPoint<'a>>>(&mut self, point: Point, target: T, pid: core::option::Option<u32>) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
+pub fn aya::programs::uprobe::UProbe::attach<'a, T: core::convert::AsRef<std::path::Path>, Point: core::convert::Into<aya::programs::uprobe::UProbeAttachPoint<'a>>>(&mut self, point: Point, target: T, scope: aya::programs::uprobe::UProbeScope) -> core::result::Result<aya::programs::uprobe::UProbeLinkId, aya::programs::ProgramError>
 pub fn aya::programs::uprobe::UProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, kind: aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub const fn aya::programs::uprobe::UProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::uprobe::UProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>

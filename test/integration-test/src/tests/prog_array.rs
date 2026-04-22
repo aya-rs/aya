@@ -49,8 +49,12 @@ fn tail_call_empty(result_map: &str, entry_prog: &str) {
         .unwrap_or_else(|err| panic!("program {entry_prog} is not a uprobe: {err}"));
     prog.load()
         .unwrap_or_else(|err| panic!("load {entry_prog}: {err}"));
-    prog.attach("trigger_tail_call_empty", "/proc/self/exe", None)
-        .unwrap_or_else(|err| panic!("attach {entry_prog}: {err}"));
+    prog.attach(
+        "trigger_tail_call_empty",
+        "/proc/self/exe",
+        aya::programs::uprobe::UProbeScope::AllProcesses,
+    )
+    .unwrap_or_else(|err| panic!("attach {entry_prog}: {err}"));
 
     let result = Array::<_, u32>::try_from(bpf.map(result_map).unwrap()).unwrap();
 
@@ -109,7 +113,11 @@ fn tail_call_success(result_map: &str, array_map: &str, entry_prog: &str, target
             .load()
             .unwrap_or_else(|err| panic!("load {entry_prog}: {err}"));
         entry
-            .attach("trigger_tail_call_success", "/proc/self/exe", None)
+            .attach(
+                "trigger_tail_call_success",
+                "/proc/self/exe",
+                aya::programs::uprobe::UProbeScope::AllProcesses,
+            )
             .unwrap_or_else(|err| panic!("attach {entry_prog}: {err}"));
     }
 

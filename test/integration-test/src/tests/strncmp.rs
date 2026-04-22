@@ -29,8 +29,12 @@ fn bpf_strncmp() {
             .unwrap();
         prog.load().unwrap();
 
-        prog.attach("trigger_bpf_strncmp", "/proc/self/exe", None)
-            .unwrap();
+        prog.attach(
+            "trigger_bpf_strncmp",
+            "/proc/self/exe",
+            aya::programs::uprobe::UProbeScope::AllProcesses,
+        )
+        .unwrap();
     }
 
     let array = Array::<_, TestResult>::try_from(bpf.map("RESULT").unwrap()).unwrap();
