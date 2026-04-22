@@ -648,12 +648,17 @@ bitflags::bitflags! {
 ///
 /// ```no_run
 /// # let mut bpf = aya::Ebpf::load(&[])?;
-/// use aya::programs::{tc, SchedClassifier, TcAttachType, tc::TcAttachOptions, LinkOrder};
+/// use aya::programs::{LinkOrder, SchedClassifier, SchedClassifierAttachment, TcxAttachType};
 ///
 /// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
-/// let options = TcAttachOptions::TcxOrder(LinkOrder::first());
-/// prog.attach_with_options("eth0", TcAttachType::Ingress, options)?;
+/// prog.attach(
+///     "eth0",
+///     SchedClassifierAttachment::Tcx {
+///         attach_type: TcxAttachType::Ingress,
+///         link_order: LinkOrder::first(),
+///     },
+/// )?;
 ///
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
