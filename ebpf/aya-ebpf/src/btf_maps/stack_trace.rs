@@ -77,3 +77,12 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize>
         if ret < 0 { Err(ret as i32) } else { Ok(ret) }
     }
 }
+
+impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize>
+    crate::programs::tracing::private::StackTraceMap for StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
+{
+    fn as_ptr(&self) -> *mut core::ffi::c_void {
+        let () = Self::_CHECK;
+        self.as_ptr()
+    }
+}
