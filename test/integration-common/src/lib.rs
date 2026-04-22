@@ -181,3 +181,9 @@ pub mod stack_trace {
     #[cfg(feature = "user")]
     unsafe impl aya::Pod for TestResult {}
 }
+
+pub mod test_run {
+    pub const XDP_MODIFY_VAL: u8 = 0xAA;
+    pub const IF_INDEX: u32 = 1;
+    pub const XDP_MODIFY_LEN: usize = 16;
+}
