@@ -156,8 +156,6 @@ impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::sk_storage:
 pub mod aya_ebpf::btf_maps::stack_trace
 #[repr(C)] pub struct aya_ebpf::btf_maps::stack_trace::StackTrace<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
-pub unsafe fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: &C, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
-impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
 pub const fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::new() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> core::default::Default for aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
 pub fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::default() -> Self
@@ -282,8 +280,6 @@ impl<T> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::sk_storage::SkStorage<
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::sk_storage::SkStorage<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::sk_storage::SkStorage<T> where T: core::panic::unwind_safe::RefUnwindSafe
 #[repr(C)] pub struct aya_ebpf::btf_maps::StackTrace<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize>
-impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
-pub unsafe fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: &C, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
 pub const fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::new() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> core::default::Default for aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
@@ -621,7 +617,6 @@ impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::stack::Stack<T>
 pub mod aya_ebpf::maps::stack_trace
 #[repr(transparent)] pub struct aya_ebpf::maps::stack_trace::StackTrace
 impl aya_ebpf::maps::stack_trace::StackTrace
-pub unsafe fn aya_ebpf::maps::stack_trace::StackTrace::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: impl core::borrow::Borrow<C>, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::stack_trace::StackTrace
@@ -967,7 +962,6 @@ impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::stack::Stac
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::stack::Stack<T> where T: core::panic::unwind_safe::UnwindSafe
 #[repr(transparent)] pub struct aya_ebpf::maps::StackTrace
 impl aya_ebpf::maps::stack_trace::StackTrace
-pub unsafe fn aya_ebpf::maps::stack_trace::StackTrace::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: impl core::borrow::Borrow<C>, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::stack_trace::StackTrace
