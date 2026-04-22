@@ -1,7 +1,7 @@
 use aya::{
     EbpfLoader,
     maps::{Array, MapError, MapType, bloom_filter::BloomFilter},
-    programs::UProbe,
+    programs::{UProbe, uprobe::UProbeScope},
     sys::is_map_supported,
 };
 use integration_common::bloom_filter::{
@@ -57,7 +57,7 @@ fn bloom_filter_basic(result_map: &str, filter_map: &str, insert_prog: &str, con
             .unwrap_or_else(|err| panic!("program {prog_name} is not a uprobe: {err}"));
         prog.load()
             .unwrap_or_else(|err| panic!("load {prog_name}: {err}"));
-        prog.attach(symbol, "/proc/self/exe", None)
+        prog.attach(symbol, "/proc/self/exe", UProbeScope::AllProcesses)
             .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
     }
 

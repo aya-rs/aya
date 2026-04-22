@@ -1,7 +1,7 @@
 use aya::{
     EbpfLoader,
     maps::{Array, MapType, StackTraceMap},
-    programs::UProbe,
+    programs::{UProbe, uprobe::UProbeScope},
     sys::is_map_supported,
 };
 use integration_common::stack_trace::TestResult;
@@ -35,7 +35,11 @@ fn record_stackid(stacks_map: &str, result_map: &str, prog: &str) {
         .load()
         .unwrap_or_else(|err| panic!("load {prog}: {err}"));
     uprobe
-        .attach("trigger_record_stackid", "/proc/self/exe", None)
+        .attach(
+            "trigger_record_stackid",
+            "/proc/self/exe",
+            UProbeScope::AllProcesses,
+        )
         .unwrap_or_else(|err| panic!("attach {prog}: {err}"));
 
     trigger_record_stackid();

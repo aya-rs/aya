@@ -1,4 +1,8 @@
-use aya::{EbpfLoader, Endianness, maps::Array, programs::UProbe};
+use aya::{
+    EbpfLoader, Endianness,
+    maps::Array,
+    programs::{UProbe, uprobe::UProbeScope},
+};
 use aya_obj::btf::Btf;
 use test_case::test_case;
 
@@ -90,7 +94,11 @@ fn relocation_tests(
     let program: &mut UProbe = bpf.program_mut("program").unwrap().try_into().unwrap();
     program.load().unwrap();
     program
-        .attach("trigger_btf_relocations_program", "/proc/self/exe", None)
+        .attach(
+            "trigger_btf_relocations_program",
+            "/proc/self/exe",
+            UProbeScope::AllProcesses,
+        )
         .unwrap();
 
     trigger_btf_relocations_program();

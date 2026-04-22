@@ -14,7 +14,7 @@ use assert_matches::assert_matches;
 use aya::{
     Ebpf, EbpfLoader,
     maps::{Array, MapData, ring_buf::RingBuf},
-    programs::UProbe,
+    programs::{UProbe, uprobe::UProbeScope},
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
 use integration_common::ring_buf::Registers;
@@ -90,8 +90,12 @@ impl RingBufTest {
         let regs = Array::<_, Registers>::try_from(regs).unwrap();
         let prog: &mut UProbe = bpf.program_mut(variant.prog).unwrap().try_into().unwrap();
         prog.load().unwrap();
-        prog.attach("ring_buf_trigger_ebpf_program", "/proc/self/exe", None)
-            .unwrap();
+        prog.attach(
+            "ring_buf_trigger_ebpf_program",
+            "/proc/self/exe",
+            UProbeScope::AllProcesses,
+        )
+        .unwrap();
 
         Self {
             bpf,
@@ -199,7 +203,8 @@ fn ring_buf_mismatch_size<T>(
     let mut ring_buf = RingBuf::try_from(ring_buf).unwrap();
     let prog: &mut UProbe = bpf.program_mut(prog).unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach(trigger_symbol, "/proc/self/exe", None).unwrap();
+    prog.attach(trigger_symbol, "/proc/self/exe", UProbeScope::AllProcesses)
+        .unwrap();
 
     trigger(value.into());
     {
