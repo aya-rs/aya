@@ -1549,6 +1549,13 @@ impl core::marker::Unpin for aya_ebpf::programs::tracepoint::TracePointContext
 impl core::marker::UnsafeUnpin for aya_ebpf::programs::tracepoint::TracePointContext
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::tracepoint::TracePointContext
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::tracepoint::TracePointContext
+pub mod aya_ebpf::programs::tracing
+pub trait aya_ebpf::programs::tracing::StackIdContext: aya_ebpf::programs::tracing::sealed::StackIdContext
+pub fn aya_ebpf::programs::tracing::StackIdContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
+impl<T: aya_ebpf::programs::tracing::sealed::StackIdContext> aya_ebpf::programs::tracing::StackIdContext for T
+pub fn T::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
+pub trait aya_ebpf::programs::tracing::StackTraceMap: aya_ebpf::programs::tracing::sealed::StackTraceMap
+impl<T: aya_ebpf::programs::tracing::sealed::StackTraceMap> aya_ebpf::programs::tracing::StackTraceMap for T
 pub mod aya_ebpf::programs::xdp
 pub struct aya_ebpf::programs::xdp::XdpContext
 pub aya_ebpf::programs::xdp::XdpContext::ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md
