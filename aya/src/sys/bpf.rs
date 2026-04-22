@@ -442,6 +442,8 @@ pub(crate) enum BpfLinkCreateArgs<'a> {
         pid: u32,
         flags: u32,
     },
+    // since kernel 6.7
+    Netkit(&'a LinkRef),
 }
 
 // since kernel 5.7
@@ -520,6 +522,25 @@ pub(crate) fn bpf_link_create(
                     .map(|slice| slice.as_ptr() as u64)
                     .unwrap_or_default();
             }
+            BpfLinkCreateArgs::Netkit(link_ref) => match link_ref {
+                LinkRef::Fd(fd) => {
+                    attr.link_create
+                        .__bindgen_anon_3
+                        .netkit
+                        .__bindgen_anon_1
+                        .relative_fd = fd.to_owned() as u32;
+                }
+                LinkRef::Id(id) => unsafe {
+                    id.clone_into(
+                        &mut attr
+                            .link_create
+                            .__bindgen_anon_3
+                            .netkit
+                            .__bindgen_anon_1
+                            .relative_id,
+                    );
+                },
+            },
         }
     }
 

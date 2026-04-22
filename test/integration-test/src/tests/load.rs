@@ -9,12 +9,11 @@ use aya::{
     pin::PinError,
     programs::{
         FlowDissector, KProbe, LinkOrder, ProbeKind, Program, ProgramError, SchedClassifier,
-        TcAttachType, TracePoint, UProbe, Xdp, XdpMode,
+        SchedClassifierAttachment, TcxAttachType, TracePoint, UProbe, Xdp, XdpMode,
         flow_dissector::{FlowDissectorLink, FlowDissectorLinkId},
         kprobe::{KProbeLink, KProbeLinkId},
         links::{FdLink, LinkError, PinnedLink},
         loaded_links, loaded_programs,
-        tc::TcAttachOptions,
         trace_point::{TracePointLink, TracePointLinkId},
         uprobe::{UProbeLink, UProbeLinkId, UProbeScope},
         xdp::{XdpLink, XdpLinkId},
@@ -457,10 +456,12 @@ fn pin_tcx_link() {
     prog.load().unwrap();
 
     let link_id = prog
-        .attach_with_options(
+        .attach(
             "lo",
-            TcAttachType::Ingress,
-            TcAttachOptions::TcxOrder(LinkOrder::default()),
+            SchedClassifierAttachment::Tcx {
+                attach_type: TcxAttachType::Ingress,
+                link_order: LinkOrder::default(),
+            },
         )
         .unwrap();
     let link = prog.take_link(link_id).unwrap();
