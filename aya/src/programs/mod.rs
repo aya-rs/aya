@@ -1030,15 +1030,6 @@ impl RawTracePointRunOptions {
             cpu: None,
         }
     }
-
-    /// Sets the tracepoint argument at `idx` to `value`.
-    #[must_use]
-    pub fn arg(self, idx: usize, value: u64) -> Self {
-        assert!(idx < 12);
-        let Self { mut args, cpu } = self;
-        args[idx] = value;
-        Self { args, cpu }
-    }
 }
 
 /// Result of running a BPF program test.

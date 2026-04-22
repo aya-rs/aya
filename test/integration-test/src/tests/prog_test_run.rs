@@ -269,7 +269,8 @@ fn test_raw_tracepoint_test_run() {
     // one element.
     const SENTINEL: u64 = 0xdead_beef_cafe_babe;
 
-    let opts = RawTracePointRunOptions::default().arg(0, SENTINEL);
+    let mut opts = RawTracePointRunOptions::default();
+    opts[0] = SENTINEL;
 
     let RawTracePointTestRunResult {
         return_value,

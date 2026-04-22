@@ -6264,7 +6264,6 @@ pub struct aya::programs::RawTracePointRunOptions
 pub aya::programs::RawTracePointRunOptions::args: [u64; 12]
 pub aya::programs::RawTracePointRunOptions::cpu: core::option::Option<u32>
 impl aya::programs::RawTracePointRunOptions
-pub fn aya::programs::RawTracePointRunOptions::arg(self, idx: usize, value: u64) -> Self
 pub const fn aya::programs::RawTracePointRunOptions::new() -> Self
 impl core::default::Default for aya::programs::RawTracePointRunOptions
 pub fn aya::programs::RawTracePointRunOptions::default() -> aya::programs::RawTracePointRunOptions
@@ -7123,7 +7122,6 @@ pub struct aya::RawTracePointRunOptions
 pub aya::RawTracePointRunOptions::args: [u64; 12]
 pub aya::RawTracePointRunOptions::cpu: core::option::Option<u32>
 impl aya::programs::RawTracePointRunOptions
-pub fn aya::programs::RawTracePointRunOptions::arg(self, idx: usize, value: u64) -> Self
 pub const fn aya::programs::RawTracePointRunOptions::new() -> Self
 impl core::default::Default for aya::programs::RawTracePointRunOptions
 pub fn aya::programs::RawTracePointRunOptions::default() -> aya::programs::RawTracePointRunOptions
