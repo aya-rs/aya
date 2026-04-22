@@ -2,7 +2,7 @@ use aya::{
     Ebpf,
     programs::{
         SchedClassifier, TcAttachType,
-        tc::{NlOptions, TcAttachOptions, TcHandle, qdisc_add_clsact},
+        tc::{NlOptions, SchedClassifierAttachment, TcHandle, qdisc_add_clsact},
     },
     test_helpers::NetNsGuard,
     util::KernelVersion,
@@ -55,13 +55,15 @@ fn netlink_attach_to_link_preserves_classid() {
     let classid = TcHandle::new(1, 1);
 
     let link_id = prog
-        .attach_with_options(
+        .attach(
             "lo",
-            TcAttachType::Ingress,
-            TcAttachOptions::Netlink(NlOptions {
-                classid: Some(classid),
-                ..Default::default()
-            }),
+            SchedClassifierAttachment::Tc {
+                attach_type: TcAttachType::Ingress,
+                options: NlOptions {
+                    classid: Some(classid),
+                    ..Default::default()
+                },
+            },
         )
         .unwrap();
 
@@ -90,10 +92,12 @@ fn netlink_attach_auto_assigns_handle() {
     prog.load().unwrap();
 
     let link_id = prog
-        .attach_with_options(
+        .attach(
             "lo",
-            TcAttachType::Ingress,
-            TcAttachOptions::Netlink(NlOptions::default()),
+            SchedClassifierAttachment::Tc {
+                attach_type: TcAttachType::Ingress,
+                options: NlOptions::default(),
+            },
         )
         .unwrap();
 
@@ -119,13 +123,15 @@ fn netlink_attach_preserves_explicit_handle() {
     let handle = TcHandle::new(1, 0xfffe);
 
     let link_id = prog
-        .attach_with_options(
+        .attach(
             "lo",
-            TcAttachType::Ingress,
-            TcAttachOptions::Netlink(NlOptions {
-                handle,
-                ..Default::default()
-            }),
+            SchedClassifierAttachment::Tc {
+                attach_type: TcAttachType::Ingress,
+                options: NlOptions {
+                    handle,
+                    ..Default::default()
+                },
+            },
         )
         .unwrap();
 
