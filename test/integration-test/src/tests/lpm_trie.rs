@@ -1,7 +1,7 @@
 use aya::{
     Ebpf,
     maps::{Array, LpmTrie, lpm_trie::Key},
-    programs::UProbe,
+    programs::{UProbe, uprobe::UProbeScope},
 };
 use integration_common::lpm_trie::{LPM_MATCH_SLOT, NO_MATCH_SLOT, REMOVE_SLOT, TestResult};
 use test_case::test_case;
@@ -36,8 +36,12 @@ fn lpm_trie_basic(prog_name: &str, routes_map: &str, results_map: &str) {
         .unwrap_or_else(|err| panic!("program {prog_name} is not a uprobe: {err}"));
     prog.load()
         .unwrap_or_else(|err| panic!("load {prog_name}: {err}"));
-    prog.attach("trigger_lpm_trie", "/proc/self/exe", None)
-        .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
+    prog.attach(
+        "trigger_lpm_trie",
+        "/proc/self/exe",
+        UProbeScope::AllProcesses,
+    )
+    .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
 
     trigger_lpm_trie();
 

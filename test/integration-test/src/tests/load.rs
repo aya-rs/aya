@@ -1,4 +1,6 @@
-use std::{convert::TryInto as _, fs::remove_file, path::Path, thread, time::Duration};
+use std::{
+    convert::TryInto as _, fs::remove_file, num::NonZeroU32, path::Path, thread, time::Duration,
+};
 
 use assert_matches::assert_matches;
 use aya::{
@@ -14,12 +16,13 @@ use aya::{
         loaded_links, loaded_programs,
         tc::TcAttachOptions,
         trace_point::{TracePointLink, TracePointLinkId},
-        uprobe::{UProbeLink, UProbeLinkId},
+        uprobe::{UProbeLink, UProbeLinkId, UProbeScope},
         xdp::{XdpLink, XdpLinkId},
     },
     util::KernelVersion,
 };
 use aya_obj::programs::XdpAttachType;
+use test_case::test_case;
 
 const MAX_RETRIES: usize = 100;
 pub(crate) const RETRY_DURATION: Duration = Duration::from_millis(10);
@@ -55,8 +58,12 @@ fn ringbuffer_btf_map() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_bpf_program", "/proc/self/exe", None)
-        .unwrap();
+    prog.attach(
+        "trigger_bpf_program",
+        "/proc/self/exe",
+        UProbeScope::AllProcesses,
+    )
+    .unwrap();
 
     trigger_bpf_program();
 
@@ -77,8 +84,12 @@ fn multiple_btf_maps() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_bpf_program", "/proc/self/exe", None)
-        .unwrap();
+    prog.attach(
+        "trigger_bpf_program",
+        "/proc/self/exe",
+        UProbeScope::AllProcesses,
+    )
+    .unwrap();
 
     trigger_bpf_program();
 
@@ -127,8 +138,12 @@ fn pin_lifecycle_multiple_btf_maps() {
 
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_bpf_program", "/proc/self/exe", None)
-        .unwrap();
+    prog.attach(
+        "trigger_bpf_program",
+        "/proc/self/exe",
+        UProbeScope::AllProcesses,
+    )
+    .unwrap();
 
     trigger_bpf_program();
 
@@ -276,13 +291,14 @@ fn unload_xdp() {
     );
 }
 
-fn run_unload_program_test<P>(
+fn run_unload_program_test<P, F>(
     bpf_image: &[u8],
     program_name: &str,
-    attach: fn(&mut P) -> P::LinkId,
+    attach: F,
     expect_fd_link: bool,
 ) where
     P: UnloadProgramOps,
+    F: Fn(&mut P) -> P::LinkId,
     P::OwnedLink: TryInto<FdLink, Error = LinkError>,
     for<'a> &'a mut Program: TryInto<&'a mut P, Error = ProgramError>,
 {
@@ -351,32 +367,22 @@ fn basic_tracepoint() {
     );
 }
 
+#[test_case(UProbeScope::AllProcesses; "all_processes")]
+#[test_case(UProbeScope::CallingProcess; "calling_process")]
+#[test_case(
+    UProbeScope::OneProcess(NonZeroU32::new(std::process::id()).unwrap());
+    "one_process"
+)]
 #[test_log::test]
-fn basic_uprobe() {
+fn basic_uprobe_scopes(scope: UProbeScope) {
     type P = UProbe;
 
     let program_name = "test_uprobe";
     let attach = |prog: &mut P| {
-        prog.attach("uprobe_function", "/proc/self/exe", None)
+        prog.attach("uprobe_function", "/proc/self/exe", scope)
             .unwrap()
     };
-    run_unload_program_test(
-        crate::TEST,
-        program_name,
-        attach,
-        aya::features().bpf_perf_link(), // probe uses perf_attach.
-    );
-}
 
-#[test_log::test]
-fn basic_uprobe_pid_zero_is_self() {
-    type P = UProbe;
-
-    let program_name = "test_uprobe";
-    let attach = |prog: &mut P| {
-        prog.attach("uprobe_function", "/proc/self/exe", Some(0))
-            .unwrap()
-    };
     run_unload_program_test(
         crate::TEST,
         program_name,
@@ -676,8 +682,12 @@ fn pin_lifecycle_uprobe() {
 
     let program_name = "test_uprobe";
     let attach = |prog: &mut P| {
-        prog.attach("uprobe_function", "/proc/self/exe", None)
-            .unwrap()
+        prog.attach(
+            "uprobe_function",
+            "/proc/self/exe",
+            UProbeScope::AllProcesses,
+        )
+        .unwrap()
     };
     let program_pin = "/sys/fs/bpf/aya-uprobe-test-prog";
     let link_pin = "/sys/fs/bpf/aya-uprobe-test-uprobe-function";

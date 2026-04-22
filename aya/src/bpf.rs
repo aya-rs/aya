@@ -1099,11 +1099,11 @@ impl Ebpf {
     ///
     /// ```no_run
     /// # let mut bpf = aya::Ebpf::load(&[])?;
-    /// use aya::programs::UProbe;
+    /// use aya::programs::{uprobe::UProbeScope, UProbe};
     ///
     /// let program: &mut UProbe = bpf.program_mut("SSL_read").unwrap().try_into()?;
     /// program.load()?;
-    /// program.attach("SSL_read", "libssl", None)?;
+    /// program.attach("SSL_read", "libssl", UProbeScope::AllProcesses)?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn program_mut(&mut self, name: &str) -> Option<&mut Program> {

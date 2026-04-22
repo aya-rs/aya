@@ -6,6 +6,7 @@ use std::{
     fmt::{self, Write},
     fs,
     io::{self, BufRead as _, Cursor, Read as _},
+    num::NonZeroU32,
     os::unix::ffi::{OsStrExt as _, OsStringExt as _},
     path::{Path, PathBuf},
     sync::LazyLock,
@@ -88,6 +89,17 @@ impl<'a, L: Into<UProbeAttachLocation<'a>>> From<L> for UProbeAttachPoint<'a> {
     }
 }
 
+/// Specifies which processes a uprobe should fire for.
+#[derive(Debug, Clone, Copy)]
+pub enum UProbeScope {
+    /// Fire for any process that hits the attach point.
+    AllProcesses,
+    /// Fire only when the calling process/thread hits the attach point.
+    CallingProcess,
+    /// Fire only when the given process hits the attach point.
+    OneProcess(NonZeroU32),
+}
+
 impl UProbe {
     /// The type of the program according to the kernel.
     pub const PROGRAM_TYPE: ProgramType = ProgramType::KProbe;
@@ -108,9 +120,8 @@ impl UProbe {
     ///
     /// Attaches the uprobe to the function `fn_name` defined in the `target`.
     /// If the attach point specifies an offset, it is added to the address of
-    /// the target function. If `pid` is not `None`, the program executes only
-    /// when the target function is executed by the given `pid`; `Some(0)`
-    /// means the calling process/thread.
+    /// the target function. `scope` specifies which processes should trigger
+    /// the uprobe.
     ///
     /// The `target` argument can be an absolute path to a binary or library, or
     /// a library name (eg: `"libc"`).
@@ -129,12 +140,19 @@ impl UProbe {
         &mut self,
         point: Point,
         target: T,
-        pid: Option<u32>,
+        scope: UProbeScope,
     ) -> Result<UProbeLinkId, ProgramError> {
         let UProbeAttachPoint { location, cookie } = point.into();
-        // /proc/0/maps does not exist; use the current pid only for ProcMap
-        // resolution and preserve pid=0 for the actual attach semantics.
-        let proc_map_pid = pid.map(|pid| if pid == 0 { std::process::id() } else { pid });
+        let (proc_map_pid, perf_event_pid) = match scope {
+            UProbeScope::AllProcesses => (None, None),
+            // /proc/0/maps does not exist, so use the real pid for ProcMap
+            // resolution while keeping the kernel's pid=0 sentinel for attach.
+            UProbeScope::CallingProcess => (Some(std::process::id()), Some(0)),
+            UProbeScope::OneProcess(pid) => {
+                let pid = pid.get();
+                (Some(pid), Some(pid))
+            }
+        };
         let proc_map = proc_map_pid.map(ProcMap::new).transpose()?;
         let path = resolve_attach_path(target.as_ref(), proc_map.as_ref())?;
         let (symbol, offset) = match location {
@@ -155,7 +173,7 @@ impl UProbe {
 
         let Self { data, kind } = self;
         let path = path.as_os_str();
-        attach::<Self, _>(data, *kind, path, offset, pid, cookie)
+        attach::<Self, _>(data, *kind, path, offset, perf_event_pid, cookie)
     }
 
     /// Creates a program from a pinned entry on a bpffs.

@@ -1,4 +1,8 @@
-use aya::{EbpfLoader, maps::Array, programs::UProbe};
+use aya::{
+    EbpfLoader,
+    maps::Array,
+    programs::{UProbe, uprobe::UProbeScope},
+};
 use integration_common::linear_data_structures::{PEEK_INDEX, POP_INDEX};
 
 enum Order {
@@ -47,7 +51,8 @@ macro_rules! define_linear_ds_host_test {
             ] {
                 let prog: &mut UProbe = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
                 prog.load().unwrap();
-                prog.attach(symbol, "/proc/self/exe", None).unwrap();
+                prog.attach(symbol, "/proc/self/exe", UProbeScope::AllProcesses)
+                    .unwrap();
             }
             let array_map = bpf.map("RESULT").unwrap();
             let array = Array::<_, u64>::try_from(array_map).unwrap();

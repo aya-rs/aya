@@ -1,7 +1,10 @@
 use aya::{
     EbpfLoader,
     maps::ring_buf::RingBuf,
-    programs::{UProbe, uprobe::UProbeAttachPoint},
+    programs::{
+        UProbe,
+        uprobe::{UProbeAttachPoint, UProbeScope},
+    },
     util::KernelVersion,
 };
 
@@ -37,7 +40,7 @@ fn test_uprobe_cookie() {
                 cookie: Some(cookie),
             },
             "/proc/self/exe",
-            None,
+            UProbeScope::AllProcesses,
         )
         .unwrap()
     };
