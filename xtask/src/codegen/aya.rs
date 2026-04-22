@@ -134,6 +134,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
             // BPF
             "BPF_PSEUDO_.*",
             "BPF_.*",
+            "MAX_BPF_FUNC_ARGS",
             "SO_ATTACH_BPF",
             "SO_DETACH_BPF",
             // BTF
