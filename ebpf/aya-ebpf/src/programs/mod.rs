@@ -19,6 +19,7 @@ pub mod sysctl;
 pub mod tc;
 pub mod tp_btf;
 pub mod tracepoint;
+pub mod tracing;
 pub mod xdp;
 
 pub use device::DeviceContext;

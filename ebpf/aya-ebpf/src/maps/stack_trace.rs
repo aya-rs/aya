@@ -36,3 +36,9 @@ impl StackTrace {
         if ret < 0 { Err(ret as i32) } else { Ok(ret) }
     }
 }
+
+impl crate::programs::tracing::private::StackTraceMap for StackTrace {
+    fn as_ptr(&self) -> *mut core::ffi::c_void {
+        self.def.as_ptr().cast()
+    }
+}
