@@ -143,6 +143,7 @@ impl UProbe {
         scope: UProbeScope,
     ) -> Result<UProbeLinkId, ProgramError> {
         let UProbeAttachPoint { location, cookie } = point.into();
+        let target = target.as_ref();
         let (proc_map_pid, perf_event_pid) = match scope {
             UProbeScope::AllProcesses => (None, None),
             // /proc/0/maps does not exist, so use the real pid for ProcMap
@@ -153,8 +154,14 @@ impl UProbe {
                 (Some(pid), Some(pid))
             }
         };
-        let proc_map = proc_map_pid.map(ProcMap::new).transpose()?;
-        let path = resolve_attach_path(target.as_ref(), proc_map.as_ref())?;
+
+        // Skip ProcMap construction for absolute paths: resolve_attach_path
+        // matches by basename, which can never start with '/'.
+        let proc_map = proc_map_pid
+            .filter(|_| !target.is_absolute())
+            .map(ProcMap::new)
+            .transpose()?;
+        let path = resolve_attach_path(target, proc_map.as_ref())?;
         let (symbol, offset) = match location {
             UProbeAttachLocation::Symbol(s) => (Some(s), 0),
             UProbeAttachLocation::SymbolOffset(s, offset) => (Some(s), offset),
@@ -790,6 +797,12 @@ mod tests {
         let synthetic_absolute = Path::new("/tmp/.aya-test-resolve-attach-absolute");
         assert_matches!(
             resolve_attach_path(synthetic_absolute, Some(&proc_map)),
+            Ok(path) => {
+                assert_eq!(path, synthetic_absolute, "path: {}", path.display());
+            }
+        );
+        assert_matches!(
+            resolve_attach_path(synthetic_absolute, None::<&ProcMap<Vec<u8>>>),
             Ok(path) => {
                 assert_eq!(path, synthetic_absolute, "path: {}", path.display());
             }
