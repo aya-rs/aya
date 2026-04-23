@@ -6729,7 +6729,6 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::Sock
 pub struct aya::programs::TestRunAttrs
 impl aya::programs::TestRunAttrs
 pub const fn aya::programs::TestRunAttrs::new() -> Self
-pub const fn aya::programs::TestRunAttrs::run_on_cpu(self, cpu: u32) -> Self
 pub const fn aya::programs::TestRunAttrs::xdp_live_frames(self, batch_size: u32) -> Self
 impl core::default::Default for aya::programs::TestRunAttrs
 pub fn aya::programs::TestRunAttrs::default() -> Self
@@ -7351,7 +7350,6 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointTestRu
 pub struct aya::TestRunAttrs
 impl aya::programs::TestRunAttrs
 pub const fn aya::programs::TestRunAttrs::new() -> Self
-pub const fn aya::programs::TestRunAttrs::run_on_cpu(self, cpu: u32) -> Self
 pub const fn aya::programs::TestRunAttrs::xdp_live_frames(self, batch_size: u32) -> Self
 impl core::default::Default for aya::programs::TestRunAttrs
 pub fn aya::programs::TestRunAttrs::default() -> Self

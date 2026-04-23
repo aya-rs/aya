@@ -613,7 +613,6 @@ pub(crate) fn bpf_prog_test_run(
         ctx_out,
         repeat,
         attrs: TestRunAttrs {
-            cpu,
             batch_size,
             flags,
         },
@@ -625,7 +624,7 @@ pub(crate) fn bpf_prog_test_run(
     test.prog_fd = prog_fd.as_raw_fd() as u32;
     test.repeat = repeat;
     test.flags = flags;
-    test.cpu = cpu;
+    test.cpu = 0;
     test.batch_size = batch_size;
 
     if let Some(data_in) = data_in {

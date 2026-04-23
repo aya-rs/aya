@@ -85,10 +85,7 @@ use std::{
 use aya_obj::{
     VerifierLog,
     btf::BtfError,
-    generated::{
-        BPF_F_TEST_RUN_ON_CPU, BPF_F_TEST_XDP_LIVE_FRAMES, bpf_attach_type, bpf_prog_info,
-        bpf_prog_type,
-    },
+    generated::{BPF_F_TEST_XDP_LIVE_FRAMES, bpf_attach_type, bpf_prog_info, bpf_prog_type},
     programs::XdpAttachType,
 };
 use info::impl_info;
@@ -920,7 +917,6 @@ impl_fd!(
 /// the associated flag bits), as opposed to *what* data is passed.
 #[derive(Debug)]
 pub struct TestRunAttrs {
-    pub(crate) cpu: u32,
     pub(crate) batch_size: u32,
     pub(crate) flags: u32,
 }
@@ -929,21 +925,9 @@ impl TestRunAttrs {
     /// Creates a new `TestRunAttrs` with default values.
     pub const fn new() -> Self {
         Self {
-            cpu: 0,
             batch_size: 0,
             flags: 0,
         }
-    }
-
-    /// Sets the CPU to run the test on.
-    ///
-    /// This automatically sets the `BPF_F_TEST_RUN_ON_CPU` flag.
-    /// This option only works with `RawTracePoint` programs.
-    #[must_use]
-    pub const fn run_on_cpu(mut self, cpu: u32) -> Self {
-        self.cpu = cpu;
-        self.flags |= BPF_F_TEST_RUN_ON_CPU;
-        self
     }
 
     /// Sets the batch size for XDP live frames testing.
@@ -1097,11 +1081,10 @@ pub trait TestRun {
     ///
     /// # Returns
     ///
-    /// Returns a [`crate::TestRunResult`] containing:
-    /// - `return_value`: The value returned by the program
-    /// - `duration`: Execution time in nanoseconds
-    /// - `data_size_out`: Size of data written to output buffer
-    /// - `ctx_size_out`: Size of context written to output buffer
+    /// Returns a [`Self::Result`] containing the program-specific test output.
+    ///
+    /// For most program types this is [`crate::TestRunResult`]. For
+    /// [`RawTracePoint`] it is [`RawTracePointTestRunResult`].
     ///
     /// # Errors
     ///
