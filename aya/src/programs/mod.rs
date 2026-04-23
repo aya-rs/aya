@@ -77,6 +77,7 @@ use std::{
     borrow::Cow,
     ffi::CString,
     io,
+    num::NonZeroU32,
     os::fd::{AsFd, BorrowedFd},
     path::{Path, PathBuf},
     sync::Arc,
@@ -267,6 +268,32 @@ impl AsFd for ProgramFd {
     fn as_fd(&self) -> BorrowedFd<'_> {
         let Self(fd) = self;
         fd.as_fd()
+    }
+}
+
+/// A non-zero process identifier.
+///
+/// This type represents a real process ID. Kernel sentinel values such as `0`
+/// are modeled separately by the APIs that accept them.
+#[derive(Debug, Clone, Copy)]
+pub struct Pid(NonZeroU32);
+
+impl Pid {
+    /// Creates a process identifier from a raw PID.
+    ///
+    /// Returns `None` if `pid` is zero.
+    pub fn new(pid: u32) -> Option<Self> {
+        NonZeroU32::new(pid).map(Self)
+    }
+
+    /// Returns the identifier of the current process.
+    pub fn current() -> Self {
+        Self(NonZeroU32::new(std::process::id()).unwrap())
+    }
+
+    /// Returns the raw PID value.
+    pub const fn get(self) -> u32 {
+        self.0.get()
     }
 }
 
