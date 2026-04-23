@@ -2,7 +2,10 @@ use std::ffi::c_longlong;
 
 use assert_matches::assert_matches;
 use aya::{
-    Ebpf, EbpfError, EbpfLoader, KConfig, maps::Array, programs::UProbe, util::KernelVersion,
+    Ebpf, EbpfError, EbpfLoader, KConfig,
+    maps::Array,
+    programs::{UProbe, UProbeScope},
+    util::KernelVersion,
 };
 use aya_obj::btf::BtfError;
 const CONFIG_BPF_INDEX: u32 = 0;
@@ -71,8 +74,12 @@ fn kconfig() {
 
     let prog: &mut UProbe = bpf.program_mut("test_kconfig").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_kconfig", "/proc/self/exe", None)
-        .unwrap();
+    prog.attach(
+        "trigger_kconfig",
+        "/proc/self/exe",
+        UProbeScope::CallingProcess,
+    )
+    .unwrap();
 
     trigger_kconfig();
 
@@ -156,8 +163,12 @@ fn kconfig_unsized_strings() {
         .try_into()
         .unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_kconfig_unsized_strings", "/proc/self/exe", None)
-        .unwrap();
+    prog.attach(
+        "trigger_kconfig_unsized_strings",
+        "/proc/self/exe",
+        UProbeScope::CallingProcess,
+    )
+    .unwrap();
 
     trigger_kconfig_unsized_strings();
 
