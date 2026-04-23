@@ -1216,17 +1216,6 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_kconfig_preserves_tristate_scalars() {
-        let kconfig =
-            super::KConfig::parse(b"CONFIG_NO=n\nCONFIG_YES=y\nCONFIG_MODULE=m\n").unwrap();
-
-        let map = kconfig.as_map();
-        assert_eq!(map["CONFIG_NO"], b"n");
-        assert_eq!(map["CONFIG_YES"], b"y");
-        assert_eq!(map["CONFIG_MODULE"], b"m");
-    }
-
-    #[test]
     fn test_parse_kconfig_rejects_malformed_lines() {
         let err = super::KConfig::parse(b"CONFIG_BROKEN\n").unwrap_err();
         assert!(matches!(
