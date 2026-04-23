@@ -342,7 +342,7 @@ fn read_kconfig() -> Result<String, KConfigError> {
 
 #[cfg(test)]
 fn kernel_release() -> Option<OsString> {
-    std::env::var_os("AYA_TEST_KERNEL_RELEASE").or_else(|| Some(OsString::from("unknown")))
+    Some(OsString::from("unknown"))
 }
 
 #[cfg(not(test))]
