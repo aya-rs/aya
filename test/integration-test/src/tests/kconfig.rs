@@ -4,7 +4,7 @@ use assert_matches::assert_matches;
 use aya::{
     Ebpf, EbpfError, EbpfLoader, KConfig,
     maps::Array,
-    programs::{UProbe, UProbeScope},
+    programs::{UProbe, uprobe::UProbeScope},
     util::KernelVersion,
 };
 use aya_obj::btf::BtfError;
