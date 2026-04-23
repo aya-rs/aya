@@ -143,6 +143,7 @@ impl UProbe {
         scope: UProbeScope,
     ) -> Result<UProbeLinkId, ProgramError> {
         let UProbeAttachPoint { location, cookie } = point.into();
+        let target = target.as_ref();
         let (proc_map_pid, perf_event_pid) = match scope {
             UProbeScope::AllProcesses => (None, None),
             // /proc/0/maps does not exist, so use the real pid for ProcMap
@@ -153,8 +154,8 @@ impl UProbe {
                 (Some(pid), Some(pid))
             }
         };
-        let proc_map = proc_map_pid.map(ProcMap::new).transpose()?;
-        let path = resolve_attach_path(target.as_ref(), proc_map.as_ref())?;
+
+        let path = resolve_attach_path(target, proc_map_pid)?;
         let (symbol, offset) = match location {
             UProbeAttachLocation::Symbol(s) => (Some(s), 0),
             UProbeAttachLocation::SymbolOffset(s, offset) => (Some(s), offset),
@@ -162,7 +163,7 @@ impl UProbe {
         };
         let offset = if let Some(symbol) = symbol {
             let symbol_offset =
-                resolve_symbol(path, symbol).map_err(|error| UProbeError::SymbolError {
+                resolve_symbol(&path, symbol).map_err(|error| UProbeError::SymbolError {
                     symbol: symbol.to_string(),
                     error: Box::new(error),
                 })?;
@@ -202,39 +203,37 @@ impl Probe for UProbe {
     }
 }
 
-fn resolve_attach_path<'a, 'b, 'c, T>(
-    target: &'a Path,
-    proc_map: Option<&'b ProcMap<T>>,
-) -> Result<&'c Path, UProbeError>
-where
-    'a: 'c,
-    'b: 'c,
-    T: AsRef<[u8]>,
-{
-    proc_map
-        .and_then(|proc_map| {
-            proc_map
-                .find_library_path_by_name(target)
-                .map_err(|source| {
-                    let ProcMap { pid, data: _ } = proc_map;
-                    let pid = *pid;
-                    UProbeError::ProcMap { pid, source }
-                })
-                .transpose()
-        })
-        .or_else(|| target.is_absolute().then(|| Ok(target)))
-        .or_else(|| {
-            LD_SO_CACHE
-                .as_ref()
-                .map_err(|io_error| UProbeError::InvalidLdSoCache { io_error })
-                .map(|cache| cache.resolve(target))
-                .transpose()
-        })
-        .unwrap_or_else(|| {
-            Err(UProbeError::InvalidTarget {
-                path: target.to_owned(),
-            })
-        })
+fn resolve_attach_path(
+    target: &Path,
+    proc_map_pid: Option<u32>,
+) -> Result<Cow<'_, Path>, UProbeError> {
+    // ProcMap resolution matches by basename, which can never start
+    // with '/'; avoid reading /proc/<pid>/maps for absolute targets.
+    if target.is_absolute() {
+        return Ok(Cow::Borrowed(target));
+    }
+
+    if let Some(pid) = proc_map_pid {
+        let proc_map = ProcMap::new(pid)?;
+        if let Some(path) = proc_map
+            .find_library_path_by_name(target)
+            .map_err(|source| UProbeError::ProcMap { pid, source })?
+        {
+            return Ok(Cow::Owned(path.to_owned()));
+        }
+    }
+
+    if let Some(path) = LD_SO_CACHE
+        .as_ref()
+        .map_err(|io_error| UProbeError::InvalidLdSoCache { io_error })?
+        .resolve(target)
+    {
+        return Ok(Cow::Borrowed(path));
+    }
+
+    Err(UProbeError::InvalidTarget {
+        path: target.to_owned(),
+    })
 }
 
 define_link_wrapper!(
@@ -442,7 +441,6 @@ impl<'a> ProcMapEntry<'a> {
 ///
 /// The information here may be used to resolve addresses to paths.
 struct ProcMap<T> {
-    pid: u32,
     data: T,
 }
 
@@ -451,13 +449,13 @@ impl ProcMap<Vec<u8>> {
         let filename = PathBuf::from(format!("/proc/{pid}/maps"));
         let data = fs::read(&filename)
             .map_err(|io_error| UProbeError::FileError { filename, io_error })?;
-        Ok(Self { pid, data })
+        Ok(Self { data })
     }
 }
 
 impl<T: AsRef<[u8]>> ProcMap<T> {
     fn libs(&self) -> impl Iterator<Item = Result<ProcMapEntry<'_>, ProcMapError>> {
-        let Self { pid: _, data } = self;
+        let Self { data } = self;
 
         // /proc/<pid>/maps ends with '\n', so split() yields a trailing empty slice without this.
         data.as_ref()
@@ -767,14 +765,12 @@ mod tests {
         ignore = "requires dynamic linkage of libc"
     )]
     fn test_resolve_attach_path() {
-        // Look up the current process's pid.
         let pid = std::process::id();
-        let proc_map = ProcMap::new(pid).expect("failed to get proc map");
 
         // Now let's resolve the path to libc. It should exist in the current process's memory map and
         // then in the ld.so.cache.
         assert_matches!(
-            resolve_attach_path("libc".as_ref(), Some(&proc_map)),
+            resolve_attach_path("libc".as_ref(), Some(pid)),
             Ok(path) => {
                 // Make sure we got a path that contains libc.
                 assert_matches!(
@@ -784,14 +780,19 @@ mod tests {
             }
         );
 
-        // If we pass an absolute path that doesn't match anything in /proc/<pid>/maps, we should fall
-        // back to the provided path instead of erroring out. Using a synthetic absolute path keeps the
-        // test hermetic.
+        // If we pass an absolute path, ProcMap lookup is skipped. Passing pid 0 keeps this hermetic:
+        // /proc/0/maps does not exist, so trying to read it would fail.
         let synthetic_absolute = Path::new("/tmp/.aya-test-resolve-attach-absolute");
         assert_matches!(
-            resolve_attach_path(synthetic_absolute, Some(&proc_map)),
+            resolve_attach_path(synthetic_absolute, Some(0)),
             Ok(path) => {
-                assert_eq!(path, synthetic_absolute, "path: {}", path.display());
+                assert_eq!(path.as_ref(), synthetic_absolute, "path: {}", path.display());
+            }
+        );
+        assert_matches!(
+            resolve_attach_path(synthetic_absolute, None),
+            Ok(path) => {
+                assert_eq!(path.as_ref(), synthetic_absolute, "path: {}", path.display());
             }
         );
     }
@@ -1143,7 +1144,6 @@ mod tests {
     #[test]
     fn test_proc_map_find_lib_by_name() {
         let proc_map_libs = ProcMap {
-            pid: 0xdead,
             data: b"
 7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libcrypto.so.3.0.9
 ",
@@ -1160,7 +1160,6 @@ mod tests {
     #[test]
     fn test_proc_map_find_lib_by_partial_name() {
         let proc_map_libs = ProcMap {
-            pid: 0xdead,
             data: b"
 7fc4a9800000-7fc4a98ad000	r--p	00000000	00:24	18147308	/usr/lib64/libcrypto.so.3.0.9
 ",
@@ -1177,7 +1176,6 @@ mod tests {
     #[test]
     fn test_proc_map_with_multiple_lib_entries() {
         let proc_map_libs = ProcMap {
-            pid: 0xdead,
             data: b"
 7f372868000-7f3722869000	r--p	00000000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
 7f3722869000-7f372288f000	r-xp	00001000	00:24	18097875	/usr/lib64/ld-linux-x86-64.so.2
