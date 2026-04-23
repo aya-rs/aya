@@ -198,6 +198,8 @@ fn compute_kconfig_definition(
 ) -> Result<HashMap<String, Vec<u8>>, KConfigError> {
     let mut result = HashMap::new();
 
+    // Mirror libbpf's virtual __kconfig externs (`LINUX_*`), see the vendored
+    // handling in `xtask/libbpf/src/libbpf.c`.
     if let Ok(version_code) = KernelVersion::current().map(KernelVersion::code) {
         result.insert(
             "LINUX_KERNEL_VERSION".to_string(),
@@ -205,8 +207,6 @@ fn compute_kconfig_definition(
         );
     }
 
-    // Mirror libbpf's virtual __kconfig externs, see
-    // https://github.com/libbpf/libbpf/blob/libbpf-1.6.2/src/libbpf.c#L8465-L8468
     result.insert(
         "LINUX_HAS_BPF_COOKIE".to_string(),
         u64::from(features.bpf_cookie()).to_ne_bytes().to_vec(),
