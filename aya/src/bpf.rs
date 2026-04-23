@@ -122,9 +122,86 @@ pub enum KConfigError {
 
 impl KConfig {
     fn with_raw_config(raw_config: Option<&str>) -> Result<Self, KConfigError> {
-        Ok(Self {
-            data: compute_kconfig_definition(&FEATURES, raw_config)?,
-        })
+        let mut data = HashMap::new();
+
+        // Mirror libbpf's virtual __kconfig externs (`LINUX_*`), see the vendored
+        // handling in `xtask/libbpf/src/libbpf.c`.
+        if let Ok(version_code) = KernelVersion::current().map(KernelVersion::code) {
+            data.insert(
+                "LINUX_KERNEL_VERSION".to_string(),
+                version_code.to_ne_bytes().to_vec(),
+            );
+        }
+        data.insert(
+            "LINUX_HAS_BPF_COOKIE".to_string(),
+            u64::from(FEATURES.bpf_cookie()).to_ne_bytes().to_vec(),
+        );
+        data.insert(
+            "LINUX_HAS_SYSCALL_WRAPPER".to_string(),
+            u64::from(FEATURES.bpf_syscall_wrapper())
+                .to_ne_bytes()
+                .to_vec(),
+        );
+
+        let Some(raw_config) = raw_config else {
+            return Ok(Self { data });
+        };
+
+        for line in raw_config.lines() {
+            if !line.starts_with("CONFIG_") {
+                continue;
+            }
+
+            let Some((key, raw_value)) = line.split_once('=') else {
+                return Err(KConfigError::MalformedLine {
+                    line: line.to_owned(),
+                });
+            };
+
+            let value = match raw_value {
+                "n" | "y" | "m" => raw_value.as_bytes().to_vec(),
+                _ if raw_value.starts_with('"') => {
+                    if raw_value.len() < 2 || !raw_value.ends_with('"') {
+                        return Err(KConfigError::MalformedLine {
+                            line: line.to_owned(),
+                        });
+                    }
+
+                    let raw_value = &raw_value[1..raw_value.len() - 1];
+                    raw_value
+                        .as_bytes()
+                        .iter()
+                        .chain(std::iter::once(&0u8))
+                        .copied()
+                        .collect()
+                }
+                // numeric
+                _ => {
+                    let value = if raw_value.starts_with('-') {
+                        raw_value.parse::<i64>().ok().map(i64::to_ne_bytes)
+                    } else if let Some(value) = raw_value
+                        .strip_prefix("0x")
+                        .or_else(|| raw_value.strip_prefix("0X"))
+                    {
+                        u64::from_str_radix(value, 16).ok().map(u64::to_ne_bytes)
+                    } else {
+                        raw_value.parse::<u64>().ok().map(u64::to_ne_bytes)
+                    };
+
+                    let Some(value) = value else {
+                        return Err(KConfigError::MalformedLine {
+                            line: line.to_owned(),
+                        });
+                    };
+
+                    value.to_vec()
+                }
+            };
+
+            data.insert(key.to_string(), value);
+        }
+
+        Ok(Self { data })
     }
 
     /// Creates a new `KConfig` by reading kernel configuration from the system.
@@ -190,103 +267,6 @@ fn detect_features() -> Features {
 /// Returns a reference to the detected BPF features.
 pub fn features() -> &'static Features {
     &FEATURES
-}
-
-fn compute_kconfig_definition(
-    features: &Features,
-    raw_config: Option<&str>,
-) -> Result<HashMap<String, Vec<u8>>, KConfigError> {
-    let mut result = HashMap::new();
-
-    // Mirror libbpf's virtual __kconfig externs (`LINUX_*`), see the vendored
-    // handling in `xtask/libbpf/src/libbpf.c`.
-    if let Ok(version_code) = KernelVersion::current().map(KernelVersion::code) {
-        result.insert(
-            "LINUX_KERNEL_VERSION".to_string(),
-            version_code.to_ne_bytes().to_vec(),
-        );
-    }
-
-    result.insert(
-        "LINUX_HAS_BPF_COOKIE".to_string(),
-        u64::from(features.bpf_cookie()).to_ne_bytes().to_vec(),
-    );
-    result.insert(
-        "LINUX_HAS_SYSCALL_WRAPPER".to_string(),
-        u64::from(features.bpf_syscall_wrapper())
-            .to_ne_bytes()
-            .to_vec(),
-    );
-
-    if let Some(raw_config) = raw_config {
-        parse_kconfig_values(raw_config, &mut result)?;
-    }
-
-    Ok(result)
-}
-
-fn parse_kconfig_values(
-    raw_config: &str,
-    result: &mut HashMap<String, Vec<u8>>,
-) -> Result<(), KConfigError> {
-    for line in raw_config.lines() {
-        if !line.starts_with("CONFIG_") {
-            continue;
-        }
-
-        let Some((key, raw_value)) = line.split_once('=') else {
-            return Err(KConfigError::MalformedLine {
-                line: line.to_owned(),
-            });
-        };
-
-        let value = match raw_value {
-            "n" | "y" | "m" => raw_value.as_bytes().to_vec(),
-            _ if raw_value.starts_with('"') => {
-                if raw_value.len() < 2 || !raw_value.ends_with('"') {
-                    return Err(KConfigError::MalformedLine {
-                        line: line.to_owned(),
-                    });
-                }
-
-                let raw_value = &raw_value[1..raw_value.len() - 1];
-                raw_value
-                    .as_bytes()
-                    .iter()
-                    .chain(std::iter::once(&0u8))
-                    .copied()
-                    .collect()
-            }
-            _ => {
-                if let Some(value) = parse_kconfig_numeric(raw_value) {
-                    value.to_vec()
-                } else {
-                    return Err(KConfigError::MalformedLine {
-                        line: line.to_owned(),
-                    });
-                }
-            }
-        };
-
-        result.insert(key.to_string(), value);
-    }
-
-    Ok(())
-}
-
-fn parse_kconfig_numeric(raw_value: &str) -> Option<[u8; 8]> {
-    if raw_value.starts_with('-') {
-        return raw_value.parse::<i64>().ok().map(i64::to_ne_bytes);
-    }
-
-    if let Some(value) = raw_value
-        .strip_prefix("0x")
-        .or_else(|| raw_value.strip_prefix("0X"))
-    {
-        u64::from_str_radix(value, 16).ok().map(u64::to_ne_bytes)
-    } else {
-        raw_value.parse::<u64>().ok().map(u64::to_ne_bytes)
-    }
 }
 
 fn read_kconfig() -> Result<String, KConfigError> {
