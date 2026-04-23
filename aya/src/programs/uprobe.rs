@@ -143,6 +143,7 @@ impl UProbe {
         scope: UProbeScope,
     ) -> Result<UProbeLinkId, ProgramError> {
         let UProbeAttachPoint { location, cookie } = point.into();
+        let target = target.as_ref();
         let (proc_map_pid, perf_event_pid) = match scope {
             UProbeScope::AllProcesses => (None, None),
             // /proc/0/maps does not exist, so use the real pid for ProcMap
@@ -153,8 +154,18 @@ impl UProbe {
                 (Some(pid), Some(pid))
             }
         };
-        let proc_map = proc_map_pid.map(ProcMap::new).transpose()?;
-        let path = resolve_attach_path(target.as_ref(), proc_map.as_ref())?;
+
+        // Keep ProcMap in this scope so resolve_attach_target_basename can return a
+        // path borrowed from it. This preserves the zero-allocation proc
+        // map hit path and keeps the borrow alive until attach uses it.
+        let proc_map;
+        let path = if is_basename_only(target) {
+            proc_map = proc_map_pid.map(ProcMap::new).transpose()?;
+            resolve_attach_target_basename(target, proc_map.as_ref())?
+        } else {
+            target
+        };
+
         let (symbol, offset) = match location {
             UProbeAttachLocation::Symbol(s) => (Some(s), 0),
             UProbeAttachLocation::SymbolOffset(s, offset) => (Some(s), offset),
@@ -202,7 +213,15 @@ impl Probe for UProbe {
     }
 }
 
-fn resolve_attach_path<'a, 'b, 'c, T>(
+// /proc/<pid>/maps entries are matched by basename; a target containing
+// any directory separator can't resolve via proc map, so skip the read.
+fn is_basename_only(target: &Path) -> bool {
+    target.parent().is_none_or(|p| p.as_os_str().is_empty())
+}
+
+// Resolves a bare basename (no directory separators) to a concrete path
+// via /proc/<pid>/maps and ld.so.cache.
+fn resolve_attach_target_basename<'a, 'b, 'c, T>(
     target: &'a Path,
     proc_map: Option<&'b ProcMap<T>>,
 ) -> Result<&'c Path, UProbeError>
@@ -222,7 +241,6 @@ where
                 })
                 .transpose()
         })
-        .or_else(|| target.is_absolute().then(|| Ok(target)))
         .or_else(|| {
             LD_SO_CACHE
                 .as_ref()
@@ -766,7 +784,7 @@ mod tests {
         any(miri, not(target_os = "linux"), target_feature = "crt-static"),
         ignore = "requires dynamic linkage of libc"
     )]
-    fn test_resolve_attach_path() {
+    fn test_resolve_attach_target_basename() {
         // Look up the current process's pid.
         let pid = std::process::id();
         let proc_map = ProcMap::new(pid).expect("failed to get proc map");
@@ -774,7 +792,7 @@ mod tests {
         // Now let's resolve the path to libc. It should exist in the current process's memory map and
         // then in the ld.so.cache.
         assert_matches!(
-            resolve_attach_path("libc".as_ref(), Some(&proc_map)),
+            resolve_attach_target_basename("libc".as_ref(), Some(&proc_map)),
             Ok(path) => {
                 // Make sure we got a path that contains libc.
                 assert_matches!(
@@ -783,17 +801,33 @@ mod tests {
                 );
             }
         );
+    }
 
-        // If we pass an absolute path that doesn't match anything in /proc/<pid>/maps, we should fall
-        // back to the provided path instead of erroring out. Using a synthetic absolute path keeps the
-        // test hermetic.
-        let synthetic_absolute = Path::new("/tmp/.aya-test-resolve-attach-absolute");
-        assert_matches!(
-            resolve_attach_path(synthetic_absolute, Some(&proc_map)),
-            Ok(path) => {
-                assert_eq!(path, synthetic_absolute, "path: {}", path.display());
-            }
-        );
+    #[test]
+    fn basename_only_recognizes_bare_names() {
+        for input in ["libssl.so", "bash", "foo.so.1"] {
+            assert!(
+                is_basename_only(Path::new(input)),
+                "{input} should be a bare basename",
+            );
+        }
+    }
+
+    #[test]
+    fn basename_only_rejects_paths_with_separator() {
+        for input in [
+            "/usr/bin/bash",
+            "/aa",
+            "./bin/foo",
+            "./aa",
+            "subdir/lib.so",
+            "../lib/foo",
+        ] {
+            assert!(
+                !is_basename_only(Path::new(input)),
+                "{input} contains a separator and should not be treated as bare basename",
+            );
+        }
     }
 
     #[test]
