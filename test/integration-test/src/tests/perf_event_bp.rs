@@ -1,4 +1,10 @@
-use std::{collections::HashMap, fs, io::ErrorKind, num::ParseIntError, path::PathBuf};
+use std::{
+    collections::HashMap,
+    fs,
+    io::ErrorKind,
+    num::{NonZeroU32, ParseIntError},
+    path::PathBuf,
+};
 
 use assert_matches::assert_matches;
 use aya::{
@@ -115,10 +121,11 @@ where
     let mut all_processes_one_cpu_scopes = Vec::new();
 
     let pid = std::process::id();
+    let scope_pid = NonZeroU32::new(pid).unwrap();
     for cpu in online_cpus().unwrap() {
         calling_process_scopes.push(PerfEventScope::CallingProcess { cpu: Some(cpu) });
         one_process_scopes.push(PerfEventScope::OneProcess {
-            pid,
+            pid: scope_pid,
             cpu: Some(cpu),
         });
         all_processes_one_cpu_scopes.push(PerfEventScope::AllProcessesOneCpu { cpu });
@@ -126,7 +133,10 @@ where
 
     let scope_groups = &[
         &[PerfEventScope::CallingProcess { cpu: None }][..],
-        &[PerfEventScope::OneProcess { pid, cpu: None }][..],
+        &[PerfEventScope::OneProcess {
+            pid: scope_pid,
+            cpu: None,
+        }][..],
         calling_process_scopes.as_slice(),
         one_process_scopes.as_slice(),
         all_processes_one_cpu_scopes.as_slice(),

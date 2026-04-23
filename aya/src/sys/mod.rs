@@ -35,7 +35,6 @@ pub(crate) enum PerfEventIoctlRequest<'a> {
     SetBpf(BorrowedFd<'a>),
 }
 
-#[cfg_attr(test, expect(dead_code, reason = "test stubs cut above this"))]
 pub(crate) enum Syscall<'a> {
     Ebpf {
         cmd: bpf_cmd,
