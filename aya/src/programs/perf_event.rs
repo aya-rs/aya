@@ -11,7 +11,7 @@ use aya_obj::generated::{
 
 use crate::{
     programs::{
-        ProgramData, ProgramError, ProgramType, impl_try_from_fdlink, impl_try_into_fdlink,
+        Pid, ProgramData, ProgramError, ProgramType, impl_try_from_fdlink, impl_try_into_fdlink,
         links::define_link_wrapper,
         load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
@@ -372,7 +372,7 @@ pub enum PerfEventScope {
     /// one process
     OneProcess {
         /// process id
-        pid: u32,
+        pid: Pid,
         /// cpu id or any cpu if None
         cpu: Option<u32>,
     },
