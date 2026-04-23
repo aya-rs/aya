@@ -143,6 +143,7 @@ impl UProbe {
         scope: UProbeScope,
     ) -> Result<UProbeLinkId, ProgramError> {
         let UProbeAttachPoint { location, cookie } = point.into();
+        let target = target.as_ref();
         let (proc_map_pid, perf_event_pid) = match scope {
             UProbeScope::AllProcesses => (None, None),
             // /proc/0/maps does not exist, so use the real pid for ProcMap
@@ -153,8 +154,21 @@ impl UProbe {
                 (Some(pid), Some(pid))
             }
         };
-        let proc_map = proc_map_pid.map(ProcMap::new).transpose()?;
-        let path = resolve_attach_path(target.as_ref(), proc_map.as_ref())?;
+
+        // Keep ProcMap in this scope so resolve_attach_target_basename can return
+        // a path borrowed from the maps buffer without cloning the matched path.
+        // This keeps the borrow alive until attach uses it.
+        let proc_map;
+        // /proc/<pid>/maps entries are matched by basename, so only bare-basename
+        // targets can benefit from the lookup; paths with a directory separator
+        // are passed through unchanged.
+        let path = if is_basename_only(target) {
+            proc_map = proc_map_pid.map(ProcMap::new).transpose()?;
+            resolve_attach_target_basename(target, proc_map.as_ref())?
+        } else {
+            target
+        };
+
         let (symbol, offset) = match location {
             UProbeAttachLocation::Symbol(s) => (Some(s), 0),
             UProbeAttachLocation::SymbolOffset(s, offset) => (Some(s), offset),
@@ -202,7 +216,13 @@ impl Probe for UProbe {
     }
 }
 
-fn resolve_attach_path<'a, 'b, 'c, T>(
+fn is_basename_only(target: &Path) -> bool {
+    target.components().count() == 1
+}
+
+// Resolves a bare basename (no directory separators) to a concrete path
+// via /proc/<pid>/maps and ld.so.cache.
+fn resolve_attach_target_basename<'a, 'b, 'c, T>(
     target: &'a Path,
     proc_map: Option<&'b ProcMap<T>>,
 ) -> Result<&'c Path, UProbeError>
@@ -222,7 +242,6 @@ where
                 })
                 .transpose()
         })
-        .or_else(|| target.is_absolute().then(|| Ok(target)))
         .or_else(|| {
             LD_SO_CACHE
                 .as_ref()
@@ -766,7 +785,7 @@ mod tests {
         any(miri, not(target_os = "linux"), target_feature = "crt-static"),
         ignore = "requires dynamic linkage of libc"
     )]
-    fn test_resolve_attach_path() {
+    fn test_resolve_attach_target_basename() {
         // Look up the current process's pid.
         let pid = std::process::id();
         let proc_map = ProcMap::new(pid).expect("failed to get proc map");
@@ -774,7 +793,7 @@ mod tests {
         // Now let's resolve the path to libc. It should exist in the current process's memory map and
         // then in the ld.so.cache.
         assert_matches!(
-            resolve_attach_path("libc".as_ref(), Some(&proc_map)),
+            resolve_attach_target_basename("libc".as_ref(), Some(&proc_map)),
             Ok(path) => {
                 // Make sure we got a path that contains libc.
                 assert_matches!(
@@ -783,17 +802,19 @@ mod tests {
                 );
             }
         );
+    }
 
-        // If we pass an absolute path that doesn't match anything in /proc/<pid>/maps, we should fall
-        // back to the provided path instead of erroring out. Using a synthetic absolute path keeps the
-        // test hermetic.
-        let synthetic_absolute = Path::new("/tmp/.aya-test-resolve-attach-absolute");
-        assert_matches!(
-            resolve_attach_path(synthetic_absolute, Some(&proc_map)),
-            Ok(path) => {
-                assert_eq!(path, synthetic_absolute, "path: {}", path.display());
-            }
-        );
+    #[test_case("libssl.so", true; "shared_object_basename")]
+    #[test_case("bash", true; "binary_basename")]
+    #[test_case("foo.so.1", true; "versioned_shared_object_basename")]
+    #[test_case("/usr/bin/bash", false; "absolute_path")]
+    #[test_case("/aa", false; "root_absolute_path")]
+    #[test_case("./bin/foo", false; "current_dir_relative_path")]
+    #[test_case("./aa", false; "current_dir_relative_file")]
+    #[test_case("subdir/lib.so", false; "subdir_relative_path")]
+    #[test_case("../lib/foo", false; "parent_dir_relative_path")]
+    fn test_is_basename_only(input: &str, expected: bool) {
+        assert_eq!(is_basename_only(Path::new(input)), expected);
     }
 
     #[test]
