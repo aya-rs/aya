@@ -612,10 +612,7 @@ pub(crate) fn bpf_prog_test_run(
         ctx_in,
         ctx_out,
         repeat,
-        attrs: TestRunAttrs {
-            batch_size,
-            flags,
-        },
+        attrs: TestRunAttrs { batch_size, flags },
     } = opts;
 
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
