@@ -320,12 +320,6 @@ fn read_kconfig() -> Result<String, KConfigError> {
     Err(KConfigError::NotFound { paths })
 }
 
-#[cfg(test)]
-fn kernel_release() -> Option<OsString> {
-    Some(OsString::from("unknown"))
-}
-
-#[cfg(not(test))]
 fn kernel_release() -> Option<OsString> {
     use std::{ffi::CStr, os::unix::ffi::OsStringExt as _};
 
