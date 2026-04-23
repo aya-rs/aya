@@ -1,6 +1,6 @@
 //! Perf event programs.
 
-use std::os::fd::AsFd as _;
+use std::{num::NonZeroU32, os::fd::AsFd as _};
 
 use aya_obj::generated::{
     HW_BREAKPOINT_LEN_1, HW_BREAKPOINT_LEN_2, HW_BREAKPOINT_LEN_4, HW_BREAKPOINT_LEN_8,
@@ -372,7 +372,7 @@ pub enum PerfEventScope {
     /// one process
     OneProcess {
         /// process id
-        pid: u32,
+        pid: NonZeroU32,
         /// cpu id or any cpu if None
         cpu: Option<u32>,
     },
