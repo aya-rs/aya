@@ -1096,7 +1096,10 @@ impl Object {
         }
     }
 
-    fn prepare_kconfig_value(
+    // Validate one __kconfig extern against its declared BTF type and materialize
+    // the bytes that should be written for it into the synthetic .kconfig section.
+    // Returns the extern's required alignment together with its final byte value.
+    fn materialize_kconfig_extern(
         obj_btf: &Btf,
         var: &Var,
         symbol_name: &str,
@@ -1330,7 +1333,7 @@ impl Object {
                                 symbol_name: name.clone(),
                             }
                         })?;
-                        let (type_align, data) = Self::prepare_kconfig_value(
+                        let (type_align, data) = Self::materialize_kconfig_extern(
                             obj_btf,
                             &var,
                             &name,
