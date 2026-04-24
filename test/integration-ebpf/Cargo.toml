@@ -151,3 +151,7 @@ path = "src/prog_array.rs"
 [[bin]]
 name = "stack_trace"
 path = "src/stack_trace.rs"
+
+[[bin]]
+name = "stack_trace_lsm"
+path = "src/stack_trace_lsm.rs"
