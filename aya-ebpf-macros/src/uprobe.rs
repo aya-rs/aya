@@ -29,6 +29,7 @@ pub(crate) struct UProbe {
     offset: Option<u64>,
     item: ItemFn,
     sleepable: bool,
+    multi: bool,
 }
 
 impl UProbe {
@@ -49,6 +50,7 @@ impl UProbe {
             .transpose()
             .map_err(|err| span.error(format!("failed to parse `offset` argument: {err}")))?;
         let sleepable = args.pop_bool("sleepable");
+        let multi = args.pop_bool("multi");
         args.into_error()?;
         Ok(Self {
             kind,
@@ -57,6 +59,7 @@ impl UProbe {
             offset,
             item,
             sleepable,
+            multi,
         })
     }
 
@@ -68,6 +71,7 @@ impl UProbe {
             offset,
             item,
             sleepable,
+            multi,
         } = self;
         let ItemFn {
             attrs: _,
@@ -76,6 +80,12 @@ impl UProbe {
             block: _,
         } = item;
         let mut prefix = kind.to_string();
+        // `.multi` must come before `.s` to match libbpf's SEC convention,
+        // e.g. `uprobe.multi.s` rather than `uprobe.s.multi`.
+        // https://docs.kernel.org/bpf/libbpf/program_types.html
+        if *multi {
+            prefix.push_str(".multi");
+        }
         if *sleepable {
             prefix.push_str(".s");
         }
@@ -116,14 +126,49 @@ impl UProbe {
 #[cfg(test)]
 mod tests {
     use syn::parse_quote;
+    use test_case::test_case;
 
     use super::*;
 
-    #[test]
-    fn uprobe() {
+    #[test_case(UProbeKind::UProbe, "", "uprobe"; "uprobe")]
+    #[test_case(UProbeKind::UProbe, "sleepable", "uprobe.s"; "uprobe_sleepable")]
+    #[test_case(
+        UProbeKind::UProbe,
+        r#"path = "/self/proc/exe", function = "trigger_uprobe""#,
+        "uprobe/self/proc/exe:trigger_uprobe";
+        "uprobe_with_path"
+    )]
+    #[test_case(
+        UProbeKind::UProbe,
+        r#"path = "/self/proc/exe", function = "foo", offset = "123""#,
+        "uprobe/self/proc/exe:foo+123";
+        "uprobe_with_path_and_offset"
+    )]
+    #[test_case(UProbeKind::URetProbe, "", "uretprobe"; "uretprobe")]
+    #[test_case(UProbeKind::UProbe, "multi", "uprobe.multi"; "uprobe_multi")]
+    #[test_case(
+        UProbeKind::UProbe,
+        "multi, sleepable",
+        "uprobe.multi.s";
+        "uprobe_multi_sleepable"
+    )]
+    #[test_case(
+        UProbeKind::UProbe,
+        r#"multi, path = "/self/proc/exe", function = "trigger_uprobe""#,
+        "uprobe.multi/self/proc/exe:trigger_uprobe";
+        "uprobe_multi_with_path"
+    )]
+    #[test_case(UProbeKind::URetProbe, "multi", "uretprobe.multi"; "uretprobe_multi")]
+    #[test_case(
+        UProbeKind::URetProbe,
+        "multi, sleepable",
+        "uretprobe.multi.s";
+        "uretprobe_multi_sleepable"
+    )]
+    fn uprobe(kind: UProbeKind, attrs: &str, section_name: &str) {
         let uprobe = UProbe::parse(
-            UProbeKind::UProbe,
-            parse_quote! {},
+            kind,
+            attrs.parse().unwrap(),
             parse_quote! {
                 fn foo(ctx: ProbeContext) -> u32 {
                     0
@@ -131,138 +176,19 @@ mod tests {
             },
         )
         .unwrap();
+
+        let probe_type = match kind {
+            UProbeKind::UProbe => quote! { ProbeContext },
+            UProbeKind::URetProbe => quote! { RetProbeContext },
+        };
+
         assert_eq!(
             uprobe.expand().unwrap().to_string(),
             quote! {
                 #[unsafe(no_mangle)]
-                #[unsafe(link_section = "uprobe")]
+                #[unsafe(link_section = #section_name)]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
-                    return 0;
-
-                    fn foo(ctx: ProbeContext) -> u32 {
-                        0
-                    }
-                }
-            }
-            .to_string()
-        );
-    }
-
-    #[test]
-    fn uprobe_sleepable() {
-        let uprobe = UProbe::parse(
-            UProbeKind::UProbe,
-            parse_quote! {sleepable},
-            parse_quote! {
-                fn foo(ctx: ProbeContext) -> u32 {
-                    0
-                }
-            },
-        )
-        .unwrap();
-        assert_eq!(
-            uprobe.expand().unwrap().to_string(),
-            quote! {
-                #[unsafe(no_mangle)]
-                #[unsafe(link_section = "uprobe.s")]
-                fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
-                    return 0;
-
-                    fn foo(ctx: ProbeContext) -> u32 {
-                        0
-                    }
-                }
-            }
-            .to_string()
-        );
-    }
-
-    #[test]
-    fn uprobe_with_path() {
-        let uprobe = UProbe::parse(
-            UProbeKind::UProbe,
-            parse_quote! {
-                path = "/self/proc/exe",
-                function = "trigger_uprobe"
-            },
-            parse_quote! {
-                fn foo(ctx: ProbeContext) -> u32 {
-                    0
-                }
-            },
-        )
-        .unwrap();
-        assert_eq!(
-            uprobe.expand().unwrap().to_string(),
-            quote! {
-                #[unsafe(no_mangle)]
-                #[unsafe(link_section = "uprobe/self/proc/exe:trigger_uprobe")]
-                fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
-                    return 0;
-
-                    fn foo(ctx: ProbeContext) -> u32 {
-                        0
-                    }
-                }
-            }
-            .to_string()
-        );
-    }
-
-    #[test]
-    fn test_uprobe_with_path_and_offset() {
-        let uprobe = UProbe::parse(
-            UProbeKind::UProbe,
-            parse_quote! {
-                path = "/self/proc/exe", function = "foo", offset = "123"
-            },
-            parse_quote! {
-                fn foo(ctx: ProbeContext) -> u32 {
-                    0
-                }
-            },
-        )
-        .unwrap();
-        assert_eq!(
-            uprobe.expand().unwrap().to_string(),
-            quote! {
-                #[unsafe(no_mangle)]
-                #[unsafe(link_section = "uprobe/self/proc/exe:foo+123")]
-                fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
-                    return 0;
-
-                    fn foo(ctx: ProbeContext) -> u32 {
-                        0
-                    }
-                }
-            }
-            .to_string()
-        );
-    }
-
-    #[test]
-    fn test_uretprobe() {
-        let uprobe = UProbe::parse(
-            UProbeKind::URetProbe,
-            parse_quote! {},
-            parse_quote! {
-                fn foo(ctx: ProbeContext) -> u32 {
-                    0
-                }
-            },
-        )
-        .unwrap();
-        assert_eq!(
-            uprobe.expand().unwrap().to_string(),
-            quote! {
-                #[unsafe(no_mangle)]
-                #[unsafe(link_section = "uretprobe")]
-                fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_ebpf::programs::RetProbeContext::new(ctx));
+                    let _ = foo(::aya_ebpf::programs::#probe_type::new(ctx));
                     return 0;
 
                     fn foo(ctx: ProbeContext) -> u32 {
