@@ -822,6 +822,11 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 //
                 // Heed the advice and boot with noapic. We don't know why this happens.
                 kernel_args.push(" noapic");
+                // Activate BPF LSM so `#[lsm]` programs actually run their hooks.
+                // Without this, `CONFIG_BPF_LSM=y` kernels still leave `bpf`
+                // out of `/sys/kernel/security/lsm` and LSM tests exercise
+                // only load/attach, missing runtime regressions.
+                kernel_args.push(" lsm=bpf");
                 qemu.args(["-no-reboot", "-nographic", "-m", "1024M", "-smp", "2"])
                     .arg("-append")
                     .arg(kernel_args)
