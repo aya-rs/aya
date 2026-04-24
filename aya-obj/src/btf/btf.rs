@@ -1008,7 +1008,9 @@ impl Object {
         })
     }
 
-    fn adjust_kconfig_value(value: &[u8], type_size: usize, endianness: Endianness) -> Vec<u8> {
+    // Pad or truncate numeric kconfig bytes to the target width. When shrinking
+    // from 8 bytes, keep the correct half for the object endianness.
+    fn resize_kconfig_value(value: &[u8], type_size: usize, endianness: Endianness) -> Vec<u8> {
         if value.len() == type_size {
             return value.to_vec();
         }
@@ -1172,7 +1174,7 @@ impl Object {
                         symbol_name: symbol_name.into(),
                     });
                 }
-                Self::adjust_kconfig_value(data, type_size, endianness)
+                Self::resize_kconfig_value(data, type_size, endianness)
             }
             KConfigDeclaredType::Char { signed } => {
                 if let Some(value) = tristate_marker {
@@ -1183,7 +1185,7 @@ impl Object {
                         symbol_name: symbol_name.into(),
                     });
                 }
-                Self::adjust_kconfig_value(data, type_size, endianness)
+                Self::resize_kconfig_value(data, type_size, endianness)
             }
             KConfigDeclaredType::Tristate => {
                 if let Some(value) = tristate_marker {
@@ -1216,7 +1218,7 @@ impl Object {
                         symbol_name: symbol_name.into(),
                     });
                 }
-                Self::adjust_kconfig_value(data, type_size, endianness)
+                Self::resize_kconfig_value(data, type_size, endianness)
             }
             KConfigDeclaredType::SignedInt => {
                 if tristate_marker.is_some() {
@@ -1229,7 +1231,7 @@ impl Object {
                         symbol_name: symbol_name.into(),
                     });
                 }
-                Self::adjust_kconfig_value(data, type_size, endianness)
+                Self::resize_kconfig_value(data, type_size, endianness)
             }
             KConfigDeclaredType::UnsignedInt => {
                 if tristate_marker.is_some() {
@@ -1242,7 +1244,7 @@ impl Object {
                         symbol_name: symbol_name.into(),
                     });
                 }
-                Self::adjust_kconfig_value(data, type_size, endianness)
+                Self::resize_kconfig_value(data, type_size, endianness)
             }
         };
 
