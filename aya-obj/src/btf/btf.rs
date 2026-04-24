@@ -1086,10 +1086,6 @@ impl Object {
         }
     }
 
-    fn kconfig_tristate_marker(value: &[u8]) -> Option<u8> {
-        matches!(value, [b'n' | b'y' | b'm']).then_some(value[0])
-    }
-
     fn prepare_kconfig_value(
         obj_btf: &Btf,
         var: &Var,
@@ -1132,7 +1128,7 @@ impl Object {
             });
         };
 
-        let tristate_marker = Self::kconfig_tristate_marker(data);
+        let tristate_marker = matches!(data, [b'n' | b'y' | b'm']).then_some(data[0]);
         let data = match declared_type {
             KConfigDeclaredType::CharArray => {
                 if tristate_marker.is_some() {
