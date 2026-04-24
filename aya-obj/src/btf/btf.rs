@@ -1080,7 +1080,11 @@ impl Object {
             }
             _ => false,
         };
-        let tristate_marker = matches!(data.as_slice(), [b'n' | b'y' | b'm']).then_some(data[0]);
+        let tristate_marker = if matches!(data.as_slice(), [b'n' | b'y' | b'm']) {
+            Some(data[0])
+        } else {
+            None
+        };
 
         let data = match resolved_type {
             BtfType::Array(Array { array, .. }) => {
