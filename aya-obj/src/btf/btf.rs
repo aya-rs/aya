@@ -297,6 +297,150 @@ fn add_type(header: &mut btf_header, types: &mut BtfTypes, btf_type: BtfType) ->
     type_id as u32
 }
 
+// Pad or truncate numeric bytes to the target width. When shrinking from 8 bytes,
+// keep the correct half for the object endianness.
+fn resize_numeric_value(value: &[u8], type_size: usize, endianness: Endianness) -> Vec<u8> {
+    if value.len() == type_size {
+        return value.to_vec();
+    }
+
+    if value.len() == size_of::<u64>() && type_size <= size_of::<u64>() {
+        let start = match endianness {
+            Endianness::Little => 0,
+            Endianness::Big => value.len() - type_size,
+        };
+        return value[start..start + type_size].to_vec();
+    }
+
+    if value.len() < type_size {
+        let mut padded = vec![0u8; type_size];
+        match endianness {
+            Endianness::Little => {
+                padded[..value.len()].copy_from_slice(value);
+            }
+            Endianness::Big => {
+                let start = type_size.saturating_sub(value.len());
+                padded[start..start + value.len()].copy_from_slice(value);
+            }
+        }
+        return padded;
+    }
+
+    value[..type_size].to_vec()
+}
+
+fn scalar_value_fits(value: &[u8], type_size: usize, signed: bool, endianness: Endianness) -> bool {
+    if value.len() <= type_size {
+        return true;
+    }
+
+    let truncated = match endianness {
+        Endianness::Little => &value[type_size..],
+        Endianness::Big => &value[..value.len() - type_size],
+    };
+
+    if !signed {
+        return truncated.iter().all(|byte| *byte == 0);
+    }
+
+    let sign_byte = match endianness {
+        Endianness::Little => value[type_size - 1],
+        Endianness::Big => value[value.len() - type_size],
+    };
+    let sign_extension = if sign_byte & 0x80 != 0 { 0xff } else { 0x00 };
+    truncated.iter().all(|byte| *byte == sign_extension)
+}
+
+fn scalar_value_as_u64(value: &[u8], endianness: Endianness) -> Option<u64> {
+    if value.len() > size_of::<u64>() {
+        return None;
+    }
+
+    match endianness {
+        Endianness::Little => Some(value.iter().enumerate().fold(0u64, |acc, (index, byte)| {
+            acc | (u64::from(*byte) << (index * 8))
+        })),
+        Endianness::Big => Some(
+            value
+                .iter()
+                .fold(0u64, |acc, byte| (acc << 8) | u64::from(*byte)),
+        ),
+    }
+}
+
+// Clone the modifier chain above a resolved leaf type so one __kconfig VAR can
+// point at a per-symbol replacement without mutating a shared BTF type.
+fn clone_type_chain_with_replacement(
+    obj_btf: &mut Btf,
+    type_id: u32,
+    resolved_type_id: u32,
+    replacement_type_id: u32,
+    symbol_name: &str,
+) -> Result<u32, BtfError> {
+    if type_id == resolved_type_id {
+        return Ok(replacement_type_id);
+    }
+
+    let new_type = match obj_btf.type_by_id(type_id)?.clone() {
+        BtfType::Const(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::Const(ty)
+        }
+        BtfType::Volatile(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::Volatile(ty)
+        }
+        BtfType::Restrict(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::Restrict(ty)
+        }
+        BtfType::Typedef(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::Typedef(ty)
+        }
+        BtfType::TypeTag(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::TypeTag(ty)
+        }
+        _ => {
+            return Err(BtfError::InvalidExternalSymbol {
+                symbol_name: symbol_name.into(),
+            });
+        }
+    };
+
+    Ok(obj_btf.add_type(new_type))
+}
 impl Btf {
     /// Creates a new empty instance with its header initialized
     pub fn new() -> Self {
@@ -888,214 +1032,7 @@ impl Default for Btf {
     }
 }
 
-enum KConfigDeclaredType {
-    Bool,
-    Char { signed: bool },
-    SignedInt,
-    UnsignedInt,
-    Tristate,
-    CharArray,
-}
-
 impl Object {
-    // Clone the modifier chain above a resolved leaf type so one __kconfig VAR can
-    // point at a per-symbol replacement without mutating a shared BTF type.
-    fn clone_kconfig_type_chain_with_replacement(
-        obj_btf: &mut Btf,
-        type_id: u32,
-        resolved_type_id: u32,
-        replacement_type_id: u32,
-        symbol_name: &str,
-    ) -> Result<u32, BtfError> {
-        if type_id == resolved_type_id {
-            return Ok(replacement_type_id);
-        }
-
-        let new_type = match obj_btf.type_by_id(type_id)?.clone() {
-            BtfType::Const(mut ty) => {
-                ty.btf_type = Self::clone_kconfig_type_chain_with_replacement(
-                    obj_btf,
-                    ty.btf_type,
-                    resolved_type_id,
-                    replacement_type_id,
-                    symbol_name,
-                )?;
-                BtfType::Const(ty)
-            }
-            BtfType::Volatile(mut ty) => {
-                ty.btf_type = Self::clone_kconfig_type_chain_with_replacement(
-                    obj_btf,
-                    ty.btf_type,
-                    resolved_type_id,
-                    replacement_type_id,
-                    symbol_name,
-                )?;
-                BtfType::Volatile(ty)
-            }
-            BtfType::Restrict(mut ty) => {
-                ty.btf_type = Self::clone_kconfig_type_chain_with_replacement(
-                    obj_btf,
-                    ty.btf_type,
-                    resolved_type_id,
-                    replacement_type_id,
-                    symbol_name,
-                )?;
-                BtfType::Restrict(ty)
-            }
-            BtfType::Typedef(mut ty) => {
-                ty.btf_type = Self::clone_kconfig_type_chain_with_replacement(
-                    obj_btf,
-                    ty.btf_type,
-                    resolved_type_id,
-                    replacement_type_id,
-                    symbol_name,
-                )?;
-                BtfType::Typedef(ty)
-            }
-            BtfType::TypeTag(mut ty) => {
-                ty.btf_type = Self::clone_kconfig_type_chain_with_replacement(
-                    obj_btf,
-                    ty.btf_type,
-                    resolved_type_id,
-                    replacement_type_id,
-                    symbol_name,
-                )?;
-                BtfType::TypeTag(ty)
-            }
-            _ => {
-                return Err(BtfError::InvalidExternalSymbol {
-                    symbol_name: symbol_name.into(),
-                });
-            }
-        };
-
-        Ok(obj_btf.add_type(new_type))
-    }
-
-    fn classify_kconfig_type(
-        obj_btf: &Btf,
-        resolved_type: &BtfType,
-    ) -> Result<Option<KConfigDeclaredType>, BtfError> {
-        Ok(match resolved_type {
-            BtfType::Int(int) if int.encoding() == IntEncoding::Bool => {
-                (int.size == 1).then_some(KConfigDeclaredType::Bool)
-            }
-            BtfType::Int(int) if int.size == 1 => Some(KConfigDeclaredType::Char {
-                signed: int.encoding() == IntEncoding::Signed,
-            }),
-            BtfType::Int(int)
-                if int.encoding() == IntEncoding::Signed && matches!(int.size, 2 | 4 | 8) =>
-            {
-                Some(KConfigDeclaredType::SignedInt)
-            }
-            BtfType::Int(int)
-                if int.encoding() == IntEncoding::None && matches!(int.size, 2 | 4 | 8) =>
-            {
-                Some(KConfigDeclaredType::UnsignedInt)
-            }
-            BtfType::Enum(enum_ty)
-                if enum_ty.size == 4
-                    && obj_btf.string_at(enum_ty.name_offset)?.as_ref() == "libbpf_tristate" =>
-            {
-                Some(KConfigDeclaredType::Tristate)
-            }
-            BtfType::Enum64(enum_ty)
-                if enum_ty.size == 8
-                    && obj_btf.string_at(enum_ty.name_offset)?.as_ref() == "libbpf_tristate" =>
-            {
-                Some(KConfigDeclaredType::Tristate)
-            }
-            BtfType::Array(Array { array, .. }) => {
-                let element_type = obj_btf.resolve_type(array.element_type)?;
-                match obj_btf.type_by_id(element_type)? {
-                    BtfType::Int(int) if int.size == 1 && int.encoding() != IntEncoding::Bool => {
-                        Some(KConfigDeclaredType::CharArray)
-                    }
-                    _ => None,
-                }
-            }
-            _ => None,
-        })
-    }
-
-    // Pad or truncate numeric kconfig bytes to the target width. When shrinking
-    // from 8 bytes, keep the correct half for the object endianness.
-    fn resize_kconfig_value(value: &[u8], type_size: usize, endianness: Endianness) -> Vec<u8> {
-        if value.len() == type_size {
-            return value.to_vec();
-        }
-
-        if value.len() == size_of::<u64>() && type_size <= size_of::<u64>() {
-            let start = match endianness {
-                Endianness::Little => 0,
-                Endianness::Big => value.len() - type_size,
-            };
-            return value[start..start + type_size].to_vec();
-        }
-
-        if value.len() < type_size {
-            let mut padded = vec![0u8; type_size];
-            match endianness {
-                Endianness::Little => {
-                    padded[..value.len()].copy_from_slice(value);
-                }
-                Endianness::Big => {
-                    let start = type_size.saturating_sub(value.len());
-                    padded[start..start + value.len()].copy_from_slice(value);
-                }
-            }
-            return padded;
-        }
-
-        value[..type_size].to_vec()
-    }
-
-    fn kconfig_scalar_value_fits(
-        value: &[u8],
-        type_size: usize,
-        signed: bool,
-        endianness: Endianness,
-    ) -> bool {
-        if value.len() <= type_size {
-            return true;
-        }
-
-        let truncated = match endianness {
-            Endianness::Little => &value[type_size..],
-            Endianness::Big => &value[..value.len() - type_size],
-        };
-
-        if !signed {
-            return truncated.iter().all(|byte| *byte == 0);
-        }
-
-        let sign_byte = match endianness {
-            Endianness::Little => value[type_size - 1],
-            Endianness::Big => value[value.len() - type_size],
-        };
-        let sign_extension = if sign_byte & 0x80 != 0 { 0xff } else { 0x00 };
-        truncated.iter().all(|byte| *byte == sign_extension)
-    }
-
-    fn kconfig_scalar_value_as_u64(value: &[u8], endianness: Endianness) -> Option<u64> {
-        if value.len() > size_of::<u64>() {
-            return None;
-        }
-
-        match endianness {
-            Endianness::Little => {
-                Some(value.iter().enumerate().fold(0u64, |acc, (index, byte)| {
-                    acc | (u64::from(*byte) << (index * 8))
-                }))
-            }
-            Endianness::Big => Some(
-                value
-                    .iter()
-                    .fold(0u64, |acc, byte| (acc << 8) | u64::from(*byte)),
-            ),
-        }
-    }
-
     // Validate one __kconfig extern against its declared BTF type and materialize
     // the bytes that should be written for it into the synthetic .kconfig section.
     // Returns the extern's required alignment together with its final byte value.
@@ -1116,53 +1053,72 @@ impl Object {
                 "LINUX_KERNEL_VERSION" | "LINUX_HAS_BPF_COOKIE" | "LINUX_HAS_SYSCALL_WRAPPER"
             )
             || (symbol_is_weak && symbol_name.starts_with("LINUX_"));
-        let Some(declared_type) = supported_symbol_name
-            .then(|| Self::classify_kconfig_type(obj_btf, resolved_type))
-            .transpose()?
-            .flatten()
-        else {
+        if !supported_symbol_name {
             return Err(BtfError::InvalidExternalSymbol {
                 symbol_name: symbol_name.into(),
             });
+        }
+
+        let mut data = match external_value {
+            Some(data) => data.to_vec(),
+            None if symbol_is_weak => vec![0; type_size],
+            None => {
+                return Err(BtfError::ExternalSymbolNotFound {
+                    symbol_name: symbol_name.into(),
+                });
+            }
         };
 
-        let weak_fallback =
-            (external_value.is_none() && symbol_is_weak).then(|| match declared_type {
-                KConfigDeclaredType::CharArray if type_size == 0 => vec![0],
-                _ => vec![0; type_size],
-            });
-
-        // Weak kconfig externs are optional for CONFIG_* and LINUX_*
-        // symbols; unknown weak LINUX_* ones default to zero for
-        // forward compatibility with newer libbpf headers.
-        let Some(data) = external_value.or(weak_fallback.as_deref()) else {
-            return Err(BtfError::ExternalSymbolNotFound {
-                symbol_name: symbol_name.into(),
-            });
+        let is_libbpf_tristate = match resolved_type {
+            BtfType::Enum(enum_ty) => {
+                enum_ty.size == 4
+                    && obj_btf.string_at(enum_ty.name_offset)?.as_ref() == "libbpf_tristate"
+            }
+            BtfType::Enum64(enum_ty) => {
+                enum_ty.size == 8
+                    && obj_btf.string_at(enum_ty.name_offset)?.as_ref() == "libbpf_tristate"
+            }
+            _ => false,
         };
+        let tristate_marker = matches!(data.as_slice(), [b'n' | b'y' | b'm']).then_some(data[0]);
 
-        let tristate_marker = matches!(data, [b'n' | b'y' | b'm']).then_some(data[0]);
-        let data = match declared_type {
-            KConfigDeclaredType::CharArray => {
+        let data = match resolved_type {
+            BtfType::Array(Array { array, .. }) => {
+                let element_type = obj_btf.resolve_type(array.element_type)?;
+                let BtfType::Int(int) = obj_btf.type_by_id(element_type)? else {
+                    return Err(BtfError::InvalidExternalSymbol {
+                        symbol_name: symbol_name.into(),
+                    });
+                };
+                if int.size != 1 || int.encoding() == IntEncoding::Bool {
+                    return Err(BtfError::InvalidExternalSymbol {
+                        symbol_name: symbol_name.into(),
+                    });
+                }
+
+                if external_value.is_none() && symbol_is_weak && type_size == 0 {
+                    data.push(0);
+                }
+
                 if tristate_marker.is_some() {
                     return Err(BtfError::ExternalSymbolValueOutOfRange {
                         symbol_name: symbol_name.into(),
                     });
                 }
-                let mut value = data.to_vec();
+
                 if type_size > 0 {
-                    if value.len() < type_size {
-                        value.resize(type_size, 0);
-                    } else if value.len() > type_size {
-                        value.truncate(type_size);
+                    if data.len() < type_size {
+                        data.resize(type_size, 0);
+                    } else if data.len() > type_size {
+                        data.truncate(type_size);
                     }
                 }
-                if !value.is_empty() {
-                    *value.last_mut().unwrap() = 0;
+                if !data.is_empty() {
+                    *data.last_mut().unwrap() = 0;
                 }
-                value
+                data
             }
-            KConfigDeclaredType::Bool => {
+            BtfType::Int(int) if int.encoding() == IntEncoding::Bool && int.size == 1 => {
                 if let Some(value) = tristate_marker {
                     if value == b'm' {
                         return Err(BtfError::ExternalSymbolValueOutOfRange {
@@ -1171,32 +1127,43 @@ impl Object {
                     }
                     return Ok((type_align, vec![u8::from(value == b'y')]));
                 }
-                if !Self::kconfig_scalar_value_fits(data, type_size, false, endianness) {
+                if !scalar_value_fits(&data, type_size, false, endianness) {
                     return Err(BtfError::ExternalSymbolValueOutOfRange {
                         symbol_name: symbol_name.into(),
                     });
                 }
-                if Self::kconfig_scalar_value_as_u64(data, endianness)
-                    .is_some_and(|value| value > 1)
-                {
+                if scalar_value_as_u64(&data, endianness).is_some_and(|value| value > 1) {
                     return Err(BtfError::ExternalSymbolValueOutOfRange {
                         symbol_name: symbol_name.into(),
                     });
                 }
-                Self::resize_kconfig_value(data, type_size, endianness)
+                resize_numeric_value(&data, type_size, endianness)
             }
-            KConfigDeclaredType::Char { signed } => {
+            BtfType::Int(int)
+                if matches!(int.encoding(), IntEncoding::Signed | IntEncoding::None)
+                    && matches!(int.size, 1 | 2 | 4 | 8) =>
+            {
                 if let Some(value) = tristate_marker {
-                    return Ok((type_align, vec![value]));
-                }
-                if !Self::kconfig_scalar_value_fits(data, type_size, signed, endianness) {
+                    if int.size == 1 {
+                        return Ok((type_align, vec![value]));
+                    }
                     return Err(BtfError::ExternalSymbolValueOutOfRange {
                         symbol_name: symbol_name.into(),
                     });
                 }
-                Self::resize_kconfig_value(data, type_size, endianness)
+                if !scalar_value_fits(
+                    &data,
+                    type_size,
+                    int.encoding() == IntEncoding::Signed,
+                    endianness,
+                ) {
+                    return Err(BtfError::ExternalSymbolValueOutOfRange {
+                        symbol_name: symbol_name.into(),
+                    });
+                }
+                resize_numeric_value(&data, type_size, endianness)
             }
-            KConfigDeclaredType::Tristate => {
+            _ if is_libbpf_tristate => {
                 if let Some(value) = tristate_marker {
                     let value = match value {
                         b'n' => 0,
@@ -1213,47 +1180,25 @@ impl Object {
                         Endianness::Little => data[0] = value,
                         Endianness::Big => data[type_size - 1] = value,
                     }
-                    return Ok((type_align, data));
+                    data
+                } else {
+                    if !scalar_value_fits(&data, type_size, false, endianness) {
+                        return Err(BtfError::ExternalSymbolValueOutOfRange {
+                            symbol_name: symbol_name.into(),
+                        });
+                    }
+                    if scalar_value_as_u64(&data, endianness).is_some_and(|value| value > 2) {
+                        return Err(BtfError::ExternalSymbolValueOutOfRange {
+                            symbol_name: symbol_name.into(),
+                        });
+                    }
+                    resize_numeric_value(&data, type_size, endianness)
                 }
-                if !Self::kconfig_scalar_value_fits(data, type_size, false, endianness) {
-                    return Err(BtfError::ExternalSymbolValueOutOfRange {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-                if Self::kconfig_scalar_value_as_u64(data, endianness)
-                    .is_some_and(|value| value > 2)
-                {
-                    return Err(BtfError::ExternalSymbolValueOutOfRange {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-                Self::resize_kconfig_value(data, type_size, endianness)
             }
-            KConfigDeclaredType::SignedInt => {
-                if tristate_marker.is_some() {
-                    return Err(BtfError::ExternalSymbolValueOutOfRange {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-                if !Self::kconfig_scalar_value_fits(data, type_size, true, endianness) {
-                    return Err(BtfError::ExternalSymbolValueOutOfRange {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-                Self::resize_kconfig_value(data, type_size, endianness)
-            }
-            KConfigDeclaredType::UnsignedInt => {
-                if tristate_marker.is_some() {
-                    return Err(BtfError::ExternalSymbolValueOutOfRange {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-                if !Self::kconfig_scalar_value_fits(data, type_size, false, endianness) {
-                    return Err(BtfError::ExternalSymbolValueOutOfRange {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-                Self::resize_kconfig_value(data, type_size, endianness)
+            _ => {
+                return Err(BtfError::InvalidExternalSymbol {
+                    symbol_name: symbol_name.into(),
+                });
             }
         };
 
@@ -1363,7 +1308,7 @@ impl Object {
                         array_type.array.len = data.len() as u32;
                         let materialized_array_type_id =
                             obj_btf.add_type(BtfType::Array(array_type));
-                        let materialized_type_id = Self::clone_kconfig_type_chain_with_replacement(
+                        let materialized_type_id = clone_type_chain_with_replacement(
                             obj_btf,
                             var.btf_type,
                             resolved_type_id,
