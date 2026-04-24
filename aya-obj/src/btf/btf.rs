@@ -1260,7 +1260,10 @@ impl Object {
         Ok((type_align, data))
     }
 
-    fn prepare_kconfig_section_internal(
+    // Build the synthetic .kconfig section by materializing each supported
+    // __kconfig extern, assigning its aligned offset, and updating any per-symbol
+    // BTF state needed to keep the section layout and type metadata consistent.
+    fn build_kconfig_section(
         &mut self,
         externs: &HashMap<String, Vec<u8>>,
     ) -> Result<Option<(SectionIndex, Vec<u8>)>, BtfError> {
@@ -1415,7 +1418,7 @@ impl Object {
         externs: &HashMap<String, Vec<u8>>,
     ) -> Result<(), BtfError> {
         // We only support external data coming from kconfig.
-        if let Some((section_index, data)) = self.prepare_kconfig_section_internal(externs)? {
+        if let Some((section_index, data)) = self.build_kconfig_section(externs)? {
             self.maps.insert(
                 ".kconfig".into(),
                 Map::Legacy(LegacyMap {
