@@ -77,6 +77,14 @@ name = "per_cpu_array"
 path = "src/per_cpu_array.rs"
 
 [[bin]]
+name = "perf_event_array"
+path = "src/perf_event_array.rs"
+
+[[bin]]
+name = "perf_event_byte_array"
+path = "src/perf_event_byte_array.rs"
+
+[[bin]]
 name = "raw_tracepoint"
 path = "src/raw_tracepoint.rs"
 

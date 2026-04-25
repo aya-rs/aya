@@ -52,6 +52,8 @@ bpf_file!(
     NAME_TEST => "name_test",
     PASS => "pass",
     PER_CPU_ARRAY => "per_cpu_array",
+    PERF_EVENT_ARRAY => "perf_event_array",
+    PERF_EVENT_BYTE_ARRAY => "perf_event_byte_array",
     PERF_EVENT_BP => "perf_event_bp",
     RAW_TRACEPOINT => "raw_tracepoint",
     REDIRECT => "redirect",
