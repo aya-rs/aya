@@ -1326,11 +1326,6 @@ impl Object {
             }
 
             if !kconfig_data.is_empty() {
-                self.section_infos.insert(
-                    ".kconfig".into(),
-                    (SectionIndex(kconfig_map_index), kconfig_data.len() as u64),
-                );
-
                 return Ok(Some((SectionIndex(kconfig_map_index), kconfig_data)));
             }
         }
@@ -1355,6 +1350,8 @@ impl Object {
     ) -> Result<(), BtfError> {
         // We only support external data coming from kconfig.
         if let Some((section_index, data)) = self.build_kconfig_section(externs)? {
+            self.section_infos
+                .insert(".kconfig".into(), (section_index, data.len() as u64));
             self.maps.insert(
                 ".kconfig".into(),
                 Map::Legacy(LegacyMap {
