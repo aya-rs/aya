@@ -1343,6 +1343,7 @@ impl Object {
                 return Ok(None);
             }
 
+            // We're creating a synthetic section, so we need a synthetic section index too.
             let kconfig_map_index = self
                 .section_infos
                 .values()
