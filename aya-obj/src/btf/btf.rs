@@ -17,6 +17,7 @@ use crate::{
         LineInfo, Struct, Typedef, Union, Var, VarLinkage,
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
+        view,
     },
     extern_types::ExternCollection,
     generated::{btf_ext_header, btf_header},
@@ -321,6 +322,14 @@ impl Btf {
         self.types.types.iter()
     }
 
+    pub(crate) const fn type_count(&self) -> u32 {
+        self.types.len() as u32
+    }
+
+    pub(crate) const fn string_len(&self) -> u32 {
+        self.header.str_len
+    }
+
     /// Adds a string to BTF metadata, returning an offset
     pub fn add_string(&mut self, name: &str) -> u32 {
         let str = name.bytes().chain(core::iter::once(0));
@@ -410,20 +419,10 @@ impl Btf {
     }
 
     pub(crate) fn string_at(&self, offset: u32) -> Result<Cow<'_, str>, BtfError> {
-        let btf_header {
-            hdr_len,
-            mut str_off,
-            str_len,
-            ..
-        } = self.header;
-        str_off += hdr_len;
-        if offset >= str_off + str_len {
-            return Err(BtfError::InvalidStringOffset {
-                offset: offset as usize,
-            });
-        }
-
         let offset = offset as usize;
+        if offset >= self.strings.len() {
+            return Err(BtfError::InvalidStringOffset { offset });
+        }
 
         let s = CStr::from_bytes_until_nul(&self.strings[offset..])
             .map_err(|FromBytesUntilNulError { .. }| BtfError::InvalidStringOffset { offset })?;
@@ -436,11 +435,11 @@ impl Btf {
     }
 
     pub(crate) fn resolve_type(&self, root_type_id: u32) -> Result<u32, BtfError> {
-        self.types.resolve_type(root_type_id)
+        <Self as view::BtfView>::resolve_type(self, root_type_id)
     }
 
     pub(crate) fn type_name(&self, ty: &BtfType) -> Result<Cow<'_, str>, BtfError> {
-        self.string_at(ty.name_offset())
+        <Self as view::BtfView>::type_name(self, ty)
     }
 
     pub(crate) fn err_type_name(&self, ty: &BtfType) -> Option<String> {
@@ -467,7 +466,7 @@ impl Btf {
         let mut type_id = root_type_id;
         let mut n_elems = 1;
         for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
-            let ty = self.types.type_by_id(type_id)?;
+            let ty = self.type_by_id(type_id)?;
             let size = match ty {
                 BtfType::Array(Array { array, .. }) => {
                     n_elems = array.len;
@@ -1282,36 +1281,6 @@ impl BtfTypes {
             .get(type_id as usize)
             .ok_or(BtfError::UnknownBtfType { type_id })
     }
-
-    pub(crate) fn resolve_type(&self, root_type_id: u32) -> Result<u32, BtfError> {
-        let mut type_id = root_type_id;
-        for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
-            let ty = self.type_by_id(type_id)?;
-
-            match ty {
-                BtfType::Volatile(ty) => {
-                    type_id = ty.btf_type;
-                }
-                BtfType::Const(ty) => {
-                    type_id = ty.btf_type;
-                }
-                BtfType::Restrict(ty) => {
-                    type_id = ty.btf_type;
-                }
-                BtfType::Typedef(ty) => {
-                    type_id = ty.btf_type;
-                }
-                BtfType::TypeTag(ty) => {
-                    type_id = ty.btf_type;
-                }
-                _ => return Ok(type_id),
-            }
-        }
-
-        Err(BtfError::MaximumTypeDepthReached {
-            type_id: root_type_id,
-        })
-    }
 }
 
 #[derive(Debug)]
@@ -1326,7 +1295,10 @@ mod tests {
     use assert_matches::assert_matches;
 
     use super::*;
-    use crate::btf::{BtfParam, DeclTag, Float, Func, FuncProto, Ptr, TypeTag};
+    use crate::btf::{
+        BtfParam, DeclTag, Float, Func, FuncProto, Ptr, TypeTag,
+        view::{BtfView as _, SplitBtf},
+    };
 
     #[test]
     fn test_parse_header() {
@@ -1548,6 +1520,94 @@ mod tests {
         let btf = Btf::parse(raw_btf, Endianness::default()).unwrap();
         assert_eq!(btf.string_at(1).unwrap(), "int");
         assert_eq!(btf.string_at(5).unwrap(), "widget");
+    }
+
+    #[test]
+    fn test_split_btf_type_and_string_lookup() {
+        let mut base = Btf::new();
+        let int_name = base.add_string("int");
+        let int_id = base.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::Signed, 0)));
+        let start_id = base.type_count();
+        let start_str_off = base.string_len();
+
+        let mut module = Btf::new();
+        let func_name = module.add_string("my_mod_kfunc");
+        let visible_func_name = start_str_off + func_name;
+        let proto_id = module.add_type(BtfType::FuncProto(FuncProto::new(vec![], int_id)));
+        let visible_proto_id = start_id + proto_id - 1;
+        let func_id = module.add_type(BtfType::Func(Func::new(
+            visible_func_name,
+            visible_proto_id,
+            FuncLinkage::Global,
+        )));
+
+        let split = SplitBtf::new(&base, &module);
+        let visible_func_id = split.start_id() + func_id - 1;
+
+        assert_eq!(split.string_at(int_name).unwrap(), "int");
+        assert_eq!(split.string_at(visible_func_name).unwrap(), "my_mod_kfunc");
+        assert!(matches!(
+            split.string_at(visible_func_name + "my_mod_kfunc".len() as u32 + 1),
+            Err(BtfError::InvalidStringOffset { .. })
+        ));
+        assert_matches!(split.type_by_id(int_id).unwrap(), BtfType::Int(_));
+        assert_matches!(split.type_by_id(0).unwrap(), BtfType::Unknown);
+        assert_matches!(split.type_by_id(visible_func_id).unwrap(), BtfType::Func(_));
+        assert!(matches!(
+            split.type_by_id(visible_func_id + 1),
+            Err(BtfError::UnknownBtfType { .. })
+        ));
+    }
+
+    #[test]
+    fn test_split_btf_visible_vs_own_lookup() {
+        let mut base = Btf::new();
+        let task_name = base.add_string("task_struct");
+        let _task_id = base.add_type(BtfType::Struct(Struct::new(task_name, vec![], 0)));
+        let start_id = base.type_count();
+        let start_str_off = base.string_len();
+
+        let mut module = Btf::new();
+        let local_name = module.add_string("my_mod_kfunc");
+        let visible_name = start_str_off + local_name;
+        let local_proto_id = module.add_type(BtfType::FuncProto(FuncProto::new(vec![], 0)));
+        let visible_proto_id = start_id + local_proto_id - 1;
+        let local_func_id = module.add_type(BtfType::Func(Func::new(
+            visible_name,
+            visible_proto_id,
+            FuncLinkage::Global,
+        )));
+
+        let split = SplitBtf::new(&base, &module);
+        let visible_func_id = split.start_id() + local_func_id - 1;
+
+        assert_eq!(
+            split
+                .id_by_type_name_kind_visible("task_struct", BtfKind::Struct)
+                .unwrap(),
+            base.id_by_type_name_kind("task_struct", BtfKind::Struct)
+                .unwrap()
+        );
+        assert_eq!(
+            split
+                .id_by_type_name_kind_visible("my_mod_kfunc", BtfKind::Func)
+                .unwrap(),
+            visible_func_id
+        );
+        assert!(matches!(
+            split.id_by_type_name_kind_own("task_struct", BtfKind::Struct),
+            Err(BtfError::UnknownBtfTypeName { .. })
+        ));
+        assert_eq!(
+            split
+                .id_by_type_name_kind_own("my_mod_kfunc", BtfKind::Func)
+                .unwrap(),
+            visible_func_id
+        );
+        assert!(matches!(
+            module.id_by_type_name_kind("my_mod_kfunc", BtfKind::Func),
+            Err(BtfError::InvalidStringOffset { .. })
+        ));
     }
 
     #[test]
