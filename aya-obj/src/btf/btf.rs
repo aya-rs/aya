@@ -1245,7 +1245,7 @@ impl Object {
                 .collect::<HashMap<_, _>>();
 
             let mut kconfig_data = Vec::new();
-            let mut offset = 0u64;
+            let mut write_offset = 0u64;
 
             for type_index in 0..obj_btf.types.types.len() {
                 let (name_offset, entries) = match &obj_btf.types.types[type_index] {
@@ -1287,7 +1287,7 @@ impl Object {
                             _ => false,
                         };
 
-                    let (data, aligned_address) = {
+                    let (data, aligned_offset) = {
                         let symbol = self.symbol_table.get_mut(symbol_index).ok_or_else(|| {
                             BtfError::InvalidExternalSymbol {
                                 symbol_name: name.clone(),
@@ -1301,12 +1301,12 @@ impl Object {
                             symbol.is_weak,
                             self.endianness,
                         )?;
-                        let aligned_address = (offset + (type_align - 1)) & !(type_align - 1);
-                        symbol.address = aligned_address;
+                        let aligned_offset = (write_offset + (type_align - 1)) & !(type_align - 1);
+                        symbol.address = aligned_offset;
                         symbol.section_index = Some(kconfig_map_index);
                         // Undefined externs often have size 0; use BTF type size for kconfig.
                         symbol.size = data.len() as u64;
-                        (data, aligned_address)
+                        (data, aligned_offset)
                     };
 
                     if materialize_unsized_char_array {
@@ -1336,11 +1336,11 @@ impl Object {
                         d.entries[entry_index].size = data.len() as u32;
                     }
 
-                    kconfig_data.resize(aligned_address as usize, 0);
+                    kconfig_data.resize(aligned_offset as usize, 0);
 
-                    self.symbol_offset_by_name.insert(name, aligned_address);
+                    self.symbol_offset_by_name.insert(name, aligned_offset);
                     kconfig_data.extend_from_slice(&data);
-                    offset = aligned_address + data.len() as u64;
+                    write_offset = aligned_offset + data.len() as u64;
                 }
             }
 
