@@ -1315,9 +1315,7 @@ impl Object {
                         d.entries[entry_index].size = data.len() as u32;
                     }
 
-                    if kconfig_data.len() < aligned_address as usize {
-                        kconfig_data.resize(aligned_address as usize, 0);
-                    }
+                    kconfig_data.resize(aligned_address as usize, 0);
 
                     self.symbol_offset_by_name.insert(name, aligned_address);
                     kconfig_data.extend_from_slice(&data);
