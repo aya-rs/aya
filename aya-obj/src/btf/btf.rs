@@ -360,79 +360,6 @@ fn scalar_value_as_u64(value: &[u8], endianness: Endianness) -> Option<u64> {
     }
 }
 
-// Clone the modifier chain above a resolved leaf type so one __kconfig VAR can
-// point at a per-symbol replacement without mutating a shared BTF type.
-fn clone_type_chain_with_replacement(
-    obj_btf: &mut Btf,
-    type_id: u32,
-    resolved_type_id: u32,
-    replacement_type_id: u32,
-    symbol_name: &str,
-) -> Result<u32, BtfError> {
-    if type_id == resolved_type_id {
-        return Ok(replacement_type_id);
-    }
-
-    let new_type = match obj_btf.type_by_id(type_id)?.clone() {
-        BtfType::Const(mut ty) => {
-            ty.btf_type = clone_type_chain_with_replacement(
-                obj_btf,
-                ty.btf_type,
-                resolved_type_id,
-                replacement_type_id,
-                symbol_name,
-            )?;
-            BtfType::Const(ty)
-        }
-        BtfType::Volatile(mut ty) => {
-            ty.btf_type = clone_type_chain_with_replacement(
-                obj_btf,
-                ty.btf_type,
-                resolved_type_id,
-                replacement_type_id,
-                symbol_name,
-            )?;
-            BtfType::Volatile(ty)
-        }
-        BtfType::Restrict(mut ty) => {
-            ty.btf_type = clone_type_chain_with_replacement(
-                obj_btf,
-                ty.btf_type,
-                resolved_type_id,
-                replacement_type_id,
-                symbol_name,
-            )?;
-            BtfType::Restrict(ty)
-        }
-        BtfType::Typedef(mut ty) => {
-            ty.btf_type = clone_type_chain_with_replacement(
-                obj_btf,
-                ty.btf_type,
-                resolved_type_id,
-                replacement_type_id,
-                symbol_name,
-            )?;
-            BtfType::Typedef(ty)
-        }
-        BtfType::TypeTag(mut ty) => {
-            ty.btf_type = clone_type_chain_with_replacement(
-                obj_btf,
-                ty.btf_type,
-                resolved_type_id,
-                replacement_type_id,
-                symbol_name,
-            )?;
-            BtfType::TypeTag(ty)
-        }
-        _ => {
-            return Err(BtfError::InvalidExternalSymbol {
-                symbol_name: symbol_name.into(),
-            });
-        }
-    };
-
-    Ok(obj_btf.add_type(new_type))
-}
 impl Btf {
     /// Creates a new empty instance with its header initialized
     pub fn new() -> Self {
@@ -1020,6 +947,81 @@ impl Default for Btf {
     fn default() -> Self {
         Self::new()
     }
+}
+
+// Clone the modifier chain above one resolved leaf type so a single extern can
+// point at a per-symbol replacement without mutating a shared BTF type. For
+// example, `const typedef char[]` becomes `const typedef char[6]` for one VAR.
+fn clone_type_chain_with_replacement(
+    obj_btf: &mut Btf,
+    type_id: u32,
+    resolved_type_id: u32,
+    replacement_type_id: u32,
+    symbol_name: &str,
+) -> Result<u32, BtfError> {
+    if type_id == resolved_type_id {
+        return Ok(replacement_type_id);
+    }
+
+    let new_type = match obj_btf.type_by_id(type_id)?.clone() {
+        BtfType::Const(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::Const(ty)
+        }
+        BtfType::Volatile(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::Volatile(ty)
+        }
+        BtfType::Restrict(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::Restrict(ty)
+        }
+        BtfType::Typedef(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::Typedef(ty)
+        }
+        BtfType::TypeTag(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::TypeTag(ty)
+        }
+        _ => {
+            return Err(BtfError::InvalidExternalSymbol {
+                symbol_name: symbol_name.into(),
+            });
+        }
+    };
+
+    Ok(obj_btf.add_type(new_type))
 }
 
 impl Object {
