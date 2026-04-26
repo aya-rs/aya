@@ -52,6 +52,10 @@ use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
 pub use aya_obj::btf::{Btf, BtfError};
 pub use bpf::*;
 pub use object::Endianness;
+pub use programs::{
+    RawTracePointRunOptions, RawTracePointTestRunResult, TestRun, TestRunAttrs, TestRunOptions,
+    TestRunResult,
+};
 #[doc(hidden)]
 pub use sys::netlink_set_link_up;
 
