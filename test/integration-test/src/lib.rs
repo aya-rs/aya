@@ -69,6 +69,7 @@ bpf_file!(
     PRINTK_TEST => "printk_test",
     PROG_ARRAY => "prog_array",
     STACK_TRACE => "stack_trace",
+    UPROBE_MULTI => "uprobe_multi",
 );
 
 #[cfg(test)]

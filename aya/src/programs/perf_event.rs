@@ -11,12 +11,12 @@ use aya_obj::generated::{
 
 use crate::{
     programs::{
-        ProgramData, ProgramError, ProgramType, impl_try_from_fdlink, impl_try_into_fdlink,
+        FdLink, LinkError, ProgramData, ProgramError, ProgramType, impl_try_into_fdlink,
         links::define_link_wrapper,
         load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
     },
-    sys::{SyscallError, perf_event_open},
+    sys::{SyscallError, bpf_link_get_info_by_fd, perf_event_open},
 };
 
 /// The type of perf event and their respective configuration.
@@ -471,16 +471,23 @@ impl PerfEvent {
         })?;
 
         let link = perf_attach(prog_fd, perf_fd, None /* cookie */)?;
-        self.data.links.insert(PerfEventLink::new(link))
+        self.data.links.insert(PerfEventLink::new(link.into()))
     }
 }
 
-impl_try_into_fdlink!(PerfEventLink, PerfLinkInner);
-impl_try_from_fdlink!(
-    PerfEventLink,
-    PerfLinkInner,
-    bpf_link_type::BPF_LINK_TYPE_PERF_EVENT
-);
+impl_try_into_fdlink!(PerfEventLink, PerfLinkInner, into_fd_link);
+
+impl TryFrom<FdLink> for PerfEventLink {
+    type Error = LinkError;
+
+    fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
+        let info = bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
+        if info.type_ == (bpf_link_type::BPF_LINK_TYPE_PERF_EVENT as u32) {
+            return Ok(Self::new(fd_link.into()));
+        }
+        Err(LinkError::InvalidLink)
+    }
+}
 
 define_link_wrapper!(
     PerfEventLink,

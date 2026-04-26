@@ -59,7 +59,7 @@ fn ringbuffer_btf_map() {
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
     prog.attach(
-        "trigger_bpf_program",
+        ["trigger_bpf_program"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )
@@ -85,7 +85,7 @@ fn multiple_btf_maps() {
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
     prog.attach(
-        "trigger_bpf_program",
+        ["trigger_bpf_program"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )
@@ -139,7 +139,7 @@ fn pin_lifecycle_multiple_btf_maps() {
     let prog: &mut UProbe = bpf.program_mut("bpf_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
     prog.attach(
-        "trigger_bpf_program",
+        ["trigger_bpf_program"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )
@@ -379,7 +379,7 @@ fn basic_uprobe_scopes(scope: UProbeScope) {
 
     let program_name = "test_uprobe";
     let attach = |prog: &mut P| {
-        prog.attach("uprobe_function", "/proc/self/exe", scope)
+        prog.attach(["uprobe_function"], "/proc/self/exe", scope)
             .unwrap()
     };
 
@@ -683,7 +683,7 @@ fn pin_lifecycle_uprobe() {
     let program_name = "test_uprobe";
     let attach = |prog: &mut P| {
         prog.attach(
-            "uprobe_function",
+            ["uprobe_function"],
             "/proc/self/exe",
             UProbeScope::AllProcesses,
         )

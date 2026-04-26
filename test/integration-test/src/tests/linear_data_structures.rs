@@ -51,7 +51,7 @@ macro_rules! define_linear_ds_host_test {
             ] {
                 let prog: &mut UProbe = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
                 prog.load().unwrap();
-                prog.attach(symbol, "/proc/self/exe", UProbeScope::AllProcesses)
+                prog.attach([symbol], "/proc/self/exe", UProbeScope::AllProcesses)
                     .unwrap();
             }
             let array_map = bpf.map("RESULT").unwrap();
