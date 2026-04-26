@@ -123,8 +123,8 @@ impl UProbe {
     /// the target function. `scope` specifies which processes should trigger
     /// the uprobe.
     ///
-    /// The `target` argument can be an absolute path to a binary or library, or
-    /// a library name (eg: `"libc"`).
+    /// The `target` argument can be an absolute or relative path to a binary or
+    /// shared library, or a library name (eg: `"libc"`).
     ///
     /// If the program is an `uprobe`, it is attached to the *start* address of
     /// the target function.  Instead if the program is a `uretprobe`, it is
@@ -217,11 +217,11 @@ impl Probe for UProbe {
 }
 
 fn is_basename_only(target: &Path) -> bool {
-    target.components().count() == 1
+    target.file_name() == Some(target.as_os_str())
 }
 
-// Resolves a bare basename (no directory separators) to a concrete path
-// via /proc/<pid>/maps and ld.so.cache.
+// Resolves a bare basename (a single normal path component) to a concrete
+// path via /proc/<pid>/maps and ld.so.cache.
 fn resolve_attach_target_basename<'a, 'b, 'c, T>(
     target: &'a Path,
     proc_map: Option<&'b ProcMap<T>>,
@@ -813,6 +813,10 @@ mod tests {
     #[test_case("./aa", false; "current_dir_relative_file")]
     #[test_case("subdir/lib.so", false; "subdir_relative_path")]
     #[test_case("../lib/foo", false; "parent_dir_relative_path")]
+    #[test_case("/", false; "root_dir")]
+    #[test_case(".", false; "current_dir")]
+    #[test_case("..", false; "parent_dir")]
+    #[test_case("foo/", false; "trailing_separator")]
     fn test_is_basename_only(input: &str, expected: bool) {
         assert_eq!(is_basename_only(Path::new(input)), expected);
     }
