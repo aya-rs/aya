@@ -13,6 +13,7 @@ use crate::{
         ProgramData, ProgramError, ProgramType, define_link_wrapper, impl_try_from_fdlink,
         impl_try_into_fdlink, load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
+        perf_event::PerfEventScope,
         utils::find_tracefs_path,
     },
     sys::{SyscallError, perf_event_open_trace_point},
@@ -80,7 +81,13 @@ impl TracePoint {
         let prog_fd = prog_fd.as_fd();
         let tracefs = find_tracefs_path()?;
         let id = read_sys_fs_trace_point_id(tracefs, category, name.as_ref())?;
-        let perf_fd = perf_event_open_trace_point(id, None).map_err(|io_error| SyscallError {
+        let perf_fd = perf_event_open_trace_point(
+            id,
+            // For all-processes attachment, perf_event_open requires an explicit
+            // CPU. Use CPU 0 only to open the backing perf event.
+            PerfEventScope::AllProcessesOneCpu { cpu: 0 },
+        )
+        .map_err(|io_error| SyscallError {
             call: "perf_event_open_trace_point",
             io_error,
         })?;

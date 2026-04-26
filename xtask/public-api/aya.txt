@@ -3625,7 +3625,7 @@ pub aya::programs::perf_event::PerfEventScope::CallingProcess
 pub aya::programs::perf_event::PerfEventScope::CallingProcess::cpu: core::option::Option<u32>
 pub aya::programs::perf_event::PerfEventScope::OneProcess
 pub aya::programs::perf_event::PerfEventScope::OneProcess::cpu: core::option::Option<u32>
-pub aya::programs::perf_event::PerfEventScope::OneProcess::pid: u32
+pub aya::programs::perf_event::PerfEventScope::OneProcess::pid: core::num::nonzero::NonZeroU32
 impl core::clone::Clone for aya::programs::perf_event::PerfEventScope
 pub fn aya::programs::perf_event::PerfEventScope::clone(&self) -> aya::programs::perf_event::PerfEventScope
 impl core::fmt::Debug for aya::programs::perf_event::PerfEventScope

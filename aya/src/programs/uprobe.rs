@@ -22,6 +22,7 @@ use crate::{
         ProgramData, ProgramError, ProgramType, define_link_wrapper, impl_try_from_fdlink,
         impl_try_into_fdlink, load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
+        perf_event::PerfEventScope,
         probe::{OsStringExt as _, Probe, ProbeKind, attach},
     },
     util::MMap,
@@ -144,15 +145,21 @@ impl UProbe {
     ) -> Result<UProbeLinkId, ProgramError> {
         let UProbeAttachPoint { location, cookie } = point.into();
         let target = target.as_ref();
-        let (proc_map_pid, perf_event_pid) = match scope {
-            UProbeScope::AllProcesses => (None, None),
+        let (proc_map_pid, perf_event_scope) = match scope {
+            // For an all-processes uprobe, perf_event_open uses pid=-1 and
+            // requires an explicit CPU. Use CPU 0 only to open the backing
+            // perf event.
+            UProbeScope::AllProcesses => (None, PerfEventScope::AllProcessesOneCpu { cpu: 0 }),
             // /proc/0/maps does not exist, so use the real pid for ProcMap
             // resolution while keeping the kernel's pid=0 sentinel for attach.
-            UProbeScope::CallingProcess => (Some(std::process::id()), Some(0)),
-            UProbeScope::OneProcess(pid) => {
-                let pid = pid.get();
-                (Some(pid), Some(pid))
-            }
+            UProbeScope::CallingProcess => (
+                Some(std::process::id()),
+                PerfEventScope::CallingProcess { cpu: None },
+            ),
+            UProbeScope::OneProcess(pid) => (
+                Some(pid.get()),
+                PerfEventScope::OneProcess { pid, cpu: None },
+            ),
         };
 
         // Keep ProcMap in this scope so resolve_attach_target_basename can return
@@ -187,7 +194,7 @@ impl UProbe {
 
         let Self { data, kind } = self;
         let path = path.as_os_str();
-        attach::<Self, _>(data, *kind, path, offset, perf_event_pid, cookie)
+        attach::<Self, _>(data, *kind, path, offset, perf_event_scope, cookie)
     }
 
     /// Creates a program from a pinned entry on a bpffs.

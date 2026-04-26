@@ -15,6 +15,7 @@ use crate::{
         ProgramData, ProgramError, ProgramType, define_link_wrapper, impl_try_from_fdlink,
         impl_try_into_fdlink, load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
+        perf_event::PerfEventScope,
         probe::{Probe, ProbeKind, attach},
     },
 };
@@ -87,7 +88,9 @@ impl KProbe {
             *kind,
             fn_name.as_ref(),
             offset,
-            None, // pid
+            // For all-processes attachment, perf_event_open requires an explicit
+            // CPU. Use CPU 0 only to open the backing perf event.
+            PerfEventScope::AllProcessesOneCpu { cpu: 0 },
             None, // cookie
         )
     }

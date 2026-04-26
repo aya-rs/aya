@@ -123,11 +123,7 @@ pub(crate) fn perf_event_open(
         }
     }
 
-    let (pid, cpu) = match scope {
-        PerfEventScope::CallingProcess { cpu } => (0, cpu.map_or(-1, |cpu| cpu as i32)),
-        PerfEventScope::OneProcess { pid, cpu } => (pid as i32, cpu.map_or(-1, |cpu| cpu as i32)),
-        PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
-    };
+    let (pid, cpu) = perf_event_scope_pid_cpu(scope);
 
     perf_event_sys(attr, pid, cpu, flags)
 }
@@ -137,7 +133,7 @@ pub(crate) fn perf_event_open_probe(
     ret_bit: Option<u32>,
     name: &OsStr,
     offset: u64,
-    pid: Option<u32>,
+    scope: PerfEventScope,
 ) -> io::Result<crate::MockableFd> {
     use std::os::unix::ffi::OsStrExt as _;
 
@@ -154,22 +150,15 @@ pub(crate) fn perf_event_open_probe(
     attr.__bindgen_anon_3.config1 = c_name.as_ptr() as u64;
     attr.__bindgen_anon_4.config2 = offset;
 
-    let (pid, cpu) = match pid {
-        Some(pid) => (pid as i32, -1),
-        None => (-1, 0),
-    };
+    let (pid, cpu) = perf_event_scope_pid_cpu(scope);
 
     perf_event_sys(attr, pid, cpu, PERF_FLAG_FD_CLOEXEC)
 }
 
 pub(crate) fn perf_event_open_trace_point(
     event_id: u64,
-    pid: Option<u32>,
+    scope: PerfEventScope,
 ) -> io::Result<crate::MockableFd> {
-    let scope = match pid {
-        Some(pid) => PerfEventScope::OneProcess { pid, cpu: None },
-        None => PerfEventScope::AllProcessesOneCpu { cpu: 0 },
-    };
     perf_event_open(
         PerfEventConfig::TracePoint { event_id },
         scope,
@@ -178,6 +167,16 @@ pub(crate) fn perf_event_open_trace_point(
         false,
         PERF_FLAG_FD_CLOEXEC,
     )
+}
+
+fn perf_event_scope_pid_cpu(scope: PerfEventScope) -> (pid_t, i32) {
+    match scope {
+        PerfEventScope::CallingProcess { cpu } => (0, cpu.map_or(-1, |cpu| cpu as i32)),
+        PerfEventScope::OneProcess { pid, cpu } => {
+            (pid.get() as i32, cpu.map_or(-1, |cpu| cpu as i32))
+        }
+        PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
+    }
 }
 
 pub(crate) fn perf_event_ioctl(
@@ -253,3 +252,68 @@ impl TryFrom<u32> for perf_event_type {
     }
 }
 */
+
+#[cfg(test)]
+mod tests {
+    use std::{num::NonZeroU32, os::fd::AsRawFd as _};
+
+    use libc::pid_t;
+    use test_case::test_case;
+
+    use super::{PERF_FLAG_FD_CLOEXEC, perf_event_open_trace_point};
+    use crate::{
+        programs::perf_event::PerfEventScope,
+        sys::{Syscall, override_syscall},
+    };
+
+    const EVENT_ID: u64 = 123;
+
+    #[test_case(
+        PerfEventScope::AllProcessesOneCpu { cpu: 0 },
+        -1,
+        0;
+        "all_processes"
+    )]
+    #[test_case(
+        PerfEventScope::CallingProcess { cpu: None },
+        0,
+        -1;
+        "calling_process"
+    )]
+    #[test_case(
+        PerfEventScope::OneProcess {
+            pid: NonZeroU32::new(42).unwrap(),
+            cpu: None,
+        },
+        42,
+        -1;
+        "one_process"
+    )]
+    fn perf_event_open_trace_point_maps_scope(
+        scope: PerfEventScope,
+        expected_pid: pid_t,
+        expected_cpu: i32,
+    ) {
+        override_syscall(move |call| match call {
+            Syscall::PerfEventOpen {
+                attr,
+                pid: actual_pid,
+                cpu: actual_cpu,
+                group,
+                flags,
+            } => {
+                assert_eq!(attr.config, EVENT_ID);
+                assert_eq!(unsafe { attr.__bindgen_anon_1.sample_period }, 0);
+                assert_eq!(actual_pid, expected_pid);
+                assert_eq!(actual_cpu, expected_cpu);
+                assert_eq!(group, -1);
+                assert_eq!(flags, PERF_FLAG_FD_CLOEXEC);
+                Ok(crate::MockableFd::mock_signed_fd().into())
+            }
+            call => panic!("unexpected syscall: {call:?}"),
+        });
+
+        let fd = perf_event_open_trace_point(EVENT_ID, scope).unwrap();
+        assert_eq!(fd.as_raw_fd(), crate::MockableFd::mock_signed_fd());
+    }
+}
