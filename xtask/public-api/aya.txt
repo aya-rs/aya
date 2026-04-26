@@ -150,6 +150,7 @@ impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::hash_map::H
 impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::hash_map::HashMap<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::hash_map::PerCpuHashMap<T, K: aya::Pod, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::hash_map::PerCpuHashMap<T, K, V>
+pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::batch_lookup_and_delete(&self, batch_size: usize, in_batch: core::option::Option<&K>, flags: u64) -> core::result::Result<(alloc::vec::Vec<K>, alloc::vec::Vec<aya::maps::PerCpuValues<V>>, core::option::Option<K>), aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::get(&self, key: &K, flags: u64) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, K, aya::maps::PerCpuValues<V>, Self>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::keys(&self) -> aya::maps::MapKeys<'_, K>
@@ -1346,6 +1347,7 @@ impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::PerCpuArray<T,
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::PerCpuArray<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::PerCpuHashMap<T, K: aya::Pod, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::hash_map::PerCpuHashMap<T, K, V>
+pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::batch_lookup_and_delete(&self, batch_size: usize, in_batch: core::option::Option<&K>, flags: u64) -> core::result::Result<(alloc::vec::Vec<K>, alloc::vec::Vec<aya::maps::PerCpuValues<V>>, core::option::Option<K>), aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::get(&self, key: &K, flags: u64) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, K, aya::maps::PerCpuValues<V>, Self>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::keys(&self) -> aya::maps::MapKeys<'_, K>
