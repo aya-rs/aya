@@ -2,6 +2,7 @@
 
 #[expect(clippy::module_inception, reason = "TODO")]
 mod btf;
+mod extern_types;
 mod info;
 mod relocation;
 mod types;

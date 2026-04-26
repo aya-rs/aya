@@ -502,6 +502,7 @@ impl Object {
                     size: symbol.size(),
                     is_definition: symbol.is_definition(),
                     kind: symbol.kind(),
+                    is_weak: symbol.is_weak(),
                 };
                 bpf_obj.symbol_table.insert(symbol.index().0, sym);
                 if let Some(section_idx) = symbol.section().index() {
@@ -525,6 +526,8 @@ impl Object {
             if let Some(s) = obj.section_by_name(".BTF.ext") {
                 bpf_obj.parse_section(Section::try_from(&s)?)?;
             }
+
+            bpf_obj.collect_ksyms_from_btf()?;
         }
 
         for s in obj.sections() {
@@ -533,7 +536,6 @@ impl Object {
                     continue;
                 }
             }
-
             bpf_obj.parse_section(Section::try_from(&s)?)?;
         }
 
@@ -1510,6 +1512,7 @@ mod tests {
                 size,
                 is_definition: false,
                 kind: SymbolKind::Text,
+                is_weak: false,
             },
         );
         obj.symbols_by_section
@@ -2751,6 +2754,7 @@ mod tests {
                 size: 3,
                 is_definition: true,
                 kind: SymbolKind::Data,
+                is_weak: false,
             },
         );
 
