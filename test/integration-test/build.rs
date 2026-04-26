@@ -93,6 +93,14 @@ fn main() -> Result<()> {
         ("struct_flavors_reloc.bpf.c", true),
         ("text_64_64_reloc.c", false),
         ("variables_reloc.bpf.c", false),
+        ("kconfig.bpf.c", false),
+        ("kconfig_missing_strong.bpf.c", false),
+        ("kconfig_unknown_weak.bpf.c", false),
+        ("kconfig_unsigned_u8.bpf.c", false),
+        ("kconfig_signed_i8.bpf.c", false),
+        ("kconfig_invalid_bool.bpf.c", false),
+        ("kconfig_invalid_array.bpf.c", false),
+        ("kconfig_non_tristate_enum.bpf.c", false),
     ];
     const C_BPF_HEADERS: &[&str] = &["reloc.h", "struct_with_scalars.h"];
 

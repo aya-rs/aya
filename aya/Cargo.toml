@@ -16,11 +16,15 @@ rust-version.workspace = true
 [lints]
 workspace = true
 
+[features]
+default = ["flate2"]
+
 [dependencies]
 assert_matches = { workspace = true }
 aya-obj = { path = "../aya-obj", version = "^0.2.2", features = ["std"] }
 bitflags = { workspace = true }
 bytes = { workspace = true }
+flate2 = { workspace = true, features = ["rust_backend"], optional = true }
 hashbrown = { workspace = true }
 libc = { workspace = true }
 log = { workspace = true }

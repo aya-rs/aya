@@ -20,6 +20,45 @@ use crate::{
 
 static PROBE_NAME_INDEX: AtomicUsize = AtomicUsize::new(0);
 
+#[cfg(target_arch = "x86_64")]
+const SYS_BPF_SYMBOLS: &[&str] = &["__x64_sys_bpf"];
+#[cfg(target_arch = "x86")]
+const SYS_BPF_SYMBOLS: &[&str] = &["__ia32_sys_bpf"];
+#[cfg(target_arch = "aarch64")]
+const SYS_BPF_SYMBOLS: &[&str] = &["__arm64_sys_bpf"];
+#[cfg(target_arch = "arm")]
+const SYS_BPF_SYMBOLS: &[&str] = &["__arm_sys_bpf"];
+#[cfg(target_arch = "powerpc64")]
+const SYS_BPF_SYMBOLS: &[&str] = &["__powerpc64_sys_bpf"];
+#[cfg(target_arch = "powerpc")]
+const SYS_BPF_SYMBOLS: &[&str] = &["__powerpc_sys_bpf"];
+#[cfg(any(target_arch = "riscv32", target_arch = "riscv64"))]
+const SYS_BPF_SYMBOLS: &[&str] = &["__riscv_sys_bpf"];
+#[cfg(target_arch = "s390x")]
+const SYS_BPF_SYMBOLS: &[&str] = &["__s390x_sys_bpf"];
+#[cfg(any(target_arch = "mips", target_arch = "mips64"))]
+const SYS_BPF_SYMBOLS: &[&str] = &["__mips_sys_bpf"];
+#[cfg(target_arch = "loongarch64")]
+const SYS_BPF_SYMBOLS: &[&str] = &[];
+#[cfg(all(
+    target_os = "linux",
+    not(any(
+        target_arch = "x86_64",
+        target_arch = "x86",
+        target_arch = "aarch64",
+        target_arch = "arm",
+        target_arch = "powerpc64",
+        target_arch = "powerpc",
+        target_arch = "riscv32",
+        target_arch = "riscv64",
+        target_arch = "s390x",
+        target_arch = "mips",
+        target_arch = "mips64",
+        target_arch = "loongarch64",
+    ))
+))]
+compile_error!("unsupported Linux architecture: update SYS_BPF_SYMBOLS");
+
 /// Kind of probe program
 #[derive(Debug, Copy, Clone)]
 pub enum ProbeKind {
@@ -37,6 +76,39 @@ pub(crate) trait Probe {
     fn file_error(filename: PathBuf, io_error: io::Error) -> Self::Error;
 
     fn write_offset<W: Write>(w: &mut W, kind: ProbeKind, offset: u64) -> fmt::Result;
+}
+
+pub(crate) fn is_syscall_wrapper_supported() -> bool {
+    if cfg!(miri) {
+        // Miri runs with isolation; avoid filesystem/probe checks.
+        return true;
+    }
+
+    let supports_probe = KernelVersion::at_least(4, 17, 0);
+    for syscall_name in SYS_BPF_SYMBOLS {
+        let is_supported = if supports_probe {
+            create_as_probe::<super::KProbe>(
+                ProbeKind::Entry,
+                OsStr::new(syscall_name),
+                0,
+                Some(process::id()),
+            )
+            .is_ok()
+        } else {
+            create_as_trace_point::<super::KProbe>(
+                ProbeKind::Entry,
+                OsStr::new(syscall_name),
+                0,
+                Some(process::id()),
+            )
+            .is_ok()
+        };
+        if is_supported {
+            return true;
+        }
+    }
+
+    false
 }
 
 pub(crate) fn lines(bytes: &[u8]) -> impl Iterator<Item = &OsStr> {
@@ -172,7 +244,7 @@ fn detach_debug_fs<P: Probe>(event_alias: &OsStr) -> Result<(), ProgramError> {
         .map_err(|(filename, io_error)| P::file_error(filename, io_error).into())
 }
 
-fn create_as_probe<P: Probe>(
+pub(crate) fn create_as_probe<P: Probe>(
     kind: ProbeKind,
     fn_name: &OsStr,
     offset: u64,
@@ -197,7 +269,7 @@ fn create_as_probe<P: Probe>(
         .map_err(Into::into)
 }
 
-fn create_as_trace_point<P: Probe>(
+pub(crate) fn create_as_trace_point<P: Probe>(
     kind: ProbeKind,
     name: &OsStr,
     offset: u64,

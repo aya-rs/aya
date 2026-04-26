@@ -16,7 +16,7 @@ use log::debug;
 use object::{Endianness, SectionIndex};
 
 use crate::{
-    Object,
+    EbpfSectionKind, Map, Object,
     btf::{
         Array, BtfEnum, BtfEnum64, BtfKind, BtfMember, BtfType, Const, DataSec, DataSecEntry, Enum,
         Enum64, Enum64Fallback, Enum64VariantFallback, FuncInfo, FuncLinkage, Int, IntEncoding,
@@ -24,7 +24,8 @@ use crate::{
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
     },
-    generated::{btf_ext_header, btf_header},
+    generated::{BPF_F_RDONLY_PROG, bpf_map_type, btf_ext_header, btf_header},
+    maps::{LegacyMap, bpf_map_def},
     util::{HashMap, bytes_of},
 };
 
@@ -160,6 +161,27 @@ pub enum BtfError {
     /// unable to get symbol name
     #[error("Unable to get symbol name")]
     InvalidSymbolName,
+
+    /// external symbol is invalid
+    #[error("Invalid extern symbol `{symbol_name}`")]
+    InvalidExternalSymbol {
+        /// name of the symbol
+        symbol_name: String,
+    },
+
+    /// external symbol not found
+    #[error("Extern symbol not found `{symbol_name}`")]
+    ExternalSymbolNotFound {
+        /// name of the symbol
+        symbol_name: String,
+    },
+
+    /// external symbol value does not fit its BTF type
+    #[error("Extern symbol `{symbol_name}` value is out of range for its BTF type")]
+    ExternalSymbolValueOutOfRange {
+        /// name of the symbol
+        symbol_name: String,
+    },
 }
 
 /// Available BTF features
@@ -275,6 +297,150 @@ fn add_type(header: &mut btf_header, types: &mut BtfTypes, btf_type: BtfType) ->
     type_id as u32
 }
 
+// Pad or truncate numeric bytes to the target width. When shrinking from 8 bytes,
+// keep the correct half for the object endianness.
+fn resize_numeric_value(value: &[u8], type_size: usize, endianness: Endianness) -> Vec<u8> {
+    if value.len() == type_size {
+        return value.to_vec();
+    }
+
+    if value.len() == size_of::<u64>() && type_size <= size_of::<u64>() {
+        let start = match endianness {
+            Endianness::Little => 0,
+            Endianness::Big => value.len() - type_size,
+        };
+        return value[start..start + type_size].to_vec();
+    }
+
+    if value.len() < type_size {
+        let mut padded = vec![0u8; type_size];
+        match endianness {
+            Endianness::Little => {
+                padded[..value.len()].copy_from_slice(value);
+            }
+            Endianness::Big => {
+                let start = type_size.saturating_sub(value.len());
+                padded[start..start + value.len()].copy_from_slice(value);
+            }
+        }
+        return padded;
+    }
+
+    value[..type_size].to_vec()
+}
+
+fn scalar_value_fits(value: &[u8], type_size: usize, signed: bool, endianness: Endianness) -> bool {
+    if value.len() <= type_size {
+        return true;
+    }
+
+    let truncated = match endianness {
+        Endianness::Little => &value[type_size..],
+        Endianness::Big => &value[..value.len() - type_size],
+    };
+
+    if !signed {
+        return truncated.iter().all(|byte| *byte == 0);
+    }
+
+    let sign_byte = match endianness {
+        Endianness::Little => value[type_size - 1],
+        Endianness::Big => value[value.len() - type_size],
+    };
+    let sign_extension = if sign_byte & 0x80 != 0 { 0xff } else { 0x00 };
+    truncated.iter().all(|byte| *byte == sign_extension)
+}
+
+fn scalar_value_as_u64(value: &[u8], endianness: Endianness) -> Option<u64> {
+    if value.len() > size_of::<u64>() {
+        return None;
+    }
+
+    match endianness {
+        Endianness::Little => Some(value.iter().enumerate().fold(0u64, |acc, (index, byte)| {
+            acc | (u64::from(*byte) << (index * 8))
+        })),
+        Endianness::Big => Some(
+            value
+                .iter()
+                .fold(0u64, |acc, byte| (acc << 8) | u64::from(*byte)),
+        ),
+    }
+}
+
+// Clone the modifier chain above a resolved leaf type so one __kconfig VAR can
+// point at a per-symbol replacement without mutating a shared BTF type.
+fn clone_type_chain_with_replacement(
+    obj_btf: &mut Btf,
+    type_id: u32,
+    resolved_type_id: u32,
+    replacement_type_id: u32,
+    symbol_name: &str,
+) -> Result<u32, BtfError> {
+    if type_id == resolved_type_id {
+        return Ok(replacement_type_id);
+    }
+
+    let new_type = match obj_btf.type_by_id(type_id)?.clone() {
+        BtfType::Const(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::Const(ty)
+        }
+        BtfType::Volatile(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::Volatile(ty)
+        }
+        BtfType::Restrict(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::Restrict(ty)
+        }
+        BtfType::Typedef(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::Typedef(ty)
+        }
+        BtfType::TypeTag(mut ty) => {
+            ty.btf_type = clone_type_chain_with_replacement(
+                obj_btf,
+                ty.btf_type,
+                resolved_type_id,
+                replacement_type_id,
+                symbol_name,
+            )?;
+            BtfType::TypeTag(ty)
+        }
+        _ => {
+            return Err(BtfError::InvalidExternalSymbol {
+                symbol_name: symbol_name.into(),
+            });
+        }
+    };
+
+    Ok(obj_btf.add_type(new_type))
+}
 impl Btf {
     /// Creates a new empty instance with its header initialized
     pub fn new() -> Self {
@@ -477,6 +643,57 @@ impl Btf {
         })
     }
 
+    pub(crate) fn type_align(&self, root_type_id: u32) -> Result<usize, BtfError> {
+        let mut type_id = root_type_id;
+        for _ in 0..MAX_RESOLVE_DEPTH {
+            let ty = self.types.type_by_id(type_id)?;
+            let size = match ty {
+                BtfType::Array(Array { array, .. }) => {
+                    type_id = array.element_type;
+                    continue;
+                }
+                BtfType::Struct(Struct { size, members, .. })
+                | BtfType::Union(Union { size, members, .. }) => {
+                    let mut max_align = 1;
+
+                    for m in members {
+                        let align = self.type_align(m.btf_type)?;
+                        max_align = usize::max(align, max_align);
+
+                        if ty.member_bit_field_size(m).unwrap() == 0
+                            && m.offset % (8 * align as u32) != 0
+                        {
+                            return Ok(1);
+                        }
+                    }
+
+                    if size % max_align as u32 != 0 {
+                        return Ok(1);
+                    }
+
+                    return Ok(max_align);
+                }
+
+                other => {
+                    if let Some(size) = other.size() {
+                        u32::min(BtfType::ptr_size(), size)
+                    } else if let Some(next) = other.btf_type() {
+                        type_id = next;
+                        continue;
+                    } else {
+                        return Err(BtfError::UnexpectedBtfType { type_id });
+                    }
+                }
+            };
+
+            return Ok(size as usize);
+        }
+
+        Err(BtfError::MaximumTypeDepthReached {
+            type_id: root_type_id,
+        })
+    }
+
     /// Encodes the metadata as BTF format
     pub fn to_bytes(&self) -> Vec<u8> {
         // Safety: btf_header is POD
@@ -567,6 +784,7 @@ impl Btf {
                     if fixed_name != name {
                         d.name_offset = self.add_string(&fixed_name);
                     }
+                    let is_kconfig_section = fixed_name == ".kconfig";
 
                     // There are some cases when the compiler does indeed populate the size.
                     if d.size > 0 {
@@ -580,89 +798,93 @@ impl Btf {
                         };
                         debug!("{kind} {name}: fixup size to {size}");
                         d.size = *size as u32;
-
-                        // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
-                        // that need to have their offsets adjusted. To do this,
-                        // we need to get the offset from the ELF file.
-                        // This was also cached during initial parsing and
-                        // we can query by name in symbol_offsets.
-                        let old_size = d.type_info_size();
-                        let mut entries = mem::take(&mut d.entries);
-                        let mut section_size = d.size;
-                        let name_offset = d.name_offset;
-
-                        // Kernels before 5.12 reject zero-length DATASEC. See
-                        // https://github.com/torvalds/linux/commit/13ca51d5eb358edcb673afccb48c3440b9fda21b.
-                        if entries.is_empty() && !features.btf_datasec_zero {
-                            let filler_var_id = *filler_var_id.get_or_init(|| {
-                                let filler_type_name = self.add_string("__aya_datasec_filler_type");
-                                let filler_type_id = add_type(
-                                    &mut self.header,
-                                    &mut types,
-                                    BtfType::Int(Int::new(
-                                        filler_type_name,
-                                        1,
-                                        IntEncoding::None,
-                                        0,
-                                    )),
-                                );
-
-                                let filler_var_name = self.add_string("__aya_datasec_filler");
-                                add_type(
-                                    &mut self.header,
-                                    &mut types,
-                                    BtfType::Var(Var::new(
-                                        filler_var_name,
-                                        filler_type_id,
-                                        VarLinkage::Static,
-                                    )),
-                                )
-                            });
-                            let filler_len = section_size.max(1);
-                            debug!(
-                                "{kind} {name}: injecting filler entry for zero-length DATASEC (len={filler_len})"
-                            );
-                            entries.push(DataSecEntry {
-                                btf_type: filler_var_id,
-                                offset: 0,
-                                size: filler_len,
-                            });
-                            if section_size == 0 {
-                                section_size = filler_len;
-                            }
-                        }
-
-                        for e in &mut entries {
-                            if let BtfType::Var(var) = types.type_by_id(e.btf_type)? {
-                                let var_name = self.string_at(var.name_offset)?;
-                                if var.linkage == VarLinkage::Static {
-                                    debug!("{kind} {name}: VAR {var_name}: fixup not required");
-                                    continue;
-                                }
-
-                                let Some(offset) = symbol_offsets.get(var_name.as_ref()) else {
-                                    return Err(BtfError::SymbolOffsetNotFound {
-                                        symbol_name: var_name.into_owned(),
-                                    });
-                                };
-                                e.offset = *offset as u32;
-                                debug!("{kind} {name}: VAR {var_name}: fixup offset {offset}");
-                            } else {
-                                return Err(BtfError::InvalidDatasec);
-                            }
-                        }
-                        let fixed_section = DataSec::new(name_offset, entries, section_size);
-                        let new_size = fixed_section.type_info_size();
-                        if new_size != old_size {
-                            self.header.type_len =
-                                self.header.type_len - old_size as u32 + new_size as u32;
-                            self.header.str_off = self.header.type_len;
-                        }
-
-                        // Must reborrow here because we borrow `types` above.
-                        let t = &mut types.types[i];
-                        *t = BtfType::DataSec(fixed_section);
                     }
+
+                    // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
+                    // that need to have their offsets adjusted. To do this,
+                    // we need to get the offset from the ELF file.
+                    // This was also cached during initial parsing and
+                    // we can query by name in symbol_offsets.
+                    let old_size = d.type_info_size();
+                    let mut entries = mem::take(&mut d.entries);
+                    let mut section_size = d.size;
+                    let name_offset = d.name_offset;
+
+                    // Kernels before 5.12 reject zero-length DATASEC. See
+                    // https://github.com/torvalds/linux/commit/13ca51d5eb358edcb673afccb48c3440b9fda21b.
+                    if entries.is_empty() && !features.btf_datasec_zero {
+                        let filler_var_id = *filler_var_id.get_or_init(|| {
+                            let filler_type_name = self.add_string("__aya_datasec_filler_type");
+                            let filler_type_id = add_type(
+                                &mut self.header,
+                                &mut types,
+                                BtfType::Int(Int::new(filler_type_name, 1, IntEncoding::None, 0)),
+                            );
+
+                            let filler_var_name = self.add_string("__aya_datasec_filler");
+                            add_type(
+                                &mut self.header,
+                                &mut types,
+                                BtfType::Var(Var::new(
+                                    filler_var_name,
+                                    filler_type_id,
+                                    VarLinkage::Static,
+                                )),
+                            )
+                        });
+                        let filler_len = section_size.max(1);
+                        debug!(
+                            "{kind} {name}: injecting filler entry for zero-length DATASEC (len={filler_len})"
+                        );
+                        entries.push(DataSecEntry {
+                            btf_type: filler_var_id,
+                            offset: 0,
+                            size: filler_len,
+                        });
+                        if section_size == 0 {
+                            section_size = filler_len;
+                        }
+                    }
+
+                    for e in &mut entries {
+                        if let BtfType::Var(var) = types.type_by_id(e.btf_type)? {
+                            let var_name = self.string_at(var.name_offset)?;
+                            if var.linkage == VarLinkage::Static {
+                                debug!("{kind} {name}: VAR {var_name}: fixup not required");
+                                continue;
+                            }
+
+                            let Some(offset) = symbol_offsets.get(var_name.as_ref()) else {
+                                return Err(BtfError::SymbolOffsetNotFound {
+                                    symbol_name: var_name.into_owned(),
+                                });
+                            };
+                            e.offset = *offset as u32;
+
+                            // For kconfig support
+                            if is_kconfig_section && var.linkage == VarLinkage::Extern {
+                                let mut var = var.clone();
+                                var.linkage = VarLinkage::Global;
+
+                                types.types[e.btf_type as usize] = BtfType::Var(var);
+                            }
+
+                            debug!("{kind} {name}: VAR {var_name}: fixup offset {offset}");
+                        } else {
+                            return Err(BtfError::InvalidDatasec);
+                        }
+                    }
+                    let fixed_section = DataSec::new(name_offset, entries, section_size);
+                    let new_size = fixed_section.type_info_size();
+                    if new_size != old_size {
+                        self.header.type_len =
+                            self.header.type_len - old_size as u32 + new_size as u32;
+                        self.header.str_off = self.header.type_len;
+                    }
+
+                    // Must reborrow here because we borrow `types` above.
+                    let t = &mut types.types[i];
+                    *t = BtfType::DataSec(fixed_section);
                 }
                 // Fixup FUNC_PROTO.
                 BtfType::FuncProto(ty) if features.btf_func => {
@@ -811,6 +1033,390 @@ impl Default for Btf {
 }
 
 impl Object {
+    // Validate one __kconfig extern against its declared BTF type and materialize
+    // the bytes that should be written for it into the synthetic .kconfig section.
+    // Returns the extern's required alignment together with its final byte value.
+    fn materialize_kconfig_extern(
+        obj_btf: &Btf,
+        var: &Var,
+        symbol_name: &str,
+        external_value: Option<&[u8]>,
+        symbol_is_weak: bool,
+        endianness: Endianness,
+    ) -> Result<(u64, Vec<u8>), BtfError> {
+        let type_size = obj_btf.type_size(var.btf_type)?;
+        let type_align = obj_btf.type_align(var.btf_type)? as u64;
+        let resolved_type = obj_btf.type_by_id(obj_btf.resolve_type(var.btf_type)?)?;
+        let supported_symbol_name = symbol_name.starts_with("CONFIG_")
+            || matches!(
+                symbol_name,
+                "LINUX_KERNEL_VERSION" | "LINUX_HAS_BPF_COOKIE" | "LINUX_HAS_SYSCALL_WRAPPER"
+            )
+            || (symbol_is_weak && symbol_name.starts_with("LINUX_"));
+        if !supported_symbol_name {
+            return Err(BtfError::InvalidExternalSymbol {
+                symbol_name: symbol_name.into(),
+            });
+        }
+
+        let mut data = match external_value {
+            Some(data) => data.to_vec(),
+            None if symbol_is_weak => vec![0; type_size],
+            None => {
+                return Err(BtfError::ExternalSymbolNotFound {
+                    symbol_name: symbol_name.into(),
+                });
+            }
+        };
+
+        let is_libbpf_tristate = match resolved_type {
+            BtfType::Enum(enum_ty) => {
+                enum_ty.size == 4
+                    && obj_btf.string_at(enum_ty.name_offset)?.as_ref() == "libbpf_tristate"
+            }
+            BtfType::Enum64(enum_ty) => {
+                enum_ty.size == 8
+                    && obj_btf.string_at(enum_ty.name_offset)?.as_ref() == "libbpf_tristate"
+            }
+            _ => false,
+        };
+        let tristate_marker = matches!(data.as_slice(), [b'n' | b'y' | b'm']).then(|| data[0]);
+
+        let data = match resolved_type {
+            BtfType::Array(Array { array, .. }) => {
+                let element_type = obj_btf.resolve_type(array.element_type)?;
+                let BtfType::Int(int) = obj_btf.type_by_id(element_type)? else {
+                    return Err(BtfError::InvalidExternalSymbol {
+                        symbol_name: symbol_name.into(),
+                    });
+                };
+                if int.size != 1 || int.encoding() == IntEncoding::Bool {
+                    return Err(BtfError::InvalidExternalSymbol {
+                        symbol_name: symbol_name.into(),
+                    });
+                }
+
+                if external_value.is_none() && symbol_is_weak && type_size == 0 {
+                    data.push(0);
+                }
+
+                if tristate_marker.is_some() {
+                    return Err(BtfError::ExternalSymbolValueOutOfRange {
+                        symbol_name: symbol_name.into(),
+                    });
+                }
+
+                if type_size > 0 {
+                    if data.len() < type_size {
+                        data.resize(type_size, 0);
+                    } else if data.len() > type_size {
+                        data.truncate(type_size);
+                    }
+                }
+                if !data.is_empty() {
+                    *data.last_mut().unwrap() = 0;
+                }
+                data
+            }
+            BtfType::Int(int) if int.encoding() == IntEncoding::Bool && int.size == 1 => {
+                if let Some(value) = tristate_marker {
+                    if value == b'm' {
+                        return Err(BtfError::ExternalSymbolValueOutOfRange {
+                            symbol_name: symbol_name.into(),
+                        });
+                    }
+                    return Ok((type_align, vec![u8::from(value == b'y')]));
+                }
+                if !scalar_value_fits(&data, type_size, false, endianness) {
+                    return Err(BtfError::ExternalSymbolValueOutOfRange {
+                        symbol_name: symbol_name.into(),
+                    });
+                }
+                if scalar_value_as_u64(&data, endianness).is_some_and(|value| value > 1) {
+                    return Err(BtfError::ExternalSymbolValueOutOfRange {
+                        symbol_name: symbol_name.into(),
+                    });
+                }
+                resize_numeric_value(&data, type_size, endianness)
+            }
+            BtfType::Int(int)
+                if matches!(int.encoding(), IntEncoding::Signed | IntEncoding::None)
+                    && matches!(int.size, 1 | 2 | 4 | 8) =>
+            {
+                if let Some(value) = tristate_marker {
+                    if int.size == 1 {
+                        return Ok((type_align, vec![value]));
+                    }
+                    return Err(BtfError::ExternalSymbolValueOutOfRange {
+                        symbol_name: symbol_name.into(),
+                    });
+                }
+                if !scalar_value_fits(
+                    &data,
+                    type_size,
+                    int.encoding() == IntEncoding::Signed,
+                    endianness,
+                ) {
+                    return Err(BtfError::ExternalSymbolValueOutOfRange {
+                        symbol_name: symbol_name.into(),
+                    });
+                }
+                resize_numeric_value(&data, type_size, endianness)
+            }
+            _ if is_libbpf_tristate => {
+                if let Some(value) = tristate_marker {
+                    let value = match value {
+                        b'n' => 0,
+                        b'y' => 1,
+                        b'm' => 2,
+                        _ => {
+                            return Err(BtfError::ExternalSymbolValueOutOfRange {
+                                symbol_name: symbol_name.into(),
+                            });
+                        }
+                    };
+                    let mut data = vec![0; type_size];
+                    match endianness {
+                        Endianness::Little => data[0] = value,
+                        Endianness::Big => data[type_size - 1] = value,
+                    }
+                    data
+                } else {
+                    if !scalar_value_fits(&data, type_size, false, endianness) {
+                        return Err(BtfError::ExternalSymbolValueOutOfRange {
+                            symbol_name: symbol_name.into(),
+                        });
+                    }
+                    if scalar_value_as_u64(&data, endianness).is_some_and(|value| value > 2) {
+                        return Err(BtfError::ExternalSymbolValueOutOfRange {
+                            symbol_name: symbol_name.into(),
+                        });
+                    }
+                    resize_numeric_value(&data, type_size, endianness)
+                }
+            }
+            _ => {
+                return Err(BtfError::InvalidExternalSymbol {
+                    symbol_name: symbol_name.into(),
+                });
+            }
+        };
+
+        Ok((type_align, data))
+    }
+
+    // Build the synthetic .kconfig section by materializing each supported
+    // __kconfig extern, assigning its aligned offset, and updating any per-symbol
+    // BTF state needed to keep the section layout and type metadata consistent.
+    fn build_kconfig_section(
+        &mut self,
+        externs: &HashMap<String, Vec<u8>>,
+    ) -> Result<Option<(SectionIndex, Vec<u8>)>, BtfError> {
+        if let Some(obj_btf) = &mut self.btf {
+            if obj_btf.is_empty() {
+                return Ok(None);
+            }
+
+            let kconfig_map_index = self
+                .section_infos
+                .values()
+                .map(|(index, _)| index.0)
+                .max()
+                .unwrap_or(0)
+                + 1;
+
+            let external_symbols_by_name = self
+                .symbol_table
+                .iter()
+                .filter(|(_, s)| s.name.is_some() && s.section_index.is_none() && s.is_external)
+                .map(|(index, s)| (s.name.as_ref().unwrap().clone(), *index))
+                .collect::<HashMap<_, _>>();
+
+            let mut kconfig_data = Vec::new();
+            let mut offset = 0u64;
+
+            for type_index in 0..obj_btf.types.types.len() {
+                let (name_offset, entries) = match &obj_btf.types.types[type_index] {
+                    BtfType::DataSec(d) => (d.name_offset, d.entries.clone()),
+                    _ => continue,
+                };
+                if obj_btf.string_at(name_offset)?.as_ref() != ".kconfig" {
+                    continue;
+                }
+
+                for (entry_index, entry) in entries.iter().enumerate() {
+                    let BtfType::Var(var) = obj_btf.types.type_by_id(entry.btf_type)? else {
+                        continue;
+                    };
+                    let var = var.clone();
+                    let name = obj_btf.string_at(var.name_offset)?.into_owned();
+
+                    if var.linkage != VarLinkage::Extern {
+                        return Err(BtfError::InvalidExternalSymbol { symbol_name: name });
+                    }
+                    let symbol_index =
+                        external_symbols_by_name.get(name.as_str()).ok_or_else(|| {
+                            BtfError::InvalidExternalSymbol {
+                                symbol_name: name.clone(),
+                            }
+                        })?;
+
+                    let resolved_type_id = obj_btf.resolve_type(var.btf_type)?;
+                    let materialize_unsized_char_array =
+                        match obj_btf.type_by_id(resolved_type_id)? {
+                            BtfType::Array(Array { array, .. }) => {
+                                let element_type = obj_btf.resolve_type(array.element_type)?;
+                                array.len == 0
+                                    && matches!(
+                                        obj_btf.type_by_id(element_type)?,
+                                        BtfType::Int(Int { size, .. }) if *size == 1
+                                    )
+                            }
+                            _ => false,
+                        };
+
+                    let (data, aligned_address) = {
+                        let symbol = self.symbol_table.get_mut(symbol_index).ok_or_else(|| {
+                            BtfError::InvalidExternalSymbol {
+                                symbol_name: name.clone(),
+                            }
+                        })?;
+                        let (type_align, data) = Self::materialize_kconfig_extern(
+                            obj_btf,
+                            &var,
+                            &name,
+                            externs.get(&name).map(Vec::as_slice),
+                            symbol.is_weak,
+                            self.endianness,
+                        )?;
+                        let aligned_address = (offset + (type_align - 1)) & !(type_align - 1);
+                        symbol.address = aligned_address;
+                        symbol.section_index = Some(kconfig_map_index);
+                        // Undefined externs often have size 0; use BTF type size for kconfig.
+                        symbol.size = data.len() as u64;
+                        (data, aligned_address)
+                    };
+
+                    if materialize_unsized_char_array {
+                        let Some(BtfType::Array(mut array_type)) =
+                            obj_btf.types.types.get(resolved_type_id as usize).cloned()
+                        else {
+                            return Err(BtfError::InvalidExternalSymbol {
+                                symbol_name: name.clone(),
+                            });
+                        };
+                        array_type.array.len = data.len() as u32;
+                        let materialized_array_type_id =
+                            obj_btf.add_type(BtfType::Array(array_type));
+                        let materialized_type_id = clone_type_chain_with_replacement(
+                            obj_btf,
+                            var.btf_type,
+                            resolved_type_id,
+                            materialized_array_type_id,
+                            &name,
+                        )?;
+                        if let BtfType::Var(var) = &mut obj_btf.types.types[entry.btf_type as usize]
+                        {
+                            var.btf_type = materialized_type_id;
+                        }
+                    }
+                    if let BtfType::DataSec(d) = &mut obj_btf.types.types[type_index] {
+                        d.entries[entry_index].size = data.len() as u32;
+                    }
+
+                    if kconfig_data.len() < aligned_address as usize {
+                        kconfig_data.resize(aligned_address as usize, 0);
+                    }
+
+                    self.symbol_offset_by_name.insert(name, aligned_address);
+                    kconfig_data.extend_from_slice(&data);
+                    offset = aligned_address + data.len() as u64;
+                }
+            }
+
+            if !kconfig_data.is_empty() {
+                self.section_infos.insert(
+                    ".kconfig".into(),
+                    (SectionIndex(kconfig_map_index), kconfig_data.len() as u64),
+                );
+
+                return Ok(Some((SectionIndex(kconfig_map_index), kconfig_data)));
+            }
+        }
+        Ok(None)
+    }
+
+    /// Prepares the `.kconfig` data section using external symbol values.
+    ///
+    /// External data symbols (e.g., kernel config values marked with `__kconfig`)
+    /// are resolved and embedded into the object as a `.kconfig` map section.
+    ///
+    /// # Arguments
+    /// * `externs` - A map of external symbol names to their byte values.
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - External symbols are found but not defined in `externs` (unless weak).
+    /// - BTF type information is invalid for external symbols.
+    pub fn prepare_kconfig_section(
+        &mut self,
+        externs: &HashMap<String, Vec<u8>>,
+    ) -> Result<(), BtfError> {
+        // We only support external data coming from kconfig.
+        if let Some((section_index, data)) = self.build_kconfig_section(externs)? {
+            self.maps.insert(
+                ".kconfig".into(),
+                Map::Legacy(LegacyMap {
+                    def: bpf_map_def {
+                        map_type: bpf_map_type::BPF_MAP_TYPE_ARRAY as u32,
+                        key_size: size_of::<u32>() as u32,
+                        value_size: data.len() as u32,
+                        max_entries: 1,
+                        map_flags: BPF_F_RDONLY_PROG,
+                        ..Default::default()
+                    },
+                    section_index: section_index.0,
+                    section_kind: EbpfSectionKind::Rodata,
+                    symbol_index: None,
+                    data,
+                }),
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Returns whether the object contains any `CONFIG_*` `__kconfig` externs.
+    pub fn has_config_kconfig_externs(&self) -> Result<bool, BtfError> {
+        let Some(obj_btf) = &self.btf else {
+            return Ok(false);
+        };
+
+        for ty in &obj_btf.types.types {
+            let BtfType::DataSec(datasec) = ty else {
+                continue;
+            };
+            if obj_btf.string_at(datasec.name_offset)?.as_ref() != ".kconfig" {
+                continue;
+            }
+
+            for entry in &datasec.entries {
+                let BtfType::Var(var) = obj_btf.types.type_by_id(entry.btf_type)? else {
+                    continue;
+                };
+                if var.linkage != VarLinkage::Extern {
+                    continue;
+                }
+                let name = obj_btf.string_at(var.name_offset)?;
+                if name.starts_with("CONFIG_") {
+                    return Ok(true);
+                }
+            }
+        }
+
+        Ok(false)
+    }
+
     /// Fixes up and sanitizes BTF data.
     ///
     /// Mostly, it removes unsupported types and works around LLVM behaviours.
@@ -1171,6 +1777,8 @@ pub(crate) struct SecInfo<'a> {
 
 #[cfg(test)]
 mod tests {
+    use alloc::{borrow::ToOwned as _, vec};
+
     use assert_matches::assert_matches;
 
     use super::*;
@@ -1997,5 +2605,61 @@ mod tests {
         // Ensure we can convert to bytes and back again.
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
+    }
+
+    #[test]
+    fn type_align_struct_naturally_aligned() {
+        // Build a struct:
+        // struct S { u64 a; u32 b; };
+        // a @ 0 bits (8-byte aligned), b @ 64 bits (8 bytes), total size 16 bytes.
+        // On 32-bit architectures, u64 alignment is capped at ptr_size() (4 bytes).
+        let mut btf = Btf::new();
+        let u32_ty = btf.add_type(BtfType::Int(Int::new(0, 4, IntEncoding::None, 0)));
+        let u64_ty = btf.add_type(BtfType::Int(Int::new(0, 8, IntEncoding::None, 0)));
+
+        let members = vec![
+            BtfMember {
+                name_offset: 0,
+                btf_type: u64_ty,
+                offset: 0, // bits
+            },
+            BtfMember {
+                name_offset: 0,
+                btf_type: u32_ty,
+                offset: 64, // bits
+            },
+        ];
+        let s_id = btf.add_type(BtfType::Struct(Struct::new(0, members, 16)));
+
+        let align = btf.type_align(s_id).unwrap();
+        // Alignment is capped at ptr_size(), so on 32-bit archs it's 4, on 64-bit it's 8
+        let expected_align = usize::min(BtfType::ptr_size() as usize, 8);
+        assert_eq!(align, expected_align);
+    }
+
+    #[test]
+    fn type_align_struct_misaligned_member_is_packed() {
+        // Build a struct with a misaligned non-bitfield member:
+        // struct P { u64 a; u32 b; }; where b is at 1-byte offset (misaligned)
+        let mut btf = Btf::new();
+        let u32_ty = btf.add_type(BtfType::Int(Int::new(0, 4, IntEncoding::None, 0)));
+        let u64_ty = btf.add_type(BtfType::Int(Int::new(0, 8, IntEncoding::None, 0)));
+
+        let members = vec![
+            BtfMember {
+                name_offset: 0,
+                btf_type: u64_ty,
+                offset: 0, // bits
+            },
+            BtfMember {
+                name_offset: 0,
+                btf_type: u32_ty,
+                offset: 8, // bits (1 byte) -> not aligned to 4 bytes
+            },
+        ];
+        let p_id = btf.add_type(BtfType::Struct(Struct::new(0, members, 16)));
+
+        let align = btf.type_align(p_id).unwrap();
+        assert_eq!(align, 1);
     }
 }
