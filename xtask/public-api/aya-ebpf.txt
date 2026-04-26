@@ -156,8 +156,6 @@ impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::sk_storage:
 pub mod aya_ebpf::btf_maps::stack_trace
 #[repr(C)] pub struct aya_ebpf::btf_maps::stack_trace::StackTrace<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
-pub unsafe fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: &C, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
-impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
 pub const fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::new() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> core::default::Default for aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
 pub fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::default() -> Self
@@ -282,8 +280,6 @@ impl<T> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::sk_storage::SkStorage<
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::sk_storage::SkStorage<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::sk_storage::SkStorage<T> where T: core::panic::unwind_safe::RefUnwindSafe
 #[repr(C)] pub struct aya_ebpf::btf_maps::StackTrace<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize>
-impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
-pub unsafe fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: &C, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
 pub const fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::new() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> core::default::Default for aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
@@ -621,7 +617,6 @@ impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::stack::Stack<T>
 pub mod aya_ebpf::maps::stack_trace
 #[repr(transparent)] pub struct aya_ebpf::maps::stack_trace::StackTrace
 impl aya_ebpf::maps::stack_trace::StackTrace
-pub unsafe fn aya_ebpf::maps::stack_trace::StackTrace::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: impl core::borrow::Borrow<C>, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::stack_trace::StackTrace
@@ -967,7 +962,6 @@ impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::stack::Stac
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::stack::Stack<T> where T: core::panic::unwind_safe::UnwindSafe
 #[repr(transparent)] pub struct aya_ebpf::maps::StackTrace
 impl aya_ebpf::maps::stack_trace::StackTrace
-pub unsafe fn aya_ebpf::maps::stack_trace::StackTrace::get_stackid<C: aya_ebpf::EbpfContext>(&self, ctx: impl core::borrow::Borrow<C>, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::pinned(max_entries: u32, flags: u32) -> Self
 pub const fn aya_ebpf::maps::stack_trace::StackTrace::with_max_entries(max_entries: u32, flags: u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::stack_trace::StackTrace
@@ -1022,6 +1016,8 @@ pub fn aya_ebpf::programs::fentry::FEntryContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::fentry::FEntryContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::fentry::FEntryContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::fentry::FEntryContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::fentry::FEntryContext
+pub fn aya_ebpf::programs::fentry::FEntryContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::fentry::FEntryContext
 impl !core::marker::Send for aya_ebpf::programs::fentry::FEntryContext
 impl !core::marker::Sync for aya_ebpf::programs::fentry::FEntryContext
@@ -1041,6 +1037,8 @@ pub fn aya_ebpf::programs::fexit::FExitContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::fexit::FExitContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::fexit::FExitContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::fexit::FExitContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::fexit::FExitContext
+pub fn aya_ebpf::programs::fexit::FExitContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::fexit::FExitContext
 impl !core::marker::Send for aya_ebpf::programs::fexit::FExitContext
 impl !core::marker::Sync for aya_ebpf::programs::fexit::FExitContext
@@ -1082,6 +1080,8 @@ pub fn aya_ebpf::programs::lsm::LsmContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::lsm::LsmContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::lsm::LsmContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::lsm::LsmContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::lsm::LsmContext
+pub fn aya_ebpf::programs::lsm::LsmContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::lsm::LsmContext
 impl !core::marker::Send for aya_ebpf::programs::lsm::LsmContext
 impl !core::marker::Sync for aya_ebpf::programs::lsm::LsmContext
@@ -1101,6 +1101,8 @@ pub fn aya_ebpf::programs::perf_event::PerfEventContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::perf_event::PerfEventContext
+pub fn aya_ebpf::programs::perf_event::PerfEventContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::perf_event::PerfEventContext
 impl !core::marker::Send for aya_ebpf::programs::perf_event::PerfEventContext
 impl !core::marker::Sync for aya_ebpf::programs::perf_event::PerfEventContext
@@ -1121,6 +1123,8 @@ pub fn aya_ebpf::programs::probe::ProbeContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::probe::ProbeContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::probe::ProbeContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::probe::ProbeContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::probe::ProbeContext
+pub fn aya_ebpf::programs::probe::ProbeContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::probe::ProbeContext
 impl !core::marker::Send for aya_ebpf::programs::probe::ProbeContext
 impl !core::marker::Sync for aya_ebpf::programs::probe::ProbeContext
@@ -1140,6 +1144,8 @@ pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::gid(&self) -> u
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
+pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl !core::marker::Send for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl !core::marker::Sync for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
@@ -1160,6 +1166,8 @@ pub fn aya_ebpf::programs::retprobe::RetProbeContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::retprobe::RetProbeContext
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::retprobe::RetProbeContext
 impl !core::marker::Send for aya_ebpf::programs::retprobe::RetProbeContext
 impl !core::marker::Sync for aya_ebpf::programs::retprobe::RetProbeContext
@@ -1461,6 +1469,8 @@ pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::tp_btf::BtfTracePointContext
+pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl !core::marker::Send for aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl !core::marker::Sync for aya_ebpf::programs::tp_btf::BtfTracePointContext
@@ -1480,6 +1490,8 @@ pub fn aya_ebpf::programs::tracepoint::TracePointContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::tracepoint::TracePointContext
+pub fn aya_ebpf::programs::tracepoint::TracePointContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::tracepoint::TracePointContext
 impl !core::marker::Send for aya_ebpf::programs::tracepoint::TracePointContext
 impl !core::marker::Sync for aya_ebpf::programs::tracepoint::TracePointContext
@@ -1487,6 +1499,29 @@ impl core::marker::Unpin for aya_ebpf::programs::tracepoint::TracePointContext
 impl core::marker::UnsafeUnpin for aya_ebpf::programs::tracepoint::TracePointContext
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::tracepoint::TracePointContext
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::tracepoint::TracePointContext
+pub mod aya_ebpf::programs::tracing
+pub trait aya_ebpf::programs::tracing::StackIdContext: aya_ebpf::EbpfContext + aya_ebpf::programs::tracing::sealed::StackIdContext
+pub fn aya_ebpf::programs::tracing::StackIdContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::fentry::FEntryContext
+pub fn aya_ebpf::programs::fentry::FEntryContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::fexit::FExitContext
+pub fn aya_ebpf::programs::fexit::FExitContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::lsm::LsmContext
+pub fn aya_ebpf::programs::lsm::LsmContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::perf_event::PerfEventContext
+pub fn aya_ebpf::programs::perf_event::PerfEventContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::probe::ProbeContext
+pub fn aya_ebpf::programs::probe::ProbeContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
+pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::retprobe::RetProbeContext
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::tp_btf::BtfTracePointContext
+pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::tracepoint::TracePointContext
+pub fn aya_ebpf::programs::tracepoint::TracePointContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
+pub trait aya_ebpf::programs::tracing::StackTraceMap: aya_ebpf::programs::tracing::private::StackTraceMap
+impl<T: aya_ebpf::programs::tracing::private::StackTraceMap> aya_ebpf::programs::tracing::StackTraceMap for T
 pub mod aya_ebpf::programs::xdp
 pub struct aya_ebpf::programs::xdp::XdpContext
 pub aya_ebpf::programs::xdp::XdpContext::ctx: *mut aya_ebpf_bindings::x86_64::bindings::xdp_md
@@ -1523,6 +1558,8 @@ pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::tp_btf::BtfTracePointContext
+pub fn aya_ebpf::programs::tp_btf::BtfTracePointContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl !core::marker::Send for aya_ebpf::programs::tp_btf::BtfTracePointContext
 impl !core::marker::Sync for aya_ebpf::programs::tp_btf::BtfTracePointContext
@@ -1559,6 +1596,8 @@ pub fn aya_ebpf::programs::fentry::FEntryContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::fentry::FEntryContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::fentry::FEntryContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::fentry::FEntryContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::fentry::FEntryContext
+pub fn aya_ebpf::programs::fentry::FEntryContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::fentry::FEntryContext
 impl !core::marker::Send for aya_ebpf::programs::fentry::FEntryContext
 impl !core::marker::Sync for aya_ebpf::programs::fentry::FEntryContext
@@ -1577,6 +1616,8 @@ pub fn aya_ebpf::programs::fexit::FExitContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::fexit::FExitContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::fexit::FExitContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::fexit::FExitContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::fexit::FExitContext
+pub fn aya_ebpf::programs::fexit::FExitContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::fexit::FExitContext
 impl !core::marker::Send for aya_ebpf::programs::fexit::FExitContext
 impl !core::marker::Sync for aya_ebpf::programs::fexit::FExitContext
@@ -1616,6 +1657,8 @@ pub fn aya_ebpf::programs::lsm::LsmContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::lsm::LsmContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::lsm::LsmContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::lsm::LsmContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::lsm::LsmContext
+pub fn aya_ebpf::programs::lsm::LsmContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::lsm::LsmContext
 impl !core::marker::Send for aya_ebpf::programs::lsm::LsmContext
 impl !core::marker::Sync for aya_ebpf::programs::lsm::LsmContext
@@ -1634,6 +1677,8 @@ pub fn aya_ebpf::programs::perf_event::PerfEventContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::perf_event::PerfEventContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::perf_event::PerfEventContext
+pub fn aya_ebpf::programs::perf_event::PerfEventContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::perf_event::PerfEventContext
 impl !core::marker::Send for aya_ebpf::programs::perf_event::PerfEventContext
 impl !core::marker::Sync for aya_ebpf::programs::perf_event::PerfEventContext
@@ -1653,6 +1698,8 @@ pub fn aya_ebpf::programs::probe::ProbeContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::probe::ProbeContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::probe::ProbeContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::probe::ProbeContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::probe::ProbeContext
+pub fn aya_ebpf::programs::probe::ProbeContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::probe::ProbeContext
 impl !core::marker::Send for aya_ebpf::programs::probe::ProbeContext
 impl !core::marker::Sync for aya_ebpf::programs::probe::ProbeContext
@@ -1671,6 +1718,8 @@ pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::gid(&self) -> u
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
+pub fn aya_ebpf::programs::raw_tracepoint::RawTracePointContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl !core::marker::Send for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
 impl !core::marker::Sync for aya_ebpf::programs::raw_tracepoint::RawTracePointContext
@@ -1690,6 +1739,8 @@ pub fn aya_ebpf::programs::retprobe::RetProbeContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::retprobe::RetProbeContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::retprobe::RetProbeContext
+pub fn aya_ebpf::programs::retprobe::RetProbeContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::retprobe::RetProbeContext
 impl !core::marker::Send for aya_ebpf::programs::retprobe::RetProbeContext
 impl !core::marker::Sync for aya_ebpf::programs::retprobe::RetProbeContext
@@ -1946,6 +1997,8 @@ pub fn aya_ebpf::programs::tracepoint::TracePointContext::gid(&self) -> u32
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::tracepoint::TracePointContext::uid(&self) -> u32
+impl aya_ebpf::programs::tracing::StackIdContext for aya_ebpf::programs::tracepoint::TracePointContext
+pub fn aya_ebpf::programs::tracepoint::TracePointContext::get_stackid<M: aya_ebpf::programs::tracing::StackTraceMap>(&self, map: &M, flags: u64) -> core::result::Result<aya_ebpf_cty::od::c_long, i32>
 impl core::marker::Freeze for aya_ebpf::programs::tracepoint::TracePointContext
 impl !core::marker::Send for aya_ebpf::programs::tracepoint::TracePointContext
 impl !core::marker::Sync for aya_ebpf::programs::tracepoint::TracePointContext
