@@ -16,12 +16,9 @@ use aya_obj::generated::{
 use libc::pid_t;
 
 use super::{PerfEventIoctlRequest, Syscall, syscall};
-use crate::programs::{
-    Pid,
-    perf_event::{
-        BreakpointConfig, PerfEventConfig, PerfEventScope, SamplePolicy, WakeupPolicy,
-        perf_type_id_to_u32,
-    },
+use crate::programs::perf_event::{
+    BreakpointConfig, PerfEventConfig, PerfEventScope, SamplePolicy, WakeupPolicy,
+    perf_type_id_to_u32,
 };
 
 pub(crate) fn perf_event_open(
@@ -126,13 +123,7 @@ pub(crate) fn perf_event_open(
         }
     }
 
-    let (pid, cpu) = match scope {
-        PerfEventScope::CallingProcess { cpu } => (0, cpu.map_or(-1, |cpu| cpu as i32)),
-        PerfEventScope::OneProcess { pid, cpu } => {
-            (pid.get() as i32, cpu.map_or(-1, |cpu| cpu as i32))
-        }
-        PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
-    };
+    let (pid, cpu) = perf_event_scope_pid_cpu(scope);
 
     perf_event_sys(attr, pid, cpu, flags)
 }
@@ -142,7 +133,7 @@ pub(crate) fn perf_event_open_probe(
     ret_bit: Option<u32>,
     name: &OsStr,
     offset: u64,
-    pid: Option<u32>,
+    scope: PerfEventScope,
 ) -> io::Result<crate::MockableFd> {
     use std::os::unix::ffi::OsStrExt as _;
 
@@ -159,26 +150,15 @@ pub(crate) fn perf_event_open_probe(
     attr.__bindgen_anon_3.config1 = c_name.as_ptr() as u64;
     attr.__bindgen_anon_4.config2 = offset;
 
-    let (pid, cpu) = match pid {
-        Some(pid) => (pid as i32, -1),
-        None => (-1, 0),
-    };
+    let (pid, cpu) = perf_event_scope_pid_cpu(scope);
 
     perf_event_sys(attr, pid, cpu, PERF_FLAG_FD_CLOEXEC)
 }
 
 pub(crate) fn perf_event_open_trace_point(
     event_id: u64,
-    pid: Option<u32>,
+    scope: PerfEventScope,
 ) -> io::Result<crate::MockableFd> {
-    let scope = match pid {
-        None => PerfEventScope::AllProcessesOneCpu { cpu: 0 },
-        Some(0) => PerfEventScope::CallingProcess { cpu: None },
-        Some(pid) => PerfEventScope::OneProcess {
-            pid: Pid::new(pid).unwrap(),
-            cpu: None,
-        },
-    };
     perf_event_open(
         PerfEventConfig::TracePoint { event_id },
         scope,
@@ -187,6 +167,16 @@ pub(crate) fn perf_event_open_trace_point(
         false,
         PERF_FLAG_FD_CLOEXEC,
     )
+}
+
+fn perf_event_scope_pid_cpu(scope: PerfEventScope) -> (pid_t, i32) {
+    match scope {
+        PerfEventScope::CallingProcess { cpu } => (0, cpu.map_or(-1, |cpu| cpu as i32)),
+        PerfEventScope::OneProcess { pid, cpu } => {
+            (pid.get() as i32, cpu.map_or(-1, |cpu| cpu as i32))
+        }
+        PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
+    }
 }
 
 pub(crate) fn perf_event_ioctl(
@@ -271,15 +261,36 @@ mod tests {
     use test_case::test_case;
 
     use super::{PERF_FLAG_FD_CLOEXEC, perf_event_open_trace_point};
-    use crate::sys::{Syscall, override_syscall};
+    use crate::{
+        programs::{Pid, perf_event::PerfEventScope},
+        sys::{Syscall, override_syscall},
+    };
 
     const EVENT_ID: u64 = 123;
 
-    #[test_case(None, -1, 0; "all_processes")]
-    #[test_case(Some(0), 0, -1; "calling_process")]
-    #[test_case(Some(42), 42, -1; "one_process")]
-    fn perf_event_open_trace_point_maps_pid_scope(
-        pid: Option<u32>,
+    #[test_case(
+        PerfEventScope::AllProcessesOneCpu { cpu: 0 },
+        -1,
+        0;
+        "all_processes"
+    )]
+    #[test_case(
+        PerfEventScope::CallingProcess { cpu: None },
+        0,
+        -1;
+        "calling_process"
+    )]
+    #[test_case(
+        PerfEventScope::OneProcess {
+            pid: Pid::new(42).unwrap(),
+            cpu: None,
+        },
+        42,
+        -1;
+        "one_process"
+    )]
+    fn perf_event_open_trace_point_maps_scope(
+        scope: PerfEventScope,
         expected_pid: pid_t,
         expected_cpu: i32,
     ) {
@@ -302,7 +313,7 @@ mod tests {
             call => panic!("unexpected syscall: {call:?}"),
         });
 
-        let fd = perf_event_open_trace_point(EVENT_ID, pid).unwrap();
+        let fd = perf_event_open_trace_point(EVENT_ID, scope).unwrap();
         assert_eq!(fd.as_raw_fd(), crate::MockableFd::mock_signed_fd());
     }
 }
