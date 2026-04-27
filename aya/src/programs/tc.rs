@@ -289,6 +289,8 @@ impl SchedClassifier {
 
     /// Attaches the program to the given `interface`.
     ///
+    /// TCX requires kernels >= 6.6.0 and netkit requires kernels >= 6.7.0.
+    ///
     /// The returned value can be used to detach, see [`SchedClassifier::detach`].
     ///
     /// # Errors
@@ -460,11 +462,39 @@ impl SchedClassifier {
         interface: &str,
         attach_type: TcxAttachType,
     ) -> Result<(u64, Vec<ProgramInfo>), ProgramError> {
+        Self::query_bpf_links(interface, attach_type.bpf_attach_type())
+    }
+
+    /// Queries a given interface for attached Netkit programs.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use aya::programs::tc::{NetkitAttachType, SchedClassifier};
+    /// # #[derive(Debug, thiserror::Error)]
+    /// # enum Error {
+    /// #     #[error(transparent)]
+    /// #     Program(#[from] aya::programs::ProgramError),
+    /// # }
+    /// let (revision, programs) = SchedClassifier::query_netkit("eth0", NetkitAttachType::Primary)?;
+    /// # Ok::<(), Error>(())
+    /// ```
+    pub fn query_netkit(
+        interface: &str,
+        attach_type: NetkitAttachType,
+    ) -> Result<(u64, Vec<ProgramInfo>), ProgramError> {
+        Self::query_bpf_links(interface, attach_type.bpf_attach_type())
+    }
+
+    fn query_bpf_links(
+        interface: &str,
+        attach_type: bpf_attach_type,
+    ) -> Result<(u64, Vec<ProgramInfo>), ProgramError> {
         let if_index = ifindex_from_ifname(interface).map_err(TcError::IoError)?;
 
         let (revision, prog_ids) = query(
             ProgQueryTarget::IfIndex(if_index),
-            attach_type.bpf_attach_type(),
+            attach_type,
             0,
             &mut None,
         )?;

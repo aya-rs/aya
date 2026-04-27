@@ -8,8 +8,9 @@ use aya::{
     maps::{Array, RingBuf},
     pin::PinError,
     programs::{
-        FlowDissector, KProbe, LinkOrder, ProbeKind, Program, ProgramError, SchedClassifier,
-        SchedClassifierAttachment, TcxAttachType, TracePoint, UProbe, Xdp, XdpFlags,
+        FlowDissector, KProbe, LinkOrder, NetkitAttachType, ProbeKind, Program, ProgramError,
+        SchedClassifier, SchedClassifierAttachment, TcxAttachType, TracePoint, UProbe, Xdp,
+        XdpFlags,
         flow_dissector::{FlowDissectorLink, FlowDissectorLinkId},
         kprobe::{KProbeLink, KProbeLinkId},
         links::{FdLink, LinkError, PinnedLink},
@@ -22,6 +23,8 @@ use aya::{
 };
 use aya_obj::programs::XdpAttachType;
 use test_case::test_case;
+
+use crate::utils::NetNsGuard;
 
 const MAX_RETRIES: usize = 100;
 pub(crate) const RETRY_DURATION: Duration = Duration::from_millis(10);
@@ -446,7 +449,6 @@ fn pin_tcx_link() {
         return;
     }
 
-    use crate::utils::NetNsGuard;
     let _netns = NetNsGuard::new();
 
     let program_name = "tcx_next";
@@ -486,6 +488,62 @@ fn pin_tcx_link() {
     assert_loaded(program_name);
 
     // Clean up: remove the stale pin file and drop the bpf instance (which drops the program and link)
+    remove_file(pin_path).unwrap();
+    drop(bpf);
+    assert_unloaded(program_name);
+}
+
+#[test_log::test]
+fn pin_netkit_link() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(6, 7, 0) {
+        eprintln!("skipping pin_netkit_link test on kernel {kernel_version:?}");
+        return;
+    }
+
+    use crate::utils::create_netkit_link;
+    let _netns = NetNsGuard::new();
+    if let Err(err) = create_netkit_link("nk-aya-0", "nk-aya-1") {
+        eprintln!("skipping pin_netkit_link test: {err}");
+        return;
+    }
+
+    let program_name = "tcx_next";
+    let pin_path = "/sys/fs/bpf/aya-netkit-test-nk0";
+    let mut bpf = Ebpf::load(crate::TCX).unwrap();
+    let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let link_id = prog
+        .attach(
+            "nk0",
+            SchedClassifierAttachment::Netkit {
+                attach_type: NetkitAttachType::Primary,
+                link_order: LinkOrder::default(),
+            },
+        )
+        .unwrap();
+    let link = prog.take_link(link_id).unwrap();
+    assert_loaded(program_name);
+
+    let fd_link: FdLink = link.try_into().unwrap();
+    fd_link.pin(pin_path).unwrap();
+
+    // Because of the pin, the program is still attached.
+    prog.unload().unwrap();
+    assert_loaded(program_name);
+
+    // Load a new program and atomically replace the old one using attach_to_link.
+    let mut bpf = Ebpf::load(crate::TCX).unwrap();
+    let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let old_link = PinnedLink::from_pin(pin_path).unwrap();
+    let link = FdLink::from(old_link).try_into().unwrap();
+    let _link_id = prog.attach_to_link(link).unwrap();
+
+    assert_loaded(program_name);
+
     remove_file(pin_path).unwrap();
     drop(bpf);
     assert_unloaded(program_name);
