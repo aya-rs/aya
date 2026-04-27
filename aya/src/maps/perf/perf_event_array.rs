@@ -15,7 +15,7 @@ use bytes::BytesMut;
 use crate::{
     maps::{
         MapData, MapError, PinError,
-        perf::{Events, PerfBuffer, PerfBufferError},
+        perf::{Events, PerfBuffer, PerfBufferError, PerfEvent},
     },
     sys::bpf_map_update_elem,
     util::page_size,
@@ -54,6 +54,23 @@ impl<T: BorrowMut<MapData>> PerfEventArrayBuffer<T> {
     /// [`PerfBufferError::NoBuffers`] is returned when `out_bufs` is empty.
     pub fn read_events(&mut self, out_bufs: &mut [BytesMut]) -> Result<Events, PerfBufferError> {
         self.buf.read_events(out_bufs)
+    }
+
+    /// Yields the next event from the buffer, or `None` when no event is available.
+    ///
+    /// The returned [`PerfEvent::Sample`] borrows from the perf ring buffer
+    /// when the event is contiguous, and from an internal scratch buffer when
+    /// it wraps the buffer end. The borrow is bounded by `&mut self`, so no
+    /// other method may be called on this buffer until the returned
+    /// [`PerfEvent`] is dropped; on drop, the wrapped [`PerfSample`] advances
+    /// `data_tail` so the kernel may reuse the underlying memory. This is the
+    /// same pattern as [`RingBuf::next`], and the reason this method is not
+    /// `Iterator::next`: `Iterator::Item` cannot express the borrow.
+    ///
+    /// [`PerfSample`]: crate::maps::perf::PerfSample
+    /// [`RingBuf::next`]: crate::maps::RingBuf::next
+    pub fn next_event(&mut self) -> Option<PerfEvent<'_>> {
+        self.buf.next_event()
     }
 }
 
