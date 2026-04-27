@@ -26,6 +26,7 @@ mod lpm_trie;
 mod lsm;
 mod map_pin;
 mod maps_disjoint;
+mod netkit;
 mod per_cpu_array;
 mod perf_event_array;
 mod perf_event_bp;
