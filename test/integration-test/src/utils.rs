@@ -8,7 +8,7 @@ use std::{
     io::{self, Write as _},
     os::fd::{AsFd, BorrowedFd},
     path::Path,
-    process,
+    process::{self, Command},
     sync::atomic::{AtomicU64, Ordering},
 };
 
@@ -287,3 +287,35 @@ macro_rules! kernel_assert_eq {
 }
 
 pub(crate) use kernel_assert_eq;
+
+pub(crate) fn ifindex(if_name: &str) -> io::Result<u32> {
+    let if_name =
+        CString::new(if_name).map_err(|err| io::Error::new(io::ErrorKind::InvalidInput, err))?;
+    let idx = unsafe { if_nametoindex(if_name.as_ptr()) };
+    if idx == 0 {
+        Err(io::Error::last_os_error())
+    } else {
+        Ok(idx)
+    }
+}
+
+pub(crate) fn create_netkit_link(primary: &str, peer: &str) -> io::Result<()> {
+    let output = Command::new("ip")
+        .args([
+            "link", "add", "name", primary, "type", "netkit", "peer", "name", peer,
+        ])
+        .output()?;
+    if !output.status.success() {
+        return Err(io::Error::other(format!(
+            "`ip link add name {primary} type netkit peer name {peer}` failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        )));
+    }
+
+    for if_name in [primary, peer] {
+        let idx = ifindex(if_name)?;
+        unsafe { netlink_set_link_up(idx as i32) }.map_err(io::Error::other)?;
+    }
+
+    Ok(())
+}
