@@ -8039,6 +8039,7 @@ impl core::marker::Unpin for aya::test_helpers::NetNsGuard
 impl core::marker::UnsafeUnpin for aya::test_helpers::NetNsGuard
 impl core::panic::unwind_safe::RefUnwindSafe for aya::test_helpers::NetNsGuard
 impl core::panic::unwind_safe::UnwindSafe for aya::test_helpers::NetNsGuard
+pub fn aya::test_helpers::create_netkit_link(&str, &str) -> core::io::error::Result<()>
 pub type aya::test_helpers::AyaTestResult<T> = core::result::Result<T, aya::test_helpers::AyaTestError>
 pub mod aya::util
 pub struct aya::util::KernelVersion

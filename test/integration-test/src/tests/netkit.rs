@@ -1,31 +1,28 @@
 use aya::{
     Ebpf,
     programs::{
-        LinkOrder, ProgramId, SchedClassifier, TcxAttachType, tc::SchedClassifierAttachment,
+        LinkOrder, NetkitAttachType, ProgramId, SchedClassifier, tc::SchedClassifierAttachment,
     },
-    test_helpers::NetNsGuard,
+    test_helpers::{NetNsGuard, create_netkit_link},
     util::KernelVersion,
 };
 
 #[test_log::test]
-fn tcx() {
+fn netkit() {
     let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(6, 6, 0) {
-        eprintln!("skipping tcx_attach test on kernel {kernel_version:?}");
+    if kernel_version < KernelVersion::new(6, 7, 0) {
+        eprintln!("skipping netkit_attach test on kernel {kernel_version:?}");
+        return;
+    }
+    let primary = "nk-aya-0";
+    let peer = "nk-aya-1";
+
+    let _netns = NetNsGuard::new().unwrap();
+    if let Err(err) = create_netkit_link(primary, peer) {
+        eprintln!("skipping netkit_attach test: {err}");
         return;
     }
 
-    let _netns = NetNsGuard::new().unwrap();
-
-    // We need a dedicated `Ebpf` instance for each program that we load
-    // since TCX does not allow the same program ID to be attached multiple
-    // times to the same interface/direction.
-    //
-    // Variables declared within this macro are within a closure scope to avoid
-    // variable name conflicts.
-    //
-    // Yields a tuple of the `Ebpf` which must remain in scope for the duration
-    // of the test, and the link ID of the attached program.
     macro_rules! attach_program_with_link_order_inner {
         ($program_name:ident, $link_order:expr) => {
             let mut ebpf = Ebpf::load(crate::TCX).unwrap();
@@ -39,9 +36,9 @@ fn tcx() {
             attach_program_with_link_order_inner!($program_name, $link_order);
             $program_name
                 .attach(
-                    "lo",
-                    SchedClassifierAttachment::Tcx {
-                        attach_type: TcxAttachType::Ingress,
+                    primary,
+                    SchedClassifierAttachment::Netkit {
+                        attach_type: NetkitAttachType::Primary,
                         link_order: $link_order,
                     },
                 )
@@ -51,9 +48,9 @@ fn tcx() {
             attach_program_with_link_order_inner!($program_name, $link_order);
             let $link_id_name = $program_name
                 .attach(
-                    "lo",
-                    SchedClassifierAttachment::Tcx {
-                        attach_type: TcxAttachType::Ingress,
+                    primary,
+                    SchedClassifierAttachment::Netkit {
+                        attach_type: NetkitAttachType::Primary,
                         link_order: $link_order,
                     },
                 )
@@ -97,7 +94,8 @@ fn tcx() {
     .map(|program| program.info().unwrap().id())
     .collect::<Vec<_>>();
 
-    let (revision, got_order) = SchedClassifier::query_tcx("lo", TcxAttachType::Ingress).unwrap();
+    let (revision, got_order) =
+        SchedClassifier::query_netkit(primary, NetkitAttachType::Primary).unwrap();
     assert_eq!(revision, (expected_order.len() + 1) as u64);
     assert_eq!(
         got_order
