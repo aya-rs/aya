@@ -10,12 +10,10 @@ use std::{
     sync::Arc,
 };
 
-use bytes::BytesMut;
-
 use crate::{
     maps::{
         MapData, MapError, PinError,
-        perf::{Events, PerfBuffer, PerfBufferError},
+        perf::{PerfBuffer, PerfBufferError, PerfEvent},
     },
     sys::bpf_map_update_elem,
     util::page_size,
@@ -39,21 +37,23 @@ impl<T: BorrowMut<MapData>> PerfEventArrayBuffer<T> {
         self.buf.readable()
     }
 
-    /// Reads events from the buffer.
+    /// Yields the next event from the buffer, or `None` when no event is available.
     ///
-    /// This method reads events into the provided slice of buffers, filling
-    /// each buffer in order stopping when there are no more events to read or
-    /// all the buffers have been filled.
+    /// The returned [`PerfEvent::Sample`] borrows directly from the perf ring
+    /// buffer; samples that straddle the ring boundary are exposed as two
+    /// slices via [`PerfSample::as_slices`]. The borrow is bounded by
+    /// `&mut self`, so no other method may be called on this buffer until the
+    /// returned [`PerfEvent`] is dropped; on drop, the wrapped [`PerfSample`]
+    /// advances `data_tail` so the kernel may reuse the underlying memory.
+    /// This is the same pattern as [`RingBuf::next`], and the reason this
+    /// method is not `Iterator::next`: `Iterator::Item` cannot express the
+    /// borrow.
     ///
-    /// Returns the number of events read and the number of events lost. Events
-    /// are lost when user space doesn't read events fast enough and the ring
-    /// buffer fills up.
-    ///
-    /// # Errors
-    ///
-    /// [`PerfBufferError::NoBuffers`] is returned when `out_bufs` is empty.
-    pub fn read_events(&mut self, out_bufs: &mut [BytesMut]) -> Result<Events, PerfBufferError> {
-        self.buf.read_events(out_bufs)
+    /// [`PerfSample`]: crate::maps::perf::PerfSample
+    /// [`PerfSample::as_slices`]: crate::maps::perf::PerfSample::as_slices
+    /// [`RingBuf::next`]: crate::maps::RingBuf::next
+    pub fn next_event(&mut self) -> Option<PerfEvent<'_>> {
+        self.buf.next_event()
     }
 }
 
@@ -78,7 +78,7 @@ impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 /// * call [`PerfEventArray::open`]
 /// * poll the returned [`PerfEventArrayBuffer`] to be notified when events are
 ///   inserted in the buffer
-/// * call [`PerfEventArrayBuffer::read_events`] to read the events
+/// * call [`PerfEventArrayBuffer::next_event`] to read the events
 ///
 /// # Minimum kernel version
 ///
@@ -90,7 +90,7 @@ impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 /// available CPU:
 ///
 /// ```no_run
-/// # use aya::maps::perf::PerfEventArrayBuffer;
+/// # use aya::maps::perf::{PerfEvent, PerfEventArrayBuffer};
 /// # use aya::maps::MapData;
 /// # use std::borrow::BorrowMut;
 /// # struct Poll<T> { _t: std::marker::PhantomData<T> };
@@ -116,7 +116,6 @@ impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 /// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::PerfEventArray;
 /// use aya::util::online_cpus;
-/// use bytes::BytesMut;
 ///
 /// let mut perf_array = PerfEventArray::try_from(bpf.map_mut("EVENTS").unwrap())?;
 ///
@@ -128,14 +127,21 @@ impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 ///     perf_buffers.push(perf_array.open(cpu_id, None)?);
 /// }
 ///
-/// let mut out_bufs = [BytesMut::with_capacity(1024)];
-///
 /// // poll the buffers to know when they have queued events
 /// let poll = poll_buffers(perf_buffers);
 /// loop {
 ///     for read_buf in poll.poll_readable() {
-///         read_buf.read_events(&mut out_bufs)?;
-///         // process out_bufs
+///         while let Some(event) = read_buf.next_event() {
+///             match event {
+///                 PerfEvent::Sample(sample) => {
+///                     let (head, tail) = sample.as_slices();
+///                     // process the sample bytes (head + tail when wrapping)
+///                 }
+///                 PerfEvent::Lost { count } => {
+///                     // record the dropped-events counter
+///                 }
+///             }
+///         }
 ///     }
 /// }
 ///
