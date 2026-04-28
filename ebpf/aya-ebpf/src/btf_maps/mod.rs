@@ -2,15 +2,25 @@ pub mod array;
 pub mod bloom_filter;
 pub mod lpm_trie;
 pub mod per_cpu_array;
+pub mod perf_event_array;
+pub mod perf_event_byte_array;
+pub mod program_array;
+pub mod reuseport_sock_array;
 pub mod ring_buf;
 pub mod sk_storage;
+pub mod stack_trace;
 
 pub use array::Array;
 pub use bloom_filter::BloomFilter;
 pub use lpm_trie::LpmTrie;
 pub use per_cpu_array::PerCpuArray;
+pub use perf_event_array::PerfEventArray;
+pub use perf_event_byte_array::PerfEventByteArray;
+pub use program_array::ProgramArray;
+pub use reuseport_sock_array::ReusePortSockArray;
 pub use ring_buf::RingBuf;
 pub use sk_storage::SkStorage;
+pub use stack_trace::StackTrace;
 
 /// Defines a BTF-compatible map struct with flat `#[repr(C)]` layout.
 ///
@@ -21,14 +31,14 @@ pub use sk_storage::SkStorage;
 /// wrapper; the macro adds `*const` internally (this is a BTF implementation
 /// detail).
 ///
-/// Generics are limited to type parameters (with optional defaults) followed by
-/// a semicolon and const parameters (with optional defaults). Lifetimes and
-/// bounds are not supported.
+/// Generics are an optional list of type parameters (with optional defaults)
+/// optionally followed by a semicolon and const parameters (with optional
+/// defaults). Lifetimes and bounds are not supported.
 macro_rules! btf_map_def {
     (
         $(#[$attr:meta])*
         $vis:vis struct $name:ident<
-            $($ty_gen:ident $(= $ty_default:ty)?),+
+            $($ty_gen:ident $(= $ty_default:ty)?),*
             $(; $(const $const_gen:ident : $const_ty:ty $(= $const_default:tt)?),+)?
             $(,)?
         >,
@@ -45,8 +55,8 @@ macro_rules! btf_map_def {
         // Without it, Rust may reorder fields and libbpf will fail to parse the map definition.
         #[repr(C)]
         $vis struct $name<
-            $($ty_gen $(= $ty_default)?),+
-            $(, $(const $const_gen : $const_ty $(= $const_default)?),+)?
+            $($ty_gen $(= $ty_default)?,)*
+            $($(const $const_gen : $const_ty $(= $const_default)?,)+)?
         > {
             r#type: *const [i32; $crate::bindings::bpf_map_type::$map_type as usize],
             key: *const $key_ty,
@@ -59,19 +69,19 @@ macro_rules! btf_map_def {
         }
 
         unsafe impl<
-            $($ty_gen),+
-            $(, $(const $const_gen : $const_ty),+)?
+            $($ty_gen,)*
+            $($(const $const_gen : $const_ty,)+)?
         > Sync for $name<
-            $($ty_gen),+
-            $(, $($const_gen),+)?
+            $($ty_gen,)*
+            $($($const_gen,)+)?
         > {}
 
         impl<
-            $($ty_gen),+
-            $(, $(const $const_gen : $const_ty),+)?
+            $($ty_gen,)*
+            $($(const $const_gen : $const_ty,)+)?
         > Default for $name<
-            $($ty_gen),+
-            $(, $($const_gen),+)?
+            $($ty_gen,)*
+            $($($const_gen,)+)?
         > {
             fn default() -> Self {
                 Self::new()
@@ -79,11 +89,11 @@ macro_rules! btf_map_def {
         }
 
         impl<
-            $($ty_gen),+
-            $(, $(const $const_gen : $const_ty),+)?
+            $($ty_gen,)*
+            $($(const $const_gen : $const_ty,)+)?
         > $name<
-            $($ty_gen),+
-            $(, $($const_gen),+)?
+            $($ty_gen,)*
+            $($($const_gen,)+)?
         > {
             pub const fn new() -> Self {
                 Self {

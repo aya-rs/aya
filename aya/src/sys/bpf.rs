@@ -1347,6 +1347,7 @@ mod tests {
         generated::bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, maps::PinningType, obj::parse_map_info,
     };
     use libc::EINVAL;
+    use test_case::test_case;
 
     use super::*;
     use crate::sys::override_syscall;
@@ -1473,6 +1474,51 @@ bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
         let map = parse_map_info(info, PinningType::None);
 
         let name = CString::new("FILTER").unwrap();
+        let btf_fd = unsafe { BorrowedFd::borrow_raw(BTF_FD) };
+        bpf_create_map(&name, &map, Some(btf_fd)).unwrap();
+    }
+
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY ; "perf_event_array")]
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY ; "cgroup_array")]
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_STACK_TRACE ; "stack_trace")]
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS ; "array_of_maps")]
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS ; "hash_of_maps")]
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_DEVMAP ; "devmap")]
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH ; "devmap_hash")]
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_CPUMAP ; "cpumap")]
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_XSKMAP ; "xskmap")]
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_SOCKMAP ; "sockmap")]
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_SOCKHASH ; "sockhash")]
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_QUEUE ; "queue")]
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_STACK ; "stack")]
+    #[test_case(bpf_map_type::BPF_MAP_TYPE_RINGBUF ; "ringbuf")]
+    fn test_btf_blocklist_strips_type_ids(map_type: bpf_map_type) {
+        const BTF_FD: i32 = 42;
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                attr,
+            } => {
+                let u = unsafe { attr.__bindgen_anon_1 };
+                assert_eq!(u.btf_key_type_id, 0);
+                assert_eq!(u.btf_value_type_id, 0);
+                assert_eq!(u.btf_fd, 0);
+                Ok(crate::MockableFd::mock_signed_fd().into())
+            }
+            _ => Err((-1, io::Error::from_raw_os_error(EINVAL))),
+        });
+
+        let mut info = unsafe { mem::zeroed::<bpf_map_info>() };
+        info.type_ = map_type as u32;
+        info.key_size = 4;
+        info.value_size = 4;
+        info.max_entries = 64;
+        info.btf_key_type_id = 99;
+        info.btf_value_type_id = 7;
+        let map = parse_map_info(info, PinningType::None);
+
+        let name = CString::new("TEST").unwrap();
         let btf_fd = unsafe { BorrowedFd::borrow_raw(BTF_FD) };
         bpf_create_map(&name, &map, Some(btf_fd)).unwrap();
     }

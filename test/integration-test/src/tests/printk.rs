@@ -15,7 +15,11 @@ use std::{
     path::Path,
 };
 
-use aya::{Ebpf, programs::UProbe, util::KernelVersion};
+use aya::{
+    Ebpf,
+    programs::{UProbe, uprobe::UProbeScope},
+    util::KernelVersion,
+};
 use integration_common::printk::{
     MARKER, TEST_CHAR, TEST_I8, TEST_I16, TEST_I32, TEST_I64, TEST_ISIZE, TEST_U8, TEST_U16,
     TEST_U32, TEST_U64, TEST_USIZE,
@@ -77,8 +81,12 @@ async fn bpf_printk(
         .try_into()
         .unwrap();
     prog.load().unwrap();
-    prog.attach("trigger_bpf_printk", "/proc/self/exe", None)
-        .unwrap();
+    prog.attach(
+        "trigger_bpf_printk",
+        "/proc/self/exe",
+        UProbeScope::AllProcesses,
+    )
+    .unwrap();
 
     let tracefs_mount = "/sys/kernel/debug/tracing";
     let tracefs_mount = Path::new(tracefs_mount);

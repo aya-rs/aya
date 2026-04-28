@@ -81,6 +81,14 @@ name = "per_cpu_array"
 path = "src/per_cpu_array.rs"
 
 [[bin]]
+name = "perf_event_array"
+path = "src/perf_event_array.rs"
+
+[[bin]]
+name = "perf_event_byte_array"
+path = "src/perf_event_byte_array.rs"
+
+[[bin]]
 name = "raw_tracepoint"
 path = "src/raw_tracepoint.rs"
 
@@ -103,6 +111,10 @@ path = "src/sk_storage.rs"
 [[bin]]
 name = "simple_prog"
 path = "src/simple_prog.rs"
+
+[[bin]]
+name = "sk_reuseport"
+path = "src/sk_reuseport.rs"
 
 [[bin]]
 name = "strncmp"
@@ -135,3 +147,11 @@ path = "src/perf_event_bp.rs"
 [[bin]]
 name = "printk_test"
 path = "src/printk_test.rs"
+
+[[bin]]
+name = "prog_array"
+path = "src/prog_array.rs"
+
+[[bin]]
+name = "stack_trace"
+path = "src/stack_trace.rs"

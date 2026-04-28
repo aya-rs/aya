@@ -76,7 +76,14 @@ pub(crate) fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
             "xdp_action",
             "tcx_action_base",
         ];
-        let vars = ["BPF_.*", "bpf_.*", "TC_ACT_.*", "SOL_SOCKET", "SO_.*"];
+        let vars = [
+            "BPF_.*",
+            "bpf_.*",
+            "PERF_MAX_STACK_DEPTH",
+            "TC_ACT_.*",
+            "SOL_SOCKET",
+            "SO_.*",
+        ];
 
         for x in &types {
             bindgen = bindgen.allowlist_type(x);

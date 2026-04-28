@@ -1,4 +1,5 @@
 //! Socket maps.
+mod reuseport_sock_array;
 mod sock_hash;
 mod sock_map;
 
@@ -7,6 +8,7 @@ use std::{
     os::fd::{AsFd, BorrowedFd},
 };
 
+pub use reuseport_sock_array::ReusePortSockArray;
 pub use sock_hash::SockHash;
 pub use sock_map::SockMap;
 

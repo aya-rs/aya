@@ -9,6 +9,21 @@ pub mod array {
     pub const ARRAY_LEN: u32 = 4;
 }
 
+pub mod prog_array {
+    /// Slot written by the uprobe after `tail_call` falls through.
+    pub const RESULT_INDEX: u32 = 0;
+
+    /// Slot written by the tail-call target to prove the target ran.
+    pub const SUCCESS_INDEX: u32 = 1;
+
+    /// Arbitrary non-zero sentinel written by the uprobe to prove control
+    /// returned from a failed `tail_call`.
+    pub const FAILURE_SENTINEL: u32 = 42;
+
+    /// Arbitrary non-zero sentinel written by the tail-call target program.
+    pub const SUCCESS_SENTINEL: u32 = 43;
+}
+
 pub mod bloom_filter {
     pub const INSERT_INDEX: u32 = 0;
     pub const CONTAINS_PRESENT_INDEX: u32 = 1;
@@ -137,7 +152,30 @@ pub mod lpm_trie {
     #[derive(Clone, Copy, Default)]
     pub struct TestResult {
         pub value: u32,
-        pub ran: u32,
+        /// Distinguishes a recorded result from a zero-initialised slot.
+        pub ran: bool,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
+
+pub mod sk_reuseport {
+    pub const SELECT_HITS_INDEX: u32 = 0;
+    pub const MIGRATE_HITS_INDEX: u32 = 1;
+    pub const CLEAR_FALLBACK_HITS_INDEX: u32 = 2;
+    pub const SELECT_SOCKET_INDEX: u32 = 0;
+    pub const MIGRATE_SOCKET_INDEX: u32 = 2;
+}
+
+pub mod stack_trace {
+    #[repr(C)]
+    #[derive(Clone, Copy, Default)]
+    pub struct TestResult {
+        pub stack_id: u32,
+
+        /// Distinguishes a recorded result from a zero-initialised slot.
+        pub ran: bool,
     }
 
     #[cfg(feature = "user")]

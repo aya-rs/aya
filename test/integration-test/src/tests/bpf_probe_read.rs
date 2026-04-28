@@ -1,4 +1,8 @@
-use aya::{Ebpf, maps::Array, programs::UProbe};
+use aya::{
+    Ebpf,
+    maps::Array,
+    programs::{UProbe, uprobe::UProbeScope},
+};
 use integration_common::bpf_probe_read::{RESULT_BUF_LEN, TestResult};
 
 #[test_log::test]
@@ -99,7 +103,8 @@ fn load_and_attach_uprobe(prog_name: &str, func_name: &str, bytes: &[u8]) -> Ebp
     let prog: &mut UProbe = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
-    prog.attach(func_name, "/proc/self/exe", None).unwrap();
+    prog.attach(func_name, "/proc/self/exe", UProbeScope::AllProcesses)
+        .unwrap();
 
     bpf
 }

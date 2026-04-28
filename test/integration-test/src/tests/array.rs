@@ -1,4 +1,8 @@
-use aya::{EbpfLoader, maps::Array, programs::UProbe};
+use aya::{
+    EbpfLoader,
+    maps::Array,
+    programs::{UProbe, uprobe::UProbeScope},
+};
 use integration_common::array::{ARRAY_LEN, GET_INDEX, GET_PTR_INDEX, GET_PTR_MUT_INDEX};
 use test_case::test_case;
 
@@ -68,7 +72,7 @@ fn test_array(
             .unwrap_or_else(|err| panic!("program {prog_name} is not a uprobe: {err}"));
         prog.load()
             .unwrap_or_else(|err| panic!("load {prog_name}: {err}"));
-        prog.attach(symbol, "/proc/self/exe", None)
+        prog.attach(symbol, "/proc/self/exe", UProbeScope::AllProcesses)
             .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
     }
 

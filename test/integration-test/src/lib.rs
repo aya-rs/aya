@@ -53,12 +53,15 @@ bpf_file!(
     NAME_TEST => "name_test",
     PASS => "pass",
     PER_CPU_ARRAY => "per_cpu_array",
+    PERF_EVENT_ARRAY => "perf_event_array",
+    PERF_EVENT_BYTE_ARRAY => "perf_event_byte_array",
     PERF_EVENT_BP => "perf_event_bp",
     RAW_TRACEPOINT => "raw_tracepoint",
     REDIRECT => "redirect",
     RELOCATIONS => "relocations",
     RING_BUF => "ring_buf",
     SIMPLE_PROG => "simple_prog",
+    SK_REUSEPORT => "sk_reuseport",
     SK_STORAGE => "sk_storage",
     STRNCMP => "strncmp",
     TCX => "tcx",
@@ -67,6 +70,8 @@ bpf_file!(
     XDP_SEC => "xdp_sec",
     UPROBE_COOKIE => "uprobe_cookie",
     PRINTK_TEST => "printk_test",
+    PROG_ARRAY => "prog_array",
+    STACK_TRACE => "stack_trace",
 );
 
 #[cfg(test)]
