@@ -1515,6 +1515,7 @@ dependencies = [
  "glob",
  "nix",
  "object",
+ "rstest",
  "walkdir",
  "xz2",
  "zstd",
