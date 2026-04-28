@@ -146,7 +146,7 @@ pub mod lpm_trie {
 
 pub mod bpf_d_path {
     pub const EXPECTED_PATH: &str = "/dev/null";
-    pub const PATH_BUF_LEN: usize = EXPECTED_PATH.len() + 1;
+    pub const PATH_BUF_LEN: usize = c"/dev/null".to_bytes_with_nul().len();
 
     #[derive(Copy, Clone)]
     #[repr(C)]
