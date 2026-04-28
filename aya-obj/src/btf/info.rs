@@ -1,4 +1,4 @@
-use alloc::{string::String, vec, vec::Vec};
+use std::vec;
 
 use bytes::BufMut as _;
 use object::Endianness;
