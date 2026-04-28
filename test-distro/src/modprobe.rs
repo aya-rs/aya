@@ -3,7 +3,7 @@
 //! This implementation is incredibly naive and is only designed to work within
 //! the constraints of the test environment. Not for production use.
 
-use std::{fs::File, io::BufRead as _, path::Path};
+use std::{fs::File, io::BufRead, path::Path};
 
 use anyhow::{Context as _, anyhow, bail};
 use clap::Parser;
@@ -41,8 +41,15 @@ fn try_main(quiet: bool, name: String) -> anyhow::Result<()> {
     let modules_dir = resolve_modules_dir()?;
 
     output!(quiet, "resolving alias for module: {}", name);
-    let module = resolve_alias(quiet, &modules_dir, &name)?;
+    let modules_alias = modules_dir.join("modules.alias");
+    let alias_file = File::open(&modules_alias)
+        .with_context(|| format!("open(): {}", modules_alias.display()))?;
+    resolve_module(std::io::BufReader::new(alias_file), &name, |module| {
+        load_module(quiet, &modules_dir, module)
+    })
+}
 
+fn load_module(quiet: bool, modules_dir: &Path, module: &str) -> anyhow::Result<()> {
     let pattern = format!(
         "{}/kernel/**/{}.ko*",
         modules_dir
@@ -90,27 +97,23 @@ fn try_main(quiet: bool, name: String) -> anyhow::Result<()> {
     }
 }
 
-fn resolve_alias(quiet: bool, module_dir: &Path, name: &str) -> anyhow::Result<String> {
-    let modules_alias = module_dir.join("modules.alias");
-    output!(
-        quiet,
-        "opening modules.alias file: {}",
-        modules_alias.display()
-    );
-    let alias_file = File::open(&modules_alias)
-        .with_context(|| format!("open(): {}", modules_alias.display()))?;
-    let alias_file = std::io::BufReader::new(alias_file);
-
-    for line in alias_file.lines() {
+fn resolve_module<T>(
+    aliases: impl BufRead,
+    name: &str,
+    use_module: impl FnOnce(&str) -> anyhow::Result<T>,
+) -> anyhow::Result<T> {
+    for line in aliases.lines() {
         let line = line?;
         let Some((alias, module)) = parse_alias_line(&line)? else {
             continue;
         };
         if alias == name {
-            return Ok(module.to_string());
+            return use_module(module);
         }
     }
-    bail!("alias not found: {name}")
+    // A module need not declare an alias for its own name. The subsequent
+    // module lookup reports an error if neither an alias nor that name exists.
+    use_module(name)
 }
 
 fn parse_alias_line(line: &str) -> anyhow::Result<Option<(&str, &str)>> {
@@ -130,25 +133,21 @@ fn parse_alias_line(line: &str) -> anyhow::Result<Option<(&str, &str)>> {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_alias_line;
+    use rstest::rstest;
 
-    #[test]
-    fn parse_alias_line_allows_spaces_in_alias() {
-        let (alias, module) = parse_alias_line("alias mt8195_mt6359 soc card mt8195-mt6359")
-            .unwrap()
-            .unwrap();
+    use super::resolve_module;
 
-        assert_eq!(alias, "mt8195_mt6359 soc card");
-        assert_eq!(module, "mt8195-mt6359");
-    }
-
-    #[test]
-    fn parse_alias_line_reads_regular_alias() {
-        let (alias, module) = parse_alias_line("alias net-sch-clsact sch_ingress")
-            .unwrap()
-            .unwrap();
-
-        assert_eq!(alias, "net-sch-clsact");
-        assert_eq!(module, "sch_ingress");
+    #[rstest]
+    #[case::alias("net-sch-clsact", "sch_ingress")]
+    #[case::alias_with_spaces("mt8195_mt6359 soc card", "mt8195-mt6359")]
+    #[case::module_name("cls_bpf", "cls_bpf")]
+    fn resolves_aliases_and_module_names(#[case] name: &str, #[case] expected: &str) {
+        let aliases =
+            b"alias net-sch-clsact sch_ingress\nalias mt8195_mt6359 soc card mt8195-mt6359\n";
+        resolve_module(aliases.as_slice(), name, |module| {
+            assert_eq!(module, expected);
+            Ok(())
+        })
+        .unwrap();
     }
 }
