@@ -1,18 +1,13 @@
 //! Object file loading, parsing, and relocation.
 
-use alloc::{
+use std::{
     borrow::ToOwned as _,
     collections::BTreeMap,
-    ffi::CString,
-    string::{String, ToString as _},
-    vec,
-    vec::Vec,
-};
-use core::{
-    ffi::{CStr, FromBytesWithNulError},
+    ffi::{CStr, CString, FromBytesWithNulError},
     mem, ptr,
     slice::from_raw_parts_mut,
     str::FromStr,
+    string::ToString as _,
 };
 
 use log::debug;
@@ -1164,7 +1159,7 @@ fn parse_license(data: &[u8]) -> Result<CString, ParseError> {
                 data: data.to_vec(),
             },
         })
-        .map(alloc::borrow::ToOwned::to_owned)
+        .map(ToOwned::to_owned)
 }
 
 fn parse_version(data: &[u8], endianness: Endianness) -> Result<Option<u32>, ParseError> {
@@ -1461,8 +1456,6 @@ fn get_func_and_line_info(
 
 #[cfg(test)]
 mod tests {
-    use alloc::vec;
-
     use assert_matches::assert_matches;
 
     use super::*;

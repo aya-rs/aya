@@ -1,6 +1,6 @@
 //! Program relocation handling.
 
-use alloc::{borrow::ToOwned as _, collections::BTreeMap, string::String};
+use std::{borrow::ToOwned as _, collections::BTreeMap};
 
 use log::debug;
 use object::{SectionIndex, SymbolKind};
@@ -16,10 +16,7 @@ use crate::{
     util::{HashMap, HashSet},
 };
 
-#[cfg(feature = "std")]
 type RawFd = std::os::fd::RawFd;
-#[cfg(not(feature = "std"))]
-type RawFd = core::ffi::c_int;
 
 pub(crate) const INS_SIZE: usize = size_of::<bpf_insn>();
 
@@ -495,7 +492,7 @@ fn insn_is_call(ins: bpf_insn) -> bool {
 
 #[cfg(test)]
 mod test {
-    use alloc::{string::ToString as _, vec, vec::Vec};
+    use std::string::ToString as _;
 
     use super::*;
     use crate::maps::{BtfMap, LegacyMap};
