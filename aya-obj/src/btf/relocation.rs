@@ -1,12 +1,12 @@
-use alloc::{
+use std::{
     borrow::{Cow, ToOwned as _},
     collections::BTreeMap,
     format,
-    string::{String, ToString as _},
-    vec,
-    vec::Vec,
+    num::ParseIntError,
+    ops::Bound::Included,
+    ptr,
+    string::ToString as _,
 };
-use core::{num::ParseIntError, ops::Bound::Included, ptr};
 
 use object::SectionIndex;
 
@@ -37,7 +37,6 @@ pub struct BtfRelocationError {
 /// Relocation failures
 #[derive(thiserror::Error, Debug)]
 enum RelocationError {
-    #[cfg(feature = "std")]
     /// I/O error
     #[error(transparent)]
     IOError(#[from] std::io::Error),

@@ -1,7 +1,5 @@
 //! Map struct and type bindings.
 
-use alloc::vec::Vec;
-
 use crate::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type};
 
 impl TryFrom<u32> for bpf_map_type {
