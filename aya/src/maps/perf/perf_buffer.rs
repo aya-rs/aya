@@ -220,6 +220,9 @@ impl PerfBuffer {
 
         let head = unsafe { (*header).data_head } as usize;
         let mut tail = unsafe { (*header).data_tail } as usize;
+        // Pair with the kernel's smp_store_release on `data_head`: subsequent
+        // record reads must not be reordered before observing the head.
+        atomic::fence(Ordering::Acquire);
         let result = loop {
             if head == tail {
                 break Ok(());
