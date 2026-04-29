@@ -289,8 +289,9 @@ fn add_type(header: &mut btf_header, types: &mut BtfTypes, btf_type: BtfType) ->
     type_id as u32
 }
 
-// Pad or truncate numeric bytes to the target width. When shrinking from 8 bytes,
-// keep the correct half for the object endianness.
+// Numeric config values are stored as native-width bytes when parsed, while the
+// BTF extern may declare a narrower destination type. After the fit check above,
+// pad or truncate numeric bytes to the target width.
 fn resize_numeric_value(value: &[u8], type_size: usize, endianness: Endianness) -> Vec<u8> {
     if value.len() == type_size {
         return value.to_vec();
@@ -1024,10 +1025,7 @@ fn clone_type_chain_with_replacement(
     Ok(obj_btf.add_type(new_type))
 }
 
-fn find_data_sec<'a>(
-    btf: &'a Btf,
-    name: &str,
-) -> Result<Option<(usize, &'a DataSec)>, BtfError> {
+fn find_data_sec<'a>(btf: &'a Btf, name: &str) -> Result<Option<(usize, &'a DataSec)>, BtfError> {
     for (type_index, ty) in btf.types().enumerate() {
         let BtfType::DataSec(datasec) = ty else {
             continue;
@@ -1259,11 +1257,12 @@ impl Object {
                 if var.linkage != VarLinkage::Extern {
                     return Err(BtfError::InvalidExternalSymbol { symbol_name: name });
                 }
-                let symbol_index = external_symbols_by_name.get(name.as_str()).ok_or_else(|| {
-                    BtfError::InvalidExternalSymbol {
-                        symbol_name: name.clone(),
-                    }
-                })?;
+                let symbol_index =
+                    external_symbols_by_name.get(name.as_str()).ok_or_else(|| {
+                        BtfError::InvalidExternalSymbol {
+                            symbol_name: name.clone(),
+                        }
+                    })?;
 
                 let resolved_type_id = obj_btf.resolve_type(var.btf_type)?;
                 let materialize_unsized_char_array = match obj_btf.type_by_id(resolved_type_id)? {
