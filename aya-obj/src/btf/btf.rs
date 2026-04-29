@@ -1130,6 +1130,7 @@ impl Object {
 
         let data = match resolved_type {
             BtfType::Array(Array { array, .. }) => {
+                // only byte arrays are valid string destinations
                 let element_type = obj_btf.resolve_type(array.element_type)?;
                 let BtfType::Int(int) = obj_btf.type_by_id(element_type)? else {
                     return Err(BtfError::InvalidExternalSymbol {
@@ -1142,24 +1143,22 @@ impl Object {
                     });
                 }
 
-                if external_value.is_none() && symbol_is_weak && type_size == 0 {
-                    data.push(0);
-                }
-
+                // tristate markers are scalar values, not valid string payloads
                 if tristate_marker.is_some() {
                     return Err(BtfError::ExternalSymbolValueOutOfRange {
                         symbol_name: symbol_name.into(),
                     });
                 }
 
+                // fixed-size strings are padded/truncated
                 if type_size > 0 {
-                    if data.len() < type_size {
-                        data.resize(type_size, 0);
-                    } else if data.len() > type_size {
-                        data.truncate(type_size);
-                    }
+                    data.resize(type_size, 0);
                 }
-                if !data.is_empty() {
+
+                // always NUL-termiate
+                if data.is_empty() {
+                    data.push(0);
+                } else {
                     *data.last_mut().unwrap() = 0;
                 }
                 data
