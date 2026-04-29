@@ -1075,21 +1075,57 @@ impl Object {
             }
         };
 
+        let tristate_marker = matches!(data.as_slice(), [b'n' | b'y' | b'm']).then(|| data[0]);
+
         // libbpf treats enum/enum64 types named `libbpf_tristate` as the
-        // destination type for tristate config values. Precompute that here so
-        // both enum encodings share the same materialization path below.
+        // destination type for tristate config values; handle those before the
+        // integer/array match so both enum encodings share the same path
         let is_libbpf_tristate = match resolved_type {
             BtfType::Enum(enum_ty) => {
+                // match libbpf's BTF_KIND_ENUM validation
+                // https://github.com/libbpf/libbpf/blob/v1.4.0/src/libbpf.c#L4018-L4023
                 enum_ty.size == 4
                     && obj_btf.string_at(enum_ty.name_offset)?.as_ref() == "libbpf_tristate"
             }
             BtfType::Enum64(enum_ty) => {
-                enum_ty.size == 8
-                    && obj_btf.string_at(enum_ty.name_offset)?.as_ref() == "libbpf_tristate"
+                obj_btf.string_at(enum_ty.name_offset)?.as_ref() == "libbpf_tristate"
             }
             _ => false,
         };
-        let tristate_marker = matches!(data.as_slice(), [b'n' | b'y' | b'm']).then(|| data[0]);
+        if is_libbpf_tristate {
+            let data = if let Some(value) = tristate_marker {
+                let value = match value {
+                    b'n' => 0,
+                    b'y' => 1,
+                    b'm' => 2,
+                    _ => {
+                        return Err(BtfError::ExternalSymbolValueOutOfRange {
+                            symbol_name: symbol_name.into(),
+                        });
+                    }
+                };
+                let mut data = vec![0; type_size];
+                match endianness {
+                    Endianness::Little => data[0] = value,
+                    Endianness::Big => data[type_size - 1] = value,
+                }
+                data
+            } else {
+                if !scalar_value_fits(&data, type_size, false, endianness) {
+                    return Err(BtfError::ExternalSymbolValueOutOfRange {
+                        symbol_name: symbol_name.into(),
+                    });
+                }
+                if scalar_value_as_u64(&data, endianness).is_some_and(|value| value > 2) {
+                    return Err(BtfError::ExternalSymbolValueOutOfRange {
+                        symbol_name: symbol_name.into(),
+                    });
+                }
+                resize_numeric_value(&data, type_size, endianness)
+            };
+
+            return Ok((type_align, data));
+        }
 
         let data = match resolved_type {
             BtfType::Array(Array { array, .. }) => {
@@ -1171,38 +1207,6 @@ impl Object {
                     });
                 }
                 resize_numeric_value(&data, type_size, endianness)
-            }
-            _ if is_libbpf_tristate => {
-                if let Some(value) = tristate_marker {
-                    let value = match value {
-                        b'n' => 0,
-                        b'y' => 1,
-                        b'm' => 2,
-                        _ => {
-                            return Err(BtfError::ExternalSymbolValueOutOfRange {
-                                symbol_name: symbol_name.into(),
-                            });
-                        }
-                    };
-                    let mut data = vec![0; type_size];
-                    match endianness {
-                        Endianness::Little => data[0] = value,
-                        Endianness::Big => data[type_size - 1] = value,
-                    }
-                    data
-                } else {
-                    if !scalar_value_fits(&data, type_size, false, endianness) {
-                        return Err(BtfError::ExternalSymbolValueOutOfRange {
-                            symbol_name: symbol_name.into(),
-                        });
-                    }
-                    if scalar_value_as_u64(&data, endianness).is_some_and(|value| value > 2) {
-                        return Err(BtfError::ExternalSymbolValueOutOfRange {
-                            symbol_name: symbol_name.into(),
-                        });
-                    }
-                    resize_numeric_value(&data, type_size, endianness)
-                }
             }
             _ => {
                 return Err(BtfError::InvalidExternalSymbol {
