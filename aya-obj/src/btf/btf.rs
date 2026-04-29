@@ -1205,6 +1205,7 @@ impl Object {
             }
         };
 
+        // detect if the data is a tristate marker
         let tristate_marker = matches!(data.as_slice(), [b'n' | b'y' | b'm']).then(|| data[0]);
 
         // libbpf treats enum/enum64 types named `libbpf_tristate` as the
