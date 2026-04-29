@@ -1024,6 +1024,22 @@ fn clone_type_chain_with_replacement(
     Ok(obj_btf.add_type(new_type))
 }
 
+fn find_data_sec<'a>(
+    btf: &'a Btf,
+    name: &str,
+) -> Result<Option<(usize, &'a DataSec)>, BtfError> {
+    for (type_index, ty) in btf.types().enumerate() {
+        let BtfType::DataSec(datasec) = ty else {
+            continue;
+        };
+        if btf.string_at(datasec.name_offset)?.as_ref() == name {
+            return Ok(Some((type_index, datasec)));
+        }
+    }
+
+    Ok(None)
+}
+
 impl Object {
     // Validate one __kconfig extern against its declared BTF type and materialize
     // the bytes that should be written for it into the synthetic .kconfig section.
@@ -1228,101 +1244,92 @@ impl Object {
             let mut kconfig_data = Vec::new();
             let mut write_offset = 0u64;
 
-            for type_index in 0..obj_btf.types.types.len() {
-                let (name_offset, entries) = match &obj_btf.types.types[type_index] {
-                    BtfType::DataSec(d) => (d.name_offset, d.entries.clone()),
-                    _ => continue,
-                };
-                if obj_btf.string_at(name_offset)?.as_ref() != ".kconfig" {
+            let Some((type_index, datasec)) = find_data_sec(obj_btf, ".kconfig")? else {
+                return Ok(None);
+            };
+            let entries = datasec.entries.clone();
+
+            for (entry_index, entry) in entries.iter().enumerate() {
+                let BtfType::Var(var) = obj_btf.types.type_by_id(entry.btf_type)? else {
                     continue;
+                };
+                let var = var.clone();
+                let name = obj_btf.string_at(var.name_offset)?.into_owned();
+
+                if var.linkage != VarLinkage::Extern {
+                    return Err(BtfError::InvalidExternalSymbol { symbol_name: name });
                 }
-
-                for (entry_index, entry) in entries.iter().enumerate() {
-                    let BtfType::Var(var) = obj_btf.types.type_by_id(entry.btf_type)? else {
-                        continue;
-                    };
-                    let var = var.clone();
-                    let name = obj_btf.string_at(var.name_offset)?.into_owned();
-
-                    if var.linkage != VarLinkage::Extern {
-                        return Err(BtfError::InvalidExternalSymbol { symbol_name: name });
+                let symbol_index = external_symbols_by_name.get(name.as_str()).ok_or_else(|| {
+                    BtfError::InvalidExternalSymbol {
+                        symbol_name: name.clone(),
                     }
-                    let symbol_index =
-                        external_symbols_by_name.get(name.as_str()).ok_or_else(|| {
-                            BtfError::InvalidExternalSymbol {
-                                symbol_name: name.clone(),
-                            }
-                        })?;
+                })?;
 
-                    let resolved_type_id = obj_btf.resolve_type(var.btf_type)?;
-                    let materialize_unsized_char_array =
-                        match obj_btf.type_by_id(resolved_type_id)? {
-                            BtfType::Array(Array { array, .. }) => {
-                                let element_type = obj_btf.resolve_type(array.element_type)?;
-                                array.len == 0
-                                    && matches!(
-                                        obj_btf.type_by_id(element_type)?,
-                                        BtfType::Int(Int { size, .. }) if *size == 1
-                                    )
-                            }
-                            _ => false,
-                        };
+                let resolved_type_id = obj_btf.resolve_type(var.btf_type)?;
+                let materialize_unsized_char_array = match obj_btf.type_by_id(resolved_type_id)? {
+                    BtfType::Array(Array { array, .. }) => {
+                        let element_type = obj_btf.resolve_type(array.element_type)?;
+                        array.len == 0
+                            && matches!(
+                                obj_btf.type_by_id(element_type)?,
+                                BtfType::Int(Int { size, .. }) if *size == 1
+                            )
+                    }
+                    _ => false,
+                };
 
-                    let (data, aligned_offset) = {
-                        let symbol = self.symbol_table.get_mut(symbol_index).ok_or_else(|| {
-                            BtfError::InvalidExternalSymbol {
-                                symbol_name: name.clone(),
-                            }
-                        })?;
-                        let (type_align, data) = Self::materialize_kconfig_extern(
-                            obj_btf,
-                            &var,
-                            &name,
-                            externs.get(&name).map(Vec::as_slice),
-                            symbol.is_weak,
-                            self.endianness,
-                        )?;
-                        let aligned_offset = (write_offset + (type_align - 1)) & !(type_align - 1);
-                        symbol.address = aligned_offset;
-                        symbol.section_index = Some(kconfig_map_index);
-                        // Undefined externs often have size 0; use BTF type size for kconfig.
-                        symbol.size = data.len() as u64;
-                        (data, aligned_offset)
-                    };
-
-                    if materialize_unsized_char_array {
-                        let Some(BtfType::Array(mut array_type)) =
-                            obj_btf.types.types.get(resolved_type_id as usize).cloned()
-                        else {
-                            return Err(BtfError::InvalidExternalSymbol {
-                                symbol_name: name.clone(),
-                            });
-                        };
-                        array_type.array.len = data.len() as u32;
-                        let materialized_array_type_id =
-                            obj_btf.add_type(BtfType::Array(array_type));
-                        let materialized_type_id = clone_type_chain_with_replacement(
-                            obj_btf,
-                            var.btf_type,
-                            resolved_type_id,
-                            materialized_array_type_id,
-                            &name,
-                        )?;
-                        if let BtfType::Var(var) = &mut obj_btf.types.types[entry.btf_type as usize]
-                        {
-                            var.btf_type = materialized_type_id;
+                let (data, aligned_offset) = {
+                    let symbol = self.symbol_table.get_mut(symbol_index).ok_or_else(|| {
+                        BtfError::InvalidExternalSymbol {
+                            symbol_name: name.clone(),
                         }
-                    }
-                    if let BtfType::DataSec(d) = &mut obj_btf.types.types[type_index] {
-                        d.entries[entry_index].size = data.len() as u32;
-                    }
+                    })?;
+                    let (type_align, data) = Self::materialize_kconfig_extern(
+                        obj_btf,
+                        &var,
+                        &name,
+                        externs.get(&name).map(Vec::as_slice),
+                        symbol.is_weak,
+                        self.endianness,
+                    )?;
+                    let aligned_offset = (write_offset + (type_align - 1)) & !(type_align - 1);
+                    symbol.address = aligned_offset;
+                    symbol.section_index = Some(kconfig_map_index);
+                    // Undefined externs often have size 0; use BTF type size for kconfig.
+                    symbol.size = data.len() as u64;
+                    (data, aligned_offset)
+                };
 
-                    kconfig_data.resize(aligned_offset as usize, 0);
-
-                    self.symbol_offset_by_name.insert(name, aligned_offset);
-                    kconfig_data.extend_from_slice(&data);
-                    write_offset = aligned_offset + data.len() as u64;
+                if materialize_unsized_char_array {
+                    let Some(BtfType::Array(mut array_type)) =
+                        obj_btf.types.types.get(resolved_type_id as usize).cloned()
+                    else {
+                        return Err(BtfError::InvalidExternalSymbol {
+                            symbol_name: name.clone(),
+                        });
+                    };
+                    array_type.array.len = data.len() as u32;
+                    let materialized_array_type_id = obj_btf.add_type(BtfType::Array(array_type));
+                    let materialized_type_id = clone_type_chain_with_replacement(
+                        obj_btf,
+                        var.btf_type,
+                        resolved_type_id,
+                        materialized_array_type_id,
+                        &name,
+                    )?;
+                    if let BtfType::Var(var) = &mut obj_btf.types.types[entry.btf_type as usize] {
+                        var.btf_type = materialized_type_id;
+                    }
                 }
+                if let BtfType::DataSec(d) = &mut obj_btf.types.types[type_index] {
+                    d.entries[entry_index].size = data.len() as u32;
+                }
+
+                kconfig_data.resize(aligned_offset as usize, 0);
+
+                self.symbol_offset_by_name.insert(name, aligned_offset);
+                kconfig_data.extend_from_slice(&data);
+                write_offset = aligned_offset + data.len() as u64;
             }
 
             if !kconfig_data.is_empty() {
