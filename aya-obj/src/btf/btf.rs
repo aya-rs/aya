@@ -950,79 +950,96 @@ impl Default for Btf {
     }
 }
 
-// Clone the modifier chain above one resolved leaf type so a single extern can
-// point at a per-symbol replacement without mutating a shared BTF type. For
-// example, `const typedef char[]` becomes `const typedef char[6]` for one VAR.
-fn clone_type_chain_with_replacement(
+// materialize one unsized char[] extern without changing other externs that
+// share the same BTF type; for example, if two vars both use `const char[]` but
+// resolve to "a\0" and "abcdef\0", clone the `const -> char[]` chain and
+// replace only this var's array leaf with `char[2]` or `char[7]`
+fn materialize_unsized_char_array_type(
     obj_btf: &mut Btf,
-    type_id: u32,
-    resolved_type_id: u32,
-    replacement_type_id: u32,
+    var_type_id: u32,
+    resolved_array_type_id: u32,
+    len: u32,
     symbol_name: &str,
 ) -> Result<u32, BtfError> {
-    if type_id == resolved_type_id {
-        return Ok(replacement_type_id);
+    let Some(BtfType::Array(mut array_type)) = obj_btf
+        .types
+        .types
+        .get(resolved_array_type_id as usize)
+        .cloned()
+    else {
+        return Err(BtfError::InvalidExternalSymbol {
+            symbol_name: symbol_name.into(),
+        });
+    };
+    array_type.array.len = len;
+    let mut next_type_id = obj_btf.add_type(BtfType::Array(array_type));
+
+    // collect the wrapper chain above the resolved char[] leaf; it can be empty
+    // when the VAR points directly at the array, or it can contain
+    // wrappers such as `const`, `typedef`, or `type_tag`
+    let mut wrappers = Vec::new();
+    let mut type_id = var_type_id;
+    for _ in 0..MAX_RESOLVE_DEPTH {
+        if type_id == resolved_array_type_id {
+            break;
+        }
+
+        let ty = obj_btf.type_by_id(type_id)?.clone();
+        type_id = match &ty {
+            BtfType::Const(ty) => ty.btf_type,
+            BtfType::Volatile(ty) => ty.btf_type,
+            BtfType::Restrict(ty) => ty.btf_type,
+            BtfType::Typedef(ty) => ty.btf_type,
+            BtfType::TypeTag(ty) => ty.btf_type,
+            _ => {
+                return Err(BtfError::InvalidExternalSymbol {
+                    symbol_name: symbol_name.into(),
+                });
+            }
+        };
+        wrappers.push(ty);
+    }
+    if type_id != resolved_array_type_id {
+        return Err(BtfError::MaximumTypeDepthReached {
+            type_id: var_type_id,
+        });
     }
 
-    let new_type = match obj_btf.type_by_id(type_id)?.clone() {
-        BtfType::Const(mut ty) => {
-            ty.btf_type = clone_type_chain_with_replacement(
-                obj_btf,
-                ty.btf_type,
-                resolved_type_id,
-                replacement_type_id,
-                symbol_name,
-            )?;
-            BtfType::Const(ty)
-        }
-        BtfType::Volatile(mut ty) => {
-            ty.btf_type = clone_type_chain_with_replacement(
-                obj_btf,
-                ty.btf_type,
-                resolved_type_id,
-                replacement_type_id,
-                symbol_name,
-            )?;
-            BtfType::Volatile(ty)
-        }
-        BtfType::Restrict(mut ty) => {
-            ty.btf_type = clone_type_chain_with_replacement(
-                obj_btf,
-                ty.btf_type,
-                resolved_type_id,
-                replacement_type_id,
-                symbol_name,
-            )?;
-            BtfType::Restrict(ty)
-        }
-        BtfType::Typedef(mut ty) => {
-            ty.btf_type = clone_type_chain_with_replacement(
-                obj_btf,
-                ty.btf_type,
-                resolved_type_id,
-                replacement_type_id,
-                symbol_name,
-            )?;
-            BtfType::Typedef(ty)
-        }
-        BtfType::TypeTag(mut ty) => {
-            ty.btf_type = clone_type_chain_with_replacement(
-                obj_btf,
-                ty.btf_type,
-                resolved_type_id,
-                replacement_type_id,
-                symbol_name,
-            )?;
-            BtfType::TypeTag(ty)
-        }
-        _ => {
-            return Err(BtfError::InvalidExternalSymbol {
-                symbol_name: symbol_name.into(),
-            });
-        }
-    };
+    // rebuild private wrappers from the leaf outwards, so this VAR points to
+    // the materialized char[N] while other VARs keep using the shared chain
+    for wrapper in wrappers.into_iter().rev() {
+        let new_type = match wrapper {
+            BtfType::Const(mut ty) => {
+                ty.btf_type = next_type_id;
+                BtfType::Const(ty)
+            }
+            BtfType::Volatile(mut ty) => {
+                ty.btf_type = next_type_id;
+                BtfType::Volatile(ty)
+            }
+            BtfType::Restrict(mut ty) => {
+                ty.btf_type = next_type_id;
+                BtfType::Restrict(ty)
+            }
+            BtfType::Typedef(mut ty) => {
+                ty.btf_type = next_type_id;
+                BtfType::Typedef(ty)
+            }
+            BtfType::TypeTag(mut ty) => {
+                ty.btf_type = next_type_id;
+                BtfType::TypeTag(ty)
+            }
+            _ => {
+                return Err(BtfError::InvalidExternalSymbol {
+                    symbol_name: symbol_name.into(),
+                });
+            }
+        };
 
-    Ok(obj_btf.add_type(new_type))
+        next_type_id = obj_btf.add_type(new_type);
+    }
+
+    Ok(next_type_id)
 }
 
 fn find_data_sec<'a>(btf: &'a Btf, name: &str) -> Result<Option<(usize, &'a DataSec)>, BtfError> {
@@ -1307,20 +1324,11 @@ impl Object {
                 };
 
                 if materialize_unsized_char_array {
-                    let Some(BtfType::Array(mut array_type)) =
-                        obj_btf.types.types.get(resolved_type_id as usize).cloned()
-                    else {
-                        return Err(BtfError::InvalidExternalSymbol {
-                            symbol_name: name.clone(),
-                        });
-                    };
-                    array_type.array.len = data.len() as u32;
-                    let materialized_array_type_id = obj_btf.add_type(BtfType::Array(array_type));
-                    let materialized_type_id = clone_type_chain_with_replacement(
+                    let materialized_type_id = materialize_unsized_char_array_type(
                         obj_btf,
                         var.btf_type,
                         resolved_type_id,
-                        materialized_array_type_id,
+                        data.len() as u32,
                         &name,
                     )?;
                     if let BtfType::Var(var) = &mut obj_btf.types.types[entry.btf_type as usize] {
