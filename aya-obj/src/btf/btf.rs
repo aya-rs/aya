@@ -1075,6 +1075,9 @@ impl Object {
             }
         };
 
+        // libbpf treats enum/enum64 types named `libbpf_tristate` as the
+        // destination type for tristate config values. Precompute that here so
+        // both enum encodings share the same materialization path below.
         let is_libbpf_tristate = match resolved_type {
             BtfType::Enum(enum_ty) => {
                 enum_ty.size == 4
