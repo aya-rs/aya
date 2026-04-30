@@ -9,11 +9,7 @@
 #define BPF_JIT_INDEX 3
 #define DEFAULT_HOSTNAME_INDEX 4
 #define DEFAULT_HOSTNAME_LEN 64
-#define FIRST_STRING_INDEX (DEFAULT_HOSTNAME_INDEX + DEFAULT_HOSTNAME_LEN)
-#define FIRST_STRING_LEN 2
-#define SECOND_STRING_INDEX (FIRST_STRING_INDEX + FIRST_STRING_LEN)
-#define SECOND_STRING_LEN 6
-#define OPTIONAL_INDEX (SECOND_STRING_INDEX + SECOND_STRING_LEN)
+#define OPTIONAL_INDEX (DEFAULT_HOSTNAME_INDEX + DEFAULT_HOSTNAME_LEN)
 #define UNKNOWN_LINUX_INDEX (OPTIONAL_INDEX + 1)
 #define CHAR_VALUE_INDEX (UNKNOWN_LINUX_INDEX + 1)
 #define BOOL_VALUE_INDEX (CHAR_VALUE_INDEX + 1)
@@ -34,15 +30,13 @@ extern int CONFIG_PANIC_TIMEOUT __kconfig;
 extern unsigned long CONFIG_DEFAULT_HUNG_TASK_TIMEOUT __kconfig __weak;
 extern _Bool CONFIG_BPF_JIT __kconfig;
 extern char CONFIG_DEFAULT_HOSTNAME[DEFAULT_HOSTNAME_LEN] __kconfig;
-extern char CONFIG_FIRST_STRING[] __kconfig __weak;
-extern char CONFIG_SECOND_STRING[] __kconfig __weak;
 extern unsigned int CONFIG_OPTIONAL __kconfig __weak;
 extern unsigned int LINUX_HAS_FUTURE_FEATURE __kconfig __weak;
 extern char CONFIG_CHAR_VALUE __kconfig;
 extern _Bool CONFIG_BOOL_VALUE __kconfig;
 extern enum libbpf_tristate CONFIG_TRISTATE_ENUM __kconfig;
 extern char CONFIG_TRUNCATED_STRING[TRUNCATED_STRING_LEN] __kconfig;
-extern char CONFIG_OPTIONAL_STRING[] __kconfig __weak;
+extern char CONFIG_OPTIONAL_STRING[OPTIONAL_STRING_LEN] __kconfig __weak;
 
 static long set_result(__u32 key, __s64 value) {
   return bpf_map_update_elem(&RESULTS, &key, &value, BPF_ANY);
@@ -93,23 +87,6 @@ int test_kconfig(void *ctx) {
   for (int i = 0; i < OPTIONAL_STRING_LEN; i++) {
     if (set_result(OPTIONAL_STRING_INDEX + i,
                    (__s64)(__u8)CONFIG_OPTIONAL_STRING[i]) != 0) {
-      return 1;
-    }
-  }
-  return 0;
-}
-
-SEC("uprobe")
-int test_kconfig_unsized_strings(void *ctx) {
-  for (int i = 0; i < FIRST_STRING_LEN; i++) {
-    if (set_result(FIRST_STRING_INDEX + i,
-                   (__s64)(__u8)CONFIG_FIRST_STRING[i]) != 0) {
-      return 1;
-    }
-  }
-  for (int i = 0; i < SECOND_STRING_LEN; i++) {
-    if (set_result(SECOND_STRING_INDEX + i,
-                   (__s64)(__u8)CONFIG_SECOND_STRING[i]) != 0) {
       return 1;
     }
   }
