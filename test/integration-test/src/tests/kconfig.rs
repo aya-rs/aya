@@ -2,7 +2,7 @@ use std::ffi::c_longlong;
 
 use assert_matches::assert_matches;
 use aya::{
-    Ebpf, EbpfError, EbpfLoader, KConfig,
+    Ebpf, EbpfError, EbpfLoader, KConfig, KConfigMode,
     maps::Array,
     programs::{UProbe, uprobe::UProbeScope},
     util::KernelVersion,
@@ -37,7 +37,7 @@ fn ensure_kconfig_support() -> bool {
 
 fn load_with_kconfig(bytes: &[u8], config: &[u8]) -> Result<Ebpf, EbpfError> {
     EbpfLoader::new()
-        .kconfig(Some(KConfig::parse(config).unwrap()))
+        .kconfig(KConfigMode::Explicit(KConfig::parse(config).unwrap()))
         .load(bytes)
 }
 
