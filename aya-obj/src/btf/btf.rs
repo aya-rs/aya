@@ -950,98 +950,6 @@ impl Default for Btf {
     }
 }
 
-// materialize one unsized char[] extern without changing other externs that
-// share the same BTF type; for example, if two vars both use `const char[]` but
-// resolve to "a\0" and "abcdef\0", clone the `const -> char[]` chain and
-// replace only this var's array leaf with `char[2]` or `char[7]`
-fn materialize_unsized_char_array_type(
-    obj_btf: &mut Btf,
-    var_type_id: u32,
-    resolved_array_type_id: u32,
-    len: u32,
-    symbol_name: &str,
-) -> Result<u32, BtfError> {
-    let Some(BtfType::Array(mut array_type)) = obj_btf
-        .types
-        .types
-        .get(resolved_array_type_id as usize)
-        .cloned()
-    else {
-        return Err(BtfError::InvalidExternalSymbol {
-            symbol_name: symbol_name.into(),
-        });
-    };
-    array_type.array.len = len;
-    let mut next_type_id = obj_btf.add_type(BtfType::Array(array_type));
-
-    // collect the wrapper chain above the resolved char[] leaf; it can be empty
-    // when the VAR points directly at the array, or it can contain
-    // wrappers such as `const`, `typedef`, or `type_tag`
-    let mut wrappers = Vec::new();
-    let mut type_id = var_type_id;
-    for _ in 0..MAX_RESOLVE_DEPTH {
-        if type_id == resolved_array_type_id {
-            break;
-        }
-
-        let ty = obj_btf.type_by_id(type_id)?.clone();
-        type_id = match &ty {
-            BtfType::Const(ty) => ty.btf_type,
-            BtfType::Volatile(ty) => ty.btf_type,
-            BtfType::Restrict(ty) => ty.btf_type,
-            BtfType::Typedef(ty) => ty.btf_type,
-            BtfType::TypeTag(ty) => ty.btf_type,
-            _ => {
-                return Err(BtfError::InvalidExternalSymbol {
-                    symbol_name: symbol_name.into(),
-                });
-            }
-        };
-        wrappers.push(ty);
-    }
-    if type_id != resolved_array_type_id {
-        return Err(BtfError::MaximumTypeDepthReached {
-            type_id: var_type_id,
-        });
-    }
-
-    // rebuild private wrappers from the leaf outwards, so this VAR points to
-    // the materialized char[N] while other VARs keep using the shared chain
-    for wrapper in wrappers.into_iter().rev() {
-        let new_type = match wrapper {
-            BtfType::Const(mut ty) => {
-                ty.btf_type = next_type_id;
-                BtfType::Const(ty)
-            }
-            BtfType::Volatile(mut ty) => {
-                ty.btf_type = next_type_id;
-                BtfType::Volatile(ty)
-            }
-            BtfType::Restrict(mut ty) => {
-                ty.btf_type = next_type_id;
-                BtfType::Restrict(ty)
-            }
-            BtfType::Typedef(mut ty) => {
-                ty.btf_type = next_type_id;
-                BtfType::Typedef(ty)
-            }
-            BtfType::TypeTag(mut ty) => {
-                ty.btf_type = next_type_id;
-                BtfType::TypeTag(ty)
-            }
-            _ => {
-                return Err(BtfError::InvalidExternalSymbol {
-                    symbol_name: symbol_name.into(),
-                });
-            }
-        };
-
-        next_type_id = obj_btf.add_type(new_type);
-    }
-
-    Ok(next_type_id)
-}
-
 fn find_data_sec<'a>(btf: &'a Btf, name: &str) -> Result<Option<(usize, &'a DataSec)>, BtfError> {
     for (type_index, ty) in btf.types().enumerate() {
         let BtfType::DataSec(datasec) = ty else {
@@ -1147,6 +1055,13 @@ impl Object {
 
         let data = match resolved_type {
             BtfType::Array(Array { array, .. }) => {
+                // kconfig strings must declare a concrete destination size
+                if array.len == 0 {
+                    return Err(BtfError::InvalidExternalSymbol {
+                        symbol_name: symbol_name.into(),
+                    });
+                }
+
                 // only byte arrays are valid string destinations
                 let element_type = obj_btf.resolve_type(array.element_type)?;
                 let BtfType::Int(int) = obj_btf.type_by_id(element_type)? else {
@@ -1167,17 +1082,9 @@ impl Object {
                     });
                 }
 
-                // fixed-size strings are padded/truncated
-                if type_size > 0 {
-                    data.resize(type_size, 0);
-                }
-
-                // always NUL-termiate
-                if data.is_empty() {
-                    data.push(0);
-                } else {
-                    *data.last_mut().unwrap() = 0;
-                }
+                // fixed-size strings are padded/truncated, then always NUL-terminated
+                data.resize(type_size, 0);
+                *data.last_mut().unwrap() = 0;
                 data
             }
             BtfType::Int(int) if int.encoding() == IntEncoding::Bool && int.size == 1 => {
@@ -1275,7 +1182,6 @@ impl Object {
                 let BtfType::Var(var) = obj_btf.types.type_by_id(entry.btf_type)? else {
                     continue;
                 };
-                let var = var.clone();
                 let name = obj_btf.string_at(var.name_offset)?.into_owned();
 
                 if var.linkage != VarLinkage::Extern {
@@ -1288,19 +1194,6 @@ impl Object {
                         }
                     })?;
 
-                let resolved_type_id = obj_btf.resolve_type(var.btf_type)?;
-                let materialize_unsized_char_array = match obj_btf.type_by_id(resolved_type_id)? {
-                    BtfType::Array(Array { array, .. }) => {
-                        let element_type = obj_btf.resolve_type(array.element_type)?;
-                        array.len == 0
-                            && matches!(
-                                obj_btf.type_by_id(element_type)?,
-                                BtfType::Int(Int { size, .. }) if *size == 1
-                            )
-                    }
-                    _ => false,
-                };
-
                 let (data, aligned_offset) = {
                     let symbol = self.symbol_table.get_mut(symbol_index).ok_or_else(|| {
                         BtfError::InvalidExternalSymbol {
@@ -1309,7 +1202,7 @@ impl Object {
                     })?;
                     let (type_align, data) = Self::materialize_kconfig_extern(
                         obj_btf,
-                        &var,
+                        var,
                         &name,
                         externs.get(&name).map(Vec::as_slice),
                         symbol.is_weak,
@@ -1323,18 +1216,6 @@ impl Object {
                     (data, aligned_offset)
                 };
 
-                if materialize_unsized_char_array {
-                    let materialized_type_id = materialize_unsized_char_array_type(
-                        obj_btf,
-                        var.btf_type,
-                        resolved_type_id,
-                        data.len() as u32,
-                        &name,
-                    )?;
-                    if let BtfType::Var(var) = &mut obj_btf.types.types[entry.btf_type as usize] {
-                        var.btf_type = materialized_type_id;
-                    }
-                }
                 if let BtfType::DataSec(d) = &mut obj_btf.types.types[type_index] {
                     d.entries[entry_index].size = data.len() as u32;
                 }
