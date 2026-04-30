@@ -3,11 +3,11 @@
 #include <bpf/bpf_helpers.h>
 // clang-format on
 
-extern unsigned int CONFIG_UNSUPPORTED_ARRAY[4] __kconfig;
+extern char CONFIG_UNSIZED_STRING[] __kconfig;
 
 SEC("uprobe")
 int test_kconfig_invalid_array(void *ctx) {
-  return CONFIG_UNSUPPORTED_ARRAY[0] != 0;
+  return CONFIG_UNSIZED_STRING[0] != 0;
 }
 
 char _license[] SEC("license") = "GPL";
