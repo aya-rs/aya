@@ -21,7 +21,7 @@ static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);
 #[unsafe(no_mangle)]
 static TARGET_TID: Global<u32> = Global::new(0);
 
-#[fentry]
+#[fentry(sleepable)]
 fn test_vfs_open(ctx: FEntryContext) -> u32 {
     let target_tid = TARGET_TID.load();
     if target_tid != 0 {

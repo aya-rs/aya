@@ -2,15 +2,26 @@ use assert_matches::assert_matches;
 use std::fs::File;
 
 use aya::{
+    util::KernelVersion,
     Btf, Ebpf, EbpfLoader,
     maps::Array,
     programs::{FEntry, ProgramError, ProgramType},
-    sys::{SyscallError, is_program_supported},
+    sys::{is_program_supported, SyscallError},
 };
 use integration_common::bpf_d_path::{EXPECTED_PATH, TestResult};
 
 #[test_log::test]
 fn bpf_d_path_basic() {
+    let kernel_version = KernelVersion::current().unwrap();
+    // Sleepable fentry programs (required for bpf_d_path) are supported from kernel 5.11+
+    // See: commit adding BPF_F_SLEEPABLE support for tracing programs
+    if kernel_version < KernelVersion::new(5, 11, 0) {
+        eprintln!(
+            "skipping test on kernel {kernel_version:?} - sleepable fentry programs (required for bpf_d_path) are not supported"
+        );
+        return;
+    }
+
     let btf = Btf::from_sys_fs().unwrap();
     let tid = u32::try_from(nix::unistd::gettid().as_raw()).unwrap();
     let mut bpf = EbpfLoader::new()
@@ -23,6 +34,7 @@ fn bpf_d_path_basic() {
         .unwrap()
         .try_into()
         .unwrap();
+    // Load the fentry program; on kernels < 5.11, sleepable fentry is not supported.
     prog.load("vfs_open", &btf).unwrap();
     let _link_id = {
         let result = prog.attach();
