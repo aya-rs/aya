@@ -76,12 +76,12 @@ pub(crate) static FEATURES: LazyLock<Features> = LazyLock::new(detect_features);
 /// # Examples
 ///
 /// ```no_run
-/// use aya::{EbpfLoader, KConfig};
+/// use aya::{EbpfLoader, KConfig, KConfigMode};
 ///
 /// // Load kconfig from the system
 /// let kconfig = KConfig::current()?;
 /// let mut loader = EbpfLoader::new();
-/// let bpf = loader.kconfig(Some(kconfig)).load_file("file.o")?;
+/// let bpf = loader.kconfig(KConfigMode::Explicit(kconfig)).load_file("file.o")?;
 /// # Ok::<(), Box<dyn std::error::Error>>(())
 /// ```
 #[derive(Debug, Clone)]
@@ -230,10 +230,14 @@ impl KConfig {
     }
 }
 
-#[derive(Debug)]
-enum KConfigMode {
+/// Controls how [`EbpfLoader`] resolves `__kconfig` externs.
+#[derive(Debug, Clone)]
+pub enum KConfigMode {
+    /// Automatically read the current kernel config when real `CONFIG_*` externs are required.
     Auto,
+    /// Disable `__kconfig` extern patching.
     Disabled,
+    /// Use caller-provided kernel config values without reading system configuration.
     Explicit(KConfig),
 }
 
@@ -415,32 +419,24 @@ impl<'a> EbpfLoader<'a> {
         }
     }
 
-    /// Sets the kernel configuration data for extern variables.
+    /// Sets how kernel configuration extern variables are resolved.
     ///
-    /// This allows you to provide kernel configuration values that will be used to patch
-    /// extern variables in eBPF programs. If not set, the loader will use
-    /// [`KConfig::current`] when the object requires real `CONFIG_*` values, and otherwise
-    /// synthesize virtual-only `LINUX_*` values without reading system configuration. If set,
-    /// the provided `KConfig` is used as-is; the loader will not automatically load the current
-    /// kernel config, so any required strong `CONFIG_*` externs must be present. Pass `None` to
-    /// disable kconfig patching.
+    /// If not set, the loader uses [`KConfigMode::Auto`], which reads
+    /// [`KConfig::current`] only when the object requires real `CONFIG_*` values.
     ///
     /// # Examples
     ///
     /// ```no_run
-    /// use aya::{EbpfLoader, KConfig};
+    /// use aya::{EbpfLoader, KConfig, KConfigMode};
     ///
     /// let kconfig = KConfig::current()?;
     /// let mut loader = EbpfLoader::new();
-    /// let bpf = loader.kconfig(Some(kconfig)).load_file("file.o")?;
+    /// let bpf = loader.kconfig(KConfigMode::Explicit(kconfig)).load_file("file.o")?;
     /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     #[must_use]
-    pub fn kconfig(&mut self, kconfig: Option<KConfig>) -> &mut Self {
-        self.kconfig = match kconfig {
-            Some(kconfig) => KConfigMode::Explicit(kconfig),
-            None => KConfigMode::Disabled,
-        };
+    pub fn kconfig(&mut self, kconfig: KConfigMode) -> &mut Self {
+        self.kconfig = kconfig;
         self
     }
 

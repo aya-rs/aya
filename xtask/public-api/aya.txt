@@ -7792,6 +7792,21 @@ impl core::marker::Unpin for aya::KConfigError
 impl core::marker::UnsafeUnpin for aya::KConfigError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::KConfigError
 impl !core::panic::unwind_safe::UnwindSafe for aya::KConfigError
+pub enum aya::KConfigMode
+pub aya::KConfigMode::Auto
+pub aya::KConfigMode::Disabled
+pub aya::KConfigMode::Explicit(aya::KConfig)
+impl core::clone::Clone for aya::KConfigMode
+pub fn aya::KConfigMode::clone(&self) -> aya::KConfigMode
+impl core::fmt::Debug for aya::KConfigMode
+pub fn aya::KConfigMode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::KConfigMode
+impl core::marker::Send for aya::KConfigMode
+impl core::marker::Sync for aya::KConfigMode
+impl core::marker::Unpin for aya::KConfigMode
+impl core::marker::UnsafeUnpin for aya::KConfigMode
+impl core::panic::unwind_safe::RefUnwindSafe for aya::KConfigMode
+impl core::panic::unwind_safe::UnwindSafe for aya::KConfigMode
 pub struct aya::Ebpf
 impl aya::Ebpf
 pub fn aya::Ebpf::load(&[u8]) -> core::result::Result<Self, aya::EbpfError>
@@ -7821,7 +7836,7 @@ pub const fn aya::EbpfLoader<'a>::allow_unsupported_maps(&mut self) -> &mut Self
 pub fn aya::EbpfLoader<'a>::btf(&mut self, core::option::Option<&'a aya_obj::btf::btf::Btf>) -> &mut Self
 pub fn aya::EbpfLoader<'a>::default_map_pin_directory<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> &mut Self
 pub fn aya::EbpfLoader<'a>::extension(&mut self, &'a str) -> &mut Self
-pub fn aya::EbpfLoader<'a>::kconfig(&mut self, core::option::Option<aya::KConfig>) -> &mut Self
+pub fn aya::EbpfLoader<'a>::kconfig(&mut self, aya::KConfigMode) -> &mut Self
 pub fn aya::EbpfLoader<'a>::load(&mut self, &[u8]) -> core::result::Result<aya::Ebpf, aya::EbpfError>
 pub fn aya::EbpfLoader<'a>::load_file<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<aya::Ebpf, aya::EbpfError>
 pub fn aya::EbpfLoader<'a>::map_max_entries(&mut self, &'a str, u32) -> &mut Self
