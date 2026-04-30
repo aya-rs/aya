@@ -14,11 +14,7 @@ const DEFAULT_HUNG_TASK_TIMEOUT_INDEX: u32 = 2;
 const BPF_JIT_INDEX: u32 = 3;
 const DEFAULT_HOSTNAME_INDEX: u32 = 4;
 const DEFAULT_HOSTNAME_LEN: usize = 64;
-const FIRST_STRING_INDEX: u32 = DEFAULT_HOSTNAME_INDEX + DEFAULT_HOSTNAME_LEN as u32;
-const FIRST_STRING_LEN: usize = 2;
-const SECOND_STRING_INDEX: u32 = FIRST_STRING_INDEX + FIRST_STRING_LEN as u32;
-const SECOND_STRING_LEN: usize = 6;
-const OPTIONAL_INDEX: u32 = SECOND_STRING_INDEX + SECOND_STRING_LEN as u32;
+const OPTIONAL_INDEX: u32 = DEFAULT_HOSTNAME_INDEX + DEFAULT_HOSTNAME_LEN as u32;
 const UNKNOWN_LINUX_INDEX: u32 = OPTIONAL_INDEX + 1;
 const CHAR_VALUE_INDEX: u32 = UNKNOWN_LINUX_INDEX + 1;
 const BOOL_VALUE_INDEX: u32 = CHAR_VALUE_INDEX + 1;
@@ -120,20 +116,6 @@ extern "C" fn trigger_kconfig() {
     core::hint::black_box(trigger_kconfig);
 }
 
-const UNSIZED_KCONFIG_TEST_CONFIG: &[u8] = br#"
-CONFIG_BPF=y
-CONFIG_PANIC_TIMEOUT=0
-CONFIG_DEFAULT_HUNG_TASK_TIMEOUT=120
-CONFIG_BPF_JIT=y
-CONFIG_DEFAULT_HOSTNAME="(none)"
-CONFIG_CHAR_VALUE=m
-CONFIG_BOOL_VALUE=y
-CONFIG_TRISTATE_ENUM=m
-CONFIG_TRUNCATED_STRING="abcdef"
-CONFIG_FIRST_STRING="a"
-CONFIG_SECOND_STRING="bcdef"
-"#;
-
 const KCONFIG_TEST_CONFIG: &[u8] = br#"
 CONFIG_BPF=y
 CONFIG_PANIC_TIMEOUT=-1
@@ -145,49 +127,6 @@ CONFIG_BOOL_VALUE=y
 CONFIG_TRISTATE_ENUM=m
 CONFIG_TRUNCATED_STRING="abcdef"
 "#;
-
-#[test_log::test]
-fn kconfig_unsized_strings() {
-    if !ensure_kconfig_support() {
-        return;
-    }
-
-    let mut bpf = EbpfLoader::new()
-        .kconfig(Some(KConfig::parse(UNSIZED_KCONFIG_TEST_CONFIG).unwrap()))
-        .load(crate::KCONFIG)
-        .unwrap();
-
-    let prog: &mut UProbe = bpf
-        .program_mut("test_kconfig_unsized_strings")
-        .unwrap()
-        .try_into()
-        .unwrap();
-    prog.load().unwrap();
-    prog.attach(
-        "trigger_kconfig_unsized_strings",
-        "/proc/self/exe",
-        UProbeScope::CallingProcess,
-    )
-    .unwrap();
-
-    trigger_kconfig_unsized_strings();
-
-    let results: Array<_, c_longlong> = bpf.take_map("RESULTS").unwrap().try_into().unwrap();
-    assert_eq!(
-        read_u8_string::<FIRST_STRING_LEN>(&results, FIRST_STRING_INDEX),
-        *b"a\0"
-    );
-    assert_eq!(
-        read_u8_string::<SECOND_STRING_LEN>(&results, SECOND_STRING_INDEX),
-        *b"bcdef\0"
-    );
-}
-
-#[unsafe(no_mangle)]
-#[inline(never)]
-extern "C" fn trigger_kconfig_unsized_strings() {
-    core::hint::black_box(trigger_kconfig_unsized_strings);
-}
 
 #[test_log::test]
 fn kconfig_rejects_missing_strong_externs() {
@@ -268,7 +207,7 @@ fn kconfig_rejects_invalid_bool_scalars() {
 }
 
 #[test_log::test]
-fn kconfig_rejects_unsupported_array_types() {
+fn kconfig_rejects_unsized_string_arrays() {
     if !ensure_kconfig_support() {
         return;
     }
@@ -276,10 +215,10 @@ fn kconfig_rejects_unsupported_array_types() {
     assert_matches!(
         load_with_kconfig(
             crate::KCONFIG_INVALID_ARRAY,
-            b"CONFIG_UNSUPPORTED_ARRAY=1\n",
+            b"CONFIG_UNSIZED_STRING=\"abc\"\n",
         ),
         Err(EbpfError::BtfError(BtfError::InvalidExternalSymbol { symbol_name }))
-            if symbol_name == "CONFIG_UNSUPPORTED_ARRAY"
+            if symbol_name == "CONFIG_UNSIZED_STRING"
     );
 }
 
