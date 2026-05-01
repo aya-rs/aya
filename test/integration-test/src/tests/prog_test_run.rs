@@ -111,15 +111,19 @@ fn test_run_repeat() {
 #[test_log::test]
 fn test_xdp_modify_packet() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
-    // The test_xdp_modify eBPF program uses a bounded for-loop to overwrite packet
-    // bytes. Before v5.3, the BPF verifier rejected all back-edges unconditionally,
-    // treating even provably-terminating loops as potential infinite loops. The v5.3
-    // merge (94079b64255f, "bpf: bounded loops") taught the verifier to track loop
-    // bounds and accept loops with a statically-known iteration count. Without this,
-    // prog.load() fails with a verifier error ("back-edge from insn N to M").
-    // Kernels 5.6–5.7 are still affected by the pre-v5.8 xdp_buff.frame_sz test-run bug,
-    // so this test can fail/flap there
-    // so we guard it with 5.8
+    // Two separate kernel requirements combine to set this guard at v5.8:
+    //
+    // 1. The test_xdp_modify eBPF program uses a bounded for-loop to overwrite
+    //    packet bytes. Before v5.3 (94079b64255f, "bpf: bounded loops"), the BPF
+    //    verifier rejected all back-edges unconditionally, so prog.load() would
+    //    fail with a verifier error ("back-edge from insn N to M").
+    //
+    // 2. XDP test-run with a writable data_out buffer requires the kernel to properly
+    //    initialize xdp_buff.frame_sz. Before v5.8 (bc56c919fce7, "bpf: Add
+    //    xdp.frame_sz in bpf_prog_test_run_xdp"), frame_sz was left as zero, causing
+    //    bpf_prog_test_run to return an error or produce incorrect data_out contents.
+    //
+    // v5.8 is the stricter of the two requirements, so we guard at v5.8.
     if kernel_version < aya::util::KernelVersion::new(5, 8, 0) {
         return;
     }
