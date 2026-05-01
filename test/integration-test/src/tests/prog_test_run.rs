@@ -117,8 +117,10 @@ fn test_xdp_modify_packet() {
     // merge (94079b64255f, "bpf: bounded loops") taught the verifier to track loop
     // bounds and accept loops with a statically-known iteration count. Without this,
     // prog.load() fails with a verifier error ("back-edge from insn N to M").
-    // We require v5.6 rather than v5.3 as a conservative bound validated in CI.
-    if kernel_version < aya::util::KernelVersion::new(5, 6, 0) {
+    // Kernels 5.6–5.7 are still affected by the pre-v5.8 xdp_buff.frame_sz test-run bug,
+    // so this test can fail/flap there
+    // so we guard it with 5.8
+    if kernel_version < aya::util::KernelVersion::new(5, 8, 0) {
         return;
     }
 

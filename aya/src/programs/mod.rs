@@ -913,7 +913,7 @@ impl_fd!(
 
 /// Kernel-side execution attributes for [`TestRunOptions`].
 ///
-/// Controls *how* the kernel runs the test (CPU pinning, XDP batch size, and
+/// Controls *how* the kernel runs the test (XDP batch size, and
 /// the associated flag bits), as opposed to *what* data is passed.
 #[derive(Debug)]
 pub struct TestRunAttrs {
@@ -964,7 +964,7 @@ pub struct TestRunOptions<'a> {
     pub ctx_out: Option<&'a mut [u8]>,
     /// Number of times to repeat the test. Defaults to `1`.
     pub repeat: u32,
-    /// Kernel execution attributes (CPU pinning, XDP batch size).
+    /// Kernel execution attributes (XDP batch size).
     pub attrs: TestRunAttrs,
 }
 
