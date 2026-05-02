@@ -1,8 +1,7 @@
 #![expect(clippy::unused_self, reason = "these APIs are horrible")]
 #![expect(missing_docs, reason = "TODO")]
 
-use alloc::{string::ToString as _, vec, vec::Vec};
-use core::{fmt::Display, ptr};
+use std::{fmt::Display, ptr, string::ToString as _};
 
 use object::Endianness;
 

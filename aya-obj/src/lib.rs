@@ -37,10 +37,7 @@
 //! let bytes = std::fs::read("program.o").unwrap();
 //! let mut object = Object::parse(&bytes).unwrap();
 //! // Relocate the programs
-//! #[cfg(feature = "std")]
 //! let text_sections = std::collections::HashSet::new();
-//! #[cfg(not(feature = "std"))]
-//! let text_sections = hashbrown::HashSet::new();
 //! object.relocate_calls(&text_sections).unwrap();
 //! object.relocate_maps(std::iter::empty(), &text_sections).unwrap();
 //!
@@ -59,21 +56,13 @@
 //!
 //! [rbpf]: https://github.com/qmonnet/rbpf
 
-#![no_std]
 #![doc(
     html_logo_url = "https://aya-rs.dev/assets/images/crabby.svg",
     html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(missing_docs)]
-#![cfg_attr(
-    any(feature = "std", test),
-    expect(unused_crate_dependencies, reason = "used in doctests")
-)]
-
-extern crate alloc;
-#[cfg(feature = "std")]
-extern crate std;
+#![cfg_attr(test, expect(unused_crate_dependencies, reason = "used in doctests"))]
 
 pub mod btf;
 #[expect(
@@ -113,11 +102,11 @@ pub use obj::*;
 /// An error returned from the verifier.
 ///
 /// Provides a [`Debug`] implementation that doesn't escape newlines.
-pub struct VerifierLog(alloc::string::String);
+pub struct VerifierLog(String);
 
 impl VerifierLog {
     /// Create a new verifier log.
-    pub const fn new(log: alloc::string::String) -> Self {
+    pub const fn new(log: String) -> Self {
         Self(log)
     }
 }

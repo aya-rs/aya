@@ -6,6 +6,7 @@ use std::{
     fmt::{self, Write},
     fs,
     io::{self, BufRead as _, Cursor, Read as _},
+    num::NonZeroU32,
     os::unix::ffi::{OsStrExt as _, OsStringExt as _},
     path::{Path, PathBuf},
     sync::LazyLock,
@@ -88,6 +89,17 @@ impl<'a, L: Into<UProbeAttachLocation<'a>>> From<L> for UProbeAttachPoint<'a> {
     }
 }
 
+/// Specifies which processes a uprobe should fire for.
+#[derive(Debug, Clone, Copy)]
+pub enum UProbeScope {
+    /// Fire for any process that hits the attach point.
+    AllProcesses,
+    /// Fire only when the calling process/thread hits the attach point.
+    CallingProcess,
+    /// Fire only when the given process hits the attach point.
+    OneProcess(NonZeroU32),
+}
+
 impl UProbe {
     /// The type of the program according to the kernel.
     pub const PROGRAM_TYPE: ProgramType = ProgramType::KProbe;
@@ -108,11 +120,11 @@ impl UProbe {
     ///
     /// Attaches the uprobe to the function `fn_name` defined in the `target`.
     /// If the attach point specifies an offset, it is added to the address of
-    /// the target function. If `pid` is not `None`, the program executes only
-    /// when the target function is executed by the given `pid`.
+    /// the target function. `scope` specifies which processes should trigger
+    /// the uprobe.
     ///
-    /// The `target` argument can be an absolute path to a binary or library, or
-    /// a library name (eg: `"libc"`).
+    /// The `target` argument can be an absolute or relative path to a binary or
+    /// shared library, or a library name (eg: `"libc"`).
     ///
     /// If the program is an `uprobe`, it is attached to the *start* address of
     /// the target function.  Instead if the program is a `uretprobe`, it is
@@ -128,11 +140,35 @@ impl UProbe {
         &mut self,
         point: Point,
         target: T,
-        pid: Option<u32>,
+        scope: UProbeScope,
     ) -> Result<UProbeLinkId, ProgramError> {
         let UProbeAttachPoint { location, cookie } = point.into();
-        let proc_map = pid.map(ProcMap::new).transpose()?;
-        let path = resolve_attach_path(target.as_ref(), proc_map.as_ref())?;
+        let target = target.as_ref();
+        let (proc_map_pid, perf_event_pid) = match scope {
+            UProbeScope::AllProcesses => (None, None),
+            // /proc/0/maps does not exist, so use the real pid for ProcMap
+            // resolution while keeping the kernel's pid=0 sentinel for attach.
+            UProbeScope::CallingProcess => (Some(std::process::id()), Some(0)),
+            UProbeScope::OneProcess(pid) => {
+                let pid = pid.get();
+                (Some(pid), Some(pid))
+            }
+        };
+
+        // Keep ProcMap in this scope so resolve_attach_target_basename can return
+        // a path borrowed from the maps buffer without cloning the matched path.
+        // This keeps the borrow alive until attach uses it.
+        let proc_map;
+        // /proc/<pid>/maps entries are matched by basename, so only bare-basename
+        // targets can benefit from the lookup; paths with a directory separator
+        // are passed through unchanged.
+        let path = if is_basename_only(target) {
+            proc_map = proc_map_pid.map(ProcMap::new).transpose()?;
+            resolve_attach_target_basename(target, proc_map.as_ref())?
+        } else {
+            target
+        };
+
         let (symbol, offset) = match location {
             UProbeAttachLocation::Symbol(s) => (Some(s), 0),
             UProbeAttachLocation::SymbolOffset(s, offset) => (Some(s), offset),
@@ -151,7 +187,7 @@ impl UProbe {
 
         let Self { data, kind } = self;
         let path = path.as_os_str();
-        attach::<Self, _>(data, *kind, path, offset, pid, cookie)
+        attach::<Self, _>(data, *kind, path, offset, perf_event_pid, cookie)
     }
 
     /// Creates a program from a pinned entry on a bpffs.
@@ -180,7 +216,13 @@ impl Probe for UProbe {
     }
 }
 
-fn resolve_attach_path<'a, 'b, 'c, T>(
+fn is_basename_only(target: &Path) -> bool {
+    target.file_name() == Some(target.as_os_str())
+}
+
+// Resolves a bare basename (a single normal path component) to a concrete
+// path via /proc/<pid>/maps and ld.so.cache.
+fn resolve_attach_target_basename<'a, 'b, 'c, T>(
     target: &'a Path,
     proc_map: Option<&'b ProcMap<T>>,
 ) -> Result<&'c Path, UProbeError>
@@ -200,7 +242,6 @@ where
                 })
                 .transpose()
         })
-        .or_else(|| target.is_absolute().then(|| Ok(target)))
         .or_else(|| {
             LD_SO_CACHE
                 .as_ref()
@@ -744,7 +785,7 @@ mod tests {
         any(miri, not(target_os = "linux"), target_feature = "crt-static"),
         ignore = "requires dynamic linkage of libc"
     )]
-    fn test_resolve_attach_path() {
+    fn test_resolve_attach_target_basename() {
         // Look up the current process's pid.
         let pid = std::process::id();
         let proc_map = ProcMap::new(pid).expect("failed to get proc map");
@@ -752,7 +793,7 @@ mod tests {
         // Now let's resolve the path to libc. It should exist in the current process's memory map and
         // then in the ld.so.cache.
         assert_matches!(
-            resolve_attach_path("libc".as_ref(), Some(&proc_map)),
+            resolve_attach_target_basename("libc".as_ref(), Some(&proc_map)),
             Ok(path) => {
                 // Make sure we got a path that contains libc.
                 assert_matches!(
@@ -761,17 +802,23 @@ mod tests {
                 );
             }
         );
+    }
 
-        // If we pass an absolute path that doesn't match anything in /proc/<pid>/maps, we should fall
-        // back to the provided path instead of erroring out. Using a synthetic absolute path keeps the
-        // test hermetic.
-        let synthetic_absolute = Path::new("/tmp/.aya-test-resolve-attach-absolute");
-        assert_matches!(
-            resolve_attach_path(synthetic_absolute, Some(&proc_map)),
-            Ok(path) => {
-                assert_eq!(path, synthetic_absolute, "path: {}", path.display());
-            }
-        );
+    #[test_case("libssl.so", true; "shared_object_basename")]
+    #[test_case("bash", true; "binary_basename")]
+    #[test_case("foo.so.1", true; "versioned_shared_object_basename")]
+    #[test_case("/usr/bin/bash", false; "absolute_path")]
+    #[test_case("/aa", false; "root_absolute_path")]
+    #[test_case("./bin/foo", false; "current_dir_relative_path")]
+    #[test_case("./aa", false; "current_dir_relative_file")]
+    #[test_case("subdir/lib.so", false; "subdir_relative_path")]
+    #[test_case("../lib/foo", false; "parent_dir_relative_path")]
+    #[test_case("/", false; "root_dir")]
+    #[test_case(".", false; "current_dir")]
+    #[test_case("..", false; "parent_dir")]
+    #[test_case("foo/", false; "trailing_separator")]
+    fn test_is_basename_only(input: &str, expected: bool) {
+        assert_eq!(is_basename_only(Path::new(input)), expected);
     }
 
     #[test]

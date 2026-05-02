@@ -1,5 +1,3 @@
-use alloc::{string::String, vec, vec::Vec};
-
 use bytes::BufMut as _;
 use object::Endianness;
 

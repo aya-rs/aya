@@ -6,7 +6,7 @@ use std::{
 use aya::{
     Ebpf,
     maps::{Array, MapData},
-    programs::UProbe,
+    programs::{UProbe, uprobe::UProbeScope},
     util::KernelVersion,
 };
 use integration_common::strncmp::TestResult;
@@ -29,8 +29,12 @@ fn bpf_strncmp() {
             .unwrap();
         prog.load().unwrap();
 
-        prog.attach("trigger_bpf_strncmp", "/proc/self/exe", None)
-            .unwrap();
+        prog.attach(
+            "trigger_bpf_strncmp",
+            "/proc/self/exe",
+            UProbeScope::AllProcesses,
+        )
+        .unwrap();
     }
 
     let array = Array::<_, TestResult>::try_from(bpf.map("RESULT").unwrap()).unwrap();

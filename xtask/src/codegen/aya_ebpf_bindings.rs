@@ -1,6 +1,6 @@
 use std::{
     fs::{File, create_dir_all},
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 use anyhow::{Context as _, Result};
@@ -34,7 +34,7 @@ pub(crate) fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
     let mut cmd = install_libbpf_headers_cmd(libbpf_dir, &libbpf_headers_dir);
     exec(&mut cmd)?;
 
-    let dir = PathBuf::from("ebpf/aya-ebpf-bindings");
+    let dir = Path::new("ebpf/aya-ebpf-bindings");
 
     let builder = || {
         let mut bindgen = bindgen::bpf_builder()
@@ -76,7 +76,14 @@ pub(crate) fn codegen(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
             "xdp_action",
             "tcx_action_base",
         ];
-        let vars = ["BPF_.*", "bpf_.*", "TC_ACT_.*", "SOL_SOCKET", "SO_.*"];
+        let vars = [
+            "BPF_.*",
+            "bpf_.*",
+            "PERF_MAX_STACK_DEPTH",
+            "TC_ACT_.*",
+            "SOL_SOCKET",
+            "SO_.*",
+        ];
 
         for x in &types {
             bindgen = bindgen.allowlist_type(x);

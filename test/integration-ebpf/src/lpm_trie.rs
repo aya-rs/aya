@@ -39,7 +39,7 @@ macro_rules! define_lpm_trie_test {
                         if let Some(val) = $routes_map.get(key) {
                             (*ptr).value = *val;
                         }
-                        (*ptr).ran = 1;
+                        (*ptr).ran = true;
                     }
                 }
             };

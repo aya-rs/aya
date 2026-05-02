@@ -52,6 +52,8 @@ bpf_file!(
     NAME_TEST => "name_test",
     PASS => "pass",
     PER_CPU_ARRAY => "per_cpu_array",
+    PERF_EVENT_ARRAY => "perf_event_array",
+    PERF_EVENT_BYTE_ARRAY => "perf_event_byte_array",
     PERF_EVENT_BP => "perf_event_bp",
     RAW_TRACEPOINT => "raw_tracepoint",
     REDIRECT => "redirect",
@@ -68,6 +70,8 @@ bpf_file!(
     UPROBE_COOKIE => "uprobe_cookie",
     PRINTK_TEST => "printk_test",
     PROG_ARRAY => "prog_array",
+    STACK_TRACE => "stack_trace",
+    STACK_TRACE_LSM => "stack_trace_lsm",
 );
 
 #[cfg(test)]

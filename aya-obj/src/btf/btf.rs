@@ -1,14 +1,8 @@
-use alloc::{
+use std::{
     borrow::{Cow, ToOwned as _},
-    format,
-    string::String,
-    vec,
-    vec::Vec,
-};
-use core::{
     cell::OnceCell,
     ffi::{CStr, FromBytesUntilNulError},
-    mem, ptr,
+    format, mem, ptr,
 };
 
 use bytes::BufMut as _;
@@ -34,7 +28,6 @@ pub(crate) const MAX_SPEC_LEN: usize = 64;
 /// The error type returned when `BTF` operations fail.
 #[derive(thiserror::Error, Debug)]
 pub enum BtfError {
-    #[cfg(feature = "std")]
     /// Error parsing file
     #[error("error parsing {path}")]
     FileError {
@@ -128,7 +121,6 @@ pub enum BtfError {
         type_id: u32,
     },
 
-    #[cfg(feature = "std")]
     /// Loading the btf failed
     #[error("the BPF_BTF_LOAD syscall returned {io_error}. Verifier output: {verifier_log}")]
     LoadError {
@@ -319,13 +311,11 @@ impl Btf {
     }
 
     /// Loads BTF metadata from `/sys/kernel/btf/vmlinux`.
-    #[cfg(feature = "std")]
     pub fn from_sys_fs() -> Result<Self, BtfError> {
         Self::parse_file("/sys/kernel/btf/vmlinux", Endianness::default())
     }
 
     /// Loads BTF metadata from the given `path`.
-    #[cfg(feature = "std")]
     pub fn parse_file<P: AsRef<std::path::Path>>(
         path: P,
         endianness: Endianness,
@@ -1878,7 +1868,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "std")]
     #[cfg_attr(miri, ignore = "`open` not available when isolation is enabled")]
     #[cfg_attr(
         target_endian = "big",
