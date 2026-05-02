@@ -6,7 +6,6 @@ use std::{
     fmt::{self, Write},
     fs,
     io::{self, BufRead as _, Cursor, Read as _},
-    num::NonZeroU32,
     os::unix::ffi::{OsStrExt as _, OsStringExt as _},
     path::{Path, PathBuf},
     sync::LazyLock,
@@ -19,7 +18,7 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        ProgramData, ProgramError, ProgramType, define_link_wrapper, impl_try_from_fdlink,
+        Pid, ProgramData, ProgramError, ProgramType, define_link_wrapper, impl_try_from_fdlink,
         impl_try_into_fdlink, load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
         probe::{OsStringExt as _, Probe, ProbeKind, attach},
@@ -97,7 +96,7 @@ pub enum UProbeScope {
     /// Fire only when the calling process/thread hits the attach point.
     CallingProcess,
     /// Fire only when the given process hits the attach point.
-    OneProcess(NonZeroU32),
+    OneProcess(Pid),
 }
 
 impl UProbe {
