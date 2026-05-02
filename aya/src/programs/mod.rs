@@ -950,8 +950,8 @@ impl Default for TestRunAttrs {
 
 /// Options for running a BPF program test.
 ///
-/// see [kernel doc](https://docs.kernel.org/bpf/bpf_prog_run.html)
-/// and [ebpf.io](https://docs.ebpf.io/linux/syscall/BPF_PROG_TEST_RUN/) for detailed usages.
+/// See [kernel doc](https://docs.kernel.org/bpf/bpf_prog_run.html)
+/// and [ebpf.io](https://docs.ebpf.io/linux/syscall/BPF_PROG_TEST_RUN/) for detailed usage.
 #[derive(Debug)]
 pub struct TestRunOptions<'a> {
     /// Input packet data to pass to the program.
