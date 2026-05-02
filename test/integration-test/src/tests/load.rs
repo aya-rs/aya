@@ -1,6 +1,4 @@
-use std::{
-    convert::TryInto as _, fs::remove_file, num::NonZeroU32, path::Path, thread, time::Duration,
-};
+use std::{convert::TryInto as _, fs::remove_file, path::Path, thread, time::Duration};
 
 use assert_matches::assert_matches;
 use aya::{
@@ -8,7 +6,7 @@ use aya::{
     maps::{Array, RingBuf},
     pin::PinError,
     programs::{
-        FlowDissector, KProbe, LinkOrder, ProbeKind, Program, ProgramError, SchedClassifier,
+        FlowDissector, KProbe, LinkOrder, Pid, ProbeKind, Program, ProgramError, SchedClassifier,
         TcAttachType, TracePoint, UProbe, Xdp, XdpFlags,
         flow_dissector::{FlowDissectorLink, FlowDissectorLinkId},
         kprobe::{KProbeLink, KProbeLinkId},
@@ -370,7 +368,7 @@ fn basic_tracepoint() {
 #[test_case(UProbeScope::AllProcesses; "all_processes")]
 #[test_case(UProbeScope::CallingProcess; "calling_process")]
 #[test_case(
-    UProbeScope::OneProcess(NonZeroU32::new(std::process::id()).unwrap());
+    UProbeScope::OneProcess(Pid::current());
     "one_process"
 )]
 #[test_log::test]

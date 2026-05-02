@@ -4769,7 +4769,7 @@ impl !core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeErro
 pub enum aya::programs::uprobe::UProbeScope
 pub aya::programs::uprobe::UProbeScope::AllProcesses
 pub aya::programs::uprobe::UProbeScope::CallingProcess
-pub aya::programs::uprobe::UProbeScope::OneProcess(core::num::nonzero::NonZeroU32)
+pub aya::programs::uprobe::UProbeScope::OneProcess(aya::programs::Pid)
 impl core::clone::Clone for aya::programs::uprobe::UProbeScope
 pub fn aya::programs::uprobe::UProbeScope::clone(&self) -> aya::programs::uprobe::UProbeScope
 impl core::fmt::Debug for aya::programs::uprobe::UProbeScope
