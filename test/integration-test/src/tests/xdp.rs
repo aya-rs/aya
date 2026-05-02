@@ -10,13 +10,12 @@ use aya::{
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
-use crate::utils::{NetNsGuard, PeerNsGuard};
+use crate::utils::NetNsGuard;
 
 // Sanity-check the veth + PeerNsGuard plumbing without any BPF programs.
 #[test_log::test]
 fn veth_connectivity() {
-    let netns = NetNsGuard::new();
-    let peer = PeerNsGuard::new(&netns);
+    let (_netns, peer) = NetNsGuard::with_peer();
 
     const PAYLOAD: &[u8] = b"veth ok";
 
@@ -42,8 +41,7 @@ fn veth_connectivity() {
     reason = "packet headers are encoded in network byte order"
 )]
 fn af_xdp() {
-    let netns = NetNsGuard::new();
-    let peer = PeerNsGuard::new(&netns);
+    let (_netns, peer) = NetNsGuard::with_peer();
 
     let mut bpf = Ebpf::load(crate::REDIRECT).unwrap();
     let mut socks: XskMap<_> = bpf.take_map("SOCKS").unwrap().try_into().unwrap();

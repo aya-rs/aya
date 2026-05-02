@@ -197,6 +197,12 @@ impl NetNsGuard {
 
         ns
     }
+
+    pub(crate) fn with_peer() -> (Self, PeerNsGuard) {
+        let netns = Self::new();
+        let peer = PeerNsGuard::new(&netns);
+        (netns, peer)
+    }
 }
 
 impl Drop for NetNsGuard {
@@ -269,7 +275,6 @@ impl PeerNsGuard {
     const PEER_IFACE: &CStr = c"veth1";
     const IFACE_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 1);
     const PEER_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 2);
-    const IFACE_ADDR: &str = "10.0.0.1";
 
     #[expect(clippy::unused_self, reason = "access requires a live PeerNsGuard")]
     pub(crate) fn iface(&self) -> &str {
@@ -277,8 +282,8 @@ impl PeerNsGuard {
     }
 
     #[expect(clippy::unused_self, reason = "access requires a live PeerNsGuard")]
-    pub(crate) fn iface_addr(&self) -> &str {
-        Self::IFACE_ADDR
+    pub(crate) fn iface_addr(&self) -> Ipv4Addr {
+        Self::IFACE_IP
     }
 
     #[expect(clippy::unused_self, reason = "access requires a live PeerNsGuard")]
@@ -286,7 +291,7 @@ impl PeerNsGuard {
         Self::PEER_IP
     }
 
-    pub(crate) fn new(netns: &NetNsGuard) -> Self {
+    fn new(netns: &NetNsGuard) -> Self {
         let name = format!("{}-peer", netns.name);
 
         // Create a veth pair for tests that attach XDP/TC programs. Veth supports

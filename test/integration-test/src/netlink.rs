@@ -52,6 +52,10 @@ struct Ndmsg {
     r#type: u8,
 }
 
+/// Netlink request for link operations (set up, set namespace, etc.).
+///
+/// Largest payload is `set_link_ns` carrying `IFLA_NET_NS_FD`: NLA header (4) +
+/// i32 (4) = 8 bytes. 64 leaves room for future attributes.
 #[derive(Copy, Clone)]
 #[repr(C)]
 struct LinkRequest {
@@ -60,6 +64,11 @@ struct LinkRequest {
     attrs: [u8; 64],
 }
 
+/// Netlink request for veth pair creation.
+///
+/// Nested attrs: `IFLA_IFNAME` + `IFLA_LINKINFO` { `IFLA_INFO_KIND`("veth") +
+/// `IFLA_INFO_DATA` { `VETH_INFO_PEER` { `ifinfomsg` + `IFLA_IFNAME` } } } totals ~64
+/// bytes with short names, up to ~88 with `IFNAMSIZ`-length names. 128 is plenty.
 #[derive(Copy, Clone)]
 #[repr(C)]
 struct VethRequest {
@@ -68,6 +77,9 @@ struct VethRequest {
     attrs: [u8; 128],
 }
 
+/// Netlink request for address assignment.
+///
+/// `IFA_LOCAL` (8) + `IFA_ADDRESS` (8) = 16 bytes. 24 provides headroom.
 #[derive(Copy, Clone)]
 #[repr(C)]
 struct AddrRequest {
@@ -76,6 +88,9 @@ struct AddrRequest {
     attrs: [u8; 24],
 }
 
+/// Netlink request for neighbor (ARP) entries.
+///
+/// `NDA_DST` (8) + `NDA_LLADDR` (4 hdr + 6 MAC padded to 8 = 12) = 20 bytes.
 #[derive(Copy, Clone)]
 #[repr(C)]
 struct NeighRequest {
