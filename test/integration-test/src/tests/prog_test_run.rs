@@ -278,17 +278,11 @@ fn test_raw_tracepoint_test_run() {
     let mut opts = RawTracePointRunOptions::default();
     opts.args[0] = SENTINEL;
 
-    let RawTracePointTestRunResult {
-        return_value,
-        data_size_out,
-        ctx_size_out,
-    } = prog.test_run(opts).unwrap();
+    let RawTracePointTestRunResult { return_value } = prog.test_run(opts).unwrap();
 
     let stored: u64 = last_arg.get(&0, 0).unwrap();
     assert_eq!(stored, SENTINEL);
     assert_eq!(return_value, 0);
-    assert_eq!(data_size_out, 0);
-    assert_eq!(ctx_size_out, 0);
 }
 
 #[test_log::test]

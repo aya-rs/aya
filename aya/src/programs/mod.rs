@@ -995,8 +995,7 @@ impl TestRunOptions<'_> {
 ///
 /// - `data_in`, `data_out`, `ctx_out`, `repeat`, `batch_size` must all be zero/NULL;
 ///   passing any of them returns `EINVAL`.
-/// - `ctx_in` is the only data path: a packed array of `u64` values that the
-///   kernel presents to the program as raw tracepoint arguments (registers r1–r5).
+/// - `ctx_in` is the only data path: a packed array of `u64` tracepoint arguments.
 /// - CPU pinning via `BPF_F_TEST_RUN_ON_CPU` is supported and is the primary
 ///   reason to use `BPF_PROG_TEST_RUN` with raw tracepoints.
 ///
@@ -1044,18 +1043,14 @@ pub struct TestRunResult {
     pub ctx_size_out: u32,
 }
 
-/// Result of running a BPF program test for [`RawTracePoint`]
-/// program type
+/// Result of running a [`RawTracePoint`] program test via `BPF_PROG_TEST_RUN`.
 ///
-/// the duration field omitted since it's always [`std::time::Duration::ZERO`]
+/// Only `return_value` is returned by the kernel; `duration`, `data_size_out`,
+/// and `ctx_size_out` are omitted.
 #[derive(Debug)]
 pub struct RawTracePointTestRunResult {
     /// Return value from the program.
     pub return_value: u32,
-    /// Size of data written to `data_out`.
-    pub data_size_out: u32,
-    /// Size of context written to `ctx_out`.
-    pub ctx_size_out: u32,
 }
 
 /// Trait for BPF programs that support test execution via `BPF_PROG_TEST_RUN`.

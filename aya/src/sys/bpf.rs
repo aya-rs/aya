@@ -18,8 +18,9 @@ use aya_obj::{
     generated::{
         BPF_ADD, BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_F_TEST_RUN_ON_CPU,
         BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_X,
-        bpf_attach_type, bpf_attr, bpf_btf_info, bpf_cmd, bpf_func_id, bpf_insn, bpf_link_info,
-        bpf_map_info, bpf_map_type, bpf_prog_info, bpf_prog_type, bpf_stats_type,
+        bpf_attach_type, bpf_attr, bpf_attr__bindgen_ty_7, bpf_btf_info, bpf_cmd, bpf_func_id,
+        bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type, bpf_prog_info, bpf_prog_type,
+        bpf_stats_type,
     },
     maps::{LegacyMap, bpf_map_def},
 };
@@ -599,6 +600,14 @@ pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<crate::MockableFd, S
     })
 }
 
+fn invoke_prog_test_run(attr: &mut bpf_attr) -> Result<&bpf_attr__bindgen_ty_7, SyscallError> {
+    unit_sys_bpf(bpf_cmd::BPF_PROG_TEST_RUN, attr).map_err(|io_error| SyscallError {
+        call: "bpf_prog_test_run",
+        io_error,
+    })?;
+    Ok(unsafe { &attr.test })
+}
+
 /// Run a loaded BPF program with test data.
 ///
 /// Introduced in kernel v4.12.
@@ -621,7 +630,6 @@ pub(crate) fn bpf_prog_test_run(
     test.prog_fd = prog_fd.as_raw_fd() as u32;
     test.repeat = repeat;
     test.flags = flags;
-    test.cpu = 0;
     test.batch_size = batch_size;
 
     if let Some(data_in) = data_in {
@@ -644,12 +652,7 @@ pub(crate) fn bpf_prog_test_run(
         test.ctx_size_out = ctx_out.len() as u32;
     }
 
-    unit_sys_bpf(bpf_cmd::BPF_PROG_TEST_RUN, &mut attr).map_err(|io_error| SyscallError {
-        call: "bpf_prog_test_run",
-        io_error,
-    })?;
-
-    let test = unsafe { &attr.test };
+    let test = invoke_prog_test_run(&mut attr)?;
 
     Ok(TestRunResult {
         return_value: test.retval,
@@ -662,7 +665,7 @@ pub(crate) fn bpf_prog_test_run(
 /// Run a loaded [`RawTracePoint`](crate::programs::RawTracePoint) program with
 /// fake tracepoint arguments.
 ///
-/// Introduced in kernel v5.10
+/// Introduced in kernel v5.10.
 ///
 /// The kernel handler (`bpf_prog_test_run_raw_tp`) enforces that `data_in`,
 /// `data_out`, `ctx_out`, `repeat`, and `batch_size` are all zero/NULL,
@@ -688,16 +691,9 @@ pub(crate) fn bpf_prog_test_run_raw_tp(
         test.flags |= BPF_F_TEST_RUN_ON_CPU;
     }
 
-    unit_sys_bpf(bpf_cmd::BPF_PROG_TEST_RUN, &mut attr).map_err(|io_error| SyscallError {
-        call: "bpf_prog_test_run",
-        io_error,
-    })?;
-
-    let test = unsafe { &attr.test };
+    let test = invoke_prog_test_run(&mut attr)?;
     Ok(RawTracePointTestRunResult {
         return_value: test.retval,
-        data_size_out: 0,
-        ctx_size_out: 0,
     })
 }
 

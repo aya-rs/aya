@@ -6443,8 +6443,6 @@ impl core::marker::UnsafeUnpin for aya::programs::RawTracePointRunOptions
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePointRunOptions
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointRunOptions
 pub struct aya::programs::RawTracePointTestRunResult
-pub aya::programs::RawTracePointTestRunResult::ctx_size_out: u32
-pub aya::programs::RawTracePointTestRunResult::data_size_out: u32
 pub aya::programs::RawTracePointTestRunResult::return_value: u32
 impl core::fmt::Debug for aya::programs::RawTracePointTestRunResult
 pub fn aya::programs::RawTracePointTestRunResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -7335,8 +7333,6 @@ impl core::marker::UnsafeUnpin for aya::programs::RawTracePointRunOptions
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePointRunOptions
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointRunOptions
 pub struct aya::RawTracePointTestRunResult
-pub aya::RawTracePointTestRunResult::ctx_size_out: u32
-pub aya::RawTracePointTestRunResult::data_size_out: u32
 pub aya::RawTracePointTestRunResult::return_value: u32
 impl core::fmt::Debug for aya::programs::RawTracePointTestRunResult
 pub fn aya::programs::RawTracePointTestRunResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
