@@ -273,23 +273,9 @@ pub(crate) struct PeerNsGuard {
 impl PeerNsGuard {
     const IFACE: &CStr = c"veth0";
     const PEER_IFACE: &CStr = c"veth1";
-    const IFACE_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 1);
-    const PEER_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 2);
-
-    #[expect(clippy::unused_self, reason = "access requires a live PeerNsGuard")]
-    pub(crate) fn iface(&self) -> &str {
-        Self::IFACE.to_str().unwrap()
-    }
-
-    #[expect(clippy::unused_self, reason = "access requires a live PeerNsGuard")]
-    pub(crate) fn iface_addr(&self) -> Ipv4Addr {
-        Self::IFACE_IP
-    }
-
-    #[expect(clippy::unused_self, reason = "access requires a live PeerNsGuard")]
-    pub(crate) fn peer_addr(&self) -> Ipv4Addr {
-        Self::PEER_IP
-    }
+    pub(crate) const IFACE_NAME: &str = "veth0";
+    pub(crate) const IFACE_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 1);
+    pub(crate) const PEER_IP: Ipv4Addr = Ipv4Addr::new(10, 0, 0, 2);
 
     fn new(netns: &NetNsGuard) -> Self {
         let name = format!("{}-peer", netns.name);

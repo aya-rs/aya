@@ -10,7 +10,7 @@ use aya::{
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
-use crate::utils::NetNsGuard;
+use crate::utils::{NetNsGuard, PeerNsGuard};
 
 // Sanity-check the veth + PeerNsGuard plumbing without any BPF programs.
 #[test_log::test]
@@ -19,14 +19,13 @@ fn veth_connectivity() {
 
     const PAYLOAD: &[u8] = b"veth ok";
 
-    let sock = UdpSocket::bind((peer.iface_addr(), 0)).unwrap();
+    let sock = UdpSocket::bind((PeerNsGuard::IFACE_IP, 0)).unwrap();
     let addr = sock.local_addr().unwrap();
     sock.set_read_timeout(Some(Duration::from_secs(10)))
         .unwrap();
 
-    let peer_ip = peer.peer_addr();
     peer.run(|| {
-        let sock = UdpSocket::bind((peer_ip, 0)).unwrap();
+        let sock = UdpSocket::bind((PeerNsGuard::PEER_IP, 0)).unwrap();
         sock.send_to(PAYLOAD, addr).unwrap();
     });
 
@@ -52,7 +51,8 @@ fn af_xdp() {
         .try_into()
         .unwrap();
     xdp.load().unwrap();
-    xdp.attach(peer.iface(), XdpFlags::default()).unwrap();
+    xdp.attach(PeerNsGuard::IFACE_NAME, XdpFlags::default())
+        .unwrap();
 
     const SIZE: usize = 2 * 4096;
 
@@ -104,10 +104,9 @@ fn af_xdp() {
     writer.insert_once(frame1.offset);
     writer.commit();
 
-    let dst = (peer.iface_addr(), 1777u16);
-    let peer_ip = peer.peer_addr();
+    let dst = (PeerNsGuard::IFACE_IP, 1777u16);
     let port = peer.run(|| {
-        let sock = UdpSocket::bind((peer_ip, 0)).unwrap();
+        let sock = UdpSocket::bind((PeerNsGuard::PEER_IP, 0)).unwrap();
         let port = sock.local_addr().unwrap().port();
         sock.send_to(b"hello AF_XDP", dst).unwrap();
         port
@@ -135,14 +134,14 @@ fn af_xdp() {
     socks.unset(0).unwrap();
     assert_eq!(rx.available(), 1);
     peer.run(|| {
-        let sock = UdpSocket::bind((peer_ip, 0)).unwrap();
+        let sock = UdpSocket::bind((PeerNsGuard::PEER_IP, 0)).unwrap();
         sock.send_to(b"hello AF_XDP", dst).unwrap();
     });
     assert_eq!(rx.available(), 1);
     // Adds socket to map again, packets will be redirected again.
     socks.set(0, rx.as_raw_fd(), 0).unwrap();
     peer.run(|| {
-        let sock = UdpSocket::bind((peer_ip, 0)).unwrap();
+        let sock = UdpSocket::bind((PeerNsGuard::PEER_IP, 0)).unwrap();
         sock.send_to(b"hello AF_XDP", dst).unwrap();
     });
     assert_eq!(rx.available(), 2);
