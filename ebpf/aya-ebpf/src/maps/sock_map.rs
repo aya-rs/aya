@@ -1,5 +1,5 @@
 use crate::{
-    EbpfContext as _,
+    ENOENT, EbpfContext as _,
     bindings::{bpf_map_type::BPF_MAP_TYPE_SOCKMAP, bpf_sock_ops},
     cty::c_long,
     helpers::{
@@ -52,13 +52,10 @@ impl SockMap {
         ctx: &SkLookupContext,
         index: u32,
         flags: u64,
-    ) -> Result<(), u32> {
-        let sk = lookup(self.def.as_ptr(), &index).ok_or(1u32)?;
+    ) -> Result<(), i32> {
+        let sk = lookup(self.def.as_ptr(), &index).ok_or(-ENOENT)?;
         let ret = unsafe { bpf_sk_assign(ctx.as_ptr().cast(), sk.as_ptr(), flags) };
         let _: c_long = unsafe { bpf_sk_release(sk.as_ptr()) };
-        match ret {
-            0 => Ok(()),
-            _ret => Err(1),
-        }
+        if ret == 0 { Ok(()) } else { Err(ret as i32) }
     }
 }
