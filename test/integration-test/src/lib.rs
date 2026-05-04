@@ -62,6 +62,8 @@ bpf_file!(
     SIMPLE_PROG => "simple_prog",
     SK_REUSEPORT => "sk_reuseport",
     SK_STORAGE => "sk_storage",
+    SOCK_HASH => "sock_hash",
+    SOCK_MAP => "sock_map",
     STRNCMP => "strncmp",
     TCX => "tcx",
     TEST => "test",

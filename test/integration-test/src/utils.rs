@@ -6,6 +6,7 @@ use std::{
     ffi::CString,
     fs,
     io::{self, Write as _},
+    os::fd::{AsFd, BorrowedFd},
     path::Path,
     process,
     sync::atomic::{AtomicU64, Ordering},
@@ -138,20 +139,22 @@ impl Drop for ChildCgroup<'_> {
 pub(crate) struct NetNsGuard {
     name: String,
     old_ns: fs::File,
+    new_ns: fs::File,
 }
 
 impl NetNsGuard {
     const PERSIST_DIR: &str = "/var/run/netns/";
+    const THREAD_NETNS: &str = "/proc/thread-self/ns/net";
 
     #[expect(
         clippy::print_stdout,
         reason = "integration tests print namespace transitions for diagnostics"
     )]
     pub(crate) fn new() -> Self {
-        let current_thread_netns_path = format!("/proc/self/task/{}/ns/net", nix::unistd::gettid());
-        let old_ns = fs::File::open(&current_thread_netns_path).unwrap_or_else(|err| {
-            panic!("fs::File::open(\"{current_thread_netns_path}\"): {err:?}")
-        });
+        // `/proc/thread-self/ns/net` resolves to the calling thread's netns
+        // (`/proc/self/ns/net` would always pin to the main thread's).
+        let old_ns = fs::File::open(Self::THREAD_NETNS)
+            .unwrap_or_else(|err| panic!("fs::File::open(\"{}\"): {err:?}", Self::THREAD_NETNS));
 
         static COUNTER: AtomicU64 = AtomicU64::new(0);
         let pid = process::id();
@@ -165,8 +168,12 @@ impl NetNsGuard {
         nix::sched::unshare(nix::sched::CloneFlags::CLONE_NEWNET)
             .expect("nix::sched::unshare(CLONE_NEWNET)");
 
+        // Re-open after unshare to capture the freshly entered namespace.
+        let new_ns = fs::File::open(Self::THREAD_NETNS)
+            .unwrap_or_else(|err| panic!("fs::File::open(\"{}\"): {err:?}", Self::THREAD_NETNS));
+
         nix::mount::mount(
-            Some(current_thread_netns_path.as_str()),
+            Some(Self::THREAD_NETNS),
             &ns_path,
             Some("none"),
             nix::mount::MsFlags::MS_BIND,
@@ -176,7 +183,11 @@ impl NetNsGuard {
 
         println!("entered network namespace {name}");
 
-        let ns = Self { name, old_ns };
+        let ns = Self {
+            name,
+            old_ns,
+            new_ns,
+        };
 
         // By default, the loopback in a new netns is down. Set it up.
         let lo = CString::new("lo").unwrap();
@@ -196,6 +207,12 @@ impl NetNsGuard {
     }
 }
 
+impl AsFd for NetNsGuard {
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        self.new_ns.as_fd()
+    }
+}
+
 impl Drop for NetNsGuard {
     #[expect(
         clippy::print_stderr,
@@ -206,7 +223,11 @@ impl Drop for NetNsGuard {
         reason = "debug formatting preserves error context in drop"
     )]
     fn drop(&mut self) {
-        let Self { old_ns, name } = self;
+        let Self {
+            old_ns,
+            name,
+            new_ns: _,
+        } = self;
         match (|| -> Result<()> {
             nix::sched::setns(old_ns, nix::sched::CloneFlags::CLONE_NEWNET)
                 .context("nix::sched::setns(_, CLONE_NEWNET)")?;
