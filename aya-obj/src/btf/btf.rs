@@ -1688,7 +1688,7 @@ pub(crate) struct SecInfo<'a> {
 
 #[cfg(test)]
 mod tests {
-    use alloc::{borrow::ToOwned as _, vec};
+    use std::{borrow::ToOwned as _, vec};
 
     use assert_matches::assert_matches;
 
