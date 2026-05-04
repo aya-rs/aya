@@ -105,6 +105,14 @@ name = "sk_storage"
 path = "src/sk_storage.rs"
 
 [[bin]]
+name = "sock_hash"
+path = "src/sock_hash.rs"
+
+[[bin]]
+name = "sock_map"
+path = "src/sock_map.rs"
+
+[[bin]]
 name = "simple_prog"
 path = "src/simple_prog.rs"
 
