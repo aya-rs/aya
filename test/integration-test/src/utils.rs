@@ -6,6 +6,7 @@ use std::{
     ffi::CString,
     fs,
     io::{self, Write as _},
+    os::fd::{AsFd, BorrowedFd},
     path::Path,
     process,
     sync::atomic::{AtomicU64, Ordering},
@@ -138,6 +139,7 @@ impl Drop for ChildCgroup<'_> {
 pub(crate) struct NetNsGuard {
     name: String,
     old_ns: fs::File,
+    new_ns: fs::File,
 }
 
 impl NetNsGuard {
@@ -165,6 +167,12 @@ impl NetNsGuard {
         nix::sched::unshare(nix::sched::CloneFlags::CLONE_NEWNET)
             .expect("nix::sched::unshare(CLONE_NEWNET)");
 
+        // Open after unshare so we capture the freshly entered namespace,
+        // not the caller's. `thread-self` resolves to the calling thread's
+        // namespace; `self` resolves to the main thread's.
+        let new_ns = fs::File::open("/proc/thread-self/ns/net")
+            .expect("fs::File::open(\"/proc/thread-self/ns/net\")");
+
         nix::mount::mount(
             Some(current_thread_netns_path.as_str()),
             &ns_path,
@@ -176,7 +184,11 @@ impl NetNsGuard {
 
         println!("entered network namespace {name}");
 
-        let ns = Self { name, old_ns };
+        let ns = Self {
+            name,
+            old_ns,
+            new_ns,
+        };
 
         // By default, the loopback in a new netns is down. Set it up.
         let lo = CString::new("lo").unwrap();
@@ -196,6 +208,12 @@ impl NetNsGuard {
     }
 }
 
+impl AsFd for NetNsGuard {
+    fn as_fd(&self) -> BorrowedFd<'_> {
+        self.new_ns.as_fd()
+    }
+}
+
 impl Drop for NetNsGuard {
     #[expect(
         clippy::print_stderr,
@@ -206,7 +224,11 @@ impl Drop for NetNsGuard {
         reason = "debug formatting preserves error context in drop"
     )]
     fn drop(&mut self) {
-        let Self { old_ns, name } = self;
+        let Self {
+            old_ns,
+            name,
+            new_ns: _,
+        } = self;
         match (|| -> Result<()> {
             nix::sched::setns(old_ns, nix::sched::CloneFlags::CLONE_NEWNET)
                 .context("nix::sched::setns(_, CLONE_NEWNET)")?;
