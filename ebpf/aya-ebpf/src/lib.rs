@@ -195,6 +195,9 @@ fn lookup<K, V>(def: *mut c_void, key: &K) -> Option<NonNull<V>> {
     NonNull::new(unsafe { bpf_map_lookup_elem(def, key.cast()) }.cast())
 }
 
+/// `ENOENT` errno value, returned (negated) when [`lookup`] misses.
+pub(crate) const ENOENT: i32 = 2;
+
 /// A read-only global value that may be initialized by the loader.
 ///
 /// Prefer using this to a plain `static` variable to avoid compiler optimizations eliding reads.
