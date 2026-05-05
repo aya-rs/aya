@@ -4724,10 +4724,14 @@ pub enum aya::programs::uprobe::UProbeAttachLocation<'a>
 pub aya::programs::uprobe::UProbeAttachLocation::AbsoluteOffset(u64)
 pub aya::programs::uprobe::UProbeAttachLocation::Symbol(&'a str)
 pub aya::programs::uprobe::UProbeAttachLocation::SymbolOffset(&'a str, u64)
+impl aya::programs::uprobe::UProbeAttachLocation<'static>
+pub fn aya::programs::uprobe::UProbeAttachLocation<'static>::from_virtual_address(instruction_address: u64, section_address: u64, section_offset: u64) -> core::result::Result<Self, aya::programs::uprobe::UProbeAttachLocationError>
 impl core::convert::From<u64> for aya::programs::uprobe::UProbeAttachLocation<'static>
 pub fn aya::programs::uprobe::UProbeAttachLocation<'static>::from(offset: u64) -> Self
 impl<'a> core::convert::From<&'a str> for aya::programs::uprobe::UProbeAttachLocation<'a>
 pub fn aya::programs::uprobe::UProbeAttachLocation<'a>::from(s: &'a str) -> Self
+impl<'a> core::fmt::Debug for aya::programs::uprobe::UProbeAttachLocation<'a>
+pub fn aya::programs::uprobe::UProbeAttachLocation<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<'a> core::marker::Freeze for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::marker::Send for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::marker::Sync for aya::programs::uprobe::UProbeAttachLocation<'a>
@@ -4735,6 +4739,26 @@ impl<'a> core::marker::Unpin for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeAttachLocation<'a>
+pub enum aya::programs::uprobe::UProbeAttachLocationError
+pub aya::programs::uprobe::UProbeAttachLocationError::AddressNotInSection
+pub aya::programs::uprobe::UProbeAttachLocationError::AddressNotInSection::instruction_address: u64
+pub aya::programs::uprobe::UProbeAttachLocationError::AddressNotInSection::section_address: u64
+pub aya::programs::uprobe::UProbeAttachLocationError::FileOffsetOverflow
+pub aya::programs::uprobe::UProbeAttachLocationError::FileOffsetOverflow::instruction_address: u64
+pub aya::programs::uprobe::UProbeAttachLocationError::FileOffsetOverflow::section_address: u64
+pub aya::programs::uprobe::UProbeAttachLocationError::FileOffsetOverflow::section_offset: u64
+impl core::error::Error for aya::programs::uprobe::UProbeAttachLocationError
+impl core::fmt::Debug for aya::programs::uprobe::UProbeAttachLocationError
+pub fn aya::programs::uprobe::UProbeAttachLocationError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::uprobe::UProbeAttachLocationError
+pub fn aya::programs::uprobe::UProbeAttachLocationError::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::uprobe::UProbeAttachLocationError
+impl core::marker::Send for aya::programs::uprobe::UProbeAttachLocationError
+impl core::marker::Sync for aya::programs::uprobe::UProbeAttachLocationError
+impl core::marker::Unpin for aya::programs::uprobe::UProbeAttachLocationError
+impl core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeAttachLocationError
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeAttachLocationError
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeAttachLocationError
 pub enum aya::programs::uprobe::UProbeError
 pub aya::programs::uprobe::UProbeError::FileError
 pub aya::programs::uprobe::UProbeError::FileError::filename: std::path::PathBuf
