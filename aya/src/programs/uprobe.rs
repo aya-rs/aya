@@ -50,6 +50,7 @@ pub struct UProbe {
 
 /// The location in the target object file to which the uprobe is to be
 /// attached.
+#[derive(Debug)]
 pub enum UProbeAttachLocation<'a> {
     /// The location of the target function in the target object file.
     Symbol(&'a str),
@@ -69,6 +70,93 @@ impl<'a> From<&'a str> for UProbeAttachLocation<'a> {
 impl From<u64> for UProbeAttachLocation<'static> {
     fn from(offset: u64) -> Self {
         Self::AbsoluteOffset(offset)
+    }
+}
+
+/// The type returned when constructing a [`UProbeAttachLocation`] fails.
+#[derive(Debug, Error)]
+pub enum UProbeAttachLocationError {
+    /// The instruction address is not in the containing section.
+    #[error(
+        "instruction address {instruction_address:#x} is not in section: \
+        before section address {section_address:#x}"
+    )]
+    AddressNotInSection {
+        /// The instruction's virtual address.
+        instruction_address: u64,
+        /// The containing section's virtual address.
+        section_address: u64,
+    },
+
+    /// The computed file offset does not fit in [`u64`].
+    #[error(
+        "computed file offset overflows u64: \
+        {instruction_address:#x} - {section_address:#x} + {section_offset:#x}"
+    )]
+    FileOffsetOverflow {
+        /// The instruction's virtual address.
+        instruction_address: u64,
+        /// The containing section's virtual address.
+        section_address: u64,
+        /// The containing section's file offset.
+        section_offset: u64,
+    },
+}
+
+impl UProbeAttachLocation<'static> {
+    /// Returns an attach location from an ELF virtual address.
+    ///
+    /// The kernel expects uprobes and uretprobes to be attached by object file
+    /// offset. If you have already resolved the instruction to an ELF virtual
+    /// address, pass that address together with the virtual address and file
+    /// offset of the section that contains it.
+    ///
+    /// This returns [`UProbeAttachLocation::AbsoluteOffset`] using the same
+    /// address translation used for uprobe attachment:
+    ///
+    /// ```text
+    /// file_offset = instruction_address - section_address + section_offset
+    /// ```
+    ///
+    /// The arguments correspond to ELF values as follows:
+    ///
+    /// - `instruction_address`: the instruction virtual address, typically a
+    ///   symbol's `st_value`.
+    /// - `section_address`: the containing section's virtual address
+    ///   (`sh_addr`).
+    /// - `section_offset`: the containing section's file offset (`sh_offset`).
+    ///
+    /// `instruction_address` must be greater than or equal to
+    /// `section_address`. The caller must pass the `section_address` and
+    /// `section_offset` for the section containing `instruction_address`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`UProbeAttachLocationError::AddressNotInSection`] if
+    /// `instruction_address` is less than `section_address`.
+    ///
+    /// Returns [`UProbeAttachLocationError::FileOffsetOverflow`] if the
+    /// computed file offset does not fit in [`u64`].
+    pub fn from_virtual_address(
+        instruction_address: u64,
+        section_address: u64,
+        section_offset: u64,
+    ) -> Result<Self, UProbeAttachLocationError> {
+        let section_relative_offset = instruction_address.checked_sub(section_address).ok_or(
+            UProbeAttachLocationError::AddressNotInSection {
+                instruction_address,
+                section_address,
+            },
+        )?;
+        let file_offset = section_relative_offset.checked_add(section_offset).ok_or(
+            UProbeAttachLocationError::FileOffsetOverflow {
+                instruction_address,
+                section_address,
+                section_offset,
+            },
+        )?;
+
+        Ok(Self::AbsoluteOffset(file_offset))
     }
 }
 
@@ -118,9 +206,11 @@ impl UProbe {
 
     /// Attaches the program.
     ///
-    /// Attaches the uprobe to the function `fn_name` defined in the `target`.
-    /// If the attach point specifies an offset, it is added to the address of
-    /// the target function. `scope` specifies which processes should trigger
+    /// Attaches the uprobe to `point` in the `target`. If the attach point is a
+    /// symbol offset, the offset is added to the address of the target function.
+    /// Absolute offsets must already be target object file offsets; use
+    /// [`UProbeAttachLocation::from_virtual_address()`] to construct one from an
+    /// ELF virtual address. `scope` specifies which processes should trigger
     /// the uprobe.
     ///
     /// The `target` argument can be an absolute or relative path to a binary or
@@ -819,6 +909,37 @@ mod tests {
     #[test_case("foo/", false; "trailing_separator")]
     fn test_is_basename_only(input: &str, expected: bool) {
         assert_eq!(is_basename_only(Path::new(input)), expected);
+    }
+
+    #[test]
+    fn test_uprobe_attach_location_from_virtual_address() {
+        assert_matches!(
+            UProbeAttachLocation::from_virtual_address(0x601300, 0x35ff00, 0x15ff00),
+            Ok(UProbeAttachLocation::AbsoluteOffset(0x401300))
+        );
+    }
+
+    #[test]
+    fn test_uprobe_attach_location_from_virtual_address_errors_on_underflow() {
+        assert_matches!(
+            UProbeAttachLocation::from_virtual_address(1, 2, 0),
+            Err(UProbeAttachLocationError::AddressNotInSection {
+                instruction_address: 1,
+                section_address: 2,
+            })
+        );
+    }
+
+    #[test]
+    fn test_uprobe_attach_location_from_virtual_address_errors_on_overflow() {
+        assert_matches!(
+            UProbeAttachLocation::from_virtual_address(u64::MAX, 0, 1),
+            Err(UProbeAttachLocationError::FileOffsetOverflow {
+                instruction_address: u64::MAX,
+                section_address: 0,
+                section_offset: 1,
+            })
+        );
     }
 
     #[test]
