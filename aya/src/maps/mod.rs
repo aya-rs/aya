@@ -215,6 +215,16 @@ pub enum MapError {
         /// The reason
         reason: &'static str,
     },
+
+    /// The path provided cannot be converted to a valid C string.
+    #[error("invalid pin path `{}`", path.display())]
+    InvalidPinPath {
+        /// The path.
+        path: std::path::PathBuf,
+        #[source]
+        /// The source error.
+        source: std::ffi::NulError,
+    },
 }
 
 impl From<InvalidTypeBinding<u32>> for MapError {
