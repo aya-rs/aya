@@ -215,6 +215,16 @@ pub enum MapError {
         /// The reason
         reason: &'static str,
     },
+
+    /// The path provided cannot be converted to a valid C string.
+    #[error("invalid pin path `{}`", path.display())]
+    InvalidPinPath {
+        /// The path.
+        path: std::path::PathBuf,
+        #[source]
+        /// The source error.
+        source: std::ffi::NulError,
+    },
 }
 
 impl From<InvalidTypeBinding<u32>> for MapError {
@@ -642,13 +652,10 @@ impl MapData {
         let path = path.as_ref();
         let path_string = match CString::new(path.as_os_str().as_bytes()) {
             Ok(path) => path,
-            Err(error) => {
-                return Err(MapError::PinError {
-                    name: Some(name.into()),
-                    error: PinError::InvalidPinPath {
-                        path: path.to_path_buf(),
-                        error,
-                    },
+            Err(source) => {
+                return Err(MapError::InvalidPinPath {
+                    path: path.to_path_buf(),
+                    source,
                 });
             }
         };
@@ -693,14 +700,12 @@ impl MapData {
         use std::os::unix::ffi::OsStrExt as _;
 
         let path = path.as_ref();
-        let path_string =
-            CString::new(path.as_os_str().as_bytes()).map_err(|error| MapError::PinError {
-                name: None,
-                error: PinError::InvalidPinPath {
-                    path: path.into(),
-                    error,
-                },
-            })?;
+        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|source| {
+            MapError::InvalidPinPath {
+                path: path.into(),
+                source,
+            }
+        })?;
 
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "BPF_OBJ_GET",

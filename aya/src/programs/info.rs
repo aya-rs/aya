@@ -224,8 +224,13 @@ impl ProgramInfo {
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path = path.as_ref();
+        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|source| {
+            ProgramError::InvalidPinPath {
+                path: path.into(),
+                source,
+            }
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,

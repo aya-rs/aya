@@ -348,15 +348,20 @@ impl PinnedLink {
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, LinkError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path = path.as_ref();
+        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|source| {
+            LinkError::InvalidPinPath {
+                path: path.into(),
+                source,
+            }
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| {
             LinkError::SyscallError(SyscallError {
                 call: "BPF_OBJ_GET",
                 io_error,
             })
         })?;
-        Ok(Self::new(path.as_ref().to_path_buf(), FdLink::new(fd)))
+        Ok(Self::new(path.to_path_buf(), FdLink::new(fd)))
     }
 
     /// Removes the pinned link from the filesystem and returns an [`FdLink`].
@@ -614,6 +619,16 @@ pub enum LinkError {
     /// Please open an issue on GitHub if you encounter this error.
     #[error("unknown link type {0}")]
     UnknownLinkType(u32),
+
+    /// The path provided cannot be converted to a valid C string.
+    #[error("invalid pin path `{}`", path.display())]
+    InvalidPinPath {
+        /// The path.
+        path: PathBuf,
+        #[source]
+        /// The source error.
+        source: std::ffi::NulError,
+    },
 
     /// Syscall failed.
     #[error(transparent)]
