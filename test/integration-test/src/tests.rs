@@ -20,6 +20,7 @@ mod iter;
 mod kprobe;
 mod linear_data_structures;
 mod load;
+mod load_bytes;
 mod log;
 mod lpm_trie;
 mod lsm;
