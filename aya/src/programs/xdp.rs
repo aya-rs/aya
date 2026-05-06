@@ -101,11 +101,17 @@ impl Xdp {
     /// If the given `interface` does not exist
     /// [`ProgramError::UnknownInterface`] is returned.
     ///
+    /// If the given `interface` name is malformed
+    /// [`ProgramError::InvalidInterfaceName`] is returned.
+    ///
     /// When `bpf_link_create` is unavailable or rejects the request, the call
     /// transparently falls back to the legacy netlink-based attach path.
     pub fn attach(&mut self, interface: &str, flags: XdpFlags) -> Result<XdpLinkId, ProgramError> {
-        // TODO: avoid this unwrap by adding a new error variant.
-        let c_interface = CString::new(interface).unwrap();
+        let c_interface =
+            CString::new(interface).map_err(|source| ProgramError::InvalidInterfaceName {
+                name: interface.to_string(),
+                source,
+            })?;
         let if_index = unsafe { libc::if_nametoindex(c_interface.as_ptr()) };
         if if_index == 0 {
             return Err(ProgramError::UnknownInterface {
