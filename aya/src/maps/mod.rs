@@ -114,6 +114,9 @@ pub enum MapError {
     InvalidName {
         /// The map name
         name: String,
+        #[source]
+        /// The source error.
+        source: std::ffi::NulError,
     },
 
     /// Failed to create map
@@ -608,8 +611,10 @@ impl MapData {
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
-        let c_name = CString::new(name)
-            .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
+        let c_name = CString::new(name).map_err(|source| MapError::InvalidName {
+            name: name.into(),
+            source,
+        })?;
 
         // BPF_MAP_TYPE_PERF_EVENT_ARRAY's max_entries should not exceed the number of
         // CPUs.
