@@ -5387,6 +5387,9 @@ pub aya::programs::ProgramError::AttachCookieNotSupported
 pub aya::programs::ProgramError::Btf(aya_obj::btf::btf::BtfError)
 pub aya::programs::ProgramError::ExtensionError(aya::programs::extension::ExtensionError)
 pub aya::programs::ProgramError::IOError(std::io::error::Error)
+pub aya::programs::ProgramError::InvalidInterfaceName
+pub aya::programs::ProgramError::InvalidInterfaceName::name: alloc::string::String
+pub aya::programs::ProgramError::InvalidInterfaceName::source: alloc::ffi::c_str::NulError
 pub aya::programs::ProgramError::InvalidName
 pub aya::programs::ProgramError::InvalidName::name: alloc::string::String
 pub aya::programs::ProgramError::InvalidPinPath
