@@ -4376,9 +4376,9 @@ pub aya::programs::tc::TcError::InvalidLinkOperation
 pub aya::programs::tc::TcError::InvalidTcxAttach(u32)
 pub aya::programs::tc::TcError::IoError(std::io::error::Error)
 pub aya::programs::tc::TcError::NetlinkError(aya::sys::netlink::NetlinkError)
-pub aya::programs::tc::TcError::NulError(alloc::ffi::c_str::NulError)
-impl core::convert::From<alloc::ffi::c_str::NulError> for aya::programs::tc::TcError
-pub fn aya::programs::tc::TcError::from(source: alloc::ffi::c_str::NulError) -> Self
+pub aya::programs::tc::TcError::NulError
+pub aya::programs::tc::TcError::NulError::name: alloc::string::String
+pub aya::programs::tc::TcError::NulError::source: alloc::ffi::c_str::NulError
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::tc::TcError) -> Self
 impl core::convert::From<std::io::error::Error> for aya::programs::tc::TcError
@@ -5568,9 +5568,9 @@ pub aya::programs::TcError::InvalidLinkOperation
 pub aya::programs::TcError::InvalidTcxAttach(u32)
 pub aya::programs::TcError::IoError(std::io::error::Error)
 pub aya::programs::TcError::NetlinkError(aya::sys::netlink::NetlinkError)
-pub aya::programs::TcError::NulError(alloc::ffi::c_str::NulError)
-impl core::convert::From<alloc::ffi::c_str::NulError> for aya::programs::tc::TcError
-pub fn aya::programs::tc::TcError::from(source: alloc::ffi::c_str::NulError) -> Self
+pub aya::programs::TcError::NulError
+pub aya::programs::TcError::NulError::name: alloc::string::String
+pub aya::programs::TcError::NulError::source: alloc::ffi::c_str::NulError
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::tc::TcError) -> Self
 impl core::convert::From<std::io::error::Error> for aya::programs::tc::TcError
