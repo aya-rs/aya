@@ -652,12 +652,12 @@ impl MapData {
         let path = path.as_ref();
         let path_string = match CString::new(path.as_os_str().as_bytes()) {
             Ok(path) => path,
-            Err(error) => {
+            Err(source) => {
                 return Err(MapError::PinError {
                     name: Some(name.into()),
                     error: PinError::InvalidPinPath {
                         path: path.to_path_buf(),
-                        error,
+                        source,
                     },
                 });
             }
@@ -704,11 +704,11 @@ impl MapData {
 
         let path = path.as_ref();
         let path_string =
-            CString::new(path.as_os_str().as_bytes()).map_err(|error| MapError::PinError {
+            CString::new(path.as_os_str().as_bytes()).map_err(|source| MapError::PinError {
                 name: None,
                 error: PinError::InvalidPinPath {
                     path: path.into(),
-                    error,
+                    source,
                 },
             })?;
 
@@ -773,10 +773,10 @@ impl MapData {
 
         let Self { fd, obj: _ } = self;
         let path = path.as_ref();
-        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
+        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|source| {
             PinError::InvalidPinPath {
                 path: path.to_path_buf(),
-                error,
+                source,
             }
         })?;
         bpf_pin_object(fd.as_fd(), &path_string).map_err(|io_error| SyscallError {

@@ -674,9 +674,9 @@ fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Resul
     })?;
     let path = path.as_ref();
     let path_string =
-        CString::new(path.as_os_str().as_bytes()).map_err(|error| PinError::InvalidPinPath {
+        CString::new(path.as_os_str().as_bytes()).map_err(|source| PinError::InvalidPinPath {
             path: path.into(),
-            error,
+            source,
         })?;
     bpf_pin_object(fd.as_fd(), &path_string).map_err(|io_error| SyscallError {
         call: "BPF_OBJ_PIN",
