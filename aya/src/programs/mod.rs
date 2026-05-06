@@ -257,6 +257,16 @@ pub enum ProgramError {
         source: std::ffi::NulError,
     },
 
+    /// The interface name cannot be converted to a valid C string.
+    #[error("invalid interface name `{name}`")]
+    InvalidInterfaceName {
+        /// The interface name.
+        name: String,
+        #[source]
+        /// The source error.
+        source: std::ffi::NulError,
+    },
+
     /// An error occurred while working with IO.
     #[error(transparent)]
     IOError(#[from] io::Error),
