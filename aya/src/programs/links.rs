@@ -284,10 +284,10 @@ impl FdLink {
         use std::os::unix::ffi::OsStrExt as _;
 
         let path = path.as_ref();
-        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
+        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|source| {
             PinError::InvalidPinPath {
                 path: path.into(),
-                error,
+                source,
             }
         })?;
         bpf_pin_object(self.fd.as_fd(), &path_string).map_err(|io_error| SyscallError {
