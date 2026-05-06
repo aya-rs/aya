@@ -936,6 +936,7 @@ pub aya::maps::MapError::InvalidMapType
 pub aya::maps::MapError::InvalidMapType::map_type: u32
 pub aya::maps::MapError::InvalidName
 pub aya::maps::MapError::InvalidName::name: alloc::string::String
+pub aya::maps::MapError::InvalidName::source: alloc::ffi::c_str::NulError
 pub aya::maps::MapError::InvalidPinPath
 pub aya::maps::MapError::InvalidPinPath::path: std::path::PathBuf
 pub aya::maps::MapError::InvalidPinPath::source: alloc::ffi::c_str::NulError
@@ -1711,8 +1712,8 @@ pub fn aya::maps::loaded_maps() -> impl core::iter::traits::iterator::Iterator<I
 pub mod aya::pin
 pub enum aya::pin::PinError
 pub aya::pin::PinError::InvalidPinPath
-pub aya::pin::PinError::InvalidPinPath::error: alloc::ffi::c_str::NulError
 pub aya::pin::PinError::InvalidPinPath::path: std::path::PathBuf
+pub aya::pin::PinError::InvalidPinPath::source: alloc::ffi::c_str::NulError
 pub aya::pin::PinError::NoFd
 pub aya::pin::PinError::NoFd::name: alloc::string::String
 pub aya::pin::PinError::SyscallError(aya::sys::SyscallError)
