@@ -25,3 +25,4 @@ thiserror = { workspace = true, features = ["std"] }
 [dev-dependencies]
 assert_matches = { workspace = true }
 rbpf = { workspace = true }
+test-case = { workspace = true }

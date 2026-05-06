@@ -39,7 +39,7 @@ fn emit_event(bpf_obj: &[u8], events_map: &str, prog: &str) {
         .unwrap_or_else(|err| panic!("load {prog}: {err}"));
     uprobe
         .attach(
-            "trigger_emit_event",
+            ["trigger_emit_event"],
             "/proc/self/exe",
             UProbeScope::AllProcesses,
         )

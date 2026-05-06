@@ -74,6 +74,7 @@ bpf_file!(
     PROG_ARRAY => "prog_array",
     STACK_TRACE => "stack_trace",
     STACK_TRACE_LSM => "stack_trace_lsm",
+    UPROBE_MULTI => "uprobe_multi",
 );
 
 #[cfg(test)]

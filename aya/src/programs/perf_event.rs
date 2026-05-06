@@ -11,10 +11,9 @@ use aya_obj::generated::{
 
 use crate::{
     programs::{
-        ProgramData, ProgramError, ProgramType, impl_try_from_fdlink, impl_try_into_fdlink,
-        links::define_link_wrapper,
-        load_program_without_attach_type,
-        perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
+        PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError, ProgramType,
+        impl_try_from_fdlink, impl_try_into_fdlink, links::define_link_wrapper,
+        load_program_without_attach_type, perf_attach,
     },
     sys::{SyscallError, perf_event_open},
 };
@@ -471,16 +470,12 @@ impl PerfEvent {
         })?;
 
         let link = perf_attach(prog_fd, perf_fd, None /* cookie */)?;
-        self.data.links.insert(PerfEventLink::new(link))
+        self.data.links.insert(PerfEventLink::new(link.into()))
     }
 }
 
-impl_try_into_fdlink!(PerfEventLink, PerfLinkInner);
-impl_try_from_fdlink!(
-    PerfEventLink,
-    PerfLinkInner,
-    bpf_link_type::BPF_LINK_TYPE_PERF_EVENT
-);
+impl_try_into_fdlink!(PerfEventLink, method = into_fd_link);
+impl_try_from_fdlink!(PerfEventLink, bpf_link_type::BPF_LINK_TYPE_PERF_EVENT);
 
 define_link_wrapper!(
     PerfEventLink,

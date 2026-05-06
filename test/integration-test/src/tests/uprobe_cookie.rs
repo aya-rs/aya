@@ -17,8 +17,11 @@ fn test_uprobe_cookie() {
         );
         return;
     }
-    const RING_BUF_BYTE_SIZE: u32 = 512; // arbitrary, but big enough
-
+    // Ring buffer sizes are rounded up to a page-sized power-of-two multiple when
+    // the object is loaded. Using 512 here therefore yields a one-page ring
+    // buffer on supported test systems, which is ample for the handful of `u64`
+    // cookie records emitted by this test.
+    const RING_BUF_BYTE_SIZE: u32 = 512;
     let mut bpf = EbpfLoader::new()
         .map_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
         .load(crate::UPROBE_COOKIE)
@@ -35,10 +38,10 @@ fn test_uprobe_cookie() {
     const PROG_B: &str = "uprobe_cookie_trigger_ebpf_program_b";
     let attach = |prog: &mut UProbe, fn_name: &str, cookie| {
         prog.attach(
-            UProbeAttachPoint {
+            [UProbeAttachPoint {
                 location: fn_name.into(),
                 cookie: Some(cookie),
-            },
+            }],
             "/proc/self/exe",
             UProbeScope::AllProcesses,
         )
