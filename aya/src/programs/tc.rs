@@ -88,9 +88,15 @@ pub enum TcError {
     /// a netlink error occurred.
     #[error(transparent)]
     NetlinkError(#[from] NetlinkError),
-    /// the provided string contains a nul byte.
-    #[error(transparent)]
-    NulError(#[from] std::ffi::NulError),
+    /// The name passed to a TC operation contains an interior nul byte.
+    #[error("tc operation received an invalid name `{name}`")]
+    NulError {
+        /// The name that contained the nul byte.
+        name: String,
+        #[source]
+        /// The source error.
+        source: std::ffi::NulError,
+    },
     /// an IO error occurred.
     #[error(transparent)]
     IoError(#[from] io::Error),
@@ -312,8 +318,10 @@ impl SchedClassifier {
         match options {
             TcAttachOptions::Netlink(options) => {
                 let name = self.data.name.as_deref().unwrap_or_default();
-                // TODO: avoid this unwrap by adding a new error variant.
-                let name = CString::new(name).unwrap();
+                let name = CString::new(name).map_err(|source| TcError::NulError {
+                    name: name.to_string(),
+                    source,
+                })?;
                 let (priority, handle) = unsafe {
                     netlink_qdisc_attach(
                         if_index as i32,
@@ -598,7 +606,10 @@ pub fn qdisc_detach_program(
     attach_type: TcAttachType,
     name: &str,
 ) -> Result<(), TcError> {
-    let cstr = CString::new(name).map_err(TcError::NulError)?;
+    let cstr = CString::new(name).map_err(|source| TcError::NulError {
+        name: name.to_string(),
+        source,
+    })?;
     let if_index = ifindex_from_ifname(if_name)? as i32;
 
     let sock = NetlinkSocket::open().map_err(NetlinkError::from)?;
