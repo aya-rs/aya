@@ -1263,7 +1263,6 @@ macro_rules! impl_from_pin {
 // Use impl_from_pin if the program doesn't require additional data
 impl_from_pin!(
     TracePoint,
-    SocketFilter,
     SkMsg,
     CgroupSysctl,
     LircMode2,
