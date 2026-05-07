@@ -84,6 +84,27 @@ where
         }
     }
 
+    pub(crate) fn insert_with<F>(
+        &mut self,
+        link_id: T::Id,
+        make_link: F,
+    ) -> Result<T::Id, ProgramError>
+    where
+        F: FnOnce() -> Result<T, ProgramError>,
+    {
+        if self.links.contains(&link_id) {
+            return Err(ProgramError::AlreadyAttached);
+        }
+
+        let link = make_link()?;
+        use hashbrown::Equivalent as _;
+
+        debug_assert!(link_id.equivalent(&link));
+        let inserted = self.links.insert(link);
+        debug_assert!(inserted);
+        Ok(link_id)
+    }
+
     pub(crate) fn remove(&mut self, link_id: T::Id) -> Result<(), ProgramError> {
         self.links
             .take(&link_id)
