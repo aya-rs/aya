@@ -101,7 +101,9 @@ impl SocketFilter {
             .into());
         }
 
-        self.data.links.insert(SocketFilterLink { socket, prog_fd })
+        let link = SocketFilterLink { socket, prog_fd };
+        let link_id = link.id();
+        self.data.links.insert(link_id, || Ok(link))
     }
 
     /// Detaches the program.

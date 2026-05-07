@@ -88,11 +88,9 @@ impl FlowDissector {
                     call: "bpf_link_create",
                     io_error,
                 })?;
-            self.data
-                .links
-                .insert(FlowDissectorLink::new(FlowDissectorLinkInner::Fd(
-                    FdLink::new(link_fd),
-                )))
+            let link = FlowDissectorLink::new(FlowDissectorLinkInner::Fd(FdLink::new(link_fd)));
+            let link_id = link.id();
+            self.data.links.insert(link_id, || Ok(link))
         } else {
             let link = ProgAttachLink::attach(
                 prog_fd,
@@ -101,11 +99,9 @@ impl FlowDissector {
                 CgroupAttachMode::default(),
             )?;
 
-            self.data
-                .links
-                .insert(FlowDissectorLink::new(FlowDissectorLinkInner::ProgAttach(
-                    link,
-                )))
+            let link = FlowDissectorLink::new(FlowDissectorLinkInner::ProgAttach(link));
+            let link_id = link.id();
+            self.data.links.insert(link_id, || Ok(link))
         }
     }
 }

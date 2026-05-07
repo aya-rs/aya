@@ -161,7 +161,9 @@ impl Xdp {
                 })
             }
         };
-        data.links.insert(XdpLink::new(link))
+        let link = XdpLink::new(link);
+        let link_id = link.id();
+        data.links.insert(link_id, || Ok(link))
     }
 
     /// Creates a program from a pinned entry on a bpffs.
@@ -194,9 +196,9 @@ impl Xdp {
                     }
                 })?;
 
-                self.data
-                    .links
-                    .insert(XdpLink::new(XdpLinkInner::Fd(FdLink::new(link_fd))))
+                let link = XdpLink::new(XdpLinkInner::Fd(FdLink::new(link_fd)));
+                let link_id = link.id();
+                self.data.links.insert(link_id, || Ok(link))
             }
             XdpLinkInner::NlLink(nl_link) => {
                 let if_index = nl_link.if_index;
@@ -216,13 +218,13 @@ impl Xdp {
                 }
 
                 let prog_fd = prog_fd.as_raw_fd();
-                self.data
-                    .links
-                    .insert(XdpLink::new(XdpLinkInner::NlLink(NlLink {
-                        if_index,
-                        prog_fd,
-                        flags,
-                    })))
+                let link = XdpLink::new(XdpLinkInner::NlLink(NlLink {
+                    if_index,
+                    prog_fd,
+                    flags,
+                }));
+                let link_id = link.id();
+                self.data.links.insert(link_id, || Ok(link))
             }
         }
     }

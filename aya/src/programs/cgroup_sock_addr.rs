@@ -92,16 +92,15 @@ impl CgroupSockAddr {
                 call: "bpf_link_create",
                 io_error,
             })?;
-            data.links
-                .insert(CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(
-                    FdLink::new(link_fd),
-                )))
+            let link = CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(FdLink::new(link_fd)));
+            let link_id = link.id();
+            data.links.insert(link_id, || Ok(link))
         } else {
             let link = ProgAttachLink::attach(prog_fd, cgroup_fd, *attach_type, mode)?;
 
-            data.links.insert(CgroupSockAddrLink::new(
-                CgroupSockAddrLinkInner::ProgAttach(link),
-            ))
+            let link = CgroupSockAddrLink::new(CgroupSockAddrLinkInner::ProgAttach(link));
+            let link_id = link.id();
+            data.links.insert(link_id, || Ok(link))
         }
     }
 

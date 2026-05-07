@@ -162,7 +162,9 @@ pub(crate) fn attach<P: Probe, T: Link + From<PerfLinkInner>>(
         let (perf_fd, event) = create_as_trace_point::<P>(kind, fn_name, offset, pid)?;
         perf_attach_debugfs(prog_fd, perf_fd, event)
     }?;
-    program_data.links.insert(T::from(link))
+    let link = T::from(link);
+    let link_id = link.id();
+    program_data.links.insert(link_id, || Ok(link))
 }
 
 fn detach_debug_fs<P: Probe>(event_alias: &OsStr) -> Result<(), ProgramError> {
