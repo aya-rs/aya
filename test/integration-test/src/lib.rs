@@ -62,6 +62,7 @@ bpf_file!(
     RING_BUF => "ring_buf",
     SIMPLE_PROG => "simple_prog",
     SK_REUSEPORT => "sk_reuseport",
+    SOCKET_FILTER => "socket_filter",
     SK_STORAGE => "sk_storage",
     SOCK_HASH => "sock_hash",
     SOCK_MAP => "sock_map",

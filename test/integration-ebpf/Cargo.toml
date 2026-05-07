@@ -125,6 +125,10 @@ name = "sk_reuseport"
 path = "src/sk_reuseport.rs"
 
 [[bin]]
+name = "socket_filter"
+path = "src/socket_filter.rs"
+
+[[bin]]
 name = "strncmp"
 path = "src/strncmp.rs"
 
