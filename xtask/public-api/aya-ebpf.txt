@@ -133,6 +133,23 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_e
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+pub mod aya_ebpf::btf_maps::queue
+#[repr(C)] pub struct aya_ebpf::btf_maps::queue::Queue<T, const MAX_ENTRIES: usize, const FLAGS: usize>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::peek(&self) -> core::option::Option<T>
+pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::pop(&self) -> core::option::Option<T>
+pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::push(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::default() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
 pub mod aya_ebpf::btf_maps::reuseport_sock_array
 #[repr(C)] pub struct aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
@@ -221,6 +238,23 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_e
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>
+pub mod aya_ebpf::btf_maps::stack
+#[repr(C)] pub struct aya_ebpf::btf_maps::stack::Stack<T, const MAX_ENTRIES: usize, const FLAGS: usize>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::peek(&self) -> core::option::Option<T>
+pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::pop(&self) -> core::option::Option<T>
+pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::push(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::default() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
 pub mod aya_ebpf::btf_maps::stack_trace
 #[repr(C)] pub struct aya_ebpf::btf_maps::stack_trace::StackTrace<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
@@ -343,6 +377,22 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_e
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+#[repr(C)] pub struct aya_ebpf::btf_maps::Queue<T, const MAX_ENTRIES: usize, const FLAGS: usize>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::peek(&self) -> core::option::Option<T>
+pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::pop(&self) -> core::option::Option<T>
+pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::push(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::default() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
 #[repr(C)] pub struct aya_ebpf::btf_maps::RingBuf<T, const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::new() -> Self
@@ -411,6 +461,22 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_e
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>
+#[repr(C)] pub struct aya_ebpf::btf_maps::Stack<T, const MAX_ENTRIES: usize, const FLAGS: usize>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::peek(&self) -> core::option::Option<T>
+pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::pop(&self) -> core::option::Option<T>
+pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::push(&self, value: impl core::borrow::Borrow<T>, flags: u64) -> core::result::Result<(), i32>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::default() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
 #[repr(C)] pub struct aya_ebpf::btf_maps::StackTrace<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
 pub const fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::new() -> Self
