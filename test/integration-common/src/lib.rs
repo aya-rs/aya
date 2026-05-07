@@ -168,6 +168,12 @@ pub mod sk_reuseport {
     pub const MIGRATE_SOCKET_INDEX: u32 = 2;
 }
 
+pub mod socket_filter {
+    pub const PASS_HITS_INDEX: u32 = 0;
+    pub const TRIM_HITS_INDEX: u32 = 1;
+    pub const TRIM_DELTA_BYTES: u32 = 4;
+}
+
 pub mod stack_trace {
     #[repr(C)]
     #[derive(Clone, Copy, Default)]

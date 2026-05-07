@@ -11,7 +11,8 @@ use libc::{SOL_SOCKET, setsockopt};
 use thiserror::Error;
 
 use crate::programs::{
-    Link, ProgramData, ProgramError, ProgramType, id_as_key, load_program_without_attach_type,
+    Link, ProgramData, ProgramError, ProgramType, define_link_wrapper, id_as_key,
+    load_program_without_attach_type,
 };
 
 /// The type returned when attaching a [`SocketFilter`] fails.
@@ -84,6 +85,17 @@ impl SocketFilter {
         let prog_fd = prog_fd.as_raw_fd();
         let socket = socket.as_fd();
         let socket = socket.as_raw_fd();
+        let link_id = SocketFilterLinkId(SocketFilterLinkIdInner(socket, prog_fd));
+
+        // The kernel allows installing the same socket filter program on the
+        // same socket again, but the socket still only has one filter slot.
+        // Aya represents that as one link. With the current link
+        // implementation, a duplicate attach would create a rejected RAII
+        // link and dropping it would detach the socket's current filter, so
+        // reject duplicates before the second install reaches the socket.
+        if self.data.links.contains_id(&link_id) {
+            return Err(ProgramError::AlreadyAttached);
+        }
 
         let ret = unsafe {
             setsockopt(
@@ -101,44 +113,29 @@ impl SocketFilter {
             .into());
         }
 
-        self.data.links.insert(SocketFilterLink { socket, prog_fd })
-    }
-
-    /// Detaches the program.
-    ///
-    /// See [`Self::attach`].
-    pub fn detach(&mut self, link_id: SocketFilterLinkId) -> Result<(), ProgramError> {
-        self.data.links.remove(link_id)
-    }
-
-    /// Takes ownership of the link referenced by the provided `link_id`.
-    ///
-    /// The caller takes the responsibility of managing the lifetime of the link. When the returned
-    /// [`SocketFilterLink`] is dropped, the link is detached.
-    pub fn take_link(
-        &mut self,
-        link_id: SocketFilterLinkId,
-    ) -> Result<SocketFilterLink, ProgramError> {
-        self.data.links.forget(link_id)
+        self.data
+            .links
+            .insert(SocketFilterLink::new(SocketFilterLinkInner {
+                socket,
+                prog_fd,
+            }))
     }
 }
 
-/// The type returned by [`SocketFilter::attach`]. Can be passed to [`SocketFilter::detach`].
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub struct SocketFilterLinkId(RawFd, RawFd);
+struct SocketFilterLinkIdInner(RawFd, RawFd);
 
-/// A [`SocketFilter`] Link.
 #[derive(Debug)]
-pub struct SocketFilterLink {
+struct SocketFilterLinkInner {
     socket: RawFd,
     prog_fd: RawFd,
 }
 
-impl Link for SocketFilterLink {
-    type Id = SocketFilterLinkId;
+impl Link for SocketFilterLinkInner {
+    type Id = SocketFilterLinkIdInner;
 
     fn id(&self) -> Self::Id {
-        SocketFilterLinkId(self.socket, self.prog_fd)
+        SocketFilterLinkIdInner(self.socket, self.prog_fd)
     }
 
     fn detach(self) -> Result<(), ProgramError> {
@@ -155,4 +152,12 @@ impl Link for SocketFilterLink {
     }
 }
 
-id_as_key!(SocketFilterLink, SocketFilterLinkId);
+id_as_key!(SocketFilterLinkInner, SocketFilterLinkIdInner);
+
+define_link_wrapper!(
+    SocketFilterLink,
+    SocketFilterLinkId,
+    SocketFilterLinkInner,
+    SocketFilterLinkIdInner,
+    SocketFilter,
+);
