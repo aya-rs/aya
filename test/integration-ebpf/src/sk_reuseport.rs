@@ -10,8 +10,8 @@ use aya_ebpf::{
     programs::SkReuseportContext,
 };
 use integration_common::sk_reuseport::{
-    CLEAR_FALLBACK_HITS_INDEX, MIGRATE_HITS_INDEX, MIGRATE_SOCKET_INDEX, SELECT_HITS_INDEX,
-    SELECT_SOCKET_INDEX,
+    CLEAR_FALLBACK_HITS_INDEX, MIGRATE_HITS_INDEX, MIGRATE_SOCKET_INDEX, PATH_HITS_MAX_ENTRIES,
+    SELECT_HITS_INDEX, SELECT_SOCKET_INDEX,
 };
 #[cfg(not(test))]
 extern crate ebpf_panic;
@@ -30,7 +30,7 @@ static SOCKET_MAP_BTF: BtfReusePortSockArray<SOCKET_COUNT_USIZE, 0> = BtfReusePo
 #[map(name = "path_hits")]
 // Test-only counters used to verify that the expected BPF path actually ran,
 // instead of the kernel falling back to its default reuseport selection logic.
-static PATH_HITS: Array<u64> = Array::with_max_entries(3, 0);
+static PATH_HITS: Array<u64> = Array::with_max_entries(PATH_HITS_MAX_ENTRIES, 0);
 
 #[inline]
 fn record_hit(index: u32) {

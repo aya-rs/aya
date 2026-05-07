@@ -84,6 +84,10 @@ where
         }
     }
 
+    pub(crate) fn contains_id(&self, link_id: &T::Id) -> bool {
+        self.links.contains(link_id)
+    }
+
     pub(crate) fn remove(&mut self, link_id: T::Id) -> Result<(), ProgramError> {
         self.links
             .take(&link_id)
