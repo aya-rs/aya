@@ -90,7 +90,7 @@ impl FlowDissector {
                 })?;
             self.data
                 .links
-                .insert(FlowDissectorLink::new(FlowDissectorLinkInner::Fd(
+                .insert_after_attach(FlowDissectorLink::new(FlowDissectorLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
@@ -101,11 +101,9 @@ impl FlowDissector {
                 CgroupAttachMode::default(),
             )?;
 
-            self.data
-                .links
-                .insert(FlowDissectorLink::new(FlowDissectorLinkInner::ProgAttach(
-                    link,
-                )))
+            self.data.links.insert_after_attach(FlowDissectorLink::new(
+                FlowDissectorLinkInner::ProgAttach(link),
+            ))
         }
     }
 }

@@ -93,13 +93,13 @@ impl CgroupSockAddr {
                 io_error,
             })?;
             data.links
-                .insert(CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(
+                .insert_after_attach(CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
             let link = ProgAttachLink::attach(prog_fd, cgroup_fd, *attach_type, mode)?;
 
-            data.links.insert(CgroupSockAddrLink::new(
+            data.links.insert_after_attach(CgroupSockAddrLink::new(
                 CgroupSockAddrLinkInner::ProgAttach(link),
             ))
         }

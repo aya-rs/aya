@@ -117,7 +117,7 @@ impl Extension {
         })?;
         self.data
             .links
-            .insert(ExtensionLink::new(FdLink::new(link_fd)))
+            .insert_after_attach(ExtensionLink::new(FdLink::new(link_fd)))
     }
 
     /// Attaches the extension to another program.
@@ -154,7 +154,7 @@ impl Extension {
         })?;
         self.data
             .links
-            .insert(ExtensionLink::new(FdLink::new(link_fd)))
+            .insert_after_attach(ExtensionLink::new(FdLink::new(link_fd)))
     }
 }
 

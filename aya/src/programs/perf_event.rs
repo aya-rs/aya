@@ -471,7 +471,9 @@ impl PerfEvent {
         })?;
 
         let link = perf_attach(prog_fd, perf_fd, None /* cookie */)?;
-        self.data.links.insert(PerfEventLink::new(link))
+        self.data
+            .links
+            .insert_after_attach(PerfEventLink::new(link))
     }
 }
 

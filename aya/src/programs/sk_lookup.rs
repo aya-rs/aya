@@ -79,7 +79,7 @@ impl SkLookup {
             })?;
         self.data
             .links
-            .insert(SkLookupLink::new(FdLink::new(link_fd)))
+            .insert_after_attach(SkLookupLink::new(FdLink::new(link_fd)))
     }
 }
 

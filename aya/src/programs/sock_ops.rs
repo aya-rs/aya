@@ -89,13 +89,13 @@ impl SockOps {
             })?;
             self.data
                 .links
-                .insert(SockOpsLink::new(SockOpsLinkInner::Fd(FdLink::new(link_fd))))
+                .insert_after_attach(SockOpsLink::new(SockOpsLinkInner::Fd(FdLink::new(link_fd))))
         } else {
             let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
 
             self.data
                 .links
-                .insert(SockOpsLink::new(SockOpsLinkInner::ProgAttach(link)))
+                .insert_after_attach(SockOpsLink::new(SockOpsLinkInner::ProgAttach(link)))
         }
     }
 }

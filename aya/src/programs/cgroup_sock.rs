@@ -92,14 +92,14 @@ impl CgroupSock {
                 io_error,
             })?;
             data.links
-                .insert(CgroupSockLink::new(CgroupSockLinkInner::Fd(FdLink::new(
+                .insert_after_attach(CgroupSockLink::new(CgroupSockLinkInner::Fd(FdLink::new(
                     link_fd,
                 ))))
         } else {
             let link = ProgAttachLink::attach(prog_fd, cgroup_fd, *attach_type, mode)?;
 
             data.links
-                .insert(CgroupSockLink::new(CgroupSockLinkInner::ProgAttach(link)))
+                .insert_after_attach(CgroupSockLink::new(CgroupSockLinkInner::ProgAttach(link)))
         }
     }
 

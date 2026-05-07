@@ -87,7 +87,7 @@ impl Iter {
 
         self.data
             .links
-            .insert(IterLink::new(PerfLinkInner::Fd(FdLink::new(link_fd))))
+            .insert_after_attach(IterLink::new(PerfLinkInner::Fd(FdLink::new(link_fd))))
     }
 }
 

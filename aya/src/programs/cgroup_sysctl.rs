@@ -90,17 +90,15 @@ impl CgroupSysctl {
             })?;
             self.data
                 .links
-                .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::Fd(
+                .insert_after_attach(CgroupSysctlLink::new(CgroupSysctlLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
             let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
 
-            self.data
-                .links
-                .insert(CgroupSysctlLink::new(CgroupSysctlLinkInner::ProgAttach(
-                    link,
-                )))
+            self.data.links.insert_after_attach(CgroupSysctlLink::new(
+                CgroupSysctlLinkInner::ProgAttach(link),
+            ))
         }
     }
 }

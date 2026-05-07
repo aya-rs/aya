@@ -283,7 +283,7 @@ impl SchedClassifier {
 
                 self.data
                     .links
-                    .insert(SchedClassifierLink::new(TcLinkInner::Fd(FdLink::new(fd))))
+                    .insert_after_attach(SchedClassifierLink::new(TcLinkInner::Fd(FdLink::new(fd))))
             }
             TcLinkInner::NlLink(NlLink {
                 if_index,
@@ -329,7 +329,7 @@ impl SchedClassifier {
 
                 self.data
                     .links
-                    .insert(SchedClassifierLink::new(TcLinkInner::NlLink(NlLink {
+                    .insert_after_attach(SchedClassifierLink::new(TcLinkInner::NlLink(NlLink {
                         if_index,
                         attach_type,
                         priority,
@@ -351,7 +351,7 @@ impl SchedClassifier {
 
                 self.data
                     .links
-                    .insert(SchedClassifierLink::new(TcLinkInner::Fd(FdLink::new(
+                    .insert_after_attach(SchedClassifierLink::new(TcLinkInner::Fd(FdLink::new(
                         link_fd,
                     ))))
             }

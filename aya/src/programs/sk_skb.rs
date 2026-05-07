@@ -81,7 +81,7 @@ impl SkSkb {
         let prog_fd = prog_fd.as_fd();
         let link = ProgAttachLink::attach(prog_fd, map.as_fd(), *kind, CgroupAttachMode::Single)?;
 
-        data.links.insert(SkSkbLink::new(link))
+        data.links.insert_after_attach(SkSkbLink::new(link))
     }
 
     /// Creates a program from a pinned entry on a bpffs.

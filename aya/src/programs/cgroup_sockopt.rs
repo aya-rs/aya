@@ -90,16 +90,15 @@ impl CgroupSockopt {
                 io_error,
             })?;
             data.links
-                .insert(CgroupSockoptLink::new(CgroupSockoptLinkInner::Fd(
+                .insert_after_attach(CgroupSockoptLink::new(CgroupSockoptLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
             let link = ProgAttachLink::attach(prog_fd, cgroup_fd, *attach_type, mode)?;
 
-            data.links
-                .insert(CgroupSockoptLink::new(CgroupSockoptLinkInner::ProgAttach(
-                    link,
-                )))
+            data.links.insert_after_attach(CgroupSockoptLink::new(
+                CgroupSockoptLinkInner::ProgAttach(link),
+            ))
         }
     }
 

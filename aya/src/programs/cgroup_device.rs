@@ -92,17 +92,15 @@ impl CgroupDevice {
             })?;
             self.data
                 .links
-                .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::Fd(
+                .insert_after_attach(CgroupDeviceLink::new(CgroupDeviceLinkInner::Fd(
                     FdLink::new(link_fd),
                 )))
         } else {
             let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
 
-            self.data
-                .links
-                .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::ProgAttach(
-                    link,
-                )))
+            self.data.links.insert_after_attach(CgroupDeviceLink::new(
+                CgroupDeviceLinkInner::ProgAttach(link),
+            ))
         }
     }
 

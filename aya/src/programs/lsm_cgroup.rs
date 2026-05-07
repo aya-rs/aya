@@ -108,7 +108,9 @@ impl LsmCgroup {
             io_error,
         })?;
 
-        self.data.links.insert(LsmLink::new(FdLink::new(link_fd)))
+        self.data
+            .links
+            .insert_after_attach(LsmLink::new(FdLink::new(link_fd)))
     }
 }
 

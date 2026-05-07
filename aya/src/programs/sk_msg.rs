@@ -94,7 +94,7 @@ impl SkMsg {
             CgroupAttachMode::Single,
         )?;
 
-        self.data.links.insert(SkMsgLink::new(link))
+        self.data.links.insert_after_attach(SkMsgLink::new(link))
     }
 }
 

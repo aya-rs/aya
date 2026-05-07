@@ -104,7 +104,7 @@ impl CgroupSkb {
             })?;
             self.data
                 .links
-                .insert(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(
+                .insert_after_attach(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(
                     link_fd,
                 ))))
         } else {
@@ -112,7 +112,7 @@ impl CgroupSkb {
 
             self.data
                 .links
-                .insert(CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(link)))
+                .insert_after_attach(CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(link)))
         }
     }
 
