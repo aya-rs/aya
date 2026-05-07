@@ -26,7 +26,9 @@ pub(crate) fn attach_raw_tracepoint<T: Link + From<FdLink>>(
         io_error,
     })?;
 
-    program_data.links.insert(FdLink::new(pfd).into())
+    let link: T = FdLink::new(pfd).into();
+    let link_id = link.id();
+    program_data.links.insert(link_id, || Ok(link))
 }
 
 /// Find tracefs filesystem path.

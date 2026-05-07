@@ -91,15 +91,15 @@ impl CgroupSock {
                 call: "bpf_link_create",
                 io_error,
             })?;
-            data.links
-                .insert(CgroupSockLink::new(CgroupSockLinkInner::Fd(FdLink::new(
-                    link_fd,
-                ))))
+            let link = CgroupSockLink::new(CgroupSockLinkInner::Fd(FdLink::new(link_fd)));
+            let link_id = link.id();
+            data.links.insert(link_id, || Ok(link))
         } else {
             let link = ProgAttachLink::attach(prog_fd, cgroup_fd, *attach_type, mode)?;
 
-            data.links
-                .insert(CgroupSockLink::new(CgroupSockLinkInner::ProgAttach(link)))
+            let link = CgroupSockLink::new(CgroupSockLinkInner::ProgAttach(link));
+            let link_id = link.id();
+            data.links.insert(link_id, || Ok(link))
         }
     }
 

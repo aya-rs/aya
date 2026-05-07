@@ -89,17 +89,15 @@ impl CgroupSockopt {
                 call: "bpf_link_create",
                 io_error,
             })?;
-            data.links
-                .insert(CgroupSockoptLink::new(CgroupSockoptLinkInner::Fd(
-                    FdLink::new(link_fd),
-                )))
+            let link = CgroupSockoptLink::new(CgroupSockoptLinkInner::Fd(FdLink::new(link_fd)));
+            let link_id = link.id();
+            data.links.insert(link_id, || Ok(link))
         } else {
             let link = ProgAttachLink::attach(prog_fd, cgroup_fd, *attach_type, mode)?;
 
-            data.links
-                .insert(CgroupSockoptLink::new(CgroupSockoptLinkInner::ProgAttach(
-                    link,
-                )))
+            let link = CgroupSockoptLink::new(CgroupSockoptLinkInner::ProgAttach(link));
+            let link_id = link.id();
+            data.links.insert(link_id, || Ok(link))
         }
     }
 

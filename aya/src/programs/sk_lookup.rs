@@ -6,7 +6,7 @@ use aya_obj::generated::{bpf_attach_type::BPF_SK_LOOKUP, bpf_prog_type::BPF_PROG
 use super::links::FdLink;
 use crate::{
     programs::{
-        FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+        FdLinkId, Link as _, ProgramData, ProgramError, ProgramType, define_link_wrapper,
         load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
@@ -77,9 +77,9 @@ impl SkLookup {
                 call: "bpf_link_create",
                 io_error,
             })?;
-        self.data
-            .links
-            .insert(SkLookupLink::new(FdLink::new(link_fd)))
+        let link = SkLookupLink::new(FdLink::new(link_fd));
+        let link_id = link.id();
+        self.data.links.insert(link_id, || Ok(link))
     }
 }
 

@@ -11,7 +11,8 @@ use aya_obj::generated::{
 
 use crate::{
     programs::{
-        ProgramData, ProgramError, ProgramType, impl_try_from_fdlink, impl_try_into_fdlink,
+        Link as _, ProgramData, ProgramError, ProgramType, impl_try_from_fdlink,
+        impl_try_into_fdlink,
         links::define_link_wrapper,
         load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
@@ -471,7 +472,9 @@ impl PerfEvent {
         })?;
 
         let link = perf_attach(prog_fd, perf_fd, None /* cookie */)?;
-        self.data.links.insert(PerfEventLink::new(link))
+        let link = PerfEventLink::new(link);
+        let link_id = link.id();
+        self.data.links.insert(link_id, || Ok(link))
     }
 }
 

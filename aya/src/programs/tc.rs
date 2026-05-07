@@ -281,9 +281,9 @@ impl SchedClassifier {
                     }
                 })?;
 
-                self.data
-                    .links
-                    .insert(SchedClassifierLink::new(TcLinkInner::Fd(FdLink::new(fd))))
+                let link = SchedClassifierLink::new(TcLinkInner::Fd(FdLink::new(fd)));
+                let link_id = link.id();
+                self.data.links.insert(link_id, || Ok(link))
             }
             TcLinkInner::NlLink(NlLink {
                 if_index,
@@ -327,14 +327,14 @@ impl SchedClassifier {
                 }
                 .map_err(TcError::NetlinkError)?;
 
-                self.data
-                    .links
-                    .insert(SchedClassifierLink::new(TcLinkInner::NlLink(NlLink {
-                        if_index,
-                        attach_type,
-                        priority,
-                        handle,
-                    })))
+                let link = SchedClassifierLink::new(TcLinkInner::NlLink(NlLink {
+                    if_index,
+                    attach_type,
+                    priority,
+                    handle,
+                }));
+                let link_id = link.id();
+                self.data.links.insert(link_id, || Ok(link))
             }
             TcAttachOptions::TcxOrder(options) => {
                 let link_fd = bpf_link_create(
@@ -349,11 +349,9 @@ impl SchedClassifier {
                     io_error,
                 })?;
 
-                self.data
-                    .links
-                    .insert(SchedClassifierLink::new(TcLinkInner::Fd(FdLink::new(
-                        link_fd,
-                    ))))
+                let link = SchedClassifierLink::new(TcLinkInner::Fd(FdLink::new(link_fd)));
+                let link_id = link.id();
+                self.data.links.insert(link_id, || Ok(link))
             }
         }
     }

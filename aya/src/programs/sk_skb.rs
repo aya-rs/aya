@@ -9,8 +9,8 @@ use crate::{
     VerifierLogLevel,
     maps::sock::SockMapFd,
     programs::{
-        CgroupAttachMode, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, load_program_without_attach_type,
+        CgroupAttachMode, Link as _, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError,
+        ProgramType, define_link_wrapper, load_program_without_attach_type,
     },
 };
 
@@ -81,7 +81,9 @@ impl SkSkb {
         let prog_fd = prog_fd.as_fd();
         let link = ProgAttachLink::attach(prog_fd, map.as_fd(), *kind, CgroupAttachMode::Single)?;
 
-        data.links.insert(SkSkbLink::new(link))
+        let link = SkSkbLink::new(link);
+        let link_id = link.id();
+        data.links.insert(link_id, || Ok(link))
     }
 
     /// Creates a program from a pinned entry on a bpffs.

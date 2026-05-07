@@ -77,7 +77,18 @@ where
         }
     }
 
-    pub(crate) fn insert(&mut self, link: T) -> Result<T::Id, ProgramError> {
+    pub(crate) fn insert<F>(&mut self, link_id: T::Id, make_link: F) -> Result<T::Id, ProgramError>
+    where
+        F: FnOnce() -> Result<T, ProgramError>,
+    {
+        if self.links.contains(&link_id) {
+            return Err(ProgramError::AlreadyAttached);
+        }
+
+        let link = make_link()?;
+        use hashbrown::Equivalent as _;
+
+        debug_assert!(link_id.equivalent(&link));
         match self.links.entry(link) {
             Entry::Occupied(_entry) => Err(ProgramError::AlreadyAttached),
             Entry::Vacant(entry) => Ok(entry.insert().get().id()),
@@ -790,12 +801,14 @@ mod tests {
     fn test_link_map() {
         let mut links = Links::new();
         let l1 = TestLink::new(1, 2);
+        let l1_id = l1.id();
         let l1_detached = Rc::clone(&l1.detached);
         let l2 = TestLink::new(1, 3);
+        let l2_id = l2.id();
         let l2_detached = Rc::clone(&l2.detached);
 
-        let id1 = links.insert(l1).unwrap();
-        let id2 = links.insert(l2).unwrap();
+        let id1 = links.insert(l1_id, || Ok(l1)).unwrap();
+        let id2 = links.insert(l2_id, || Ok(l2)).unwrap();
 
         assert_eq!(*l1_detached.borrow(), 0);
         assert_eq!(*l2_detached.borrow(), 0);
@@ -813,9 +826,11 @@ mod tests {
     fn test_already_attached() {
         let mut links = Links::new();
 
-        links.insert(TestLink::new(1, 2)).unwrap();
+        links
+            .insert(TestLinkId(1, 2), || Ok(TestLink::new(1, 2)))
+            .unwrap();
         assert_matches!(
-            links.insert(TestLink::new(1, 2)),
+            links.insert(TestLinkId(1, 2), || Ok(TestLink::new(1, 2))),
             Err(ProgramError::AlreadyAttached)
         );
     }
@@ -827,7 +842,7 @@ mod tests {
         let l1 = TestLink::new(1, 2);
         let l1_id1 = l1.id();
         let l1_id2 = l1.id();
-        links.insert(TestLink::new(1, 2)).unwrap();
+        links.insert(l1.id(), || Ok(l1)).unwrap();
         links.remove(l1_id1).unwrap();
         assert_matches!(links.remove(l1_id2), Err(ProgramError::NotAttached));
     }
@@ -835,14 +850,16 @@ mod tests {
     #[test]
     fn test_drop_detach() {
         let l1 = TestLink::new(1, 2);
+        let l1_id = l1.id();
         let l1_detached = Rc::clone(&l1.detached);
         let l2 = TestLink::new(1, 3);
+        let l2_id = l2.id();
         let l2_detached = Rc::clone(&l2.detached);
 
         {
             let mut links = Links::new();
-            let id1 = links.insert(l1).unwrap();
-            links.insert(l2).unwrap();
+            let id1 = links.insert(l1_id, || Ok(l1)).unwrap();
+            links.insert(l2_id, || Ok(l2)).unwrap();
             // manually remove one link
             links.remove(id1).unwrap();
             assert_eq!(*l1_detached.borrow(), 1);
@@ -856,14 +873,16 @@ mod tests {
     #[test]
     fn test_owned_detach() {
         let l1 = TestLink::new(1, 2);
+        let l1_id = l1.id();
         let l1_detached = Rc::clone(&l1.detached);
         let l2 = TestLink::new(1, 3);
+        let l2_id = l2.id();
         let l2_detached = Rc::clone(&l2.detached);
 
         let owned_l1 = {
             let mut links = Links::new();
-            let id1 = links.insert(l1).unwrap();
-            links.insert(l2).unwrap();
+            let id1 = links.insert(l1_id, || Ok(l1)).unwrap();
+            links.insert(l2_id, || Ok(l2)).unwrap();
             // manually forget one link
             let owned_l1 = links.forget(id1);
             assert_eq!(*l1_detached.borrow(), 0);

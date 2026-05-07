@@ -10,8 +10,8 @@ use thiserror::Error;
 
 use crate::{
     programs::{
-        ProgramData, ProgramError, ProgramType, define_link_wrapper, impl_try_from_fdlink,
-        impl_try_into_fdlink, load_program_without_attach_type,
+        Link as _, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+        impl_try_from_fdlink, impl_try_into_fdlink, load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach},
         utils::find_tracefs_path,
     },
@@ -86,7 +86,9 @@ impl TracePoint {
         })?;
 
         let link = perf_attach(prog_fd, perf_fd, None /* cookie */)?;
-        self.data.links.insert(TracePointLink::new(link))
+        let link = TracePointLink::new(link);
+        let link_id = link.id();
+        self.data.links.insert(link_id, || Ok(link))
     }
 }
 

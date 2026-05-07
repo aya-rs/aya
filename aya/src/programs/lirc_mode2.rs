@@ -86,7 +86,9 @@ impl LircMode2 {
             CgroupAttachMode::Single.into(),
         )?;
 
-        self.data.links.insert(LircLink::new(prog_fd, lircdev_fd))
+        let link = LircLink::new(prog_fd, lircdev_fd);
+        let link_id = link.id();
+        self.data.links.insert(link_id, || Ok(link))
     }
 
     /// Detaches the program.

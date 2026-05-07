@@ -102,17 +102,15 @@ impl CgroupSkb {
                 call: "bpf_link_create",
                 io_error,
             })?;
-            self.data
-                .links
-                .insert(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(
-                    link_fd,
-                ))))
+            let link = CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(link_fd)));
+            let link_id = link.id();
+            self.data.links.insert(link_id, || Ok(link))
         } else {
             let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
 
-            self.data
-                .links
-                .insert(CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(link)))
+            let link = CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(link));
+            let link_id = link.id();
+            self.data.links.insert(link_id, || Ok(link))
         }
     }
 

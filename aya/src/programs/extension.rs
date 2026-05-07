@@ -12,8 +12,8 @@ use thiserror::Error;
 use crate::{
     Btf,
     programs::{
-        FdLink, FdLinkId, ProgramData, ProgramError, ProgramFd, ProgramType, define_link_wrapper,
-        load_program_without_attach_type,
+        FdLink, FdLinkId, Link as _, ProgramData, ProgramError, ProgramFd, ProgramType,
+        define_link_wrapper, load_program_without_attach_type,
     },
     sys::{self, BpfLinkCreateArgs, LinkTarget, SyscallError, bpf_link_create},
 };
@@ -115,9 +115,9 @@ impl Extension {
             call: "bpf_link_create",
             io_error,
         })?;
-        self.data
-            .links
-            .insert(ExtensionLink::new(FdLink::new(link_fd)))
+        let link = ExtensionLink::new(FdLink::new(link_fd));
+        let link_id = link.id();
+        self.data.links.insert(link_id, || Ok(link))
     }
 
     /// Attaches the extension to another program.
@@ -152,9 +152,9 @@ impl Extension {
             call: "bpf_link_create",
             io_error,
         })?;
-        self.data
-            .links
-            .insert(ExtensionLink::new(FdLink::new(link_fd)))
+        let link = ExtensionLink::new(FdLink::new(link_fd));
+        let link_id = link.id();
+        self.data.links.insert(link_id, || Ok(link))
     }
 }
 

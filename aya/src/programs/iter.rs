@@ -14,8 +14,8 @@ use aya_obj::{
 
 use crate::{
     programs::{
-        FdLink, LinkError, PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, impl_try_from_fdlink, impl_try_into_fdlink,
+        FdLink, Link as _, LinkError, PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError,
+        ProgramType, define_link_wrapper, impl_try_from_fdlink, impl_try_into_fdlink,
         load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_create_iter, bpf_link_create},
@@ -85,9 +85,9 @@ impl Iter {
             },
         )?;
 
-        self.data
-            .links
-            .insert(IterLink::new(PerfLinkInner::Fd(FdLink::new(link_fd))))
+        let link = IterLink::new(PerfLinkInner::Fd(FdLink::new(link_fd)));
+        let link_id = link.id();
+        self.data.links.insert(link_id, || Ok(link))
     }
 }
 

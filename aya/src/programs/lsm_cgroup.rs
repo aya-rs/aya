@@ -10,7 +10,7 @@ use aya_obj::{
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, FdLinkId, ProgramData, ProgramError, define_link_wrapper,
+        FdLink, FdLinkId, Link as _, ProgramData, ProgramError, define_link_wrapper,
         load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
@@ -108,7 +108,9 @@ impl LsmCgroup {
             io_error,
         })?;
 
-        self.data.links.insert(LsmLink::new(FdLink::new(link_fd)))
+        let link = LsmLink::new(FdLink::new(link_fd));
+        let link_id = link.id();
+        self.data.links.insert(link_id, || Ok(link))
     }
 }
 

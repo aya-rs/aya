@@ -9,8 +9,8 @@ use aya_obj::generated::{
 use crate::{
     maps::sock::SockMapFd,
     programs::{
-        CgroupAttachMode, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, load_program_with_attach_type,
+        CgroupAttachMode, Link as _, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError,
+        ProgramType, define_link_wrapper, load_program_with_attach_type,
     },
 };
 
@@ -94,7 +94,9 @@ impl SkMsg {
             CgroupAttachMode::Single,
         )?;
 
-        self.data.links.insert(SkMsgLink::new(link))
+        let link = SkMsgLink::new(link);
+        let link_id = link.id();
+        self.data.links.insert(link_id, || Ok(link))
     }
 }
 
