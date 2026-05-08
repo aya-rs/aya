@@ -237,6 +237,36 @@ pub enum ProgramError {
         name: String,
     },
 
+    /// The path provided cannot be converted to a valid C string.
+    #[error("invalid pin path `{}`", path.display())]
+    InvalidPinPath {
+        /// The path.
+        path: PathBuf,
+        #[source]
+        /// The source error.
+        source: std::ffi::NulError,
+    },
+
+    /// The tracepoint name cannot be converted to a valid C string.
+    #[error("invalid tracepoint name `{name}`")]
+    InvalidTracepointName {
+        /// The tracepoint name.
+        name: String,
+        #[source]
+        /// The source error.
+        source: std::ffi::NulError,
+    },
+
+    /// The interface name cannot be converted to a valid C string.
+    #[error("invalid interface name `{name}`")]
+    InvalidInterfaceName {
+        /// The interface name.
+        name: String,
+        #[source]
+        /// The source error.
+        source: std::ffi::NulError,
+    },
+
     /// An error occurred while working with IO.
     #[error(transparent)]
     IOError(#[from] io::Error),
@@ -600,8 +630,13 @@ impl<T: Link> ProgramData<T> {
     ) -> Result<Self, ProgramError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path = path.as_ref();
+        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|source| {
+            ProgramError::InvalidPinPath {
+                path: path.into(),
+                source,
+            }
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "bpf_obj_get",
             io_error,
@@ -609,7 +644,7 @@ impl<T: Link> ProgramData<T> {
 
         let info = ProgramInfo::new_from_fd(fd.as_fd())?;
         let name = info.name_as_str().map(ToOwned::to_owned).map(Into::into);
-        Self::from_bpf_prog_info(name, fd, path.as_ref(), info.0, verifier_log_level)
+        Self::from_bpf_prog_info(name, fd, path, info.0, verifier_log_level)
     }
 }
 
@@ -639,9 +674,9 @@ fn pin_program<T: Link, P: AsRef<Path>>(data: &ProgramData<T>, path: P) -> Resul
     })?;
     let path = path.as_ref();
     let path_string =
-        CString::new(path.as_os_str().as_bytes()).map_err(|error| PinError::InvalidPinPath {
+        CString::new(path.as_os_str().as_bytes()).map_err(|source| PinError::InvalidPinPath {
             path: path.into(),
-            error,
+            source,
         })?;
     bpf_pin_object(fd.as_fd(), &path_string).map_err(|io_error| SyscallError {
         call: "BPF_OBJ_PIN",

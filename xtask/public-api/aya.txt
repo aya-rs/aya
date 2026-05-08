@@ -936,6 +936,10 @@ pub aya::maps::MapError::InvalidMapType
 pub aya::maps::MapError::InvalidMapType::map_type: u32
 pub aya::maps::MapError::InvalidName
 pub aya::maps::MapError::InvalidName::name: alloc::string::String
+pub aya::maps::MapError::InvalidName::source: alloc::ffi::c_str::NulError
+pub aya::maps::MapError::InvalidPinPath
+pub aya::maps::MapError::InvalidPinPath::path: std::path::PathBuf
+pub aya::maps::MapError::InvalidPinPath::source: alloc::ffi::c_str::NulError
 pub aya::maps::MapError::InvalidValueSize
 pub aya::maps::MapError::InvalidValueSize::expected: usize
 pub aya::maps::MapError::InvalidValueSize::size: usize
@@ -1708,8 +1712,8 @@ pub fn aya::maps::loaded_maps() -> impl core::iter::traits::iterator::Iterator<I
 pub mod aya::pin
 pub enum aya::pin::PinError
 pub aya::pin::PinError::InvalidPinPath
-pub aya::pin::PinError::InvalidPinPath::error: alloc::ffi::c_str::NulError
 pub aya::pin::PinError::InvalidPinPath::path: std::path::PathBuf
+pub aya::pin::PinError::InvalidPinPath::source: alloc::ffi::c_str::NulError
 pub aya::pin::PinError::NoFd
 pub aya::pin::PinError::NoFd::name: alloc::string::String
 pub aya::pin::PinError::SyscallError(aya::sys::SyscallError)
@@ -2800,6 +2804,9 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::CgroupAtt
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::CgroupAttachMode
 pub enum aya::programs::links::LinkError
 pub aya::programs::links::LinkError::InvalidLink
+pub aya::programs::links::LinkError::InvalidPinPath
+pub aya::programs::links::LinkError::InvalidPinPath::path: std::path::PathBuf
+pub aya::programs::links::LinkError::InvalidPinPath::source: alloc::ffi::c_str::NulError
 pub aya::programs::links::LinkError::SyscallError(aya::sys::SyscallError)
 pub aya::programs::links::LinkError::UnknownLinkType(u32)
 impl core::convert::From<aya::sys::SyscallError> for aya::programs::links::LinkError
@@ -4370,9 +4377,9 @@ pub aya::programs::tc::TcError::InvalidLinkOperation
 pub aya::programs::tc::TcError::InvalidTcxAttach(u32)
 pub aya::programs::tc::TcError::IoError(std::io::error::Error)
 pub aya::programs::tc::TcError::NetlinkError(aya::sys::netlink::NetlinkError)
-pub aya::programs::tc::TcError::NulError(alloc::ffi::c_str::NulError)
-impl core::convert::From<alloc::ffi::c_str::NulError> for aya::programs::tc::TcError
-pub fn aya::programs::tc::TcError::from(source: alloc::ffi::c_str::NulError) -> Self
+pub aya::programs::tc::TcError::NulError
+pub aya::programs::tc::TcError::NulError::name: alloc::string::String
+pub aya::programs::tc::TcError::NulError::source: alloc::ffi::c_str::NulError
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::tc::TcError) -> Self
 impl core::convert::From<std::io::error::Error> for aya::programs::tc::TcError
@@ -5381,8 +5388,17 @@ pub aya::programs::ProgramError::AttachCookieNotSupported
 pub aya::programs::ProgramError::Btf(aya_obj::btf::btf::BtfError)
 pub aya::programs::ProgramError::ExtensionError(aya::programs::extension::ExtensionError)
 pub aya::programs::ProgramError::IOError(std::io::error::Error)
+pub aya::programs::ProgramError::InvalidInterfaceName
+pub aya::programs::ProgramError::InvalidInterfaceName::name: alloc::string::String
+pub aya::programs::ProgramError::InvalidInterfaceName::source: alloc::ffi::c_str::NulError
 pub aya::programs::ProgramError::InvalidName
 pub aya::programs::ProgramError::InvalidName::name: alloc::string::String
+pub aya::programs::ProgramError::InvalidPinPath
+pub aya::programs::ProgramError::InvalidPinPath::path: std::path::PathBuf
+pub aya::programs::ProgramError::InvalidPinPath::source: alloc::ffi::c_str::NulError
+pub aya::programs::ProgramError::InvalidTracepointName
+pub aya::programs::ProgramError::InvalidTracepointName::name: alloc::string::String
+pub aya::programs::ProgramError::InvalidTracepointName::source: alloc::ffi::c_str::NulError
 pub aya::programs::ProgramError::KProbeError(aya::programs::kprobe::KProbeError)
 pub aya::programs::ProgramError::LoadError
 pub aya::programs::ProgramError::LoadError::io_error: std::io::error::Error
@@ -5556,9 +5572,9 @@ pub aya::programs::TcError::InvalidLinkOperation
 pub aya::programs::TcError::InvalidTcxAttach(u32)
 pub aya::programs::TcError::IoError(std::io::error::Error)
 pub aya::programs::TcError::NetlinkError(aya::sys::netlink::NetlinkError)
-pub aya::programs::TcError::NulError(alloc::ffi::c_str::NulError)
-impl core::convert::From<alloc::ffi::c_str::NulError> for aya::programs::tc::TcError
-pub fn aya::programs::tc::TcError::from(source: alloc::ffi::c_str::NulError) -> Self
+pub aya::programs::TcError::NulError
+pub aya::programs::TcError::NulError::name: alloc::string::String
+pub aya::programs::TcError::NulError::source: alloc::ffi::c_str::NulError
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(source: aya::programs::tc::TcError) -> Self
 impl core::convert::From<std::io::error::Error> for aya::programs::tc::TcError

@@ -114,6 +114,9 @@ pub enum MapError {
     InvalidName {
         /// The map name
         name: String,
+        #[source]
+        /// The source error.
+        source: std::ffi::NulError,
     },
 
     /// Failed to create map
@@ -214,6 +217,16 @@ pub enum MapError {
         flags: u32,
         /// The reason
         reason: &'static str,
+    },
+
+    /// The path provided cannot be converted to a valid C string.
+    #[error("invalid pin path `{}`", path.display())]
+    InvalidPinPath {
+        /// The path.
+        path: std::path::PathBuf,
+        #[source]
+        /// The source error.
+        source: std::ffi::NulError,
     },
 }
 
@@ -598,8 +611,10 @@ impl MapData {
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
-        let c_name = CString::new(name)
-            .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
+        let c_name = CString::new(name).map_err(|source| MapError::InvalidName {
+            name: name.into(),
+            source,
+        })?;
 
         // BPF_MAP_TYPE_PERF_EVENT_ARRAY's max_entries should not exceed the number of
         // CPUs.
@@ -642,13 +657,10 @@ impl MapData {
         let path = path.as_ref();
         let path_string = match CString::new(path.as_os_str().as_bytes()) {
             Ok(path) => path,
-            Err(error) => {
-                return Err(MapError::PinError {
-                    name: Some(name.into()),
-                    error: PinError::InvalidPinPath {
-                        path: path.to_path_buf(),
-                        error,
-                    },
+            Err(source) => {
+                return Err(MapError::InvalidPinPath {
+                    path: path.to_path_buf(),
+                    source,
                 });
             }
         };
@@ -693,14 +705,12 @@ impl MapData {
         use std::os::unix::ffi::OsStrExt as _;
 
         let path = path.as_ref();
-        let path_string =
-            CString::new(path.as_os_str().as_bytes()).map_err(|error| MapError::PinError {
-                name: None,
-                error: PinError::InvalidPinPath {
-                    path: path.into(),
-                    error,
-                },
-            })?;
+        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|source| {
+            MapError::InvalidPinPath {
+                path: path.into(),
+                source,
+            }
+        })?;
 
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "BPF_OBJ_GET",
@@ -763,10 +773,10 @@ impl MapData {
 
         let Self { fd, obj: _ } = self;
         let path = path.as_ref();
-        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
+        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|source| {
             PinError::InvalidPinPath {
                 path: path.to_path_buf(),
-                error,
+                source,
             }
         })?;
         bpf_pin_object(fd.as_fd(), &path_string).map_err(|io_error| SyscallError {
