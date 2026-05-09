@@ -23,6 +23,13 @@ btf_map_def!(
     value_type: T,
 );
 
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> crate::btf_maps::private::MapDef
+    for Array<T, MAX_ENTRIES, FLAGS>
+{
+    type Key = u32;
+    type Value = T;
+}
+
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> Array<T, MAX_ENTRIES, FLAGS> {
     #[inline(always)]
     pub fn get(&self, index: u32) -> Option<&T> {
