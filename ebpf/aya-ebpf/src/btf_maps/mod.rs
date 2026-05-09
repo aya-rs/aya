@@ -5,11 +5,13 @@ pub mod per_cpu_array;
 pub mod perf_event_array;
 pub mod perf_event_byte_array;
 pub mod program_array;
+pub mod queue;
 pub mod reuseport_sock_array;
 pub mod ring_buf;
 pub mod sk_storage;
 pub mod sock_hash;
 pub mod sock_map;
+pub mod stack;
 pub mod stack_trace;
 
 pub use array::Array;
@@ -19,11 +21,13 @@ pub use per_cpu_array::PerCpuArray;
 pub use perf_event_array::PerfEventArray;
 pub use perf_event_byte_array::PerfEventByteArray;
 pub use program_array::ProgramArray;
+pub use queue::Queue;
 pub use reuseport_sock_array::ReusePortSockArray;
 pub use ring_buf::RingBuf;
 pub use sk_storage::SkStorage;
 pub use sock_hash::SockHash;
 pub use sock_map::SockMap;
+pub use stack::Stack;
 pub use stack_trace::StackTrace;
 
 /// Defines a BTF-compatible map struct with flat `#[repr(C)]` layout.
