@@ -424,6 +424,8 @@ pub(crate) enum BpfLinkCreateArgs<'a> {
     PerfEvent { bpf_cookie: u64 },
     // since kernel 6.6
     Tcx(&'a LinkRef),
+    // since kernel 6.7
+    Netkit(&'a LinkRef),
 }
 
 // since kernel 5.7
@@ -476,6 +478,25 @@ pub(crate) fn bpf_link_create(
                             .link_create
                             .__bindgen_anon_3
                             .tcx
+                            .__bindgen_anon_1
+                            .relative_id,
+                    );
+                },
+            },
+            BpfLinkCreateArgs::Netkit(link_ref) => match link_ref {
+                LinkRef::Fd(fd) => {
+                    attr.link_create
+                        .__bindgen_anon_3
+                        .netkit
+                        .__bindgen_anon_1
+                        .relative_fd = fd.to_owned() as u32;
+                }
+                LinkRef::Id(id) => unsafe {
+                    id.clone_into(
+                        &mut attr
+                            .link_create
+                            .__bindgen_anon_3
+                            .netkit
                             .__bindgen_anon_1
                             .relative_id,
                     );
