@@ -5,8 +5,8 @@ pub(crate) mod feature_probe;
 mod netlink;
 mod perf_event;
 
-#[cfg(test)]
-mod fake;
+#[cfg(any(test, feature = "test-utils"))]
+pub(crate) mod fake;
 
 use std::{
     ffi::{c_int, c_void},
@@ -16,7 +16,7 @@ use std::{
 
 use aya_obj::generated::{bpf_attr, bpf_cmd, bpf_stats_type, perf_event_attr};
 pub(crate) use bpf::*;
-#[cfg(test)]
+#[cfg(any(test, feature = "test-utils"))]
 pub(crate) use fake::*;
 pub use feature_probe::{is_map_supported, is_program_supported};
 #[doc(hidden)]
@@ -25,31 +25,86 @@ pub(crate) use netlink::*;
 pub(crate) use perf_event::*;
 use thiserror::Error;
 
-pub(crate) type SysResult = Result<i64, (i64, io::Error)>;
+/// Test utilities for mocking BPF syscalls.
+///
+/// This module is only available when the `test-utils` feature is enabled.
+/// It provides [`override_syscall`] to intercept
+/// BPF syscalls in tests, allowing userspace code to be tested without a real
+/// kernel.
+///
+/// # Example
+///
+/// ```ignore
+/// use aya::sys::test_utils::{override_syscall, Syscall, bpf_cmd};
+///
+/// override_syscall(|call| match call {
+///     Syscall::Ebpf { cmd, attr } => {
+///         // Handle BPF syscalls
+///         Ok(0)
+///     }
+///     _ => Ok(0),
+/// });
+/// ```
+#[cfg(feature = "test-utils")]
+#[cfg_attr(docsrs, doc(cfg(feature = "test-utils")))]
+pub mod test_utils {
+    pub use aya_obj::generated::{bpf_attr, bpf_cmd};
 
-#[cfg_attr(test, expect(dead_code, reason = "test stubs cut above this"))]
+    pub use super::{PerfEventIoctlRequest, SysResult, Syscall, fake::override_syscall};
+
+    /// Returns the fake file descriptor value used internally by aya's test
+    /// infrastructure. Return this from your `override_syscall` handler for
+    /// syscalls that create FDs (e.g. `BPF_MAP_CREATE`).
+    pub const fn mock_fd() -> i64 {
+        crate::MockableFd::mock_signed_fd() as i64
+    }
+}
+
+/// The result type for syscall operations.
+///
+/// `Ok(i64)` on success, `Err((i64, io::Error))` on failure.
+pub type SysResult = Result<i64, (i64, io::Error)>;
+
+/// A perf event ioctl request.
 #[derive(Debug)]
-pub(crate) enum PerfEventIoctlRequest<'a> {
+pub enum PerfEventIoctlRequest<'a> {
+    /// Enable the perf event.
     Enable,
+    /// Disable the perf event.
     Disable,
+    /// Set the BPF program for the perf event.
     SetBpf(BorrowedFd<'a>),
 }
 
-#[cfg_attr(test, expect(dead_code, reason = "test stubs cut above this"))]
-pub(crate) enum Syscall<'a> {
+/// Represents a system call that Aya may perform.
+///
+/// Pattern-match on this in your [`override_syscall`] handler.
+pub enum Syscall<'a> {
+    /// A BPF syscall.
     Ebpf {
+        /// The BPF command.
         cmd: bpf_cmd,
+        /// The BPF attributes.
         attr: &'a mut bpf_attr,
     },
+    /// A `perf_event_open` syscall.
     PerfEventOpen {
+        /// The perf event attributes.
         attr: perf_event_attr,
+        /// The PID.
         pid: libc::pid_t,
+        /// The CPU.
         cpu: i32,
+        /// The group.
         group: i32,
+        /// The flags.
         flags: u32,
     },
+    /// A perf event ioctl syscall.
     PerfEventIoctl {
+        /// The file descriptor.
         fd: BorrowedFd<'a>,
+        /// The ioctl request.
         request: PerfEventIoctlRequest<'a>,
     },
 }
@@ -97,12 +152,12 @@ impl std::fmt::Debug for Syscall<'_> {
 }
 
 fn syscall(call: Syscall<'_>) -> SysResult {
-    #[cfg(test)]
+    #[cfg(any(test, feature = "test-utils"))]
     {
         TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) })
     }
 
-    #[cfg(not(test))]
+    #[cfg(not(any(test, feature = "test-utils")))]
     {
         let ret = unsafe {
             match call {
@@ -154,7 +209,7 @@ fn syscall(call: Syscall<'_>) -> SysResult {
 }
 
 #[cfg_attr(
-    test,
+    any(test, feature = "test-utils"),
     expect(unused_variables, reason = "TODO: we should validate all arguments")
 )]
 pub(crate) unsafe fn mmap(
@@ -165,12 +220,12 @@ pub(crate) unsafe fn mmap(
     fd: BorrowedFd<'_>,
     offset: libc::off_t,
 ) -> *mut c_void {
-    #[cfg(test)]
+    #[cfg(any(test, feature = "test-utils"))]
     {
         TEST_MMAP_RET.with(|ret| *ret.borrow())
     }
 
-    #[cfg(not(test))]
+    #[cfg(not(any(test, feature = "test-utils")))]
     {
         use std::os::fd::AsRawFd as _;
 
@@ -179,17 +234,17 @@ pub(crate) unsafe fn mmap(
 }
 
 #[cfg_attr(
-    test,
+    any(test, feature = "test-utils"),
     expect(clippy::missing_const_for_fn, reason = "only const in cfg(test)"),
     expect(unused_variables, reason = "TODO: we should validate all arguments")
 )]
 pub(crate) unsafe fn munmap(addr: *mut c_void, len: usize) -> c_int {
-    #[cfg(test)]
+    #[cfg(any(test, feature = "test-utils"))]
     {
         0
     }
 
-    #[cfg(not(test))]
+    #[cfg(not(any(test, feature = "test-utils")))]
     {
         unsafe { libc::munmap(addr, len) }
     }

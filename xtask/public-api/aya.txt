@@ -7180,6 +7180,60 @@ pub fn aya::programs::xdp::Xdp::test_run(&self, opts: Self::Opts) -> core::resul
 pub fn aya::programs::loaded_links() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::links::LinkInfo, aya::programs::links::LinkError>>
 pub fn aya::programs::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>
 pub mod aya::sys
+pub mod aya::sys::test_utils
+pub use aya::sys::test_utils::bpf_attr
+pub use aya::sys::test_utils::bpf_cmd
+pub enum aya::sys::test_utils::PerfEventIoctlRequest<'a>
+pub aya::sys::test_utils::PerfEventIoctlRequest::Disable
+pub aya::sys::test_utils::PerfEventIoctlRequest::Enable
+pub aya::sys::test_utils::PerfEventIoctlRequest::SetBpf(std::os::fd::owned::BorrowedFd<'a>)
+impl<'a> core::fmt::Debug for aya::sys::PerfEventIoctlRequest<'a>
+pub fn aya::sys::PerfEventIoctlRequest<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Freeze for aya::sys::PerfEventIoctlRequest<'a>
+impl<'a> core::marker::Send for aya::sys::PerfEventIoctlRequest<'a>
+impl<'a> core::marker::Sync for aya::sys::PerfEventIoctlRequest<'a>
+impl<'a> core::marker::Unpin for aya::sys::PerfEventIoctlRequest<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::sys::PerfEventIoctlRequest<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::sys::PerfEventIoctlRequest<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya::sys::PerfEventIoctlRequest<'a>
+pub enum aya::sys::test_utils::Syscall<'a>
+pub aya::sys::test_utils::Syscall::Ebpf
+pub aya::sys::test_utils::Syscall::Ebpf::attr: &'a mut aya_obj::generated::linux_bindings_x86_64::bpf_attr
+pub aya::sys::test_utils::Syscall::Ebpf::cmd: aya_obj::generated::linux_bindings_x86_64::bpf_cmd
+pub aya::sys::test_utils::Syscall::PerfEventIoctl
+pub aya::sys::test_utils::Syscall::PerfEventIoctl::fd: std::os::fd::owned::BorrowedFd<'a>
+pub aya::sys::test_utils::Syscall::PerfEventIoctl::request: aya::sys::PerfEventIoctlRequest<'a>
+pub aya::sys::test_utils::Syscall::PerfEventOpen
+pub aya::sys::test_utils::Syscall::PerfEventOpen::attr: aya_obj::generated::linux_bindings_x86_64::perf_event_attr
+pub aya::sys::test_utils::Syscall::PerfEventOpen::cpu: i32
+pub aya::sys::test_utils::Syscall::PerfEventOpen::flags: u32
+pub aya::sys::test_utils::Syscall::PerfEventOpen::group: i32
+pub aya::sys::test_utils::Syscall::PerfEventOpen::pid: libc::unix::pid_t
+impl core::fmt::Debug for aya::sys::Syscall<'_>
+pub fn aya::sys::Syscall<'_>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Freeze for aya::sys::Syscall<'a>
+impl<'a> core::marker::Send for aya::sys::Syscall<'a>
+impl<'a> core::marker::Sync for aya::sys::Syscall<'a>
+impl<'a> core::marker::Unpin for aya::sys::Syscall<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::sys::Syscall<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::sys::Syscall<'a>
+impl<'a> !core::panic::unwind_safe::UnwindSafe for aya::sys::Syscall<'a>
+pub const fn aya::sys::test_utils::mock_fd() -> i64
+pub fn aya::sys::test_utils::override_syscall(call: fn(aya::sys::Syscall<'_>) -> aya::sys::SysResult)
+pub type aya::sys::test_utils::SysResult = core::result::Result<i64, (i64, std::io::error::Error)>
+pub enum aya::sys::PerfEventIoctlRequest<'a>
+pub aya::sys::PerfEventIoctlRequest::Disable
+pub aya::sys::PerfEventIoctlRequest::Enable
+pub aya::sys::PerfEventIoctlRequest::SetBpf(std::os::fd::owned::BorrowedFd<'a>)
+impl<'a> core::fmt::Debug for aya::sys::PerfEventIoctlRequest<'a>
+pub fn aya::sys::PerfEventIoctlRequest<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Freeze for aya::sys::PerfEventIoctlRequest<'a>
+impl<'a> core::marker::Send for aya::sys::PerfEventIoctlRequest<'a>
+impl<'a> core::marker::Sync for aya::sys::PerfEventIoctlRequest<'a>
+impl<'a> core::marker::Unpin for aya::sys::PerfEventIoctlRequest<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::sys::PerfEventIoctlRequest<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::sys::PerfEventIoctlRequest<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya::sys::PerfEventIoctlRequest<'a>
 #[non_exhaustive] pub enum aya::sys::Stats
 pub aya::sys::Stats::RunTime
 impl core::clone::Clone for aya::sys::Stats
@@ -7196,6 +7250,28 @@ impl core::marker::Unpin for aya::sys::Stats
 impl core::marker::UnsafeUnpin for aya::sys::Stats
 impl core::panic::unwind_safe::RefUnwindSafe for aya::sys::Stats
 impl core::panic::unwind_safe::UnwindSafe for aya::sys::Stats
+pub enum aya::sys::Syscall<'a>
+pub aya::sys::Syscall::Ebpf
+pub aya::sys::Syscall::Ebpf::attr: &'a mut aya_obj::generated::linux_bindings_x86_64::bpf_attr
+pub aya::sys::Syscall::Ebpf::cmd: aya_obj::generated::linux_bindings_x86_64::bpf_cmd
+pub aya::sys::Syscall::PerfEventIoctl
+pub aya::sys::Syscall::PerfEventIoctl::fd: std::os::fd::owned::BorrowedFd<'a>
+pub aya::sys::Syscall::PerfEventIoctl::request: aya::sys::PerfEventIoctlRequest<'a>
+pub aya::sys::Syscall::PerfEventOpen
+pub aya::sys::Syscall::PerfEventOpen::attr: aya_obj::generated::linux_bindings_x86_64::perf_event_attr
+pub aya::sys::Syscall::PerfEventOpen::cpu: i32
+pub aya::sys::Syscall::PerfEventOpen::flags: u32
+pub aya::sys::Syscall::PerfEventOpen::group: i32
+pub aya::sys::Syscall::PerfEventOpen::pid: libc::unix::pid_t
+impl core::fmt::Debug for aya::sys::Syscall<'_>
+pub fn aya::sys::Syscall<'_>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Freeze for aya::sys::Syscall<'a>
+impl<'a> core::marker::Send for aya::sys::Syscall<'a>
+impl<'a> core::marker::Sync for aya::sys::Syscall<'a>
+impl<'a> core::marker::Unpin for aya::sys::Syscall<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::sys::Syscall<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::sys::Syscall<'a>
+impl<'a> !core::panic::unwind_safe::UnwindSafe for aya::sys::Syscall<'a>
 pub struct aya::sys::SyscallError
 pub aya::sys::SyscallError::call: &'static str
 pub aya::sys::SyscallError::io_error: std::io::error::Error
@@ -7223,6 +7299,7 @@ impl !core::panic::unwind_safe::UnwindSafe for aya::sys::SyscallError
 pub fn aya::sys::enable_stats(stats_type: aya::sys::Stats) -> core::result::Result<std::os::fd::owned::OwnedFd, aya::sys::SyscallError>
 pub fn aya::sys::is_map_supported(map_type: aya::maps::MapType) -> core::result::Result<bool, aya::sys::SyscallError>
 pub fn aya::sys::is_program_supported(program_type: aya::programs::ProgramType) -> core::result::Result<bool, aya::programs::ProgramError>
+pub type aya::sys::SysResult = core::result::Result<i64, (i64, std::io::error::Error)>
 pub mod aya::util
 pub struct aya::util::KernelVersion
 impl aya::util::KernelVersion

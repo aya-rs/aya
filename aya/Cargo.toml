@@ -13,6 +13,15 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
+[features]
+default = []
+# Expose test utilities for mocking syscalls in user tests.
+#
+# When enabled, the `sys::test_utils` module becomes available, providing
+# `override_syscall` and the `Syscall` enum so that downstream crates can
+# intercept BPF syscalls in their own `#[cfg(test)]` code.
+test-utils = []
+
 [lints]
 workspace = true
 
