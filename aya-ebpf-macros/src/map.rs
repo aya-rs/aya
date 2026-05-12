@@ -23,6 +23,7 @@ impl Map {
         let section_name: Cow<'_, _> = "maps".into();
         let name = &self.name;
         let item = &self.item;
+
         quote! {
             #[unsafe(link_section = #section_name)]
             #[unsafe(export_name = #name)]
@@ -71,5 +72,19 @@ mod tests {
             static BAR: HashMap<&'static str, u32> = HashMap::new();
         );
         assert_eq!(expected.to_string(), expanded.to_string());
+    }
+
+    #[test]
+    fn test_map_unknown_arg() {
+        let result = Map::parse(
+            parse_quote!(unknown = "foo"),
+            parse_quote!(
+                static BAR: HashMap<&'static str, u32> = HashMap::new();
+            ),
+        );
+        let Err(err) = result else {
+            panic!("expected parse error for unknown argument")
+        };
+        assert_eq!(err.to_string(), "invalid argument");
     }
 }
