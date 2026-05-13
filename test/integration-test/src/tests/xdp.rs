@@ -1,13 +1,14 @@
-use std::{net::UdpSocket, num::NonZeroU32, time::Duration};
+use std::{ffi::CString, net::UdpSocket, num::NonZeroU32, time::Duration};
 
 use assert_matches::assert_matches;
 use aya::{
     Ebpf,
-    maps::{Array, CpuMap, XskMap},
+    maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
     programs::{ProgramError, Xdp, XdpError, XdpMode, xdp::XdpLinkId},
     util::KernelVersion,
 };
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
+use test_case::test_case;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
 use crate::utils::NetNsGuard;
@@ -216,4 +217,48 @@ fn cpumap_chain() {
     assert_eq!(&buf[..n], PAYLOAD.as_bytes());
     assert_eq!(hits.get(&0, 0).unwrap(), 1);
     assert_eq!(hits.get(&1, 0).unwrap(), 1);
+}
+
+#[test_case(
+    "DEVS", "DEVS_HASH",
+    "redirect_dev", "redirect_dev_hash",
+    "get_dev", "get_dev_hash";
+    "legacy"
+)]
+#[test_case(
+    "DEVS_BTF", "DEVS_HASH_BTF",
+    "redirect_dev_btf", "redirect_dev_hash_btf",
+    "get_dev_btf", "get_dev_hash_btf";
+    "btf"
+)]
+#[test_log::test]
+fn devmap_set(
+    devs_name: &str,
+    devs_hash_name: &str,
+    dev_prog: &str,
+    dev_hash_prog: &str,
+    dev_get_prog: &str,
+    dev_hash_get_prog: &str,
+) {
+    let _netns = NetNsGuard::new();
+
+    let mut bpf = Ebpf::load(crate::DEV_MAP).unwrap();
+    let mut devs: DevMap<_> = bpf.take_map(devs_name).unwrap().try_into().unwrap();
+    let mut devs_hash: DevMapHash<_> = bpf.take_map(devs_hash_name).unwrap().try_into().unwrap();
+
+    let lo = {
+        let name = CString::new("lo").unwrap();
+        let idx = unsafe { libc::if_nametoindex(name.as_ptr()) };
+        assert!(idx != 0, "interface `lo` not found");
+        idx
+    };
+    devs.set(0, lo, None, 0).unwrap();
+    devs_hash.insert(10, lo, None, 0).unwrap();
+
+    // Load each probe so the BPF verifier validates the wrapper-generated
+    // bytecode for both `redirect` and `get`.
+    for prog in [dev_prog, dev_hash_prog, dev_get_prog, dev_hash_get_prog] {
+        let xdp: &mut Xdp = bpf.program_mut(prog).unwrap().try_into().unwrap();
+        xdp.load().unwrap();
+    }
 }
