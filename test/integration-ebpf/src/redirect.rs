@@ -4,8 +4,9 @@
 
 use aya_ebpf::{
     bindings::xdp_action,
-    macros::{map, xdp},
-    maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
+    btf_maps::{DevMap as BtfDevMap, DevMapHash as BtfDevMapHash},
+    macros::{btf_map, map, xdp},
+    maps::{Array, CpuMap, DevMap, DevMapHash, XskMap, xdp::DevMapValue},
     programs::XdpContext,
 };
 #[cfg(not(test))]
@@ -19,6 +20,11 @@ static DEVS: DevMap = DevMap::with_max_entries(1, 0);
 static DEVS_HASH: DevMapHash = DevMapHash::with_max_entries(1, 0);
 #[map]
 static CPUS: CpuMap = CpuMap::with_max_entries(1, 0);
+
+#[btf_map]
+static DEVS_BTF: BtfDevMap<1> = BtfDevMap::new();
+#[btf_map]
+static DEVS_HASH_BTF: BtfDevMapHash<1> = BtfDevMapHash::new();
 
 /// Hits of a probe, used to test program chaining through CpuMap/DevMap.
 /// The first slot counts how many times the "raw" xdp program got executed, while the second slot
@@ -51,6 +57,55 @@ fn redirect_dev(_ctx: XdpContext) -> u32 {
 fn redirect_dev_hash(_ctx: XdpContext) -> u32 {
     inc_hit(0);
     DEVS_HASH.redirect(10, 0).unwrap_or(xdp_action::XDP_ABORTED)
+}
+
+#[xdp]
+fn redirect_dev_btf(_ctx: XdpContext) -> u32 {
+    inc_hit(0);
+    DEVS_BTF.redirect(0, 0).unwrap_or(xdp_action::XDP_ABORTED)
+}
+
+#[xdp]
+fn redirect_dev_hash_btf(_ctx: XdpContext) -> u32 {
+    inc_hit(0);
+    DEVS_HASH_BTF
+        .redirect(10, 0)
+        .unwrap_or(xdp_action::XDP_ABORTED)
+}
+
+#[xdp]
+fn get_dev(_ctx: XdpContext) -> u32 {
+    DEVS.get(0).map_or(xdp_action::XDP_ABORTED, devmap_action)
+}
+
+#[xdp]
+fn get_dev_hash(_ctx: XdpContext) -> u32 {
+    DEVS_HASH
+        .get(10)
+        .map_or(xdp_action::XDP_ABORTED, devmap_action)
+}
+
+#[xdp]
+fn get_dev_btf(_ctx: XdpContext) -> u32 {
+    DEVS_BTF
+        .get(0)
+        .map_or(xdp_action::XDP_ABORTED, devmap_action)
+}
+
+#[xdp]
+fn get_dev_hash_btf(_ctx: XdpContext) -> u32 {
+    DEVS_HASH_BTF
+        .get(10)
+        .map_or(xdp_action::XDP_ABORTED, devmap_action)
+}
+
+#[inline(always)]
+const fn devmap_action(v: DevMapValue) -> u32 {
+    if v.prog_id.is_some() && v.if_index != 0 {
+        xdp_action::XDP_PASS
+    } else {
+        xdp_action::XDP_DROP
+    }
 }
 
 #[xdp]
