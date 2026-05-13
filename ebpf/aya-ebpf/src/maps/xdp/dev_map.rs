@@ -89,8 +89,10 @@ impl DevMap {
         let value: &bpf_devmap_val = unsafe { value.as_ref() };
         Some(DevMapValue {
             if_index: value.ifindex,
-            // SAFETY: map writes use fd, map reads use id.
-            // https://elixir.bootlin.com/linux/v6.2/source/include/uapi/linux/bpf.h#L6136
+            // SAFETY: `bpf_devmap_val::bpf_prog` is a union of `fd` and `id`; the
+            // kernel populates `id` on map lookup (`fd` is only consumed on
+            // userspace writes), so reading from `id` is the active variant.
+            // https://github.com/torvalds/linux/blob/v6.2/include/uapi/linux/bpf.h#L6136
             prog_id: NonZeroU32::new(unsafe { value.bpf_prog.id }),
         })
     }
@@ -119,12 +121,8 @@ impl DevMap {
     }
 }
 
-#[derive(Clone, Copy)]
-#[expect(
-    unnameable_types,
-    reason = "this value type is exposed via the map API, not by path"
-)]
 /// The value of a device map.
+#[derive(Clone, Copy)]
 pub struct DevMapValue {
     /// Target interface index to redirect to.
     pub if_index: u32,
