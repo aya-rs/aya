@@ -1,5 +1,7 @@
 pub mod array;
 pub mod bloom_filter;
+pub mod dev_map;
+pub mod dev_map_hash;
 pub mod lpm_trie;
 pub mod per_cpu_array;
 pub mod perf_event_array;
@@ -16,6 +18,8 @@ pub mod stack_trace;
 
 pub use array::Array;
 pub use bloom_filter::BloomFilter;
+pub use dev_map::DevMap;
+pub use dev_map_hash::DevMapHash;
 pub use lpm_trie::LpmTrie;
 pub use per_cpu_array::PerCpuArray;
 pub use perf_event_array::PerfEventArray;
