@@ -55,6 +55,7 @@ pub(crate) fn bpf_create_map(
     name: &CStr,
     def: &aya_obj::Map,
     btf_fd: Option<BorrowedFd<'_>>,
+    inner_map_fd: Option<BorrowedFd<'_>>,
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -65,6 +66,11 @@ pub(crate) fn bpf_create_map(
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
     u.map_extra = def.map_extra();
+
+    // For map-of-maps types, set the inner_map_fd.
+    if let Some(inner_fd) = inner_map_fd {
+        u.inner_map_fd = inner_fd.as_raw_fd() as u32;
+    }
 
     if let aya_obj::Map::Btf(m) = def {
         // Mimic https://github.com/libbpf/libbpf/issues/355
@@ -1075,6 +1081,7 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
                 max_entries: 1,
                 ..Default::default()
             },
+            inner_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
@@ -1576,7 +1583,7 @@ bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
 
         let name = CString::new("FILTER").unwrap();
         let btf_fd = unsafe { BorrowedFd::borrow_raw(BTF_FD) };
-        bpf_create_map(&name, &map, Some(btf_fd)).unwrap();
+        bpf_create_map(&name, &map, Some(btf_fd), None).unwrap();
     }
 
     #[test_case(bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY ; "perf_event_array")]
@@ -1621,6 +1628,6 @@ bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
 
         let name = CString::new("TEST").unwrap();
         let btf_fd = unsafe { BorrowedFd::borrow_raw(BTF_FD) };
-        bpf_create_map(&name, &map, Some(btf_fd)).unwrap();
+        bpf_create_map(&name, &map, Some(btf_fd), None).unwrap();
     }
 }

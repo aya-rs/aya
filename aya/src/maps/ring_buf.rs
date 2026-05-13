@@ -109,6 +109,10 @@ impl<T: Borrow<MapData>> RingBuf<T> {
             producer,
         })
     }
+
+    pub(crate) fn map_data(&self) -> &MapData {
+        self.map.borrow()
+    }
 }
 
 impl<T> RingBuf<T> {

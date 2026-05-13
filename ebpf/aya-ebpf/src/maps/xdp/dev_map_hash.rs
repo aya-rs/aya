@@ -37,6 +37,11 @@ pub struct DevMapHash {
     def: MapDef,
 }
 
+impl super::super::private::Map for DevMapHash {
+    type Key = u32;
+    type Value = bpf_devmap_val;
+}
+
 impl DevMapHash {
     map_constructors!(
         u32,
