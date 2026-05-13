@@ -18,7 +18,7 @@ btf_map_def!(
     map_flags: FLAGS,
     key_type: (),
     value_type: T,
-    value_size: *const [i32; 0],
+    value_size: *const [i32; 0] = ::core::ptr::null(),
 );
 
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> RingBuf<T, MAX_ENTRIES, FLAGS> {

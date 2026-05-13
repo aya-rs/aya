@@ -26,7 +26,7 @@ btf_map_def!(
     map_flags: FLAGS,
     key_type: (),
     value_type: T,
-    map_extra: *const [i32; HASH_FUNCS],
+    map_extra: *const [i32; HASH_FUNCS] = ::core::ptr::null(),
 );
 
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize>
