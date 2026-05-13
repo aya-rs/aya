@@ -171,3 +171,7 @@ path = "src/stack_trace.rs"
 [[bin]]
 name = "stack_trace_lsm"
 path = "src/stack_trace_lsm.rs"
+
+[[bin]]
+name = "btf_map_of_maps"
+path = "src/btf_map_of_maps.rs"
