@@ -209,6 +209,10 @@ impl<T: Borrow<MapData>> PerfEventArray<T> {
         let data: &MapData = self.map.deref().borrow();
         data.pin(path)
     }
+
+    pub(crate) fn map_data(&self) -> &MapData {
+        self.map.deref().borrow()
+    }
 }
 
 impl<T: BorrowMut<MapData>> PerfEventArray<T> {
