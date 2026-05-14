@@ -144,7 +144,7 @@ impl SocketFilter {
     /// this operation does not require the program to remain loaded in this
     /// process. If another filter replaced this program on the same socket,
     /// detaching will remove that replacement filter.
-    pub fn detach<T: AsFd>(&mut self, socket: T) -> Result<(), ProgramError> {
+    pub fn detach<T: AsFd>(socket: T) -> Result<(), ProgramError> {
         let socket = socket.as_fd().as_raw_fd();
 
         // `SO_DETACH_BPF` is an alias for `SO_DETACH_FILTER`; Linux's

@@ -84,7 +84,7 @@ async fn socket_filter_program_can_trim_packets_and_detach() {
     let trim_hits_before_detach = read_hits(&path_hits, TRIM_HITS_INDEX);
     assert!(trim_hits_before_detach > 0, "trim path did not run");
 
-    prog.detach(&receiver).unwrap();
+    SocketFilter::detach(&receiver).unwrap();
 
     send_and_assert(&sender, &receiver, 0).await;
     assert_eq!(
@@ -154,12 +154,45 @@ async fn socket_filter_replacement_stays_attached_until_explicit_detach() {
     );
     let trim_hits_before_detach = read_hits(&path_hits, TRIM_HITS_INDEX);
 
-    let trim_prog: &mut SocketFilter = ebpf
-        .program_mut("trim_packets")
-        .unwrap()
-        .try_into()
-        .unwrap();
-    trim_prog.detach(&receiver).unwrap();
+    SocketFilter::detach(&receiver).unwrap();
+
+    send_and_assert(&sender, &receiver, 0).await;
+    assert_eq!(
+        read_hits(&path_hits, TRIM_HITS_INDEX),
+        trim_hits_before_detach,
+        "trim path ran after detach",
+    );
+}
+
+#[test_log::test(tokio::test)]
+async fn socket_filter_stays_attached_after_ebpf_drop() {
+    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
+        eprintln!("skipping test - socket_filter program not supported");
+        return;
+    }
+
+    let (sender, receiver) = UnixDatagram::pair().unwrap();
+    let path_hits: Array<_, u64> = {
+        let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
+        let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
+        let prog: &mut SocketFilter = ebpf
+            .program_mut("trim_packets")
+            .unwrap()
+            .try_into()
+            .unwrap();
+        prog.load().unwrap();
+        prog.attach(&receiver).unwrap();
+        path_hits
+    };
+
+    send_and_assert(&sender, &receiver, TRIM_DELTA_BYTES as usize).await;
+    let trim_hits_before_detach = read_hits(&path_hits, TRIM_HITS_INDEX);
+    assert!(
+        trim_hits_before_detach > 0,
+        "dropping Ebpf detached the socket filter",
+    );
+
+    SocketFilter::detach(&receiver).unwrap();
 
     send_and_assert(&sender, &receiver, 0).await;
     assert_eq!(

@@ -819,9 +819,10 @@ macro_rules! impl_program_unload {
             impl $struct_name {
                 /// Unloads the program from the kernel.
                 ///
-                /// Links will be detached before unloading the program.  Note
-                /// that owned links obtained using `take_link()` will not be
-                /// detached.
+                /// Tracked links will be detached before unloading the program.
+                /// Attachment mechanisms that do not create tracked links are
+                /// not affected. Note that owned links obtained using
+                /// `take_link()` will not be detached.
                 pub fn unload(&mut self) -> Result<(), ProgramError> {
                     unload_program(&mut self.data)
                 }
