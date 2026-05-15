@@ -41,6 +41,10 @@ name = "btf_maps_plain"
 path = "src/btf_maps_plain.rs"
 
 [[bin]]
+name = "cpu_map"
+path = "src/cpu_map.rs"
+
+[[bin]]
 name = "dev_map"
 path = "src/dev_map.rs"
 
@@ -91,10 +95,6 @@ path = "src/perf_event_byte_array.rs"
 [[bin]]
 name = "raw_tracepoint"
 path = "src/raw_tracepoint.rs"
-
-[[bin]]
-name = "redirect"
-path = "src/redirect.rs"
 
 [[bin]]
 name = "relocations"
@@ -175,3 +175,7 @@ path = "src/stack_trace_lsm.rs"
 [[bin]]
 name = "btf_map_of_maps"
 path = "src/btf_map_of_maps.rs"
+
+[[bin]]
+name = "xsk_map"
+path = "src/xsk_map.rs"
