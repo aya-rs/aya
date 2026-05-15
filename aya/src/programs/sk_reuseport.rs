@@ -171,7 +171,7 @@ impl SkReuseport {
     /// operation. Dropping the program object does not detach it; call
     /// [`SkReuseport::detach`] with any socket from the same group to remove it
     /// again, or close all sockets in the group.
-    pub fn attach<T: AsFd>(&mut self, socket: T) -> Result<(), ProgramError> {
+    pub fn attach<T: AsFd>(&self, socket: T) -> Result<(), ProgramError> {
         let prog_fd = self.fd()?.as_fd().as_raw_fd();
         let socket = socket.as_fd().as_raw_fd();
 
@@ -186,7 +186,7 @@ impl SkReuseport {
     /// from the entire group, regardless of which socket in that group was
     /// used to attach it. Unlike [`SkReuseport::attach`], this operation does
     /// not require the program to remain loaded in this process.
-    pub fn detach<T: AsFd>(&mut self, socket: T) -> Result<(), ProgramError> {
+    pub fn detach<T: AsFd>(socket: T) -> Result<(), ProgramError> {
         let socket = socket.as_fd().as_raw_fd();
         let dummy: libc::c_int = 0;
 

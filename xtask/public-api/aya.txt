@@ -4045,8 +4045,8 @@ impl !core::panic::unwind_safe::UnwindSafe for aya::programs::sk_reuseport::SkRe
 pub struct aya::programs::sk_reuseport::SkReuseport
 impl aya::programs::sk_reuseport::SkReuseport
 pub const aya::programs::sk_reuseport::SkReuseport::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::sk_reuseport::SkReuseport::attach<T: std::os::fd::owned::AsFd>(&mut self, socket: T) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::sk_reuseport::SkReuseport::detach<T: std::os::fd::owned::AsFd>(&mut self, socket: T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_reuseport::SkReuseport::attach<T: std::os::fd::owned::AsFd>(&self, socket: T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_reuseport::SkReuseport::detach<T: std::os::fd::owned::AsFd>(socket: T) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::sk_reuseport::SkReuseport::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::sk_reuseport::SkReuseportAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::sk_reuseport::SkReuseport::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::sk_reuseport::SkReuseport
@@ -6491,8 +6491,8 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsg
 pub struct aya::programs::SkReuseport
 impl aya::programs::sk_reuseport::SkReuseport
 pub const aya::programs::sk_reuseport::SkReuseport::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::sk_reuseport::SkReuseport::attach<T: std::os::fd::owned::AsFd>(&mut self, socket: T) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::sk_reuseport::SkReuseport::detach<T: std::os::fd::owned::AsFd>(&mut self, socket: T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_reuseport::SkReuseport::attach<T: std::os::fd::owned::AsFd>(&self, socket: T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::sk_reuseport::SkReuseport::detach<T: std::os::fd::owned::AsFd>(socket: T) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::sk_reuseport::SkReuseport::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::sk_reuseport::SkReuseportAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::sk_reuseport::SkReuseport::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::sk_reuseport::SkReuseport
