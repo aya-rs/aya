@@ -1,6 +1,6 @@
 use aya::{
     Ebpf, EbpfLoader,
-    programs::{Extension, TracePoint, Xdp, XdpFlags, tc},
+    programs::{Extension, TracePoint, Xdp, XdpMode, tc},
     util::KernelVersion,
 };
 
@@ -34,7 +34,7 @@ fn xdp() {
     let mut bpf = Ebpf::load(crate::PASS).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
-    dispatcher.attach("lo", XdpFlags::default()).unwrap();
+    dispatcher.attach("lo", XdpMode::default()).unwrap();
 }
 
 #[test_log::test]
@@ -72,7 +72,7 @@ fn extension() {
     let mut bpf = Ebpf::load(crate::MAIN).unwrap();
     let pass: &mut Xdp = bpf.program_mut("xdp_pass").unwrap().try_into().unwrap();
     pass.load().unwrap();
-    pass.attach("lo", XdpFlags::default()).unwrap();
+    pass.attach("lo", XdpMode::default()).unwrap();
 
     let mut bpf = EbpfLoader::new()
         .extension("xdp_drop")

@@ -4,7 +4,12 @@
 //! This implementation is incredibly naive and is only designed to work within
 //! the constraints of the test environment. Not for production use.
 
-use std::{io::BufWriter, path::PathBuf, str::Utf8Error};
+use std::{
+    borrow::Cow,
+    io::BufWriter,
+    path::{Path, PathBuf},
+    str::Utf8Error,
+};
 
 use anyhow::{Context as _, anyhow};
 use clap::Parser;
@@ -21,8 +26,8 @@ struct Args {
 fn main() -> anyhow::Result<()> {
     let Args { base_dir } = Parser::parse();
 
-    let modules_dir = if let Some(base_dir) = base_dir {
-        base_dir
+    let modules_dir: Cow<'static, Path> = if let Some(base_dir) = base_dir {
+        base_dir.into()
     } else {
         resolve_modules_dir().context("failed to resolve modules dir")?
     };

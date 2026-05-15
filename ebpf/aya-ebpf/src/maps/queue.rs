@@ -1,6 +1,7 @@
-use core::{borrow::Borrow, marker::PhantomData, mem, ptr};
+use core::{borrow::Borrow, marker::PhantomData, mem::MaybeUninit, ptr};
 
 use crate::{
+    ENOENT,
     bindings::bpf_map_type::BPF_MAP_TYPE_QUEUE,
     helpers::{bpf_map_peek_elem, bpf_map_pop_elem, bpf_map_push_elem},
     maps::{MapDef, PinningType},
@@ -10,6 +11,11 @@ use crate::{
 pub struct Queue<T> {
     def: MapDef,
     _t: PhantomData<T>,
+}
+
+impl<T> super::private::Map for Queue<T> {
+    type Key = ();
+    type Value = T;
 }
 
 impl<T> Queue<T> {
@@ -26,19 +32,45 @@ impl<T> Queue<T> {
         (ret == 0).then_some(()).ok_or(ret as i32)
     }
 
-    pub fn pop(&self) -> Option<T> {
+    /// Removes and returns the head of the queue.
+    ///
+    /// Returns `Ok(None)` when the queue is empty.
+    ///
+    /// # Errors
+    ///
+    /// Propagates any non-zero errno from [`bpf_map_pop_elem`] (e.g.
+    /// `-EBUSY` under lock contention).
+    ///
+    /// [`bpf_map_pop_elem`]: https://docs.ebpf.io/linux/helper-function/bpf_map_pop_elem/
+    pub fn pop(&self) -> Result<Option<T>, i32> {
         unsafe {
-            let mut value = mem::MaybeUninit::<T>::uninit();
-            let ret = bpf_map_pop_elem(self.def.as_ptr().cast(), value.as_mut_ptr().cast());
-            (ret == 0).then_some(value.assume_init())
+            let mut value = MaybeUninit::<T>::uninit();
+            match bpf_map_pop_elem(self.def.as_ptr().cast(), value.as_mut_ptr().cast()) as i32 {
+                0 => Ok(Some(value.assume_init())),
+                err if err == -ENOENT => Ok(None),
+                err => Err(err),
+            }
         }
     }
 
-    pub fn peek(&self) -> Option<T> {
+    /// Returns the head of the queue without removing it.
+    ///
+    /// Returns `Ok(None)` when the queue is empty.
+    ///
+    /// # Errors
+    ///
+    /// Propagates any non-zero errno from [`bpf_map_peek_elem`] (e.g.
+    /// `-EBUSY` under lock contention).
+    ///
+    /// [`bpf_map_peek_elem`]: https://docs.ebpf.io/linux/helper-function/bpf_map_peek_elem/
+    pub fn peek(&self) -> Result<Option<T>, i32> {
         unsafe {
-            let mut value = mem::MaybeUninit::<T>::uninit();
-            let ret = bpf_map_peek_elem(self.def.as_ptr().cast(), value.as_mut_ptr().cast());
-            (ret == 0).then_some(value.assume_init())
+            let mut value = MaybeUninit::<T>::uninit();
+            match bpf_map_peek_elem(self.def.as_ptr().cast(), value.as_mut_ptr().cast()) as i32 {
+                0 => Ok(Some(value.assume_init())),
+                err if err == -ENOENT => Ok(None),
+                err => Err(err),
+            }
         }
     }
 }

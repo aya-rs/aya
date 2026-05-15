@@ -119,6 +119,21 @@ pub mod printk {
     pub const TEST_ISIZE: isize = isize::MIN;
 }
 
+pub mod btf_map_of_maps {
+    /// Capacity of each inner array shared between userspace and the eBPF probes.
+    pub const INNER_MAX_ENTRIES: u32 = 10;
+
+    #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+    #[repr(C)]
+    pub struct TestResult {
+        pub value: u32,
+        pub ran: u32,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
+
 pub mod sk_storage {
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
     #[repr(C)]
@@ -197,4 +212,10 @@ pub mod bpf_d_path {
 
     #[cfg(feature = "user")]
     unsafe impl aya::Pod for TestResult {}
+}
+
+pub mod test_run {
+    pub const XDP_MODIFY_VAL: u8 = 0xAA;
+    pub const IF_INDEX: u32 = 1;
+    pub const XDP_MODIFY_LEN: usize = 16;
 }

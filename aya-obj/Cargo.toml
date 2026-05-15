@@ -18,14 +18,10 @@ workspace = true
 
 [dependencies]
 bytes = { workspace = true }
-hashbrown = { workspace = true, features = ["default-hasher", "equivalent"] }
 log = { workspace = true }
 object = { workspace = true, features = ["elf", "read_core"] }
-thiserror = { workspace = true }
+thiserror = { workspace = true, features = ["std"] }
 
 [dev-dependencies]
 assert_matches = { workspace = true }
 rbpf = { workspace = true }
-
-[features]
-std = ["thiserror/std"]

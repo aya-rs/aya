@@ -11,7 +11,7 @@ use aya_ebpf::{
     cty::c_long,
     macros::{btf_map, map, uprobe},
     maps::{Array as LegacyArray, StackTrace as LegacyStackTrace},
-    programs::ProbeContext,
+    programs::{ProbeContext, tracing::StackIdContext as _},
 };
 use integration_common::stack_trace::TestResult;
 
@@ -31,8 +31,7 @@ macro_rules! define_stack_trace_test {
     ($map:ident, $result:ident, $probe:ident $(,)?) => {
         #[uprobe]
         fn $probe(ctx: ProbeContext) -> Result<(), c_long> {
-            let id =
-                unsafe { $map.get_stackid::<ProbeContext>(&ctx, u64::from(BPF_F_USER_STACK))? };
+            let id = ctx.get_stackid(&$map, u64::from(BPF_F_USER_STACK))?;
             let slot = $result.get_ptr_mut(0).ok_or(-1)?;
             unsafe {
                 *slot = TestResult {

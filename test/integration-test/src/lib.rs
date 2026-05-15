@@ -44,6 +44,7 @@ bpf_file!(
     BPF_D_PATH => "bpf_d_path",
     BPF_PROBE_READ => "bpf_probe_read",
     BTF_MAPS_PLAIN => "btf_maps_plain",
+    DEV_MAP => "dev_map",
     KPROBE => "kprobe",
     LINEAR_DATA_STRUCTURES => "linear_data_structures",
     LOG => "log",
@@ -63,15 +64,20 @@ bpf_file!(
     SIMPLE_PROG => "simple_prog",
     SK_REUSEPORT => "sk_reuseport",
     SK_STORAGE => "sk_storage",
+    SOCK_HASH => "sock_hash",
+    SOCK_MAP => "sock_map",
     STRNCMP => "strncmp",
     TCX => "tcx",
     TEST => "test",
+    TEST_RUN => "test_run",
     TWO_PROGS => "two_progs",
     XDP_SEC => "xdp_sec",
     UPROBE_COOKIE => "uprobe_cookie",
     PRINTK_TEST => "printk_test",
     PROG_ARRAY => "prog_array",
     STACK_TRACE => "stack_trace",
+    STACK_TRACE_LSM => "stack_trace_lsm",
+    BTF_MAP_OF_MAPS => "btf_map_of_maps",
 );
 
 #[cfg(test)]

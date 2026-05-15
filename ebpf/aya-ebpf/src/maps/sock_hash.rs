@@ -5,7 +5,7 @@ use core::{
 };
 
 use crate::{
-    EbpfContext as _,
+    ENOENT, EbpfContext as _,
     bindings::{bpf_map_type::BPF_MAP_TYPE_SOCKHASH, bpf_sock_ops},
     cty::c_long,
     helpers::{
@@ -21,6 +21,11 @@ use crate::{
 pub struct SockHash<K> {
     def: MapDef,
     _k: PhantomData<K>,
+}
+
+impl<K> super::private::Map for SockHash<K> {
+    type Key = K;
+    type Value = u32;
 }
 
 impl<K> SockHash<K> {
@@ -80,13 +85,10 @@ impl<K> SockHash<K> {
         ctx: impl Borrow<SkLookupContext>,
         key: impl Borrow<K>,
         flags: u64,
-    ) -> Result<(), u32> {
-        let sk = lookup(self.def.as_ptr(), key.borrow()).ok_or(1u32)?;
+    ) -> Result<(), i32> {
+        let sk = lookup(self.def.as_ptr(), key.borrow()).ok_or(-ENOENT)?;
         let ret = unsafe { bpf_sk_assign(ctx.borrow().as_ptr().cast(), sk.as_ptr(), flags) };
         let _: c_long = unsafe { bpf_sk_release(sk.as_ptr()) };
-        match ret {
-            0 => Ok(()),
-            _ret => Err(1),
-        }
+        (ret == 0).then_some(()).ok_or(ret as i32)
     }
 }

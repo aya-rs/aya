@@ -15,6 +15,8 @@ impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::array:
 pub fn aya::maps::array::Array<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::array::Array<T, V>
 pub fn aya::maps::array::Array<T, V>::set(&mut self, index: u32, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<V: aya::Pod> aya::maps::array::Array<aya::maps::MapData, V>
+pub fn aya::maps::array::Array<aya::maps::MapData, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::array::Array<&'a aya::maps::MapData, V>
 pub type aya::maps::array::Array<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::array::Array<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -43,6 +45,8 @@ impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::PerCpu
 pub fn aya::maps::PerCpuArray<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::PerCpuArray<T, V>
 pub fn aya::maps::PerCpuArray<T, V>::set(&mut self, index: u32, values: aya::maps::PerCpuValues<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<V: aya::Pod> aya::maps::PerCpuArray<aya::maps::MapData, V>
+pub fn aya::maps::PerCpuArray<aya::maps::MapData, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::PerCpuArray<&'a aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -94,6 +98,8 @@ impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::insert(&mut self, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<V: aya::Pod> aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>
+pub fn aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -114,6 +120,8 @@ impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::bloom_filter::
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 pub mod aya::maps::hash_map
 pub struct aya::maps::hash_map::HashMap<T, K, V>
+impl<K: aya::Pod, V: aya::Pod> aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>
+pub fn aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::hash_map::HashMap<T, K, V>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::get(&self, key: &K, flags: u64) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, K, V, Self>
@@ -149,6 +157,8 @@ impl<T, K, V> core::marker::UnsafeUnpin for aya::maps::hash_map::HashMap<T, K, V
 impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::hash_map::HashMap<T, K, V> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::hash_map::HashMap<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::hash_map::PerCpuHashMap<T, K: aya::Pod, V: aya::Pod>
+impl<K: aya::Pod, V: aya::Pod> aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>
+pub fn aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::hash_map::PerCpuHashMap<T, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::get(&self, key: &K, flags: u64) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, K, aya::maps::PerCpuValues<V>, Self>
@@ -202,6 +212,8 @@ impl<K> core::marker::UnsafeUnpin for aya::maps::lpm_trie::Key<K> where K: core:
 impl<K> core::panic::unwind_safe::RefUnwindSafe for aya::maps::lpm_trie::Key<K> where K: core::panic::unwind_safe::RefUnwindSafe
 impl<K> core::panic::unwind_safe::UnwindSafe for aya::maps::lpm_trie::Key<K> where K: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::lpm_trie::LpmTrie<T, K, V>
+impl<K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>
+pub fn aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<T, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::get(&self, key: &aya::maps::lpm_trie::Key<K>, flags: u64) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, aya::maps::lpm_trie::Key<K>, V, Self>
@@ -236,6 +248,64 @@ impl<T, K, V> core::marker::Unpin for aya::maps::lpm_trie::LpmTrie<T, K, V> wher
 impl<T, K, V> core::marker::UnsafeUnpin for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::marker::UnsafeUnpin
 impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+pub mod aya::maps::of_maps
+pub struct aya::maps::of_maps::ArrayOfMaps<T, V>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::maps::FromMapData> aya::maps::ArrayOfMaps<T, V>
+pub fn aya::maps::ArrayOfMaps<T, V>::get(&self, index: &u32, flags: u64) -> core::result::Result<V, aya::maps::MapError>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V> aya::maps::ArrayOfMaps<T, V>
+pub fn aya::maps::ArrayOfMaps<T, V>::is_empty(&self) -> bool
+pub fn aya::maps::ArrayOfMaps<T, V>::len(&self) -> u32
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::maps::InnerMap> aya::maps::ArrayOfMaps<T, V>
+pub fn aya::maps::ArrayOfMaps<T, V>::set(&mut self, index: u32, value: &V, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<V> aya::maps::ArrayOfMaps<aya::maps::MapData, V>
+pub fn aya::maps::ArrayOfMaps<aya::maps::MapData, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
+impl<'a, V: aya::maps::InnerMap> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::ArrayOfMaps<&'a aya::maps::MapData, V>
+pub type aya::maps::ArrayOfMaps<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::ArrayOfMaps<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::maps::InnerMap> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData, V>
+pub type aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug, V> core::fmt::Debug for aya::maps::ArrayOfMaps<T, V>
+pub fn aya::maps::ArrayOfMaps<T, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<V: aya::maps::InnerMap> core::convert::TryFrom<aya::maps::Map> for aya::maps::ArrayOfMaps<aya::maps::MapData, V>
+pub type aya::maps::ArrayOfMaps<aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::ArrayOfMaps<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T, V> core::marker::Freeze for aya::maps::ArrayOfMaps<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::ArrayOfMaps<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::ArrayOfMaps<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::ArrayOfMaps<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::ArrayOfMaps<T, V> where T: core::marker::UnsafeUnpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ArrayOfMaps<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::ArrayOfMaps<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+pub struct aya::maps::of_maps::HashOfMaps<T, K, V>
+impl<K: aya::Pod, V> aya::maps::HashOfMaps<aya::maps::MapData, K, V>
+pub fn aya::maps::HashOfMaps<aya::maps::MapData, K, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::maps::FromMapData> aya::maps::HashOfMaps<T, K, V>
+pub fn aya::maps::HashOfMaps<T, K, V>::get(&self, key: &K, flags: u64) -> core::result::Result<V, aya::maps::MapError>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V> aya::maps::HashOfMaps<T, K, V>
+pub fn aya::maps::HashOfMaps<T, K, V>::keys(&self) -> aya::maps::MapKeys<'_, K>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>, K: aya::Pod, V: aya::maps::InnerMap> aya::maps::HashOfMaps<T, K, V>
+pub fn aya::maps::HashOfMaps<T, K, V>::insert(&mut self, key: impl core::borrow::Borrow<K>, value: &V, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>, K: aya::Pod, V> aya::maps::HashOfMaps<T, K, V>
+pub fn aya::maps::HashOfMaps<T, K, V>::remove(&mut self, key: &K) -> core::result::Result<(), aya::maps::MapError>
+impl<'a, K: aya::Pod, V: aya::maps::InnerMap> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::HashOfMaps<&'a aya::maps::MapData, K, V>
+pub type aya::maps::HashOfMaps<&'a aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::HashOfMaps<&'a aya::maps::MapData, K, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::maps::InnerMap> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::HashOfMaps<&'a mut aya::maps::MapData, K, V>
+pub type aya::maps::HashOfMaps<&'a mut aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::HashOfMaps<&'a mut aya::maps::MapData, K, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<K: aya::Pod, V: aya::maps::InnerMap> core::convert::TryFrom<aya::maps::Map> for aya::maps::HashOfMaps<aya::maps::MapData, K, V>
+pub type aya::maps::HashOfMaps<aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::HashOfMaps<aya::maps::MapData, K, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug, K, V> core::fmt::Debug for aya::maps::HashOfMaps<T, K, V>
+pub fn aya::maps::HashOfMaps<T, K, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T, K, V> core::marker::Freeze for aya::maps::HashOfMaps<T, K, V> where T: core::marker::Freeze
+impl<T, K, V> core::marker::Send for aya::maps::HashOfMaps<T, K, V> where T: core::marker::Send, K: core::marker::Send, V: core::marker::Send
+impl<T, K, V> core::marker::Sync for aya::maps::HashOfMaps<T, K, V> where T: core::marker::Sync, K: core::marker::Sync, V: core::marker::Sync
+impl<T, K, V> core::marker::Unpin for aya::maps::HashOfMaps<T, K, V> where T: core::marker::Unpin, K: core::marker::Unpin, V: core::marker::Unpin
+impl<T, K, V> core::marker::UnsafeUnpin for aya::maps::HashOfMaps<T, K, V> where T: core::marker::UnsafeUnpin
+impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::HashOfMaps<T, K, V> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::HashOfMaps<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 pub mod aya::maps::perf
 pub enum aya::maps::perf::PerfBufferError
 pub aya::maps::perf::PerfBufferError::IOError(std::io::error::Error)
@@ -243,9 +313,6 @@ pub aya::maps::perf::PerfBufferError::InvalidPageCount
 pub aya::maps::perf::PerfBufferError::InvalidPageCount::page_count: usize
 pub aya::maps::perf::PerfBufferError::MMapError
 pub aya::maps::perf::PerfBufferError::MMapError::io_error: std::io::error::Error
-pub aya::maps::perf::PerfBufferError::MoreSpaceNeeded
-pub aya::maps::perf::PerfBufferError::MoreSpaceNeeded::size: usize
-pub aya::maps::perf::PerfBufferError::NoBuffers
 pub aya::maps::perf::PerfBufferError::OpenError
 pub aya::maps::perf::PerfBufferError::OpenError::io_error: std::io::error::Error
 pub aya::maps::perf::PerfBufferError::PerfEventEnableError
@@ -265,22 +332,21 @@ impl core::marker::Unpin for aya::maps::perf::PerfBufferError
 impl core::marker::UnsafeUnpin for aya::maps::perf::PerfBufferError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfBufferError
 impl !core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfBufferError
-pub struct aya::maps::perf::Events
-pub aya::maps::perf::Events::lost: usize
-pub aya::maps::perf::Events::read: usize
-impl core::cmp::Eq for aya::maps::perf::Events
-impl core::cmp::PartialEq for aya::maps::perf::Events
-pub fn aya::maps::perf::Events::eq(&self, other: &aya::maps::perf::Events) -> bool
-impl core::fmt::Debug for aya::maps::perf::Events
-pub fn aya::maps::perf::Events::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::StructuralPartialEq for aya::maps::perf::Events
-impl core::marker::Freeze for aya::maps::perf::Events
-impl core::marker::Send for aya::maps::perf::Events
-impl core::marker::Sync for aya::maps::perf::Events
-impl core::marker::Unpin for aya::maps::perf::Events
-impl core::marker::UnsafeUnpin for aya::maps::perf::Events
-impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::Events
-impl core::panic::unwind_safe::UnwindSafe for aya::maps::perf::Events
+pub enum aya::maps::perf::PerfEvent<'a>
+pub aya::maps::perf::PerfEvent::Lost
+pub aya::maps::perf::PerfEvent::Lost::count: u64
+pub aya::maps::perf::PerfEvent::Sample
+pub aya::maps::perf::PerfEvent::Sample::head: &'a [u8]
+pub aya::maps::perf::PerfEvent::Sample::tail: &'a [u8]
+impl<'a> core::fmt::Debug for aya::maps::perf::PerfEvent<'a>
+pub fn aya::maps::perf::PerfEvent<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Freeze for aya::maps::perf::PerfEvent<'a>
+impl<'a> core::marker::Send for aya::maps::perf::PerfEvent<'a>
+impl<'a> core::marker::Sync for aya::maps::perf::PerfEvent<'a>
+impl<'a> core::marker::Unpin for aya::maps::perf::PerfEvent<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::maps::perf::PerfEvent<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfEvent<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfEvent<'a>
 pub struct aya::maps::perf::PerfEventArray<T>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::perf::PerfEventArray<T>
 pub fn aya::maps::perf::PerfEventArray<T>::pin<P: core::convert::AsRef<std::path::Path>>(&self, path: P) -> core::result::Result<(), aya::pin::PinError>
@@ -304,8 +370,10 @@ impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfEventAr
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfEventArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
 pub struct aya::maps::perf::PerfEventArrayBuffer<T>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::PerfEventArrayBuffer<T>
-pub fn aya::maps::perf::PerfEventArrayBuffer<T>::read_events(&mut self, out_bufs: &mut [bytes::bytes_mut::BytesMut]) -> core::result::Result<aya::maps::perf::Events, aya::maps::perf::PerfBufferError>
+pub fn aya::maps::perf::PerfEventArrayBuffer<T>::fold<C, F>(&mut self, init: C, f: F) -> C where F: core::ops::function::FnMut(C, aya::maps::perf::PerfEvent<'_>) -> C
+pub fn aya::maps::perf::PerfEventArrayBuffer<T>::for_each<F>(&mut self, f: F) where F: core::ops::function::FnMut(aya::maps::perf::PerfEvent<'_>)
 pub fn aya::maps::perf::PerfEventArrayBuffer<T>::readable(&self) -> bool
+pub fn aya::maps::perf::PerfEventArrayBuffer<T>::try_fold<B, C, F>(&mut self, init: C, f: F) -> core::ops::control_flow::ControlFlow<B, C> where F: core::ops::function::FnMut(C, aya::maps::perf::PerfEvent<'_>) -> core::ops::control_flow::ControlFlow<B, C>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> std::os::fd::owned::AsFd for aya::maps::perf::PerfEventArrayBuffer<T>
 pub fn aya::maps::perf::PerfEventArrayBuffer<T>::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> std::os::fd::raw::AsRawFd for aya::maps::perf::PerfEventArrayBuffer<T>
@@ -326,6 +394,8 @@ pub fn aya::maps::queue::Queue<T, V>::pin<P: core::convert::AsRef<std::path::Pat
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::queue::Queue<T, V>
 pub fn aya::maps::queue::Queue<T, V>::pop(&mut self, flags: u64) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::queue::Queue<T, V>::push(&mut self, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<V: aya::Pod> aya::maps::queue::Queue<aya::maps::MapData, V>
+pub fn aya::maps::queue::Queue<aya::maps::MapData, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::queue::Queue<&'a aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::queue::Queue<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -513,6 +583,8 @@ pub fn aya::maps::stack::Stack<T, V>::pin<P: core::convert::AsRef<std::path::Pat
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::stack::Stack<T, V>
 pub fn aya::maps::stack::Stack<T, V>::pop(&mut self, flags: u64) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::stack::Stack<T, V>::push(&mut self, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<V: aya::Pod> aya::maps::stack::Stack<aya::maps::MapData, V>
+pub fn aya::maps::stack::Stack<aya::maps::MapData, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::stack::Stack<&'a aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::stack::Stack<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -712,11 +784,13 @@ impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::XskMap<T> where T
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::XskMap<T> where T: core::panic::unwind_safe::UnwindSafe
 pub enum aya::maps::Map
 pub aya::maps::Map::Array(aya::maps::MapData)
+pub aya::maps::Map::ArrayOfMaps(aya::maps::MapData)
 pub aya::maps::Map::BloomFilter(aya::maps::MapData)
 pub aya::maps::Map::CpuMap(aya::maps::MapData)
 pub aya::maps::Map::DevMap(aya::maps::MapData)
 pub aya::maps::Map::DevMapHash(aya::maps::MapData)
 pub aya::maps::Map::HashMap(aya::maps::MapData)
+pub aya::maps::Map::HashOfMaps(aya::maps::MapData)
 pub aya::maps::Map::LpmTrie(aya::maps::MapData)
 pub aya::maps::Map::LruHashMap(aya::maps::MapData)
 pub aya::maps::Map::PerCpuArray(aya::maps::MapData)
@@ -787,6 +861,12 @@ pub fn aya::maps::hash_map::PerCpuHashMap<&'a mut aya::maps::MapData, K, V>::try
 impl<'a, K: aya::Pod, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, K, V>
 pub type aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, K, V>::Error = aya::maps::MapError
 pub fn aya::maps::lpm_trie::LpmTrie<&'a mut aya::maps::MapData, K, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::maps::InnerMap> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::HashOfMaps<&'a aya::maps::MapData, K, V>
+pub type aya::maps::HashOfMaps<&'a aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::HashOfMaps<&'a aya::maps::MapData, K, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::maps::InnerMap> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::HashOfMaps<&'a mut aya::maps::MapData, K, V>
+pub type aya::maps::HashOfMaps<&'a mut aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::HashOfMaps<&'a mut aya::maps::MapData, K, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::PerCpuArray<&'a aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -829,6 +909,12 @@ pub fn aya::maps::sk_storage::SkStorage<&'a mut aya::maps::MapData, V>::try_from
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::stack::Stack<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::maps::InnerMap> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::ArrayOfMaps<&'a aya::maps::MapData, V>
+pub type aya::maps::ArrayOfMaps<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::ArrayOfMaps<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::maps::InnerMap> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData, V>
+pub type aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::CpuMap<&'a aya::maps::MapData>
 pub type aya::maps::CpuMap<&'a aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::CpuMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -898,6 +984,9 @@ pub fn aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>::try_from(ma
 impl<K: aya::Pod, V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>
 pub type aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::Error = aya::maps::MapError
 pub fn aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<K: aya::Pod, V: aya::maps::InnerMap> core::convert::TryFrom<aya::maps::Map> for aya::maps::HashOfMaps<aya::maps::MapData, K, V>
+pub type aya::maps::HashOfMaps<aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::HashOfMaps<aya::maps::MapData, K, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::PerCpuArray<aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::PerCpuArray<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -919,6 +1008,9 @@ pub fn aya::maps::sk_storage::SkStorage<aya::maps::MapData, V>::try_from(map: ay
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::stack::Stack<aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::stack::Stack<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<V: aya::maps::InnerMap> core::convert::TryFrom<aya::maps::Map> for aya::maps::ArrayOfMaps<aya::maps::MapData, V>
+pub type aya::maps::ArrayOfMaps<aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::ArrayOfMaps<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl core::marker::Freeze for aya::maps::Map
 impl core::marker::Send for aya::maps::Map
 impl core::marker::Sync for aya::maps::Map
@@ -946,6 +1038,8 @@ pub aya::maps::MapError::InvalidValueStride::size: usize
 pub aya::maps::MapError::InvalidValueStride::stride: usize
 pub aya::maps::MapError::IoError(std::io::error::Error)
 pub aya::maps::MapError::KeyNotFound
+pub aya::maps::MapError::MissingInnerMapDefinition
+pub aya::maps::MapError::MissingInnerMapDefinition::outer_name: alloc::string::String
 pub aya::maps::MapError::OutOfBounds
 pub aya::maps::MapError::OutOfBounds::index: u32
 pub aya::maps::MapError::OutOfBounds::max_entries: u32
@@ -1048,6 +1142,8 @@ impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::array:
 pub fn aya::maps::array::Array<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::array::Array<T, V>
 pub fn aya::maps::array::Array<T, V>::set(&mut self, index: u32, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<V: aya::Pod> aya::maps::array::Array<aya::maps::MapData, V>
+pub fn aya::maps::array::Array<aya::maps::MapData, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::array::Array<&'a aya::maps::MapData, V>
 pub type aya::maps::array::Array<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::array::Array<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1067,6 +1163,34 @@ impl<T, V> core::marker::Unpin for aya::maps::array::Array<T, V> where T: core::
 impl<T, V> core::marker::UnsafeUnpin for aya::maps::array::Array<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::array::Array<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::array::Array<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+pub struct aya::maps::ArrayOfMaps<T, V>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::maps::FromMapData> aya::maps::ArrayOfMaps<T, V>
+pub fn aya::maps::ArrayOfMaps<T, V>::get(&self, index: &u32, flags: u64) -> core::result::Result<V, aya::maps::MapError>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V> aya::maps::ArrayOfMaps<T, V>
+pub fn aya::maps::ArrayOfMaps<T, V>::is_empty(&self) -> bool
+pub fn aya::maps::ArrayOfMaps<T, V>::len(&self) -> u32
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::maps::InnerMap> aya::maps::ArrayOfMaps<T, V>
+pub fn aya::maps::ArrayOfMaps<T, V>::set(&mut self, index: u32, value: &V, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<V> aya::maps::ArrayOfMaps<aya::maps::MapData, V>
+pub fn aya::maps::ArrayOfMaps<aya::maps::MapData, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
+impl<'a, V: aya::maps::InnerMap> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::ArrayOfMaps<&'a aya::maps::MapData, V>
+pub type aya::maps::ArrayOfMaps<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::ArrayOfMaps<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::maps::InnerMap> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData, V>
+pub type aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug, V> core::fmt::Debug for aya::maps::ArrayOfMaps<T, V>
+pub fn aya::maps::ArrayOfMaps<T, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<V: aya::maps::InnerMap> core::convert::TryFrom<aya::maps::Map> for aya::maps::ArrayOfMaps<aya::maps::MapData, V>
+pub type aya::maps::ArrayOfMaps<aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::ArrayOfMaps<aya::maps::MapData, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T, V> core::marker::Freeze for aya::maps::ArrayOfMaps<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::ArrayOfMaps<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::ArrayOfMaps<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::ArrayOfMaps<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::ArrayOfMaps<T, V> where T: core::marker::UnsafeUnpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ArrayOfMaps<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::ArrayOfMaps<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::BloomFilter<T, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::contains(&self, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
@@ -1074,6 +1198,8 @@ impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::bloom_filter::BloomFilter<T, V>
 pub fn aya::maps::bloom_filter::BloomFilter<T, V>::insert(&mut self, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<V: aya::Pod> aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>
+pub fn aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1173,6 +1299,8 @@ impl<T> core::marker::UnsafeUnpin for aya::maps::DevMapHash<T> where T: core::ma
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::DevMapHash<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::DevMapHash<T> where T: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::HashMap<T, K, V>
+impl<K: aya::Pod, V: aya::Pod> aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>
+pub fn aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::hash_map::HashMap<T, K, V>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::get(&self, key: &K, flags: u64) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::hash_map::HashMap<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, K, V, Self>
@@ -1207,7 +1335,38 @@ impl<T, K, V> core::marker::Unpin for aya::maps::hash_map::HashMap<T, K, V> wher
 impl<T, K, V> core::marker::UnsafeUnpin for aya::maps::hash_map::HashMap<T, K, V> where T: core::marker::UnsafeUnpin
 impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::hash_map::HashMap<T, K, V> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::hash_map::HashMap<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+pub struct aya::maps::HashOfMaps<T, K, V>
+impl<K: aya::Pod, V> aya::maps::HashOfMaps<aya::maps::MapData, K, V>
+pub fn aya::maps::HashOfMaps<aya::maps::MapData, K, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::maps::FromMapData> aya::maps::HashOfMaps<T, K, V>
+pub fn aya::maps::HashOfMaps<T, K, V>::get(&self, key: &K, flags: u64) -> core::result::Result<V, aya::maps::MapError>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V> aya::maps::HashOfMaps<T, K, V>
+pub fn aya::maps::HashOfMaps<T, K, V>::keys(&self) -> aya::maps::MapKeys<'_, K>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>, K: aya::Pod, V: aya::maps::InnerMap> aya::maps::HashOfMaps<T, K, V>
+pub fn aya::maps::HashOfMaps<T, K, V>::insert(&mut self, key: impl core::borrow::Borrow<K>, value: &V, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>, K: aya::Pod, V> aya::maps::HashOfMaps<T, K, V>
+pub fn aya::maps::HashOfMaps<T, K, V>::remove(&mut self, key: &K) -> core::result::Result<(), aya::maps::MapError>
+impl<'a, K: aya::Pod, V: aya::maps::InnerMap> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::HashOfMaps<&'a aya::maps::MapData, K, V>
+pub type aya::maps::HashOfMaps<&'a aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::HashOfMaps<&'a aya::maps::MapData, K, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, K: aya::Pod, V: aya::maps::InnerMap> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::HashOfMaps<&'a mut aya::maps::MapData, K, V>
+pub type aya::maps::HashOfMaps<&'a mut aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::HashOfMaps<&'a mut aya::maps::MapData, K, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<K: aya::Pod, V: aya::maps::InnerMap> core::convert::TryFrom<aya::maps::Map> for aya::maps::HashOfMaps<aya::maps::MapData, K, V>
+pub type aya::maps::HashOfMaps<aya::maps::MapData, K, V>::Error = aya::maps::MapError
+pub fn aya::maps::HashOfMaps<aya::maps::MapData, K, V>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug, K, V> core::fmt::Debug for aya::maps::HashOfMaps<T, K, V>
+pub fn aya::maps::HashOfMaps<T, K, V>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T, K, V> core::marker::Freeze for aya::maps::HashOfMaps<T, K, V> where T: core::marker::Freeze
+impl<T, K, V> core::marker::Send for aya::maps::HashOfMaps<T, K, V> where T: core::marker::Send, K: core::marker::Send, V: core::marker::Send
+impl<T, K, V> core::marker::Sync for aya::maps::HashOfMaps<T, K, V> where T: core::marker::Sync, K: core::marker::Sync, V: core::marker::Sync
+impl<T, K, V> core::marker::Unpin for aya::maps::HashOfMaps<T, K, V> where T: core::marker::Unpin, K: core::marker::Unpin, V: core::marker::Unpin
+impl<T, K, V> core::marker::UnsafeUnpin for aya::maps::HashOfMaps<T, K, V> where T: core::marker::UnsafeUnpin
+impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::HashOfMaps<T, K, V> where T: core::panic::unwind_safe::RefUnwindSafe, K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::HashOfMaps<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::LpmTrie<T, K, V>
+impl<K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>
+pub fn aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<T, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::get(&self, key: &aya::maps::lpm_trie::Key<K>, flags: u64) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, aya::maps::lpm_trie::Key<K>, V, Self>
@@ -1325,6 +1484,8 @@ impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::PerCpu
 pub fn aya::maps::PerCpuArray<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::PerCpuArray<T, V>
 pub fn aya::maps::PerCpuArray<T, V>::set(&mut self, index: u32, values: aya::maps::PerCpuValues<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<V: aya::Pod> aya::maps::PerCpuArray<aya::maps::MapData, V>
+pub fn aya::maps::PerCpuArray<aya::maps::MapData, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::PerCpuArray<&'a aya::maps::MapData, V>
 pub type aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::PerCpuArray<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1345,6 +1506,8 @@ impl<T, V> core::marker::UnsafeUnpin for aya::maps::PerCpuArray<T, V> where T: c
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::PerCpuArray<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::PerCpuArray<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::PerCpuHashMap<T, K: aya::Pod, V: aya::Pod>
+impl<K: aya::Pod, V: aya::Pod> aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>
+pub fn aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::hash_map::PerCpuHashMap<T, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::get(&self, key: &K, flags: u64) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
 pub fn aya::maps::hash_map::PerCpuHashMap<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, K, aya::maps::PerCpuValues<V>, Self>
@@ -1452,6 +1615,8 @@ pub fn aya::maps::queue::Queue<T, V>::pin<P: core::convert::AsRef<std::path::Pat
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::queue::Queue<T, V>
 pub fn aya::maps::queue::Queue<T, V>::pop(&mut self, flags: u64) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::queue::Queue<T, V>::push(&mut self, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<V: aya::Pod> aya::maps::queue::Queue<aya::maps::MapData, V>
+pub fn aya::maps::queue::Queue<aya::maps::MapData, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::queue::Queue<&'a aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::queue::Queue<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1608,6 +1773,8 @@ pub fn aya::maps::stack::Stack<T, V>::pin<P: core::convert::AsRef<std::path::Pat
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::stack::Stack<T, V>
 pub fn aya::maps::stack::Stack<T, V>::pop(&mut self, flags: u64) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::stack::Stack<T, V>::push(&mut self, value: impl core::borrow::Borrow<V>, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+impl<V: aya::Pod> aya::maps::stack::Stack<aya::maps::MapData, V>
+pub fn aya::maps::stack::Stack<aya::maps::MapData, V>::create(max_entries: u32, flags: u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::stack::Stack<&'a aya::maps::MapData, V>
 pub type aya::maps::stack::Stack<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::stack::Stack<&'a aya::maps::MapData, V>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1682,6 +1849,10 @@ impl<T> core::marker::Unpin for aya::maps::XskMap<T> where T: core::marker::Unpi
 impl<T> core::marker::UnsafeUnpin for aya::maps::XskMap<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::XskMap<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::XskMap<T> where T: core::panic::unwind_safe::UnwindSafe
+pub trait aya::maps::FromMapData: aya::maps::sealed::FromMapData
+impl<T: aya::maps::sealed::FromMapData> aya::maps::FromMapData for T
+pub trait aya::maps::InnerMap: aya::maps::sealed::InnerMap
+impl<T: aya::maps::sealed::InnerMap> aya::maps::InnerMap for T
 pub trait aya::maps::IterableMap<K: aya::Pod, V>
 pub fn aya::maps::IterableMap::get(&self, key: &K) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::IterableMap::map(&self) -> &aya::maps::MapData
@@ -1841,6 +2012,10 @@ pub fn aya::programs::cgroup_skb::CgroupSkb::pin<P: core::convert::AsRef<std::pa
 pub fn aya::programs::cgroup_skb::CgroupSkb::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
+pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
+pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_skb::CgroupSkb
@@ -2513,6 +2688,10 @@ pub fn aya::programs::flow_dissector::FlowDissector::pin<P: core::convert::AsRef
 pub fn aya::programs::flow_dissector::FlowDissector::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::flow_dissector::FlowDissector
 pub fn aya::programs::flow_dissector::FlowDissector::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::flow_dissector::FlowDissector
+pub type aya::programs::flow_dissector::FlowDissector::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::flow_dissector::FlowDissector::Result = aya::programs::TestRunResult
+pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::flow_dissector::FlowDissector
 pub fn aya::programs::flow_dissector::FlowDissector::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::flow_dissector::FlowDissector
@@ -3785,6 +3964,10 @@ pub fn aya::programs::raw_trace_point::RawTracePoint::pin<P: core::convert::AsRe
 pub fn aya::programs::raw_trace_point::RawTracePoint::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::raw_trace_point::RawTracePoint
+pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions
+pub type aya::programs::raw_trace_point::RawTracePoint::Result = aya::programs::RawTracePointTestRunResult
+pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::raw_trace_point::RawTracePoint
@@ -4275,6 +4458,10 @@ pub fn aya::programs::socket_filter::SocketFilter::pin<P: core::convert::AsRef<s
 pub fn aya::programs::socket_filter::SocketFilter::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::socket_filter::SocketFilter
+pub type aya::programs::socket_filter::SocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::socket_filter::SocketFilter::Result = aya::programs::TestRunResult
+pub fn aya::programs::socket_filter::SocketFilter::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::socket_filter::SocketFilter
@@ -4437,6 +4624,10 @@ impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::MultiProgram for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::tc::SchedClassifier
+pub type aya::programs::tc::SchedClassifier::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::tc::SchedClassifier::Result = aya::programs::TestRunResult
+pub fn aya::programs::tc::SchedClassifier::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::tc::SchedClassifier
@@ -4897,11 +5088,36 @@ impl core::marker::Unpin for aya::programs::xdp::XdpError
 impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpError
+pub enum aya::programs::xdp::XdpMode
+pub aya::programs::xdp::XdpMode::Default
+pub aya::programs::xdp::XdpMode::Driver
+pub aya::programs::xdp::XdpMode::Hardware
+pub aya::programs::xdp::XdpMode::Skb
+impl core::clone::Clone for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::clone(&self) -> aya::programs::xdp::XdpMode
+impl core::cmp::Eq for aya::programs::xdp::XdpMode
+impl core::cmp::PartialEq for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::eq(&self, other: &aya::programs::xdp::XdpMode) -> bool
+impl core::default::Default for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::default() -> aya::programs::xdp::XdpMode
+impl core::fmt::Debug for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for aya::programs::xdp::XdpMode
+impl core::marker::StructuralPartialEq for aya::programs::xdp::XdpMode
+impl core::marker::Freeze for aya::programs::xdp::XdpMode
+impl core::marker::Send for aya::programs::xdp::XdpMode
+impl core::marker::Sync for aya::programs::xdp::XdpMode
+impl core::marker::Unpin for aya::programs::xdp::XdpMode
+impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpMode
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpMode
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpMode
 pub struct aya::programs::xdp::Xdp
 impl aya::programs::xdp::Xdp
 pub const aya::programs::xdp::Xdp::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::xdp::Xdp::attach(&mut self, interface: &str, flags: aya::programs::xdp::XdpFlags) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
-pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, if_index: u32, flags: aya::programs::xdp::XdpFlags) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::attach(&mut self, interface: &str, mode: aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, if_index: u32, mode: aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::attach_to_link(&mut self, link: aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -4919,6 +5135,10 @@ pub fn aya::programs::xdp::Xdp::pin<P: core::convert::AsRef<std::path::Path>>(&m
 pub fn aya::programs::xdp::Xdp::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::xdp::Xdp
+pub type aya::programs::xdp::Xdp::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::xdp::Xdp::Result = aya::programs::TestRunResult
+pub fn aya::programs::xdp::Xdp::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::xdp::Xdp
@@ -4936,98 +5156,6 @@ impl core::marker::Unpin for aya::programs::xdp::Xdp
 impl core::marker::UnsafeUnpin for aya::programs::xdp::Xdp
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::Xdp
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::Xdp
-pub struct aya::programs::xdp::XdpFlags(_)
-impl aya::programs::xdp::XdpFlags
-pub const aya::programs::xdp::XdpFlags::DRV_MODE: Self
-pub const aya::programs::xdp::XdpFlags::HW_MODE: Self
-pub const aya::programs::xdp::XdpFlags::REPLACE: Self
-pub const aya::programs::xdp::XdpFlags::SKB_MODE: Self
-pub const aya::programs::xdp::XdpFlags::UPDATE_IF_NOEXIST: Self
-impl aya::programs::xdp::XdpFlags
-pub const fn aya::programs::xdp::XdpFlags::all() -> Self
-pub const fn aya::programs::xdp::XdpFlags::bits(&self) -> u32
-pub const fn aya::programs::xdp::XdpFlags::complement(self) -> Self
-pub const fn aya::programs::xdp::XdpFlags::contains(&self, other: Self) -> bool
-pub const fn aya::programs::xdp::XdpFlags::difference(self, other: Self) -> Self
-pub const fn aya::programs::xdp::XdpFlags::empty() -> Self
-pub const fn aya::programs::xdp::XdpFlags::from_bits(bits: u32) -> core::option::Option<Self>
-pub const fn aya::programs::xdp::XdpFlags::from_bits_retain(bits: u32) -> Self
-pub const fn aya::programs::xdp::XdpFlags::from_bits_truncate(bits: u32) -> Self
-pub fn aya::programs::xdp::XdpFlags::from_name(name: &str) -> core::option::Option<Self>
-pub fn aya::programs::xdp::XdpFlags::insert(&mut self, other: Self)
-pub const fn aya::programs::xdp::XdpFlags::intersection(self, other: Self) -> Self
-pub const fn aya::programs::xdp::XdpFlags::intersects(&self, other: Self) -> bool
-pub const fn aya::programs::xdp::XdpFlags::is_all(&self) -> bool
-pub const fn aya::programs::xdp::XdpFlags::is_empty(&self) -> bool
-pub fn aya::programs::xdp::XdpFlags::remove(&mut self, other: Self)
-pub fn aya::programs::xdp::XdpFlags::set(&mut self, other: Self, value: bool)
-pub const fn aya::programs::xdp::XdpFlags::symmetric_difference(self, other: Self) -> Self
-pub fn aya::programs::xdp::XdpFlags::toggle(&mut self, other: Self)
-pub const fn aya::programs::xdp::XdpFlags::union(self, other: Self) -> Self
-impl aya::programs::xdp::XdpFlags
-pub const fn aya::programs::xdp::XdpFlags::iter(&self) -> bitflags::iter::Iter<aya::programs::xdp::XdpFlags>
-pub const fn aya::programs::xdp::XdpFlags::iter_names(&self) -> bitflags::iter::IterNames<aya::programs::xdp::XdpFlags>
-impl bitflags::traits::Flags for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Bits = u32
-pub const aya::programs::xdp::XdpFlags::FLAGS: &'static [bitflags::traits::Flag<aya::programs::xdp::XdpFlags>]
-pub fn aya::programs::xdp::XdpFlags::bits(&self) -> u32
-pub fn aya::programs::xdp::XdpFlags::from_bits_retain(bits: u32) -> aya::programs::xdp::XdpFlags
-impl bitflags::traits::PublicFlags for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Internal = InternalBitFlags
-pub type aya::programs::xdp::XdpFlags::Primitive = u32
-impl core::clone::Clone for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::clone(&self) -> aya::programs::xdp::XdpFlags
-impl core::default::Default for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::default() -> aya::programs::xdp::XdpFlags
-impl core::fmt::Binary for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Debug for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Octal for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::iter::traits::collect::Extend<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::extend<T: core::iter::traits::collect::IntoIterator<Item = Self>>(&mut self, iterator: T)
-impl core::iter::traits::collect::FromIterator<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::from_iter<T: core::iter::traits::collect::IntoIterator<Item = Self>>(iterator: T) -> Self
-impl core::iter::traits::collect::IntoIterator for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::IntoIter = bitflags::iter::Iter<aya::programs::xdp::XdpFlags>
-pub type aya::programs::xdp::XdpFlags::Item = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::into_iter(self) -> Self::IntoIter
-impl core::marker::Copy for aya::programs::xdp::XdpFlags
-impl core::ops::arith::Sub for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::sub(self, other: Self) -> Self
-impl core::ops::arith::SubAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::sub_assign(&mut self, other: Self)
-impl core::ops::bit::BitAnd for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitand(self, other: Self) -> Self
-impl core::ops::bit::BitAndAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitand_assign(&mut self, other: Self)
-impl core::ops::bit::BitOr for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitor(self, other: aya::programs::xdp::XdpFlags) -> Self
-impl core::ops::bit::BitOrAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitor_assign(&mut self, other: Self)
-impl core::ops::bit::BitXor for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitxor(self, other: Self) -> Self
-impl core::ops::bit::BitXorAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitxor_assign(&mut self, other: Self)
-impl core::ops::bit::Not for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::not(self) -> Self
-impl core::marker::Freeze for aya::programs::xdp::XdpFlags
-impl core::marker::Send for aya::programs::xdp::XdpFlags
-impl core::marker::Sync for aya::programs::xdp::XdpFlags
-impl core::marker::Unpin for aya::programs::xdp::XdpFlags
-impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpFlags
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpFlags
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpFlags
 pub struct aya::programs::xdp::XdpLink(_)
 impl aya::programs::links::Link for aya::programs::xdp::XdpLink
 pub type aya::programs::xdp::XdpLink::Id = aya::programs::xdp::XdpLinkId
@@ -5643,6 +5771,31 @@ impl core::marker::Unpin for aya::programs::xdp::XdpError
 impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpError
+pub enum aya::programs::XdpMode
+pub aya::programs::XdpMode::Default
+pub aya::programs::XdpMode::Driver
+pub aya::programs::XdpMode::Hardware
+pub aya::programs::XdpMode::Skb
+impl core::clone::Clone for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::clone(&self) -> aya::programs::xdp::XdpMode
+impl core::cmp::Eq for aya::programs::xdp::XdpMode
+impl core::cmp::PartialEq for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::eq(&self, other: &aya::programs::xdp::XdpMode) -> bool
+impl core::default::Default for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::default() -> aya::programs::xdp::XdpMode
+impl core::fmt::Debug for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::xdp::XdpMode
+pub fn aya::programs::xdp::XdpMode::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for aya::programs::xdp::XdpMode
+impl core::marker::StructuralPartialEq for aya::programs::xdp::XdpMode
+impl core::marker::Freeze for aya::programs::xdp::XdpMode
+impl core::marker::Send for aya::programs::xdp::XdpMode
+impl core::marker::Sync for aya::programs::xdp::XdpMode
+impl core::marker::Unpin for aya::programs::xdp::XdpMode
+impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpMode
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpMode
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpMode
 pub struct aya::programs::BtfTracePoint
 impl aya::programs::tp_btf::BtfTracePoint
 pub const aya::programs::tp_btf::BtfTracePoint::PROGRAM_TYPE: aya::programs::ProgramType
@@ -5741,6 +5894,10 @@ pub fn aya::programs::cgroup_skb::CgroupSkb::pin<P: core::convert::AsRef<std::pa
 pub fn aya::programs::cgroup_skb::CgroupSkb::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
+pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
+pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::cgroup_skb::CgroupSkb
@@ -6037,6 +6194,10 @@ pub fn aya::programs::flow_dissector::FlowDissector::pin<P: core::convert::AsRef
 pub fn aya::programs::flow_dissector::FlowDissector::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::flow_dissector::FlowDissector
 pub fn aya::programs::flow_dissector::FlowDissector::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::flow_dissector::FlowDissector
+pub type aya::programs::flow_dissector::FlowDissector::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::flow_dissector::FlowDissector::Result = aya::programs::TestRunResult
+pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::flow_dissector::FlowDissector
 pub fn aya::programs::flow_dissector::FlowDissector::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::flow_dissector::FlowDissector
@@ -6373,6 +6534,10 @@ pub fn aya::programs::raw_trace_point::RawTracePoint::pin<P: core::convert::AsRe
 pub fn aya::programs::raw_trace_point::RawTracePoint::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::raw_trace_point::RawTracePoint
+pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions
+pub type aya::programs::raw_trace_point::RawTracePoint::Result = aya::programs::RawTracePointTestRunResult
+pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::raw_trace_point::RawTracePoint
 pub fn aya::programs::raw_trace_point::RawTracePoint::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::raw_trace_point::RawTracePoint
@@ -6390,6 +6555,33 @@ impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePoint
 impl core::marker::UnsafeUnpin for aya::programs::raw_trace_point::RawTracePoint
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePoint
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePoint
+pub struct aya::programs::RawTracePointRunOptions
+pub aya::programs::RawTracePointRunOptions::args: [u64; 12]
+pub aya::programs::RawTracePointRunOptions::cpu: core::option::Option<u32>
+impl aya::programs::RawTracePointRunOptions
+pub const fn aya::programs::RawTracePointRunOptions::new() -> Self
+impl core::default::Default for aya::programs::RawTracePointRunOptions
+pub fn aya::programs::RawTracePointRunOptions::default() -> aya::programs::RawTracePointRunOptions
+impl core::fmt::Debug for aya::programs::RawTracePointRunOptions
+pub fn aya::programs::RawTracePointRunOptions::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::RawTracePointRunOptions
+impl core::marker::Send for aya::programs::RawTracePointRunOptions
+impl core::marker::Sync for aya::programs::RawTracePointRunOptions
+impl core::marker::Unpin for aya::programs::RawTracePointRunOptions
+impl core::marker::UnsafeUnpin for aya::programs::RawTracePointRunOptions
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePointRunOptions
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointRunOptions
+pub struct aya::programs::RawTracePointTestRunResult
+pub aya::programs::RawTracePointTestRunResult::return_value: u32
+impl core::fmt::Debug for aya::programs::RawTracePointTestRunResult
+pub fn aya::programs::RawTracePointTestRunResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::RawTracePointTestRunResult
+impl core::marker::Send for aya::programs::RawTracePointTestRunResult
+impl core::marker::Sync for aya::programs::RawTracePointTestRunResult
+impl core::marker::Unpin for aya::programs::RawTracePointTestRunResult
+impl core::marker::UnsafeUnpin for aya::programs::RawTracePointTestRunResult
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePointTestRunResult
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointTestRunResult
 pub struct aya::programs::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub const aya::programs::tc::SchedClassifier::PROGRAM_TYPE: aya::programs::ProgramType
@@ -6415,6 +6607,10 @@ impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::MultiProgram for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::tc::SchedClassifier
+pub type aya::programs::tc::SchedClassifier::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::tc::SchedClassifier::Result = aya::programs::TestRunResult
+pub fn aya::programs::tc::SchedClassifier::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::tc::SchedClassifier
@@ -6636,6 +6832,10 @@ pub fn aya::programs::socket_filter::SocketFilter::pin<P: core::convert::AsRef<s
 pub fn aya::programs::socket_filter::SocketFilter::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::socket_filter::SocketFilter
+pub type aya::programs::socket_filter::SocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::socket_filter::SocketFilter::Result = aya::programs::TestRunResult
+pub fn aya::programs::socket_filter::SocketFilter::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::socket_filter::SocketFilter
@@ -6653,6 +6853,55 @@ impl core::marker::Unpin for aya::programs::socket_filter::SocketFilter
 impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilter
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilter
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilter
+pub struct aya::programs::TestRunAttrs
+impl aya::programs::TestRunAttrs
+pub const fn aya::programs::TestRunAttrs::new() -> Self
+pub const fn aya::programs::TestRunAttrs::xdp_live_frames(self, batch_size: u32) -> Self
+impl core::default::Default for aya::programs::TestRunAttrs
+pub fn aya::programs::TestRunAttrs::default() -> Self
+impl core::fmt::Debug for aya::programs::TestRunAttrs
+pub fn aya::programs::TestRunAttrs::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::TestRunAttrs
+impl core::marker::Send for aya::programs::TestRunAttrs
+impl core::marker::Sync for aya::programs::TestRunAttrs
+impl core::marker::Unpin for aya::programs::TestRunAttrs
+impl core::marker::UnsafeUnpin for aya::programs::TestRunAttrs
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::TestRunAttrs
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunAttrs
+pub struct aya::programs::TestRunOptions<'a>
+pub aya::programs::TestRunOptions::attrs: aya::programs::TestRunAttrs
+pub aya::programs::TestRunOptions::ctx_in: core::option::Option<&'a [u8]>
+pub aya::programs::TestRunOptions::ctx_out: core::option::Option<&'a mut [u8]>
+pub aya::programs::TestRunOptions::data_in: core::option::Option<&'a [u8]>
+pub aya::programs::TestRunOptions::data_out: core::option::Option<&'a mut [u8]>
+pub aya::programs::TestRunOptions::repeat: u32
+impl aya::programs::TestRunOptions<'_>
+pub const fn aya::programs::TestRunOptions<'_>::new() -> Self
+impl core::default::Default for aya::programs::TestRunOptions<'_>
+pub fn aya::programs::TestRunOptions<'_>::default() -> Self
+impl<'a> core::fmt::Debug for aya::programs::TestRunOptions<'a>
+pub fn aya::programs::TestRunOptions<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Freeze for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::Send for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::Sync for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::Unpin for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::programs::TestRunOptions<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::TestRunOptions<'a>
+impl<'a> !core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunOptions<'a>
+pub struct aya::programs::TestRunResult
+pub aya::programs::TestRunResult::ctx_size_out: u32
+pub aya::programs::TestRunResult::data_size_out: u32
+pub aya::programs::TestRunResult::duration: core::time::Duration
+pub aya::programs::TestRunResult::return_value: u32
+impl core::fmt::Debug for aya::programs::TestRunResult
+pub fn aya::programs::TestRunResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::TestRunResult
+impl core::marker::Send for aya::programs::TestRunResult
+impl core::marker::Sync for aya::programs::TestRunResult
+impl core::marker::Unpin for aya::programs::TestRunResult
+impl core::marker::UnsafeUnpin for aya::programs::TestRunResult
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::TestRunResult
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunResult
 pub struct aya::programs::TracePoint
 impl aya::programs::trace_point::TracePoint
 pub const aya::programs::trace_point::TracePoint::PROGRAM_TYPE: aya::programs::ProgramType
@@ -6732,8 +6981,8 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbe
 pub struct aya::programs::Xdp
 impl aya::programs::xdp::Xdp
 pub const aya::programs::xdp::Xdp::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::xdp::Xdp::attach(&mut self, interface: &str, flags: aya::programs::xdp::XdpFlags) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
-pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, if_index: u32, flags: aya::programs::xdp::XdpFlags) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::attach(&mut self, interface: &str, mode: aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, if_index: u32, mode: aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::attach_to_link(&mut self, link: aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P, attach_type: aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -6751,6 +7000,10 @@ pub fn aya::programs::xdp::Xdp::pin<P: core::convert::AsRef<std::path::Path>>(&m
 pub fn aya::programs::xdp::Xdp::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::xdp::Xdp
+pub type aya::programs::xdp::Xdp::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::xdp::Xdp::Result = aya::programs::TestRunResult
+pub fn aya::programs::xdp::Xdp::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::xdp::Xdp
@@ -6768,98 +7021,6 @@ impl core::marker::Unpin for aya::programs::xdp::Xdp
 impl core::marker::UnsafeUnpin for aya::programs::xdp::Xdp
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::Xdp
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::Xdp
-pub struct aya::programs::XdpFlags(_)
-impl aya::programs::xdp::XdpFlags
-pub const aya::programs::xdp::XdpFlags::DRV_MODE: Self
-pub const aya::programs::xdp::XdpFlags::HW_MODE: Self
-pub const aya::programs::xdp::XdpFlags::REPLACE: Self
-pub const aya::programs::xdp::XdpFlags::SKB_MODE: Self
-pub const aya::programs::xdp::XdpFlags::UPDATE_IF_NOEXIST: Self
-impl aya::programs::xdp::XdpFlags
-pub const fn aya::programs::xdp::XdpFlags::all() -> Self
-pub const fn aya::programs::xdp::XdpFlags::bits(&self) -> u32
-pub const fn aya::programs::xdp::XdpFlags::complement(self) -> Self
-pub const fn aya::programs::xdp::XdpFlags::contains(&self, other: Self) -> bool
-pub const fn aya::programs::xdp::XdpFlags::difference(self, other: Self) -> Self
-pub const fn aya::programs::xdp::XdpFlags::empty() -> Self
-pub const fn aya::programs::xdp::XdpFlags::from_bits(bits: u32) -> core::option::Option<Self>
-pub const fn aya::programs::xdp::XdpFlags::from_bits_retain(bits: u32) -> Self
-pub const fn aya::programs::xdp::XdpFlags::from_bits_truncate(bits: u32) -> Self
-pub fn aya::programs::xdp::XdpFlags::from_name(name: &str) -> core::option::Option<Self>
-pub fn aya::programs::xdp::XdpFlags::insert(&mut self, other: Self)
-pub const fn aya::programs::xdp::XdpFlags::intersection(self, other: Self) -> Self
-pub const fn aya::programs::xdp::XdpFlags::intersects(&self, other: Self) -> bool
-pub const fn aya::programs::xdp::XdpFlags::is_all(&self) -> bool
-pub const fn aya::programs::xdp::XdpFlags::is_empty(&self) -> bool
-pub fn aya::programs::xdp::XdpFlags::remove(&mut self, other: Self)
-pub fn aya::programs::xdp::XdpFlags::set(&mut self, other: Self, value: bool)
-pub const fn aya::programs::xdp::XdpFlags::symmetric_difference(self, other: Self) -> Self
-pub fn aya::programs::xdp::XdpFlags::toggle(&mut self, other: Self)
-pub const fn aya::programs::xdp::XdpFlags::union(self, other: Self) -> Self
-impl aya::programs::xdp::XdpFlags
-pub const fn aya::programs::xdp::XdpFlags::iter(&self) -> bitflags::iter::Iter<aya::programs::xdp::XdpFlags>
-pub const fn aya::programs::xdp::XdpFlags::iter_names(&self) -> bitflags::iter::IterNames<aya::programs::xdp::XdpFlags>
-impl bitflags::traits::Flags for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Bits = u32
-pub const aya::programs::xdp::XdpFlags::FLAGS: &'static [bitflags::traits::Flag<aya::programs::xdp::XdpFlags>]
-pub fn aya::programs::xdp::XdpFlags::bits(&self) -> u32
-pub fn aya::programs::xdp::XdpFlags::from_bits_retain(bits: u32) -> aya::programs::xdp::XdpFlags
-impl bitflags::traits::PublicFlags for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Internal = InternalBitFlags
-pub type aya::programs::xdp::XdpFlags::Primitive = u32
-impl core::clone::Clone for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::clone(&self) -> aya::programs::xdp::XdpFlags
-impl core::default::Default for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::default() -> aya::programs::xdp::XdpFlags
-impl core::fmt::Binary for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Debug for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::LowerHex for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::Octal for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::fmt::UpperHex for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::iter::traits::collect::Extend<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::extend<T: core::iter::traits::collect::IntoIterator<Item = Self>>(&mut self, iterator: T)
-impl core::iter::traits::collect::FromIterator<aya::programs::xdp::XdpFlags> for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::from_iter<T: core::iter::traits::collect::IntoIterator<Item = Self>>(iterator: T) -> Self
-impl core::iter::traits::collect::IntoIterator for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::IntoIter = bitflags::iter::Iter<aya::programs::xdp::XdpFlags>
-pub type aya::programs::xdp::XdpFlags::Item = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::into_iter(self) -> Self::IntoIter
-impl core::marker::Copy for aya::programs::xdp::XdpFlags
-impl core::ops::arith::Sub for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::sub(self, other: Self) -> Self
-impl core::ops::arith::SubAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::sub_assign(&mut self, other: Self)
-impl core::ops::bit::BitAnd for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitand(self, other: Self) -> Self
-impl core::ops::bit::BitAndAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitand_assign(&mut self, other: Self)
-impl core::ops::bit::BitOr for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitor(self, other: aya::programs::xdp::XdpFlags) -> Self
-impl core::ops::bit::BitOrAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitor_assign(&mut self, other: Self)
-impl core::ops::bit::BitXor for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitxor(self, other: Self) -> Self
-impl core::ops::bit::BitXorAssign for aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::bitxor_assign(&mut self, other: Self)
-impl core::ops::bit::Not for aya::programs::xdp::XdpFlags
-pub type aya::programs::xdp::XdpFlags::Output = aya::programs::xdp::XdpFlags
-pub fn aya::programs::xdp::XdpFlags::not(self) -> Self
-impl core::marker::Freeze for aya::programs::xdp::XdpFlags
-impl core::marker::Send for aya::programs::xdp::XdpFlags
-impl core::marker::Sync for aya::programs::xdp::XdpFlags
-impl core::marker::Unpin for aya::programs::xdp::XdpFlags
-impl core::marker::UnsafeUnpin for aya::programs::xdp::XdpFlags
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::xdp::XdpFlags
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpFlags
 pub trait aya::programs::Link: core::fmt::Debug + core::cmp::Eq + core::hash::Hash + 'static
 pub type aya::programs::Link::Id: core::fmt::Debug + core::cmp::Eq + core::hash::Hash + equivalent::Equivalent<Self>
 pub fn aya::programs::Link::detach(self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -6988,6 +7149,34 @@ pub trait aya::programs::MultiProgram
 pub fn aya::programs::MultiProgram::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
 impl aya::programs::MultiProgram for aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::ProgramError>
+pub trait aya::programs::TestRun
+pub type aya::programs::TestRun::Opts<'a>
+pub type aya::programs::TestRun::Result
+pub fn aya::programs::TestRun::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
+pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
+pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::flow_dissector::FlowDissector
+pub type aya::programs::flow_dissector::FlowDissector::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::flow_dissector::FlowDissector::Result = aya::programs::TestRunResult
+pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::raw_trace_point::RawTracePoint
+pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions
+pub type aya::programs::raw_trace_point::RawTracePoint::Result = aya::programs::RawTracePointTestRunResult
+pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::socket_filter::SocketFilter
+pub type aya::programs::socket_filter::SocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::socket_filter::SocketFilter::Result = aya::programs::TestRunResult
+pub fn aya::programs::socket_filter::SocketFilter::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::tc::SchedClassifier
+pub type aya::programs::tc::SchedClassifier::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::tc::SchedClassifier::Result = aya::programs::TestRunResult
+pub fn aya::programs::tc::SchedClassifier::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::xdp::Xdp
+pub type aya::programs::xdp::Xdp::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::xdp::Xdp::Result = aya::programs::TestRunResult
+pub fn aya::programs::xdp::Xdp::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 pub fn aya::programs::loaded_links() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::links::LinkInfo, aya::programs::links::LinkError>>
 pub fn aya::programs::loaded_programs() -> impl core::iter::traits::iterator::Iterator<Item = core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>>
 pub mod aya::sys
@@ -7164,6 +7353,82 @@ impl<'a> core::marker::Unpin for aya::GlobalData<'a>
 impl<'a> core::marker::UnsafeUnpin for aya::GlobalData<'a>
 impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::GlobalData<'a>
 impl<'a> core::panic::unwind_safe::UnwindSafe for aya::GlobalData<'a>
+pub struct aya::RawTracePointRunOptions
+pub aya::RawTracePointRunOptions::args: [u64; 12]
+pub aya::RawTracePointRunOptions::cpu: core::option::Option<u32>
+impl aya::programs::RawTracePointRunOptions
+pub const fn aya::programs::RawTracePointRunOptions::new() -> Self
+impl core::default::Default for aya::programs::RawTracePointRunOptions
+pub fn aya::programs::RawTracePointRunOptions::default() -> aya::programs::RawTracePointRunOptions
+impl core::fmt::Debug for aya::programs::RawTracePointRunOptions
+pub fn aya::programs::RawTracePointRunOptions::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::RawTracePointRunOptions
+impl core::marker::Send for aya::programs::RawTracePointRunOptions
+impl core::marker::Sync for aya::programs::RawTracePointRunOptions
+impl core::marker::Unpin for aya::programs::RawTracePointRunOptions
+impl core::marker::UnsafeUnpin for aya::programs::RawTracePointRunOptions
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePointRunOptions
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointRunOptions
+pub struct aya::RawTracePointTestRunResult
+pub aya::RawTracePointTestRunResult::return_value: u32
+impl core::fmt::Debug for aya::programs::RawTracePointTestRunResult
+pub fn aya::programs::RawTracePointTestRunResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::RawTracePointTestRunResult
+impl core::marker::Send for aya::programs::RawTracePointTestRunResult
+impl core::marker::Sync for aya::programs::RawTracePointTestRunResult
+impl core::marker::Unpin for aya::programs::RawTracePointTestRunResult
+impl core::marker::UnsafeUnpin for aya::programs::RawTracePointTestRunResult
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePointTestRunResult
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointTestRunResult
+pub struct aya::TestRunAttrs
+impl aya::programs::TestRunAttrs
+pub const fn aya::programs::TestRunAttrs::new() -> Self
+pub const fn aya::programs::TestRunAttrs::xdp_live_frames(self, batch_size: u32) -> Self
+impl core::default::Default for aya::programs::TestRunAttrs
+pub fn aya::programs::TestRunAttrs::default() -> Self
+impl core::fmt::Debug for aya::programs::TestRunAttrs
+pub fn aya::programs::TestRunAttrs::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::TestRunAttrs
+impl core::marker::Send for aya::programs::TestRunAttrs
+impl core::marker::Sync for aya::programs::TestRunAttrs
+impl core::marker::Unpin for aya::programs::TestRunAttrs
+impl core::marker::UnsafeUnpin for aya::programs::TestRunAttrs
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::TestRunAttrs
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunAttrs
+pub struct aya::TestRunOptions<'a>
+pub aya::TestRunOptions::attrs: aya::programs::TestRunAttrs
+pub aya::TestRunOptions::ctx_in: core::option::Option<&'a [u8]>
+pub aya::TestRunOptions::ctx_out: core::option::Option<&'a mut [u8]>
+pub aya::TestRunOptions::data_in: core::option::Option<&'a [u8]>
+pub aya::TestRunOptions::data_out: core::option::Option<&'a mut [u8]>
+pub aya::TestRunOptions::repeat: u32
+impl aya::programs::TestRunOptions<'_>
+pub const fn aya::programs::TestRunOptions<'_>::new() -> Self
+impl core::default::Default for aya::programs::TestRunOptions<'_>
+pub fn aya::programs::TestRunOptions<'_>::default() -> Self
+impl<'a> core::fmt::Debug for aya::programs::TestRunOptions<'a>
+pub fn aya::programs::TestRunOptions<'a>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Freeze for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::Send for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::Sync for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::Unpin for aya::programs::TestRunOptions<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::programs::TestRunOptions<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::TestRunOptions<'a>
+impl<'a> !core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunOptions<'a>
+pub struct aya::TestRunResult
+pub aya::TestRunResult::ctx_size_out: u32
+pub aya::TestRunResult::data_size_out: u32
+pub aya::TestRunResult::duration: core::time::Duration
+pub aya::TestRunResult::return_value: u32
+impl core::fmt::Debug for aya::programs::TestRunResult
+pub fn aya::programs::TestRunResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::TestRunResult
+impl core::marker::Send for aya::programs::TestRunResult
+impl core::marker::Sync for aya::programs::TestRunResult
+impl core::marker::Unpin for aya::programs::TestRunResult
+impl core::marker::UnsafeUnpin for aya::programs::TestRunResult
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::TestRunResult
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::TestRunResult
 pub struct aya::VerifierLogLevel(_)
 impl aya::VerifierLogLevel
 pub const aya::VerifierLogLevel::DEBUG: Self
@@ -7271,6 +7536,34 @@ impl aya::Pod for u64
 impl aya::Pod for u8
 impl<K: aya::Pod> aya::Pod for aya::maps::lpm_trie::Key<K>
 impl<T: aya::Pod, const N: usize> aya::Pod for [T; N]
+pub trait aya::TestRun
+pub type aya::TestRun::Opts<'a>
+pub type aya::TestRun::Result
+pub fn aya::TestRun::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
+pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
+pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::flow_dissector::FlowDissector
+pub type aya::programs::flow_dissector::FlowDissector::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::flow_dissector::FlowDissector::Result = aya::programs::TestRunResult
+pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::raw_trace_point::RawTracePoint
+pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions
+pub type aya::programs::raw_trace_point::RawTracePoint::Result = aya::programs::RawTracePointTestRunResult
+pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::socket_filter::SocketFilter
+pub type aya::programs::socket_filter::SocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::socket_filter::SocketFilter::Result = aya::programs::TestRunResult
+pub fn aya::programs::socket_filter::SocketFilter::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::tc::SchedClassifier
+pub type aya::programs::tc::SchedClassifier::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::tc::SchedClassifier::Result = aya::programs::TestRunResult
+pub fn aya::programs::tc::SchedClassifier::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::xdp::Xdp
+pub type aya::programs::xdp::Xdp::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::xdp::Xdp::Result = aya::programs::TestRunResult
+pub fn aya::programs::xdp::Xdp::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 pub fn aya::features() -> &'static aya_obj::obj::Features
 pub type aya::Bpf = aya::Ebpf
 pub type aya::BpfError = aya::EbpfError

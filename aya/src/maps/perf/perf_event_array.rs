@@ -4,18 +4,16 @@
 
 use std::{
     borrow::{Borrow, BorrowMut},
-    ops::Deref as _,
+    ops::{ControlFlow, Deref as _},
     os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
     path::Path,
     sync::Arc,
 };
 
-use bytes::BytesMut;
-
 use crate::{
     maps::{
         MapData, MapError, PinError,
-        perf::{Events, PerfBuffer, PerfBufferError},
+        perf::{PerfBuffer, PerfBufferError, PerfEvent},
     },
     sys::bpf_map_update_elem,
     util::page_size,
@@ -39,21 +37,45 @@ impl<T: BorrowMut<MapData>> PerfEventArrayBuffer<T> {
         self.buf.readable()
     }
 
-    /// Reads events from the buffer.
+    /// Processes events available in the buffer with `f`.
     ///
-    /// This method reads events into the provided slice of buffers, filling
-    /// each buffer in order stopping when there are no more events to read or
-    /// all the buffers have been filled.
+    /// For each available event, `f` receives the accumulator and event:
+    /// * [`ControlFlow::Continue(next)`](ControlFlow::Continue) keeps draining with `next`.
+    /// * [`ControlFlow::Break(break_value)`](ControlFlow::Break) stops early and returns `break_value`.
     ///
-    /// Returns the number of events read and the number of events lost. Events
-    /// are lost when user space doesn't read events fast enough and the ring
-    /// buffer fills up.
+    /// If the buffer is fully drained, returns [`ControlFlow::Continue`]
+    /// containing the final accumulator.
     ///
-    /// # Errors
+    /// The slices in [`PerfEvent::Sample`] are borrowed directly from the perf
+    /// ring buffer; the borrow is bounded by the closure invocation. The
+    /// kernel-visible `data_tail` is advanced once at the end of the call,
+    /// amortizing the `SeqCst` store across the drain.
+    pub fn try_fold<B, C, F>(&mut self, init: C, f: F) -> ControlFlow<B, C>
+    where
+        F: FnMut(C, PerfEvent<'_>) -> ControlFlow<B, C>,
+    {
+        self.buf.try_fold(init, f)
+    }
+
+    /// Processes events available in the buffer with `f`.
     ///
-    /// [`PerfBufferError::NoBuffers`] is returned when `out_bufs` is empty.
-    pub fn read_events(&mut self, out_bufs: &mut [BytesMut]) -> Result<Events, PerfBufferError> {
-        self.buf.read_events(out_bufs)
+    /// For each available event, `f` receives the accumulator and event, and
+    /// returns the next accumulator. Unlike [`PerfEventArrayBuffer::try_fold`],
+    /// this function cannot short-circuit: it always processes events until the
+    /// buffer is fully drained, then returns the final accumulator.
+    pub fn fold<C, F>(&mut self, init: C, f: F) -> C
+    where
+        F: FnMut(C, PerfEvent<'_>) -> C,
+    {
+        self.buf.fold(init, f)
+    }
+
+    /// Processes events available in the buffer with `f`.
+    pub fn for_each<F>(&mut self, f: F)
+    where
+        F: FnMut(PerfEvent<'_>),
+    {
+        self.buf.for_each(f)
     }
 }
 
@@ -78,7 +100,10 @@ impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 /// * call [`PerfEventArray::open`]
 /// * poll the returned [`PerfEventArrayBuffer`] to be notified when events are
 ///   inserted in the buffer
-/// * call [`PerfEventArrayBuffer::read_events`] to read the events
+/// * drain events with [`PerfEventArrayBuffer::for_each`] (or [`fold`]/[`try_fold`])
+///
+/// [`fold`]: PerfEventArrayBuffer::fold
+/// [`try_fold`]: PerfEventArrayBuffer::try_fold
 ///
 /// # Minimum kernel version
 ///
@@ -90,7 +115,7 @@ impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 /// available CPU:
 ///
 /// ```no_run
-/// # use aya::maps::perf::PerfEventArrayBuffer;
+/// # use aya::maps::perf::{PerfEvent, PerfEventArrayBuffer};
 /// # use aya::maps::MapData;
 /// # use std::borrow::BorrowMut;
 /// # struct Poll<T> { _t: std::marker::PhantomData<T> };
@@ -116,7 +141,6 @@ impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 /// # let mut bpf = aya::Ebpf::load(&[])?;
 /// use aya::maps::PerfEventArray;
 /// use aya::util::online_cpus;
-/// use bytes::BytesMut;
 ///
 /// let mut perf_array = PerfEventArray::try_from(bpf.map_mut("EVENTS").unwrap())?;
 ///
@@ -128,14 +152,18 @@ impl<T: BorrowMut<MapData>> AsRawFd for PerfEventArrayBuffer<T> {
 ///     perf_buffers.push(perf_array.open(cpu_id, None)?);
 /// }
 ///
-/// let mut out_bufs = [BytesMut::with_capacity(1024)];
-///
 /// // poll the buffers to know when they have queued events
 /// let poll = poll_buffers(perf_buffers);
 /// loop {
-///     for read_buf in poll.poll_readable() {
-///         read_buf.read_events(&mut out_bufs)?;
-///         // process out_bufs
+///     for perf_buf in poll.poll_readable() {
+///         perf_buf.for_each(|event| match event {
+///             PerfEvent::Sample { head, tail } => {
+///                 // process the sample bytes (`tail` is empty unless the sample wraps)
+///             }
+///             PerfEvent::Lost { count } => {
+///                 // record the dropped-events counter
+///             }
+///         });
 ///     }
 /// }
 ///
@@ -180,6 +208,10 @@ impl<T: Borrow<MapData>> PerfEventArray<T> {
     pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
         let data: &MapData = self.map.deref().borrow();
         data.pin(path)
+    }
+
+    pub(crate) fn map_data(&self) -> &MapData {
+        self.map.deref().borrow()
     }
 }
 

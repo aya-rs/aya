@@ -16,10 +16,11 @@ use aya_obj::{
         VarLinkage,
     },
     generated::{
-        BPF_ADD, BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_IMM, BPF_JMP, BPF_K,
-        BPF_LD, BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_X, bpf_attach_type, bpf_attr,
-        bpf_btf_info, bpf_cmd, bpf_func_id, bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type,
-        bpf_prog_info, bpf_prog_type, bpf_stats_type,
+        BPF_ADD, BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_F_TEST_RUN_ON_CPU,
+        BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_X,
+        bpf_attach_type, bpf_attr, bpf_attr__bindgen_ty_7, bpf_btf_info, bpf_cmd, bpf_func_id,
+        bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type, bpf_prog_info, bpf_prog_type,
+        bpf_stats_type,
     },
     maps::{LegacyMap, bpf_map_def},
 };
@@ -30,9 +31,12 @@ use libc::{
 use log::warn;
 
 use crate::{
-    Btf, Pod, VerifierLogLevel,
+    Btf, Pod, TestRunAttrs, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
-    programs::{LsmAttachType, ProgramType, links::LinkRef},
+    programs::{
+        LsmAttachType, ProgramType, RawTracePointRunOptions, RawTracePointTestRunResult,
+        TestRunOptions, TestRunResult, links::LinkRef,
+    },
     sys::{Syscall, SyscallError, syscall},
     util::KernelVersion,
 };
@@ -51,6 +55,7 @@ pub(crate) fn bpf_create_map(
     name: &CStr,
     def: &aya_obj::Map,
     btf_fd: Option<BorrowedFd<'_>>,
+    inner_map_fd: Option<BorrowedFd<'_>>,
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -61,6 +66,11 @@ pub(crate) fn bpf_create_map(
     u.max_entries = def.max_entries();
     u.map_flags = def.map_flags();
     u.map_extra = def.map_extra();
+
+    // For map-of-maps types, set the inner_map_fd.
+    if let Some(inner_fd) = inner_map_fd {
+        u.inner_map_fd = inner_fd.as_raw_fd() as u32;
+    }
 
     if let aya_obj::Map::Btf(m) = def {
         // Mimic https://github.com/libbpf/libbpf/issues/355
@@ -596,6 +606,103 @@ pub(crate) fn bpf_prog_get_fd_by_id(prog_id: u32) -> Result<crate::MockableFd, S
     })
 }
 
+fn invoke_prog_test_run(attr: &mut bpf_attr) -> Result<&bpf_attr__bindgen_ty_7, SyscallError> {
+    unit_sys_bpf(bpf_cmd::BPF_PROG_TEST_RUN, attr).map_err(|io_error| SyscallError {
+        call: "bpf_prog_test_run",
+        io_error,
+    })?;
+    Ok(unsafe { &attr.test })
+}
+
+/// Run a loaded BPF program with test data.
+///
+/// Introduced in kernel v4.12.
+pub(crate) fn bpf_prog_test_run(
+    prog_fd: BorrowedFd<'_>,
+    opts: TestRunOptions<'_>,
+) -> Result<TestRunResult, SyscallError> {
+    let TestRunOptions {
+        data_in,
+        data_out,
+        ctx_in,
+        ctx_out,
+        repeat,
+        attrs: TestRunAttrs { batch_size, flags },
+    } = opts;
+
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+
+    let test = unsafe { &mut attr.test };
+    test.prog_fd = prog_fd.as_raw_fd() as u32;
+    test.repeat = repeat;
+    test.flags = flags;
+    test.batch_size = batch_size;
+
+    if let Some(data_in) = data_in {
+        test.data_in = data_in.as_ptr() as u64;
+        test.data_size_in = data_in.len() as u32;
+    }
+
+    if let Some(data_out) = data_out {
+        test.data_out = data_out.as_mut_ptr() as u64;
+        test.data_size_out = data_out.len() as u32;
+    }
+
+    if let Some(ctx_in) = ctx_in {
+        test.ctx_in = ctx_in.as_ptr() as u64;
+        test.ctx_size_in = ctx_in.len() as u32;
+    }
+
+    if let Some(ctx_out) = ctx_out {
+        test.ctx_out = ctx_out.as_mut_ptr() as u64;
+        test.ctx_size_out = ctx_out.len() as u32;
+    }
+
+    let test = invoke_prog_test_run(&mut attr)?;
+
+    Ok(TestRunResult {
+        return_value: test.retval,
+        duration: std::time::Duration::from_nanos(u64::from(test.duration)),
+        data_size_out: test.data_size_out,
+        ctx_size_out: test.ctx_size_out,
+    })
+}
+
+/// Run a loaded [`RawTracePoint`](crate::programs::RawTracePoint) program with
+/// fake tracepoint arguments.
+///
+/// Introduced in kernel v5.10.
+///
+/// The kernel handler (`bpf_prog_test_run_raw_tp`) enforces that `data_in`,
+/// `data_out`, `ctx_out`, `repeat`, and `batch_size` are all zero/NULL,
+/// returning `EINVAL` otherwise. This function only sets the fields the kernel
+/// actually accepts: `ctx_in` (fake tracepoint args) and, optionally,
+/// `cpu`/`BPF_F_TEST_RUN_ON_CPU`.
+pub(crate) fn bpf_prog_test_run_raw_tp(
+    prog_fd: BorrowedFd<'_>,
+    opts: RawTracePointRunOptions,
+) -> Result<RawTracePointTestRunResult, SyscallError> {
+    let RawTracePointRunOptions { args, cpu } = opts;
+
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    // repeat, data_in, data_out, ctx_out, batch_size intentionally left as 0/NULL.
+    let test = unsafe { &mut attr.test };
+    test.prog_fd = prog_fd.as_raw_fd() as u32;
+
+    test.ctx_in = args.as_ptr() as u64;
+    test.ctx_size_in = size_of_val(&args) as u32;
+
+    if let Some(cpu) = cpu {
+        test.cpu = cpu;
+        test.flags |= BPF_F_TEST_RUN_ON_CPU;
+    }
+
+    let test = invoke_prog_test_run(&mut attr)?;
+    Ok(RawTracePointTestRunResult {
+        return_value: test.retval,
+    })
+}
+
 /// Introduced in kernel v4.13.
 fn bpf_obj_get_info_by_fd<T, F: FnOnce(&mut T)>(
     fd: BorrowedFd<'_>,
@@ -974,6 +1081,7 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
                 max_entries: 1,
                 ..Default::default()
             },
+            inner_def: None,
             section_index: 0,
             section_kind: EbpfSectionKind::Maps,
             symbol_index: None,
@@ -1475,7 +1583,7 @@ bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
 
         let name = CString::new("FILTER").unwrap();
         let btf_fd = unsafe { BorrowedFd::borrow_raw(BTF_FD) };
-        bpf_create_map(&name, &map, Some(btf_fd)).unwrap();
+        bpf_create_map(&name, &map, Some(btf_fd), None).unwrap();
     }
 
     #[test_case(bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY ; "perf_event_array")]
@@ -1520,6 +1628,6 @@ bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
 
         let name = CString::new("TEST").unwrap();
         let btf_fd = unsafe { BorrowedFd::borrow_raw(BTF_FD) };
-        bpf_create_map(&name, &map, Some(btf_fd)).unwrap();
+        bpf_create_map(&name, &map, Some(btf_fd), None).unwrap();
     }
 }

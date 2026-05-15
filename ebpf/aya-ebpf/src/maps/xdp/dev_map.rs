@@ -1,4 +1,4 @@
-use core::num::NonZeroU32;
+use core::{num::NonZeroU32, ptr::NonNull};
 
 use aya_ebpf_bindings::bindings::bpf_devmap_val;
 
@@ -35,6 +35,11 @@ pub struct DevMap {
     def: MapDef,
 }
 
+impl super::super::private::Map for DevMap {
+    type Key = u32;
+    type Value = bpf_devmap_val;
+}
+
 impl DevMap {
     map_constructors!(
         u32,
@@ -67,7 +72,12 @@ impl DevMap {
         },
     );
 
-    /// Retrieves the interface index at `index` in the array.
+    /// Retrieves the device at `index` in the array.
+    ///
+    /// Reads the entry as a [`DevMapValue`] including `prog_id`, which
+    /// requires kernel 5.8 or newer because `bpf_devmap_val::bpf_prog` was
+    /// only introduced then. On older kernels use
+    /// [`get_ifindex`](Self::get_ifindex) instead.
     ///
     /// To actually redirect a packet, see [`DevMap::redirect`].
     ///
@@ -89,10 +99,29 @@ impl DevMap {
         let value: &bpf_devmap_val = unsafe { value.as_ref() };
         Some(DevMapValue {
             if_index: value.ifindex,
-            // SAFETY: map writes use fd, map reads use id.
-            // https://elixir.bootlin.com/linux/v6.2/source/include/uapi/linux/bpf.h#L6136
+            // SAFETY: `bpf_devmap_val::bpf_prog` is a union of `fd` and `id`; the
+            // kernel populates `id` on map lookup (`fd` is only consumed on
+            // userspace writes), so reading from `id` is the active variant.
+            // https://github.com/torvalds/linux/blob/v6.2/include/uapi/linux/bpf.h#L6136
             prog_id: NonZeroU32::new(unsafe { value.bpf_prog.id }),
         })
+    }
+
+    /// Retrieves the interface index at `index` in the array.
+    ///
+    /// Reads only the leading 4 bytes of the map value, so it works on every
+    /// kernel that supports `BPF_MAP_TYPE_DEVMAP` (4.14 and newer), unlike
+    /// [`get`](Self::get) which also reads `bpf_devmap_val::bpf_prog`.
+    ///
+    /// To actually redirect a packet, see [`DevMap::redirect`].
+    #[inline(always)]
+    pub fn get_ifindex(&self, index: u32) -> Option<u32> {
+        let value: NonNull<u32> = lookup(self.def.as_ptr(), &index)?;
+        // SAFETY: the first 4 bytes of every devmap value are `ifindex`, both
+        // for the legacy 4-byte layout (kernel < 5.8) and the 8-byte
+        // `bpf_devmap_val` layout (kernel >= 5.8); a 4-byte read at offset 0 is
+        // in-bounds either way.
+        Some(unsafe { *value.as_ptr() })
     }
 
     /// Redirects the current packet on the interface at `index`.
@@ -119,12 +148,8 @@ impl DevMap {
     }
 }
 
-#[derive(Clone, Copy)]
-#[expect(
-    unnameable_types,
-    reason = "this value type is exposed via the map API, not by path"
-)]
 /// The value of a device map.
+#[derive(Clone, Copy)]
 pub struct DevMapValue {
     /// Target interface index to redirect to.
     pub if_index: u32,

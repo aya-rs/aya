@@ -5,7 +5,7 @@
 use aya_ebpf::{
     bindings::xdp_action,
     macros::{map, xdp},
-    maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
+    maps::{Array, CpuMap, XskMap},
     programs::XdpContext,
 };
 #[cfg(not(test))]
@@ -13,10 +13,6 @@ extern crate ebpf_panic;
 
 #[map]
 static SOCKS: XskMap = XskMap::with_max_entries(1, 0);
-#[map]
-static DEVS: DevMap = DevMap::with_max_entries(1, 0);
-#[map]
-static DEVS_HASH: DevMapHash = DevMapHash::with_max_entries(1, 0);
 #[map]
 static CPUS: CpuMap = CpuMap::with_max_entries(1, 0);
 
@@ -39,18 +35,6 @@ fn redirect_sock(ctx: XdpContext) -> u32 {
         // Queue ID did not match, pass packet to kernel network stack.
         xdp_action::XDP_PASS
     }
-}
-
-#[xdp]
-fn redirect_dev(_ctx: XdpContext) -> u32 {
-    inc_hit(0);
-    DEVS.redirect(0, 0).unwrap_or(xdp_action::XDP_ABORTED)
-}
-
-#[xdp]
-fn redirect_dev_hash(_ctx: XdpContext) -> u32 {
-    inc_hit(0);
-    DEVS_HASH.redirect(10, 0).unwrap_or(xdp_action::XDP_ABORTED)
 }
 
 #[xdp]
