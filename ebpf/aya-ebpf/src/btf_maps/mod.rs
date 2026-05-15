@@ -1,5 +1,6 @@
 pub mod array;
 pub mod bloom_filter;
+pub mod cpu_map;
 pub mod dev_map;
 pub mod dev_map_hash;
 pub mod lpm_trie;
@@ -16,9 +17,11 @@ pub mod sock_hash;
 pub mod sock_map;
 pub mod stack;
 pub mod stack_trace;
+pub mod xsk_map;
 
 pub use array::Array;
 pub use bloom_filter::BloomFilter;
+pub use cpu_map::CpuMap;
 pub use dev_map::DevMap;
 pub use dev_map_hash::DevMapHash;
 pub use lpm_trie::LpmTrie;
@@ -35,6 +38,7 @@ pub use sock_hash::SockHash;
 pub use sock_map::SockMap;
 pub use stack::Stack;
 pub use stack_trace::StackTrace;
+pub use xsk_map::XskMap;
 
 mod private {
     /// Sealed trait exposing the key and value types of a BTF map definition.
@@ -59,6 +63,23 @@ mod private {
 pub trait MapDef: private::MapDef {}
 
 impl<T: private::MapDef> MapDef for T {}
+
+/// Wraps `bpf_redirect_map` for XDP redirect maps.
+///
+/// Returns `Ok(XDP_REDIRECT)` on success, or the lower two bits of `flags`
+/// as `Err` when the lookup misses.
+#[inline(always)]
+pub(crate) fn try_redirect_map(
+    ptr: *mut core::ffi::c_void,
+    key: u32,
+    flags: u64,
+) -> Result<u32, u32> {
+    let ret = unsafe { crate::helpers::bpf_redirect_map(ptr.cast(), key.into(), flags) };
+    match ret.unsigned_abs() as u32 {
+        crate::bindings::xdp_action::XDP_REDIRECT => Ok(crate::bindings::xdp_action::XDP_REDIRECT),
+        ret => Err(ret),
+    }
+}
 
 /// Performs the inner half of a fused map-of-maps lookup, returning a shared reference.
 ///
