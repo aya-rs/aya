@@ -1,12 +1,7 @@
 use core::{num::NonZeroU32, ptr::NonNull};
 
 use crate::{
-    bindings::{bpf_devmap_val, xdp_action::XDP_REDIRECT},
-    btf_maps::btf_map_def,
-    cty::c_void,
-    helpers::bpf_redirect_map,
-    lookup,
-    maps::xdp::DevMapValue,
+    bindings::bpf_devmap_val, btf_maps::btf_map_def, cty::c_void, lookup, maps::xdp::DevMapValue,
 };
 
 // Private helpers shared with DevMapHash.
@@ -29,14 +24,6 @@ pub(super) fn devmap_get_ifindex(ptr: *mut c_void, key: u32) -> Option<u32> {
     // the legacy 4-byte layout (kernel < 5.8) and the 8-byte `bpf_devmap_val`
     // layout (kernel >= 5.8); a 4-byte read at offset 0 is in-bounds either way.
     Some(unsafe { *value.as_ptr() })
-}
-
-pub(super) fn devmap_redirect(ptr: *mut c_void, key: u32, flags: u64) -> Result<u32, u32> {
-    let ret = unsafe { bpf_redirect_map(ptr.cast(), key.into(), flags) };
-    match ret.unsigned_abs() as u32 {
-        XDP_REDIRECT => Ok(XDP_REDIRECT),
-        ret => Err(ret),
-    }
 }
 
 btf_map_def!(
@@ -112,6 +99,6 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> DevMap<MAX_ENTRIES, FLAGS> {
     #[inline(always)]
     pub fn redirect(&self, index: u32, flags: u64) -> Result<u32, u32> {
         let () = Self::_CHECK;
-        devmap_redirect(self.as_ptr(), index, flags)
+        super::try_redirect_map(self.as_ptr(), index, flags)
     }
 }
