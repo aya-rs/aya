@@ -43,6 +43,7 @@ bpf_file!(
     BLOOM_FILTER => "bloom_filter",
     BPF_PROBE_READ => "bpf_probe_read",
     BTF_MAPS_PLAIN => "btf_maps_plain",
+    CPU_MAP => "cpu_map",
     DEV_MAP => "dev_map",
     KPROBE => "kprobe",
     LINEAR_DATA_STRUCTURES => "linear_data_structures",
@@ -57,7 +58,6 @@ bpf_file!(
     PERF_EVENT_BYTE_ARRAY => "perf_event_byte_array",
     PERF_EVENT_BP => "perf_event_bp",
     RAW_TRACEPOINT => "raw_tracepoint",
-    REDIRECT => "redirect",
     RELOCATIONS => "relocations",
     RING_BUF => "ring_buf",
     SIMPLE_PROG => "simple_prog",
@@ -77,6 +77,7 @@ bpf_file!(
     STACK_TRACE => "stack_trace",
     STACK_TRACE_LSM => "stack_trace_lsm",
     BTF_MAP_OF_MAPS => "btf_map_of_maps",
+    XSK_MAP => "xsk_map",
 );
 
 #[cfg(test)]
