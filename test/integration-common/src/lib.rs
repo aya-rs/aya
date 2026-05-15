@@ -184,7 +184,7 @@ pub mod stack_trace {
 
 pub mod bpf_d_path {
     pub const EXPECTED_PATH: &str = "/dev/null";
-    pub const PATH_BUF_LEN: usize = c"/dev/null".to_bytes_with_nul().len();
+    pub const PATH_BUF_LEN: usize = 128;
 
     #[derive(Copy, Clone)]
     #[repr(C)]

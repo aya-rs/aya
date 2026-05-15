@@ -19,16 +19,13 @@ extern crate ebpf_panic;
 static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);
 
 #[unsafe(no_mangle)]
-static TARGET_TID: Global<u32> = Global::new(0);
+static TARGET_PID: Global<u32> = Global::new(0);
 
 #[fentry(sleepable)]
 fn test_vfs_open(ctx: FEntryContext) -> u32 {
-    let target_tid = TARGET_TID.load();
-    if target_tid != 0 {
-        let tid = bpf_get_current_pid_tgid() as u32;
-        if tid != target_tid {
-            return 0;
-        }
+    let target_pid = TARGET_PID.load();
+    if target_pid != 0 && (bpf_get_current_pid_tgid() >> 32) as u32 != target_pid {
+        return 0;
     }
 
     let pathptr: *const path = ctx.arg(0);

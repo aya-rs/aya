@@ -23,9 +23,9 @@ fn bpf_d_path_basic() {
     }
 
     let btf = Btf::from_sys_fs().unwrap();
-    let tid = u32::try_from(nix::unistd::gettid().as_raw()).unwrap();
+    let pid = std::process::id();
     let mut bpf = EbpfLoader::new()
-        .override_global("TARGET_TID", &tid, true)
+        .override_global("TARGET_PID", &pid, true)
         .load(crate::BPF_D_PATH)
         .unwrap();
 
@@ -55,8 +55,8 @@ fn bpf_d_path_basic() {
 
     assert!(
         result.seen > 0,
-        "The BPF program did not observe any matching vfs_open() call for this test thread (tid {}).",
-        nix::unistd::gettid()
+        "The BPF program did not observe any matching vfs_open() call for this test process (pid {}).",
+        pid
     );
     assert_eq!(
         result.status, 0,
