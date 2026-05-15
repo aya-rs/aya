@@ -430,6 +430,10 @@ impl<'a> EbpfLoader<'a> {
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
 
+        if let Some(btf) = btf {
+            obj.relocate_btf(btf)?;
+        }
+
         let btf_fd = if let Some(features) = &FEATURES.btf() {
             if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
                 match load_btf(btf.to_bytes(), *verifier_log_level) {
@@ -491,10 +495,6 @@ impl<'a> EbpfLoader<'a> {
         } else {
             None
         };
-
-        if let Some(btf) = &btf {
-            obj.relocate_btf(btf)?;
-        }
 
         const fn is_map_of_maps(map_type: bpf_map_type) -> bool {
             matches!(

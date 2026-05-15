@@ -21,8 +21,8 @@ pub use aya_ebpf_bindings::helpers as generated;
 pub use generated::*;
 
 use crate::{
-    bindings::path,
     EbpfContext as _,
+    bindings::path,
     btf_maps::reuseport_sock_array::ReusePortSockArrayImpl,
     check_bounds_signed,
     cty::{c_char, c_long, c_void},

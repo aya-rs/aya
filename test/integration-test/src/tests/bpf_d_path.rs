@@ -1,12 +1,12 @@
-use assert_matches::assert_matches;
 use std::fs::File;
 
+use assert_matches::assert_matches;
 use aya::{
-    util::KernelVersion,
     Btf, Ebpf, EbpfLoader,
     maps::Array,
     programs::{FEntry, ProgramError, ProgramType},
-    sys::{is_program_supported, SyscallError},
+    sys::{SyscallError, is_program_supported},
+    util::KernelVersion,
 };
 use integration_common::bpf_d_path::{EXPECTED_PATH, TestResult};
 
