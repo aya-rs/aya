@@ -22,7 +22,7 @@ use thiserror::Error;
 
 use crate::{
     Pod,
-    programs::{TcAttachType, XdpMode},
+    programs::{TcAttachType, TcHandle, XdpMode},
     util::{bytes_of, tc_handler_make},
 };
 
@@ -223,9 +223,9 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     prog_fd: BorrowedFd<'_>,
     prog_name: &CStr,
     priority: u16,
-    handle: u32,
+    handle: TcHandle,
     create: bool,
-) -> Result<(u16, u32), NetlinkError> {
+) -> Result<(u16, TcHandle), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
     let mut req = unsafe { mem::zeroed::<TcRequest>() };
@@ -252,7 +252,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         nlmsg_seq: 1,
     };
     req.tc_info.tcm_family = AF_UNSPEC as u8;
-    req.tc_info.tcm_handle = handle; // auto-assigned, if zero
+    req.tc_info.tcm_handle = handle.into();
     req.tc_info.tcm_ifindex = if_index;
     req.tc_info.tcm_parent = attach_type.tc_parent();
     req.tc_info.tcm_info = tc_handler_make(
@@ -286,7 +286,11 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         ))),
         [tc_msg] => {
             let priority = ((tc_msg.tcm_info & TC_H_MAJ_MASK) >> 16) as u16;
-            Ok((priority, tc_msg.tcm_handle))
+            let handle = TcHandle {
+                major: (tc_msg.tcm_handle >> 16) as u16,
+                minor: tc_msg.tcm_handle as u16,
+            };
+            Ok((priority, handle))
         }
         _tc_msg => Err(NetlinkError(NetlinkErrorInternal::IoError(
             io::Error::other(
@@ -300,7 +304,7 @@ pub(crate) unsafe fn netlink_qdisc_detach(
     if_index: i32,
     attach_type: TcAttachType,
     priority: u16,
-    handle: u32,
+    handle: TcHandle,
 ) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
@@ -315,7 +319,7 @@ pub(crate) unsafe fn netlink_qdisc_detach(
     };
 
     req.tc_info.tcm_family = AF_UNSPEC as u8;
-    req.tc_info.tcm_handle = handle; // auto-assigned, if zero
+    req.tc_info.tcm_handle = handle.into();
     req.tc_info.tcm_info = tc_handler_make(
         u32::from(priority) << 16,
         u32::from(htons(ETH_P_ALL as u16)),
@@ -337,7 +341,7 @@ pub(crate) fn netlink_find_filter_with_name(
     if_index: i32,
     attach_type: TcAttachType,
     name: &CStr,
-) -> Result<impl Iterator<Item = Result<(u16, u32), NetlinkError>>, NetlinkError> {
+) -> Result<impl Iterator<Item = Result<(u16, TcHandle), NetlinkError>>, NetlinkError> {
     let mut req = unsafe { mem::zeroed::<TcRequest>() };
 
     let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
@@ -395,7 +399,11 @@ pub(crate) fn netlink_find_filter_with_name(
                         if f_name != name {
                             continue;
                         }
-                        filter = Some((priority, tc_msg.tcm_handle));
+                        let handle = TcHandle {
+                            major: (tc_msg.tcm_handle >> 16) as u16,
+                            minor: tc_msg.tcm_handle as u16,
+                        };
+                        filter = Some((priority, handle));
                     }
                 }
                 Ok(filter)

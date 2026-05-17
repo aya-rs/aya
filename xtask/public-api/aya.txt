@@ -4580,7 +4580,7 @@ impl core::marker::UnsafeUnpin for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcError
 pub struct aya::programs::tc::NlOptions
-pub aya::programs::tc::NlOptions::handle: u32
+pub aya::programs::tc::NlOptions::handle: aya::programs::tc::TcHandle
 pub aya::programs::tc::NlOptions::priority: u16
 impl core::cmp::Eq for aya::programs::tc::NlOptions
 impl core::cmp::PartialEq for aya::programs::tc::NlOptions
@@ -4648,8 +4648,8 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifier
 pub struct aya::programs::tc::SchedClassifierLink(_)
 impl aya::programs::tc::SchedClassifierLink
 pub fn aya::programs::tc::SchedClassifierLink::attach_type(&self) -> core::result::Result<aya::programs::tc::TcAttachType, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifierLink::attached(if_name: &str, attach_type: aya::programs::tc::TcAttachType, priority: u16, handle: u32) -> core::result::Result<Self, std::io::error::Error>
-pub fn aya::programs::tc::SchedClassifierLink::handle(&self) -> core::result::Result<u32, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifierLink::attached(if_name: &str, attach_type: aya::programs::tc::TcAttachType, priority: u16, handle: aya::programs::tc::TcHandle) -> core::result::Result<Self, std::io::error::Error>
+pub fn aya::programs::tc::SchedClassifierLink::handle(&self) -> core::result::Result<aya::programs::tc::TcHandle, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifierLink::priority(&self) -> core::result::Result<u16, aya::programs::ProgramError>
 impl aya::programs::MultiProgLink for aya::programs::tc::SchedClassifierLink
 pub fn aya::programs::tc::SchedClassifierLink::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::links::LinkError>
@@ -4702,6 +4702,34 @@ impl core::marker::Unpin for aya::programs::tc::SchedClassifierLinkId
 impl core::marker::UnsafeUnpin for aya::programs::tc::SchedClassifierLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::SchedClassifierLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifierLinkId
+pub struct aya::programs::tc::TcHandle
+pub aya::programs::tc::TcHandle::major: u16
+pub aya::programs::tc::TcHandle::minor: u16
+impl aya::programs::tc::TcHandle
+pub const aya::programs::tc::TcHandle::AUTO_ASSIGN: Self
+pub const fn aya::programs::tc::TcHandle::new(major: u16, minor: u16) -> Self
+impl core::clone::Clone for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::clone(&self) -> aya::programs::tc::TcHandle
+impl core::cmp::Eq for aya::programs::tc::TcHandle
+impl core::cmp::PartialEq for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::eq(&self, other: &aya::programs::tc::TcHandle) -> bool
+impl core::convert::From<aya::programs::tc::TcHandle> for u32
+pub fn u32::from(_: aya::programs::tc::TcHandle) -> Self
+impl core::default::Default for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::default() -> aya::programs::tc::TcHandle
+impl core::fmt::Debug for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for aya::programs::tc::TcHandle
+impl core::marker::StructuralPartialEq for aya::programs::tc::TcHandle
+impl core::marker::Freeze for aya::programs::tc::TcHandle
+impl core::marker::Send for aya::programs::tc::TcHandle
+impl core::marker::Sync for aya::programs::tc::TcHandle
+impl core::marker::Unpin for aya::programs::tc::TcHandle
+impl core::marker::UnsafeUnpin for aya::programs::tc::TcHandle
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcHandle
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcHandle
 pub fn aya::programs::tc::qdisc_add_clsact(if_name: &str) -> core::result::Result<(), aya::programs::tc::TcError>
 pub fn aya::programs::tc::qdisc_detach_program(if_name: &str, attach_type: aya::programs::tc::TcAttachType, name: &str) -> core::result::Result<(), aya::programs::tc::TcError>
 pub mod aya::programs::tp_btf
@@ -6853,6 +6881,34 @@ impl core::marker::Unpin for aya::programs::socket_filter::SocketFilter
 impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilter
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilter
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilter
+pub struct aya::programs::TcHandle
+pub aya::programs::TcHandle::major: u16
+pub aya::programs::TcHandle::minor: u16
+impl aya::programs::tc::TcHandle
+pub const aya::programs::tc::TcHandle::AUTO_ASSIGN: Self
+pub const fn aya::programs::tc::TcHandle::new(major: u16, minor: u16) -> Self
+impl core::clone::Clone for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::clone(&self) -> aya::programs::tc::TcHandle
+impl core::cmp::Eq for aya::programs::tc::TcHandle
+impl core::cmp::PartialEq for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::eq(&self, other: &aya::programs::tc::TcHandle) -> bool
+impl core::convert::From<aya::programs::tc::TcHandle> for u32
+pub fn u32::from(_: aya::programs::tc::TcHandle) -> Self
+impl core::default::Default for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::default() -> aya::programs::tc::TcHandle
+impl core::fmt::Debug for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::Copy for aya::programs::tc::TcHandle
+impl core::marker::StructuralPartialEq for aya::programs::tc::TcHandle
+impl core::marker::Freeze for aya::programs::tc::TcHandle
+impl core::marker::Send for aya::programs::tc::TcHandle
+impl core::marker::Sync for aya::programs::tc::TcHandle
+impl core::marker::Unpin for aya::programs::tc::TcHandle
+impl core::marker::UnsafeUnpin for aya::programs::tc::TcHandle
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcHandle
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcHandle
 pub struct aya::programs::TestRunAttrs
 impl aya::programs::TestRunAttrs
 pub const fn aya::programs::TestRunAttrs::new() -> Self
