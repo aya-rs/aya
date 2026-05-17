@@ -7,9 +7,9 @@ use std::{
 
 use aya_obj::generated::{
     IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD, IFLA_XDP_FLAGS, NLMSG_ALIGNTO, TC_H_CLSACT, TC_H_INGRESS,
-    TC_H_MAJ_MASK, TC_H_UNSPEC, TCA_BPF_FD, TCA_BPF_FLAG_ACT_DIRECT, TCA_BPF_FLAGS, TCA_BPF_NAME,
-    TCA_KIND, TCA_OPTIONS, XDP_FLAGS_REPLACE, XDP_FLAGS_UPDATE_IF_NOEXIST, ifinfomsg,
-    nlmsgerr_attrs::NLMSGERR_ATTR_MSG, tcmsg,
+    TC_H_MAJ_MASK, TC_H_UNSPEC, TCA_BPF_CLASSID, TCA_BPF_FD, TCA_BPF_FLAG_ACT_DIRECT,
+    TCA_BPF_FLAGS, TCA_BPF_NAME, TCA_KIND, TCA_OPTIONS, XDP_FLAGS_REPLACE,
+    XDP_FLAGS_UPDATE_IF_NOEXIST, ifinfomsg, nlmsgerr_attrs::NLMSGERR_ATTR_MSG, tcmsg,
 };
 use libc::{
     AF_NETLINK, AF_UNSPEC, ETH_P_ALL, IFF_UP, IFLA_XDP, NETLINK_CAP_ACK, NETLINK_EXT_ACK,
@@ -46,12 +46,15 @@ const NLA_HDR_ALIGN_LEN: usize = nla_align!(NLA_HDR_LEN);
 const CLS_BPF_NAME_LEN: usize = 256;
 
 // Size of the attribute buffer needed by write_tc_attach_attrs:
-// TCA_KIND + nested TCA_OPTIONS containing TCA_BPF_FD, TCA_BPF_NAME, TCA_BPF_FLAGS.
+// TCA_KIND + nested TCA_OPTIONS containing TCA_BPF_CLASSID, TCA_BPF_FD,
+// TCA_BPF_NAME, TCA_BPF_FLAGS.
 const fn tc_request_attrs_size() -> usize {
     // TCA_KIND
     NLA_HDR_ALIGN_LEN + nla_align!(c"bpf".to_bytes_with_nul().len())
     // TCA_OPTIONS header
     + NLA_HDR_ALIGN_LEN
+    // TCA_BPF_CLASSID
+    + NLA_HDR_ALIGN_LEN + nla_align!(size_of::<u32>())
     // TCA_BPF_FD
     + NLA_HDR_ALIGN_LEN + nla_align!(size_of::<i32>())
     // TCA_BPF_NAME
@@ -60,7 +63,7 @@ const fn tc_request_attrs_size() -> usize {
     + NLA_HDR_ALIGN_LEN + nla_align!(size_of::<u32>())
 }
 
-const _: () = assert!(tc_request_attrs_size() == 288);
+const _: () = assert!(tc_request_attrs_size() == 296);
 
 /// A private error type for internal use in this module.
 #[derive(Error, Debug)]
@@ -201,13 +204,23 @@ fn write_tc_attach_attrs(
     nlmsg_len: usize,
     prog_fd: i32,
     prog_name: &[u8],
+    classid: Option<TcHandle>,
 ) -> io::Result<()> {
+    if prog_name.len() > CLS_BPF_NAME_LEN {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "program name exceeds CLS_BPF_NAME_LEN",
+        ));
+    }
     let attrs_buf = unsafe { request_attributes(req, nlmsg_len) };
 
     let (attrs_buf, kind_len) =
         write_attr_bytes(attrs_buf, TCA_KIND as u16, c"bpf".to_bytes_with_nul())?;
 
     let mut options = NestedAttrs::new(attrs_buf, TCA_OPTIONS as u16);
+    if let Some(classid) = classid {
+        options.write_attr(TCA_BPF_CLASSID as u16, u32::from(classid))?;
+    }
     options.write_attr(TCA_BPF_FD as u16, prog_fd)?;
     options.write_attr_bytes(TCA_BPF_NAME as u16, prog_name)?;
     options.write_attr(TCA_BPF_FLAGS as u16, TCA_BPF_FLAG_ACT_DIRECT)?;
@@ -217,6 +230,7 @@ fn write_tc_attach_attrs(
     Ok(())
 }
 
+#[expect(clippy::too_many_arguments, reason = "internal netlink helper")]
 pub(crate) unsafe fn netlink_qdisc_attach(
     if_index: i32,
     attach_type: &TcAttachType,
@@ -224,6 +238,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     prog_name: &CStr,
     priority: u16,
     handle: TcHandle,
+    classid: Option<TcHandle>,
     create: bool,
 ) -> Result<(u16, TcHandle), NetlinkError> {
     let sock = NetlinkSocket::open()?;
@@ -265,6 +280,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         nlmsg_len,
         prog_fd.as_raw_fd(),
         prog_name.to_bytes_with_nul(),
+        classid,
     )
     .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
@@ -833,7 +849,7 @@ unsafe fn request_attributes<T>(req: &mut T, msg_len: usize) -> &mut [u8] {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    use test_case::test_case;
 
     use super::*;
 
@@ -955,35 +971,59 @@ mod tests {
         assert_eq!(name.to_str().unwrap(), "foo");
     }
 
-    fn tc_request(name: &[u8]) -> io::Result<()> {
+    fn tc_request(name: &[u8], classid: Option<TcHandle>) -> io::Result<TcRequest> {
         let mut req = unsafe { mem::zeroed::<TcRequest>() };
         let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
         req.header.nlmsg_len = nlmsg_len as u32;
 
-        write_tc_attach_attrs(&mut req, nlmsg_len, 0, name)
+        write_tc_attach_attrs(&mut req, nlmsg_len, 0, name, classid)?;
+        Ok(req)
     }
 
-    /// Verify that [`TcRequest`] fits all the attributes [`write_tc_attach_attrs`]
-    /// writes, even with the kernel's maximum TC name length (`CLS_BPF_NAME_LEN`).
+    fn classid_in_request(req: &TcRequest) -> Option<TcHandle> {
+        let attrs_len = req.header.nlmsg_len as usize - size_of::<nlmsghdr>() - size_of::<tcmsg>();
+        let attrs = &req.attrs[..attrs_len];
+
+        let options = NlAttrsIterator::new(attrs)
+            .filter_map(Result::ok)
+            .find(|a| a.header.nla_type & NLA_TYPE_MASK as u16 == TCA_OPTIONS as u16)?;
+
+        let classid = NlAttrsIterator::new(options.data)
+            .filter_map(Result::ok)
+            .find(|a| a.header.nla_type & NLA_TYPE_MASK as u16 == TCA_BPF_CLASSID as u16)?;
+
+        Some(TcHandle::from(u32::from_ne_bytes(
+            classid.data.try_into().ok()?,
+        )))
+    }
+
+    /// Verify that [`TcRequest`] fits a `CLS_BPF_NAME_LEN`-byte program name.
     ///
     /// Before the buffer was enlarged, serializing the netlink attributes for
     /// long names failed with "no space left".
     #[test]
     fn tc_request_fits_max_length_name() {
-        assert_matches!(tc_request(&[b'a'; CLS_BPF_NAME_LEN]), Ok(()));
+        tc_request(&[b'a'; CLS_BPF_NAME_LEN], None).unwrap();
     }
 
-    /// Verify that a name exceeding `CLS_BPF_NAME_LEN` is rejected.
+    /// Verify that a name exceeding `CLS_BPF_NAME_LEN` is rejected before the
+    /// netlink request is built.
     #[test]
     fn tc_request_rejects_oversized_name() {
-        // One byte over the kernel's maximum — the attribute buffer is sized
-        // exactly for CLS_BPF_NAME_LEN, so this should fail with "no space left".
-        assert_matches!(
-            tc_request(&[b'a'; CLS_BPF_NAME_LEN + 1]),
-            Err(err) => {
-                assert_eq!(err.kind(), io::ErrorKind::Other);
-                assert_eq!(err.to_string(), "no space left");
-            }
-        );
+        let Err(err) = tc_request(&[b'a'; CLS_BPF_NAME_LEN + 1], None) else {
+            panic!("expected oversized name to be rejected");
+        };
+        assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
+        assert_eq!(err.to_string(), "program name exceeds CLS_BPF_NAME_LEN");
+    }
+
+    /// Verify that the `classid` value supplied to [`write_tc_attach_attrs`]
+    /// round-trips through the serialized netlink attributes. The absent case
+    /// mirrors iproute2's behavior when `classid` is not on the command line.
+    #[test_case(Some(TcHandle::new(1, 1)) ; "set")]
+    #[test_case(None ; "unset")]
+    fn tc_request_classid_serialization(classid: Option<TcHandle>) {
+        let req = tc_request(b"foo\0", classid).unwrap();
+        assert_eq!(classid_in_request(&req), classid);
     }
 }
