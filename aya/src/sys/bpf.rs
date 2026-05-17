@@ -16,11 +16,10 @@ use aya_obj::{
         VarLinkage,
     },
     generated::{
-        BPF_ADD, BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_F_TEST_RUN_ON_CPU,
-        BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_X,
-        bpf_attach_type, bpf_attr, bpf_attr__bindgen_ty_7, bpf_btf_info, bpf_cmd, bpf_func_id,
-        bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type, bpf_prog_info, bpf_prog_type,
-        bpf_stats_type,
+        BPF_ALU64, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_F_TEST_RUN_ON_CPU, BPF_IMM, BPF_JMP, BPF_K,
+        BPF_LD, BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, bpf_attach_type, bpf_attr,
+        bpf_attr__bindgen_ty_7, bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_map_info,
+        bpf_map_type, bpf_prog_info, bpf_prog_type, bpf_stats_type,
     },
     maps::{LegacyMap, bpf_map_def},
 };
@@ -30,6 +29,7 @@ use libc::{
 };
 use log::warn;
 
+use super::feature_probe::{BpfHelper, is_helper_supported};
 use crate::{
     Btf, Pod, TestRunAttrs, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
@@ -1025,37 +1025,13 @@ where
 }
 
 pub(crate) fn is_probe_read_kernel_supported() -> bool {
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_3 };
-
-    let mov64_reg = (BPF_ALU64 | BPF_MOV | BPF_X) as u8;
-    let add64_imm = (BPF_ALU64 | BPF_ADD | BPF_K) as u8;
-    let mov64_imm = (BPF_ALU64 | BPF_MOV | BPF_K) as u8;
-    let call = (BPF_JMP | BPF_CALL) as u8;
-    let exit = (BPF_JMP | BPF_EXIT) as u8;
-    let insns = [
-        new_insn(mov64_reg, 1, 10, 0, 0),
-        new_insn(add64_imm, 1, 0, 0, -8),
-        new_insn(mov64_imm, 2, 0, 0, 8),
-        new_insn(mov64_imm, 3, 0, 0, 0),
-        new_insn(
-            call,
-            0,
-            0,
-            0,
-            bpf_func_id::BPF_FUNC_probe_read_kernel as i32,
+    matches!(
+        is_helper_supported(
+            ProgramType::TracePoint,
+            BpfHelper::BPF_FUNC_probe_read_kernel
         ),
-        new_insn(exit, 0, 0, 0, 0),
-    ];
-
-    let gpl = c"GPL";
-    u.license = gpl.as_ptr() as u64;
-
-    u.insn_cnt = insns.len() as u32;
-    u.insns = insns.as_ptr() as u64;
-    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_TRACEPOINT as u32;
-
-    bpf_prog_load(&mut attr).is_ok()
+        Ok(true)
+    )
 }
 
 pub(crate) fn is_perf_link_supported() -> bool {
@@ -1129,30 +1105,10 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
 }
 
 pub(crate) fn is_bpf_cookie_supported() -> bool {
-    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
-    let u = unsafe { &mut attr.__bindgen_anon_3 };
-
-    let call = (BPF_JMP | BPF_CALL) as u8;
-    let exit = (BPF_JMP | BPF_EXIT) as u8;
-    let insns = [
-        new_insn(
-            call,
-            0,
-            0,
-            0,
-            bpf_func_id::BPF_FUNC_get_attach_cookie as i32,
-        ),
-        new_insn(exit, 0, 0, 0, 0),
-    ];
-
-    let gpl = c"GPL";
-    u.license = gpl.as_ptr() as u64;
-
-    u.insn_cnt = insns.len() as u32;
-    u.insns = insns.as_ptr() as u64;
-    u.prog_type = bpf_prog_type::BPF_PROG_TYPE_KPROBE as u32;
-
-    bpf_prog_load(&mut attr).is_ok()
+    matches!(
+        is_helper_supported(ProgramType::KProbe, BpfHelper::BPF_FUNC_get_attach_cookie),
+        Ok(true)
+    )
 }
 
 /// Tests whether [`CpuMap`], [`DevMap`] and [`DevMapHash`] support program ids.
