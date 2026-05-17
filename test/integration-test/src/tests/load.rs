@@ -706,3 +706,14 @@ fn pin_lifecycle_uprobe() {
     // Make sure the function isn't optimized out.
     uprobe_function();
 }
+
+#[test_log::test]
+fn legacy_36_byte_maps() {
+    let mut bpf = Ebpf::load(crate::TC_LEGACY_MAP).unwrap();
+
+    let map_1: Array<_, u32> = bpf.take_map("tc_map_1").unwrap().try_into().unwrap();
+    let map_2: Array<_, u32> = bpf.take_map("tc_map_2").unwrap().try_into().unwrap();
+
+    assert_eq!(map_1.len(), 1);
+    assert_eq!(map_2.len(), 2);
+}
