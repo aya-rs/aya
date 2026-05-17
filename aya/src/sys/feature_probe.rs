@@ -1,6 +1,7 @@
 //! Probes and identifies available eBPF features supported by the host kernel.
 
 use std::{
+    ffi::CStr,
     mem,
     os::fd::{AsFd as _, AsRawFd as _},
     ptr,
@@ -9,14 +10,15 @@ use std::{
 use aya_obj::{
     btf::{Btf, BtfKind},
     generated::{
-        BPF_F_MMAPABLE, BPF_F_NO_PREALLOC, bpf_attr, bpf_cmd, bpf_map_type, bpf_prog_info,
+        BPF_CALL, BPF_EXIT, BPF_F_MMAPABLE, BPF_F_NO_PREALLOC, BPF_JMP, bpf_attr, bpf_cmd,
+        bpf_func_id, bpf_map_type, bpf_prog_info,
     },
 };
 use libc::{E2BIG, EBADF, EINVAL};
 
 use super::{
-    SyscallError, bpf_map_create, bpf_prog_load, bpf_raw_tracepoint_open, unit_sys_bpf,
-    with_trivial_prog,
+    SyscallError, bpf_map_create, bpf_prog_load, bpf_raw_tracepoint_open, new_insn, unit_sys_bpf,
+    with_prog_insns, with_trivial_prog,
 };
 use crate::{
     MockableFd,
@@ -24,6 +26,120 @@ use crate::{
     programs::{LsmAttachType, ProgramError, ProgramType},
     util::page_size,
 };
+
+/// A BPF helper function.
+#[doc(alias = "bpf_func_id")]
+pub type BpfHelper = bpf_func_id;
+
+/// Whether the host kernel supports the [`BpfHelper`] for the [`ProgramType`].
+///
+/// Helper availability is program-type specific. This probes whether the
+/// `(program_type, helper)` pair is supported by the current environment.
+/// `Ok(false)` means the pair is unavailable; it does not distinguish whether
+/// the helper is absent entirely, unsupported for the program type, or disabled
+/// by the current kernel configuration.
+/// This follows libbpf's probe strategy by loading a minimal program that calls
+/// the requested helper and inspecting verifier output for unknown-helper
+/// diagnostics.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use aya::{programs::ProgramType, sys::{BpfHelper, is_helper_supported}};
+/// #
+/// match is_helper_supported(ProgramType::Xdp, BpfHelper::BPF_FUNC_redirect) {
+///     Ok(true) => println!("bpf_redirect supported from XDP"),
+///     Ok(false) => println!("bpf_redirect not supported from XDP"),
+///     Err(err) => println!("unexpected error while probing: {:?}", err),
+/// }
+/// ```
+///
+/// # Errors
+///
+/// Returns [`ProgramError::SyscallError`] if probing fails before support can
+/// be determined.
+/// Returns [`ProgramError::UnexpectedProgramType`] for [`ProgramType::Tracing`],
+/// [`ProgramType::Extension`], [`ProgramType::Lsm`], and
+/// [`ProgramType::StructOps`], which require a real attach or BTF target.
+pub fn is_helper_supported(
+    program_type: ProgramType,
+    helper: BpfHelper,
+) -> Result<bool, ProgramError> {
+    if program_type == ProgramType::Unspecified {
+        return Ok(false);
+    }
+
+    // These program types require a real attach or BTF target, so a minimal
+    // helper-call program cannot probe their helper availability reliably.
+    // https://github.com/libbpf/libbpf/blob/v1.7.0/src/libbpf_probes.c#L434-L442
+    if matches!(
+        program_type,
+        ProgramType::Tracing
+            | ProgramType::Extension
+            | ProgramType::Lsm(_)
+            | ProgramType::StructOps
+    ) {
+        return Err(ProgramError::UnexpectedProgramType);
+    }
+
+    let call = (BPF_JMP | BPF_CALL) as u8;
+    let exit = (BPF_JMP | BPF_EXIT) as u8;
+    let insns = [
+        new_insn(call, 0, 0, 0, helper as i32),
+        new_insn(exit, 0, 0, 0, 0),
+    ];
+    // 4096 bytes is enough for this probe and matches libbpf's helper probe.
+    // https://github.com/libbpf/libbpf/blob/v1.7.0/src/libbpf_probes.c#L430-L479
+    let mut verifier_log = [0u8; 4096];
+
+    with_prog_insns(program_type, &insns, |attr| {
+        // SAFETY: union access
+        let u = unsafe { &mut attr.__bindgen_anon_3 };
+        u.log_buf = verifier_log.as_mut_ptr() as u64;
+        u.log_level = 1;
+        u.log_size = verifier_log.len() as u32;
+        match bpf_prog_load(attr).map(|_: MockableFd| ()) {
+            Ok(()) => Ok(true),
+            Err(io_error) => {
+                // https://github.com/libbpf/libbpf/blob/v1.7.0/src/libbpf_probes.c#L452-L466
+                const UNSUPPORTED_HELPER_DIAGNOSTICS: &[&[u8]] = &[
+                    b"invalid func ",
+                    b"unknown func ",
+                    b"program of this type cannot use helper ",
+                ];
+                let verifier_log = CStr::from_bytes_until_nul(&verifier_log)
+                    .map_or(verifier_log.as_slice(), CStr::to_bytes);
+
+                if verifier_log.is_empty() {
+                    return match io_error.raw_os_error() {
+                        // With a valid probe attr, EINVAL means the program type is unsupported.
+                        Some(EINVAL) => Ok(false),
+                        // An empty verifier log means the load failed before reaching the
+                        // verifier. In this path, `E2BIG` from `bpf_check_uarg_tail_zero()`
+                        // indicates that the kernel detected non-zero `bpf_attr` fields it does
+                        // not know about before verifier output could be produced.
+                        Some(E2BIG) => Ok(false),
+                        _ => Err(ProgramError::SyscallError(SyscallError {
+                            call: "bpf_prog_load",
+                            io_error,
+                        })),
+                    };
+                }
+
+                if UNSUPPORTED_HELPER_DIAGNOSTICS.iter().any(|diagnostic| {
+                    verifier_log
+                        .windows(diagnostic.len())
+                        .any(|w| w == *diagnostic)
+                }) {
+                    return Ok(false);
+                }
+
+                // Other verifier failures mean the helper was recognized; assume support.
+                Ok(true)
+            }
+        }
+    })
+}
 
 /// Whether the host kernel supports the [`ProgramType`].
 ///
