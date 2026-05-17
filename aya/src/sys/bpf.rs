@@ -922,7 +922,7 @@ pub(crate) fn is_prog_name_supported() -> bool {
     })
 }
 
-fn new_insn(code: u8, dst_reg: u8, src_reg: u8, offset: i16, imm: i32) -> bpf_insn {
+pub(super) fn new_insn(code: u8, dst_reg: u8, src_reg: u8, offset: i16, imm: i32) -> bpf_insn {
     let mut insn = unsafe { mem::zeroed::<bpf_insn>() };
     insn.code = code;
     insn.set_dst_reg(dst_reg);
@@ -932,16 +932,12 @@ fn new_insn(code: u8, dst_reg: u8, src_reg: u8, offset: i16, imm: i32) -> bpf_in
     insn
 }
 
-pub(super) fn with_trivial_prog<T, F>(program_type: ProgramType, op: F) -> T
+pub(super) fn with_prog_insns<T, F>(program_type: ProgramType, insns: &[bpf_insn], op: F) -> T
 where
     F: FnOnce(&mut bpf_attr) -> T,
 {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
-
-    let mov64_imm = (BPF_ALU64 | BPF_MOV | BPF_K) as u8;
-    let exit = (BPF_JMP | BPF_EXIT) as u8;
-    let insns = [new_insn(mov64_imm, 0, 0, 0, 0), new_insn(exit, 0, 0, 0, 0)];
 
     let gpl = c"GPL";
     u.license = gpl.as_ptr() as u64;
@@ -952,7 +948,10 @@ where
     // `expected_attach_type` field was added in v4.17 https://elixir.bootlin.com/linux/v4.17/source/include/uapi/linux/bpf.h#L310.
     let expected_attach_type = match program_type {
         ProgramType::SkMsg => Some(bpf_attach_type::BPF_SK_MSG_VERDICT),
-        ProgramType::CgroupSockAddr => Some(bpf_attach_type::BPF_CGROUP_INET4_BIND),
+        // `CONNECT` is a broader probe target than `BIND`: some sock_addr helpers, such as
+        // `bpf_bind`, are available from connect hooks but not bind hooks.
+        // https://github.com/libbpf/libbpf/blob/v1.7.0/src/libbpf_probes.c#L116-L119
+        ProgramType::CgroupSockAddr => Some(bpf_attach_type::BPF_CGROUP_INET4_CONNECT),
         ProgramType::LircMode2 => Some(bpf_attach_type::BPF_LIRC_MODE2),
         ProgramType::SkReuseport => Some(bpf_attach_type::BPF_SK_REUSEPORT_SELECT),
         ProgramType::FlowDissector => Some(bpf_attach_type::BPF_FLOW_DISSECTOR),
@@ -1012,6 +1011,17 @@ where
     }
 
     op(&mut attr)
+}
+
+pub(super) fn with_trivial_prog<T, F>(program_type: ProgramType, op: F) -> T
+where
+    F: FnOnce(&mut bpf_attr) -> T,
+{
+    let mov64_imm = (BPF_ALU64 | BPF_MOV | BPF_K) as u8;
+    let exit = (BPF_JMP | BPF_EXIT) as u8;
+    let insns = [new_insn(mov64_imm, 0, 0, 0, 0), new_insn(exit, 0, 0, 0, 0)];
+
+    with_prog_insns(program_type, &insns, op)
 }
 
 pub(crate) fn is_probe_read_kernel_supported() -> bool {
