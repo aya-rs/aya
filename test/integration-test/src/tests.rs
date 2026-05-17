@@ -43,6 +43,7 @@ mod smoke;
 mod stack_trace;
 mod stack_trace_lsm;
 mod strncmp;
+mod tc_netlink;
 mod tcx;
 mod uprobe_cookie;
 mod xdp;
