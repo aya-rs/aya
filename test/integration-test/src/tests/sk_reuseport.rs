@@ -187,15 +187,13 @@ async fn sk_reuseport_selects_expected_listener(socket_map: &str, select_prog: &
     assert_eq!(read_hits(&path_hits, CLEAR_FALLBACK_HITS_INDEX), 0);
     assert_connection_works(client, server).await;
 
-    let prog: &mut SkReuseport = ebpf.program_mut(select_prog).unwrap().try_into().unwrap();
-
     // `SkReuseport` attachments are group-scoped: detaching through any socket in
     // the reuseport group removes the program from the whole group, even if that
     // socket was not used for attach, so a second detach through listener A yields
     // ENOENT.
-    prog.detach(&second).unwrap();
+    SkReuseport::detach(&second).unwrap();
 
-    let err = prog.detach(&first).unwrap_err();
+    let err = SkReuseport::detach(&first).unwrap_err();
     assert_matches!(
         err,
         ProgramError::SkReuseportError(SkReuseportError::SetsockoptError {
@@ -267,7 +265,7 @@ async fn sk_reuseport_clear_index_changes_selection(socket_map: &str, clear_prog
 #[test_case("select_socket"; "legacy")]
 #[test_case("select_socket_btf"; "btf")]
 #[test_log::test(tokio::test)]
-async fn sk_reuseport_detaches_after_unload(select_prog: &str) {
+async fn sk_reuseport_stays_attached_until_explicit_detach(select_prog: &str) {
     let _netns = NetNsGuard::new();
 
     let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
@@ -276,14 +274,14 @@ async fn sk_reuseport_detaches_after_unload(select_prog: &str) {
     let prog: &mut SkReuseport = ebpf.program_mut(select_prog).unwrap().try_into().unwrap();
     prog.load().unwrap();
     prog.attach(&first).unwrap();
-    prog.unload().unwrap();
+    drop(ebpf);
 
     // `SO_DETACH_REUSEPORT_BPF` identifies the group solely from the
-    // socket, so detaching should still succeed after the local program FD
-    // has been unloaded.
-    prog.detach(&second).unwrap();
+    // socket, so detaching should still succeed after the local program has
+    // been unloaded.
+    SkReuseport::detach(&second).unwrap();
 
-    let err = prog.detach(&first).unwrap_err();
+    let err = SkReuseport::detach(&first).unwrap_err();
     assert_matches!(
         err,
         ProgramError::SkReuseportError(SkReuseportError::SetsockoptError {

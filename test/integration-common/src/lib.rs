@@ -179,8 +179,16 @@ pub mod sk_reuseport {
     pub const SELECT_HITS_INDEX: u32 = 0;
     pub const MIGRATE_HITS_INDEX: u32 = 1;
     pub const CLEAR_FALLBACK_HITS_INDEX: u32 = 2;
+    pub const PATH_HITS_MAX_ENTRIES: u32 = 3;
     pub const SELECT_SOCKET_INDEX: u32 = 0;
     pub const MIGRATE_SOCKET_INDEX: u32 = 2;
+}
+
+pub mod socket_filter {
+    pub const PASS_HITS_INDEX: u32 = 0;
+    pub const TRIM_HITS_INDEX: u32 = 1;
+    pub const PATH_HITS_MAX_ENTRIES: u32 = 2;
+    pub const TRIM_DELTA_BYTES: u32 = 4;
 }
 
 pub mod stack_trace {
