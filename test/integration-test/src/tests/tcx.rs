@@ -8,12 +8,6 @@ use crate::utils::NetNsGuard;
 
 #[test_log::test]
 fn tcx() {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(6, 6, 0) {
-        eprintln!("skipping tcx_attach test on kernel {kernel_version:?}");
-        return;
-    }
-
     let _netns = NetNsGuard::new();
 
     // We need a dedicated `Ebpf` instance for each program that we load
