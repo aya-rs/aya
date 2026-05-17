@@ -4580,6 +4580,7 @@ impl core::marker::UnsafeUnpin for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcError
 pub struct aya::programs::tc::NlOptions
+pub aya::programs::tc::NlOptions::classid: core::option::Option<aya::programs::tc::TcHandle>
 pub aya::programs::tc::NlOptions::handle: aya::programs::tc::TcHandle
 pub aya::programs::tc::NlOptions::priority: u16
 impl core::cmp::Eq for aya::programs::tc::NlOptions
@@ -4648,7 +4649,8 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifier
 pub struct aya::programs::tc::SchedClassifierLink(_)
 impl aya::programs::tc::SchedClassifierLink
 pub fn aya::programs::tc::SchedClassifierLink::attach_type(&self) -> core::result::Result<aya::programs::tc::TcAttachType, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifierLink::attached(if_name: &str, attach_type: aya::programs::tc::TcAttachType, priority: u16, handle: aya::programs::tc::TcHandle) -> core::result::Result<Self, std::io::error::Error>
+pub fn aya::programs::tc::SchedClassifierLink::attached(if_name: &str, attach_type: aya::programs::tc::TcAttachType, priority: u16, handle: aya::programs::tc::TcHandle, classid: core::option::Option<aya::programs::tc::TcHandle>) -> core::result::Result<Self, std::io::error::Error>
+pub fn aya::programs::tc::SchedClassifierLink::classid(&self) -> core::result::Result<core::option::Option<aya::programs::tc::TcHandle>, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifierLink::handle(&self) -> core::result::Result<aya::programs::tc::TcHandle, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifierLink::priority(&self) -> core::result::Result<u16, aya::programs::ProgramError>
 impl aya::programs::MultiProgLink for aya::programs::tc::SchedClassifierLink
