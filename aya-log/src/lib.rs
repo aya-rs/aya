@@ -182,9 +182,7 @@ impl<T: Log> EbpfLogger<T> {
     /// Reads log records from eBPF and writes them to the logger.
     pub fn flush(&mut self) {
         let Self { ring_buf, logger } = self;
-        while let Some(buf) = ring_buf.next() {
-            log_buf(buf.as_ref(), logger).unwrap();
-        }
+        ring_buf.for_each(|buf| log_buf(buf, logger).unwrap());
     }
 }
 
