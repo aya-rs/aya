@@ -139,6 +139,40 @@ pub enum TcAttachOptions {
     TcxOrder(LinkOrder),
 }
 
+/// A TC filter handle in `major:minor` form.
+///
+/// Encoded as `(major << 16) | minor`, matching the `M:N` syntax accepted by
+/// `tc(8)`. Use [`TcHandle::AUTO_ASSIGN`] to ask the kernel to allocate one.
+#[derive(Debug, Clone, Copy, Default, Hash, Eq, PartialEq)]
+#[repr(transparent)]
+#[doc(alias = "tcm_handle")]
+pub struct TcHandle(u32);
+
+impl TcHandle {
+    /// Sentinel that asks the kernel to allocate a handle at attach time.
+    ///
+    /// Equal to [`Default::default`]. The allocated value is exposed by
+    /// [`SchedClassifierLink::handle`] after the program is attached.
+    pub const AUTO_ASSIGN: Self = Self(0);
+
+    /// Packs a `major:minor` pair into a handle.
+    pub const fn new(major: u16, minor: u16) -> Self {
+        Self(((major as u32) << 16) | (minor as u32))
+    }
+}
+
+impl From<TcHandle> for u32 {
+    fn from(handle: TcHandle) -> Self {
+        handle.0
+    }
+}
+
+impl From<u32> for TcHandle {
+    fn from(value: u32) -> Self {
+        Self(value)
+    }
+}
+
 /// Options for [`SchedClassifier`] attach via netlink.
 #[derive(Debug, Default, Hash, Eq, PartialEq)]
 pub struct NlOptions {
@@ -146,8 +180,9 @@ pub struct NlOptions {
     /// If set to default (0), the system chooses the next highest priority or 49152 if no filters exist yet
     pub priority: u16,
     /// Handle used to uniquely identify a program at a given priority level.
-    /// If set to default (0), the system chooses a handle.
-    pub handle: u32,
+    ///
+    /// Defaults to [`TcHandle::AUTO_ASSIGN`], which lets the kernel pick one.
+    pub handle: TcHandle,
 }
 
 impl SchedClassifier {
@@ -410,14 +445,14 @@ impl SchedClassifier {
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub(crate) struct NlLinkId(u32, TcAttachType, u16, u32);
+pub(crate) struct NlLinkId(u32, TcAttachType, u16, TcHandle);
 
 #[derive(Debug)]
 pub(crate) struct NlLink {
     if_index: u32,
     attach_type: TcAttachType,
     priority: u16,
-    handle: u32,
+    handle: TcHandle,
 }
 
 impl Link for NlLink {
@@ -517,15 +552,15 @@ impl SchedClassifierLink {
     ///
     /// # Examples
     /// ```no_run
-    /// # use aya::programs::tc::SchedClassifierLink;
+    /// # use aya::programs::tc::{SchedClassifierLink, TcHandle};
     /// # use aya::programs::TcAttachType;
     /// # #[derive(Debug, thiserror::Error)]
     /// # enum Error {
     /// #     #[error(transparent)]
     /// #     IO(#[from] std::io::Error),
     /// # }
-    /// # fn read_persisted_link_details() -> (&'static str, TcAttachType, u16, u32) {
-    /// #     ("eth0", TcAttachType::Ingress, 50, 1)
+    /// # fn read_persisted_link_details() -> (&'static str, TcAttachType, u16, TcHandle) {
+    /// #     ("eth0", TcAttachType::Ingress, 50, TcHandle::new(0, 1))
     /// # }
     /// // Get the link parameters from some external source. Where and how the parameters are
     /// // persisted is up to your application.
@@ -538,7 +573,7 @@ impl SchedClassifierLink {
         if_name: &str,
         attach_type: TcAttachType,
         priority: u16,
-        handle: u32,
+        handle: TcHandle,
     ) -> Result<Self, io::Error> {
         let if_index = ifindex_from_ifname(if_name)?;
         Ok(Self(Some(TcLinkInner::NlLink(NlLink {
@@ -568,7 +603,7 @@ impl SchedClassifierLink {
     }
 
     /// Returns the assigned handle. If none was provided at attach time, this was allocated for you.
-    pub fn handle(&self) -> Result<u32, ProgramError> {
+    pub fn handle(&self) -> Result<TcHandle, ProgramError> {
         if let TcLinkInner::NlLink(n) = self.inner() {
             Ok(n.handle)
         } else {
