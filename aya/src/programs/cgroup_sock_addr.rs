@@ -115,7 +115,8 @@ impl CgroupSockAddr {
         path: P,
         attach_type: CgroupSockAddrAttachType,
     ) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+        let mut data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+        data.expected_attach_type = Some(attach_type.into());
         Ok(Self { data, attach_type })
     }
 }
