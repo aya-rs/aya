@@ -22,6 +22,7 @@ pub use generated::*;
 
 use crate::{
     EbpfContext as _,
+    bindings::path,
     btf_maps::reuseport_sock_array::ReusePortSockArrayImpl,
     check_bounds_signed,
     cty::{c_char, c_long, c_void},
@@ -865,4 +866,33 @@ pub(crate) fn sk_select_reuseport<T: ReusePortSockArrayMap + ?Sized>(
         )
     };
     if ret == 0 { Ok(()) } else { Err(ret) }
+}
+
+/// Returns the path of a given `path` structure.
+///
+/// Returns a byte slice containing the path.
+///
+/// # Examples
+///
+/// ```no_run
+/// # use aya_ebpf::{helpers::bpf_d_path, bindings::path};
+/// # fn try_test(p: *const path) -> Result<(), i32> {
+/// let mut buf = [0u8; 128];
+/// let path_bytes = unsafe { bpf_d_path(p, &mut buf)? };
+///
+/// // Do something with path_bytes
+/// # Ok::<(), i32>(())
+/// # }
+/// ```
+///
+/// # Errors
+///
+/// On failure, this function returns a negative value wrapped in an `Err`.
+#[inline]
+pub unsafe fn bpf_d_path(path: *const path, dest: &mut [u8]) -> Result<&[u8], i32> {
+    let len = unsafe {
+        generated::bpf_d_path(path.cast_mut(), dest.as_mut_ptr().cast(), dest.len() as u32)
+    };
+
+    read_str_bytes(len, dest)
 }
