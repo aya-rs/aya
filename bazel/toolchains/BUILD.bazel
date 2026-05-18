@@ -1,0 +1,17 @@
+platform(
+    name = "rbe_x86_64_linux",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    exec_properties = {
+        # Buildbuddy only allows anon access on AMD builders, not ARM.
+        "Arch": "amd64",
+        "OSFamily": "Linux",
+        # We just need an image with a new-enough glibc for the prebuilt rustc
+        # to work. All other tools should be provided as hermetic action
+        # inputs, and LLVM/bsdtar are statically linked.
+        "container-image": "docker://ubuntu:24.04",
+    },
+    visibility = ["//visibility:public"],
+)

@@ -3,6 +3,14 @@
 
 version: 2
 updates:
+  - package-ecosystem: "bazel"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      bazel-modules:
+        patterns:
+          - "*"
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
