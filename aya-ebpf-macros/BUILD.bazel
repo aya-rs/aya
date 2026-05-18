@@ -1,0 +1,16 @@
+load("//bazel:defs.bzl", "aya_rust_crate")
+
+aya_rust_crate(
+    name = "aya-ebpf-macros",
+    proc_macro = True,
+    # The generated dependency list includes aya-ebpf, which depends on
+    # aya-ebpf-macros and creates a Bazel dependency cycle. These tests only
+    # compare generated token streams, so they do not require aya-ebpf.
+    test_deps = [
+        "@crates//:proc-macro2",
+        "@crates//:proc-macro2-diagnostics",
+        "@crates//:quote",
+        "@crates//:rstest",
+        "@crates//:syn",
+    ],
+)

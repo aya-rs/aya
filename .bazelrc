@@ -1,0 +1,51 @@
+# See https://bazel.build/reference/command-line-reference for an explanation
+# of flags, or ask zbarsky :)
+
+common --test_output=errors
+
+# Tell @apple_support and @rules_cc modules that we are not interested in
+# their automatic non-hermetic toolchains. We use a fully hermetic @llvm
+# toolchain.
+common --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+common --repo_env=BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
+
+# Use platform names in output directories created by BPF and VM transitions.
+common --experimental_platform_in_output_dir
+
+# Standard rust configuration to avoid passing libtool to build scripts that
+# use cc-rs and expect ar.
+# Can be removed once https://github.com/hermeticbuild/rules_rust/pull/24 lands.
+common --@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos=False
+
+# Aya's eBPF crates require unstable BPF inline assembly.
+common --@rules_rust//rust/toolchain/channel=nightly
+
+# Keep remote connections healthy.
+common:remote --grpc_keepalive_time=10s
+common:remote --remote_timeout=30
+common:remote --experimental_remote_execution_keepalive
+
+# Use BuildBuddy for all remote APIs.
+common:remote --bes_results_url=https://app.buildbuddy.io/invocation/
+common:remote --bes_backend=grpcs://remote.buildbuddy.io
+common:remote --experimental_remote_downloader=grpcs://remote.buildbuddy.io
+common:remote --remote_cache=grpcs://remote.buildbuddy.io
+common:remote --remote_executor=grpcs://remote.buildbuddy.io
+
+# Remote tests execute on Linux even when the Bazel client runs on Windows.
+common:remote --action_env=PATH=/bin:/usr/bin
+
+# Minimize network traffic.
+common:remote --remote_cache_compression
+common:remote --remote_download_minimal
+
+# Keep remote backends fed
+common:remote --noexperimental_throttle_remote_action_building
+common:remote --jobs=800
+
+# Use the RBE platform to execute remote actions and build remote test targets.
+common:remote --extra_execution_platforms=//bazel/toolchains:rbe_x86_64_linux
+test:remote --platforms=//bazel/toolchains:rbe_x86_64_linux
+
+# Allow users to specify repo-specific personal settings.
+try-import %workspace%/.bazelrc.user
