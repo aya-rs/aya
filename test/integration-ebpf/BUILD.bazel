@@ -1,0 +1,28 @@
+load("//bazel:defs.bzl", "aya_crate_binary_names", "aya_rust_crate", "bpf_transition_filegroup")
+
+INTEGRATION_EBPF_BINS = aya_crate_binary_names()
+
+aya_rust_crate(
+    name = "integration-ebpf",
+    binary_rustc_flags = [
+        "-Clink-arg=--btf",
+    ],
+    binary_unit_tests = [],
+    build_script = False,
+)
+
+bpf_transition_filegroup(
+    name = "bpfeb",
+    srcs = INTEGRATION_EBPF_BINS,
+    tags = ["manual"],
+    target_platform = "@rules_rs//rs/platforms:bpfeb-unknown-none",
+    visibility = ["//visibility:public"],
+)
+
+bpf_transition_filegroup(
+    name = "bpfel",
+    srcs = INTEGRATION_EBPF_BINS,
+    tags = ["manual"],
+    target_platform = "@rules_rs//rs/platforms:bpfel-unknown-none",
+    visibility = ["//visibility:public"],
+)

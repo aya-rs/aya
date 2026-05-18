@@ -1,0 +1,4 @@
+exports_files([
+    "rules_rs_bpf_source_std.patch",
+    "rules_rust_bpf_link_args.patch",
+])

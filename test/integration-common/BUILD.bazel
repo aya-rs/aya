@@ -1,0 +1,21 @@
+load("//bazel:defs.bzl", "aya_rust_crate")
+
+aya_rust_crate(
+    name = "integration-common",
+    crate_features = [],
+    deps = [],
+)
+
+aya_rust_crate(
+    name = "integration-common-user",
+    crate_features = [
+        "aya",
+        "default",
+        "user",
+    ],
+    crate_name = "integration_common",
+    package_filegroup = False,
+    deps = [
+        "//aya",
+    ],
+)

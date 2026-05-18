@@ -1,0 +1,61 @@
+diff --git a/rs/private/rustc_src_repository.bzl b/rs/private/rustc_src_repository.bzl
+index 0000000..0000000 100644
+--- a/rs/private/rustc_src_repository.bzl
++++ b/rs/private/rustc_src_repository.bzl
+@@ -269,6 +269,15 @@ source_stdlib(
+         "std",
+     ],
+ )
++
++source_stdlib(
++    name = "rust_no_std_alloc",
++    crates = [
++        "alloc",
++        "compiler_builtins",
++        "core",
++    ],
++)
+ """,
+     ]
+     rustc_srcs = _generate_source_stdlib_build_files(rctx, _SOURCE_ROOT, root_build)
+diff --git a/rs/toolchains/declare_rustc_toolchains.bzl b/rs/toolchains/declare_rustc_toolchains.bzl
+index 0000000..0000000 100644
+--- a/rs/toolchains/declare_rustc_toolchains.bzl
++++ b/rs/toolchains/declare_rustc_toolchains.bzl
+@@ -5,6 +5,11 @@ load("@rules_rust//rust:toolchain.bzl", "rust_toolchain")
+ load("@rules_rust//rust/platform:triple.bzl", _parse_triple = "triple")
+ load("@rules_rust//rust/platform:triple_mappings.bzl", "system_to_stdlib_linkflags")
+ 
++_NO_STD_ALLOC_TRIPLES = [
++    "bpfeb-unknown-none",
++    "bpfel-unknown-none",
++]
++
+ def _channel(version):
+     if version.startswith("nightly/"):
+         return "nightly"
+@@ -66,7 +71,9 @@ def declare_rustc_toolchains(
+             config_label = "@rules_rs//rs/platforms/config:" + target_triple
+             stdlib_repo = "rust_stdlib_%s_%s" % (target_key, version_key)
+             if target_triple in SUPPORTED_TIER_3_TRIPLES:
+-                rust_std_select[config_label] = "@rustc_src_" + version_key + "//src:rust_std"
++                rust_std_select[config_label] = "@rustc_src_" + version_key + "//src:{}".format(
++                    "rust_no_std_alloc" if target_triple in _NO_STD_ALLOC_TRIPLES else "rust_std",
++                )
+             else:
+                 rust_std_select[config_label] = "@%s//:rust_std-%s" % (stdlib_repo, target_triple)
+             target_triple_select[config_label] = target_triple
+@@ -96,6 +103,13 @@ def declare_rustc_toolchains(
+             linker = select({
++                "@platforms//cpu:bpfeb": "@@//bazel/toolchains:bpf-linker",
++                "@platforms//cpu:bpfel": "@@//bazel/toolchains:bpf-linker",
+                 "@platforms//cpu:wasm32": "{}rust-lld".format(rustc_repo_label),
+                 "@platforms//cpu:wasm64": "{}rust-lld".format(rustc_repo_label),
+                 "//conditions:default": None,
+             }),
++            linker_preference = select({
++                "@platforms//cpu:bpfeb": "rust",
++                "@platforms//cpu:bpfel": "rust",
++                "//conditions:default": "cc",
++            }),
+             linker_type = "direct",
