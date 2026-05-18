@@ -1,5 +1,6 @@
-Cargo.lock
 target/
+bazel-*
+.bazelrc.user
 .vscode/
 !.vscode/settings.json
 site/

@@ -1,0 +1,50 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
+
+exports_files([
+    "defs.bzl",
+    "vm.bzl",
+])
+
+string_flag(
+    name = "bpf_target_arch",
+    build_setting_default = "x86_64",
+    values = [
+        "aarch64",
+        "x86_64",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "bpf_target_arch_aarch64",
+    flag_values = {":bpf_target_arch": "aarch64"},
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "bpf_target_arch_x86_64",
+    flag_values = {":bpf_target_arch": "x86_64"},
+    visibility = ["//visibility:public"],
+)
+
+string_flag(
+    name = "qemu_system_target",
+    build_setting_default = "x86_64",
+    values = [
+        "aarch64",
+        "x86_64",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "qemu_system_target_aarch64",
+    flag_values = {":qemu_system_target": "aarch64"},
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "qemu_system_target_x86_64",
+    flag_values = {":qemu_system_target": "x86_64"},
+    visibility = ["//visibility:public"],
+)

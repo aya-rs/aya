@@ -1,0 +1,47 @@
+load("@linux.bzl//:linux.bzl", "linux")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "aya_aarch64.config",
+    "aya_x86_64.config",
+])
+
+alias(
+    name = "aya_kconfig",
+    actual = select({
+        "@platforms//cpu:aarch64": "@aya_aarch64_kconfig//:kconfig",
+        "@platforms//cpu:x86_64": "@aya_x86_64_kconfig//:kconfig",
+    }),
+)
+
+linux(
+    name = "aya_kernel",
+    compact_repos = {
+        "aarch64": "@aya_aarch64_compact",
+        "x86_64": "@aya_x86_64_compact",
+    },
+    config = ":aya_kconfig",
+    config_mode = "allnoconfig",
+    kallsyms = "true",
+    pahole = "@pahole//:pahole",
+    probe_values = {"pahole_version": "130"},
+    source_repo = "@aya_linux_6_18_2",
+)
+
+filegroup(
+    name = "aya_kernel_config",
+    srcs = select({
+        "@platforms//cpu:aarch64": [":aya_kernel_aarch64_config"],
+        "@platforms//cpu:x86_64": [":aya_kernel_x86_64_config"],
+    }),
+)
+
+filegroup(
+    name = "aya_kernel_system_map",
+    srcs = select({
+        "@platforms//cpu:aarch64": [":aya_kernel_aarch64_vmlinux"],
+        "@platforms//cpu:x86_64": [":aya_kernel_x86_64_vmlinux"],
+    }),
+    output_group = "system_map",
+)

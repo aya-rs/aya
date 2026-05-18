@@ -1,0 +1,16 @@
+diff --git a/rust/private/rustc.bzl b/rust/private/rustc.bzl
+index 0000000..0000000 100644
+--- a/rust/private/rustc.bzl
++++ b/rust/private/rustc.bzl
+@@ -479,7 +479,10 @@ def get_linker_and_args(
+         # When using rust-lld directly, we still need library search paths from cc_toolchain
+         # to find system libraries that rustc's stdlib depends on (like -lgcc_s, -lutil, etc.)
+         # Filter link_args to only include flags that help locate libraries.
+-        if cc_toolchain and link_args:
++        if toolchain.target_arch in ("bpfeb", "bpfel"):
++            # bpf-linker accepts rustc's BPF-specific flags and bitcode inputs, not C linker flags.
++            link_args = []
++        elif cc_toolchain and link_args:
+             filtered_args = []
+             skip_next = False
+             for i, arg in enumerate(link_args):

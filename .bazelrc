@@ -1,0 +1,54 @@
+common --enable_platform_specific_config
+common --experimental_fetch_all_coverage_outputs
+common --heap_dump_on_oom
+common --incompatible_default_to_explicit_init_py
+common --incompatible_enforce_starlark_utf8=error
+common --incompatible_modify_execution_info_additive
+common --incompatible_strict_action_env
+common --module_mirrors="https://bcr.cloudflaremirrors.com"
+common --nobuild_runfile_links
+common --noexperimental_check_external_repository_files
+common --nosandbox_default_allow_network
+common --reuse_sandbox_directories
+common --rewind_lost_inputs
+common --show_result=20
+common --test_output=errors
+
+common --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+common --repo_env=BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
+
+common --experimental_platform_in_output_dir
+
+build:aarch64-linux --platforms=@rules_rs//rs/platforms:aarch64-unknown-linux-gnu
+build:aarch64-linux --//bazel:bpf_target_arch=aarch64
+build:aarch64-linux-musl --platforms=@rules_rs//rs/platforms:aarch64-unknown-linux-musl
+build:aarch64-linux-musl --//bazel:bpf_target_arch=aarch64
+build:x86_64-linux --platforms=@rules_rs//rs/platforms:x86_64-unknown-linux-gnu
+build:x86_64-linux --//bazel:bpf_target_arch=x86_64
+build:x86_64-linux-musl --platforms=@rules_rs//rs/platforms:x86_64-unknown-linux-musl
+build:x86_64-linux-musl --//bazel:bpf_target_arch=x86_64
+build:bpfel --platforms=@rules_rs//rs/platforms:bpfel-unknown-none
+build:bpfel --@rules_rust//rust/settings:no_std=alloc
+build:bpfeb --platforms=@rules_rs//rs/platforms:bpfeb-unknown-none
+build:bpfeb --@rules_rust//rust/settings:no_std=alloc
+
+common --@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos=False
+common --@rules_rust//rust/toolchain/channel=nightly
+common --@llvm//config:experimental_stub_libgcc_s=True
+
+common:remote --bes_results_url=https://app.buildbuddy.io/invocation/
+common:remote --bes_backend=grpcs://remote.buildbuddy.io
+common:remote --experimental_remote_downloader=grpcs://remote.buildbuddy.io
+common:remote --grpc_keepalive_time=30s
+common:remote --remote_cache=grpcs://remote.buildbuddy.io
+common:remote --remote_cache_compression
+common:remote --remote_download_toplevel
+common:remote --remote_timeout=120
+common:remote --noexperimental_throttle_remote_action_building
+common:remote --experimental_remote_execution_keepalive
+common:remote --remote_executor=grpcs://remote.buildbuddy.io
+common:remote --jobs=800
+common:remote --extra_execution_platforms=//bazel/toolchains:rbe_x86_64_linux
+common:remote --platforms=@rules_rs//rs/platforms:x86_64-unknown-linux-gnu
+
+try-import %workspace%/.bazelrc.user
