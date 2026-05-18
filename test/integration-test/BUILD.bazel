@@ -1,0 +1,88 @@
+load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
+load("@linux.bzl//:linux.bzl", "initramfs")
+load("//bazel:defs.bzl", "aya_c_bpf_objects", "aya_rust_crate")
+load("//bazel:vm.bzl", "aya_qemu_vm_test")
+
+C_BPF_OBJECTS = [
+    ("bpf/ext.bpf.c", False),
+    ("bpf/iter.bpf.c", True),
+    ("bpf/main.bpf.c", False),
+    ("bpf/multimap-btf.bpf.c", False),
+    ("bpf/ringbuf-btf.bpf.c", True),
+    ("bpf/enum_signed_32_checked_variants_reloc.bpf.c", True),
+    ("bpf/enum_signed_32_reloc.bpf.c", True),
+    ("bpf/enum_signed_64_checked_variants_reloc.bpf.c", True),
+    ("bpf/enum_signed_64_reloc.bpf.c", True),
+    ("bpf/enum_unsigned_32_checked_variants_reloc.bpf.c", True),
+    ("bpf/enum_unsigned_32_reloc.bpf.c", True),
+    ("bpf/enum_unsigned_64_checked_variants_reloc.bpf.c", True),
+    ("bpf/enum_unsigned_64_reloc.bpf.c", True),
+    ("bpf/field_reloc.bpf.c", True),
+    ("bpf/pointer_reloc.bpf.c", True),
+    ("bpf/struct_flavors_reloc.bpf.c", True),
+    ("bpf/text_64_64_reloc.c", False),
+    ("bpf/variables_reloc.bpf.c", False),
+]
+
+aya_c_bpf_objects(
+    name = "c_bpf_objects",
+    hdrs = [
+        "bpf/reloc.h",
+        "bpf/struct_with_scalars.h",
+    ],
+    objects = C_BPF_OBJECTS,
+    vmlinux = "@crates//:libbpf-sys-vmlinux-h-1.7.0+v1.7.0",
+    deps = ["@libbpf"],
+)
+
+copy_to_directory(
+    name = "bpf_out_dir",
+    srcs = [
+        ":c_bpf_objects",
+        "//test/integration-ebpf:bpfel",
+    ],
+    root_paths = [
+        ".",
+        "test/integration-ebpf",
+    ],
+)
+
+aya_rust_crate(
+    name = "integration-test",
+    build_script = False,
+    compile_data = [":bpf_out_dir"],
+    rustc_env = {
+        "OUT_DIR": "$(execpath :bpf_out_dir)",
+    },
+    test_binary = True,
+)
+
+initramfs(
+    name = "vm_initramfs",
+    directories = ["/lib/modules"],
+    executables = {
+        "/bin/integration-test-unit-test-bin": ":integration-test-unit-test",
+        "/init": "//test-distro:init",
+        "/sbin/modprobe": "//test-distro:modprobe",
+    },
+    files = {
+        "/boot/config": "//test/kernel:aya_kernel_config",
+        "/boot/System.map-6.18.2": "//test/kernel:aya_kernel_system_map",
+    },
+)
+
+[
+    aya_qemu_vm_test(
+        name = "vm_" + qemu_system_target,
+        timeout = "long",
+        args = ["--test-threads=1"],
+        initrd = ":vm_initramfs",
+        kernel = "//test/kernel:aya_kernel",
+        qemu_system_target = qemu_system_target,
+        target_compatible_with = ["@platforms//os:linux"],
+    )
+    for qemu_system_target in [
+        "aarch64",
+        "x86_64",
+    ]
+]

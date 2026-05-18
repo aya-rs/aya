@@ -1,0 +1,19 @@
+load("//bazel:defs.bzl", "aya_rust_crate")
+
+aya_rust_crate(
+    name = "integration-common",
+    crate_features = select({
+        "@rules_rs//rs/platforms/config:bpfeb-unknown-none": [],
+        "@rules_rs//rs/platforms/config:bpfel-unknown-none": [],
+        "//conditions:default": [
+            "aya",
+            "default",
+            "user",
+        ],
+    }),
+    deps = select({
+        "@rules_rs//rs/platforms/config:bpfeb-unknown-none": [],
+        "@rules_rs//rs/platforms/config:bpfel-unknown-none": [],
+        "//conditions:default": ["//aya"],
+    }),
+)

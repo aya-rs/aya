@@ -1457,6 +1457,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert_matches",
+ "aya",
  "clap",
  "glob",
  "nix",
