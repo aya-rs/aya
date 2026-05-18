@@ -73,7 +73,7 @@ pub struct SkMsg {
 
 impl SkMsg {
     /// The type of the program according to the kernel.
-    pub const PROGRAM_TYPE: ProgramType = ProgramType::SkLookup;
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::SkMsg;
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {

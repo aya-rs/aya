@@ -2,7 +2,7 @@ use crate::{
     bindings::bpf_devmap_val,
     btf_maps::{
         btf_map_def,
-        dev_map::{devmap_get, devmap_get_ifindex, devmap_redirect},
+        dev_map::{devmap_get, devmap_get_ifindex},
     },
     maps::xdp::DevMapValue,
 };
@@ -78,6 +78,6 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> DevMapHash<MAX_ENTRIES, FLAGS
     #[inline(always)]
     pub fn redirect(&self, key: u32, flags: u64) -> Result<u32, u32> {
         let () = Self::_CHECK;
-        devmap_redirect(self.as_ptr(), key, flags)
+        super::try_redirect_map(self.as_ptr(), key, flags)
     }
 }

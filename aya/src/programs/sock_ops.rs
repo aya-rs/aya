@@ -55,7 +55,7 @@ pub struct SockOps {
 
 impl SockOps {
     /// The type of the program according to the kernel.
-    pub const PROGRAM_TYPE: ProgramType = ProgramType::SkSkb;
+    pub const PROGRAM_TYPE: ProgramType = ProgramType::SockOps;
 
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {

@@ -13,22 +13,16 @@ use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
 use crate::utils::NetNsGuard;
 
+#[test_case("SOCKS", "redirect_sock"; "legacy")]
+#[test_case("SOCKS_BTF", "redirect_sock_btf"; "btf")]
 #[test_log::test]
-#[expect(
-    clippy::big_endian_bytes,
-    reason = "packet headers are encoded in network byte order"
-)]
-fn af_xdp() {
+fn af_xdp(socks_name: &str, prog_name: &str) {
     let _netns = NetNsGuard::new();
 
-    let mut bpf = Ebpf::load(crate::REDIRECT).unwrap();
-    let mut socks: XskMap<_> = bpf.take_map("SOCKS").unwrap().try_into().unwrap();
+    let mut bpf = Ebpf::load(crate::XSK_MAP).unwrap();
+    let mut socks: XskMap<_> = bpf.take_map(socks_name).unwrap().try_into().unwrap();
 
-    let xdp: &mut Xdp = bpf
-        .program_mut("redirect_sock")
-        .unwrap()
-        .try_into()
-        .unwrap();
+    let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     xdp.load().unwrap();
     xdp.attach("lo", XdpMode::default()).unwrap();
 
@@ -99,8 +93,13 @@ fn af_xdp() {
     let (udp, payload) = buf.split_at(8);
     let ports = &udp[..4];
     let (src, dst) = ports.split_at(2);
-    assert_eq!(src, port.to_be_bytes().as_slice()); // Source
-    assert_eq!(dst, 1777u16.to_be_bytes().as_slice()); // Dest
+    #[expect(
+        clippy::big_endian_bytes,
+        reason = "packet headers are encoded in network byte order"
+    )]
+    let (src_be, dst_be) = (port.to_be_bytes(), 1777u16.to_be_bytes());
+    assert_eq!(src, src_be.as_slice()); // Source
+    assert_eq!(dst, dst_be.as_slice()); // Dest
     assert_eq!(payload, b"hello AF_XDP");
 
     assert_eq!(rx.available(), 1);
@@ -161,14 +160,16 @@ fn map_load() {
     bpf.program("xdp_frags_devmap").unwrap();
 }
 
+#[test_case("CPUS", "redirect_cpu"; "legacy")]
+#[test_case("CPUS_BTF", "redirect_cpu_btf"; "btf")]
 #[test_log::test]
-fn cpumap_chain() {
+fn cpumap_chain(cpus_name: &str, prog_name: &str) {
     let _netns = NetNsGuard::new();
 
-    let mut bpf = Ebpf::load(crate::REDIRECT).unwrap();
+    let mut bpf = Ebpf::load(crate::CPU_MAP).unwrap();
 
     // Load our cpumap and our canary map
-    let mut cpus: CpuMap<_> = bpf.take_map("CPUS").unwrap().try_into().unwrap();
+    let mut cpus: CpuMap<_> = bpf.take_map(cpus_name).unwrap().try_into().unwrap();
     let hits: Array<_, u32> = bpf.take_map("HITS").unwrap().try_into().unwrap();
 
     let xdp_chain_fd = {
@@ -184,7 +185,7 @@ fn cpumap_chain() {
     cpus.set(0, 2048, Some(xdp_chain_fd), 0).unwrap();
 
     // Load the main program
-    let xdp: &mut Xdp = bpf.program_mut("redirect_cpu").unwrap().try_into().unwrap();
+    let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     xdp.load().unwrap();
     let result = xdp.attach("lo", XdpMode::default());
     // Generic devices did not support cpumap XDP programs until 5.15.
