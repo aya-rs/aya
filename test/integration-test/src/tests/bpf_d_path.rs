@@ -55,8 +55,7 @@ fn bpf_d_path_basic() {
 
     assert!(
         result.seen > 0,
-        "The BPF program did not observe any matching vfs_open() call for this test process (pid {}).",
-        pid
+        "The BPF program did not observe any matching vfs_open() call for this test process (pid {pid}).",
     );
     assert_eq!(
         result.status, 0,
