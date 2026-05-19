@@ -48,7 +48,7 @@ impl<V, const MAX_ENTRIES: usize, const FLAGS: usize> ArrayOfMaps<V, MAX_ENTRIES
     }
 }
 
-impl<V: crate::btf_maps::MapDef, const MAX_ENTRIES: usize, const FLAGS: usize>
+impl<V: crate::btf_maps::SafeInnerLookup, const MAX_ENTRIES: usize, const FLAGS: usize>
     ArrayOfMaps<V, MAX_ENTRIES, FLAGS>
 {
     /// Looks up a value directly in the inner map at `outer_index`.
@@ -59,11 +59,23 @@ impl<V: crate::btf_maps::MapDef, const MAX_ENTRIES: usize, const FLAGS: usize>
     #[inline(always)]
     pub fn get_value(&self, outer_index: u32, inner_key: &V::Key) -> Option<&V::Value> {
         let inner: NonNull<V> = lookup(self.as_ptr(), &outer_index)?;
-        // SAFETY: Array lookups are safe (no BPF_F_NO_PREALLOC aliasing concern).
+        // SAFETY: `V: SafeInnerLookup` guarantees the kernel returns a
+        // reference that stays valid for the lifetime of the BPF program,
+        // so the produced shared reference is sound.
         unsafe { crate::btf_maps::lookup_inner(inner, inner_key) }
     }
+}
 
-    /// Same as [`get_value`](Self::get_value) but returns a mutable pointer.
+impl<V: crate::btf_maps::MapDef, const MAX_ENTRIES: usize, const FLAGS: usize>
+    ArrayOfMaps<V, MAX_ENTRIES, FLAGS>
+{
+    /// Returns a `*mut V::Value` to the entry at `inner_key` of the inner map at
+    /// `outer_index`.
+    ///
+    /// Like [`get_value`](Self::get_value), this combines the outer and inner
+    /// `bpf_map_lookup_elem` calls in a single method. The pointer's lifetime
+    /// is not enforced by Rust; it is the caller's responsibility to ensure
+    /// dereferences are sound for the inner map type.
     #[inline(always)]
     pub fn get_value_ptr_mut(&self, outer_index: u32, inner_key: &V::Key) -> Option<*mut V::Value> {
         let inner: NonNull<V> = lookup(self.as_ptr(), &outer_index)?;
