@@ -3,6 +3,7 @@ pub mod bloom_filter;
 pub mod cpu_map;
 pub mod dev_map;
 pub mod dev_map_hash;
+pub mod hash_map;
 pub mod lpm_trie;
 pub mod of_maps;
 pub mod per_cpu_array;
@@ -24,6 +25,7 @@ pub use bloom_filter::BloomFilter;
 pub use cpu_map::CpuMap;
 pub use dev_map::DevMap;
 pub use dev_map_hash::DevMapHash;
+pub use hash_map::{HashMap, LruHashMap, LruPerCpuHashMap, PerCpuHashMap};
 pub use lpm_trie::LpmTrie;
 pub use of_maps::{ArrayOfMaps, HashOfMaps};
 pub use per_cpu_array::PerCpuArray;
@@ -52,6 +54,18 @@ mod private {
         /// The value type of this map.
         type Value;
     }
+
+    /// Sealed marker for inner-map types whose `bpf_map_lookup_elem` returns
+    /// a reference that stays valid for the lifetime of the BPF program. Only
+    /// implemented for map families whose entries occupy stable, preallocated
+    /// slots (BPF arrays and per-CPU arrays); hash families opt out because
+    /// the entry behind a reference can be reused by any subsequent `insert`,
+    /// `remove`, or LRU eviction.
+    #[expect(
+        unnameable_types,
+        reason = "sealed trait pattern requires pub trait in private mod"
+    )]
+    pub trait SafeInnerLookup: MapDef {}
 }
 
 /// Key and value types of a BTF map definition.
@@ -63,6 +77,19 @@ mod private {
 pub trait MapDef: private::MapDef {}
 
 impl<T: private::MapDef> MapDef for T {}
+
+/// Marks a BTF map type whose fused inner lookup via [`ArrayOfMaps::get_value`]
+/// is safe without an additional `unsafe` contract from the caller.
+///
+/// Implemented for [`Array`] and [`PerCpuArray`]. Hash families do not
+/// implement this trait because their kernel-side allocators reuse slots on
+/// `insert`/`remove`/eviction, so a reference obtained by a previous lookup
+/// can alias an unrelated entry.
+///
+/// This trait is sealed and cannot be implemented outside this crate.
+pub trait SafeInnerLookup: private::SafeInnerLookup {}
+
+impl<T: private::SafeInnerLookup> SafeInnerLookup for T {}
 
 /// Wraps `bpf_redirect_map` for XDP redirect maps.
 ///
@@ -206,6 +233,13 @@ macro_rules! btf_map_def {
             $($extra_field: $extra_ty,)*
         }
 
+        // SAFETY: The struct fields are placeholder raw pointers that the
+        // BTF loader patches at load time; they are never dereferenced
+        // from Rust code, so the wrapper has no aliasable state. Static
+        // declaration of BPF maps via `#[btf_map]` requires `Sync`. For
+        // per-CPU map types the current-CPU access semantic is enforced
+        // by the kernel inside `bpf_map_lookup_elem`, not by the wrapper,
+        // so this impl applies uniformly to shared and per-CPU variants.
         unsafe impl<
             $($ty_gen,)*
             $($(const $const_gen : $const_ty,)+)?
@@ -233,6 +267,7 @@ macro_rules! btf_map_def {
             $($ty_gen,)*
             $($($const_gen,)+)?
         > {
+            /// Returns a placeholder definition that the BPF loader patches at load time.
             pub const fn new() -> Self {
                 Self {
                     r#type: ::core::ptr::null(),
