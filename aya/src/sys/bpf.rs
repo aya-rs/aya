@@ -703,6 +703,25 @@ pub(crate) fn bpf_prog_test_run_raw_tp(
     })
 }
 
+/// Run a loaded tracing program through the kernel's synthetic fentry/fexit
+/// test path.
+pub(crate) fn bpf_prog_test_run_tracing(prog_fd: BorrowedFd<'_>) -> Result<(), SyscallError> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    // The tracing test-run handler uses a fixed synthetic call sequence instead
+    // of caller-provided input. It rejects non-zero flags, CPU, and batch size,
+    // so only prog_fd is set here.
+    // https://github.com/torvalds/linux/blob/v7.1-rc4/net/bpf/test_run.c#L699-L715
+    let test = unsafe { &mut attr.test };
+    test.prog_fd = prog_fd.as_raw_fd() as u32;
+
+    invoke_prog_test_run(&mut attr)?;
+    // For fentry/fexit, the tracing test-run handler writes 0 to attr.test.retval
+    // after the fixed synthetic call sequence succeeds. That value carries no
+    // extra information beyond syscall success.
+    // https://github.com/torvalds/linux/blob/v7.1-rc4/net/bpf/test_run.c#L695-L732
+    Ok(())
+}
+
 /// Introduced in kernel v4.13.
 fn bpf_obj_get_info_by_fd<T, F: FnOnce(&mut T)>(
     fd: BorrowedFd<'_>,
