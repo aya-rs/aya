@@ -566,18 +566,19 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// any function inside the kernel.
 ///
 /// The difference between fexit and kretprobe is that fexit has practically
-/// zero overhead to call after kernel function and it focuses on access to
-/// arguments rather than the return value. fexit programs can be also attached
-/// to other eBPF programs.
+/// zero overhead to call after the kernel function returns. Fexit programs can
+/// access arguments, can access the return value with `FExitContext::ret`, and
+/// can also be attached to other eBPF programs.
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is 5.5.
+/// The minimum kernel version required to use fexit programs is 5.5. Accessing
+/// the return value with `FExitContext::ret` requires Linux 5.17 or later.
 ///
 /// # Examples
 ///
 /// ```no_run
-/// use aya_ebpf::{macros::fexit, programs::FExitContext};
+/// use aya_ebpf::{cty::c_int, macros::fexit, programs::FExitContext};
 /// # #[expect(non_camel_case_types)]
 /// # type filename = u32;
 /// # #[expect(non_camel_case_types)]
@@ -594,6 +595,7 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// unsafe fn try_filename_lookup(ctx: FExitContext) -> Result<i32, i32> {
 ///     let _f: *const filename = ctx.arg(1);
 ///     let _p: *const path = ctx.arg(3);
+///     let _retval: c_int = ctx.ret()?;
 ///
 ///     Ok(0)
 /// }
