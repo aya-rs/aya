@@ -46,6 +46,7 @@ bpf_file!(
     CGROUP_ARRAY => "cgroup_array",
     CPU_MAP => "cpu_map",
     DEV_MAP => "dev_map",
+    FEXIT => "fexit",
     HASH_MAP => "hash_map",
     KPROBE => "kprobe",
     LINEAR_DATA_STRUCTURES => "linear_data_structures",
