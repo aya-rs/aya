@@ -13,9 +13,14 @@ use integration_common::bpf_d_path::{EXPECTED_PATH, TestResult};
 #[test_log::test]
 fn bpf_d_path_basic() {
     let kernel_version = KernelVersion::current().unwrap();
+    let min_version = if cfg!(target_arch = "aarch64") {
+        KernelVersion::new(6, 4, 0)
+    } else {
+        KernelVersion::new(5, 11, 0)
+    };
     // Sleepable fentry programs (required for bpf_d_path) are supported from kernel 5.11+
     // See: commit adding BPF_F_SLEEPABLE support for tracing programs
-    if kernel_version < KernelVersion::new(5, 11, 0) {
+    if kernel_version < min_version {
         eprintln!(
             "skipping test on kernel {kernel_version:?} - sleepable fentry programs (required for bpf_d_path) are not supported"
         );
@@ -34,7 +39,7 @@ fn bpf_d_path_basic() {
         .unwrap()
         .try_into()
         .unwrap();
-    // Load the fentry program; on kernels < 5.11, sleepable fentry is not supported.
+    // Load the fentry program; on kernels < 5.11 (x86_64) or < 6.4 (aarch64), sleepable fentry is not supported.
     prog.load("vfs_open", &btf).unwrap();
     let _link_id = {
         let result = prog.attach();
