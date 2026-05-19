@@ -12,9 +12,8 @@ extern "C" fn trigger_lpm_trie() {
     core::hint::black_box(());
 }
 
-#[test_case("test_btf_lpm_trie", "ROUTES", "RESULTS" ; "btf")]
+#[test_log::test(test_case("test_btf_lpm_trie", "ROUTES", "RESULTS" ; "btf"))]
 #[test_case("test_lpm_trie_legacy", "ROUTES_LEGACY", "RESULTS_LEGACY" ; "legacy")]
-#[test_log::test]
 fn lpm_trie_basic(prog_name: &str, routes_map: &str, results_map: &str) {
     let mut bpf = Ebpf::load(crate::LPM_TRIE).unwrap();
 

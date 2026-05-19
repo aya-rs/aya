@@ -9,7 +9,7 @@ use test_case::test_case;
 #[derive(Debug)]
 enum Requirements {}
 
-#[test_case(crate::ENUM_SIGNED_32_RELOC_BPF, None, None,-0x7AAAAAAAi32 as u64)]
+#[test_log::test(test_case(crate::ENUM_SIGNED_32_RELOC_BPF, None, None,-0x7AAAAAAAi32 as u64))]
 #[test_case(crate::ENUM_SIGNED_32_RELOC_BPF, Some(crate::ENUM_SIGNED_32_RELOC_BTF),  None, -0x7BBBBBBBi32 as u64)]
 #[test_case(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BPF, None, None,-0x7AAAAAAAi32 as u64)]
 #[test_case(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BPF, Some(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BTF),  None, -0x7BBBBBBBi32 as u64)]
@@ -66,7 +66,6 @@ enum Requirements {}
     None,
     2
 )]
-#[test_log::test]
 fn relocation_tests(
     bpf: &[u8],
     btf: Option<&[u8]>,

@@ -12,11 +12,10 @@ extern "C" fn trigger_emit_event() {
     std::hint::black_box(());
 }
 
-#[test_case(crate::PERF_EVENT_ARRAY, "EVENTS_LEGACY", "emit_event_legacy" ; "legacy")]
+#[test_log::test(test_case(crate::PERF_EVENT_ARRAY, "EVENTS_LEGACY", "emit_event_legacy" ; "legacy"))]
 #[test_case(crate::PERF_EVENT_ARRAY, "EVENTS", "emit_event" ; "btf")]
 #[test_case(crate::PERF_EVENT_BYTE_ARRAY, "EVENTS_LEGACY", "emit_event_legacy" ; "byte_legacy")]
 #[test_case(crate::PERF_EVENT_BYTE_ARRAY, "EVENTS", "emit_event" ; "byte_btf")]
-#[test_log::test]
 fn emit_event(bpf_obj: &[u8], events_map: &str, prog: &str) {
     let mut bpf = EbpfLoader::new()
         .load(bpf_obj)

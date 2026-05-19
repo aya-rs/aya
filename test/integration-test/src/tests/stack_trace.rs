@@ -13,9 +13,8 @@ extern "C" fn trigger_record_stackid() {
     std::hint::black_box(());
 }
 
-#[test_case("STACKS_LEGACY", "RESULT_LEGACY", "record_stackid_legacy" ; "legacy")]
+#[test_log::test(test_case("STACKS_LEGACY", "RESULT_LEGACY", "record_stackid_legacy" ; "legacy"))]
 #[test_case("STACKS", "RESULT", "record_stackid" ; "btf")]
-#[test_log::test]
 fn record_stackid(stacks_map: &str, result_map: &str, prog: &str) {
     if !is_map_supported(MapType::StackTrace).unwrap() {
         eprintln!("skipping test - stack trace map not supported");

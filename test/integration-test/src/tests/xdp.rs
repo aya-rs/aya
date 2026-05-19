@@ -13,9 +13,8 @@ use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
 use crate::utils::NetNsGuard;
 
-#[test_case("SOCKS", "redirect_sock"; "legacy")]
+#[test_log::test(test_case("SOCKS", "redirect_sock"; "legacy"))]
 #[test_case("SOCKS_BTF", "redirect_sock_btf"; "btf")]
-#[test_log::test]
 fn af_xdp(socks_name: &str, prog_name: &str) {
     let _netns = NetNsGuard::new();
 
@@ -160,9 +159,8 @@ fn map_load() {
     bpf.program("xdp_frags_devmap").unwrap();
 }
 
-#[test_case("CPUS", "redirect_cpu"; "legacy")]
+#[test_log::test(test_case("CPUS", "redirect_cpu"; "legacy"))]
 #[test_case("CPUS_BTF", "redirect_cpu_btf"; "btf")]
-#[test_log::test]
 fn cpumap_chain(cpus_name: &str, prog_name: &str) {
     let _netns = NetNsGuard::new();
 
@@ -220,19 +218,18 @@ fn cpumap_chain(cpus_name: &str, prog_name: &str) {
     assert_eq!(hits.get(&1, 0).unwrap(), 1);
 }
 
-#[test_case(
+#[test_log::test(test_case(
     "DEVS", "DEVS_HASH",
     "redirect_dev", "redirect_dev_hash",
     "get_dev", "get_dev_hash";
     "legacy"
-)]
+))]
 #[test_case(
     "DEVS_BTF", "DEVS_HASH_BTF",
     "redirect_dev_btf", "redirect_dev_hash_btf",
     "get_dev_btf", "get_dev_hash_btf";
     "btf"
 )]
-#[test_log::test]
 fn devmap_set(
     devs_name: &str,
     devs_hash_name: &str,
@@ -276,11 +273,10 @@ fn devmap_set(
     }
 }
 
-#[test_case("get_ifindex_dev"; "legacy_array")]
+#[test_log::test(test_case("get_ifindex_dev"; "legacy_array"))]
 #[test_case("get_ifindex_dev_hash"; "legacy_hash")]
 #[test_case("get_ifindex_dev_btf"; "btf_array")]
 #[test_case("get_ifindex_dev_hash_btf"; "btf_hash")]
-#[test_log::test]
 fn devmap_get_ifindex(prog_name: &str) {
     let _netns = NetNsGuard::new();
     let mut bpf = Ebpf::load(crate::DEV_MAP).unwrap();

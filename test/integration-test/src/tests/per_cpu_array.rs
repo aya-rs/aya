@@ -32,7 +32,7 @@ extern "C" fn trigger_set(index: u32, value: u32) {
     std::hint::black_box((index, value));
 }
 
-#[test_case(
+#[test_log::test(test_case(
     "RESULT_LEGACY",
     "ARRAY_LEGACY",
     "get_legacy",
@@ -40,7 +40,7 @@ extern "C" fn trigger_set(index: u32, value: u32) {
     "get_ptr_mut_legacy",
     "set_legacy"
     ; "legacy"
-)]
+))]
 #[test_case(
     "RESULT",
     "ARRAY",
@@ -50,7 +50,6 @@ extern "C" fn trigger_set(index: u32, value: u32) {
     "set"
     ; "btf"
 )]
-#[test_log::test]
 fn per_cpu_array_basic(
     result_map: &str,
     array_map: &str,

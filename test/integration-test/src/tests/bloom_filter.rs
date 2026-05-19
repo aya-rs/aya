@@ -23,19 +23,18 @@ extern "C" fn trigger_bloom_contains(result_index: u32, value: u32) {
     core::hint::black_box(value);
 }
 
-#[test_case(
+#[test_log::test(test_case(
     "RESULT_LEGACY",
     "FILTER_LEGACY",
     "bloom_filter_insert_legacy",
     "bloom_filter_contains_legacy" ; "legacy"
-)]
+))]
 #[test_case(
     "RESULT",
     "FILTER",
     "btf_bloom_filter_insert",
     "btf_bloom_filter_contains" ; "btf"
 )]
-#[test_log::test]
 fn bloom_filter_basic(result_map: &str, filter_map: &str, insert_prog: &str, contains_prog: &str) {
     if !is_map_supported(MapType::BloomFilter).unwrap() {
         eprintln!("skipping test - bloom filter map not supported");
