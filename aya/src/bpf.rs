@@ -168,7 +168,7 @@ impl KConfig {
                     raw_value
                         .as_bytes()
                         .iter()
-                        .chain(std::iter::once(&0u8))
+                        .chain(iter::once(&0u8))
                         .copied()
                         .collect()
                 }
