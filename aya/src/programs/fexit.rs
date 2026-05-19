@@ -10,17 +10,29 @@ use crate::programs::{
     load_program_with_attach_type, utils::attach_raw_tracepoint,
 };
 
-/// A program that can be attached to the exit point of (almost) anny kernel
+/// A program that can be attached to the exit point of (almost) any kernel
 /// function.
 ///
 /// [`FExit`] programs are similar to [kretprobes](crate::programs::KProbe),
 /// but the difference is that fexit has practically zero overhead to call
-/// before kernel function. Fexit programs can be also attached to other eBPF
-/// programs.
+/// after the kernel function returns. Fexit programs can also be attached to
+/// other eBPF programs.
 ///
 /// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 5.5.
+///
+/// # Test runs
+///
+/// [`TestRun`](crate::programs::TestRun) support for [`FExit`] programs uses
+/// the kernel's tracing `BPF_PROG_TEST_RUN` handler. That handler does not call
+/// the function passed to [`FExit::load`]. Instead, it runs the kernel's fixed
+/// `bpf_fentry_test*` sequence, so the [`FExit`] program is executed only when
+/// it is attached to one of those built-in test targets.
+///
+/// A successful test-run syscall means the kernel sequence completed. To check
+/// that an [`FExit`] program ran, record and verify an explicit side effect such
+/// as a map update. `Ok(())` does not mean this [`FExit`] program ran.
 ///
 /// # Examples
 ///
