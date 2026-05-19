@@ -141,7 +141,8 @@ use crate::{
     sys::{
         EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget, SyscallError, bpf_btf_get_fd_by_id,
         bpf_get_object, bpf_link_get_fd_by_id, bpf_load_program, bpf_pin_object,
-        bpf_prog_get_fd_by_id, bpf_prog_query, iter_link_ids, retry_with_verifier_logs,
+        bpf_prog_get_fd_by_id, bpf_prog_query, bpf_prog_test_run, bpf_prog_test_run_raw_tp,
+        bpf_prog_test_run_tracing, iter_link_ids, retry_with_verifier_logs,
     },
     util::KernelVersion,
 };
@@ -624,7 +625,7 @@ fn test_run<T: Link>(
     opts: TestRunOptions<'_>,
 ) -> Result<TestRunResult, ProgramError> {
     let fd = data.fd()?.as_fd();
-    crate::sys::bpf_prog_test_run(fd, opts).map_err(Into::into)
+    bpf_prog_test_run(fd, opts).map_err(Into::into)
 }
 
 fn test_run_raw_tp<T: Link>(
@@ -632,7 +633,12 @@ fn test_run_raw_tp<T: Link>(
     opts: RawTracePointRunOptions,
 ) -> Result<RawTracePointTestRunResult, ProgramError> {
     let fd = data.fd()?.as_fd();
-    crate::sys::bpf_prog_test_run_raw_tp(fd, opts).map_err(Into::into)
+    bpf_prog_test_run_raw_tp(fd, opts).map_err(Into::into)
+}
+
+fn test_run_tracing<T: Link>(data: &ProgramData<T>) -> Result<(), ProgramError> {
+    let fd = data.fd()?.as_fd();
+    bpf_prog_test_run_tracing(fd).map_err(Into::into)
 }
 
 fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError> {
@@ -1059,8 +1065,9 @@ pub trait TestRun {
     /// The options type used to configure a single test invocation.
     ///
     /// Different program types require different options: skb/XDP programs use
-    /// [`TestRunOptions`], while [`RawTracePoint`] programs use
-    /// [`RawTracePointRunOptions`].
+    /// [`TestRunOptions`], raw tracepoint programs use
+    /// [`RawTracePointRunOptions`], and [`FExit`] programs use `()`. See
+    /// [`FExit`] for the tracing-specific test-run semantics.
     type Opts<'a>;
 
     /// The Result type for a single test invocation.
@@ -1080,7 +1087,8 @@ pub trait TestRun {
     /// Returns a [`Self::Result`] containing the program-specific test output.
     ///
     /// For most program types this is [`crate::TestRunResult`]. For
-    /// [`RawTracePoint`] it is [`RawTracePointTestRunResult`].
+    /// [`RawTracePoint`] it is [`RawTracePointTestRunResult`]. For [`FExit`]
+    /// it is `()`; see [`FExit`] for what a successful tracing test run means.
     ///
     /// # Errors
     ///
@@ -1130,6 +1138,21 @@ impl TestRun for RawTracePoint {
 
     fn test_run(&self, opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError> {
         test_run_raw_tp(&self.data, opts)
+    }
+}
+
+impl TestRun for FExit {
+    // The kernel tracing test-run handler uses a fixed synthetic fentry/fexit
+    // call sequence; packet data, context data, repeat count, CPU pinning, and
+    // batch flags do not apply.
+    // https://github.com/torvalds/linux/blob/v7.1-rc4/net/bpf/test_run.c#L690-L735
+    type Opts<'a> = ();
+    // For fentry/fexit, test-run success only reports that the kernel's fixed
+    // synthetic call sequence ran.
+    type Result = ();
+
+    fn test_run(&self, _opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError> {
+        test_run_tracing(&self.data)
     }
 }
 
