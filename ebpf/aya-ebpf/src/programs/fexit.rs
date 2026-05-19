@@ -1,6 +1,10 @@
 use core::ffi::c_void;
 
-use crate::{Argument, EbpfContext, args::btf_arg};
+use crate::{
+    Argument, EbpfContext,
+    args::{btf_arg, from_register},
+    helpers::bpf_get_func_ret,
+};
 
 pub struct FExitContext {
     ctx: *mut c_void,
@@ -11,7 +15,7 @@ impl FExitContext {
         Self { ctx }
     }
 
-    /// Returns the `n`th argument to passed to the probe function, starting from 0.
+    /// Returns the `n`th argument passed to the probed function, starting from 0.
     ///
     /// # Examples
     ///
@@ -33,6 +37,36 @@ impl FExitContext {
     /// ```
     pub fn arg<T: Argument>(&self, n: usize) -> T {
         btf_arg(self, n)
+    }
+
+    /// Returns the value returned by the probed function.
+    ///
+    /// This uses the [`bpf_get_func_ret`] helper, so programs that call this
+    /// method require Linux 5.17 or later. On unsupported tracing attach types
+    /// the helper returns `-EOPNOTSUPP`.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use aya_ebpf::{cty::c_int, programs::FExitContext};
+    /// unsafe fn try_filename_lookup(ctx: FExitContext) -> Result<u32, i32> {
+    ///     let retval: c_int = ctx.ret()?;
+    ///
+    ///     // Do something with retval
+    ///
+    ///     Ok(0)
+    /// }
+    /// ```
+    ///
+    /// [`bpf_get_func_ret`]: crate::helpers::bpf_get_func_ret
+    pub fn ret<T: Argument>(&self) -> Result<T, i32> {
+        let mut value = 0;
+        let ret = unsafe { bpf_get_func_ret(self.as_ptr(), &raw mut value) };
+        if ret == 0 {
+            Ok(from_register(value))
+        } else {
+            Err(ret as i32)
+        }
     }
 }
 

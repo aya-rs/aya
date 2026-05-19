@@ -49,7 +49,11 @@ pub(crate) fn btf_arg<T: Argument>(ctx: &impl crate::EbpfContext, n: usize) -> T
     // either be treated as a pointer or a primitive type
     let ptr: *const usize = ctx.as_ptr().cast();
     let ptr = unsafe { ptr.add(n) };
-    T::from_register(unsafe { *ptr as u64 })
+    from_register(unsafe { *ptr as u64 })
+}
+
+pub(crate) fn from_register<T: Argument>(value: u64) -> T {
+    T::from_register(value)
 }
 
 trait PtRegsLayout {

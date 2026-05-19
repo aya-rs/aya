@@ -1442,6 +1442,7 @@ pub struct aya_ebpf::programs::fexit::FExitContext
 impl aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::arg<T: aya_ebpf::Argument>(&self, n: usize) -> T
 pub const fn aya_ebpf::programs::fexit::FExitContext::new(ctx: *mut core::ffi::c_void) -> Self
+pub fn aya_ebpf::programs::fexit::FExitContext::ret<T: aya_ebpf::Argument>(&self) -> core::result::Result<T, i32>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::as_ptr(&self) -> *mut core::ffi::c_void
 pub fn aya_ebpf::programs::fexit::FExitContext::command(&self) -> core::result::Result<[u8; 16], i32>
@@ -1985,6 +1986,7 @@ pub struct aya_ebpf::programs::FExitContext
 impl aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::arg<T: aya_ebpf::Argument>(&self, n: usize) -> T
 pub const fn aya_ebpf::programs::fexit::FExitContext::new(ctx: *mut core::ffi::c_void) -> Self
+pub fn aya_ebpf::programs::fexit::FExitContext::ret<T: aya_ebpf::Argument>(&self) -> core::result::Result<T, i32>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::fexit::FExitContext
 pub fn aya_ebpf::programs::fexit::FExitContext::as_ptr(&self) -> *mut core::ffi::c_void
 pub fn aya_ebpf::programs::fexit::FExitContext::command(&self) -> core::result::Result<[u8; 16], i32>
