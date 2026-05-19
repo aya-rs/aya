@@ -16,15 +16,11 @@ rust-version.workspace = true
 [lints]
 workspace = true
 
-[features]
-default = ["flate2"]
-
 [dependencies]
 anyhow = { workspace = true, optional = true }
 assert_matches = { workspace = true }
 aya-obj = { path = "../aya-obj", version = "^0.3.0" }
 bitflags = { workspace = true }
-bytes = { workspace = true }
 flate2 = { workspace = true, features = ["rust_backend"], optional = true }
 # TODO(https://github.com/rust-lang/rust/issues/60896): Remove once
 # `std::collections::hash_set::Entry` is stabilized.
@@ -43,6 +39,7 @@ rstest = { workspace = true }
 tempfile = { workspace = true }
 
 [features]
+default = ["flate2"]
 test-helpers = ["dep:anyhow", "dep:nix"]
 
 [package.metadata.docs.rs]
