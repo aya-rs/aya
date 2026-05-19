@@ -115,10 +115,6 @@ pub enum KConfigError {
         /// The malformed line.
         line: String,
     },
-
-    /// Kernel config data is not valid UTF-8.
-    #[error("kernel config is not valid UTF-8")]
-    InvalidUtf8(#[from] std::str::Utf8Error),
 }
 
 impl KConfig {
@@ -221,7 +217,22 @@ impl KConfig {
     /// This still populates the synthetic libbpf-compatible externs from local feature
     /// detection and kernel version discovery.
     pub fn parse(data: &[u8]) -> Result<Self, KConfigError> {
-        Self::with_raw_config(Some(std::str::from_utf8(data)?))
+        let raw_config = std::str::from_utf8(data).map_err(|err| {
+            let valid_up_to = err.valid_up_to();
+            let line_start = data[..valid_up_to]
+                .iter()
+                .rposition(|byte| *byte == b'\n')
+                .map_or(0, |index| index + 1);
+            let line_end = data[valid_up_to..]
+                .iter()
+                .position(|byte| *byte == b'\n')
+                .map_or(data.len(), |index| valid_up_to + index);
+
+            KConfigError::MalformedLine {
+                line: String::from_utf8_lossy(&data[line_start..line_end]).into_owned(),
+            }
+        })?;
+        Self::with_raw_config(Some(raw_config))
     }
 
     /// Returns a reference to the underlying configuration data.
@@ -1257,6 +1268,17 @@ mod tests {
         assert!(matches!(
             err,
             super::KConfigError::MalformedLine { line } if line == "CONFIG_BROKEN=\"unterminated"
+        ));
+    }
+
+    #[test]
+    fn test_parse_kconfig_rejects_invalid_utf8_as_malformed_line() {
+        let err = super::KConfig::parse(b"CONFIG_BROKEN=\xff\n").unwrap_err();
+        assert!(matches!(
+            err,
+            super::KConfigError::MalformedLine { line }
+                if line.starts_with("CONFIG_BROKEN=")
+                    && line.contains(char::REPLACEMENT_CHARACTER)
         ));
     }
 }

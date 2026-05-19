@@ -7769,7 +7769,6 @@ impl core::marker::UnsafeUnpin for aya::EbpfError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::EbpfError
 impl !core::panic::unwind_safe::UnwindSafe for aya::EbpfError
 pub enum aya::KConfigError
-pub aya::KConfigError::InvalidUtf8(core::str::error::Utf8Error)
 pub aya::KConfigError::MalformedLine
 pub aya::KConfigError::MalformedLine::line: alloc::string::String
 pub aya::KConfigError::NotFound
@@ -7777,8 +7776,6 @@ pub aya::KConfigError::NotFound::paths: alloc::vec::Vec<std::path::PathBuf>
 pub aya::KConfigError::Read
 pub aya::KConfigError::Read::error: std::io::error::Error
 pub aya::KConfigError::Read::path: std::path::PathBuf
-impl core::convert::From<core::str::error::Utf8Error> for aya::KConfigError
-pub fn aya::KConfigError::from(source: core::str::error::Utf8Error) -> Self
 impl core::error::Error for aya::KConfigError
 pub fn aya::KConfigError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya::KConfigError
