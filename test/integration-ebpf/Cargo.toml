@@ -49,6 +49,10 @@ name = "dev_map"
 path = "src/dev_map.rs"
 
 [[bin]]
+name = "fexit"
+path = "src/fexit.rs"
+
+[[bin]]
 name = "kprobe"
 path = "src/kprobe.rs"
 

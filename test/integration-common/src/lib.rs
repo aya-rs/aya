@@ -30,6 +30,34 @@ pub mod bloom_filter {
     pub const CONTAINS_ABSENT_INDEX: u32 = 2;
 }
 
+pub mod fexit {
+    pub const TEST_CALLED: u32 = 1;
+    pub const NO_ERROR: i32 = 0;
+    pub const RETVAL_MISMATCH: i32 = 1;
+    pub const ARG_MISMATCH: i32 = 2;
+    pub const TEST1_INDEX: u32 = 0;
+    pub const TEST2_INDEX: u32 = 1;
+    pub const TEST3_INDEX: u32 = 2;
+    pub const TEST4_INDEX: u32 = 3;
+    pub const TEST5_INDEX: u32 = 4;
+    pub const TEST6_INDEX: u32 = 5;
+    pub const TEST7_INDEX: u32 = 6;
+    pub const TEST8_INDEX: u32 = 7;
+    pub const TEST9_INDEX: u32 = 8;
+    pub const TEST10_INDEX: u32 = 9;
+    pub const TEST_COUNT: u32 = 10;
+
+    #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+    #[repr(C)]
+    pub struct TestResult {
+        pub called: u32,
+        pub error: i32,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
+
 pub mod bpf_probe_read {
     pub const RESULT_BUF_LEN: usize = 1024;
 

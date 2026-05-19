@@ -45,6 +45,7 @@ bpf_file!(
     BTF_MAPS_PLAIN => "btf_maps_plain",
     CPU_MAP => "cpu_map",
     DEV_MAP => "dev_map",
+    FEXIT => "fexit",
     KPROBE => "kprobe",
     LINEAR_DATA_STRUCTURES => "linear_data_structures",
     LOG => "log",
