@@ -310,76 +310,80 @@ fn add_type(header: &mut btf_header, types: &mut BtfTypes, btf_type: BtfType) ->
     type_id as u32
 }
 
-// Numeric config values are stored as native-width bytes when parsed, while the
-// BTF extern may declare a narrower destination type. After the fit check above,
-// pad or truncate numeric bytes to the target width.
-fn resize_numeric_value(value: &[u8], type_size: usize, endianness: Endianness) -> Vec<u8> {
-    if value.len() == type_size {
-        return value.to_vec();
+// Materialize a numeric value into the BTF-declared scalar width. Values parsed
+// from textual kconfig are stored as 64-bit byte arrays; when the destination is
+// narrower, only redundant sign/zero-extension bytes may be discarded.
+fn materialize_scalar_value(
+    symbol_name: &str,
+    value: &[u8],
+    type_size: usize,
+    signed: bool,
+    max_value: Option<u64>,
+    endianness: Endianness,
+) -> Result<Vec<u8>, BtfError> {
+    let out_of_range = || {
+        Err(BtfError::ExternalSymbolValueOutOfRange {
+            symbol_name: symbol_name.into(),
+        })
+    };
+    if value.is_empty()
+        || type_size == 0
+        || type_size > size_of::<u64>()
+        || value.len() > size_of::<u64>()
+    {
+        return out_of_range();
     }
 
-    if value.len() == size_of::<u64>() && type_size <= size_of::<u64>() {
-        let start = match endianness {
-            Endianness::Little => 0,
-            Endianness::Big => value.len() - type_size,
+    let value_bits = value.len() * u8::BITS as usize;
+    let value = match endianness {
+        Endianness::Little => value
+            .iter()
+            .rev()
+            .fold(0u64, |value, byte| (value << u8::BITS) | u64::from(*byte)),
+        Endianness::Big => value
+            .iter()
+            .fold(0u64, |value, byte| (value << u8::BITS) | u64::from(*byte)),
+    };
+    let bits = type_size * u8::BITS as usize;
+    let value = if signed {
+        let value = if value_bits == u64::BITS as usize {
+            value as i64
+        } else {
+            // sign-extend
+            ((value << (u64::BITS as usize - value_bits)) as i64)
+                >> (u64::BITS as usize - value_bits)
         };
-        return value[start..start + type_size].to_vec();
-    }
-
-    if value.len() < type_size {
-        let mut padded = vec![0u8; type_size];
-        match endianness {
-            Endianness::Little => {
-                padded[..value.len()].copy_from_slice(value);
-            }
-            Endianness::Big => {
-                let start = type_size.saturating_sub(value.len());
-                padded[start..start + value.len()].copy_from_slice(value);
+        if bits < i64::BITS as usize {
+            let min = -(1i64 << (bits - 1));
+            let max = (1i64 << (bits - 1)) - 1;
+            if !(min..=max).contains(&value) {
+                return out_of_range();
             }
         }
-        return padded;
-    }
-
-    value[..type_size].to_vec()
-}
-
-fn scalar_value_fits(value: &[u8], type_size: usize, signed: bool, endianness: Endianness) -> bool {
-    if value.len() <= type_size {
-        return true;
-    }
-
-    let truncated = match endianness {
-        Endianness::Little => &value[type_size..],
-        Endianness::Big => &value[..value.len() - type_size],
+        value as u64
+    } else {
+        if bits < u64::BITS as usize && value >= (1u64 << bits) {
+            return out_of_range();
+        }
+        if max_value.is_some_and(|max| value > max) {
+            return out_of_range();
+        }
+        value
     };
-
-    if !signed {
-        return truncated.iter().all(|byte| *byte == 0);
-    }
-
-    let sign_byte = match endianness {
-        Endianness::Little => value[type_size - 1],
-        Endianness::Big => value[value.len() - type_size],
+    #[expect(
+        clippy::big_endian_bytes,
+        clippy::little_endian_bytes,
+        reason = "value is materialized in object endianness"
+    )]
+    let bytes = match endianness {
+        Endianness::Little => value.to_le_bytes(),
+        Endianness::Big => value.to_be_bytes(),
     };
-    let sign_extension = if sign_byte & 0x80 != 0 { 0xff } else { 0x00 };
-    truncated.iter().all(|byte| *byte == sign_extension)
-}
-
-fn scalar_value_as_u64(value: &[u8], endianness: Endianness) -> Option<u64> {
-    if value.len() > size_of::<u64>() {
-        return None;
-    }
-
-    match endianness {
-        Endianness::Little => Some(value.iter().enumerate().fold(0u64, |acc, (index, byte)| {
-            acc | (u64::from(*byte) << (index * 8))
-        })),
-        Endianness::Big => Some(
-            value
-                .iter()
-                .fold(0u64, |acc, byte| (acc << 8) | u64::from(*byte)),
-        ),
-    }
+    let start = match endianness {
+        Endianness::Little => 0,
+        Endianness::Big => size_of::<u64>() - type_size,
+    };
+    Ok(bytes[start..start + type_size].to_vec())
 }
 
 impl Btf {
@@ -1051,27 +1055,22 @@ impl Object {
                         });
                     }
                 };
-                let mut data = vec![0; type_size];
-                match endianness {
-                    Endianness::Little => data[0] = value,
-                    Endianness::Big => data[type_size - 1] = value,
-                }
-                data
+                vec![value]
             } else {
-                if !scalar_value_fits(&data, type_size, false, endianness) {
-                    return Err(BtfError::ExternalSymbolValueOutOfRange {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-                if scalar_value_as_u64(&data, endianness).is_some_and(|value| value > 2) {
-                    return Err(BtfError::ExternalSymbolValueOutOfRange {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-                resize_numeric_value(&data, type_size, endianness)
+                data
             };
 
-            return Ok((type_align, data));
+            return Ok((
+                type_align,
+                materialize_scalar_value(
+                    symbol_name,
+                    &data,
+                    type_size,
+                    false,
+                    Some(2),
+                    endianness,
+                )?,
+            ));
         }
 
         let data = match resolved_type {
@@ -1109,49 +1108,40 @@ impl Object {
                 data
             }
             BtfType::Int(int) if int.encoding() == IntEncoding::Bool && int.size == 1 => {
-                if let Some(value) = tristate_marker {
+                let data = if let Some(value) = tristate_marker {
                     if value == b'm' {
                         return Err(BtfError::ExternalSymbolValueOutOfRange {
                             symbol_name: symbol_name.into(),
                         });
                     }
-                    return Ok((type_align, vec![u8::from(value == b'y')]));
-                }
-                if !scalar_value_fits(&data, type_size, false, endianness) {
-                    return Err(BtfError::ExternalSymbolValueOutOfRange {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-                if scalar_value_as_u64(&data, endianness).is_some_and(|value| value > 1) {
-                    return Err(BtfError::ExternalSymbolValueOutOfRange {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-                resize_numeric_value(&data, type_size, endianness)
+                    vec![u8::from(value == b'y')]
+                } else {
+                    data
+                };
+
+                materialize_scalar_value(symbol_name, &data, type_size, false, Some(1), endianness)?
             }
             BtfType::Int(int)
                 if matches!(int.encoding(), IntEncoding::Signed | IntEncoding::None)
                     && matches!(int.size, 1 | 2 | 4 | 8) =>
             {
                 if let Some(value) = tristate_marker {
-                    if int.size == 1 {
-                        return Ok((type_align, vec![value]));
+                    if int.size != 1 {
+                        return Err(BtfError::ExternalSymbolValueOutOfRange {
+                            symbol_name: symbol_name.into(),
+                        });
                     }
-                    return Err(BtfError::ExternalSymbolValueOutOfRange {
-                        symbol_name: symbol_name.into(),
-                    });
+                    vec![value]
+                } else {
+                    materialize_scalar_value(
+                        symbol_name,
+                        &data,
+                        type_size,
+                        int.encoding() == IntEncoding::Signed,
+                        None,
+                        endianness,
+                    )?
                 }
-                if !scalar_value_fits(
-                    &data,
-                    type_size,
-                    int.encoding() == IntEncoding::Signed,
-                    endianness,
-                ) {
-                    return Err(BtfError::ExternalSymbolValueOutOfRange {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-                resize_numeric_value(&data, type_size, endianness)
             }
             _ => {
                 return Err(BtfError::InvalidExternalSymbol {
