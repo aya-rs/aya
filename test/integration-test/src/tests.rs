@@ -16,6 +16,7 @@ mod btf_maps;
 mod btf_relocations;
 mod elf;
 mod feature_probe;
+mod fexit;
 mod hash_map;
 mod info;
 mod iter;
