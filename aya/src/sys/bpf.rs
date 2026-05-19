@@ -16,11 +16,10 @@ use aya_obj::{
         VarLinkage,
     },
     generated::{
-        BPF_ADD, BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE,
-        BPF_F_TEST_RUN_ON_CPU, BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_MEM, BPF_MOV,
-        BPF_PSEUDO_MAP_VALUE, BPF_ST, BPF_X, bpf_attach_type, bpf_attr,
-        bpf_attr__bindgen_ty_7, bpf_btf_info, bpf_cmd, bpf_func_id, bpf_insn, bpf_link_info,
-        bpf_map_info, bpf_map_type, bpf_prog_info, bpf_prog_type, bpf_stats_type,
+        BPF_ALU64, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_F_TEST_RUN_ON_CPU, BPF_IMM, BPF_JMP, BPF_K,
+        BPF_LD, BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, bpf_attach_type, bpf_attr,
+        bpf_attr__bindgen_ty_7, bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_map_info,
+        bpf_map_type, bpf_prog_info, bpf_prog_type, bpf_stats_type,
     },
     maps::{LegacyMap, bpf_map_def},
 };
