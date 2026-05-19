@@ -1279,6 +1279,7 @@ impl Object {
                     section_index: section_index.0,
                     section_kind: EbpfSectionKind::Rodata,
                     symbol_index: None,
+                    inner_def: None,
                     data,
                 }),
             );
