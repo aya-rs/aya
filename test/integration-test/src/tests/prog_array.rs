@@ -21,17 +21,16 @@ extern "C" fn trigger_tail_call_success() {
     std::hint::black_box(());
 }
 
-#[test_case(
+#[test_log::test(test_case(
     "RESULT_LEGACY",
     "tail_call_empty_legacy"
     ; "legacy"
-)]
+))]
 #[test_case(
     "RESULT",
     "tail_call_empty"
     ; "btf"
 )]
-#[test_log::test]
 fn tail_call_empty(result_map: &str, entry_prog: &str) {
     if !is_map_supported(MapType::ProgramArray).unwrap() {
         eprintln!("skipping test - program array map not supported");
@@ -67,13 +66,13 @@ fn tail_call_empty(result_map: &str, entry_prog: &str) {
     );
 }
 
-#[test_case(
+#[test_log::test(test_case(
     "RESULT_LEGACY",
     "ARRAY_LEGACY",
     "tail_call_empty_legacy",
     "tail_call_target_legacy"
     ; "legacy"
-)]
+))]
 #[test_case(
     "RESULT",
     "ARRAY",
@@ -81,7 +80,6 @@ fn tail_call_empty(result_map: &str, entry_prog: &str) {
     "tail_call_target"
     ; "btf"
 )]
-#[test_log::test]
 fn tail_call_success(result_map: &str, array_map: &str, entry_prog: &str, target_prog: &str) {
     if !is_map_supported(MapType::ProgramArray).unwrap() {
         eprintln!("skipping test - program array map not supported");

@@ -367,13 +367,12 @@ fn basic_tracepoint() {
     );
 }
 
-#[test_case(UProbeScope::AllProcesses; "all_processes")]
+#[test_log::test(test_case(UProbeScope::AllProcesses; "all_processes"))]
 #[test_case(UProbeScope::CallingProcess; "calling_process")]
 #[test_case(
     UProbeScope::OneProcess(NonZeroU32::new(std::process::id()).unwrap());
     "one_process"
 )]
-#[test_log::test]
 fn basic_uprobe_scopes(scope: UProbeScope) {
     type P = UProbe;
 

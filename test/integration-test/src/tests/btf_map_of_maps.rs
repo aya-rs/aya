@@ -94,9 +94,8 @@ extern "C" fn trigger_btf_hash_of_maps_get_value() {
     std::hint::black_box(());
 }
 
-#[test_case(MapKind::Array, "btf_array_of_maps", 0, 42 ; "array_of_maps")]
+#[test_log::test(test_case(MapKind::Array, "btf_array_of_maps", 0, 42 ; "array_of_maps"))]
 #[test_case(MapKind::Hash, "btf_hash_of_maps", 1, 55 ; "hash_of_maps")]
-#[test_log::test]
 fn btf_map_of_maps(kind: MapKind, name: &str, result_index: u32, expected: u32) {
     let mut ebpf = Ebpf::load(crate::BTF_MAP_OF_MAPS).unwrap();
 
@@ -110,9 +109,8 @@ fn btf_map_of_maps(kind: MapKind, name: &str, result_index: u32, expected: u32) 
     assert_result(&ebpf, result_index, expected);
 }
 
-#[test_case(MapKind::Array, "btf_array_of_maps_get_value", 2, 77, 99 ; "array_of_maps")]
+#[test_log::test(test_case(MapKind::Array, "btf_array_of_maps_get_value", 2, 77, 99 ; "array_of_maps"))]
 #[test_case(MapKind::Hash, "btf_hash_of_maps_get_value", 3, 55, 88 ; "hash_of_maps")]
-#[test_log::test]
 fn btf_map_of_maps_get_value(
     kind: MapKind,
     name: &str,

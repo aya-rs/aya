@@ -8,9 +8,8 @@ use aya::{
 use integration_common::stack_trace::TestResult;
 use test_case::test_case;
 
-#[test_case("STACKS_LEGACY", "RESULT_LEGACY", "record_stackid_lsm_legacy" ; "legacy")]
+#[test_log::test(test_case("STACKS_LEGACY", "RESULT_LEGACY", "record_stackid_lsm_legacy" ; "legacy"))]
 #[test_case("STACKS", "RESULT", "record_stackid_lsm" ; "btf")]
-#[test_log::test]
 fn record_stackid_lsm(stacks_map: &str, result_map: &str, prog: &str) {
     if !is_map_supported(MapType::StackTrace).unwrap() {
         eprintln!("skipping test - stack trace map not supported");

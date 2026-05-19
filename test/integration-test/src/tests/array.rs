@@ -30,7 +30,7 @@ extern "C" fn get_ptr_mut(index: u32) {
     std::hint::black_box(index);
 }
 
-#[test_case(
+#[test_log::test(test_case(
     "RESULT_LEGACY",
     "ARRAY_LEGACY",
     "set_legacy",
@@ -38,7 +38,7 @@ extern "C" fn get_ptr_mut(index: u32) {
     "get_ptr_legacy",
     "get_ptr_mut_legacy"
     ; "legacy"
-)]
+))]
 #[test_case(
     "RESULT",
     "ARRAY",
@@ -48,7 +48,6 @@ extern "C" fn get_ptr_mut(index: u32) {
     "get_ptr_mut"
     ; "btf"
 )]
-#[test_log::test]
 fn test_array(
     result_map: &str,
     array_map: &str,
