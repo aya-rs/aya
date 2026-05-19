@@ -2606,6 +2606,10 @@ pub fn aya::programs::fexit::FExit::pin<P: core::convert::AsRef<std::path::Path>
 pub fn aya::programs::fexit::FExit::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::fexit::FExit
+pub type aya::programs::fexit::FExit::Opts<'a> = ()
+pub type aya::programs::fexit::FExit::Result = ()
+pub fn aya::programs::fexit::FExit::test_run(&self, _opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::fexit::FExit
@@ -6169,6 +6173,10 @@ pub fn aya::programs::fexit::FExit::pin<P: core::convert::AsRef<std::path::Path>
 pub fn aya::programs::fexit::FExit::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
 impl aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::fexit::FExit
+pub type aya::programs::fexit::FExit::Opts<'a> = ()
+pub type aya::programs::fexit::FExit::Result = ()
+pub fn aya::programs::fexit::FExit::test_run(&self, _opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::fexit::FExit
 pub fn aya::programs::fexit::FExit::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::drop::Drop for aya::programs::fexit::FExit
@@ -7190,6 +7198,10 @@ impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
 pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
 pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
 pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::fexit::FExit
+pub type aya::programs::fexit::FExit::Opts<'a> = ()
+pub type aya::programs::fexit::FExit::Result = ()
+pub fn aya::programs::fexit::FExit::test_run(&self, _opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::flow_dissector::FlowDissector
 pub type aya::programs::flow_dissector::FlowDissector::Opts<'a> = aya::programs::TestRunOptions<'a>
 pub type aya::programs::flow_dissector::FlowDissector::Result = aya::programs::TestRunResult
@@ -7579,6 +7591,10 @@ impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
 pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
 pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
 pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::fexit::FExit
+pub type aya::programs::fexit::FExit::Opts<'a> = ()
+pub type aya::programs::fexit::FExit::Result = ()
+pub fn aya::programs::fexit::FExit::test_run(&self, _opts: Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::flow_dissector::FlowDissector
 pub type aya::programs::flow_dissector::FlowDissector::Opts<'a> = aya::programs::TestRunOptions<'a>
 pub type aya::programs::flow_dissector::FlowDissector::Result = aya::programs::TestRunResult
