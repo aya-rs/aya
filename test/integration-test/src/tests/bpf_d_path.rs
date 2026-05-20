@@ -35,12 +35,12 @@ fn bpf_d_path_basic() {
         .unwrap();
 
     let prog: &mut FEntry = bpf
-        .program_mut("test_vfs_open")
+        .program_mut("test_security_file_open")
         .unwrap()
         .try_into()
         .unwrap();
-    // Load the fentry program; on kernels < 5.11 (x86_64) or < 6.4 (aarch64), sleepable fentry is not supported.
-    prog.load("vfs_open", &btf).unwrap();
+    // Load and attach to security_file_open, which is in the bpf_d_path allowlist
+    prog.load("security_file_open", &btf).unwrap();
     let _link_id = {
         let result = prog.attach();
         if !is_program_supported(ProgramType::Tracing).unwrap() {
@@ -60,7 +60,7 @@ fn bpf_d_path_basic() {
 
     assert!(
         result.seen > 0,
-        "The BPF program did not observe any matching vfs_open() call for this test process (pid {pid}).",
+        "The BPF program did not observe any matching security_file_open() call for this test process (pid {pid}).",
     );
     assert_eq!(
         result.status, 0,
