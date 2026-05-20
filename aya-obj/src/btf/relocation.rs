@@ -755,7 +755,7 @@ impl<'a> AccessSpec<'a> {
                         spec: spec.to_string(),
                         index,
                         max_index: n_variants,
-                        error: "tried to access nonexistant enum variant",
+                        error: "tried to access nonexistent enum variant",
                     })?;
                 let name = btf.string_at(name_offset)?;
                 let accessors = vec![Accessor {

@@ -375,3 +375,21 @@ unused_macro_rules = "warn"
 unused_qualifications = "warn"
 # unused_results = "warn" # We should make this warn.
 # variant_size_differences = "warn" # Never.
+
+# https://github.com/crate-ci/typos/blob/master/docs/reference.md
+[workspace.metadata.typos.default]
+extend-ignore-identifiers-re = [
+    # variables
+    "__PT_PARM",           # PARM
+    "BPF_F_WRONLY",        # WRONLY
+    "BPF_SOCK_OPS_RTO_CB", # RTO
+    # words
+    "UNIONs", # UNIO
+]
+extend-ignore-re = [
+    # memory range (i.e. "5ba3b000-5da3b000")
+    "[a-f0-9]+\\-[a-f0-9]+",
+]
+
+[workspace.metadata.typos.files]
+extend-exclude = ["CHANGELOG.md"]

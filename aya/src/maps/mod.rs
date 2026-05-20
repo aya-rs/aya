@@ -132,7 +132,7 @@ mod sealed {
 }
 
 #[derive(Error, Debug)]
-/// Errors occuring from working with Maps
+/// Errors occurring from working with Maps
 pub enum MapError {
     /// Missing inner map BTF definition for a map-of-maps.
     #[error(
@@ -212,7 +212,7 @@ pub enum MapError {
     #[error("element not found")]
     ElementNotFound,
 
-    /// Progam Not Loaded
+    /// Program Not Loaded
     #[error("the program is not loaded")]
     ProgramNotLoaded,
 

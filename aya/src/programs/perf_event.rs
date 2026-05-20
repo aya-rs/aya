@@ -156,7 +156,7 @@ pub enum SoftwareEvent {
     /// Number of page faults.
     #[doc(alias = "PERF_COUNT_SW_PAGE_FAULTS")]
     PageFaults = perf_sw_ids_to_u32(perf_sw_ids::PERF_COUNT_SW_PAGE_FAULTS),
-    /// Numer of context switches.
+    /// Number of context switches.
     #[doc(alias = "PERF_COUNT_SW_CONTEXT_SWITCHES")]
     ContextSwitches = perf_sw_ids_to_u32(perf_sw_ids::PERF_COUNT_SW_CONTEXT_SWITCHES),
     /// Number of times the process has migrated to a new CPU.

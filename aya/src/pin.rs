@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::sys::SyscallError;
 
-/// An error ocurred working with a pinned BPF object.
+/// An error occurred working with a pinned BPF object.
 #[derive(Error, Debug)]
 pub enum PinError {
     /// The object FD is not known by Aya.
@@ -23,7 +23,7 @@ pub enum PinError {
         /// The source error.
         error: std::ffi::NulError,
     },
-    /// An error ocurred making a syscall.
+    /// An error occurred making a syscall.
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
 }

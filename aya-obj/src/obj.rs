@@ -1192,7 +1192,7 @@ fn parse_version(data: &[u8], endianness: Endianness) -> Result<Option<u32>, Par
     })
 }
 
-// Gets an integer value from a BTF map defintion K/V pair.
+// Gets an integer value from a BTF map definition K/V pair.
 // type_id should be a PTR to an ARRAY.
 // the value is encoded in the array nr_elems field.
 fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
@@ -2639,7 +2639,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_section_cgroup_skb_no_direction_unamed() {
+    fn test_parse_section_cgroup_skb_no_direction_unnamed() {
         let mut obj = fake_obj();
         fake_sym(&mut obj, 0, 0, "skb", FAKE_INS_LEN);
 
