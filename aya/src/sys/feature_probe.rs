@@ -270,15 +270,18 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
                 })),
             },
             Ok(prog_fd) => {
-                // Some arm64 kernels (notably < 6.4) can load LSM programs but cannot attach them:
-                // `bpf_raw_tracepoint_open` fails with `-ENOTSUPP`. Probe attach support
-                // explicitly.
+                // Some kernels can load tracing and LSM programs but cannot attach BPF
+                // trampolines: `bpf_raw_tracepoint_open` fails with `-ENOTSUPP`. Probe attach
+                // support explicitly. This is notably seen on arm64 kernels before 6.4.
                 //
                 // h/t to https://www.exein.io/blog/exploring-bpf-lsm-support-on-aarch64-with-ftrace.
                 //
                 // The same test for cGroup LSM programs would require attaching to a real cgroup,
                 // which is more involved and not possible in the general case.
-                if matches!(program_type, ProgramType::Lsm(LsmAttachType::Mac)) {
+                if matches!(
+                    program_type,
+                    ProgramType::Tracing | ProgramType::Lsm(LsmAttachType::Mac)
+                ) {
                     match bpf_raw_tracepoint_open(None, prog_fd.as_fd()) {
                         Ok(_) => Ok(true),
                         Err(io_error) => match io_error.raw_os_error() {
