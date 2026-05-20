@@ -1,5 +1,3 @@
-use std::fs::File;
-
 use assert_matches::assert_matches;
 use aya::{
     Btf, Ebpf, EbpfLoader,
@@ -55,7 +53,8 @@ fn bpf_d_path_basic() {
         result.unwrap()
     };
 
-    let file = File::open(EXPECTED_PATH).unwrap();
+    // security_inode_getattr is triggered by stat/getattr operations, not open.
+    let _meta = std::fs::metadata(EXPECTED_PATH).unwrap();
 
     let result = get_result(&bpf);
 
@@ -79,8 +78,6 @@ fn bpf_d_path_basic() {
         path_str, EXPECTED_PATH,
         "unexpected path returned by bpf_d_path"
     );
-
-    drop(file);
 }
 
 fn get_result(bpf: &Ebpf) -> TestResult {
