@@ -455,7 +455,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    This commit fixes the (func|line)_info when we have multiple programs in
    the same section. The integration test reloc.bpf.c serves as our test
    case here. This required filtering down the (func|line)_info to only
-   that in scope of the current symbol + then adjusting the offets to
+   that in scope of the current symbol + then adjusting the offsets to
    appease the kernel.
  - <csr-id-cca9b8f1a7e345a39d852bd18a43974871d3ed4b/> Remove name from ProgramSection
    The name here is never used as we get the program name from the symbol
@@ -636,7 +636,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       - aya::{bpf_map_def, BtfMapDef, PinningType},
       - aya::programs::{CgroupSock*AttachType},
    
-   The new crate is currenly allowing missing_docs. Member visibility
+   The new crate is currently allowing missing_docs. Member visibility
    will be adjusted later to minimize exposure of implementation details.
  - <csr-id-81bc307dce452f0aacbfbe8c304089d11ddd8c5e/> migrate bindgen destination
 
@@ -744,7 +744,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Merge pull request #602 from marysaka/fix/btf-reloc-all-functions ([`3a9a54f`](https://github.com/aya-rs/aya/commit/3a9a54fd9b2f69e2427accbe0451761ecc537197))
     - Merge pull request #616 from nak3/fix-bump ([`3211d2c`](https://github.com/aya-rs/aya/commit/3211d2c92801d8208c76856cb271f2b7772a0313))
     - Apply BTF relocations to all functions ([`c4e721f`](https://github.com/aya-rs/aya/commit/c4e721f3d334a7c2e5e6d6cd6f4ade0f1334be72))
-    - [codegen] Update libbpf to f7eb43b90f4c8882edf6354f8585094f8f3aade0Update libbpf to f7eb43b90f4c8882edf6354f8585094f8f3aade0 ([`0bc886f`](https://github.com/aya-rs/aya/commit/0bc886f1634443d202e24f56cb74d3dce2e66e37))
+    - [codegen] Update libbpf to f7eb43b90f4c8882edf6354f8585094f8f3aade0 ([`0bc886f`](https://github.com/aya-rs/aya/commit/0bc886f1634443d202e24f56cb74d3dce2e66e37))
     - Merge pull request #585 from probulate/tag-len-value ([`5165bf2`](https://github.com/aya-rs/aya/commit/5165bf2f99cdc228122bdab505c2059723e95a9f))
     - Merge pull request #605 from marysaka/fix/global-data-reloc-ancient-kernels ([`9c437aa`](https://github.com/aya-rs/aya/commit/9c437aafd96bebc5c90fdc7f370b5415174b1019))
     - Merge pull request #604 from marysaka/fix/section-kind-from-str ([`3a9058e`](https://github.com/aya-rs/aya/commit/3a9058e7625b56ac26d6bb592dd4c3a93c61d6b0))
@@ -797,7 +797,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Add new map types ([`3d03c8a`](https://github.com/aya-rs/aya/commit/3d03c8a8e0a9033be8c1ab020129db7790cc7493))
     - Merge pull request #483 from aya-rs/codegen ([`0399991`](https://github.com/aya-rs/aya/commit/03999913833ad576d9ba7d1c0123703f49b340a5))
     - Update `BPF_MAP_TYPE_CGROUP_STORAGE` name to `BPF_MAP_TYPE_CGRP_STORAGE` ([`cb28533`](https://github.com/aya-rs/aya/commit/cb28533e2f9eb0b2cd80f4bf9515cdec31763749))
-    - [codegen] Update libbpf to 3423d5e7cdab356d115aef7f987b4a1098ede448Update libbpf to 3423d5e7cdab356d115aef7f987b4a1098ede448 ([`5d13fd5`](https://github.com/aya-rs/aya/commit/5d13fd5acaa90efedb76d371b69431ac9a262fdd))
+    - [codegen] Update libbpf to 3423d5e7cdab356d115aef7f987b4a1098ede448 ([`5d13fd5`](https://github.com/aya-rs/aya/commit/5d13fd5acaa90efedb76d371b69431ac9a262fdd))
     - Merge pull request #475 from yesh0/aya-obj ([`897957a`](https://github.com/aya-rs/aya/commit/897957ac84370cd1ee463bdf2ff4859333b41012))
     - Update documentation and versioning info ([`9c451a3`](https://github.com/aya-rs/aya/commit/9c451a3357317405dd8e2e4df7d006cee943adcc))
     - Add documentation on program names ([`772af17`](https://github.com/aya-rs/aya/commit/772af170aea2feccb5e98cc84125e9e31b9fbe9a))

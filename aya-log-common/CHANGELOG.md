@@ -111,7 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    These were missed when the code was updated.
  - <csr-id-ca3f70b16a705bf26d2ccc7ce754de403be36223/> s/Result<usize, ()>/Option<NonZeroUsize>/
    `Option<NonZeroUsize>` is guaranteed to have the same size as `usize`,
-   which is not guarnateed for `Result`. This is a minor optimization, but
+   which is not guaranteed for `Result`. This is a minor optimization, but
    also results in simpler code.
  - <csr-id-3cfd886dc512872fd3948cdf3baa8c99fe27ef0f/> annotate logging functions inlining
    Some of these functions fail to compile when not inlined, so we should

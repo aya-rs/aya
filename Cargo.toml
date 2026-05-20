@@ -383,13 +383,13 @@ extend-ignore-identifiers-re = [
     "__PT_PARM",           # PARM
     "BPF_F_WRONLY",        # WRONLY
     "BPF_SOCK_OPS_RTO_CB", # RTO
-    # words
-    "UNIONs", # UNIO
 ]
 extend-ignore-re = [
-    # memory range (i.e. "5ba3b000-5da3b000")
-    "[a-f0-9]+\\-[a-f0-9]+",
+    # abbreviated git commit SHA (e.g. "`8f3b1e2`")
+    "`[a-f0-9]{7}`",
+    # memory range (e.g. "5ba3b000-5da3b000")
+    "[a-f0-9]{8}\\-[a-f0-9]{8}",
 ]
 
 [workspace.metadata.typos.files]
-extend-exclude = ["CHANGELOG.md"]
+extend-exclude = ["xtask/libbpf"]
