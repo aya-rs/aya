@@ -4,7 +4,7 @@
 
 use aya_ebpf::{
     Global,
-    bindings::{file, path},
+    bindings::path,
     helpers::{bpf_d_path, bpf_get_current_pid_tgid},
     macros::{fentry, map},
     maps::Array,
@@ -22,18 +22,16 @@ static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);
 static TARGET_PID: Global<u32> = Global::new(0);
 
 #[fentry(sleepable)]
-fn test_security_file_open(ctx: FEntryContext) -> u32 {
+fn test_security_inode_getattr(ctx: FEntryContext) -> u32 {
     let target_pid = TARGET_PID.load();
     if target_pid != 0 && (bpf_get_current_pid_tgid() >> 32) as u32 != target_pid {
         return 0;
     }
 
-    let file: *const file = ctx.arg(0);
-    if file.is_null() {
+    let pathptr: *const path = ctx.arg(0);
+    if pathptr.is_null() {
         return 0;
     }
-
-    let pathptr: *const path = unsafe { core::ptr::addr_of!((*file).f_path) };
 
     let Some(result) = RESULT.get_ptr_mut(0) else {
         return 0;

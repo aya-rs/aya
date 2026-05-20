@@ -35,12 +35,13 @@ fn bpf_d_path_basic() {
         .unwrap();
 
     let prog: &mut FEntry = bpf
-        .program_mut("test_security_file_open")
+        .program_mut("test_security_inode_getattr")
         .unwrap()
         .try_into()
         .unwrap();
-    // Load and attach to security_file_open, which is in the bpf_d_path allowlist
-    prog.load("security_file_open", &btf).unwrap();
+    // security_inode_getattr takes `const struct path *` as its first argument and is in the
+    // bpf_d_path allowlist, making it compatible with all architectures including aarch64.
+    prog.load("security_inode_getattr", &btf).unwrap();
     let _link_id = {
         let result = prog.attach();
         if !is_program_supported(ProgramType::Tracing).unwrap() {
@@ -60,7 +61,7 @@ fn bpf_d_path_basic() {
 
     assert!(
         result.seen > 0,
-        "The BPF program did not observe any matching security_file_open() call for this test process (pid {pid}).",
+        "The BPF program did not observe any matching security_inode_getattr() call for this test process (pid {pid}).",
     );
     assert_eq!(
         result.status, 0,
