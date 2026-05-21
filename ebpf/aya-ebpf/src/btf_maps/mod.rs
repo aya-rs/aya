@@ -1,5 +1,6 @@
 pub mod array;
 pub mod bloom_filter;
+pub mod cgroup_array;
 pub mod cpu_map;
 pub mod dev_map;
 pub mod dev_map_hash;
@@ -22,6 +23,7 @@ pub mod xsk_map;
 
 pub use array::Array;
 pub use bloom_filter::BloomFilter;
+pub use cgroup_array::CgroupArray;
 pub use cpu_map::CpuMap;
 pub use dev_map::DevMap;
 pub use dev_map_hash::DevMapHash;

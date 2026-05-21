@@ -86,7 +86,7 @@ pub mod stack;
 pub mod stack_trace;
 pub mod xdp;
 
-pub use array::{Array, PerCpuArray, ProgramArray};
+pub use array::{Array, CgroupArray, PerCpuArray, ProgramArray};
 pub use bloom_filter::BloomFilter;
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use info::{MapInfo, MapType, loaded_maps};
@@ -300,6 +300,8 @@ pub enum Map {
     ArrayOfMaps(MapData),
     /// A [`BloomFilter`] map.
     BloomFilter(MapData),
+    /// A [`CgroupArray`] map.
+    CgroupArray(MapData),
     /// A [`CpuMap`] map.
     CpuMap(MapData),
     /// A [`DevMap`] map.
@@ -353,6 +355,7 @@ impl Map {
             Self::Array(map) => map.obj.map_type(),
             Self::ArrayOfMaps(map) => map.obj.map_type(),
             Self::BloomFilter(map) => map.obj.map_type(),
+            Self::CgroupArray(map) => map.obj.map_type(),
             Self::CpuMap(map) => map.obj.map_type(),
             Self::DevMap(map) => map.obj.map_type(),
             Self::DevMapHash(map) => map.obj.map_type(),
@@ -387,6 +390,7 @@ impl Map {
             Self::Array(map) => map.pin(path),
             Self::ArrayOfMaps(map) => map.pin(path),
             Self::BloomFilter(map) => map.pin(path),
+            Self::CgroupArray(map) => map.pin(path),
             Self::CpuMap(map) => map.pin(path),
             Self::DevMap(map) => map.pin(path),
             Self::DevMapHash(map) => map.pin(path),
@@ -445,7 +449,7 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => Self::DevMapHash(map_data),
             bpf_map_type::BPF_MAP_TYPE_RINGBUF => Self::RingBuf(map_data),
             bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER => Self::BloomFilter(map_data),
-            bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY => Self::CgroupArray(map_data),
             bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Self::ArrayOfMaps(map_data),
             bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Self::HashOfMaps(map_data),
             bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::Unsupported(map_data),
@@ -494,6 +498,7 @@ macro_rules! impl_map_pin {
 }
 
 impl_map_pin!(() {
+    CgroupArray,
     ProgramArray,
     ReusePortSockArray,
     SockMap,
@@ -574,6 +579,7 @@ macro_rules! impl_try_from_map {
 }
 
 impl_try_from_map!(() {
+    CgroupArray,
     CpuMap,
     DevMap,
     DevMapHash,
