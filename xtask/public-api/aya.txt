@@ -36,6 +36,30 @@ impl<T, V> core::marker::Unpin for aya::maps::array::Array<T, V> where T: core::
 impl<T, V> core::marker::UnsafeUnpin for aya::maps::array::Array<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::array::Array<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::array::Array<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+pub struct aya::maps::array::CgroupArray<T>
+impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::CgroupArray<T>
+pub fn aya::maps::CgroupArray<T>::len(&self) -> u32
+impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::CgroupArray<T>
+pub fn aya::maps::CgroupArray<T>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::CgroupArray<T>
+pub fn aya::maps::CgroupArray<T>::set(&mut self, index: u32, cgroup_fd: impl std::os::fd::raw::AsRawFd, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+pub fn aya::maps::CgroupArray<T>::unset(&mut self, index: u32) -> core::result::Result<(), aya::maps::MapError>
+impl core::convert::TryFrom<aya::maps::Map> for aya::maps::CgroupArray<aya::maps::MapData>
+pub type aya::maps::CgroupArray<aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::CgroupArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::CgroupArray<&'a aya::maps::MapData>
+pub type aya::maps::CgroupArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::CgroupArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::CgroupArray<&'a mut aya::maps::MapData>
+pub type aya::maps::CgroupArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::CgroupArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T> core::marker::Freeze for aya::maps::CgroupArray<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for aya::maps::CgroupArray<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya::maps::CgroupArray<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for aya::maps::CgroupArray<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::CgroupArray<T> where T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::CgroupArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::CgroupArray<T> where T: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::array::PerCpuArray<T, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::PerCpuArray<T, V>
 pub fn aya::maps::PerCpuArray<T, V>::get(&self, index: &u32, flags: u64) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
@@ -786,6 +810,7 @@ pub enum aya::maps::Map
 pub aya::maps::Map::Array(aya::maps::MapData)
 pub aya::maps::Map::ArrayOfMaps(aya::maps::MapData)
 pub aya::maps::Map::BloomFilter(aya::maps::MapData)
+pub aya::maps::Map::CgroupArray(aya::maps::MapData)
 pub aya::maps::Map::CpuMap(aya::maps::MapData)
 pub aya::maps::Map::DevMap(aya::maps::MapData)
 pub aya::maps::Map::DevMapHash(aya::maps::MapData)
@@ -811,6 +836,9 @@ pub aya::maps::Map::XskMap(aya::maps::MapData)
 impl aya::maps::Map
 pub fn aya::maps::Map::from_map_data(map_data: aya::maps::MapData) -> core::result::Result<Self, aya::maps::MapError>
 pub fn aya::maps::Map::pin<P: core::convert::AsRef<std::path::Path>>(&self, path: P) -> core::result::Result<(), aya::pin::PinError>
+impl core::convert::TryFrom<aya::maps::Map> for aya::maps::CgroupArray<aya::maps::MapData>
+pub type aya::maps::CgroupArray<aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::CgroupArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::CpuMap<aya::maps::MapData>
 pub type aya::maps::CpuMap<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::CpuMap<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -915,6 +943,9 @@ pub fn aya::maps::ArrayOfMaps<&'a aya::maps::MapData, V>::try_from(map: &'a aya:
 impl<'a, V: aya::maps::InnerMap> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData, V>
 pub type aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::ArrayOfMaps<&'a mut aya::maps::MapData, V>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::CgroupArray<&'a aya::maps::MapData>
+pub type aya::maps::CgroupArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::CgroupArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::CpuMap<&'a aya::maps::MapData>
 pub type aya::maps::CpuMap<&'a aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::CpuMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -945,6 +976,9 @@ pub fn aya::maps::ring_buf::RingBuf<&'a aya::maps::MapData>::try_from(map: &'a a
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>
 pub type aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::stack_trace::StackTraceMap<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::CgroupArray<&'a mut aya::maps::MapData>
+pub type aya::maps::CgroupArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::CgroupArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::CpuMap<&'a mut aya::maps::MapData>
 pub type aya::maps::CpuMap<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::CpuMap<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1218,6 +1252,30 @@ impl<T, V> core::marker::Unpin for aya::maps::bloom_filter::BloomFilter<T, V> wh
 impl<T, V> core::marker::UnsafeUnpin for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+pub struct aya::maps::CgroupArray<T>
+impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::CgroupArray<T>
+pub fn aya::maps::CgroupArray<T>::len(&self) -> u32
+impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::CgroupArray<T>
+pub fn aya::maps::CgroupArray<T>::pin<P: core::convert::AsRef<std::path::Path>>(self, path: P) -> core::result::Result<(), aya::pin::PinError>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::CgroupArray<T>
+pub fn aya::maps::CgroupArray<T>::set(&mut self, index: u32, cgroup_fd: impl std::os::fd::raw::AsRawFd, flags: u64) -> core::result::Result<(), aya::maps::MapError>
+pub fn aya::maps::CgroupArray<T>::unset(&mut self, index: u32) -> core::result::Result<(), aya::maps::MapError>
+impl core::convert::TryFrom<aya::maps::Map> for aya::maps::CgroupArray<aya::maps::MapData>
+pub type aya::maps::CgroupArray<aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::CgroupArray<aya::maps::MapData>::try_from(map: aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::CgroupArray<&'a aya::maps::MapData>
+pub type aya::maps::CgroupArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::CgroupArray<&'a aya::maps::MapData>::try_from(map: &'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::CgroupArray<&'a mut aya::maps::MapData>
+pub type aya::maps::CgroupArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::CgroupArray<&'a mut aya::maps::MapData>::try_from(map: &'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T> core::marker::Freeze for aya::maps::CgroupArray<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for aya::maps::CgroupArray<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya::maps::CgroupArray<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for aya::maps::CgroupArray<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::CgroupArray<T> where T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::CgroupArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::CgroupArray<T> where T: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::CpuMap<T>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::CpuMap<T>
 pub fn aya::maps::CpuMap<T>::get(&self, cpu_index: u32, flags: u64) -> core::result::Result<aya::maps::xdp::cpu_map::CpuMapValue, aya::maps::MapError>

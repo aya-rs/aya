@@ -804,6 +804,7 @@ fn parse_map(
         bpf_map_type::BPF_MAP_TYPE_ARRAY => Map::Array(map),
         bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY => Map::PerCpuArray(map),
         bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY => Map::ProgramArray(map),
+        bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY => Map::CgroupArray(map),
         bpf_map_type::BPF_MAP_TYPE_HASH => Map::HashMap(map),
         bpf_map_type::BPF_MAP_TYPE_LRU_HASH => Map::LruHashMap(map),
         bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH => Map::PerCpuHashMap(map),
