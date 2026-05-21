@@ -19,6 +19,17 @@ fn bytes_of<T: Sized>(val: &T) -> &[u8] {
     unsafe { core::slice::from_raw_parts(core::ptr::from_ref::<T>(val).cast::<u8>(), size) }
 }
 
+fn skip_if_socket_filter_test_run_unsupported() -> bool {
+    let kernel_version = aya::util::KernelVersion::current().unwrap();
+    // BPF_PROG_TEST_RUN was introduced in v4.12 but initially only supported
+    // sched_cls and sched_act program types. Support for
+    // BPF_PROG_TYPE_SOCKET_FILTER was added in v4.16 (61f3c964dfd2, "bpf:
+    // allow socket_filter programs to use bpf_prog_test_run"). On earlier
+    // kernels, calling BPF_PROG_TEST_RUN on a socket filter program returns
+    // EINVAL.
+    kernel_version < aya::util::KernelVersion::new(4, 16, 0)
+}
+
 #[test_log::test]
 fn test_classifier_test_run() {
     let kernel_version = aya::util::KernelVersion::current().unwrap();
@@ -164,13 +175,7 @@ fn test_xdp_modify_packet() {
 
 #[test_log::test]
 fn test_socket_filter_test_run() {
-    let kernel_version = aya::util::KernelVersion::current().unwrap();
-    // BPF_PROG_TEST_RUN was introduced in v4.12 but initially only supported
-    // sched_cls and sched_act program types. Support for BPF_PROG_TYPE_SOCKET_FILTER
-    // was added in v4.16 (61f3c964dfd2, "bpf: allow socket_filter programs to use
-    // bpf_prog_test_run"). On earlier kernels, calling BPF_PROG_TEST_RUN on a socket
-    // filter program returns EINVAL.
-    if kernel_version < aya::util::KernelVersion::new(4, 16, 0) {
+    if skip_if_socket_filter_test_run_unsupported() {
         return;
     }
 
