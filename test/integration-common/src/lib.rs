@@ -44,6 +44,27 @@ pub mod bpf_probe_read {
     unsafe impl aya::Pod for TestResult {}
 }
 
+pub mod cgroup_array {
+    /// Index holding a cgroup the task is under (expect `1`).
+    pub const UNDER_INDEX: u32 = 0;
+    /// Index holding a cgroup the task is not under (expect `0`).
+    pub const NOT_UNDER_INDEX: u32 = 1;
+
+    #[repr(C)]
+    #[derive(Clone, Copy, Default)]
+    pub struct TestResult {
+        /// `current_task_under_cgroup` for `UNDER_INDEX`: 1 under, 0 not, negative errno.
+        pub under: i64,
+        /// `current_task_under_cgroup` for `NOT_UNDER_INDEX`.
+        pub not_under: i64,
+        /// Distinguishes a recorded result from a zero-initialised slot.
+        pub ran: bool,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
+
 pub mod log {
     pub const BUF_LEN: usize = 1024;
 

@@ -187,3 +187,7 @@ path = "src/btf_map_of_maps.rs"
 [[bin]]
 name = "xsk_map"
 path = "src/xsk_map.rs"
+
+[[bin]]
+name = "cgroup_array"
+path = "src/cgroup_array.rs"

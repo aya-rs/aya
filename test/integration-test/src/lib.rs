@@ -43,6 +43,7 @@ bpf_file!(
     BLOOM_FILTER => "bloom_filter",
     BPF_PROBE_READ => "bpf_probe_read",
     BTF_MAPS_PLAIN => "btf_maps_plain",
+    CGROUP_ARRAY => "cgroup_array",
     CPU_MAP => "cpu_map",
     DEV_MAP => "dev_map",
     HASH_MAP => "hash_map",
