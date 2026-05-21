@@ -4418,6 +4418,21 @@ impl core::marker::UnsafeUnpin for aya::programs::sock_ops::SockOpsLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOpsLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOpsLinkId
 pub mod aya::programs::socket_filter
+pub enum aya::programs::socket_filter::SocketFilterAttachType
+pub aya::programs::socket_filter::SocketFilterAttachType::ReusePort
+pub aya::programs::socket_filter::SocketFilterAttachType::SocketFilter
+impl core::clone::Clone for aya::programs::socket_filter::SocketFilterAttachType
+pub fn aya::programs::socket_filter::SocketFilterAttachType::clone(&self) -> aya::programs::socket_filter::SocketFilterAttachType
+impl core::fmt::Debug for aya::programs::socket_filter::SocketFilterAttachType
+pub fn aya::programs::socket_filter::SocketFilterAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::socket_filter::SocketFilterAttachType
+impl core::marker::Freeze for aya::programs::socket_filter::SocketFilterAttachType
+impl core::marker::Send for aya::programs::socket_filter::SocketFilterAttachType
+impl core::marker::Sync for aya::programs::socket_filter::SocketFilterAttachType
+impl core::marker::Unpin for aya::programs::socket_filter::SocketFilterAttachType
+impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilterAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterAttachType
 pub enum aya::programs::socket_filter::SocketFilterError
 pub aya::programs::socket_filter::SocketFilterError::SetsockoptError
 pub aya::programs::socket_filter::SocketFilterError::SetsockoptError::io_error: std::io::error::Error
@@ -4440,8 +4455,8 @@ impl !core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::Soc
 pub struct aya::programs::socket_filter::SocketFilter
 impl aya::programs::socket_filter::SocketFilter
 pub const aya::programs::socket_filter::SocketFilter::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::socket_filter::SocketFilter::attach<T: std::os::fd::owned::AsFd>(&self, socket: T) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::socket_filter::SocketFilter::detach<T: std::os::fd::owned::AsFd>(socket: T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::SocketFilter::attach<T: std::os::fd::owned::AsFd>(&self, socket: T, attach_type: aya::programs::socket_filter::SocketFilterAttachType) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::SocketFilter::detach<T: std::os::fd::owned::AsFd>(socket: T, attach_type: aya::programs::socket_filter::SocketFilterAttachType) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::socket_filter::SocketFilter::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::socket_filter::SocketFilter::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
@@ -5650,6 +5665,21 @@ impl core::marker::Unpin for aya::programs::sk_reuseport::SkReuseportError
 impl core::marker::UnsafeUnpin for aya::programs::sk_reuseport::SkReuseportError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_reuseport::SkReuseportError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::sk_reuseport::SkReuseportError
+pub enum aya::programs::SocketFilterAttachType
+pub aya::programs::SocketFilterAttachType::ReusePort
+pub aya::programs::SocketFilterAttachType::SocketFilter
+impl core::clone::Clone for aya::programs::socket_filter::SocketFilterAttachType
+pub fn aya::programs::socket_filter::SocketFilterAttachType::clone(&self) -> aya::programs::socket_filter::SocketFilterAttachType
+impl core::fmt::Debug for aya::programs::socket_filter::SocketFilterAttachType
+pub fn aya::programs::socket_filter::SocketFilterAttachType::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::socket_filter::SocketFilterAttachType
+impl core::marker::Freeze for aya::programs::socket_filter::SocketFilterAttachType
+impl core::marker::Send for aya::programs::socket_filter::SocketFilterAttachType
+impl core::marker::Sync for aya::programs::socket_filter::SocketFilterAttachType
+impl core::marker::Unpin for aya::programs::socket_filter::SocketFilterAttachType
+impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilterAttachType
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterAttachType
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterAttachType
 pub enum aya::programs::SocketFilterError
 pub aya::programs::SocketFilterError::SetsockoptError
 pub aya::programs::SocketFilterError::SetsockoptError::io_error: std::io::error::Error
@@ -6828,8 +6858,8 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOps
 pub struct aya::programs::SocketFilter
 impl aya::programs::socket_filter::SocketFilter
 pub const aya::programs::socket_filter::SocketFilter::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::socket_filter::SocketFilter::attach<T: std::os::fd::owned::AsFd>(&self, socket: T) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::socket_filter::SocketFilter::detach<T: std::os::fd::owned::AsFd>(socket: T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::SocketFilter::attach<T: std::os::fd::owned::AsFd>(&self, socket: T, attach_type: aya::programs::socket_filter::SocketFilterAttachType) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::SocketFilter::detach<T: std::os::fd::owned::AsFd>(socket: T, attach_type: aya::programs::socket_filter::SocketFilterAttachType) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::socket_filter::SocketFilter::from_pin<P: core::convert::AsRef<std::path::Path>>(path: P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::socket_filter::SocketFilter::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
