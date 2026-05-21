@@ -33,13 +33,13 @@ fn bpf_d_path_basic() {
         .unwrap();
 
     let prog: &mut FEntry = bpf
-        .program_mut("test_security_inode_getattr")
+        .program_mut("test_vfs_getattr")
         .unwrap()
         .try_into()
         .unwrap();
-    // security_inode_getattr takes `const struct path *` as its first argument and is in the
+    // vfs_getattr takes `const struct path *` as its first argument and is in the
     // bpf_d_path allowlist, making it compatible with all architectures including aarch64.
-    prog.load("security_inode_getattr", &btf).unwrap();
+    prog.load("vfs_getattr", &btf).unwrap();
     let _link_id = {
         let result = prog.attach();
         if !is_program_supported(ProgramType::Tracing).unwrap() {
@@ -53,14 +53,14 @@ fn bpf_d_path_basic() {
         result.unwrap()
     };
 
-    // security_inode_getattr is triggered by stat/getattr operations, not open.
+    // vfs_getattr is triggered by stat/getattr operations, not open.
     let _meta = std::fs::metadata(EXPECTED_PATH).unwrap();
 
     let result = get_result(&bpf);
 
     assert!(
         result.seen > 0,
-        "The BPF program did not observe any matching security_inode_getattr() call for this test process (pid {pid}).",
+        "The BPF program did not observe any matching vfs_getattr() call for this test process (pid {pid}).",
     );
     assert_eq!(
         result.status, 0,

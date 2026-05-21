@@ -22,7 +22,7 @@ static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);
 static TARGET_PID: Global<u32> = Global::new(0);
 
 #[fentry(sleepable)]
-fn test_security_inode_getattr(ctx: FEntryContext) -> u32 {
+fn test_vfs_getattr(ctx: FEntryContext) -> u32 {
     let target_pid = TARGET_PID.load();
     if target_pid != 0 && (bpf_get_current_pid_tgid() >> 32) as u32 != target_pid {
         return 0;
