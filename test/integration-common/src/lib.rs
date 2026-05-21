@@ -187,8 +187,14 @@ pub mod sk_reuseport {
 pub mod socket_filter {
     pub const PASS_HITS_INDEX: u32 = 0;
     pub const TRIM_HITS_INDEX: u32 = 1;
-    pub const PATH_HITS_MAX_ENTRIES: u32 = 2;
+
+    pub const REUSEPORT_SELECT_FIRST_HITS_INDEX: u32 = 2;
+    pub const REUSEPORT_SELECT_SECOND_HITS_INDEX: u32 = 3;
+    pub const PATH_HITS_MAX_ENTRIES: u32 = 4;
+
     pub const TRIM_DELTA_BYTES: u32 = 4;
+    pub const REUSEPORT_FIRST_LISTENER_INDEX: i64 = 0;
+    pub const REUSEPORT_SECOND_LISTENER_INDEX: i64 = 1;
 }
 
 pub mod stack_trace {
