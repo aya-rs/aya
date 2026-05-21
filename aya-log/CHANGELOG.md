@@ -187,7 +187,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   High time we stop debating this; let the robots do the work.
 - <csr-id-ca3f70b16a705bf26d2ccc7ce754de403be36223/> s/Result<usize, ()>/Option<NonZeroUsize>/
   `Option<NonZeroUsize>` is guaranteed to have the same size as `usize`,
-  which is not guarnateed for `Result`. This is a minor optimization, but
+  which is not guaranteed for `Result`. This is a minor optimization, but
   also results in simpler code.
 - <csr-id-96fa08bd82233268154edf30b106876f5a4f0e30/> Define dependencies on the workspace level
   This way we will avoid version mismatches and make differences in

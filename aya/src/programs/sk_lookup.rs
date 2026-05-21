@@ -15,7 +15,7 @@ use crate::{
 /// A program used to redirect incoming packets to a local socket.
 ///
 /// [`SkLookup`] programs are attached to network namespaces to provide programmable
-/// socket lookup for TCP/UDP when a packet is to be delievered locally.
+/// socket lookup for TCP/UDP when a packet is to be delivered locally.
 ///
 /// You may attach multiple programs to the same namespace and they are executed
 /// in the order they were attached.

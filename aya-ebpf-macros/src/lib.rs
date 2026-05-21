@@ -525,7 +525,7 @@ pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// overhead to call before kernel function. fentry programs can be also
 /// attached to other eBPF programs.
 ///
-/// # Minimumm kernel version
+/// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 5.5.
 ///
@@ -570,7 +570,7 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// arguments rather than the return value. fexit programs can be also attached
 /// to other eBPF programs.
 ///
-/// # Minimumm kernel version
+/// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 5.5.
 ///

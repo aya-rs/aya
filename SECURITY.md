@@ -10,7 +10,7 @@ which depending on the severity of the vulnerability may be immediate.
 ## Reporting a Vulnerability
 
 To report a vulnerability, please use the
-[Private Vulnerability Reporting Feature] on GitHub. We will endevour to respond
+[Private Vulnerability Reporting Feature] on GitHub. We will endeavour to respond
 within 48hrs of reporting.
 
 If a vulnerability is reported but considered low priority it may be converted

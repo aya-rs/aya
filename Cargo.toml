@@ -375,3 +375,21 @@ unused_macro_rules = "warn"
 unused_qualifications = "warn"
 # unused_results = "warn" # We should make this warn.
 # variant_size_differences = "warn" # Never.
+
+# https://github.com/crate-ci/typos/blob/master/docs/reference.md
+[workspace.metadata.typos.default]
+extend-ignore-identifiers-re = [
+    # variables
+    "__PT_PARM",           # PARM
+    "BPF_F_WRONLY",        # WRONLY
+    "BPF_SOCK_OPS_RTO_CB", # RTO
+]
+extend-ignore-re = [
+    # abbreviated git commit SHA (e.g. "`8f3b1e2`")
+    "`[a-f0-9]{7}`",
+    # memory range (e.g. "5ba3b000-5da3b000")
+    "[a-f0-9]{8}\\-[a-f0-9]{8}",
+]
+
+[workspace.metadata.typos.files]
+extend-exclude = ["xtask/libbpf"]

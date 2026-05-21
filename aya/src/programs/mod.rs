@@ -1310,7 +1310,7 @@ macro_rules! impl_from_prog_info {
                 if info.program_type() != Self::PROGRAM_TYPE.into() {
                     return Err(ProgramError::UnexpectedProgramType {});
                 }
-                let ProgramInfo(bpf_progam_info) = info;
+                let ProgramInfo(bpf_program_info) = info;
                 let fd = info.fd()?;
                 let fd = fd.as_fd().try_clone_to_owned()?;
 
@@ -1319,7 +1319,7 @@ macro_rules! impl_from_prog_info {
                         Some(name),
                         crate::MockableFd::from_fd(fd),
                         Path::new(""),
-                        bpf_progam_info,
+                        bpf_program_info,
                         VerifierLogLevel::default(),
                     )?,
                     $($var,)?

@@ -504,7 +504,7 @@ fn match_candidate<'target>(
                     enum64_fallback: Some(fallback),
                     ..
                 }) => {
-                    // Local ENUM64 types become UNIONs during sanitisation; the fallback retains
+                    // Local ENUM64 types become UNION types during sanitisation; the fallback retains
                     // their original variant names so we can line them up with target enums.
                     match_enum(&mut fallback.variants.iter().map(|variant| variant.name_offset))
                 }
@@ -755,7 +755,7 @@ impl<'a> AccessSpec<'a> {
                         spec: spec.to_string(),
                         index,
                         max_index: n_variants,
-                        error: "tried to access nonexistant enum variant",
+                        error: "tried to access nonexistent enum variant",
                     })?;
                 let name = btf.string_at(name_offset)?;
                 let accessors = vec![Accessor {
