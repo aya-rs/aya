@@ -19,6 +19,11 @@ use libc::if_nametoindex;
 const CGROUP_ROOT: &str = "/sys/fs/cgroup";
 const CGROUP_PROCS: &str = "cgroup.procs";
 
+pub(crate) fn is_cgroup2() -> bool {
+    // `cgroup.controllers` exists only at the root of a cgroup2 mount.
+    Path::new(CGROUP_ROOT).join("cgroup.controllers").exists()
+}
+
 pub(crate) struct ChildCgroup<'a> {
     parent: &'a Cgroup<'a>,
     path: Cow<'a, Path>,
