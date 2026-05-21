@@ -4499,7 +4499,46 @@ impl core::marker::Unpin for aya::programs::socket_filter::SocketFilterError
 impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilterError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterError
-pub struct aya::programs::socket_filter::SocketFilter
+#[repr(transparent)] pub struct aya::programs::socket_filter::ReusePortSocketFilter
+impl aya::programs::socket_filter::ReusePortSocketFilter
+pub const aya::programs::socket_filter::ReusePortSocketFilter::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::attach<T: std::os::fd::owned::AsFd>(&self, T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::detach<T: std::os::fd::owned::AsFd>(T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::socket_filter::ReusePortSocketFilter
+pub type aya::programs::socket_filter::ReusePortSocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::socket_filter::ReusePortSocketFilter::Result = aya::programs::TestRunResult
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::socket_filter::ReusePortSocketFilter
+pub type &'a aya::programs::socket_filter::ReusePortSocketFilter::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::socket_filter::ReusePortSocketFilter::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::socket_filter::ReusePortSocketFilter, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::socket_filter::ReusePortSocketFilter
+pub type &'a mut aya::programs::socket_filter::ReusePortSocketFilter::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::socket_filter::ReusePortSocketFilter::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::socket_filter::ReusePortSocketFilter, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::socket_filter::ReusePortSocketFilter
+impl core::marker::Send for aya::programs::socket_filter::ReusePortSocketFilter
+impl core::marker::Sync for aya::programs::socket_filter::ReusePortSocketFilter
+impl core::marker::Unpin for aya::programs::socket_filter::ReusePortSocketFilter
+impl core::marker::UnsafeUnpin for aya::programs::socket_filter::ReusePortSocketFilter
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::ReusePortSocketFilter
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::ReusePortSocketFilter
+#[repr(transparent)] pub struct aya::programs::socket_filter::SocketFilter
 impl aya::programs::socket_filter::SocketFilter
 pub const aya::programs::socket_filter::SocketFilter::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::socket_filter::SocketFilter::attach<T: std::os::fd::owned::AsFd>(&self, T) -> core::result::Result<(), aya::programs::ProgramError>
@@ -4508,6 +4547,8 @@ pub fn aya::programs::socket_filter::SocketFilter::from_pin<P: core::convert::As
 pub fn aya::programs::socket_filter::SocketFilter::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
@@ -5383,6 +5424,7 @@ pub aya::programs::Program::Lsm(aya::programs::lsm::Lsm)
 pub aya::programs::Program::LsmCgroup(aya::programs::lsm_cgroup::LsmCgroup)
 pub aya::programs::Program::PerfEvent(aya::programs::perf_event::PerfEvent)
 pub aya::programs::Program::RawTracePoint(aya::programs::raw_trace_point::RawTracePoint)
+pub aya::programs::Program::ReusePortSocketFilter(aya::programs::socket_filter::ReusePortSocketFilter)
 pub aya::programs::Program::SchedClassifier(aya::programs::tc::SchedClassifier)
 pub aya::programs::Program::SkLookup(aya::programs::sk_lookup::SkLookup)
 pub aya::programs::Program::SkMsg(aya::programs::sk_msg::SkMsg)
@@ -5467,6 +5509,9 @@ pub fn &'a aya::programs::sk_skb::SkSkb::try_from(&'a aya::programs::Program) ->
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sock_ops::SockOps
 pub type &'a aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::sock_ops::SockOps::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::socket_filter::ReusePortSocketFilter
+pub type &'a aya::programs::socket_filter::ReusePortSocketFilter::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::socket_filter::ReusePortSocketFilter::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::socket_filter::ReusePortSocketFilter, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::socket_filter::SocketFilter
 pub type &'a aya::programs::socket_filter::SocketFilter::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::socket_filter::SocketFilter::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::socket_filter::SocketFilter, aya::programs::ProgramError>
@@ -5551,6 +5596,9 @@ pub fn &'a mut aya::programs::sk_skb::SkSkb::try_from(&'a mut aya::programs::Pro
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sock_ops::SockOps
 pub type &'a mut aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::sock_ops::SockOps::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::socket_filter::ReusePortSocketFilter
+pub type &'a mut aya::programs::socket_filter::ReusePortSocketFilter::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::socket_filter::ReusePortSocketFilter::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::socket_filter::ReusePortSocketFilter, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::socket_filter::SocketFilter
 pub type &'a mut aya::programs::socket_filter::SocketFilter::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::socket_filter::SocketFilter::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::socket_filter::SocketFilter, aya::programs::ProgramError>
@@ -6659,6 +6707,45 @@ impl core::marker::Unpin for aya::programs::RawTracePointTestRunResult
 impl core::marker::UnsafeUnpin for aya::programs::RawTracePointTestRunResult
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::RawTracePointTestRunResult
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::RawTracePointTestRunResult
+#[repr(transparent)] pub struct aya::programs::ReusePortSocketFilter
+impl aya::programs::socket_filter::ReusePortSocketFilter
+pub const aya::programs::socket_filter::ReusePortSocketFilter::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::attach<T: std::os::fd::owned::AsFd>(&self, T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::detach<T: std::os::fd::owned::AsFd>(T) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::unpin(&mut self) -> core::result::Result<(), std::io::error::Error>
+impl aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::socket_filter::ReusePortSocketFilter
+pub type aya::programs::socket_filter::ReusePortSocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::socket_filter::ReusePortSocketFilter::Result = aya::programs::TestRunResult
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::socket_filter::ReusePortSocketFilter
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::socket_filter::ReusePortSocketFilter
+pub type &'a aya::programs::socket_filter::ReusePortSocketFilter::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::socket_filter::ReusePortSocketFilter::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::socket_filter::ReusePortSocketFilter, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::socket_filter::ReusePortSocketFilter
+pub type &'a mut aya::programs::socket_filter::ReusePortSocketFilter::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::socket_filter::ReusePortSocketFilter::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::socket_filter::ReusePortSocketFilter, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::socket_filter::ReusePortSocketFilter
+impl core::marker::Send for aya::programs::socket_filter::ReusePortSocketFilter
+impl core::marker::Sync for aya::programs::socket_filter::ReusePortSocketFilter
+impl core::marker::Unpin for aya::programs::socket_filter::ReusePortSocketFilter
+impl core::marker::UnsafeUnpin for aya::programs::socket_filter::ReusePortSocketFilter
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::ReusePortSocketFilter
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::ReusePortSocketFilter
 pub struct aya::programs::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub const aya::programs::tc::SchedClassifier::PROGRAM_TYPE: aya::programs::ProgramType
@@ -6891,7 +6978,7 @@ impl core::marker::Unpin for aya::programs::sock_ops::SockOps
 impl core::marker::UnsafeUnpin for aya::programs::sock_ops::SockOps
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOps
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOps
-pub struct aya::programs::SocketFilter
+#[repr(transparent)] pub struct aya::programs::SocketFilter
 impl aya::programs::socket_filter::SocketFilter
 pub const aya::programs::socket_filter::SocketFilter::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::socket_filter::SocketFilter::attach<T: std::os::fd::owned::AsFd>(&self, T) -> core::result::Result<(), aya::programs::ProgramError>
@@ -6900,6 +6987,8 @@ pub fn aya::programs::socket_filter::SocketFilter::from_pin<P: core::convert::As
 pub fn aya::programs::socket_filter::SocketFilter::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::socket_filter::SocketFilter
+pub fn aya::programs::socket_filter::SocketFilter::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
 pub fn aya::programs::socket_filter::SocketFilter::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
 impl aya::programs::socket_filter::SocketFilter
@@ -7268,6 +7357,10 @@ impl aya::programs::TestRun for aya::programs::raw_trace_point::RawTracePoint
 pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions
 pub type aya::programs::raw_trace_point::RawTracePoint::Result = aya::programs::RawTracePointTestRunResult
 pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::socket_filter::ReusePortSocketFilter
+pub type aya::programs::socket_filter::ReusePortSocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::socket_filter::ReusePortSocketFilter::Result = aya::programs::TestRunResult
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::socket_filter::SocketFilter
 pub type aya::programs::socket_filter::SocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
 pub type aya::programs::socket_filter::SocketFilter::Result = aya::programs::TestRunResult
@@ -7661,6 +7754,10 @@ impl aya::programs::TestRun for aya::programs::raw_trace_point::RawTracePoint
 pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions
 pub type aya::programs::raw_trace_point::RawTracePoint::Result = aya::programs::RawTracePointTestRunResult
 pub fn aya::programs::raw_trace_point::RawTracePoint::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::socket_filter::ReusePortSocketFilter
+pub type aya::programs::socket_filter::ReusePortSocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::socket_filter::ReusePortSocketFilter::Result = aya::programs::TestRunResult
+pub fn aya::programs::socket_filter::ReusePortSocketFilter::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::socket_filter::SocketFilter
 pub type aya::programs::socket_filter::SocketFilter::Opts<'a> = aya::programs::TestRunOptions<'a>
 pub type aya::programs::socket_filter::SocketFilter::Result = aya::programs::TestRunResult

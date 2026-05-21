@@ -73,6 +73,18 @@ pub mod trace_point;
 pub mod uprobe;
 pub mod xdp;
 
+// `libc` exposes `SO_ATTACH_REUSEPORT_EBPF` on all architectures, but
+// `SO_DETACH_REUSEPORT_BPF` is still commented out in libc's
+// `src/unix/linux_like/linux/arch/{mips,powerpc,sparc}/mod.rs`.
+// The values below are the asm-generic constants (52 and 68), which are
+// correct for every architecture aya supports; sparc uses different values
+// but aya does not target sparc. Both are defined locally to keep them
+// consistent rather than mixing a libc constant with a hand-written one.
+// TODO(https://github.com/rust-lang/libc/commit/95c9572): use libc's
+// constants once this lands in a released libc version.
+pub(crate) const SO_ATTACH_REUSEPORT_EBPF: libc::c_int = 52;
+pub(crate) const SO_DETACH_REUSEPORT_BPF: libc::c_int = 68;
+
 use std::{
     borrow::Cow,
     ffi::CString,
@@ -120,7 +132,7 @@ pub use crate::programs::{
     sk_reuseport::{SkReuseport, SkReuseportAttachType, SkReuseportError},
     sk_skb::{SkSkb, SkSkbKind},
     sock_ops::SockOps,
-    socket_filter::{SocketFilter, SocketFilterError},
+    socket_filter::{ReusePortSocketFilter, SocketFilter, SocketFilterError},
     tc::{SchedClassifier, TcAttachType, TcError, TcHandle},
     tp_btf::BtfTracePoint,
     trace_point::{TracePoint, TracePointError},
@@ -297,6 +309,8 @@ pub enum Program {
     TracePoint(TracePoint),
     /// A [`SocketFilter`] program
     SocketFilter(SocketFilter),
+    /// A [`ReusePortSocketFilter`] program
+    ReusePortSocketFilter(ReusePortSocketFilter),
     /// A [`Xdp`] program
     Xdp(Xdp),
     /// A [`SkMsg`] program
@@ -353,7 +367,7 @@ impl Program {
         match self {
             Self::KProbe(_) | Self::UProbe(_) => ProgramType::KProbe,
             Self::TracePoint(_) => ProgramType::TracePoint,
-            Self::SocketFilter(_) => ProgramType::SocketFilter,
+            Self::SocketFilter(_) | Self::ReusePortSocketFilter(_) => ProgramType::SocketFilter,
             Self::Xdp(_) => ProgramType::Xdp,
             Self::SkMsg(_) => ProgramType::SkMsg,
             Self::SkSkb(_) => ProgramType::SkSkb,
@@ -396,6 +410,7 @@ impl Program {
             Self::UProbe(p) => p.pin(path),
             Self::TracePoint(p) => p.pin(path),
             Self::SocketFilter(p) => p.pin(path),
+            Self::ReusePortSocketFilter(p) => p.pin(path),
             Self::Xdp(p) => p.pin(path),
             Self::SkMsg(p) => p.pin(path),
             Self::SkSkb(p) => p.pin(path),
@@ -430,6 +445,7 @@ impl Program {
             Self::UProbe(mut p) => p.unload(),
             Self::TracePoint(mut p) => p.unload(),
             Self::SocketFilter(mut p) => p.unload(),
+            Self::ReusePortSocketFilter(mut p) => p.unload(),
             Self::Xdp(mut p) => p.unload(),
             Self::SkMsg(mut p) => p.unload(),
             Self::SkSkb(mut p) => p.unload(),
@@ -466,6 +482,7 @@ impl Program {
             Self::UProbe(p) => p.fd(),
             Self::TracePoint(p) => p.fd(),
             Self::SocketFilter(p) => p.fd(),
+            Self::ReusePortSocketFilter(p) => p.fd(),
             Self::Xdp(p) => p.fd(),
             Self::SkMsg(p) => p.fd(),
             Self::SkSkb(p) => p.fd(),
@@ -503,6 +520,7 @@ impl Program {
             Self::UProbe(p) => p.info(),
             Self::TracePoint(p) => p.info(),
             Self::SocketFilter(p) => p.info(),
+            Self::ReusePortSocketFilter(p) => p.info(),
             Self::Xdp(p) => p.info(),
             Self::SkMsg(p) => p.info(),
             Self::SkSkb(p) => p.info(),
@@ -848,6 +866,7 @@ impl_program_unload!(
     UProbe,
     TracePoint,
     SocketFilter,
+    ReusePortSocketFilter,
     Xdp,
     SkMsg,
     SkSkb,
@@ -892,6 +911,7 @@ impl_fd!(
     UProbe,
     TracePoint,
     SocketFilter,
+    ReusePortSocketFilter,
     Xdp,
     SkMsg,
     SkSkb,
@@ -1130,7 +1150,14 @@ macro_rules! impl_program_test_run {
     }
 }
 
-impl_program_test_run!(SocketFilter, SchedClassifier, Xdp, CgroupSkb, FlowDissector);
+impl_program_test_run!(
+    SocketFilter,
+    ReusePortSocketFilter,
+    SchedClassifier,
+    Xdp,
+    CgroupSkb,
+    FlowDissector,
+);
 
 impl TestRun for RawTracePoint {
     type Opts<'a> = RawTracePointRunOptions;
@@ -1239,6 +1266,7 @@ impl_program_pin!(
     UProbe,
     TracePoint,
     SocketFilter,
+    ReusePortSocketFilter,
     Xdp,
     SkMsg,
     SkSkb,
@@ -1391,6 +1419,8 @@ impl_from_prog_info!(
     unsafe KProbe kind : ProbeKind,
     unsafe UProbe kind : ProbeKind,
     TracePoint,
+    SocketFilter,
+    ReusePortSocketFilter,
     Xdp attach_type : XdpAttachType,
     SkMsg,
     SkSkb kind : SkSkbKind,
@@ -1441,11 +1471,55 @@ macro_rules! impl_try_from_program {
     }
 }
 
+// Socket filters are special: Aya follows libbpf section rules, so
+// `SEC("socket")` always loads as `Program::SocketFilter`. There is no
+// `socket/reuseport` section to distinguish the reuseport use at load time.
+// The two uses have different return value semantics, so a program is not
+// expected to be meaningful for both; modeling them as separate program
+// abstractions is useful even though they share a section.
+macro_rules! impl_try_from_socket_filter_program {
+    ($ty:ident, $variant:ident, $other_variant:ident $(,)?) => {
+        impl<'a> TryFrom<&'a Program> for &'a $ty {
+            type Error = ProgramError;
+
+            fn try_from(program: &'a Program) -> Result<&'a $ty, ProgramError> {
+                match program {
+                    Program::$variant(p) => Ok(p),
+                    Program::$other_variant(p) => {
+                        // SAFETY: Both variants are `repr(transparent)`
+                        // wrappers around the same `ProgramData<FdLink>` field.
+                        Ok(unsafe { &*std::ptr::from_ref(p).cast::<$ty>() })
+                    }
+                    _ => Err(ProgramError::UnexpectedProgramType),
+                }
+            }
+        }
+
+        impl<'a> TryFrom<&'a mut Program> for &'a mut $ty {
+            type Error = ProgramError;
+
+            fn try_from(program: &'a mut Program) -> Result<&'a mut $ty, ProgramError> {
+                match program {
+                    Program::$variant(p) => Ok(p),
+                    Program::$other_variant(other) => {
+                        // SAFETY: Both variants are `repr(transparent)`
+                        // wrappers around the same `ProgramData<FdLink>` field.
+                        Ok(unsafe { &mut *std::ptr::from_mut(other).cast::<$ty>() })
+                    }
+                    _ => Err(ProgramError::UnexpectedProgramType),
+                }
+            }
+        }
+    };
+}
+
+impl_try_from_socket_filter_program!(SocketFilter, SocketFilter, ReusePortSocketFilter);
+impl_try_from_socket_filter_program!(ReusePortSocketFilter, ReusePortSocketFilter, SocketFilter);
+
 impl_try_from_program!(
     KProbe,
     UProbe,
     TracePoint,
-    SocketFilter,
     Xdp,
     SkMsg,
     SkSkb,
@@ -1477,6 +1551,7 @@ impl_info!(
     UProbe,
     TracePoint,
     SocketFilter,
+    ReusePortSocketFilter,
     Xdp,
     SkMsg,
     SkSkb,
