@@ -32,7 +32,7 @@ jobs:
 
       - uses: taiki-e/install-action@v2
         with:
-          tool: cargo-hack,taplo-cli,typos
+          tool: cargo-hack,taplo-cli,typos-cli
 
       - run: git ls-files -- '*.c' '*.h' | xargs clang-format --dry-run --Werror
 
