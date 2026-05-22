@@ -20,10 +20,16 @@ fn main() {
     let build_integration_bpf = env::var(AYA_BUILD_INTEGRATION_BPF)
         .as_deref()
         .map(str::parse)
-        .is_ok_and(Result::unwrap);
+        .is_ok_and(|res| res.unwrap_or(false));
 
     if build_integration_bpf {
-        let bpf_linker = which("bpf-linker").unwrap();
-        println!("cargo:rerun-if-changed={}", bpf_linker.to_str().unwrap());
+        match which("bpf-linker") {
+            Ok(bpf_linker) => {
+                println!("cargo:rerun-if-changed={}", bpf_linker.to_str().unwrap());
+            }
+            Err(err) => {
+                println!("cargo:warning=failed to find bpf-linker: {err}");
+            }
+        }
     }
 }

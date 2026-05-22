@@ -869,6 +869,7 @@ pub mod aya_ebpf::helpers
 pub use aya_ebpf::helpers::generated
 pub macro aya_ebpf::helpers::bpf_printk!
 pub const aya_ebpf::helpers::TASK_COMM_LEN: usize
+pub unsafe fn aya_ebpf::helpers::bpf_d_path(path: *const aya_ebpf_bindings::x86_64::bindings::path, dest: &mut [u8]) -> core::result::Result<&[u8], i32>
 pub fn aya_ebpf::helpers::bpf_get_current_comm() -> core::result::Result<[u8; 16], i32>
 pub fn aya_ebpf::helpers::bpf_get_current_pid_tgid() -> u64
 pub fn aya_ebpf::helpers::bpf_get_current_uid_gid() -> u64

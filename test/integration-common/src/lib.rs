@@ -226,6 +226,23 @@ pub mod stack_trace {
     unsafe impl aya::Pod for TestResult {}
 }
 
+pub mod bpf_d_path {
+    pub const EXPECTED_PATH: &str = "/dev/null";
+    pub const PATH_BUF_LEN: usize = 128;
+
+    #[derive(Copy, Clone)]
+    #[repr(C)]
+    pub struct TestResult {
+        pub buf: [u8; PATH_BUF_LEN],
+        pub len: usize,
+        pub seen: u32,
+        pub status: i32,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
+
 pub mod test_run {
     pub const XDP_MODIFY_VAL: u8 = 0xAA;
     pub const IF_INDEX: u32 = 1;
