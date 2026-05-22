@@ -3,6 +3,8 @@
 use std::{
     fs::File,
     io::{BufRead as _, BufReader},
+    path::Path,
+    process::Command,
 };
 
 use aya::{Btf, Ebpf, EbpfError, maps::Array, programs::BtfTracePoint, util::KernelVersion};
@@ -73,6 +75,39 @@ mod output_keys_strong {
     pub(super) const PER_CPU_PTR_ADDR: u32 = 2;
     pub(super) const PER_CPU_PTR_VALUE: u32 = 3;
     pub(super) const MARKER: u32 = 4;
+}
+
+mod output_keys_module {
+    pub(super) const VAR_ADDR: u32 = 0;
+    pub(super) const VAR_VALUE: u32 = 1;
+    pub(super) const READ_RET: u32 = 2;
+    pub(super) const MARKER: u32 = 3;
+}
+
+fn load_test_module(module: &str) -> bool {
+    match Command::new("/sbin/modprobe")
+        .arg("-q")
+        .arg(module)
+        .status()
+    {
+        Ok(status) if status.success() => {}
+        Ok(status) => {
+            eprintln!("skipping test, modprobe {module} failed with status {status}");
+            return false;
+        }
+        Err(e) => {
+            eprintln!("skipping test, failed to run modprobe {module}: {e:?}");
+            return false;
+        }
+    }
+
+    let btf_path = Path::new("/sys/kernel/btf").join(module);
+    if !btf_path.exists() {
+        eprintln!("skipping test, module BTF not available at {btf_path:?}");
+        return false;
+    }
+
+    true
 }
 
 /// Test STRONG typed ksym resolution with per-cpu helpers.
@@ -161,6 +196,64 @@ fn ksyms_typed_strong() {
         signed_per_cpu >= 0,
         "bpf_per_cpu_ptr value should be >= 0, got {signed_per_cpu}"
     );
+}
+
+#[test]
+fn ksyms_module_btf() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 10, 0) {
+        eprintln!(
+            "skipping test on kernel {kernel_version:?}, module typed ksyms require kernel >= 5.10"
+        );
+        return;
+    }
+
+    if !load_test_module(crate::KMOD_AYA_KSYMS_TEST) {
+        return;
+    }
+
+    // Module typed ksyms require both module BTF for type resolution and
+    // kallsyms for the verifier's final symbol-address lookup.
+    if !kallsyms_available() {
+        eprintln!("skipping test, kallsyms not available");
+        return;
+    }
+    if kallsyms_find("aya_ksyms_test_var").is_none() {
+        eprintln!(
+            "skipping test, aya_ksyms_test_var kallsyms not available \
+            (usually due to CONFIG_KALLSYMS_ALL kernel configuration disabled)"
+        );
+        return;
+    }
+
+    let mut bpf = Ebpf::load(crate::KSYMS_MODULE).unwrap();
+    let prog: &mut BtfTracePoint = bpf
+        .program_mut("ksyms_module_btf")
+        .unwrap()
+        .try_into()
+        .unwrap();
+
+    let btf = Btf::from_sys_fs().unwrap();
+    if let Err(e) = prog.load(SYS_ENTER, &btf) {
+        panic!("failed to load program {SYS_ENTER}: {e:?}");
+    }
+    prog.attach().unwrap();
+
+    drop(std::fs::metadata("/"));
+
+    let output: Array<_, u64> = Array::try_from(bpf.map("module_output").unwrap()).unwrap();
+
+    let marker = output.get(&output_keys_module::MARKER, 0).unwrap();
+    assert_eq!(marker, 0xA11CEB7F, "BPF program did not execute");
+
+    let var_addr = output.get(&output_keys_module::VAR_ADDR, 0).unwrap();
+    assert_ne!(var_addr, 0, "module ksym address should be non-zero");
+
+    let read_ret = output.get(&output_keys_module::READ_RET, 0).unwrap();
+    assert_eq!(read_ret as i64, 0, "module ksym read failed");
+
+    let var_value = output.get(&output_keys_module::VAR_VALUE, 0).unwrap();
+    assert_eq!(var_value as i32, 123, "unexpected module ksym value");
 }
 
 /// Test WEAK typed ksym resolution and kfunc calls.

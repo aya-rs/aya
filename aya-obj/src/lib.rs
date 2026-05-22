@@ -97,7 +97,9 @@ pub mod programs;
 pub mod relocation;
 mod util;
 
-pub use extern_types::KsymsError;
+pub use extern_types::{
+    ExternModuleBtfProvider, ExternResolverModule, KsymsError, ResolveExternsError, ResolvedExterns,
+};
 pub use maps::Map;
 pub use obj::*;
 

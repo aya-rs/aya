@@ -5,6 +5,7 @@ set -euo pipefail
 # Check for required arguments.
 if [ "$#" -lt 3 ]; then
   echo "Usage: $0 <output directory> <architecture> <version1> [<version2> ...]"
+  echo "       $0 <output directory> gentoo <architecture> <version1> [<version2> ...]"
   exit 1
 fi
 
@@ -15,42 +16,64 @@ escape_regex() {
 }
 
 OUTPUT_DIR=$1
-ARCHITECTURE=$2
+KERNEL_SOURCE_OR_ARCH=$2
 shift 2
-VERSIONS=("$@")
 
-URLS=$(lynx -dump -listonly -nonumbers https://mirrors.wikimedia.org/debian/pool/main/l/linux/)
-readonly URLS
-
-# Find the latest revision of each kernel version.
 FILES=()
-for VERSION in "${VERSIONS[@]}"; do
-  REGEX="linux-image-${VERSION//./\\.}\\.[0-9]+(-[0-9]+)?(\+bpo|\+deb[0-9]+)?-cloud-${ARCHITECTURE}-unsigned_.*\\.deb"
-  match=$(printf '%s\n' "$URLS" | grep -E "$REGEX" | sort -V | tail -n1) || {
-    printf '%s\nVERSION=%s\nREGEX=%s\n' "$URLS" "$VERSION" "$REGEX" >&2
+
+if [ "$KERNEL_SOURCE_OR_ARCH" = "gentoo" ]; then
+  if [ "$#" -lt 2 ]; then
+    echo "Usage: $0 <output directory> gentoo <architecture> <version1> [<version2> ...]"
     exit 1
-  }
-  FILES+=("$match")
+  fi
 
-  # The debug package contains the actual System.map. Debian has transitioned
-  # between -dbg and -dbgsym suffixes, so match either for the specific kernel
-  # we just selected.
-  kernel_basename=$(basename "$match")
-  kernel_prefix=${kernel_basename%%_*}
-  kernel_suffix=${kernel_basename#${kernel_prefix}_}
-  base_prefix=${kernel_prefix%-unsigned}
+  ARCHITECTURE=$1
+  shift
+  VERSIONS=("$@")
 
-  base_prefix_regex=$(escape_regex "$base_prefix")
-  kernel_suffix_regex=$(escape_regex "$kernel_suffix")
+  for VERSION in "${VERSIONS[@]}"; do
+    MINOR_VERSION=${VERSION#*.}
+    SERIES="${VERSION%%.*}.${MINOR_VERSION%%.*}"
+    FILES+=(
+      "https://mirror.netcologne.de/gentoo/pub/proj/dist-kernel/binpkg/${ARCHITECTURE}/${SERIES}/gentoo-kernel-${VERSION}.${ARCHITECTURE}.gpkg.tar"
+    )
+  done
+else
+  ARCHITECTURE=$KERNEL_SOURCE_OR_ARCH
+  VERSIONS=("$@")
 
-  DEBUG_REGEX="${base_prefix_regex}-dbg(sym)?_${kernel_suffix_regex}"
-  debug_match=$(printf '%s\n' "$URLS" | grep -E "$DEBUG_REGEX" | sort -V | tail -n1) || {
-    printf 'Failed to locate debug package matching %s\n%s\nVERSION=%s\nREGEX=%s\n' \
-      "$kernel_basename" "$URLS" "$VERSION" "$DEBUG_REGEX" >&2
-    exit 1
-  }
-  FILES+=("$debug_match")
-done
+  URLS=$(lynx -dump -listonly -nonumbers https://mirrors.wikimedia.org/debian/pool/main/l/linux/)
+  readonly URLS
+
+  # Find the latest revision of each kernel version.
+  for VERSION in "${VERSIONS[@]}"; do
+    REGEX="linux-image-${VERSION//./\\.}\\.[0-9]+(-[0-9]+)?(\+bpo|\+deb[0-9]+)?-cloud-${ARCHITECTURE}-unsigned_.*\\.deb"
+    match=$(printf '%s\n' "$URLS" | grep -E "$REGEX" | sort -V | tail -n1) || {
+      printf '%s\nVERSION=%s\nREGEX=%s\n' "$URLS" "$VERSION" "$REGEX" >&2
+      exit 1
+    }
+    FILES+=("$match")
+
+    # The debug package contains the actual System.map. Debian has transitioned
+    # between -dbg and -dbgsym suffixes, so match either for the specific kernel
+    # we just selected.
+    kernel_basename=$(basename "$match")
+    kernel_prefix=${kernel_basename%%_*}
+    kernel_suffix=${kernel_basename#${kernel_prefix}_}
+    base_prefix=${kernel_prefix%-unsigned}
+
+    base_prefix_regex=$(escape_regex "$base_prefix")
+    kernel_suffix_regex=$(escape_regex "$kernel_suffix")
+
+    DEBUG_REGEX="${base_prefix_regex}-dbg(sym)?_${kernel_suffix_regex}"
+    debug_match=$(printf '%s\n' "$URLS" | grep -E "$DEBUG_REGEX" | sort -V | tail -n1) || {
+      printf 'Failed to locate debug package matching %s\n%s\nVERSION=%s\nREGEX=%s\n' \
+        "$kernel_basename" "$URLS" "$VERSION" "$DEBUG_REGEX" >&2
+      exit 1
+    }
+    FILES+=("$debug_match")
+  done
+fi
 
 # Note: `--etag-{compare,save}` are not idempotent until curl 8.9.0 which included
 # https://github.com/curl/curl/commit/85efbb92b8e6679705e122cee45ce76c56414a3e. At the time of

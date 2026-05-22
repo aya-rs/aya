@@ -61,13 +61,6 @@ pub(crate) struct SplitBtf<'a> {
 }
 
 impl<'a> SplitBtf<'a> {
-    #[cfg_attr(
-        not(test),
-        expect(
-            dead_code,
-            reason = "exercised by split BTF tests until module BTF resolution uses it"
-        )
-    )]
     pub(crate) const fn new(base: &'a Btf, split: &'a Btf) -> Self {
         Self {
             base,
@@ -82,13 +75,6 @@ impl<'a> SplitBtf<'a> {
         self.start_id
     }
 
-    #[cfg_attr(
-        not(test),
-        expect(
-            dead_code,
-            reason = "exercised by split BTF tests until module BTF resolution uses it"
-        )
-    )]
     pub(crate) fn id_by_type_name_kind_own(
         &self,
         name: &str,

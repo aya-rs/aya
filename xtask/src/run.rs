@@ -44,7 +44,13 @@ enum Environment {
         #[clap(long)]
         github_api_token: Option<String>,
 
-        /// Debian kernel archives (.deb) to boot in the VM.
+        /// Integration-test kernel modules to build and inject into the VM.
+        ///
+        /// The module source is resolved from test/integration-test/kmod/<name>.
+        #[clap(long = "kmod")]
+        kmods: Vec<String>,
+
+        /// Kernel archives to boot in the VM.
         #[clap(required = true)]
         kernel_archives: Vec<PathBuf>,
     },
@@ -217,6 +223,490 @@ fn one<T: Debug>(slice: &[T]) -> Result<&T> {
     }
 }
 
+fn resolve_extracted_path(root: &Path, link: &Path) -> Result<PathBuf> {
+    let target = fs::read_link(link).with_context(|| format!("read_link({})", link.display()))?;
+    if target.is_absolute() {
+        Ok(root.join(
+            target
+                .strip_prefix("/")
+                .with_context(|| format!("strip absolute prefix from {}", target.display()))?,
+        ))
+    } else {
+        Ok(link
+            .parent()
+            .ok_or_else(|| anyhow!("{} has no parent", link.display()))?
+            .join(target))
+    }
+}
+
+struct KernelArtifacts {
+    image_root: PathBuf,
+    kernel_image: PathBuf,
+    config: PathBuf,
+    modules_dir: PathBuf,
+    system_map: PathBuf,
+    module_copy: ModuleCopy,
+}
+
+enum ModuleCopy {
+    FullTree,
+    TestDependencies,
+}
+
+const TEST_INITRAMFS_MODULES: &[&str] = &["cls_bpf", "sch_ingress"];
+
+fn module_release(modules_dir: &Path) -> Result<String> {
+    modules_dir
+        .file_name()
+        .ok_or_else(|| anyhow!("modules directory missing name: {}", modules_dir.display()))?
+        .to_str()
+        .ok_or_else(|| anyhow!("modules directory is not UTF-8: {}", modules_dir.display()))
+        .map(ToOwned::to_owned)
+}
+
+fn module_build_dir(image_root: &Path, modules_dir: &Path) -> Result<PathBuf> {
+    let build = modules_dir.join("build");
+    match fs::symlink_metadata(&build) {
+        Ok(metadata) if metadata.file_type().is_symlink() => {
+            resolve_extracted_path(image_root, &build)
+        }
+        Ok(_) => Ok(build),
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
+            let release = module_release(modules_dir)?;
+            for usr_src in [image_root.join("usr/src"), image_root.join("image/usr/src")] {
+                let build_dir = usr_src.join(format!("linux-{release}"));
+                if build_dir.exists() {
+                    return Ok(build_dir);
+                }
+            }
+            Err(err).with_context(|| format!("metadata({})", build.display()))
+        }
+        Err(err) => Err(err).with_context(|| format!("metadata({})", build.display())),
+    }
+}
+
+fn is_gentoo_gpkg(archive: &Path) -> bool {
+    archive
+        .file_name()
+        .and_then(OsStr::to_str)
+        .is_some_and(|name| name.ends_with(".gpkg.tar"))
+}
+
+fn exists_nonempty(path: &Path) -> Result<bool> {
+    match fs::metadata(path) {
+        Ok(metadata) => Ok(metadata.len() != 0),
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(err) => Err(err).with_context(|| format!("metadata({})", path.display())),
+    }
+}
+
+fn gentoo_kernel_image(image_root: &Path, build_dir: &Path) -> Result<PathBuf> {
+    let arm64_image = build_dir.join("arch/arm64/boot/Image");
+    if exists_nonempty(&arm64_image)? {
+        return Ok(arm64_image);
+    }
+
+    let vmlinux = build_dir.join("vmlinux");
+    if build_dir.join("arch/arm64").exists() {
+        let image = image_root.join("gentoo-kernel-Image");
+        // Gentoo's arm64 package has a complete vmlinux, but not always a
+        // populated boot Image. QEMU needs the raw Image form.
+        let mut objcopy = Command::new("llvm-objcopy");
+        objcopy
+            .args(["-O", "binary"])
+            .args(["-R", ".note"])
+            .args(["-R", ".note.gnu.build-id"])
+            .args(["-R", ".comment"])
+            .arg("-S")
+            .arg(&vmlinux)
+            .arg(&image);
+        run_command(&mut objcopy)?;
+        return Ok(image);
+    }
+
+    let x86_image = build_dir.join("arch/x86/boot/bzImage");
+    if exists_nonempty(&x86_image)? {
+        return Ok(x86_image);
+    }
+
+    Ok(vmlinux)
+}
+
+fn extract_gentoo_gpkg(archive: &Path, dest: &Path) -> Result<()> {
+    fs::create_dir_all(dest).with_context(|| format!("failed to create {}", dest.display()))?;
+
+    let archive_reader = File::open(archive)
+        .with_context(|| format!("failed to open the gentoo package {}", archive.display()))?;
+    let mut archive_reader = tar::Archive::new(archive_reader);
+    let mut image_tar_xz_entries = 0;
+    let start = std::time::Instant::now();
+
+    for (outer_index, entry) in archive_reader.entries()?.enumerate() {
+        let entry =
+            entry.with_context(|| format!("({}).entries()[{outer_index}]", archive.display()))?;
+        let path = entry
+            .path()
+            .with_context(|| format!("({}).entries()[{outer_index}].path()", archive.display()))?;
+        if path.file_name() != Some(OsStr::new("image.tar.xz")) {
+            continue;
+        }
+
+        image_tar_xz_entries += 1;
+        let entry_reader = xz2::read::XzDecoder::new(entry);
+        let mut entry_reader = tar::Archive::new(entry_reader);
+        let entries = entry_reader
+            .entries()
+            .with_context(|| format!("({}/image.tar.xz).entries()", archive.display()))?;
+        for (i, entry) in entries.enumerate() {
+            let mut entry = entry
+                .with_context(|| format!("({}/image.tar.xz).entries()[{i}]", archive.display()))?;
+            let path = entry.path().with_context(|| {
+                format!("({}/image.tar.xz).entries()[{i}].path()", archive.display())
+            })?;
+            let path = path.into_owned();
+            if !path.starts_with("image/lib/modules") && !path.starts_with("image/usr/src") {
+                continue;
+            }
+
+            let entry_type = entry.header().entry_type();
+            if entry_type.is_symlink() && path.starts_with("image/lib/modules") {
+                continue;
+            }
+
+            let out_path = dest.join(&path);
+            if let Some(parent) = out_path.parent() {
+                fs::create_dir_all(parent)
+                    .with_context(|| format!("create_dir_all({})", parent.display()))?;
+            }
+            entry.unpack(&out_path).with_context(|| {
+                format!(
+                    "({}/image.tar.xz)[{i}].unpack({})",
+                    archive.display(),
+                    out_path.display(),
+                )
+            })?;
+        }
+    }
+
+    println!("{} in {:?}", archive.display(), start.elapsed());
+    anyhow::ensure!(
+        image_tar_xz_entries == 1,
+        "expected exactly one image.tar.xz in {}, found {image_tar_xz_entries}",
+        archive.display()
+    );
+    Ok(())
+}
+
+fn gentoo_kernel_artifacts(archive: &Path, image_root: PathBuf) -> Result<KernelArtifacts> {
+    extract_gentoo_gpkg(archive, &image_root)?;
+
+    let modules_root = image_root.join("image/lib/modules");
+    let modules_dirs = fs::read_dir(&modules_root)
+        .with_context(|| format!("read_dir({})", modules_root.display()))?
+        .map(|entry| {
+            let entry = entry.with_context(|| format!("read_dir({})", modules_root.display()))?;
+            let file_type = entry
+                .file_type()
+                .with_context(|| format!("file_type({})", entry.path().display()))?;
+            Ok(file_type.is_dir().then_some(entry.path()))
+        })
+        .collect::<Result<Vec<_>>>()?
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>();
+    let modules_dir = one(modules_dirs.as_slice())
+        .with_context(|| format!("modules directory in {}", archive.display()))?
+        .to_owned();
+    let build_dir = module_build_dir(&image_root, &modules_dir)?;
+
+    let kernel_image = gentoo_kernel_image(&image_root, &build_dir)?;
+    let config = build_dir.join(".config");
+    let system_map = build_dir.join("System.map");
+    for path in [&kernel_image, &config, &system_map] {
+        anyhow::ensure!(path.exists(), "{} does not exist", path.display());
+    }
+
+    Ok(KernelArtifacts {
+        image_root,
+        kernel_image,
+        config,
+        modules_dir,
+        system_map,
+        module_copy: ModuleCopy::TestDependencies,
+    })
+}
+
+fn debian_kernel_artifacts(
+    kernel_archive: &Path,
+    debug_archive: &Path,
+    image_root: PathBuf,
+    debug_root: &Path,
+) -> Result<KernelArtifacts> {
+    let (kernel_images, configs, modules_dirs) = with_deb(
+        kernel_archive,
+        &image_root,
+        (Vec::new(), Vec::new(), Vec::new()),
+        |(kernel_images, configs, modules_dirs), path, entry_type| {
+            if let Some(path) = ["./lib/modules/", "./usr/lib/modules/"]
+                .into_iter()
+                .find_map(|modules_dir| {
+                    #[expect(clippy::manual_ok_err, reason = "type ascription")]
+                    match path.strip_prefix(modules_dir) {
+                        Ok(path) => Some(path),
+                        Err(path::StripPrefixError { .. }) => None,
+                    }
+                })
+            {
+                return Disposition::Unpack((
+                    (path.iter().count() == 1).then_some(modules_dirs),
+                    ControlFlow::Continue,
+                ));
+            }
+            if !entry_type.is_file() {
+                return Disposition::Skip;
+            }
+            let name = match path.strip_prefix("./boot/") {
+                Ok(path) => {
+                    if let Some(path::Component::Normal(name)) = path.components().next() {
+                        name
+                    } else {
+                        return Disposition::Skip;
+                    }
+                }
+                Err(path::StripPrefixError { .. }) => return Disposition::Skip,
+            };
+            let name = name.as_encoded_bytes();
+            if name.starts_with(b"vmlinuz-") {
+                Disposition::Unpack((Some(kernel_images), ControlFlow::Continue))
+            } else if name.starts_with(b"config-") {
+                Disposition::Unpack((Some(configs), ControlFlow::Continue))
+            } else {
+                Disposition::Skip
+            }
+        },
+    )?;
+    let kernel_image = one(kernel_images.as_slice())
+        .with_context(|| format!("kernel image in {}", kernel_archive.display()))?
+        .to_owned();
+    let config = one(configs.as_slice())
+        .with_context(|| format!("config in {}", kernel_archive.display()))?
+        .to_owned();
+    let modules_dir = one(modules_dirs.as_slice())
+        .with_context(|| format!("modules directory in {}", kernel_archive.display()))?
+        .to_owned();
+
+    let system_maps = with_deb(
+        debug_archive,
+        debug_root,
+        Vec::new(),
+        |system_maps: &mut Vec<PathBuf>, path, entry_type| {
+            if entry_type != tar::EntryType::Regular {
+                return Disposition::Skip;
+            }
+            let name = match path.strip_prefix("./usr/lib/debug/boot/") {
+                Ok(path) => {
+                    if let Some(path::Component::Normal(name)) = path.components().next() {
+                        name
+                    } else {
+                        return Disposition::Skip;
+                    }
+                }
+                Err(path::StripPrefixError { .. }) => return Disposition::Skip,
+            };
+            if name.as_encoded_bytes().starts_with(b"System.map-") {
+                Disposition::Unpack((Some(system_maps), ControlFlow::Break))
+            } else {
+                Disposition::Skip
+            }
+        },
+    )?;
+    let system_map = one(system_maps.as_slice())
+        .with_context(|| format!("System.map in {}", debug_archive.display()))?
+        .to_owned();
+
+    Ok(KernelArtifacts {
+        image_root,
+        kernel_image,
+        config,
+        modules_dir,
+        system_map,
+        module_copy: ModuleCopy::FullTree,
+    })
+}
+
+fn run_command(cmd: &mut Command) -> Result<()> {
+    let status = cmd
+        .status()
+        .with_context(|| format!("failed to run {cmd:?}"))?;
+    if status.code() == Some(0) {
+        Ok(())
+    } else {
+        bail!("{cmd:?} failed: {status:?}")
+    }
+}
+
+fn verify_ko_has_btf(ko: &Path) -> Result<()> {
+    let output = Command::new("llvm-readelf")
+        .arg("-S")
+        .arg(ko)
+        .output()
+        .with_context(|| format!("failed to run llvm-readelf -S {}", ko.display()))?;
+    if output.status.code() != Some(0) {
+        bail!("llvm-readelf -S {} failed: {output:?}", ko.display());
+    }
+
+    let stdout = String::from_utf8(output.stdout)
+        .with_context(|| format!("invalid UTF-8 from llvm-readelf -S {}", ko.display()))?;
+    anyhow::ensure!(
+        stdout.contains(".BTF"),
+        "{} does not contain a .BTF section",
+        ko.display()
+    );
+    Ok(())
+}
+
+fn find_kernel_module(modules_dir: &Path, name: &str) -> Result<Option<PathBuf>> {
+    let kernel_modules = modules_dir.join("kernel");
+    if !kernel_modules.exists() {
+        return Ok(None);
+    }
+
+    let module = format!("{name}.ko");
+    let compressed_module = format!("{module}.xz");
+    for entry in WalkDir::new(kernel_modules) {
+        let entry = entry.context("read_dir failed")?;
+        #[expect(
+            clippy::filetype_is_file,
+            reason = "we only want to match regular kernel module files"
+        )]
+        if !entry.file_type().is_file() {
+            continue;
+        }
+
+        let file_name = entry.file_name();
+        if file_name == OsStr::new(&module) || file_name == OsStr::new(&compressed_module) {
+            return Ok(Some(entry.into_path()));
+        }
+    }
+
+    Ok(None)
+}
+
+fn module_initramfs_inputs(
+    modules_dir: &Path,
+    module_copy: ModuleCopy,
+) -> Result<(Vec<PathBuf>, Vec<PathBuf>)> {
+    match module_copy {
+        ModuleCopy::FullTree => Ok((vec![modules_dir.to_owned()], Vec::new())),
+        ModuleCopy::TestDependencies => {
+            let mut module_roots = Vec::new();
+            let extra_modules = modules_dir.join("kernel/extra");
+            if extra_modules.exists() {
+                module_roots.push(extra_modules);
+            }
+
+            let mut module_files = Vec::new();
+            for module in TEST_INITRAMFS_MODULES {
+                let module_file = find_kernel_module(modules_dir, module)?.ok_or_else(|| {
+                    anyhow!(
+                        "kernel module {module}.ko not found under {}",
+                        modules_dir.display()
+                    )
+                })?;
+                module_files.push(module_file);
+            }
+
+            let modules_alias = modules_dir.join("modules.alias");
+            if modules_alias.exists() {
+                module_files.push(modules_alias);
+            }
+
+            Ok((module_roots, module_files))
+        }
+    }
+}
+
+fn build_test_kmod(
+    workspace_root: &Path,
+    image_root: &Path,
+    modules_dir: &Path,
+    name: &str,
+) -> Result<()> {
+    let build_dir = module_build_dir(image_root, modules_dir)?;
+    let build_vmlinux = build_dir.join("vmlinux");
+    anyhow::ensure!(
+        build_vmlinux.exists(),
+        "--kmod requires {} to generate module BTF",
+        build_vmlinux.display()
+    );
+
+    let work_dir = tempfile::tempdir().context("tempdir failed")?;
+    let src_dir = workspace_root.join("test/integration-test/kmod").join(name);
+    for entry in
+        fs::read_dir(&src_dir).with_context(|| format!("read_dir({})", src_dir.display()))?
+    {
+        let entry = entry.with_context(|| format!("read_dir({})", src_dir.display()))?;
+        let metadata = entry
+            .metadata()
+            .with_context(|| format!("metadata({})", entry.path().display()))?;
+        if metadata.is_file() {
+            let dst = work_dir.path().join(entry.file_name());
+            fs::copy(entry.path(), &dst)
+                .with_context(|| format!("copy({}, {})", entry.path().display(), dst.display()))?;
+        }
+    }
+
+    let mut make = Command::new("make");
+    make.arg("-C")
+        .arg(&build_dir)
+        .arg(format!("M={}", work_dir.path().display()))
+        .arg("PAHOLE_FLAGS=--btf_gen_all --btf_encode_force")
+        // Gentoo's prebuilt kernel tree can carry newer module pahole flags or
+        // compiler feature toggles than the local toolchain supports. Keep the
+        // build portable, then verify .BTF exists before using the module.
+        .arg("MODULE_PAHOLE_FLAGS=")
+        .arg("CONFIG_CC_HAS_MIN_FUNCTION_ALIGNMENT=")
+        .arg("modules");
+    run_command(&mut make)?;
+
+    let ko = work_dir.path().join(format!("{name}.ko"));
+    verify_ko_has_btf(&ko)?;
+
+    let dst_dir = modules_dir.join("kernel/extra");
+    fs::create_dir_all(&dst_dir)
+        .with_context(|| format!("create_dir_all({})", dst_dir.display()))?;
+    let dst = dst_dir.join(format!("{name}.ko"));
+    fs::copy(&ko, &dst).with_context(|| format!("copy({}, {})", ko.display(), dst.display()))?;
+
+    Ok(())
+}
+
+fn build_test_kmods(
+    workspace_root: &Path,
+    image_root: &Path,
+    modules_dir: &Path,
+    guest_arch: &str,
+    kmods: &[String],
+) -> Result<()> {
+    if kmods.is_empty() {
+        return Ok(());
+    }
+
+    let host_arch = env::consts::ARCH;
+    anyhow::ensure!(
+        guest_arch == host_arch,
+        "cannot build test kernel modules for guest architecture {guest_arch} on host architecture {host_arch}"
+    );
+
+    for kmod in kmods {
+        let name = kmod.replace('-', "_");
+        build_test_kmod(workspace_root, image_root, modules_dir, &name)
+            .with_context(|| format!("failed to build test kernel module {name}"))?;
+    }
+
+    Ok(())
+}
+
 /// Build and run the project.
 pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
     let Options {
@@ -297,6 +787,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
         Environment::VM {
             cache_dir,
             github_api_token,
+            kmods,
             kernel_archives,
         } => {
             // The user has asked us to run the tests on a VM. This is involved; strap in.
@@ -425,8 +916,55 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 debug: Vec<&'a Path>,
             }
 
+            enum KernelPackage<'a> {
+                Debian {
+                    base: &'a OsStr,
+                    kernel: &'a Path,
+                    debug: &'a Path,
+                },
+                Gentoo {
+                    archive: &'a Path,
+                },
+            }
+
+            impl KernelPackage<'_> {
+                fn artifacts(
+                    self,
+                    index: usize,
+                    extraction_root: &Path,
+                ) -> Result<KernelArtifacts> {
+                    let image_root = extraction_root.join(format!("kernel-archive-{index}-image"));
+                    match self {
+                        KernelPackage::Debian {
+                            base,
+                            kernel,
+                            debug,
+                        } => debian_kernel_artifacts(
+                            kernel,
+                            debug,
+                            image_root,
+                            &extraction_root.join(format!("kernel-archive-{index}-debug")),
+                        )
+                        .with_context(|| {
+                            format!("extracting Debian kernel package {}", base.display())
+                        }),
+                        KernelPackage::Gentoo { archive } => {
+                            gentoo_kernel_artifacts(archive, image_root).with_context(|| {
+                                format!("extracting Gentoo kernel package {}", archive.display())
+                            })
+                        }
+                    }
+                }
+            }
+
             let mut package_groups = BTreeMap::new();
+            let mut gentoo_archives = Vec::new();
             for archive in &kernel_archives {
+                if is_gentoo_gpkg(archive) {
+                    gentoo_archives.push(archive.as_path());
+                    continue;
+                }
+
                 let file_name = archive.file_name().ok_or_else(|| {
                     anyhow!("archive path missing filename: {}", archive.display())
                 })?;
@@ -451,120 +989,43 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 dst.push(archive.as_path());
             }
 
-            let mut errors = Vec::new();
-            for (index, (KernelPackageKey { base }, KernelPackageGroup { kernel, debug })) in
-                package_groups.into_iter().enumerate()
+            let mut kernel_packages = Vec::new();
+            for (KernelPackageKey { base }, KernelPackageGroup { kernel, debug }) in package_groups
             {
                 let base = {
                     use std::os::unix::ffi::OsStrExt as _;
                     OsStr::from_bytes(base)
                 };
+                kernel_packages.push(KernelPackage::Debian {
+                    base,
+                    kernel: one(kernel.as_slice())
+                        .with_context(|| format!("kernel archive for {}", base.display()))?,
+                    debug: one(debug.as_slice())
+                        .with_context(|| format!("debug archive for {}", base.display()))?,
+                });
+            }
+            kernel_packages.extend(
+                gentoo_archives
+                    .into_iter()
+                    .map(|archive| KernelPackage::Gentoo { archive }),
+            );
 
-                let kernel_archive = one(kernel.as_slice())
-                    .with_context(|| format!("kernel archive for {}", base.display()))?;
-                let debug_archive = one(debug.as_slice())
-                    .with_context(|| format!("debug archive for {}", base.display()))?;
-
-                let (kernel_images, configs, modules_dirs) = with_deb(
-                    kernel_archive,
-                    &extraction_root
-                        .path()
-                        .join(format!("kernel-archive-{index}-image")),
-                    (Vec::new(), Vec::new(), Vec::new()),
-                    |(kernel_images, configs, modules_dirs), path, entry_type| {
-                        if let Some(path) = ["./lib/modules/", "./usr/lib/modules/"]
-                            .into_iter()
-                            .find_map(|modules_dir| {
-                                // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this
-                                // allowance when the lint behaves more sensibly.
-                                #[expect(clippy::manual_ok_err, reason = "type ascription")]
-                                match path.strip_prefix(modules_dir) {
-                                    Ok(path) => Some(path),
-                                    Err(path::StripPrefixError { .. }) => None,
-                                }
-                            })
-                        {
-                            return Disposition::Unpack((
-                                (path.iter().count() == 1).then_some(modules_dirs),
-                                ControlFlow::Continue,
-                            ));
-                        }
-                        if !entry_type.is_file() {
-                            return Disposition::Skip;
-                        }
-                        let name = match path.strip_prefix("./boot/") {
-                            Ok(path) => {
-                                if let Some(path::Component::Normal(name)) =
-                                    path.components().next()
-                                {
-                                    name
-                                } else {
-                                    return Disposition::Skip;
-                                }
-                            }
-                            Err(path::StripPrefixError { .. }) => return Disposition::Skip,
-                        };
-                        let name = name.as_encoded_bytes();
-                        if name.starts_with(b"vmlinuz-") {
-                            Disposition::Unpack((Some(kernel_images), ControlFlow::Continue))
-                        } else if name.starts_with(b"config-") {
-                            Disposition::Unpack((Some(configs), ControlFlow::Continue))
-                        } else {
-                            Disposition::Skip
-                        }
-                    },
-                )?;
-                let kernel_image = one(kernel_images.as_slice())
-                    .with_context(|| format!("kernel image in {}", kernel_archive.display()))?;
-                let config = one(configs.as_slice())
-                    .with_context(|| format!("config in {}", kernel_archive.display()))?;
-                let modules_dir = one(modules_dirs.as_slice()).with_context(|| {
-                    format!("modules directory in {}", kernel_archive.display())
-                })?;
-
-                let system_maps = with_deb(
-                    debug_archive,
-                    &extraction_root
-                        .path()
-                        .join(format!("kernel-archive-{index}-debug")),
-                    Vec::new(),
-                    |system_maps: &mut Vec<PathBuf>, path, entry_type| {
-                        if entry_type != tar::EntryType::Regular {
-                            return Disposition::Skip;
-                        }
-                        let name = match path.strip_prefix("./usr/lib/debug/boot/") {
-                            Ok(path) => {
-                                if let Some(path::Component::Normal(name)) =
-                                    path.components().next()
-                                {
-                                    name
-                                } else {
-                                    return Disposition::Skip;
-                                }
-                            }
-                            Err(path::StripPrefixError { .. }) => {
-                                return Disposition::Skip;
-                            }
-                        };
-                        if name.as_encoded_bytes().starts_with(b"System.map-") {
-                            // We only expect one System.map in the debug archive; ordinarily
-                            // we'd walk the whole archive to assert this fact but it turns out
-                            // that doing so takes around 10 seconds while stopping early takes
-                            // around 1ms.
-                            Disposition::Unpack((Some(system_maps), ControlFlow::Break))
-                        } else {
-                            Disposition::Skip
-                        }
-                    },
-                )?;
-                let system_map = one(system_maps.as_slice())
-                    .with_context(|| format!("System.map in {}", debug_archive.display()))?;
+            let mut errors = Vec::new();
+            for (index, kernel_package) in kernel_packages.into_iter().enumerate() {
+                let KernelArtifacts {
+                    image_root,
+                    kernel_image,
+                    config,
+                    modules_dir,
+                    system_map,
+                    module_copy,
+                } = kernel_package.artifacts(index, extraction_root.path())?;
 
                 // Guess the guest architecture.
                 let mut file = Command::new("file");
                 let output = file
                     .arg("--brief")
-                    .arg(kernel_image)
+                    .arg(&kernel_image)
                     .output()
                     .with_context(|| format!("failed to run {file:?}"))?;
                 let Output { status, .. } = &output;
@@ -578,16 +1039,23 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 // - Linux kernel ARM64 boot executable Image, little-endian, 4K pages
                 //
                 // - Linux kernel x86 boot executable bzImage, version 6.1.0-10-cloud-amd64 [..]
+                //
+                // Gentoo packages provide vmlinux directly, which file(1) reports as an ELF.
 
                 let stdout = String::from_utf8(stdout)
                     .with_context(|| format!("invalid UTF-8 in {file:?} stdout"))?;
-                let (_, stdout) = stdout
-                    .split_once("Linux kernel")
-                    .ok_or_else(|| anyhow!("failed to parse {file:?} stdout: {stdout}"))?;
-                let (guest_arch, _) = stdout
-                    .split_once("boot executable")
-                    .ok_or_else(|| anyhow!("failed to parse {file:?} stdout: {stdout}"))?;
-                let guest_arch = guest_arch.trim();
+                let guest_arch = if let Some((_, stdout)) = stdout.split_once("Linux kernel") {
+                    let (guest_arch, _) = stdout
+                        .split_once("boot executable")
+                        .ok_or_else(|| anyhow!("failed to parse {file:?} stdout: {stdout}"))?;
+                    guest_arch.trim()
+                } else if stdout.contains("ARM aarch64") {
+                    "ARM64"
+                } else if stdout.contains("x86-64") {
+                    "x86"
+                } else {
+                    bail!("failed to parse {file:?} stdout: {stdout}")
+                };
 
                 let (guest_arch, machine, cpu, console) = match guest_arch {
                     "ARM64" => (
@@ -711,14 +1179,14 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 write_dir(Path::new("/lib"));
                 write_dir(Path::new("/lib/modules"));
 
-                write_file(Path::new("/boot/config"), config, "644 0 0");
+                write_file(Path::new("/boot/config"), &config, "644 0 0");
                 if let Some(name) = config.file_name() {
-                    write_file(&Path::new("/boot").join(name), config, "644 0 0");
+                    write_file(&Path::new("/boot").join(name), &config, "644 0 0");
                 }
 
-                write_file(Path::new("/boot/System.map"), system_map, "644 0 0");
+                write_file(Path::new("/boot/System.map"), &system_map, "644 0 0");
                 if let Some(name) = system_map.file_name() {
-                    write_file(&Path::new("/boot").join(name), system_map, "644 0 0");
+                    write_file(&Path::new("/boot").join(name), &system_map, "644 0 0");
                 }
 
                 for (name, path) in &test_distro {
@@ -729,6 +1197,14 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     }
                 }
 
+                build_test_kmods(
+                    workspace_root,
+                    &image_root,
+                    &modules_dir,
+                    guest_arch,
+                    &kmods,
+                )?;
+
                 // At this point we need to make a slight detour!
                 // Preparing the `modules.alias` file inside the VM as part of
                 // `/init` is slow. It's faster to prepare it here.
@@ -737,7 +1213,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     .arg("run")
                     .args(test_distro_args)
                     .args(["--bin", "depmod", "--", "-b"])
-                    .arg(modules_dir)
+                    .arg(&modules_dir)
                     .output()
                     .with_context(|| format!("failed to run {cargo:?}"))?;
                 let Output { status, .. } = &output;
@@ -746,30 +1222,54 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 }
 
                 // Now our modules.alias file is built, we can recursively
-                // walk the modules directory and add all the files to the
-                // initramfs.
-                for entry in WalkDir::new(modules_dir) {
-                    let entry = entry.context("read_dir failed")?;
-                    let path = entry.path();
-                    let metadata = entry.metadata().context("metadata failed")?;
+                // walk the modules directory and add all the files to the initramfs.
+                let (module_roots, module_files) =
+                    module_initramfs_inputs(&modules_dir, module_copy)?;
+
+                for module_root in module_roots {
+                    for entry in WalkDir::new(&module_root) {
+                        let entry = entry.context("read_dir failed")?;
+                        let path = entry.path();
+                        let metadata = entry.metadata().context("metadata failed")?;
+                        let out_path = Path::new("/lib/modules").join(
+                            path.strip_prefix(&modules_dir).with_context(|| {
+                                format!(
+                                    "strip prefix {} failed for {}",
+                                    path.display(),
+                                    modules_dir.display()
+                                )
+                            })?,
+                        );
+                        #[expect(
+                            clippy::filetype_is_file,
+                            reason = "we only want to copy regular files"
+                        )]
+                        if metadata.file_type().is_dir() {
+                            write_dir(&out_path);
+                        } else if metadata.file_type().is_file() {
+                            write_file(&out_path, path, "644 0 0");
+                        }
+                    }
+                }
+
+                for module_file in module_files {
                     let out_path = Path::new("/lib/modules").join(
-                        path.strip_prefix(modules_dir).with_context(|| {
+                        module_file.strip_prefix(&modules_dir).with_context(|| {
                             format!(
                                 "strip prefix {} failed for {}",
-                                path.display(),
-                                modules_dir.display()
+                                modules_dir.display(),
+                                module_file.display()
                             )
                         })?,
                     );
-                    #[expect(
-                        clippy::filetype_is_file,
-                        reason = "we only want to copy regular files"
-                    )]
-                    if metadata.file_type().is_dir() {
-                        write_dir(&out_path);
-                    } else if metadata.file_type().is_file() {
-                        write_file(&out_path, path, "644 0 0");
+                    let mut parents = out_path.ancestors().skip(1).collect::<Vec<_>>();
+                    parents.reverse();
+                    for parent in parents {
+                        if parent != Path::new("/") {
+                            write_dir(parent);
+                        }
                     }
+                    write_file(&out_path, &module_file, "644 0 0");
                 }
 
                 for (profile, binaries) in binaries {
@@ -833,7 +1333,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     .arg("-append")
                     .arg(kernel_args)
                     .arg("-kernel")
-                    .arg(kernel_image)
+                    .arg(&kernel_image)
                     .arg("-initrd")
                     .arg(&initrd_image);
                 let mut qemu_child = qemu

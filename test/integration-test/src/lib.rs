@@ -1,3 +1,7 @@
+mod kmods;
+
+pub use kmods::*;
+
 macro_rules! bpf_file {
     ($($uppercase:ident => $lowercase:literal),* $(,)?) => {
         $(
@@ -14,6 +18,7 @@ bpf_file!(
     RINGBUF_BTF => "ringbuf-btf.bpf.o",
     KSYMS => "ksyms.bpf.o",
     KSYMS_STRONG => "ksyms_strong.bpf.o",
+    KSYMS_MODULE => "ksyms_module.bpf.o",
     KSYMS_TYPED_MISSING_VAR => "ksyms_typed_missing_var.bpf.o",
     KSYMS_TYPED_MISSING_KFUNC => "ksyms_typed_missing_kfunc.bpf.o",
     KSYMS_TYPELESS_MISSING => "ksyms_typeless_missing.bpf.o",

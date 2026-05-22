@@ -7,10 +7,10 @@ use object::{SectionIndex, SymbolKind};
 
 use crate::{
     EbpfSectionKind,
-    extern_types::ExternDesc,
+    extern_types::{ExternDesc, ResolvedKsymTarget},
     generated::{
-        BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_BTF_ID, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC,
-        BPF_PSEUDO_KFUNC_CALL, BPF_PSEUDO_MAP_FD, BPF_PSEUDO_MAP_VALUE, bpf_insn,
+        BPF_CALL, BPF_DW, BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_PSEUDO_BTF_ID, BPF_PSEUDO_CALL,
+        BPF_PSEUDO_FUNC, BPF_PSEUDO_KFUNC_CALL, BPF_PSEUDO_MAP_FD, BPF_PSEUDO_MAP_VALUE, bpf_insn,
     },
     maps::Map,
     obj::{Function, Object},
@@ -96,6 +96,42 @@ pub enum RelocationError {
         /// Name of the extern symbol
         name: String,
     },
+
+    /// Invalid extern relocation instruction.
+    #[error("invalid extern relocation instruction for `{name}` at instruction {ins_index}")]
+    InvalidExternRelocationInstruction {
+        /// Name of the extern symbol.
+        name: String,
+        /// Index of the instruction being relocated.
+        ins_index: usize,
+    },
+
+    /// Invalid `ldimm64` extern relocation.
+    #[error(
+        "invalid ldimm64 relocation for extern `{name}` at instruction {ins_index}; function has {function_len} instructions"
+    )]
+    InvalidLdImm64Relocation {
+        /// Name of the extern symbol.
+        name: String,
+        /// Index of the instruction being relocated.
+        ins_index: usize,
+        /// Number of instructions in the function.
+        function_len: usize,
+    },
+
+    /// Strong extern resolved as missing.
+    #[error("strong extern `{name}` resolved as missing")]
+    StrongExternMissing {
+        /// Name of the extern symbol.
+        name: String,
+    },
+
+    /// The module BTF fd array index is too large for `bpf_insn.off`.
+    #[error("module BTF fd index `{index}` is too large for kfunc call relocation")]
+    BtfFdIndexTooLarge {
+        /// The module BTF fd array index.
+        index: u16,
+    },
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -172,10 +208,7 @@ impl Object {
         };
 
         for (name, extern_desc) in obj_btf.externs.iter() {
-            debug!(
-                "extern '{}': resolved={}, btf_id={:?}",
-                name, extern_desc.is_resolved, extern_desc.kernel_btf_id
-            );
+            debug!("extern '{}': resolved={:?}", name, extern_desc.resolved);
         }
 
         for function in self.functions.values_mut() {
@@ -278,49 +311,79 @@ fn patch_extern_relocations<'a, I: Iterator<Item = &'a Relocation>>(
                     name: extern_name.clone(),
                 })?;
 
-        let ins = &mut instructions[ins_index];
         // Extern relocations use CALL opcode to identify kfunc-call sites.
         // `insn_is_call()` is for internal pseudo-calls.
-        let is_call = ins.code == (BPF_JMP | BPF_CALL) as u8;
-
-        if is_call {
-            ins.set_src_reg(BPF_PSEUDO_KFUNC_CALL as u8);
-            if extern_desc.is_resolved {
-                let kernel_btf_id = extern_desc
-                    .kernel_btf_id
-                    .expect("resolved extern must have kernel_btf_id");
-                ins.imm = kernel_btf_id as i32;
-                ins.off = 0; // btf_fd_idx, typically 0 for vmlinux
-            } else if extern_desc.is_weak {
-                // Unresolved weak kfunc call
-                poison_kfunc_call(ins, rel.symbol_index);
-            } else {
-                return Err(RelocationError::UnresolvableSymbol {
-                    name: extern_name.clone(),
-                });
+        if insn_is_extern_call(instructions[ins_index]) {
+            let ins = &mut instructions[ins_index];
+            match extern_desc.resolved {
+                Some(ResolvedKsymTarget::VmlinuxBtf { type_id }) => {
+                    ins.set_src_reg(BPF_PSEUDO_KFUNC_CALL as u8);
+                    ins.imm = type_id as i32;
+                    ins.off = 0;
+                }
+                Some(ResolvedKsymTarget::ModuleBtf {
+                    type_id,
+                    btf_fd_idx,
+                    ..
+                }) => {
+                    ins.set_src_reg(BPF_PSEUDO_KFUNC_CALL as u8);
+                    ins.imm = type_id as i32;
+                    ins.off = i16::try_from(btf_fd_idx).map_err(|_err| {
+                        RelocationError::BtfFdIndexTooLarge { index: btf_fd_idx }
+                    })?;
+                }
+                Some(ResolvedKsymTarget::WeakMissing) => {
+                    if !extern_desc.is_weak {
+                        return Err(RelocationError::StrongExternMissing {
+                            name: extern_name.clone(),
+                        });
+                    }
+                    poison_kfunc_call(ins, rel.symbol_index);
+                }
+                Some(ResolvedKsymTarget::Address { .. }) | None => {
+                    return Err(RelocationError::UnresolvableSymbol {
+                        name: extern_name.clone(),
+                    });
+                }
             }
         } else {
-            match (extern_desc.kernel_btf_id, extern_desc.ksym_addr) {
-                // symbol found in kernel BTF
-                (Some(btf_id), _) => {
+            validate_extern_ldimm64_relocation(instructions, ins_index, extern_name)?;
+            let (ins, next_ins) = {
+                let (head, tail) = instructions.split_at_mut(ins_index + 1);
+                (&mut head[ins_index], &mut tail[0])
+            };
+
+            match extern_desc.resolved {
+                Some(ResolvedKsymTarget::VmlinuxBtf { type_id }) => {
                     ins.set_src_reg(BPF_PSEUDO_BTF_ID as u8);
-                    ins.imm = btf_id as i32;
-                    instructions[ins_index + 1].imm = 0; // vmlinux
+                    ins.imm = type_id as i32;
+                    next_ins.imm = 0;
                 }
-                // fallback to kallsyms (BTF missing but address found)
-                (None, Some(addr)) => {
-                    ins.set_src_reg(0); // Standard 64-bit absolute load
+                Some(ResolvedKsymTarget::ModuleBtf {
+                    type_id,
+                    btf_obj_fd,
+                    ..
+                }) => {
+                    ins.set_src_reg(BPF_PSEUDO_BTF_ID as u8);
+                    ins.imm = type_id as i32;
+                    next_ins.imm = btf_obj_fd;
+                }
+                Some(ResolvedKsymTarget::Address { addr }) => {
+                    ins.set_src_reg(0);
                     ins.imm = (addr & 0xFFFFFFFF) as i32;
-                    instructions[ins_index + 1].imm = (addr >> 32) as i32;
+                    next_ins.imm = (addr >> 32) as i32;
                 }
-                // weak symbol not found, null-patch
-                (None, None) if extern_desc.is_weak => {
+                Some(ResolvedKsymTarget::WeakMissing) => {
+                    if !extern_desc.is_weak {
+                        return Err(RelocationError::StrongExternMissing {
+                            name: extern_name.clone(),
+                        });
+                    }
                     ins.set_src_reg(0);
                     ins.imm = 0;
-                    instructions[ins_index + 1].imm = 0;
+                    next_ins.imm = 0;
                 }
-                // strong symbol not found anywhere
-                _ => {
+                None => {
                     return Err(RelocationError::UnresolvableSymbol {
                         name: extern_name.clone(),
                     });
@@ -333,6 +396,44 @@ fn patch_extern_relocations<'a, I: Iterator<Item = &'a Relocation>>(
 }
 
 const POISON_CALL_KFUNC_BASE: i32 = 2002000000;
+
+const fn insn_is_extern_call(ins: bpf_insn) -> bool {
+    ins.code == (BPF_JMP | BPF_CALL) as u8
+}
+
+const fn insn_is_ldimm64(ins: bpf_insn) -> bool {
+    ins.code == (BPF_LD | BPF_DW | BPF_IMM) as u8
+}
+
+fn validate_extern_ldimm64_relocation(
+    instructions: &[bpf_insn],
+    ins_index: usize,
+    name: &str,
+) -> Result<(), RelocationError> {
+    let Some(ins) = instructions.get(ins_index) else {
+        return Err(RelocationError::InvalidExternRelocationInstruction {
+            name: name.to_owned(),
+            ins_index,
+        });
+    };
+
+    if !insn_is_ldimm64(*ins) {
+        return Err(RelocationError::InvalidExternRelocationInstruction {
+            name: name.to_owned(),
+            ins_index,
+        });
+    }
+
+    if instructions.get(ins_index + 1).is_none() {
+        return Err(RelocationError::InvalidLdImm64Relocation {
+            name: name.to_owned(),
+            ins_index,
+            function_len: instructions.len(),
+        });
+    }
+
+    Ok(())
+}
 
 fn poison_kfunc_call(ins: &mut bpf_insn, ext_idx: usize) {
     ins.code = (BPF_JMP | BPF_CALL) as u8;
@@ -941,11 +1042,9 @@ mod test {
                 extern_type: ExternType::Ksym,
                 btf_id: 1,
                 is_weak: true,
-                is_resolved: false,
-                kernel_btf_id: None,
-                ksym_addr: None,
                 type_id: Some(1),
                 essential_name: None,
+                resolved: Some(ResolvedKsymTarget::WeakMissing),
             },
         )]);
 
@@ -981,11 +1080,9 @@ mod test {
                 extern_type: ExternType::Ksym,
                 btf_id: 1,
                 is_weak: false,
-                is_resolved: false,
-                kernel_btf_id: None,
-                ksym_addr: None,
                 type_id: Some(1),
                 essential_name: None,
+                resolved: None,
             },
         )]);
 
@@ -1026,11 +1123,9 @@ mod test {
                 extern_type: ExternType::Ksym,
                 btf_id: 1,
                 is_weak: true,
-                is_resolved: false,
-                kernel_btf_id: None,
-                ksym_addr: None,
                 type_id: None,
                 essential_name: None,
+                resolved: Some(ResolvedKsymTarget::WeakMissing),
             },
         )]);
 
@@ -1041,5 +1136,262 @@ mod test {
         assert_eq!(fun.instructions[0].src_reg(), 0);
         assert_eq!(fun.instructions[0].imm, 0);
         assert_eq!(fun.instructions[1].imm, 0);
+    }
+
+    #[test]
+    fn test_extern_ldimm64_relocation_rejects_missing_second_slot() {
+        let mut fun = fake_func(
+            "test",
+            vec![ins(&[0x18, 0x01, 0x00, 0x00, 0xaa, 0xbb, 0xcc, 0xdd])],
+        );
+
+        let relocations = [Relocation {
+            offset: 0,
+            symbol_index: 1,
+            size: 64,
+        }];
+
+        let externs = HashMap::from([(
+            "module_var".to_string(),
+            ExternDesc {
+                name: "module_var".to_string(),
+                extern_type: ExternType::Ksym,
+                btf_id: 1,
+                is_weak: false,
+                type_id: Some(1),
+                essential_name: None,
+                resolved: Some(ResolvedKsymTarget::ModuleBtf {
+                    type_id: 123,
+                    btf_fd_idx: 2,
+                    btf_obj_fd: 40_000,
+                }),
+            },
+        )]);
+
+        let symbol_table = HashMap::from([(1, fake_extern_sym(1, "module_var", false))]);
+
+        let err = patch_extern_relocations(&mut fun, relocations.iter(), &externs, &symbol_table)
+            .unwrap_err();
+
+        assert!(matches!(
+            err,
+            RelocationError::InvalidLdImm64Relocation {
+                name,
+                ins_index: 0,
+                function_len: 1,
+            } if name == "module_var"
+        ));
+    }
+
+    #[test]
+    fn test_extern_ldimm64_relocation_rejects_non_ldimm64_instruction() {
+        let mut fun = fake_func(
+            "test",
+            vec![ins(&[0xbf, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])],
+        );
+
+        let relocations = [Relocation {
+            offset: 0,
+            symbol_index: 1,
+            size: 64,
+        }];
+
+        let externs = HashMap::from([(
+            "module_var".to_string(),
+            ExternDesc {
+                name: "module_var".to_string(),
+                extern_type: ExternType::Ksym,
+                btf_id: 1,
+                is_weak: false,
+                type_id: Some(1),
+                essential_name: None,
+                resolved: Some(ResolvedKsymTarget::ModuleBtf {
+                    type_id: 123,
+                    btf_fd_idx: 2,
+                    btf_obj_fd: 40_000,
+                }),
+            },
+        )]);
+
+        let symbol_table = HashMap::from([(1, fake_extern_sym(1, "module_var", false))]);
+
+        let err = patch_extern_relocations(&mut fun, relocations.iter(), &externs, &symbol_table)
+            .unwrap_err();
+
+        assert!(matches!(
+            err,
+            RelocationError::InvalidExternRelocationInstruction {
+                name,
+                ins_index: 0,
+            } if name == "module_var"
+        ));
+    }
+
+    #[test]
+    fn test_strong_extern_resolved_as_weak_missing_is_rejected() {
+        let mut fun = fake_func(
+            "test",
+            vec![
+                ins(&[
+                    0x18, 0x01, 0x00, 0x00, 0xaa, 0xbb, 0xcc, 0xdd, 0x00, 0x00, 0x00, 0x00, 0x11,
+                    0x22, 0x33, 0x44,
+                ]),
+                ins(&[0; 8]),
+            ],
+        );
+
+        let relocations = [Relocation {
+            offset: 0,
+            symbol_index: 1,
+            size: 64,
+        }];
+
+        let externs = HashMap::from([(
+            "missing_var".to_string(),
+            ExternDesc {
+                name: "missing_var".to_string(),
+                extern_type: ExternType::Ksym,
+                btf_id: 1,
+                is_weak: false,
+                type_id: None,
+                essential_name: None,
+                resolved: Some(ResolvedKsymTarget::WeakMissing),
+            },
+        )]);
+
+        let symbol_table = HashMap::from([(1, fake_extern_sym(1, "missing_var", false))]);
+
+        let err = patch_extern_relocations(&mut fun, relocations.iter(), &externs, &symbol_table)
+            .unwrap_err();
+
+        assert!(matches!(
+            err,
+            RelocationError::StrongExternMissing { name } if name == "missing_var"
+        ));
+    }
+
+    #[test]
+    fn test_module_kfunc_call_sets_btf_fd_index() {
+        let mut fun = fake_func(
+            "test",
+            vec![ins(&[0x85, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])],
+        );
+
+        let relocations = [Relocation {
+            offset: 0,
+            symbol_index: 1,
+            size: 32,
+        }];
+
+        let externs = HashMap::from([(
+            "module_kfunc".to_string(),
+            ExternDesc {
+                name: "module_kfunc".to_string(),
+                extern_type: ExternType::Ksym,
+                btf_id: 1,
+                is_weak: false,
+                type_id: Some(1),
+                essential_name: None,
+                resolved: Some(ResolvedKsymTarget::ModuleBtf {
+                    type_id: 123,
+                    btf_fd_idx: 2,
+                    btf_obj_fd: 40_000,
+                }),
+            },
+        )]);
+
+        let symbol_table = HashMap::from([(1, fake_extern_sym(1, "module_kfunc", false))]);
+
+        patch_extern_relocations(&mut fun, relocations.iter(), &externs, &symbol_table).unwrap();
+
+        assert_eq!(fun.instructions[0].src_reg(), BPF_PSEUDO_KFUNC_CALL as u8);
+        assert_eq!(fun.instructions[0].imm, 123);
+        assert_eq!(fun.instructions[0].off, 2);
+    }
+
+    #[test]
+    fn test_module_kfunc_call_rejects_large_btf_fd_index() {
+        let mut fun = fake_func(
+            "test",
+            vec![ins(&[0x85, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])],
+        );
+
+        let relocations = [Relocation {
+            offset: 0,
+            symbol_index: 1,
+            size: 32,
+        }];
+
+        let externs = HashMap::from([(
+            "module_kfunc".to_string(),
+            ExternDesc {
+                name: "module_kfunc".to_string(),
+                extern_type: ExternType::Ksym,
+                btf_id: 1,
+                is_weak: false,
+                type_id: Some(1),
+                essential_name: None,
+                resolved: Some(ResolvedKsymTarget::ModuleBtf {
+                    type_id: 123,
+                    btf_fd_idx: 40_000,
+                    btf_obj_fd: 50_000,
+                }),
+            },
+        )]);
+
+        let symbol_table = HashMap::from([(1, fake_extern_sym(1, "module_kfunc", false))]);
+
+        let err = patch_extern_relocations(&mut fun, relocations.iter(), &externs, &symbol_table)
+            .unwrap_err();
+
+        assert!(matches!(
+            err,
+            RelocationError::BtfFdIndexTooLarge { index: 40_000 }
+        ));
+    }
+
+    #[test]
+    fn test_module_variable_reference_sets_btf_object_fd() {
+        let mut fun = fake_func(
+            "test",
+            vec![
+                ins(&[
+                    0x18, 0x01, 0x00, 0x00, 0xaa, 0xbb, 0xcc, 0xdd, 0x00, 0x00, 0x00, 0x00, 0x11,
+                    0x22, 0x33, 0x44,
+                ]),
+                ins(&[0; 8]),
+            ],
+        );
+
+        let relocations = [Relocation {
+            offset: 0,
+            symbol_index: 1,
+            size: 64,
+        }];
+
+        let externs = HashMap::from([(
+            "module_var".to_string(),
+            ExternDesc {
+                name: "module_var".to_string(),
+                extern_type: ExternType::Ksym,
+                btf_id: 1,
+                is_weak: false,
+                type_id: Some(1),
+                essential_name: None,
+                resolved: Some(ResolvedKsymTarget::ModuleBtf {
+                    type_id: 123,
+                    btf_fd_idx: 2,
+                    btf_obj_fd: 40_000,
+                }),
+            },
+        )]);
+
+        let symbol_table = HashMap::from([(1, fake_extern_sym(1, "module_var", false))]);
+
+        patch_extern_relocations(&mut fun, relocations.iter(), &externs, &symbol_table).unwrap();
+
+        assert_eq!(fun.instructions[0].src_reg(), BPF_PSEUDO_BTF_ID as u8);
+        assert_eq!(fun.instructions[0].imm, 123);
+        assert_eq!(fun.instructions[1].imm, 40_000);
     }
 }

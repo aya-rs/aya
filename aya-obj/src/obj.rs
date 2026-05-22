@@ -23,8 +23,8 @@ use crate::{
         Struct,
     },
     generated::{
-        BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K, bpf_func_id, bpf_insn, bpf_map_info,
-        bpf_map_type::BPF_MAP_TYPE_ARRAY,
+        BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K, BPF_PSEUDO_BTF_ID, BPF_PSEUDO_KFUNC_CALL,
+        bpf_func_id, bpf_insn, bpf_map_info, bpf_map_type::BPF_MAP_TYPE_ARRAY,
     },
     maps::{BtfMap, BtfMapDef, LegacyMap, MINIMUM_MAP_SIZE, Map, PinningType, bpf_map_def},
     programs::{
@@ -929,7 +929,58 @@ fn insn_is_helper_call(ins: bpf_insn) -> bool {
     klass == BPF_JMP && op == BPF_CALL && src == BPF_K && ins.src_reg() == 0 && ins.dst_reg() == 0
 }
 
+/// Module BTF state required to load a relocated function.
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
+pub struct ModuleBtfLoadRequirements {
+    needs_lifetime: bool,
+    needs_fd_array: bool,
+}
+
+impl ModuleBtfLoadRequirements {
+    /// Returns whether module BTF file descriptors must stay alive while the function is loaded.
+    pub const fn needs_lifetime(self) -> bool {
+        self.needs_lifetime
+    }
+
+    /// Returns whether `BPF_PROG_LOAD` needs the module BTF fd array.
+    pub const fn needs_fd_array(self) -> bool {
+        self.needs_fd_array
+    }
+}
+
 impl Function {
+    /// Returns this function's module BTF load requirements.
+    ///
+    /// This must be called after extern relocations have been applied.
+    pub fn module_btf_load_requirements(&self) -> ModuleBtfLoadRequirements {
+        let mut requirements = ModuleBtfLoadRequirements::default();
+
+        for (i, ins) in self.instructions.iter().enumerate() {
+            if ins.code == (BPF_JMP | BPF_CALL) as u8
+                && ins.src_reg() == BPF_PSEUDO_KFUNC_CALL as u8
+                && ins.off != 0
+            {
+                requirements.needs_lifetime = true;
+                requirements.needs_fd_array = true;
+            }
+
+            if ins.src_reg() == BPF_PSEUDO_BTF_ID as u8
+                && self
+                    .instructions
+                    .get(i + 1)
+                    .is_some_and(|next| next.imm != 0)
+            {
+                requirements.needs_lifetime = true;
+            }
+
+            if requirements.needs_lifetime() && requirements.needs_fd_array() {
+                break;
+            }
+        }
+
+        requirements
+    }
+
     fn sanitize(&mut self, features: &Features) {
         for inst in &mut self.instructions {
             if !insn_is_helper_call(*inst) {
@@ -1566,6 +1617,57 @@ mod tests {
             off: 0,
             imm: 0,
         }
+    }
+
+    fn fake_func(instructions: Vec<bpf_insn>) -> Function {
+        Function {
+            address: Default::default(),
+            name: "test".to_string(),
+            section_index: SectionIndex(0),
+            section_offset: Default::default(),
+            instructions,
+            func_info: Default::default(),
+            line_info: Default::default(),
+            func_info_rec_size: Default::default(),
+            line_info_rec_size: Default::default(),
+        }
+    }
+
+    #[test]
+    fn test_function_module_btf_load_requirements() {
+        let requirements = fake_func(vec![fake_ins()]).module_btf_load_requirements();
+        assert!(!requirements.needs_lifetime());
+        assert!(!requirements.needs_fd_array());
+
+        let mut module_kfunc = fake_ins();
+        module_kfunc.code = (BPF_JMP | BPF_CALL) as u8;
+        module_kfunc.set_src_reg(BPF_PSEUDO_KFUNC_CALL as u8);
+        module_kfunc.off = 1;
+        let requirements = fake_func(vec![module_kfunc]).module_btf_load_requirements();
+        assert!(requirements.needs_lifetime());
+        assert!(requirements.needs_fd_array());
+
+        let mut vmlinux_kfunc = module_kfunc;
+        vmlinux_kfunc.off = 0;
+        let requirements = fake_func(vec![vmlinux_kfunc]).module_btf_load_requirements();
+        assert!(!requirements.needs_lifetime());
+        assert!(!requirements.needs_fd_array());
+
+        let mut module_var = fake_ins();
+        module_var.set_src_reg(BPF_PSEUDO_BTF_ID as u8);
+        let mut module_var_fd = fake_ins();
+        module_var_fd.imm = 10;
+        let requirements =
+            fake_func(vec![module_var, module_var_fd]).module_btf_load_requirements();
+        assert!(requirements.needs_lifetime());
+        assert!(!requirements.needs_fd_array());
+
+        let mut vmlinux_var_fd = module_var_fd;
+        vmlinux_var_fd.imm = 0;
+        let requirements =
+            fake_func(vec![module_var, vmlinux_var_fd]).module_btf_load_requirements();
+        assert!(!requirements.needs_lifetime());
+        assert!(!requirements.needs_fd_array());
     }
 
     fn fake_sym(obj: &mut Object, section_index: usize, address: u64, name: &str, size: u64) {

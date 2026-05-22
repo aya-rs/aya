@@ -95,6 +95,7 @@ fn main() -> Result<()> {
         ("variables_reloc.bpf.c", false),
         ("ksyms.bpf.c", true),
         ("ksyms_strong.bpf.c", true),
+        ("ksyms_module.bpf.c", true),
         ("ksyms_typed_missing_var.bpf.c", true),
         ("ksyms_typed_missing_kfunc.bpf.c", true),
         ("ksyms_typeless_missing.bpf.c", true),

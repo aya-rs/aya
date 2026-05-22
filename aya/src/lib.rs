@@ -42,6 +42,7 @@
 
 mod bpf;
 pub mod maps;
+mod module_btf;
 pub mod pin;
 pub mod programs;
 pub mod sys;
