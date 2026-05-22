@@ -6,7 +6,7 @@ use aya::{
     util::nr_cpus,
 };
 use integration_common::array::{GET_INDEX, GET_PTR_INDEX, GET_PTR_MUT_INDEX};
-use test_case::test_case;
+use rstest::rstest;
 
 #[unsafe(no_mangle)]
 #[inline(never)]
@@ -32,31 +32,24 @@ extern "C" fn trigger_set(index: u32, value: u32) {
     std::hint::black_box((index, value));
 }
 
-#[test_log::test(test_case(
+#[rstest]
+#[case::legacy(
     "RESULT_LEGACY",
     "ARRAY_LEGACY",
     "get_legacy",
     "get_ptr_legacy",
     "get_ptr_mut_legacy",
     "set_legacy"
-    ; "legacy"
-))]
-#[test_case(
-    "RESULT",
-    "ARRAY",
-    "get",
-    "get_ptr",
-    "get_ptr_mut",
-    "set"
-    ; "btf"
 )]
+#[case::btf("RESULT", "ARRAY", "get", "get_ptr", "get_ptr_mut", "set")]
+#[test_attr(test_log::test)]
 fn per_cpu_array_basic(
-    result_map: &str,
-    array_map: &str,
-    get_prog: &str,
-    get_ptr_prog: &str,
-    get_ptr_mut_prog: &str,
-    set_prog: &str,
+    #[case] result_map: &str,
+    #[case] array_map: &str,
+    #[case] get_prog: &str,
+    #[case] get_ptr_prog: &str,
+    #[case] get_ptr_mut_prog: &str,
+    #[case] set_prog: &str,
 ) {
     if !is_map_supported(MapType::PerCpuArray).unwrap() {
         eprintln!("skipping test - per-cpu array map not supported");

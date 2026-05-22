@@ -8,7 +8,7 @@ use aya::{
     util::KernelVersion,
 };
 use integration_common::cgroup_array::{NOT_UNDER_INDEX, TestResult, UNDER_INDEX};
-use test_case::test_case;
+use rstest::rstest;
 
 use crate::utils::{Cgroup, is_cgroup2};
 
@@ -18,19 +18,15 @@ extern "C" fn trigger_current_task_under_cgroup() {
     std::hint::black_box(());
 }
 
-#[test_log::test(test_case(
-    "CGROUPS_LEGACY",
-    "RESULT_LEGACY",
-    "current_task_under_cgroup_legacy"
-    ; "legacy"
-))]
-#[test_case(
-    "CGROUPS",
-    "RESULT",
-    "current_task_under_cgroup_btf"
-    ; "btf"
-)]
-fn current_task_under_cgroup(cgroups_map: &str, result_map: &str, prog: &str) {
+#[rstest]
+#[case::legacy("CGROUPS_LEGACY", "RESULT_LEGACY", "current_task_under_cgroup_legacy")]
+#[case::btf("CGROUPS", "RESULT", "current_task_under_cgroup_btf")]
+#[test_attr(test_log::test)]
+fn current_task_under_cgroup(
+    #[case] cgroups_map: &str,
+    #[case] result_map: &str,
+    #[case] prog: &str,
+) {
     if !is_map_supported(MapType::CgroupArray).unwrap() {
         eprintln!("skipping test - cgroup array map not supported");
         return;

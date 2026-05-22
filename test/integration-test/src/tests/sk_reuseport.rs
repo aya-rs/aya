@@ -18,7 +18,7 @@ use integration_common::sk_reuseport::{
     SELECT_SOCKET_INDEX,
 };
 use libc::{EINVAL, ENOENT};
-use test_case::test_case;
+use rstest::rstest;
 use tokio::{
     io::{AsyncReadExt as _, AsyncWriteExt as _},
     net::{TcpListener as TokioTcpListener, TcpSocket, TcpStream as TokioTcpStream},
@@ -146,10 +146,14 @@ async fn assert_connection_works(mut client: TokioTcpStream, mut server: TokioTc
 
 // `NetNsGuard` switches the current thread into a dedicated network namespace,
 // so these async tests must stay on a single runtime thread.
-#[test_case("socket_map", "select_socket"; "legacy")]
-#[test_case("socket_map_btf", "select_socket_btf"; "btf")]
-#[test_log::test(tokio::test)]
-async fn sk_reuseport_selects_expected_listener(socket_map: &str, select_prog: &str) {
+#[rstest]
+#[case::legacy("socket_map", "select_socket")]
+#[case::btf("socket_map_btf", "select_socket_btf")]
+#[test_attr(test_log::test(tokio::test))]
+async fn sk_reuseport_selects_expected_listener(
+    #[case] socket_map: &str,
+    #[case] select_prog: &str,
+) {
     let _netns = NetNsGuard::new();
 
     let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
@@ -203,10 +207,14 @@ async fn sk_reuseport_selects_expected_listener(socket_map: &str, select_prog: &
     );
 }
 
-#[test_case("socket_map", "select_socket_after_clear"; "legacy")]
-#[test_case("socket_map_btf", "select_socket_after_clear_btf"; "btf")]
-#[test_log::test(tokio::test)]
-async fn sk_reuseport_clear_index_changes_selection(socket_map: &str, clear_prog: &str) {
+#[rstest]
+#[case::legacy("socket_map", "select_socket_after_clear")]
+#[case::btf("socket_map_btf", "select_socket_after_clear_btf")]
+#[test_attr(test_log::test(tokio::test))]
+async fn sk_reuseport_clear_index_changes_selection(
+    #[case] socket_map: &str,
+    #[case] clear_prog: &str,
+) {
     let _netns = NetNsGuard::new();
 
     let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
@@ -262,10 +270,11 @@ async fn sk_reuseport_clear_index_changes_selection(socket_map: &str, clear_prog
     assert_connection_works(second_client, second_server).await;
 }
 
-#[test_case("select_socket"; "legacy")]
-#[test_case("select_socket_btf"; "btf")]
-#[test_log::test(tokio::test)]
-async fn sk_reuseport_stays_attached_until_explicit_detach(select_prog: &str) {
+#[rstest]
+#[case::legacy("select_socket")]
+#[case::btf("select_socket_btf")]
+#[test_attr(test_log::test(tokio::test))]
+async fn sk_reuseport_stays_attached_until_explicit_detach(#[case] select_prog: &str) {
     let _netns = NetNsGuard::new();
 
     let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
@@ -291,10 +300,14 @@ async fn sk_reuseport_stays_attached_until_explicit_detach(select_prog: &str) {
     );
 }
 
-#[test_case("socket_map", "select_or_migrate_socket"; "legacy")]
-#[test_case("socket_map_btf", "select_or_migrate_socket_btf"; "btf")]
-#[test_log::test(tokio::test)]
-async fn sk_reuseport_migrates_to_expected_listener(socket_map: &str, migrate_prog: &str) {
+#[rstest]
+#[case::legacy("socket_map", "select_or_migrate_socket")]
+#[case::btf("socket_map_btf", "select_or_migrate_socket_btf")]
+#[test_attr(test_log::test(tokio::test))]
+async fn sk_reuseport_migrates_to_expected_listener(
+    #[case] socket_map: &str,
+    #[case] migrate_prog: &str,
+) {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 14, 0) {
         eprintln!("skipping test on kernel {kernel_version:?}, sk_reuseport/migrate requires 5.14");

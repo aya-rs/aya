@@ -864,7 +864,7 @@ fn symbol_translated_address(
 mod tests {
     use assert_matches::assert_matches;
     use object::{Architecture, BinaryFormat, Endianness, write::SectionKind};
-    use test_case::test_case;
+    use rstest::rstest;
 
     use super::*;
 
@@ -894,20 +894,21 @@ mod tests {
         );
     }
 
-    #[test_case("libssl.so", true; "shared_object_basename")]
-    #[test_case("bash", true; "binary_basename")]
-    #[test_case("foo.so.1", true; "versioned_shared_object_basename")]
-    #[test_case("/usr/bin/bash", false; "absolute_path")]
-    #[test_case("/aa", false; "root_absolute_path")]
-    #[test_case("./bin/foo", false; "current_dir_relative_path")]
-    #[test_case("./aa", false; "current_dir_relative_file")]
-    #[test_case("subdir/lib.so", false; "subdir_relative_path")]
-    #[test_case("../lib/foo", false; "parent_dir_relative_path")]
-    #[test_case("/", false; "root_dir")]
-    #[test_case(".", false; "current_dir")]
-    #[test_case("..", false; "parent_dir")]
-    #[test_case("foo/", false; "trailing_separator")]
-    fn test_is_basename_only(input: &str, expected: bool) {
+    #[rstest]
+    #[case::shared_object_basename("libssl.so", true)]
+    #[case::binary_basename("bash", true)]
+    #[case::versioned_shared_object_basename("foo.so.1", true)]
+    #[case::absolute_path("/usr/bin/bash", false)]
+    #[case::root_absolute_path("/aa", false)]
+    #[case::current_dir_relative_path("./bin/foo", false)]
+    #[case::current_dir_relative_file("./aa", false)]
+    #[case::subdir_relative_path("subdir/lib.so", false)]
+    #[case::parent_dir_relative_path("../lib/foo", false)]
+    #[case::root_dir("/", false)]
+    #[case::current_dir(".", false)]
+    #[case::parent_dir("..", false)]
+    #[case::trailing_separator("foo/", false)]
+    fn test_is_basename_only(#[case] input: &str, #[case] expected: bool) {
         assert_eq!(is_basename_only(Path::new(input)), expected);
     }
 
@@ -1131,7 +1132,8 @@ mod tests {
         path: Option<&'static str>,
     }
 
-    #[test_case(
+    #[rstest]
+    #[case::bracketed_name(
         b"7ffd6fbea000-7ffd6fbec000  r-xp  00000000  00:00  0  [vdso]",
         ExpectedProcMapEntry {
             address: 0x7ffd6fbea000,
@@ -1141,10 +1143,8 @@ mod tests {
             dev: "00:00",
             inode: 0,
             path: Some("[vdso]"),
-        };
-        "bracketed_name"
-    )]
-    #[test_case(
+        })]
+    #[case::absolute_path(
         b"7f1bca83a000-7f1bca83c000  rw-p  00036000  fd:01  2895508  /usr/lib64/ld-linux-x86-64.so.2",
         ExpectedProcMapEntry {
             address: 0x7f1bca83a000,
@@ -1154,10 +1154,8 @@ mod tests {
             dev: "fd:01",
             inode: 2895508,
             path: Some("/usr/lib64/ld-linux-x86-64.so.2"),
-        };
-        "absolute_path"
-    )]
-    #[test_case(
+        })]
+    #[case::no_path(
         b"7f1bca5f9000-7f1bca601000  rw-p  00000000  00:00  0",
         ExpectedProcMapEntry {
             address: 0x7f1bca5f9000,
@@ -1167,10 +1165,8 @@ mod tests {
             dev: "00:00",
             inode: 0,
             path: None,
-        };
-        "no_path"
-    )]
-    #[test_case(
+        })]
+    #[case::relative_path_token(
         b"7f1bca5f9000-7f1bca601000  rw-p  00000000  00:00  0  deadbeef",
         ExpectedProcMapEntry {
             address: 0x7f1bca5f9000,
@@ -1180,10 +1176,8 @@ mod tests {
             dev: "00:00",
             inode: 0,
             path: Some("deadbeef"),
-        };
-        "relative_path_token"
-    )]
-    #[test_case(
+        })]
+    #[case::deleted_suffix_in_path(
         b"7f1bca83a000-7f1bca83c000  rw-p  00036000  fd:01  2895508  /usr/lib/libc.so.6 (deleted)",
         ExpectedProcMapEntry {
             address: 0x7f1bca83a000,
@@ -1193,11 +1187,9 @@ mod tests {
             dev: "fd:01",
             inode: 2895508,
             path: Some("/usr/lib/libc.so.6 (deleted)"),
-        };
-        "deleted_suffix_in_path"
-    )]
+        })]
     // The path field is the remainder of the line. It may contain whitespace and arbitrary tokens.
-    #[test_case(
+    #[case::path_remainder_with_spaces(
         b"71064dc000-71064df000 ---p 00000000 00:00 0  [page size compat] extra",
         ExpectedProcMapEntry {
             address: 0x71064dc000,
@@ -1207,10 +1199,8 @@ mod tests {
             dev: "00:00",
             inode: 0,
             path: Some("[page size compat] extra"),
-        };
-        "path_remainder_with_spaces"
-    )]
-    #[test_case(
+        })]
+    #[case::bracketed_name_with_spaces(
         b"724a0000-72aab000 rw-p 00000000 00:00 0 [anon:dalvik-zygote space] (deleted) extra",
         ExpectedProcMapEntry {
             address: 0x724a0000,
@@ -1220,10 +1210,8 @@ mod tests {
             dev: "00:00",
             inode: 0,
             path: Some("[anon:dalvik-zygote space] (deleted) extra"),
-        };
-        "bracketed_name_with_spaces"
-    )]
-    #[test_case(
+        })]
+    #[case::memfd_deleted(
         b"5ba3b000-5da3b000 r--s 00000000 00:01 1033 /memfd:jit-zygote-cache (deleted)",
         ExpectedProcMapEntry {
             address: 0x5ba3b000,
@@ -1233,10 +1221,8 @@ mod tests {
             dev: "00:01",
             inode: 1033,
             path: Some("/memfd:jit-zygote-cache (deleted)"),
-        };
-        "memfd_deleted"
-    )]
-    #[test_case(
+        })]
+    #[case::ashmem_with_spaces(
         b"6cd539c000-6cd559c000 rw-s 00000000 00:01 7215 /dev/ashmem/CursorWindow: /data/user/0/package/databases/kitefly.db (deleted)",
         ExpectedProcMapEntry {
             address: 0x6cd539c000,
@@ -1246,10 +1232,11 @@ mod tests {
             dev: "00:01",
             inode: 7215,
             path: Some("/dev/ashmem/CursorWindow: /data/user/0/package/databases/kitefly.db (deleted)"),
-        };
-        "ashmem_with_spaces"
-    )]
-    fn test_parse_proc_map_entry_ok(line: &'static [u8], expected: ExpectedProcMapEntry) {
+        })]
+    fn test_parse_proc_map_entry_ok(
+        #[case] line: &'static [u8],
+        #[case] expected: ExpectedProcMapEntry,
+    ) {
         use std::ffi::OsStr;
 
         let ExpectedProcMapEntry {
@@ -1273,13 +1260,14 @@ mod tests {
         });
     }
 
-    #[test_case(b"zzzz-7ffd6fbea000  r-xp  00000000  00:00  0  [vdso]"; "bad_address")]
-    #[test_case(b"7f1bca5f9000-7f1bca601000  r-xp  zzzz  00:00  0  [vdso]"; "bad_offset")]
-    #[test_case(b"7f1bca5f9000-7f1bca601000  r-xp  00000000  00:00  zzzz  [vdso]"; "bad_inode")]
-    #[test_case(b"7f1bca5f90007ffd6fbea000  r-xp  00000000  00:00  0  [vdso]"; "bad_address_range")]
-    #[test_case(b"7f1bca5f9000-7f1bca601000  r-xp  00000000"; "missing_fields")]
-    #[test_case(b"7f1bca5f9000-7f1bca601000-deadbeef  rw-p  00000000  00:00  0"; "bad_address_delimiter")]
-    fn test_parse_proc_map_entry_err(line: &'static [u8]) {
+    #[rstest]
+    #[case::bad_address(b"zzzz-7ffd6fbea000  r-xp  00000000  00:00  0  [vdso]")]
+    #[case::bad_offset(b"7f1bca5f9000-7f1bca601000  r-xp  zzzz  00:00  0  [vdso]")]
+    #[case::bad_inode(b"7f1bca5f9000-7f1bca601000  r-xp  00000000  00:00  zzzz  [vdso]")]
+    #[case::bad_address_range(b"7f1bca5f90007ffd6fbea000  r-xp  00000000  00:00  0  [vdso]")]
+    #[case::missing_fields(b"7f1bca5f9000-7f1bca601000  r-xp  00000000")]
+    #[case::bad_address_delimiter(b"7f1bca5f9000-7f1bca601000-deadbeef  rw-p  00000000  00:00  0")]
+    fn test_parse_proc_map_entry_err(#[case] line: &'static [u8]) {
         assert_matches!(
             ProcMapEntry::parse(line),
             Err(ProcMapError::ParseLine { line: _ })
