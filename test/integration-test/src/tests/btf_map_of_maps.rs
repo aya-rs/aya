@@ -4,7 +4,7 @@ use aya::{
     programs::{UProbe, uprobe::UProbeScope},
 };
 use integration_common::btf_map_of_maps::INNER_MAX_ENTRIES;
-use test_case::test_case;
+use rstest::rstest;
 
 #[derive(Clone, Copy, Debug)]
 enum MapKind {
@@ -94,9 +94,16 @@ extern "C" fn trigger_btf_hash_of_maps_get_value() {
     std::hint::black_box(());
 }
 
-#[test_log::test(test_case(MapKind::Array, "btf_array_of_maps", 0, 42 ; "array_of_maps"))]
-#[test_case(MapKind::Hash, "btf_hash_of_maps", 1, 55 ; "hash_of_maps")]
-fn btf_map_of_maps(kind: MapKind, name: &str, result_index: u32, expected: u32) {
+#[rstest]
+#[case::array_of_maps(MapKind::Array, "btf_array_of_maps", 0, 42)]
+#[case::hash_of_maps(MapKind::Hash, "btf_hash_of_maps", 1, 55)]
+#[test_attr(test_log::test)]
+fn btf_map_of_maps(
+    #[case] kind: MapKind,
+    #[case] name: &str,
+    #[case] result_index: u32,
+    #[case] expected: u32,
+) {
     let mut ebpf = Ebpf::load(crate::BTF_MAP_OF_MAPS).unwrap();
 
     let mut inner: Array<MapData, u32> = Array::create(INNER_MAX_ENTRIES, 0).unwrap();
@@ -109,14 +116,16 @@ fn btf_map_of_maps(kind: MapKind, name: &str, result_index: u32, expected: u32) 
     assert_result(&ebpf, result_index, expected);
 }
 
-#[test_log::test(test_case(MapKind::Array, "btf_array_of_maps_get_value", 2, 77, 99 ; "array_of_maps"))]
-#[test_case(MapKind::Hash, "btf_hash_of_maps_get_value", 3, 55, 88 ; "hash_of_maps")]
+#[rstest]
+#[case::array_of_maps(MapKind::Array, "btf_array_of_maps_get_value", 2, 77, 99)]
+#[case::hash_of_maps(MapKind::Hash, "btf_hash_of_maps_get_value", 3, 55, 88)]
+#[test_attr(test_log::test)]
 fn btf_map_of_maps_get_value(
-    kind: MapKind,
-    name: &str,
-    result_index: u32,
-    expected_get: u32,
-    expected_mut_write: u32,
+    #[case] kind: MapKind,
+    #[case] name: &str,
+    #[case] result_index: u32,
+    #[case] expected_get: u32,
+    #[case] expected_mut_write: u32,
 ) {
     let mut ebpf = Ebpf::load(crate::BTF_MAP_OF_MAPS).unwrap();
 

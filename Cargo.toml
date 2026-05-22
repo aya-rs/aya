@@ -97,6 +97,7 @@ public-api = { version = "0.51.0", default-features = false }
 quote = { version = "1", default-features = false }
 rand = { version = "0.10", default-features = false }
 rbpf = { version = "0.4.0", default-features = false }
+rstest = { version = "0.26.1", default-features = false }
 rustc_version = { version = "0.4.1", default-features = false }
 rustdoc-json = { version = "0.9.0", default-features = false }
 rustup-toolchain = { version = "0.1.5", default-features = false }
@@ -105,7 +106,6 @@ scopeguard = { version = "1.2.0", default-features = false }
 syn = { version = "2", default-features = false }
 tar = { version = "0.4.44", default-features = false }
 tempfile = { version = "3", default-features = false }
-test-case = { version = "3.1.0", default-features = false }
 test-log = { version = "0.2.13", default-features = false }
 testing_logger = { version = "0.1.1", default-features = false }
 thiserror = { version = "2.0.3", default-features = false }

@@ -11,7 +11,7 @@ use integration_common::fexit::{
     TEST4_INDEX, TEST5_INDEX, TEST6_INDEX, TEST7_INDEX, TEST8_INDEX, TEST9_INDEX, TEST10_INDEX,
     TestResult,
 };
-use test_case::test_case;
+use rstest::rstest;
 
 fn fexit_error_name(error: i32) -> &'static str {
     match error {
@@ -24,20 +24,21 @@ fn fexit_error_name(error: i32) -> &'static str {
 
 // Mirrors libbpf's tracing test-run trigger:
 // https://github.com/torvalds/linux/blob/v7.1-rc4/tools/testing/selftests/bpf/prog_tests/fentry_fexit.c#L24-L42
-#[test_case("test1", "bpf_fentry_test1", TEST1_INDEX ; "test1")]
-#[test_case("test2", "bpf_fentry_test2", TEST2_INDEX ; "test2")]
-#[test_case("test3", "bpf_fentry_test3", TEST3_INDEX ; "test3")]
-#[test_case("test4", "bpf_fentry_test4", TEST4_INDEX ; "test4")]
-#[test_case("test5", "bpf_fentry_test5", TEST5_INDEX ; "test5")]
-#[test_case("test6", "bpf_fentry_test6", TEST6_INDEX ; "test6")]
-#[test_case("test7", "bpf_fentry_test7", TEST7_INDEX ; "test7")]
-#[test_case("test8", "bpf_fentry_test8", TEST8_INDEX ; "test8")]
-#[test_case("test9", "bpf_fentry_test9", TEST9_INDEX ; "test9")]
-#[test_case("test10", "bpf_fentry_test10", TEST10_INDEX ; "test10")]
+#[rstest]
+#[case::test1("test1", "bpf_fentry_test1", TEST1_INDEX)]
+#[case::test2("test2", "bpf_fentry_test2", TEST2_INDEX)]
+#[case::test3("test3", "bpf_fentry_test3", TEST3_INDEX)]
+#[case::test4("test4", "bpf_fentry_test4", TEST4_INDEX)]
+#[case::test5("test5", "bpf_fentry_test5", TEST5_INDEX)]
+#[case::test6("test6", "bpf_fentry_test6", TEST6_INDEX)]
+#[case::test7("test7", "bpf_fentry_test7", TEST7_INDEX)]
+#[case::test8("test8", "bpf_fentry_test8", TEST8_INDEX)]
+#[case::test9("test9", "bpf_fentry_test9", TEST9_INDEX)]
+#[case::test10("test10", "bpf_fentry_test10", TEST10_INDEX)]
 fn fexit_reads_args_and_return_values_from_prog_test_run_targets(
-    program: &str,
-    target: &str,
-    index: u32,
+    #[case] program: &str,
+    #[case] target: &str,
+    #[case] index: u32,
 ) {
     // The fexit program itself requires Linux 5.5, but FExitContext::ret uses
     // bpf_get_func_ret, which was added in Linux 5.17:

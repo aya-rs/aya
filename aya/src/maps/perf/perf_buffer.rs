@@ -348,7 +348,7 @@ mod tests {
     use std::fmt::Debug;
 
     use assert_matches::assert_matches;
-    use test_case::test_case;
+    use rstest::rstest;
 
     use super::*;
     use crate::sys::{Syscall, TEST_MMAP_RET, override_syscall};
@@ -439,10 +439,11 @@ mod tests {
         v
     }
 
-    #[test_case(&[] ; "empty")]
-    #[test_case(&[0xCAFEBABEu32] ; "single")]
-    #[test_case(&[0xCAFEBABEu32, 0xBADCAFEu32] ; "consecutive")]
-    fn test_for_each_samples(expected: &[u32]) {
+    #[rstest]
+    #[case::empty(&[])]
+    #[case::single(&[0xCAFEBABEu32])]
+    #[case::consecutive(&[0xCAFEBABEu32, 0xBADCAFEu32])]
+    fn test_for_each_samples(#[case] expected: &[u32]) {
         let mut mmapped_buf = MMappedBuf {
             data: [0; PAGE_SIZE * 2],
         };

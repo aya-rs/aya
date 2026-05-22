@@ -4,7 +4,7 @@ use aya::{
     programs::{UProbe, uprobe::UProbeScope},
     util::online_cpus,
 };
-use test_case::test_case;
+use rstest::rstest;
 
 #[unsafe(no_mangle)]
 #[inline(never)]
@@ -12,11 +12,13 @@ extern "C" fn trigger_emit_event() {
     std::hint::black_box(());
 }
 
-#[test_log::test(test_case(crate::PERF_EVENT_ARRAY, "EVENTS_LEGACY", "emit_event_legacy" ; "legacy"))]
-#[test_case(crate::PERF_EVENT_ARRAY, "EVENTS", "emit_event" ; "btf")]
-#[test_case(crate::PERF_EVENT_BYTE_ARRAY, "EVENTS_LEGACY", "emit_event_legacy" ; "byte_legacy")]
-#[test_case(crate::PERF_EVENT_BYTE_ARRAY, "EVENTS", "emit_event" ; "byte_btf")]
-fn emit_event(bpf_obj: &[u8], events_map: &str, prog: &str) {
+#[rstest]
+#[case::legacy(crate::PERF_EVENT_ARRAY, "EVENTS_LEGACY", "emit_event_legacy")]
+#[case::btf(crate::PERF_EVENT_ARRAY, "EVENTS", "emit_event")]
+#[case::byte_legacy(crate::PERF_EVENT_BYTE_ARRAY, "EVENTS_LEGACY", "emit_event_legacy")]
+#[case::byte_btf(crate::PERF_EVENT_BYTE_ARRAY, "EVENTS", "emit_event")]
+#[test_attr(test_log::test)]
+fn emit_event(#[case] bpf_obj: &[u8], #[case] events_map: &str, #[case] prog: &str) {
     let mut bpf = EbpfLoader::new()
         .load(bpf_obj)
         .expect("load perf event array program");

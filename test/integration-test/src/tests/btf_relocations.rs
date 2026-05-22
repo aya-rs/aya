@@ -4,73 +4,75 @@ use aya::{
     programs::{UProbe, uprobe::UProbeScope},
 };
 use aya_obj::btf::Btf;
-use test_case::test_case;
+use rstest::rstest;
 
 #[derive(Debug)]
 enum Requirements {}
 
-#[test_log::test(test_case(crate::ENUM_SIGNED_32_RELOC_BPF, None, None,-0x7AAAAAAAi32 as u64))]
-#[test_case(crate::ENUM_SIGNED_32_RELOC_BPF, Some(crate::ENUM_SIGNED_32_RELOC_BTF),  None, -0x7BBBBBBBi32 as u64)]
-#[test_case(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BPF, None, None,-0x7AAAAAAAi32 as u64)]
-#[test_case(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BPF, Some(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BTF),  None, -0x7BBBBBBBi32 as u64)]
-#[test_case(crate::ENUM_SIGNED_64_RELOC_BPF, None, None,-0xAAAAAAABBBBBBBBi64 as u64)]
-#[test_case(crate::ENUM_SIGNED_64_RELOC_BPF, Some(crate::ENUM_SIGNED_64_RELOC_BTF),  None, -0xCCCCCCCDDDDDDDDi64 as u64)]
-#[test_case(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BPF, None, None,-0xAAAAAAABBBBBBBi64 as u64)]
-#[test_case(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BPF, Some(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BTF),  None, -0xCCCCCCCDDDDDDDi64 as u64)]
-#[test_case(crate::ENUM_UNSIGNED_32_RELOC_BPF, None, None, 0xAAAAAAAA)]
-#[test_case(
+#[rstest]
+#[case(crate::ENUM_SIGNED_32_RELOC_BPF, None, None,-0x7AAAAAAAi32 as u64)]
+#[case(crate::ENUM_SIGNED_32_RELOC_BPF, Some(crate::ENUM_SIGNED_32_RELOC_BTF),  None, -0x7BBBBBBBi32 as u64)]
+#[case(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BPF, None, None,-0x7AAAAAAAi32 as u64)]
+#[case(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BPF, Some(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BTF),  None, -0x7BBBBBBBi32 as u64)]
+#[case(crate::ENUM_SIGNED_64_RELOC_BPF, None, None,-0xAAAAAAABBBBBBBBi64 as u64)]
+#[case(crate::ENUM_SIGNED_64_RELOC_BPF, Some(crate::ENUM_SIGNED_64_RELOC_BTF),  None, -0xCCCCCCCDDDDDDDDi64 as u64)]
+#[case(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BPF, None, None,-0xAAAAAAABBBBBBBi64 as u64)]
+#[case(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BPF, Some(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BTF),  None, -0xCCCCCCCDDDDDDDi64 as u64)]
+#[case(crate::ENUM_UNSIGNED_32_RELOC_BPF, None, None, 0xAAAAAAAA)]
+#[case(
     crate::ENUM_UNSIGNED_32_RELOC_BPF,
     Some(crate::ENUM_UNSIGNED_32_RELOC_BTF),
     None,
     0xBBBBBBBB
 )]
-#[test_case(
+#[case(
     crate::ENUM_UNSIGNED_32_CHECKED_VARIANTS_RELOC_BPF,
     None,
     None,
     0xAAAAAAAA
 )]
-#[test_case(
+#[case(
     crate::ENUM_UNSIGNED_32_CHECKED_VARIANTS_RELOC_BPF,
     Some(crate::ENUM_UNSIGNED_32_CHECKED_VARIANTS_RELOC_BTF),
     None,
     0xBBBBBBBB
 )]
-#[test_case(crate::ENUM_UNSIGNED_64_RELOC_BPF, None, None, 0xAAAAAAAABBBBBBBB)]
-#[test_case(
+#[case(crate::ENUM_UNSIGNED_64_RELOC_BPF, None, None, 0xAAAAAAAABBBBBBBB)]
+#[case(
     crate::ENUM_UNSIGNED_64_RELOC_BPF,
     Some(crate::ENUM_UNSIGNED_64_RELOC_BTF),
     None,
     0xCCCCCCCCDDDDDDDD
 )]
-#[test_case(
+#[case(
     crate::ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BPF,
     None,
     None,
     0xAAAAAAAABBBBBBBB
 )]
-#[test_case(
+#[case(
     crate::ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BPF,
     Some(crate::ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BTF),
     None,
     0xCCCCCCCCDDDDDDDD
 )]
-#[test_case(crate::FIELD_RELOC_BPF, None, None, 2)]
-#[test_case(crate::FIELD_RELOC_BPF, Some(crate::FIELD_RELOC_BTF), None, 1)]
-#[test_case(crate::POINTER_RELOC_BPF, None, None, 42)]
-#[test_case(crate::POINTER_RELOC_BPF, Some(crate::POINTER_RELOC_BTF), None, 21)]
-#[test_case(crate::STRUCT_FLAVORS_RELOC_BPF, None, None, 1)]
-#[test_case(
+#[case(crate::FIELD_RELOC_BPF, None, None, 2)]
+#[case(crate::FIELD_RELOC_BPF, Some(crate::FIELD_RELOC_BTF), None, 1)]
+#[case(crate::POINTER_RELOC_BPF, None, None, 42)]
+#[case(crate::POINTER_RELOC_BPF, Some(crate::POINTER_RELOC_BTF), None, 21)]
+#[case(crate::STRUCT_FLAVORS_RELOC_BPF, None, None, 1)]
+#[case(
     crate::STRUCT_FLAVORS_RELOC_BPF,
     Some(crate::STRUCT_FLAVORS_RELOC_BTF),
     None,
     2
 )]
+#[test_attr(test_log::test)]
 fn relocation_tests(
-    bpf: &[u8],
-    btf: Option<&[u8]>,
-    requirements: Option<Requirements>,
-    expected: u64,
+    #[case] bpf: &[u8],
+    #[case] btf: Option<&[u8]>,
+    #[case] requirements: Option<Requirements>,
+    #[case] expected: u64,
 ) {
     let features = aya::features();
 

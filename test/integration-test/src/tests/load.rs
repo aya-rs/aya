@@ -22,7 +22,7 @@ use aya::{
     util::KernelVersion,
 };
 use aya_obj::programs::XdpAttachType;
-use test_case::test_case;
+use rstest::rstest;
 
 const MAX_RETRIES: usize = 100;
 pub(crate) const RETRY_DURATION: Duration = Duration::from_millis(10);
@@ -367,13 +367,13 @@ fn basic_tracepoint() {
     );
 }
 
-#[test_log::test(test_case(UProbeScope::AllProcesses; "all_processes"))]
-#[test_case(UProbeScope::CallingProcess; "calling_process")]
-#[test_case(
-    UProbeScope::OneProcess(NonZeroU32::new(std::process::id()).unwrap());
-    "one_process"
-)]
-fn basic_uprobe_scopes(scope: UProbeScope) {
+#[rstest]
+#[case::all_processes(UProbeScope::AllProcesses)]
+#[case::calling_process(UProbeScope::CallingProcess)]
+#[case::one_process(
+    UProbeScope::OneProcess(NonZeroU32::new(std::process::id()).unwrap()))]
+#[test_attr(test_log::test)]
+fn basic_uprobe_scopes(#[case] scope: UProbeScope) {
     type P = UProbe;
 
     let program_name = "test_uprobe";

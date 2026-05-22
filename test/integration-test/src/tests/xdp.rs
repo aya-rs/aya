@@ -8,14 +8,16 @@ use aya::{
     util::KernelVersion,
 };
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
-use test_case::test_case;
+use rstest::rstest;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
 use crate::utils::NetNsGuard;
 
-#[test_log::test(test_case("SOCKS", "redirect_sock"; "legacy"))]
-#[test_case("SOCKS_BTF", "redirect_sock_btf"; "btf")]
-fn af_xdp(socks_name: &str, prog_name: &str) {
+#[rstest]
+#[case::legacy("SOCKS", "redirect_sock")]
+#[case::btf("SOCKS_BTF", "redirect_sock_btf")]
+#[test_attr(test_log::test)]
+fn af_xdp(#[case] socks_name: &str, #[case] prog_name: &str) {
     let _netns = NetNsGuard::new();
 
     let mut bpf = Ebpf::load(crate::XSK_MAP).unwrap();
@@ -159,9 +161,11 @@ fn map_load() {
     bpf.program("xdp_frags_devmap").unwrap();
 }
 
-#[test_log::test(test_case("CPUS", "redirect_cpu"; "legacy"))]
-#[test_case("CPUS_BTF", "redirect_cpu_btf"; "btf")]
-fn cpumap_chain(cpus_name: &str, prog_name: &str) {
+#[rstest]
+#[case::legacy("CPUS", "redirect_cpu")]
+#[case::btf("CPUS_BTF", "redirect_cpu_btf")]
+#[test_attr(test_log::test)]
+fn cpumap_chain(#[case] cpus_name: &str, #[case] prog_name: &str) {
     let _netns = NetNsGuard::new();
 
     let mut bpf = Ebpf::load(crate::CPU_MAP).unwrap();
@@ -218,25 +222,31 @@ fn cpumap_chain(cpus_name: &str, prog_name: &str) {
     assert_eq!(hits.get(&1, 0).unwrap(), 1);
 }
 
-#[test_log::test(test_case(
-    "DEVS", "DEVS_HASH",
-    "redirect_dev", "redirect_dev_hash",
-    "get_dev", "get_dev_hash";
-    "legacy"
-))]
-#[test_case(
-    "DEVS_BTF", "DEVS_HASH_BTF",
-    "redirect_dev_btf", "redirect_dev_hash_btf",
-    "get_dev_btf", "get_dev_hash_btf";
-    "btf"
+#[rstest]
+#[case::legacy(
+    "DEVS",
+    "DEVS_HASH",
+    "redirect_dev",
+    "redirect_dev_hash",
+    "get_dev",
+    "get_dev_hash"
 )]
+#[case::btf(
+    "DEVS_BTF",
+    "DEVS_HASH_BTF",
+    "redirect_dev_btf",
+    "redirect_dev_hash_btf",
+    "get_dev_btf",
+    "get_dev_hash_btf"
+)]
+#[test_attr(test_log::test)]
 fn devmap_set(
-    devs_name: &str,
-    devs_hash_name: &str,
-    dev_prog: &str,
-    dev_hash_prog: &str,
-    dev_get_prog: &str,
-    dev_hash_get_prog: &str,
+    #[case] devs_name: &str,
+    #[case] devs_hash_name: &str,
+    #[case] dev_prog: &str,
+    #[case] dev_hash_prog: &str,
+    #[case] dev_get_prog: &str,
+    #[case] dev_hash_get_prog: &str,
 ) {
     let _netns = NetNsGuard::new();
 
@@ -273,11 +283,13 @@ fn devmap_set(
     }
 }
 
-#[test_log::test(test_case("get_ifindex_dev"; "legacy_array"))]
-#[test_case("get_ifindex_dev_hash"; "legacy_hash")]
-#[test_case("get_ifindex_dev_btf"; "btf_array")]
-#[test_case("get_ifindex_dev_hash_btf"; "btf_hash")]
-fn devmap_get_ifindex(prog_name: &str) {
+#[rstest]
+#[case::legacy_array("get_ifindex_dev")]
+#[case::legacy_hash("get_ifindex_dev_hash")]
+#[case::btf_array("get_ifindex_dev_btf")]
+#[case::btf_hash("get_ifindex_dev_hash_btf")]
+#[test_attr(test_log::test)]
+fn devmap_get_ifindex(#[case] prog_name: &str) {
     let _netns = NetNsGuard::new();
     let mut bpf = Ebpf::load(crate::DEV_MAP).unwrap();
     let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();

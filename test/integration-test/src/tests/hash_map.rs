@@ -5,7 +5,7 @@ use aya::{
     sys::is_map_supported,
     util::nr_cpus,
 };
-use test_case::test_case;
+use rstest::rstest;
 
 const EXPECTED: u64 = 42;
 
@@ -15,15 +15,47 @@ extern "C" fn trigger_hash_lookup() {
     std::hint::black_box(());
 }
 
-#[test_log::test(test_case(MapType::Hash, "test_hash_btf", "HASH_BTF", "RESULT" ; "hash_btf"))]
-#[test_case(MapType::LruHash, "test_lru_hash_btf", "LRU_HASH_BTF", "RESULT" ; "lru_hash_btf")]
-#[test_case(MapType::PerCpuHash, "test_per_cpu_hash_btf", "PER_CPU_HASH_BTF", "RESULT" ; "per_cpu_hash_btf")]
-#[test_case(MapType::LruPerCpuHash, "test_lru_per_cpu_hash_btf", "LRU_PER_CPU_HASH_BTF", "RESULT" ; "lru_per_cpu_hash_btf")]
-#[test_case(MapType::Hash, "test_hash_legacy", "HASH_LEGACY", "RESULT_LEGACY" ; "hash_legacy")]
-#[test_case(MapType::LruHash, "test_lru_hash_legacy", "LRU_HASH_LEGACY", "RESULT_LEGACY" ; "lru_hash_legacy")]
-#[test_case(MapType::PerCpuHash, "test_per_cpu_hash_legacy", "PER_CPU_HASH_LEGACY", "RESULT_LEGACY" ; "per_cpu_hash_legacy")]
-#[test_case(MapType::LruPerCpuHash, "test_lru_per_cpu_hash_legacy", "LRU_PER_CPU_HASH_LEGACY", "RESULT_LEGACY" ; "lru_per_cpu_hash_legacy")]
-fn hash_basic(map_type: MapType, prog_name: &str, map_name: &str, result_map: &str) {
+#[rstest]
+#[case::hash_btf(MapType::Hash, "test_hash_btf", "HASH_BTF", "RESULT")]
+#[case::lru_hash_btf(MapType::LruHash, "test_lru_hash_btf", "LRU_HASH_BTF", "RESULT")]
+#[case::per_cpu_hash_btf(
+    MapType::PerCpuHash,
+    "test_per_cpu_hash_btf",
+    "PER_CPU_HASH_BTF",
+    "RESULT"
+)]
+#[case::lru_per_cpu_hash_btf(
+    MapType::LruPerCpuHash,
+    "test_lru_per_cpu_hash_btf",
+    "LRU_PER_CPU_HASH_BTF",
+    "RESULT"
+)]
+#[case::hash_legacy(MapType::Hash, "test_hash_legacy", "HASH_LEGACY", "RESULT_LEGACY")]
+#[case::lru_hash_legacy(
+    MapType::LruHash,
+    "test_lru_hash_legacy",
+    "LRU_HASH_LEGACY",
+    "RESULT_LEGACY"
+)]
+#[case::per_cpu_hash_legacy(
+    MapType::PerCpuHash,
+    "test_per_cpu_hash_legacy",
+    "PER_CPU_HASH_LEGACY",
+    "RESULT_LEGACY"
+)]
+#[case::lru_per_cpu_hash_legacy(
+    MapType::LruPerCpuHash,
+    "test_lru_per_cpu_hash_legacy",
+    "LRU_PER_CPU_HASH_LEGACY",
+    "RESULT_LEGACY"
+)]
+#[test_attr(test_log::test)]
+fn hash_basic(
+    #[case] map_type: MapType,
+    #[case] prog_name: &str,
+    #[case] map_name: &str,
+    #[case] result_map: &str,
+) {
     if matches!(map_type, MapType::LruHash | MapType::LruPerCpuHash)
         && !is_map_supported(map_type).unwrap()
     {

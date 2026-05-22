@@ -1440,7 +1440,7 @@ mod tests {
         generated::bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, maps::PinningType, obj::parse_map_info,
     };
     use libc::EINVAL;
-    use test_case::test_case;
+    use rstest::rstest;
 
     use super::*;
     use crate::sys::override_syscall;
@@ -1571,21 +1571,22 @@ bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
         bpf_create_map(&name, &map, Some(btf_fd), None).unwrap();
     }
 
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY ; "perf_event_array")]
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY ; "cgroup_array")]
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_STACK_TRACE ; "stack_trace")]
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS ; "array_of_maps")]
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS ; "hash_of_maps")]
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_DEVMAP ; "devmap")]
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH ; "devmap_hash")]
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_CPUMAP ; "cpumap")]
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_XSKMAP ; "xskmap")]
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_SOCKMAP ; "sockmap")]
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_SOCKHASH ; "sockhash")]
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_QUEUE ; "queue")]
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_STACK ; "stack")]
-    #[test_case(bpf_map_type::BPF_MAP_TYPE_RINGBUF ; "ringbuf")]
-    fn test_btf_blocklist_strips_type_ids(map_type: bpf_map_type) {
+    #[rstest]
+    #[case::perf_event_array(bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY)]
+    #[case::cgroup_array(bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY)]
+    #[case::stack_trace(bpf_map_type::BPF_MAP_TYPE_STACK_TRACE)]
+    #[case::array_of_maps(bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS)]
+    #[case::hash_of_maps(bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS)]
+    #[case::devmap(bpf_map_type::BPF_MAP_TYPE_DEVMAP)]
+    #[case::devmap_hash(bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH)]
+    #[case::cpumap(bpf_map_type::BPF_MAP_TYPE_CPUMAP)]
+    #[case::xskmap(bpf_map_type::BPF_MAP_TYPE_XSKMAP)]
+    #[case::sockmap(bpf_map_type::BPF_MAP_TYPE_SOCKMAP)]
+    #[case::sockhash(bpf_map_type::BPF_MAP_TYPE_SOCKHASH)]
+    #[case::queue(bpf_map_type::BPF_MAP_TYPE_QUEUE)]
+    #[case::stack(bpf_map_type::BPF_MAP_TYPE_STACK)]
+    #[case::ringbuf(bpf_map_type::BPF_MAP_TYPE_RINGBUF)]
+    fn test_btf_blocklist_strips_type_ids(#[case] map_type: bpf_map_type) {
         const BTF_FD: i32 = 42;
 
         override_syscall(|call| match call {

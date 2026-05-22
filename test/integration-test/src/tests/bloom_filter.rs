@@ -7,7 +7,7 @@ use aya::{
 use integration_common::bloom_filter::{
     CONTAINS_ABSENT_INDEX, CONTAINS_PRESENT_INDEX, INSERT_INDEX,
 };
-use test_case::test_case;
+use rstest::rstest;
 
 #[unsafe(no_mangle)]
 #[inline(never)]
@@ -23,19 +23,26 @@ extern "C" fn trigger_bloom_contains(result_index: u32, value: u32) {
     core::hint::black_box(value);
 }
 
-#[test_log::test(test_case(
+#[rstest]
+#[case::legacy(
     "RESULT_LEGACY",
     "FILTER_LEGACY",
     "bloom_filter_insert_legacy",
-    "bloom_filter_contains_legacy" ; "legacy"
-))]
-#[test_case(
+    "bloom_filter_contains_legacy"
+)]
+#[case::btf(
     "RESULT",
     "FILTER",
     "btf_bloom_filter_insert",
-    "btf_bloom_filter_contains" ; "btf"
+    "btf_bloom_filter_contains"
 )]
-fn bloom_filter_basic(result_map: &str, filter_map: &str, insert_prog: &str, contains_prog: &str) {
+#[test_attr(test_log::test)]
+fn bloom_filter_basic(
+    #[case] result_map: &str,
+    #[case] filter_map: &str,
+    #[case] insert_prog: &str,
+    #[case] contains_prog: &str,
+) {
     if !is_map_supported(MapType::BloomFilter).unwrap() {
         eprintln!("skipping test - bloom filter map not supported");
         return;

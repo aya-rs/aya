@@ -24,13 +24,14 @@ use integration_common::printk::{
     MARKER, TEST_CHAR, TEST_I8, TEST_I16, TEST_I32, TEST_I64, TEST_ISIZE, TEST_U8, TEST_U16,
     TEST_U32, TEST_U64, TEST_USIZE,
 };
-use test_case::test_case;
+use rstest::rstest;
 use tokio::{
     io::{Interest, unix::AsyncFd},
     time::{Duration, timeout},
 };
 
-#[test_case(
+#[rstest]
+#[case::few(
     None,
     "test_bpf_printk",
     vec![
@@ -47,22 +48,18 @@ use tokio::{
         format!("{MARKER}_I64:{TEST_I64:x}"),
         format!("{MARKER}_ISIZE:{TEST_ISIZE}"),
         format!("{MARKER}_MULTI_printk:{TEST_U8:x},{TEST_I32:x}"),
-    ];
-    "few"
-)]
-#[test_case(
+    ])]
+#[case::many(
     Some(("bpf_trace_vprintk", KernelVersion::new(5, 15, 0))),
     "test_bpf_printk_for_many_args",
     vec![
         format!("{MARKER}_MULTI_vprintk:{TEST_U8},{TEST_U16},{TEST_I8},{TEST_I16}")
-    ];
-    "many"
-)]
-#[tokio::test]
+    ])]
+#[test_attr(tokio::test)]
 async fn bpf_printk(
-    minimum_kernel_version: Option<(&str, KernelVersion)>,
-    bpf_program_name: &str,
-    expected: Vec<String>,
+    #[case] minimum_kernel_version: Option<(&str, KernelVersion)>,
+    #[case] bpf_program_name: &str,
+    #[case] expected: Vec<String>,
 ) {
     if let Some((helper_name, minimum_kernel_version)) = minimum_kernel_version {
         let kernel_version = KernelVersion::current().unwrap();

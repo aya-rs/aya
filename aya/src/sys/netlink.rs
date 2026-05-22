@@ -849,7 +849,7 @@ unsafe fn request_attributes<T>(req: &mut T, msg_len: usize) -> &mut [u8] {
 
 #[cfg(test)]
 mod tests {
-    use test_case::test_case;
+    use rstest::rstest;
 
     use super::*;
 
@@ -1019,9 +1019,10 @@ mod tests {
     /// Verify that the `classid` value supplied to [`write_tc_attach_attrs`]
     /// round-trips through the serialized netlink attributes. The absent case
     /// mirrors iproute2's behavior when `classid` is not on the command line.
-    #[test_case(Some(TcHandle::new(1, 1)) ; "set")]
-    #[test_case(None ; "unset")]
-    fn tc_request_classid_serialization(classid: Option<TcHandle>) {
+    #[rstest]
+    #[case::set(Some(TcHandle::new(1, 1)))]
+    #[case::unset(None)]
+    fn tc_request_classid_serialization(#[case] classid: Option<TcHandle>) {
         let req = tc_request(b"foo\0", classid).unwrap();
         assert_eq!(classid_in_request(&req), classid);
     }

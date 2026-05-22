@@ -12,7 +12,7 @@ use aya::{
     sys::{is_map_supported, is_program_supported},
 };
 use libc::ENOENT;
-use test_case::test_case;
+use rstest::rstest;
 
 use crate::utils::NetNsGuard;
 
@@ -56,11 +56,18 @@ impl MapKind {
     }
 }
 
-#[test_log::test(test_case(crate::SOCK_HASH, MapKind::Hash, "SOCKETS_LEGACY", "sk_lookup_legacy" ; "sock_hash legacy"))]
-#[test_case(crate::SOCK_HASH, MapKind::Hash, "SOCKETS_BTF", "sk_lookup_btf" ; "sock_hash btf")]
-#[test_case(crate::SOCK_MAP, MapKind::Map, "SOCKETS_LEGACY", "sk_lookup_legacy" ; "sock_map legacy")]
-#[test_case(crate::SOCK_MAP, MapKind::Map, "SOCKETS_BTF", "sk_lookup_btf" ; "sock_map btf")]
-fn redirect_sk_lookup(bpf_bytes: &[u8], kind: MapKind, map_name: &str, prog_name: &str) {
+#[rstest]
+#[case::sock_hash_legacy(crate::SOCK_HASH, MapKind::Hash, "SOCKETS_LEGACY", "sk_lookup_legacy")]
+#[case::sock_hash_btf(crate::SOCK_HASH, MapKind::Hash, "SOCKETS_BTF", "sk_lookup_btf")]
+#[case::sock_map_legacy(crate::SOCK_MAP, MapKind::Map, "SOCKETS_LEGACY", "sk_lookup_legacy")]
+#[case::sock_map_btf(crate::SOCK_MAP, MapKind::Map, "SOCKETS_BTF", "sk_lookup_btf")]
+#[test_attr(test_log::test)]
+fn redirect_sk_lookup(
+    #[case] bpf_bytes: &[u8],
+    #[case] kind: MapKind,
+    #[case] map_name: &str,
+    #[case] prog_name: &str,
+) {
     if !is_map_supported(kind.map_type()).unwrap() {
         eprintln!("skipping test - {:?} not supported", kind.map_type());
         return;
@@ -103,11 +110,17 @@ fn redirect_sk_lookup(bpf_bytes: &[u8], kind: MapKind, map_name: &str, prog_name
     drop(stream);
 }
 
-#[test_log::test(test_case(crate::SOCK_HASH, MapKind::Hash, "sk_lookup_legacy" ; "sock_hash legacy"))]
-#[test_case(crate::SOCK_HASH, MapKind::Hash, "sk_lookup_btf" ; "sock_hash btf")]
-#[test_case(crate::SOCK_MAP, MapKind::Map, "sk_lookup_legacy" ; "sock_map legacy")]
-#[test_case(crate::SOCK_MAP, MapKind::Map, "sk_lookup_btf" ; "sock_map btf")]
-fn redirect_sk_lookup_miss_propagates_enoent(bpf_bytes: &[u8], kind: MapKind, prog_name: &str) {
+#[rstest]
+#[case::sock_hash_legacy(crate::SOCK_HASH, MapKind::Hash, "sk_lookup_legacy")]
+#[case::sock_hash_btf(crate::SOCK_HASH, MapKind::Hash, "sk_lookup_btf")]
+#[case::sock_map_legacy(crate::SOCK_MAP, MapKind::Map, "sk_lookup_legacy")]
+#[case::sock_map_btf(crate::SOCK_MAP, MapKind::Map, "sk_lookup_btf")]
+#[test_attr(test_log::test)]
+fn redirect_sk_lookup_miss_propagates_enoent(
+    #[case] bpf_bytes: &[u8],
+    #[case] kind: MapKind,
+    #[case] prog_name: &str,
+) {
     if !is_map_supported(kind.map_type()).unwrap() {
         eprintln!("skipping test - {:?} not supported", kind.map_type());
         return;

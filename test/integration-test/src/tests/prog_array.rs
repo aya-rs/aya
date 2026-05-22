@@ -7,7 +7,7 @@ use aya::{
 use integration_common::prog_array::{
     FAILURE_SENTINEL, RESULT_INDEX, SUCCESS_INDEX, SUCCESS_SENTINEL,
 };
-use test_case::test_case;
+use rstest::rstest;
 
 #[unsafe(no_mangle)]
 #[inline(never)]
@@ -21,17 +21,11 @@ extern "C" fn trigger_tail_call_success() {
     std::hint::black_box(());
 }
 
-#[test_log::test(test_case(
-    "RESULT_LEGACY",
-    "tail_call_empty_legacy"
-    ; "legacy"
-))]
-#[test_case(
-    "RESULT",
-    "tail_call_empty"
-    ; "btf"
-)]
-fn tail_call_empty(result_map: &str, entry_prog: &str) {
+#[rstest]
+#[case::legacy("RESULT_LEGACY", "tail_call_empty_legacy")]
+#[case::btf("RESULT", "tail_call_empty")]
+#[test_attr(test_log::test)]
+fn tail_call_empty(#[case] result_map: &str, #[case] entry_prog: &str) {
     if !is_map_supported(MapType::ProgramArray).unwrap() {
         eprintln!("skipping test - program array map not supported");
         return;
@@ -66,21 +60,21 @@ fn tail_call_empty(result_map: &str, entry_prog: &str) {
     );
 }
 
-#[test_log::test(test_case(
+#[rstest]
+#[case::legacy(
     "RESULT_LEGACY",
     "ARRAY_LEGACY",
     "tail_call_empty_legacy",
     "tail_call_target_legacy"
-    ; "legacy"
-))]
-#[test_case(
-    "RESULT",
-    "ARRAY",
-    "tail_call_empty",
-    "tail_call_target"
-    ; "btf"
 )]
-fn tail_call_success(result_map: &str, array_map: &str, entry_prog: &str, target_prog: &str) {
+#[case::btf("RESULT", "ARRAY", "tail_call_empty", "tail_call_target")]
+#[test_attr(test_log::test)]
+fn tail_call_success(
+    #[case] result_map: &str,
+    #[case] array_map: &str,
+    #[case] entry_prog: &str,
+    #[case] target_prog: &str,
+) {
     if !is_map_supported(MapType::ProgramArray).unwrap() {
         eprintln!("skipping test - program array map not supported");
         return;

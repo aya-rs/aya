@@ -5,7 +5,7 @@ use aya::{
     sys::is_map_supported,
 };
 use integration_common::stack_trace::TestResult;
-use test_case::test_case;
+use rstest::rstest;
 
 #[unsafe(no_mangle)]
 #[inline(never)]
@@ -13,9 +13,11 @@ extern "C" fn trigger_record_stackid() {
     std::hint::black_box(());
 }
 
-#[test_log::test(test_case("STACKS_LEGACY", "RESULT_LEGACY", "record_stackid_legacy" ; "legacy"))]
-#[test_case("STACKS", "RESULT", "record_stackid" ; "btf")]
-fn record_stackid(stacks_map: &str, result_map: &str, prog: &str) {
+#[rstest]
+#[case::legacy("STACKS_LEGACY", "RESULT_LEGACY", "record_stackid_legacy")]
+#[case::btf("STACKS", "RESULT", "record_stackid")]
+#[test_attr(test_log::test)]
+fn record_stackid(#[case] stacks_map: &str, #[case] result_map: &str, #[case] prog: &str) {
     if !is_map_supported(MapType::StackTrace).unwrap() {
         eprintln!("skipping test - stack trace map not supported");
         return;

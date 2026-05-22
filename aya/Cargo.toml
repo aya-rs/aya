@@ -32,8 +32,8 @@ thiserror = { workspace = true }
 
 [dev-dependencies]
 nix = { workspace = true, features = ["net", "socket"] }
+rstest = { workspace = true }
 tempfile = { workspace = true }
-test-case = { workspace = true }
 
 [package.metadata.docs.rs]
 all-features = true
