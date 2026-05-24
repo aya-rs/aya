@@ -15,6 +15,7 @@ mod btf_map_of_maps;
 mod btf_maps;
 mod btf_relocations;
 mod cgroup_array;
+mod cgroup_storage;
 mod elf;
 mod feature_probe;
 mod fexit;

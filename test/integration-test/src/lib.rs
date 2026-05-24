@@ -44,6 +44,7 @@ bpf_file!(
     BPF_PROBE_READ => "bpf_probe_read",
     BTF_MAPS_PLAIN => "btf_maps_plain",
     CGROUP_ARRAY => "cgroup_array",
+    CGROUP_STORAGE => "cgroup_storage",
     CPU_MAP => "cpu_map",
     DEV_MAP => "dev_map",
     FEXIT => "fexit",
