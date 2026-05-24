@@ -195,3 +195,7 @@ path = "src/xsk_map.rs"
 [[bin]]
 name = "cgroup_array"
 path = "src/cgroup_array.rs"
+
+[[bin]]
+name = "cgroup_storage"
+path = "src/cgroup_storage.rs"
