@@ -79,6 +79,7 @@ macro_rules! map_constructors {
 pub mod array;
 pub mod bloom_filter;
 pub mod cgroup_array;
+pub mod cgroup_storage;
 pub mod hash_map;
 pub mod lpm_trie;
 pub mod per_cpu_array;
@@ -96,6 +97,7 @@ pub mod xdp;
 pub use array::Array;
 pub use bloom_filter::BloomFilter;
 pub use cgroup_array::CgroupArray;
+pub use cgroup_storage::{CgroupStorage, PerCpuCgroupStorage};
 pub use hash_map::{HashMap, LruHashMap, LruPerCpuHashMap, PerCpuHashMap};
 pub use lpm_trie::LpmTrie;
 pub use per_cpu_array::PerCpuArray;
