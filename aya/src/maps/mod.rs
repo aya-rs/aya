@@ -73,6 +73,7 @@ use crate::{
 
 pub mod array;
 pub mod bloom_filter;
+pub mod cgroup_storage;
 pub mod hash_map;
 mod info;
 pub mod lpm_trie;
@@ -88,6 +89,11 @@ pub mod xdp;
 
 pub use array::{Array, CgroupArray, PerCpuArray, ProgramArray};
 pub use bloom_filter::BloomFilter;
+#[expect(
+    deprecated,
+    reason = "re-exporting the deprecated cgroup storage map types"
+)]
+pub use cgroup_storage::{CgroupStorage, CgroupStorageKey, PerCpuCgroupStorage};
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use info::{MapInfo, MapType, loaded_maps};
 pub use lpm_trie::LpmTrie;
@@ -302,6 +308,8 @@ pub enum Map {
     BloomFilter(MapData),
     /// A [`CgroupArray`] map.
     CgroupArray(MapData),
+    /// A [`CgroupStorage`] map.
+    CgroupStorage(MapData),
     /// A [`CpuMap`] map.
     CpuMap(MapData),
     /// A [`DevMap`] map.
@@ -318,6 +326,8 @@ pub enum Map {
     LruHashMap(MapData),
     /// A [`PerCpuArray`] map.
     PerCpuArray(MapData),
+    /// A [`PerCpuCgroupStorage`] map.
+    PerCpuCgroupStorage(MapData),
     /// A [`PerCpuHashMap`] map.
     PerCpuHashMap(MapData),
     /// A [`PerCpuHashMap`] map that uses a LRU eviction policy.
@@ -356,6 +366,7 @@ impl Map {
             Self::ArrayOfMaps(map) => map.obj.map_type(),
             Self::BloomFilter(map) => map.obj.map_type(),
             Self::CgroupArray(map) => map.obj.map_type(),
+            Self::CgroupStorage(map) => map.obj.map_type(),
             Self::CpuMap(map) => map.obj.map_type(),
             Self::DevMap(map) => map.obj.map_type(),
             Self::DevMapHash(map) => map.obj.map_type(),
@@ -364,6 +375,7 @@ impl Map {
             Self::LpmTrie(map) => map.obj.map_type(),
             Self::LruHashMap(map) => map.obj.map_type(),
             Self::PerCpuArray(map) => map.obj.map_type(),
+            Self::PerCpuCgroupStorage(map) => map.obj.map_type(),
             Self::PerCpuHashMap(map) => map.obj.map_type(),
             Self::PerCpuLruHashMap(map) => map.obj.map_type(),
             Self::PerfEventArray(map) => map.obj.map_type(),
@@ -391,6 +403,7 @@ impl Map {
             Self::ArrayOfMaps(map) => map.pin(path),
             Self::BloomFilter(map) => map.pin(path),
             Self::CgroupArray(map) => map.pin(path),
+            Self::CgroupStorage(map) => map.pin(path),
             Self::CpuMap(map) => map.pin(path),
             Self::DevMap(map) => map.pin(path),
             Self::DevMapHash(map) => map.pin(path),
@@ -399,6 +412,7 @@ impl Map {
             Self::LpmTrie(map) => map.pin(path),
             Self::LruHashMap(map) => map.pin(path),
             Self::PerCpuArray(map) => map.pin(path),
+            Self::PerCpuCgroupStorage(map) => map.pin(path),
             Self::PerCpuHashMap(map) => map.pin(path),
             Self::PerCpuLruHashMap(map) => map.pin(path),
             Self::PerfEventArray(map) => map.pin(path),
@@ -452,7 +466,7 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY => Self::CgroupArray(map_data),
             bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Self::ArrayOfMaps(map_data),
             bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Self::HashOfMaps(map_data),
-            bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Self::CgroupStorage(map_data),
             bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::ReusePortSockArray(map_data),
             bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Self::SkStorage(map_data),
             bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS => Self::Unsupported(map_data),
@@ -462,7 +476,7 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_CGRP_STORAGE => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_ARENA => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED => {
-                Self::Unsupported(map_data)
+                Self::PerCpuCgroupStorage(map_data)
             }
             bpf_map_type::BPF_MAP_TYPE_UNSPEC => return Err(MapError::InvalidMapType { map_type }),
             bpf_map_type::__MAX_BPF_MAP_TYPE => return Err(MapError::InvalidMapType { map_type }),
@@ -474,14 +488,16 @@ impl Map {
 // Implements map pinning for different map implementations
 macro_rules! impl_map_pin {
     ($ty_param:tt {
-        $($ty:ident),+ $(,)?
+        $($(#[$meta:meta])* $ty:ident),+ $(,)?
     }) => {
-        $(impl_map_pin!(<$ty_param> $ty);)+
+        $(impl_map_pin!($(#[$meta])* <$ty_param> $ty);)+
     };
     (
+      $(#[$meta:meta])*
       <($($ty_param:ident),*)>
       $ty:ident
     ) => {
+            $(#[$meta])*
             impl<T: Borrow<MapData>, $($ty_param: Pod),*> $ty<T, $($ty_param),*>
             {
                     /// Pins the map to a BPF filesystem.
@@ -511,7 +527,11 @@ impl_map_pin!(() {
 
 impl_map_pin!((V) {
     Array,
+    #[expect(deprecated, reason = "implementing pinning for the deprecated cgroup storage map types")]
+    CgroupStorage,
     PerCpuArray,
+    #[expect(deprecated, reason = "implementing pinning for the deprecated cgroup storage map types")]
+    PerCpuCgroupStorage,
     SockHash,
     BloomFilter,
     Queue,
@@ -595,7 +615,11 @@ impl_try_from_map!(() {
 impl_try_from_map!((V) {
     Array,
     BloomFilter,
+    #[expect(deprecated, reason = "implementing TryFrom for the deprecated cgroup storage map types")]
+    CgroupStorage,
     PerCpuArray,
+    #[expect(deprecated, reason = "implementing TryFrom for the deprecated cgroup storage map types")]
+    PerCpuCgroupStorage,
     Queue,
     SockHash,
     SkStorage,

@@ -142,6 +142,72 @@ impl<T, V> core::marker::Unpin for aya::maps::bloom_filter::BloomFilter<T, V> wh
 impl<T, V> core::marker::UnsafeUnpin for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::bloom_filter::BloomFilter<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+pub mod aya::maps::cgroup_storage
+pub struct aya::maps::cgroup_storage::CgroupStorage<T, V: aya::Pod>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::cgroup_storage::CgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::CgroupStorage<T, V>::get(&self, aya::maps::cgroup_storage::CgroupStorageKey, u64) -> core::result::Result<V, aya::maps::MapError>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::cgroup_storage::CgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::CgroupStorage<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, P) -> core::result::Result<(), aya::pin::PinError>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::cgroup_storage::CgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::CgroupStorage<T, V>::insert(&mut self, aya::maps::cgroup_storage::CgroupStorageKey, impl core::borrow::Borrow<V>, u64) -> core::result::Result<(), aya::maps::MapError>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::cgroup_storage::CgroupStorage<&'a aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::CgroupStorage<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::CgroupStorage<&'a aya::maps::MapData, V>::try_from(&'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::cgroup_storage::CgroupStorage<&'a mut aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::CgroupStorage<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::CgroupStorage<&'a mut aya::maps::MapData, V>::try_from(&'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug, V: core::fmt::Debug + aya::Pod> core::fmt::Debug for aya::maps::cgroup_storage::CgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::CgroupStorage<T, V>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::cgroup_storage::CgroupStorage<aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::CgroupStorage<aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::CgroupStorage<aya::maps::MapData, V>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T, V> core::marker::Freeze for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::marker::UnsafeUnpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+pub struct aya::maps::cgroup_storage::CgroupStorageKey
+impl aya::maps::cgroup_storage::CgroupStorageKey
+pub const fn aya::maps::cgroup_storage::CgroupStorageKey::new(u64, u32) -> Self
+impl core::clone::Clone for aya::maps::cgroup_storage::CgroupStorageKey
+pub fn aya::maps::cgroup_storage::CgroupStorageKey::clone(&self) -> aya::maps::cgroup_storage::CgroupStorageKey
+impl core::fmt::Debug for aya::maps::cgroup_storage::CgroupStorageKey
+pub fn aya::maps::cgroup_storage::CgroupStorageKey::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::marker::Freeze for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::marker::Send for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::marker::Sync for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::marker::Unpin for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::marker::UnsafeUnpin for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::panic::unwind_safe::UnwindSafe for aya::maps::cgroup_storage::CgroupStorageKey
+pub struct aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V: aya::Pod>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>::get(&self, aya::maps::cgroup_storage::CgroupStorageKey, u64) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, P) -> core::result::Result<(), aya::pin::PinError>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>::insert(&mut self, aya::maps::cgroup_storage::CgroupStorageKey, aya::maps::PerCpuValues<V>, u64) -> core::result::Result<(), aya::maps::MapError>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a aya::maps::MapData, V>::try_from(&'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a mut aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a mut aya::maps::MapData, V>::try_from(&'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug, V: core::fmt::Debug + aya::Pod> core::fmt::Debug for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::cgroup_storage::PerCpuCgroupStorage<aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::PerCpuCgroupStorage<aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<aya::maps::MapData, V>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T, V> core::marker::Freeze for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::marker::UnsafeUnpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 pub mod aya::maps::hash_map
 pub struct aya::maps::hash_map::HashMap<T, K, V>
 impl<K: aya::Pod, V: aya::Pod> aya::maps::hash_map::HashMap<aya::maps::MapData, K, V>
@@ -811,6 +877,7 @@ pub aya::maps::Map::Array(aya::maps::MapData)
 pub aya::maps::Map::ArrayOfMaps(aya::maps::MapData)
 pub aya::maps::Map::BloomFilter(aya::maps::MapData)
 pub aya::maps::Map::CgroupArray(aya::maps::MapData)
+pub aya::maps::Map::CgroupStorage(aya::maps::MapData)
 pub aya::maps::Map::CpuMap(aya::maps::MapData)
 pub aya::maps::Map::DevMap(aya::maps::MapData)
 pub aya::maps::Map::DevMapHash(aya::maps::MapData)
@@ -819,6 +886,7 @@ pub aya::maps::Map::HashOfMaps(aya::maps::MapData)
 pub aya::maps::Map::LpmTrie(aya::maps::MapData)
 pub aya::maps::Map::LruHashMap(aya::maps::MapData)
 pub aya::maps::Map::PerCpuArray(aya::maps::MapData)
+pub aya::maps::Map::PerCpuCgroupStorage(aya::maps::MapData)
 pub aya::maps::Map::PerCpuHashMap(aya::maps::MapData)
 pub aya::maps::Map::PerCpuLruHashMap(aya::maps::MapData)
 pub aya::maps::Map::PerfEventArray(aya::maps::MapData)
@@ -907,6 +975,12 @@ pub fn aya::maps::array::Array<&'a aya::maps::MapData, V>::try_from(&'a aya::map
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::bloom_filter::BloomFilter<&'a aya::maps::MapData, V>::try_from(&'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::cgroup_storage::CgroupStorage<&'a aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::CgroupStorage<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::CgroupStorage<&'a aya::maps::MapData, V>::try_from(&'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a aya::maps::MapData, V>::try_from(&'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::queue::Queue<&'a aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::queue::Queue<&'a aya::maps::MapData, V>::try_from(&'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -928,6 +1002,12 @@ pub fn aya::maps::array::Array<&'a mut aya::maps::MapData, V>::try_from(&'a mut 
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::bloom_filter::BloomFilter<&'a mut aya::maps::MapData, V>::try_from(&'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::cgroup_storage::CgroupStorage<&'a mut aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::CgroupStorage<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::CgroupStorage<&'a mut aya::maps::MapData, V>::try_from(&'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a mut aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a mut aya::maps::MapData, V>::try_from(&'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::queue::Queue<&'a mut aya::maps::MapData, V>::try_from(&'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1033,6 +1113,12 @@ pub fn aya::maps::array::Array<aya::maps::MapData, V>::try_from(aya::maps::Map) 
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>
 pub type aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::bloom_filter::BloomFilter<aya::maps::MapData, V>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::cgroup_storage::CgroupStorage<aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::CgroupStorage<aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::CgroupStorage<aya::maps::MapData, V>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::cgroup_storage::PerCpuCgroupStorage<aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::PerCpuCgroupStorage<aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<aya::maps::MapData, V>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::queue::Queue<aya::maps::MapData, V>
 pub type aya::maps::queue::Queue<aya::maps::MapData, V>::Error = aya::maps::MapError
 pub fn aya::maps::queue::Queue<aya::maps::MapData, V>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1276,6 +1362,46 @@ impl<T> core::marker::Unpin for aya::maps::CgroupArray<T> where T: core::marker:
 impl<T> core::marker::UnsafeUnpin for aya::maps::CgroupArray<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::CgroupArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::CgroupArray<T> where T: core::panic::unwind_safe::UnwindSafe
+pub struct aya::maps::CgroupStorage<T, V: aya::Pod>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::cgroup_storage::CgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::CgroupStorage<T, V>::get(&self, aya::maps::cgroup_storage::CgroupStorageKey, u64) -> core::result::Result<V, aya::maps::MapError>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::cgroup_storage::CgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::CgroupStorage<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, P) -> core::result::Result<(), aya::pin::PinError>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::cgroup_storage::CgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::CgroupStorage<T, V>::insert(&mut self, aya::maps::cgroup_storage::CgroupStorageKey, impl core::borrow::Borrow<V>, u64) -> core::result::Result<(), aya::maps::MapError>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::cgroup_storage::CgroupStorage<&'a aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::CgroupStorage<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::CgroupStorage<&'a aya::maps::MapData, V>::try_from(&'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::cgroup_storage::CgroupStorage<&'a mut aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::CgroupStorage<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::CgroupStorage<&'a mut aya::maps::MapData, V>::try_from(&'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug, V: core::fmt::Debug + aya::Pod> core::fmt::Debug for aya::maps::cgroup_storage::CgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::CgroupStorage<T, V>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::cgroup_storage::CgroupStorage<aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::CgroupStorage<aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::CgroupStorage<aya::maps::MapData, V>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T, V> core::marker::Freeze for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::marker::UnsafeUnpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::cgroup_storage::CgroupStorage<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+pub struct aya::maps::CgroupStorageKey
+impl aya::maps::cgroup_storage::CgroupStorageKey
+pub const fn aya::maps::cgroup_storage::CgroupStorageKey::new(u64, u32) -> Self
+impl core::clone::Clone for aya::maps::cgroup_storage::CgroupStorageKey
+pub fn aya::maps::cgroup_storage::CgroupStorageKey::clone(&self) -> aya::maps::cgroup_storage::CgroupStorageKey
+impl core::fmt::Debug for aya::maps::cgroup_storage::CgroupStorageKey
+pub fn aya::maps::cgroup_storage::CgroupStorageKey::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::marker::Freeze for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::marker::Send for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::marker::Sync for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::marker::Unpin for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::marker::UnsafeUnpin for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::cgroup_storage::CgroupStorageKey
+impl core::panic::unwind_safe::UnwindSafe for aya::maps::cgroup_storage::CgroupStorageKey
 pub struct aya::maps::CpuMap<T>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::CpuMap<T>
 pub fn aya::maps::CpuMap<T>::get(&self, u32, u64) -> core::result::Result<aya::maps::xdp::cpu_map::CpuMapValue, aya::maps::MapError>
@@ -1563,6 +1689,31 @@ impl<T, V> core::marker::Unpin for aya::maps::PerCpuArray<T, V> where T: core::m
 impl<T, V> core::marker::UnsafeUnpin for aya::maps::PerCpuArray<T, V> where T: core::marker::UnsafeUnpin
 impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::PerCpuArray<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::PerCpuArray<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
+pub struct aya::maps::PerCpuCgroupStorage<T, V: aya::Pod>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>::get(&self, aya::maps::cgroup_storage::CgroupStorageKey, u64) -> core::result::Result<aya::maps::PerCpuValues<V>, aya::maps::MapError>
+impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>::pin<P: core::convert::AsRef<std::path::Path>>(self, P) -> core::result::Result<(), aya::pin::PinError>
+impl<T: core::borrow::BorrowMut<aya::maps::MapData>, V: aya::Pod> aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>::insert(&mut self, aya::maps::cgroup_storage::CgroupStorageKey, aya::maps::PerCpuValues<V>, u64) -> core::result::Result<(), aya::maps::MapError>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a aya::maps::MapData, V>::try_from(&'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a, V: aya::Pod> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a mut aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a mut aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<&'a mut aya::maps::MapData, V>::try_from(&'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug, V: core::fmt::Debug + aya::Pod> core::fmt::Debug for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<V: aya::Pod> core::convert::TryFrom<aya::maps::Map> for aya::maps::cgroup_storage::PerCpuCgroupStorage<aya::maps::MapData, V>
+pub type aya::maps::cgroup_storage::PerCpuCgroupStorage<aya::maps::MapData, V>::Error = aya::maps::MapError
+pub fn aya::maps::cgroup_storage::PerCpuCgroupStorage<aya::maps::MapData, V>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T, V> core::marker::Freeze for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::marker::Freeze
+impl<T, V> core::marker::Send for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::marker::Send, V: core::marker::Send
+impl<T, V> core::marker::Sync for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::marker::Sync, V: core::marker::Sync
+impl<T, V> core::marker::Unpin for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::marker::Unpin, V: core::marker::Unpin
+impl<T, V> core::marker::UnsafeUnpin for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::marker::UnsafeUnpin
+impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
+impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::cgroup_storage::PerCpuCgroupStorage<T, V> where T: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::PerCpuHashMap<T, K: aya::Pod, V: aya::Pod>
 impl<K: aya::Pod, V: aya::Pod> aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>
 pub fn aya::maps::hash_map::PerCpuHashMap<aya::maps::MapData, K, V>::create(u32, u32) -> core::result::Result<Self, aya::maps::MapError>
@@ -7626,6 +7777,7 @@ impl core::marker::UnsafeUnpin for aya::VerifierLogLevel
 impl core::panic::unwind_safe::RefUnwindSafe for aya::VerifierLogLevel
 impl core::panic::unwind_safe::UnwindSafe for aya::VerifierLogLevel
 pub unsafe trait aya::Pod: core::marker::Copy + 'static
+impl aya::Pod for aya_obj::generated::linux_bindings_x86_64::bpf_cgroup_storage_key
 impl aya::Pod for aya_obj::generated::linux_bindings_x86_64::bpf_cpumap_val
 impl aya::Pod for aya_obj::generated::linux_bindings_x86_64::bpf_devmap_val
 impl aya::Pod for i128
