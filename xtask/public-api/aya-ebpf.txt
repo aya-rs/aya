@@ -54,6 +54,35 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_e
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
+pub mod aya_ebpf::btf_maps::cgroup_storage
+#[repr(C)] pub struct aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+impl<V> aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+pub fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::get_ptr_mut(&self) -> *mut V
+impl<V> aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+pub const fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::new() -> Self
+impl<V> core::default::Default for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+pub fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::default() -> Self
+impl<V> core::marker::Sync for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+impl<V> core::marker::Freeze for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+impl<V> !core::marker::Send for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+impl<V> core::marker::Unpin for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+impl<V> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+impl<V> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V> where V: core::panic::unwind_safe::RefUnwindSafe
+impl<V> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V> where V: core::panic::unwind_safe::RefUnwindSafe
+#[repr(C)] pub struct aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+pub fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::get_ptr_mut(&self) -> *mut V
+impl<V> aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+pub const fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::new() -> Self
+impl<V> core::default::Default for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+pub fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::default() -> Self
+impl<V> core::marker::Sync for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> core::marker::Freeze for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> !core::marker::Send for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> core::marker::Unpin for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V> where V: core::panic::unwind_safe::RefUnwindSafe
+impl<V> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V> where V: core::panic::unwind_safe::RefUnwindSafe
 pub mod aya_ebpf::btf_maps::cpu_map
 #[repr(C)] pub struct aya_ebpf::btf_maps::cpu_map::CpuMap<const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>
@@ -521,6 +550,20 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_e
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
+#[repr(C)] pub struct aya_ebpf::btf_maps::CgroupStorage<V>
+impl<V> aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+pub fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::get_ptr_mut(&self) -> *mut V
+impl<V> aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+pub const fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::new() -> Self
+impl<V> core::default::Default for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+pub fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::default() -> Self
+impl<V> core::marker::Sync for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+impl<V> core::marker::Freeze for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+impl<V> !core::marker::Send for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+impl<V> core::marker::Unpin for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+impl<V> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+impl<V> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V> where V: core::panic::unwind_safe::RefUnwindSafe
+impl<V> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V> where V: core::panic::unwind_safe::RefUnwindSafe
 #[repr(C)] pub struct aya_ebpf::btf_maps::CpuMap<const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>::new() -> Self
@@ -671,6 +714,20 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for ay
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
+#[repr(C)] pub struct aya_ebpf::btf_maps::PerCpuCgroupStorage<V>
+impl<V> aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+pub fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::get_ptr_mut(&self) -> *mut V
+impl<V> aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+pub const fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::new() -> Self
+impl<V> core::default::Default for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+pub fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::default() -> Self
+impl<V> core::marker::Sync for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> core::marker::Freeze for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> !core::marker::Send for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> core::marker::Unpin for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V> where V: core::panic::unwind_safe::RefUnwindSafe
+impl<V> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V> where V: core::panic::unwind_safe::RefUnwindSafe
 #[repr(C)] pub struct aya_ebpf::btf_maps::PerCpuHashMap<K, V, const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
 pub unsafe fn aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::get(&self, impl core::borrow::Borrow<K>) -> core::option::Option<&V>
@@ -929,6 +986,35 @@ impl core::marker::Unpin for aya_ebpf::maps::cgroup_array::CgroupArray
 impl core::marker::UnsafeUnpin for aya_ebpf::maps::cgroup_array::CgroupArray
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::cgroup_array::CgroupArray
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::cgroup_array::CgroupArray
+pub mod aya_ebpf::maps::cgroup_storage
+#[repr(transparent)] pub struct aya_ebpf::maps::cgroup_storage::CgroupStorage<V>
+impl<V> aya_ebpf::maps::cgroup_storage::CgroupStorage<V>
+pub fn aya_ebpf::maps::cgroup_storage::CgroupStorage<V>::get_ptr_mut(&self) -> *mut V
+pub const fn aya_ebpf::maps::cgroup_storage::CgroupStorage<V>::new() -> Self
+pub const fn aya_ebpf::maps::cgroup_storage::CgroupStorage<V>::pinned() -> Self
+impl<V> core::default::Default for aya_ebpf::maps::cgroup_storage::CgroupStorage<V>
+pub fn aya_ebpf::maps::cgroup_storage::CgroupStorage<V>::default() -> Self
+impl<V> !core::marker::Freeze for aya_ebpf::maps::cgroup_storage::CgroupStorage<V>
+impl<V> core::marker::Send for aya_ebpf::maps::cgroup_storage::CgroupStorage<V> where V: core::marker::Send
+impl<V> core::marker::Sync for aya_ebpf::maps::cgroup_storage::CgroupStorage<V> where V: core::marker::Sync
+impl<V> core::marker::Unpin for aya_ebpf::maps::cgroup_storage::CgroupStorage<V> where V: core::marker::Unpin
+impl<V> core::marker::UnsafeUnpin for aya_ebpf::maps::cgroup_storage::CgroupStorage<V>
+impl<V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::cgroup_storage::CgroupStorage<V>
+impl<V> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::cgroup_storage::CgroupStorage<V> where V: core::panic::unwind_safe::UnwindSafe
+#[repr(transparent)] pub struct aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>
+pub fn aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>::get_ptr_mut(&self) -> *mut V
+pub const fn aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>::new() -> Self
+pub const fn aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>::pinned() -> Self
+impl<V> core::default::Default for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>
+pub fn aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>::default() -> Self
+impl<V> !core::marker::Freeze for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> core::marker::Send for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V> where V: core::marker::Send
+impl<V> core::marker::Sync for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V> where V: core::marker::Sync
+impl<V> core::marker::Unpin for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V> where V: core::marker::Unpin
+impl<V> core::marker::UnsafeUnpin for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V> where V: core::panic::unwind_safe::UnwindSafe
 pub mod aya_ebpf::maps::hash_map
 #[repr(transparent)] pub struct aya_ebpf::maps::hash_map::HashMap<K, V>
 impl<K, V> aya_ebpf::maps::hash_map::HashMap<K, V>
@@ -1319,6 +1405,20 @@ impl core::marker::Unpin for aya_ebpf::maps::cgroup_array::CgroupArray
 impl core::marker::UnsafeUnpin for aya_ebpf::maps::cgroup_array::CgroupArray
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::cgroup_array::CgroupArray
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::cgroup_array::CgroupArray
+#[repr(transparent)] pub struct aya_ebpf::maps::CgroupStorage<V>
+impl<V> aya_ebpf::maps::cgroup_storage::CgroupStorage<V>
+pub fn aya_ebpf::maps::cgroup_storage::CgroupStorage<V>::get_ptr_mut(&self) -> *mut V
+pub const fn aya_ebpf::maps::cgroup_storage::CgroupStorage<V>::new() -> Self
+pub const fn aya_ebpf::maps::cgroup_storage::CgroupStorage<V>::pinned() -> Self
+impl<V> core::default::Default for aya_ebpf::maps::cgroup_storage::CgroupStorage<V>
+pub fn aya_ebpf::maps::cgroup_storage::CgroupStorage<V>::default() -> Self
+impl<V> !core::marker::Freeze for aya_ebpf::maps::cgroup_storage::CgroupStorage<V>
+impl<V> core::marker::Send for aya_ebpf::maps::cgroup_storage::CgroupStorage<V> where V: core::marker::Send
+impl<V> core::marker::Sync for aya_ebpf::maps::cgroup_storage::CgroupStorage<V> where V: core::marker::Sync
+impl<V> core::marker::Unpin for aya_ebpf::maps::cgroup_storage::CgroupStorage<V> where V: core::marker::Unpin
+impl<V> core::marker::UnsafeUnpin for aya_ebpf::maps::cgroup_storage::CgroupStorage<V>
+impl<V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::cgroup_storage::CgroupStorage<V>
+impl<V> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::cgroup_storage::CgroupStorage<V> where V: core::panic::unwind_safe::UnwindSafe
 #[repr(transparent)] pub struct aya_ebpf::maps::CpuMap
 impl aya_ebpf::maps::CpuMap
 pub const fn aya_ebpf::maps::CpuMap::pinned(u32, u32) -> Self
@@ -1436,6 +1536,20 @@ impl<T> core::marker::Unpin for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> wh
 impl<T> core::marker::UnsafeUnpin for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::per_cpu_array::PerCpuArray<T>
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::per_cpu_array::PerCpuArray<T> where T: core::panic::unwind_safe::UnwindSafe
+#[repr(transparent)] pub struct aya_ebpf::maps::PerCpuCgroupStorage<V>
+impl<V> aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>
+pub fn aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>::get_ptr_mut(&self) -> *mut V
+pub const fn aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>::new() -> Self
+pub const fn aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>::pinned() -> Self
+impl<V> core::default::Default for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>
+pub fn aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>::default() -> Self
+impl<V> !core::marker::Freeze for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> core::marker::Send for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V> where V: core::marker::Send
+impl<V> core::marker::Sync for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V> where V: core::marker::Sync
+impl<V> core::marker::Unpin for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V> where V: core::marker::Unpin
+impl<V> core::marker::UnsafeUnpin for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V>
+impl<V> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::cgroup_storage::PerCpuCgroupStorage<V> where V: core::panic::unwind_safe::UnwindSafe
 #[repr(transparent)] pub struct aya_ebpf::maps::PerCpuHashMap<K, V>
 impl<K, V> aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>
 pub unsafe fn aya_ebpf::maps::hash_map::PerCpuHashMap<K, V>::get(&self, impl core::borrow::Borrow<K>) -> core::option::Option<&V>
