@@ -87,6 +87,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
             "bpf_func_info",
             "bpf_line_info",
             "bpf_lpm_trie_key",
+            "bpf_cgroup_storage_key",
             "bpf_cpumap_val",
             "bpf_devmap_val",
             "bpf_stats_type",
