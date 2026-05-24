@@ -3022,6 +3022,21 @@ impl core::marker::Unpin for aya_obj::generated::bpf_btf_info
 impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_btf_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_btf_info
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_btf_info
+#[repr(C)] pub struct aya_obj::generated::bpf_cgroup_storage_key
+pub aya_obj::generated::bpf_cgroup_storage_key::attach_type: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_cgroup_storage_key::cgroup_inode_id: aya_obj::generated::__u64
+impl core::clone::Clone for aya_obj::generated::bpf_cgroup_storage_key
+pub fn aya_obj::generated::bpf_cgroup_storage_key::clone(&self) -> aya_obj::generated::bpf_cgroup_storage_key
+impl core::fmt::Debug for aya_obj::generated::bpf_cgroup_storage_key
+pub fn aya_obj::generated::bpf_cgroup_storage_key::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::bpf_cgroup_storage_key
+impl core::marker::Freeze for aya_obj::generated::bpf_cgroup_storage_key
+impl core::marker::Send for aya_obj::generated::bpf_cgroup_storage_key
+impl core::marker::Sync for aya_obj::generated::bpf_cgroup_storage_key
+impl core::marker::Unpin for aya_obj::generated::bpf_cgroup_storage_key
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_cgroup_storage_key
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_cgroup_storage_key
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_cgroup_storage_key
 #[repr(C)] pub struct aya_obj::generated::bpf_core_relo
 pub aya_obj::generated::bpf_core_relo::access_str_off: core::ffi::primitives::c_uint
 pub aya_obj::generated::bpf_core_relo::insn_off: core::ffi::primitives::c_uint
