@@ -12,7 +12,8 @@ use std::{
 use crate::{
     programs::{
         Link, ProgramData, ProgramError, perf_attach, perf_attach::PerfLinkInner,
-        perf_attach_debugfs, trace_point::read_sys_fs_trace_point_id, utils::find_tracefs_path,
+        perf_attach_debugfs, perf_event::PerfEventScope, trace_point::read_sys_fs_trace_point_id,
+        utils::find_tracefs_path,
     },
     sys::{SyscallError, perf_event_open_probe, perf_event_open_trace_point},
     util::KernelVersion,
@@ -145,7 +146,7 @@ pub(crate) fn attach<P: Probe, T: Link + From<PerfLinkInner>>(
     // separate argument.
     fn_name: &OsStr,
     offset: u64,
-    pid: Option<u32>,
+    scope: PerfEventScope,
     cookie: Option<u64>,
 ) -> Result<T::Id, ProgramError> {
     // https://github.com/torvalds/linux/commit/e12f03d7031a977356e3d7b75a68c2185ff8d155
@@ -153,13 +154,13 @@ pub(crate) fn attach<P: Probe, T: Link + From<PerfLinkInner>>(
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
     let link = if KernelVersion::at_least(4, 17, 0) {
-        let perf_fd = create_as_probe::<P>(kind, fn_name, offset, pid)?;
+        let perf_fd = create_as_probe::<P>(kind, fn_name, offset, scope)?;
         perf_attach(prog_fd, perf_fd, cookie)
     } else {
         if cookie.is_some() {
             return Err(ProgramError::AttachCookieNotSupported);
         }
-        let (perf_fd, event) = create_as_trace_point::<P>(kind, fn_name, offset, pid)?;
+        let (perf_fd, event) = create_as_trace_point::<P>(kind, fn_name, offset, scope)?;
         perf_attach_debugfs(prog_fd, perf_fd, event)
     }?;
     program_data.links.insert(T::from(link))
@@ -176,7 +177,7 @@ fn create_as_probe<P: Probe>(
     kind: ProbeKind,
     fn_name: &OsStr,
     offset: u64,
-    pid: Option<u32>,
+    scope: PerfEventScope,
 ) -> Result<crate::MockableFd, ProgramError> {
     let perf_ty = read_sys_fs_perf_type(P::PMU)
         .map_err(|(filename, io_error)| P::file_error(filename, io_error).into())?;
@@ -189,7 +190,7 @@ fn create_as_probe<P: Probe>(
         ProbeKind::Entry => None,
     };
 
-    perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid)
+    perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, scope)
         .map_err(|io_error| SyscallError {
             call: "perf_event_open",
             io_error,
@@ -201,7 +202,7 @@ fn create_as_trace_point<P: Probe>(
     kind: ProbeKind,
     name: &OsStr,
     offset: u64,
-    pid: Option<u32>,
+    scope: PerfEventScope,
 ) -> Result<(crate::MockableFd, ProbeEvent), ProgramError> {
     let tracefs = find_tracefs_path()?;
 
@@ -214,7 +215,7 @@ fn create_as_trace_point<P: Probe>(
     } = &event;
     let category = format!("{}s", P::PMU);
     let tpid = read_sys_fs_trace_point_id(tracefs, &category, event_alias.as_ref())?;
-    let perf_fd = perf_event_open_trace_point(tpid, pid).map_err(|io_error| SyscallError {
+    let perf_fd = perf_event_open_trace_point(tpid, scope).map_err(|io_error| SyscallError {
         call: "perf_event_open",
         io_error,
     })?;

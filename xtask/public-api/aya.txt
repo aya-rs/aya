@@ -3862,7 +3862,7 @@ pub aya::programs::perf_event::PerfEventScope::CallingProcess
 pub aya::programs::perf_event::PerfEventScope::CallingProcess::cpu: core::option::Option<u32>
 pub aya::programs::perf_event::PerfEventScope::OneProcess
 pub aya::programs::perf_event::PerfEventScope::OneProcess::cpu: core::option::Option<u32>
-pub aya::programs::perf_event::PerfEventScope::OneProcess::pid: u32
+pub aya::programs::perf_event::PerfEventScope::OneProcess::pid: aya::programs::Pid
 impl core::clone::Clone for aya::programs::perf_event::PerfEventScope
 pub fn aya::programs::perf_event::PerfEventScope::clone(&self) -> aya::programs::perf_event::PerfEventScope
 impl core::fmt::Debug for aya::programs::perf_event::PerfEventScope
@@ -5032,7 +5032,7 @@ impl !core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeErro
 pub enum aya::programs::uprobe::UProbeScope
 pub aya::programs::uprobe::UProbeScope::AllProcesses
 pub aya::programs::uprobe::UProbeScope::CallingProcess
-pub aya::programs::uprobe::UProbeScope::OneProcess(core::num::nonzero::NonZeroU32)
+pub aya::programs::uprobe::UProbeScope::OneProcess(aya::programs::Pid)
 impl core::clone::Clone for aya::programs::uprobe::UProbeScope
 pub fn aya::programs::uprobe::UProbeScope::clone(&self) -> aya::programs::uprobe::UProbeScope
 impl core::fmt::Debug for aya::programs::uprobe::UProbeScope
@@ -6537,6 +6537,23 @@ impl core::marker::Unpin for aya::programs::perf_event::PerfEvent
 impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfEvent
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEvent
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEvent
+pub struct aya::programs::Pid(_)
+impl aya::programs::Pid
+pub fn aya::programs::Pid::current() -> Self
+pub const fn aya::programs::Pid::get(self) -> u32
+pub fn aya::programs::Pid::new(pid: u32) -> core::option::Option<Self>
+impl core::clone::Clone for aya::programs::Pid
+pub fn aya::programs::Pid::clone(&self) -> aya::programs::Pid
+impl core::fmt::Debug for aya::programs::Pid
+pub fn aya::programs::Pid::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::programs::Pid
+impl core::marker::Freeze for aya::programs::Pid
+impl core::marker::Send for aya::programs::Pid
+impl core::marker::Sync for aya::programs::Pid
+impl core::marker::Unpin for aya::programs::Pid
+impl core::marker::UnsafeUnpin for aya::programs::Pid
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::Pid
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::Pid
 pub struct aya::programs::ProgramFd(_)
 impl aya::programs::ProgramFd
 pub fn aya::programs::ProgramFd::try_clone(&self) -> std::io::error::Result<Self>

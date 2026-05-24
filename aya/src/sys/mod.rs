@@ -35,7 +35,6 @@ pub(crate) enum PerfEventIoctlRequest<'a> {
     SetBpf(BorrowedFd<'a>),
 }
 
-#[cfg_attr(test, expect(dead_code, reason = "test stubs cut above this"))]
 pub(crate) enum Syscall<'a> {
     Ebpf {
         cmd: bpf_cmd,
@@ -99,7 +98,7 @@ impl std::fmt::Debug for Syscall<'_> {
 fn syscall(call: Syscall<'_>) -> SysResult {
     #[cfg(test)]
     {
-        TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) })
+        TEST_SYSCALL.with(|test_impl| test_impl.borrow()(call))
     }
 
     #[cfg(not(test))]
