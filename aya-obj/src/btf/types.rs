@@ -51,6 +51,11 @@ impl Fwd {
     pub(crate) const fn type_info_size(&self) -> usize {
         size_of::<Self>()
     }
+
+    /// Kind flag of fwd
+    pub const fn kind_flag(&self) -> bool {
+        (self.info >> 31) == 1
+    }
 }
 
 #[repr(C)]
@@ -82,6 +87,11 @@ impl Const {
             btf_type,
         }
     }
+
+    /// BTF type index this const refers to
+    pub const fn referred_btf_type(&self) -> u32 {
+        self.btf_type
+    }
 }
 
 #[repr(C)]
@@ -104,6 +114,11 @@ impl Volatile {
     pub(crate) const fn type_info_size(&self) -> usize {
         size_of::<Self>()
     }
+
+    /// BTF type index this volatile refers to
+    pub const fn referred_btf_type(&self) -> u32 {
+        self.btf_type
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -124,6 +139,11 @@ impl Restrict {
 
     pub(crate) const fn type_info_size(&self) -> usize {
         size_of::<Self>()
+    }
+
+    /// BTF type index this restrict refers to
+    pub const fn referred_btf_type(&self) -> u32 {
+        self.btf_type
     }
 }
 
@@ -156,6 +176,11 @@ impl Ptr {
             btf_type,
         }
     }
+
+    /// BTF type index this ptr refers to
+    pub const fn referred_btf_type(&self) -> u32 {
+        self.btf_type
+    }
 }
 
 #[repr(C)]
@@ -187,6 +212,11 @@ impl Typedef {
             btf_type,
         }
     }
+
+    /// BTF type index this typedef refers to
+    pub const fn referred_btf_type(&self) -> u32 {
+        self.btf_type
+    }
 }
 
 #[repr(C)]
@@ -216,6 +246,11 @@ impl Float {
             info,
             size,
         }
+    }
+
+    /// Size of this float
+    pub const fn size(&self) -> u32 {
+        self.size
     }
 }
 
@@ -269,8 +304,14 @@ impl Func {
         }
     }
 
-    pub(crate) fn linkage(&self) -> FuncLinkage {
+    /// Linkage of this func
+    pub fn linkage(&self) -> FuncLinkage {
         (self.info & 0xFFFF).into()
+    }
+
+    /// Proto of this func
+    pub const fn proto(&self) -> u32 {
+        self.btf_type
     }
 
     pub(crate) const fn set_linkage(&mut self, linkage: FuncLinkage) {
@@ -306,6 +347,11 @@ impl TypeTag {
             info,
             btf_type,
         }
+    }
+
+    /// BTF type index this typetag refers to
+    pub const fn referred_btf_type(&self) -> u32 {
+        self.btf_type
     }
 }
 
@@ -378,17 +424,18 @@ impl Int {
         }
     }
 
-    pub(crate) fn encoding(&self) -> IntEncoding {
+    /// Encoding of this int
+    pub fn encoding(&self) -> IntEncoding {
         ((self.data & 0x0f000000) >> 24).into()
     }
 
-    pub(crate) const fn offset(&self) -> u32 {
+    /// Offset of this int
+    pub const fn offset(&self) -> u32 {
         (self.data & 0x00ff0000) >> 16
     }
 
-    // TODO: Remove directive this when this crate is pub
-    #[cfg(test)]
-    pub(crate) const fn bits(&self) -> u32 {
+    /// Size of this int in bits
+    pub const fn bits(&self) -> u32 {
         self.data & 0x000000ff
     }
 }
@@ -459,8 +506,19 @@ impl Enum {
         }
     }
 
-    pub(crate) const fn is_signed(&self) -> bool {
+    /// Whether this enum is signed
+    pub const fn is_signed(&self) -> bool {
         self.info >> 31 == 1
+    }
+
+    /// Variants of this enum
+    pub fn variants(&self) -> &[BtfEnum] {
+        &self.variants
+    }
+
+    /// Size of this enum
+    pub const fn size(&self) -> u32 {
+        self.size
     }
 
     pub(crate) const fn set_signed(&mut self, signed: bool) {
@@ -475,9 +533,9 @@ impl Enum {
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct BtfEnum64 {
-    pub(crate) name_offset: u32,
-    pub(crate) value_low: u32,
-    pub(crate) value_high: u32,
+    pub name_offset: u32,
+    pub value_low: u32,
+    pub value_high: u32,
 }
 
 impl BtfEnum64 {
@@ -539,8 +597,19 @@ impl Enum64 {
         size_of::<Fwd>() + size_of::<BtfEnum64>() * self.variants.len()
     }
 
-    pub(crate) const fn is_signed(&self) -> bool {
+    /// Whether this enum64 is signed
+    pub const fn is_signed(&self) -> bool {
         self.info >> 31 == 1
+    }
+
+    /// Variants of this enum64
+    pub fn variants(&self) -> &[BtfEnum64] {
+        &self.variants
+    }
+
+    /// Size of this enum64
+    pub const fn size(&self) -> u32 {
+        self.size
     }
 
     pub const fn new(name_offset: u32, signed: bool, variants: Vec<BtfEnum64>) -> Self {
@@ -566,10 +635,10 @@ impl Enum64 {
 
 #[repr(C)]
 #[derive(Clone, Debug)]
-pub(crate) struct BtfMember {
-    pub(crate) name_offset: u32,
-    pub(crate) btf_type: u32,
-    pub(crate) offset: u32,
+pub struct BtfMember {
+    pub name_offset: u32,
+    pub btf_type: u32,
+    pub offset: u32,
 }
 
 #[repr(C)]
@@ -632,7 +701,18 @@ impl Struct {
         }
     }
 
-    pub(crate) const fn member_bit_offset(&self, member: &BtfMember) -> usize {
+    /// Members of this struct
+    pub fn members(&self) -> &[BtfMember] {
+        &self.members
+    }
+
+    /// Size of this struct
+    pub const fn size(&self) -> u32 {
+        self.size
+    }
+
+    /// Bit offset of given member
+    pub const fn member_bit_offset(&self, member: &BtfMember) -> usize {
         let k_flag = self.info >> 31 == 1;
         let bit_offset = if k_flag {
             member.offset & 0xFFFFFF
@@ -643,7 +723,8 @@ impl Struct {
         bit_offset as usize
     }
 
-    pub(crate) const fn member_bit_field_size(&self, member: &BtfMember) -> usize {
+    /// Bit field size of given member
+    pub const fn member_bit_field_size(&self, member: &BtfMember) -> usize {
         let k_flag = (self.info >> 31) == 1;
         let size = if k_flag { member.offset >> 24 } else { 0 };
 
@@ -735,7 +816,18 @@ impl Union {
         size_of::<Fwd>() + size_of::<BtfMember>() * self.members.len()
     }
 
-    pub(crate) const fn member_bit_offset(&self, member: &BtfMember) -> usize {
+    /// Members of this union
+    pub fn members(&self) -> &[BtfMember] {
+        &self.members
+    }
+
+    /// Size of this union
+    pub const fn size(&self) -> u32 {
+        self.size
+    }
+
+    /// Bit offset of given member
+    pub const fn member_bit_offset(&self, member: &BtfMember) -> usize {
         let k_flag = self.info >> 31 == 1;
         let bit_offset = if k_flag {
             member.offset & 0xFFFFFF
@@ -746,7 +838,8 @@ impl Union {
         bit_offset as usize
     }
 
-    pub(crate) const fn member_bit_field_size(&self, member: &BtfMember) -> usize {
+    /// Bit field size of given member
+    pub const fn member_bit_field_size(&self, member: &BtfMember) -> usize {
         let k_flag = (self.info >> 31) == 1;
         let size = if k_flag { member.offset >> 24 } else { 0 };
 
@@ -817,6 +910,21 @@ impl Array {
             },
         }
     }
+
+    /// Length of this array
+    pub const fn len(&self) -> usize {
+        self.array.len as usize
+    }
+
+    /// BTF type index of array element
+    pub const fn btf_element_type(&self) -> u32 {
+        self.array.element_type
+    }
+
+    /// BTF type index of array index
+    pub const fn btf_index_type(&self) -> u32 {
+        self.array.index_type
+    }
 }
 
 #[repr(C)]
@@ -878,10 +986,20 @@ impl FuncProto {
             params,
         }
     }
+
+    /// Params of this func proto
+    pub fn params(&self) -> &[BtfParam] {
+        &self.params
+    }
+
+    /// BTF type index of this func proto's return type
+    pub const fn return_type(&self) -> u32 {
+        self.return_type
+    }
 }
 
 #[repr(u32)]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum VarLinkage {
     Static,
     Global,
@@ -942,6 +1060,16 @@ impl Var {
             btf_type,
             linkage,
         }
+    }
+
+    /// BTF type index this var refers to
+    pub const fn referred_btf_type(&self) -> u32 {
+        self.btf_type
+    }
+
+    /// Linkage of this var
+    pub const fn linkage(&self) -> VarLinkage {
+        self.linkage
     }
 }
 
@@ -1012,6 +1140,16 @@ impl DataSec {
             entries,
         }
     }
+
+    /// Entries of this datasec
+    pub fn entries(&self) -> &[DataSecEntry] {
+        &self.entries
+    }
+
+    /// Size of this datasec
+    pub const fn size(&self) -> u32 {
+        self.size
+    }
 }
 
 #[repr(C)]
@@ -1056,6 +1194,16 @@ impl DeclTag {
             btf_type,
             component_index,
         }
+    }
+
+    /// BTF type index this declare tag refers to
+    pub const fn referred_btf_type(&self) -> u32 {
+        self.btf_type
+    }
+
+    /// Component index of this declare tag
+    pub const fn component_index(&self) -> i32 {
+        self.component_index
     }
 }
 
@@ -1393,7 +1541,8 @@ impl BtfType {
         }
     }
 
-    pub(crate) const fn kind(&self) -> BtfKind {
+    /// Kind of this BTF type
+    pub const fn kind(&self) -> BtfKind {
         match self {
             Self::Unknown => BtfKind::Unknown,
             Self::Fwd(t) => t.kind(),

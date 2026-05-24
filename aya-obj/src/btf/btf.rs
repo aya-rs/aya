@@ -313,7 +313,8 @@ impl Btf {
         self.types.types.len() < 2
     }
 
-    pub(crate) fn types(&self) -> impl Iterator<Item = &BtfType> {
+    /// An iterator over all types in this BTF, ordered by type index
+    pub fn types(&self) -> impl Iterator<Item = &BtfType> {
         self.types.types.iter()
     }
 
@@ -404,7 +405,11 @@ impl Btf {
         Ok(types)
     }
 
-    pub(crate) fn string_at(&self, offset: u32) -> Result<Cow<'_, str>, BtfError> {
+    /// Get string pointed by offset.
+    ///
+    /// This `offset` is usually retrieved from the `name_offset` field
+    /// of several BTF types.
+    pub fn string_at(&self, offset: u32) -> Result<Cow<'_, str>, BtfError> {
         let btf_header {
             hdr_len,
             mut str_off,
@@ -426,7 +431,8 @@ impl Btf {
         Ok(s.to_string_lossy())
     }
 
-    pub(crate) fn type_by_id(&self, type_id: u32) -> Result<&BtfType, BtfError> {
+    /// Gets BTF type of given id, which can be retrieved from [`id_by_type_name_kind`][Self::id_by_type_name_kind].
+    pub fn type_by_id(&self, type_id: u32) -> Result<&BtfType, BtfError> {
         self.types.type_by_id(type_id)
     }
 
@@ -434,7 +440,8 @@ impl Btf {
         self.types.resolve_type(root_type_id)
     }
 
-    pub(crate) fn type_name(&self, ty: &BtfType) -> Result<Cow<'_, str>, BtfError> {
+    /// Gets type name of given BTF type
+    pub fn type_name(&self, ty: &BtfType) -> Result<Cow<'_, str>, BtfError> {
         self.string_at(ty.name_offset())
     }
 
