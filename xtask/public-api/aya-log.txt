@@ -6,15 +6,15 @@ pub aya_log::Error::MapNotFound
 pub aya_log::Error::ProgramError(aya::programs::ProgramError)
 pub aya_log::Error::ProgramNotFound
 impl core::convert::From<aya::maps::MapError> for aya_log::Error
-pub fn aya_log::Error::from(source: aya::maps::MapError) -> Self
+pub fn aya_log::Error::from(aya::maps::MapError) -> Self
 impl core::convert::From<aya::programs::ProgramError> for aya_log::Error
-pub fn aya_log::Error::from(source: aya::programs::ProgramError) -> Self
+pub fn aya_log::Error::from(aya::programs::ProgramError) -> Self
 impl core::error::Error for aya_log::Error
 pub fn aya_log::Error::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya_log::Error
-pub fn aya_log::Error::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_log::Error::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya_log::Error
-pub fn aya_log::Error::fmt(&self, __formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_log::Error::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya_log::Error
 impl core::marker::Send for aya_log::Error
 impl core::marker::Sync for aya_log::Error
@@ -24,7 +24,7 @@ impl !core::panic::unwind_safe::RefUnwindSafe for aya_log::Error
 impl !core::panic::unwind_safe::UnwindSafe for aya_log::Error
 pub struct aya_log::DefaultFormatter
 impl<T> aya_log::Formatter<T> for aya_log::DefaultFormatter where T: alloc::string::ToString
-pub fn aya_log::DefaultFormatter::format(v: T) -> alloc::string::String
+pub fn aya_log::DefaultFormatter::format(T) -> alloc::string::String
 impl core::marker::Freeze for aya_log::DefaultFormatter
 impl core::marker::Send for aya_log::DefaultFormatter
 impl core::marker::Sync for aya_log::DefaultFormatter
@@ -34,12 +34,12 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_log::DefaultFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::DefaultFormatter
 pub struct aya_log::EbpfLogger<T>
 impl aya_log::EbpfLogger<&'static dyn log::Log>
-pub fn aya_log::EbpfLogger<&'static dyn log::Log>::init(bpf: &mut aya::bpf::Ebpf) -> core::result::Result<Self, aya_log::Error>
-pub fn aya_log::EbpfLogger<&'static dyn log::Log>::init_from_id(program_id: u32) -> core::result::Result<Self, aya_log::Error>
+pub fn aya_log::EbpfLogger<&'static dyn log::Log>::init(&mut aya::bpf::Ebpf) -> core::result::Result<Self, aya_log::Error>
+pub fn aya_log::EbpfLogger<&'static dyn log::Log>::init_from_id(u32) -> core::result::Result<Self, aya_log::Error>
 impl<T: log::Log> aya_log::EbpfLogger<T>
 pub fn aya_log::EbpfLogger<T>::flush(&mut self)
-pub fn aya_log::EbpfLogger<T>::init_from_id_with_logger(program_id: u32, logger: T) -> core::result::Result<Self, aya_log::Error>
-pub fn aya_log::EbpfLogger<T>::init_with_logger(bpf: &mut aya::bpf::Ebpf, logger: T) -> core::result::Result<Self, aya_log::Error>
+pub fn aya_log::EbpfLogger<T>::init_from_id_with_logger(u32, T) -> core::result::Result<Self, aya_log::Error>
+pub fn aya_log::EbpfLogger<T>::init_with_logger(&mut aya::bpf::Ebpf, T) -> core::result::Result<Self, aya_log::Error>
 impl<T> std::os::fd::owned::AsFd for aya_log::EbpfLogger<T>
 pub fn aya_log::EbpfLogger<T>::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
 impl<T> std::os::fd::raw::AsRawFd for aya_log::EbpfLogger<T>
@@ -53,7 +53,7 @@ impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_log::EbpfLogger<T> where
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_log::EbpfLogger<T> where T: core::panic::unwind_safe::UnwindSafe
 pub struct aya_log::Ipv4Formatter
 impl<T> aya_log::Formatter<T> for aya_log::Ipv4Formatter where T: core::convert::Into<core::net::ip_addr::Ipv4Addr>
-pub fn aya_log::Ipv4Formatter::format(v: T) -> alloc::string::String
+pub fn aya_log::Ipv4Formatter::format(T) -> alloc::string::String
 impl core::marker::Freeze for aya_log::Ipv4Formatter
 impl core::marker::Send for aya_log::Ipv4Formatter
 impl core::marker::Sync for aya_log::Ipv4Formatter
@@ -63,7 +63,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_log::Ipv4Formatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::Ipv4Formatter
 pub struct aya_log::Ipv6Formatter
 impl<T> aya_log::Formatter<T> for aya_log::Ipv6Formatter where T: core::convert::Into<core::net::ip_addr::Ipv6Addr>
-pub fn aya_log::Ipv6Formatter::format(v: T) -> alloc::string::String
+pub fn aya_log::Ipv6Formatter::format(T) -> alloc::string::String
 impl core::marker::Freeze for aya_log::Ipv6Formatter
 impl core::marker::Send for aya_log::Ipv6Formatter
 impl core::marker::Sync for aya_log::Ipv6Formatter
@@ -73,7 +73,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_log::Ipv6Formatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::Ipv6Formatter
 pub struct aya_log::LowerHexBytesFormatter
 impl aya_log::Formatter<&[u8]> for aya_log::LowerHexBytesFormatter
-pub fn aya_log::LowerHexBytesFormatter::format(v: &[u8]) -> alloc::string::String
+pub fn aya_log::LowerHexBytesFormatter::format(&[u8]) -> alloc::string::String
 impl core::marker::Freeze for aya_log::LowerHexBytesFormatter
 impl core::marker::Send for aya_log::LowerHexBytesFormatter
 impl core::marker::Sync for aya_log::LowerHexBytesFormatter
@@ -83,7 +83,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_log::LowerHexBytesFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::LowerHexBytesFormatter
 pub struct aya_log::LowerHexFormatter
 impl<T> aya_log::Formatter<T> for aya_log::LowerHexFormatter where T: core::fmt::LowerHex
-pub fn aya_log::LowerHexFormatter::format(v: T) -> alloc::string::String
+pub fn aya_log::LowerHexFormatter::format(T) -> alloc::string::String
 impl core::marker::Freeze for aya_log::LowerHexFormatter
 impl core::marker::Send for aya_log::LowerHexFormatter
 impl core::marker::Sync for aya_log::LowerHexFormatter
@@ -93,7 +93,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_log::LowerHexFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::LowerHexFormatter
 pub struct aya_log::LowerMacFormatter
 impl aya_log::Formatter<[u8; 6]> for aya_log::LowerMacFormatter
-pub fn aya_log::LowerMacFormatter::format(v: [u8; 6]) -> alloc::string::String
+pub fn aya_log::LowerMacFormatter::format([u8; 6]) -> alloc::string::String
 impl core::marker::Freeze for aya_log::LowerMacFormatter
 impl core::marker::Send for aya_log::LowerMacFormatter
 impl core::marker::Sync for aya_log::LowerMacFormatter
@@ -103,9 +103,9 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_log::LowerMacFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::LowerMacFormatter
 pub struct aya_log::PointerFormatter
 impl<T> aya_log::Formatter<*const T> for aya_log::PointerFormatter
-pub fn aya_log::PointerFormatter::format(v: *const T) -> alloc::string::String
+pub fn aya_log::PointerFormatter::format(*const T) -> alloc::string::String
 impl<T> aya_log::Formatter<*mut T> for aya_log::PointerFormatter
-pub fn aya_log::PointerFormatter::format(v: *mut T) -> alloc::string::String
+pub fn aya_log::PointerFormatter::format(*mut T) -> alloc::string::String
 impl core::marker::Freeze for aya_log::PointerFormatter
 impl core::marker::Send for aya_log::PointerFormatter
 impl core::marker::Sync for aya_log::PointerFormatter
@@ -115,7 +115,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_log::PointerFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::PointerFormatter
 pub struct aya_log::UpperHexBytesFormatter
 impl aya_log::Formatter<&[u8]> for aya_log::UpperHexBytesFormatter
-pub fn aya_log::UpperHexBytesFormatter::format(v: &[u8]) -> alloc::string::String
+pub fn aya_log::UpperHexBytesFormatter::format(&[u8]) -> alloc::string::String
 impl core::marker::Freeze for aya_log::UpperHexBytesFormatter
 impl core::marker::Send for aya_log::UpperHexBytesFormatter
 impl core::marker::Sync for aya_log::UpperHexBytesFormatter
@@ -125,7 +125,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_log::UpperHexBytesFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::UpperHexBytesFormatter
 pub struct aya_log::UpperHexFormatter
 impl<T> aya_log::Formatter<T> for aya_log::UpperHexFormatter where T: core::fmt::UpperHex
-pub fn aya_log::UpperHexFormatter::format(v: T) -> alloc::string::String
+pub fn aya_log::UpperHexFormatter::format(T) -> alloc::string::String
 impl core::marker::Freeze for aya_log::UpperHexFormatter
 impl core::marker::Send for aya_log::UpperHexFormatter
 impl core::marker::Sync for aya_log::UpperHexFormatter
@@ -135,7 +135,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_log::UpperHexFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::UpperHexFormatter
 pub struct aya_log::UpperMacFormatter
 impl aya_log::Formatter<[u8; 6]> for aya_log::UpperMacFormatter
-pub fn aya_log::UpperMacFormatter::format(v: [u8; 6]) -> alloc::string::String
+pub fn aya_log::UpperMacFormatter::format([u8; 6]) -> alloc::string::String
 impl core::marker::Freeze for aya_log::UpperMacFormatter
 impl core::marker::Send for aya_log::UpperMacFormatter
 impl core::marker::Sync for aya_log::UpperMacFormatter
@@ -145,27 +145,27 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_log::UpperMacFormatter
 impl core::panic::unwind_safe::UnwindSafe for aya_log::UpperMacFormatter
 pub const aya_log::LEVEL: &str
 pub trait aya_log::Formatter<T>
-pub fn aya_log::Formatter::format(v: T) -> alloc::string::String
+pub fn aya_log::Formatter::format(T) -> alloc::string::String
 impl aya_log::Formatter<&[u8]> for aya_log::LowerHexBytesFormatter
-pub fn aya_log::LowerHexBytesFormatter::format(v: &[u8]) -> alloc::string::String
+pub fn aya_log::LowerHexBytesFormatter::format(&[u8]) -> alloc::string::String
 impl aya_log::Formatter<&[u8]> for aya_log::UpperHexBytesFormatter
-pub fn aya_log::UpperHexBytesFormatter::format(v: &[u8]) -> alloc::string::String
+pub fn aya_log::UpperHexBytesFormatter::format(&[u8]) -> alloc::string::String
 impl aya_log::Formatter<[u8; 6]> for aya_log::LowerMacFormatter
-pub fn aya_log::LowerMacFormatter::format(v: [u8; 6]) -> alloc::string::String
+pub fn aya_log::LowerMacFormatter::format([u8; 6]) -> alloc::string::String
 impl aya_log::Formatter<[u8; 6]> for aya_log::UpperMacFormatter
-pub fn aya_log::UpperMacFormatter::format(v: [u8; 6]) -> alloc::string::String
+pub fn aya_log::UpperMacFormatter::format([u8; 6]) -> alloc::string::String
 impl<T> aya_log::Formatter<*const T> for aya_log::PointerFormatter
-pub fn aya_log::PointerFormatter::format(v: *const T) -> alloc::string::String
+pub fn aya_log::PointerFormatter::format(*const T) -> alloc::string::String
 impl<T> aya_log::Formatter<*mut T> for aya_log::PointerFormatter
-pub fn aya_log::PointerFormatter::format(v: *mut T) -> alloc::string::String
+pub fn aya_log::PointerFormatter::format(*mut T) -> alloc::string::String
 impl<T> aya_log::Formatter<T> for aya_log::DefaultFormatter where T: alloc::string::ToString
-pub fn aya_log::DefaultFormatter::format(v: T) -> alloc::string::String
+pub fn aya_log::DefaultFormatter::format(T) -> alloc::string::String
 impl<T> aya_log::Formatter<T> for aya_log::Ipv4Formatter where T: core::convert::Into<core::net::ip_addr::Ipv4Addr>
-pub fn aya_log::Ipv4Formatter::format(v: T) -> alloc::string::String
+pub fn aya_log::Ipv4Formatter::format(T) -> alloc::string::String
 impl<T> aya_log::Formatter<T> for aya_log::Ipv6Formatter where T: core::convert::Into<core::net::ip_addr::Ipv6Addr>
-pub fn aya_log::Ipv6Formatter::format(v: T) -> alloc::string::String
+pub fn aya_log::Ipv6Formatter::format(T) -> alloc::string::String
 impl<T> aya_log::Formatter<T> for aya_log::LowerHexFormatter where T: core::fmt::LowerHex
-pub fn aya_log::LowerHexFormatter::format(v: T) -> alloc::string::String
+pub fn aya_log::LowerHexFormatter::format(T) -> alloc::string::String
 impl<T> aya_log::Formatter<T> for aya_log::UpperHexFormatter where T: core::fmt::UpperHex
-pub fn aya_log::UpperHexFormatter::format(v: T) -> alloc::string::String
+pub fn aya_log::UpperHexFormatter::format(T) -> alloc::string::String
 pub type aya_log::BpfLogger<T> = aya_log::EbpfLogger<T>
