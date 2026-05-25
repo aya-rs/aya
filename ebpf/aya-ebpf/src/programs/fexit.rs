@@ -83,10 +83,11 @@ impl FExitContext {
         // changing runtime semantics.
         //
         // See also:
-        // https://github.com/torvalds/linux/commit/4621202adc5b
-        // fixes the forward propagation variant in v6.8.
-        // https://github.com/torvalds/linux/commit/4bf79f9be434
-        // fixes a related backtracking variant in v6.12.
+        // https://github.com/torvalds/linux/commit/d028f87517d6775dccff4ddbca2740826f9e53f1
+        // fixes this verifier bug by tracking BPF_JNE "not equal" constraints.
+        // https://github.com/torvalds/linux/commit/9e314f5d8682e1fe6ac214fb34580a238b6fd3c4
+        // is also a prerequisite, because it preserves 32/64-bit bounds
+        // across reg_set_min_max().
         let err = core::hint::black_box(err);
         if err == 0 {
             Ok(T::from_register(ret_val))
