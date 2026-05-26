@@ -117,13 +117,22 @@ pub mod raw_tracepoint {
     #[repr(C)]
     #[derive(Clone, Copy)]
     pub struct SysEnterEvent {
-        pub common_type: u16,
-        pub common_flags: u8,
-        _padding: u8, // Padding must be explicit to ensure zero-initialization.
+        pub regs_addr: u64,
+        pub syscall_id: i64,
     }
 
     #[cfg(feature = "user")]
     unsafe impl aya::Pod for SysEnterEvent {}
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    pub struct TaskRenameEvent {
+        pub task_addr: u64,
+        pub comm_addr: u64,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TaskRenameEvent {}
 }
 
 pub mod ring_buf {
