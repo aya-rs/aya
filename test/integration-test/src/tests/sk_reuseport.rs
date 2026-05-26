@@ -144,14 +144,10 @@ async fn assert_connection_works(mut client: TokioTcpStream, mut server: TokioTc
     .expect("timed out waiting for connection I/O");
 }
 
-// `NetNsGuard` switches the current thread into a dedicated network namespace,
-// so these async tests must stay on a single runtime thread.
 #[test_case("socket_map", "select_socket"; "legacy")]
 #[test_case("socket_map_btf", "select_socket_btf"; "btf")]
 #[test_log::test(tokio::test)]
 async fn sk_reuseport_selects_expected_listener(socket_map: &str, select_prog: &str) {
-    let _netns = NetNsGuard::new();
-
     let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
     let mut socket_array: ReusePortSockArray<_> =
         ebpf.take_map(socket_map).unwrap().try_into().unwrap();
@@ -207,8 +203,6 @@ async fn sk_reuseport_selects_expected_listener(socket_map: &str, select_prog: &
 #[test_case("socket_map_btf", "select_socket_after_clear_btf"; "btf")]
 #[test_log::test(tokio::test)]
 async fn sk_reuseport_clear_index_changes_selection(socket_map: &str, clear_prog: &str) {
-    let _netns = NetNsGuard::new();
-
     let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
     let mut socket_array: ReusePortSockArray<_> =
         ebpf.take_map(socket_map).unwrap().try_into().unwrap();
@@ -266,8 +260,6 @@ async fn sk_reuseport_clear_index_changes_selection(socket_map: &str, clear_prog
 #[test_case("select_socket_btf"; "btf")]
 #[test_log::test(tokio::test)]
 async fn sk_reuseport_stays_attached_until_explicit_detach(select_prog: &str) {
-    let _netns = NetNsGuard::new();
-
     let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
     let [first, second] = reuseport_listeners();
 
@@ -291,6 +283,8 @@ async fn sk_reuseport_stays_attached_until_explicit_detach(select_prog: &str) {
     );
 }
 
+// `NetNsGuard` switches the current thread into a dedicated network namespace,
+// so this async test must stay on a single runtime thread.
 #[test_case("socket_map", "select_or_migrate_socket"; "legacy")]
 #[test_case("socket_map_btf", "select_or_migrate_socket_btf"; "btf")]
 #[test_log::test(tokio::test)]

@@ -8,7 +8,9 @@ use aya_ebpf::{
     programs::SkBuffContext,
 };
 use integration_common::socket_filter::{
-    PASS_HITS_INDEX, PATH_HITS_MAX_ENTRIES, TRIM_DELTA_BYTES, TRIM_HITS_INDEX,
+    PASS_HITS_INDEX, PATH_HITS_MAX_ENTRIES, REUSEPORT_FIRST_LISTENER_INDEX,
+    REUSEPORT_SECOND_LISTENER_INDEX, REUSEPORT_SELECT_FIRST_HITS_INDEX,
+    REUSEPORT_SELECT_SECOND_HITS_INDEX, TRIM_DELTA_BYTES, TRIM_HITS_INDEX,
 };
 #[cfg(not(test))]
 extern crate ebpf_panic;
@@ -37,4 +39,26 @@ fn pass_packets(ctx: SkBuffContext) -> i64 {
 fn trim_packets(ctx: SkBuffContext) -> i64 {
     record_hit(TRIM_HITS_INDEX);
     i64::from(ctx.len().saturating_sub(TRIM_DELTA_BYTES))
+}
+
+#[socket_filter]
+fn select_first(_ctx: SkBuffContext) -> i64 {
+    record_hit(REUSEPORT_SELECT_FIRST_HITS_INDEX);
+    // For SO_ATTACH_REUSEPORT_EBPF, the return value selects
+    // `reuse->socks[index]`:
+    // https://github.com/torvalds/linux/blob/v6.9/net/core/sock_reuseport.c#L517-L525
+    // The integration test binds `first` before `second`. The kernel initialises
+    // the first group member at socks[0] and appends later sockets at
+    // socks[num_socks], so index 0 selects `first`:
+    // https://github.com/torvalds/linux/blob/v6.9/net/core/sock_reuseport.c#L233-L238
+    // https://github.com/torvalds/linux/blob/v6.9/net/core/sock_reuseport.c#L124-L130
+    REUSEPORT_FIRST_LISTENER_INDEX
+}
+
+#[socket_filter]
+fn select_second(_ctx: SkBuffContext) -> i64 {
+    record_hit(REUSEPORT_SELECT_SECOND_HITS_INDEX);
+    // `second` is appended after `first` joins the reuseport group, so index 1
+    // selects `second`.
+    REUSEPORT_SECOND_LISTENER_INDEX
 }
