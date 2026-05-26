@@ -144,8 +144,6 @@ async fn assert_connection_works(mut client: TokioTcpStream, mut server: TokioTc
     .expect("timed out waiting for connection I/O");
 }
 
-// `NetNsGuard` switches the current thread into a dedicated network namespace,
-// so these async tests must stay on a single runtime thread.
 #[rstest]
 #[case::legacy("socket_map", "select_socket")]
 #[case::btf("socket_map_btf", "select_socket_btf")]
@@ -154,8 +152,6 @@ async fn sk_reuseport_selects_expected_listener(
     #[case] socket_map: &str,
     #[case] select_prog: &str,
 ) {
-    let _netns = NetNsGuard::new();
-
     let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
     let mut socket_array: ReusePortSockArray<_> =
         ebpf.take_map(socket_map).unwrap().try_into().unwrap();
@@ -215,8 +211,6 @@ async fn sk_reuseport_clear_index_changes_selection(
     #[case] socket_map: &str,
     #[case] clear_prog: &str,
 ) {
-    let _netns = NetNsGuard::new();
-
     let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
     let mut socket_array: ReusePortSockArray<_> =
         ebpf.take_map(socket_map).unwrap().try_into().unwrap();
@@ -275,8 +269,6 @@ async fn sk_reuseport_clear_index_changes_selection(
 #[case::btf("select_socket_btf")]
 #[test_attr(test_log::test(tokio::test))]
 async fn sk_reuseport_stays_attached_until_explicit_detach(#[case] select_prog: &str) {
-    let _netns = NetNsGuard::new();
-
     let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
     let [first, second] = reuseport_listeners();
 
@@ -300,6 +292,8 @@ async fn sk_reuseport_stays_attached_until_explicit_detach(#[case] select_prog: 
     );
 }
 
+// `NetNsGuard` switches the current thread into a dedicated network namespace,
+// so this async test must stay on a single runtime thread.
 #[rstest]
 #[case::legacy("socket_map", "select_or_migrate_socket")]
 #[case::btf("socket_map_btf", "select_or_migrate_socket_btf")]
