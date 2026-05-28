@@ -2,10 +2,12 @@ pub mod array;
 pub mod bloom_filter;
 pub mod cgroup_array;
 pub mod cgroup_storage;
+pub mod cgrp_storage;
 pub mod cpu_map;
 pub mod dev_map;
 pub mod dev_map_hash;
 pub mod hash_map;
+pub mod inode_storage;
 pub mod lpm_trie;
 pub mod of_maps;
 pub mod per_cpu_array;
@@ -30,10 +32,12 @@ pub use cgroup_array::CgroupArray;
     reason = "re-exporting the deprecated cgroup storage map types"
 )]
 pub use cgroup_storage::{CgroupStorage, PerCpuCgroupStorage};
+pub use cgrp_storage::CgrpStorage;
 pub use cpu_map::CpuMap;
 pub use dev_map::DevMap;
 pub use dev_map_hash::DevMapHash;
 pub use hash_map::{HashMap, LruHashMap, LruPerCpuHashMap, PerCpuHashMap};
+pub use inode_storage::InodeStorage;
 pub use lpm_trie::LpmTrie;
 pub use of_maps::{ArrayOfMaps, HashOfMaps};
 pub use per_cpu_array::PerCpuArray;
