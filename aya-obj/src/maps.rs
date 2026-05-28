@@ -308,6 +308,8 @@ impl Map {
                 map_flags: flags,
                 id: 0,
                 pinning: PinningType::None,
+                inner_id: 0,
+                inner_idx: 0,
             },
             inner_def: None,
             section_index: 0,
