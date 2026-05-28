@@ -221,6 +221,12 @@ pub mod sk_storage {
     unsafe impl aya::Pod for Value {}
 }
 
+pub mod local_storage {
+    /// Arbitrary non-zero marker the inode and cgroup storage probes write into
+    /// their map, distinguishing a stored value from a zero-initialised slot.
+    pub const SENTINEL: u64 = 0xAA;
+}
+
 pub mod lpm_trie {
     pub const LPM_MATCH_SLOT: u32 = 0;
     pub const NO_MATCH_SLOT: u32 = 1;
