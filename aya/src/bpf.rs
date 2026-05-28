@@ -828,6 +828,8 @@ fn parse_map(
         bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
         bpf_map_type::BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
         bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Map::SkStorage(map),
+        bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE => Map::InodeStorage(map),
+        bpf_map_type::BPF_MAP_TYPE_CGRP_STORAGE => Map::CgrpStorage(map),
         bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Map::ArrayOfMaps(map),
         bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Map::HashOfMaps(map),
         m_type => {
