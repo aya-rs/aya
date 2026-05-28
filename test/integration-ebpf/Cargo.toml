@@ -199,3 +199,11 @@ path = "src/cgroup_array.rs"
 [[bin]]
 name = "cgroup_storage"
 path = "src/cgroup_storage.rs"
+
+[[bin]]
+name = "inode_storage"
+path = "src/inode_storage.rs"
+
+[[bin]]
+name = "cgrp_storage"
+path = "src/cgrp_storage.rs"

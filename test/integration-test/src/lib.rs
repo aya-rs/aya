@@ -83,6 +83,8 @@ bpf_file!(
     STACK_TRACE_LSM => "stack_trace_lsm",
     BTF_MAP_OF_MAPS => "btf_map_of_maps",
     XSK_MAP => "xsk_map",
+    INODE_STORAGE => "inode_storage",
+    CGRP_STORAGE => "cgrp_storage",
 );
 
 #[cfg(test)]
