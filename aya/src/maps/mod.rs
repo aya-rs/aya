@@ -74,8 +74,10 @@ use crate::{
 pub mod array;
 pub mod bloom_filter;
 pub mod cgroup_storage;
+pub mod cgrp_storage;
 pub mod hash_map;
 mod info;
+pub mod inode_storage;
 pub mod lpm_trie;
 pub mod of_maps;
 pub mod perf;
@@ -94,8 +96,10 @@ pub use bloom_filter::BloomFilter;
     reason = "re-exporting the deprecated cgroup storage map types"
 )]
 pub use cgroup_storage::{CgroupStorage, CgroupStorageKey, PerCpuCgroupStorage};
+pub use cgrp_storage::CgrpStorage;
 pub use hash_map::{HashMap, PerCpuHashMap};
 pub use info::{MapInfo, MapType, loaded_maps};
+pub use inode_storage::InodeStorage;
 pub use lpm_trie::LpmTrie;
 pub use of_maps::{ArrayOfMaps, HashOfMaps};
 pub use perf::PerfEventArray;
@@ -310,6 +314,8 @@ pub enum Map {
     CgroupArray(MapData),
     /// A [`CgroupStorage`] map.
     CgroupStorage(MapData),
+    /// A [`CgrpStorage`] map.
+    CgrpStorage(MapData),
     /// A [`CpuMap`] map.
     CpuMap(MapData),
     /// A [`DevMap`] map.
@@ -320,6 +326,8 @@ pub enum Map {
     HashMap(MapData),
     /// A [`HashOfMaps`] map.
     HashOfMaps(MapData),
+    /// An [`InodeStorage`] map.
+    InodeStorage(MapData),
     /// A [`LpmTrie`] map.
     LpmTrie(MapData),
     /// A [`HashMap`] map that uses a LRU eviction policy.
@@ -367,11 +375,13 @@ impl Map {
             Self::BloomFilter(map) => map.obj.map_type(),
             Self::CgroupArray(map) => map.obj.map_type(),
             Self::CgroupStorage(map) => map.obj.map_type(),
+            Self::CgrpStorage(map) => map.obj.map_type(),
             Self::CpuMap(map) => map.obj.map_type(),
             Self::DevMap(map) => map.obj.map_type(),
             Self::DevMapHash(map) => map.obj.map_type(),
             Self::HashMap(map) => map.obj.map_type(),
             Self::HashOfMaps(map) => map.obj.map_type(),
+            Self::InodeStorage(map) => map.obj.map_type(),
             Self::LpmTrie(map) => map.obj.map_type(),
             Self::LruHashMap(map) => map.obj.map_type(),
             Self::PerCpuArray(map) => map.obj.map_type(),
@@ -404,11 +414,13 @@ impl Map {
             Self::BloomFilter(map) => map.pin(path),
             Self::CgroupArray(map) => map.pin(path),
             Self::CgroupStorage(map) => map.pin(path),
+            Self::CgrpStorage(map) => map.pin(path),
             Self::CpuMap(map) => map.pin(path),
             Self::DevMap(map) => map.pin(path),
             Self::DevMapHash(map) => map.pin(path),
             Self::HashMap(map) => map.pin(path),
             Self::HashOfMaps(map) => map.pin(path),
+            Self::InodeStorage(map) => map.pin(path),
             Self::LpmTrie(map) => map.pin(path),
             Self::LruHashMap(map) => map.pin(path),
             Self::PerCpuArray(map) => map.pin(path),
@@ -470,10 +482,10 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Self::ReusePortSockArray(map_data),
             bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Self::SkStorage(map_data),
             bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS => Self::Unsupported(map_data),
-            bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE => Self::InodeStorage(map_data),
             bpf_map_type::BPF_MAP_TYPE_TASK_STORAGE => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF => Self::Unsupported(map_data),
-            bpf_map_type::BPF_MAP_TYPE_CGRP_STORAGE => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_CGRP_STORAGE => Self::CgrpStorage(map_data),
             bpf_map_type::BPF_MAP_TYPE_ARENA => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED => {
                 Self::PerCpuCgroupStorage(map_data)
@@ -529,6 +541,8 @@ impl_map_pin!((V) {
     Array,
     #[expect(deprecated, reason = "implementing pinning for the deprecated cgroup storage map types")]
     CgroupStorage,
+    CgrpStorage,
+    InodeStorage,
     PerCpuArray,
     #[expect(deprecated, reason = "implementing pinning for the deprecated cgroup storage map types")]
     PerCpuCgroupStorage,
@@ -617,6 +631,8 @@ impl_try_from_map!((V) {
     BloomFilter,
     #[expect(deprecated, reason = "implementing TryFrom for the deprecated cgroup storage map types")]
     CgroupStorage,
+    CgrpStorage,
+    InodeStorage,
     PerCpuArray,
     #[expect(deprecated, reason = "implementing TryFrom for the deprecated cgroup storage map types")]
     PerCpuCgroupStorage,
@@ -695,7 +711,7 @@ impl_from_map_data!(<()> PerfEventArray via map_data);
 impl_from_map_data!(<()> RingBuf via map_data);
 
 impl_from_map_data!((V) {
-    Array, BloomFilter, PerCpuArray,
+    Array, BloomFilter, CgrpStorage, InodeStorage, PerCpuArray,
     Queue, SockHash, SkStorage, Stack,
 });
 
