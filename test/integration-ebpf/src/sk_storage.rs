@@ -19,7 +19,7 @@ static SOCKET_STORAGE: SkStorage<Value> = SkStorage::new();
 pub(crate) fn sk_storage_connect4(ctx: SockAddrContext) -> i32 {
     let sock_addr = unsafe { &*ctx.sock_addr };
 
-    let storage = unsafe { SOCKET_STORAGE.get_or_insert_ptr_mut(&ctx, None) };
+    let storage = SOCKET_STORAGE.get_or_insert_ptr_mut(&ctx, None);
     if !storage.is_null() {
         unsafe {
             *storage = Value {
@@ -40,7 +40,7 @@ pub(crate) fn sk_storage_connect4(ctx: SockAddrContext) -> i32 {
 pub(crate) fn sk_storage_connect6(ctx: SockAddrContext) -> i32 {
     let sock_addr = unsafe { &*ctx.sock_addr };
 
-    let storage = unsafe { SOCKET_STORAGE.get_or_insert_ptr_mut(&ctx, None) };
+    let storage = SOCKET_STORAGE.get_or_insert_ptr_mut(&ctx, None);
     if !storage.is_null() {
         let mut user_ip6 = [0u32; 4];
         unsafe {
