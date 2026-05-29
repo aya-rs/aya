@@ -24,6 +24,25 @@ use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors, libbpf_sys_env};
 
 const GEN_INIT_CPIO_PATCH: &str = include_str!("../patches/gen_init_cpio.c.macos.diff");
 
+struct GitHubLogGroup;
+
+impl GitHubLogGroup {
+    fn for_vm_integration_tests(kernel: impl std::fmt::Display) -> Option<Self> {
+        if !matches!(env::var("GITHUB_ACTIONS").as_deref(), Ok("true")) {
+            return None;
+        }
+
+        println!("::group::VM integration tests on {kernel}");
+        Some(Self)
+    }
+}
+
+impl Drop for GitHubLogGroup {
+    fn drop(&mut self) {
+        println!("::endgroup::");
+    }
+}
+
 #[derive(Parser)]
 enum Environment {
     /// Runs the integration tests locally.
@@ -459,6 +478,8 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     use std::os::unix::ffi::OsStrExt as _;
                     OsStr::from_bytes(base)
                 };
+                // Fold each kernel's integration test output in GitHub Actions.
+                let _github_group = GitHubLogGroup::for_vm_integration_tests(base.display());
 
                 let kernel_archive = one(kernel.as_slice())
                     .with_context(|| format!("kernel archive for {}", base.display()))?;
