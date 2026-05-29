@@ -52,6 +52,16 @@ impl TcContext {
         self.skb.set_mark(mark);
     }
 
+    /// Sets `__sk_buff::tc_classid`.
+    ///
+    /// In direct-action mode this provides the minor 16 bits of the resulting
+    /// class id; the major 16 bits come from the `classid` configured on the
+    /// attached filter, so the program must be attached with one.
+    #[inline]
+    pub fn set_tc_classid(&self, classid: u16) {
+        self.skb.set_tc_classid(classid);
+    }
+
     #[inline]
     pub fn cb(&self) -> &[u32] {
         self.skb.cb()

@@ -48,6 +48,14 @@ impl SkBuff {
         unsafe { (*self.as_raw_ptr()).mark = mark }
     }
 
+    // Not public: writes to `tc_classid` are only accepted from sched_cls and
+    // sched_act programs, so this is exposed publicly on `TcContext` only.
+    // https://github.com/torvalds/linux/blob/v6.17/net/core/filter.c#L9037-L9050
+    #[inline]
+    pub(crate) fn set_tc_classid(&self, classid: u16) {
+        unsafe { (*self.as_raw_ptr()).tc_classid = u32::from(classid) }
+    }
+
     #[inline]
     pub fn cb(&self) -> &[u32] {
         unsafe { &(*self.as_raw_ptr()).cb }
