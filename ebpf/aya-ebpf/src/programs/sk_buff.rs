@@ -38,6 +38,13 @@ impl SkBuff {
         unsafe { (*self.skb).mark = mark }
     }
 
+    // Not public: the verifier only accepts writes to `tc_classid` from
+    // sched_cls/sched_act, so this is exposed publicly on `TcContext` only.
+    #[inline]
+    pub(crate) fn set_tc_classid(&self, classid: u32) {
+        unsafe { (*self.skb).tc_classid = classid }
+    }
+
     #[inline]
     pub fn cb(&self) -> &[u32] {
         unsafe { &(*self.skb).cb }

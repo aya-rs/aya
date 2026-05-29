@@ -49,6 +49,13 @@ impl TcContext {
         self.skb.set_mark(mark);
     }
 
+    /// Sets `__sk_buff::tc_classid`, steering the packet to a traffic-control
+    /// (e.g. HTB) class. Write-only, and only valid for TC classifier programs.
+    #[inline]
+    pub fn set_tc_classid(&self, classid: u32) {
+        self.skb.set_tc_classid(classid);
+    }
+
     #[inline]
     pub fn cb(&self) -> &[u32] {
         self.skb.cb()
