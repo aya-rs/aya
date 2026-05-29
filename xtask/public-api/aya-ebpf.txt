@@ -2227,6 +2227,7 @@ pub fn aya_ebpf::programs::tc::TcContext::load_bytes(&self, usize, &mut [u8]) ->
 pub const fn aya_ebpf::programs::tc::TcContext::new(core::ptr::non_null::NonNull<aya_ebpf_bindings::x86_64::bindings::__sk_buff>) -> Self
 pub fn aya_ebpf::programs::tc::TcContext::pull_data(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::set_mark(&self, u32)
+pub fn aya_ebpf::programs::tc::TcContext::set_tc_classid(&self, u32)
 pub fn aya_ebpf::programs::tc::TcContext::skb_under_cgroup<M: aya_ebpf::programs::tc::CgroupArrayMap>(&self, &M, u32) -> core::result::Result<bool, aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::store<T>(&self, usize, &T, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tc::TcContext
@@ -2726,6 +2727,7 @@ pub fn aya_ebpf::programs::tc::TcContext::load_bytes(&self, usize, &mut [u8]) ->
 pub const fn aya_ebpf::programs::tc::TcContext::new(core::ptr::non_null::NonNull<aya_ebpf_bindings::x86_64::bindings::__sk_buff>) -> Self
 pub fn aya_ebpf::programs::tc::TcContext::pull_data(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::set_mark(&self, u32)
+pub fn aya_ebpf::programs::tc::TcContext::set_tc_classid(&self, u32)
 pub fn aya_ebpf::programs::tc::TcContext::skb_under_cgroup<M: aya_ebpf::programs::tc::CgroupArrayMap>(&self, &M, u32) -> core::result::Result<bool, aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::store<T>(&self, usize, &T, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::tc::TcContext
