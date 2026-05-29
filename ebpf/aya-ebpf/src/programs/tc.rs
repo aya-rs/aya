@@ -50,6 +50,11 @@ impl TcContext {
     }
 
     #[inline]
+    pub fn set_tc_classid(&self, classid: u32) {
+        self.skb.set_tc_classid(classid);
+    }
+
+    #[inline]
     pub fn cb(&self) -> &[u32] {
         self.skb.cb()
     }
