@@ -14,6 +14,41 @@ escape_regex() {
   printf '%s\n' "$1" | sed 's/[][(){}.^$*+?|\\-]/\\&/g'
 }
 
+snapshot_kernel_files() {
+  local version=$1
+  local architecture=$2
+  local archive_timestamp
+  local base
+  local kernel_release
+  local package_revision
+
+  # Debian Snapshot does not have cloud packages for the current upstream LTS
+  # tips (5.15.208 and 6.6.141 as of 2026-05-29). Use the newest archived
+  # Debian cloud packages we can find for each LTS line instead: 5.15.15 for
+  # 5.15, and 6.6.15 for 6.6.
+  case "$version:$architecture" in
+    5.15:amd64 | 5.15:arm64)
+      archive_timestamp=20220130T155220Z
+      kernel_release=5.15.0-3
+      package_revision=5.15.15-2
+      ;;
+    6.6:amd64 | 6.6:arm64)
+      archive_timestamp=20240206T163351Z
+      kernel_release=6.6.15
+      package_revision=6.6.15-2
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+
+  base="https://snapshot.debian.org/archive/debian/${archive_timestamp}"
+  base="${base}/pool/main/l/linux/linux-image-${kernel_release}-cloud-${architecture}"
+  printf '%s\n' \
+    "${base}-unsigned_${package_revision}_${architecture}.deb" \
+    "${base}-dbg_${package_revision}_${architecture}.deb"
+}
+
 OUTPUT_DIR=$1
 ARCHITECTURE=$2
 shift 2
@@ -26,30 +61,36 @@ readonly URLS
 FILES=()
 for VERSION in "${VERSIONS[@]}"; do
   REGEX="linux-image-${VERSION//./\\.}\\.[0-9]+(-[0-9]+)?(\+bpo|\+deb[0-9]+)?-cloud-${ARCHITECTURE}-unsigned_.*\\.deb"
-  match=$(printf '%s\n' "$URLS" | grep -E "$REGEX" | sort -V | tail -n1) || {
-    printf '%s\nVERSION=%s\nREGEX=%s\n' "$URLS" "$VERSION" "$REGEX" >&2
-    exit 1
-  }
-  FILES+=("$match")
+  if match=$(printf '%s\n' "$URLS" | grep -E "$REGEX" | sort -V | tail -n1); then
+    FILES+=("$match")
 
-  # The debug package contains the actual System.map. Debian has transitioned
-  # between -dbg and -dbgsym suffixes, so match either for the specific kernel
-  # we just selected.
-  kernel_basename=$(basename "$match")
-  kernel_prefix=${kernel_basename%%_*}
-  kernel_suffix=${kernel_basename#${kernel_prefix}_}
-  base_prefix=${kernel_prefix%-unsigned}
+    # The debug package contains the actual System.map. Debian has transitioned
+    # between -dbg and -dbgsym suffixes, so match either for the specific kernel
+    # we just selected.
+    kernel_basename=$(basename "$match")
+    kernel_prefix=${kernel_basename%%_*}
+    kernel_suffix=${kernel_basename#${kernel_prefix}_}
+    base_prefix=${kernel_prefix%-unsigned}
 
-  base_prefix_regex=$(escape_regex "$base_prefix")
-  kernel_suffix_regex=$(escape_regex "$kernel_suffix")
+    base_prefix_regex=$(escape_regex "$base_prefix")
+    kernel_suffix_regex=$(escape_regex "$kernel_suffix")
 
-  DEBUG_REGEX="${base_prefix_regex}-dbg(sym)?_${kernel_suffix_regex}"
-  debug_match=$(printf '%s\n' "$URLS" | grep -E "$DEBUG_REGEX" | sort -V | tail -n1) || {
-    printf 'Failed to locate debug package matching %s\n%s\nVERSION=%s\nREGEX=%s\n' \
-      "$kernel_basename" "$URLS" "$VERSION" "$DEBUG_REGEX" >&2
-    exit 1
-  }
-  FILES+=("$debug_match")
+    DEBUG_REGEX="${base_prefix_regex}-dbg(sym)?_${kernel_suffix_regex}"
+    debug_match=$(printf '%s\n' "$URLS" | grep -E "$DEBUG_REGEX" | sort -V | tail -n1) || {
+      printf 'Failed to locate debug package matching %s\n%s\nVERSION=%s\nREGEX=%s\n' \
+        "$kernel_basename" "$URLS" "$VERSION" "$DEBUG_REGEX" >&2
+      exit 1
+    }
+    FILES+=("$debug_match")
+  else
+    snapshot_files=$(snapshot_kernel_files "$VERSION" "$ARCHITECTURE") || {
+      printf '%s\nVERSION=%s\nREGEX=%s\n' "$URLS" "$VERSION" "$REGEX" >&2
+      exit 1
+    }
+    while IFS= read -r FILE; do
+      FILES+=("$FILE")
+    done <<<"$snapshot_files"
+  fi
 done
 
 # Note: `--etag-{compare,save}` are not idempotent until curl 8.9.0 which included
