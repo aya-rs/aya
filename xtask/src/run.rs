@@ -6,7 +6,7 @@ use std::{
     collections::BTreeMap,
     env,
     ffi::{OsStr, OsString},
-    fmt::{Debug, Write as _},
+    fmt::{Arguments, Debug, Write as _},
     fs::{self, File, OpenOptions},
     io::{BufRead as _, BufReader, Write as _},
     ops::Deref as _,
@@ -23,6 +23,25 @@ use walkdir::WalkDir;
 use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors, libbpf_sys_env};
 
 const GEN_INIT_CPIO_PATCH: &str = include_str!("../patches/gen_init_cpio.c.macos.diff");
+
+struct GitHubLogGroup;
+
+impl GitHubLogGroup {
+    fn new(title: Arguments<'_>) -> Option<Self> {
+        if env::var_os("GITHUB_ACTIONS").as_deref() != Some(OsStr::new("true")) {
+            return None;
+        }
+
+        println!("::group::{title}");
+        Some(Self)
+    }
+}
+
+impl Drop for GitHubLogGroup {
+    fn drop(&mut self) {
+        println!("::endgroup::");
+    }
+}
 
 #[derive(Parser)]
 enum Environment {
@@ -459,6 +478,10 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     use std::os::unix::ffi::OsStrExt as _;
                     OsStr::from_bytes(base)
                 };
+
+                // Fold each kernel's integration test output in GitHub Actions.
+                let _github_group =
+                    GitHubLogGroup::new(format_args!("VM integration tests on {}", base.display()));
 
                 let kernel_archive = one(kernel.as_slice())
                     .with_context(|| format!("kernel archive for {}", base.display()))?;
