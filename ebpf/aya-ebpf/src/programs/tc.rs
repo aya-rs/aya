@@ -52,6 +52,27 @@ impl TcContext {
         self.skb.set_mark(mark);
     }
 
+    /// Sets `__sk_buff::tc_classid`.
+    ///
+    /// The kernel [stores this field as 16 bits][store], so writes are
+    /// truncated to the minor id.
+    ///
+    /// In direct-action mode this provides the minor 16 bits of the
+    /// resulting class id; [the major 16 bits come from the `classid`
+    /// configured on the attached filter][major], so the program must be
+    /// attached with one.
+    ///
+    /// Before the program runs, [`cls_bpf`][cls_bpf] pre-populates this
+    /// field with that same `classid`.
+    ///
+    /// [store]: https://github.com/torvalds/linux/blob/e5f0a698b/net/core/filter.c#L9768-L9781
+    /// [major]: https://github.com/torvalds/linux/blob/e5f0a698b/net/sched/cls_bpf.c#L110-L118
+    /// [cls_bpf]: https://github.com/torvalds/linux/blob/e5f0a698b/net/sched/cls_bpf.c#L90-L105
+    #[inline]
+    pub fn set_tc_classid(&self, classid: u16) {
+        self.skb.set_tc_classid(classid);
+    }
+
     #[inline]
     pub fn cb(&self) -> &[u32] {
         self.skb.cb()
