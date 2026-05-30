@@ -30,11 +30,12 @@ use tokio::{
     time::{Duration, timeout},
 };
 
+#[expect(clippy::useless_format, reason = "symmetry")]
 #[rstest]
 #[case::few(
     None,
     "test_bpf_printk",
-    vec![
+    [
         format!("{MARKER}"),
         format!("{MARKER}_CHAR_AS_U32:{:x}", TEST_CHAR as u32),
         format!("{MARKER}_U8:{TEST_U8}"),
@@ -52,14 +53,14 @@ use tokio::{
 #[case::many(
     Some(("bpf_trace_vprintk", KernelVersion::new(5, 15, 0))),
     "test_bpf_printk_for_many_args",
-    vec![
+    [
         format!("{MARKER}_MULTI_vprintk:{TEST_U8},{TEST_U16},{TEST_I8},{TEST_I16}")
     ])]
 #[test_attr(tokio::test)]
-async fn bpf_printk(
+async fn bpf_printk<const N: usize>(
     #[case] minimum_kernel_version: Option<(&str, KernelVersion)>,
     #[case] bpf_program_name: &str,
-    #[case] expected: Vec<String>,
+    #[case] expected: [String; N],
 ) {
     if let Some((helper_name, minimum_kernel_version)) = minimum_kernel_version {
         let kernel_version = KernelVersion::current().unwrap();
