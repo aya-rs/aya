@@ -57,12 +57,6 @@ enum Environment {
         #[clap(long)]
         cache_dir: PathBuf,
 
-        /// The Github API token to use if network requests to Github are made.
-        ///
-        /// This may be required if Github rate limits are exceeded.
-        #[clap(long)]
-        github_api_token: Option<String>,
-
         /// Debian kernel archives (.deb) to boot in the VM.
         #[clap(required = true)]
         kernel_archives: Vec<PathBuf>,
@@ -315,7 +309,6 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
         }
         Environment::VM {
             cache_dir,
-            github_api_token,
             kernel_archives,
         } => {
             // The user has asked us to run the tests on a VM. This is involved; strap in.
@@ -357,9 +350,6 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         etag_path_exists,
                     )
                 }
-
-                // Currently unused. Can be used for authenticated requests if needed in the future.
-                drop(github_api_token);
 
                 let mut curl = Command::new("curl");
                 curl.args([
