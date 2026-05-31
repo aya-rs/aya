@@ -385,8 +385,7 @@ jobs:
           set -euxo pipefail
 
           find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
-            cargo xtask integration-test vm --cache-dir test/.tmp \
-              --github-api-token ${{ secrets.GITHUB_TOKEN }}
+            cargo xtask integration-test vm --cache-dir test/.tmp
 
   check:
     if: always()
