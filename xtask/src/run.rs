@@ -3,14 +3,13 @@
 #![allow(clippy::use_debug, reason = "debug output aids troubleshooting")]
 
 use std::{
-    collections::BTreeMap,
     env,
     ffi::{OsStr, OsString},
-    fmt::{Arguments, Debug, Write as _},
-    fs::{self, File, OpenOptions},
+    fmt::{Arguments, Write as _},
+    fs::{self, OpenOptions},
     io::{BufRead as _, BufReader, Write as _},
     ops::Deref as _,
-    path::{self, Path, PathBuf},
+    path::{Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
     sync::{Arc, Mutex},
     thread,
@@ -22,7 +21,20 @@ use clap::Parser;
 use walkdir::WalkDir;
 use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors, libbpf_sys_env};
 
+use crate::{
+    http::HttpClient,
+    ubuntu_mainline::{
+        KernelArchitecture, KernelPackage, download_ubuntu_mainline_kernel_packages,
+    },
+};
+
 const GEN_INIT_CPIO_PATCH: &str = include_str!("../patches/gen_init_cpio.c.macos.diff");
+// We build gen_init_cpio as a host-side tool for creating the VM
+// initramfs. Pin the source file because we apply GEN_INIT_CPIO_PATCH
+// below and need stable patch input.
+// https://github.com/torvalds/linux/blob/v6.18/usr/gen_init_cpio.c
+const GEN_INIT_CPIO_VERSION: &str = "v6.18";
+const GEN_INIT_CPIO_PATH: &str = "usr/gen_init_cpio.c";
 
 struct GitHubLogGroup;
 
@@ -57,9 +69,13 @@ enum Environment {
         #[clap(long)]
         cache_dir: PathBuf,
 
-        /// Debian kernel archives (.deb) to boot in the VM.
-        #[clap(required = true)]
-        kernel_archives: Vec<PathBuf>,
+        /// Ubuntu Mainline architecture to resolve kernel version arguments for.
+        #[clap(long, value_enum)]
+        kernel_arch: KernelArchitecture,
+
+        /// Ubuntu Mainline versions such as 5.15 or 6.6.
+        #[clap(required = true, value_name = "VERSION")]
+        kernels: Vec<String>,
     },
 }
 
@@ -131,103 +147,6 @@ where
         bail!("{cargo:?} failed: {status:?}")
     }
     Ok(executables)
-}
-
-enum Disposition<T> {
-    Skip,
-    Unpack(T),
-}
-
-enum ControlFlow {
-    Continue,
-    Break,
-}
-
-fn with_deb<S, F>(archive: &Path, dest: &Path, mut state: S, mut select: F) -> Result<S>
-where
-    F: for<'state> FnMut(
-        &'state mut S,
-        &Path,
-        tar::EntryType,
-    ) -> Disposition<(Option<&'state mut Vec<PathBuf>>, ControlFlow)>,
-{
-    fs::create_dir_all(dest).with_context(|| format!("failed to create {}", dest.display()))?;
-
-    let archive_reader = File::open(archive)
-        .with_context(|| format!("failed to open the deb package {}", archive.display()))?;
-    let mut archive_reader = ar::Archive::new(archive_reader);
-    // `ar` entries are borrowed from the reader, so the reader
-    // cannot implement `Iterator` (because `Iterator::Item` is not
-    // a GAT).
-    //
-    // https://github.com/mdsteele/rust-ar/issues/15
-    let mut data_tar_xz_entries = 0;
-    let start = std::time::Instant::now();
-    while let Some(entry) = archive_reader.next_entry() {
-        let entry = entry.with_context(|| format!("({}).next_entry()", archive.display()))?;
-        const DATA_TAR_XZ: &str = "data.tar.xz";
-        if entry.header().identifier() != DATA_TAR_XZ.as_bytes() {
-            continue;
-        }
-        data_tar_xz_entries += 1;
-        let entry_reader = xz2::read::XzDecoder::new(entry);
-        let mut entry_reader = tar::Archive::new(entry_reader);
-        let entries = entry_reader
-            .entries()
-            .with_context(|| format!("({}/{DATA_TAR_XZ}).entries()", archive.display()))?;
-        for (i, entry) in entries.enumerate() {
-            let mut entry = entry
-                .with_context(|| format!("({}/{DATA_TAR_XZ}).entries()[{i}]", archive.display()))?;
-            let path = entry.path().with_context(|| {
-                format!(
-                    "({}/{DATA_TAR_XZ}).entries()[{i}].path()",
-                    archive.display()
-                )
-            })?;
-            let entry_type = entry.header().entry_type();
-            let (selected, control_flow) = match select(&mut state, path.as_ref(), entry_type) {
-                Disposition::Skip => continue,
-                Disposition::Unpack(unpack) => unpack,
-            };
-            if let Some(selected) = selected {
-                println!(
-                    "{}[{}] in {:?}",
-                    archive.display(),
-                    path.display(),
-                    start.elapsed()
-                );
-                selected.push(dest.join(path));
-            }
-            let unpacked = entry.unpack_in(dest).with_context(|| {
-                format!(
-                    "({}/{DATA_TAR_XZ})[{i}].unpack_in({})",
-                    archive.display(),
-                    dest.display(),
-                )
-            })?;
-            assert!(
-                unpacked,
-                "({}/{DATA_TAR_XZ})[{i}].unpack_in({})",
-                archive.display(),
-                dest.display(),
-            );
-            match control_flow {
-                ControlFlow::Continue => {}
-                ControlFlow::Break => break,
-            }
-        }
-    }
-    println!("{} in {:?}", archive.display(), start.elapsed());
-    assert_eq!(data_tar_xz_entries, 1);
-    Ok(state)
-}
-
-fn one<T: Debug>(slice: &[T]) -> Result<&T> {
-    if let [item] = slice {
-        Ok(item)
-    } else {
-        bail!("expected [{}], got {slice:?}", std::any::type_name::<T>())
-    }
 }
 
 /// Build and run the project.
@@ -309,17 +228,19 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
         }
         Environment::VM {
             cache_dir,
-            kernel_archives,
+            kernel_arch,
+            kernels,
         } => {
             // The user has asked us to run the tests on a VM. This is involved; strap in.
             //
             // We need tools to build the initramfs; we use gen_init_cpio from the Linux repository,
             // taking care to cache it.
             //
-            // We iterate the kernel images, using the `file` program to guess the target
-            // architecture. We then build the init program and our test binaries for that
-            // architecture, and use gen_init_cpio to build an initramfs containing the test
-            // binaries. We're ready to run the VM.
+            // We resolve Ubuntu Mainline kernel versions for the requested
+            // architecture. We then build the init program and our test
+            // binaries for that architecture, and use
+            // gen_init_cpio to build an initramfs containing the test binaries.
+            // We're ready to run the VM.
             //
             // We start QEMU with the provided kernel image and the initramfs we built.
             //
@@ -330,56 +251,23 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
             // The end.
 
             fs::create_dir_all(&cache_dir).context("failed to create cache dir")?;
+            let http_client = HttpClient::new();
 
             let gen_init_cpio = cache_dir.join("gen_init_cpio");
             {
-                let dest_path = cache_dir.join("gen_init_cpio.c");
-                let etag_path = cache_dir.join("gen_init_cpio.etag");
-                let dest_path_exists = dest_path.try_exists().with_context(|| {
-                    format!("failed to check existence of {}", dest_path.display())
-                })?;
-                let etag_path_exists = etag_path.try_exists().with_context(|| {
-                    format!("failed to check existence of {}", etag_path.display())
-                })?;
-                if dest_path_exists != etag_path_exists {
-                    println!(
-                        "({}).exists()={} != ({})={} (mismatch)",
-                        dest_path.display(),
-                        dest_path_exists,
-                        etag_path.display(),
-                        etag_path_exists,
-                    )
-                }
-
-                let mut curl = Command::new("curl");
-                curl.args([
-                    "-sfSL",
-                    "https://raw.githubusercontent.com/torvalds/linux/master/usr/gen_init_cpio.c",
-                    "--output",
-                ])
-                .arg(&dest_path);
-                for arg in ["--etag-compare", "--etag-save"] {
-                    curl.arg(arg).arg(&etag_path);
-                }
-
-                let output = curl
-                    .output()
-                    .with_context(|| format!("failed to run {curl:?}"))?;
-                let Output { status, .. } = &output;
-                if status.code() != Some(0) {
-                    if dest_path_exists {
-                        println!(
-                            "{curl:?} failed ({status:?}); using cached {}",
-                            dest_path.display()
-                        );
-                    } else {
-                        bail!("{curl:?} failed: {output:?}")
-                    }
-                }
+                let source_dir = cache_dir
+                    .join("gen_init_cpio-source")
+                    .join(GEN_INIT_CPIO_VERSION);
+                let dest_path = source_dir.join("gen_init_cpio.c");
+                let etag_path = source_dir.join("gen_init_cpio.etag");
+                let gen_init_cpio_url = format!(
+                    "https://raw.githubusercontent.com/torvalds/linux/{GEN_INIT_CPIO_VERSION}/{GEN_INIT_CPIO_PATH}"
+                );
+                http_client.download_to_path(&gen_init_cpio_url, &dest_path, &etag_path)?;
 
                 let mut patch = Command::new("patch");
                 patch
-                    .current_dir(&cache_dir)
+                    .current_dir(&source_dir)
                     .args(["--quiet", "--forward", "--output", "-"])
                     .stdin(Stdio::piped())
                     .stdout(Stdio::piped());
@@ -422,188 +310,37 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
             }
 
             let extraction_root = tempfile::tempdir().context("tempdir failed")?;
-
-            #[derive(Eq, PartialEq, Ord, PartialOrd)]
-            struct KernelPackageKey<'a> {
-                base: &'a [u8],
-            }
-
-            #[derive(Default)]
-            struct KernelPackageGroup<'a> {
-                kernel: Vec<&'a Path>,
-                debug: Vec<&'a Path>,
-            }
-
-            let mut package_groups = BTreeMap::new();
-            for archive in &kernel_archives {
-                let file_name = archive.file_name().ok_or_else(|| {
-                    anyhow!("archive path missing filename: {}", archive.display())
-                })?;
-                let file_name = file_name.as_encoded_bytes();
-                // TODO(https://github.com/rust-lang/rust/issues/112811): use split_once when stable.
-                let package_name = file_name
-                    .split(|&byte| byte == b'_')
-                    .next()
-                    .ok_or_else(|| anyhow!("unexpected archive filename: {}", archive.display()))?;
-                let (base, is_debug) = if let Some(base) = package_name.strip_suffix(b"-dbg") {
-                    (base, true)
-                } else if let Some(base) = package_name.strip_suffix(b"-dbgsym") {
-                    (base, true)
-                } else if let Some(base) = package_name.strip_suffix(b"-unsigned") {
-                    (base, false)
-                } else {
-                    bail!("unexpected archive filename: {}", archive.display())
-                };
-                let KernelPackageGroup { kernel, debug } =
-                    package_groups.entry(KernelPackageKey { base }).or_default();
-                let dst = if is_debug { debug } else { kernel };
-                dst.push(archive.as_path());
-            }
+            let kernel_packages = download_ubuntu_mainline_kernel_packages(
+                &http_client,
+                &cache_dir,
+                extraction_root.path(),
+                kernel_arch,
+                &kernels,
+            )?;
 
             let mut errors = Vec::new();
-            for (index, (KernelPackageKey { base }, KernelPackageGroup { kernel, debug })) in
-                package_groups.into_iter().enumerate()
-            {
-                let base = {
-                    use std::os::unix::ffi::OsStrExt as _;
-                    OsStr::from_bytes(base)
-                };
-
+            for kernel_package in kernel_packages {
+                let KernelPackage {
+                    base,
+                    kernel_image,
+                    config,
+                    modules_dir,
+                    system_map,
+                } = kernel_package;
                 // Fold each kernel's integration test output in GitHub Actions.
                 let _github_group =
                     GitHubLogGroup::new(format_args!("VM integration tests on {}", base.display()));
 
-                let kernel_archive = one(kernel.as_slice())
-                    .with_context(|| format!("kernel archive for {}", base.display()))?;
-                let debug_archive = one(debug.as_slice())
-                    .with_context(|| format!("debug archive for {}", base.display()))?;
-
-                let (kernel_images, configs, modules_dirs) = with_deb(
-                    kernel_archive,
-                    &extraction_root
-                        .path()
-                        .join(format!("kernel-archive-{index}-image")),
-                    (Vec::new(), Vec::new(), Vec::new()),
-                    |(kernel_images, configs, modules_dirs), path, entry_type| {
-                        if let Some(path) = ["./lib/modules/", "./usr/lib/modules/"]
-                            .into_iter()
-                            .find_map(|modules_dir| {
-                                // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this
-                                // allowance when the lint behaves more sensibly.
-                                #[expect(clippy::manual_ok_err, reason = "type ascription")]
-                                match path.strip_prefix(modules_dir) {
-                                    Ok(path) => Some(path),
-                                    Err(path::StripPrefixError { .. }) => None,
-                                }
-                            })
-                        {
-                            return Disposition::Unpack((
-                                (path.iter().count() == 1).then_some(modules_dirs),
-                                ControlFlow::Continue,
-                            ));
-                        }
-                        if !entry_type.is_file() {
-                            return Disposition::Skip;
-                        }
-                        let name = match path.strip_prefix("./boot/") {
-                            Ok(path) => {
-                                if let Some(path::Component::Normal(name)) =
-                                    path.components().next()
-                                {
-                                    name
-                                } else {
-                                    return Disposition::Skip;
-                                }
-                            }
-                            Err(path::StripPrefixError { .. }) => return Disposition::Skip,
-                        };
-                        let name = name.as_encoded_bytes();
-                        if name.starts_with(b"vmlinuz-") {
-                            Disposition::Unpack((Some(kernel_images), ControlFlow::Continue))
-                        } else if name.starts_with(b"config-") {
-                            Disposition::Unpack((Some(configs), ControlFlow::Continue))
-                        } else {
-                            Disposition::Skip
-                        }
-                    },
-                )?;
-                let kernel_image = one(kernel_images.as_slice())
-                    .with_context(|| format!("kernel image in {}", kernel_archive.display()))?;
-                let config = one(configs.as_slice())
-                    .with_context(|| format!("config in {}", kernel_archive.display()))?;
-                let modules_dir = one(modules_dirs.as_slice()).with_context(|| {
-                    format!("modules directory in {}", kernel_archive.display())
-                })?;
-
-                let system_maps = with_deb(
-                    debug_archive,
-                    &extraction_root
-                        .path()
-                        .join(format!("kernel-archive-{index}-debug")),
-                    Vec::new(),
-                    |system_maps: &mut Vec<PathBuf>, path, entry_type| {
-                        if entry_type != tar::EntryType::Regular {
-                            return Disposition::Skip;
-                        }
-                        let name = match path.strip_prefix("./usr/lib/debug/boot/") {
-                            Ok(path) => {
-                                if let Some(path::Component::Normal(name)) =
-                                    path.components().next()
-                                {
-                                    name
-                                } else {
-                                    return Disposition::Skip;
-                                }
-                            }
-                            Err(path::StripPrefixError { .. }) => {
-                                return Disposition::Skip;
-                            }
-                        };
-                        if name.as_encoded_bytes().starts_with(b"System.map-") {
-                            // We only expect one System.map in the debug archive; ordinarily
-                            // we'd walk the whole archive to assert this fact but it turns out
-                            // that doing so takes around 10 seconds while stopping early takes
-                            // around 1ms.
-                            Disposition::Unpack((Some(system_maps), ControlFlow::Break))
-                        } else {
-                            Disposition::Skip
-                        }
-                    },
-                )?;
-                let system_map = one(system_maps.as_slice())
-                    .with_context(|| format!("System.map in {}", debug_archive.display()))?;
-
-                // Guess the guest architecture.
-                let mut file = Command::new("file");
-                let output = file
-                    .arg("--brief")
-                    .arg(kernel_image)
-                    .output()
-                    .with_context(|| format!("failed to run {file:?}"))?;
-                let Output { status, .. } = &output;
-                if status.code() != Some(0) {
-                    bail!("{file:?} failed: {output:?}")
-                }
-                let Output { stdout, .. } = output;
-
-                // Now parse the output of the file command, which looks something like
-                //
-                // - Linux kernel ARM64 boot executable Image, little-endian, 4K pages
-                //
-                // - Linux kernel x86 boot executable bzImage, version 6.1.0-10-cloud-amd64 [..]
-
-                let stdout = String::from_utf8(stdout)
-                    .with_context(|| format!("invalid UTF-8 in {file:?} stdout"))?;
-                let (_, stdout) = stdout
-                    .split_once("Linux kernel")
-                    .ok_or_else(|| anyhow!("failed to parse {file:?} stdout: {stdout}"))?;
-                let (guest_arch, _) = stdout
-                    .split_once("boot executable")
-                    .ok_or_else(|| anyhow!("failed to parse {file:?} stdout: {stdout}"))?;
-                let guest_arch = guest_arch.trim();
-
-                let (guest_arch, machine, cpu, console) = match guest_arch {
-                    "ARM64" => (
+                // Fixed VM launch configuration for each supported kernel
+                // architecture.
+                let (guest_arch, machine, cpu, console) = match kernel_arch {
+                    KernelArchitecture::Amd64 => (
+                        "x86_64",
+                        None,
+                        cfg!(target_arch = "x86_64").then_some("host"),
+                        "ttyS0",
+                    ),
+                    KernelArchitecture::Arm64 => (
                         "aarch64",
                         Some("virt"),
                         // NB: we'd prefer to write:
@@ -629,13 +366,6 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         Some("neoverse-n1"),
                         "ttyAMA0",
                     ),
-                    "x86" => (
-                        "x86_64",
-                        None,
-                        cfg!(target_arch = "x86_64").then_some("host"),
-                        "ttyS0",
-                    ),
-                    guest_arch => (guest_arch, None, None, "ttyS0"),
                 };
 
                 let target = format!("{guest_arch}-unknown-linux-musl");
@@ -729,14 +459,14 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 write_dir(Path::new("/lib"));
                 write_dir(Path::new("/lib/modules"));
 
-                write_file(Path::new("/boot/config"), config, "644 0 0");
+                write_file(Path::new("/boot/config"), &config, "644 0 0");
                 if let Some(name) = config.file_name() {
-                    write_file(&Path::new("/boot").join(name), config, "644 0 0");
+                    write_file(&Path::new("/boot").join(name), &config, "644 0 0");
                 }
 
-                write_file(Path::new("/boot/System.map"), system_map, "644 0 0");
+                write_file(Path::new("/boot/System.map"), &system_map, "644 0 0");
                 if let Some(name) = system_map.file_name() {
-                    write_file(&Path::new("/boot").join(name), system_map, "644 0 0");
+                    write_file(&Path::new("/boot").join(name), &system_map, "644 0 0");
                 }
 
                 for (name, path) in &test_distro {
@@ -755,7 +485,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     .arg("run")
                     .args(test_distro_args)
                     .args(["--bin", "depmod", "--", "-b"])
-                    .arg(modules_dir)
+                    .arg(&modules_dir)
                     .output()
                     .with_context(|| format!("failed to run {cargo:?}"))?;
                 let Output { status, .. } = &output;
@@ -766,12 +496,12 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 // Now our modules.alias file is built, we can recursively
                 // walk the modules directory and add all the files to the
                 // initramfs.
-                for entry in WalkDir::new(modules_dir) {
+                for entry in WalkDir::new(&modules_dir) {
                     let entry = entry.context("read_dir failed")?;
                     let path = entry.path();
                     let metadata = entry.metadata().context("metadata failed")?;
                     let out_path = Path::new("/lib/modules").join(
-                        path.strip_prefix(modules_dir).with_context(|| {
+                        path.strip_prefix(&modules_dir).with_context(|| {
                             format!(
                                 "strip prefix {} failed for {}",
                                 path.display(),
@@ -847,11 +577,13 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 // out of `/sys/kernel/security/lsm` and LSM tests exercise
                 // only load/attach, missing runtime regressions.
                 kernel_args.push(" lsm=bpf");
-                qemu.args(["-no-reboot", "-nographic", "-m", "1024M", "-smp", "2"])
+                // Ubuntu Mainline arm64 packages can make the initramfs large
+                // enough that 1G fails to unpack it, leaving a broken rootfs.
+                qemu.args(["-no-reboot", "-nographic", "-m", "2048M", "-smp", "2"])
                     .arg("-append")
                     .arg(kernel_args)
                     .arg("-kernel")
-                    .arg(kernel_image)
+                    .arg(&kernel_image)
                     .arg("-initrd")
                     .arg(&initrd_image);
                 let mut qemu_child = qemu

@@ -277,7 +277,7 @@ jobs:
         # for CI. We use arm64 runners to avoid cross-compilation.
         os:
           - ubuntu-24.04-arm
-        download-kernel-images:
+        vm-kernels:
           - arm64 5.10
           - arm64 6.1
           - arm64 6.12
@@ -289,15 +289,15 @@ jobs:
             # Just one kernel to keep things fast. We just want to keep things from rotting on
             # macOS. We use amd64 because otherwise qemu tries to use HVF and hits a hard error:
             # qemu-system-aarch64: -accel hvf: Error: ret = HV_UNSUPPORTED (0xfae9400f, at ../target/arm/hvf/hvf.c:956)
-            download-kernel-images: amd64 5.10
+            vm-kernels: amd64 5.10
 
           # We don't use ubuntu-latest because we care about the apt packages available.
           - os: ubuntu-24.04
-            download-kernel-images: amd64 5.10 6.1 6.12 6.17
+            vm-kernels: amd64 5.10 6.1 6.12 6.17
           - os: ubuntu-24.04-arm
             # Native arm runner for local tests only; arm runners don't support
             # nested virtualization so running them here would be slow.
-            download-kernel-images: local
+            vm-kernels: local
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -326,7 +326,6 @@ jobs:
             linux-libc-dev \
             liblzma-dev \
             llvm \
-            lynx \
             musl-tools \
             qemu-system-{arm,x86}
 
@@ -337,7 +336,6 @@ jobs:
           # Dependencies are tracked in `Brewfile`.
           brew trust --formula filosottile/musl-cross/musl-cross
           brew bundle
-          echo $(brew --prefix curl)/bin >> $GITHUB_PATH
           echo $(brew --prefix llvm)/bin >> $GITHUB_PATH
 
           # https://github.com/actions/setup-python/issues/577
@@ -363,14 +361,7 @@ jobs:
       - uses: actions/cache@v5
         with:
           path: test/.tmp
-          key: ${{ runner.arch }}-${{ runner.os }}-test-cache-${{ matrix.download-kernel-images }}
-
-      - name: Download debian kernels
-        if: matrix.download-kernel-images != 'local'
-        run: |
-          set -euxo pipefail
-
-          .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels ${{ matrix.download-kernel-images }}
+          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v2-${{ matrix.vm-kernels }}
 
       - name: Cleanup stale kernels and modules
         run: rm -rf test/.tmp/boot test/.tmp/lib
@@ -380,12 +371,12 @@ jobs:
         run: cargo xtask integration-test local
 
       - name: Run virtualized integration tests
-        if: matrix.download-kernel-images != 'local'
+        if: matrix.vm-kernels != 'local'
         run: |
           set -euxo pipefail
 
-          find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
-            cargo xtask integration-test vm --cache-dir test/.tmp
+          cargo xtask integration-test vm --cache-dir test/.tmp \
+            --kernel-arch ${{ matrix.vm-kernels }}
 
   check:
     if: always()
