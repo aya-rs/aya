@@ -278,9 +278,11 @@ jobs:
           - ubuntu-24.04-arm
         vm-kernels:
           - arm64 5.10
+          - arm64 5.15
           - arm64 6.1
+          - arm64 6.6
           - arm64 6.12
-          - arm64 6.17
+          - arm64 6.18
         skip-local:
           - true
         include:
@@ -292,7 +294,7 @@ jobs:
 
           # We don't use ubuntu-latest because we care about the apt packages available.
           - os: ubuntu-24.04
-            vm-kernels: amd64 5.10 6.1 6.12 6.17
+            vm-kernels: amd64 5.10 5.15 6.1 6.6 6.12 6.18
           - os: ubuntu-24.04-arm
             # Native arm runner for local tests only; arm runners don't support
             # nested virtualization so running them here would be slow.
