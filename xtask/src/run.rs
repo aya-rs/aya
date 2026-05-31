@@ -650,8 +650,13 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
 
                 let target = format!("{guest_arch}-unknown-linux-musl");
 
-                let test_distro_args =
-                    ["--package", "test-distro", "--release", "--features", "xz2"];
+                let test_distro_args = [
+                    "--package",
+                    "test-distro",
+                    "--release",
+                    "--features",
+                    "xz2,zstd",
+                ];
                 let test_distro: Vec<(String, PathBuf)> =
                     build(Some(&target), |cmd| cmd.args(test_distro_args))
                         .context("building test-distro package failed")?;
