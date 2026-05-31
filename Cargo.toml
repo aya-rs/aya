@@ -110,6 +110,7 @@ test-log = { version = "0.2.13", default-features = false }
 testing_logger = { version = "0.1.1", default-features = false }
 thiserror = { version = "2.0.3", default-features = false }
 tokio = { version = "1.24.0", default-features = false }
+ureq = { version = "3.3.0", default-features = false, features = ["rustls"] }
 walkdir = { version = "2", default-features = false }
 which = { version = "8.0.0", default-features = false }
 xdpilone = { version = "1.0.5", default-features = false }
