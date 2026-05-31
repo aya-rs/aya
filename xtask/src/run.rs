@@ -935,15 +935,15 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     }
                 }
 
-                let output = qemu_child
-                    .wait_with_output()
+                let status = qemu_child
+                    .wait()
                     .with_context(|| format!("failed to wait for {qemu:?}"))?;
-                let Output { status, .. } = &output;
-                if status.code() != Some(0) {
-                    bail!("{qemu:?} failed: {output:?}")
-                }
 
                 stderr.join().unwrap()?;
+
+                if status.code() != Some(0) {
+                    bail!("{qemu:?} failed: {status}")
+                }
 
                 let outcome = outcome.ok_or_else(|| anyhow!("init did not exit"))?;
                 match outcome {
