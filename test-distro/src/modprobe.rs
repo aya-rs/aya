@@ -9,7 +9,7 @@ use anyhow::{Context as _, anyhow, bail};
 use clap::Parser;
 use glob::glob;
 use nix::kmod::init_module;
-use test_distro::{read_to_end, resolve_modules_dir};
+use test_distro::{Compression, read_to_end, resolve_modules_dir};
 
 macro_rules! output {
     ($quiet:expr, $($arg:tt)*) => {
@@ -58,12 +58,17 @@ fn try_main(quiet: bool, name: String) -> anyhow::Result<()> {
 
     output!(quiet, "loading module: {}", module_path.display());
 
-    let extension = module_path
+    let compression = match module_path
         .as_path()
         .extension()
-        .ok_or_else(|| anyhow!("module has no extension: {}", module_path.display()))?;
+        .and_then(|extension| extension.to_str())
+    {
+        Some("xz") => Compression::Xz,
+        Some("zst") => Compression::Zstd,
+        _ => Compression::None,
+    };
 
-    let contents = read_to_end(&module_path, extension == "xz")
+    let contents = read_to_end(&module_path, compression)
         .with_context(|| format!("read_to_end({})", module_path.display()))?;
 
     if !contents.starts_with(&[0x7f, 0x45, 0x4c, 0x46]) {
