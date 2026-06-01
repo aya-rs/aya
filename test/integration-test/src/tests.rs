@@ -68,4 +68,5 @@ mod strncmp;
 mod tc_netlink;
 mod tcx;
 mod uprobe_cookie;
+mod user_ring_buf;
 mod xdp;
