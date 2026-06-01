@@ -861,7 +861,7 @@ impl MapData {
 
     pub(crate) fn create_pinned_by_name<P: AsRef<Path>>(
         path: P,
-        obj: aya_obj::Map,
+        mut obj: aya_obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
         inner_map_obj: Option<aya_obj::Map>,
@@ -883,6 +883,15 @@ impl MapData {
             }
         };
         if let Ok(fd) = bpf_get_object(&path_string) {
+            // The pinned map already exists, so its definition lives in the kernel rather than in
+            // `obj`. Ring buffers size their mmap from `max_entries`, but the ELF value is often
+            // zero (resolved at load time), so refresh it from the kernel for those map types.
+            let map_type = obj.map_type();
+            if map_type == bpf_map_type::BPF_MAP_TYPE_RINGBUF as u32
+                || map_type == bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF as u32
+            {
+                obj.set_max_entries(MapInfo::new_from_fd(fd.as_fd())?.max_entries());
+            }
             Ok(Self {
                 obj,
                 fd: MapFd::from_fd(fd),
