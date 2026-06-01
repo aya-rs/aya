@@ -87,6 +87,7 @@ pub mod sk_storage;
 pub mod sock;
 pub mod stack;
 pub mod stack_trace;
+pub mod user_ring_buf;
 pub mod xdp;
 
 pub use array::{Array, CgroupArray, PerCpuArray, ProgramArray};
@@ -109,6 +110,7 @@ pub use sk_storage::SkStorage;
 pub use sock::{ReusePortSockArray, SockHash, SockMap};
 pub use stack::Stack;
 pub use stack_trace::StackTraceMap;
+pub use user_ring_buf::UserRingBuf;
 pub use xdp::{CpuMap, DevMap, DevMapHash, XskMap};
 
 /// Trait for constructing a typed map from [`MapData`].
@@ -362,6 +364,8 @@ pub enum Map {
     StackTraceMap(MapData),
     /// An unsupported map type.
     Unsupported(MapData),
+    /// A [`UserRingBuf`] map.
+    UserRingBuf(MapData),
     /// A [`XskMap`] map.
     XskMap(MapData),
 }
@@ -399,6 +403,7 @@ impl Map {
             Self::Stack(map) => map.obj.map_type(),
             Self::StackTraceMap(map) => map.obj.map_type(),
             Self::Unsupported(map) => map.obj.map_type(),
+            Self::UserRingBuf(map) => map.obj.map_type(),
             Self::XskMap(map) => map.obj.map_type(),
         }
     }
@@ -438,6 +443,7 @@ impl Map {
             Self::Stack(map) => map.pin(path),
             Self::StackTraceMap(map) => map.pin(path),
             Self::Unsupported(map) => map.pin(path),
+            Self::UserRingBuf(map) => map.pin(path),
             Self::XskMap(map) => map.pin(path),
         }
     }
@@ -484,7 +490,7 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_STRUCT_OPS => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE => Self::InodeStorage(map_data),
             bpf_map_type::BPF_MAP_TYPE_TASK_STORAGE => Self::Unsupported(map_data),
-            bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF => Self::UserRingBuf(map_data),
             bpf_map_type::BPF_MAP_TYPE_CGRP_STORAGE => Self::CgrpStorage(map_data),
             bpf_map_type::BPF_MAP_TYPE_ARENA => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED => {
@@ -623,6 +629,7 @@ impl_try_from_map!(() {
     RingBuf,
     SockMap,
     StackTraceMap,
+    UserRingBuf,
     XskMap,
 });
 
@@ -709,6 +716,7 @@ impl_from_map_data!(() {
 // PerfEventArray and RingBuf use map_data() instead of inner field.
 impl_from_map_data!(<()> PerfEventArray via map_data);
 impl_from_map_data!(<()> RingBuf via map_data);
+impl_from_map_data!(<()> UserRingBuf via map_data);
 
 impl_from_map_data!((V) {
     Array, BloomFilter, CgrpStorage, InodeStorage, PerCpuArray,
