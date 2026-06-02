@@ -7937,6 +7937,7 @@ pub const fn aya::VerifierLogLevel::iter_names(&self) -> bitflags::iter::IterNam
 impl bitflags::traits::Flags for aya::VerifierLogLevel
 pub type aya::VerifierLogLevel::Bits = u32
 pub const aya::VerifierLogLevel::FLAGS: &'static [bitflags::traits::Flag<aya::VerifierLogLevel>]
+pub fn aya::VerifierLogLevel::all_named() -> aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::bits(&self) -> u32
 pub fn aya::VerifierLogLevel::from_bits_retain(u32) -> aya::VerifierLogLevel
 impl bitflags::traits::PublicFlags for aya::VerifierLogLevel
