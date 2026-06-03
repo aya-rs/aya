@@ -622,7 +622,7 @@ impl Object {
     }
 
     fn parse_btf(&mut self, section: &Section<'_>) -> Result<(), BtfError> {
-        self.btf = Some(Btf::parse(section.data, self.endianness)?);
+        self.btf = Some(Btf::parse_bpf_object(section.data, self.endianness)?);
 
         Ok(())
     }

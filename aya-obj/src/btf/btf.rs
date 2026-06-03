@@ -25,6 +25,7 @@ use crate::{
 
 pub(crate) const MAX_RESOLVE_DEPTH: usize = 32;
 pub(crate) const MAX_SPEC_LEN: usize = 64;
+const BPF_PTR_SIZE: u32 = 8;
 
 /// The error type returned when `BTF` operations fail.
 #[derive(thiserror::Error, Debug)]
@@ -298,6 +299,7 @@ pub struct Btf {
     header: btf_header,
     strings: Vec<u8>,
     types: BtfTypes,
+    pointer_size: u32,
     _endianness: Endianness,
 }
 
@@ -402,6 +404,7 @@ impl Btf {
             },
             strings: vec![0],
             types: BtfTypes::default(),
+            pointer_size: size_of::<&()>() as u32,
             _endianness: Endianness::default(),
         }
     }
@@ -452,6 +455,18 @@ impl Btf {
 
     /// Parses BTF from binary data of the given endianness
     pub fn parse(data: &[u8], endianness: Endianness) -> Result<Self, BtfError> {
+        Self::parse_with_pointer_size(data, endianness, size_of::<&()>() as u32)
+    }
+
+    pub(crate) fn parse_bpf_object(data: &[u8], endianness: Endianness) -> Result<Self, BtfError> {
+        Self::parse_with_pointer_size(data, endianness, BPF_PTR_SIZE)
+    }
+
+    fn parse_with_pointer_size(
+        data: &[u8],
+        endianness: Endianness,
+        pointer_size: u32,
+    ) -> Result<Self, BtfError> {
         if data.len() < size_of::<btf_header>() {
             return Err(BtfError::InvalidHeader);
         }
@@ -472,6 +487,7 @@ impl Btf {
             header,
             strings,
             types,
+            pointer_size,
             _endianness: endianness,
         })
     }
@@ -567,6 +583,7 @@ impl Btf {
                     type_id = array.element_type;
                     continue;
                 }
+                BtfType::Ptr(_) => self.pointer_size,
                 other => {
                     if let Some(size) = other.size() {
                         size
@@ -617,9 +634,10 @@ impl Btf {
                     return Ok(max_align);
                 }
 
+                BtfType::Ptr(_) => self.pointer_size,
                 other => {
                     if let Some(size) = other.size() {
-                        u32::min(BtfType::ptr_size(), size)
+                        u32::min(self.pointer_size, size)
                     } else if let Some(next) = other.btf_type() {
                         type_id = next;
                         continue;
@@ -2513,7 +2531,7 @@ mod tests {
         // Build a struct:
         // struct S { u64 a; u32 b; };
         // a @ 0 bits (8-byte aligned), b @ 64 bits (8 bytes), total size 16 bytes.
-        // On 32-bit architectures, u64 alignment is capped at ptr_size() (4 bytes).
+        // u64 alignment is capped at the BTF pointer size.
         let mut btf = Btf::new();
         let u32_ty = btf.add_type(BtfType::Int(Int::new(0, 4, IntEncoding::None, 0)));
         let u64_ty = btf.add_type(BtfType::Int(Int::new(0, 8, IntEncoding::None, 0)));
@@ -2533,9 +2551,21 @@ mod tests {
         let s_id = btf.add_type(BtfType::Struct(Struct::new(0, members, 16)));
 
         let align = btf.type_align(s_id).unwrap();
-        // Alignment is capped at ptr_size(), so on 32-bit archs it's 4, on 64-bit it's 8
-        let expected_align = usize::min(BtfType::ptr_size() as usize, 8);
+        let expected_align = usize::min(btf.pointer_size as usize, 8);
         assert_eq!(align, expected_align);
+    }
+
+    #[test]
+    fn parse_bpf_object_uses_bpf_pointer_size() {
+        let mut btf = Btf::new();
+        let int_type = btf.add_type(BtfType::Int(Int::new(0, 4, IntEncoding::None, 0)));
+        let ptr_type = btf.add_type(BtfType::Ptr(Ptr::new(0, int_type)));
+        let raw = btf.to_bytes();
+
+        let btf = Btf::parse_bpf_object(&raw, Endianness::default()).unwrap();
+
+        assert_eq!(btf.type_size(ptr_type).unwrap(), 8);
+        assert_eq!(btf.type_align(ptr_type).unwrap(), 8);
     }
 
     #[test]
