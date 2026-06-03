@@ -1709,12 +1709,208 @@ pub(crate) struct SecInfo<'a> {
 
 #[cfg(test)]
 mod tests {
-    use std::{borrow::ToOwned as _, vec};
+    use std::vec;
 
     use assert_matches::assert_matches;
 
     use super::*;
     use crate::btf::{BtfParam, DeclTag, Float, Func, FuncProto, Ptr, TypeTag};
+
+    fn materialize_test_scalar(
+        value: &[u8],
+        target_type_size: usize,
+        signed: bool,
+        max_value: Option<u64>,
+        endianness: Endianness,
+    ) -> Result<Vec<u8>, BtfError> {
+        materialize_scalar_value(
+            "CONFIG_TEST",
+            value,
+            target_type_size,
+            signed,
+            max_value,
+            endianness,
+        )
+    }
+
+    fn assert_scalar_out_of_range(result: Result<Vec<u8>, BtfError>) {
+        assert_matches!(
+            result,
+            Err(BtfError::ExternalSymbolValueOutOfRange { symbol_name })
+                if symbol_name == "CONFIG_TEST"
+        );
+    }
+
+    #[test]
+    fn materialize_scalar_value_accepts_unsigned_boundaries() {
+        assert_eq!(
+            materialize_test_scalar(&[0], 1, false, None, Endianness::Little).unwrap(),
+            vec![0]
+        );
+        assert_eq!(
+            materialize_test_scalar(&[0xff], 1, false, None, Endianness::Little).unwrap(),
+            vec![0xff]
+        );
+        assert_eq!(
+            materialize_test_scalar(&[0xff, 0xff], 2, false, None, Endianness::Big).unwrap(),
+            vec![0xff, 0xff]
+        );
+    }
+
+    #[test]
+    fn materialize_scalar_value_rejects_unsigned_overflow() {
+        // match libbpf: narrowing is allowed only when discarded bytes are redundant
+        assert_scalar_out_of_range(materialize_test_scalar(
+            &[0x00, 0x01],
+            1,
+            false,
+            None,
+            Endianness::Little,
+        ));
+        assert_scalar_out_of_range(materialize_test_scalar(
+            &[0x01, 0x00],
+            1,
+            false,
+            None,
+            Endianness::Big,
+        ));
+        assert_scalar_out_of_range(materialize_test_scalar(
+            &[0x00, 0x00, 0x01],
+            2,
+            false,
+            None,
+            Endianness::Little,
+        ));
+    }
+
+    #[test]
+    fn materialize_scalar_value_accepts_signed_boundaries() {
+        const LE_I64_NEG_128: &[u8] = &[0x80, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
+        const LE_I64_POS_127: &[u8] = &[0x7f, 0, 0, 0, 0, 0, 0, 0];
+
+        assert_eq!(
+            materialize_test_scalar(LE_I64_NEG_128, 1, true, None, Endianness::Little).unwrap(),
+            vec![0x80]
+        );
+        assert_eq!(
+            materialize_test_scalar(LE_I64_POS_127, 1, true, None, Endianness::Little).unwrap(),
+            vec![0x7f]
+        );
+    }
+
+    #[test]
+    fn materialize_scalar_value_rejects_signed_overflow() {
+        const LE_I64_NEG_129: &[u8] = &[0x7f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
+        const LE_I64_POS_128: &[u8] = &[0x80, 0, 0, 0, 0, 0, 0, 0];
+
+        assert_scalar_out_of_range(materialize_test_scalar(
+            LE_I64_NEG_129,
+            1,
+            true,
+            None,
+            Endianness::Little,
+        ));
+        assert_scalar_out_of_range(materialize_test_scalar(
+            LE_I64_POS_128,
+            1,
+            true,
+            None,
+            Endianness::Little,
+        ));
+    }
+
+    #[test]
+    fn materialize_scalar_value_pads_and_truncates_for_endianness() {
+        // parsed kconfig numerics are byte arrays, but BTF externs declare their own width
+        assert_eq!(
+            materialize_test_scalar(&[0x34, 0x12], 4, false, None, Endianness::Little).unwrap(),
+            vec![0x34, 0x12, 0, 0]
+        );
+        assert_eq!(
+            materialize_test_scalar(&[0x12, 0x34], 4, false, None, Endianness::Big).unwrap(),
+            vec![0, 0, 0x12, 0x34]
+        );
+        assert_eq!(
+            materialize_test_scalar(&[0x34, 0x12, 0, 0], 2, false, None, Endianness::Little)
+                .unwrap(),
+            vec![0x34, 0x12]
+        );
+        assert_eq!(
+            materialize_test_scalar(&[0, 0, 0x12, 0x34], 2, false, None, Endianness::Big).unwrap(),
+            vec![0x12, 0x34]
+        );
+        assert_eq!(
+            materialize_test_scalar(&[0xff], 2, true, None, Endianness::Little).unwrap(),
+            vec![0xff, 0xff]
+        );
+        assert_eq!(
+            materialize_test_scalar(&[0xff], 2, true, None, Endianness::Big).unwrap(),
+            vec![0xff, 0xff]
+        );
+    }
+
+    #[test]
+    fn materialize_scalar_value_applies_max_value() {
+        // bool and libbpf_tristate callers use max_value to enforce their semantic range
+        assert_eq!(
+            materialize_test_scalar(&[0], 1, false, Some(1), Endianness::Little).unwrap(),
+            vec![0]
+        );
+        assert_eq!(
+            materialize_test_scalar(&[1], 1, false, Some(1), Endianness::Little).unwrap(),
+            vec![1]
+        );
+        assert_eq!(
+            materialize_test_scalar(&[2], 1, false, Some(2), Endianness::Little).unwrap(),
+            vec![2]
+        );
+        assert_scalar_out_of_range(materialize_test_scalar(
+            &[2],
+            1,
+            false,
+            Some(1),
+            Endianness::Little,
+        ));
+        assert_scalar_out_of_range(materialize_test_scalar(
+            &[3],
+            1,
+            false,
+            Some(2),
+            Endianness::Little,
+        ));
+    }
+
+    #[test]
+    fn materialize_scalar_value_rejects_invalid_widths() {
+        assert_scalar_out_of_range(materialize_test_scalar(
+            &[],
+            1,
+            false,
+            None,
+            Endianness::Little,
+        ));
+        assert_scalar_out_of_range(materialize_test_scalar(
+            &[0],
+            0,
+            false,
+            None,
+            Endianness::Little,
+        ));
+        assert_scalar_out_of_range(materialize_test_scalar(
+            &[0],
+            9,
+            false,
+            None,
+            Endianness::Little,
+        ));
+        assert_scalar_out_of_range(materialize_test_scalar(
+            &[0, 0, 0, 0, 0, 0, 0, 0, 0],
+            8,
+            false,
+            None,
+            Endianness::Little,
+        ));
+    }
 
     #[test]
     fn test_parse_header() {
