@@ -1006,6 +1006,51 @@ fn find_data_sec<'a>(btf: &'a Btf, name: &str) -> Result<Option<(usize, &'a Data
     Ok(None)
 }
 
+fn maybe_materialize_libbpf_tristate(
+    obj_btf: &Btf,
+    resolved_type: &BtfType,
+    symbol_name: &str,
+    data: &[u8],
+    tristate_marker: Option<u8>,
+    type_size: usize,
+    endianness: Endianness,
+) -> Result<Option<Vec<u8>>, BtfError> {
+    let is_libbpf_tristate = match resolved_type {
+        BtfType::Enum(enum_ty) => {
+            // match libbpf's BTF_KIND_ENUM validation
+            // https://github.com/libbpf/libbpf/blob/v1.4.0/src/libbpf.c#L4018-L4023
+            enum_ty.size == 4
+                && obj_btf.string_at(enum_ty.name_offset)?.as_ref() == "libbpf_tristate"
+        }
+        BtfType::Enum64(enum_ty) => {
+            obj_btf.string_at(enum_ty.name_offset)?.as_ref() == "libbpf_tristate"
+        }
+        _ => false,
+    };
+    if !is_libbpf_tristate {
+        return Ok(None);
+    }
+
+    let marker_data;
+    let data = if let Some(value) = tristate_marker {
+        marker_data = [match value {
+            b'n' => 0,
+            b'y' => 1,
+            b'm' => 2,
+            _ => {
+                return Err(BtfError::ExternalSymbolValueOutOfRange {
+                    symbol_name: symbol_name.into(),
+                });
+            }
+        }];
+        marker_data.as_slice()
+    } else {
+        data
+    };
+
+    materialize_scalar_value(symbol_name, data, type_size, false, Some(2), endianness).map(Some)
+}
+
 impl Object {
     // Validate one __kconfig extern against its declared BTF type and materialize
     // the bytes that should be written for it into the synthetic .kconfig section.
@@ -1046,49 +1091,16 @@ impl Object {
         // detect if the data is a tristate marker
         let tristate_marker = matches!(data.as_slice(), [b'n' | b'y' | b'm']).then(|| data[0]);
 
-        // libbpf treats enum/enum64 types named `libbpf_tristate` as the
-        // destination type for tristate config values; handle those before the
-        // integer/array match so both enum encodings share the same path
-        let is_libbpf_tristate = match resolved_type {
-            BtfType::Enum(enum_ty) => {
-                // match libbpf's BTF_KIND_ENUM validation
-                // https://github.com/libbpf/libbpf/blob/v1.4.0/src/libbpf.c#L4018-L4023
-                enum_ty.size == 4
-                    && obj_btf.string_at(enum_ty.name_offset)?.as_ref() == "libbpf_tristate"
-            }
-            BtfType::Enum64(enum_ty) => {
-                obj_btf.string_at(enum_ty.name_offset)?.as_ref() == "libbpf_tristate"
-            }
-            _ => false,
-        };
-        if is_libbpf_tristate {
-            let data = if let Some(value) = tristate_marker {
-                let value = match value {
-                    b'n' => 0,
-                    b'y' => 1,
-                    b'm' => 2,
-                    _ => {
-                        return Err(BtfError::ExternalSymbolValueOutOfRange {
-                            symbol_name: symbol_name.into(),
-                        });
-                    }
-                };
-                vec![value]
-            } else {
-                data
-            };
-
-            return Ok((
-                type_align,
-                materialize_scalar_value(
-                    symbol_name,
-                    &data,
-                    type_size,
-                    false,
-                    Some(2),
-                    endianness,
-                )?,
-            ));
+        if let Some(data) = maybe_materialize_libbpf_tristate(
+            obj_btf,
+            resolved_type,
+            symbol_name,
+            &data,
+            tristate_marker,
+            type_size,
+            endianness,
+        )? {
+            return Ok((type_align, data));
         }
 
         let data = match resolved_type {
