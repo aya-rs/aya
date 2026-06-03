@@ -318,7 +318,7 @@ fn add_type(header: &mut btf_header, types: &mut BtfTypes, btf_type: BtfType) ->
 fn materialize_scalar_value(
     symbol_name: &str,
     value: &[u8],
-    type_size: usize,
+    target_type_size: usize,
     signed: bool,
     max_value: Option<u64>,
     endianness: Endianness,
@@ -329,8 +329,8 @@ fn materialize_scalar_value(
         })
     };
     if value.is_empty()
-        || type_size == 0
-        || type_size > size_of::<u64>()
+        || target_type_size == 0
+        || target_type_size > size_of::<u64>()
         || value.len() > size_of::<u64>()
     {
         return out_of_range();
@@ -346,7 +346,7 @@ fn materialize_scalar_value(
             .iter()
             .fold(0u64, |value, byte| (value << u8::BITS) | u64::from(*byte)),
     };
-    let bits = type_size * u8::BITS as usize;
+    let target_type_bits = target_type_size * u8::BITS as usize;
     let value = if signed {
         let value = if value_bits == u64::BITS as usize {
             value as i64
@@ -355,16 +355,16 @@ fn materialize_scalar_value(
             ((value << (u64::BITS as usize - value_bits)) as i64)
                 >> (u64::BITS as usize - value_bits)
         };
-        if bits < i64::BITS as usize {
-            let min = -(1i64 << (bits - 1));
-            let max = (1i64 << (bits - 1)) - 1;
+        if target_type_bits < i64::BITS as usize {
+            let min = -(1i64 << (target_type_bits - 1));
+            let max = (1i64 << (target_type_bits - 1)) - 1;
             if !(min..=max).contains(&value) {
                 return out_of_range();
             }
         }
         value as u64
     } else {
-        if bits < u64::BITS as usize && value >= (1u64 << bits) {
+        if target_type_bits < u64::BITS as usize && value >= (1u64 << target_type_bits) {
             return out_of_range();
         }
         if max_value.is_some_and(|max| value > max) {
@@ -383,9 +383,9 @@ fn materialize_scalar_value(
     };
     let start = match endianness {
         Endianness::Little => 0,
-        Endianness::Big => size_of::<u64>() - type_size,
+        Endianness::Big => size_of::<u64>() - target_type_size,
     };
-    Ok(bytes[start..start + type_size].to_vec())
+    Ok(bytes[start..start + target_type_size].to_vec())
 }
 
 impl Btf {
