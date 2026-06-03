@@ -1273,7 +1273,8 @@ mod tests {
 
     #[test]
     fn test_parse_kconfig_rejects_invalid_utf8_as_malformed_line() {
-        let err = super::KConfig::parse(b"CONFIG_BROKEN=\xff\n").unwrap_err();
+        let err = super::KConfig::parse(b"CONFIG_VALID=y\nCONFIG_BROKEN=\xff\nCONFIG_OTHER=y\n")
+            .unwrap_err();
         assert!(matches!(
             err,
             super::KConfigError::MalformedLine { line }
