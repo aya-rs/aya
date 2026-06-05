@@ -100,7 +100,11 @@ fn main() -> Result<()> {
         ("kconfig_signed_i8.bpf.c", false),
         ("kconfig_invalid_bool.bpf.c", false),
         ("kconfig_invalid_array.bpf.c", false),
+        ("kconfig_int_tristate.bpf.c", false),
         ("kconfig_non_tristate_enum.bpf.c", false),
+        ("kconfig_string_tristate.bpf.c", false),
+        ("kconfig_tristate_enum.bpf.c", false),
+        ("kconfig_unknown_linux_strong.bpf.c", false),
     ];
     const C_BPF_HEADERS: &[&str] = &["reloc.h", "struct_with_scalars.h"];
 
