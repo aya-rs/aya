@@ -41,6 +41,23 @@ fn load_with_kconfig(bytes: &[u8], config: &[u8]) -> Result<Ebpf, EbpfError> {
         .load(bytes)
 }
 
+fn run_kconfig(config: &[u8]) -> Array<aya::maps::MapData, c_longlong> {
+    let mut bpf = load_with_kconfig(crate::KCONFIG, config).unwrap();
+
+    let prog: &mut UProbe = bpf.program_mut("test_kconfig").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+    prog.attach(
+        "trigger_kconfig",
+        "/proc/self/exe",
+        UProbeScope::CallingProcess,
+    )
+    .unwrap();
+
+    trigger_kconfig();
+
+    bpf.take_map("RESULTS").unwrap().try_into().unwrap()
+}
+
 fn read_u8_string<const LEN: usize>(
     results: &Array<aya::maps::MapData, c_longlong>,
     base: u32,
@@ -66,20 +83,7 @@ fn kconfig() {
     if !ensure_kconfig_support() {
         return;
     }
-    let mut bpf = load_with_kconfig(crate::KCONFIG, KCONFIG_TEST_CONFIG).unwrap();
-
-    let prog: &mut UProbe = bpf.program_mut("test_kconfig").unwrap().try_into().unwrap();
-    prog.load().unwrap();
-    prog.attach(
-        "trigger_kconfig",
-        "/proc/self/exe",
-        UProbeScope::CallingProcess,
-    )
-    .unwrap();
-
-    trigger_kconfig();
-
-    let results: Array<_, c_longlong> = bpf.take_map("RESULTS").unwrap().try_into().unwrap();
+    let results = run_kconfig(KCONFIG_TEST_CONFIG);
 
     assert_eq!(results.get(&CONFIG_BPF_INDEX, 0).unwrap(), 1);
     assert_eq!(results.get(&PANIC_TIMEOUT_INDEX, 0).unwrap(), -1);
@@ -110,6 +114,41 @@ fn kconfig() {
     );
 }
 
+#[test_log::test]
+fn kconfig_materializes_false_markers_and_numeric_scalars() {
+    if !ensure_kconfig_support() {
+        return;
+    }
+    let results = run_kconfig(KCONFIG_FALSE_AND_NUMERIC_SCALAR_CONFIG);
+
+    assert_eq!(results.get(&CONFIG_BPF_INDEX, 0).unwrap(), 0);
+    assert_eq!(results.get(&BPF_JIT_INDEX, 0).unwrap(), 0);
+    assert_eq!(
+        results.get(&CHAR_VALUE_INDEX, 0).unwrap(),
+        c_longlong::from(b'A')
+    );
+    assert_eq!(results.get(&BOOL_VALUE_INDEX, 0).unwrap(), 1);
+    assert_eq!(results.get(&TRISTATE_ENUM_INDEX, 0).unwrap(), 0);
+    assert_eq!(
+        read_u8_string::<DEFAULT_HOSTNAME_LEN>(&results, DEFAULT_HOSTNAME_INDEX),
+        nul_terminated_string(b"host")
+    );
+    assert_eq!(
+        read_u8_string::<TRUNCATED_STRING_LEN>(&results, TRUNCATED_STRING_INDEX),
+        *b"ab\0\0"
+    );
+}
+
+#[test_log::test]
+fn kconfig_materializes_yes_tristate_enums() {
+    if !ensure_kconfig_support() {
+        return;
+    }
+    let results = run_kconfig(KCONFIG_YES_TRISTATE_CONFIG);
+
+    assert_eq!(results.get(&TRISTATE_ENUM_INDEX, 0).unwrap(), 1);
+}
+
 #[unsafe(no_mangle)]
 #[inline(never)]
 extern "C" fn trigger_kconfig() {
@@ -126,6 +165,28 @@ CONFIG_CHAR_VALUE=m
 CONFIG_BOOL_VALUE=y
 CONFIG_TRISTATE_ENUM=m
 CONFIG_TRUNCATED_STRING="abcdef"
+"#;
+
+const KCONFIG_FALSE_AND_NUMERIC_SCALAR_CONFIG: &[u8] = br#"
+CONFIG_BPF=n
+CONFIG_PANIC_TIMEOUT=0
+CONFIG_BPF_JIT=0
+CONFIG_DEFAULT_HOSTNAME="host"
+CONFIG_CHAR_VALUE=65
+CONFIG_BOOL_VALUE=1
+CONFIG_TRISTATE_ENUM=n
+CONFIG_TRUNCATED_STRING="ab"
+"#;
+
+const KCONFIG_YES_TRISTATE_CONFIG: &[u8] = br#"
+CONFIG_BPF=y
+CONFIG_PANIC_TIMEOUT=0
+CONFIG_BPF_JIT=y
+CONFIG_DEFAULT_HOSTNAME="host"
+CONFIG_CHAR_VALUE=0
+CONFIG_BOOL_VALUE=0
+CONFIG_TRISTATE_ENUM=y
+CONFIG_TRUNCATED_STRING="ab"
 "#;
 
 #[test_log::test]
@@ -207,6 +268,19 @@ fn kconfig_rejects_invalid_bool_scalars() {
 }
 
 #[test_log::test]
+fn kconfig_rejects_out_of_range_numeric_bool_scalars() {
+    if !ensure_kconfig_support() {
+        return;
+    }
+
+    assert_matches!(
+        load_with_kconfig(crate::KCONFIG_INVALID_BOOL, b"CONFIG_BOOL_VALUE=2\n"),
+        Err(EbpfError::BtfError(BtfError::ExternalSymbolValueOutOfRange { symbol_name }))
+            if symbol_name == "CONFIG_BOOL_VALUE"
+    );
+}
+
+#[test_log::test]
 fn kconfig_rejects_unsized_string_arrays() {
     if !ensure_kconfig_support() {
         return;
@@ -223,6 +297,32 @@ fn kconfig_rejects_unsized_string_arrays() {
 }
 
 #[test_log::test]
+fn kconfig_rejects_tristate_markers_for_wide_ints() {
+    if !ensure_kconfig_support() {
+        return;
+    }
+
+    assert_matches!(
+        load_with_kconfig(crate::KCONFIG_INT_TRISTATE, b"CONFIG_INT_VALUE=m\n"),
+        Err(EbpfError::BtfError(BtfError::ExternalSymbolValueOutOfRange { symbol_name }))
+            if symbol_name == "CONFIG_INT_VALUE"
+    );
+}
+
+#[test_log::test]
+fn kconfig_rejects_tristate_markers_for_strings() {
+    if !ensure_kconfig_support() {
+        return;
+    }
+
+    assert_matches!(
+        load_with_kconfig(crate::KCONFIG_STRING_TRISTATE, b"CONFIG_STRING_VALUE=m\n"),
+        Err(EbpfError::BtfError(BtfError::ExternalSymbolValueOutOfRange { symbol_name }))
+            if symbol_name == "CONFIG_STRING_VALUE"
+    );
+}
+
+#[test_log::test]
 fn kconfig_rejects_non_tristate_enums() {
     if !ensure_kconfig_support() {
         return;
@@ -232,5 +332,31 @@ fn kconfig_rejects_non_tristate_enums() {
         load_with_kconfig(crate::KCONFIG_NON_TRISTATE_ENUM, b"CONFIG_NOT_TRISTATE=m\n"),
         Err(EbpfError::BtfError(BtfError::InvalidExternalSymbol { symbol_name }))
             if symbol_name == "CONFIG_NOT_TRISTATE"
+    );
+}
+
+#[test_log::test]
+fn kconfig_rejects_out_of_range_tristate_enums() {
+    if !ensure_kconfig_support() {
+        return;
+    }
+
+    assert_matches!(
+        load_with_kconfig(crate::KCONFIG_TRISTATE_ENUM, b"CONFIG_TRISTATE_ENUM=3\n"),
+        Err(EbpfError::BtfError(BtfError::ExternalSymbolValueOutOfRange { symbol_name }))
+            if symbol_name == "CONFIG_TRISTATE_ENUM"
+    );
+}
+
+#[test_log::test]
+fn kconfig_rejects_unknown_strong_linux_externs() {
+    if !ensure_kconfig_support() {
+        return;
+    }
+
+    assert_matches!(
+        load_with_kconfig(crate::KCONFIG_UNKNOWN_LINUX_STRONG, b""),
+        Err(EbpfError::BtfError(BtfError::InvalidExternalSymbol { symbol_name }))
+            if symbol_name == "LINUX_HAS_FUTURE_FEATURE"
     );
 }
