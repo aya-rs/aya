@@ -18,7 +18,11 @@ bpf_file!(
     KCONFIG_SIGNED_I8 => "kconfig_signed_i8.bpf.o",
     KCONFIG_INVALID_BOOL => "kconfig_invalid_bool.bpf.o",
     KCONFIG_INVALID_ARRAY => "kconfig_invalid_array.bpf.o",
+    KCONFIG_INT_TRISTATE => "kconfig_int_tristate.bpf.o",
     KCONFIG_NON_TRISTATE_ENUM => "kconfig_non_tristate_enum.bpf.o",
+    KCONFIG_STRING_TRISTATE => "kconfig_string_tristate.bpf.o",
+    KCONFIG_TRISTATE_ENUM => "kconfig_tristate_enum.bpf.o",
+    KCONFIG_UNKNOWN_LINUX_STRONG => "kconfig_unknown_linux_strong.bpf.o",
     RINGBUF_BTF => "ringbuf-btf.bpf.o",
 
     ENUM_SIGNED_32_RELOC_BPF => "enum_signed_32_reloc.bpf.o",
