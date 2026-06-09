@@ -5,6 +5,60 @@ use crate::{
     generated::{bpf_attach_type, bpf_link_type},
 };
 
+/// The type of BPF link
+#[derive(Copy, Clone, Debug)]
+pub enum BpfLinkType {
+    /// Not Specified
+    Unspecified,
+    /// Raw Tracepoint
+    RawTracepoint,
+    /// Tracing
+    Tracing,
+    /// Cgroup
+    Cgroup,
+    /// Iter
+    Iter,
+    /// Netns
+    Netns,
+    /// Xdp
+    Xdp,
+    /// Perf Event
+    PerfEvent,
+    /// Kprobe Multi
+    KprobeMulti,
+    /// Struct Ops
+    StructOps,
+    /// Netfilter
+    Netfilter,
+    /// Tcx
+    Tcx,
+    /// Uprobe Multi
+    UprobeMulti,
+    /// Netkit
+    Netkit,
+}
+
+impl From<BpfLinkType> for bpf_link_type {
+    fn from(value: BpfLinkType) -> Self {
+        match value {
+            BpfLinkType::Unspecified => Self::BPF_LINK_TYPE_UNSPEC,
+            BpfLinkType::RawTracepoint => Self::BPF_LINK_TYPE_RAW_TRACEPOINT,
+            BpfLinkType::Tracing => Self::BPF_LINK_TYPE_TRACING,
+            BpfLinkType::Cgroup => Self::BPF_LINK_TYPE_CGROUP,
+            BpfLinkType::Iter => Self::BPF_LINK_TYPE_ITER,
+            BpfLinkType::Netns => Self::BPF_LINK_TYPE_NETNS,
+            BpfLinkType::Xdp => Self::BPF_LINK_TYPE_XDP,
+            BpfLinkType::PerfEvent => Self::BPF_LINK_TYPE_PERF_EVENT,
+            BpfLinkType::KprobeMulti => Self::BPF_LINK_TYPE_KPROBE_MULTI,
+            BpfLinkType::StructOps => Self::BPF_LINK_TYPE_STRUCT_OPS,
+            BpfLinkType::Netfilter => Self::BPF_LINK_TYPE_NETFILTER,
+            BpfLinkType::Tcx => Self::BPF_LINK_TYPE_TCX,
+            BpfLinkType::UprobeMulti => Self::BPF_LINK_TYPE_UPROBE_MULTI,
+            BpfLinkType::Netkit => Self::BPF_LINK_TYPE_NETKIT,
+        }
+    }
+}
+
 impl TryFrom<u32> for bpf_link_type {
     type Error = InvalidTypeBinding<u32>;
 

@@ -1713,7 +1713,7 @@ impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::lpm_trie::L
 impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::lpm_trie::LpmTrie<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, K: core::panic::unwind_safe::UnwindSafe, V: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::MapData
 impl aya::maps::MapData
-pub fn aya::maps::MapData::create(aya_obj::maps::Map, &str, core::option::Option<std::os::fd::owned::BorrowedFd<'_>>) -> core::result::Result<Self, aya::maps::MapError>
+pub fn aya::maps::MapData::create(aya_obj::maps::Map, &str, core::option::Option<std::os::fd::owned::BorrowedFd<'_>>, core::option::Option<std::os::fd::owned::BorrowedFd<'_>>, aya_obj::obj::Features) -> core::result::Result<Self, aya::maps::MapError>
 pub const fn aya::maps::MapData::fd(&self) -> &aya::maps::MapFd
 pub fn aya::maps::MapData::from_fd(std::os::fd::owned::OwnedFd) -> core::result::Result<Self, aya::maps::MapError>
 pub fn aya::maps::MapData::from_id(u32) -> core::result::Result<Self, aya::maps::MapError>
@@ -7693,11 +7693,57 @@ impl core::marker::Unpin for aya::sys::SyscallError
 impl core::marker::UnsafeUnpin for aya::sys::SyscallError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::sys::SyscallError
 impl !core::panic::unwind_safe::UnwindSafe for aya::sys::SyscallError
+pub fn aya::sys::detect_features_with_token(std::os::fd::owned::BorrowedFd<'_>) -> aya_obj::obj::Features
 pub fn aya::sys::enable_stats(aya::sys::Stats) -> core::result::Result<std::os::fd::owned::OwnedFd, aya::sys::SyscallError>
 pub fn aya::sys::is_helper_supported(aya::programs::ProgramType, aya::sys::BpfHelper) -> core::result::Result<bool, aya::programs::ProgramError>
 pub fn aya::sys::is_map_supported(aya::maps::MapType) -> core::result::Result<bool, aya::sys::SyscallError>
 pub fn aya::sys::is_program_supported(aya::programs::ProgramType) -> core::result::Result<bool, aya::programs::ProgramError>
 pub type aya::sys::BpfHelper = aya_obj::generated::linux_bindings_x86_64::bpf_func_id
+pub mod aya::token
+pub struct aya::token::BpfToken
+impl aya::token::BpfToken
+pub fn aya::token::BpfToken::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
+pub fn aya::token::BpfToken::create<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, std::io::error::Error>
+impl core::marker::Freeze for aya::token::BpfToken
+impl core::marker::Send for aya::token::BpfToken
+impl core::marker::Sync for aya::token::BpfToken
+impl core::marker::Unpin for aya::token::BpfToken
+impl core::marker::UnsafeUnpin for aya::token::BpfToken
+impl core::panic::unwind_safe::RefUnwindSafe for aya::token::BpfToken
+impl core::panic::unwind_safe::UnwindSafe for aya::token::BpfToken
+pub struct aya::token::FilesystemPermissions
+impl core::default::Default for aya::token::FilesystemPermissions
+pub fn aya::token::FilesystemPermissions::default() -> aya::token::FilesystemPermissions
+impl core::fmt::Debug for aya::token::FilesystemPermissions
+pub fn aya::token::FilesystemPermissions::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::token::FilesystemPermissions
+impl core::marker::Send for aya::token::FilesystemPermissions
+impl core::marker::Sync for aya::token::FilesystemPermissions
+impl core::marker::Unpin for aya::token::FilesystemPermissions
+impl core::marker::UnsafeUnpin for aya::token::FilesystemPermissions
+impl core::panic::unwind_safe::RefUnwindSafe for aya::token::FilesystemPermissions
+impl core::panic::unwind_safe::UnwindSafe for aya::token::FilesystemPermissions
+pub struct aya::token::FilesystemPermissionsBuilder
+impl aya::token::FilesystemPermissionsBuilder
+pub fn aya::token::FilesystemPermissionsBuilder::allow_attach_type(self, aya_obj::attach::BpfAttachType) -> Self
+pub fn aya::token::FilesystemPermissionsBuilder::allow_cmd(self, aya_obj::cmd::BpfCommand) -> Self
+pub fn aya::token::FilesystemPermissionsBuilder::allow_map_type(self, aya_obj::maps::BpfMapType) -> Self
+pub fn aya::token::FilesystemPermissionsBuilder::allow_prog_type(self, aya_obj::programs::BpfProgType) -> Self
+pub const fn aya::token::FilesystemPermissionsBuilder::build(self) -> aya::token::FilesystemPermissions
+pub const fn aya::token::FilesystemPermissionsBuilder::gid(self, u32) -> Self
+pub const fn aya::token::FilesystemPermissionsBuilder::uid(self, u32) -> Self
+impl core::default::Default for aya::token::FilesystemPermissionsBuilder
+pub fn aya::token::FilesystemPermissionsBuilder::default() -> aya::token::FilesystemPermissionsBuilder
+impl core::fmt::Debug for aya::token::FilesystemPermissionsBuilder
+pub fn aya::token::FilesystemPermissionsBuilder::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::token::FilesystemPermissionsBuilder
+impl core::marker::Send for aya::token::FilesystemPermissionsBuilder
+impl core::marker::Sync for aya::token::FilesystemPermissionsBuilder
+impl core::marker::Unpin for aya::token::FilesystemPermissionsBuilder
+impl core::marker::UnsafeUnpin for aya::token::FilesystemPermissionsBuilder
+impl core::panic::unwind_safe::RefUnwindSafe for aya::token::FilesystemPermissionsBuilder
+impl core::panic::unwind_safe::UnwindSafe for aya::token::FilesystemPermissionsBuilder
+pub fn aya::token::create_bpf_filesystem<P: core::convert::AsRef<std::path::Path>>(P, aya::token::FilesystemPermissions) -> core::result::Result<(), std::io::error::Error>
 pub mod aya::util
 pub struct aya::util::KernelVersion
 impl aya::util::KernelVersion
@@ -7804,6 +7850,7 @@ pub fn aya::EbpfLoader<'a>::new() -> Self
 pub fn aya::EbpfLoader<'a>::override_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, &'a str, T, bool) -> &mut Self
 pub fn aya::EbpfLoader<'a>::set_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, &'a str, T, bool) -> &mut Self
 pub fn aya::EbpfLoader<'a>::set_max_entries(&mut self, &'a str, u32) -> &mut Self
+pub fn aya::EbpfLoader<'a>::token(&mut self, &aya::token::BpfToken) -> &mut Self
 pub const fn aya::EbpfLoader<'a>::verifier_log_level(&mut self, aya::VerifierLogLevel) -> &mut Self
 impl core::default::Default for aya::EbpfLoader<'_>
 pub fn aya::EbpfLoader<'_>::default() -> Self
@@ -7937,7 +7984,6 @@ pub const fn aya::VerifierLogLevel::iter_names(&self) -> bitflags::iter::IterNam
 impl bitflags::traits::Flags for aya::VerifierLogLevel
 pub type aya::VerifierLogLevel::Bits = u32
 pub const aya::VerifierLogLevel::FLAGS: &'static [bitflags::traits::Flag<aya::VerifierLogLevel>]
-pub fn aya::VerifierLogLevel::all_named() -> aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::bits(&self) -> u32
 pub fn aya::VerifierLogLevel::from_bits_retain(u32) -> aya::VerifierLogLevel
 impl bitflags::traits::PublicFlags for aya::VerifierLogLevel

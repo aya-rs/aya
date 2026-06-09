@@ -113,7 +113,12 @@ impl CgroupSockopt {
         path: P,
         attach_type: CgroupSockoptAttachType,
     ) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+        let data = ProgramData::from_pinned_path(
+            path,
+            VerifierLogLevel::default(),
+            None,
+            crate::FEATURES.clone(),
+        )?;
         Ok(Self { data, attach_type })
     }
 }

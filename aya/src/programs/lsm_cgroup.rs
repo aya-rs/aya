@@ -82,7 +82,12 @@ impl LsmCgroup {
     /// On drop, any managed links are detached and the program is unloaded. This will not result in
     /// the program being unloaded from the kernel if it is still pinned.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+        let data = ProgramData::from_pinned_path(
+            path,
+            VerifierLogLevel::default(),
+            None,
+            crate::FEATURES.clone(),
+        )?;
         Ok(Self { data })
     }
 

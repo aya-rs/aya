@@ -16,10 +16,10 @@ use aya_obj::{
         VarLinkage,
     },
     generated::{
-        BPF_ALU64, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_F_TEST_RUN_ON_CPU, BPF_IMM, BPF_JMP, BPF_K,
-        BPF_LD, BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, bpf_attach_type, bpf_attr,
-        bpf_attr__bindgen_ty_7, bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_map_info,
-        bpf_map_type, bpf_prog_info, bpf_prog_type, bpf_stats_type,
+        BPF_ALU64, BPF_CALL, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_F_TEST_RUN_ON_CPU, BPF_IMM,
+        BPF_JMP, BPF_K, BPF_LD, BPF_MEM, BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, bpf_attach_type,
+        bpf_attr, bpf_attr__bindgen_ty_7, bpf_btf_info, bpf_cmd, bpf_func_id, bpf_insn,
+        bpf_link_info, bpf_map_info, bpf_map_type, bpf_prog_info, bpf_prog_type, bpf_stats_type,
     },
     maps::{LegacyMap, bpf_map_def},
 };
@@ -56,6 +56,7 @@ pub(crate) fn bpf_create_map(
     def: &aya_obj::Map,
     btf_fd: Option<BorrowedFd<'_>>,
     inner_map_fd: Option<BorrowedFd<'_>>,
+    token_fd: Option<BorrowedFd<'_>>,
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -122,6 +123,10 @@ pub(crate) fn bpf_create_map(
             .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
     }
 
+    if let Some(token_fd) = token_fd {
+        u.map_token_fd = token_fd.as_raw_fd();
+    }
+
     bpf_map_create(&mut attr)
 }
 
@@ -158,6 +163,7 @@ pub(crate) struct EbpfLoadProgramAttrs<'a> {
     pub(crate) line_info_rec_size: usize,
     pub(crate) line_info: LineSecInfo,
     pub(crate) flags: u32,
+    pub(crate) token_fd: Option<BorrowedFd<'a>>,
 }
 
 pub(crate) fn bpf_load_program(
@@ -218,6 +224,9 @@ pub(crate) fn bpf_load_program(
 
     if let Some(v) = aya_attr.attach_btf_id {
         u.attach_btf_id = v;
+    }
+    if let Some(token_fd) = aya_attr.token_fd {
+        u.prog_token_fd = token_fd.as_raw_fd();
     }
     bpf_prog_load(&mut attr)
 }
@@ -796,6 +805,13 @@ pub(crate) fn bpf_link_get_info_by_fd(fd: BorrowedFd<'_>) -> Result<bpf_link_inf
     bpf_obj_get_info_by_fd(fd, |_| {})
 }
 
+pub(crate) fn bpf_token_create(bpffs_fd: BorrowedFd<'_>) -> io::Result<crate::MockableFd> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    attr.token_create.bpffs_fd = bpffs_fd.as_raw_fd() as u32;
+    // SAFETY: BPF_TOKEN_CREATE returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_TOKEN_CREATE, &mut attr) }
+}
+
 pub(crate) fn btf_obj_get_info_by_fd(
     fd: BorrowedFd<'_>,
     buf: &mut [u8],
@@ -826,6 +842,7 @@ pub(crate) fn bpf_load_btf(
     raw_btf: &[u8],
     log_buf: &mut [u8],
     verifier_log_level: VerifierLogLevel,
+    token_fd: Option<BorrowedFd<'_>>,
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_7 };
@@ -835,6 +852,9 @@ pub(crate) fn bpf_load_btf(
         u.btf_log_level = verifier_log_level.bits();
         u.btf_log_buf = log_buf.as_mut_ptr() as u64;
         u.btf_log_size = log_buf.len() as u32;
+    }
+    if let Some(token_fd) = token_fd {
+        u.btf_token_fd = token_fd.as_raw_fd();
     }
     // SAFETY: `BPF_BTF_LOAD` returns a newly created fd.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_BTF_LOAD, &mut attr) }
@@ -930,6 +950,10 @@ pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<crate::MockableFd, Syscall
 }
 
 pub(crate) fn is_prog_name_supported() -> bool {
+    is_prog_name_supported_inner(None)
+}
+
+fn is_prog_name_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
     with_trivial_prog(ProgramType::TracePoint, |attr| {
         let u = unsafe { &mut attr.__bindgen_anon_3 };
         let name = c"aya_name_check";
@@ -937,6 +961,9 @@ pub(crate) fn is_prog_name_supported() -> bool {
         let len = cmp::min(name_bytes.len(), u.prog_name.len() - 1); // Ensure NULL termination.
         u.prog_name[..len]
             .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
+        if let Some(token_fd) = token_fd {
+            u.prog_token_fd = token_fd.as_raw_fd();
+        }
         bpf_prog_load(attr).is_ok()
     })
 }
@@ -1053,8 +1080,38 @@ pub(crate) fn is_probe_read_kernel_supported() -> bool {
     )
 }
 
+fn is_probe_read_kernel_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
+    let call = (BPF_JMP | BPF_CALL) as u8;
+    let exit = (BPF_JMP | BPF_EXIT) as u8;
+    let insns = [
+        new_insn(
+            call,
+            0,
+            0,
+            0,
+            bpf_func_id::BPF_FUNC_probe_read_kernel as i32,
+        ),
+        new_insn(exit, 0, 0, 0, 0),
+    ];
+    with_prog_insns(ProgramType::TracePoint, &insns, |attr| {
+        if let Some(token_fd) = token_fd {
+            let u = unsafe { &mut attr.__bindgen_anon_3 };
+            u.prog_token_fd = token_fd.as_raw_fd();
+        }
+        bpf_prog_load(attr).is_ok()
+    })
+}
+
 pub(crate) fn is_perf_link_supported() -> bool {
+    is_perf_link_supported_inner(None)
+}
+
+fn is_perf_link_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
     with_trivial_prog(ProgramType::TracePoint, |attr| {
+        if let Some(token_fd) = token_fd {
+            let u = unsafe { &mut attr.__bindgen_anon_3 };
+            u.prog_token_fd = token_fd.as_raw_fd();
+        }
         if let Ok(fd) = bpf_prog_load(attr) {
             let fd = fd.as_fd();
             // Uses an invalid target FD so we get EBADF if supported.
@@ -1074,6 +1131,10 @@ pub(crate) fn is_perf_link_supported() -> bool {
 }
 
 pub(crate) fn is_bpf_global_data_supported() -> bool {
+    is_bpf_global_data_supported_inner(None)
+}
+
+fn is_bpf_global_data_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
@@ -1094,6 +1155,8 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
         }),
         "aya_global",
         None,
+        token_fd,
+        Default::default(),
     );
 
     if let Ok(map) = map {
@@ -1117,6 +1180,10 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
         u.insns = insns.as_ptr() as u64;
         u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
 
+        if let Some(token_fd) = token_fd {
+            u.prog_token_fd = token_fd.as_raw_fd();
+        }
+
         bpf_prog_load(&mut attr).is_ok()
     } else {
         false
@@ -1130,8 +1197,34 @@ pub(crate) fn is_bpf_cookie_supported() -> bool {
     )
 }
 
+fn is_bpf_cookie_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
+    let call = (BPF_JMP | BPF_CALL) as u8;
+    let exit = (BPF_JMP | BPF_EXIT) as u8;
+    let insns = [
+        new_insn(
+            call,
+            0,
+            0,
+            0,
+            bpf_func_id::BPF_FUNC_get_attach_cookie as i32,
+        ),
+        new_insn(exit, 0, 0, 0, 0),
+    ];
+    with_prog_insns(ProgramType::KProbe, &insns, |attr| {
+        if let Some(token_fd) = token_fd {
+            let u = unsafe { &mut attr.__bindgen_anon_3 };
+            u.prog_token_fd = token_fd.as_raw_fd();
+        }
+        bpf_prog_load(attr).is_ok()
+    })
+}
+
 /// Tests whether [`CpuMap`], [`DevMap`] and [`DevMapHash`] support program ids.
 pub(crate) fn is_prog_id_supported(map_type: bpf_map_type) -> bool {
+    is_prog_id_supported_inner(map_type, None)
+}
+
+fn is_prog_id_supported_inner(map_type: bpf_map_type, token_fd: Option<BorrowedFd<'_>>) -> bool {
     assert_matches!(
         map_type,
         bpf_map_type::BPF_MAP_TYPE_CPUMAP
@@ -1148,19 +1241,31 @@ pub(crate) fn is_prog_id_supported(map_type: bpf_map_type) -> bool {
     u.max_entries = 1;
     u.map_flags = 0;
 
+    if let Some(token_fd) = token_fd {
+        u.map_token_fd = token_fd.as_raw_fd();
+    }
+
     bpf_map_create(&mut attr).is_ok()
 }
 
 pub(crate) fn is_btf_supported() -> bool {
+    is_btf_supported_inner(None)
+}
+
+fn is_btf_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
     btf.add_type(int_type);
     let btf_bytes = btf.to_bytes();
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
 pub(crate) fn is_btf_func_supported() -> bool {
+    is_btf_func_supported_inner(None)
+}
+
+fn is_btf_func_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
@@ -1187,10 +1292,14 @@ pub(crate) fn is_btf_func_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
 pub(crate) fn is_btf_func_global_supported() -> bool {
+    is_btf_func_global_supported_inner(None)
+}
+
+fn is_btf_func_global_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
@@ -1217,10 +1326,14 @@ pub(crate) fn is_btf_func_global_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
 pub(crate) fn is_btf_datasec_supported() -> bool {
+    is_btf_datasec_supported_inner(None)
+}
+
+fn is_btf_datasec_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
@@ -1241,19 +1354,33 @@ pub(crate) fn is_btf_datasec_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
 pub(crate) fn is_btf_datasec_zero_supported() -> bool {
+    is_btf_datasec_zero_supported_inner(None)
+}
+
+fn is_btf_datasec_zero_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string(".empty");
     let datasec_type = BtfType::DataSec(DataSec::new(name_offset, Vec::new(), 0));
     btf.add_type(datasec_type);
 
-    bpf_load_btf(btf.to_bytes().as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(
+        btf.to_bytes().as_slice(),
+        &mut [],
+        Default::default(),
+        token_fd,
+    )
+    .is_ok()
 }
 
 pub(crate) fn is_btf_enum64_supported() -> bool {
+    is_btf_enum64_supported_inner(None)
+}
+
+fn is_btf_enum64_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("enum64");
 
@@ -1266,10 +1393,14 @@ pub(crate) fn is_btf_enum64_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
 pub(crate) fn is_btf_float_supported() -> bool {
+    is_btf_float_supported_inner(None)
+}
+
+fn is_btf_float_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("float");
     let float_type = BtfType::Float(Float::new(name_offset, 16));
@@ -1277,10 +1408,14 @@ pub(crate) fn is_btf_float_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
 pub(crate) fn is_btf_decl_tag_supported() -> bool {
+    is_btf_decl_tag_supported_inner(None)
+}
+
+fn is_btf_decl_tag_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
@@ -1296,10 +1431,14 @@ pub(crate) fn is_btf_decl_tag_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
 }
 
 pub(crate) fn is_btf_type_tag_supported() -> bool {
+    is_btf_type_tag_supported_inner(None)
+}
+
+fn is_btf_type_tag_supported_inner(token_fd: Option<BorrowedFd<'_>>) -> bool {
     let mut btf = Btf::new();
 
     let int_type = BtfType::Int(Int::new(0, 4, IntEncoding::Signed, 0));
@@ -1313,7 +1452,36 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
 
     let btf_bytes = btf.to_bytes();
 
-    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()).is_ok()
+    bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd).is_ok()
+}
+
+/// Detects BPF and BTF features using the given BPF token for privilege delegation.
+pub fn detect_features_with_token(token_fd: BorrowedFd<'_>) -> aya_obj::Features {
+    use aya_obj::btf::BtfFeatures;
+
+    let token = Some(token_fd);
+    let btf = is_btf_supported_inner(token).then(|| {
+        BtfFeatures::new(
+            is_btf_func_supported_inner(token),
+            is_btf_func_global_supported_inner(token),
+            is_btf_datasec_supported_inner(token),
+            is_btf_datasec_zero_supported_inner(token),
+            is_btf_float_supported_inner(token),
+            is_btf_decl_tag_supported_inner(token),
+            is_btf_type_tag_supported_inner(token),
+            is_btf_enum64_supported_inner(token),
+        )
+    });
+    aya_obj::Features::new(
+        is_prog_name_supported_inner(token),
+        is_probe_read_kernel_supported_inner(token),
+        is_perf_link_supported_inner(token),
+        is_bpf_global_data_supported_inner(token),
+        is_bpf_cookie_supported_inner(token),
+        is_prog_id_supported_inner(bpf_map_type::BPF_MAP_TYPE_CPUMAP, token),
+        is_prog_id_supported_inner(bpf_map_type::BPF_MAP_TYPE_DEVMAP, token),
+        btf,
+    )
 }
 
 pub(super) fn bpf_prog_load(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
@@ -1568,7 +1736,7 @@ bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
 
         let name = CString::new("FILTER").unwrap();
         let btf_fd = unsafe { BorrowedFd::borrow_raw(BTF_FD) };
-        bpf_create_map(&name, &map, Some(btf_fd), None).unwrap();
+        bpf_create_map(&name, &map, Some(btf_fd), None, None).unwrap();
     }
 
     #[rstest]
@@ -1614,6 +1782,6 @@ bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
 
         let name = CString::new("TEST").unwrap();
         let btf_fd = unsafe { BorrowedFd::borrow_raw(BTF_FD) };
-        bpf_create_map(&name, &map, Some(btf_fd), None).unwrap();
+        bpf_create_map(&name, &map, Some(btf_fd), None, None).unwrap();
     }
 }
