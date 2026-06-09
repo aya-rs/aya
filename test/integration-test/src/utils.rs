@@ -15,31 +15,50 @@ use anyhow::{Context as _, Result};
 use aya::netlink_set_link_up;
 use libc::if_nametoindex;
 
+/// The root cgroup mount point on cgroup v2 systems.
 const CGROUP_ROOT: &str = "/sys/fs/cgroup";
+
+/// The name of the file used to assign PIDs to a cgroup.
 const CGROUP_PROCS: &str = "cgroup.procs";
 
+/// Returns `true` if the system is using cgroup v2, as determined by the
+/// presence of `cgroup.controllers` at the root of the cgroup mount.
 pub(crate) fn is_cgroup2() -> bool {
     // `cgroup.controllers` exists only at the root of a cgroup2 mount.
     Path::new(CGROUP_ROOT).join("cgroup.controllers").exists()
 }
 
+/// A handle to a child cgroup created under a [`Cgroup`].
+///
+/// On drop, the PIDs in this cgroup's `cgroup.procs` are moved back to the
+/// parent cgroup and the directory is removed.
 pub(crate) struct ChildCgroup<'a> {
+    /// The parent cgroup under which this child was created.
     parent: &'a Cgroup<'a>,
+    /// The filesystem path of this cgroup directory.
     path: Cow<'a, Path>,
 }
 
+/// A handle representing either the root cgroup or a child cgroup.
+///
+/// This enum is used to avoid unnecessary reference counting when the root
+/// cgroup is the only handle needed.
 pub(crate) enum Cgroup<'a> {
+    /// The root cgroup (`/sys/fs/cgroup`).
     Root,
+    /// A child cgroup created via [`Cgroup::create_child`].
     Child(ChildCgroup<'a>),
 }
 
 impl Cgroup<'static> {
+    /// Returns a handle to the root cgroup.
     pub(crate) fn root() -> Self {
         Self::Root
     }
 }
 
 impl<'a> Cgroup<'a> {
+    /// Returns the filesystem path for this cgroup.
     fn path(&self) -> &Path {
         match self {
             Self::Root => Path::new(CGROUP_ROOT),
@@ -47,6 +66,8 @@ impl<'a> Cgroup<'a> {
         }
     }
 
+    /// Creates a child cgroup with the given name under this cgroup and returns
+    /// a [`ChildCgroup`] handle to it.
     pub(crate) fn create_child(&'a self, name: &str) -> ChildCgroup<'a> {
         let path = self.path().join(name);
         fs::create_dir(&path).unwrap();
@@ -57,12 +78,15 @@ impl<'a> Cgroup<'a> {
         }
     }
 
+    /// Writes the given PID to this cgroup's `cgroup.procs` file, thereby
+    /// moving that process into this cgroup.
     pub(crate) fn write_pid(&self, pid: u32) {
         fs::write(self.path().join(CGROUP_PROCS), format!("{pid}\n")).unwrap();
     }
 }
 
 impl<'a> ChildCgroup<'a> {
+    /// Reads the cgroup directory and returns its file descriptor.
     pub(crate) fn fd(&self) -> fs::File {
         let Self { parent: _, path } = self;
         fs::OpenOptions::new()
@@ -71,12 +95,19 @@ impl<'a> ChildCgroup<'a> {
             .unwrap()
     }
 
+    /// Consumes `self` and returns a [`Cgroup::Child`] variant.
     pub(crate) fn into_cgroup(self) -> Cgroup<'a> {
         Cgroup::Child(self)
     }
 }
 
 impl Drop for ChildCgroup<'_> {
+    /// Moves all PIDs from this child cgroup back to the parent cgroup's
+    /// `cgroup.procs`, then removes this cgroup's directory.
+    ///
+    /// If this cgroup is empty, the directory is simply removed. Errors are
+    /// logged or cause a panic (depending on whether the runtime is already
+    /// unwinding) rather than propagating, to avoid double-panic.
     #[expect(
         clippy::print_stderr,
         reason = "drop handlers avoid panic-in-panic by logging errors"
@@ -124,16 +155,32 @@ impl Drop for ChildCgroup<'_> {
     }
 }
 
+/// A guard that creates and enters a new network namespace, restoring the
+/// previous namespace on drop.
+///
+/// The guard also brings up the `lo` (loopback) interface in the new
+/// namespace by default, since it is down in freshly created namespaces.
 pub(crate) struct NetNsGuard {
+    /// The name of the persisted network namespace.
     name: String,
+    /// File handle to the original network namespace, used for restoration on drop.
     old_ns: fs::File,
+    /// File handle to the newly created network namespace.
     new_ns: fs::File,
 }
 
 impl NetNsGuard {
+    /// The directory where network namespaces are persisted for user-space access.
     const PERSIST_DIR: &str = "/var/run/netns/";
+
+    /// The path to the calling thread's network namespace file.
     const THREAD_NETNS: &str = "/proc/thread-self/ns/net";
 
+    /// Creates a new network namespace guard.
+    ///
+    /// This creates a new network namespace, persists it under `/var/run/netns/`,
+    /// enters it, and brings up the `lo` interface. On drop, the guard restores
+    /// the previous namespace and cleans up the persisted namespace entry.
     #[expect(
         clippy::print_stdout,
         reason = "integration tests print namespace transitions for diagnostics"
@@ -196,12 +243,18 @@ impl NetNsGuard {
 }
 
 impl AsFd for NetNsGuard {
+    /// Returns a borrowed file descriptor for the new network namespace.
     fn as_fd(&self) -> BorrowedFd<'_> {
         self.new_ns.as_fd()
     }
 }
 
 impl Drop for NetNsGuard {
+    /// Restores the original network namespace and cleans up the persisted
+    /// namespace entry under `/var/run/netns/`.
+    ///
+    /// Errors are logged or cause a panic (depending on whether the runtime is
+    /// already unwinding) rather than propagating, to avoid double-panic.
     #[expect(
         clippy::print_stderr,
         reason = "drop handlers avoid panic-in-panic by logging errors"
@@ -240,7 +293,12 @@ impl Drop for NetNsGuard {
     }
 }
 
-/// If the `KernelVersion::current >= $version`, `assert!($cond)`, else `assert!(!$cond)`.
+/// Asserts a condition based on the running kernel version.
+///
+/// If `KernelVersion::current >= $version`, evaluates to `assert!($cond)`.
+/// Otherwise, evaluates to `assert!(!$cond)`.
+///
+/// This is useful for tests that behave differently across kernel versions.
 macro_rules! kernel_assert {
     ($cond:expr, $version:expr $(,)?) => {
         let current = aya::util::KernelVersion::current().unwrap();
@@ -255,8 +313,13 @@ macro_rules! kernel_assert {
 
 pub(crate) use kernel_assert;
 
-/// If the `KernelVersion::current >= $version`, `assert_eq!($left, $right)`, else
-/// `assert_ne!($left, $right)`.
+/// Asserts equality based on the running kernel version.
+///
+/// If `KernelVersion::current >= $version`, evaluates to `assert_eq!($left, $right)`.
+/// Otherwise, evaluates to `assert_ne!($left, $right)`.
+///
+/// This is useful for tests that check for behavioral changes introduced in
+/// specific kernel versions.
 macro_rules! kernel_assert_eq {
     ($left:expr, $right:expr, $version:expr $(,)?) => {
         let current = aya::util::KernelVersion::current().unwrap();
