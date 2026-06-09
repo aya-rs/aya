@@ -446,7 +446,7 @@ fn pin_tcx_link() {
         return;
     }
 
-    use crate::utils::NetNsGuard;
+    use aya::test_helpers::NetNsGuard;
     let _netns = NetNsGuard::new();
 
     let program_name = "tcx_next";

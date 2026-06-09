@@ -16,12 +16,11 @@ use aya::{
         uprobe::UProbeScope,
     },
     sys::{is_map_supported, is_program_supported},
+    test_helpers::{kernel_assert, kernel_assert_eq},
     util::KernelVersion,
 };
 use aya_obj::generated::bpf_prog_type;
 use libc::EINVAL;
-
-use crate::utils::{kernel_assert, kernel_assert_eq};
 
 #[test_log::test]
 fn test_loaded_programs() {

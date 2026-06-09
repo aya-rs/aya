@@ -5,11 +5,10 @@ use aya::{
     EbpfLoader,
     maps::{MapError, SkStorage},
     programs::{CgroupAttachMode, CgroupSockAddr},
+    test_helpers::{Cgroup, NetNsGuard},
 };
 use integration_common::sk_storage::{Ip, Value};
 use test_log::test;
-
-use crate::utils::{Cgroup, NetNsGuard};
 
 #[test]
 fn sk_storage_connect() {
