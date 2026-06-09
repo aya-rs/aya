@@ -10,6 +10,7 @@ use aya::{
     maps::{Array, MapData},
     programs::{ProgramError, ProgramType, ReusePortSocketFilter, SocketFilter, SocketFilterError},
     sys::is_program_supported,
+    test_helpers::NetNsGuard,
     util::KernelVersion,
 };
 use integration_common::socket_filter::{
@@ -22,8 +23,6 @@ use tokio::{
     net::{TcpListener, TcpSocket, TcpStream, UnixDatagram},
     time::timeout,
 };
-
-use crate::utils::NetNsGuard;
 
 const IO_TIMEOUT: Duration = Duration::from_secs(10);
 const ACCEPT_TIMEOUT: Duration = Duration::from_secs(10);

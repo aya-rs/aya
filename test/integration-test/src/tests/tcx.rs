@@ -1,10 +1,9 @@
 use aya::{
     Ebpf,
     programs::{LinkOrder, ProgramId, SchedClassifier, TcAttachType, tc::TcAttachOptions},
+    test_helpers::NetNsGuard,
     util::KernelVersion,
 };
-
-use crate::utils::NetNsGuard;
 
 #[test_log::test]
 fn tcx() {

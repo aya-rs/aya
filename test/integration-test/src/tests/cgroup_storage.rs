@@ -14,12 +14,11 @@ use aya::{
     maps::{CgroupStorage, CgroupStorageKey, MapType, PerCpuCgroupStorage},
     programs::{CgroupAttachMode, CgroupSockAddr},
     sys::is_map_supported,
+    test_helpers::{Cgroup, NetNsGuard},
     util::KernelVersion,
 };
 use aya_obj::generated::bpf_attach_type::BPF_CGROUP_INET4_CONNECT;
 use rstest::rstest;
-
-use crate::utils::{Cgroup, NetNsGuard};
 
 #[rstest]
 #[case::legacy("STORAGE_LEGACY", "PERCPU_LEGACY", "connect4_legacy")]
