@@ -10,6 +10,7 @@ use aya::{
     Ebpf,
     maps::{Array, MapData, ReusePortSockArray},
     programs::{ProgramError, SkReuseport, SkReuseportError},
+    test_helpers::NetNsGuard,
     util::KernelVersion,
 };
 use futures::future::select_all;
@@ -24,8 +25,6 @@ use tokio::{
     net::{TcpListener as TokioTcpListener, TcpSocket, TcpStream as TokioTcpStream},
     time::{sleep, timeout},
 };
-
-use crate::utils::NetNsGuard;
 
 const RETRY_DURATION: Duration = Duration::from_millis(10);
 const ACCEPT_TIMEOUT: Duration = Duration::from_secs(10);

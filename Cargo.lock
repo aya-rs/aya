@@ -95,6 +95,7 @@ checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 name = "aya"
 version = "0.13.2"
 dependencies = [
+ "anyhow",
  "assert_matches",
  "aya-obj",
  "bitflags",
