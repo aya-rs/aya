@@ -10,11 +10,10 @@ use aya::{
     maps::{Array, MapType, SockHash, SockMap},
     programs::{ProgramType, SkLookup},
     sys::{is_map_supported, is_program_supported},
+    test_helpers::NetNsGuard,
 };
 use libc::ENOENT;
 use rstest::rstest;
-
-use crate::utils::NetNsGuard;
 
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 const MISS_TIMEOUT: Duration = Duration::from_millis(200);

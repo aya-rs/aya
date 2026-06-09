@@ -4,11 +4,10 @@ use aya::{
     maps::{CgrpStorage, MapError, MapType},
     programs::{BtfTracePoint, ProgramType},
     sys::{is_map_supported, is_program_supported},
+    test_helpers::Cgroup,
 };
 use integration_common::local_storage::SENTINEL;
 use test_log::test;
-
-use crate::utils::Cgroup;
 
 #[test]
 fn cgrp_storage() {

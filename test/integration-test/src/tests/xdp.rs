@@ -5,13 +5,12 @@ use aya::{
     Ebpf,
     maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
     programs::{ProgramError, Xdp, XdpError, XdpMode, xdp::XdpLinkId},
+    test_helpers::NetNsGuard,
     util::KernelVersion,
 };
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use rstest::rstest;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
-
-use crate::utils::NetNsGuard;
 
 #[rstest]
 #[case::legacy("SOCKS", "redirect_sock")]

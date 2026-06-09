@@ -17,6 +17,7 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+anyhow = { workspace = true, optional = true }
 assert_matches = { workspace = true }
 aya-obj = { path = "../aya-obj", version = "^0.2.2" }
 bitflags = { workspace = true }
@@ -25,6 +26,7 @@ bitflags = { workspace = true }
 hashbrown = { workspace = true, features = ["default-hasher", "equivalent"] }
 libc = { workspace = true }
 log = { workspace = true }
+nix = { workspace = true, features = ["mount", "sched"], optional = true }
 object = { workspace = true, features = ["elf", "read_core", "std", "write"] }
 once_cell = { workspace = true }
 scopeguard = { workspace = true }
@@ -34,6 +36,9 @@ thiserror = { workspace = true }
 nix = { workspace = true, features = ["net", "socket"] }
 rstest = { workspace = true }
 tempfile = { workspace = true }
+
+[features]
+test-helpers = ["dep:anyhow", "dep:nix"]
 
 [package.metadata.docs.rs]
 all-features = true

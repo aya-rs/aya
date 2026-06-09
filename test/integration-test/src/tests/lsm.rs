@@ -3,10 +3,9 @@ use aya::{
     Btf, Ebpf,
     programs::{Lsm, LsmAttachType, LsmCgroup, ProgramError, ProgramType},
     sys::{SyscallError, is_program_supported},
+    test_helpers::Cgroup,
     util::KernelVersion,
 };
-
-use crate::utils::Cgroup;
 
 macro_rules! expect_permission_denied {
     ($result:expr) => {
