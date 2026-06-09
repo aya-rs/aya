@@ -4,10 +4,11 @@ use aya::{
         SchedClassifier, TcAttachType,
         tc::{NlOptions, TcAttachOptions, TcHandle, qdisc_add_clsact},
     },
+    test_helpers::NetNsGuard,
     util::KernelVersion,
 };
 
-use crate::{TCX, utils::NetNsGuard};
+use crate::TCX;
 
 /// Returns true if the kernel autoloads `cls_bpf` on netlink attach.
 ///
