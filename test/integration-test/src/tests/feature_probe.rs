@@ -4,15 +4,13 @@ use std::io::ErrorKind;
 
 use assert_matches::assert_matches;
 use aya::{
-    Btf,
+    Btf, kernel_assert,
     maps::MapType,
     programs::{LsmAttachType, ProgramError, ProgramType},
     sys::{BpfHelper, is_helper_supported, is_map_supported, is_program_supported},
     util::KernelVersion,
 };
 use procfs::kernel_config;
-
-use crate::utils::kernel_assert;
 
 #[test_log::test]
 fn probe_supported_programs() {

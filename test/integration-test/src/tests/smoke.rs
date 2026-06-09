@@ -1,10 +1,9 @@
 use aya::{
     Ebpf, EbpfLoader,
     programs::{Extension, TracePoint, Xdp, XdpMode, tc},
+    test_helpers::NetNsGuard,
     util::KernelVersion,
 };
-
-use crate::utils::NetNsGuard;
 
 #[test_log::test]
 fn modprobe() {

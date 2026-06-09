@@ -5,12 +5,11 @@ use aya::{
     maps::{Array, CgroupArray, MapType},
     programs::{SchedClassifier, UProbe, uprobe::UProbeScope},
     sys::is_map_supported,
+    test_helpers::{Cgroup, is_cgroup2},
     util::KernelVersion,
 };
 use integration_common::cgroup_array::{NOT_UNDER_INDEX, TestResult, UNDER_INDEX};
 use rstest::rstest;
-
-use crate::utils::{Cgroup, is_cgroup2};
 
 #[unsafe(no_mangle)]
 #[inline(never)]
