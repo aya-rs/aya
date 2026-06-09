@@ -7979,6 +7979,7 @@ pub const fn aya::VerifierLogLevel::symmetric_difference(self, Self) -> Self
 pub fn aya::VerifierLogLevel::toggle(&mut self, Self)
 pub const fn aya::VerifierLogLevel::union(self, Self) -> Self
 impl aya::VerifierLogLevel
+pub fn aya::VerifierLogLevel::all_named() -> aya::VerifierLogLevel
 pub const fn aya::VerifierLogLevel::iter(&self) -> bitflags::iter::Iter<aya::VerifierLogLevel>
 pub const fn aya::VerifierLogLevel::iter_names(&self) -> bitflags::iter::IterNames<aya::VerifierLogLevel>
 impl bitflags::traits::Flags for aya::VerifierLogLevel
