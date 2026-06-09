@@ -12,16 +12,19 @@ use std::{
 };
 
 use anyhow::{Context as _, Result};
-use aya::netlink_set_link_up;
 use libc::if_nametoindex;
 
+use crate::netlink_set_link_up;
+
+/// The cgroup-relative name of the file to which a PID is written to assign
+/// that process to the cgroup.
 const CGROUP_PROCS: &str = "cgroup.procs";
 
 /// A handle to a child cgroup created under a [`Cgroup`].
 ///
 /// On drop, the PIDs in this cgroup's `cgroup.procs` are moved back to the
 /// parent cgroup and the directory is removed.
-pub(crate) struct ChildCgroup<'a> {
+pub struct ChildCgroup<'a> {
     /// The parent cgroup under which this child was created.
     parent: &'a Cgroup<'a>,
     /// The filesystem path of this cgroup directory.
@@ -32,7 +35,7 @@ pub(crate) struct ChildCgroup<'a> {
 ///
 /// This enum is used to avoid unnecessary reference counting when the root
 /// cgroup is the only handle needed.
-pub(crate) enum Cgroup<'a> {
+pub enum Cgroup<'a> {
     /// The root cgroup.
     Root(PathBuf),
     /// A child cgroup created via [`Cgroup::create_child`].
@@ -41,7 +44,7 @@ pub(crate) enum Cgroup<'a> {
 
 impl Cgroup<'static> {
     /// Returns a handle to the root cgroup.
-    pub(crate) fn root() -> Self {
+    pub fn root() -> Self {
         const PROC_MOUNTS: &str = "/proc/self/mounts";
         const CGROUP2: &str = "cgroup2";
         {
@@ -81,7 +84,7 @@ impl<'a> Cgroup<'a> {
 
     /// Creates a child cgroup with the given name under this cgroup and returns
     /// a [`ChildCgroup`] handle to it.
-    pub(crate) fn create_child(&'a self, name: &str) -> ChildCgroup<'a> {
+    pub fn create_child(&'a self, name: &str) -> ChildCgroup<'a> {
         let path = self.path().join(name);
         fs::create_dir(&path).unwrap();
 
@@ -93,14 +96,14 @@ impl<'a> Cgroup<'a> {
 
     /// Writes the given PID to this cgroup's `cgroup.procs` file, thereby
     /// moving that process into this cgroup.
-    pub(crate) fn write_pid(&self, pid: u32) {
+    pub fn write_pid(&self, pid: u32) {
         fs::write(self.path().join(CGROUP_PROCS), format!("{pid}\n")).unwrap();
     }
 }
 
 impl<'a> ChildCgroup<'a> {
     /// Opens the cgroup directory and returns its file descriptor.
-    pub(crate) fn fd(&self) -> fs::File {
+    pub fn fd(&self) -> fs::File {
         let Self { parent: _, path } = self;
         fs::OpenOptions::new()
             .read(true)
@@ -109,7 +112,7 @@ impl<'a> ChildCgroup<'a> {
     }
 
     /// Consumes `self` and returns a [`Cgroup::Child`] variant.
-    pub(crate) fn into_cgroup(self) -> Cgroup<'a> {
+    pub const fn into_cgroup(self) -> Cgroup<'a> {
         Cgroup::Child(self)
     }
 }
@@ -129,6 +132,7 @@ impl Drop for ChildCgroup<'_> {
         clippy::use_debug,
         reason = "debug formatting preserves error context in drop"
     )]
+    #[expect(clippy::panic, reason = "drop handlers can't return a result")]
     fn drop(&mut self) {
         let Self { parent, path } = self;
 
@@ -173,7 +177,7 @@ impl Drop for ChildCgroup<'_> {
 ///
 /// The guard also brings up the `lo` (loopback) interface in the new
 /// namespace by default, since it is down in freshly created namespaces.
-pub(crate) struct NetNsGuard {
+pub struct NetNsGuard {
     /// The name of the persisted network namespace.
     name: String,
     /// File handle to the original network namespace, used for restoration on drop.
@@ -198,7 +202,7 @@ impl NetNsGuard {
         clippy::print_stdout,
         reason = "integration tests print namespace transitions for diagnostics"
     )]
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         // `/proc/thread-self/ns/net` resolves to the calling thread's netns
         // (`/proc/self/ns/net` would always pin to the main thread's).
         let old_ns = fs::File::open(Self::THREAD_NETNS)
@@ -276,6 +280,7 @@ impl Drop for NetNsGuard {
         clippy::use_debug,
         reason = "debug formatting preserves error context in drop"
     )]
+    #[expect(clippy::panic, reason = "drop handlers can't return a result")]
     fn drop(&mut self) {
         let Self {
             old_ns,
@@ -312,10 +317,12 @@ impl Drop for NetNsGuard {
 /// Otherwise, evaluates to `assert!(!$cond)`.
 ///
 /// This is useful for tests that behave differently across kernel versions.
-macro_rules! kernel_assert {
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __aya_kernel_assert {
     ($cond:expr, $version:expr $(,)?) => {
-        let current = aya::util::KernelVersion::current().unwrap();
-        let required: aya::util::KernelVersion = $version;
+        let current = $crate::util::KernelVersion::current().unwrap();
+        let required: $crate::util::KernelVersion = $version;
         if current >= required {
             assert!($cond, "{current} >= {required}");
         } else {
@@ -324,8 +331,6 @@ macro_rules! kernel_assert {
     };
 }
 
-pub(crate) use kernel_assert;
-
 /// Asserts equality based on the running kernel version.
 ///
 /// If `KernelVersion::current >= $version`, evaluates to `assert_eq!($left, $right)`.
@@ -333,10 +338,12 @@ pub(crate) use kernel_assert;
 ///
 /// This is useful for tests that check for behavioral changes introduced in
 /// specific kernel versions.
-macro_rules! kernel_assert_eq {
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __aya_kernel_assert_eq {
     ($left:expr, $right:expr, $version:expr $(,)?) => {
-        let current = aya::util::KernelVersion::current().unwrap();
-        let required: aya::util::KernelVersion = $version;
+        let current = $crate::util::KernelVersion::current().unwrap();
+        let required: $crate::util::KernelVersion = $version;
         if current >= required {
             assert_eq!($left, $right, "{current} >= {required}");
         } else {
@@ -345,4 +352,7 @@ macro_rules! kernel_assert_eq {
     };
 }
 
-pub(crate) use kernel_assert_eq;
+/// Asserts a condition based on the running kernel version.
+pub use crate::__aya_kernel_assert as kernel_assert;
+/// Asserts equality based on the running kernel version.
+pub use crate::__aya_kernel_assert_eq as kernel_assert_eq;
