@@ -9,7 +9,7 @@
 use std::{fs, panic, path::Path, time::SystemTime};
 
 use aya::{
-    Ebpf,
+    Ebpf, kernel_assert, kernel_assert_eq,
     maps::{Array, HashMap, IterableMap as _, MapError, MapType, loaded_maps},
     programs::{
         ProgramError, ProgramType, SocketFilter, TracePoint, UProbe, loaded_programs,
@@ -20,8 +20,6 @@ use aya::{
 };
 use aya_obj::generated::bpf_prog_type;
 use libc::EINVAL;
-
-use crate::utils::{kernel_assert, kernel_assert_eq};
 
 #[test_log::test]
 fn test_loaded_programs() {

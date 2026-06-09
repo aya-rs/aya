@@ -13,8 +13,9 @@ use std::{
 };
 
 use anyhow::{Context as _, Result};
-use aya::netlink_set_link_up;
 use libc::if_nametoindex;
+
+use crate::netlink_set_link_up;
 
 /// The root cgroup mount point on cgroup v2 systems.
 const CGROUP_ROOT: &str = "/sys/fs/cgroup";
@@ -24,7 +25,7 @@ const CGROUP_PROCS: &str = "cgroup.procs";
 
 /// Returns `true` if the system is using cgroup v2, as determined by the
 /// presence of `cgroup.controllers` at the root of the cgroup mount.
-pub(crate) fn is_cgroup2() -> bool {
+pub fn is_cgroup2() -> bool {
     // `cgroup.controllers` exists only at the root of a cgroup2 mount.
     Path::new(CGROUP_ROOT).join("cgroup.controllers").exists()
 }
@@ -33,7 +34,7 @@ pub(crate) fn is_cgroup2() -> bool {
 ///
 /// On drop, the PIDs in this cgroup's `cgroup.procs` are moved back to the
 /// parent cgroup and the directory is removed.
-pub(crate) struct ChildCgroup<'a> {
+pub struct ChildCgroup<'a> {
     /// The parent cgroup under which this child was created.
     parent: &'a Cgroup<'a>,
     /// The filesystem path of this cgroup directory.
@@ -46,7 +47,7 @@ pub(crate) struct ChildCgroup<'a> {
 ///
 /// This enum is used to avoid unnecessary reference counting when the root
 /// cgroup is the only handle needed.
-pub(crate) enum Cgroup<'a> {
+pub enum Cgroup<'a> {
     /// The root cgroup (`/sys/fs/cgroup`).
     Root,
     /// A child cgroup created via [`Cgroup::create_child`].
@@ -55,7 +56,7 @@ pub(crate) enum Cgroup<'a> {
 
 impl Cgroup<'static> {
     /// Returns a handle to the root cgroup.
-    pub(crate) fn root() -> Self {
+    pub fn root() -> Self {
         Self::Root
     }
 }
@@ -79,7 +80,7 @@ impl<'a> Cgroup<'a> {
     /// # Panics
     ///
     /// Panics if the cgroup directory cannot be created.
-    pub(crate) fn create_child(&'a self, name: &str) -> ChildCgroup<'a> {
+    pub fn create_child(&'a self, name: &str) -> ChildCgroup<'a> {
         let path = self.path().join(name);
         fs::create_dir(&path).unwrap();
 
@@ -96,7 +97,7 @@ impl<'a> Cgroup<'a> {
     /// # Panics
     ///
     /// Panics if the file cannot be written.
-    pub(crate) fn write_pid(&self, pid: u32) {
+    pub fn write_pid(&self, pid: u32) {
         fs::write(self.path().join(CGROUP_PROCS), format!("{pid}\n")).unwrap();
     }
 }
@@ -111,7 +112,7 @@ impl<'a> ChildCgroup<'a> {
     /// # Panics
     ///
     /// Panics if the file cannot be opened.
-    pub(crate) fn fd(&self) -> &fs::File {
+    pub fn fd(&self) -> &fs::File {
         let Self {
             parent: _,
             path,
@@ -126,7 +127,7 @@ impl<'a> ChildCgroup<'a> {
     }
 
     /// Consumes `self` and returns a [`Cgroup::Child`] variant.
-    pub(crate) fn into_cgroup(self) -> Cgroup<'a> {
+    pub fn into_cgroup(self) -> Cgroup<'a> {
         Cgroup::Child(self)
     }
 }
@@ -194,7 +195,7 @@ impl Drop for ChildCgroup<'_> {
 ///
 /// The guard also brings up the `lo` (loopback) interface in the new
 /// namespace by default, since it is down in freshly created namespaces.
-pub(crate) struct NetNsGuard {
+pub struct NetNsGuard {
     /// The name of the persisted network namespace.
     name: String,
     /// File handle to the original network namespace, used for restoration on drop.
@@ -224,7 +225,7 @@ impl NetNsGuard {
         clippy::print_stdout,
         reason = "integration tests print namespace transitions for diagnostics"
     )]
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         // `/proc/thread-self/ns/net` resolves to the calling thread's netns
         // (`/proc/self/ns/net` would always pin to the main thread's).
         let old_ns = fs::File::open(Self::THREAD_NETNS)
@@ -338,6 +339,7 @@ impl Drop for NetNsGuard {
 /// Otherwise, evaluates to `assert!(!$cond)`.
 ///
 /// This is useful for tests that behave differently across kernel versions.
+#[macro_export]
 macro_rules! kernel_assert {
     ($cond:expr, $version:expr $(,)?) => {
         let current = aya::util::KernelVersion::current().unwrap();
@@ -350,8 +352,6 @@ macro_rules! kernel_assert {
     };
 }
 
-pub(crate) use kernel_assert;
-
 /// Asserts equality based on the running kernel version.
 ///
 /// If `KernelVersion::current >= $version`, evaluates to `assert_eq!($left, $right)`.
@@ -359,6 +359,7 @@ pub(crate) use kernel_assert;
 ///
 /// This is useful for tests that check for behavioral changes introduced in
 /// specific kernel versions.
+#[macro_export]
 macro_rules! kernel_assert_eq {
     ($left:expr, $right:expr, $version:expr $(,)?) => {
         let current = aya::util::KernelVersion::current().unwrap();
@@ -370,5 +371,3 @@ macro_rules! kernel_assert_eq {
         }
     };
 }
-
-pub(crate) use kernel_assert_eq;

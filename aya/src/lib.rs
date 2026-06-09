@@ -45,6 +45,7 @@ pub mod maps;
 pub mod pin;
 pub mod programs;
 pub mod sys;
+pub mod test_helpers;
 pub mod util;
 
 use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
