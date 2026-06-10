@@ -2,7 +2,6 @@
 
 use std::{
     borrow::Cow,
-    cell::OnceCell,
     ffi::CString,
     fs,
     io::{self, Write as _},
@@ -38,8 +37,6 @@ pub(crate) struct ChildCgroup<'a> {
     parent: &'a Cgroup<'a>,
     /// The filesystem path of this cgroup directory.
     path: Cow<'a, Path>,
-    /// Lazily opened file descriptor for this cgroup directory.
-    fd: OnceCell<fs::File>,
 }
 
 /// A handle representing either the root cgroup or a child cgroup.
@@ -65,11 +62,7 @@ impl<'a> Cgroup<'a> {
     fn path(&self) -> &Path {
         match self {
             Self::Root => Path::new(CGROUP_ROOT),
-            Self::Child(ChildCgroup {
-                parent: _,
-                path,
-                fd: _,
-            }) => path,
+            Self::Child(ChildCgroup { parent: _, path }) => path,
         }
     }
 
@@ -82,7 +75,6 @@ impl<'a> Cgroup<'a> {
         ChildCgroup {
             parent: self,
             path: path.into(),
-            fd: OnceCell::new(),
         }
     }
 
@@ -99,18 +91,12 @@ impl<'a> ChildCgroup<'a> {
     ///
     /// The file is opened for reading on first call and cached for subsequent
     /// calls.
-    pub(crate) fn fd(&self) -> &fs::File {
-        let Self {
-            parent: _,
-            path,
-            fd,
-        } = self;
-        fd.get_or_init(|| {
-            fs::OpenOptions::new()
-                .read(true)
-                .open(path.as_ref())
-                .unwrap()
-        })
+    pub(crate) fn fd(&self) -> fs::File {
+        let Self { parent: _, path } = self;
+        fs::OpenOptions::new()
+            .read(true)
+            .open(path.as_ref())
+            .unwrap()
     }
 
     /// Consumes `self` and returns a [`Cgroup::Child`] variant.
@@ -135,11 +121,7 @@ impl Drop for ChildCgroup<'_> {
         reason = "debug formatting preserves error context in drop"
     )]
     fn drop(&mut self) {
-        let Self {
-            parent,
-            path,
-            fd: _,
-        } = self;
+        let Self { parent, path } = self;
 
         match (|| -> Result<()> {
             let dst = parent.path().join(CGROUP_PROCS);

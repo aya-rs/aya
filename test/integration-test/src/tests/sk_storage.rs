@@ -29,7 +29,7 @@ fn sk_storage_connect() {
             let prog: &mut CgroupSockAddr = prog.try_into().expect(name);
             prog.load().expect(name);
             let link_id = prog
-                .attach(cgroup_fd, CgroupAttachMode::Single)
+                .attach(&cgroup_fd, CgroupAttachMode::Single)
                 .expect(name);
             scopeguard::guard((), |()| {
                 prog.detach(link_id).expect(name);
