@@ -182,7 +182,7 @@ async fn socket_filter_attach_types_use_separate_slots() {
     }
 
     // Aya's CI VM init may leave `lo` down; NetNsGuard brings it up.
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
     let listener = reuseport_listener(0).expect("failed to create reuseport listener");
 
     let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
@@ -282,7 +282,7 @@ async fn socket_filter_reuseport_selects_listener_and_detaches() {
     }
 
     // Aya's CI VM init may leave `lo` down; NetNsGuard brings it up.
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
     let [first, second] = reuseport_listeners();
     let addr = first.local_addr().unwrap();
 
@@ -342,7 +342,7 @@ async fn socket_filter_reuseport_stays_attached_after_ebpf_drop() {
     }
 
     // Aya's CI VM init may leave `lo` down; NetNsGuard brings it up.
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
     let [first, second] = reuseport_listeners();
     let addr = first.local_addr().unwrap();
 
@@ -396,7 +396,7 @@ async fn socket_filter_reuseport_replacement_uses_latest_program() {
     }
 
     // Aya's CI VM init may leave `lo` down; NetNsGuard brings it up.
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
     let [first, second] = reuseport_listeners();
     let addr = first.local_addr().unwrap();
 

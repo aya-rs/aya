@@ -44,7 +44,7 @@ fn netlink_attach_to_link_preserves_classid() {
         return;
     }
 
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     qdisc_add_clsact("lo").unwrap();
 
@@ -81,7 +81,7 @@ fn netlink_attach_auto_assigns_handle() {
         return;
     }
 
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     qdisc_add_clsact("lo").unwrap();
 
@@ -108,7 +108,7 @@ fn netlink_attach_preserves_explicit_handle() {
         return;
     }
 
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     qdisc_add_clsact("lo").unwrap();
 

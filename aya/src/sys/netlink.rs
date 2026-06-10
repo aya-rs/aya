@@ -83,10 +83,6 @@ pub(crate) enum NetlinkErrorInternal {
 /// An error occurred during a netlink operation.
 #[derive(Error, Debug)]
 #[error(transparent)]
-#[expect(
-    unnameable_types,
-    reason = "the internal error is crate-private but transparently wrapped"
-)]
 pub struct NetlinkError(#[from] NetlinkErrorInternal);
 
 impl NetlinkError {
