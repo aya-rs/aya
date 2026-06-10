@@ -13,7 +13,7 @@ fn tcx() {
         return;
     }
 
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     // We need a dedicated `Ebpf` instance for each program that we load
     // since TCX does not allow the same program ID to be attached multiple
