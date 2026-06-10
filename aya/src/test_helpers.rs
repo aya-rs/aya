@@ -2,25 +2,61 @@
 
 use std::{
     borrow::Cow,
-    ffi::CString,
     fs,
     io::{self, Write as _},
     os::fd::{AsFd, BorrowedFd},
-    path::Path,
+    path::{Path, PathBuf},
     process,
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use anyhow::{Context as _, Result};
 use libc::if_nametoindex;
 
-use crate::netlink_set_link_up;
+use crate::{netlink_set_link_up, sys::NetlinkError};
 
 /// The root cgroup mount point on cgroup v2 systems.
 const CGROUP_ROOT: &str = "/sys/fs/cgroup";
 
 /// The name of the file used to assign PIDs to a cgroup.
 const CGROUP_PROCS: &str = "cgroup.procs";
+
+/// An error type for test helpers.
+///
+/// This enum covers all failures that can occur during cgroup setup,
+/// network namespace creation, and link manipulation in integration tests.
+#[derive(Debug, thiserror::Error)]
+pub enum AyaTestError {
+    /// A filesystem operation failed (open, create, write, remove, etc.).
+    #[error("failed to {op}: {path}: {source}")]
+    Io {
+        /// The operation that failed (e.g. `"create dir"`).
+        op: &'static str,
+        /// The path involved in the operation.
+        path: PathBuf,
+        /// Source error.
+        #[source]
+        source: io::Error,
+    },
+
+    /// A POSIX syscall failed (mount, unshare, etc.).
+    #[error("syscall {syscall} failed: {path}: {source}")]
+    Syscall {
+        /// The syscall that failed (e.g. `"nix::sched::unshare"`).
+        syscall: &'static str,
+        /// The path involved in the syscall, if any.
+        path: PathBuf,
+        /// Source error.
+        #[source]
+        source: nix::errno::Errno,
+    },
+
+    /// An error occurred during a netlink operation.
+    #[error(transparent)]
+    Netlink(#[from] NetlinkError),
+}
+
+/// A result type for test helpers.
+pub type AyaTestResult<T> = Result<T, AyaTestError>;
 
 /// Returns `true` if the system is using cgroup v2, as determined by the
 /// presence of `cgroup.controllers` at the root of the cgroup mount.
@@ -69,31 +105,44 @@ impl<'a> Cgroup<'a> {
 
     /// Creates a child cgroup with the given name under this cgroup and returns
     /// a [`ChildCgroup`] handle to it.
-    pub fn create_child(&'a self, name: &str) -> ChildCgroup<'a> {
+    pub fn create_child(&'a self, name: &str) -> AyaTestResult<ChildCgroup<'a>> {
         let path = self.path().join(name);
-        fs::create_dir(&path).unwrap();
+        fs::create_dir(&path).map_err(|source| AyaTestError::Io {
+            op: "create directory",
+            path: path.clone(),
+            source,
+        })?;
 
-        ChildCgroup {
+        Ok(ChildCgroup {
             parent: self,
             path: path.into(),
-        }
+        })
     }
 
     /// Writes the given PID to this cgroup's `cgroup.procs` file, thereby
     /// moving that process into this cgroup.
-    pub fn write_pid(&self, pid: u32) {
-        fs::write(self.path().join(CGROUP_PROCS), format!("{pid}\n")).unwrap();
+    pub fn write_pid(&self, pid: u32) -> AyaTestResult<()> {
+        let cgroup_procs = self.path().join(CGROUP_PROCS);
+        fs::write(&cgroup_procs, format!("{pid}\n")).map_err(move |source| AyaTestError::Io {
+            op: "write",
+            path: cgroup_procs,
+            source,
+        })
     }
 }
 
 impl<'a> ChildCgroup<'a> {
     /// Reads the cgroup directory and returns its file descriptor.
-    pub fn fd(&self) -> fs::File {
+    pub fn fd(&self) -> AyaTestResult<fs::File> {
         let Self { parent: _, path } = self;
         fs::OpenOptions::new()
             .read(true)
             .open(path.as_ref())
-            .unwrap()
+            .map_err(|source| AyaTestError::Io {
+                op: "open",
+                path: path.to_path_buf(),
+                source,
+            })
     }
 
     /// Consumes `self` and returns a [`Cgroup::Child`] variant.
@@ -119,6 +168,8 @@ impl Drop for ChildCgroup<'_> {
     )]
     #[expect(clippy::panic, reason = "drop handlers can't return a result")]
     fn drop(&mut self) {
+        use anyhow::{Context as _, Result};
+
         let Self { parent, path } = self;
 
         match (|| -> Result<()> {
@@ -187,27 +238,44 @@ impl NetNsGuard {
         clippy::print_stdout,
         reason = "integration tests print namespace transitions for diagnostics"
     )]
-    pub fn new() -> Self {
+    pub fn new() -> AyaTestResult<Self> {
         // `/proc/thread-self/ns/net` resolves to the calling thread's netns
         // (`/proc/self/ns/net` would always pin to the main thread's).
-        let old_ns = fs::File::open(Self::THREAD_NETNS)
-            .unwrap_or_else(|err| panic!("fs::File::open(\"{}\"): {err:?}", Self::THREAD_NETNS));
+        let old_ns = fs::File::open(Self::THREAD_NETNS).map_err(|source| AyaTestError::Io {
+            op: "open",
+            path: PathBuf::from(Self::THREAD_NETNS),
+            source,
+        })?;
 
         static COUNTER: AtomicU64 = AtomicU64::new(0);
         let pid = process::id();
         let name = format!("aya-test-{pid}-{}", COUNTER.fetch_add(1, Ordering::Relaxed));
 
-        fs::create_dir_all(Self::PERSIST_DIR)
-            .unwrap_or_else(|err| panic!("fs::create_dir_all(\"{}\"): {err:?}", Self::PERSIST_DIR));
+        fs::create_dir_all(Self::PERSIST_DIR).map_err(|source| AyaTestError::Io {
+            op: "create directory",
+            path: PathBuf::from(Self::PERSIST_DIR),
+            source,
+        })?;
         let ns_path = Path::new(Self::PERSIST_DIR).join(&name);
-        let _unused: fs::File = fs::File::create(&ns_path)
-            .unwrap_or_else(|err| panic!("fs::File::create(\"{}\"): {err:?}", ns_path.display()));
-        nix::sched::unshare(nix::sched::CloneFlags::CLONE_NEWNET)
-            .expect("nix::sched::unshare(CLONE_NEWNET)");
+        let _unused: fs::File = fs::File::create(&ns_path).map_err(|source| AyaTestError::Io {
+            op: "create file",
+            path: ns_path.clone(),
+            source,
+        })?;
+        nix::sched::unshare(nix::sched::CloneFlags::CLONE_NEWNET).map_err(|source| {
+            AyaTestError::Syscall {
+                syscall: "unshare",
+                path: PathBuf::new(),
+                source,
+            }
+        })?;
 
         // Re-open after unshare to capture the freshly entered namespace.
-        let new_ns = fs::File::open(Self::THREAD_NETNS)
-            .unwrap_or_else(|err| panic!("fs::File::open(\"{}\"): {err:?}", Self::THREAD_NETNS));
+        let new_ns = fs::File::open(Self::THREAD_NETNS).map_err(|source| AyaTestError::Io {
+            op: "open",
+            path: PathBuf::from(Self::THREAD_NETNS),
+            source,
+        })?;
 
         nix::mount::mount(
             Some(Self::THREAD_NETNS),
@@ -216,7 +284,11 @@ impl NetNsGuard {
             nix::mount::MsFlags::MS_BIND,
             None::<&str>,
         )
-        .expect("nix::mount::mount");
+        .map_err(|source| AyaTestError::Syscall {
+            syscall: "mount",
+            path: ns_path.clone(),
+            source,
+        })?;
 
         println!("entered network namespace {name}");
 
@@ -227,20 +299,20 @@ impl NetNsGuard {
         };
 
         // By default, the loopback in a new netns is down. Set it up.
-        let lo = CString::new("lo").unwrap();
+        let lo = c"lo";
         unsafe {
             let idx = if_nametoindex(lo.as_ptr());
-            assert!(
-                idx != 0,
-                "interface `lo` not found in netns {}: {}",
-                ns.name,
-                io::Error::last_os_error()
-            );
-            netlink_set_link_up(idx as i32)
-                .unwrap_or_else(|e| panic!("failed to set `lo` up in netns {}: {e}", ns.name));
+            if idx == 0 {
+                return Err(AyaTestError::Io {
+                    op: "lookup interface index",
+                    path: PathBuf::from("lo"),
+                    source: io::Error::last_os_error(),
+                });
+            }
+            netlink_set_link_up(idx as i32)?;
         }
 
-        ns
+        Ok(ns)
     }
 }
 
@@ -267,6 +339,8 @@ impl Drop for NetNsGuard {
     )]
     #[expect(clippy::panic, reason = "drop handlers can't return a result")]
     fn drop(&mut self) {
+        use anyhow::{Context as _, Result};
+
         let Self {
             old_ns,
             name,

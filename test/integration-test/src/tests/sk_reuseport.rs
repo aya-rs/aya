@@ -154,7 +154,7 @@ async fn sk_reuseport_selects_expected_listener(
     #[case] select_prog: &str,
 ) {
     // Aya's CI VM init may leave `lo` down; NetNsGuard brings it up.
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
     let mut socket_array: ReusePortSockArray<_> =
@@ -216,7 +216,7 @@ async fn sk_reuseport_clear_index_changes_selection(
     #[case] clear_prog: &str,
 ) {
     // Aya's CI VM init may leave `lo` down; NetNsGuard brings it up.
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
     let mut socket_array: ReusePortSockArray<_> =
@@ -277,7 +277,7 @@ async fn sk_reuseport_clear_index_changes_selection(
 #[test_attr(test_log::test(tokio::test))]
 async fn sk_reuseport_stays_attached_until_explicit_detach(#[case] select_prog: &str) {
     // Aya's CI VM init may leave `lo` down; NetNsGuard brings it up.
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
     let [first, second] = reuseport_listeners();
@@ -317,7 +317,7 @@ async fn sk_reuseport_migrates_to_expected_listener(
     }
 
     // Aya's CI VM init may leave `lo` down; NetNsGuard brings it up.
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
     match std::fs::write("/proc/sys/net/ipv4/tcp_migrate_req", "1") {
         Ok(()) => {}
         Err(err)
