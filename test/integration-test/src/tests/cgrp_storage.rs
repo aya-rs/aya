@@ -39,8 +39,8 @@ fn cgrp_storage() {
 
     // Creating a cgroup fires `cgroup_mkdir`, populating its storage.
     let root = Cgroup::root();
-    let cgroup = root.create_child("aya-test-cgrp-storage");
-    let cgroup_fd = cgroup.fd();
+    let cgroup = root.create_child("aya-test-cgrp-storage").unwrap();
+    let cgroup_fd = cgroup.fd().unwrap();
 
     let mut storage =
         CgrpStorage::<_, u64>::try_from(bpf.map_mut("CGRP_STORAGE").unwrap()).unwrap();

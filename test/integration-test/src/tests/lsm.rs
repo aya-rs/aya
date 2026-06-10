@@ -75,10 +75,10 @@ fn lsm_cgroup() {
 
     let pid = std::process::id();
     let root = Cgroup::root();
-    let cgroup = root.create_child("aya-test-lsm-cgroup");
+    let cgroup = root.create_child("aya-test-lsm-cgroup").unwrap();
 
     let link_id = {
-        let result = prog.attach(cgroup.fd());
+        let result = prog.attach(cgroup.fd().unwrap());
 
         // See https://www.exein.io/blog/exploring-bpf-lsm-support-on-aarch64-with-ftrace.
         if cfg!(target_arch = "aarch64")
@@ -96,15 +96,15 @@ fn lsm_cgroup() {
 
     let cgroup = cgroup.into_cgroup();
 
-    cgroup.write_pid(pid);
+    cgroup.write_pid(pid).unwrap();
 
     expect_permission_denied!(std::net::TcpListener::bind("127.0.0.1:0"));
 
-    root.write_pid(pid);
+    root.write_pid(pid).unwrap();
 
     assert_matches!(std::net::TcpListener::bind("127.0.0.1:0"), Ok(_));
 
-    cgroup.write_pid(pid);
+    cgroup.write_pid(pid).unwrap();
 
     expect_permission_denied!(std::net::TcpListener::bind("127.0.0.1:0"));
 

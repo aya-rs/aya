@@ -76,7 +76,7 @@ fn redirect_sk_lookup(
         return;
     }
 
-    let netns = NetNsGuard::new();
+    let netns = NetNsGuard::new().unwrap();
 
     let canary = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).expect("bind canary listener");
 
@@ -129,7 +129,7 @@ fn redirect_sk_lookup_miss_propagates_enoent(
         return;
     }
 
-    let netns = NetNsGuard::new();
+    let netns = NetNsGuard::new().unwrap();
 
     // Empty map: `redirect_sk_lookup` must return `Err(-ENOENT)` and the BPF
     // program records it in LAST_ERRNO before returning SK_DROP.
