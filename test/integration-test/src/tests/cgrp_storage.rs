@@ -41,12 +41,13 @@ fn cgrp_storage() {
     // Creating a cgroup fires `cgroup_mkdir`, populating its storage.
     let root = Cgroup::root();
     let cgroup = root.create_child("aya-test-cgrp-storage");
+    let cgroup_fd = cgroup.fd();
 
     let mut storage =
         CgrpStorage::<_, u64>::try_from(bpf.map_mut("CGRP_STORAGE").unwrap()).unwrap();
-    assert_matches!(storage.get(cgroup.fd(), 0), Ok(value) => {
+    assert_matches!(storage.get(&cgroup_fd, 0), Ok(value) => {
         assert_eq!(value, SENTINEL);
     });
-    storage.remove(cgroup.fd()).unwrap();
-    assert_matches!(storage.get(cgroup.fd(), 0), Err(MapError::KeyNotFound));
+    storage.remove(&cgroup_fd).unwrap();
+    assert_matches!(storage.get(&cgroup_fd, 0), Err(MapError::KeyNotFound));
 }
