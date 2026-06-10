@@ -2,7 +2,6 @@
 
 use std::{
     borrow::Cow,
-    ffi::CString,
     fs,
     io::{self, BufRead as _, BufReader, Write as _},
     os::fd::{AsFd, BorrowedFd},
@@ -11,14 +10,75 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use anyhow::{Context as _, Result};
 use libc::if_nametoindex;
 
-use crate::netlink_set_link_up;
+use crate::{netlink_set_link_up, sys::NetlinkError};
 
 /// The cgroup-relative name of the file to which a PID is written to assign
 /// that process to the cgroup.
 const CGROUP_PROCS: &str = "cgroup.procs";
+
+/// The path to the per-process mount table, used to locate cgroup2 mounts.
+const PROC_MOUNTS: &str = "/proc/self/mounts";
+
+/// An error type for test helpers.
+///
+/// This enum covers all failures that can occur during cgroup setup,
+/// network namespace creation, and link manipulation in integration tests.
+#[derive(Debug, thiserror::Error)]
+pub enum AyaTestError {
+    /// A filesystem operation failed (open, create, write, remove, etc.).
+    #[error("failed to {op}: {path}: {source}")]
+    Io {
+        /// The operation that failed (e.g. `"create dir"`).
+        op: &'static str,
+        /// The path involved in the operation.
+        path: PathBuf,
+        /// Source error.
+        #[source]
+        source: io::Error,
+    },
+
+    /// A mount entry from is missing a required field (e.g. device,
+    /// mountpoint, or fstype).
+    #[error("mount entry from {PROC_MOUNTS} has no {field} field: {mount_entry}")]
+    MissingMountEntryField {
+        /// The name of the missing field (e.g. `"device"`, `"mountpoint"`, `"fstype"`).
+        field: &'static str,
+        /// The full mount entry line that is missing the field.
+        mount_entry: String,
+    },
+
+    /// No cgroup2 mount entry was found.
+    #[error("could not find a cgroup2 mount entry in {PROC_MOUNTS}")]
+    Cgroup2NotFound,
+
+    /// A syscall failed.
+    #[error(
+        "syscall {syscall} failed{}: {source}",
+        if let Some(path) = &.path {
+            format!(": {}", path.display())
+        } else {
+            String::new()
+        }
+    )]
+    Syscall {
+        /// The syscall that failed (e.g. `"nix::sched::unshare"`).
+        syscall: &'static str,
+        /// The path involved in the syscall, if any.
+        path: Option<PathBuf>,
+        /// Source error.
+        #[source]
+        source: nix::errno::Errno,
+    },
+
+    /// An error occurred during a netlink operation.
+    #[error(transparent)]
+    Netlink(#[from] NetlinkError),
+}
+
+/// A result type for test helpers.
+pub type AyaTestResult<T> = Result<T, AyaTestError>;
 
 /// A handle to a child cgroup created under a [`Cgroup`].
 ///
@@ -44,32 +104,46 @@ pub enum Cgroup<'a> {
 
 impl Cgroup<'static> {
     /// Returns a handle to the root cgroup.
-    pub fn root() -> Self {
-        const PROC_MOUNTS: &str = "/proc/self/mounts";
+    pub fn root() -> AyaTestResult<Self> {
         const CGROUP2: &str = "cgroup2";
         {
-            let mounts = fs::File::open(PROC_MOUNTS)
-                .unwrap_or_else(|err| panic!("fs::File::open(\"{PROC_MOUNTS}\"): {err}"));
-            for line in BufReader::new(mounts).lines() {
-                let line = line.unwrap_or_else(|err| {
-                    panic!("line yielded by io::BufReader::new(mounts): {err}")
-                });
-                let mut parts = line.split_whitespace();
-                let device = parts.next().unwrap_or_else(|| {
-                    panic!("mount entry from {PROC_MOUNTS} has no device field: {line}")
-                });
-                let mountpoint = parts.next().unwrap_or_else(|| {
-                    panic!("mount entry from {PROC_MOUNTS} has no mountpoint field: {line}")
-                });
-                let fstype = parts.next().unwrap_or_else(|| {
-                    panic!("mount entry from {PROC_MOUNTS} has no fstype field: {line}")
-                });
+            let mounts = fs::File::open(PROC_MOUNTS).map_err(|source| AyaTestError::Io {
+                op: "open",
+                path: PathBuf::from(PROC_MOUNTS),
+                source,
+            })?;
+            for mount_entry in BufReader::new(mounts).lines() {
+                let mount_entry = mount_entry.map_err(|source| AyaTestError::Io {
+                    op: "retrieve a line",
+                    path: PathBuf::from(PROC_MOUNTS),
+                    source,
+                })?;
+                let mut parts = mount_entry.split_whitespace();
+                let device = parts
+                    .next()
+                    .ok_or_else(|| AyaTestError::MissingMountEntryField {
+                        field: "device",
+                        mount_entry: mount_entry.clone(),
+                    })?;
+                let mountpoint =
+                    parts
+                        .next()
+                        .ok_or_else(|| AyaTestError::MissingMountEntryField {
+                            field: "mountpoint",
+                            mount_entry: mount_entry.clone(),
+                        })?;
+                let fstype = parts
+                    .next()
+                    .ok_or_else(|| AyaTestError::MissingMountEntryField {
+                        field: "fstype",
+                        mount_entry: mount_entry.clone(),
+                    })?;
                 if device == CGROUP2 && fstype == CGROUP2 {
-                    return Self::Root(PathBuf::from(mountpoint));
+                    return Ok(Self::Root(PathBuf::from(mountpoint)));
                 }
             }
         }
-        panic!("could not find a cgroup2 mount entry in {PROC_MOUNTS}");
+        Err(AyaTestError::Cgroup2NotFound)
     }
 }
 
@@ -84,31 +158,44 @@ impl<'a> Cgroup<'a> {
 
     /// Creates a child cgroup with the given name under this cgroup and returns
     /// a [`ChildCgroup`] handle to it.
-    pub fn create_child(&'a self, name: &str) -> ChildCgroup<'a> {
+    pub fn create_child(&'a self, name: &str) -> AyaTestResult<ChildCgroup<'a>> {
         let path = self.path().join(name);
-        fs::create_dir(&path).unwrap();
+        fs::create_dir(&path).map_err(|source| AyaTestError::Io {
+            op: "create directory",
+            path: path.clone(),
+            source,
+        })?;
 
-        ChildCgroup {
+        Ok(ChildCgroup {
             parent: self,
             path: path.into(),
-        }
+        })
     }
 
     /// Writes the given PID to this cgroup's `cgroup.procs` file, thereby
     /// moving that process into this cgroup.
-    pub fn write_pid(&self, pid: u32) {
-        fs::write(self.path().join(CGROUP_PROCS), format!("{pid}\n")).unwrap();
+    pub fn write_pid(&self, pid: u32) -> AyaTestResult<()> {
+        let cgroup_procs = self.path().join(CGROUP_PROCS);
+        fs::write(&cgroup_procs, format!("{pid}\n")).map_err(move |source| AyaTestError::Io {
+            op: "write",
+            path: cgroup_procs,
+            source,
+        })
     }
 }
 
 impl<'a> ChildCgroup<'a> {
     /// Opens the cgroup directory and returns its file descriptor.
-    pub fn fd(&self) -> fs::File {
+    pub fn fd(&self) -> AyaTestResult<fs::File> {
         let Self { parent: _, path } = self;
         fs::OpenOptions::new()
             .read(true)
             .open(path.as_ref())
-            .unwrap()
+            .map_err(|source| AyaTestError::Io {
+                op: "open",
+                path: path.to_path_buf(),
+                source,
+            })
     }
 
     /// Consumes `self` and returns a [`Cgroup::Child`] variant.
@@ -134,6 +221,8 @@ impl Drop for ChildCgroup<'_> {
     )]
     #[expect(clippy::panic, reason = "drop handlers can't return a result")]
     fn drop(&mut self) {
+        use anyhow::{Context as _, Result};
+
         let Self { parent, path } = self;
 
         match (|| -> Result<()> {
@@ -202,27 +291,44 @@ impl NetNsGuard {
         clippy::print_stdout,
         reason = "integration tests print namespace transitions for diagnostics"
     )]
-    pub fn new() -> Self {
+    pub fn new() -> AyaTestResult<Self> {
         // `/proc/thread-self/ns/net` resolves to the calling thread's netns
         // (`/proc/self/ns/net` would always pin to the main thread's).
-        let old_ns = fs::File::open(Self::THREAD_NETNS)
-            .unwrap_or_else(|err| panic!("fs::File::open(\"{}\"): {err:?}", Self::THREAD_NETNS));
+        let old_ns = fs::File::open(Self::THREAD_NETNS).map_err(|source| AyaTestError::Io {
+            op: "open",
+            path: PathBuf::from(Self::THREAD_NETNS),
+            source,
+        })?;
 
         static COUNTER: AtomicU64 = AtomicU64::new(0);
         let pid = process::id();
         let name = format!("aya-test-{pid}-{}", COUNTER.fetch_add(1, Ordering::Relaxed));
 
-        fs::create_dir_all(Self::PERSIST_DIR)
-            .unwrap_or_else(|err| panic!("fs::create_dir_all(\"{}\"): {err:?}", Self::PERSIST_DIR));
+        fs::create_dir_all(Self::PERSIST_DIR).map_err(|source| AyaTestError::Io {
+            op: "create directory",
+            path: PathBuf::from(Self::PERSIST_DIR),
+            source,
+        })?;
         let ns_path = Path::new(Self::PERSIST_DIR).join(&name);
-        let _unused: fs::File = fs::File::create(&ns_path)
-            .unwrap_or_else(|err| panic!("fs::File::create(\"{}\"): {err:?}", ns_path.display()));
-        nix::sched::unshare(nix::sched::CloneFlags::CLONE_NEWNET)
-            .expect("nix::sched::unshare(CLONE_NEWNET)");
+        let _unused: fs::File = fs::File::create(&ns_path).map_err(|source| AyaTestError::Io {
+            op: "create file",
+            path: ns_path.clone(),
+            source,
+        })?;
+        nix::sched::unshare(nix::sched::CloneFlags::CLONE_NEWNET).map_err(|source| {
+            AyaTestError::Syscall {
+                syscall: "unshare",
+                path: None,
+                source,
+            }
+        })?;
 
         // Re-open after unshare to capture the freshly entered namespace.
-        let new_ns = fs::File::open(Self::THREAD_NETNS)
-            .unwrap_or_else(|err| panic!("fs::File::open(\"{}\"): {err:?}", Self::THREAD_NETNS));
+        let new_ns = fs::File::open(Self::THREAD_NETNS).map_err(|source| AyaTestError::Io {
+            op: "open",
+            path: PathBuf::from(Self::THREAD_NETNS),
+            source,
+        })?;
 
         nix::mount::mount(
             Some(Self::THREAD_NETNS),
@@ -231,7 +337,11 @@ impl NetNsGuard {
             nix::mount::MsFlags::MS_BIND,
             None::<&str>,
         )
-        .expect("nix::mount::mount");
+        .map_err(|source| AyaTestError::Syscall {
+            syscall: "mount",
+            path: Some(ns_path.clone()),
+            source,
+        })?;
 
         println!("entered network namespace {name}");
 
@@ -242,20 +352,20 @@ impl NetNsGuard {
         };
 
         // By default, the loopback in a new netns is down. Set it up.
-        let lo = CString::new("lo").unwrap();
+        let lo = c"lo";
         unsafe {
             let idx = if_nametoindex(lo.as_ptr());
-            assert!(
-                idx != 0,
-                "interface `lo` not found in netns {}: {}",
-                ns.name,
-                io::Error::last_os_error()
-            );
-            netlink_set_link_up(idx as i32)
-                .unwrap_or_else(|e| panic!("failed to set `lo` up in netns {}: {e}", ns.name));
+            if idx == 0 {
+                return Err(AyaTestError::Io {
+                    op: "lookup interface index",
+                    path: PathBuf::from("lo"),
+                    source: io::Error::last_os_error(),
+                });
+            }
+            netlink_set_link_up(idx as i32)?;
         }
 
-        ns
+        Ok(ns)
     }
 }
 
@@ -282,6 +392,8 @@ impl Drop for NetNsGuard {
     )]
     #[expect(clippy::panic, reason = "drop handlers can't return a result")]
     fn drop(&mut self) {
+        use anyhow::{Context as _, Result};
+
         let Self {
             old_ns,
             name,

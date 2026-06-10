@@ -17,7 +17,7 @@ use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 #[case::btf("SOCKS_BTF", "redirect_sock_btf")]
 #[test_attr(test_log::test)]
 fn af_xdp(#[case] socks_name: &str, #[case] prog_name: &str) {
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     let mut bpf = Ebpf::load(crate::XSK_MAP).unwrap();
     let mut socks: XskMap<_> = bpf.take_map(socks_name).unwrap().try_into().unwrap();
@@ -165,7 +165,7 @@ fn map_load() {
 #[case::btf("CPUS_BTF", "redirect_cpu_btf")]
 #[test_attr(test_log::test)]
 fn cpumap_chain(#[case] cpus_name: &str, #[case] prog_name: &str) {
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     let mut bpf = Ebpf::load(crate::CPU_MAP).unwrap();
 
@@ -247,7 +247,7 @@ fn devmap_set(
     #[case] dev_get_prog: &str,
     #[case] dev_hash_get_prog: &str,
 ) {
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     let mut bpf = Ebpf::load(crate::DEV_MAP).unwrap();
     let mut devs: DevMap<_> = bpf.take_map(devs_name).unwrap().try_into().unwrap();
@@ -289,7 +289,7 @@ fn devmap_set(
 #[case::btf_hash("get_ifindex_dev_hash_btf")]
 #[test_attr(test_log::test)]
 fn devmap_get_ifindex(#[case] prog_name: &str) {
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
     let mut bpf = Ebpf::load(crate::DEV_MAP).unwrap();
     let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     xdp.load().unwrap();
