@@ -50,6 +50,31 @@ impl Architecture {
             Self::X86_64 => "x86_64-unknown-linux-gnu",
         }
     }
+
+    pub(crate) fn sysroot(self, opts: &SysrootOptions) -> &Path {
+        let SysrootOptions {
+            aarch64_sysroot,
+            armv7_sysroot,
+            loongarch64_sysroot,
+            mips_sysroot,
+            mips64_sysroot,
+            powerpc64_sysroot,
+            riscv64_sysroot,
+            s390x_sysroot,
+            x86_64_sysroot,
+        } = opts;
+        match self {
+            Self::AArch64 => aarch64_sysroot,
+            Self::ARMv7 => armv7_sysroot,
+            Self::LoongArch64 => loongarch64_sysroot,
+            Self::Mips => mips_sysroot,
+            Self::Mips64 => mips64_sysroot,
+            Self::PowerPC64 => powerpc64_sysroot,
+            Self::RISCV64 => riscv64_sysroot,
+            Self::S390X => s390x_sysroot,
+            Self::X86_64 => x86_64_sysroot,
+        }
+    }
 }
 
 impl std::str::FromStr for Architecture {
