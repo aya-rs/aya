@@ -71,7 +71,7 @@ fn current_task_under_cgroup(
     // The cgroup root is an ancestor of every task; a fresh child cgroup that
     // the test process is not moved into is not.
     let root = Cgroup::root();
-    let not_under = root.create_child(prog);
+    let not_under = root.create_child(prog).unwrap();
     let under = File::open("/sys/fs/cgroup").expect("open cgroup root");
 
     let mut cgroups: CgroupArray<_> = bpf.take_map(cgroups_map).unwrap().try_into().unwrap();
@@ -79,7 +79,7 @@ fn current_task_under_cgroup(
         .set(UNDER_INDEX, under.as_raw_fd(), 0)
         .expect("set UNDER_INDEX");
     cgroups
-        .set(NOT_UNDER_INDEX, not_under.fd().as_raw_fd(), 0)
+        .set(NOT_UNDER_INDEX, not_under.fd().unwrap().as_raw_fd(), 0)
         .expect("set NOT_UNDER_INDEX");
 
     let result = Array::<_, TestResult>::try_from(bpf.map(result_map).unwrap()).unwrap();

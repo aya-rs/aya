@@ -13,7 +13,7 @@ fn modprobe() {
     // `/sbin/modprobe` to load the required kernel module.
     // In order for this test to pass, all of that machinery must work
     // correctly within the test environment.
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     tc::qdisc_add_clsact("lo").unwrap();
 }
@@ -28,7 +28,7 @@ fn xdp() {
         return;
     }
 
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     let mut bpf = Ebpf::load(crate::PASS).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
@@ -66,7 +66,7 @@ fn extension() {
         return;
     }
 
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     let mut bpf = Ebpf::load(crate::MAIN).unwrap();
     let pass: &mut Xdp = bpf.program_mut("xdp_pass").unwrap().try_into().unwrap();
