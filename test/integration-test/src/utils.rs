@@ -2,7 +2,6 @@
 
 use std::{
     borrow::Cow,
-    cell::OnceCell,
     ffi::CString,
     fs,
     io::{self, Write as _},
@@ -27,7 +26,6 @@ pub(crate) fn is_cgroup2() -> bool {
 pub(crate) struct ChildCgroup<'a> {
     parent: &'a Cgroup<'a>,
     path: Cow<'a, Path>,
-    fd: OnceCell<fs::File>,
 }
 
 pub(crate) enum Cgroup<'a> {
@@ -45,11 +43,7 @@ impl<'a> Cgroup<'a> {
     fn path(&self) -> &Path {
         match self {
             Self::Root => Path::new(CGROUP_ROOT),
-            Self::Child(ChildCgroup {
-                parent: _,
-                path,
-                fd: _,
-            }) => path,
+            Self::Child(ChildCgroup { parent: _, path }) => path,
         }
     }
 
@@ -60,7 +54,6 @@ impl<'a> Cgroup<'a> {
         ChildCgroup {
             parent: self,
             path: path.into(),
-            fd: OnceCell::new(),
         }
     }
 
@@ -70,18 +63,12 @@ impl<'a> Cgroup<'a> {
 }
 
 impl<'a> ChildCgroup<'a> {
-    pub(crate) fn fd(&self) -> &fs::File {
-        let Self {
-            parent: _,
-            path,
-            fd,
-        } = self;
-        fd.get_or_init(|| {
-            fs::OpenOptions::new()
-                .read(true)
-                .open(path.as_ref())
-                .unwrap()
-        })
+    pub(crate) fn fd(&self) -> fs::File {
+        let Self { parent: _, path } = self;
+        fs::OpenOptions::new()
+            .read(true)
+            .open(path.as_ref())
+            .unwrap()
     }
 
     pub(crate) fn into_cgroup(self) -> Cgroup<'a> {
@@ -99,11 +86,7 @@ impl Drop for ChildCgroup<'_> {
         reason = "debug formatting preserves error context in drop"
     )]
     fn drop(&mut self) {
-        let Self {
-            parent,
-            path,
-            fd: _,
-        } = self;
+        let Self { parent, path } = self;
 
         match (|| -> Result<()> {
             let dst = parent.path().join(CGROUP_PROCS);

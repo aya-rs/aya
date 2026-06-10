@@ -53,7 +53,8 @@ fn cgroup_storage(#[case] storage_map: &str, #[case] percpu_map: &str, #[case] p
     let _netns = NetNsGuard::new();
     let root = Cgroup::root();
     let cgroup = root.create_child(prog);
-    let cgroup_inode_id = cgroup.fd().metadata().expect("cgroup metadata").ino();
+    let cgroup_fd = cgroup.fd();
+    let cgroup_inode_id = cgroup_fd.metadata().expect("cgroup metadata").ino();
 
     {
         let program: &mut CgroupSockAddr = bpf
@@ -65,7 +66,7 @@ fn cgroup_storage(#[case] storage_map: &str, #[case] percpu_map: &str, #[case] p
             .load()
             .unwrap_or_else(|err| panic!("load {prog}: {err}"));
         program
-            .attach(cgroup.fd(), CgroupAttachMode::Single)
+            .attach(cgroup_fd, CgroupAttachMode::Single)
             .unwrap_or_else(|err| panic!("attach {prog}: {err}"));
     }
 
