@@ -19,6 +19,7 @@ pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
 pub use feature_probe::{BpfHelper, is_helper_supported, is_map_supported, is_program_supported};
+pub use netlink::NetlinkError;
 #[doc(hidden)]
 pub use netlink::netlink_set_link_up;
 pub(crate) use netlink::*;

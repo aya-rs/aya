@@ -447,7 +447,7 @@ fn pin_tcx_link() {
     }
 
     use aya::test_helpers::NetNsGuard;
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     let program_name = "tcx_next";
     let pin_path = "/sys/fs/bpf/aya-tcx-test-lo";

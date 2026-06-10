@@ -44,10 +44,10 @@ fn cgroup_storage(#[case] storage_map: &str, #[case] percpu_map: &str, #[case] p
         .load(crate::CGROUP_STORAGE)
         .expect("load cgroup_storage program");
 
-    let _netns = NetNsGuard::new();
-    let root = Cgroup::root();
-    let cgroup = root.create_child(prog);
-    let cgroup_fd = cgroup.fd();
+    let _netns = NetNsGuard::new().unwrap();
+    let root = Cgroup::root().unwrap();
+    let cgroup = root.create_child(prog).unwrap();
+    let cgroup_fd = cgroup.fd().unwrap();
     let cgroup_inode_id = cgroup_fd.metadata().expect("cgroup metadata").ino();
 
     {
@@ -65,7 +65,7 @@ fn cgroup_storage(#[case] storage_map: &str, #[case] percpu_map: &str, #[case] p
     }
 
     let cgroup = cgroup.into_cgroup();
-    cgroup.write_pid(process::id());
+    cgroup.write_pid(process::id()).unwrap();
 
     // A single connect over loopback fires the connect4 program exactly once.
     let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
