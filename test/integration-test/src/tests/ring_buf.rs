@@ -495,9 +495,9 @@ struct WriterThread {
 }
 
 impl WriterThread {
-    // When the ring buffer implementation uses Ordering::Relaxed to write the consumer position
-    // rather than Ordering::SeqCst, the test will hang. This number was determined to be large
-    // enough to tickle that bug on a hardware accelerated VM with 2 vCPUs.
+    // Without a full barrier between publishing the consumer position and checking the producer
+    // position, the test will hang. This number was determined to be large enough to tickle that
+    // bug on a hardware accelerated VM with 2 vCPUs.
     const NUM_MESSAGES: u64 = 20_000;
 
     fn spawn() -> Self {

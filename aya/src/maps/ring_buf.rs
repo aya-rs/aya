@@ -9,7 +9,7 @@ use std::{
     fmt::{self, Debug, Formatter},
     ops::Deref,
     os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
-    sync::atomic::{AtomicU32, AtomicUsize, Ordering},
+    sync::atomic::{self, AtomicU32, AtomicUsize, Ordering},
 };
 
 use aya_obj::generated::{BPF_RINGBUF_BUSY_BIT, BPF_RINGBUF_DISCARD_BIT, BPF_RINGBUF_HDR_SZ};
@@ -185,6 +185,7 @@ impl Debug for RingBufItem<'_> {
                 ConsumerPos {
                     pos,
                     metadata: ConsumerMetadata { mmap: _ },
+                    needs_wakeup: _,
                 },
         } = self;
         // In general Relaxed here is sufficient, for debugging, it certainly is.
@@ -221,31 +222,35 @@ impl AsRef<AtomicUsize> for ConsumerMetadata {
 struct ConsumerPos {
     pos: usize,
     metadata: ConsumerMetadata,
+    needs_wakeup: bool,
 }
 
 impl ConsumerPos {
     fn new(metadata: ConsumerMetadata) -> Self {
-        // Load the initial value of the consumer position. SeqCst is used to be safe given we don't
-        // have any claims about memory synchronization performed by some previous writer.
-        let pos = metadata.as_ref().load(Ordering::SeqCst);
-        Self { pos, metadata }
+        // Read the starting position before producer data.
+        let pos = metadata.as_ref().load(Ordering::Acquire);
+        Self {
+            pos,
+            metadata,
+            needs_wakeup: false,
+        }
     }
 
     fn consume(&mut self, len: usize) {
-        let Self { pos, metadata } = self;
+        let Self {
+            pos,
+            metadata,
+            needs_wakeup,
+        } = self;
 
         *pos += (usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap() + len).next_multiple_of(8);
 
-        // Write operation needs to be properly ordered with respect to the producer committing new
-        // data to the ringbuf. The producer uses xchg (SeqCst) to commit new data [1]. The producer
-        // reads the consumer offset after clearing the busy bit on a new entry [2]. By using SeqCst
-        // here we ensure that either a subsequent read by the consumer to consume messages will see
-        // an available message, or the producer in the kernel will see the updated consumer offset
-        // that is caught up.
+        // Publish the new position after reading the record. The kernel pairs this with an Acquire
+        // load before reusing the record's storage [1].
         //
-        // [1]: https://github.com/torvalds/linux/blob/2772d7df/kernel/bpf/ringbuf.c#L487-L488
-        // [2]: https://github.com/torvalds/linux/blob/2772d7df/kernel/bpf/ringbuf.c#L494
-        metadata.as_ref().store(*pos, Ordering::SeqCst);
+        // [1]: https://github.com/torvalds/linux/blob/2772d7df/kernel/bpf/ringbuf.c#L422
+        metadata.as_ref().store(*pos, Ordering::Release);
+        *needs_wakeup = true;
     }
 }
 
@@ -340,7 +345,15 @@ impl ProducerData {
         });
         while data_available(mmap, pos_cache, consumer) {
             match read_item(data_pages, *mask, consumer) {
-                Item::Busy => return None,
+                Item::Busy => {
+                    if !consumer.needs_wakeup {
+                        return None;
+                    }
+                    // Ensure either a retry sees the committed record or its producer sees the
+                    // updated consumer position and sends a notification.
+                    atomic::fence(Ordering::SeqCst);
+                    consumer.needs_wakeup = false;
+                }
                 Item::Discard { len } => consumer.consume(len),
                 Item::Data(data) => return Some(RingBufItem { data, consumer }),
             }
@@ -356,25 +369,36 @@ impl ProducerData {
         fn data_available(
             producer: &MMap,
             producer_cache: &mut usize,
-            consumer: &ConsumerPos,
+            consumer: &mut ConsumerPos,
         ) -> bool {
-            let ConsumerPos { pos: consumer, .. } = consumer;
+            let ConsumerPos {
+                pos: consumer,
+                needs_wakeup,
+                ..
+            } = consumer;
             // Refresh the producer position cache if it appears that the consumer is caught up
             // with the producer position.
-            if consumer == producer_cache {
+            if *consumer == *producer_cache {
+                if *needs_wakeup {
+                    // Ensure either this sees a new record or its producer sees the updated
+                    // consumer position and sends a notification.
+                    atomic::fence(Ordering::SeqCst);
+                    *needs_wakeup = false;
+                }
                 *producer_cache = load_producer_pos(producer);
             }
 
-            // Note that we don't compare the order of the values because the producer position may
-            // overflow u32 and wrap around to 0. Instead we just compare equality and assume that
-            // the consumer position is always logically less than the producer position.
+            // Note that we don't compare the order of the values because the word-sized producer
+            // position may overflow and wrap around to 0. Instead we just compare equality and
+            // assume that the consumer position is always logically less than the producer
+            // position.
             //
             // Note also that the kernel, at the time of writing [1], doesn't seem to handle this
             // overflow correctly at all, and it's not clear that one can produce events after the
             // producer position has wrapped around.
             //
             // [1]: https://github.com/torvalds/linux/blob/4b810bf0/kernel/bpf/ringbuf.c#L434-L440
-            consumer != producer_cache
+            *consumer != *producer_cache
         }
 
         fn read_item<'data>(data: &'data [u8], mask: u32, pos: &ConsumerPos) -> Item<'data> {
@@ -392,8 +416,8 @@ impl ProducerData {
             let header_ptr: *const AtomicU32 = must_get_data(offset, size_of::<AtomicU32>())
                 .as_ptr()
                 .cast();
-            // Pair the kernel's SeqCst write (implies Release) [1] with an Acquire load. This
-            // ensures data written by the producer will be visible.
+            // The kernel commits the record with a fully ordered xchg [1]. Pair it with an Acquire
+            // load so data written by the producer is visible after the busy bit is cleared.
             //
             // [1]: https://github.com/torvalds/linux/blob/eb26cbb1/kernel/bpf/ringbuf.c#L488
             let header = unsafe { &*header_ptr }.load(Ordering::Acquire);
