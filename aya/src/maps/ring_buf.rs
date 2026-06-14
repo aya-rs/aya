@@ -185,7 +185,6 @@ impl Debug for RingBufItem<'_> {
                 ConsumerPos {
                     pos,
                     metadata: ConsumerMetadata { mmap: _ },
-                    needs_wakeup: _,
                 },
         } = self;
         // In general Relaxed here is sufficient, for debugging, it certainly is.
@@ -222,26 +221,17 @@ impl AsRef<AtomicUsize> for ConsumerMetadata {
 struct ConsumerPos {
     pos: usize,
     metadata: ConsumerMetadata,
-    needs_wakeup: bool,
 }
 
 impl ConsumerPos {
     fn new(metadata: ConsumerMetadata) -> Self {
         // Read the starting position before producer data.
         let pos = metadata.as_ref().load(Ordering::Acquire);
-        Self {
-            pos,
-            metadata,
-            needs_wakeup: false,
-        }
+        Self { pos, metadata }
     }
 
     fn consume(&mut self, len: usize) {
-        let Self {
-            pos,
-            metadata,
-            needs_wakeup,
-        } = self;
+        let Self { pos, metadata } = self;
 
         let record_len = (usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap() + len).next_multiple_of(8);
         *pos = pos.wrapping_add(record_len);
@@ -251,7 +241,6 @@ impl ConsumerPos {
         //
         // [1]: https://github.com/torvalds/linux/blob/2772d7df/kernel/bpf/ringbuf.c#L422
         metadata.as_ref().store(*pos, Ordering::Release);
-        *needs_wakeup = true;
     }
 }
 
@@ -344,51 +333,11 @@ impl ProducerData {
                 mmap_data.len()
             )
         });
-        while data_available(mmap, pos_cache, consumer) {
-            match read_item(data_pages, *mask, consumer) {
-                Item::Busy => {
-                    if !consumer.needs_wakeup {
-                        return None;
-                    }
-                    // Ensure either a retry sees the committed record or its producer sees the
-                    // updated consumer position and sends a notification.
-                    atomic::fence(Ordering::SeqCst);
-                    consumer.needs_wakeup = false;
-                }
-                Item::Discard { len } => consumer.consume(len),
-                Item::Data(data) => return Some(RingBufItem { data, consumer }),
-            }
-        }
-        return None;
-
-        enum Item<'a> {
-            Busy,
-            Discard { len: usize },
-            Data(&'a [u8]),
-        }
-
-        fn data_available(
-            producer: &MMap,
-            producer_cache: &mut usize,
-            consumer: &mut ConsumerPos,
-        ) -> bool {
-            let ConsumerPos {
-                pos: consumer,
-                needs_wakeup,
-                ..
-            } = consumer;
-            // Refresh the producer position cache if it appears that the consumer is caught up
-            // with the producer position.
-            if *consumer == *producer_cache {
-                if *needs_wakeup {
-                    // Ensure either this sees a new record or its producer sees the updated
-                    // consumer position and sends a notification.
-                    atomic::fence(Ordering::SeqCst);
-                    *needs_wakeup = false;
-                }
-                *producer_cache = load_producer_pos(producer);
-            }
-
+        // The item returned by the previous call may have published a new consumer position after
+        // this function returned.
+        let mut may_have_published = true;
+        loop {
+            let ConsumerPos { pos, metadata: _ } = consumer;
             // Note that we don't compare the order of the values because the word-sized producer
             // position may overflow and wrap around to 0. Instead we just compare equality and
             // assume that the consumer position is always logically less than the producer
@@ -399,7 +348,38 @@ impl ProducerData {
             // producer position has wrapped around.
             //
             // [1]: https://github.com/torvalds/linux/blob/4b810bf0/kernel/bpf/ringbuf.c#L434-L440
-            *consumer != *producer_cache
+            let caught_up = *pos == *pos_cache;
+
+            if !caught_up {
+                match read_item(data_pages, *mask, consumer) {
+                    Item::Busy => {}
+                    Item::Discard { len } => {
+                        consumer.consume(len);
+                        may_have_published = true;
+                        continue;
+                    }
+                    Item::Data(data) => return Some(RingBufItem { data, consumer }),
+                }
+            }
+
+            if !may_have_published {
+                return None;
+            }
+
+            // Ensure either the next load sees a new record or its producer sees the updated
+            // consumer position and sends a notification.
+            atomic::fence(Ordering::SeqCst);
+            may_have_published = false;
+
+            if caught_up {
+                *pos_cache = load_producer_pos(mmap);
+            }
+        }
+
+        enum Item<'a> {
+            Busy,
+            Discard { len: usize },
+            Data(&'a [u8]),
         }
 
         fn read_item<'data>(data: &'data [u8], mask: u32, pos: &ConsumerPos) -> Item<'data> {
