@@ -243,7 +243,8 @@ impl ConsumerPos {
             needs_wakeup,
         } = self;
 
-        *pos += (usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap() + len).next_multiple_of(8);
+        let record_len = (usize::try_from(BPF_RINGBUF_HDR_SZ).unwrap() + len).next_multiple_of(8);
+        *pos = pos.wrapping_add(record_len);
 
         // Publish the new position after reading the record. The kernel pairs this with an Acquire
         // load before reusing the record's storage [1].
