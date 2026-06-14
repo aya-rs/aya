@@ -343,11 +343,9 @@ impl ProducerData {
             // assume that the consumer position is always logically less than the producer
             // position.
             //
-            // Note also that the kernel, at the time of writing [1], doesn't seem to handle this
-            // overflow correctly at all, and it's not clear that one can produce events after the
-            // producer position has wrapped around.
+            // The same comparison has been proposed for libbpf[1].
             //
-            // [1]: https://github.com/torvalds/linux/blob/4b810bf0/kernel/bpf/ringbuf.c#L434-L440
+            // [1]: https://lore.kernel.org/bpf/20260613-bpf-ringbuf-fixes-v1-3-e623481cb724@kernel.org/
             let caught_up = *pos == *pos_cache;
 
             if !caught_up {
