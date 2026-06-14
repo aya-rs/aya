@@ -20,6 +20,8 @@ use crate::{
     util::{MMap, page_size},
 };
 
+const BPF_F_RB_OVERWRITE: u32 = 1 << 19;
+
 /// A map that can be used to receive events from eBPF programs.
 ///
 /// This is similar to [`crate::maps::PerfEventArray`], but different in a few ways:
@@ -97,6 +99,14 @@ pub struct RingBuf<T> {
 impl<T: Borrow<MapData>> RingBuf<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data: &MapData = map.borrow();
+        let flags = data.obj.map_flags();
+        if flags & BPF_F_RB_OVERWRITE != 0 {
+            return Err(MapError::UnsupportedMapFlags {
+                flags,
+                reason: "RingBuf does not support overwrite mode",
+            });
+        }
+
         let page_size = page_size();
         let map_fd = data.fd().as_fd();
         let byte_size = data.obj.max_entries();
