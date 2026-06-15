@@ -1,7 +1,8 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@crates//:defs.bzl", "all_crate_deps")
+load("@linux.bzl//:linux.bzl", "initramfs")
 load("//bazel:defs.bzl", "BPF_C_TARGET_ARCH", "aya_c_bpf_objects", "aya_rust_crate")
-load("//bazel:vm.bzl", "aya_initramfs", "aya_qemu_vm_test")
+load("//bazel:vm.bzl", "aya_qemu_vm_test")
 
 C_BPF_OBJECTS = [
     ("bpf/ext.bpf.c", False),
@@ -67,16 +68,18 @@ aya_rust_crate(
     unit_test_binary = True,
 )
 
-aya_initramfs(
+initramfs(
     name = "vm_initramfs",
-    srcs = [
-        "//test/kernel:aya_kernel_config",
-        "//test/kernel:aya_kernel_system_map",
-        "//test-distro:init",
-        "//test-distro:modprobe",
-        ":integration-test-unit-test-bin",
-    ],
-    tests = ["integration-test-unit-test-bin"],
+    directories = ["/lib/modules"],
+    executables = {
+        "/bin/integration-test-unit-test-bin": ":integration-test-unit-test-bin",
+        "/init": "//test-distro:init",
+        "/sbin/modprobe": "//test-distro:modprobe",
+    },
+    files = {
+        "/boot/System.map-6.18.2": "//test/kernel:aya_kernel_system_map",
+        "/boot/config-6.18.2": "//test/kernel:aya_kernel_config",
+    },
 )
 
 aya_qemu_vm_test(

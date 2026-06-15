@@ -25,92 +25,16 @@ _guest_platform_transition = transition(
     ],
 )
 
-def _file_with_basename(files, basename, attr_name):
-    matches = [file for file in files if file.basename == basename]
-    if len(matches) != 1:
-        fail("%s must contain exactly one file named %s, got %d" % (attr_name, basename, len(matches)))
-    return matches[0]
-
 def _single_file(files, attr_name):
     if len(files) != 1:
         fail("%s must contain exactly one file, got %d" % (attr_name, len(files)))
     return files[0]
-
-def _files_with_basenames(files, basenames, attr_name):
-    return [_file_with_basename(files, basename, attr_name) for basename in basenames]
 
 def _kernel_image(files, attr_name):
     matches = [file for file in files if file.basename.endswith(".Image") or file.basename.endswith(".bzImage")]
     if len(matches) != 1:
         fail("%s must contain exactly one kernel image, got %d" % (attr_name, len(matches)))
     return matches[0]
-
-def _initramfs_file_line(dst, src, mode):
-    return "file %s %s %s 0 0" % (dst, src.path, mode)
-
-def _aya_initramfs_impl(ctx):
-    srcs = ctx.files.srcs
-    init = _file_with_basename(srcs, ctx.attr.init, "srcs")
-    config = _file_with_basename(srcs, ".config", "srcs")
-    system_map = _file_with_basename(srcs, "System.map.syms", "srcs")
-    sbin = _files_with_basenames(srcs, ctx.attr.sbin, "srcs")
-    tests = _files_with_basenames(srcs, ctx.attr.tests, "srcs")
-    out = ctx.outputs.initrd
-    manifest = ctx.actions.declare_file(ctx.label.name + ".cpio.list")
-
-    lines = [
-        "dir /bin 755 0 0",
-        "dir /sbin 755 0 0",
-        "dir /boot 755 0 0",
-        "dir /lib 755 0 0",
-        "dir /lib/modules 755 0 0",
-        _initramfs_file_line("/init", init, "755"),
-        _initramfs_file_line("/boot/config", config, "644"),
-        _initramfs_file_line("/boot/config-bazel", config, "644"),
-        _initramfs_file_line("/boot/System.map", system_map, "644"),
-        _initramfs_file_line("/boot/System.map-bazel", system_map, "644"),
-    ]
-    for file in sbin:
-        lines.append(_initramfs_file_line("/sbin/" + file.basename, file, "755"))
-    for file in tests:
-        lines.append(_initramfs_file_line("/bin/" + file.basename, file, "755"))
-
-    ctx.actions.write(
-        output = manifest,
-        content = "\n".join(lines) + "\n",
-    )
-
-    ctx.actions.run_shell(
-        inputs = depset([manifest, init, config, system_map] + sbin + tests),
-        outputs = [out],
-        tools = [ctx.executable.gen_init_cpio],
-        command = "\"$1\" \"$2\" > \"$3\"",
-        arguments = [
-            ctx.executable.gen_init_cpio.path,
-            manifest.path,
-            out.path,
-        ],
-        mnemonic = "AyaInitramfs",
-        progress_message = "Building Aya initramfs %{label}",
-    )
-
-    return [DefaultInfo(files = depset([out]))]
-
-aya_initramfs = rule(
-    implementation = _aya_initramfs_impl,
-    attrs = {
-        "srcs": attr.label_list(allow_files = True, mandatory = True),
-        "init": attr.string(default = "init"),
-        "sbin": attr.string_list(default = ["modprobe"]),
-        "tests": attr.string_list(allow_empty = False),
-        "gen_init_cpio": attr.label(
-            cfg = "exec",
-            default = "@aya_linux_6_18_2//:gen_init_cpio",
-            executable = True,
-        ),
-    },
-    outputs = {"initrd": "%{name}.img"},
-)
 
 def _qemu_system_transition_impl(_, attr):
     return {"//bazel:qemu_system_target": attr.qemu_system_target}

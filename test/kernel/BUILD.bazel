@@ -35,6 +35,7 @@ filegroup(
         "@platforms//cpu:aarch64": [":aya_kernel_aarch64_config"],
         "@platforms//cpu:x86_64": [":aya_kernel_x86_64_config"],
     }),
+    output_group = "config",
 )
 
 filegroup(

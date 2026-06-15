@@ -63,9 +63,9 @@ single_version_override(
 
 archive_override(
     module_name = "linux.bzl",
-    integrity = "sha256-0pukqV7QanGjjHVpXD2CmtrF3zFiOp42IDT17AtAWhI=",
-    strip_prefix = "linux.bzl-9a6d68d14dc7c1bda6f1c26160c838ec8ce76884",
-    urls = ["https://github.com/hermeticbuild/linux.bzl/archive/9a6d68d14dc7c1bda6f1c26160c838ec8ce76884.tar.gz"],
+    integrity = "sha256-2gveHVEG4EE5x3N4kDnUftB7ed/6RRFslFwDquObqRg=",
+    strip_prefix = "linux.bzl-e18628f3e177022c2ff0cf93a2e5f2d408f7d2fc",
+    urls = ["https://github.com/hermeticbuild/linux.bzl/archive/e18628f3e177022c2ff0cf93a2e5f2d408f7d2fc.tar.gz"],
 )
 
 rules_rust = use_extension("@rules_rs//rs:rules_rust.bzl", "rules_rust")
