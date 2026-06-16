@@ -78,7 +78,7 @@ jobs:
       - name: Run miri
         run: |
           set -euxo pipefail
-          cargo +nightly hack miri test --all-targets --feature-powerset \
+          cargo +nightly hack --locked miri test --all-targets --feature-powerset \
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
@@ -130,7 +130,7 @@ jobs:
           CFLAGS_armv7_unknown_linux_gnueabi: "-U_TIME_BITS -D_FILE_OFFSET_BITS=64"
         run: |
           set -euxo pipefail
-          cargo hack build --all-targets --feature-powerset \
+          cargo hack --locked build --all-targets --feature-powerset \
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
@@ -143,7 +143,7 @@ jobs:
           RUST_BACKTRACE: full
         run: |
           set -euxo pipefail
-          cargo hack test --all-targets \
+          cargo hack --locked test --all-targets \
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
@@ -156,7 +156,7 @@ jobs:
           RUST_BACKTRACE: full
         run: |
           set -euxo pipefail
-          cargo hack test --doc \
+          cargo hack --locked test --doc \
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
@@ -202,7 +202,7 @@ jobs:
             for target in bpfeb-unknown-none bpfel-unknown-none; do
               echo "::group::target=$target"
               if ! (
-                cargo +nightly hack build \
+                cargo +nightly hack --locked build \
                   --release \
                   --target "$target" \
                   -Z build-std=core \
@@ -217,7 +217,7 @@ jobs:
               echo "::endgroup::"
             done
             if ! (
-              RUSTDOCFLAGS=$RUSTFLAGS cargo +nightly hack test --doc \
+              RUSTDOCFLAGS=$RUSTFLAGS cargo +nightly hack --locked test --doc \
                 --package aya-ebpf \
                 --package aya-ebpf-bindings \
                 --package aya-log-ebpf \

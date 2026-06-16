@@ -1,4 +1,3 @@
-Cargo.lock
 target/
 .vscode/
 !.vscode/settings.json
