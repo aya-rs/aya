@@ -44,6 +44,8 @@ pub aya_obj::btf::BtfError::UnknownBtfTypeName
 pub aya_obj::btf::BtfError::UnknownBtfTypeName::type_name: alloc::string::String
 pub aya_obj::btf::BtfError::UnknownSectionSize
 pub aya_obj::btf::BtfError::UnknownSectionSize::section_name: alloc::string::String
+impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::KsymsError
+pub fn aya_obj::KsymsError::from(aya_obj::btf::BtfError) -> Self
 impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::ParseError
 pub fn aya_obj::ParseError::from(aya_obj::btf::BtfError) -> Self
 impl core::error::Error for aya_obj::btf::BtfError
@@ -4813,6 +4815,8 @@ pub aya_obj::obj::Function::line_info_rec_size: usize
 pub aya_obj::obj::Function::name: alloc::string::String
 pub aya_obj::obj::Function::section_index: object::read::SectionIndex
 pub aya_obj::obj::Function::section_offset: usize
+impl aya_obj::Function
+pub fn aya_obj::Function::module_btf_load_requirements(&self) -> aya_obj::ModuleBtfLoadRequirements
 impl core::clone::Clone for aya_obj::Function
 pub fn aya_obj::Function::clone(&self) -> aya_obj::Function
 impl core::fmt::Debug for aya_obj::Function
@@ -4833,6 +4837,28 @@ impl<T> core::marker::Unpin for aya_obj::InvalidTypeBinding<T> where T: core::ma
 impl<T> core::marker::UnsafeUnpin for aya_obj::InvalidTypeBinding<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::UnwindSafe
+pub struct aya_obj::obj::ModuleBtfLoadRequirements
+impl aya_obj::ModuleBtfLoadRequirements
+pub const fn aya_obj::ModuleBtfLoadRequirements::needs_fd_array(self) -> bool
+pub const fn aya_obj::ModuleBtfLoadRequirements::needs_lifetime(self) -> bool
+impl core::clone::Clone for aya_obj::ModuleBtfLoadRequirements
+pub fn aya_obj::ModuleBtfLoadRequirements::clone(&self) -> aya_obj::ModuleBtfLoadRequirements
+impl core::cmp::Eq for aya_obj::ModuleBtfLoadRequirements
+impl core::cmp::PartialEq for aya_obj::ModuleBtfLoadRequirements
+pub fn aya_obj::ModuleBtfLoadRequirements::eq(&self, &aya_obj::ModuleBtfLoadRequirements) -> bool
+impl core::default::Default for aya_obj::ModuleBtfLoadRequirements
+pub fn aya_obj::ModuleBtfLoadRequirements::default() -> aya_obj::ModuleBtfLoadRequirements
+impl core::fmt::Debug for aya_obj::ModuleBtfLoadRequirements
+pub fn aya_obj::ModuleBtfLoadRequirements::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::ModuleBtfLoadRequirements
+impl core::marker::StructuralPartialEq for aya_obj::ModuleBtfLoadRequirements
+impl core::marker::Freeze for aya_obj::ModuleBtfLoadRequirements
+impl core::marker::Send for aya_obj::ModuleBtfLoadRequirements
+impl core::marker::Sync for aya_obj::ModuleBtfLoadRequirements
+impl core::marker::Unpin for aya_obj::ModuleBtfLoadRequirements
+impl core::marker::UnsafeUnpin for aya_obj::ModuleBtfLoadRequirements
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::ModuleBtfLoadRequirements
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::ModuleBtfLoadRequirements
 pub struct aya_obj::obj::Object
 pub aya_obj::obj::Object::btf: core::option::Option<aya_obj::btf::Btf>
 pub aya_obj::obj::Object::btf_ext: core::option::Option<aya_obj::btf::BtfExt>
@@ -4853,7 +4879,10 @@ impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_calls(&mut self, &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+pub fn aya_obj::Object::relocate_externs(&mut self) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, I, &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+impl aya_obj::Object
+pub fn aya_obj::Object::resolve_externs<P, F>(&mut self, core::option::Option<&aya_obj::btf::Btf>, F) -> core::result::Result<aya_obj::ResolvedExterns<P>, aya_obj::ResolveExternsError<<P as aya_obj::ExternModuleBtfProvider>::Error>> where P: aya_obj::ExternModuleBtfProvider, F: core::ops::function::FnOnce() -> core::result::Result<P, <P as aya_obj::ExternModuleBtfProvider>::Error>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object
@@ -5164,6 +5193,17 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::programs::xdp::XdpAtta
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::programs::xdp::XdpAttachType
 pub mod aya_obj::relocation
 pub enum aya_obj::relocation::RelocationError
+pub aya_obj::relocation::RelocationError::BtfFdIndexTooLarge
+pub aya_obj::relocation::RelocationError::BtfFdIndexTooLarge::index: u16
+pub aya_obj::relocation::RelocationError::ExternNotFound
+pub aya_obj::relocation::RelocationError::ExternNotFound::name: alloc::string::String
+pub aya_obj::relocation::RelocationError::InvalidExternRelocationInstruction
+pub aya_obj::relocation::RelocationError::InvalidExternRelocationInstruction::ins_index: usize
+pub aya_obj::relocation::RelocationError::InvalidExternRelocationInstruction::name: alloc::string::String
+pub aya_obj::relocation::RelocationError::InvalidLdImm64Relocation
+pub aya_obj::relocation::RelocationError::InvalidLdImm64Relocation::function_len: usize
+pub aya_obj::relocation::RelocationError::InvalidLdImm64Relocation::ins_index: usize
+pub aya_obj::relocation::RelocationError::InvalidLdImm64Relocation::name: alloc::string::String
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::offset: u64
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::relocation_number: usize
@@ -5171,6 +5211,8 @@ pub aya_obj::relocation::RelocationError::SectionNotFound
 pub aya_obj::relocation::RelocationError::SectionNotFound::section_index: usize
 pub aya_obj::relocation::RelocationError::SectionNotFound::symbol_index: usize
 pub aya_obj::relocation::RelocationError::SectionNotFound::symbol_name: core::option::Option<alloc::string::String>
+pub aya_obj::relocation::RelocationError::StrongExternMissing
+pub aya_obj::relocation::RelocationError::StrongExternMissing::name: alloc::string::String
 pub aya_obj::relocation::RelocationError::UnknownFunction
 pub aya_obj::relocation::RelocationError::UnknownFunction::address: u64
 pub aya_obj::relocation::RelocationError::UnknownFunction::caller_name: alloc::string::String
@@ -5179,6 +5221,8 @@ pub aya_obj::relocation::RelocationError::UnknownProgram::address: u64
 pub aya_obj::relocation::RelocationError::UnknownProgram::section_index: usize
 pub aya_obj::relocation::RelocationError::UnknownSymbol
 pub aya_obj::relocation::RelocationError::UnknownSymbol::index: usize
+pub aya_obj::relocation::RelocationError::UnresolvableSymbol
+pub aya_obj::relocation::RelocationError::UnresolvableSymbol::name: alloc::string::String
 impl core::error::Error for aya_obj::relocation::RelocationError
 impl core::fmt::Debug for aya_obj::relocation::RelocationError
 pub fn aya_obj::relocation::RelocationError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -5234,6 +5278,44 @@ impl core::marker::Unpin for aya_obj::EbpfSectionKind
 impl core::marker::UnsafeUnpin for aya_obj::EbpfSectionKind
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::EbpfSectionKind
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::EbpfSectionKind
+pub enum aya_obj::KsymsError
+pub aya_obj::KsymsError::AmbiguousResolution
+pub aya_obj::KsymsError::AmbiguousResolution::first_addr: u64
+pub aya_obj::KsymsError::AmbiguousResolution::name: alloc::string::String
+pub aya_obj::KsymsError::AmbiguousResolution::second_addr: u64
+pub aya_obj::KsymsError::BtfError(aya_obj::btf::BtfError)
+pub aya_obj::KsymsError::FunctionNotFound
+pub aya_obj::KsymsError::FunctionNotFound::name: alloc::string::String
+pub aya_obj::KsymsError::IncompatibleFunctionSignature
+pub aya_obj::KsymsError::IncompatibleFunctionSignature::name: alloc::string::String
+pub aya_obj::KsymsError::IncompatibleVariableType
+pub aya_obj::KsymsError::IncompatibleVariableType::name: alloc::string::String
+pub aya_obj::KsymsError::InvalidExternType
+pub aya_obj::KsymsError::InvalidExternType::name: alloc::string::String
+pub aya_obj::KsymsError::KallsymsParseError(alloc::string::String)
+pub aya_obj::KsymsError::KallsymsReadError(std::io::error::Error)
+pub aya_obj::KsymsError::TypedKsymRequiresKernelBtf
+pub aya_obj::KsymsError::VariableNotFound
+pub aya_obj::KsymsError::VariableNotFound::name: alloc::string::String
+impl core::convert::From<aya_obj::btf::BtfError> for aya_obj::KsymsError
+pub fn aya_obj::KsymsError::from(aya_obj::btf::BtfError) -> Self
+impl core::convert::From<std::io::error::Error> for aya_obj::KsymsError
+pub fn aya_obj::KsymsError::from(std::io::error::Error) -> Self
+impl core::error::Error for aya_obj::KsymsError
+pub fn aya_obj::KsymsError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya_obj::KsymsError
+pub fn aya_obj::KsymsError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya_obj::KsymsError
+pub fn aya_obj::KsymsError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<E> core::convert::From<aya_obj::KsymsError> for aya_obj::ResolveExternsError<E>
+pub fn aya_obj::ResolveExternsError<E>::from(aya_obj::KsymsError) -> Self
+impl core::marker::Freeze for aya_obj::KsymsError
+impl core::marker::Send for aya_obj::KsymsError
+impl core::marker::Sync for aya_obj::KsymsError
+impl core::marker::Unpin for aya_obj::KsymsError
+impl core::marker::UnsafeUnpin for aya_obj::KsymsError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::KsymsError
+impl !core::panic::unwind_safe::UnwindSafe for aya_obj::KsymsError
 pub enum aya_obj::Map
 pub aya_obj::Map::Btf(aya_obj::maps::BtfMap)
 pub aya_obj::Map::Legacy(aya_obj::maps::LegacyMap)
@@ -5379,6 +5461,38 @@ impl core::marker::Unpin for aya_obj::ProgramSection
 impl core::marker::UnsafeUnpin for aya_obj::ProgramSection
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::ProgramSection
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::ProgramSection
+pub enum aya_obj::ResolveExternsError<E>
+pub aya_obj::ResolveExternsError::Ksyms(aya_obj::KsymsError)
+pub aya_obj::ResolveExternsError::ModuleBtf(E)
+impl<E: core::fmt::Debug> core::fmt::Debug for aya_obj::ResolveExternsError<E>
+pub fn aya_obj::ResolveExternsError<E>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<E> core::convert::From<aya_obj::KsymsError> for aya_obj::ResolveExternsError<E>
+pub fn aya_obj::ResolveExternsError<E>::from(aya_obj::KsymsError) -> Self
+impl<E> core::error::Error for aya_obj::ResolveExternsError<E> where Self: core::fmt::Debug + core::fmt::Display
+pub fn aya_obj::ResolveExternsError<E>::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl<E> core::fmt::Display for aya_obj::ResolveExternsError<E> where E: core::fmt::Display
+pub fn aya_obj::ResolveExternsError<E>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<E> core::marker::Freeze for aya_obj::ResolveExternsError<E> where E: core::marker::Freeze
+impl<E> core::marker::Send for aya_obj::ResolveExternsError<E> where E: core::marker::Send
+impl<E> core::marker::Sync for aya_obj::ResolveExternsError<E> where E: core::marker::Sync
+impl<E> core::marker::Unpin for aya_obj::ResolveExternsError<E> where E: core::marker::Unpin
+impl<E> core::marker::UnsafeUnpin for aya_obj::ResolveExternsError<E> where E: core::marker::UnsafeUnpin
+impl<E> !core::panic::unwind_safe::RefUnwindSafe for aya_obj::ResolveExternsError<E>
+impl<E> !core::panic::unwind_safe::UnwindSafe for aya_obj::ResolveExternsError<E>
+pub struct aya_obj::ExternResolverModule<'a>
+pub aya_obj::ExternResolverModule::btf: &'a aya_obj::btf::Btf
+pub aya_obj::ExternResolverModule::btf_obj_fd: std::os::fd::raw::RawFd
+pub aya_obj::ExternResolverModule::fd_idx: u16
+impl<'a> core::clone::Clone for aya_obj::ExternResolverModule<'a>
+pub fn aya_obj::ExternResolverModule<'a>::clone(&self) -> aya_obj::ExternResolverModule<'a>
+impl<'a> core::marker::Copy for aya_obj::ExternResolverModule<'a>
+impl<'a> core::marker::Freeze for aya_obj::ExternResolverModule<'a>
+impl<'a> core::marker::Send for aya_obj::ExternResolverModule<'a>
+impl<'a> core::marker::Sync for aya_obj::ExternResolverModule<'a>
+impl<'a> core::marker::Unpin for aya_obj::ExternResolverModule<'a>
+impl<'a> core::marker::UnsafeUnpin for aya_obj::ExternResolverModule<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya_obj::ExternResolverModule<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya_obj::ExternResolverModule<'a>
 pub struct aya_obj::Features
 impl aya_obj::Features
 pub const fn aya_obj::Features::bpf_cookie(&self) -> bool
@@ -5410,6 +5524,8 @@ pub aya_obj::Function::line_info_rec_size: usize
 pub aya_obj::Function::name: alloc::string::String
 pub aya_obj::Function::section_index: object::read::SectionIndex
 pub aya_obj::Function::section_offset: usize
+impl aya_obj::Function
+pub fn aya_obj::Function::module_btf_load_requirements(&self) -> aya_obj::ModuleBtfLoadRequirements
 impl core::clone::Clone for aya_obj::Function
 pub fn aya_obj::Function::clone(&self) -> aya_obj::Function
 impl core::fmt::Debug for aya_obj::Function
@@ -5430,6 +5546,28 @@ impl<T> core::marker::Unpin for aya_obj::InvalidTypeBinding<T> where T: core::ma
 impl<T> core::marker::UnsafeUnpin for aya_obj::InvalidTypeBinding<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::UnwindSafe
+pub struct aya_obj::ModuleBtfLoadRequirements
+impl aya_obj::ModuleBtfLoadRequirements
+pub const fn aya_obj::ModuleBtfLoadRequirements::needs_fd_array(self) -> bool
+pub const fn aya_obj::ModuleBtfLoadRequirements::needs_lifetime(self) -> bool
+impl core::clone::Clone for aya_obj::ModuleBtfLoadRequirements
+pub fn aya_obj::ModuleBtfLoadRequirements::clone(&self) -> aya_obj::ModuleBtfLoadRequirements
+impl core::cmp::Eq for aya_obj::ModuleBtfLoadRequirements
+impl core::cmp::PartialEq for aya_obj::ModuleBtfLoadRequirements
+pub fn aya_obj::ModuleBtfLoadRequirements::eq(&self, &aya_obj::ModuleBtfLoadRequirements) -> bool
+impl core::default::Default for aya_obj::ModuleBtfLoadRequirements
+pub fn aya_obj::ModuleBtfLoadRequirements::default() -> aya_obj::ModuleBtfLoadRequirements
+impl core::fmt::Debug for aya_obj::ModuleBtfLoadRequirements
+pub fn aya_obj::ModuleBtfLoadRequirements::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::ModuleBtfLoadRequirements
+impl core::marker::StructuralPartialEq for aya_obj::ModuleBtfLoadRequirements
+impl core::marker::Freeze for aya_obj::ModuleBtfLoadRequirements
+impl core::marker::Send for aya_obj::ModuleBtfLoadRequirements
+impl core::marker::Sync for aya_obj::ModuleBtfLoadRequirements
+impl core::marker::Unpin for aya_obj::ModuleBtfLoadRequirements
+impl core::marker::UnsafeUnpin for aya_obj::ModuleBtfLoadRequirements
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::ModuleBtfLoadRequirements
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::ModuleBtfLoadRequirements
 pub struct aya_obj::Object
 pub aya_obj::Object::btf: core::option::Option<aya_obj::btf::Btf>
 pub aya_obj::Object::btf_ext: core::option::Option<aya_obj::btf::BtfExt>
@@ -5450,7 +5588,10 @@ impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_calls(&mut self, &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+pub fn aya_obj::Object::relocate_externs(&mut self) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, I, &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
+impl aya_obj::Object
+pub fn aya_obj::Object::resolve_externs<P, F>(&mut self, core::option::Option<&aya_obj::btf::Btf>, F) -> core::result::Result<aya_obj::ResolvedExterns<P>, aya_obj::ResolveExternsError<<P as aya_obj::ExternModuleBtfProvider>::Error>> where P: aya_obj::ExternModuleBtfProvider, F: core::ops::function::FnOnce() -> core::result::Result<P, <P as aya_obj::ExternModuleBtfProvider>::Error>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object
@@ -5481,6 +5622,18 @@ impl core::marker::Unpin for aya_obj::Program
 impl core::marker::UnsafeUnpin for aya_obj::Program
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Program
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::Program
+pub struct aya_obj::ResolvedExterns<P>
+impl<P> aya_obj::ResolvedExterns<P>
+pub fn aya_obj::ResolvedExterns<P>::into_modules(self) -> core::option::Option<P>
+impl<P: core::fmt::Debug> core::fmt::Debug for aya_obj::ResolvedExterns<P>
+pub fn aya_obj::ResolvedExterns<P>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<P> core::marker::Freeze for aya_obj::ResolvedExterns<P> where P: core::marker::Freeze
+impl<P> core::marker::Send for aya_obj::ResolvedExterns<P> where P: core::marker::Send
+impl<P> core::marker::Sync for aya_obj::ResolvedExterns<P> where P: core::marker::Sync
+impl<P> core::marker::Unpin for aya_obj::ResolvedExterns<P> where P: core::marker::Unpin
+impl<P> core::marker::UnsafeUnpin for aya_obj::ResolvedExterns<P> where P: core::marker::UnsafeUnpin
+impl<P> core::panic::unwind_safe::RefUnwindSafe for aya_obj::ResolvedExterns<P> where P: core::panic::unwind_safe::RefUnwindSafe
+impl<P> core::panic::unwind_safe::UnwindSafe for aya_obj::ResolvedExterns<P> where P: core::panic::unwind_safe::UnwindSafe
 pub struct aya_obj::VerifierLog(_)
 impl aya_obj::VerifierLog
 pub const fn aya_obj::VerifierLog::new(alloc::string::String) -> Self
@@ -5495,5 +5648,8 @@ impl core::marker::Unpin for aya_obj::VerifierLog
 impl core::marker::UnsafeUnpin for aya_obj::VerifierLog
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::VerifierLog
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::VerifierLog
+pub trait aya_obj::ExternModuleBtfProvider
+pub type aya_obj::ExternModuleBtfProvider::Error
+pub fn aya_obj::ExternModuleBtfProvider::extern_resolution_modules(&self) -> core::result::Result<alloc::vec::Vec<aya_obj::ExternResolverModule<'_>>, Self::Error>
 pub fn aya_obj::copy_instructions(&[u8]) -> core::result::Result<alloc::vec::Vec<aya_obj::generated::bpf_insn>, aya_obj::ParseError>
 pub const fn aya_obj::parse_map_info(aya_obj::generated::bpf_map_info, aya_obj::maps::PinningType) -> aya_obj::maps::Map

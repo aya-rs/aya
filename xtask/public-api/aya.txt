@@ -7735,11 +7735,14 @@ pub aya::EbpfError::BtfRelocationError(aya_obj::btf::relocation::BtfRelocationEr
 pub aya::EbpfError::FileError
 pub aya::EbpfError::FileError::error: std::io::error::Error
 pub aya::EbpfError::FileError::path: std::path::PathBuf
+pub aya::EbpfError::KsymsError(aya_obj::extern_types::KsymsError)
 pub aya::EbpfError::MapError(aya::maps::MapError)
 pub aya::EbpfError::NoBTF
 pub aya::EbpfError::ParseError(aya_obj::obj::ParseError)
 pub aya::EbpfError::ProgramError(aya::programs::ProgramError)
 pub aya::EbpfError::RelocationError(aya_obj::relocation::EbpfRelocationError)
+pub aya::EbpfError::TooManyModuleBtfObjects
+pub aya::EbpfError::TooManyModuleBtfObjects::count: usize
 pub aya::EbpfError::UnexpectedPinningType
 pub aya::EbpfError::UnexpectedPinningType::name: u32
 impl core::convert::From<aya::maps::MapError> for aya::EbpfError
@@ -7750,6 +7753,8 @@ impl core::convert::From<aya_obj::btf::btf::BtfError> for aya::EbpfError
 pub fn aya::EbpfError::from(aya_obj::btf::btf::BtfError) -> Self
 impl core::convert::From<aya_obj::btf::relocation::BtfRelocationError> for aya::EbpfError
 pub fn aya::EbpfError::from(aya_obj::btf::relocation::BtfRelocationError) -> Self
+impl core::convert::From<aya_obj::extern_types::KsymsError> for aya::EbpfError
+pub fn aya::EbpfError::from(aya_obj::extern_types::KsymsError) -> Self
 impl core::convert::From<aya_obj::obj::ParseError> for aya::EbpfError
 pub fn aya::EbpfError::from(aya_obj::obj::ParseError) -> Self
 impl core::convert::From<aya_obj::relocation::EbpfRelocationError> for aya::EbpfError

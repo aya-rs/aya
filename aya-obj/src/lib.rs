@@ -65,6 +65,7 @@
 #![cfg_attr(test, expect(unused_crate_dependencies, reason = "used in doctests"))]
 
 pub mod btf;
+mod extern_types;
 #[expect(
     clippy::all,
     clippy::as_pointer_underscore,
@@ -96,6 +97,9 @@ pub mod programs;
 pub mod relocation;
 mod util;
 
+pub use extern_types::{
+    ExternModuleBtfProvider, ExternResolverModule, KsymsError, ResolveExternsError, ResolvedExterns,
+};
 pub use maps::Map;
 pub use obj::*;
 

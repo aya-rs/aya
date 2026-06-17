@@ -272,6 +272,13 @@ jobs:
             # nested virtualization so running them here would be slow.
             download-kernel-images: local
 
+          - os: ubuntu-24.04-arm
+            # Run the full VM integration suite on one Gentoo distribution
+            # kernel. This covers the custom kmod/module-BTF path and checks
+            # that the Gentoo kernel config does not regress unrelated tests.
+            download-kernel-images: gentoo arm64 6.18.9-1
+            skip-local: true
+
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
@@ -296,6 +303,7 @@ jobs:
           # See https://github.com/libbpf/libbpf-sys/issues/137.
           sudo apt -y install \
             autopoint \
+            dwarves \
             linux-libc-dev \
             liblzma-dev \
             llvm \
@@ -337,12 +345,12 @@ jobs:
           path: test/.tmp
           key: ${{ runner.arch }}-${{ runner.os }}-test-cache-${{ matrix.download-kernel-images }}
 
-      - name: Download debian kernels
+      - name: Download kernels
         if: matrix.download-kernel-images != 'local'
         run: |
           set -euxo pipefail
 
-          .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels ${{ matrix.download-kernel-images }}
+          .github/scripts/download_kernel_images.sh test/.tmp/kernels ${{ matrix.download-kernel-images }}
 
       - name: Cleanup stale kernels and modules
         run: rm -rf test/.tmp/boot test/.tmp/lib
@@ -352,13 +360,23 @@ jobs:
         run: cargo xtask integration-test local
 
       - name: Run virtualized integration tests
-        if: matrix.download-kernel-images != 'local'
+        if: matrix.download-kernel-images != 'local' && !startsWith(matrix.download-kernel-images, 'gentoo ')
         run: |
           set -euxo pipefail
 
-          find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
+          find test/.tmp/kernels -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
             cargo xtask integration-test vm --cache-dir test/.tmp \
               --github-api-token ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Gentoo virtualized integration tests
+        if: startsWith(matrix.download-kernel-images, 'gentoo ')
+        run: |
+          set -euxo pipefail
+
+          find test/.tmp/kernels -name '*.gpkg.tar' -print0 | sort -Vz | xargs -t -0 \
+            cargo xtask integration-test vm --cache-dir test/.tmp \
+              --github-api-token ${{ secrets.GITHUB_TOKEN }} \
+              --kmod aya_ksyms_test
 
   check:
     if: always()

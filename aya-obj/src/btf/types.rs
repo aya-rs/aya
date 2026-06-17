@@ -5,7 +5,7 @@ use std::{fmt::Display, ptr, string::ToString as _};
 
 use object::Endianness;
 
-use crate::btf::{Btf, BtfError, MAX_RESOLVE_DEPTH};
+use crate::btf::{BtfError, MAX_RESOLVE_DEPTH, view::BtfView};
 
 #[derive(Clone, Debug)]
 pub enum BtfType {
@@ -1466,12 +1466,16 @@ const fn type_vlen(info: u32) -> usize {
     (info & 0xFFFF) as usize
 }
 
-pub(crate) fn types_are_compatible(
-    local_btf: &Btf,
+pub(crate) fn types_are_compatible<L, R>(
+    local_btf: &L,
     root_local_id: u32,
-    target_btf: &Btf,
+    target_btf: &R,
     root_target_id: u32,
-) -> Result<bool, BtfError> {
+) -> Result<bool, BtfError>
+where
+    L: BtfView + ?Sized,
+    R: BtfView + ?Sized,
+{
     let mut local_id = root_local_id;
     let mut target_id = root_target_id;
     let local_ty = local_btf.type_by_id(local_id)?;
@@ -1542,12 +1546,16 @@ pub(crate) fn types_are_compatible(
     Err(BtfError::MaximumTypeDepthReached { type_id: local_id })
 }
 
-pub(crate) fn fields_are_compatible(
-    local_btf: &Btf,
+pub(crate) fn fields_are_compatible<L, R>(
+    local_btf: &L,
     mut local_id: u32,
-    target_btf: &Btf,
+    target_btf: &R,
     mut target_id: u32,
-) -> Result<bool, BtfError> {
+) -> Result<bool, BtfError>
+where
+    L: BtfView + ?Sized,
+    R: BtfView + ?Sized,
+{
     for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
         local_id = local_btf.resolve_type(local_id)?;
         target_id = target_btf.resolve_type(target_id)?;
@@ -1606,6 +1614,7 @@ mod tests {
     use assert_matches::assert_matches;
 
     use super::*;
+    use crate::btf::{Btf, view::SplitBtf};
 
     #[test]
     fn test_read_btf_type_int() {
@@ -1867,6 +1876,148 @@ mod tests {
         // int types are compatible if offsets match. size and encoding aren't compared
         assert!(types_are_compatible(&btf, u32t, &btf, u64t).unwrap());
         assert!(types_are_compatible(&btf, array_type, &btf, array_type).unwrap());
+    }
+
+    #[test]
+    fn test_types_are_compatible_across_split_btf_boundary() {
+        let mut base = Btf::new();
+        let int_name = base.add_string("int");
+        let int_id = base.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::Signed, 0)));
+        let task_name = base.add_string("task_struct");
+        let task_id = base.add_type(BtfType::Struct(Struct::new(task_name, vec![], 0)));
+        let task_ptr_id = base.add_type(BtfType::Ptr(Ptr::new(0, task_id)));
+
+        let mut local_btf = Btf::new();
+        let local_int_name = local_btf.add_string("int");
+        let local_int_id = local_btf.add_type(BtfType::Int(Int::new(
+            local_int_name,
+            4,
+            IntEncoding::Signed,
+            0,
+        )));
+        let local_task_name = local_btf.add_string("task_struct");
+        let local_task_id =
+            local_btf.add_type(BtfType::Struct(Struct::new(local_task_name, vec![], 0)));
+        let local_task_ptr_id = local_btf.add_type(BtfType::Ptr(Ptr::new(0, local_task_id)));
+        let local_proto_id = local_btf.add_type(BtfType::FuncProto(FuncProto::new(
+            vec![BtfParam {
+                name_offset: 0,
+                btf_type: local_task_ptr_id,
+            }],
+            local_int_id,
+        )));
+
+        let mut module_btf = Btf::new();
+        let module_proto_id = module_btf.add_type(BtfType::FuncProto(FuncProto::new(
+            vec![BtfParam {
+                name_offset: 0,
+                btf_type: task_ptr_id,
+            }],
+            int_id,
+        )));
+
+        let split_btf = SplitBtf::new(&base, &module_btf);
+        let split_proto_id = split_btf.start_id() + module_proto_id - 1;
+
+        assert!(
+            types_are_compatible(&local_btf, local_proto_id, &split_btf, split_proto_id).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_split_btf_resolve_type_crosses_module_modifiers_to_base() {
+        let mut base = Btf::new();
+        let int_name = base.add_string("int");
+        let int_id = base.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::Signed, 0)));
+        let start_id = base.type_count();
+        let start_str_off = base.string_len();
+
+        let mut module_btf = Btf::new();
+        let const_id = module_btf.add_type(BtfType::Const(Const::new(int_id)));
+        let visible_const_id = start_id + const_id - 1;
+        let typedef_name = module_btf.add_string("module_int");
+        let visible_typedef_name = start_str_off + typedef_name;
+        let typedef_id = module_btf.add_type(BtfType::Typedef(Typedef::new(
+            visible_typedef_name,
+            visible_const_id,
+        )));
+
+        let split_btf = SplitBtf::new(&base, &module_btf);
+        let visible_typedef_id = split_btf.start_id() + typedef_id - 1;
+
+        assert_eq!(split_btf.resolve_type(visible_typedef_id).unwrap(), int_id);
+    }
+
+    #[test]
+    fn test_fields_are_compatible_across_split_btf_boundary() {
+        let mut base = Btf::new();
+        base.add_string("padding");
+        let start_id = base.type_count();
+        let start_str_off = base.string_len();
+
+        let mut local_btf = Btf::new();
+        let local_name = local_btf.add_string("module_enum");
+        let local_id = local_btf.add_type(BtfType::Enum(Enum::new(local_name, false, vec![])));
+
+        let mut module_btf = Btf::new();
+        let module_name = module_btf.add_string("module_enum");
+        let visible_module_name = start_str_off + module_name;
+        let module_id =
+            module_btf.add_type(BtfType::Enum(Enum::new(visible_module_name, false, vec![])));
+
+        let split_btf = SplitBtf::new(&base, &module_btf);
+        let visible_module_id = start_id + module_id - 1;
+
+        assert!(
+            fields_are_compatible(&local_btf, local_id, &split_btf, visible_module_id).unwrap()
+        );
+
+        let mut other_module_btf = Btf::new();
+        let other_name = other_module_btf.add_string("other_enum");
+        let visible_other_name = start_str_off + other_name;
+        let other_id =
+            other_module_btf.add_type(BtfType::Enum(Enum::new(visible_other_name, false, vec![])));
+        let other_split_btf = SplitBtf::new(&base, &other_module_btf);
+        let visible_other_id = start_id + other_id - 1;
+
+        assert!(
+            !fields_are_compatible(&local_btf, local_id, &other_split_btf, visible_other_id)
+                .unwrap()
+        );
+    }
+
+    #[test]
+    fn test_types_are_compatible_across_split_btf_boundary_rejects_mismatch() {
+        let mut base = Btf::new();
+        let int_name = base.add_string("int");
+        let int_id = base.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::Signed, 0)));
+
+        let mut local_btf = Btf::new();
+        let local_int_name = local_btf.add_string("int");
+        let local_int_id = local_btf.add_type(BtfType::Int(Int::new(
+            local_int_name,
+            4,
+            IntEncoding::Signed,
+            0,
+        )));
+        let local_proto_id = local_btf.add_type(BtfType::FuncProto(FuncProto::new(
+            vec![BtfParam {
+                name_offset: 0,
+                btf_type: local_int_id,
+            }],
+            local_int_id,
+        )));
+
+        let mut module_btf = Btf::new();
+        let module_proto_id =
+            module_btf.add_type(BtfType::FuncProto(FuncProto::new(vec![], int_id)));
+
+        let split_btf = SplitBtf::new(&base, &module_btf);
+        let split_proto_id = split_btf.start_id() + module_proto_id - 1;
+
+        assert!(
+            !types_are_compatible(&local_btf, local_proto_id, &split_btf, split_proto_id).unwrap()
+        );
     }
 
     #[test]

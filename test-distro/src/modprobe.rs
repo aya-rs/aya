@@ -41,7 +41,13 @@ fn try_main(quiet: bool, name: String) -> anyhow::Result<()> {
     let modules_dir = resolve_modules_dir()?;
 
     output!(quiet, "resolving alias for module: {}", name);
-    let module = resolve_alias(quiet, &modules_dir, &name)?;
+    let module = match resolve_alias(quiet, &modules_dir, &name) {
+        Ok(module) => module,
+        Err(error) => {
+            output!(quiet, "alias not found ({error}); trying module name");
+            name.replace('-', "_")
+        }
+    };
 
     let pattern = format!(
         "{}/kernel/**/{}.ko*",

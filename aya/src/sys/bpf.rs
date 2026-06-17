@@ -31,11 +31,11 @@ use log::warn;
 
 use super::feature_probe::{BpfHelper, is_helper_supported};
 use crate::{
-    Btf, Pod, TestRunAttrs, VerifierLogLevel,
+    Btf, Pod, VerifierLogLevel,
     maps::{MapData, PerCpuValues},
     programs::{
         LsmAttachType, ProgramType, RawTracePointRunOptions, RawTracePointTestRunResult,
-        TestRunOptions, TestRunResult, links::LinkRef,
+        TestRunAttrs, TestRunOptions, TestRunResult, links::LinkRef,
     },
     sys::{Syscall, SyscallError, syscall},
     util::KernelVersion,
@@ -158,6 +158,7 @@ pub(crate) struct EbpfLoadProgramAttrs<'a> {
     pub(crate) line_info_rec_size: usize,
     pub(crate) line_info: LineSecInfo,
     pub(crate) flags: u32,
+    pub(crate) fd_array: Option<&'a [RawFd]>,
 }
 
 pub(crate) fn bpf_load_program(
@@ -218,6 +219,9 @@ pub(crate) fn bpf_load_program(
 
     if let Some(v) = aya_attr.attach_btf_id {
         u.attach_btf_id = v;
+    }
+    if let Some(fd_array) = aya_attr.fd_array {
+        u.fd_array = fd_array.as_ptr() as u64;
     }
     bpf_prog_load(&mut attr)
 }
@@ -806,6 +810,13 @@ pub(crate) fn btf_obj_get_info_by_fd(
     })
 }
 
+pub(crate) fn bpf_btf_get_info_by_fd<F: FnOnce(&mut bpf_btf_info)>(
+    fd: BorrowedFd<'_>,
+    init: F,
+) -> Result<bpf_btf_info, SyscallError> {
+    bpf_obj_get_info_by_fd(fd, init)
+}
+
 pub(crate) fn bpf_raw_tracepoint_open(
     name: Option<&CStr>,
     prog_fd: BorrowedFd<'_>,
@@ -1388,6 +1399,11 @@ pub(crate) fn iter_map_ids() -> impl Iterator<Item = Result<u32, SyscallError>> 
 }
 
 /// Introduced in kernel v5.8.
+pub(crate) fn iter_btf_ids() -> impl Iterator<Item = Result<u32, SyscallError>> {
+    iter_obj_ids(bpf_cmd::BPF_BTF_GET_NEXT_ID, "bpf_btf_get_next_id")
+}
+
+/// Introduced in kernel v5.8.
 pub(crate) fn bpf_enable_stats(
     stats_type: bpf_stats_type,
 ) -> Result<crate::MockableFd, SyscallError> {
@@ -1533,6 +1549,49 @@ mod tests {
 bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
     fn test_prog_id_supported_reject_types() {
         is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_HASH);
+    }
+
+    #[test]
+    fn test_prog_load_encodes_fd_array() {
+        const FD_ARRAY: [RawFd; 3] = [-1, 42, 43];
+        let insns = [unsafe { mem::zeroed::<bpf_insn>() }];
+        let license = c"GPL";
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_PROG_LOAD,
+                attr,
+            } => {
+                let u = unsafe { attr.__bindgen_anon_3 };
+                assert_eq!(u.core_relo_cnt, 0);
+                let fd_array =
+                    unsafe { core::slice::from_raw_parts(u.fd_array as *const RawFd, 3) };
+                assert_eq!(fd_array, FD_ARRAY);
+                Ok(crate::MockableFd::mock_signed_fd().into())
+            }
+            _ => Err((-1, io::Error::from_raw_os_error(EINVAL))),
+        });
+
+        let attr = EbpfLoadProgramAttrs {
+            name: None,
+            ty: bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER,
+            insns: &insns,
+            license,
+            kernel_version: 0,
+            expected_attach_type: None,
+            prog_btf_fd: None,
+            attach_btf_obj_fd: None,
+            attach_btf_id: None,
+            attach_prog_fd: None,
+            func_info_rec_size: 0,
+            func_info: FuncSecInfo::default(),
+            line_info_rec_size: 0,
+            line_info: LineSecInfo::default(),
+            flags: 0,
+            fd_array: Some(&FD_ARRAY),
+        };
+
+        bpf_load_program(&attr, &mut [], VerifierLogLevel::default()).unwrap();
     }
 
     #[test]

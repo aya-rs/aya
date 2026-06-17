@@ -8,7 +8,7 @@ use std::{
 };
 
 use aya_obj::{
-    EbpfSectionKind, Features, Object, ParseError, ProgramSection,
+    EbpfSectionKind, Features, KsymsError, Object, ParseError, ProgramSection, ResolveExternsError,
     btf::{Btf, BtfError, BtfFeatures, BtfRelocationError},
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
@@ -18,6 +18,7 @@ use thiserror::Error;
 
 use crate::{
     maps::{Map, MapData, MapError},
+    module_btf::KernelModuleBtfSet,
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSock, CgroupSockAddr, CgroupSockopt,
         CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe, LircMode2, Lsm,
@@ -496,6 +497,15 @@ impl<'a> EbpfLoader<'a> {
             obj.relocate_btf(btf)?;
         }
 
+        let resolved_externs = obj
+            .resolve_externs(self.btf.as_deref(), KernelModuleBtfSet::discover)
+            .map_err(|err| match err {
+                ResolveExternsError::Ksyms(err) => EbpfError::KsymsError(err),
+                ResolveExternsError::ModuleBtf(err) => err,
+            })?;
+
+        let program_module_btf = resolved_externs.into_modules().map(Arc::new);
+
         const fn is_map_of_maps(map_type: bpf_map_type) -> bool {
             matches!(
                 map_type,
@@ -604,6 +614,9 @@ impl<'a> EbpfLoader<'a> {
                 .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
             &text_sections,
         )?;
+
+        obj.relocate_externs()?;
+
         obj.relocate_calls(&text_sections)?;
         obj.sanitize_functions(&FEATURES);
 
@@ -612,13 +625,14 @@ impl<'a> EbpfLoader<'a> {
             .drain()
             .map(|(name, prog_obj)| {
                 let function_obj = obj.functions[&prog_obj.function_key()].clone();
+                let module_btf_requirements = function_obj.module_btf_load_requirements();
 
                 let prog_name = FEATURES.bpf_name().then(|| name.clone().into());
                 let section = prog_obj.section.clone();
                 let obj = (prog_obj, function_obj);
 
                 let btf_fd = btf_fd.as_ref().map(Arc::clone);
-                let program = if extensions.contains(name.as_str()) {
+                let mut program = if extensions.contains(name.as_str()) {
                     Program::Extension(Extension {
                         data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                     })
@@ -782,6 +796,11 @@ impl<'a> EbpfLoader<'a> {
                         }
                     }
                 };
+                if module_btf_requirements.needs_lifetime() {
+                    if let Some(module_btf) = program_module_btf.as_ref().map(Arc::clone) {
+                        program.set_module_btf(module_btf);
+                    }
+                }
                 (name, program)
             })
             .collect();
@@ -1247,6 +1266,10 @@ pub enum EbpfError {
     #[error("error relocating section")]
     BtfRelocationError(#[from] BtfRelocationError),
 
+    /// Error resolving extern kernel symbols.
+    #[error("kernel symbol error: {0}")]
+    KsymsError(#[from] KsymsError),
+
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]
     NoBTF,
@@ -1258,6 +1281,13 @@ pub enum EbpfError {
     #[error("program error: {0}")]
     /// A program error
     ProgramError(#[from] ProgramError),
+
+    /// Too many module BTF objects were loaded to address through the kernel fd array ABI.
+    #[error("too many module BTF objects: {count}")]
+    TooManyModuleBtfObjects {
+        /// Number of module BTF objects discovered.
+        count: usize,
+    },
 }
 
 /// The error type returned by [`Bpf::load_file`] and [`Bpf::load`].

@@ -25,6 +25,7 @@ mod info;
 mod inode_storage;
 mod iter;
 mod kprobe;
+mod ksyms;
 mod linear_data_structures;
 mod load;
 mod log;
