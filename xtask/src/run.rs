@@ -10,7 +10,7 @@ use std::{
     fs::{self, File, OpenOptions},
     io::{BufRead as _, BufReader, Write as _},
     ops::Deref as _,
-    os::unix::ffi::OsStrExt as _,
+    os::unix::ffi::{OsStrExt as _, OsStringExt as _},
     path::{self, Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
     sync::{Arc, Mutex},
@@ -74,9 +74,9 @@ pub(crate) struct Options {
 ///
 /// `encoded_separator` determines whether the encoded separator (`\x1f`) or a
 /// space is used.
-fn add_crt_static_rustflag(
+fn add_crt_static_rustflag<S: AsRef<OsStr>>(
     cargo: &mut Command,
-    key: &str,
+    key: S,
     mut rustflags: OsString,
     encoded_separator: bool,
 ) {
@@ -99,8 +99,8 @@ fn add_crt_static_rustflag(
 /// If the environment variable `key` is already set, the static linking flag is
 /// appended to the existing value using a space. If not set, the flag is set
 /// directly.
-fn set_crt_static_rustflag(cargo: &mut Command, key: &str) {
-    if let Some(old_rustflags) = env::var_os(key) {
+fn set_crt_static_rustflag<S: AsRef<OsStr>>(cargo: &mut Command, key: S) {
+    if let Some(old_rustflags) = env::var_os(key.as_ref()) {
         add_crt_static_rustflag(cargo, key, old_rustflags, false)
     } else {
         let rustflags = format!("-C {CRT_STATIC_FLAG}");
@@ -109,7 +109,7 @@ fn set_crt_static_rustflag(cargo: &mut Command, key: &str) {
 }
 
 pub(crate) fn build<F>(
-    target: Option<&str>,
+    target: Option<&OsStr>,
     enforce_static_linking: bool,
     f: F,
 ) -> Result<Vec<(String, PathBuf)>>
@@ -119,12 +119,21 @@ where
     let mut cargo = Command::new("cargo");
     cargo.args(["build", "--message-format=json"]);
     if let Some(target) = target {
-        cargo.args(["--target", target]);
+        cargo.arg("--target");
+        cargo.arg(target);
         if enforce_static_linking {
-            let rustflags_key = format!(
-                "CARGO_TARGET_{}_RUSTFLAGS",
-                target.replace('-', "_").to_ascii_uppercase()
-            );
+            let mut rustflags_key = Vec::new();
+            rustflags_key.extend_from_slice(b"CARGO_TARGET_");
+            for byte in target.as_encoded_bytes() {
+                let byte = match byte {
+                    b'-' => b'_',
+                    b'a'..=b'z' => byte.to_ascii_uppercase(),
+                    byte => *byte,
+                };
+                rustflags_key.push(byte);
+            }
+            rustflags_key.extend_from_slice(b"_RUSTFLAGS");
+            let rustflags_key = OsString::from_vec(rustflags_key);
             set_crt_static_rustflag(&mut cargo, &rustflags_key);
         }
     } else if enforce_static_linking {
@@ -290,7 +299,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
     type Binary = (String, PathBuf);
 
     let binaries = |package: &str,
-                    target: Option<&str>,
+                    target: Option<&OsStr>,
                     enforce_static_linking: bool,
                     envs: &[(&OsStr, &OsStr)]|
      -> Result<Vec<(&'static str, Vec<Binary>)>> {
@@ -638,20 +647,49 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 // - Linux kernel ARM64 boot executable Image, little-endian, 4K pages
                 //
                 // - Linux kernel x86 boot executable bzImage, version 6.1.0-10-cloud-amd64 [..]
-
-                let stdout = String::from_utf8(stdout)
-                    .with_context(|| format!("invalid UTF-8 in {file:?} stdout"))?;
-                let (_, stdout) = stdout
-                    .split_once("Linux kernel")
-                    .ok_or_else(|| anyhow!("failed to parse {file:?} stdout: {stdout}"))?;
-                let (guest_arch, _) = stdout
-                    .split_once("boot executable")
-                    .ok_or_else(|| anyhow!("failed to parse {file:?} stdout: {stdout}"))?;
-                let guest_arch = guest_arch.trim();
+                const LINUX_KERNEL: &[u8] = b"Linux kernel";
+                let start = stdout
+                    .windows(LINUX_KERNEL.len())
+                    .enumerate()
+                    .find(|(_, x)| *x == LINUX_KERNEL)
+                    .map(|(ix, _)| ix + LINUX_KERNEL.len())
+                    .ok_or_else(|| {
+                        anyhow!(
+                            "failed to find `{}` in stdout of {file:?}: {stdout:?}",
+                            OsStr::from_bytes(LINUX_KERNEL).display()
+                        )
+                    })?;
+                let stdout = &stdout[start..];
+                let (start, _) = stdout
+                    .iter()
+                    .enumerate()
+                    .find(|(_, x)| !x.is_ascii_whitespace())
+                    .ok_or_else(|| anyhow!("failed to find a non-whitespace character in stdout fragment of {file:?}: {stdout:?}"))?;
+                let stdout = &stdout[start..];
+                const BOOT_EXECUTABLE: &[u8] = b"boot executable";
+                let end = stdout
+                    .windows(BOOT_EXECUTABLE.len())
+                    .enumerate()
+                    .find(|(_, x)| *x == BOOT_EXECUTABLE)
+                    .map(|(ix, _)| ix)
+                    .ok_or_else(|| {
+                        anyhow!(
+                            "failed to find `{}` in stdout fragment of {file:?}: {stdout:?}",
+                            OsStr::from_bytes(BOOT_EXECUTABLE).display()
+                        )
+                    })?;
+                let stdout = &stdout[..end];
+                let (end, _) = stdout
+                    .iter()
+                    .enumerate()
+                    .rev()
+                    .find(|(_, x)| !x.is_ascii_whitespace())
+                    .ok_or_else(|| anyhow!("failed to find a non-whitespace character in stdout fragment of {file:?}: {stdout:?}"))?;
+                let guest_arch = &stdout[..=end];
 
                 let (guest_arch, machine, cpu, console) = match guest_arch {
-                    "ARM64" => (
-                        "aarch64",
+                    b"ARM64" => (
+                        &b"aarch64"[..],
                         Some("virt"),
                         // NB: we'd prefer to write:
                         //
@@ -676,16 +714,19 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         Some("neoverse-n1"),
                         "ttyAMA0",
                     ),
-                    "x86" => (
-                        "x86_64",
+                    b"x86" => (
+                        &b"x86_64"[..],
                         None,
                         cfg!(target_arch = "x86_64").then_some("host"),
                         "ttyS0",
                     ),
                     guest_arch => (guest_arch, None, None, "ttyS0"),
                 };
+                let guest_arch = OsStr::from_bytes(guest_arch);
 
-                let target = format!("{guest_arch}-unknown-linux-musl");
+                let mut target = OsString::new();
+                target.push(guest_arch);
+                target.push("-unknown-linux-musl");
 
                 let test_distro_args =
                     ["--package", "test-distro", "--release", "--features", "xz2"];
@@ -700,9 +741,9 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 let envs: &[_] = if package == INTEGRATION_TEST_PACKAGE {
                     const LIBBPF_SYS_EXTRA_CFLAGS: &str = "LIBBPF_SYS_EXTRA_CFLAGS";
                     extra = OsString::new();
-                    extra.push(format!(
-                        "-idirafter /usr/include/{guest_arch}-linux-gnu -idirafter /usr/include",
-                    ));
+                    extra.push("-idirafter /usr/include/");
+                    extra.push(guest_arch);
+                    extra.push("-linux-gnu -idirafter /usr/include");
                     if guest_arch == "aarch64" {
                         extra.push(" -mno-outline-atomics");
                     }
@@ -854,7 +895,9 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     bail!("{gen_init_cpio:?} failed: {output:?}")
                 }
 
-                let mut qemu = Command::new(format!("qemu-system-{guest_arch}"));
+                let mut qemu = OsString::from("qemu-system-");
+                qemu.push(guest_arch);
+                let mut qemu = Command::new(qemu);
                 if let Some(machine) = machine {
                     qemu.args(["-machine", machine]);
                 }
