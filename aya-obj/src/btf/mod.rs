@@ -6,6 +6,8 @@ mod info;
 mod relocation;
 mod types;
 
+pub mod helpers;
+
 pub use btf::*;
 pub use info::*;
 pub use relocation::BtfRelocationError;
