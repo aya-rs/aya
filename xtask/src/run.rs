@@ -10,6 +10,7 @@ use std::{
     fs::{self, File, OpenOptions},
     io::{BufRead as _, BufReader, Write as _},
     ops::Deref as _,
+    os::unix::ffi::OsStrExt as _,
     path::{self, Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
     sync::{Arc, Mutex},
@@ -455,10 +456,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
             for (index, (KernelPackageKey { base }, KernelPackageGroup { kernel, debug })) in
                 package_groups.into_iter().enumerate()
             {
-                let base = {
-                    use std::os::unix::ffi::OsStrExt as _;
-                    OsStr::from_bytes(base)
-                };
+                let base = OsStr::from_bytes(base);
 
                 let kernel_archive = one(kernel.as_slice())
                     .with_context(|| format!("kernel archive for {}", base.display()))?;
@@ -677,7 +675,6 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     .with_context(|| format!("failed to spawn {gen_init_cpio:?}"))?;
                 let Child { stdin, .. } = &mut gen_init_cpio_child;
                 let stdin = Arc::new(stdin.take().unwrap());
-                use std::os::unix::ffi::OsStrExt as _;
 
                 // Send input into gen_init_cpio for directories
                 //
