@@ -342,7 +342,7 @@ jobs:
         run: |
           set -euxo pipefail
 
-          .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels ${{ matrix.download-kernel-images }}
+          cargo xtask download-kernel-images test/.tmp/debian-kernels ${{ matrix.download-kernel-images }}
 
       - name: Cleanup stale kernels and modules
         run: rm -rf test/.tmp/boot test/.tmp/lib

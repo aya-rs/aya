@@ -99,6 +99,7 @@ rand = { version = "0.10", default-features = false }
 rbpf = { version = "0.4.0", default-features = false }
 rstest = { version = "0.26.1", default-features = false }
 rustc_version = { version = "0.4.1", default-features = false }
+regex = { version = "1", default-features = false, features = ["std"] }
 rustdoc-json = { version = "0.9.0", default-features = false }
 rustup-toolchain = { version = "0.1.5", default-features = false }
 rustversion = { version = "1.0.0", default-features = false }
@@ -110,6 +111,7 @@ test-log = { version = "0.2.13", default-features = false }
 testing_logger = { version = "0.1.1", default-features = false }
 thiserror = { version = "2.0.3", default-features = false }
 tokio = { version = "1.24.0", default-features = false }
+ureq = { version = "2", default-features = false, features = ["tls", "gzip"] }
 walkdir = { version = "2", default-features = false }
 which = { version = "8.0.0", default-features = false }
 xdpilone = { version = "1.0.5", default-features = false }
