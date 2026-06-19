@@ -19,7 +19,7 @@ ARCHITECTURE=$2
 shift 2
 VERSIONS=("$@")
 
-URLS=$(lynx -dump -listonly -nonumbers https://mirrors.wikimedia.org/debian/pool/main/l/linux/)
+URLS=$(lynx -dump -listonly -nonumbers https://deb.debian.org/debian/pool/main/l/linux/)
 readonly URLS
 
 # Find the latest revision of each kernel version.
