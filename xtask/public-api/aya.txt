@@ -7698,6 +7698,74 @@ pub fn aya::sys::is_helper_supported(aya::programs::ProgramType, aya::sys::BpfHe
 pub fn aya::sys::is_map_supported(aya::maps::MapType) -> core::result::Result<bool, aya::sys::SyscallError>
 pub fn aya::sys::is_program_supported(aya::programs::ProgramType) -> core::result::Result<bool, aya::programs::ProgramError>
 pub type aya::sys::BpfHelper = aya_obj::generated::linux_bindings_x86_64::bpf_func_id
+pub mod aya::test_helpers
+pub enum aya::test_helpers::AyaTestError
+pub aya::test_helpers::AyaTestError::Io
+pub aya::test_helpers::AyaTestError::Io::op: &'static str
+pub aya::test_helpers::AyaTestError::Io::path: std::path::PathBuf
+pub aya::test_helpers::AyaTestError::Io::source: std::io::error::Error
+pub aya::test_helpers::AyaTestError::Netlink(aya::sys::netlink::NetlinkError)
+pub aya::test_helpers::AyaTestError::Syscall
+pub aya::test_helpers::AyaTestError::Syscall::path: std::path::PathBuf
+pub aya::test_helpers::AyaTestError::Syscall::source: nix::errno::consts::Errno
+pub aya::test_helpers::AyaTestError::Syscall::syscall: &'static str
+impl core::error::Error for aya::test_helpers::AyaTestError
+pub fn aya::test_helpers::AyaTestError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::test_helpers::AyaTestError
+pub fn aya::test_helpers::AyaTestError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::test_helpers::AyaTestError
+pub fn aya::test_helpers::AyaTestError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::test_helpers::AyaTestError
+impl core::marker::Send for aya::test_helpers::AyaTestError
+impl core::marker::Sync for aya::test_helpers::AyaTestError
+impl core::marker::Unpin for aya::test_helpers::AyaTestError
+impl core::marker::UnsafeUnpin for aya::test_helpers::AyaTestError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya::test_helpers::AyaTestError
+impl !core::panic::unwind_safe::UnwindSafe for aya::test_helpers::AyaTestError
+pub enum aya::test_helpers::Cgroup<'a>
+pub aya::test_helpers::Cgroup::Child(aya::test_helpers::ChildCgroup<'a>)
+pub aya::test_helpers::Cgroup::Root
+impl aya::test_helpers::Cgroup<'static>
+pub const fn aya::test_helpers::Cgroup<'static>::root() -> Self
+impl<'a> aya::test_helpers::Cgroup<'a>
+pub fn aya::test_helpers::Cgroup<'a>::create_child(&'a self, &str) -> aya::test_helpers::AyaTestResult<aya::test_helpers::ChildCgroup<'a>>
+pub fn aya::test_helpers::Cgroup<'a>::write_pid(&self, u32) -> aya::test_helpers::AyaTestResult<()>
+impl<'a> core::marker::Freeze for aya::test_helpers::Cgroup<'a>
+impl<'a> core::marker::Send for aya::test_helpers::Cgroup<'a>
+impl<'a> core::marker::Sync for aya::test_helpers::Cgroup<'a>
+impl<'a> core::marker::Unpin for aya::test_helpers::Cgroup<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::test_helpers::Cgroup<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::test_helpers::Cgroup<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya::test_helpers::Cgroup<'a>
+pub struct aya::test_helpers::ChildCgroup<'a>
+impl<'a> aya::test_helpers::ChildCgroup<'a>
+pub fn aya::test_helpers::ChildCgroup<'a>::fd(&self) -> aya::test_helpers::AyaTestResult<std::fs::File>
+pub const fn aya::test_helpers::ChildCgroup<'a>::into_cgroup(self) -> aya::test_helpers::Cgroup<'a>
+impl core::ops::drop::Drop for aya::test_helpers::ChildCgroup<'_>
+pub fn aya::test_helpers::ChildCgroup<'_>::drop(&mut self)
+impl<'a> core::marker::Freeze for aya::test_helpers::ChildCgroup<'a>
+impl<'a> core::marker::Send for aya::test_helpers::ChildCgroup<'a>
+impl<'a> core::marker::Sync for aya::test_helpers::ChildCgroup<'a>
+impl<'a> core::marker::Unpin for aya::test_helpers::ChildCgroup<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::test_helpers::ChildCgroup<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::test_helpers::ChildCgroup<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya::test_helpers::ChildCgroup<'a>
+pub struct aya::test_helpers::NetNsGuard
+impl aya::test_helpers::NetNsGuard
+pub fn aya::test_helpers::NetNsGuard::new() -> core::result::Result<Self, alloc::vec::Vec<aya::test_helpers::AyaTestError>>
+impl core::ops::drop::Drop for aya::test_helpers::NetNsGuard
+pub fn aya::test_helpers::NetNsGuard::drop(&mut self)
+impl std::os::fd::owned::AsFd for aya::test_helpers::NetNsGuard
+pub fn aya::test_helpers::NetNsGuard::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
+impl core::marker::Freeze for aya::test_helpers::NetNsGuard
+impl core::marker::Send for aya::test_helpers::NetNsGuard
+impl core::marker::Sync for aya::test_helpers::NetNsGuard
+impl core::marker::Unpin for aya::test_helpers::NetNsGuard
+impl core::marker::UnsafeUnpin for aya::test_helpers::NetNsGuard
+impl core::panic::unwind_safe::RefUnwindSafe for aya::test_helpers::NetNsGuard
+impl core::panic::unwind_safe::UnwindSafe for aya::test_helpers::NetNsGuard
+pub fn aya::test_helpers::is_cgroup2() -> bool
+pub type aya::test_helpers::AyaTestResult<T> = core::result::Result<T, aya::test_helpers::AyaTestError>
 pub mod aya::util
 pub struct aya::util::KernelVersion
 impl aya::util::KernelVersion
@@ -7729,6 +7797,8 @@ pub fn aya::util::nr_cpus() -> core::result::Result<usize, (&'static str, std::i
 pub fn aya::util::online_cpus() -> core::result::Result<alloc::vec::Vec<u32>, (&'static str, std::io::error::Error)>
 pub fn aya::util::syscall_prefix() -> core::result::Result<&'static str, std::io::error::Error>
 pub macro aya::include_bytes_aligned!
+pub macro aya::kernel_assert!
+pub macro aya::kernel_assert_eq!
 pub enum aya::EbpfError
 pub aya::EbpfError::BtfError(aya_obj::btf::btf::BtfError)
 pub aya::EbpfError::BtfRelocationError(aya_obj::btf::relocation::BtfRelocationError)
