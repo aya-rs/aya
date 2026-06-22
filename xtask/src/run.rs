@@ -67,14 +67,66 @@ pub(crate) struct Options {
     run_args: Vec<OsString>,
 }
 
-pub(crate) fn build<F>(target: Option<&str>, f: F) -> Result<Vec<(String, PathBuf)>>
+pub(crate) fn build<F>(
+    target: Option<&str>,
+    enforce_static_linking: bool,
+    f: F,
+) -> Result<Vec<(String, PathBuf)>>
 where
     F: FnOnce(&mut Command) -> &mut Command,
 {
     let mut cargo = Command::new("cargo");
     cargo.args(["build", "--message-format=json"]);
+    const CRT_STATIC_FLAG: &str = "target-feature=+crt-static";
     if let Some(target) = target {
         cargo.args(["--target", target]);
+
+        if enforce_static_linking {
+            // Enforce static linking by target-specific RUSTFLAGS.
+            let target_rustflags_key = format!(
+                "CARGO_TARGET_{}_RUSTFLAGS",
+                target.replace('-', "_").to_ascii_uppercase()
+            );
+            match env::var_os(&target_rustflags_key) {
+                Some(mut rustflags) => {
+                    if !rustflags.is_empty() {
+                        rustflags.push(" ");
+                    }
+                    rustflags.push("-C ");
+                    rustflags.push(CRT_STATIC_FLAG);
+                    cargo.env(target_rustflags_key, rustflags);
+                }
+                None => {
+                    cargo.env(target_rustflags_key, CRT_STATIC_FLAG);
+                }
+            }
+        }
+    } else if enforce_static_linking {
+        // Enforce static linking. `CARGO_ENCODED_RUSTFLAGS` takes precedence
+        // over `RUSTFLAGS`, so inspect the former first, then fall back to the
+        // latter.
+        const CARGO_ENCODED_RUSTFLAGS: &str = "CARGO_ENCODED_RUSTFLAGS";
+        if let Some(mut rustflags) = env::var_os(CARGO_ENCODED_RUSTFLAGS) {
+            if !rustflags.is_empty() {
+                rustflags.push("\x1f");
+            }
+            rustflags.push("-C");
+            rustflags.push("\x1f");
+            rustflags.push(CRT_STATIC_FLAG);
+            cargo.env(CARGO_ENCODED_RUSTFLAGS, rustflags);
+        } else {
+            const RUSTFLAGS: &str = "RUSTFLAGS";
+            if let Some(mut rustflags) = env::var_os(RUSTFLAGS) {
+                if !rustflags.is_empty() {
+                    rustflags.push(" ");
+                }
+                rustflags.push("-C ");
+                rustflags.push(CRT_STATIC_FLAG);
+                cargo.env(RUSTFLAGS, rustflags);
+            } else {
+                cargo.env(RUSTFLAGS, format!("-C {CRT_STATIC_FLAG}"));
+            }
+        }
     }
     f(&mut cargo);
 
@@ -229,12 +281,13 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
 
     let binaries = |package: &str,
                     target: Option<&str>,
+                    enforce_static_linking: bool,
                     envs: &[(&OsStr, &OsStr)]|
      -> Result<Vec<(&'static str, Vec<Binary>)>> {
         ["dev", "release"]
             .into_iter()
             .map(|profile| {
-                let binaries = build(target, |cmd| {
+                let binaries = build(target, enforce_static_linking, |cmd| {
                     if package == INTEGRATION_TEST_PACKAGE {
                         cmd.env(AYA_BUILD_INTEGRATION_BPF, "true");
                         libbpf_sys_env(workspace_root, cmd);
@@ -265,7 +318,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
             let mut args = runner.trim().split_terminator(' ');
             let runner = args.next().ok_or_else(|| anyhow!("no first argument"))?;
 
-            let binaries = binaries(&package, None, &[])?;
+            let binaries = binaries(&package, None, false, &[])?;
 
             let mut failures = String::new();
             for (profile, binaries) in binaries {
@@ -627,7 +680,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 let test_distro_args =
                     ["--package", "test-distro", "--release", "--features", "xz2"];
                 let test_distro: Vec<(String, PathBuf)> =
-                    build(Some(&target), |cmd| cmd.args(test_distro_args))
+                    build(Some(&target), true, |cmd| cmd.args(test_distro_args))
                         .context("building test-distro package failed")?;
 
                 // Set up cross compilation.
@@ -652,7 +705,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     &[]
                 };
 
-                let binaries = binaries(&package, Some(&target), envs)?;
+                let binaries = binaries(&package, Some(&target), true, envs)?;
 
                 let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
 
