@@ -72,6 +72,10 @@ pub enum AyaTestError {
         source: nix::errno::Errno,
     },
 
+    /// Multiple errors.
+    #[error("errors: {0:?}")]
+    Multi(Vec<Self>),
+
     /// An error occurred during a netlink operation.
     #[error(transparent)]
     Netlink(#[from] NetlinkError),
@@ -291,7 +295,7 @@ impl NetNsGuard {
         clippy::print_stdout,
         reason = "integration tests print namespace transitions for diagnostics"
     )]
-    pub fn new() -> AyaTestResult<Self> {
+    pub fn new() -> Result<Self, AyaTestError> {
         // `/proc/thread-self/ns/net` resolves to the calling thread's netns
         // (`/proc/self/ns/net` would always pin to the main thread's).
         let old_ns = fs::File::open(Self::THREAD_NETNS).map_err(|source| AyaTestError::Io {
@@ -316,18 +320,45 @@ impl NetNsGuard {
             source,
         })?;
         nix::sched::unshare(nix::sched::CloneFlags::CLONE_NEWNET).map_err(|source| {
-            AyaTestError::Syscall {
+            let mut errs = vec![AyaTestError::Syscall {
                 syscall: "unshare",
                 path: None,
                 source,
-            }
+            }];
+            fs::remove_file(&ns_path).unwrap_or_else(|source| {
+                errs.push(AyaTestError::Io {
+                    op: "remove file",
+                    path: ns_path.clone(),
+                    source,
+                })
+            });
+            AyaTestError::Multi(errs)
         })?;
 
         // Re-open after unshare to capture the freshly entered namespace.
-        let new_ns = fs::File::open(Self::THREAD_NETNS).map_err(|source| AyaTestError::Io {
-            op: "open",
-            path: PathBuf::from(Self::THREAD_NETNS),
-            source,
+        let new_ns = fs::File::open(Self::THREAD_NETNS).map_err(|source| {
+            let mut errs = vec![AyaTestError::Io {
+                op: "open",
+                path: PathBuf::from(Self::THREAD_NETNS),
+                source,
+            }];
+            nix::sched::setns(&old_ns, nix::sched::CloneFlags::CLONE_NEWNET).unwrap_or_else(
+                |source| {
+                    errs.push(AyaTestError::Syscall {
+                        syscall: "setns",
+                        path: Some(PathBuf::from(Self::THREAD_NETNS)),
+                        source,
+                    });
+                },
+            );
+            fs::remove_file(&ns_path).unwrap_or_else(|source| {
+                errs.push(AyaTestError::Io {
+                    op: "remove file",
+                    path: ns_path.clone(),
+                    source,
+                })
+            });
+            AyaTestError::Multi(errs)
         })?;
 
         nix::mount::mount(
@@ -337,10 +368,29 @@ impl NetNsGuard {
             nix::mount::MsFlags::MS_BIND,
             None::<&str>,
         )
-        .map_err(|source| AyaTestError::Syscall {
-            syscall: "mount",
-            path: Some(ns_path.clone()),
-            source,
+        .map_err(|source| {
+            let mut errs = vec![AyaTestError::Syscall {
+                syscall: "mount",
+                path: Some(ns_path.clone()),
+                source,
+            }];
+            nix::sched::setns(&old_ns, nix::sched::CloneFlags::CLONE_NEWNET).unwrap_or_else(
+                |source| {
+                    errs.push(AyaTestError::Syscall {
+                        syscall: "setns",
+                        path: Some(PathBuf::from(Self::THREAD_NETNS)),
+                        source,
+                    })
+                },
+            );
+            fs::remove_file(&ns_path).unwrap_or_else(|source| {
+                errs.push(AyaTestError::Io {
+                    op: "remove file",
+                    path: ns_path,
+                    source,
+                })
+            });
+            AyaTestError::Multi(errs)
         })?;
 
         println!("entered network namespace {name}");
