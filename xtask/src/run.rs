@@ -71,7 +71,6 @@ pub(crate) fn build<F>(target: Option<&str>, f: F) -> Result<Vec<(String, PathBu
 where
     F: FnOnce(&mut Command) -> &mut Command,
 {
-    // Always use rust-lld in case we're cross-compiling.
     let mut cargo = Command::new("cargo");
     cargo.args(["build", "--message-format=json"]);
     if let Some(target) = target {
