@@ -245,43 +245,76 @@ impl NetNsGuard {
         clippy::print_stdout,
         reason = "integration tests print namespace transitions for diagnostics"
     )]
-    pub fn new() -> AyaTestResult<Self> {
+    pub fn new() -> Result<Self, Vec<AyaTestError>> {
         // `/proc/thread-self/ns/net` resolves to the calling thread's netns
         // (`/proc/self/ns/net` would always pin to the main thread's).
-        let old_ns = fs::File::open(Self::THREAD_NETNS).map_err(|source| AyaTestError::Io {
-            op: "open",
-            path: PathBuf::from(Self::THREAD_NETNS),
-            source,
+        let old_ns = fs::File::open(Self::THREAD_NETNS).map_err(|source| {
+            vec![AyaTestError::Io {
+                op: "open",
+                path: PathBuf::from(Self::THREAD_NETNS),
+                source,
+            }]
         })?;
 
         static COUNTER: AtomicU64 = AtomicU64::new(0);
         let pid = process::id();
         let name = format!("aya-test-{pid}-{}", COUNTER.fetch_add(1, Ordering::Relaxed));
 
-        fs::create_dir_all(Self::PERSIST_DIR).map_err(|source| AyaTestError::Io {
-            op: "create directory",
-            path: PathBuf::from(Self::PERSIST_DIR),
-            source,
+        fs::create_dir_all(Self::PERSIST_DIR).map_err(|source| {
+            vec![AyaTestError::Io {
+                op: "create directory",
+                path: PathBuf::from(Self::PERSIST_DIR),
+                source,
+            }]
         })?;
         let ns_path = Path::new(Self::PERSIST_DIR).join(&name);
-        let _unused: fs::File = fs::File::create(&ns_path).map_err(|source| AyaTestError::Io {
-            op: "create file",
-            path: ns_path.clone(),
-            source,
+        let _unused: fs::File = fs::File::create(&ns_path).map_err(|source| {
+            vec![AyaTestError::Io {
+                op: "create file",
+                path: ns_path.clone(),
+                source,
+            }]
         })?;
         nix::sched::unshare(nix::sched::CloneFlags::CLONE_NEWNET).map_err(|source| {
-            AyaTestError::Syscall {
+            let mut errs = vec![AyaTestError::Syscall {
                 syscall: "unshare",
                 path: None,
                 source,
-            }
+            }];
+            fs::remove_file(&ns_path).unwrap_or_else(|source| {
+                errs.push(AyaTestError::Io {
+                    op: "remove file",
+                    path: ns_path.clone(),
+                    source,
+                })
+            });
+            errs
         })?;
 
         // Re-open after unshare to capture the freshly entered namespace.
-        let new_ns = fs::File::open(Self::THREAD_NETNS).map_err(|source| AyaTestError::Io {
-            op: "open",
-            path: PathBuf::from(Self::THREAD_NETNS),
-            source,
+        let new_ns = fs::File::open(Self::THREAD_NETNS).map_err(|source| {
+            let mut errs = vec![AyaTestError::Io {
+                op: "open",
+                path: PathBuf::from(Self::THREAD_NETNS),
+                source,
+            }];
+            nix::sched::setns(&old_ns, nix::sched::CloneFlags::CLONE_NEWNET).unwrap_or_else(
+                |source| {
+                    errs.push(AyaTestError::Syscall {
+                        syscall: "setns",
+                        path: Some(PathBuf::from(Self::THREAD_NETNS)),
+                        source,
+                    });
+                },
+            );
+            fs::remove_file(&ns_path).unwrap_or_else(|source| {
+                errs.push(AyaTestError::Io {
+                    op: "remove file",
+                    path: ns_path.clone(),
+                    source,
+                })
+            });
+            errs
         })?;
 
         nix::mount::mount(
@@ -291,10 +324,29 @@ impl NetNsGuard {
             nix::mount::MsFlags::MS_BIND,
             None::<&str>,
         )
-        .map_err(|source| AyaTestError::Syscall {
-            syscall: "mount",
-            path: Some(ns_path.clone()),
-            source,
+        .map_err(|source| {
+            let mut errs = vec![AyaTestError::Syscall {
+                syscall: "mount",
+                path: Some(ns_path.clone()),
+                source,
+            }];
+            nix::sched::setns(&old_ns, nix::sched::CloneFlags::CLONE_NEWNET).unwrap_or_else(
+                |source| {
+                    errs.push(AyaTestError::Syscall {
+                        syscall: "setns",
+                        path: Some(PathBuf::from(Self::THREAD_NETNS)),
+                        source,
+                    })
+                },
+            );
+            fs::remove_file(&ns_path).unwrap_or_else(|source| {
+                errs.push(AyaTestError::Io {
+                    op: "remove file",
+                    path: ns_path,
+                    source,
+                })
+            });
+            errs
         })?;
 
         println!("entered network namespace {name}");
@@ -310,13 +362,13 @@ impl NetNsGuard {
         unsafe {
             let idx = if_nametoindex(lo.as_ptr());
             if idx == 0 {
-                return Err(AyaTestError::Io {
+                return Err(vec![AyaTestError::Io {
                     op: "lookup interface index",
                     path: PathBuf::from("lo"),
                     source: io::Error::last_os_error(),
-                });
+                }]);
             }
-            netlink_set_link_up(idx as i32)?;
+            netlink_set_link_up(idx as i32).map_err(|err| vec![err.into()])?;
         }
 
         Ok(ns)
