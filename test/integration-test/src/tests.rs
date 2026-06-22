@@ -52,5 +52,6 @@ mod stack_trace_lsm;
 mod strncmp;
 mod tc_netlink;
 mod tcx;
+mod token;
 mod uprobe_cookie;
 mod xdp;

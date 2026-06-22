@@ -383,6 +383,7 @@ extend-ignore-identifiers-re = [
     "__PT_PARM",           # PARM
     "BPF_F_WRONLY",        # WRONLY
     "BPF_SOCK_OPS_RTO_CB", # RTO
+    "delegate_attachs",    # kernel mount option
 ]
 extend-ignore-re = [
     # abbreviated git commit SHA (e.g. "`8f3b1e2`")

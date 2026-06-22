@@ -58,7 +58,9 @@ use std::{
     ptr,
 };
 
-use aya_obj::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type, parse_map_info};
+use aya_obj::{
+    EbpfSectionKind, Features, InvalidTypeBinding, generated::bpf_map_type, parse_map_info,
+};
 use thiserror::Error;
 
 use crate::{
@@ -745,7 +747,7 @@ macro_rules! impl_creatable_map {
                 let obj = aya_obj::Map::new_from_params(
                     $map_type as u32, $key_size, $value_size, max_entries, flags,
                 );
-                Self::new(MapData::create(obj, $name, None)?)
+                Self::new(MapData::create(obj, $name, None, None, Default::default())?)
             }
         }
     };
@@ -807,6 +809,8 @@ pub(crate) const fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 pub struct MapData {
     obj: aya_obj::Map,
     fd: MapFd,
+    /// The detected BPF features at the time this map was created.
+    pub(crate) features: Features,
 }
 
 impl MapData {
@@ -815,8 +819,10 @@ impl MapData {
         obj: aya_obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
+        token_fd: Option<BorrowedFd<'_>>,
+        features: Features,
     ) -> Result<Self, MapError> {
-        Self::create_with_inner_map_fd(obj, name, btf_fd, None)
+        Self::create_with_inner_map_fd(obj, name, btf_fd, None, token_fd, features)
     }
 
     /// Creates a new map with the provided `name` and optional `inner_map_fd` for map-of-maps types.
@@ -825,6 +831,8 @@ impl MapData {
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
         inner_map_fd: Option<BorrowedFd<'_>>,
+        token_fd: Option<BorrowedFd<'_>>,
+        features: Features,
     ) -> Result<Self, MapError> {
         let c_name = CString::new(name)
             .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
@@ -847,15 +855,17 @@ impl MapData {
             }
         }
 
-        let fd = bpf_create_map(&c_name, &obj, btf_fd, inner_map_fd).map_err(|io_error| {
-            MapError::CreateError {
-                name: name.into(),
-                io_error,
-            }
-        })?;
+        let fd =
+            bpf_create_map(&c_name, &obj, btf_fd, inner_map_fd, token_fd).map_err(|io_error| {
+                MapError::CreateError {
+                    name: name.into(),
+                    io_error,
+                }
+            })?;
         Ok(Self {
             obj,
             fd: MapFd::from_fd(fd),
+            features,
         })
     }
 
@@ -865,6 +875,8 @@ impl MapData {
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
         inner_map_obj: Option<aya_obj::Map>,
+        token_fd: Option<BorrowedFd<'_>>,
+        features: Features,
     ) -> Result<Self, MapError> {
         use std::os::unix::ffi::OsStrExt as _;
 
@@ -886,16 +898,30 @@ impl MapData {
             Ok(Self {
                 obj,
                 fd: MapFd::from_fd(fd),
+                features,
             })
         } else {
             let inner_map;
             let inner_map_fd = if let Some(inner) = inner_map_obj {
-                inner_map = Self::create(inner, &format!("{name}.inner"), btf_fd)?;
+                inner_map = Self::create(
+                    inner,
+                    &format!("{name}.inner"),
+                    btf_fd,
+                    token_fd,
+                    features.clone(),
+                )?;
                 Some(inner_map.fd().as_fd())
             } else {
                 None
             };
-            let map = Self::create_with_inner_map_fd(obj, name, btf_fd, inner_map_fd)?;
+            let map = Self::create_with_inner_map_fd(
+                obj,
+                name,
+                btf_fd,
+                inner_map_fd,
+                token_fd,
+                features,
+            )?;
             map.pin(path).map_err(|error| MapError::PinError {
                 name: Some(name.into()),
                 error,
@@ -905,7 +931,7 @@ impl MapData {
     }
 
     pub(crate) fn finalize(&mut self) -> Result<(), MapError> {
-        let Self { obj, fd } = self;
+        let Self { obj, fd, .. } = self;
         if !obj.data().is_empty() {
             bpf_map_update_elem_ptr(fd.as_fd(), &0, obj.data_mut().as_mut_ptr(), 0)
                 .map_err(|io_error| SyscallError {
@@ -958,6 +984,7 @@ impl MapData {
         Ok(Self {
             obj: parse_map_info(info, PinningType::None),
             fd: MapFd::from_fd(fd),
+            features: crate::FEATURES.clone(),
         })
     }
 
@@ -998,7 +1025,7 @@ impl MapData {
     pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        let Self { fd, obj: _ } = self;
+        let Self { fd, .. } = self;
         let path = path.as_ref();
         let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
             PinError::InvalidPinPath {
@@ -1015,12 +1042,12 @@ impl MapData {
 
     /// Returns the file descriptor of the map.
     pub const fn fd(&self) -> &MapFd {
-        let Self { obj: _, fd } = self;
+        let Self { obj: _, fd, .. } = self;
         fd
     }
 
     pub(crate) const fn obj(&self) -> &aya_obj::Map {
-        let Self { obj, fd: _ } = self;
+        let Self { obj, .. } = self;
         obj
     }
 
@@ -1238,7 +1265,7 @@ mod test_utils {
             } => Ok(crate::MockableFd::mock_signed_fd().into()),
             call => panic!("unexpected syscall {call:?}"),
         });
-        MapData::create(obj, "foo", None).unwrap()
+        MapData::create(obj, "foo", None, None, Default::default()).unwrap()
     }
 
     pub(super) fn new_obj_map<K>(map_type: bpf_map_type) -> aya_obj::Map {
@@ -1325,6 +1352,7 @@ mod tests {
             Ok(MapData {
                 obj: _,
                 fd,
+                ..
             }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd())
         );
     }
@@ -1340,10 +1368,11 @@ mod tests {
         });
 
         assert_matches!(
-            MapData::create(new_obj_map(), "foo", None),
+            MapData::create(new_obj_map(), "foo", None, None, Default::default()),
             Ok(MapData {
                 obj: _,
                 fd,
+                ..
             }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd())
         );
     }
@@ -1365,10 +1394,11 @@ mod tests {
             MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
                 bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 65535,
-            ), "foo", None),
+            ), "foo", None, None, Default::default()),
             Ok(MapData {
                 obj,
                 fd,
+                ..
             }) => {
                 assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
                 assert_eq!(obj.max_entries(), nr_cpus as u32)
@@ -1380,10 +1410,11 @@ mod tests {
             MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
                 bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 0,
-            ), "foo", None),
+            ), "foo", None, None, Default::default()),
             Ok(MapData {
                 obj,
                 fd,
+                ..
             }) => {
                 assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
                 assert_eq!(obj.max_entries(), nr_cpus as u32)
@@ -1395,10 +1426,11 @@ mod tests {
             MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
                 bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
                 1,
-            ), "foo", None),
+            ), "foo", None, None, Default::default()),
             Ok(MapData {
                 obj,
                 fd,
+                ..
             }) => {
                 assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
                 assert_eq!(obj.max_entries(), 1)
@@ -1437,7 +1469,8 @@ mod tests {
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
         });
 
-        let map_data = MapData::create(new_obj_map(), TEST_NAME, None).unwrap();
+        let map_data =
+            MapData::create(new_obj_map(), TEST_NAME, None, None, Default::default()).unwrap();
         assert_eq!(TEST_NAME, map_data.info().unwrap().name_as_str().unwrap());
     }
 
@@ -1516,7 +1549,7 @@ mod tests {
         override_syscall(|_| Err((-1, io::Error::from_raw_os_error(EFAULT))));
 
         assert_matches!(
-            MapData::create(new_obj_map(), "foo", None),
+            MapData::create(new_obj_map(), "foo", None, None, Default::default()),
             Err(MapError::CreateError { name, io_error }) => {
                 assert_eq!(name, "foo");
                 assert_eq!(io_error.raw_os_error(), Some(EFAULT));

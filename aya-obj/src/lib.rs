@@ -64,7 +64,9 @@
 #![deny(missing_docs)]
 #![cfg_attr(test, expect(unused_crate_dependencies, reason = "used in doctests"))]
 
+pub mod attach;
 pub mod btf;
+pub mod cmd;
 #[expect(
     clippy::all,
     clippy::as_pointer_underscore,

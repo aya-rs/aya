@@ -191,7 +191,12 @@ impl SocketFilter {
     /// detach the filter from any socket. This will also not unload the program
     /// from the kernel while it remains pinned.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+        let data = ProgramData::from_pinned_path(
+            path,
+            VerifierLogLevel::default(),
+            None,
+            crate::FEATURES.clone(),
+        )?;
         Ok(Self { data })
     }
 }
@@ -370,7 +375,12 @@ impl ReusePortSocketFilter {
     /// detach the selector from any reuseport group. This will also not unload
     /// the program from the kernel while it remains pinned.
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
-        let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
+        let data = ProgramData::from_pinned_path(
+            path,
+            VerifierLogLevel::default(),
+            None,
+            crate::FEATURES.clone(),
+        )?;
         Ok(Self { data })
     }
 }
