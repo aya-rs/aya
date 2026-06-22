@@ -4894,12 +4894,14 @@ pub aya::programs::tc::TcError::AlreadyAttached
 pub aya::programs::tc::TcError::InvalidLinkOperation
 pub aya::programs::tc::TcError::InvalidTcxAttach(u32)
 pub aya::programs::tc::TcError::IoError(std::io::error::Error)
-pub aya::programs::tc::TcError::NetlinkError(aya::sys::netlink::NetlinkError)
+pub aya::programs::tc::TcError::NetlinkError(aya::sys::NetlinkError)
 pub aya::programs::tc::TcError::NulError(alloc::ffi::c_str::NulError)
 impl core::convert::From<alloc::ffi::c_str::NulError> for aya::programs::tc::TcError
 pub fn aya::programs::tc::TcError::from(alloc::ffi::c_str::NulError) -> Self
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::tc::TcError) -> Self
+impl core::convert::From<aya::sys::NetlinkError> for aya::programs::tc::TcError
+pub fn aya::programs::tc::TcError::from(aya::sys::NetlinkError) -> Self
 impl core::convert::From<std::io::error::Error> for aya::programs::tc::TcError
 pub fn aya::programs::tc::TcError::from(std::io::error::Error) -> Self
 impl core::error::Error for aya::programs::tc::TcError
@@ -5462,9 +5464,11 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeLi
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeLinkId
 pub mod aya::programs::xdp
 pub enum aya::programs::xdp::XdpError
-pub aya::programs::xdp::XdpError::NetlinkError(aya::sys::netlink::NetlinkError)
+pub aya::programs::xdp::XdpError::NetlinkError(aya::sys::NetlinkError)
 impl core::convert::From<aya::programs::xdp::XdpError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::xdp::XdpError) -> Self
+impl core::convert::From<aya::sys::NetlinkError> for aya::programs::xdp::XdpError
+pub fn aya::programs::xdp::XdpError::from(aya::sys::NetlinkError) -> Self
 impl core::error::Error for aya::programs::xdp::XdpError
 pub fn aya::programs::xdp::XdpError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya::programs::xdp::XdpError
@@ -5915,7 +5919,7 @@ pub aya::programs::ProgramError::LoadError
 pub aya::programs::ProgramError::LoadError::io_error: std::io::error::Error
 pub aya::programs::ProgramError::LoadError::verifier_log: aya_obj::VerifierLog
 pub aya::programs::ProgramError::MapError(aya::maps::MapError)
-pub aya::programs::ProgramError::NetlinkError(aya::sys::netlink::NetlinkError)
+pub aya::programs::ProgramError::NetlinkError(aya::sys::NetlinkError)
 pub aya::programs::ProgramError::NotAttached
 pub aya::programs::ProgramError::NotLoaded
 pub aya::programs::ProgramError::SkReuseportError(aya::programs::sk_reuseport::SkReuseportError)
@@ -5948,6 +5952,8 @@ impl core::convert::From<aya::programs::uprobe::UProbeError> for aya::programs::
 pub fn aya::programs::ProgramError::from(aya::programs::uprobe::UProbeError) -> Self
 impl core::convert::From<aya::programs::xdp::XdpError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::xdp::XdpError) -> Self
+impl core::convert::From<aya::sys::NetlinkError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(aya::sys::NetlinkError) -> Self
 impl core::convert::From<aya::sys::SyscallError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::sys::SyscallError) -> Self
 impl core::convert::From<aya_obj::btf::btf::BtfError> for aya::programs::ProgramError
@@ -6083,12 +6089,14 @@ pub aya::programs::TcError::AlreadyAttached
 pub aya::programs::TcError::InvalidLinkOperation
 pub aya::programs::TcError::InvalidTcxAttach(u32)
 pub aya::programs::TcError::IoError(std::io::error::Error)
-pub aya::programs::TcError::NetlinkError(aya::sys::netlink::NetlinkError)
+pub aya::programs::TcError::NetlinkError(aya::sys::NetlinkError)
 pub aya::programs::TcError::NulError(alloc::ffi::c_str::NulError)
 impl core::convert::From<alloc::ffi::c_str::NulError> for aya::programs::tc::TcError
 pub fn aya::programs::tc::TcError::from(alloc::ffi::c_str::NulError) -> Self
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::tc::TcError) -> Self
+impl core::convert::From<aya::sys::NetlinkError> for aya::programs::tc::TcError
+pub fn aya::programs::tc::TcError::from(aya::sys::NetlinkError) -> Self
 impl core::convert::From<std::io::error::Error> for aya::programs::tc::TcError
 pub fn aya::programs::tc::TcError::from(std::io::error::Error) -> Self
 impl core::error::Error for aya::programs::tc::TcError
@@ -6153,9 +6161,11 @@ impl core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeError
 pub enum aya::programs::XdpError
-pub aya::programs::XdpError::NetlinkError(aya::sys::netlink::NetlinkError)
+pub aya::programs::XdpError::NetlinkError(aya::sys::NetlinkError)
 impl core::convert::From<aya::programs::xdp::XdpError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::xdp::XdpError) -> Self
+impl core::convert::From<aya::sys::NetlinkError> for aya::programs::xdp::XdpError
+pub fn aya::programs::xdp::XdpError::from(aya::sys::NetlinkError) -> Self
 impl core::error::Error for aya::programs::xdp::XdpError
 pub fn aya::programs::xdp::XdpError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya::programs::xdp::XdpError
@@ -7669,6 +7679,30 @@ impl core::marker::Unpin for aya::sys::Stats
 impl core::marker::UnsafeUnpin for aya::sys::Stats
 impl core::panic::unwind_safe::RefUnwindSafe for aya::sys::Stats
 impl core::panic::unwind_safe::UnwindSafe for aya::sys::Stats
+pub struct aya::sys::NetlinkError(_)
+impl aya::sys::NetlinkError
+pub fn aya::sys::NetlinkError::raw_os_error(&self) -> core::option::Option<i32>
+impl core::convert::From<aya::sys::NetlinkError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(aya::sys::NetlinkError) -> Self
+impl core::convert::From<aya::sys::NetlinkError> for aya::programs::tc::TcError
+pub fn aya::programs::tc::TcError::from(aya::sys::NetlinkError) -> Self
+impl core::convert::From<aya::sys::NetlinkError> for aya::programs::xdp::XdpError
+pub fn aya::programs::xdp::XdpError::from(aya::sys::NetlinkError) -> Self
+impl core::convert::From<aya::sys::NetlinkError> for aya::test_helpers::AyaTestError
+pub fn aya::test_helpers::AyaTestError::from(aya::sys::NetlinkError) -> Self
+impl core::error::Error for aya::sys::NetlinkError
+pub fn aya::sys::NetlinkError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::sys::NetlinkError
+pub fn aya::sys::NetlinkError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::sys::NetlinkError
+pub fn aya::sys::NetlinkError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::sys::NetlinkError
+impl core::marker::Send for aya::sys::NetlinkError
+impl core::marker::Sync for aya::sys::NetlinkError
+impl core::marker::Unpin for aya::sys::NetlinkError
+impl core::marker::UnsafeUnpin for aya::sys::NetlinkError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya::sys::NetlinkError
+impl !core::panic::unwind_safe::UnwindSafe for aya::sys::NetlinkError
 pub struct aya::sys::SyscallError
 pub aya::sys::SyscallError::call: &'static str
 pub aya::sys::SyscallError::io_error: std::io::error::Error
@@ -7698,6 +7732,80 @@ pub fn aya::sys::is_helper_supported(aya::programs::ProgramType, aya::sys::BpfHe
 pub fn aya::sys::is_map_supported(aya::maps::MapType) -> core::result::Result<bool, aya::sys::SyscallError>
 pub fn aya::sys::is_program_supported(aya::programs::ProgramType) -> core::result::Result<bool, aya::programs::ProgramError>
 pub type aya::sys::BpfHelper = aya_obj::generated::linux_bindings_x86_64::bpf_func_id
+pub mod aya::test_helpers
+pub enum aya::test_helpers::AyaTestError
+pub aya::test_helpers::AyaTestError::Cgroup2NotFound
+pub aya::test_helpers::AyaTestError::Io
+pub aya::test_helpers::AyaTestError::Io::op: &'static str
+pub aya::test_helpers::AyaTestError::Io::path: std::path::PathBuf
+pub aya::test_helpers::AyaTestError::Io::source: std::io::error::Error
+pub aya::test_helpers::AyaTestError::MissingMountEntryField
+pub aya::test_helpers::AyaTestError::MissingMountEntryField::field: &'static str
+pub aya::test_helpers::AyaTestError::MissingMountEntryField::mount_entry: alloc::string::String
+pub aya::test_helpers::AyaTestError::Multi(alloc::vec::Vec<Self>)
+pub aya::test_helpers::AyaTestError::Netlink(aya::sys::NetlinkError)
+pub aya::test_helpers::AyaTestError::Syscall
+pub aya::test_helpers::AyaTestError::Syscall::path: core::option::Option<std::path::PathBuf>
+pub aya::test_helpers::AyaTestError::Syscall::source: nix::errno::consts::Errno
+pub aya::test_helpers::AyaTestError::Syscall::syscall: &'static str
+impl core::convert::From<aya::sys::NetlinkError> for aya::test_helpers::AyaTestError
+pub fn aya::test_helpers::AyaTestError::from(aya::sys::NetlinkError) -> Self
+impl core::error::Error for aya::test_helpers::AyaTestError
+pub fn aya::test_helpers::AyaTestError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::test_helpers::AyaTestError
+pub fn aya::test_helpers::AyaTestError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::test_helpers::AyaTestError
+pub fn aya::test_helpers::AyaTestError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::test_helpers::AyaTestError
+impl core::marker::Send for aya::test_helpers::AyaTestError
+impl core::marker::Sync for aya::test_helpers::AyaTestError
+impl core::marker::Unpin for aya::test_helpers::AyaTestError
+impl core::marker::UnsafeUnpin for aya::test_helpers::AyaTestError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya::test_helpers::AyaTestError
+impl !core::panic::unwind_safe::UnwindSafe for aya::test_helpers::AyaTestError
+pub enum aya::test_helpers::Cgroup<'a>
+pub aya::test_helpers::Cgroup::Child(aya::test_helpers::ChildCgroup<'a>)
+pub aya::test_helpers::Cgroup::Root(std::path::PathBuf)
+impl aya::test_helpers::Cgroup<'static>
+pub fn aya::test_helpers::Cgroup<'static>::root() -> aya::test_helpers::AyaTestResult<Self>
+impl<'a> aya::test_helpers::Cgroup<'a>
+pub fn aya::test_helpers::Cgroup<'a>::create_child(&'a self, &str) -> aya::test_helpers::AyaTestResult<aya::test_helpers::ChildCgroup<'a>>
+pub fn aya::test_helpers::Cgroup<'a>::write_pid(&self, u32) -> aya::test_helpers::AyaTestResult<()>
+impl<'a> core::marker::Freeze for aya::test_helpers::Cgroup<'a>
+impl<'a> core::marker::Send for aya::test_helpers::Cgroup<'a>
+impl<'a> core::marker::Sync for aya::test_helpers::Cgroup<'a>
+impl<'a> core::marker::Unpin for aya::test_helpers::Cgroup<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::test_helpers::Cgroup<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::test_helpers::Cgroup<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya::test_helpers::Cgroup<'a>
+pub struct aya::test_helpers::ChildCgroup<'a>
+impl<'a> aya::test_helpers::ChildCgroup<'a>
+pub fn aya::test_helpers::ChildCgroup<'a>::fd(&self) -> aya::test_helpers::AyaTestResult<std::fs::File>
+pub const fn aya::test_helpers::ChildCgroup<'a>::into_cgroup(self) -> aya::test_helpers::Cgroup<'a>
+impl core::ops::drop::Drop for aya::test_helpers::ChildCgroup<'_>
+pub fn aya::test_helpers::ChildCgroup<'_>::drop(&mut self)
+impl<'a> core::marker::Freeze for aya::test_helpers::ChildCgroup<'a>
+impl<'a> core::marker::Send for aya::test_helpers::ChildCgroup<'a>
+impl<'a> core::marker::Sync for aya::test_helpers::ChildCgroup<'a>
+impl<'a> core::marker::Unpin for aya::test_helpers::ChildCgroup<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::test_helpers::ChildCgroup<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::test_helpers::ChildCgroup<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya::test_helpers::ChildCgroup<'a>
+pub struct aya::test_helpers::NetNsGuard
+impl aya::test_helpers::NetNsGuard
+pub fn aya::test_helpers::NetNsGuard::new() -> core::result::Result<Self, aya::test_helpers::AyaTestError>
+impl core::ops::drop::Drop for aya::test_helpers::NetNsGuard
+pub fn aya::test_helpers::NetNsGuard::drop(&mut self)
+impl std::os::fd::owned::AsFd for aya::test_helpers::NetNsGuard
+pub fn aya::test_helpers::NetNsGuard::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
+impl core::marker::Freeze for aya::test_helpers::NetNsGuard
+impl !core::marker::Send for aya::test_helpers::NetNsGuard
+impl !core::marker::Sync for aya::test_helpers::NetNsGuard
+impl core::marker::Unpin for aya::test_helpers::NetNsGuard
+impl core::marker::UnsafeUnpin for aya::test_helpers::NetNsGuard
+impl core::panic::unwind_safe::RefUnwindSafe for aya::test_helpers::NetNsGuard
+impl core::panic::unwind_safe::UnwindSafe for aya::test_helpers::NetNsGuard
+pub type aya::test_helpers::AyaTestResult<T> = core::result::Result<T, aya::test_helpers::AyaTestError>
 pub mod aya::util
 pub struct aya::util::KernelVersion
 impl aya::util::KernelVersion
