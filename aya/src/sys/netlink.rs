@@ -90,6 +90,10 @@ pub(crate) enum NetlinkErrorInternal {
 pub struct NetlinkError(#[from] NetlinkErrorInternal);
 
 impl NetlinkError {
+    /// Returns the raw OS error code, if one is available.
+    ///
+    /// Returns `None` if the error does not wrap an OS error (e.g. buffer
+    /// length or header length errors from the netlink attribute parser).
     pub fn raw_os_error(&self) -> Option<i32> {
         let Self(inner) = self;
         match inner {
