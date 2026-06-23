@@ -4,6 +4,7 @@ use std::{
     borrow::Cow,
     fs,
     io::{self, BufRead as _, BufReader, Write as _},
+    marker::PhantomData,
     os::fd::{AsFd, BorrowedFd},
     path::{Path, PathBuf},
     process,
@@ -277,6 +278,10 @@ pub struct NetNsGuard {
     old_ns: fs::File,
     /// File handle to the newly created network namespace.
     new_ns: fs::File,
+    /// Prevents moving the guard to another thread (makes it `!Send`).
+    // TODO(https://github.com/rust-lang/rust/issues/68318): Replace with a
+    // negative `impl` when possible.
+    _not_send: PhantomData<*mut ()>,
 }
 
 impl NetNsGuard {
@@ -399,6 +404,7 @@ impl NetNsGuard {
             name,
             old_ns,
             new_ns,
+            _not_send: PhantomData,
         };
 
         // By default, the loopback in a new netns is down. Set it up.
@@ -447,6 +453,7 @@ impl Drop for NetNsGuard {
             old_ns,
             name,
             new_ns: _,
+            _not_send: _,
         } = self;
         match (|| -> Result<()> {
             nix::sched::setns(old_ns, nix::sched::CloneFlags::CLONE_NEWNET)
