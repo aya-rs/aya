@@ -8,7 +8,7 @@ use aya::{
 use integration_common::local_storage::SENTINEL;
 use test_log::test;
 
-use crate::utils::{Cgroup, is_cgroup2};
+use crate::utils::Cgroup;
 
 #[test]
 fn cgrp_storage() {
@@ -19,11 +19,6 @@ fn cgrp_storage() {
 
     if !is_program_supported(ProgramType::Tracing).unwrap() {
         eprintln!("skipping test - tracing programs not supported");
-        return;
-    }
-
-    if !is_cgroup2() {
-        eprintln!("skipping test - /sys/fs/cgroup is not cgroup2");
         return;
     }
 
