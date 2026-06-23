@@ -10,7 +10,7 @@ use aya::{
 use integration_common::cgroup_array::{NOT_UNDER_INDEX, TestResult, UNDER_INDEX};
 use rstest::rstest;
 
-use crate::utils::{Cgroup, is_cgroup2};
+use crate::utils::Cgroup;
 
 #[unsafe(no_mangle)]
 #[inline(never)]
@@ -29,11 +29,6 @@ fn current_task_under_cgroup(
 ) {
     if !is_map_supported(MapType::CgroupArray).unwrap() {
         eprintln!("skipping test - cgroup array map not supported");
-        return;
-    }
-
-    if !is_cgroup2() {
-        eprintln!("skipping test - /sys/fs/cgroup is not cgroup2");
         return;
     }
 

@@ -19,7 +19,7 @@ use aya::{
 use aya_obj::generated::bpf_attach_type::BPF_CGROUP_INET4_CONNECT;
 use rstest::rstest;
 
-use crate::utils::{Cgroup, NetNsGuard, is_cgroup2};
+use crate::utils::{Cgroup, NetNsGuard};
 
 #[rstest]
 #[case::legacy("STORAGE_LEGACY", "PERCPU_LEGACY", "connect4_legacy")]
@@ -30,11 +30,6 @@ fn cgroup_storage(#[case] storage_map: &str, #[case] percpu_map: &str, #[case] p
         || !is_map_supported(MapType::PerCpuCgroupStorage).unwrap()
     {
         eprintln!("skipping test - cgroup storage maps not supported");
-        return;
-    }
-
-    if !is_cgroup2() {
-        eprintln!("skipping test - /sys/fs/cgroup is not cgroup2");
         return;
     }
 
