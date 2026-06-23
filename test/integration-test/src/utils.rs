@@ -4,9 +4,9 @@ use std::{
     borrow::Cow,
     ffi::CString,
     fs,
-    io::{self, Write as _},
+    io::{self, BufRead as _, BufReader, Write as _},
     os::fd::{AsFd, BorrowedFd},
-    path::Path,
+    path::{Path, PathBuf},
     process,
     sync::atomic::{AtomicU64, Ordering},
 };
@@ -15,13 +15,7 @@ use anyhow::{Context as _, Result};
 use aya::netlink_set_link_up;
 use libc::if_nametoindex;
 
-const CGROUP_ROOT: &str = "/sys/fs/cgroup";
 const CGROUP_PROCS: &str = "cgroup.procs";
-
-pub(crate) fn is_cgroup2() -> bool {
-    // `cgroup.controllers` exists only at the root of a cgroup2 mount.
-    Path::new(CGROUP_ROOT).join("cgroup.controllers").exists()
-}
 
 pub(crate) struct ChildCgroup<'a> {
     parent: &'a Cgroup<'a>,
@@ -29,20 +23,44 @@ pub(crate) struct ChildCgroup<'a> {
 }
 
 pub(crate) enum Cgroup<'a> {
-    Root,
+    Root(PathBuf),
     Child(ChildCgroup<'a>),
 }
 
 impl Cgroup<'static> {
     pub(crate) fn root() -> Self {
-        Self::Root
+        const PROC_MOUNTS: &str = "/proc/self/mounts";
+        const CGROUP2: &str = "cgroup2";
+        {
+            let mounts = fs::File::open(PROC_MOUNTS)
+                .unwrap_or_else(|err| panic!("fs::File::open(\"{PROC_MOUNTS}\"): {err}"));
+            for line in BufReader::new(mounts).lines() {
+                let line = line.unwrap_or_else(|err| {
+                    panic!("line yielded by io::BufReader::new(mounts): {err}")
+                });
+                let mut parts = line.split_whitespace();
+                let device = parts.next().unwrap_or_else(|| {
+                    panic!("mount entry from {PROC_MOUNTS} has no device field: {line}")
+                });
+                let mountpoint = parts.next().unwrap_or_else(|| {
+                    panic!("mount entry from {PROC_MOUNTS} has no mountpoint field: {line}")
+                });
+                let fstype = parts.next().unwrap_or_else(|| {
+                    panic!("mount entry from {PROC_MOUNTS} has no fstype field: {line}")
+                });
+                if device == CGROUP2 && fstype == CGROUP2 {
+                    return Self::Root(PathBuf::from(mountpoint));
+                }
+            }
+        }
+        panic!("could not find a cgroup2 mount entry in {PROC_MOUNTS}");
     }
 }
 
 impl<'a> Cgroup<'a> {
     fn path(&self) -> &Path {
         match self {
-            Self::Root => Path::new(CGROUP_ROOT),
+            Self::Root(path) => path,
             Self::Child(ChildCgroup { parent: _, path }) => path,
         }
     }
