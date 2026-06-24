@@ -163,6 +163,7 @@ linux_kernel.kconfig(
 # aya_aarch64.config and aya_x86_64.config.
 # linux.bzl encodes pahole 1.31 as "131" for the CONFIG_DEBUG_INFO_BTF probe;
 # keep this value synchronized with bazel_dep(name = "pahole") above.
+# TODO: Teach linux.bzl to derive pahole_version from the pahole toolchain.
 linux_kernel.compact(
     name = "aya_aarch64_compact",
     config = "//test/kernel:aya_aarch64.config",

@@ -5,12 +5,13 @@ platform(
         "@platforms//os:linux",
     ],
     exec_properties = {
-        # BuildBuddy anonymous access supports Arch=amd64, not Arch=arm64.
+        # Buildbuddy only allows anon access on AMD builders, not ARM.
         "Arch": "amd64",
         "OSFamily": "Linux",
         # We just need an image with a new-enough glibc for the prebuilt rustc
         # to work. All other tools should be provided as hermetic action
         # inputs, and LLVM/bsdtar are statically linked.
+        # This digest pins ubuntu:24.04.
         "container-image": "docker://ubuntu@sha256:023f8a753c22258c9fe2d0005a7d28258038da7d620e9f93e9ad78aa266f9f11",
     },
     visibility = ["//visibility:public"],
