@@ -300,6 +300,24 @@ jobs:
             # Native arm runner for local tests only; arm runners don't support
             # nested virtualization so running them here would be slow.
             vm-kernels: local
+          # These Ubuntu Mainline arm64 jobs are slower than the previous
+          # Debian cloud kernels under TCG. Local full-suite dev-profile A/B
+          # runs point to kernel BTF as the main cost: with BTF disabled, arm64
+          # 6.1 Debian-config, 6.6 Ubuntu-config, and 6.18 Ubuntu-config all
+          # finish in about 120 seconds. With BTF enabled, runtime grows from
+          # the older Debian-style kernel to the newer Ubuntu Mainline kernels.
+          # That does not prove BTF size is the only factor, but the trend
+          # matches the larger BTF/module surface carried by Ubuntu Mainline
+          # generic. That surface is built into the Ubuntu Mainline .deb
+          # packages, so CI cannot tune it; run only release here to keep the
+          # added coverage while bringing PR runtime from about 40 minutes back
+          # to about 27 minutes.
+          - os: ubuntu-24.04-arm
+            vm-kernels: arm64 6.12
+            test-profiles: --test-profile release
+          - os: ubuntu-24.04-arm
+            vm-kernels: arm64 6.18
+            test-profiles: --test-profile release
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -378,6 +396,7 @@ jobs:
           set -euxo pipefail
 
           cargo xtask integration-test vm --cache-dir test/.tmp \
+            ${{ matrix.test-profiles || '' }} \
             --kernel-arch ${{ matrix.vm-kernels }}
 
   check:

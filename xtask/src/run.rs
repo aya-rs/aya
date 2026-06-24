@@ -17,7 +17,7 @@ use std::{
 
 use anyhow::{Context as _, Result, anyhow, bail};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use walkdir::WalkDir;
 use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors, libbpf_sys_env};
 
@@ -55,6 +55,23 @@ impl Drop for GitHubLogGroup {
     }
 }
 
+#[derive(Clone, Copy, Debug, ValueEnum)]
+enum TestProfile {
+    Dev,
+    Release,
+}
+
+impl TestProfile {
+    const DEFAULTS: &'static [Self] = &[Self::Dev, Self::Release];
+
+    const fn cargo_profile(self) -> &'static str {
+        match self {
+            Self::Dev => "dev",
+            Self::Release => "release",
+        }
+    }
+}
+
 #[derive(Parser)]
 enum Environment {
     /// Runs the integration tests locally.
@@ -72,6 +89,10 @@ enum Environment {
         /// Ubuntu Mainline architecture to resolve kernel version arguments for.
         #[clap(long, value_enum)]
         kernel_arch: KernelArchitecture,
+
+        /// Test binary build profile to run. Defaults to both dev and release.
+        #[clap(long = "test-profile", value_enum, value_name = "PROFILE")]
+        test_profile: Option<TestProfile>,
 
         /// Ubuntu Mainline versions such as 5.15 or 6.6.
         #[clap(required = true, value_name = "VERSION")]
@@ -161,11 +182,14 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
 
     let binaries = |package: &str,
                     target: Option<&str>,
-                    envs: &[(&OsStr, &OsStr)]|
+                    envs: &[(&OsStr, &OsStr)],
+                    test_profiles: &[TestProfile]|
      -> Result<Vec<(&'static str, Vec<Binary>)>> {
-        ["dev", "release"]
-            .into_iter()
+        test_profiles
+            .iter()
+            .copied()
             .map(|profile| {
+                let profile = profile.cargo_profile();
                 let binaries = build(target, |cmd| {
                     if package == INTEGRATION_TEST_PACKAGE {
                         cmd.env(AYA_BUILD_INTEGRATION_BPF, "true");
@@ -197,7 +221,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
             let mut args = runner.trim().split_terminator(' ');
             let runner = args.next().ok_or_else(|| anyhow!("no first argument"))?;
 
-            let binaries = binaries(&package, None, &[])?;
+            let binaries = binaries(&package, None, &[], TestProfile::DEFAULTS)?;
 
             let mut failures = String::new();
             for (profile, binaries) in binaries {
@@ -229,6 +253,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
         Environment::VM {
             cache_dir,
             kernel_arch,
+            test_profile,
             kernels,
         } => {
             // The user has asked us to run the tests on a VM. This is involved; strap in.
@@ -403,7 +428,10 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     &[]
                 };
 
-                let binaries = binaries(&package, Some(&target), envs)?;
+                let test_profiles = test_profile
+                    .as_ref()
+                    .map_or(TestProfile::DEFAULTS, std::slice::from_ref);
+                let binaries = binaries(&package, Some(&target), envs, test_profiles)?;
 
                 let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
 
