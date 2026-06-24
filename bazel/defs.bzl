@@ -1,10 +1,4 @@
-"""Bazel targets corresponding to Aya Cargo packages and BPF inputs.
-
-aya_rust_crate reads rules_rs metadata for one Cargo package and declares its
-library, binaries, build script, and tests. aya_c_bpf_objects compiles the C BPF
-inputs used by integration-test. bpfeb_filegroup and bpfel_filegroup apply the
-corresponding BPF target platform to integration-ebpf binaries.
-"""
+"""Aya Rust and BPF build rules."""
 
 load("@crates//:data.bzl", "DEP_DATA")
 load("@crates//:defs.bzl", "all_crate_deps")
@@ -63,8 +57,20 @@ def _bpf_filegroup(target_platform):
         "alloc",
     ).build()
 
-bpfeb_filegroup, _bpfeb_filegroup_internal = _bpf_filegroup(Label("@rules_rs//rs/platforms:bpfeb-unknown-none"))
-bpfel_filegroup, _bpfel_filegroup_internal = _bpf_filegroup(Label("@rules_rs//rs/platforms:bpfel-unknown-none"))
+# with_cfg requires its private rule classes to be exported by this module.
+# buildifier: disable=unused-variable
+_bpfeb_filegroup_macro, _bpfeb_filegroup_internal = _bpf_filegroup(Label("@rules_rs//rs/platforms:bpfeb-unknown-none"))
+
+# buildifier: disable=unused-variable
+_bpfel_filegroup_macro, _bpfel_filegroup_internal = _bpf_filegroup(Label("@rules_rs//rs/platforms:bpfel-unknown-none"))
+
+def bpfeb_filegroup(name, srcs, **kwargs):
+    """Applies the bpfeb-unknown-none platform to Rust BPF binary targets."""
+    _bpfeb_filegroup_macro(name = name, srcs = srcs, **kwargs)
+
+def bpfel_filegroup(name, srcs, **kwargs):
+    """Applies the bpfel-unknown-none platform to Rust BPF binary targets."""
+    _bpfel_filegroup_macro(name = name, srcs = srcs, **kwargs)
 
 def _c_bpf_compile(ctx, cc_toolchain, feature_configuration, name, defines = []):
     _, compilation_outputs = cc_common.compile(
@@ -172,7 +178,7 @@ def _c_bpf_target_name(src):
     return _c_bpf_object_out(src)[:-2].replace("-", "_").replace(".", "_")
 
 def aya_c_bpf_objects(name, objects, deps, hdrs, vmlinux):
-    """Compiles C BPF sources and collects their object files in a filegroup.
+    """Compiles integration-test C BPF inputs and collects their object files.
 
     Args:
       name: Name of the resulting filegroup.
@@ -233,7 +239,7 @@ def aya_rust_crate(
         binary_unit_tests = None,
         test_deps = None,
         test_binary = False):
-    """Declares Rust targets for the Cargo package in the current package.
+    """Reads rules_rs metadata and declares one Cargo package's Rust targets.
 
     Args:
       name: Cargo package name and primary Bazel target name.
