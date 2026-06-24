@@ -1,0 +1,46 @@
+load("@linux.bzl//:linux.bzl", "linux")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "aya_aarch64.config",
+    "aya_x86_64.config",
+])
+
+# linux.bzl encodes pahole 1.31 as "131". Keep this synchronized with
+# bazel_dep(name = "pahole", version = "1.31") in MODULE.bazel.
+_PAHOLE_VERSION = "131"
+
+# MODULE.bazel declares this integrity-pinned Linux 6.18.2 repository.
+_LINUX_SOURCE_REPOSITORY = "@aya_linux_6_18_2"
+
+linux(
+    name = "aya_kernel",
+    compact_repos = {
+        "aarch64": "@aya_aarch64_compact",
+        "x86_64": "@aya_x86_64_compact",
+    },
+    config = {
+        "aarch64": "@aya_aarch64_kconfig//:kconfig",
+        "x86_64": "@aya_x86_64_kconfig//:kconfig",
+    },
+    config_mode = "allnoconfig",
+    pahole = "@pahole//:pahole",
+    probe_values = {"pahole_version": _PAHOLE_VERSION},
+    source_repo = _LINUX_SOURCE_REPOSITORY,
+)
+
+filegroup(
+    name = "aya_kernel_config",
+    srcs = select({
+        "@platforms//cpu:aarch64": [":aya_kernel_aarch64_config"],
+        "@platforms//cpu:x86_64": [":aya_kernel_x86_64_config"],
+    }),
+    output_group = "config",
+)
+
+filegroup(
+    name = "aya_kernel_system_map",
+    srcs = [":aya_kernel.vm_linux"],
+    output_group = "system_map",
+)
