@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    features. It also preserves `-1` as an explicit opt-out and accepts
    crate-scoped bootstrap values.
  - <csr-id-dc129982687754ebef39d9f5e24e20d5f4acad84/> try to build when rustup is not found
-   In some environments, rustup is not availible but cargo and its targets
+   In some environments, rustup is not available but cargo and its targets
    are. This changes aya-build to try to continue building if rustup is not
    found, even with stable Rust. A warning will now be issued if rustup is
    not found but the build will proceed regardless. Add a dependency on
@@ -126,7 +126,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    eBPF kernel. This is problematic in environments such as CI, where
    tools always need to be installed first. Installing the current
    nightly Rust toolchain gives you a new toolchain every day. This
-   poisones caches and makes CI jobs non-deterministic.
+   poisons caches and makes CI jobs non-deterministic.
  - <csr-id-49a828ec5655f6ecd0c38083c6c0dca217bad777/> reorder-keys
    Group non-workspace keys before workspace ones for readability.
  - <csr-id-3d8cb08b7f067a5d57a7268d0b53131b527f4583/> add explicit irrefutable pattern
