@@ -1,8 +1,6 @@
 """Hermetic VM helpers for integration tests."""
 
-load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
-
-_QEMU_SYSTEM_TOOLCHAIN_TYPE = "@rules_qemu//qemu:system_toolchain_type"
+_QEMU_SYSTEM_TOOLCHAIN_TYPE = "@rules_qemu//qemu:exec_toolchain_type"
 
 # Keep the QEMU settings and result protocol synchronized with
 # xtask/src/run.rs::run. Bazel cannot invoke that Cargo runner because this rule
@@ -32,6 +30,17 @@ _target_arch_transition = transition(
     implementation = _target_arch_transition_impl,
     inputs = [],
     outputs = ["//bazel:bpf_target_arch"],
+)
+
+def _guest_platform_transition_impl(_, attr):
+    return {
+        "//command_line_option:platforms": [_GUESTS[attr.qemu_system_target].platform],
+    }
+
+_guest_platform_transition = transition(
+    implementation = _guest_platform_transition_impl,
+    inputs = [],
+    outputs = ["//command_line_option:platforms"],
 )
 
 def _rootpath(file, workspace_name):
@@ -209,18 +218,17 @@ _aya_qemu_vm_test = rule(
     attrs = {
         "kernel": attr.label(
             allow_single_file = True,
+            cfg = _guest_platform_transition,
             mandatory = True,
         ),
         "initrd": attr.label(
             allow_single_file = True,
+            cfg = _guest_platform_transition,
             mandatory = True,
         ),
         "qemu_system_target": attr.string(
             mandatory = True,
             values = ["aarch64", "x86_64"],
-        ),
-        "_allowlist_function_transition": attr.label(
-            default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
         ),
     },
     cfg = _target_arch_transition,
@@ -238,26 +246,10 @@ def aya_qemu_vm_test(name, initrd, kernel, qemu_system_target, **kwargs):
       qemu_system_target: QEMU architecture, either aarch64 or x86_64.
       **kwargs: Additional test rule attributes.
     """
-    target_platform = _GUESTS[qemu_system_target].platform
-    kernel_target = name + "_kernel"
-    initrd_target = name + "_initrd"
-
-    platform_transition_filegroup(
-        name = kernel_target,
-        srcs = [kernel],
-        tags = ["manual"],
-        target_platform = target_platform,
-    )
-    platform_transition_filegroup(
-        name = initrd_target,
-        srcs = [initrd],
-        tags = ["manual"],
-        target_platform = target_platform,
-    )
     _aya_qemu_vm_test(
         name = name,
-        initrd = initrd_target,
-        kernel = kernel_target,
+        initrd = initrd,
+        kernel = kernel,
         qemu_system_target = qemu_system_target,
         **kwargs
     )

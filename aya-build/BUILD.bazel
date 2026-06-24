@@ -1,3 +1,3 @@
-load("//bazel:defs.bzl", "aya_rust_crate")
+load("//bazel:rust.bzl", "aya_rust_crate")
 
 aya_rust_crate(name = "aya-build")

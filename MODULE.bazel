@@ -13,31 +13,21 @@ bazel_dep(name = "linux.bzl", version = "0.0.0")
 bazel_dep(name = "libbpf", version = "1.7.0", dev_dependency = True)
 
 # The LLVM toolchain compiles C BPF objects and the integration VM kernels.
-bazel_dep(name = "llvm", version = "0.8.8")
+bazel_dep(name = "llvm", version = "0.8.9")
 
 # CONFIG_DEBUG_INFO_BTF requires pahole when linking the integration VM kernels.
 bazel_dep(name = "pahole", version = "1.31", dev_dependency = True)
 
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "rules_cc", version = "0.2.19")
-bazel_dep(name = "rules_qemu", version = "0.1.1")
-bazel_dep(name = "rules_rs", version = "0.0.89")
+bazel_dep(name = "rules_qemu", version = "0.3.0")
+bazel_dep(name = "rules_rs", version = "0.0.93")
 
 # with_cfg.bzl applies the BPF target settings to Rust and C BPF targets.
 bazel_dep(name = "with_cfg.bzl", version = "0.14.6")
 
 # lzma-sys uses @xz//:lzma instead of compiling vendored liblzma in build.rs.
 bazel_dep(name = "xz", version = "5.4.5.bcr.8")
-
-# rules_qemu 0.1.1 does not expose qemu-system toolchains or let callers attach
-# target_settings to them. Aya uses target_settings to select the QEMU system
-# toolchain that matches //bazel:bpf_target_arch.
-archive_override(
-    module_name = "rules_qemu",
-    integrity = "sha256-Sm7OYHvHMLPzG5kysmLQ5M6R+SucwiFTziI7/CeaZXA=",
-    strip_prefix = "rules_qemu-53059535110cb8b132a110c94c1881331655e483",
-    urls = ["https://github.com/hermeticbuild/rules_qemu/archive/53059535110cb8b132a110c94c1881331655e483.tar.gz"],
-)
 
 # //test/integration-test:bpf_out_dir uses copy_to_directory.
 bazel_lib_toolchains = use_extension("@bazel_lib//lib:extensions.bzl", "toolchains")
@@ -133,11 +123,6 @@ exports_files(
     deps = ["@libbpf"],
 )
 use_repo(crate, "crates")
-
-# The generated @crates repository references @libbpf and @xz.
-inject_repo(crate, "libbpf")
-
-inject_repo(crate, "xz")
 
 # Use one integrity-pinned Linux source archive for both integration VM
 # architectures.
