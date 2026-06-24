@@ -273,6 +273,21 @@ jobs:
             # Native arm runner for local tests only; arm runners don't support
             # nested virtualization so running them here would be slow.
             vm-kernels: local
+          # These Ubuntu Mainline arm64 jobs are slower than the previous
+          # Debian cloud kernels under TCG. A local A/B run of the slowest
+          # single VM test with the same Ubuntu-style config took about 8.3s
+          # with kernel BTF enabled and about 1.7s with kernel BTF disabled,
+          # which points to BTF as the bottleneck. Ubuntu Mainline generic
+          # carries many more modules and much larger BTF data, and these
+          # settings are built into the Ubuntu .deb packages, so CI cannot tune
+          # them; run only release here to keep the added coverage while
+          # bringing PR runtime from about 40 minutes back to about 27 minutes.
+          - os: ubuntu-24.04-arm
+            vm-kernels: arm64 6.12
+            test-profiles: --test-profile release
+          - os: ubuntu-24.04-arm
+            vm-kernels: arm64 6.18
+            test-profiles: --test-profile release
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -350,6 +365,7 @@ jobs:
           set -euxo pipefail
 
           cargo xtask integration-test vm --cache-dir test/.tmp \
+            ${{ matrix.test-profiles || '' }} \
             --kernel-arch ${{ matrix.vm-kernels }}
 
   check:
