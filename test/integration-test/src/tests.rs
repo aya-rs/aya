@@ -8,6 +8,20 @@
     reason = "debug formatting aids diagnostics in tests"
 )]
 
+fn run_netns_tokio<F, Fut, T>(test: F) -> T
+where
+    F: FnOnce() -> Fut,
+    Fut: Future<Output = T>,
+{
+    let _netns = aya::test_helpers::NetNsGuard::new().unwrap();
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+
+    runtime.block_on(test())
+}
+
 mod array;
 mod bloom_filter;
 mod bpf_probe_read;

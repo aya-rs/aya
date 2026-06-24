@@ -10,7 +10,6 @@ use aya::{
     maps::{Array, MapData},
     programs::{ProgramError, ProgramType, ReusePortSocketFilter, SocketFilter, SocketFilterError},
     sys::is_program_supported,
-    test_helpers::NetNsGuard,
     util::KernelVersion,
 };
 use integration_common::socket_filter::{
@@ -23,6 +22,8 @@ use tokio::{
     net::{TcpListener, TcpSocket, TcpStream, UnixDatagram},
     time::timeout,
 };
+
+use super::run_netns_tokio;
 
 const IO_TIMEOUT: Duration = Duration::from_secs(10);
 const ACCEPT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -170,8 +171,8 @@ async fn socket_filter_program_can_trim_packets_and_detach() {
     );
 }
 
-#[test_log::test(tokio::test)]
-async fn socket_filter_attach_types_use_separate_slots() {
+#[test_log::test]
+fn socket_filter_attach_types_use_separate_slots() {
     if !is_program_supported(ProgramType::SocketFilter).unwrap() {
         eprintln!("skipping test - socket_filter program not supported");
         return;
@@ -181,97 +182,98 @@ async fn socket_filter_attach_types_use_separate_slots() {
         return;
     }
 
-    // Aya's CI VM init may leave `lo` down; NetNsGuard brings it up.
-    let _netns = NetNsGuard::new().unwrap();
-    let listener = reuseport_listener(0).expect("failed to create reuseport listener");
+    run_netns_tokio(async || {
+        let listener = reuseport_listener(0).expect("failed to create reuseport listener");
 
-    let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
-    let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
+        let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
+        let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
 
-    {
-        let prog: &mut SocketFilter = ebpf
-            .program_mut("pass_packets")
-            .unwrap()
-            .try_into()
+        {
+            let prog: &mut SocketFilter = ebpf
+                .program_mut("pass_packets")
+                .unwrap()
+                .try_into()
+                .unwrap();
+            prog.load().unwrap();
+            prog.attach(&listener).unwrap();
+        }
+
+        // Attaching a regular socket filter must not populate the reuseport
+        // selector slot.
+        let err = ReusePortSocketFilter::detach(&listener).unwrap_err();
+        assert_matches!(
+            err,
+            ProgramError::SocketFilterError(SocketFilterError::SetsockoptError {
+                option: "SO_DETACH_REUSEPORT_BPF",
+                io_error,
+            }) if io_error.raw_os_error() == Some(ENOENT)
+        );
+        SocketFilter::detach(&listener).expect("regular socket filter should still be attached");
+
+        {
+            let prog: &mut ReusePortSocketFilter = ebpf
+                .program_mut("select_first")
+                .unwrap()
+                .try_into()
+                .unwrap();
+            prog.load().unwrap();
+            prog.attach(&listener).unwrap();
+        }
+
+        // A TCP listener is awkward for a regular socket filter path assertion, so
+        // only smoke-test that the reuseport selector actually runs.
+        let _client = TcpStream::connect(listener.local_addr().unwrap())
+            .await
             .unwrap();
-        prog.load().unwrap();
-        prog.attach(&listener).unwrap();
-    }
-
-    // Attaching a regular socket filter must not populate the reuseport
-    // selector slot.
-    let err = ReusePortSocketFilter::detach(&listener).unwrap_err();
-    assert_matches!(
-        err,
-        ProgramError::SocketFilterError(SocketFilterError::SetsockoptError {
-            option: "SO_DETACH_REUSEPORT_BPF",
-            io_error,
-        }) if io_error.raw_os_error() == Some(ENOENT)
-    );
-    SocketFilter::detach(&listener).expect("regular socket filter should still be attached");
-
-    {
-        let prog: &mut ReusePortSocketFilter = ebpf
-            .program_mut("select_first")
+        timeout(ACCEPT_TIMEOUT, listener.accept())
+            .await
             .unwrap()
-            .try_into()
             .unwrap();
-        prog.load().unwrap();
-        prog.attach(&listener).unwrap();
-    }
+        assert!(
+            read_hits(&path_hits, REUSEPORT_SELECT_FIRST_HITS_INDEX) > 0,
+            "reuseport path did not run",
+        );
 
-    // A TCP listener is awkward for a regular socket filter path assertion, so
-    // only smoke-test that the reuseport selector actually runs.
-    let _client = TcpStream::connect(listener.local_addr().unwrap())
-        .await
-        .unwrap();
-    timeout(ACCEPT_TIMEOUT, listener.accept())
-        .await
-        .unwrap()
-        .unwrap();
-    assert!(
-        read_hits(&path_hits, REUSEPORT_SELECT_FIRST_HITS_INDEX) > 0,
-        "reuseport path did not run",
-    );
+        // Conversely, attaching a reuseport selector must not populate the
+        // socket's regular filter slot.
+        let err = SocketFilter::detach(&listener).unwrap_err();
+        assert_matches!(
+            err,
+            ProgramError::SocketFilterError(SocketFilterError::SetsockoptError {
+                option: "SO_DETACH_BPF",
+                io_error,
+            }) if io_error.raw_os_error() == Some(ENOENT)
+        );
+        // The reuseport selector should still be attached after the wrong detach
+        // type above.
+        ReusePortSocketFilter::detach(&listener)
+            .expect("reuseport selector should still be attached");
 
-    // Conversely, attaching a reuseport selector must not populate the
-    // socket's regular filter slot.
-    let err = SocketFilter::detach(&listener).unwrap_err();
-    assert_matches!(
-        err,
-        ProgramError::SocketFilterError(SocketFilterError::SetsockoptError {
-            option: "SO_DETACH_BPF",
-            io_error,
-        }) if io_error.raw_os_error() == Some(ENOENT)
-    );
-    // The reuseport selector should still be attached after the wrong detach
-    // type above.
-    ReusePortSocketFilter::detach(&listener).expect("reuseport selector should still be attached");
+        {
+            let prog: &mut SocketFilter = ebpf
+                .program_mut("pass_packets")
+                .unwrap()
+                .try_into()
+                .unwrap();
+            prog.attach(&listener).unwrap();
+        }
+        {
+            let prog: &mut ReusePortSocketFilter = ebpf
+                .program_mut("select_first")
+                .unwrap()
+                .try_into()
+                .unwrap();
+            prog.attach(&listener).unwrap();
+        }
 
-    {
-        let prog: &mut SocketFilter = ebpf
-            .program_mut("pass_packets")
-            .unwrap()
-            .try_into()
-            .unwrap();
-        prog.attach(&listener).unwrap();
-    }
-    {
-        let prog: &mut ReusePortSocketFilter = ebpf
-            .program_mut("select_first")
-            .unwrap()
-            .try_into()
-            .unwrap();
-        prog.attach(&listener).unwrap();
-    }
-
-    // Both slots can be populated on the same socket at the same time.
-    ReusePortSocketFilter::detach(&listener).expect("failed to detach reuseport selector");
-    SocketFilter::detach(&listener).expect("failed to detach regular socket filter");
+        // Both slots can be populated on the same socket at the same time.
+        ReusePortSocketFilter::detach(&listener).expect("failed to detach reuseport selector");
+        SocketFilter::detach(&listener).expect("failed to detach regular socket filter");
+    });
 }
 
-#[test_log::test(tokio::test)]
-async fn socket_filter_reuseport_selects_listener_and_detaches() {
+#[test_log::test]
+fn socket_filter_reuseport_selects_listener_and_detaches() {
     if !is_program_supported(ProgramType::SocketFilter).unwrap() {
         eprintln!("skipping test - socket_filter program not supported");
         return;
@@ -281,74 +283,10 @@ async fn socket_filter_reuseport_selects_listener_and_detaches() {
         return;
     }
 
-    // Aya's CI VM init may leave `lo` down; NetNsGuard brings it up.
-    let _netns = NetNsGuard::new().unwrap();
-    let [first, second] = reuseport_listeners();
-    let addr = first.local_addr().unwrap();
+    run_netns_tokio(async || {
+        let [first, second] = reuseport_listeners();
+        let addr = first.local_addr().unwrap();
 
-    let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
-    let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
-    let prog: &mut ReusePortSocketFilter = ebpf
-        .program_mut("select_second")
-        .unwrap()
-        .try_into()
-        .unwrap();
-    prog.load().unwrap();
-    prog.attach(&first).unwrap();
-
-    let _client = TcpStream::connect(addr).await.unwrap();
-    assert_eq!(
-        accept_from_either(&first, &second).await,
-        REUSEPORT_SECOND_LISTENER_INDEX,
-        "reuseport socket filter did not select the second listener",
-    );
-    assert!(
-        read_hits(&path_hits, REUSEPORT_SELECT_SECOND_HITS_INDEX) > 0,
-        "reuseport path did not run",
-    );
-    let hits_before_detach = read_hits(&path_hits, REUSEPORT_SELECT_SECOND_HITS_INDEX);
-
-    // Reuseport detach is group-scoped: detaching through `second` clears the
-    // selector for the whole group, including `first`.
-    ReusePortSocketFilter::detach(&second).unwrap();
-
-    let err = ReusePortSocketFilter::detach(&first).unwrap_err();
-    assert_matches!(
-        err,
-        ProgramError::SocketFilterError(SocketFilterError::SetsockoptError {
-            option: "SO_DETACH_REUSEPORT_BPF",
-            io_error,
-        }) if io_error.raw_os_error() == Some(ENOENT)
-    );
-
-    let _client = TcpStream::connect(addr).await.unwrap();
-    accept_from_either(&first, &second).await;
-    assert_eq!(
-        read_hits(&path_hits, REUSEPORT_SELECT_SECOND_HITS_INDEX),
-        hits_before_detach,
-        "reuseport path ran after detach",
-    );
-}
-
-#[test_log::test(tokio::test)]
-async fn socket_filter_reuseport_stays_attached_after_ebpf_drop() {
-    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
-        eprintln!("skipping test - socket_filter program not supported");
-        return;
-    }
-
-    if !reuseport_detach_supported() {
-        return;
-    }
-
-    // Aya's CI VM init may leave `lo` down; NetNsGuard brings it up.
-    let _netns = NetNsGuard::new().unwrap();
-    let [first, second] = reuseport_listeners();
-    let addr = first.local_addr().unwrap();
-
-    // Dropping `Ebpf` at the end of this scope releases local program FDs, but
-    // the reuseport group slot owns the attachment and must keep it active.
-    let path_hits: Array<_, u64> = {
         let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
         let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
         let prog: &mut ReusePortSocketFilter = ebpf
@@ -358,34 +296,44 @@ async fn socket_filter_reuseport_stays_attached_after_ebpf_drop() {
             .unwrap();
         prog.load().unwrap();
         prog.attach(&first).unwrap();
-        path_hits
-    };
 
-    let _client = TcpStream::connect(addr).await.unwrap();
-    assert_eq!(
-        accept_from_either(&first, &second).await,
-        REUSEPORT_SECOND_LISTENER_INDEX,
-        "dropping Ebpf detached the reuseport socket filter",
-    );
-    let hits_before_detach = read_hits(&path_hits, REUSEPORT_SELECT_SECOND_HITS_INDEX);
-    assert!(
-        hits_before_detach > 0,
-        "reuseport path did not run after Ebpf drop",
-    );
+        let _client = TcpStream::connect(addr).await.unwrap();
+        assert_eq!(
+            accept_from_either(&first, &second).await,
+            REUSEPORT_SECOND_LISTENER_INDEX,
+            "reuseport socket filter did not select the second listener",
+        );
+        assert!(
+            read_hits(&path_hits, REUSEPORT_SELECT_SECOND_HITS_INDEX) > 0,
+            "reuseport path did not run",
+        );
+        let hits_before_detach = read_hits(&path_hits, REUSEPORT_SELECT_SECOND_HITS_INDEX);
 
-    ReusePortSocketFilter::detach(&first).unwrap();
+        // Reuseport detach is group-scoped: detaching through `second` clears the
+        // selector for the whole group, including `first`.
+        ReusePortSocketFilter::detach(&second).unwrap();
 
-    let _client = TcpStream::connect(addr).await.unwrap();
-    accept_from_either(&first, &second).await;
-    assert_eq!(
-        read_hits(&path_hits, REUSEPORT_SELECT_SECOND_HITS_INDEX),
-        hits_before_detach,
-        "reuseport path ran after detach",
-    );
+        let err = ReusePortSocketFilter::detach(&first).unwrap_err();
+        assert_matches!(
+            err,
+            ProgramError::SocketFilterError(SocketFilterError::SetsockoptError {
+                option: "SO_DETACH_REUSEPORT_BPF",
+                io_error,
+            }) if io_error.raw_os_error() == Some(ENOENT)
+        );
+
+        let _client = TcpStream::connect(addr).await.unwrap();
+        accept_from_either(&first, &second).await;
+        assert_eq!(
+            read_hits(&path_hits, REUSEPORT_SELECT_SECOND_HITS_INDEX),
+            hits_before_detach,
+            "reuseport path ran after detach",
+        );
+    });
 }
 
-#[test_log::test(tokio::test)]
-async fn socket_filter_reuseport_replacement_uses_latest_program() {
+#[test_log::test]
+fn socket_filter_reuseport_stays_attached_after_ebpf_drop() {
     if !is_program_supported(ProgramType::SocketFilter).unwrap() {
         eprintln!("skipping test - socket_filter program not supported");
         return;
@@ -395,69 +343,124 @@ async fn socket_filter_reuseport_replacement_uses_latest_program() {
         return;
     }
 
-    // Aya's CI VM init may leave `lo` down; NetNsGuard brings it up.
-    let _netns = NetNsGuard::new().unwrap();
-    let [first, second] = reuseport_listeners();
-    let addr = first.local_addr().unwrap();
+    run_netns_tokio(async || {
+        let [first, second] = reuseport_listeners();
+        let addr = first.local_addr().unwrap();
 
-    let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
-    let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
+        // Dropping `Ebpf` at the end of this scope releases local program FDs, but
+        // the reuseport group slot owns the attachment and must keep it active.
+        let path_hits: Array<_, u64> = {
+            let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
+            let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
+            let prog: &mut ReusePortSocketFilter = ebpf
+                .program_mut("select_second")
+                .unwrap()
+                .try_into()
+                .unwrap();
+            prog.load().unwrap();
+            prog.attach(&first).unwrap();
+            path_hits
+        };
 
-    // Drop the mutable program reference before exercising the attachment. The
-    // kernel slot, not a link handle, owns the attachment, so ending this scope
-    // must not detach it.
-    {
-        let first_prog: &mut ReusePortSocketFilter = ebpf
-            .program_mut("select_first")
-            .unwrap()
-            .try_into()
-            .unwrap();
-        first_prog.load().unwrap();
-        first_prog.attach(&first).unwrap();
+        let _client = TcpStream::connect(addr).await.unwrap();
+        assert_eq!(
+            accept_from_either(&first, &second).await,
+            REUSEPORT_SECOND_LISTENER_INDEX,
+            "dropping Ebpf detached the reuseport socket filter",
+        );
+        let hits_before_detach = read_hits(&path_hits, REUSEPORT_SELECT_SECOND_HITS_INDEX);
+        assert!(
+            hits_before_detach > 0,
+            "reuseport path did not run after Ebpf drop",
+        );
+
+        ReusePortSocketFilter::detach(&first).unwrap();
+
+        let _client = TcpStream::connect(addr).await.unwrap();
+        accept_from_either(&first, &second).await;
+        assert_eq!(
+            read_hits(&path_hits, REUSEPORT_SELECT_SECOND_HITS_INDEX),
+            hits_before_detach,
+            "reuseport path ran after detach",
+        );
+    });
+}
+
+#[test_log::test]
+fn socket_filter_reuseport_replacement_uses_latest_program() {
+    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
+        eprintln!("skipping test - socket_filter program not supported");
+        return;
     }
 
-    let _client = TcpStream::connect(addr).await.unwrap();
-    assert_eq!(
-        accept_from_either(&first, &second).await,
-        REUSEPORT_FIRST_LISTENER_INDEX,
-        "first reuseport socket filter did not select the first listener",
-    );
-    let first_hits_before_replacement = read_hits(&path_hits, REUSEPORT_SELECT_FIRST_HITS_INDEX);
-    assert!(
-        first_hits_before_replacement > 0,
-        "first reuseport path did not run",
-    );
-
-    // A second attach through the same reuseport group replaces `reuse->prog`;
-    // it does not create a second attachment or change the socket indexes:
-    // https://github.com/torvalds/linux/blob/v6.9/net/core/sock_reuseport.c#L684-L712
-    {
-        let second_prog: &mut ReusePortSocketFilter = ebpf
-            .program_mut("select_second")
-            .unwrap()
-            .try_into()
-            .unwrap();
-        second_prog.load().unwrap();
-        second_prog.attach(&first).unwrap();
+    if !reuseport_detach_supported() {
+        return;
     }
 
-    let _client = TcpStream::connect(addr).await.unwrap();
-    assert_eq!(
-        accept_from_either(&first, &second).await,
-        REUSEPORT_SECOND_LISTENER_INDEX,
-        "replacement reuseport socket filter did not select the second listener",
-    );
-    assert_eq!(
-        read_hits(&path_hits, REUSEPORT_SELECT_FIRST_HITS_INDEX),
-        first_hits_before_replacement,
-        "replaced reuseport path ran after replacement",
-    );
-    assert!(
-        read_hits(&path_hits, REUSEPORT_SELECT_SECOND_HITS_INDEX) > 0,
-        "replacement reuseport path did not run",
-    );
+    run_netns_tokio(async || {
+        let [first, second] = reuseport_listeners();
+        let addr = first.local_addr().unwrap();
 
-    ReusePortSocketFilter::detach(&second).unwrap();
+        let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
+        let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
+
+        // Drop the mutable program reference before exercising the attachment. The
+        // kernel slot, not a link handle, owns the attachment, so ending this scope
+        // must not detach it.
+        {
+            let first_prog: &mut ReusePortSocketFilter = ebpf
+                .program_mut("select_first")
+                .unwrap()
+                .try_into()
+                .unwrap();
+            first_prog.load().unwrap();
+            first_prog.attach(&first).unwrap();
+        }
+
+        let _client = TcpStream::connect(addr).await.unwrap();
+        assert_eq!(
+            accept_from_either(&first, &second).await,
+            REUSEPORT_FIRST_LISTENER_INDEX,
+            "first reuseport socket filter did not select the first listener",
+        );
+        let first_hits_before_replacement =
+            read_hits(&path_hits, REUSEPORT_SELECT_FIRST_HITS_INDEX);
+        assert!(
+            first_hits_before_replacement > 0,
+            "first reuseport path did not run",
+        );
+
+        // A second attach through the same reuseport group replaces `reuse->prog`;
+        // it does not create a second attachment or change the socket indexes:
+        // https://github.com/torvalds/linux/blob/v6.9/net/core/sock_reuseport.c#L684-L712
+        {
+            let second_prog: &mut ReusePortSocketFilter = ebpf
+                .program_mut("select_second")
+                .unwrap()
+                .try_into()
+                .unwrap();
+            second_prog.load().unwrap();
+            second_prog.attach(&first).unwrap();
+        }
+
+        let _client = TcpStream::connect(addr).await.unwrap();
+        assert_eq!(
+            accept_from_either(&first, &second).await,
+            REUSEPORT_SECOND_LISTENER_INDEX,
+            "replacement reuseport socket filter did not select the second listener",
+        );
+        assert_eq!(
+            read_hits(&path_hits, REUSEPORT_SELECT_FIRST_HITS_INDEX),
+            first_hits_before_replacement,
+            "replaced reuseport path ran after replacement",
+        );
+        assert!(
+            read_hits(&path_hits, REUSEPORT_SELECT_SECOND_HITS_INDEX) > 0,
+            "replacement reuseport path did not run",
+        );
+
+        ReusePortSocketFilter::detach(&second).unwrap();
+    });
 }
 
 #[test_log::test(tokio::test)]
