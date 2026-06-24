@@ -1,6 +1,7 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@linux.bzl//:linux.bzl", "initramfs")
-load("//bazel:defs.bzl", "aya_c_bpf_objects", "aya_rust_crate")
+load("//bazel:bpf.bzl", "aya_c_bpf_objects")
+load("//bazel:rust.bzl", "aya_rust_crate")
 load("//bazel:vm.bzl", "aya_qemu_vm_test")
 
 # Keep this list synchronized with C_BPF in build.rs. The Boolean requests the

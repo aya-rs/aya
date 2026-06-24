@@ -1,4 +1,5 @@
-load("//bazel:defs.bzl", "aya_crate_binary_names", "aya_rust_crate", "bpfeb_filegroup", "bpfel_filegroup")
+load("//bazel:bpf.bzl", "bpfeb_filegroup", "bpfel_filegroup")
+load("//bazel:rust.bzl", "aya_crate_binary_names", "aya_rust_crate")
 
 INTEGRATION_EBPF_BINS = aya_crate_binary_names()
 

@@ -43,7 +43,6 @@ jobs:
             --remote_header=x-buildbuddy-api-key=5CeVmFS0jDnutd00x9Xl
           )
 
-          bazel build //test/integration-ebpf:bpfeb "${bazel_args[@]}"
           bazel test //... "${bazel_args[@]}"
 
   lint:

@@ -12,11 +12,6 @@ common --repo_env=BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
 # Use platform names in output directories created by BPF and VM transitions.
 common --experimental_platform_in_output_dir
 
-# Standard rust configuration to avoid passing libtool to build scripts that
-# use cc-rs and expect ar.
-# Can be removed once https://github.com/hermeticbuild/rules_rust/pull/24 lands.
-common --@rules_cc//cc/toolchains/args/archiver_flags:use_libtool_on_macos=False
-
 # Aya's eBPF crates require unstable BPF inline assembly.
 common --@rules_rust//rust/toolchain/channel=nightly
 
@@ -31,9 +26,6 @@ common:remote --bes_backend=grpcs://remote.buildbuddy.io
 common:remote --experimental_remote_downloader=grpcs://remote.buildbuddy.io
 common:remote --remote_cache=grpcs://remote.buildbuddy.io
 common:remote --remote_executor=grpcs://remote.buildbuddy.io
-
-# Remote tests execute on Linux even when the Bazel client runs on Windows.
-common:remote --action_env=PATH=/bin:/usr/bin
 
 # Minimize network traffic.
 common:remote --remote_cache_compression
