@@ -19,7 +19,7 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true, optional = true }
 assert_matches = { workspace = true }
-aya-obj = { path = "../aya-obj", version = "^0.2.2" }
+aya-obj = { path = "../aya-obj", version = "^0.3.0" }
 bitflags = { workspace = true }
 # TODO(https://github.com/rust-lang/rust/issues/60896): Remove once
 # `std::collections::hash_set::Entry` is stabilized.
