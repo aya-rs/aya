@@ -273,6 +273,16 @@ jobs:
             # Native arm runner for local tests only; arm runners don't support
             # nested virtualization so running them here would be slow.
             vm-kernels: local
+          # Add test-profiles to the slow Ubuntu Mainline arm64 jobs. They are
+          # the VM CI long pole under QEMU, so keep coverage but skip the
+          # dev-profile pass to keep PR runtime closer to the previous arm64
+          # lane.
+          - os: ubuntu-24.04-arm
+            vm-kernels: arm64 6.12
+            test-profiles: --test-profile release
+          - os: ubuntu-24.04-arm
+            vm-kernels: arm64 6.18
+            test-profiles: --test-profile release
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -350,6 +360,7 @@ jobs:
           set -euxo pipefail
 
           cargo xtask integration-test vm --cache-dir test/.tmp \
+            ${{ matrix.test-profiles || '' }} \
             --kernel-arch ${{ matrix.vm-kernels }}
 
   check:
