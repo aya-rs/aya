@@ -1,4 +1,10 @@
-"""Aya Rust and BPF build rules."""
+"""Bazel targets corresponding to Aya Cargo packages and BPF inputs.
+
+aya_rust_crate reads rules_rs metadata for one Cargo package and declares its
+library, binaries, build script, and tests. aya_c_bpf_objects compiles the C BPF
+inputs used by integration-test. bpfeb_filegroup and bpfel_filegroup apply the
+corresponding BPF target platform to integration-ebpf binaries.
+"""
 
 load("@crates//:data.bzl", "DEP_DATA")
 load("@crates//:defs.bzl", "all_crate_deps")

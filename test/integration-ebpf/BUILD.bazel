@@ -15,13 +15,11 @@ aya_rust_crate(
 bpfeb_filegroup(
     name = "bpfeb",
     srcs = INTEGRATION_EBPF_BINS,
-    tags = ["manual"],
     visibility = ["//visibility:public"],
 )
 
 bpfel_filegroup(
     name = "bpfel",
     srcs = INTEGRATION_EBPF_BINS,
-    tags = ["manual"],
     visibility = ["//visibility:public"],
 )

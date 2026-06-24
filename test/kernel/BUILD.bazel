@@ -7,6 +7,13 @@ exports_files([
     "aya_x86_64.config",
 ])
 
+# linux.bzl encodes pahole 1.31 as "131". Keep this synchronized with
+# bazel_dep(name = "pahole", version = "1.31") in MODULE.bazel.
+_PAHOLE_VERSION = "131"
+
+# MODULE.bazel declares this integrity-pinned Linux 6.18.2 repository.
+_LINUX_SOURCE_REPOSITORY = "@aya_linux_6_18_2"
+
 linux(
     name = "aya_kernel",
     compact_repos = {
@@ -19,8 +26,8 @@ linux(
     },
     config_mode = "allnoconfig",
     pahole = "@pahole//:pahole",
-    probe_values = {"pahole_version": "131"},
-    source_repo = "@aya_linux_6_18_2",
+    probe_values = {"pahole_version": _PAHOLE_VERSION},
+    source_repo = _LINUX_SOURCE_REPOSITORY,
 )
 
 filegroup(

@@ -3,6 +3,8 @@ load("@linux.bzl//:linux.bzl", "initramfs")
 load("//bazel:defs.bzl", "aya_c_bpf_objects", "aya_rust_crate")
 load("//bazel:vm.bzl", "aya_qemu_vm_test")
 
+# Keep this list synchronized with C_BPF in build.rs. The Boolean requests the
+# additional .BTF section used by the corresponding relocation test.
 C_BPF_OBJECTS = [
     ("bpf/ext.bpf.c", False),
     ("bpf/iter.bpf.c", True),
@@ -37,6 +39,8 @@ aya_c_bpf_objects(
 
 copy_to_directory(
     name = "bpf_out_dir",
+    # build.rs puts the same C and Rust BPF outputs in OUT_DIR for Cargo builds.
+    # test/integration-test/src/lib.rs reads each output by this basename.
     srcs = [
         ":c_bpf_objects",
         "//test/integration-ebpf:bpfel",
@@ -59,6 +63,8 @@ aya_rust_crate(
 
 initramfs(
     name = "vm_initramfs",
+    # Keep these archive paths synchronized with xtask/src/run.rs::run. The
+    # integration tests read /boot/config and the versioned System.map path.
     directories = ["/lib/modules"],
     executables = {
         "/bin/integration-test-unit-test-bin": ":integration-test-unit-test",
@@ -79,7 +85,6 @@ initramfs(
         initrd = ":vm_initramfs",
         kernel = "//test/kernel:aya_kernel",
         qemu_system_target = qemu_system_target,
-        target_compatible_with = ["@platforms//os:linux"],
     )
     for qemu_system_target in [
         "aarch64",
