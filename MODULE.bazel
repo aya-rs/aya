@@ -62,7 +62,7 @@ use_repo(rules_rust, "rules_rust")
 toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")
 toolchains.toolchain(
     edition = "2024",
-    version = "nightly/2026-04-20",
+    version = "nightly/2026-06-24",
 )
 use_repo(toolchains, "default_rust_toolchains")
 
@@ -90,18 +90,20 @@ register_toolchains(
     "@qemu_system_toolchains//:all",
 )
 
-# Generate Cargo dependencies for every Rust platform selected by Aya's host,
-# integration VM, and BPF targets.
+# Generate Cargo dependencies for every Rust execution and target platform used
+# by Aya's local hosts, integration VMs, and BPF targets.
 crate = use_extension("@rules_rs//rs:extensions.bzl", "crate")
 crate.from_cargo(
     name = "crates",
     cargo_lock = "//:Cargo.lock",
     cargo_toml = "//:Cargo.toml",
     platform_triples = [
+        "aarch64-apple-darwin",
         "aarch64-unknown-linux-gnu",
         "aarch64-unknown-linux-musl",
         "bpfeb-unknown-none",
         "bpfel-unknown-none",
+        "x86_64-apple-darwin",
         "x86_64-unknown-linux-gnu",
         "x86_64-unknown-linux-musl",
     ],
@@ -159,7 +161,8 @@ linux_kernel.kconfig(
 
 # Generate architecture-specific compact Kbuild metadata from
 # aya_aarch64.config and aya_x86_64.config.
-# pahole_version models the CONFIG_DEBUG_INFO_BTF version probe hermetically.
+# linux.bzl encodes pahole 1.31 as "131" for the CONFIG_DEBUG_INFO_BTF probe;
+# keep this value synchronized with bazel_dep(name = "pahole") above.
 linux_kernel.compact(
     name = "aya_aarch64_compact",
     config = "//test/kernel:aya_aarch64.config",

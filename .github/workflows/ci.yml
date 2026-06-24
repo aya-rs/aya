@@ -10,6 +10,8 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # This key is intentionally public so fork pull requests can use BuildBuddy.
+  BUILDBUDDY_API_KEY: 5CeVmFS0jDnutd00x9Xl
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,20 +32,19 @@ jobs:
     defaults:
       run:
         shell: bash
-    env:
-      BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-
     steps:
       - uses: actions/checkout@v6
 
       - name: Test
         run: |
           set -euo pipefail
-          bazel_args=(--config=remote --lockfile_mode=error)
-          if [[ -n "${BUILDBUDDY_API_KEY:-}" ]]; then
-            bazel_args+=(--remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY")
-          fi
+          bazel_args=(
+            --config=remote
+            --lockfile_mode=error
+            --remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY"
+          )
 
+          bazel build //test/integration-ebpf:bpfeb "${bazel_args[@]}"
           bazel test //... "${bazel_args[@]}"
 
   lint:

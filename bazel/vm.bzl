@@ -4,6 +4,10 @@ load("@bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 
 _QEMU_SYSTEM_TOOLCHAIN_TYPE = "@rules_qemu//qemu:system_toolchain_type"
 
+# Keep the QEMU settings and result protocol synchronized with
+# xtask/src/run.rs::run. Bazel cannot invoke that Cargo runner because this rule
+# must execute the configured QEMU toolchain with the transitioned kernel and
+# initramfs as declared runfiles.
 _GUESTS = {
     "aarch64": struct(
         cpu = "neoverse-n1",  # QEMU "max" has broken aarch64 CI before.
@@ -13,7 +17,9 @@ _GUESTS = {
     ),
     "x86_64": struct(
         cpu = "max",
-        kernel_args = "console=ttyS0,115200n8 rdinit=/init lsm=bpf panic=-1",
+        # xtask/src/run.rs::run uses noapic after observed
+        # "IO-APIC + timer doesn't work!" kernel panics.
+        kernel_args = "console=ttyS0,115200n8 rdinit=/init lsm=bpf noapic panic=-1",
         platform = "@rules_rs//rs/platforms:x86_64-unknown-linux-musl",
         smp = "1",
     ),
@@ -29,6 +35,8 @@ _target_arch_transition = transition(
 )
 
 def _rootpath(file, workspace_name):
+    # Custom rules cannot expand $(rootpath). File.short_path supplies the
+    # runfiles-relative path; ctx.runfiles below makes each file available.
     short_path = file.short_path
     if short_path.startswith("../"):
         return short_path[3:]
@@ -48,6 +56,8 @@ def _aya_qemu_vm_test_impl(ctx):
         guest.cpu,
         "-accel",
         "kvm",
+        "-accel",
+        "hvf",
         "-accel",
         "tcg",
         "-no-reboot",
@@ -80,41 +90,101 @@ for arg in "$@"; do
 done
 
 log="${{TEST_TMPDIR:-/tmp}}/{name}.qemu.log"
+fifo="${{TEST_TMPDIR:-/tmp}}/{name}.qemu.fifo"
+rm -f "${{fifo}}"
+mkfifo "${{fifo}}"
 
-"${{qemu}}" {qemu_args} -L "${{qemu_data_dir}}" -append "${{kernel_args}}" -kernel "${{kernel}}" -initrd "${{initrd}}" >"${{log}}" 2>&1 &
+"${{qemu}}" {qemu_args} -L "${{qemu_data_dir}}" -append "${{kernel_args}}" -kernel "${{kernel}}" -initrd "${{initrd}}" >"${{fifo}}" 2>&1 &
 qemu_pid="$!"
 timeout_seconds="${{TEST_TIMEOUT:-300}}"
 deadline=$((SECONDS + timeout_seconds))
+outcome=""
+termination_reason=""
+soft_lockups=0
 
-finish() {{
-  local status="$1"
-  local message="${{2:-}}"
+cleanup() {{
   kill "${{qemu_pid}}" 2>/dev/null || true
-  wait "${{qemu_pid}}" || true
-  cat "${{log}}"
-  if [[ -n "${{message}}" ]]; then
-    echo "${{message}}" >&2
+  rm -f "${{fifo}}"
+}}
+trap cleanup EXIT
+
+terminate() {{
+  if [[ -z "${{termination_reason}}" ]]; then
+    termination_reason="$1"
   fi
-  exit "${{status}}"
+  kill "${{qemu_pid}}" 2>/dev/null || true
 }}
 
-while kill -0 "${{qemu_pid}}" 2>/dev/null; do
-  if grep -q "init: success" "${{log}}"; then
-    finish 0
+exec 3<"${{fifo}}"
+while true; do
+  if IFS= read -r -t 1 line <&3; then
+    line="${{line%$'\r'}}"
+    printf '%s\n' "${{line}}"
+    printf '%s\n' "${{line}}" >>"${{log}}"
+
+    case "${{line}}" in
+      "init: success"|"init: failure")
+        current_outcome="${{line#init: }}"
+        if [[ -n "${{outcome}}" ]]; then
+          terminate "multiple exit status: previous=${{outcome}}, current=${{current_outcome}}"
+        else
+          outcome="${{current_outcome}}"
+        fi
+        ;;
+      "init: "*)
+        terminate "unexpected init output: ${{line#init: }}"
+        ;;
+    esac
+
+    if [[ "${{line}}" == *"end Kernel panic"* ]]; then
+      terminate "end Kernel panic detected"
+    elif [[ "${{line}}" == *"rcu: RCU grace-period kthread stack dump:"* ]]; then
+      terminate "rcu: RCU grace-period kthread stack dump: detected"
+    elif [[ "${{line}}" == *"watchdog: BUG: soft lockup"* ]]; then
+      soft_lockups=$((soft_lockups + 1))
+      if (( soft_lockups > 1 )); then
+        terminate "watchdog: BUG: soft lockup detected more than once"
+      fi
+    fi
+    continue
   fi
-  if grep -Eq "init: failure|Kernel panic|RCU grace-period kthread stack dump|soft lockup" "${{log}}"; then
-    finish 1
+
+  if ! kill -0 "${{qemu_pid}}" 2>/dev/null; then
+    break
   fi
   if (( SECONDS >= deadline )); then
-    finish 1 "timed out after ${{timeout_seconds}}s waiting for init: success"
+    terminate "timed out after ${{timeout_seconds}}s waiting for QEMU"
   fi
-  sleep 1
 done
+exec 3<&-
 
-if grep -q "init: success" "${{log}}"; then
-  finish 0
+if wait "${{qemu_pid}}"; then
+  qemu_status=0
+else
+  qemu_status="$?"
 fi
-finish 1
+
+if [[ -n "${{termination_reason}}" ]]; then
+  echo "${{termination_reason}}" >&2
+  exit 1
+fi
+if (( qemu_status != 0 )); then
+  echo "QEMU failed with status ${{qemu_status}}" >&2
+  exit 1
+fi
+
+case "${{outcome}}" in
+  success)
+    ;;
+  failure)
+    echo "VM binaries failed" >&2
+    exit 1
+    ;;
+  "")
+    echo "init did not exit" >&2
+    exit 1
+    ;;
+esac
 """.format(
             initrd = _rootpath(initrd, ctx.workspace_name),
             kernel = _rootpath(kernel, ctx.workspace_name),

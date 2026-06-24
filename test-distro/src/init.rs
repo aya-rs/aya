@@ -5,38 +5,6 @@
 
 use anyhow::Context as _;
 
-#[cfg(target_os = "linux")]
-fn set_loopback_up() -> anyhow::Result<()> {
-    // test-distro runs directly as PID 1, so no network manager brings `lo` up. Integration tests
-    // attach XDP and TC programs to `lo` and exchange traffic through `lo`.
-    use std::{ffi::CString, io};
-
-    let lo = CString::new("lo").unwrap();
-    let if_index = unsafe { nix::libc::if_nametoindex(lo.as_ptr()) };
-    if if_index == 0 {
-        return Err(io::Error::last_os_error()).context("if_nametoindex(\"lo\") failed");
-    }
-
-    unsafe { aya::netlink_set_link_up(if_index as i32) }
-        .context("netlink_set_link_up(\"lo\") failed")
-}
-
-#[cfg(not(target_os = "linux"))]
-fn set_loopback_up() -> anyhow::Result<()> {
-    Ok(())
-}
-
-fn ensure_dir(path: &str) -> anyhow::Result<()> {
-    let nix::sys::stat::FileStat { st_mode, .. } =
-        nix::sys::stat::stat(path).with_context(|| format!("stat({path}) failed"))?;
-    let s_flag = nix::sys::stat::SFlag::from_bits_truncate(st_mode);
-
-    if !s_flag.contains(nix::sys::stat::SFlag::S_IFDIR) {
-        anyhow::bail!("{path} is not a directory");
-    }
-    Ok(())
-}
-
 #[derive(Debug)]
 struct Errors(Vec<anyhow::Error>);
 
@@ -114,20 +82,12 @@ fn run() -> anyhow::Result<()> {
             target_mode: Some(RXRXRX),
         },
         Mount {
-            source: "tmpfs",
+            source: "debugfs",
             target: "/sys/kernel/debug",
-            fstype: "tmpfs",
-            flags: nix::mount::MsFlags::empty(),
-            data: Some("mode=755"),
-            target_mode: None,
-        },
-        Mount {
-            source: "tracefs",
-            target: "/sys/kernel/debug/tracing",
-            fstype: "tracefs",
+            fstype: "debugfs",
             flags: nix::mount::MsFlags::empty(),
             data: None,
-            target_mode: Some(RXRXRX),
+            target_mode: None,
         },
         Mount {
             source: "bpffs",
@@ -157,20 +117,24 @@ fn run() -> anyhow::Result<()> {
         match target_mode {
             None => {
                 // Must exist.
-                ensure_dir(target)?;
+                let nix::sys::stat::FileStat { st_mode, .. } = nix::sys::stat::stat(target)
+                    .with_context(|| format!("stat({target}) failed"))?;
+                let s_flag = nix::sys::stat::SFlag::from_bits_truncate(st_mode);
+
+                if !s_flag.contains(nix::sys::stat::SFlag::S_IFDIR) {
+                    anyhow::bail!("{target} is not a directory");
+                }
             }
-            Some(target_mode) => match nix::unistd::mkdir(target, target_mode) {
-                Ok(()) => {}
-                Err(nix::errno::Errno::EEXIST) => ensure_dir(target)?,
-                Err(err) => return Err(err).with_context(|| format!("mkdir({target}) failed")),
-            },
+            Some(target_mode) => {
+                // Must not exist.
+                nix::unistd::mkdir(target, target_mode)
+                    .with_context(|| format!("mkdir({target}) failed"))?;
+            }
         }
         nix::mount::mount(Some(source), target, Some(fstype), flags, data).with_context(|| {
             format!("mount({source}, {target}, {fstype}, {flags:?}, {data:?}) failed")
         })?;
     }
-
-    set_loopback_up().context("set_loopback_up() failed")?;
 
     // By contract we run everything in /bin and assume they're rust test binaries.
     //
