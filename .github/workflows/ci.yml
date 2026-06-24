@@ -18,6 +18,33 @@ concurrency:
 permissions: {}
 
 jobs:
+  bazel:
+    name: bazel (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Test
+        run: |
+          set -euo pipefail
+          bazel_args=(
+            --config=remote
+            --lockfile_mode=error
+            # This key is intentionally public so fork pull requests can use BuildBuddy.
+            --remote_header=x-buildbuddy-api-key=5CeVmFS0jDnutd00x9Xl
+          )
+
+          bazel test //... "${bazel_args[@]}"
+
   lint:
     runs-on: ubuntu-latest
 
@@ -308,6 +335,7 @@ jobs:
         run: |
           set -euxo pipefail
           # Dependencies are tracked in `Brewfile`.
+          brew trust --formula filosottile/musl-cross/musl-cross
           brew bundle
           echo $(brew --prefix curl)/bin >> $GITHUB_PATH
           echo $(brew --prefix llvm)/bin >> $GITHUB_PATH
@@ -363,6 +391,7 @@ jobs:
   check:
     if: always()
     needs:
+      - bazel
       - lint
       - build-test-aya
       - build-test-aya-ebpf
