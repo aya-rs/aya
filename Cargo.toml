@@ -389,6 +389,8 @@ extend-ignore-re = [
     "`[a-f0-9]{7}`",
     # memory range (e.g. "5ba3b000-5da3b000")
     "[a-f0-9]{8}\\-[a-f0-9]{8}",
+    # libc-style memory function group (e.g. "mem{set,move,cpy}")
+    "mem\\{set,move,cpy\\}",
 ]
 
 [workspace.metadata.typos.files]

@@ -340,7 +340,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    Found while working on #1417.
  - <csr-id-48f9e00c2e148182172367d26b7e1b9095af16d5/> make Align not pub
    This has no effect, so drop it. Tidy up a bit while I'm here and explain
-   the use of const refernces.
+   the use of const references.
  - <csr-id-98960db18a01fe4fa932423e22a712b37d21b03a/> avoid some allocations
  - <csr-id-ed516b3ec040aa5f3b1fc4c5aa174fd0f8484355/> advance through write buffers
    Refactor netlink attribute writers to consume and return the remaining
@@ -561,7 +561,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-3aded0e0a5c644569b0a268ea31c6c0edddea3b2/> move Mmap struct to aya::util
  - <csr-id-fc69a069727475060ee6d9895ac2745b8965237f/> fix is_probe_read_kernel_supported in aarch64 kernels 5.5
    In aarch64, with kernel 5.5, my programs that use `bpf_probe_read_user`
-   don't work successfully because `aya` is mistakenly re-writting it
+   don't work successfully because `aya` is mistakenly re-writing it
    `bpf_probe_read` because it falsely detects that the kernel doesn't
    support `bpf_probe_read_user`.
    
@@ -1274,7 +1274,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Use FdLink in SockOps programs ([`c44f8b0`](https://github.com/aya-rs/aya/commit/c44f8b0f5bddd820a4a98cff293126c0146b827a))
     - Remove unwrap and NonZero* in info ([`02d1db5`](https://github.com/aya-rs/aya/commit/02d1db5fc043fb7af90c14d13de6419ec5b9bcb5))
     - Merge pull request #985 from reyzell/main ([`40f3032`](https://github.com/aya-rs/aya/commit/40f303205f7a800877fe3f9a4fb1893141741e13))
-    - Add the option to support multiple and overrideable programs per cgroup ([`f790685`](https://github.com/aya-rs/aya/commit/f790685d759cbd97cb09ad48d87cdece28fbe579))
+    - Add the option to support multiple and overridable programs per cgroup ([`f790685`](https://github.com/aya-rs/aya/commit/f790685d759cbd97cb09ad48d87cdece28fbe579))
     - Merge pull request #1007 from tyrone-wu/aya/info-api ([`15eb935`](https://github.com/aya-rs/aya/commit/15eb935bce6d41fb67189c48ce582b074544e0ed))
     - Revamp MapInfo be more friendly with older kernels ([`fbb0930`](https://github.com/aya-rs/aya/commit/fbb09304a2de0d8baf7ea20c9727fcd2e4fb7f41))
     - Revamp ProgramInfo be more friendly with older kernels ([`88f5ac3`](https://github.com/aya-rs/aya/commit/88f5ac31142f1657b41b1ee0f217dcd9125b210a))
@@ -2617,7 +2617,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Merge pull request #584 from marysaka/fix/btf-kern-optional ([`0766e70`](https://github.com/aya-rs/aya/commit/0766e705486df167b0d5cf736c1edc14880bce17))
     - Don't use env::tempdir ([`5407d4a`](https://github.com/aya-rs/aya/commit/5407d4a9a1885806a0f74abfc8cfe17baf13e124))
     - Remove "async" feature ([`fa91fb4`](https://github.com/aya-rs/aya/commit/fa91fb4f59be3505664f8088b6e3e8da2c372253))
-    - Ignore embedded BTF error if not truely required ([`74b5468`](https://github.com/aya-rs/aya/commit/74b546827cdde13872e141e9e5b6cc9ac39efe1e))
+    - Ignore embedded BTF error if not truly required ([`74b5468`](https://github.com/aya-rs/aya/commit/74b546827cdde13872e141e9e5b6cc9ac39efe1e))
     - Fix build ([`242d8c3`](https://github.com/aya-rs/aya/commit/242d8c33c4ff71f766f32f184f826d3216929faa))
     - Merge pull request #520 from astoycos/unsupported-map ([`eb60d65`](https://github.com/aya-rs/aya/commit/eb60d6561362e57955b2963b9a6b0a818281aabf))
     - Merge pull request #560 from astoycos/fix-perf-link-pin ([`edb7baf`](https://github.com/aya-rs/aya/commit/edb7baf9a37187027e4459a7c716b22c2204ca1f))
@@ -2783,7 +2783,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Use & ([`9991ffb`](https://github.com/aya-rs/aya/commit/9991ffb093bff3a10678c48f8c4c7610558ab809))
     - Add test case ([`e9ec257`](https://github.com/aya-rs/aya/commit/e9ec257328299551a750883075095f8a60f1cce3))
     - Use Borrow<T> instead ([`1247ffc`](https://github.com/aya-rs/aya/commit/1247ffc19b8d68d37c032a7b916e3f2b3531972f))
-    - Use a struct for setting priority and handle in SchedClassfier attach ([`af3de84`](https://github.com/aya-rs/aya/commit/af3de84b081941bd3139c7089618a53dfa37ac83))
+    - Use a struct for setting priority and handle in SchedClassifier attach ([`af3de84`](https://github.com/aya-rs/aya/commit/af3de84b081941bd3139c7089618a53dfa37ac83))
     - Support using handle in tc programs ([`ac07608`](https://github.com/aya-rs/aya/commit/ac07608b7922a545cd1de1996b66dcbdeb7fbbe1))
     - Merge pull request #397 from astoycos/refactor-map-api2 ([`d6cb1a1`](https://github.com/aya-rs/aya/commit/d6cb1a16ad0f8df483e2234fb01ab55bdbeaa8b8))
     - Fix doc links, update rustdoc args ([`82edd68`](https://github.com/aya-rs/aya/commit/82edd681c398f73de026a695837dd37643ed124a))
@@ -3635,7 +3635,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Kprobe: remove pid argument ([`08c71df`](https://github.com/aya-rs/aya/commit/08c71dfeb19b2b4358d75baf5b95f8d4e6521935))
     - Add missing load() in kprobe example ([`bb15e82`](https://github.com/aya-rs/aya/commit/bb15e82c1d8373700dda52f69d6c4bf6f5489a03))
     - Support both bpf_map_def layout variants ([`d8d3117`](https://github.com/aya-rs/aya/commit/d8d311738c974f3b6fad22006ab2b827d0925ce8))
-    - Netlink: tc: use ptr::read_unaligned instead of deferencing a potentially unaligned ptr ([`5f0ff16`](https://github.com/aya-rs/aya/commit/5f0ff1698a12141ffe50e160de252f664773c140))
+    - Netlink: tc: use ptr::read_unaligned instead of dereferencing a potentially unaligned ptr ([`5f0ff16`](https://github.com/aya-rs/aya/commit/5f0ff1698a12141ffe50e160de252f664773c140))
     - Netlink: port TC code to using new nlattr utils ([`7f2ceaf`](https://github.com/aya-rs/aya/commit/7f2ceaf12e3aeadd81a55a75c268f254192cf866))
     - Netlink: refactor nlattr writing code ([`d9b5ab5`](https://github.com/aya-rs/aya/commit/d9b5ab575f6e2cbca793881094e1846a39332fa1))
     - Netlink: introduce NestedAttrs builder and switch XDP to it ([`c240a2c`](https://github.com/aya-rs/aya/commit/c240a2c73381a6864f343c79069abfd5f9e9b729))
