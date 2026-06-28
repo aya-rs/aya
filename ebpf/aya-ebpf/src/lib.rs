@@ -84,6 +84,11 @@ pub trait EbpfContext {
     }
 }
 
+#[allow(unknown_lints)]
+#[expect(
+    invalid_runtime_symbol_definitions,
+    reason = "BPF subprograms cannot return pointers into the caller's stack"
+)]
 mod intrinsics {
     use super::cty::c_int;
 
