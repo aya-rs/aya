@@ -155,6 +155,16 @@ impl TcContext {
     }
 
     #[inline]
+    pub fn change_head(&self, len: u32, flags: u64) -> Result<(), c_long> {
+        self.skb.change_head(len, flags)
+    }
+
+    #[inline]
+    pub fn change_tail(&self, len: u32, flags: u64) -> Result<(), c_long> {
+        self.skb.change_tail(len, flags)
+    }
+
+    #[inline]
     pub fn clone_redirect(&self, if_index: u32, flags: u64) -> Result<(), c_long> {
         self.skb.clone_redirect(if_index, flags)
     }
