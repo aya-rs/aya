@@ -7889,6 +7889,7 @@ pub fn aya::Ebpf::program_mut(&mut self, &str) -> core::option::Option<&mut aya:
 pub fn aya::Ebpf::programs(&self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &aya::programs::Program)>
 pub fn aya::Ebpf::programs_mut(&mut self) -> impl core::iter::traits::iterator::Iterator<Item = (&str, &mut aya::programs::Program)>
 pub fn aya::Ebpf::take_map(&mut self, &str) -> core::option::Option<aya::maps::Map>
+pub fn aya::Ebpf::take_program(&mut self, &str) -> core::option::Option<aya::programs::Program>
 impl core::fmt::Debug for aya::Ebpf
 pub fn aya::Ebpf::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya::Ebpf
