@@ -26,28 +26,16 @@ impl<T> CgrpStorage<T> {
     }
 
     /// Gets a mutable reference to the value associated with `cgroup`.
-    ///
-    /// # Safety
-    ///
-    /// This function may dereference the pointer `cgroup`.
     #[inline(always)]
-    pub unsafe fn get_ptr_mut(&self, cgroup: *mut cgroup) -> *mut T {
+    pub fn get_ptr_mut(&self, cgroup: *mut cgroup) -> *mut T {
         self.get_ptr(cgroup, ptr::null_mut(), 0)
     }
 
     /// Gets a mutable reference to the value associated with `cgroup`.
     ///
     /// If no value is associated with `cgroup`, `value` will be inserted.
-    ///
-    /// # Safety
-    ///
-    /// This function may dereference the pointer `cgroup`.
     #[inline(always)]
-    pub unsafe fn get_or_insert_ptr_mut(
-        &self,
-        cgroup: *mut cgroup,
-        value: Option<&mut T>,
-    ) -> *mut T {
+    pub fn get_or_insert_ptr_mut(&self, cgroup: *mut cgroup, value: Option<&mut T>) -> *mut T {
         self.get_ptr(
             cgroup,
             value.map_or(ptr::null_mut(), ptr::from_mut),
@@ -56,12 +44,13 @@ impl<T> CgrpStorage<T> {
     }
 
     /// Deletes the value associated with `cgroup`.
-    ///
-    /// # Safety
-    ///
-    /// This function may dereference the pointer `cgroup`.
+    #[expect(
+        clippy::not_unsafe_ptr_arg_deref,
+        reason = "the verifier validates the cgroup pointer as ARG_PTR_TO_BTF_ID at load time; \
+                  this wrapper forwards it to the helper without dereferencing it"
+    )]
     #[inline(always)]
-    pub unsafe fn delete(&self, cgroup: *mut cgroup) -> Result<(), i32> {
+    pub fn delete(&self, cgroup: *mut cgroup) -> Result<(), i32> {
         let ret = unsafe { bpf_cgrp_storage_delete(self.as_ptr(), cgroup) };
         if ret == 0 { Ok(()) } else { Err(ret as i32) }
     }

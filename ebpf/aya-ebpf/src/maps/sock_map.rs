@@ -24,7 +24,17 @@ impl super::private::Map for SockMap {
 impl SockMap {
     map_constructors!(u32, u32, BPF_MAP_TYPE_SOCKMAP);
 
-    #[expect(clippy::missing_safety_doc, reason = "TODO")]
+    /// Inserts the socket from `sk_ops` into the map at `index`.
+    ///
+    /// Wraps `bpf_sock_map_update`. Intended for `SOCK_OPS` programs.
+    ///
+    /// # Safety
+    ///
+    /// `sk_ops` must be a valid pointer to a `bpf_sock_ops` structure,
+    /// typically the `ops` field of a [`SockOpsContext`]. The kernel
+    /// guarantees its validity within the program's execution context.
+    ///
+    /// [`SockOpsContext`]: crate::programs::SockOpsContext
     pub unsafe fn update(
         &self,
         mut index: u32,
@@ -42,13 +52,13 @@ impl SockMap {
         if ret == 0 { Ok(()) } else { Err(ret as i32) }
     }
 
-    #[expect(clippy::missing_safety_doc, reason = "TODO")]
-    pub unsafe fn redirect_msg(&self, ctx: &SkMsgContext, index: u32, flags: u64) -> c_long {
+    /// Redirects the message in `ctx` to the socket at `index`.
+    pub fn redirect_msg(&self, ctx: &SkMsgContext, index: u32, flags: u64) -> c_long {
         unsafe { bpf_msg_redirect_map(ctx.as_ptr().cast(), self.def.as_ptr().cast(), index, flags) }
     }
 
-    #[expect(clippy::missing_safety_doc, reason = "TODO")]
-    pub unsafe fn redirect_skb(&self, ctx: &SkBuffContext, index: u32, flags: u64) -> c_long {
+    /// Redirects the socket buffer in `ctx` to the socket at `index`.
+    pub fn redirect_skb(&self, ctx: &SkBuffContext, index: u32, flags: u64) -> c_long {
         unsafe { bpf_sk_redirect_map(ctx.as_ptr().cast(), self.def.as_ptr().cast(), index, flags) }
     }
 
