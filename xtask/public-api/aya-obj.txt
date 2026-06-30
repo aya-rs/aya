@@ -2,7 +2,7 @@ pub mod aya_obj
 pub mod aya_obj::btf
 pub enum aya_obj::btf::BtfError
 pub aya_obj::btf::BtfError::FileError
-pub aya_obj::btf::BtfError::FileError::error: std::io::error::Error
+pub aya_obj::btf::BtfError::FileError::error: core::io::error::Error
 pub aya_obj::btf::BtfError::FileError::path: std::path::PathBuf
 pub aya_obj::btf::BtfError::InnerMapCannotBePinned
 pub aya_obj::btf::BtfError::InnerMapCannotBePinned::name: alloc::string::String
@@ -28,7 +28,7 @@ pub aya_obj::btf::BtfError::InvalidTypeKind::kind: u32
 pub aya_obj::btf::BtfError::InvalidValuesSpec
 pub aya_obj::btf::BtfError::InvalidValuesSpec::name: alloc::string::String
 pub aya_obj::btf::BtfError::LoadError
-pub aya_obj::btf::BtfError::LoadError::io_error: std::io::error::Error
+pub aya_obj::btf::BtfError::LoadError::io_error: core::io::error::Error
 pub aya_obj::btf::BtfError::LoadError::verifier_log: aya_obj::VerifierLog
 pub aya_obj::btf::BtfError::MaximumTypeDepthReached
 pub aya_obj::btf::BtfError::MaximumTypeDepthReached::type_id: u32
