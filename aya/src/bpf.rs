@@ -816,6 +816,7 @@ fn parse_map(
         bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY => Map::PerfEventArray(map),
         bpf_map_type::BPF_MAP_TYPE_REUSEPORT_SOCKARRAY => Map::ReusePortSockArray(map),
         bpf_map_type::BPF_MAP_TYPE_RINGBUF => Map::RingBuf(map),
+        bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF => Map::UserRingBuf(map),
         bpf_map_type::BPF_MAP_TYPE_SOCKHASH => Map::SockHash(map),
         bpf_map_type::BPF_MAP_TYPE_SOCKMAP => Map::SockMap(map),
         bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER => Map::BloomFilter(map),
@@ -859,9 +860,11 @@ fn max_entries_override(
     let max_entries = || user_override.unwrap_or_else(&current_value);
     Ok(match map_type {
         bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY if max_entries() == 0 => Some(num_cpus()?),
-        bpf_map_type::BPF_MAP_TYPE_RINGBUF => Some(adjust_to_page_size(max_entries(), page_size()))
-            .filter(|adjusted| *adjusted != max_entries())
-            .or(user_override),
+        bpf_map_type::BPF_MAP_TYPE_RINGBUF | bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF => {
+            Some(adjust_to_page_size(max_entries(), page_size()))
+                .filter(|adjusted| *adjusted != max_entries())
+                .or(user_override)
+        }
         _ => user_override,
     })
 }
@@ -874,7 +877,7 @@ fn value_size_override(map_type: bpf_map_type) -> Option<u32> {
         bpf_map_type::BPF_MAP_TYPE_DEVMAP | bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => {
             Some(if FEATURES.devmap_prog_id() { 8 } else { 4 })
         }
-        bpf_map_type::BPF_MAP_TYPE_RINGBUF => Some(0),
+        bpf_map_type::BPF_MAP_TYPE_RINGBUF | bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF => Some(0),
         _ => None,
     }
 }
