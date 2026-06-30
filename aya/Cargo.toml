@@ -21,6 +21,7 @@ anyhow = { workspace = true, optional = true }
 assert_matches = { workspace = true }
 aya-obj = { path = "../aya-obj", version = "^0.3.0" }
 bitflags = { workspace = true }
+flate2 = { workspace = true, features = ["rust_backend"], optional = true }
 # TODO(https://github.com/rust-lang/rust/issues/60896): Remove once
 # `std::collections::hash_set::Entry` is stabilized.
 hashbrown = { workspace = true, features = ["default-hasher", "equivalent"] }
@@ -38,6 +39,7 @@ rstest = { workspace = true }
 tempfile = { workspace = true }
 
 [features]
+default = ["flate2"]
 test-helpers = ["dep:anyhow", "dep:nix"]
 
 [package.metadata.docs.rs]

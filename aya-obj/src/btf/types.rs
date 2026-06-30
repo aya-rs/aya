@@ -1322,7 +1322,6 @@ impl BtfType {
             Self::Struct(t) => Some(t.size),
             Self::Union(t) => Some(t.size),
             Self::DataSec(t) => Some(t.size),
-            Self::Ptr(_) => Some(size_of::<&()>() as u32),
             _ => None,
         }
     }
