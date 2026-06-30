@@ -2051,9 +2051,16 @@ pub aya_ebpf::programs::sk_msg::SkMsgContext::msg: *mut aya_ebpf_bindings::x86_6
 impl aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::data(&self) -> usize
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::data_end(&self) -> usize
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::family(&self) -> u32
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::local_ip4(&self) -> u32
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::local_ip6(&self) -> [u32; 4]
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::local_port(&self) -> u32
 pub const fn aya_ebpf::programs::sk_msg::SkMsgContext::new(*mut aya_ebpf_bindings::x86_64::bindings::sk_msg_md) -> Self
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::pop_data(&self, u32, u32, u64) -> core::result::Result<(), i32>
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::push_data(&self, u32, u32, u64) -> core::result::Result<(), i32>
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::remote_ip4(&self) -> u32
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::remote_ip6(&self) -> [u32; 4]
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::remote_port(&self) -> u32
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::size(&self) -> u32
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::as_ptr(&self) -> *mut core::ffi::c_void
@@ -2555,9 +2562,16 @@ pub aya_ebpf::programs::SkMsgContext::msg: *mut aya_ebpf_bindings::x86_64::bindi
 impl aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::data(&self) -> usize
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::data_end(&self) -> usize
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::family(&self) -> u32
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::local_ip4(&self) -> u32
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::local_ip6(&self) -> [u32; 4]
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::local_port(&self) -> u32
 pub const fn aya_ebpf::programs::sk_msg::SkMsgContext::new(*mut aya_ebpf_bindings::x86_64::bindings::sk_msg_md) -> Self
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::pop_data(&self, u32, u32, u64) -> core::result::Result<(), i32>
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::push_data(&self, u32, u32, u64) -> core::result::Result<(), i32>
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::remote_ip4(&self) -> u32
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::remote_ip6(&self) -> [u32; 4]
+pub fn aya_ebpf::programs::sk_msg::SkMsgContext::remote_port(&self) -> u32
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::size(&self) -> u32
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::sk_msg::SkMsgContext
 pub fn aya_ebpf::programs::sk_msg::SkMsgContext::as_ptr(&self) -> *mut core::ffi::c_void
