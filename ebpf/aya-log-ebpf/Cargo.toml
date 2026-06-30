@@ -14,6 +14,6 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-aya-ebpf = { version = "^0.2.0", path = "../aya-ebpf" }
+aya-ebpf = { version = "^0.2.1", path = "../aya-ebpf" }
 aya-log-common = { version = "^0.2.0", path = "../../aya-log-common" }
 aya-log-ebpf-macros = { version = "^0.2.0", path = "../../aya-log-ebpf-macros" }
