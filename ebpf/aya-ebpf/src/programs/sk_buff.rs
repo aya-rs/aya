@@ -39,6 +39,11 @@ impl SkBuff {
     }
 
     #[inline]
+    pub fn set_tc_classid(&self, classid: u32) {
+        unsafe { (*self.skb).tc_classid = classid }
+    }
+
+    #[inline]
     pub fn cb(&self) -> &[u32] {
         unsafe { &(*self.skb).cb }
     }
