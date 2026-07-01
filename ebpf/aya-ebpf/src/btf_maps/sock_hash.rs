@@ -108,7 +108,7 @@ impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> SockHash<K, MAX_ENTRIES, F
         let () = Self::_CHECK;
         unsafe {
             bpf_sk_redirect_hash(
-                ctx.borrow().skb.skb,
+                ctx.borrow().skb.as_raw_ptr(),
                 self.as_ptr().cast(),
                 ptr::from_mut(key.borrow_mut()).cast(),
                 flags,
