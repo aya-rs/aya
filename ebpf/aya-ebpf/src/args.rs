@@ -52,11 +52,15 @@ pub(crate) fn btf_arg<T: Argument>(ctx: &impl crate::EbpfContext, n: usize) -> T
     T::from_register(unsafe { *ptr as u64 })
 }
 
-trait PtRegsLayout {
+pub(crate) trait PtRegsLayout {
     type Reg;
 
     fn arg_reg(&self, index: usize) -> Option<&Self::Reg>;
     fn rc_reg(&self) -> &Self::Reg;
+
+    fn syscall_regs_ptr(&self) -> Option<*const pt_regs> {
+        None
+    }
 }
 
 #[cfg(bpf_target_arch = "aarch64")]
@@ -77,6 +81,11 @@ impl PtRegsLayout for pt_regs {
         // Return codes use libbpf's __PT_RC_REG (regs[0]/x0).
         // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L248-L251
         &self.regs[0]
+    }
+
+    fn syscall_regs_ptr(&self) -> Option<*const pt_regs> {
+        // ARCH_HAS_SYSCALL_WRAPPER: the real pt_regs pointer is in x0.
+        self.arg_reg(0).map(|reg| *reg as *const pt_regs)
     }
 }
 
@@ -264,6 +273,33 @@ pub(crate) fn ret<T: Argument>(ctx: &pt_regs) -> T {
         reason = "architecture-specific"
     )]
     T::from_register((*reg) as u64)
+}
+
+/// Coerces a `T` from the `n`th syscall argument of the `pt_regs` pointed to
+/// by `regs`, where `n` starts at 0. Differs from [`arg`] in that on
+/// architectures like aarch64 the first syscall argument lives in
+/// `orig_x0` (outside `user_pt_regs`), not in `regs[0]`.
+pub(crate) fn syscall_read_arg<T: Argument>(regs: *const pt_regs, n: usize) -> Option<T> {
+    let layout = unsafe { &*regs };
+    #[cfg(bpf_target_arch = "aarch64")]
+    {
+        if n == 0 {
+            let orig_x0_addr =
+                unsafe { (regs as *const u8).add(size_of_val(layout)) };
+            let val =
+                unsafe { crate::helpers::bpf_probe_read_kernel(orig_x0_addr as *const u64) };
+            return val.ok().map(T::from_register);
+        }
+    }
+    let reg = layout.arg_reg(n)?;
+    #[expect(clippy::allow_attributes, reason = "architecture-specific")]
+    #[allow(
+        clippy::cast_sign_loss,
+        clippy::unnecessary_cast,
+        trivial_numeric_casts,
+        reason = "architecture-specific"
+    )]
+    Some(T::from_register((*reg) as u64))
 }
 
 /// Returns the n-th argument of the raw tracepoint.

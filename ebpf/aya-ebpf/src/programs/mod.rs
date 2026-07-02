@@ -28,7 +28,7 @@ pub use fexit::FExitContext;
 pub use flow_dissector::FlowDissectorContext;
 pub use lsm::LsmContext;
 pub use perf_event::PerfEventContext;
-pub use probe::ProbeContext;
+pub use probe::{ProbeContext, syscall_arg};
 pub use raw_tracepoint::RawTracePointContext;
 pub use retprobe::RetProbeContext;
 pub use sk_buff::SkBuffContext;

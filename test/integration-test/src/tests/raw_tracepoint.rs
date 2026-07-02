@@ -30,8 +30,14 @@ fn raw_tracepoint_sys_enter() {
     // Trigger a deterministic syscall after attaching the raw tracepoint.
     File::open("/dev/null").unwrap();
 
-    let SysEnterEvent { regs_addr, .. } = get_sys_enter_event(&mut bpf);
+    let SysEnterEvent {
+        regs_addr,
+        first_syscall_arg,
+        ..
+    } = get_sys_enter_event(&mut bpf);
     assert_ne!(regs_addr, 0);
+    // openat(AT_FDCWD, "/dev/null", O_RDONLY) has AT_FDCWD (-100) as the first arg.
+    assert_eq!(first_syscall_arg, (-100i64) as u64);
 }
 
 #[test_log::test]

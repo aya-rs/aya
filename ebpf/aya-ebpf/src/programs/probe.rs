@@ -1,6 +1,10 @@
 use core::ffi::c_void;
 
-use crate::{Argument, EbpfContext, args::arg, bindings::pt_regs};
+use crate::{
+    Argument, EbpfContext,
+    args::{PtRegsLayout as _, arg, syscall_read_arg},
+    bindings::pt_regs,
+};
 
 pub struct ProbeContext {
     pub regs: *mut pt_regs,
@@ -37,6 +41,33 @@ impl ProbeContext {
     pub fn arg<T: Argument>(&self, n: usize) -> Option<T> {
         arg(unsafe { &*self.regs }, n)
     }
+
+    /// Returns the `n`th syscall argument, accounting for architecture-specific
+    /// conventions that differ from the function-call ABI.
+    ///
+    /// On architectures with `ARCH_HAS_SYSCALL_WRAPPER` (aarch64, s390x, x86_64),
+    /// the real `pt_regs` that holds the syscall arguments is obtained by
+    /// dereferencing the first function-call argument. On aarch64, the first
+    /// syscall argument is read from `orig_x0` (past `user_pt_regs`) rather
+    /// than `regs[0]`/`x0`.
+    ///
+    /// On architectures where the syscall and function-call conventions
+    /// coincide (arm, riscv64, mips, loongarch64), this is equivalent to
+    /// [`arg`](Self::arg).
+    pub fn syscall_arg<T: Argument>(&self, n: usize) -> Option<T> {
+        let layout = unsafe { &*self.regs };
+        let real_regs = layout.syscall_regs_ptr().unwrap_or(self.regs);
+        syscall_read_arg(real_regs, n)
+    }
+}
+
+/// Reads the `n`th syscall argument from the `pt_regs` pointed to by `regs`.
+///
+/// This is the building block for reading syscall arguments from contexts that
+/// provide a raw `pt_regs` pointer (for example, the `sys_enter` raw
+/// tracepoint passes a `struct pt_regs *` as its first argument).
+pub fn syscall_arg<T: Argument>(regs: *const pt_regs, n: usize) -> Option<T> {
+    syscall_read_arg(regs, n)
 }
 
 impl EbpfContext for ProbeContext {

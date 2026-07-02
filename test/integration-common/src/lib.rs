@@ -119,6 +119,7 @@ pub mod raw_tracepoint {
     pub struct SysEnterEvent {
         pub regs_addr: u64,
         pub syscall_id: i64,
+        pub first_syscall_arg: u64,
     }
 
     #[cfg(feature = "user")]

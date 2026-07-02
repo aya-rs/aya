@@ -4,9 +4,10 @@
 
 use aya_ebpf::{
     EbpfContext as _, Global,
+    bindings::pt_regs,
     macros::{map, raw_tracepoint},
     maps::Array,
-    programs::RawTracePointContext,
+    programs::{self, RawTracePointContext},
 };
 #[cfg(not(test))]
 extern crate ebpf_panic;
@@ -33,6 +34,12 @@ fn sys_enter(ctx: RawTracePointContext) -> i32 {
     let regs_addr: u64 = ctx.arg(0);
     let syscall_id: i64 = ctx.arg(1);
 
+    let first_arg = if regs_addr != 0 {
+        programs::syscall_arg::<u64>(regs_addr as *const pt_regs, 0).unwrap_or(0)
+    } else {
+        0
+    };
+
     if let Some(ptr) = RESULT.get_ptr_mut(0) {
         unsafe {
             if (*ptr).regs_addr != 0 {
@@ -40,6 +47,7 @@ fn sys_enter(ctx: RawTracePointContext) -> i32 {
             }
             (*ptr).regs_addr = regs_addr;
             (*ptr).syscall_id = syscall_id;
+            (*ptr).first_syscall_arg = first_arg;
         }
     }
 
