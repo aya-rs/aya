@@ -286,3 +286,52 @@ pub mod test_run {
     pub const IF_INDEX: u32 = 1;
     pub const XDP_MODIFY_LEN: usize = 16;
 }
+
+pub mod syscall_args {
+    /// Index in the `RESULTS` map holding the single captured result.
+    pub const RESULT_INDEX: u32 = 0;
+
+    /// Marker written to [`TestResult::ran`] to distinguish a captured result
+    /// from an uninitialised slot.
+    pub const RAN: u32 = 1;
+
+    /// Sentinel values passed as the six arguments of the `splice(2)` syscall.
+    ///
+    /// The kprobe distinguishes each register slot round-trip through the
+    /// syscall wrapper. Mirrors the kernel selftest pattern in
+    /// <https://github.com/torvalds/linux/blob/e5f0a698b34ed76002dc5cff3804a61c80233a7a/tools/testing/selftests/bpf/progs/bpf_syscall_macro.c#L89-L103>.
+    ///
+    /// `SPLICE_OFF_IN`/`SPLICE_OFF_OUT` are the contents of the `loff_t`
+    /// variables whose addresses are passed as the pointer arguments; the
+    /// userspace test does not check the addresses themselves.
+    pub const SPLICE_FD_IN: u64 = 0xfeedfaceu32 as i32 as i64 as u64;
+    pub const SPLICE_FD_OUT: u64 = 0xdeadbeefu32 as i32 as i64 as u64;
+    pub const SPLICE_OFF_IN: u64 = 0x1234_5678_9abc_def0;
+    pub const SPLICE_OFF_OUT: u64 = 0x0fed_cba9_8765_4321;
+    pub const SPLICE_LEN: u64 = 0xcafe_babe_dad0_bad0;
+    pub const SPLICE_FLAGS: u64 = 0x0edb_ab1e;
+
+    #[repr(C)]
+    #[derive(Clone, Copy, Default, Debug, Eq, PartialEq)]
+    pub struct TestResult {
+        /// Set to [`RAN`] once the kprobe has fired and overwritten the slot.
+        pub ran: u32,
+        /// `fd_in` (`splice` arg 0) as seen by the kprobe.
+        pub fd_in: u64,
+        /// `off_in` (`splice` arg 1) as seen by the kprobe.
+        pub off_in: u64,
+        /// `fd_out` (`splice` arg 2) as seen by the kprobe.
+        pub fd_out: u64,
+        /// `off_out` (`splice` arg 3) as seen by the kprobe.
+        /// On `x86-64` this is passed in `r10` (not `rcx`) for syscalls, so a
+        /// wrong value here indicates the regular calling convention was used.
+        pub off_out: u64,
+        /// `len` (`splice` arg 4) as seen by the kprobe.
+        pub len: u64,
+        /// `flags` (`splice` arg 5) as seen by the kprobe.
+        pub flags: u64,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
