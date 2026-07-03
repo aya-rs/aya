@@ -1,3 +1,5 @@
+use core::ptr::NonNull;
+
 use aya_ebpf_cty::{c_long, c_void};
 
 use crate::{
@@ -12,12 +14,8 @@ pub struct FlowDissectorContext {
 
 impl FlowDissectorContext {
     #[inline]
-    #[expect(
-        clippy::not_unsafe_ptr_arg_deref,
-        reason = "skb is initialization context from kernel"
-    )]
-    pub const fn new(skb: *mut __sk_buff) -> Self {
-        let skb = unsafe { SkBuff::new(skb) };
+    pub const fn new(skb: NonNull<__sk_buff>) -> Self {
+        let skb = SkBuff::new(skb);
         Self { skb }
     }
 

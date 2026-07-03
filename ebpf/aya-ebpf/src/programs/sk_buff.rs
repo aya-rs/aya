@@ -18,17 +18,9 @@ pub struct SkBuff {
 }
 
 impl SkBuff {
-    /// Creates a new `SkBuff` from a raw `__sk_buff` pointer.
-    ///
-    /// # Safety
-    ///
-    /// The caller must ensure that `skb` points to a valid and initialized
-    /// `__sk_buff` structure managed by the kernel.
     #[inline]
-    pub const unsafe fn new(skb: *mut __sk_buff) -> Self {
-        Self {
-            skb: unsafe { NonNull::new_unchecked(skb) },
-        }
+    pub const fn new(skb: NonNull<__sk_buff>) -> Self {
+        Self { skb }
     }
 
     #[inline]
@@ -244,13 +236,9 @@ pub struct SkBuffContext {
 }
 
 impl SkBuffContext {
-    #[expect(
-        clippy::not_unsafe_ptr_arg_deref,
-        reason = "skb is initialization context from kernel"
-    )]
     #[inline]
-    pub const fn new(skb: *mut __sk_buff) -> Self {
-        let skb = unsafe { SkBuff::new(skb) };
+    pub const fn new(skb: NonNull<__sk_buff>) -> Self {
+        let skb = SkBuff::new(skb);
         Self { skb }
     }
 
@@ -345,17 +333,7 @@ impl SkBuffContext {
     /// ```
     #[inline(always)]
     pub fn load_bytes(&self, offset: usize, dst: &mut [u8]) -> Result<usize, c_long> {
-        let len = dst.len();
-        let len_u32 = u32::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
-        let ret = unsafe {
-            bpf_skb_load_bytes(
-                self.skb.as_raw_ptr().cast(),
-                offset as u32,
-                dst.as_mut_ptr().cast(),
-                len_u32,
-            )
-        };
-        if ret == 0 { Ok(len) } else { Err(ret) }
+        self.skb.load_bytes(offset, dst)
     }
 
     #[inline]
