@@ -54,6 +54,8 @@ impl ProbeContext {
     /// and extracts the syscall arguments using the syscall calling convention
     /// rather than the regular call convention.
     ///
+    /// Currently this is implemented only for `AArch64` and `x86-64`; on other
+    /// architectures this method will return `None`.
     /// On some architectures the syscall register layout differs from the
     /// regular call convention:
     ///
