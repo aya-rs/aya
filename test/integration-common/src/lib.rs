@@ -286,3 +286,28 @@ pub mod test_run {
     pub const IF_INDEX: u32 = 1;
     pub const XDP_MODIFY_LEN: usize = 16;
 }
+
+pub mod syscall_args {
+    /// Index in the `RESULTS` map holding the single captured result.
+    pub const RESULT_INDEX: u32 = 0;
+
+    /// Marker written to [`TestResult::ran`] to distinguish a captured result
+    /// from an uninitialised slot.
+    pub const RAN: u32 = 1;
+
+    #[repr(C)]
+    #[derive(Clone, Copy, Default, Debug, Eq, PartialEq)]
+    pub struct TestResult {
+        /// Set to [`RAN`] once the kprobe has fired and overwritten the slot.
+        pub ran: u32,
+        /// First syscall argument as seen by the kprobe (e.g., `pid` of
+        /// `kill(pid, sig)`).
+        pub pid: i32,
+        /// Second syscall argument as seen by the kprobe (e.g., `sig` of
+        /// `kill(pid, sig)`).
+        pub sig: i32,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
