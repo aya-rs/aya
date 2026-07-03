@@ -219,3 +219,7 @@ path = "src/inode_storage.rs"
 [[bin]]
 name = "cgrp-storage"
 path = "src/cgrp_storage.rs"
+
+[[bin]]
+name = "syscall-args"
+path = "src/syscall_args.rs"
