@@ -166,7 +166,20 @@ pub enum DisplayHint {
     UpperMac,
     /// `:p`
     Pointer,
+    /// `:s` — interpret a fixed-size byte array as a null-terminated UTF-8 string.
+    ///
+    /// Intended for use with `bpf_get_current_comm()`, which returns a `[u8; 16]`
+    /// null-padded process name. Bytes up to the first `\0` are decoded as UTF-8
+    /// (with lossy replacement for invalid sequences). Any trailing null bytes are
+    /// stripped before display.
+    Str,
 }
+
+/// Marker trait for types that can be formatted with the `{:s}` display hint.
+///
+/// Currently only `[u8; 16]` (the return type of `bpf_get_current_comm()`) implements this.
+pub trait StrFormatter {}
+impl StrFormatter for [u8; 16] {}
 
 mod sealed {
     #[expect(unnameable_types, reason = "this is the sealed trait pattern")]

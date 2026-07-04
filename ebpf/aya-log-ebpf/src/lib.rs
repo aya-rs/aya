@@ -10,7 +10,7 @@ pub mod macro_support {
     use aya_ebpf::{Global, maps::RingBuf};
     pub use aya_log_common::{
         Argument, DefaultFormatter, DisplayHint, Field, Header, IpFormatter, Level, LogValueLength,
-        LowerHexFormatter, LowerMacFormatter, PointerFormatter, UpperHexFormatter,
+        LowerHexFormatter, LowerMacFormatter, PointerFormatter, StrFormatter, UpperHexFormatter,
         UpperMacFormatter,
     };
 

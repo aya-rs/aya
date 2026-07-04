@@ -309,6 +309,7 @@ impl Format for &[u8] {
         match last_hint.map(|DisplayHintWrapper(dh)| dh) {
             Some(DisplayHint::LowerHex) => Ok(LowerHexBytesFormatter::format(self)),
             Some(DisplayHint::UpperHex) => Ok(UpperHexBytesFormatter::format(self)),
+            Some(DisplayHint::Str) => Err(()),
             _ => Err(()),
         }
     }
@@ -324,6 +325,7 @@ impl Format for u32 {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => Err(()),
             None => Ok(DefaultFormatter::format(self)),
         }
     }
@@ -339,6 +341,7 @@ impl Format for Ipv4Addr {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => Err(()),
             None => Ok(Ipv4Formatter::format(*self)),
         }
     }
@@ -354,6 +357,7 @@ impl Format for Ipv6Addr {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => Err(()),
             None => Ok(Ipv6Formatter::format(*self)),
         }
     }
@@ -369,6 +373,7 @@ impl Format for [u8; 4] {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => Err(()),
             None => Ok(Ipv4Formatter::format(*self)),
         }
     }
@@ -384,6 +389,7 @@ impl Format for [u8; 6] {
             Some(DisplayHint::LowerMac) => Ok(LowerMacFormatter::format(*self)),
             Some(DisplayHint::UpperMac) => Ok(UpperMacFormatter::format(*self)),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => Err(()),
             None => Err(()),
         }
     }
@@ -399,6 +405,10 @@ impl Format for [u8; 16] {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => {
+                let nul = self.iter().position(|&b| b == 0).unwrap_or(self.len());
+                Ok(String::from_utf8_lossy(&self[..nul]).into_owned())
+            }
             None => Err(()),
         }
     }
@@ -414,6 +424,7 @@ impl Format for [u16; 8] {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => Err(()),
             None => Err(()),
         }
     }
@@ -431,6 +442,7 @@ macro_rules! impl_format {
                     Some(DisplayHint::LowerMac) => Err(()),
                     Some(DisplayHint::UpperMac) => Err(()),
                     Some(DisplayHint::Pointer) => Err(()),
+                    Some(DisplayHint::Str) => Err(()),
                     None => Ok(DefaultFormatter::format(self)),
                 }
             }
@@ -461,6 +473,7 @@ macro_rules! impl_format_float {
                     Some(DisplayHint::LowerMac) => Err(()),
                     Some(DisplayHint::UpperMac) => Err(()),
                     Some(DisplayHint::Pointer) => Err(()),
+                    Some(DisplayHint::Str) => Err(()),
                     None => Ok(DefaultFormatter::format(self)),
                 }
             }
@@ -1299,6 +1312,29 @@ mod test {
         testing_logger::validate(|captured_logs| {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "mac: 00:00:5E:00:53:AF");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_display_hint_str() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(3).unwrap();
+
+        len += "comm: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::Str.write(&mut input[len..]).unwrap().get();
+        // "bash" null-terminated, padded to 16 bytes
+        let comm: [u8; 16] = *b"bash\0\0\0\0\0\0\0\0\0\0\0\0";
+        len += comm.write(&mut input[len..]).unwrap().get();
+
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
+
+        let logger = logger();
+        let () = log_buf(&input, logger).unwrap();
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "comm: bash");
             assert_eq!(captured_logs[0].level, Level::Info);
         });
     }
