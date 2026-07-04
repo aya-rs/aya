@@ -132,6 +132,7 @@ pub(crate) fn log(args: LogArgs, level_expr: Option<TokenStream>) -> Result<Toke
                     DisplayHint::Pointer => {
                         (quote!(DisplayHint::Pointer), quote!(PointerFormatter))
                     }
+                    DisplayHint::Str => (quote!(DisplayHint::Str), quote!(StrFormatter)),
                 };
                 let hint = quote!(::aya_log_ebpf::macro_support::#hint);
                 let arg = quote!(
