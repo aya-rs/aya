@@ -30,6 +30,7 @@ fn ptr_at<T>(ctx: &XdpContext, offset: usize) -> Result<*const T, ()> {
     Ok((start + offset) as *const T)
 }
 
+#[repr(C)]
 struct Value {
     pub orig_ip: [u8; 16],
 }
