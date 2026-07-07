@@ -17,7 +17,9 @@ use crate::{
         LineInfo, Struct, Typedef, Union, Var, VarLinkage,
         info::{FuncSecInfo, LineSecInfo},
         relocation::Relocation,
+        view,
     },
+    extern_types::ExternCollection,
     generated::{btf_ext_header, btf_header},
     util::{HashMap, bytes_of},
 };
@@ -277,6 +279,8 @@ pub struct Btf {
     strings: Vec<u8>,
     types: BtfTypes,
     _endianness: Endianness,
+    /// Extern symbols parsed from the `.ksyms` section.
+    pub(crate) externs: ExternCollection,
 }
 
 fn add_type(header: &mut btf_header, types: &mut BtfTypes, btf_type: BtfType) -> u32 {
@@ -305,6 +309,7 @@ impl Btf {
             strings: vec![0],
             types: BtfTypes::default(),
             _endianness: Endianness::default(),
+            externs: ExternCollection::new(),
         }
     }
 
@@ -315,6 +320,14 @@ impl Btf {
 
     pub(crate) fn types(&self) -> impl Iterator<Item = &BtfType> {
         self.types.types.iter()
+    }
+
+    pub(crate) const fn type_count(&self) -> u32 {
+        self.types.len() as u32
+    }
+
+    pub(crate) const fn string_len(&self) -> u32 {
+        self.header.str_len
     }
 
     /// Adds a string to BTF metadata, returning an offset
@@ -375,6 +388,7 @@ impl Btf {
             strings,
             types,
             _endianness: endianness,
+            externs: ExternCollection::new(),
         })
     }
 
@@ -405,20 +419,10 @@ impl Btf {
     }
 
     pub(crate) fn string_at(&self, offset: u32) -> Result<Cow<'_, str>, BtfError> {
-        let btf_header {
-            hdr_len,
-            mut str_off,
-            str_len,
-            ..
-        } = self.header;
-        str_off += hdr_len;
-        if offset >= str_off + str_len {
-            return Err(BtfError::InvalidStringOffset {
-                offset: offset as usize,
-            });
-        }
-
         let offset = offset as usize;
+        if offset >= self.strings.len() {
+            return Err(BtfError::InvalidStringOffset { offset });
+        }
 
         let s = CStr::from_bytes_until_nul(&self.strings[offset..])
             .map_err(|FromBytesUntilNulError { .. }| BtfError::InvalidStringOffset { offset })?;
@@ -431,11 +435,11 @@ impl Btf {
     }
 
     pub(crate) fn resolve_type(&self, root_type_id: u32) -> Result<u32, BtfError> {
-        self.types.resolve_type(root_type_id)
+        <Self as view::BtfView>::resolve_type(self, root_type_id)
     }
 
     pub(crate) fn type_name(&self, ty: &BtfType) -> Result<Cow<'_, str>, BtfError> {
-        self.string_at(ty.name_offset())
+        <Self as view::BtfView>::type_name(self, ty)
     }
 
     pub(crate) fn err_type_name(&self, ty: &BtfType) -> Option<String> {
@@ -462,7 +466,7 @@ impl Btf {
         let mut type_id = root_type_id;
         let mut n_elems = 1;
         for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
-            let ty = self.types.type_by_id(type_id)?;
+            let ty = self.type_by_id(type_id)?;
             let size = match ty {
                 BtfType::Array(Array { array, .. }) => {
                     n_elems = array.len;
@@ -511,6 +515,13 @@ impl Btf {
         symbol_offsets: &HashMap<String, u64>,
         features: &BtfFeatures,
     ) -> Result<(), BtfError> {
+        if !self.externs.is_empty() {
+            let datasec_id = self
+                .externs
+                .datasec_id
+                .expect("non-empty externs must have datasec_id");
+            self.fixup_ksyms_datasec(datasec_id, self.externs.ksym_func_placeholder_id)?;
+        }
         let enum64_placeholder_id = OnceCell::new();
         let filler_var_id = OnceCell::new();
         let mut types = mem::take(&mut self.types);
@@ -811,6 +822,135 @@ impl Btf {
             }
         }
         self.types = types;
+        Ok(())
+    }
+
+    /// Fixes up BTF for `.ksyms` datasec entries containing extern kernel symbols and
+    /// makes it acceptable by the kernel:
+    ///
+    /// * Changes linkage of extern functions to `GLOBAL`, fixes parameter names, injects
+    ///   a placeholder variable representing them in datasec.
+    /// * Changes linkage of extern variables to `GLOBAL`, replaces their type
+    ///   with `int`.
+    pub(crate) fn fixup_ksyms_datasec(
+        &mut self,
+        datasec_id: u32,
+        ksym_func_placeholder_id: Option<u32>,
+    ) -> Result<(), BtfError> {
+        // Use the placeholder var's name/type when present; otherwise fall back to a plain
+        // 4-byte int for `.ksyms` datasec fixup.
+        let (placeholder_name_offset, int_btf_id) =
+            if let Some(placeholder_id) = ksym_func_placeholder_id {
+                let placeholder_type = &self.types.types[placeholder_id as usize];
+                if let BtfType::Var(v) = placeholder_type {
+                    (Some(v.name_offset), v.btf_type)
+                } else {
+                    return Err(BtfError::InvalidDatasec);
+                }
+            } else {
+                let int_id = self
+                    .types
+                    .types
+                    .iter()
+                    .enumerate()
+                    .find_map(|(idx, t)| {
+                        if let BtfType::Int(int_type) = t {
+                            (int_type.size == 4).then_some(idx as u32)
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or_else(|| {
+                        let name_offset = self.add_string("int");
+                        self.add_type(BtfType::Int(Int::new(
+                            name_offset,
+                            4,
+                            IntEncoding::Signed,
+                            0,
+                        )))
+                    });
+
+                (None, int_id)
+            };
+
+        let datasec_name = {
+            let datasec = &self.types.types[datasec_id as usize];
+            let BtfType::DataSec(d) = datasec else {
+                return Err(BtfError::InvalidDatasec);
+            };
+            self.string_at(d.name_offset)?.into_owned()
+        };
+
+        debug!("DATASEC {datasec_name}: fixing up extern ksyms");
+
+        let entry_type_ids: Vec<u32> = {
+            let BtfType::DataSec(d) = &self.types.types[datasec_id as usize] else {
+                return Err(BtfError::InvalidDatasec);
+            };
+            d.entries.iter().map(|e| e.btf_type).collect()
+        };
+
+        let mut offset = 0u32;
+        let size = size_of::<i32>() as u32;
+
+        for (i, &type_id) in entry_type_ids.iter().enumerate() {
+            match &self.types.types[type_id as usize] {
+                BtfType::Func(f) => {
+                    let (func_name, proto_id) =
+                        { (self.string_at(f.name_offset)?.into_owned(), f.btf_type) };
+
+                    if let BtfType::Func(f) = &mut self.types.types[type_id as usize] {
+                        f.set_linkage(FuncLinkage::Global);
+                    }
+
+                    if let Some(placeholder_name_offset) = placeholder_name_offset {
+                        if let BtfType::FuncProto(func_proto) =
+                            &mut self.types.types[proto_id as usize]
+                        {
+                            for param in &mut func_proto.params {
+                                if param.btf_type != 0 && param.name_offset == 0 {
+                                    param.name_offset = placeholder_name_offset;
+                                }
+                            }
+                        }
+                    }
+
+                    if let (Some(placeholder_id), BtfType::DataSec(d)) = (
+                        ksym_func_placeholder_id,
+                        &mut self.types.types[datasec_id as usize],
+                    ) {
+                        d.entries[i].btf_type = placeholder_id;
+                    }
+
+                    debug!("DATASEC {datasec_name}: FUNC {func_name}: fixup offset {offset}");
+                }
+                BtfType::Var(v) => {
+                    let var_name = { self.string_at(v.name_offset)?.into_owned() };
+
+                    if let BtfType::Var(v) = &mut self.types.types[type_id as usize] {
+                        v.linkage = VarLinkage::Global;
+                        v.btf_type = int_btf_id;
+                    }
+
+                    debug!("DATASEC {datasec_name}: VAR {var_name}: fixup offset {offset}");
+                }
+                _ => return Err(BtfError::InvalidDatasec),
+            }
+
+            let BtfType::DataSec(d) = &mut self.types.types[datasec_id as usize] else {
+                return Err(BtfError::InvalidDatasec);
+            };
+            d.entries[i].offset = offset;
+            d.entries[i].size = size;
+
+            offset += size;
+        }
+
+        if let BtfType::DataSec(d) = &mut self.types.types[datasec_id as usize] {
+            d.size = offset;
+            debug!("DATASEC {datasec_name}: fixup size to {offset}");
+        }
+
         Ok(())
     }
 }
@@ -1141,36 +1281,6 @@ impl BtfTypes {
             .get(type_id as usize)
             .ok_or(BtfError::UnknownBtfType { type_id })
     }
-
-    pub(crate) fn resolve_type(&self, root_type_id: u32) -> Result<u32, BtfError> {
-        let mut type_id = root_type_id;
-        for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
-            let ty = self.type_by_id(type_id)?;
-
-            match ty {
-                BtfType::Volatile(ty) => {
-                    type_id = ty.btf_type;
-                }
-                BtfType::Const(ty) => {
-                    type_id = ty.btf_type;
-                }
-                BtfType::Restrict(ty) => {
-                    type_id = ty.btf_type;
-                }
-                BtfType::Typedef(ty) => {
-                    type_id = ty.btf_type;
-                }
-                BtfType::TypeTag(ty) => {
-                    type_id = ty.btf_type;
-                }
-                _ => return Ok(type_id),
-            }
-        }
-
-        Err(BtfError::MaximumTypeDepthReached {
-            type_id: root_type_id,
-        })
-    }
 }
 
 #[derive(Debug)]
@@ -1185,7 +1295,10 @@ mod tests {
     use assert_matches::assert_matches;
 
     use super::*;
-    use crate::btf::{BtfParam, DeclTag, Float, Func, FuncProto, Ptr, TypeTag};
+    use crate::btf::{
+        BtfParam, DeclTag, Float, Func, FuncProto, Ptr, TypeTag,
+        view::{BtfView as _, SplitBtf},
+    };
 
     #[test]
     fn test_parse_header() {
@@ -1410,6 +1523,94 @@ mod tests {
     }
 
     #[test]
+    fn test_split_btf_type_and_string_lookup() {
+        let mut base = Btf::new();
+        let int_name = base.add_string("int");
+        let int_id = base.add_type(BtfType::Int(Int::new(int_name, 4, IntEncoding::Signed, 0)));
+        let start_id = base.type_count();
+        let start_str_off = base.string_len();
+
+        let mut module = Btf::new();
+        let func_name = module.add_string("my_mod_kfunc");
+        let visible_func_name = start_str_off + func_name;
+        let proto_id = module.add_type(BtfType::FuncProto(FuncProto::new(vec![], int_id)));
+        let visible_proto_id = start_id + proto_id - 1;
+        let func_id = module.add_type(BtfType::Func(Func::new(
+            visible_func_name,
+            visible_proto_id,
+            FuncLinkage::Global,
+        )));
+
+        let split = SplitBtf::new(&base, &module);
+        let visible_func_id = split.start_id() + func_id - 1;
+
+        assert_eq!(split.string_at(int_name).unwrap(), "int");
+        assert_eq!(split.string_at(visible_func_name).unwrap(), "my_mod_kfunc");
+        assert!(matches!(
+            split.string_at(visible_func_name + "my_mod_kfunc".len() as u32 + 1),
+            Err(BtfError::InvalidStringOffset { .. })
+        ));
+        assert_matches!(split.type_by_id(int_id).unwrap(), BtfType::Int(_));
+        assert_matches!(split.type_by_id(0).unwrap(), BtfType::Unknown);
+        assert_matches!(split.type_by_id(visible_func_id).unwrap(), BtfType::Func(_));
+        assert!(matches!(
+            split.type_by_id(visible_func_id + 1),
+            Err(BtfError::UnknownBtfType { .. })
+        ));
+    }
+
+    #[test]
+    fn test_split_btf_visible_vs_own_lookup() {
+        let mut base = Btf::new();
+        let task_name = base.add_string("task_struct");
+        let _task_id = base.add_type(BtfType::Struct(Struct::new(task_name, vec![], 0)));
+        let start_id = base.type_count();
+        let start_str_off = base.string_len();
+
+        let mut module = Btf::new();
+        let local_name = module.add_string("my_mod_kfunc");
+        let visible_name = start_str_off + local_name;
+        let local_proto_id = module.add_type(BtfType::FuncProto(FuncProto::new(vec![], 0)));
+        let visible_proto_id = start_id + local_proto_id - 1;
+        let local_func_id = module.add_type(BtfType::Func(Func::new(
+            visible_name,
+            visible_proto_id,
+            FuncLinkage::Global,
+        )));
+
+        let split = SplitBtf::new(&base, &module);
+        let visible_func_id = split.start_id() + local_func_id - 1;
+
+        assert_eq!(
+            split
+                .id_by_type_name_kind_visible("task_struct", BtfKind::Struct)
+                .unwrap(),
+            base.id_by_type_name_kind("task_struct", BtfKind::Struct)
+                .unwrap()
+        );
+        assert_eq!(
+            split
+                .id_by_type_name_kind_visible("my_mod_kfunc", BtfKind::Func)
+                .unwrap(),
+            visible_func_id
+        );
+        assert!(matches!(
+            split.id_by_type_name_kind_own("task_struct", BtfKind::Struct),
+            Err(BtfError::UnknownBtfTypeName { .. })
+        ));
+        assert_eq!(
+            split
+                .id_by_type_name_kind_own("my_mod_kfunc", BtfKind::Func)
+                .unwrap(),
+            visible_func_id
+        );
+        assert!(matches!(
+            module.id_by_type_name_kind("my_mod_kfunc", BtfKind::Func),
+            Err(BtfError::InvalidStringOffset { .. })
+        ));
+    }
+
+    #[test]
     fn test_fixup_ptr() {
         let mut btf = Btf::new();
         let name_offset = btf.add_string("int");
@@ -1579,6 +1780,61 @@ mod tests {
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
+    }
+
+    #[test]
+    fn test_fixup_ksyms_datasec_creates_int_type_for_var_only_datasec() {
+        let mut btf = Btf::new();
+
+        let var_name_offset = btf.add_string("init_task");
+        let var_type_id = btf.add_type(BtfType::Var(Var::new(
+            var_name_offset,
+            0,
+            VarLinkage::Extern,
+        )));
+
+        let datasec_name_offset = btf.add_string(".ksyms");
+        let variables = vec![DataSecEntry {
+            btf_type: var_type_id,
+            offset: 0,
+            size: 0,
+        }];
+        let datasec_type_id = btf.add_type(BtfType::DataSec(DataSec::new(
+            datasec_name_offset,
+            variables,
+            0,
+        )));
+
+        btf.fixup_ksyms_datasec(datasec_type_id, None).unwrap();
+
+        let int_type_id = match btf.type_by_id(var_type_id).unwrap() {
+            BtfType::Var(fixed) => {
+                assert_eq!(fixed.linkage, VarLinkage::Global);
+                fixed.btf_type
+            }
+            other => panic!("expected var, got {other:?}"),
+        };
+
+        assert_matches!(btf.type_by_id(int_type_id).unwrap(), BtfType::Int(int) => {
+            assert_eq!(btf.string_at(int.name_offset).unwrap(), "int");
+            assert_eq!(int.size, 4);
+            assert_eq!(int.encoding(), IntEncoding::Signed);
+        });
+
+        assert_matches!(btf.type_by_id(datasec_type_id).unwrap(), BtfType::DataSec(fixed) => {
+            assert_eq!(fixed.size, 4);
+            assert_matches!(*fixed.entries, [
+                DataSecEntry {
+                    btf_type,
+                    offset,
+                    size,
+                },
+            ] => {
+                assert_eq!(btf_type, var_type_id);
+                assert_eq!(offset, 0);
+                assert_eq!(size, 4);
+            });
+        });
     }
 
     #[test]
