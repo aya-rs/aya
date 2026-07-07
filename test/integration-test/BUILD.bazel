@@ -25,6 +25,18 @@ C_BPF_OBJECTS = [
     ("bpf/struct_flavors_reloc.bpf.c", True),
     ("bpf/text_64_64_reloc.c", False),
     ("bpf/variables_reloc.bpf.c", False),
+    ("bpf/kconfig.bpf.c", False),
+    ("bpf/kconfig_missing_strong.bpf.c", False),
+    ("bpf/kconfig_unknown_weak.bpf.c", False),
+    ("bpf/kconfig_unsigned_u8.bpf.c", False),
+    ("bpf/kconfig_signed_i8.bpf.c", False),
+    ("bpf/kconfig_invalid_bool.bpf.c", False),
+    ("bpf/kconfig_invalid_array.bpf.c", False),
+    ("bpf/kconfig_int_tristate.bpf.c", False),
+    ("bpf/kconfig_non_tristate_enum.bpf.c", False),
+    ("bpf/kconfig_string_tristate.bpf.c", False),
+    ("bpf/kconfig_tristate_enum.bpf.c", False),
+    ("bpf/kconfig_unknown_linux_strong.bpf.c", False),
 ]
 
 aya_c_bpf_objects(
