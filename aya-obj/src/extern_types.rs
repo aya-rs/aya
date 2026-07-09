@@ -273,6 +273,9 @@ impl Object {
             crate::btf::types_are_compatible(obj_btf, local_type_id, kernel_btf, kernel_type_id)?;
 
         if !compatible {
+            if extern_desc.is_weak {
+                return Ok(None);
+            }
             return Err(KsymsError::IncompatibleVariableType {
                 name: name.to_string(),
             });
