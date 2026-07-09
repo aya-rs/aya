@@ -283,7 +283,10 @@ fn patch_extern_relocations<'a, I: Iterator<Item = &'a Relocation>>(
         // `insn_is_call()` is for internal pseudo-calls.
         let is_call = ins.code == (BPF_JMP | BPF_CALL) as u8;
 
-        if is_call {
+        // We can't borrow two instructions mutably at once. Start from
+        // modifying the first one, and carry the override of `imm` for the
+        // next instruction if necessary.
+        let ins_next_imm = if is_call {
             ins.set_src_reg(BPF_PSEUDO_KFUNC_CALL as u8);
             if extern_desc.is_resolved {
                 let kernel_btf_id = extern_desc
@@ -299,25 +302,26 @@ fn patch_extern_relocations<'a, I: Iterator<Item = &'a Relocation>>(
                     name: extern_name.clone(),
                 });
             }
+            None
         } else {
-            match (extern_desc.kernel_btf_id, extern_desc.ksym_addr) {
+            Some(match (extern_desc.kernel_btf_id, extern_desc.ksym_addr) {
                 // symbol found in kernel BTF
                 (Some(btf_id), _) => {
                     ins.set_src_reg(BPF_PSEUDO_BTF_ID as u8);
                     ins.imm = btf_id as i32;
-                    instructions[ins_index + 1].imm = 0; // vmlinux
+                    0 // vmlinux
                 }
                 // fallback to kallsyms (BTF missing but address found)
                 (None, Some(addr)) => {
                     ins.set_src_reg(0); // Standard 64-bit absolute load
                     ins.imm = (addr & 0xFFFFFFFF) as i32;
-                    instructions[ins_index + 1].imm = (addr >> 32) as i32;
+                    (addr >> 32) as i32
                 }
                 // weak symbol not found, null-patch
                 (None, None) if extern_desc.is_weak => {
                     ins.set_src_reg(0);
                     ins.imm = 0;
-                    instructions[ins_index + 1].imm = 0;
+                    0
                 }
                 // strong symbol not found anywhere
                 _ => {
@@ -325,7 +329,18 @@ fn patch_extern_relocations<'a, I: Iterator<Item = &'a Relocation>>(
                         name: extern_name.clone(),
                     });
                 }
-            }
+            })
+        };
+        if let Some(ins_next_imm) = ins_next_imm {
+            // Non-call extern relocations should always target an ld_imm64 (LDDW),
+            // which occupies two instructions. Guard against malformed relocations.
+            let ins_next = instructions.get_mut(ins_index + 1).ok_or(
+                RelocationError::InvalidRelocationOffset {
+                    offset: rel.offset,
+                    relocation_number: rel_n,
+                },
+            )?;
+            ins_next.imm = ins_next_imm;
         }
     }
 
@@ -1041,5 +1056,47 @@ mod test {
         assert_eq!(fun.instructions[0].src_reg(), 0);
         assert_eq!(fun.instructions[0].imm, 0);
         assert_eq!(fun.instructions[1].imm, 0);
+    }
+
+    #[test]
+    fn test_extern_ldimm_relocation_requires_second_instruction() {
+        let mut fun = fake_func(
+            "test",
+            vec![ins(&[0x18, 0x01, 0x00, 0x00, 0xaa, 0xbb, 0xcc, 0xdd])],
+        );
+
+        let relocations = [Relocation {
+            offset: 0,
+            symbol_index: 1,
+            size: 64,
+        }];
+
+        let externs = HashMap::from([(
+            "missing_var".to_string(),
+            ExternDesc {
+                name: "missing_var".to_string(),
+                extern_type: ExternType::Ksym,
+                btf_id: 1,
+                is_weak: true,
+                is_resolved: false,
+                kernel_btf_id: None,
+                ksym_addr: None,
+                type_id: None,
+                essential_name: None,
+            },
+        )]);
+
+        let symbol_table = HashMap::from([(1, fake_extern_sym(1, "missing_var", true))]);
+
+        let err = patch_extern_relocations(&mut fun, relocations.iter(), &externs, &symbol_table)
+            .unwrap_err();
+
+        assert!(matches!(
+            err,
+            RelocationError::InvalidRelocationOffset {
+                offset: 0,
+                relocation_number: 0,
+            }
+        ));
     }
 }
