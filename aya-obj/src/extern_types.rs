@@ -386,41 +386,12 @@ pub(crate) struct ExternDesc {
     pub(crate) essential_name: Option<String>,
 }
 
-/// Given `some_struct_name___with_flavor` return the length of a name prefix
-/// before last triple underscore. Struct name part after last triple
-/// underscore is ignored by BPF CO-RE relocation during relocation matching.
-fn essential_name_len(name: &str) -> usize {
-    let n = name.len();
-    if n < 5 {
-        return n;
-    }
-
-    for i in (0..=n - 5).rev() {
-        if is_flavor_sep(name, i) {
-            return i + 1;
-        }
-    }
-
-    n
-}
-
-fn is_flavor_sep(s: &str, pos: usize) -> bool {
-    let bytes = s.as_bytes();
-    if pos + 4 >= bytes.len() {
-        return false;
-    }
-    bytes[pos] != b'_'
-        && bytes[pos + 1] == b'_'
-        && bytes[pos + 2] == b'_'
-        && bytes[pos + 3] == b'_'
-        && bytes[pos + 4] != b'_'
-}
-
 impl ExternDesc {
     pub(crate) fn new(name: String, extern_type: ExternType, btf_id: u32, is_weak: bool) -> Self {
-        let essential_len = essential_name_len(&name);
-        let essential_name =
-            (essential_len != name.len()).then(|| name[..essential_len].to_string());
+        // Extract essential name by stripping the BPF CO-RE flavor suffix.
+        // Given `some_struct_name___with_flavor`, the triple-underscore and
+        // everything after it is ignored during relocation matching.
+        let essential_name = name.split_once("___").map(|(name, _)| name.to_string());
 
         Self {
             name,
