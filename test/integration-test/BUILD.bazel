@@ -25,6 +25,11 @@ C_BPF_OBJECTS = [
     ("bpf/struct_flavors_reloc.bpf.c", True),
     ("bpf/text_64_64_reloc.c", False),
     ("bpf/variables_reloc.bpf.c", False),
+    ("bpf/ksyms.bpf.c", True),
+    ("bpf/ksyms_strong.bpf.c", True),
+    ("bpf/ksyms_typed_missing_kfunc.bpf.c", True),
+    ("bpf/ksyms_typed_missing_var.bpf.c", True),
+    ("bpf/ksyms_typeless_missing.bpf.c", True),
 ]
 
 aya_c_bpf_objects(
