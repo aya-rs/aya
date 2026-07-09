@@ -332,9 +332,9 @@ pub enum KsymsError {
         second_addr: u64,
     },
 
-    /// Could not read kallsyms entries.
-    #[error("failed to read /proc/kallsyms: {0}")]
-    KallsymsReadError(#[from] std::io::Error),
+    /// Could not access kallsyms entries.
+    #[error("failed to access /proc/kallsyms: {0}")]
+    KallsymsAccessError(#[from] std::io::Error),
 
     /// Failed to parse kallsyms data.
     #[error("failed to parse kallsyms: {0}")]

@@ -5257,8 +5257,8 @@ pub aya_obj::KsymsError::IncompatibleVariableType
 pub aya_obj::KsymsError::IncompatibleVariableType::name: alloc::string::String
 pub aya_obj::KsymsError::InvalidExternType
 pub aya_obj::KsymsError::InvalidExternType::name: alloc::string::String
+pub aya_obj::KsymsError::KallsymsAccessError(core::io::error::Error)
 pub aya_obj::KsymsError::KallsymsParseError(alloc::string::String)
-pub aya_obj::KsymsError::KallsymsReadError(core::io::error::Error)
 pub aya_obj::KsymsError::TypedKsymRequiresKernelBtf
 pub aya_obj::KsymsError::VariableNotFound
 pub aya_obj::KsymsError::VariableNotFound::name: alloc::string::String
