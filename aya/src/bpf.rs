@@ -496,7 +496,7 @@ impl<'a> EbpfLoader<'a> {
             obj.relocate_btf(btf)?;
         }
 
-        obj.resolve_externs(self.btf.as_deref())?;
+        obj.resolve_externs(btf.as_deref())?;
 
         const fn is_map_of_maps(map_type: bpf_map_type) -> bool {
             matches!(
