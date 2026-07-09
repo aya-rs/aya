@@ -9,8 +9,8 @@ use crate::{
     EbpfSectionKind,
     extern_types::ExternDesc,
     generated::{
-        BPF_CALL, BPF_JMP, BPF_K, BPF_PSEUDO_BTF_ID, BPF_PSEUDO_CALL, BPF_PSEUDO_FUNC,
-        BPF_PSEUDO_KFUNC_CALL, BPF_PSEUDO_MAP_FD, BPF_PSEUDO_MAP_VALUE, bpf_insn,
+        BPF_CALL, BPF_DW, BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_PSEUDO_BTF_ID, BPF_PSEUDO_CALL,
+        BPF_PSEUDO_FUNC, BPF_PSEUDO_KFUNC_CALL, BPF_PSEUDO_MAP_FD, BPF_PSEUDO_MAP_VALUE, bpf_insn,
     },
     maps::Map,
     obj::{Function, Object},
@@ -304,6 +304,13 @@ fn patch_extern_relocations<'a, I: Iterator<Item = &'a Relocation>>(
             }
             None
         } else {
+            if ins.code != (BPF_LD | BPF_DW | BPF_IMM) as u8 {
+                return Err(RelocationError::InvalidRelocationOffset {
+                    offset: rel.offset,
+                    relocation_number: rel_n,
+                });
+            }
+
             Some(match (extern_desc.kernel_btf_id, extern_desc.ksym_addr) {
                 // symbol found in kernel BTF
                 (Some(btf_id), _) => {
@@ -1063,6 +1070,51 @@ mod test {
         let mut fun = fake_func(
             "test",
             vec![ins(&[0x18, 0x01, 0x00, 0x00, 0xaa, 0xbb, 0xcc, 0xdd])],
+        );
+
+        let relocations = [Relocation {
+            offset: 0,
+            symbol_index: 1,
+            size: 64,
+        }];
+
+        let externs = HashMap::from([(
+            "missing_var".to_string(),
+            ExternDesc {
+                name: "missing_var".to_string(),
+                extern_type: ExternType::Ksym,
+                btf_id: 1,
+                is_weak: true,
+                is_resolved: false,
+                kernel_btf_id: None,
+                ksym_addr: None,
+                type_id: None,
+                essential_name: None,
+            },
+        )]);
+
+        let symbol_table = HashMap::from([(1, fake_extern_sym(1, "missing_var", true))]);
+
+        let err = patch_extern_relocations(&mut fun, relocations.iter(), &externs, &symbol_table)
+            .unwrap_err();
+
+        assert!(matches!(
+            err,
+            RelocationError::InvalidRelocationOffset {
+                offset: 0,
+                relocation_number: 0,
+            }
+        ));
+    }
+
+    #[test]
+    fn test_extern_variable_relocation_requires_ldimm64() {
+        let mut fun = fake_func(
+            "test",
+            vec![
+                ins(&[0xb7, 0x00, 0x00, 0x00, 0xaa, 0xbb, 0xcc, 0xdd]),
+                ins(&[0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]),
+            ],
         );
 
         let relocations = [Relocation {
