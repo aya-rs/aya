@@ -90,7 +90,7 @@ impl Object {
             self.resolve_kallsyms_from_reader(reader, &unresolved)?;
         }
 
-        // Default unresolved weak ksyms to address 0 so pointer checks evaluate to false.
+        // Set unresolved weak ksyms to address 0 so they appear as null pointers.
         if let Some(obj_btf) = self.btf.as_mut() {
             for ext in obj_btf.externs.externs.values_mut() {
                 if ext.extern_type == ExternType::Ksym && !ext.is_resolved && ext.is_weak {
