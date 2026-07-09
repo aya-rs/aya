@@ -105,7 +105,7 @@ impl Btf {
 
         // Resolve through modifiers (const, volatile, typedef, etc.)
         // Type ID 0 represents void in BTF
-        let resolved_type_id = self.resolve_type(var_btf_type).unwrap_or(var_btf_type);
+        let resolved_type_id = self.resolve_type(var_btf_type)?;
 
         // Typeless ksyms are declared as `extern const void symbol __ksym`
         // They resolve to void (type_id 0) and are resolved via /proc/kallsyms
