@@ -65,6 +65,16 @@ const fn tc_request_attrs_size() -> usize {
 
 const _: () = assert!(tc_request_attrs_size() == 296);
 
+#[inline]
+fn to_u16<T: Copy + Into<i64>>(val: T) -> u16 {
+    u16::try_from(val.into()).expect("Netlink constant overflowed u16 boundaries")
+}
+
+#[inline]
+fn to_u8<T: Copy + Into<i64>>(val: T) -> u8 {
+    u8::try_from(val.into()).expect("Netlink constant overflowed u8 boundaries")
+}
+
 /// A private error type for internal use in this module.
 #[derive(Error, Debug)]
 pub(crate) enum NetlinkErrorInternal {
@@ -90,6 +100,7 @@ impl NetlinkError {
     ///
     /// Returns `None` if the error does not wrap an OS error (e.g. buffer
     /// length or header length errors from the netlink attribute parser).
+    #[must_use]
     pub fn raw_os_error(&self) -> Option<i32> {
         let Self(inner) = self;
         match inner {
@@ -120,20 +131,23 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
 
     let nlmsg_len = size_of::<nlmsghdr>() + size_of::<ifinfomsg>();
     req.header = nlmsghdr {
-        nlmsg_len: nlmsg_len as u32,
-        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK) as u16,
+        nlmsg_len: u32::try_from(nlmsg_len).unwrap(),
+        nlmsg_flags: u16::try_from(NLM_F_REQUEST | NLM_F_ACK).unwrap(),
         nlmsg_type: RTM_SETLINK,
         nlmsg_pid: 0,
         nlmsg_seq: 1,
     };
-    req.if_info.ifi_family = AF_UNSPEC as u8;
+    req.if_info.ifi_family = u8::try_from(AF_UNSPEC).unwrap();
     req.if_info.ifi_index = if_index;
 
     // write the attrs
     let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
-    let mut attrs = NestedAttrs::new(attrs_buf, IFLA_XDP);
+    let mut attrs = NestedAttrs::new(attrs_buf, to_u16(IFLA_XDP));
     attrs
-        .write_attr(IFLA_XDP_FD as u16, fd.map_or(-1, |fd| fd.as_raw_fd()))
+        .write_attr(
+            u16::try_from(IFLA_XDP_FD).unwrap(),
+            fd.map_or(-1, |fd| fd.as_raw_fd()),
+        )
         .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
 
     let flags = mode.flags() | XDP_FLAGS_UPDATE_IF_NOEXIST;
@@ -157,7 +171,12 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
     let nla_len = attrs
         .finish()
         .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    req.header.nlmsg_len += nla_align!(nla_len) as u32;
+    req.header.nlmsg_len += u32::try_from(nla_align!(nla_len)).map_err(|_err| {
+        NetlinkErrorInternal::from(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "invalid message length",
+        ))
+    })?;
 
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
     for msg in sock.recv() {
@@ -189,7 +208,12 @@ pub(crate) unsafe fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), Netli
     let attrs_buf = unsafe { request_attributes(&mut req, nlmsg_len) };
     let (_, attr_len) = write_attr_bytes(attrs_buf, TCA_KIND as u16, c"clsact".to_bytes_with_nul())
         .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
-    req.header.nlmsg_len += nla_align!(attr_len) as u32;
+    req.header.nlmsg_len += u32::try_from(nla_align!(attr_len)).map_err(|_err| {
+        NetlinkErrorInternal::from(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "invalid message length",
+        ))
+    })?;
 
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
     for msg in sock.recv() {
@@ -225,8 +249,8 @@ fn write_tc_attach_attrs(
     options.write_attr_bytes(TCA_BPF_NAME as u16, prog_name)?;
     options.write_attr(TCA_BPF_FLAGS as u16, TCA_BPF_FLAG_ACT_DIRECT)?;
     let options_len = options.finish()?;
-
-    req.header.nlmsg_len += nla_align!(kind_len + options_len) as u32;
+    req.header.nlmsg_len += u32::try_from(nla_align!(kind_len + options_len))
+        .map_err(|_err| io::Error::new(io::ErrorKind::InvalidData, "invalid message length"))?;
     Ok(())
 }
 
@@ -323,8 +347,8 @@ pub(crate) unsafe fn netlink_qdisc_detach(
     let mut req = unsafe { mem::zeroed::<TcRequest>() };
 
     req.header = nlmsghdr {
-        nlmsg_len: (size_of::<nlmsghdr>() + size_of::<tcmsg>()) as u32,
-        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK) as u16,
+        nlmsg_len: u32::try_from(size_of::<nlmsghdr>() + size_of::<tcmsg>()).unwrap(),
+        nlmsg_flags: to_u16(NLM_F_REQUEST | NLM_F_ACK),
         nlmsg_type: RTM_DELTFILTER,
         nlmsg_pid: 0,
         nlmsg_seq: 1,
@@ -396,13 +420,13 @@ pub(crate) fn netlink_find_filter_with_name(
                 for opt in NlAttrsIterator::new(attrs_buf) {
                     let opt =
                         opt.map_err(|e| NetlinkError(NetlinkErrorInternal::NlAttrError(e)))?;
-                    if opt.header.nla_type & NLA_TYPE_MASK as u16 != TCA_OPTIONS as u16 {
+                    if opt.header.nla_type & to_u16(NLA_TYPE_MASK) != to_u16(TCA_OPTIONS) {
                         continue;
                     }
                     for opt in NlAttrsIterator::new(opt.data) {
                         let opt =
                             opt.map_err(|e| NetlinkError(NetlinkErrorInternal::NlAttrError(e)))?;
-                        if opt.header.nla_type & NLA_TYPE_MASK as u16 != TCA_BPF_NAME as u16 {
+                        if opt.header.nla_type & to_u16(NLA_TYPE_MASK) != to_u16(TCA_BPF_NAME) {
                             continue;
                         }
                         let f_name = CStr::from_bytes_with_nul(opt.data)
@@ -435,11 +459,11 @@ pub unsafe fn netlink_set_link_up(if_index: i32) -> Result<(), NetlinkError> {
     req.header = nlmsghdr {
         nlmsg_len: nlmsg_len as u32,
         nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK) as u16,
-        nlmsg_type: RTM_SETLINK,
+        nlmsg_type: to_u16(RTM_SETLINK),
         nlmsg_pid: 0,
         nlmsg_seq: 1,
     };
-    req.if_info.ifi_family = AF_UNSPEC as u8;
+    req.if_info.ifi_family = to_u8(AF_UNSPEC);
     req.if_info.ifi_index = if_index;
     req.if_info.ifi_flags = IFF_UP as u32;
     req.if_info.ifi_change = IFF_UP as u32;
@@ -497,7 +521,7 @@ impl NetlinkSocket {
                 SOL_NETLINK,
                 NETLINK_EXT_ACK,
                 ptr::from_ref(&enable).cast(),
-                size_of_val(&enable) as u32,
+                u32::try_from(size_of_val(&enable)).unwrap(),
             ) < 0
             {
                 return Err(NetlinkErrorInternal::IoError(io::Error::last_os_error()));
@@ -519,7 +543,7 @@ impl NetlinkSocket {
         // Safety: sockaddr_nl is POD so this is safe
         let mut addr = unsafe { mem::zeroed::<sockaddr_nl>() };
         addr.nl_family = AF_NETLINK as u16;
-        let mut addr_len = size_of::<sockaddr_nl>() as u32;
+        let mut addr_len = u32::try_from(size_of::<sockaddr_nl>()).unwrap();
         // Safety: libc wrapper
         if unsafe {
             getsockname(
@@ -556,7 +580,7 @@ impl NetlinkSocket {
                     while offset < len {
                         let message = NetlinkMessage::read(&scratch[offset..len])?;
                         offset += nla_align!(message.header.nlmsg_len as usize);
-                        multipart = message.header.nlmsg_flags & NLM_F_MULTI as u16 != 0;
+                        multipart = message.header.nlmsg_flags & to_u16(NLM_F_MULTI) != 0;
                         return match i32::from(message.header.nlmsg_type) {
                             NLMSG_ERROR => {
                                 let error = message.error.unwrap();
@@ -567,11 +591,12 @@ impl NetlinkSocket {
                                 let mut messages = Vec::new();
                                 for attr in NlAttrsIterator::new(&message.data) {
                                     let attr = attr?;
-                                    if attr.header.nla_type & NLA_TYPE_MASK as u16
-                                        != NLMSGERR_ATTR_MSG as u16
+                                    if attr.header.nla_type & to_u16(NLA_TYPE_MASK)
+                                        != to_u16(NLMSGERR_ATTR_MSG as i32)
                                     {
                                         continue;
                                     }
+
                                     let message = CStr::from_bytes_with_nul(attr.data)
                                         .map_err(NlAttrError::CStrFromBytesWithNul)?;
                                     messages.push(message.to_owned());
@@ -637,7 +662,7 @@ impl NetlinkMessage {
             .get(NLMSG_HDR_ALIGN_LEN..)
             .ok_or_else(|| io::Error::other("need more data"))?;
 
-        let (rest, error) = if header.nlmsg_type == NLMSG_ERROR as u16 {
+        let (rest, error) = if header.nlmsg_type == u16::try_from(NLMSG_ERROR).unwrap() {
             let (err_buf, rest) = data
                 .split_at_checked(size_of::<nlmsgerr>())
                 .ok_or_else(|| io::Error::other("NLMSG_ERROR but not enough space for nlmsgerr"))?;
@@ -721,8 +746,8 @@ impl<'a> NestedAttrs<'a> {
             nla_len,
         } = self;
         let attr = nlattr {
-            nla_type: NLA_F_NESTED as u16 | self.top_attr_type,
-            nla_len: nla_len as u16,
+            nla_type: u16::try_from(NLA_F_NESTED).unwrap() | self.top_attr_type,
+            nla_len: u16::try_from(nla_len).unwrap(),
         };
 
         let (_, header_len) = write_attr_header(header_buf, attr)?;
@@ -743,7 +768,9 @@ fn write_attr_bytes<'a>(
 ) -> io::Result<(&'a mut [u8], usize)> {
     let attr = nlattr {
         nla_type: attr_type,
-        nla_len: ((NLA_HDR_LEN + value.len()) as u16),
+        nla_len: u16::try_from(NLA_HDR_LEN + value.len()).map_err(|_err| {
+            io::Error::new(io::ErrorKind::InvalidData, "attribute length overflow")
+        })?,
     };
 
     let (buf, header_len) = write_attr_header(buf, attr)?;
@@ -848,6 +875,11 @@ unsafe fn request_attributes<T>(req: &mut T, msg_len: usize) -> &mut [u8] {
 }
 
 #[cfg(test)]
+#[expect(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    reason = "Safe truncation: test constants mimic hardware/kernel definitions and fit into Netlink structures"
+)]
 mod tests {
     use rstest::rstest;
 
@@ -974,7 +1006,8 @@ mod tests {
     fn tc_request(name: &[u8], classid: Option<TcHandle>) -> io::Result<TcRequest> {
         let mut req = unsafe { mem::zeroed::<TcRequest>() };
         let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
-        req.header.nlmsg_len = nlmsg_len as u32;
+        req.header.nlmsg_len = u32::try_from(nlmsg_len)
+            .map_err(|_err| io::Error::other("Netlink message length exceeds u32 boundaries"))?;
 
         write_tc_attach_attrs(&mut req, nlmsg_len, 0, name, classid)?;
         Ok(req)
@@ -984,6 +1017,11 @@ mod tests {
         let attrs_len = req.header.nlmsg_len as usize - size_of::<nlmsghdr>() - size_of::<tcmsg>();
         let attrs = &req.attrs[..attrs_len];
 
+        #[expect(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            reason = "Safe truncation of C constants mapped to Netlink wire format"
+        )]
         let options = NlAttrsIterator::new(attrs)
             .filter_map(Result::ok)
             .find(|a| a.header.nla_type & NLA_TYPE_MASK as u16 == TCA_OPTIONS as u16)?;
