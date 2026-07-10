@@ -8,8 +8,9 @@ use aya::{
     maps::{Array, RingBuf},
     pin::PinError,
     programs::{
-        FlowDissector, KProbe, LinkOrder, ProbeKind, Program, ProgramError, SchedClassifier,
-        TcAttachType, TracePoint, UProbe, Xdp, XdpMode,
+        CgroupSkb, FlowDissector, KProbe, LinkOrder, ProbeKind, Program, ProgramError,
+        SchedClassifier, TcAttachType, TracePoint, UProbe, Xdp, XdpMode,
+        cgroup_skb::{CgroupSkbLink, CgroupSkbLinkId},
         flow_dissector::{FlowDissectorLink, FlowDissectorLinkId},
         kprobe::{KProbeLink, KProbeLinkId},
         links::{FdLink, LinkError, PinnedLink},
@@ -275,6 +276,7 @@ impl_unload_program_ops!(KProbe, KProbeLinkId, KProbeLink);
 impl_unload_program_ops!(TracePoint, TracePointLinkId, TracePointLink);
 impl_unload_program_ops!(UProbe, UProbeLinkId, UProbeLink);
 impl_unload_program_ops!(FlowDissector, FlowDissectorLinkId, FlowDissectorLink);
+impl_unload_program_ops!(CgroupSkb, CgroupSkbLinkId, CgroupSkbLink);
 
 #[test_log::test]
 fn unload_xdp() {
@@ -337,6 +339,23 @@ fn run_unload_program_test<P, F>(
     prog.unload().unwrap();
 
     assert_unloaded(program_name);
+}
+
+#[test_log::test]
+fn unload_cgroup_skb() {
+    type P = CgroupSkb;
+
+    let program_name = "test_cgroup_skb";
+    let attach = |prog: &mut P| {
+        let cgroup = std::fs::File::open("/sys/fs/cgroup").unwrap();
+        prog.attach(
+            cgroup,
+            aya::programs::CgroupSkbAttachType::Egress,
+            aya::programs::CgroupAttachMode::default(),
+        )
+        .unwrap()
+    };
+    run_unload_program_test(crate::TEST, program_name, attach, true);
 }
 
 #[test_log::test]
