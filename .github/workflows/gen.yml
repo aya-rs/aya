@@ -57,8 +57,21 @@ jobs:
           ref_hash=$(printf '%s' "$GITHUB_REF" | sha256sum | cut -d ' ' -f1)
           echo "name=create-pull-request/codegen-$ref_hash" >> "$GITHUB_OUTPUT"
 
+      # Dependabot-triggered workflows cannot access CRABBY_GITHUB_TOKEN.
+      # Keep the run useful: generated files must already be current, while
+      # dependabot-bazel-lock handles the Cargo-derived Bazel lockfile.
+      # git diff omits untracked files, so use status for this assertion.
+      - name: Check generated files
+        if: ${{ github.actor == 'dependabot[bot]' }}
+        run: |
+          set -euo pipefail
+          if test -n "$(git status --porcelain --untracked-files=all)"; then
+            git status --short
+            exit 1
+          fi
+
       - uses: peter-evans/create-pull-request@v8
-        if: ${{ github.repository == 'aya-rs/aya' }}
+        if: ${{ github.repository == 'aya-rs/aya' && github.actor != 'dependabot[bot]' }}
         with:
           # GitHub actions aren't allowed to trigger other actions to prevent
           # abuse; the canonical workaround is to use a sufficiently authorized
