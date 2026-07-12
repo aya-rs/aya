@@ -38,7 +38,6 @@ jobs:
           set -euo pipefail
           bazel_args=(
             --config=remote
-            --lockfile_mode=error
             # This key is intentionally public so fork pull requests can use BuildBuddy.
             --remote_header=x-buildbuddy-api-key=5CeVmFS0jDnutd00x9Xl
           )
