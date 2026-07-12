@@ -41,6 +41,15 @@ archive_override(
     urls = ["https://github.com/hermeticbuild/linux.bzl/archive/e18628f3e177022c2ff0cf93a2e5f2d408f7d2fc.tar.gz"],
 )
 
+# Use the rust-lang/llvm-project commit referenced by nightly/2026-06-24 rustc.
+llvm_source = use_extension("@llvm//extensions:llvm_source.bzl", "llvm_source")
+llvm_source.from_archive(
+    integrity = "sha256-oiZ9KV9pqEUMrkYhWNV/VZm+95tMKUARHJOQ1HZg1P0=",
+    strip_prefix = "llvm-project-ec9ab9d68bf7a0e86b2ddf3c0e6e3c4620e02961",
+    urls = ["https://github.com/rust-lang/llvm-project/archive/ec9ab9d68bf7a0e86b2ddf3c0e6e3c4620e02961.tar.gz"],
+)
+use_repo(llvm_source, "llvm-raw", "llvm_config", "llvm_zlib", "llvm_zstd")
+
 # @rules_rs creates @rules_rust here; generated BUILD files and .bazelrc labels
 # reference @rules_rust directly.
 rules_rust = use_extension("@rules_rs//rs:rules_rust.bzl", "rules_rust")
