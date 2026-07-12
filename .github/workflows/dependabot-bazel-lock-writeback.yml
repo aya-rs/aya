@@ -1,0 +1,132 @@
+name: dependabot-bazel-lock-writeback
+
+on:
+  workflow_run:
+    workflows:
+      - dependabot-bazel-lock
+    types:
+      - completed
+
+permissions: {}
+
+jobs:
+  writeback:
+    if: github.event.workflow_run.conclusion == 'success'
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      # workflow_run can access repository secrets, so establish the full
+      # Dependabot scope again before downloading or writing anything.
+      - id: scope
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const [candidate] = run.pull_requests ?? [];
+            if (run.event !== "pull_request" || !candidate) {
+              core.notice("Skipping: the generating run is not a pull request.");
+              core.setOutput("eligible", "false");
+              return;
+            }
+
+            const { owner, repo } = context.repo;
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: candidate.number,
+            });
+            const sameRepository =
+              pr.head.repo?.full_name === `${owner}/${repo}`;
+            const sameHead = pr.head.sha === run.head_sha;
+            const cargoBranch =
+              /^dependabot\/cargo\/[A-Za-z0-9._/-]+$/.test(pr.head.ref);
+            if (
+              pr.user?.login !== "dependabot[bot]" ||
+              pr.state !== "open" ||
+              !sameRepository ||
+              !sameHead ||
+              !cargoBranch
+            ) {
+              core.notice("Skipping: the pull request is not the expected Dependabot Cargo head.");
+              core.setOutput("eligible", "false");
+              return;
+            }
+
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number: pr.number, per_page: 100 },
+            );
+            const isCargoInput = ({ filename }) =>
+              filename === "Cargo.lock" ||
+              /(^|\/)Cargo\.toml$/.test(filename);
+            const allowed =
+              files.some(isCargoInput) &&
+              files.every(
+                file =>
+                  isCargoInput(file) ||
+                  file.filename === "MODULE.bazel.lock",
+              );
+            if (!allowed) {
+              core.notice(
+                "Skipping: the pull request changes files outside Cargo inputs and MODULE.bazel.lock.",
+              );
+              core.setOutput("eligible", "false");
+              return;
+            }
+
+            core.setOutput("eligible", "true");
+            core.setOutput("head_ref", pr.head.ref);
+            core.setOutput("head_sha", pr.head.sha);
+
+      - name: Download generated lockfile
+        if: steps.scope.outputs.eligible == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          github-token: ${{ github.token }}
+          name: dependabot-bazel-lock
+          path: ${{ runner.temp }}/dependabot-bazel-lock
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - uses: actions/checkout@v6
+        if: steps.scope.outputs.eligible == 'true'
+        with:
+          persist-credentials: false
+          ref: ${{ steps.scope.outputs.head_sha }}
+
+      - name: Apply generated lockfile
+        if: steps.scope.outputs.eligible == 'true'
+        env:
+          LOCKFILE: ${{ runner.temp }}/dependabot-bazel-lock/MODULE.bazel.lock
+        run: |
+          set -euo pipefail
+          test -f "$LOCKFILE"
+          test ! -L "$LOCKFILE"
+          cp -- "$LOCKFILE" MODULE.bazel.lock
+          if ! git diff --quiet -- . ':(exclude)MODULE.bazel.lock'; then
+            git diff -- . ':(exclude)MODULE.bazel.lock'
+            exit 1
+          fi
+
+      - name: Commit and push lockfile
+        if: steps.scope.outputs.eligible == 'true'
+        env:
+          CRABBY_GITHUB_TOKEN: ${{ secrets.CRABBY_GITHUB_TOKEN }}
+          HEAD_REF: ${{ steps.scope.outputs.head_ref }}
+          HEAD_SHA: ${{ steps.scope.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- MODULE.bazel.lock; then
+            exit 0
+          fi
+          test -n "$CRABBY_GITHUB_TOKEN"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- MODULE.bazel.lock
+          git commit --message 'build: regenerate Bazel lockfile'
+          git remote set-url origin "https://x-access-token:${CRABBY_GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --porcelain \
+            --force-with-lease="refs/heads/${HEAD_REF}:${HEAD_SHA}" \
+            origin "HEAD:refs/heads/${HEAD_REF}"

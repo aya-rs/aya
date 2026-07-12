@@ -1,0 +1,78 @@
+name: dependabot-bazel-lock
+
+on:
+  pull_request:
+    paths:
+      - Cargo.lock
+      - '**/Cargo.toml'
+      - MODULE.bazel.lock
+
+permissions: {}
+
+jobs:
+  generate:
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      # Keep Bazel evaluation on the unprivileged pull_request runner. The
+      # writeback workflow consumes only the resulting lockfile.
+      - id: scope
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { number } = context.issue;
+            const files = await github.paginate(
+              github.rest.pulls.listFiles,
+              { owner, repo, pull_number: number, per_page: 100 },
+            );
+            const isCargoInput = ({ filename }) =>
+              filename === "Cargo.lock" ||
+              /(^|\/)Cargo\.toml$/.test(filename);
+            const allowed =
+              files.some(isCargoInput) &&
+              files.every(
+                file =>
+                  isCargoInput(file) ||
+                  file.filename === "MODULE.bazel.lock",
+              );
+            if (!allowed) {
+              core.notice(
+                "Skipping: the pull request changes files outside Cargo inputs and MODULE.bazel.lock.",
+              );
+              core.setOutput("eligible", "false");
+              return;
+            }
+            core.setOutput("eligible", "true");
+
+      - uses: actions/checkout@v6
+        if: steps.scope.outputs.eligible == 'true'
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Regenerate Bazel lockfile
+        if: steps.scope.outputs.eligible == 'true'
+        run: bazel mod deps --lockfile_mode=update
+
+      - name: Verify generated scope
+        if: steps.scope.outputs.eligible == 'true'
+        run: |
+          set -euo pipefail
+          if ! git diff --quiet -- . ':(exclude)MODULE.bazel.lock'; then
+            git diff -- . ':(exclude)MODULE.bazel.lock'
+            exit 1
+          fi
+
+      - name: Upload Bazel lockfile
+        if: steps.scope.outputs.eligible == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: dependabot-bazel-lock
+          path: MODULE.bazel.lock
+          retention-days: 1
