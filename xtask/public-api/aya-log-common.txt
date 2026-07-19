@@ -204,8 +204,8 @@ impl<T> aya_log_common::PointerFormatter for *const T
 impl<T> aya_log_common::PointerFormatter for *mut T
 pub trait aya_log_common::StrFormatter
 impl aya_log_common::StrFormatter for &[u8]
-impl<const N: usize> aya_log_common::StrFormatter for [u8; N]
 impl<const N: usize> aya_log_common::StrFormatter for &[u8; N]
+impl<const N: usize> aya_log_common::StrFormatter for [u8; N]
 pub trait aya_log_common::UpperHexFormatter
 impl aya_log_common::UpperHexFormatter for &[u8]
 impl aya_log_common::UpperHexFormatter for i16
