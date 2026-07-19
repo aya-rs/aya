@@ -309,9 +309,9 @@ trait Format {
 /// rather than silently replacing invalid sequences.
 fn format_nul_terminated_str(bytes: &[u8]) -> Result<String, ()> {
     let nul = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
-    std::str::from_utf8(&bytes[..nul])
+    str::from_utf8(&bytes[..nul])
         .map(str::to_owned)
-        .map_err(|_| ())
+        .map_err(|_utf8_error| ())
 }
 
 impl Format for &[u8] {
