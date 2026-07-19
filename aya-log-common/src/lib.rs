@@ -166,20 +166,25 @@ pub enum DisplayHint {
     UpperMac,
     /// `:p`
     Pointer,
-    /// `:s` — interpret a fixed-size byte array as a null-terminated UTF-8 string.
+    /// `:s` — interpret a byte array or slice as a null-terminated UTF-8 string.
     ///
-    /// Intended for use with `bpf_get_current_comm()`, which returns a `[u8; 16]`
-    /// null-padded process name. Bytes up to the first `\0` are decoded as UTF-8
-    /// (with lossy replacement for invalid sequences). Any trailing null bytes are
-    /// stripped before display.
+    /// Useful for `bpf_get_current_comm()` (which returns a `[u8; 16]` null-padded
+    /// process name) as well as buffers filled by helpers like
+    /// `bpf_probe_read_user_str_bytes()` and `bpf_probe_read_kernel_str_bytes()`.
+    /// Bytes up to the first `\0` must be valid UTF-8, or formatting fails. Any
+    /// trailing null bytes are stripped before display.
     Str,
 }
 
 /// Marker trait for types that can be formatted with the `{:s}` display hint.
 ///
-/// Currently only `[u8; 16]` (the return type of `bpf_get_current_comm()`) implements this.
+/// Implemented for byte slices and fixed-size byte arrays of any length, since
+/// helpers such as `bpf_get_current_comm()`, `bpf_probe_read_user_str_bytes()`,
+/// and `bpf_probe_read_kernel_str_bytes()` return buffers of varying sizes.
 pub trait StrFormatter {}
-impl StrFormatter for [u8; 16] {}
+impl StrFormatter for &[u8] {}
+impl<const N: usize> StrFormatter for [u8; N] {}
+impl<const N: usize> StrFormatter for &[u8; N] {}
 
 mod sealed {
     #[expect(unnameable_types, reason = "this is the sealed trait pattern")]

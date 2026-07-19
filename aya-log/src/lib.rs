@@ -304,12 +304,22 @@ trait Format {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()>;
 }
 
+/// Decodes `bytes` up to the first NUL byte (or the end of the slice, if there is
+/// no NUL byte) as UTF-8. Returns `Err(())` if those bytes are not valid UTF-8,
+/// rather than silently replacing invalid sequences.
+fn format_nul_terminated_str(bytes: &[u8]) -> Result<String, ()> {
+    let nul = bytes.iter().position(|&b| b == 0).unwrap_or(bytes.len());
+    std::str::from_utf8(&bytes[..nul])
+        .map(str::to_owned)
+        .map_err(|_| ())
+}
+
 impl Format for &[u8] {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
         match last_hint.map(|DisplayHintWrapper(dh)| dh) {
             Some(DisplayHint::LowerHex) => Ok(LowerHexBytesFormatter::format(self)),
             Some(DisplayHint::UpperHex) => Ok(UpperHexBytesFormatter::format(self)),
-            Some(DisplayHint::Str) => Err(()),
+            Some(DisplayHint::Str) => format_nul_terminated_str(self),
             _ => Err(()),
         }
     }
@@ -373,7 +383,7 @@ impl Format for [u8; 4] {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
-            Some(DisplayHint::Str) => Err(()),
+            Some(DisplayHint::Str) => format_nul_terminated_str(self),
             None => Ok(Ipv4Formatter::format(*self)),
         }
     }
@@ -389,7 +399,7 @@ impl Format for [u8; 6] {
             Some(DisplayHint::LowerMac) => Ok(LowerMacFormatter::format(*self)),
             Some(DisplayHint::UpperMac) => Ok(UpperMacFormatter::format(*self)),
             Some(DisplayHint::Pointer) => Err(()),
-            Some(DisplayHint::Str) => Err(()),
+            Some(DisplayHint::Str) => format_nul_terminated_str(self),
             None => Err(()),
         }
     }
@@ -405,10 +415,7 @@ impl Format for [u8; 16] {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
-            Some(DisplayHint::Str) => {
-                let nul = self.iter().position(|&b| b == 0).unwrap_or(self.len());
-                Ok(String::from_utf8_lossy(&self[..nul]).into_owned())
-            }
+            Some(DisplayHint::Str) => format_nul_terminated_str(self),
             None => Err(()),
         }
     }
@@ -1336,6 +1343,29 @@ mod test {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "comm: bash");
             assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_display_hint_str_invalid_utf8() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(3).unwrap();
+
+        len += "comm: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::Str.write(&mut input[len..]).unwrap().get();
+        // Invalid UTF-8 byte (0xFF), null-terminated, padded to 16 bytes.
+        let comm: [u8; 16] = *b"\xff\xff\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+        len += comm.write(&mut input[len..]).unwrap().get();
+
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
+
+        let logger = logger();
+        // Formatting must fail rather than silently substituting replacement
+        // characters for the invalid bytes.
+        assert_eq!(log_buf(&input, logger), Err(()));
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 0);
         });
     }
 }
