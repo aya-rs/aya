@@ -29,6 +29,8 @@ impl FlowDissector {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "flow_dissector")]
             #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
+                // SAFETY: The `ctx` pointer provided by the kernel should be valid.
+                let ctx = unsafe { ::core::ptr::NonNull::new_unchecked(ctx) };
                 return #fn_name(::aya_ebpf::programs::FlowDissectorContext::new(ctx));
 
                 #item
@@ -59,6 +61,8 @@ mod tests {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "flow_dissector")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
+                // SAFETY: The `ctx` pointer provided by the kernel should be valid.
+                let ctx = unsafe { ::core::ptr::NonNull::new_unchecked(ctx) };
                 return prog(::aya_ebpf::programs::FlowDissectorContext::new(ctx));
 
                 fn prog(ctx: &mut ::aya_ebpf::programs::FlowDissectorContext) -> u32 {

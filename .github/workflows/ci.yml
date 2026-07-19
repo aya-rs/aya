@@ -31,14 +31,13 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Test
         run: |
           set -euo pipefail
           bazel_args=(
             --config=remote
-            --lockfile_mode=error
             # This key is intentionally public so fork pull requests can use BuildBuddy.
             --remote_header=x-buildbuddy-api-key=5CeVmFS0jDnutd00x9Xl
           )
@@ -49,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@nightly
         with:
@@ -63,7 +62,7 @@ jobs:
 
       - run: git ls-files -- '*.c' '*.h' | xargs clang-format --dry-run --Werror
 
-      - uses: DavidAnson/markdownlint-cli2-action@v23
+      - uses: DavidAnson/markdownlint-cli2-action@v24
 
       - run: taplo fmt --check
 
@@ -127,7 +126,7 @@ jobs:
           - x86_64-unknown-linux-gnu
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -195,7 +194,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@nightly
         with:
@@ -301,7 +300,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -360,7 +359,7 @@ jobs:
           tool: cargo-binstall,cargo-hack
       - run: cargo binstall --force bpf-linker
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: test/.tmp
           key: ${{ runner.arch }}-${{ runner.os }}-test-cache-${{ matrix.download-kernel-images }}

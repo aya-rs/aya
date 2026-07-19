@@ -4,6 +4,8 @@ on:
   push:
     branches-ignore:
       - 'create-pull-request/**'
+      # Dependabot pushes cannot use the PR-writing token below.
+      - 'dependabot/**'
 
   schedule:
     - cron: 00 4 * * *
@@ -17,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -40,6 +42,10 @@ jobs:
       # avoid blessing if there are no changes; this avoids triggering PRs on
       # PRs whose authors neglected to bless.
       - run: git diff --quiet || cargo xtask public-api --bless
+
+      # rules_rs derives crate extension facts from Cargo.lock, so keep the
+      # Bazel lockfile with the other generated files owned by this workflow.
+      - run: bazel mod deps --lockfile_mode=update
 
       - id: libbpf
         working-directory: xtask/libbpf
@@ -70,10 +76,10 @@ jobs:
           # branches do not overwrite each other's codegen PRs.
           branch: ${{ steps.branch.outputs.name }}
           commit-message: |
-            aya-obj, aya-ebpf-bindings: regenerate
+            generated files: regenerate
 
             libbpf commit: ${{ steps.libbpf.outputs.sha }}
-          title: 'aya-obj, aya-ebpf-bindings: regenerate'
+          title: 'generated files: regenerate'
           body: |
             **Automated changes**
 

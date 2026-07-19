@@ -1,4 +1,8 @@
-use core::{ffi::c_void, mem::MaybeUninit, ptr};
+use core::{
+    ffi::c_void,
+    mem::MaybeUninit,
+    ptr::{self, NonNull},
+};
 
 use aya_ebpf_bindings::helpers::{
     bpf_clone_redirect, bpf_get_socket_uid, bpf_l3_csum_replace, bpf_l4_csum_replace,
@@ -10,49 +14,55 @@ use aya_ebpf_cty::c_long;
 use crate::{EbpfContext, bindings::__sk_buff};
 
 pub struct SkBuff {
-    pub skb: *mut __sk_buff,
+    skb: NonNull<__sk_buff>,
 }
 
 impl SkBuff {
-    pub const fn new(skb: *mut __sk_buff) -> Self {
+    #[inline]
+    pub const fn new(skb: NonNull<__sk_buff>) -> Self {
         Self { skb }
     }
 
     #[inline]
-    pub fn len(&self) -> u32 {
-        unsafe { (*self.skb).len }
+    pub(crate) const fn as_raw_ptr(&self) -> *mut __sk_buff {
+        self.skb.as_ptr()
     }
 
     #[inline]
-    pub(crate) fn data(&self) -> usize {
-        unsafe { (*self.skb).data as usize }
+    pub(crate) const fn data(&self) -> usize {
+        unsafe { self.skb.as_ref().data as usize }
     }
 
     #[inline]
-    pub(crate) fn data_end(&self) -> usize {
-        unsafe { (*self.skb).data_end as usize }
+    pub(crate) const fn data_end(&self) -> usize {
+        unsafe { self.skb.as_ref().data_end as usize }
+    }
+
+    #[inline]
+    pub const fn len(&self) -> u32 {
+        unsafe { self.skb.as_ref().len }
     }
 
     #[inline]
     pub fn set_mark(&self, mark: u32) {
-        unsafe { (*self.skb).mark = mark }
+        unsafe { (*self.as_raw_ptr()).mark = mark }
     }
 
     #[inline]
     pub fn cb(&self) -> &[u32] {
-        unsafe { &(*self.skb).cb }
+        unsafe { &(*self.as_raw_ptr()).cb }
     }
 
     /// Returns a mutable slice to the control buffer (cb).
     #[inline]
     pub fn cb_mut(&mut self) -> &mut [u32] {
-        unsafe { &mut (*self.skb).cb }
+        unsafe { &mut (*self.as_raw_ptr()).cb }
     }
 
     /// Returns the owner UID of the socket associated to the SKB context.
     #[inline]
     pub fn get_socket_uid(&self) -> u32 {
-        unsafe { bpf_get_socket_uid(self.skb) }
+        unsafe { bpf_get_socket_uid(self.as_raw_ptr()) }
     }
 
     #[inline]
@@ -60,7 +70,7 @@ impl SkBuff {
         unsafe {
             let mut data = MaybeUninit::<T>::uninit();
             let ret = bpf_skb_load_bytes(
-                self.skb.cast(),
+                self.as_raw_ptr().cast(),
                 offset as u32,
                 ptr::from_mut(&mut data).cast(),
                 size_of_val(&data) as u32,
@@ -90,7 +100,7 @@ impl SkBuff {
         let len_u32 = u32::try_from(len).map_err(|core::num::TryFromIntError { .. }| -1)?;
         let ret = unsafe {
             bpf_skb_load_bytes(
-                self.skb.cast(),
+                self.as_raw_ptr().cast(),
                 offset as u32,
                 dst.as_mut_ptr().cast(),
                 len_u32,
@@ -103,7 +113,7 @@ impl SkBuff {
     pub fn store<T>(&self, offset: usize, v: &T, flags: u64) -> Result<(), c_long> {
         unsafe {
             let ret = bpf_skb_store_bytes(
-                self.skb.cast(),
+                self.as_raw_ptr(),
                 offset as u32,
                 ptr::from_ref(v).cast(),
                 size_of_val(v) as u32,
@@ -122,7 +132,7 @@ impl SkBuff {
         size: u64,
     ) -> Result<(), c_long> {
         unsafe {
-            let ret = bpf_l3_csum_replace(self.skb.cast(), offset as u32, from, to, size);
+            let ret = bpf_l3_csum_replace(self.as_raw_ptr(), offset as u32, from, to, size);
             if ret == 0 { Ok(()) } else { Err(ret) }
         }
     }
@@ -136,32 +146,32 @@ impl SkBuff {
         flags: u64,
     ) -> Result<(), c_long> {
         unsafe {
-            let ret = bpf_l4_csum_replace(self.skb.cast(), offset as u32, from, to, flags);
+            let ret = bpf_l4_csum_replace(self.as_raw_ptr(), offset as u32, from, to, flags);
             if ret == 0 { Ok(()) } else { Err(ret) }
         }
     }
 
     #[inline]
     pub fn adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> Result<(), c_long> {
-        let ret = unsafe { bpf_skb_adjust_room(self.skb, len_diff, mode, flags) };
+        let ret = unsafe { bpf_skb_adjust_room(self.as_raw_ptr(), len_diff, mode, flags) };
         if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
     #[inline]
     pub fn clone_redirect(&self, if_index: u32, flags: u64) -> Result<(), c_long> {
-        let ret = unsafe { bpf_clone_redirect(self.skb, if_index, flags) };
+        let ret = unsafe { bpf_clone_redirect(self.as_raw_ptr(), if_index, flags) };
         if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
     #[inline]
     pub fn change_proto(&self, proto: u16, flags: u64) -> Result<(), c_long> {
-        let ret = unsafe { bpf_skb_change_proto(self.skb, proto, flags) };
+        let ret = unsafe { bpf_skb_change_proto(self.as_raw_ptr(), proto, flags) };
         if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
     #[inline]
     pub fn change_type(&self, ty: u32) -> Result<(), c_long> {
-        let ret = unsafe { bpf_skb_change_type(self.skb, ty) };
+        let ret = unsafe { bpf_skb_change_type(self.as_raw_ptr(), ty) };
         if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
@@ -172,52 +182,52 @@ impl SkBuff {
     /// for reading and writing with direct packet access.
     #[inline(always)]
     pub fn pull_data(&self, len: u32) -> Result<(), c_long> {
-        let ret = unsafe { bpf_skb_pull_data(self.skb, len) };
+        let ret = unsafe { bpf_skb_pull_data(self.as_raw_ptr(), len) };
         if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
     pub(crate) const fn as_ptr(&self) -> *mut c_void {
-        self.skb.cast()
+        self.skb.as_ptr().cast()
     }
 
     #[inline]
-    pub fn protocol(&self) -> u32 {
-        unsafe { (*self.skb).protocol }
+    pub const fn protocol(&self) -> u32 {
+        unsafe { self.skb.as_ref().protocol }
     }
 
     #[inline]
-    pub fn family(&self) -> u32 {
-        unsafe { (*self.skb).family }
+    pub const fn family(&self) -> u32 {
+        unsafe { self.skb.as_ref().family }
     }
 
     #[inline]
-    pub fn local_ipv4(&self) -> u32 {
-        unsafe { (*self.skb).local_ip4 }
+    pub const fn local_ipv4(&self) -> u32 {
+        unsafe { self.skb.as_ref().local_ip4 }
     }
 
     #[inline]
-    pub fn local_ipv6(&self) -> &[u32; 4] {
-        unsafe { &(*self.skb).local_ip6 }
+    pub const fn local_ipv6(&self) -> &[u32; 4] {
+        unsafe { &self.skb.as_ref().local_ip6 }
     }
 
     #[inline]
-    pub fn remote_ipv4(&self) -> u32 {
-        unsafe { (*self.skb).remote_ip4 }
+    pub const fn remote_ipv4(&self) -> u32 {
+        unsafe { self.skb.as_ref().remote_ip4 }
     }
 
     #[inline]
-    pub fn remote_ipv6(&self) -> &[u32; 4] {
-        unsafe { &(*self.skb).remote_ip6 }
+    pub const fn remote_ipv6(&self) -> &[u32; 4] {
+        unsafe { &self.skb.as_ref().remote_ip6 }
     }
 
     #[inline]
-    pub fn local_port(&self) -> u32 {
-        unsafe { (*self.skb).local_port }
+    pub const fn local_port(&self) -> u32 {
+        unsafe { self.skb.as_ref().local_port }
     }
 
     #[inline]
-    pub fn remote_port(&self) -> u32 {
-        unsafe { (*self.skb).remote_port }
+    pub const fn remote_port(&self) -> u32 {
+        unsafe { self.skb.as_ref().remote_port }
     }
 }
 
@@ -226,29 +236,42 @@ pub struct SkBuffContext {
 }
 
 impl SkBuffContext {
-    pub const fn new(skb: *mut __sk_buff) -> Self {
-        let skb = SkBuff { skb };
+    #[inline]
+    pub const fn new(skb: NonNull<__sk_buff>) -> Self {
+        let skb = SkBuff::new(skb);
         Self { skb }
     }
 
     #[inline]
-    pub fn len(&self) -> u32 {
+    pub const fn data(&self) -> usize {
+        self.skb.data()
+    }
+
+    #[inline]
+    pub const fn data_end(&self) -> usize {
+        self.skb.data_end()
+    }
+
+    #[inline]
+    pub const fn len(&self) -> u32 {
         self.skb.len()
     }
 
     #[inline]
     pub fn set_mark(&self, mark: u32) {
-        self.skb.set_mark(mark);
+        unsafe {
+            (*self.skb.as_raw_ptr()).mark = mark;
+        }
     }
 
     #[inline]
-    pub fn cb(&self) -> &[u32] {
-        self.skb.cb()
+    pub fn cb(&self) -> &[u32; 5] {
+        unsafe { &(*self.skb.as_raw_ptr()).cb }
     }
 
     #[inline]
-    pub fn cb_mut(&mut self) -> &mut [u32] {
-        self.skb.cb_mut()
+    pub fn cb_mut(&mut self) -> &mut [u32; 5] {
+        unsafe { &mut (*self.skb.as_raw_ptr()).cb }
     }
 
     /// Returns the owner UID of the socket associated to the SKB context.
