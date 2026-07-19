@@ -993,9 +993,7 @@ impl Ebpf {
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Self, EbpfError> {
-        EbpfLoader::new()
-            .btf(Btf::from_sys_fs().ok().as_ref())
-            .load_file(path)
+        EbpfLoader::new().load_file(path)
     }
 
     /// Loads eBPF bytecode from a buffer.
@@ -1022,9 +1020,7 @@ impl Ebpf {
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn load(data: &[u8]) -> Result<Self, EbpfError> {
-        EbpfLoader::new()
-            .btf(Btf::from_sys_fs().ok().as_ref())
-            .load(data)
+        EbpfLoader::new().load(data)
     }
 
     /// Returns a reference to the map with the given name.
