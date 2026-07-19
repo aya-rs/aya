@@ -29,6 +29,8 @@ impl SchedClassifier {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "classifier")]
             #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
+                // SAFETY: The `ctx` pointer provided by the kernel should be valid.
+                let ctx = unsafe { ::core::ptr::NonNull::new_unchecked(ctx) };
                 return #fn_name(::aya_ebpf::programs::TcContext::new(ctx));
 
                 #item
@@ -59,6 +61,8 @@ mod tests {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "classifier")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> i32 {
+                // SAFETY: The `ctx` pointer provided by the kernel should be valid.
+                let ctx = unsafe { ::core::ptr::NonNull::new_unchecked(ctx) };
                 return prog(::aya_ebpf::programs::TcContext::new(ctx));
 
                 fn prog(ctx: &mut ::aya_ebpf::programs::TcContext) -> i32 {

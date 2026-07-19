@@ -52,6 +52,8 @@ impl SkSkb {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = #section_name)]
             #vis fn #fn_name(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
+                // SAFETY: The `ctx` pointer provided by the kernel should be valid.
+                let ctx = unsafe { ::core::ptr::NonNull::new_unchecked(ctx) };
                 return #fn_name(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 #item
@@ -83,6 +85,8 @@ mod tests {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "sk_skb/stream_parser")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
+                // SAFETY: The `ctx` pointer provided by the kernel should be valid.
+                let ctx = unsafe { ::core::ptr::NonNull::new_unchecked(ctx) };
                 return prog(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 fn prog(ctx: &mut ::aya_ebpf::programs::SkBuffContext) -> u32 {
@@ -110,6 +114,8 @@ mod tests {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = "sk_skb/stream_verdict")]
             fn prog(ctx: *mut ::aya_ebpf::bindings::__sk_buff) -> u32 {
+                // SAFETY: The `ctx` pointer provided by the kernel should be valid.
+                let ctx = unsafe { ::core::ptr::NonNull::new_unchecked(ctx) };
                 return prog(::aya_ebpf::programs::SkBuffContext::new(ctx));
 
                 fn prog(ctx: &mut ::aya_ebpf::programs::SkBuffContext) -> u32 {

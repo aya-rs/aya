@@ -72,7 +72,7 @@ impl<K> SockHash<K> {
     ) -> c_long {
         unsafe {
             bpf_sk_redirect_hash(
-                ctx.borrow().skb.skb,
+                ctx.borrow().skb.as_raw_ptr(),
                 self.def.as_ptr().cast(),
                 ptr::from_mut(key.borrow_mut()).cast(),
                 flags,

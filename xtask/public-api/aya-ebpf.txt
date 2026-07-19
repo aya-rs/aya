@@ -1843,11 +1843,11 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::fexit::FExitCo
 pub mod aya_ebpf::programs::flow_dissector
 pub struct aya_ebpf::programs::flow_dissector::FlowDissectorContext
 impl aya_ebpf::programs::flow_dissector::FlowDissectorContext
-pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data(&self) -> usize
-pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data_end(&self) -> usize
+pub const fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data(&self) -> usize
+pub const fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data_end(&self) -> usize
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::flow_keys(&mut self) -> &mut aya_ebpf_bindings::x86_64::bindings::bpf_flow_keys
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::load_bytes(&self, usize, &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub const fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::new(*mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> Self
+pub const fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::new(core::ptr::non_null::NonNull<aya_ebpf_bindings::x86_64::bindings::__sk_buff>) -> Self
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::flow_dissector::FlowDissectorContext
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::command(&self) -> core::result::Result<[u8; 16], i32>
@@ -1961,7 +1961,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::retprobe::R
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::retprobe::RetProbeContext
 pub mod aya_ebpf::programs::sk_buff
 pub struct aya_ebpf::programs::sk_buff::SkBuff
-pub aya_ebpf::programs::sk_buff::SkBuff::skb: *mut aya_ebpf_bindings::x86_64::bindings::__sk_buff
 impl aya_ebpf::programs::sk_buff::SkBuff
 pub fn aya_ebpf::programs::sk_buff::SkBuff::adjust_room(&self, i32, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::cb(&self) -> &[u32]
@@ -1969,22 +1968,22 @@ pub fn aya_ebpf::programs::sk_buff::SkBuff::cb_mut(&mut self) -> &mut [u32]
 pub fn aya_ebpf::programs::sk_buff::SkBuff::change_proto(&self, u16, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::change_type(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::clone_redirect(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuff::family(&self) -> u32
+pub const fn aya_ebpf::programs::sk_buff::SkBuff::family(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuff::get_socket_uid(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuff::l3_csum_replace(&self, usize, u64, u64, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::l4_csum_replace(&self, usize, u64, u64, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuff::len(&self) -> u32
+pub const fn aya_ebpf::programs::sk_buff::SkBuff::len(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuff::load<T>(&self, usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::load_bytes(&self, usize, &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuff::local_ipv4(&self) -> u32
-pub fn aya_ebpf::programs::sk_buff::SkBuff::local_ipv6(&self) -> &[u32; 4]
-pub fn aya_ebpf::programs::sk_buff::SkBuff::local_port(&self) -> u32
-pub const fn aya_ebpf::programs::sk_buff::SkBuff::new(*mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> Self
-pub fn aya_ebpf::programs::sk_buff::SkBuff::protocol(&self) -> u32
+pub const fn aya_ebpf::programs::sk_buff::SkBuff::local_ipv4(&self) -> u32
+pub const fn aya_ebpf::programs::sk_buff::SkBuff::local_ipv6(&self) -> &[u32; 4]
+pub const fn aya_ebpf::programs::sk_buff::SkBuff::local_port(&self) -> u32
+pub const fn aya_ebpf::programs::sk_buff::SkBuff::new(core::ptr::non_null::NonNull<aya_ebpf_bindings::x86_64::bindings::__sk_buff>) -> Self
+pub const fn aya_ebpf::programs::sk_buff::SkBuff::protocol(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuff::pull_data(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuff::remote_ipv4(&self) -> u32
-pub fn aya_ebpf::programs::sk_buff::SkBuff::remote_ipv6(&self) -> &[u32; 4]
-pub fn aya_ebpf::programs::sk_buff::SkBuff::remote_port(&self) -> u32
+pub const fn aya_ebpf::programs::sk_buff::SkBuff::remote_ipv4(&self) -> u32
+pub const fn aya_ebpf::programs::sk_buff::SkBuff::remote_ipv6(&self) -> &[u32; 4]
+pub const fn aya_ebpf::programs::sk_buff::SkBuff::remote_port(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuff::set_mark(&self, u32)
 pub fn aya_ebpf::programs::sk_buff::SkBuff::store<T>(&self, usize, &T, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 impl core::marker::Freeze for aya_ebpf::programs::sk_buff::SkBuff
@@ -1998,17 +1997,19 @@ pub struct aya_ebpf::programs::sk_buff::SkBuffContext
 pub aya_ebpf::programs::sk_buff::SkBuffContext::skb: aya_ebpf::programs::sk_buff::SkBuff
 impl aya_ebpf::programs::sk_buff::SkBuffContext
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::adjust_room(&self, i32, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::cb(&self) -> &[u32]
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::cb_mut(&mut self) -> &mut [u32]
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::cb(&self) -> &[u32; 5]
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::cb_mut(&mut self) -> &mut [u32; 5]
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::change_type(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::clone_redirect(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub const fn aya_ebpf::programs::sk_buff::SkBuffContext::data(&self) -> usize
+pub const fn aya_ebpf::programs::sk_buff::SkBuffContext::data_end(&self) -> usize
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::get_socket_uid(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l3_csum_replace(&self, usize, u64, u64, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l4_csum_replace(&self, usize, u64, u64, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::len(&self) -> u32
+pub const fn aya_ebpf::programs::sk_buff::SkBuffContext::len(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load<T>(&self, usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load_bytes(&self, usize, &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub const fn aya_ebpf::programs::sk_buff::SkBuffContext::new(*mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> Self
+pub const fn aya_ebpf::programs::sk_buff::SkBuffContext::new(core::ptr::non_null::NonNull<aya_ebpf_bindings::x86_64::bindings::__sk_buff>) -> Self
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::pull_data(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::set_mark(&self, u32)
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::store<T>(&self, usize, &T, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
@@ -2215,15 +2216,15 @@ pub fn aya_ebpf::programs::tc::TcContext::cb_mut(&mut self) -> &mut [u32]
 pub fn aya_ebpf::programs::tc::TcContext::change_proto(&self, u16, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::change_type(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::clone_redirect(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::data(&self) -> usize
-pub fn aya_ebpf::programs::tc::TcContext::data_end(&self) -> usize
+pub const fn aya_ebpf::programs::tc::TcContext::data(&self) -> usize
+pub const fn aya_ebpf::programs::tc::TcContext::data_end(&self) -> usize
 pub fn aya_ebpf::programs::tc::TcContext::get_socket_uid(&self) -> u32
 pub fn aya_ebpf::programs::tc::TcContext::l3_csum_replace(&self, usize, u64, u64, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::l4_csum_replace(&self, usize, u64, u64, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::len(&self) -> u32
+pub const fn aya_ebpf::programs::tc::TcContext::len(&self) -> u32
 pub fn aya_ebpf::programs::tc::TcContext::load<T>(&self, usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::load_bytes(&self, usize, &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub const fn aya_ebpf::programs::tc::TcContext::new(*mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> Self
+pub const fn aya_ebpf::programs::tc::TcContext::new(core::ptr::non_null::NonNull<aya_ebpf_bindings::x86_64::bindings::__sk_buff>) -> Self
 pub fn aya_ebpf::programs::tc::TcContext::pull_data(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::set_mark(&self, u32)
 pub fn aya_ebpf::programs::tc::TcContext::skb_under_cgroup<M: aya_ebpf::programs::tc::CgroupArrayMap>(&self, &M, u32) -> core::result::Result<bool, aya_ebpf_cty::od::c_long>
@@ -2389,11 +2390,11 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::fexit::FExi
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::fexit::FExitContext
 pub struct aya_ebpf::programs::FlowDissectorContext
 impl aya_ebpf::programs::flow_dissector::FlowDissectorContext
-pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data(&self) -> usize
-pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data_end(&self) -> usize
+pub const fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data(&self) -> usize
+pub const fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data_end(&self) -> usize
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::flow_keys(&mut self) -> &mut aya_ebpf_bindings::x86_64::bindings::bpf_flow_keys
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::load_bytes(&self, usize, &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub const fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::new(*mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> Self
+pub const fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::new(core::ptr::non_null::NonNull<aya_ebpf_bindings::x86_64::bindings::__sk_buff>) -> Self
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::flow_dissector::FlowDissectorContext
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::as_ptr(&self) -> *mut aya_ebpf_cty::c_void
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::command(&self) -> core::result::Result<[u8; 16], i32>
@@ -2504,17 +2505,19 @@ pub struct aya_ebpf::programs::SkBuffContext
 pub aya_ebpf::programs::SkBuffContext::skb: aya_ebpf::programs::sk_buff::SkBuff
 impl aya_ebpf::programs::sk_buff::SkBuffContext
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::adjust_room(&self, i32, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::cb(&self) -> &[u32]
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::cb_mut(&mut self) -> &mut [u32]
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::cb(&self) -> &[u32; 5]
+pub fn aya_ebpf::programs::sk_buff::SkBuffContext::cb_mut(&mut self) -> &mut [u32; 5]
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::change_type(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::clone_redirect(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub const fn aya_ebpf::programs::sk_buff::SkBuffContext::data(&self) -> usize
+pub const fn aya_ebpf::programs::sk_buff::SkBuffContext::data_end(&self) -> usize
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::get_socket_uid(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l3_csum_replace(&self, usize, u64, u64, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::l4_csum_replace(&self, usize, u64, u64, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::sk_buff::SkBuffContext::len(&self) -> u32
+pub const fn aya_ebpf::programs::sk_buff::SkBuffContext::len(&self) -> u32
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load<T>(&self, usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::load_bytes(&self, usize, &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub const fn aya_ebpf::programs::sk_buff::SkBuffContext::new(*mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> Self
+pub const fn aya_ebpf::programs::sk_buff::SkBuffContext::new(core::ptr::non_null::NonNull<aya_ebpf_bindings::x86_64::bindings::__sk_buff>) -> Self
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::pull_data(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::set_mark(&self, u32)
 pub fn aya_ebpf::programs::sk_buff::SkBuffContext::store<T>(&self, usize, &T, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
@@ -2712,15 +2715,15 @@ pub fn aya_ebpf::programs::tc::TcContext::cb_mut(&mut self) -> &mut [u32]
 pub fn aya_ebpf::programs::tc::TcContext::change_proto(&self, u16, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::change_type(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::clone_redirect(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::data(&self) -> usize
-pub fn aya_ebpf::programs::tc::TcContext::data_end(&self) -> usize
+pub const fn aya_ebpf::programs::tc::TcContext::data(&self) -> usize
+pub const fn aya_ebpf::programs::tc::TcContext::data_end(&self) -> usize
 pub fn aya_ebpf::programs::tc::TcContext::get_socket_uid(&self) -> u32
 pub fn aya_ebpf::programs::tc::TcContext::l3_csum_replace(&self, usize, u64, u64, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::l4_csum_replace(&self, usize, u64, u64, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
-pub fn aya_ebpf::programs::tc::TcContext::len(&self) -> u32
+pub const fn aya_ebpf::programs::tc::TcContext::len(&self) -> u32
 pub fn aya_ebpf::programs::tc::TcContext::load<T>(&self, usize) -> core::result::Result<T, aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::load_bytes(&self, usize, &mut [u8]) -> core::result::Result<usize, aya_ebpf_cty::od::c_long>
-pub const fn aya_ebpf::programs::tc::TcContext::new(*mut aya_ebpf_bindings::x86_64::bindings::__sk_buff) -> Self
+pub const fn aya_ebpf::programs::tc::TcContext::new(core::ptr::non_null::NonNull<aya_ebpf_bindings::x86_64::bindings::__sk_buff>) -> Self
 pub fn aya_ebpf::programs::tc::TcContext::pull_data(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::set_mark(&self, u32)
 pub fn aya_ebpf::programs::tc::TcContext::skb_under_cgroup<M: aya_ebpf::programs::tc::CgroupArrayMap>(&self, &M, u32) -> core::result::Result<bool, aya_ebpf_cty::od::c_long>

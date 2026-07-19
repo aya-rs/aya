@@ -1,3 +1,5 @@
+use core::ptr::NonNull;
+
 use aya_ebpf_cty::{c_long, c_void};
 
 use crate::{
@@ -11,24 +13,25 @@ pub struct FlowDissectorContext {
 }
 
 impl FlowDissectorContext {
-    pub const fn new(skb: *mut __sk_buff) -> Self {
-        let skb = SkBuff { skb };
+    #[inline]
+    pub const fn new(skb: NonNull<__sk_buff>) -> Self {
+        let skb = SkBuff::new(skb);
         Self { skb }
     }
 
     #[inline]
-    pub fn data(&self) -> usize {
+    pub const fn data(&self) -> usize {
         self.skb.data()
     }
 
     #[inline]
-    pub fn data_end(&self) -> usize {
+    pub const fn data_end(&self) -> usize {
         self.skb.data_end()
     }
 
     #[inline]
     pub fn flow_keys(&mut self) -> &mut bpf_flow_keys {
-        unsafe { &mut *(*self.skb.skb).__bindgen_anon_1.flow_keys }
+        unsafe { &mut *(*self.skb.as_raw_ptr()).__bindgen_anon_1.flow_keys }
     }
 
     #[inline(always)]
