@@ -6,6 +6,13 @@ use crate::{
 };
 
 impl Object {
+    /// Returns true if this object contains typed kernel symbols.
+    pub fn has_typed_ksyms(&self) -> bool {
+        self.btf
+            .as_ref()
+            .is_some_and(|btf| btf.externs.has_typed_ksyms())
+    }
+
     /// Resolves extern kernel symbols through kernel `BTF` and `kallsyms`.
     pub fn resolve_externs(&mut self, kernel_btf: Option<&Btf>) -> Result<(), KsymsError> {
         if self.btf.is_none() {
@@ -25,11 +32,9 @@ impl Object {
 
     /// Returns whether the object contains strong typed ksyms that require kernel `BTF`.
     pub(crate) fn has_strong_typed_ksyms(&self) -> bool {
-        self.btf.as_ref().is_some_and(|btf| {
-            btf.externs.iter().any(|(_, ext)| {
-                ext.extern_type == ExternType::Ksym && ext.type_id.is_some() && !ext.is_weak
-            })
-        })
+        self.btf
+            .as_ref()
+            .is_some_and(|btf| btf.externs.has_strong_typed_ksyms())
     }
 
     /// Resolves typed externs through kernel `BTF`.
@@ -421,6 +426,12 @@ pub(crate) struct ExternCollection {
 
     /// Index ID of `.ksyms` datasec entry in BTF types.
     pub(crate) datasec_id: Option<u32>,
+
+    /// Whether the collection contains any typed ksyms.
+    has_typed_ksyms: bool,
+
+    /// Whether the collection contains any strong typed ksyms.
+    has_strong_typed_ksyms: bool,
 }
 
 impl ExternCollection {
@@ -429,7 +440,21 @@ impl ExternCollection {
     }
 
     pub(crate) fn insert(&mut self, name: String, desc: ExternDesc) {
+        if desc.extern_type == ExternType::Ksym && desc.type_id.is_some() {
+            self.has_typed_ksyms = true;
+            if !desc.is_weak {
+                self.has_strong_typed_ksyms = true;
+            }
+        }
         self.externs.insert(name, desc);
+    }
+
+    pub(crate) const fn has_typed_ksyms(&self) -> bool {
+        self.has_typed_ksyms
+    }
+
+    pub(crate) const fn has_strong_typed_ksyms(&self) -> bool {
+        self.has_strong_typed_ksyms
     }
 
     pub(crate) fn get_mut(&mut self, name: &str) -> Option<&mut ExternDesc> {
@@ -547,6 +572,8 @@ mod tests {
 
         let mut object = object_with_externs(externs);
 
+        assert!(object.has_typed_ksyms());
+
         let err = object.resolve_externs(None).unwrap_err();
         assert!(matches!(err, KsymsError::TypedKsymRequiresKernelBtf));
     }
@@ -561,11 +588,24 @@ mod tests {
 
         let mut object = object_with_externs(externs);
 
+        assert!(object.has_typed_ksyms());
+
         object.resolve_externs(None).unwrap();
 
         let ext = &object.btf.as_ref().unwrap().externs.externs["typed"];
         assert!(!ext.is_resolved);
         assert_eq!(ext.ksym_addr, Some(0));
+    }
+
+    #[test]
+    fn has_typed_ksyms_ignores_typeless_ksyms() {
+        let mut externs = ExternCollection::new();
+        let typeless = ExternDesc::new("typeless".into(), ExternType::Ksym, 1, false);
+        externs.insert(typeless.name.clone(), typeless);
+
+        let object = object_with_externs(externs);
+
+        assert!(!object.has_typed_ksyms());
     }
 
     #[test]

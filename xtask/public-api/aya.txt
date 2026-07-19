@@ -7904,7 +7904,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::Ebpf
 pub struct aya::EbpfLoader<'a>
 impl<'a> aya::EbpfLoader<'a>
 pub const fn aya::EbpfLoader<'a>::allow_unsupported_maps(&mut self) -> &mut Self
-pub fn aya::EbpfLoader<'a>::btf(&mut self, core::option::Option<&'a aya_obj::btf::btf::Btf>) -> &mut Self
+pub fn aya::EbpfLoader<'a>::btf(&mut self, &'a aya_obj::btf::btf::Btf) -> &mut Self
 pub fn aya::EbpfLoader<'a>::default_map_pin_directory<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> &mut Self
 pub fn aya::EbpfLoader<'a>::extension(&mut self, &'a str) -> &mut Self
 pub fn aya::EbpfLoader<'a>::load(&mut self, &[u8]) -> core::result::Result<aya::Ebpf, aya::EbpfError>

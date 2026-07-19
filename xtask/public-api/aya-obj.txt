@@ -4852,13 +4852,14 @@ pub fn aya_obj::Object::parse(&[u8]) -> core::result::Result<Self, aya_obj::Pars
 pub fn aya_obj::Object::patch_map_data(&mut self, std::collections::hash::map::HashMap<&str, (&[u8], bool)>) -> core::result::Result<(), aya_obj::ParseError>
 pub fn aya_obj::Object::sanitize_functions(&mut self, &aya_obj::Features)
 impl aya_obj::Object
+pub fn aya_obj::Object::has_typed_ksyms(&self) -> bool
+pub fn aya_obj::Object::resolve_externs(&mut self, core::option::Option<&aya_obj::btf::Btf>) -> core::result::Result<(), aya_obj::KsymsError>
+impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_calls(&mut self, &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 pub fn aya_obj::Object::relocate_externs(&mut self) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, I, &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
-impl aya_obj::Object
-pub fn aya_obj::Object::resolve_externs(&mut self, core::option::Option<&aya_obj::btf::Btf>) -> core::result::Result<(), aya_obj::KsymsError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object
@@ -5492,13 +5493,14 @@ pub fn aya_obj::Object::parse(&[u8]) -> core::result::Result<Self, aya_obj::Pars
 pub fn aya_obj::Object::patch_map_data(&mut self, std::collections::hash::map::HashMap<&str, (&[u8], bool)>) -> core::result::Result<(), aya_obj::ParseError>
 pub fn aya_obj::Object::sanitize_functions(&mut self, &aya_obj::Features)
 impl aya_obj::Object
+pub fn aya_obj::Object::has_typed_ksyms(&self) -> bool
+pub fn aya_obj::Object::resolve_externs(&mut self, core::option::Option<&aya_obj::btf::Btf>) -> core::result::Result<(), aya_obj::KsymsError>
+impl aya_obj::Object
 pub fn aya_obj::Object::relocate_btf(&mut self, &aya_obj::btf::Btf) -> core::result::Result<(), aya_obj::btf::BtfRelocationError>
 impl aya_obj::Object
 pub fn aya_obj::Object::relocate_calls(&mut self, &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 pub fn aya_obj::Object::relocate_externs(&mut self) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
 pub fn aya_obj::Object::relocate_maps<'a, I: core::iter::traits::iterator::Iterator<Item = (&'a str, std::os::fd::raw::RawFd, &'a aya_obj::maps::Map)>>(&mut self, I, &std::collections::hash::set::HashSet<usize>) -> core::result::Result<(), aya_obj::relocation::EbpfRelocationError>
-impl aya_obj::Object
-pub fn aya_obj::Object::resolve_externs(&mut self, core::option::Option<&aya_obj::btf::Btf>) -> core::result::Result<(), aya_obj::KsymsError>
 impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> aya_obj::Object
 impl core::fmt::Debug for aya_obj::Object
