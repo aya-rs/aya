@@ -9,14 +9,13 @@ use std::{
 use aya_obj::generated::{
     SO_ATTACH_BPF, SO_DETACH_BPF, bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER,
 };
-use libc::{SOL_SOCKET, setsockopt};
+use libc::{SO_ATTACH_REUSEPORT_EBPF, SO_DETACH_REUSEPORT_BPF, SOL_SOCKET, setsockopt};
 use thiserror::Error;
 
 use crate::{
     VerifierLogLevel,
     programs::{
-        ProgramData, ProgramError, ProgramType, SO_ATTACH_REUSEPORT_EBPF, SO_DETACH_REUSEPORT_BPF,
-        links::FdLink, load_program_without_attach_type,
+        ProgramData, ProgramError, ProgramType, links::FdLink, load_program_without_attach_type,
     },
 };
 
