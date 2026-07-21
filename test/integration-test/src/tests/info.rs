@@ -20,7 +20,7 @@ use aya::{
     util::KernelVersion,
 };
 use aya_obj::generated::bpf_prog_type;
-use libc::EINVAL;
+use libc::{EINVAL, ENOENT};
 
 #[test_log::test]
 fn test_loaded_programs() {
@@ -232,20 +232,34 @@ fn list_loaded_maps() {
     let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
     prog.load().unwrap();
 
-    // Ensure the loaded_maps() api doesn't panic
+    // Skip kernels that do not support loaded_maps().
     let mut maps = loaded_maps().peekable();
-    if let Err(err) = maps.peek().unwrap() {
-        if let MapError::SyscallError(err) = &err {
-            if err.io_error.raw_os_error() == Some(EINVAL) {
-                eprintln!("skipping test - `loaded_maps()` not supported");
-                return;
-            }
-        }
-        panic!("{err}");
+    if let Err(MapError::SyscallError(err)) = maps.peek().unwrap()
+        && err.io_error.raw_os_error() == Some(EINVAL)
+    {
+        eprintln!("skipping test - `loaded_maps()` not supported");
+        return;
     }
 
     // Loaded maps should contain our test maps
-    let maps: Vec<_> = maps.filter_map(Result::ok).collect();
+    let maps: Vec<_> = maps
+        .filter_map(|result| match result {
+            Ok(info) => Some(info),
+            // BPF_MAP_GET_NEXT_ID returns an ID without holding a reference, so the map can be
+            // removed before BPF_MAP_GET_FD_BY_ID. The kernel selftests and bpftool both skip the
+            // resulting ENOENT:
+            // https://github.com/torvalds/linux/blob/b15dc417/kernel/bpf/syscall.c#L3184-L3207
+            // https://github.com/torvalds/linux/blob/b95f03f0/tools/testing/selftests/bpf/prog_tests/bpf_obj_id.c#L205-L218
+            // https://github.com/libbpf/bpftool/blob/5730b384/src/map.c#L703-L719
+            Err(MapError::SyscallError(err))
+                if err.call == "bpf_map_get_fd_by_id"
+                    && err.io_error.raw_os_error() == Some(ENOENT) =>
+            {
+                None
+            }
+            Err(err) => panic!("{err:?}"),
+        })
+        .collect();
     if let Ok(info) = &prog.info() {
         if let Some(map_ids) = info.map_ids().unwrap() {
             assert_eq!(2, map_ids.len());
