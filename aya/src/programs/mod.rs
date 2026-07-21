@@ -73,18 +73,6 @@ pub mod trace_point;
 pub mod uprobe;
 pub mod xdp;
 
-// `libc` exposes `SO_ATTACH_REUSEPORT_EBPF` on all architectures, but
-// `SO_DETACH_REUSEPORT_BPF` is still commented out in libc's
-// `src/unix/linux_like/linux/arch/{mips,powerpc,sparc}/mod.rs`.
-// The values below are the asm-generic constants (52 and 68), which are
-// correct for every architecture aya supports; sparc uses different values
-// but aya does not target sparc. Both are defined locally to keep them
-// consistent rather than mixing a libc constant with a hand-written one.
-// TODO(https://github.com/rust-lang/libc/commit/95c9572): use libc's
-// constants once this lands in a released libc version.
-pub(crate) const SO_ATTACH_REUSEPORT_EBPF: libc::c_int = 52;
-pub(crate) const SO_DETACH_REUSEPORT_BPF: libc::c_int = 68;
-
 use std::{
     borrow::Cow,
     ffi::CString,
