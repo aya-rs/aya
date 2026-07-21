@@ -24,7 +24,7 @@ use aya_obj::{
     maps::{LegacyMap, bpf_map_def},
 };
 use libc::{
-    EBADF, ENOENT, ENOSPC, EPERM, RLIM_INFINITY, RLIMIT_MEMLOCK, getrlimit, rlim_t, rlimit,
+    EBADF, ENOENT, ENOMEM, ENOSPC, EPERM, RLIM_INFINITY, RLIMIT_MEMLOCK, getrlimit, rlim_t, rlimit,
     setrlimit,
 };
 use log::warn;
@@ -490,8 +490,14 @@ pub(crate) fn bpf_link_create(
         }
     }
 
-    // BPF_LINK_CREATE returns a new file descriptor.
-    unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) }
+    // Before Linux 5.11, cgroup storage allocation can turn a memlock
+    // failure into ENOMEM during attach:
+    // https://github.com/torvalds/linux/blob/b15dc4170c6317731c00fa8fe7d4d99a0a04c83c/kernel/bpf/cgroup.c#L475-L477
+    // SAFETY: BPF_LINK_CREATE returns a new file descriptor.
+    with_raised_rlimit_retry(
+        || unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) },
+        &[EPERM, ENOMEM],
+    )
 }
 
 // since kernel 5.7
@@ -528,7 +534,11 @@ pub(crate) fn bpf_prog_attach(
     attr.__bindgen_anon_5.attach_type = attach_type.into() as u32;
     attr.__bindgen_anon_5.attach_flags = flags;
 
-    unit_sys_bpf(bpf_cmd::BPF_PROG_ATTACH, &mut attr).map_err(|io_error| SyscallError {
+    with_raised_rlimit_retry(
+        || unit_sys_bpf(bpf_cmd::BPF_PROG_ATTACH, &mut attr),
+        &[EPERM, ENOMEM],
+    )
+    .map_err(|io_error| SyscallError {
         call: "bpf_prog_attach",
         io_error,
     })
@@ -858,13 +868,20 @@ pub(super) unsafe fn fd_sys_bpf(
 }
 
 static RAISE_MEMLIMIT: std::sync::Once = std::sync::Once::new();
-fn with_raised_rlimit_retry<T, F: FnMut() -> io::Result<T>>(mut op: F) -> io::Result<T> {
+fn with_raised_rlimit_retry<T, F: FnMut() -> io::Result<T>>(
+    mut op: F,
+    memlock_errnos: &[i32],
+) -> io::Result<T> {
     let mut result = op();
-    if matches!(result.as_ref(), Err(err) if err.raw_os_error() == Some(EPERM)) {
+    if matches!(
+        result.as_ref(),
+        Err(err)
+            if !KernelVersion::at_least(5, 11, 0)
+                && err
+                    .raw_os_error()
+                    .is_some_and(|errno| memlock_errnos.contains(&errno))
+    ) {
         RAISE_MEMLIMIT.call_once(|| {
-            if KernelVersion::at_least(5, 11, 0) {
-                return;
-            }
             let mut limit = MaybeUninit::<rlimit>::uninit();
             let ret = unsafe { getrlimit(RLIMIT_MEMLOCK, limit.as_mut_ptr()) };
             if ret != 0 {
@@ -913,7 +930,10 @@ fn with_raised_rlimit_retry<T, F: FnMut() -> io::Result<T>>(mut op: F) -> io::Re
 
 pub(super) fn bpf_map_create(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
     // SAFETY: BPF_MAP_CREATE returns a new file descriptor.
-    with_raised_rlimit_retry(|| unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, attr) })
+    with_raised_rlimit_retry(
+        || unsafe { fd_sys_bpf(bpf_cmd::BPF_MAP_CREATE, attr) },
+        &[EPERM],
+    )
 }
 
 pub(crate) fn bpf_btf_get_fd_by_id(id: u32) -> Result<crate::MockableFd, SyscallError> {
@@ -1318,7 +1338,10 @@ pub(crate) fn is_btf_type_tag_supported() -> bool {
 
 pub(super) fn bpf_prog_load(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
     // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
-    with_raised_rlimit_retry(|| unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) })
+    with_raised_rlimit_retry(
+        || unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) },
+        &[EPERM],
+    )
 }
 
 fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<i64> {
