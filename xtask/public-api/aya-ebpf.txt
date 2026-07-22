@@ -1906,6 +1906,7 @@ pub aya_ebpf::programs::probe::ProbeContext::regs: *mut aya_ebpf_bindings::x86_6
 impl aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::arg<T: aya_ebpf::Argument>(&self, usize) -> core::option::Option<T>
 pub const fn aya_ebpf::programs::probe::ProbeContext::new(*mut core::ffi::c_void) -> Self
+pub fn aya_ebpf::programs::probe::ProbeContext::syscall_arg<T: aya_ebpf::Argument>(&self, usize) -> core::option::Option<T>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
 pub fn aya_ebpf::programs::probe::ProbeContext::command(&self) -> core::result::Result<[u8; 16], i32>
@@ -2450,6 +2451,7 @@ pub aya_ebpf::programs::ProbeContext::regs: *mut aya_ebpf_bindings::x86_64::bind
 impl aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::arg<T: aya_ebpf::Argument>(&self, usize) -> core::option::Option<T>
 pub const fn aya_ebpf::programs::probe::ProbeContext::new(*mut core::ffi::c_void) -> Self
+pub fn aya_ebpf::programs::probe::ProbeContext::syscall_arg<T: aya_ebpf::Argument>(&self, usize) -> core::option::Option<T>
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::probe::ProbeContext
 pub fn aya_ebpf::programs::probe::ProbeContext::as_ptr(&self) -> *mut core::ffi::c_void
 pub fn aya_ebpf::programs::probe::ProbeContext::command(&self) -> core::result::Result<[u8; 16], i32>
