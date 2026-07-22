@@ -1,4 +1,4 @@
-use core::{borrow::Borrow, mem::MaybeUninit, ptr};
+use core::{mem::MaybeUninit, ptr};
 
 #[cfg(generic_const_exprs)]
 use crate::const_assert::{Assert, IsTrue};
@@ -89,7 +89,7 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> RingBuf<T, MAX_ENTRIES, FL
     }
 
     /// Copy `data` to the ring buffer output using the map's `T`.
-    pub fn output(&self, data: impl Borrow<T>, flags: u64) -> Result<(), i32> {
+    pub fn output(&self, data: &T, flags: u64) -> Result<(), i32> {
         self.output_untyped::<T>(data, flags)
     }
 
@@ -108,8 +108,7 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> RingBuf<T, MAX_ENTRIES, FL
     ///
     /// [`reserve`]: RingBuf::reserve
     /// [`submit`]: RingBufEntry::submit
-    pub fn output_untyped<U: ?Sized>(&self, data: impl Borrow<U>, flags: u64) -> Result<(), i32> {
-        let data = data.borrow();
+    pub fn output_untyped<U: ?Sized>(&self, data: &U, flags: u64) -> Result<(), i32> {
         assert_eq!(8 % align_of_val(data), 0);
         let ret = unsafe {
             bpf_ringbuf_output(
