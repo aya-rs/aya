@@ -83,7 +83,7 @@ glob = { version = "0.3.0", default-features = false }
 hashbrown = { version = "0.17.0", default-features = false }
 indoc = { version = "2.0", default-features = false }
 libbpf-rs = { version = "0.26", default-features = false }
-libc = { version = "0.2.105", default-features = false }
+libc = { version = "0.2.187", default-features = false }
 log = { version = "0.4", default-features = false }
 network-types = { version = "0.2.0", default-features = false }
 nix = { version = "0.31.1", default-features = false }

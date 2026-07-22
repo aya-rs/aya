@@ -8,14 +8,13 @@ use std::{
 
 use aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_SK_REUSEPORT;
 pub use aya_obj::programs::SkReuseportAttachType;
-use libc::{SOL_SOCKET, setsockopt};
+use libc::{SO_ATTACH_REUSEPORT_EBPF, SO_DETACH_REUSEPORT_BPF, SOL_SOCKET, setsockopt};
 use thiserror::Error;
 
 use crate::{
     VerifierLogLevel,
     programs::{
-        ProgramData, ProgramError, ProgramType, SO_ATTACH_REUSEPORT_EBPF, SO_DETACH_REUSEPORT_BPF,
-        links::FdLink, load_program_with_attach_type,
+        ProgramData, ProgramError, ProgramType, links::FdLink, load_program_with_attach_type,
     },
 };
 
