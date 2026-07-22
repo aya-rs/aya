@@ -6,91 +6,55 @@ use aya::{
 use aya_obj::btf::Btf;
 use rstest::rstest;
 
-#[derive(Debug)]
-enum Requirements {}
-
 #[rstest]
-#[case(crate::ENUM_SIGNED_32_RELOC_BPF, None, None,-0x7AAAAAAAi32 as u64)]
-#[case(crate::ENUM_SIGNED_32_RELOC_BPF, Some(crate::ENUM_SIGNED_32_RELOC_BTF),  None, -0x7BBBBBBBi32 as u64)]
-#[case(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BPF, None, None,-0x7AAAAAAAi32 as u64)]
-#[case(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BPF, Some(crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BTF),  None, -0x7BBBBBBBi32 as u64)]
-#[case(crate::ENUM_SIGNED_64_RELOC_BPF, None, None,-0xAAAAAAABBBBBBBBi64 as u64)]
-#[case(crate::ENUM_SIGNED_64_RELOC_BPF, Some(crate::ENUM_SIGNED_64_RELOC_BTF),  None, -0xCCCCCCCDDDDDDDDi64 as u64)]
-#[case(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BPF, None, None,-0xAAAAAAABBBBBBBi64 as u64)]
-#[case(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BPF, Some(crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BTF),  None, -0xCCCCCCCDDDDDDDi64 as u64)]
-#[case(crate::ENUM_UNSIGNED_32_RELOC_BPF, None, None, 0xAAAAAAAA)]
+#[case(
+    crate::ENUM_SIGNED_32_RELOC_BPF,
+    crate::ENUM_SIGNED_32_RELOC_BTF,
+    -0x7BBBBBBBi32 as u64
+)]
+#[case(
+    crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BPF,
+    crate::ENUM_SIGNED_32_CHECKED_VARIANTS_RELOC_BTF,
+    -0x7BBBBBBBi32 as u64
+)]
+#[case(
+    crate::ENUM_SIGNED_64_RELOC_BPF,
+    crate::ENUM_SIGNED_64_RELOC_BTF,
+    -0xCCCCCCCDDDDDDDDi64 as u64
+)]
+#[case(
+    crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BPF,
+    crate::ENUM_SIGNED_64_CHECKED_VARIANTS_RELOC_BTF,
+    -0xCCCCCCCDDDDDDDi64 as u64
+)]
 #[case(
     crate::ENUM_UNSIGNED_32_RELOC_BPF,
-    Some(crate::ENUM_UNSIGNED_32_RELOC_BTF),
-    None,
+    crate::ENUM_UNSIGNED_32_RELOC_BTF,
     0xBBBBBBBB
 )]
 #[case(
     crate::ENUM_UNSIGNED_32_CHECKED_VARIANTS_RELOC_BPF,
-    None,
-    None,
-    0xAAAAAAAA
-)]
-#[case(
-    crate::ENUM_UNSIGNED_32_CHECKED_VARIANTS_RELOC_BPF,
-    Some(crate::ENUM_UNSIGNED_32_CHECKED_VARIANTS_RELOC_BTF),
-    None,
+    crate::ENUM_UNSIGNED_32_CHECKED_VARIANTS_RELOC_BTF,
     0xBBBBBBBB
 )]
-#[case(crate::ENUM_UNSIGNED_64_RELOC_BPF, None, None, 0xAAAAAAAABBBBBBBB)]
 #[case(
     crate::ENUM_UNSIGNED_64_RELOC_BPF,
-    Some(crate::ENUM_UNSIGNED_64_RELOC_BTF),
-    None,
+    crate::ENUM_UNSIGNED_64_RELOC_BTF,
     0xCCCCCCCCDDDDDDDD
 )]
 #[case(
     crate::ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BPF,
-    None,
-    None,
-    0xAAAAAAAABBBBBBBB
-)]
-#[case(
-    crate::ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BPF,
-    Some(crate::ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BTF),
-    None,
+    crate::ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BTF,
     0xCCCCCCCCDDDDDDDD
 )]
-#[case(crate::FIELD_RELOC_BPF, None, None, 2)]
-#[case(crate::FIELD_RELOC_BPF, Some(crate::FIELD_RELOC_BTF), None, 1)]
-#[case(crate::POINTER_RELOC_BPF, None, None, 42)]
-#[case(crate::POINTER_RELOC_BPF, Some(crate::POINTER_RELOC_BTF), None, 21)]
-#[case(crate::STRUCT_FLAVORS_RELOC_BPF, None, None, 1)]
-#[case(
-    crate::STRUCT_FLAVORS_RELOC_BPF,
-    Some(crate::STRUCT_FLAVORS_RELOC_BTF),
-    None,
-    2
-)]
+#[case(crate::FIELD_RELOC_BPF, crate::FIELD_RELOC_BTF, 1)]
+#[case(crate::POINTER_RELOC_BPF, crate::POINTER_RELOC_BTF, 21)]
+#[case(crate::STRUCT_FLAVORS_RELOC_BPF, crate::STRUCT_FLAVORS_RELOC_BTF, 2)]
 #[test_attr(test_log::test)]
-fn relocation_tests(
-    #[case] bpf: &[u8],
-    #[case] btf: Option<&[u8]>,
-    #[case] requirements: Option<Requirements>,
-    #[case] expected: u64,
-) {
-    let features = aya::features();
+fn relocation_tests(#[case] bpf: &[u8], #[case] btf: &[u8], #[case] expected: u64) {
+    let btf = Btf::parse(btf, Endianness::default()).unwrap();
 
-    let btf = btf.map(|btf| Btf::parse(btf, Endianness::default()).unwrap());
-
-    let mut bpf = match EbpfLoader::new().btf(btf.as_ref()).load(bpf) {
-        Ok(bpf) => {
-            if let Some(requirements) = requirements {
-                // We'll want to panic here if we expect some feature we don't have.
-                match requirements {}
-            }
-            bpf
-        }
-        Err(err) => panic!(
-            "err={err:?} requirements={requirements:?} features={:?}",
-            features.btf()
-        ),
-    };
+    let mut bpf = EbpfLoader::new().btf(&btf).load(bpf).unwrap();
 
     let program: &mut UProbe = bpf.program_mut("program").unwrap().try_into().unwrap();
     program.load().unwrap();
