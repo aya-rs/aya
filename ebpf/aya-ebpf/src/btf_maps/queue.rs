@@ -1,4 +1,4 @@
-use core::{borrow::Borrow, mem::MaybeUninit, ptr};
+use core::{mem::MaybeUninit, ptr};
 
 use aya_ebpf_bindings::bindings::BPF_F_NO_PREALLOC;
 
@@ -59,11 +59,9 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> Queue<T, MAX_ENTRIES, FLAG
     /// `flags` is forwarded to `bpf_map_push_elem`; setting `BPF_EXIST`
     /// evicts the oldest element when the queue is full.
     #[inline(always)]
-    pub fn push(&self, value: impl Borrow<T>, flags: u64) -> Result<(), i32> {
+    pub fn push(&self, value: &T, flags: u64) -> Result<(), i32> {
         let () = Self::_CHECK;
-        let ret = unsafe {
-            bpf_map_push_elem(self.as_ptr(), ptr::from_ref(value.borrow()).cast(), flags)
-        };
+        let ret = unsafe { bpf_map_push_elem(self.as_ptr(), ptr::from_ref(value).cast(), flags) };
         (ret == 0).then_some(()).ok_or(ret as i32)
     }
 

@@ -47,16 +47,16 @@ macro_rules! define_bloom_filter_test {
         fn $insert_prog(ctx: ProbeContext) -> Result<(), i32> {
             let index: u32 = ctx.arg(0).ok_or(-1)?;
             let value: u32 = ctx.arg(1).ok_or(-1)?;
-            let result = map_result($filter_map.insert(value, 0));
-            $result_map.set(index, result, 0)
+            let result = map_result($filter_map.insert(&value, 0));
+            $result_map.set(index, &result, 0)
         }
 
         #[uprobe]
         fn $contains_prog(ctx: ProbeContext) -> Result<(), i32> {
             let index: u32 = ctx.arg(0).ok_or(-1)?;
             let value: u32 = ctx.arg(1).ok_or(-1)?;
-            let result = map_result($filter_map.contains(value));
-            $result_map.set(index, result, 0)
+            let result = map_result($filter_map.contains(&value));
+            $result_map.set(index, &result, 0)
         }
     };
 }

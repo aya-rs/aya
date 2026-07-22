@@ -25,9 +25,9 @@ macro_rules! define_sk_lookup {
     ($map:ident, $prog:ident) => {
         #[sk_lookup]
         fn $prog(ctx: SkLookupContext) -> u32 {
-            match $map.redirect_sk_lookup(&ctx, 0u32, 0) {
+            match $map.redirect_sk_lookup(&ctx, &0u32, 0) {
                 Ok(()) => SK_PASS,
-                Err(errno) => match LAST_ERRNO.set(0, errno, 0) {
+                Err(errno) => match LAST_ERRNO.set(0, &errno, 0) {
                     // Single-slot ARRAY set is infallible at runtime.
                     Ok(()) | Err(_) => SK_DROP,
                 },

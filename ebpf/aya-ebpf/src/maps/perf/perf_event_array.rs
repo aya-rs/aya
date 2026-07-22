@@ -1,4 +1,4 @@
-use core::{borrow::Borrow, marker::PhantomData, ptr};
+use core::{marker::PhantomData, ptr};
 
 use crate::{
     EbpfContext,
@@ -29,18 +29,11 @@ impl<T> PerfEventArray<T> {
         }
     }
 
-    pub fn output<C: EbpfContext>(&self, ctx: &C, data: impl Borrow<T>, flags: u32) {
+    pub fn output<C: EbpfContext>(&self, ctx: &C, data: &T, flags: u32) {
         self.output_at_index(ctx, BPF_F_CURRENT_CPU as u32, data, flags);
     }
 
-    pub fn output_at_index<C: EbpfContext>(
-        &self,
-        ctx: &C,
-        index: u32,
-        data: impl Borrow<T>,
-        flags: u32,
-    ) {
-        let data = data.borrow();
+    pub fn output_at_index<C: EbpfContext>(&self, ctx: &C, index: u32, data: &T, flags: u32) {
         let flags = (u64::from(flags) << 32) | u64::from(index);
         unsafe {
             bpf_perf_event_output(

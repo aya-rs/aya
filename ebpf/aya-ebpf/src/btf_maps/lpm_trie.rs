@@ -1,5 +1,3 @@
-use core::borrow::Borrow;
-
 use aya_ebpf_bindings::bindings::BPF_F_NO_PREALLOC;
 
 pub use crate::maps::lpm_trie::Key;
@@ -100,9 +98,9 @@ impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> LpmTrie<K, V, MAX_ENTRI
 
     /// Inserts or updates the value for the exact `(prefix_len, data)` pair.
     #[inline(always)]
-    pub fn insert(&self, key: &Key<K>, value: impl Borrow<V>, flags: u64) -> Result<(), i32> {
+    pub fn insert(&self, key: &Key<K>, value: &V, flags: u64) -> Result<(), i32> {
         let () = Self::_CHECK;
-        insert(self.as_ptr(), key, value.borrow(), flags)
+        insert(self.as_ptr(), key, value, flags)
     }
 
     /// Removes the entry for the exact `(prefix_len, data)` pair.
