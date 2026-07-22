@@ -1189,6 +1189,29 @@ impl Ebpf {
         self.programs.get_mut(name)
     }
 
+    /// Takes ownership of the program with the given name.
+    ///
+    /// Use this when borrowing with [`program`](crate::Ebpf::program) or
+    /// [`program_mut`](crate::Ebpf::program_mut) is not possible (e.g. when using the
+    /// program from an async task). The caller then owns the returned program and is
+    /// responsible for managing its lifetime; like any [`Program`](crate::programs::Program),
+    /// it is unloaded on `Drop`.
+    ///
+    /// For more details on programs and their usage, see the
+    /// [programs module documentation](crate::programs).
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # let mut bpf = aya::Ebpf::load(&[])?;
+    /// let program = bpf.take_program("SSL_read").unwrap();
+    /// println!("took program SSL_read, type {:?}", program.prog_type());
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    pub fn take_program(&mut self, name: &str) -> Option<Program> {
+        self.programs.remove(name)
+    }
+
     /// An iterator over all the programs.
     ///
     /// # Examples
