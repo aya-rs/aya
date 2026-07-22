@@ -91,7 +91,8 @@ pub(crate) fn bpf_create_map(
                 | bpf_map_type::BPF_MAP_TYPE_SOCKHASH
                 | bpf_map_type::BPF_MAP_TYPE_QUEUE
                 | bpf_map_type::BPF_MAP_TYPE_STACK
-                | bpf_map_type::BPF_MAP_TYPE_RINGBUF,
+                | bpf_map_type::BPF_MAP_TYPE_RINGBUF
+                | bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF,
             ) => {
                 u.btf_key_type_id = 0;
                 u.btf_value_type_id = 0;
@@ -1614,6 +1615,7 @@ bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
     #[case::queue(bpf_map_type::BPF_MAP_TYPE_QUEUE)]
     #[case::stack(bpf_map_type::BPF_MAP_TYPE_STACK)]
     #[case::ringbuf(bpf_map_type::BPF_MAP_TYPE_RINGBUF)]
+    #[case::user_ringbuf(bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF)]
     fn test_btf_blocklist_strips_type_ids(#[case] map_type: bpf_map_type) {
         const BTF_FD: i32 = 42;
 
