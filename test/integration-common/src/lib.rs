@@ -67,11 +67,16 @@ pub mod fexit {
 pub mod bpf_probe_read {
     pub const RESULT_BUF_LEN: usize = 1024;
 
+    /// Sentinel stored in [`TestResult::len`] when the probe did not run to
+    /// completion. Negative values are helper errors; non-negative values are
+    /// the length read.
+    pub const LEN_UNSET: i64 = i64::MIN;
+
     #[derive(Copy, Clone)]
     #[repr(C)]
     pub struct TestResult {
         pub buf: [u8; RESULT_BUF_LEN],
-        pub len: Option<Result<usize, i32>>,
+        pub len: i64,
     }
 
     #[cfg(feature = "user")]

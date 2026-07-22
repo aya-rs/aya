@@ -136,3 +136,14 @@ mod private {
 pub trait Map: private::Map {}
 
 impl<T: private::Map> Map for T {}
+
+#[doc(hidden)]
+pub trait __MapLayout {
+    type Key;
+    type Value;
+}
+
+impl<T: private::Map> __MapLayout for T {
+    type Key = T::Key;
+    type Value = T::Value;
+}

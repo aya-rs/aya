@@ -90,8 +90,8 @@ fn set_kernel_buffer_element(bpf: &mut Ebpf, bytes: &[u8]) {
 fn result_bytes(bpf: &Ebpf) -> Vec<u8> {
     let m = Array::<_, TestResult>::try_from(bpf.map("RESULT").unwrap()).unwrap();
     let TestResult { buf, len } = m.get(&0, 0).unwrap();
-    let len = len.unwrap();
-    let len = len.unwrap();
+    // Negative values are helper errors, i64::MIN means the probe bailed out.
+    let len = usize::try_from(len).unwrap();
     // assert that the buffer is always null terminated
     assert_eq!(buf[len], 0);
     buf[..len].to_vec()
