@@ -1965,7 +1965,9 @@ impl aya_ebpf::programs::sk_buff::SkBuff
 pub fn aya_ebpf::programs::sk_buff::SkBuff::adjust_room(&self, i32, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::cb(&self) -> &[u32]
 pub fn aya_ebpf::programs::sk_buff::SkBuff::cb_mut(&mut self) -> &mut [u32]
+pub fn aya_ebpf::programs::sk_buff::SkBuff::change_head(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::change_proto(&self, u16, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::sk_buff::SkBuff::change_tail(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::change_type(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::sk_buff::SkBuff::clone_redirect(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::programs::sk_buff::SkBuff::family(&self) -> u32
@@ -2213,7 +2215,9 @@ impl aya_ebpf::programs::tc::TcContext
 pub fn aya_ebpf::programs::tc::TcContext::adjust_room(&self, i32, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::cb(&self) -> &[u32]
 pub fn aya_ebpf::programs::tc::TcContext::cb_mut(&mut self) -> &mut [u32]
+pub fn aya_ebpf::programs::tc::TcContext::change_head(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::change_proto(&self, u16, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::change_tail(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::change_type(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::clone_redirect(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::programs::tc::TcContext::data(&self) -> usize
@@ -2712,7 +2716,9 @@ impl aya_ebpf::programs::tc::TcContext
 pub fn aya_ebpf::programs::tc::TcContext::adjust_room(&self, i32, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::cb(&self) -> &[u32]
 pub fn aya_ebpf::programs::tc::TcContext::cb_mut(&mut self) -> &mut [u32]
+pub fn aya_ebpf::programs::tc::TcContext::change_head(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::change_proto(&self, u16, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
+pub fn aya_ebpf::programs::tc::TcContext::change_tail(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::change_type(&self, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub fn aya_ebpf::programs::tc::TcContext::clone_redirect(&self, u32, u64) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 pub const fn aya_ebpf::programs::tc::TcContext::data(&self) -> usize

@@ -6,8 +6,8 @@ use core::{
 
 use aya_ebpf_bindings::helpers::{
     bpf_clone_redirect, bpf_get_socket_uid, bpf_l3_csum_replace, bpf_l4_csum_replace,
-    bpf_skb_adjust_room, bpf_skb_change_proto, bpf_skb_change_type, bpf_skb_load_bytes,
-    bpf_skb_pull_data, bpf_skb_store_bytes,
+    bpf_skb_adjust_room, bpf_skb_change_head, bpf_skb_change_proto, bpf_skb_change_tail,
+    bpf_skb_change_type, bpf_skb_load_bytes, bpf_skb_pull_data, bpf_skb_store_bytes,
 };
 use aya_ebpf_cty::c_long;
 
@@ -154,6 +154,18 @@ impl SkBuff {
     #[inline]
     pub fn adjust_room(&self, len_diff: i32, mode: u32, flags: u64) -> Result<(), c_long> {
         let ret = unsafe { bpf_skb_adjust_room(self.as_raw_ptr(), len_diff, mode, flags) };
+        if ret == 0 { Ok(()) } else { Err(ret) }
+    }
+
+    #[inline]
+    pub fn change_head(&self, len: u32, flags: u64) -> Result<(), c_long> {
+        let ret = unsafe { bpf_skb_change_head(self.as_raw_ptr(), len, flags) };
+        if ret == 0 { Ok(()) } else { Err(ret) }
+    }
+
+    #[inline]
+    pub fn change_tail(&self, len: u32, flags: u64) -> Result<(), c_long> {
+        let ret = unsafe { bpf_skb_change_tail(self.as_raw_ptr(), len, flags) };
         if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
