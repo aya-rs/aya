@@ -159,13 +159,13 @@ impl SkBuff {
 
     #[inline]
     pub fn change_head(&self, len: u32, flags: u64) -> Result<(), c_long> {
-        let ret = unsafe { bpf_skb_change_head(self.skb, len, flags) };
+        let ret = unsafe { bpf_skb_change_head(self.as_raw_ptr(), len, flags) };
         if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
     #[inline]
     pub fn change_tail(&self, len: u32, flags: u64) -> Result<(), c_long> {
-        let ret = unsafe { bpf_skb_change_tail(self.skb, len, flags) };
+        let ret = unsafe { bpf_skb_change_tail(self.as_raw_ptr(), len, flags) };
         if ret == 0 { Ok(()) } else { Err(ret) }
     }
 
