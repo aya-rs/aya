@@ -93,4 +93,8 @@ bpf_file!(
 );
 
 #[cfg(test)]
+mod netlink;
+#[cfg(test)]
+mod netns;
+#[cfg(test)]
 mod tests;

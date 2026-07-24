@@ -12,19 +12,49 @@ use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use rstest::rstest;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
-#[rstest]
-#[case::legacy("SOCKS", "redirect_sock")]
-#[case::btf("SOCKS_BTF", "redirect_sock_btf")]
-#[test_attr(test_log::test)]
-fn af_xdp(#[case] socks_name: &str, #[case] prog_name: &str) {
-    let _netns = NetNsGuard::new().unwrap();
+use crate::netns::PeerNsGuard;
+
+// Sanity-check the veth + PeerNsGuard plumbing without any BPF programs.
+#[test_log::test]
+fn veth_connectivity() {
+    let (_netns, peer) = PeerNsGuard::with_netns();
+
+    const PAYLOAD: &[u8] = b"veth ok";
+
+    let sock = UdpSocket::bind((PeerNsGuard::IFACE_IP, 0)).unwrap();
+    let addr = sock.local_addr().unwrap();
+    sock.set_read_timeout(Some(Duration::from_secs(10)))
+        .unwrap();
+
+    peer.run(|| {
+        let sock = UdpSocket::bind((PeerNsGuard::PEER_IP, 0)).unwrap();
+        sock.send_to(PAYLOAD, addr).unwrap();
+    });
+
+    let mut buf = [0u8; PAYLOAD.len() + 1];
+    let n = sock.recv(&mut buf).unwrap();
+    assert_eq!(&buf[..n], PAYLOAD);
+}
+
+#[test_log::test]
+#[expect(
+    clippy::big_endian_bytes,
+    reason = "packet headers are encoded in network byte order"
+)]
+fn af_xdp() {
+    let (_netns, peer) = PeerNsGuard::with_netns();
 
     let mut bpf = Ebpf::load(crate::XSK_MAP).unwrap();
-    let mut socks: XskMap<_> = bpf.take_map(socks_name).unwrap().try_into().unwrap();
+    let mut socks: XskMap<_> = bpf.take_map("SOCKS").unwrap().try_into().unwrap();
 
-    let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
+    let xdp: &mut Xdp = bpf
+        .program_mut("redirect_sock")
+        .unwrap()
+        .try_into()
+        .unwrap();
     xdp.load().unwrap();
-    xdp.attach("lo", XdpMode::default()).unwrap();
+    xdp.attach(PeerNsGuard::IFACE_NAME, XdpMode::default())
+        .unwrap();
 
     const SIZE: usize = 2 * 4096;
 
@@ -42,7 +72,7 @@ fn af_xdp(#[case] socks_name: &str, #[case] prog_name: &str) {
     };
 
     let mut iface = IfInfo::invalid();
-    iface.from_name(c"lo").unwrap();
+    iface.from_name(c"veth0").unwrap();
     let sock = match Socket::with_shared(&iface, &umem) {
         Ok(sock) => sock,
         Err(err) => {
@@ -76,9 +106,13 @@ fn af_xdp(#[case] socks_name: &str, #[case] prog_name: &str) {
     writer.insert_once(frame1.offset);
     writer.commit();
 
-    let sock = UdpSocket::bind("127.0.0.1:0").unwrap();
-    let port = sock.local_addr().unwrap().port();
-    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    let dst = (PeerNsGuard::IFACE_IP, 1777u16);
+    let port = peer.run(|| {
+        let sock = UdpSocket::bind((PeerNsGuard::PEER_IP, 0)).unwrap();
+        let port = sock.local_addr().unwrap().port();
+        sock.send_to(b"hello AF_XDP", dst).unwrap();
+        port
+    });
 
     assert_eq!(rx.available(), 1);
     let desc = rx.receive(1).read().unwrap();
@@ -92,25 +126,26 @@ fn af_xdp(#[case] socks_name: &str, #[case] prog_name: &str) {
     assert_eq!(ip[9], 17); // UDP
     let (udp, payload) = buf.split_at(8);
     let ports = &udp[..4];
-    let (src, dst) = ports.split_at(2);
-    #[expect(
-        clippy::big_endian_bytes,
-        reason = "packet headers are encoded in network byte order"
-    )]
-    let (src_be, dst_be) = (port.to_be_bytes(), 1777u16.to_be_bytes());
-    assert_eq!(src, src_be.as_slice()); // Source
-    assert_eq!(dst, dst_be.as_slice()); // Dest
+    let (src, dst_port) = ports.split_at(2);
+    assert_eq!(src, port.to_be_bytes().as_slice()); // Source
+    assert_eq!(dst_port, 1777u16.to_be_bytes().as_slice()); // Dest
     assert_eq!(payload, b"hello AF_XDP");
 
     assert_eq!(rx.available(), 1);
     // Removes socket from map, no more packets will be redirected.
     socks.unset(0).unwrap();
     assert_eq!(rx.available(), 1);
-    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    peer.run(|| {
+        let sock = UdpSocket::bind((PeerNsGuard::PEER_IP, 0)).unwrap();
+        sock.send_to(b"hello AF_XDP", dst).unwrap();
+    });
     assert_eq!(rx.available(), 1);
     // Adds socket to map again, packets will be redirected again.
     socks.set(0, rx.as_raw_fd(), 0).unwrap();
-    sock.send_to(b"hello AF_XDP", "127.0.0.1:1777").unwrap();
+    peer.run(|| {
+        let sock = UdpSocket::bind((PeerNsGuard::PEER_IP, 0)).unwrap();
+        sock.send_to(b"hello AF_XDP", dst).unwrap();
+    });
     assert_eq!(rx.available(), 2);
 }
 
