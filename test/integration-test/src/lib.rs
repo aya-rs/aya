@@ -76,6 +76,7 @@ bpf_file!(
     SOCK_HASH => "sock_hash",
     SOCK_MAP => "sock_map",
     STRNCMP => "strncmp",
+    TC_CLASSID => "tc_classid",
     TCX => "tcx",
     TEST => "test",
     TEST_RUN => "test_run",
