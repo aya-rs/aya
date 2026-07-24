@@ -119,6 +119,15 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
         hash_map::get(self.inner.borrow(), key, flags)
     }
 
+    /// Returns `true` if the map contains a key matching the longest prefix.
+    pub fn contains_key(&self, key: &Key<K>, flags: u64) -> Result<bool, MapError> {
+        match self.get(key, flags) {
+            Ok(_) => Ok(true),
+            Err(MapError::KeyNotFound) => Ok(false),
+            Err(e) => Err(e),
+        }
+    }
+
     /// An iterator visiting all key-value pairs. The
     /// iterator item type is `Result<(K, V), MapError>`.
     pub fn iter(&self) -> MapIter<'_, Key<K>, V, Self> {
