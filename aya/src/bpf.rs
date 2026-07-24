@@ -1,14 +1,14 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    fs, io,
+    fs, io, iter,
     os::fd::{AsFd as _, AsRawFd as _},
     path::{Path, PathBuf},
     sync::{Arc, LazyLock},
 };
 
 use aya_obj::{
-    EbpfSectionKind, Features, Object, ParseError, ProgramSection,
+    EbpfSectionKind, Features, KsymsError, Object, ParseError, ProgramSection,
     btf::{Btf, BtfError, BtfFeatures, BtfRelocationError},
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
@@ -102,12 +102,9 @@ pub fn features() -> &'static Features {
 /// # Examples
 ///
 /// ```no_run
-/// use aya::{EbpfLoader, Btf};
-/// use std::fs;
+/// use aya::EbpfLoader;
 ///
 /// let bpf = EbpfLoader::new()
-///     // load the BTF data from /sys/kernel/btf/vmlinux
-///     .btf(Btf::from_sys_fs().ok().as_ref())
 ///     // load pinned maps from /sys/fs/bpf/my-program
 ///     .default_map_pin_directory("/sys/fs/bpf/my-program")
 ///     // finally load the code
@@ -160,7 +157,7 @@ impl<'a> EbpfLoader<'a> {
     /// Creates a new loader instance.
     pub fn new() -> Self {
         Self {
-            btf: Btf::from_sys_fs().ok().map(Cow::Owned),
+            btf: None,
             default_map_pin_directory: None,
             globals: HashMap::new(),
             max_entries: HashMap::new(),
@@ -173,9 +170,10 @@ impl<'a> EbpfLoader<'a> {
 
     /// Sets the target [BTF](Btf) info.
     ///
-    /// The loader defaults to loading `BTF` info using [`Btf::from_sys_fs`].
-    /// Use this method if you want to load `BTF` from a custom location or
-    /// pass `None` to disable `BTF` relocations entirely.
+    /// By default, the loader reads target `BTF` using [`Btf::from_sys_fs`] when
+    /// the object contains CO-RE relocations or typed kernel symbols. Use this
+    /// method to load `BTF` from a custom location.
+    ///
     /// # Example
     ///
     /// ```no_run
@@ -183,13 +181,16 @@ impl<'a> EbpfLoader<'a> {
     ///
     /// let bpf = EbpfLoader::new()
     ///     // load the BTF data from a custom location
-    ///     .btf(Btf::parse_file("/custom_btf_file", Endianness::default()).ok().as_ref())
+    ///     .btf(&Btf::parse_file(
+    ///         "/custom_btf_file",
+    ///         Endianness::default(),
+    ///     )?)
     ///     .load_file("file.o")?;
     ///
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
-    pub fn btf(&mut self, btf: Option<&'a Btf>) -> &mut Self {
-        self.btf = btf.map(Cow::Borrowed);
+    pub fn btf(&mut self, btf: &'a Btf) -> &mut Self {
+        self.btf = Some(Cow::Borrowed(btf));
         self
     }
 
@@ -492,41 +493,111 @@ impl<'a> EbpfLoader<'a> {
             None
         };
 
-        if let Some(btf) = &btf {
+        if btf.is_none() && (obj.has_btf_relocations() || obj.has_typed_ksyms()) {
+            match Btf::from_sys_fs() {
+                Ok(kernel_btf) => *btf = Some(Cow::Owned(kernel_btf)),
+                Err(err) => {
+                    // CO-RE relocations and strong typed ksyms cannot be resolved without kernel
+                    // BTF, so preserve the original loading error.
+                    if obj.has_btf_relocations() || obj.has_strong_typed_ksyms() {
+                        return Err(err.into());
+                    }
+
+                    // Unresolved weak typed ksyms are allowed and handled during extern
+                    // relocation.
+                    warn!("kernel BTF is unavailable; weak typed ksyms will be unresolved: {err}")
+                }
+            }
+        }
+
+        let btf = btf.as_deref();
+        if let Some(btf) = btf {
             obj.relocate_btf(btf)?;
         }
-        let mut maps = HashMap::new();
-        for (name, mut obj) in obj.maps.drain() {
+
+        obj.resolve_externs(btf)?;
+
+        const fn is_map_of_maps(map_type: bpf_map_type) -> bool {
+            matches!(
+                map_type,
+                bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS | bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS
+            )
+        }
+
+        // The kernel requires inner_map_fd when creating map-of-maps, so inner
+        // maps must be created first. Partition into regular maps and map-of-maps.
+        let mut regular_maps: Vec<(String, aya_obj::Map)> = Vec::new();
+        let mut maps_of_maps: Vec<(String, aya_obj::Map)> = Vec::new();
+
+        for (name, map_obj) in obj.maps.drain() {
             if let (false, EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata) =
-                (FEATURES.bpf_global_data(), obj.section_kind())
+                (FEATURES.bpf_global_data(), map_obj.section_kind())
             {
                 continue;
             }
+            let map_type: bpf_map_type = map_obj.map_type().try_into().map_err(MapError::from)?;
+            if is_map_of_maps(map_type) {
+                maps_of_maps.push((name, map_obj));
+            } else {
+                regular_maps.push((name, map_obj));
+            }
+        }
+
+        let mut maps: HashMap<String, MapData> = HashMap::new();
+
+        // Regular maps first, so they're available as inner maps below.
+        for ((name, mut map_obj), is_map_of_maps) in regular_maps
+            .into_iter()
+            .zip(iter::repeat(false))
+            .chain(maps_of_maps.into_iter().zip(iter::repeat(true)))
+        {
             let num_cpus = || {
                 Ok(nr_cpus().map_err(|(path, error)| EbpfError::FileError {
                     path: PathBuf::from(path),
                     error,
                 })? as u32)
             };
-            let map_type: bpf_map_type = obj.map_type().try_into().map_err(MapError::from)?;
-            if let Some(max_entries) = max_entries_override(
+            let map_type: bpf_map_type = map_obj.map_type().try_into().map_err(MapError::from)?;
+            if let Some(max_entries_val) = max_entries_override(
                 map_type,
                 max_entries.get(name.as_str()).copied(),
-                || obj.max_entries(),
+                || map_obj.max_entries(),
                 num_cpus,
                 || page_size() as u32,
             )? {
-                obj.set_max_entries(max_entries)
+                map_obj.set_max_entries(max_entries_val)
             }
             if let Some(value_size) = value_size_override(map_type) {
-                obj.set_value_size(value_size)
+                map_obj.set_value_size(value_size)
             }
+
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
-            let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
-                MapData::create_pinned_by_name(pin_path, obj, &name, btf_fd)?
+
+            // Defer inner map creation to avoid a BPF_MAP_CREATE when the outer map is already pinned.
+            let inner_map_obj = if is_map_of_maps {
+                Some(map_obj.inner().ok_or_else(|| {
+                    EbpfError::MapError(MapError::MissingInnerMapDefinition {
+                        outer_name: name.clone(),
+                    })
+                })?)
             } else {
-                match obj.pinning() {
-                    PinningType::None => MapData::create(obj, &name, btf_fd)?,
+                None
+            };
+            let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
+                MapData::create_pinned_by_name(pin_path, map_obj, &name, btf_fd, inner_map_obj)?
+            } else {
+                match map_obj.pinning() {
+                    PinningType::None => {
+                        let btf_inner_map;
+                        let inner_map_fd = if let Some(inner) = inner_map_obj {
+                            btf_inner_map =
+                                MapData::create(inner, &format!("{name}.inner"), btf_fd)?;
+                            Some(btf_inner_map.fd().as_fd())
+                        } else {
+                            None
+                        };
+                        MapData::create_with_inner_map_fd(map_obj, &name, btf_fd, inner_map_fd)?
+                    }
                     PinningType::ByName => {
                         // pin maps in /sys/fs/bpf by default to align with libbpf
                         // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
@@ -535,7 +606,7 @@ impl<'a> EbpfLoader<'a> {
                             .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
                         let path = path.join(&name);
 
-                        MapData::create_pinned_by_name(path, obj, &name, btf_fd)?
+                        MapData::create_pinned_by_name(path, map_obj, &name, btf_fd, inner_map_obj)?
                     }
                 }
             };
@@ -554,6 +625,9 @@ impl<'a> EbpfLoader<'a> {
                 .map(|(s, data)| (s.as_str(), data.fd().as_fd().as_raw_fd(), data.obj())),
             &text_sections,
         )?;
+
+        obj.relocate_externs()?;
+
         obj.relocate_calls(&text_sections)?;
         obj.sanitize_functions(&FEATURES);
 
@@ -754,6 +828,11 @@ fn parse_map(
         bpf_map_type::BPF_MAP_TYPE_ARRAY => Map::Array(map),
         bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY => Map::PerCpuArray(map),
         bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY => Map::ProgramArray(map),
+        bpf_map_type::BPF_MAP_TYPE_CGROUP_ARRAY => Map::CgroupArray(map),
+        bpf_map_type::BPF_MAP_TYPE_CGROUP_STORAGE_DEPRECATED => Map::CgroupStorage(map),
+        bpf_map_type::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED => {
+            Map::PerCpuCgroupStorage(map)
+        }
         bpf_map_type::BPF_MAP_TYPE_HASH => Map::HashMap(map),
         bpf_map_type::BPF_MAP_TYPE_LRU_HASH => Map::LruHashMap(map),
         bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH => Map::PerCpuHashMap(map),
@@ -773,6 +852,10 @@ fn parse_map(
         bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => Map::DevMapHash(map),
         bpf_map_type::BPF_MAP_TYPE_XSKMAP => Map::XskMap(map),
         bpf_map_type::BPF_MAP_TYPE_SK_STORAGE => Map::SkStorage(map),
+        bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE => Map::InodeStorage(map),
+        bpf_map_type::BPF_MAP_TYPE_CGRP_STORAGE => Map::CgrpStorage(map),
+        bpf_map_type::BPF_MAP_TYPE_ARRAY_OF_MAPS => Map::ArrayOfMaps(map),
+        bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS => Map::HashOfMaps(map),
         m_type => {
             if allow_unsupported_maps {
                 Map::Unsupported(map)
@@ -929,9 +1012,7 @@ impl Ebpf {
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn load_file<P: AsRef<Path>>(path: P) -> Result<Self, EbpfError> {
-        EbpfLoader::new()
-            .btf(Btf::from_sys_fs().ok().as_ref())
-            .load_file(path)
+        EbpfLoader::new().load_file(path)
     }
 
     /// Loads eBPF bytecode from a buffer.
@@ -958,9 +1039,7 @@ impl Ebpf {
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn load(data: &[u8]) -> Result<Self, EbpfError> {
-        EbpfLoader::new()
-            .btf(Btf::from_sys_fs().ok().as_ref())
-            .load(data)
+        EbpfLoader::new().load(data)
     }
 
     /// Returns a reference to the map with the given name.
@@ -1187,6 +1266,10 @@ pub enum EbpfError {
     /// Error performing relocations
     #[error("error relocating section")]
     BtfRelocationError(#[from] BtfRelocationError),
+
+    /// Error resolving extern kernel symbols.
+    #[error("kernel symbol error: {0}")]
+    KsymsError(#[from] KsymsError),
 
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]

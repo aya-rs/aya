@@ -4,7 +4,7 @@ documentation = "https://docs.rs/aya-obj"
 keywords = ["bpf", "btf", "ebpf", "elf", "object"]
 name = "aya-obj"
 readme = "README.md"
-version = "0.2.2"
+version = "0.3.0"
 
 authors.workspace = true
 edition.workspace = true

@@ -18,11 +18,37 @@ concurrency:
 permissions: {}
 
 jobs:
+  bazel:
+    name: bazel (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Test
+        run: |
+          set -euo pipefail
+          bazel_args=(
+            --config=remote
+            # This key is intentionally public so fork pull requests can use BuildBuddy.
+            --remote_header=x-buildbuddy-api-key=5CeVmFS0jDnutd00x9Xl
+          )
+
+          bazel test //... "${bazel_args[@]}"
+
   lint:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@nightly
         with:
@@ -32,13 +58,15 @@ jobs:
 
       - uses: taiki-e/install-action@v2
         with:
-          tool: cargo-hack,taplo-cli
+          tool: cargo-hack,taplo-cli,typos-cli
 
       - run: git ls-files -- '*.c' '*.h' | xargs clang-format --dry-run --Werror
 
-      - uses: DavidAnson/markdownlint-cli2-action@v23
+      - uses: DavidAnson/markdownlint-cli2-action@v24
 
       - run: taplo fmt --check
+
+      - run: typos
 
       - run: cargo +nightly fmt --all -- --check
 
@@ -76,7 +104,7 @@ jobs:
       - name: Run miri
         run: |
           set -euxo pipefail
-          cargo +nightly hack miri test --all-targets --feature-powerset \
+          cargo +nightly hack --locked miri test --all-targets --feature-powerset \
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
@@ -98,7 +126,7 @@ jobs:
           - x86_64-unknown-linux-gnu
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -128,7 +156,7 @@ jobs:
           CFLAGS_armv7_unknown_linux_gnueabi: "-U_TIME_BITS -D_FILE_OFFSET_BITS=64"
         run: |
           set -euxo pipefail
-          cargo hack build --all-targets --feature-powerset \
+          cargo hack --locked build --all-targets --feature-powerset \
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
@@ -141,7 +169,7 @@ jobs:
           RUST_BACKTRACE: full
         run: |
           set -euxo pipefail
-          cargo hack test --all-targets \
+          cargo hack --locked test --all-targets \
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
@@ -154,7 +182,7 @@ jobs:
           RUST_BACKTRACE: full
         run: |
           set -euxo pipefail
-          cargo hack test --doc \
+          cargo hack --locked test --doc \
             --exclude aya-ebpf \
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
@@ -166,7 +194,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@nightly
         with:
@@ -200,7 +228,7 @@ jobs:
             for target in bpfeb-unknown-none bpfel-unknown-none; do
               echo "::group::target=$target"
               if ! (
-                cargo +nightly hack build \
+                cargo +nightly hack --locked build \
                   --release \
                   --target "$target" \
                   -Z build-std=core \
@@ -215,7 +243,7 @@ jobs:
               echo "::endgroup::"
             done
             if ! (
-              RUSTDOCFLAGS=$RUSTFLAGS cargo +nightly hack test --doc \
+              RUSTDOCFLAGS=$RUSTFLAGS cargo +nightly hack --locked test --doc \
                 --package aya-ebpf \
                 --package aya-ebpf-bindings \
                 --package aya-log-ebpf \
@@ -272,7 +300,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -306,6 +334,7 @@ jobs:
         run: |
           set -euxo pipefail
           # Dependencies are tracked in `Brewfile`.
+          brew trust --formula filosottile/musl-cross/musl-cross
           brew bundle
           echo $(brew --prefix curl)/bin >> $GITHUB_PATH
           echo $(brew --prefix llvm)/bin >> $GITHUB_PATH
@@ -330,7 +359,7 @@ jobs:
           tool: cargo-binstall,cargo-hack
       - run: cargo binstall --force bpf-linker
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@v6
         with:
           path: test/.tmp
           key: ${{ runner.arch }}-${{ runner.os }}-test-cache-${{ matrix.download-kernel-images }}
@@ -361,6 +390,7 @@ jobs:
   check:
     if: always()
     needs:
+      - bazel
       - lint
       - build-test-aya
       - build-test-aya-ebpf

@@ -41,6 +41,22 @@ name = "btf_maps_plain"
 path = "src/btf_maps_plain.rs"
 
 [[bin]]
+name = "cpu_map"
+path = "src/cpu_map.rs"
+
+[[bin]]
+name = "dev_map"
+path = "src/dev_map.rs"
+
+[[bin]]
+name = "fexit"
+path = "src/fexit.rs"
+
+[[bin]]
+name = "hash_map"
+path = "src/hash_map.rs"
+
+[[bin]]
 name = "kprobe"
 path = "src/kprobe.rs"
 
@@ -89,10 +105,6 @@ name = "raw_tracepoint"
 path = "src/raw_tracepoint.rs"
 
 [[bin]]
-name = "redirect"
-path = "src/redirect.rs"
-
-[[bin]]
 name = "relocations"
 path = "src/relocations.rs"
 
@@ -105,12 +117,24 @@ name = "sk_storage"
 path = "src/sk_storage.rs"
 
 [[bin]]
+name = "sock_hash"
+path = "src/sock_hash.rs"
+
+[[bin]]
+name = "sock_map"
+path = "src/sock_map.rs"
+
+[[bin]]
 name = "simple_prog"
 path = "src/simple_prog.rs"
 
 [[bin]]
 name = "sk_reuseport"
 path = "src/sk_reuseport.rs"
+
+[[bin]]
+name = "socket_filter"
+path = "src/socket_filter.rs"
 
 [[bin]]
 name = "strncmp"
@@ -123,6 +147,10 @@ path = "src/tcx.rs"
 [[bin]]
 name = "test"
 path = "src/test.rs"
+
+[[bin]]
+name = "test_run"
+path = "src/test_run.rs"
 
 [[bin]]
 name = "two_progs"
@@ -155,3 +183,27 @@ path = "src/stack_trace.rs"
 [[bin]]
 name = "stack_trace_lsm"
 path = "src/stack_trace_lsm.rs"
+
+[[bin]]
+name = "btf_map_of_maps"
+path = "src/btf_map_of_maps.rs"
+
+[[bin]]
+name = "xsk_map"
+path = "src/xsk_map.rs"
+
+[[bin]]
+name = "cgroup_array"
+path = "src/cgroup_array.rs"
+
+[[bin]]
+name = "cgroup_storage"
+path = "src/cgroup_storage.rs"
+
+[[bin]]
+name = "inode_storage"
+path = "src/inode_storage.rs"
+
+[[bin]]
+name = "cgrp_storage"
+path = "src/cgrp_storage.rs"

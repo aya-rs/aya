@@ -4,7 +4,7 @@ documentation = "https://docs.rs/aya"
 keywords = ["bpf", "ebpf", "kernel", "linux"]
 name = "aya"
 readme = "README.md"
-version = "0.13.2"
+version = "0.14.0"
 
 authors.workspace = true
 edition.workspace = true
@@ -17,23 +17,28 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+anyhow = { workspace = true, optional = true }
 assert_matches = { workspace = true }
-aya-obj = { path = "../aya-obj", version = "^0.2.2" }
+aya-obj = { path = "../aya-obj", version = "^0.3.0" }
 bitflags = { workspace = true }
-bytes = { workspace = true }
 # TODO(https://github.com/rust-lang/rust/issues/60896): Remove once
 # `std::collections::hash_set::Entry` is stabilized.
 hashbrown = { workspace = true, features = ["default-hasher", "equivalent"] }
 libc = { workspace = true }
 log = { workspace = true }
+nix = { workspace = true, features = ["mount", "sched"], optional = true }
 object = { workspace = true, features = ["elf", "read_core", "std", "write"] }
 once_cell = { workspace = true }
+scopeguard = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
 nix = { workspace = true, features = ["net", "socket"] }
+rstest = { workspace = true }
 tempfile = { workspace = true }
-test-case = { workspace = true }
+
+[features]
+test-helpers = ["dep:anyhow", "dep:nix"]
 
 [package.metadata.docs.rs]
 all-features = true

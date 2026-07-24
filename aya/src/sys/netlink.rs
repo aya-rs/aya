@@ -7,8 +7,9 @@ use std::{
 
 use aya_obj::generated::{
     IFLA_XDP_EXPECTED_FD, IFLA_XDP_FD, IFLA_XDP_FLAGS, NLMSG_ALIGNTO, TC_H_CLSACT, TC_H_INGRESS,
-    TC_H_MAJ_MASK, TC_H_UNSPEC, TCA_BPF_FD, TCA_BPF_FLAG_ACT_DIRECT, TCA_BPF_FLAGS, TCA_BPF_NAME,
-    TCA_KIND, TCA_OPTIONS, XDP_FLAGS_REPLACE, ifinfomsg, nlmsgerr_attrs::NLMSGERR_ATTR_MSG, tcmsg,
+    TC_H_MAJ_MASK, TC_H_UNSPEC, TCA_BPF_CLASSID, TCA_BPF_FD, TCA_BPF_FLAG_ACT_DIRECT,
+    TCA_BPF_FLAGS, TCA_BPF_NAME, TCA_KIND, TCA_OPTIONS, XDP_FLAGS_REPLACE,
+    XDP_FLAGS_UPDATE_IF_NOEXIST, ifinfomsg, nlmsgerr_attrs::NLMSGERR_ATTR_MSG, tcmsg,
 };
 use libc::{
     AF_NETLINK, AF_UNSPEC, ETH_P_ALL, IFF_UP, IFLA_XDP, NETLINK_CAP_ACK, NETLINK_EXT_ACK,
@@ -21,7 +22,7 @@ use thiserror::Error;
 
 use crate::{
     Pod,
-    programs::TcAttachType,
+    programs::{TcAttachType, TcHandle, XdpMode},
     util::{bytes_of, tc_handler_make},
 };
 
@@ -45,12 +46,15 @@ const NLA_HDR_ALIGN_LEN: usize = nla_align!(NLA_HDR_LEN);
 const CLS_BPF_NAME_LEN: usize = 256;
 
 // Size of the attribute buffer needed by write_tc_attach_attrs:
-// TCA_KIND + nested TCA_OPTIONS containing TCA_BPF_FD, TCA_BPF_NAME, TCA_BPF_FLAGS.
+// TCA_KIND + nested TCA_OPTIONS containing TCA_BPF_CLASSID, TCA_BPF_FD,
+// TCA_BPF_NAME, TCA_BPF_FLAGS.
 const fn tc_request_attrs_size() -> usize {
     // TCA_KIND
     NLA_HDR_ALIGN_LEN + nla_align!(c"bpf".to_bytes_with_nul().len())
     // TCA_OPTIONS header
     + NLA_HDR_ALIGN_LEN
+    // TCA_BPF_CLASSID
+    + NLA_HDR_ALIGN_LEN + nla_align!(size_of::<u32>())
     // TCA_BPF_FD
     + NLA_HDR_ALIGN_LEN + nla_align!(size_of::<i32>())
     // TCA_BPF_NAME
@@ -59,7 +63,7 @@ const fn tc_request_attrs_size() -> usize {
     + NLA_HDR_ALIGN_LEN + nla_align!(size_of::<u32>())
 }
 
-const _: () = assert!(tc_request_attrs_size() == 288);
+const _: () = assert!(tc_request_attrs_size() == 296);
 
 /// A private error type for internal use in this module.
 #[derive(Error, Debug)]
@@ -79,13 +83,13 @@ pub(crate) enum NetlinkErrorInternal {
 /// An error occurred during a netlink operation.
 #[derive(Error, Debug)]
 #[error(transparent)]
-#[expect(
-    unnameable_types,
-    reason = "the internal error is crate-private but transparently wrapped"
-)]
 pub struct NetlinkError(#[from] NetlinkErrorInternal);
 
 impl NetlinkError {
+    /// Returns the raw OS error code, if one is available.
+    ///
+    /// Returns `None` if the error does not wrap an OS error (e.g. buffer
+    /// length or header length errors from the netlink attribute parser).
     pub fn raw_os_error(&self) -> Option<i32> {
         let Self(inner) = self;
         match inner {
@@ -106,8 +110,8 @@ impl NetlinkError {
 pub(crate) unsafe fn netlink_set_xdp_fd(
     if_index: i32,
     fd: Option<BorrowedFd<'_>>,
-    old_fd: Option<BorrowedFd<'_>>,
-    flags: u32,
+    expected_fd: Option<BorrowedFd<'_>>,
+    mode: XdpMode,
 ) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
@@ -132,18 +136,21 @@ pub(crate) unsafe fn netlink_set_xdp_fd(
         .write_attr(IFLA_XDP_FD as u16, fd.map_or(-1, |fd| fd.as_raw_fd()))
         .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
 
-    if flags > 0 {
+    let flags = mode.flags() | XDP_FLAGS_UPDATE_IF_NOEXIST;
+    let (flags, expected_fd) = match expected_fd {
+        None => (flags, None),
+        Some(fd) => (flags | XDP_FLAGS_REPLACE, Some(fd.as_raw_fd())),
+    };
+
+    if flags != 0 {
         attrs
             .write_attr(IFLA_XDP_FLAGS as u16, flags)
             .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
     }
 
-    if flags & XDP_FLAGS_REPLACE != 0 {
+    if let Some(expected_fd) = expected_fd {
         attrs
-            .write_attr(
-                IFLA_XDP_EXPECTED_FD as u16,
-                old_fd.map(|fd| fd.as_raw_fd()).unwrap(),
-            )
+            .write_attr(IFLA_XDP_EXPECTED_FD as u16, expected_fd)
             .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
     }
 
@@ -197,13 +204,23 @@ fn write_tc_attach_attrs(
     nlmsg_len: usize,
     prog_fd: i32,
     prog_name: &[u8],
+    classid: Option<TcHandle>,
 ) -> io::Result<()> {
+    if prog_name.len() > CLS_BPF_NAME_LEN {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "program name exceeds CLS_BPF_NAME_LEN",
+        ));
+    }
     let attrs_buf = unsafe { request_attributes(req, nlmsg_len) };
 
     let (attrs_buf, kind_len) =
         write_attr_bytes(attrs_buf, TCA_KIND as u16, c"bpf".to_bytes_with_nul())?;
 
     let mut options = NestedAttrs::new(attrs_buf, TCA_OPTIONS as u16);
+    if let Some(classid) = classid {
+        options.write_attr(TCA_BPF_CLASSID as u16, u32::from(classid))?;
+    }
     options.write_attr(TCA_BPF_FD as u16, prog_fd)?;
     options.write_attr_bytes(TCA_BPF_NAME as u16, prog_name)?;
     options.write_attr(TCA_BPF_FLAGS as u16, TCA_BPF_FLAG_ACT_DIRECT)?;
@@ -213,15 +230,17 @@ fn write_tc_attach_attrs(
     Ok(())
 }
 
+#[expect(clippy::too_many_arguments, reason = "internal netlink helper")]
 pub(crate) unsafe fn netlink_qdisc_attach(
     if_index: i32,
     attach_type: &TcAttachType,
     prog_fd: BorrowedFd<'_>,
     prog_name: &CStr,
     priority: u16,
-    handle: u32,
+    handle: TcHandle,
+    classid: Option<TcHandle>,
     create: bool,
-) -> Result<(u16, u32), NetlinkError> {
+) -> Result<(u16, TcHandle), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
     let mut req = unsafe { mem::zeroed::<TcRequest>() };
@@ -248,7 +267,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         nlmsg_seq: 1,
     };
     req.tc_info.tcm_family = AF_UNSPEC as u8;
-    req.tc_info.tcm_handle = handle; // auto-assigned, if zero
+    req.tc_info.tcm_handle = handle.into();
     req.tc_info.tcm_ifindex = if_index;
     req.tc_info.tcm_parent = attach_type.tc_parent();
     req.tc_info.tcm_info = tc_handler_make(
@@ -261,6 +280,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         nlmsg_len,
         prog_fd.as_raw_fd(),
         prog_name.to_bytes_with_nul(),
+        classid,
     )
     .map_err(|e| NetlinkError(NetlinkErrorInternal::IoError(e)))?;
     sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
@@ -282,7 +302,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
         ))),
         [tc_msg] => {
             let priority = ((tc_msg.tcm_info & TC_H_MAJ_MASK) >> 16) as u16;
-            Ok((priority, tc_msg.tcm_handle))
+            Ok((priority, tc_msg.tcm_handle.into()))
         }
         _tc_msg => Err(NetlinkError(NetlinkErrorInternal::IoError(
             io::Error::other(
@@ -296,7 +316,7 @@ pub(crate) unsafe fn netlink_qdisc_detach(
     if_index: i32,
     attach_type: TcAttachType,
     priority: u16,
-    handle: u32,
+    handle: TcHandle,
 ) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
@@ -311,7 +331,7 @@ pub(crate) unsafe fn netlink_qdisc_detach(
     };
 
     req.tc_info.tcm_family = AF_UNSPEC as u8;
-    req.tc_info.tcm_handle = handle; // auto-assigned, if zero
+    req.tc_info.tcm_handle = handle.into();
     req.tc_info.tcm_info = tc_handler_make(
         u32::from(priority) << 16,
         u32::from(htons(ETH_P_ALL as u16)),
@@ -333,7 +353,7 @@ pub(crate) fn netlink_find_filter_with_name(
     if_index: i32,
     attach_type: TcAttachType,
     name: &CStr,
-) -> Result<impl Iterator<Item = Result<(u16, u32), NetlinkError>>, NetlinkError> {
+) -> Result<impl Iterator<Item = Result<(u16, TcHandle), NetlinkError>>, NetlinkError> {
     let mut req = unsafe { mem::zeroed::<TcRequest>() };
 
     let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
@@ -391,7 +411,7 @@ pub(crate) fn netlink_find_filter_with_name(
                         if f_name != name {
                             continue;
                         }
-                        filter = Some((priority, tc_msg.tcm_handle));
+                        filter = Some((priority, tc_msg.tcm_handle.into()));
                     }
                 }
                 Ok(filter)
@@ -829,7 +849,7 @@ unsafe fn request_attributes<T>(req: &mut T, msg_len: usize) -> &mut [u8] {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    use rstest::rstest;
 
     use super::*;
 
@@ -951,35 +971,59 @@ mod tests {
         assert_eq!(name.to_str().unwrap(), "foo");
     }
 
-    fn tc_request(name: &[u8]) -> io::Result<()> {
+    fn tc_request(name: &[u8], classid: Option<TcHandle>) -> io::Result<TcRequest> {
         let mut req = unsafe { mem::zeroed::<TcRequest>() };
         let nlmsg_len = size_of::<nlmsghdr>() + size_of::<tcmsg>();
         req.header.nlmsg_len = nlmsg_len as u32;
 
-        write_tc_attach_attrs(&mut req, nlmsg_len, 0, name)
+        write_tc_attach_attrs(&mut req, nlmsg_len, 0, name, classid)?;
+        Ok(req)
     }
 
-    /// Verify that [`TcRequest`] fits all the attributes [`write_tc_attach_attrs`]
-    /// writes, even with the kernel's maximum TC name length (`CLS_BPF_NAME_LEN`).
+    fn classid_in_request(req: &TcRequest) -> Option<TcHandle> {
+        let attrs_len = req.header.nlmsg_len as usize - size_of::<nlmsghdr>() - size_of::<tcmsg>();
+        let attrs = &req.attrs[..attrs_len];
+
+        let options = NlAttrsIterator::new(attrs)
+            .filter_map(Result::ok)
+            .find(|a| a.header.nla_type & NLA_TYPE_MASK as u16 == TCA_OPTIONS as u16)?;
+
+        let classid = NlAttrsIterator::new(options.data)
+            .filter_map(Result::ok)
+            .find(|a| a.header.nla_type & NLA_TYPE_MASK as u16 == TCA_BPF_CLASSID as u16)?;
+
+        let raw = u32::from_ne_bytes(classid.data.try_into().ok()?);
+        Some(raw.into())
+    }
+
+    /// Verify that [`TcRequest`] fits a `CLS_BPF_NAME_LEN`-byte program name.
     ///
     /// Before the buffer was enlarged, serializing the netlink attributes for
     /// long names failed with "no space left".
     #[test]
     fn tc_request_fits_max_length_name() {
-        assert_matches!(tc_request(&[b'a'; CLS_BPF_NAME_LEN]), Ok(()));
+        tc_request(&[b'a'; CLS_BPF_NAME_LEN], None).unwrap();
     }
 
-    /// Verify that a name exceeding `CLS_BPF_NAME_LEN` is rejected.
+    /// Verify that a name exceeding `CLS_BPF_NAME_LEN` is rejected before the
+    /// netlink request is built.
     #[test]
     fn tc_request_rejects_oversized_name() {
-        // One byte over the kernel's maximum — the attribute buffer is sized
-        // exactly for CLS_BPF_NAME_LEN, so this should fail with "no space left".
-        assert_matches!(
-            tc_request(&[b'a'; CLS_BPF_NAME_LEN + 1]),
-            Err(err) => {
-                assert_eq!(err.kind(), io::ErrorKind::Other);
-                assert_eq!(err.to_string(), "no space left");
-            }
-        );
+        let Err(err) = tc_request(&[b'a'; CLS_BPF_NAME_LEN + 1], None) else {
+            panic!("expected oversized name to be rejected");
+        };
+        assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
+        assert_eq!(err.to_string(), "program name exceeds CLS_BPF_NAME_LEN");
+    }
+
+    /// Verify that the `classid` value supplied to [`write_tc_attach_attrs`]
+    /// round-trips through the serialized netlink attributes. The absent case
+    /// mirrors iproute2's behavior when `classid` is not on the command line.
+    #[rstest]
+    #[case::set(Some(TcHandle::new(1, 1)))]
+    #[case::unset(None)]
+    fn tc_request_classid_serialization(#[case] classid: Option<TcHandle>) {
+        let req = tc_request(b"foo\0", classid).unwrap();
+        assert_eq!(classid_in_request(&req), classid);
     }
 }

@@ -39,11 +39,11 @@ use crate::{
 /// Three strategies are possible:
 ///
 /// - Reduce the RX queue count to a single one. This option is great for development, but is
-///   detrimental for performance as the single CPU core recieving packets will get overwhelmed.
+///   detrimental for performance as the single CPU core receiving packets will get overwhelmed.
 ///   Setting the queue count for a NIC can be achieved using `ethtool -L <ifname> combined 1`.
 /// - Create a socket for every RX queue. Most modern NICs will have an RX queue per CPU thread, so
 ///   a socket per CPU thread is best for performance. To dynamically size the map depending on the
-///   recieve queue count, see the userspace documentation of `CpuMap`.
+///   receive queue count, see the userspace documentation of `CpuMap`.
 /// - Create a single socket and use a [`CpuMap`](super::CpuMap) to redirect the packet to the
 ///   correct CPU core. This way, the packet is sent to another CPU, and a chained XDP program can
 ///   the redirect to the `AF_XDP` socket. Using a single socket simplifies the userspace code but
@@ -52,6 +52,11 @@ use crate::{
 #[repr(transparent)]
 pub struct XskMap {
     def: MapDef,
+}
+
+impl super::super::private::Map for XskMap {
+    type Key = u32;
+    type Value = u32;
 }
 
 impl XskMap {

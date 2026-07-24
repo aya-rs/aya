@@ -5,11 +5,10 @@ use aya::{
     EbpfLoader,
     maps::{MapError, SkStorage},
     programs::{CgroupAttachMode, CgroupSockAddr},
+    test_helpers::{Cgroup, NetNsGuard},
 };
 use integration_common::sk_storage::{Ip, Value};
 use test_log::test;
-
-use crate::utils::{Cgroup, NetNsGuard};
 
 #[test]
 fn sk_storage_connect() {
@@ -18,10 +17,10 @@ fn sk_storage_connect() {
     let storage = ebpf.take_map("SOCKET_STORAGE").unwrap();
     let mut storage = SkStorage::<_, Value>::try_from(storage).unwrap();
 
-    let _netns = NetNsGuard::new();
-    let root_cgroup = Cgroup::root();
-    let cgroup = root_cgroup.create_child("aya-test-sk-storage");
-    let cgroup_fd = cgroup.fd();
+    let _netns = NetNsGuard::new().unwrap();
+    let root_cgroup = Cgroup::root().unwrap();
+    let cgroup = root_cgroup.create_child("aya-test-sk-storage").unwrap();
+    let cgroup_fd = cgroup.fd().unwrap();
 
     let guards = ebpf
         .programs_mut()
@@ -29,7 +28,7 @@ fn sk_storage_connect() {
             let prog: &mut CgroupSockAddr = prog.try_into().expect(name);
             prog.load().expect(name);
             let link_id = prog
-                .attach(cgroup_fd, CgroupAttachMode::Single)
+                .attach(&cgroup_fd, CgroupAttachMode::Single)
                 .expect(name);
             scopeguard::guard((), |()| {
                 prog.detach(link_id).expect(name);
@@ -38,7 +37,7 @@ fn sk_storage_connect() {
         .collect::<Vec<_>>();
 
     let cgroup = cgroup.into_cgroup();
-    cgroup.write_pid(std::process::id());
+    cgroup.write_pid(std::process::id()).unwrap();
 
     let listener4 = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
     let addr4 = listener4.local_addr().unwrap();

@@ -48,6 +48,11 @@ btf_map_def!(
     value_type: T,
 );
 
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> crate::btf_maps::private::SafeInnerLookup
+    for PerCpuArray<T, MAX_ENTRIES, FLAGS>
+{
+}
+
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> PerCpuArray<T, MAX_ENTRIES, FLAGS> {
     // Enforces kernel constraints from kernel/bpf/arraymap.c and the
     // per-CPU allocator alignment invariant. `const _: ()` is forbidden in

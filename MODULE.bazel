@@ -1,0 +1,179 @@
+module(
+    name = "aya",
+    version = "0.0.0",
+)
+
+bazel_dep(name = "bazel_lib", version = "3.2.2")
+bazel_dep(name = "bazel_skylib", version = "1.9.0")
+
+# The archive_override below supplies the exact unpublished linux.bzl revision.
+bazel_dep(name = "linux.bzl", version = "0.0.0")
+
+# libbpf supplies headers and libraries for the C BPF integration-test objects.
+bazel_dep(name = "libbpf", version = "1.7.0")
+
+# The LLVM toolchain compiles C BPF objects and the integration VM kernels.
+bazel_dep(name = "llvm", version = "0.8.9")
+
+# CONFIG_DEBUG_INFO_BTF requires pahole when linking the integration VM kernels.
+bazel_dep(name = "pahole", version = "1.31")
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "rules_cc", version = "0.2.19")
+bazel_dep(name = "rules_qemu", version = "0.3.0")
+bazel_dep(name = "rules_rs", version = "0.0.93")
+
+# with_cfg.bzl applies the BPF target settings to Rust and C BPF targets.
+bazel_dep(name = "with_cfg.bzl", version = "0.14.6")
+
+# lzma-sys uses @xz//:lzma instead of compiling vendored liblzma in build.rs.
+bazel_dep(name = "xz", version = "5.4.5.bcr.8")
+
+# //test/integration-test:bpf_out_dir uses copy_to_directory.
+bazel_lib_toolchains = use_extension("@bazel_lib//lib:extensions.bzl", "toolchains")
+bazel_lib_toolchains.copy_to_directory()
+use_repo(bazel_lib_toolchains, "copy_to_directory_toolchains")
+
+# Pin the linux.bzl revision that provides the deterministic C initramfs rule.
+archive_override(
+    module_name = "linux.bzl",
+    integrity = "sha256-2gveHVEG4EE5x3N4kDnUftB7ed/6RRFslFwDquObqRg=",
+    strip_prefix = "linux.bzl-e18628f3e177022c2ff0cf93a2e5f2d408f7d2fc",
+    urls = ["https://github.com/hermeticbuild/linux.bzl/archive/e18628f3e177022c2ff0cf93a2e5f2d408f7d2fc.tar.gz"],
+)
+
+# @rules_rs creates @rules_rust here; generated BUILD files and .bazelrc labels
+# reference @rules_rust directly.
+rules_rust = use_extension("@rules_rs//rs:rules_rust.bzl", "rules_rust")
+use_repo(rules_rust, "rules_rust")
+
+# Aya's eBPF crates use generic_const_exprs, asm_experimental_arch, and
+# core_intrinsics, so the hermetic Rust toolchain must be a pinned nightly.
+toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")
+toolchains.toolchain(
+    edition = "2024",
+    version = "nightly/2026-06-24",
+)
+use_repo(toolchains, "default_rust_toolchains")
+
+# Each qemu-system toolchain is compatible with the corresponding
+# //bazel:bpf_target_arch value. bazel/vm.bzl transitions that value for each
+# integration VM test.
+qemu = use_extension("@rules_qemu//qemu/extension:qemu.bzl", "qemu")
+qemu.system_toolchain(
+    system_target = "aarch64-softmmu",
+    target_settings = ["//bazel:bpf_target_arch_aarch64"],
+)
+qemu.system_toolchain(
+    system_target = "x86_64-softmmu",
+    target_settings = ["//bazel:bpf_target_arch_x86_64"],
+)
+
+# rules_qemu declares both repositories as root-module direct dependencies;
+# Aya registers only qemu_system_toolchains below.
+use_repo(qemu, "qemu_system_toolchains", "qemu_user_toolchains")
+
+register_toolchains(
+    "@copy_to_directory_toolchains//:all",
+    "@default_rust_toolchains//:all",
+    "@llvm//toolchain:all",
+    "@qemu_system_toolchains//:all",
+)
+
+# Generate Cargo dependencies for every Rust execution and target platform used
+# by Aya's local hosts, integration VMs, and BPF targets.
+crate = use_extension("@rules_rs//rs:extensions.bzl", "crate")
+crate.from_cargo(
+    name = "crates",
+    cargo_lock = "//:Cargo.lock",
+    cargo_toml = "//:Cargo.toml",
+    platform_triples = [
+        "aarch64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "aarch64-unknown-linux-musl",
+        "bpfeb-unknown-none",
+        "bpfel-unknown-none",
+        "x86_64-apple-darwin",
+        "x86_64-unknown-linux-gnu",
+        "x86_64-unknown-linux-musl",
+    ],
+)
+
+# Replace lzma-sys's build.rs with the hermetic @xz//:lzma target.
+crate.annotation(
+    crate = "lzma-sys",
+    gen_build_script = "off",
+    deps = ["@xz//:lzma"],
+)
+
+# Replace libbpf-sys's build.rs with @libbpf and export the bundled vmlinux.h
+# used by //test/integration-test:c_bpf_objects.
+crate.annotation(
+    additive_build_file_content = """
+exports_files(
+    ["libbpf/.github/actions/build-selftests/vmlinux.h"],
+    visibility = ["//visibility:public"],
+)
+""",
+    crate = "libbpf-sys",
+    extra_aliased_targets = {
+        "libbpf-sys-vmlinux-h": "libbpf/.github/actions/build-selftests/vmlinux.h",
+    },
+    gen_build_script = "off",
+    deps = ["@libbpf"],
+)
+use_repo(crate, "crates")
+
+# Use one integrity-pinned Linux source archive for both integration VM
+# architectures.
+linux_kernel = use_extension("@linux.bzl//:linux.bzl", "linux_kernel")
+linux_kernel.archive(
+    name = "aya_linux_6_18_2",
+    integrity = "sha256-VYxrurdJSSs0+Zgn/oB7ADmnRGk8IdOn4Ds6SO2quWo=",
+    strip_prefix = "linux-6.18.2",
+    urls = ["https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.2.tar.xz"],
+)
+
+# Convert each requested Kconfig fragment into a KconfigInfo repository.
+linux_kernel.kconfig(
+    name = "aya_aarch64_kconfig",
+    config = "//test/kernel:aya_aarch64.config",
+)
+linux_kernel.kconfig(
+    name = "aya_x86_64_kconfig",
+    config = "//test/kernel:aya_x86_64.config",
+)
+
+# Generate architecture-specific compact Kbuild metadata from
+# aya_aarch64.config and aya_x86_64.config.
+# linux.bzl encodes pahole 1.31 as "131" for the CONFIG_DEBUG_INFO_BTF probe;
+# keep this value synchronized with bazel_dep(name = "pahole") above.
+# TODO(https://github.com/hermeticbuild/linux.bzl/issues/6): Teach linux.bzl to
+# derive pahole_version from the pahole toolchain.
+linux_kernel.compact(
+    name = "aya_aarch64_compact",
+    config = "//test/kernel:aya_aarch64.config",
+    config_mode = "allnoconfig",
+    config_name = "aarch64",
+    kernel_name = "aya_kernel",
+    kernel_package = "test/kernel",
+    probe_values = {"pahole_version": "131"},
+    source_repo = "aya_linux_6_18_2",
+)
+linux_kernel.compact(
+    name = "aya_x86_64_compact",
+    config = "//test/kernel:aya_x86_64.config",
+    config_mode = "allnoconfig",
+    config_name = "x86_64",
+    kernel_name = "aya_kernel",
+    kernel_package = "test/kernel",
+    probe_values = {"pahole_version": "131"},
+    source_repo = "aya_linux_6_18_2",
+)
+use_repo(
+    linux_kernel,
+    "aya_aarch64_compact",
+    "aya_aarch64_kconfig",
+    "aya_linux_6_18_2",
+    "aya_x86_64_compact",
+    "aya_x86_64_kconfig",
+)

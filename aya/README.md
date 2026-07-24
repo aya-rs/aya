@@ -14,7 +14,7 @@
 
 ## API Documentation
 
-[![Unreleased Documentation][git-docs-badge]][git-api-docs] [![Documentaiton][api-docs-badge]][api-docs]
+[![Unreleased Documentation][git-docs-badge]][git-api-docs] [![Documentation][api-docs-badge]][api-docs]
 
 [git-docs-badge]: https://img.shields.io/badge/docs-unreleased-red.svg?style=for-the-badge&logo=docsdotrs
 [git-api-docs]: https://docs.aya-rs.dev

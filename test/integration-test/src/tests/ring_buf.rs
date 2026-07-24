@@ -19,6 +19,7 @@ use aya::{
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
 use integration_common::ring_buf::Registers;
 use rand::RngExt as _;
+use rstest::rstest;
 use scopeguard::defer;
 use tokio::io::{Interest, unix::AsyncFd};
 
@@ -116,12 +117,13 @@ impl WithData {
     }
 }
 
-#[test_case::test_case(0; "write zero items")]
-#[test_case::test_case(1; "write one item")]
-#[test_case::test_case(RING_BUF_MAX_ENTRIES / 2; "write half the capacity items")]
-#[test_case::test_case(RING_BUF_MAX_ENTRIES - 1; "write one less than capacity items")]
-#[test_case::test_case(RING_BUF_MAX_ENTRIES * 8; "write more items than capacity")]
-fn ring_buf(n: usize) {
+#[rstest]
+#[case::write_zero_items(0)]
+#[case::write_one_item(1)]
+#[case::write_half_the_capacity_items(RING_BUF_MAX_ENTRIES / 2)]
+#[case::write_one_less_than_capacity_items(RING_BUF_MAX_ENTRIES - 1)]
+#[case::write_more_items_than_capacity(RING_BUF_MAX_ENTRIES * 8)]
+fn ring_buf(#[case] n: usize) {
     for &variant in RING_BUF_VARIANTS {
         let WithData(
             RingBufTest {
@@ -493,9 +495,9 @@ struct WriterThread {
 }
 
 impl WriterThread {
-    // When the ring buffer implementation uses Ordering::Relaxed to write the consumer position
-    // rather than Ordering::SeqCst, the test will hang. This number was determined to be large
-    // enough to tickle that bug on a hardware accelerated VM with 2 vCPUs.
+    // Without a full barrier between publishing the consumer position and checking the producer
+    // position, the test will hang. This number was determined to be large enough to tickle that
+    // bug on a hardware accelerated VM with 2 vCPUs.
     const NUM_MESSAGES: u64 = 20_000;
 
     fn spawn() -> Self {

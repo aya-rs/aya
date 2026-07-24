@@ -7,7 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.2.0 (2026-06-24)
+
+### New Features
+
+ - <csr-id-c1eb42780c8e0eba340808eb4b75df15ac434e61/> add typos-cli configuration and CI
+ - <csr-id-a98b638fa95fd8edb8c015ee03154d2f03ecffc8/> add support for logging raw pointer types
+   * Requires the usage of `:p` display hint.
+   * Will, like stdlib, log with `0x` prefix.
+
+### Other
+
+ - <csr-id-353b83383dccc430619f3c6d95e17edd6ca8a96c/> zero copy!
+ - <csr-id-aa47acc5074ac1507a72ea14d1172d6ed6d59294/> allow macros in expr position
+   This is load-bearing in aya-template.
+ - <csr-id-9be2d723ce5d7bf5f85d69d54aa5fd7f60d48edc/> Replace AsyncPerfEventArray with RingBuf
+   This doesn't get us to zero copy because the reserve/submit APIs do not
+   support DSTs for reasons I don't remember.
+   
+   Now that it is unused in userspace, move `LOG_BUF_CAPACITY` to
+   `aya-log-ebpf` by making its type `LogValueLength` which obviates the
+   need for `log_value_length_sufficient`.
+ - <csr-id-8fb19264da203ae3b6089b1b09b7cee13d235b09/> tidy up `macro_support`
+   Move top level items into and remove unused items from `macro_support`.
+ - <csr-id-600927d6fcb671081b9bbfe19eea8c36ee8cc96c/> use destructuring
+ - <csr-id-49a828ec5655f6ecd0c38083c6c0dca217bad777/> reorder-keys
+   Group non-workspace keys before workspace ones for readability.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 15 commits contributed to the release.
+ - 8 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Add typos-cli configuration and CI ([`c1eb427`](https://github.com/aya-rs/aya/commit/c1eb42780c8e0eba340808eb4b75df15ac434e61))
+    - Dial the lints to 100 ([`2f8759c`](https://github.com/aya-rs/aya/commit/2f8759cc62e2a420eef463e271d354fcf65eca9d))
+    - Release crates ([`d238b2e`](https://github.com/aya-rs/aya/commit/d238b2ea6f1b2c1aa09a9050415b1c96329af0aa))
+    - Add support for logging raw pointer types ([`a98b638`](https://github.com/aya-rs/aya/commit/a98b638fa95fd8edb8c015ee03154d2f03ecffc8))
+    - Lint all crates; enable strict pointer lints ([`5f5305c`](https://github.com/aya-rs/aya/commit/5f5305c2a8ca0a739219093599dd57182d440ac1))
+    - Zero copy! ([`353b833`](https://github.com/aya-rs/aya/commit/353b83383dccc430619f3c6d95e17edd6ca8a96c))
+    - Allow macros in expr position ([`aa47acc`](https://github.com/aya-rs/aya/commit/aa47acc5074ac1507a72ea14d1172d6ed6d59294))
+    - Implement load-time log level mask ([`b36cbc3`](https://github.com/aya-rs/aya/commit/b36cbc3eb8413d4fba4f2d820fec8176751457ac))
+    - Replace AsyncPerfEventArray with RingBuf ([`9be2d72`](https://github.com/aya-rs/aya/commit/9be2d723ce5d7bf5f85d69d54aa5fd7f60d48edc))
+    - Tidy up `macro_support` ([`8fb1926`](https://github.com/aya-rs/aya/commit/8fb19264da203ae3b6089b1b09b7cee13d235b09))
+    - Use destructuring ([`600927d`](https://github.com/aya-rs/aya/commit/600927d6fcb671081b9bbfe19eea8c36ee8cc96c))
+    - Avoid shadowing `buf` ([`90c2165`](https://github.com/aya-rs/aya/commit/90c2165231e06c82218163247820ebf3dbaae2d8))
+    - Reorder-keys ([`49a828e`](https://github.com/aya-rs/aya/commit/49a828ec5655f6ecd0c38083c6c0dca217bad777))
+    - Introduce workspace lints, warn on unused crates ([`a43e40a`](https://github.com/aya-rs/aya/commit/a43e40ae1d1441ab4aea6a1a5d9ea36b56d62ff8))
+    - Bump edition to 2024 ([`f0a9f19`](https://github.com/aya-rs/aya/commit/f0a9f19ddc7f02143a02dcc2bf6be88fa2d84063))
+</details>
+
 ## v0.1.1 (2025-11-17)
+
+<csr-id-9be2d723ce5d7bf5f85d69d54aa5fd7f60d48edc/>
+<csr-id-600927d6bb802fbaaddea8b54708c386b15fd88e/>
+<csr-id-8fb19264638c7d02c4e83d315c0c4824dc1e27e1/>
 
 ### Breaking Changes
 
@@ -41,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-2223ab828d6db40a85cff4737f6164ed8ee9e42d/>
 <csr-id-9a8409e3a24179f4f60e6587b70e2ecd12322973/>
 <csr-id-83ec27f06b6859f455f2b2baf985b8fd3fb4adc5/>
+<csr-id-1d515fe810c6e646ca405d8f97803698deda148c/>
 
 ### Chore
 
@@ -75,7 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    High time we stop debating this; let the robots do the work.
  - <csr-id-ca3f70b16a705bf26d2ccc7ce754de403be36223/> s/Result<usize, ()>/Option<NonZeroUsize>/
    `Option<NonZeroUsize>` is guaranteed to have the same size as `usize`,
-   which is not guarnateed for `Result`. This is a minor optimization, but
+   which is not guaranteed for `Result`. This is a minor optimization, but
    also results in simpler code.
  - <csr-id-96fa08bd82233268154edf30b106876f5a4f0e30/> Define dependencies on the workspace level
    This way we will avoid version mismatches and make differences in
@@ -169,7 +233,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 35 commits contributed to the release over the course of 623 calendar days.
+ - 36 commits contributed to the release.
  - 17 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -180,6 +244,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release aya-log-ebpf-macros v0.1.0 ([`2eac95f`](https://github.com/aya-rs/aya/commit/2eac95f6d9075053fbabc67b92b7aa66008b057e))
     - Release aya-log-parser v0.1.13 ([`04ee35d`](https://github.com/aya-rs/aya/commit/04ee35d1392ab7dc2d97c6e0f1449e98b1283ffe))
     - Add missing changelogs ([`1d515fe`](https://github.com/aya-rs/aya/commit/1d515fe810c6e646ca405d8f97803698deda148c))
     - Release aya-log-common v0.1.14, aya-log v0.2.0 ([`c22a696`](https://github.com/aya-rs/aya/commit/c22a6963d44befb5591d4b21c09767c43935cb54))

@@ -12,6 +12,11 @@ bpf_file!(
     MAIN => "main.bpf.o",
     MULTIMAP_BTF => "multimap-btf.bpf.o",
     RINGBUF_BTF => "ringbuf-btf.bpf.o",
+    KSYMS => "ksyms.bpf.o",
+    KSYMS_STRONG => "ksyms_strong.bpf.o",
+    KSYMS_TYPED_MISSING_VAR => "ksyms_typed_missing_var.bpf.o",
+    KSYMS_TYPED_MISSING_KFUNC => "ksyms_typed_missing_kfunc.bpf.o",
+    KSYMS_TYPELESS_MISSING => "ksyms_typeless_missing.bpf.o",
 
     ENUM_SIGNED_32_RELOC_BPF => "enum_signed_32_reloc.bpf.o",
     ENUM_SIGNED_32_RELOC_BTF => "enum_signed_32_reloc.bpf.target.o",
@@ -43,6 +48,12 @@ bpf_file!(
     BLOOM_FILTER => "bloom_filter",
     BPF_PROBE_READ => "bpf_probe_read",
     BTF_MAPS_PLAIN => "btf_maps_plain",
+    CGROUP_ARRAY => "cgroup_array",
+    CGROUP_STORAGE => "cgroup_storage",
+    CPU_MAP => "cpu_map",
+    DEV_MAP => "dev_map",
+    FEXIT => "fexit",
+    HASH_MAP => "hash_map",
     KPROBE => "kprobe",
     LINEAR_DATA_STRUCTURES => "linear_data_structures",
     LOG => "log",
@@ -56,15 +67,18 @@ bpf_file!(
     PERF_EVENT_BYTE_ARRAY => "perf_event_byte_array",
     PERF_EVENT_BP => "perf_event_bp",
     RAW_TRACEPOINT => "raw_tracepoint",
-    REDIRECT => "redirect",
     RELOCATIONS => "relocations",
     RING_BUF => "ring_buf",
     SIMPLE_PROG => "simple_prog",
     SK_REUSEPORT => "sk_reuseport",
+    SOCKET_FILTER => "socket_filter",
     SK_STORAGE => "sk_storage",
+    SOCK_HASH => "sock_hash",
+    SOCK_MAP => "sock_map",
     STRNCMP => "strncmp",
     TCX => "tcx",
     TEST => "test",
+    TEST_RUN => "test_run",
     TWO_PROGS => "two_progs",
     XDP_SEC => "xdp_sec",
     UPROBE_COOKIE => "uprobe_cookie",
@@ -72,11 +86,15 @@ bpf_file!(
     PROG_ARRAY => "prog_array",
     STACK_TRACE => "stack_trace",
     STACK_TRACE_LSM => "stack_trace_lsm",
+    BTF_MAP_OF_MAPS => "btf_map_of_maps",
+    XSK_MAP => "xsk_map",
+    INODE_STORAGE => "inode_storage",
+    CGRP_STORAGE => "cgrp_storage",
 );
 
 #[cfg(test)]
 mod netlink;
 #[cfg(test)]
-mod tests;
+mod netns;
 #[cfg(test)]
-mod utils;
+mod tests;

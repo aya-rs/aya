@@ -8,16 +8,38 @@
     reason = "debug formatting aids diagnostics in tests"
 )]
 
+fn run_netns_tokio<F, Fut, T>(test: F) -> T
+where
+    F: FnOnce() -> Fut,
+    Fut: Future<Output = T>,
+{
+    let _netns = aya::test_helpers::NetNsGuard::new().unwrap();
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+
+    runtime.block_on(test())
+}
+
 mod array;
 mod bloom_filter;
 mod bpf_probe_read;
+mod btf_map_of_maps;
 mod btf_maps;
 mod btf_relocations;
+mod cgroup_array;
+mod cgroup_storage;
+mod cgrp_storage;
 mod elf;
 mod feature_probe;
+mod fexit;
+mod hash_map;
 mod info;
+mod inode_storage;
 mod iter;
 mod kprobe;
+mod ksyms;
 mod linear_data_structures;
 mod load;
 mod log;
@@ -30,16 +52,20 @@ mod perf_event_array;
 mod perf_event_bp;
 mod printk;
 mod prog_array;
+mod prog_test_run;
 mod raw_tracepoint;
 mod rbpf;
 mod relocations;
 mod ring_buf;
+mod sk_lookup;
 mod sk_reuseport;
 mod sk_storage;
 mod smoke;
+mod socket_filter;
 mod stack_trace;
 mod stack_trace_lsm;
 mod strncmp;
+mod tc_netlink;
 mod tcx;
 mod uprobe_cookie;
 mod xdp;

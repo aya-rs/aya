@@ -4,7 +4,7 @@ use aya::{
     programs::{UProbe, uprobe::UProbeScope},
 };
 use integration_common::lpm_trie::{LPM_MATCH_SLOT, NO_MATCH_SLOT, REMOVE_SLOT, TestResult};
-use test_case::test_case;
+use rstest::rstest;
 
 #[unsafe(no_mangle)]
 #[inline(never)]
@@ -12,10 +12,11 @@ extern "C" fn trigger_lpm_trie() {
     core::hint::black_box(());
 }
 
-#[test_case("test_btf_lpm_trie", "ROUTES", "RESULTS" ; "btf")]
-#[test_case("test_lpm_trie_legacy", "ROUTES_LEGACY", "RESULTS_LEGACY" ; "legacy")]
-#[test_log::test]
-fn lpm_trie_basic(prog_name: &str, routes_map: &str, results_map: &str) {
+#[rstest]
+#[case::btf("test_btf_lpm_trie", "ROUTES", "RESULTS")]
+#[case::legacy("test_lpm_trie_legacy", "ROUTES_LEGACY", "RESULTS_LEGACY")]
+#[test_attr(test_log::test)]
+fn lpm_trie_basic(#[case] prog_name: &str, #[case] routes_map: &str, #[case] results_map: &str) {
     let mut bpf = Ebpf::load(crate::LPM_TRIE).unwrap();
 
     {

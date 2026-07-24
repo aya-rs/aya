@@ -7,7 +7,203 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.3.0 (2026-06-24)
+
+### Chore
+
+ - <csr-id-f6c5cb2ad2b09760ae5434785ed5d4d195d3a765/> set clippy unused_trait_names = warn
+   We have previously tried to import traits anonymously where possible but
+   enforcing this manually was hard.
+   
+   Since Rust 1.83 clippy can now enforce this for us.
+ - <csr-id-41c61560eae01a30c703ea22c5bfeeff0ecf6b1b/> Rename bpf -> ebpf
+
+### Documentation
+
+ - <csr-id-8830c0bc20c6e3dbbddf63533d4623fcd45dd9af/> reword rustdocs a bit
+
+### New Features
+
+ - <csr-id-c1eb42780c8e0eba340808eb4b75df15ac434e61/> add typos-cli configuration and CI
+ - <csr-id-a98b638fa95fd8edb8c015ee03154d2f03ecffc8/> add support for logging raw pointer types
+   * Requires the usage of `:p` display hint.
+   * Will, like stdlib, log with `0x` prefix.
+ - <csr-id-8c79b71bd5699a686f33360520aa95c1a2895fa5/> Rename Bpf to Ebpf
+   And BpfLoader to EbpfLoader.
+   This also adds type aliases to preserve the use of the old names, making
+   updating to a new Aya release less of a burden. These aliases are marked
+   as deprecated since we'll likely remove them in a later release.
+ - <csr-id-a93e3546204115631c11bc0601905c205bf8a584/> Rename BpfLogger to EbpfLogger
+
+### Bug Fixes
+
+ - <csr-id-55ed9e054665ba303e1fb381c7ac590056da7724/> print &[u8] using full width
+   Otherwise `&[1u8, 0u8]` cannot be distinguished from `&[0x10u8]` (they both become 10)
+
+### Other
+
+ - <csr-id-03e84871773e09badf08bdef8e83b4f1256850a4/> rename `set_` methods on `EbpfLoader`
+   This loader is more of a builder, so these `set_` methods didn't
+   quite fit. See [this discussion][1] for the motivation.
+ - <csr-id-e2a68ee38412d6a523e803fc077e8baf834545ba/> add `#[must_use]` attribute to `EbpfLogger`
+ - <csr-id-353b83383dccc430619f3c6d95e17edd6ca8a96c/> zero copy!
+ - <csr-id-44ec978bd35c5af484b73c273b5bd18886033b5a/> Implement `AsFd` for `EbpfLogger`
+   This change implements the `AsFd` trait for the `EbpfLogger` struct.
+   This allows obtaining a `BorrowedFd` from an `EbpfLogger` instance, which is safer than using `AsRawFd`.
+   
+   This improves the ergonomics of using `EbpfLogger` with APIs that accept file descriptors.
+ - <csr-id-0b732c3d468ecb9855b58bd61be2b0972baa3a8a/> simplify map name matching using direct Option comparison
+   Replace match statement with direct Option comparison for cleaner code
+ - <csr-id-cab559b9d954a02237636f704bfd23909d524732/> Use `None` instead of wildcard in `Format` impls
+   The `Format` implementations for various types were using a wildcard `_`
+   to match the `None` case on `Option<DisplayHint>`.
+   
+   This is incorrect as it would also match any `Some(...)` variants that
+   were not explicitly handled, leading to unexpected behavior.
+   
+   This commit changes the wildcard `_` to an explicit `None` match to
+   ensure that only the `None` case is handled, making the matching more
+   explicit and correct.
+ - <csr-id-61376c4608ebd2c10f05f3e917833832158d7c87/> Remove tokio dep
+   Require the caller to provide their own executor.
+ - <csr-id-9be2d723ce5d7bf5f85d69d54aa5fd7f60d48edc/> Replace AsyncPerfEventArray with RingBuf
+   This doesn't get us to zero copy because the reserve/submit APIs do not
+   support DSTs for reasons I don't remember.
+   
+   Now that it is unused in userspace, move `LOG_BUF_CAPACITY` to
+   `aya-log-ebpf` by making its type `LogValueLength` which obviates the
+   need for `log_value_length_sufficient`.
+ - <csr-id-49a828ec5655f6ecd0c38083c6c0dca217bad777/> reorder-keys
+   Group non-workspace keys before workspace ones for readability.
+ - <csr-id-bdd8ae2d0b443513c73143da968d400df9b05464/> avoid `_`
+   This can silently discard information, so we shouldn't do it.
+ - <csr-id-b500a6326b7df8a147c0c7a0121888c3ad79fd85/> use `cfg!` to tidy up
+ - <csr-id-02d1db5fc043fb7af90c14d13de6419ec5b9bcb5/> remove unwrap and NonZero* in info
+   Addresses the feedback from #1007:
+   - remove panic from `unwrap` and `expect`
+   - Option<NonZero*> => Option<int> with `0` mapping to `None`
+ - <csr-id-fbb09304a2de0d8baf7ea20c9727fcd2e4fb7f41/> revamp MapInfo be more friendly with older kernels
+   Adds detection for whether a field is available in `MapInfo`:
+   - For `map_type()`, we treturn new enum `MapType` instead of the integer
+     representation.
+   - For fields that can't be zero, we return `Option<NonZero*>` type.
+   - For `name_as_str()`, it now uses the feature probe `bpf_name()` to
+     detect if field is available.
+     Although the feature probe checks for program name, it can also be
+     used for map name since they were both introduced in the same commit.
+ - <csr-id-88f5ac31142f1657b41b1ee0f217dcd9125b210a/> revamp ProgramInfo be more friendly with older kernels
+   Purpose of this commit is to add detections for whether a field is
+   available in `ProgramInfo`.
+   - For `program_type()`, we return the new enum `ProgramType` instead of
+     the integer representation.
+   - For fields that we know cannot be zero, we return `Option<NonZero*>`
+     type.
+   - For `name_as_str()`, it now also uses the feature probe `bpf_name()`
+     to detect if field is available or not.
+   - Two additional feature probes are added for the fields:
+     - `prog_info_map_ids()` probe -> `map_ids()` field
+     - `prog_info_gpl_compatible()` probe -> `gpl_compatible()` field
+   
+   With the `prog_info_map_ids()` probe, the previous implementation that
+   I had for `bpf_prog_get_info_by_fd()` is shortened to use the probe
+   instead of having to make 2 potential syscalls.
+   
+   The `test_loaded_at()` test is also moved into info tests since it is
+   better related to the info tests.
+ - <csr-id-a75fc2f7691dad21822c2eff35281abd3c4b5d23/> Allow logging `core::net::Ipv4Addr` and `core::net::Ipv6Addr`
+   IP address types are available in `core`, so they can be used also in
+   eBPF programs. This change adds support of these types in aya-log.
+   
+   * Add implementation of `WriteTuBuf` to these types.
+   * Support these types in `Ipv4Formatter` and `Ipv6Formatter`.
+   * Support them with `DisplayHint::Ip`.
+   * Add support for formatting `[u8; 4]`, to be able to handle
+     `Ipv4Addr::octets`.
+ - <csr-id-e66f9540c9196ecce16431542366771b6505124f/> allow re-attach and read previously created logs
+   This feature is useful if someone wants to view the log contents
+   of a program that is already running. For e.g. a pinned program
+   or an XDP program attached to a net interface.
+
+### Test
+
+ - <csr-id-eef7346fb2231f8741410381198015cceeebfac9/> adjust test byte arrays for big endian
+   Adding support for s390x (big endian architecture) and found that some
+   of the unit tests have structures and files implemented as byte arrays.
+   They are all coded as little endian and need a bug endian version to
+   work properly.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 49 commits contributed to the release.
+ - 25 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 2 unique issues were worked on: [#1008](https://github.com/aya-rs/aya/issues/1008), [#1428](https://github.com/aya-rs/aya/issues/1428)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1008](https://github.com/aya-rs/aya/issues/1008)**
+    - Print &[u8] using full width ([`55ed9e0`](https://github.com/aya-rs/aya/commit/55ed9e054665ba303e1fb381c7ac590056da7724))
+ * **[#1428](https://github.com/aya-rs/aya/issues/1428)**
+    - Symlink licenses into aya log ([`ac85ad2`](https://github.com/aya-rs/aya/commit/ac85ad27df867526f7ed7fd9b8fe41303878c98d))
+ * **Uncategorized**
+    - Add typos-cli configuration and CI ([`c1eb427`](https://github.com/aya-rs/aya/commit/c1eb42780c8e0eba340808eb4b75df15ac434e61))
+    - Dial the lints to 100 ([`2f8759c`](https://github.com/aya-rs/aya/commit/2f8759cc62e2a420eef463e271d354fcf65eca9d))
+    - Enable unused_qualifications lint ([`e746618`](https://github.com/aya-rs/aya/commit/e746618143f010fe7f05635a1a6e1a8b723bfd31))
+    - Release crates ([`d238b2e`](https://github.com/aya-rs/aya/commit/d238b2ea6f1b2c1aa09a9050415b1c96329af0aa))
+    - Rename `set_` methods on `EbpfLoader` ([`03e8487`](https://github.com/aya-rs/aya/commit/03e84871773e09badf08bdef8e83b4f1256850a4))
+    - Add support for logging raw pointer types ([`a98b638`](https://github.com/aya-rs/aya/commit/a98b638fa95fd8edb8c015ee03154d2f03ecffc8))
+    - Lint all crates; enable strict pointer lints ([`5f5305c`](https://github.com/aya-rs/aya/commit/5f5305c2a8ca0a739219093599dd57182d440ac1))
+    - Add `#[must_use]` attribute to `EbpfLogger` ([`e2a68ee`](https://github.com/aya-rs/aya/commit/e2a68ee38412d6a523e803fc077e8baf834545ba))
+    - Zero copy! ([`353b833`](https://github.com/aya-rs/aya/commit/353b83383dccc430619f3c6d95e17edd6ca8a96c))
+    - Implement load-time log level mask ([`b36cbc3`](https://github.com/aya-rs/aya/commit/b36cbc3eb8413d4fba4f2d820fec8176751457ac))
+    - Implement `AsFd` for `EbpfLogger` ([`44ec978`](https://github.com/aya-rs/aya/commit/44ec978bd35c5af484b73c273b5bd18886033b5a))
+    - Simplify map name matching using direct Option comparison ([`0b732c3`](https://github.com/aya-rs/aya/commit/0b732c3d468ecb9855b58bd61be2b0972baa3a8a))
+    - Use `None` instead of wildcard in `Format` impls ([`cab559b`](https://github.com/aya-rs/aya/commit/cab559b9d954a02237636f704bfd23909d524732))
+    - Remove tokio dep ([`61376c4`](https://github.com/aya-rs/aya/commit/61376c4608ebd2c10f05f3e917833832158d7c87))
+    - Replace AsyncPerfEventArray with RingBuf ([`9be2d72`](https://github.com/aya-rs/aya/commit/9be2d723ce5d7bf5f85d69d54aa5fd7f60d48edc))
+    - Remove pointless `map_err` calls ([`87188f6`](https://github.com/aya-rs/aya/commit/87188f621a1cc347240eb05248ac9df61feb9f57))
+    - Remove dead code expectation fixed upstream ([`30d5c9f`](https://github.com/aya-rs/aya/commit/30d5c9f53e08d059d2c0a3252508aab242b68c44))
+    - Appease `clippy::uninlined-format-args` ([`583709f`](https://github.com/aya-rs/aya/commit/583709f6a09c432b4e06ab9353bb4e397d58c451))
+    - Merge pull request #1224 from dave-tucker/unused_trait_names ([`9eecbe9`](https://github.com/aya-rs/aya/commit/9eecbe9d0e9dc1fdbbc87d41512d4202e26d4687))
+    - Set clippy unused_trait_names = warn ([`f6c5cb2`](https://github.com/aya-rs/aya/commit/f6c5cb2ad2b09760ae5434785ed5d4d195d3a765))
+    - Reorder-keys ([`49a828e`](https://github.com/aya-rs/aya/commit/49a828ec5655f6ecd0c38083c6c0dca217bad777))
+    - Introduce workspace lints, warn on unused crates ([`a43e40a`](https://github.com/aya-rs/aya/commit/a43e40ae1d1441ab4aea6a1a5d9ea36b56d62ff8))
+    - Bump edition to 2024 ([`f0a9f19`](https://github.com/aya-rs/aya/commit/f0a9f19ddc7f02143a02dcc2bf6be88fa2d84063))
+    - Use #[expect(...)] rather than #[allow(...)] ([`4101a5a`](https://github.com/aya-rs/aya/commit/4101a5a55d43cd9ead56497820c4d43018f74cbb))
+    - Avoid `_` ([`bdd8ae2`](https://github.com/aya-rs/aya/commit/bdd8ae2d0b443513c73143da968d400df9b05464))
+    - Use `cfg!` to tidy up ([`b500a63`](https://github.com/aya-rs/aya/commit/b500a6326b7df8a147c0c7a0121888c3ad79fd85))
+    - Release aya v0.13.1 ([`2791bad`](https://github.com/aya-rs/aya/commit/2791badd947e3abb459e5339a23a66d0a56c42d0))
+    - Release aya-log v0.2.1 ([`0e70838`](https://github.com/aya-rs/aya/commit/0e70838b0f896ec73a4c7a51cab29625e7c87f9a))
+    - Release aya-log-common v0.1.15, aya-log-ebpf v0.1.1 ([`04bbbcc`](https://github.com/aya-rs/aya/commit/04bbbccffa6298dbfeb967ca9967611e283ac81d))
+    - Release aya-obj v0.2.0, aya v0.13.0, safety bump aya v0.13.0 ([`c169b72`](https://github.com/aya-rs/aya/commit/c169b727e6b8f8c2dda57f54b8c77f8b551025c6))
+    - Reduce duplication in `{nr,possible}_cpus` ([`f3b2744`](https://github.com/aya-rs/aya/commit/f3b27440725a0eb2f1615c92cb0047e3b1548d66))
+    - Remove unwrap and NonZero* in info ([`02d1db5`](https://github.com/aya-rs/aya/commit/02d1db5fc043fb7af90c14d13de6419ec5b9bcb5))
+    - Merge pull request #1007 from tyrone-wu/aya/info-api ([`15eb935`](https://github.com/aya-rs/aya/commit/15eb935bce6d41fb67189c48ce582b074544e0ed))
+    - Revamp MapInfo be more friendly with older kernels ([`fbb0930`](https://github.com/aya-rs/aya/commit/fbb09304a2de0d8baf7ea20c9727fcd2e4fb7f41))
+    - Revamp ProgramInfo be more friendly with older kernels ([`88f5ac3`](https://github.com/aya-rs/aya/commit/88f5ac31142f1657b41b1ee0f217dcd9125b210a))
+    - Merge pull request #974 from Billy99/billy99-arch-ppc64-s390x ([`ab5e688`](https://github.com/aya-rs/aya/commit/ab5e688fd49fcfb402ad47d51cb445437fbd8cb7))
+    - Adjust test byte arrays for big endian ([`eef7346`](https://github.com/aya-rs/aya/commit/eef7346fb2231f8741410381198015cceeebfac9))
+    - Revert "Remove unused `allow(dead_code)`" ([`4161993`](https://github.com/aya-rs/aya/commit/41619933d64289bec02c6672bd2248a8075eff3e))
+    - Remove unused `allow(dead_code)` ([`5397c1c`](https://github.com/aya-rs/aya/commit/5397c1ca4b77cd27082e96aab9ab931631df7fa8))
+    - Allow logging `core::net::Ipv4Addr` and `core::net::Ipv6Addr` ([`a75fc2f`](https://github.com/aya-rs/aya/commit/a75fc2f7691dad21822c2eff35281abd3c4b5d23))
+    - Merge pull request #900 from catalin-h/log_init_from_program_id ([`e5d107d`](https://github.com/aya-rs/aya/commit/e5d107dd50b13ccf9783b9af4e79b57b02c1f0f3))
+    - Reword rustdocs a bit ([`8830c0b`](https://github.com/aya-rs/aya/commit/8830c0bc20c6e3dbbddf63533d4623fcd45dd9af))
+    - Allow re-attach and read previously created logs ([`e66f954`](https://github.com/aya-rs/aya/commit/e66f9540c9196ecce16431542366771b6505124f))
+    - Merge pull request #528 from dave-tucker/rename-all-the-things ([`63d8d4d`](https://github.com/aya-rs/aya/commit/63d8d4d34bdbbee149047dc0a5e9c2b191f3b32d))
+    - Rename Bpf to Ebpf ([`8c79b71`](https://github.com/aya-rs/aya/commit/8c79b71bd5699a686f33360520aa95c1a2895fa5))
+    - Rename BpfLogger to EbpfLogger ([`a93e354`](https://github.com/aya-rs/aya/commit/a93e3546204115631c11bc0601905c205bf8a584))
+    - Rename bpf -> ebpf ([`41c6156`](https://github.com/aya-rs/aya/commit/41c61560eae01a30c703ea22c5bfeeff0ecf6b1b))
+</details>
+
 ## v0.2.2 (2025-11-17)
+
+<csr-id-9be2d723ce5d7bf5f85d69d54aa5fd7f60d48edc/>
+<csr-id-61376c4608ebd2c10f05f3e917833832158d7c87/>
 
 ### Breaking Changes
 
@@ -21,6 +217,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-a98b638fa95fd8edb8c015ee03154d2f03ecffc8/> Added support for logging raw pointer types, which unlocks richer debugging output from probes.
 
 ## v0.2.1 (2024-10-09)
+
+<csr-id-41c61560eae01a30c703ea22c5bfeeff0ecf6b1b/>
+<csr-id-02d1db5fc043fb7af90c14d13de6419ec5b9bcb5/>
+<csr-id-fbb09304a2de0d8baf7ea20c9727fcd2e4fb7f41/>
+<csr-id-88f5ac31142f1657b41b1ee0f217dcd9125b210a/>
+<csr-id-a75fc2f7691dad21822c2eff35281abd3c4b5d23/>
+<csr-id-e66f9540c9196ecce16431542366771b6505124f/>
+<csr-id-eef7346fb2231f8741410381198015cceeebfac9/>
 
 ### Chore
 
@@ -100,45 +304,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    They are all coded as little endian and need a bug endian version to
    work properly.
 
-### Commit Statistics
-
-<csr-read-only-do-not-edit/>
-
- - 20 commits contributed to the release.
- - 223 days passed between releases.
- - 11 commits were understood as [conventional](https://www.conventionalcommits.org).
- - 1 unique issue was worked on: [#1008](https://github.com/aya-rs/aya/issues/1008)
-
-### Commit Details
-
-<csr-read-only-do-not-edit/>
-
-<details><summary>view details</summary>
-
- * **[#1008](https://github.com/aya-rs/aya/issues/1008)**
-    - Print &[u8] using full width ([`55ed9e0`](https://github.com/aya-rs/aya/commit/55ed9e054665ba303e1fb381c7ac590056da7724))
- * **Uncategorized**
-    - Release aya-log-common v0.1.15, aya-log-ebpf v0.1.1 ([`04bbbcc`](https://github.com/aya-rs/aya/commit/04bbbccffa6298dbfeb967ca9967611e283ac81d))
-    - Release aya-obj v0.2.0, aya v0.13.0, safety bump aya v0.13.0 ([`c169b72`](https://github.com/aya-rs/aya/commit/c169b727e6b8f8c2dda57f54b8c77f8b551025c6))
-    - Reduce duplication in `{nr,possible}_cpus` ([`f3b2744`](https://github.com/aya-rs/aya/commit/f3b27440725a0eb2f1615c92cb0047e3b1548d66))
-    - Remove unwrap and NonZero* in info ([`02d1db5`](https://github.com/aya-rs/aya/commit/02d1db5fc043fb7af90c14d13de6419ec5b9bcb5))
-    - Merge pull request #1007 from tyrone-wu/aya/info-api ([`15eb935`](https://github.com/aya-rs/aya/commit/15eb935bce6d41fb67189c48ce582b074544e0ed))
-    - Revamp MapInfo be more friendly with older kernels ([`fbb0930`](https://github.com/aya-rs/aya/commit/fbb09304a2de0d8baf7ea20c9727fcd2e4fb7f41))
-    - Revamp ProgramInfo be more friendly with older kernels ([`88f5ac3`](https://github.com/aya-rs/aya/commit/88f5ac31142f1657b41b1ee0f217dcd9125b210a))
-    - Merge pull request #974 from Billy99/billy99-arch-ppc64-s390x ([`ab5e688`](https://github.com/aya-rs/aya/commit/ab5e688fd49fcfb402ad47d51cb445437fbd8cb7))
-    - Adjust test byte arrays for big endian ([`eef7346`](https://github.com/aya-rs/aya/commit/eef7346fb2231f8741410381198015cceeebfac9))
-    - Revert "Remove unused `allow(dead_code)`" ([`4161993`](https://github.com/aya-rs/aya/commit/41619933d64289bec02c6672bd2248a8075eff3e))
-    - Remove unused `allow(dead_code)` ([`5397c1c`](https://github.com/aya-rs/aya/commit/5397c1ca4b77cd27082e96aab9ab931631df7fa8))
-    - Allow logging `core::net::Ipv4Addr` and `core::net::Ipv6Addr` ([`a75fc2f`](https://github.com/aya-rs/aya/commit/a75fc2f7691dad21822c2eff35281abd3c4b5d23))
-    - Merge pull request #900 from catalin-h/log_init_from_program_id ([`e5d107d`](https://github.com/aya-rs/aya/commit/e5d107dd50b13ccf9783b9af4e79b57b02c1f0f3))
-    - Reword rustdocs a bit ([`8830c0b`](https://github.com/aya-rs/aya/commit/8830c0bc20c6e3dbbddf63533d4623fcd45dd9af))
-    - Allow re-attach and read previously created logs ([`e66f954`](https://github.com/aya-rs/aya/commit/e66f9540c9196ecce16431542366771b6505124f))
-    - Merge pull request #528 from dave-tucker/rename-all-the-things ([`63d8d4d`](https://github.com/aya-rs/aya/commit/63d8d4d34bdbbee149047dc0a5e9c2b191f3b32d))
-    - Rename Bpf to Ebpf ([`8c79b71`](https://github.com/aya-rs/aya/commit/8c79b71bd5699a686f33360520aa95c1a2895fa5))
-    - Rename BpfLogger to EbpfLogger ([`a93e354`](https://github.com/aya-rs/aya/commit/a93e3546204115631c11bc0601905c205bf8a584))
-    - Rename bpf -> ebpf ([`41c6156`](https://github.com/aya-rs/aya/commit/41c61560eae01a30c703ea22c5bfeeff0ecf6b1b))
-</details>
-
 ## v0.2.0 (2024-02-28)
 
 <csr-id-13b1fc63ef2ae083ba03ce9de24cb4f31f989d21/>
@@ -187,7 +352,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   High time we stop debating this; let the robots do the work.
 - <csr-id-ca3f70b16a705bf26d2ccc7ce754de403be36223/> s/Result<usize, ()>/Option<NonZeroUsize>/
   `Option<NonZeroUsize>` is guaranteed to have the same size as `usize`,
-  which is not guarnateed for `Result`. This is a minor optimization, but
+  which is not guaranteed for `Result`. This is a minor optimization, but
   also results in simpler code.
 - <csr-id-96fa08bd82233268154edf30b106876f5a4f0e30/> Define dependencies on the workspace level
   This way we will avoid version mismatches and make differences in
@@ -262,7 +427,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 38 commits contributed to the release.
- - 469 days passed between releases.
  - 14 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 

@@ -18,14 +18,14 @@ use integration_common::sk_reuseport::{
     SELECT_SOCKET_INDEX,
 };
 use libc::{EINVAL, ENOENT};
-use test_case::test_case;
+use rstest::rstest;
 use tokio::{
     io::{AsyncReadExt as _, AsyncWriteExt as _},
     net::{TcpListener as TokioTcpListener, TcpSocket, TcpStream as TokioTcpStream},
     time::{sleep, timeout},
 };
 
-use crate::utils::NetNsGuard;
+use super::run_netns_tokio;
 
 const RETRY_DURATION: Duration = Duration::from_millis(10);
 const ACCEPT_TIMEOUT: Duration = Duration::from_secs(10);
@@ -146,240 +146,251 @@ async fn assert_connection_works(mut client: TokioTcpStream, mut server: TokioTc
 
 // `NetNsGuard` switches the current thread into a dedicated network namespace,
 // so these async tests must stay on a single runtime thread.
-#[test_case("socket_map", "select_socket"; "legacy")]
-#[test_case("socket_map_btf", "select_socket_btf"; "btf")]
-#[test_log::test(tokio::test)]
-async fn sk_reuseport_selects_expected_listener(socket_map: &str, select_prog: &str) {
-    let _netns = NetNsGuard::new();
+#[rstest]
+#[case::legacy("socket_map", "select_socket")]
+#[case::btf("socket_map_btf", "select_socket_btf")]
+#[test_attr(test_log::test)]
+fn sk_reuseport_selects_expected_listener(#[case] socket_map: &str, #[case] select_prog: &str) {
+    run_netns_tokio(async || {
+        let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
+        let mut socket_array: ReusePortSockArray<_> =
+            ebpf.take_map(socket_map).unwrap().try_into().unwrap();
+        let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
+        let [first, second, third] = reuseport_listeners();
+        let addr = first.local_addr().unwrap();
 
-    let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
-    let mut socket_array: ReusePortSockArray<_> =
-        ebpf.take_map(socket_map).unwrap().try_into().unwrap();
-    let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
-    let [first, second, third] = reuseport_listeners();
-    let addr = first.local_addr().unwrap();
+        for (index, listener) in [&first, &second, &third].into_iter().enumerate() {
+            socket_array.set(index as u32, listener, 0).unwrap();
+        }
 
-    for (index, listener) in [&first, &second, &third].into_iter().enumerate() {
-        socket_array.set(index as u32, listener, 0).unwrap();
-    }
+        {
+            // Limit the mutable borrow of `ebpf` from `program_mut()` to this block.
+            let prog: &mut SkReuseport = ebpf.program_mut(select_prog).unwrap().try_into().unwrap();
+            prog.load().unwrap();
+            prog.attach(&first).unwrap();
+        }
 
-    {
-        // Limit the mutable borrow of `ebpf` from `program_mut()` to this block.
+        let client = connect(addr).await.unwrap();
+        let (accepted_idx, server) = wait_for_accept_tokio(&[&first, &second, &third]).await;
+        assert_eq!(
+            accepted_idx, SELECT_SOCKET_INDEX as usize,
+            "connection should be steered to listener A",
+        );
+
+        // Confirm that the BPF select path ran, not just the kernel's default
+        // SO_REUSEPORT selection logic landing on listener A by chance.
+        assert!(
+            read_hits(&path_hits, SELECT_HITS_INDEX) > 0,
+            "select path did not run",
+        );
+        assert_eq!(read_hits(&path_hits, MIGRATE_HITS_INDEX), 0);
+        assert_eq!(read_hits(&path_hits, CLEAR_FALLBACK_HITS_INDEX), 0);
+        assert_connection_works(client, server).await;
+
+        // `SkReuseport` attachments are group-scoped: detaching through any socket in
+        // the reuseport group removes the program from the whole group, even if that
+        // socket was not used for attach, so a second detach through listener A yields
+        // ENOENT.
+        SkReuseport::detach(&second).unwrap();
+
+        let err = SkReuseport::detach(&first).unwrap_err();
+        assert_matches!(
+            err,
+            ProgramError::SkReuseportError(SkReuseportError::SetsockoptError {
+                option: "SO_DETACH_REUSEPORT_BPF",
+                io_error,
+            }) if io_error.raw_os_error() == Some(ENOENT)
+        );
+    });
+}
+
+#[rstest]
+#[case::legacy("socket_map", "select_socket_after_clear")]
+#[case::btf("socket_map_btf", "select_socket_after_clear_btf")]
+#[test_attr(test_log::test)]
+fn sk_reuseport_clear_index_changes_selection(#[case] socket_map: &str, #[case] clear_prog: &str) {
+    run_netns_tokio(async || {
+        let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
+        let mut socket_array: ReusePortSockArray<_> =
+            ebpf.take_map(socket_map).unwrap().try_into().unwrap();
+        let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
+        let [first, second, third] = reuseport_listeners();
+        let addr = first.local_addr().unwrap();
+
+        for (index, listener) in [&first, &second, &third].into_iter().enumerate() {
+            socket_array.set(index as u32, listener, 0).unwrap();
+        }
+
+        {
+            // Limit the mutable borrow of `ebpf` from `program_mut()` to this block.
+            let prog: &mut SkReuseport = ebpf.program_mut(clear_prog).unwrap().try_into().unwrap();
+            prog.load().unwrap();
+            prog.attach(&first).unwrap();
+        }
+
+        let first_client = connect(addr).await.unwrap();
+        let (first_accepted_idx, first_server) =
+            wait_for_accept_tokio(&[&first, &second, &third]).await;
+        assert_eq!(
+            first_accepted_idx, SELECT_SOCKET_INDEX as usize,
+            "before clearing key 0, the program should steer to listener A",
+        );
+        assert!(
+            read_hits(&path_hits, SELECT_HITS_INDEX) > 0,
+            "select path did not run before clear",
+        );
+        assert_eq!(read_hits(&path_hits, MIGRATE_HITS_INDEX), 0);
+        assert_eq!(read_hits(&path_hits, CLEAR_FALLBACK_HITS_INDEX), 0);
+        assert_connection_works(first_client, first_server).await;
+
+        socket_array.clear_index(&SELECT_SOCKET_INDEX).unwrap();
+
+        let second_client = connect(addr).await.unwrap();
+        let (second_accepted_idx, second_server) =
+            wait_for_accept_tokio(&[&first, &second, &third]).await;
+        assert_eq!(
+            second_accepted_idx, MIGRATE_SOCKET_INDEX as usize,
+            "after clearing key 0, the program should fall back to listener C",
+        );
+        assert_eq!(read_hits(&path_hits, MIGRATE_HITS_INDEX), 0);
+        // Confirm that the test program observed the missing primary key and
+        // explicitly selected listener C, rather than relying on the kernel's
+        // default SO_REUSEPORT selection logic.
+        assert!(
+            read_hits(&path_hits, CLEAR_FALLBACK_HITS_INDEX) > 0,
+            "clear fallback path did not run",
+        );
+        assert_connection_works(second_client, second_server).await;
+    });
+}
+
+#[rstest]
+#[case::legacy("select_socket")]
+#[case::btf("select_socket_btf")]
+#[test_attr(test_log::test)]
+fn sk_reuseport_stays_attached_until_explicit_detach(#[case] select_prog: &str) {
+    run_netns_tokio(async || {
+        let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
+        let [first, second] = reuseport_listeners();
+
         let prog: &mut SkReuseport = ebpf.program_mut(select_prog).unwrap().try_into().unwrap();
         prog.load().unwrap();
         prog.attach(&first).unwrap();
-    }
+        drop(ebpf);
 
-    let client = connect(addr).await.unwrap();
-    let (accepted_idx, server) = wait_for_accept_tokio(&[&first, &second, &third]).await;
-    assert_eq!(
-        accepted_idx, SELECT_SOCKET_INDEX as usize,
-        "connection should be steered to listener A",
-    );
+        // `SO_DETACH_REUSEPORT_BPF` identifies the group solely from the
+        // socket, so detaching should still succeed after the local program has
+        // been unloaded.
+        SkReuseport::detach(&second).unwrap();
 
-    // Confirm that the BPF select path ran, not just the kernel's default
-    // SO_REUSEPORT selection logic landing on listener A by chance.
-    assert!(
-        read_hits(&path_hits, SELECT_HITS_INDEX) > 0,
-        "select path did not run",
-    );
-    assert_eq!(read_hits(&path_hits, MIGRATE_HITS_INDEX), 0);
-    assert_eq!(read_hits(&path_hits, CLEAR_FALLBACK_HITS_INDEX), 0);
-    assert_connection_works(client, server).await;
-
-    let prog: &mut SkReuseport = ebpf.program_mut(select_prog).unwrap().try_into().unwrap();
-
-    // `SkReuseport` attachments are group-scoped: detaching through any socket in
-    // the reuseport group removes the program from the whole group, even if that
-    // socket was not used for attach, so a second detach through listener A yields
-    // ENOENT.
-    prog.detach(&second).unwrap();
-
-    let err = prog.detach(&first).unwrap_err();
-    assert_matches!(
-        err,
-        ProgramError::SkReuseportError(SkReuseportError::SetsockoptError {
-            option: "SO_DETACH_REUSEPORT_BPF",
-            io_error,
-        }) if io_error.raw_os_error() == Some(ENOENT)
-    );
+        let err = SkReuseport::detach(&first).unwrap_err();
+        assert_matches!(
+            err,
+            ProgramError::SkReuseportError(SkReuseportError::SetsockoptError {
+                option: "SO_DETACH_REUSEPORT_BPF",
+                io_error,
+            }) if io_error.raw_os_error() == Some(ENOENT)
+        );
+    });
 }
 
-#[test_case("socket_map", "select_socket_after_clear"; "legacy")]
-#[test_case("socket_map_btf", "select_socket_after_clear_btf"; "btf")]
-#[test_log::test(tokio::test)]
-async fn sk_reuseport_clear_index_changes_selection(socket_map: &str, clear_prog: &str) {
-    let _netns = NetNsGuard::new();
-
-    let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
-    let mut socket_array: ReusePortSockArray<_> =
-        ebpf.take_map(socket_map).unwrap().try_into().unwrap();
-    let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
-    let [first, second, third] = reuseport_listeners();
-    let addr = first.local_addr().unwrap();
-
-    for (index, listener) in [&first, &second, &third].into_iter().enumerate() {
-        socket_array.set(index as u32, listener, 0).unwrap();
-    }
-
-    {
-        // Limit the mutable borrow of `ebpf` from `program_mut()` to this block.
-        let prog: &mut SkReuseport = ebpf.program_mut(clear_prog).unwrap().try_into().unwrap();
-        prog.load().unwrap();
-        prog.attach(&first).unwrap();
-    }
-
-    let first_client = connect(addr).await.unwrap();
-    let (first_accepted_idx, first_server) =
-        wait_for_accept_tokio(&[&first, &second, &third]).await;
-    assert_eq!(
-        first_accepted_idx, SELECT_SOCKET_INDEX as usize,
-        "before clearing key 0, the program should steer to listener A",
-    );
-    assert!(
-        read_hits(&path_hits, SELECT_HITS_INDEX) > 0,
-        "select path did not run before clear",
-    );
-    assert_eq!(read_hits(&path_hits, MIGRATE_HITS_INDEX), 0);
-    assert_eq!(read_hits(&path_hits, CLEAR_FALLBACK_HITS_INDEX), 0);
-    assert_connection_works(first_client, first_server).await;
-
-    socket_array.clear_index(&SELECT_SOCKET_INDEX).unwrap();
-
-    let second_client = connect(addr).await.unwrap();
-    let (second_accepted_idx, second_server) =
-        wait_for_accept_tokio(&[&first, &second, &third]).await;
-    assert_eq!(
-        second_accepted_idx, MIGRATE_SOCKET_INDEX as usize,
-        "after clearing key 0, the program should fall back to listener C",
-    );
-    assert_eq!(read_hits(&path_hits, MIGRATE_HITS_INDEX), 0);
-    // Confirm that the test program observed the missing primary key and
-    // explicitly selected listener C, rather than relying on the kernel's
-    // default SO_REUSEPORT selection logic.
-    assert!(
-        read_hits(&path_hits, CLEAR_FALLBACK_HITS_INDEX) > 0,
-        "clear fallback path did not run",
-    );
-    assert_connection_works(second_client, second_server).await;
-}
-
-#[test_case("select_socket"; "legacy")]
-#[test_case("select_socket_btf"; "btf")]
-#[test_log::test(tokio::test)]
-async fn sk_reuseport_detaches_after_unload(select_prog: &str) {
-    let _netns = NetNsGuard::new();
-
-    let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
-    let [first, second] = reuseport_listeners();
-
-    let prog: &mut SkReuseport = ebpf.program_mut(select_prog).unwrap().try_into().unwrap();
-    prog.load().unwrap();
-    prog.attach(&first).unwrap();
-    prog.unload().unwrap();
-
-    // `SO_DETACH_REUSEPORT_BPF` identifies the group solely from the
-    // socket, so detaching should still succeed after the local program FD
-    // has been unloaded.
-    prog.detach(&second).unwrap();
-
-    let err = prog.detach(&first).unwrap_err();
-    assert_matches!(
-        err,
-        ProgramError::SkReuseportError(SkReuseportError::SetsockoptError {
-            option: "SO_DETACH_REUSEPORT_BPF",
-            io_error,
-        }) if io_error.raw_os_error() == Some(ENOENT)
-    );
-}
-
-#[test_case("socket_map", "select_or_migrate_socket"; "legacy")]
-#[test_case("socket_map_btf", "select_or_migrate_socket_btf"; "btf")]
-#[test_log::test(tokio::test)]
-async fn sk_reuseport_migrates_to_expected_listener(socket_map: &str, migrate_prog: &str) {
+#[rstest]
+#[case::legacy("socket_map", "select_or_migrate_socket")]
+#[case::btf("socket_map_btf", "select_or_migrate_socket_btf")]
+#[test_attr(test_log::test)]
+fn sk_reuseport_migrates_to_expected_listener(
+    #[case] socket_map: &str,
+    #[case] migrate_prog: &str,
+) {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 14, 0) {
         eprintln!("skipping test on kernel {kernel_version:?}, sk_reuseport/migrate requires 5.14");
         return;
     }
 
-    let _netns = NetNsGuard::new();
-    match std::fs::write("/proc/sys/net/ipv4/tcp_migrate_req", "1") {
-        Ok(()) => {}
-        Err(err)
-            if matches!(
-                err.kind(),
-                ErrorKind::NotFound | ErrorKind::PermissionDenied | ErrorKind::ReadOnlyFilesystem
-            ) =>
+    run_netns_tokio(async || {
+        match std::fs::write("/proc/sys/net/ipv4/tcp_migrate_req", "1") {
+            Ok(()) => {}
+            Err(err)
+                if matches!(
+                    err.kind(),
+                    ErrorKind::NotFound
+                        | ErrorKind::PermissionDenied
+                        | ErrorKind::ReadOnlyFilesystem
+                ) =>
+            {
+                eprintln!("skipping test - tcp_migrate_req not configurable in test netns: {err}");
+                return;
+            }
+            Err(err) => panic!("unexpected error configuring tcp_migrate_req: {err}"),
+        }
+
+        let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
+        let mut socket_array: ReusePortSockArray<_> =
+            ebpf.take_map(socket_map).unwrap().try_into().unwrap();
+        let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
+        let [listener_a, listener_b, listener_c] = reuseport_listeners();
+
+        for (index, listener) in [&listener_a, &listener_b, &listener_c]
+            .into_iter()
+            .enumerate()
         {
-            eprintln!("skipping test - tcp_migrate_req not configurable in test netns: {err}");
-            return;
+            socket_array.set(index as u32, listener, 0).unwrap();
         }
-        Err(err) => panic!("unexpected error configuring tcp_migrate_req: {err}"),
-    }
 
-    let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
-    let mut socket_array: ReusePortSockArray<_> =
-        ebpf.take_map(socket_map).unwrap().try_into().unwrap();
-    let path_hits: Array<_, u64> = ebpf.take_map("path_hits").unwrap().try_into().unwrap();
-    let [listener_a, listener_b, listener_c] = reuseport_listeners();
-
-    for (index, listener) in [&listener_a, &listener_b, &listener_c]
-        .into_iter()
-        .enumerate()
-    {
-        socket_array.set(index as u32, listener, 0).unwrap();
-    }
-
-    let prog: &mut SkReuseport = ebpf.program_mut(migrate_prog).unwrap().try_into().unwrap();
-    match prog.load() {
-        Ok(()) => {}
-        Err(ProgramError::LoadError { io_error, .. })
-            if io_error.raw_os_error() == Some(EINVAL) =>
-        {
-            eprintln!("skipping test - kernel rejected BPF_SK_REUSEPORT_SELECT_OR_MIGRATE at load");
-            return;
-        }
-        Err(err) => {
-            panic!("unexpected error loading sk_reuseport/migrate program: {err}")
-        }
-    }
-
-    {
-        // Limit the mutable borrow of `ebpf` from `program_mut()` to this block.
         let prog: &mut SkReuseport = ebpf.program_mut(migrate_prog).unwrap().try_into().unwrap();
-        prog.attach(&listener_a).unwrap();
-    }
+        match prog.load() {
+            Ok(()) => {}
+            Err(ProgramError::LoadError { io_error, .. })
+                if io_error.raw_os_error() == Some(EINVAL) =>
+            {
+                eprintln!(
+                    "skipping test - kernel rejected BPF_SK_REUSEPORT_SELECT_OR_MIGRATE at load"
+                );
+                return;
+            }
+            Err(err) => {
+                panic!("unexpected error loading sk_reuseport/migrate program: {err}")
+            }
+        }
 
-    let addr = listener_b.local_addr().unwrap();
-    // Leave the connection pending on the listener side so dropping the
-    // selected listener exercises the kernel's reuseport migration path
-    // instead of handing an already-accepted socket to userspace.
-    let client = connect(addr).await.unwrap();
-    assert!(
-        read_hits(&path_hits, SELECT_HITS_INDEX) > 0,
-        "initial selection path did not run",
-    );
+        {
+            // Limit the mutable borrow of `ebpf` from `program_mut()` to this block.
+            let prog: &mut SkReuseport =
+                ebpf.program_mut(migrate_prog).unwrap().try_into().unwrap();
+            prog.attach(&listener_a).unwrap();
+        }
 
-    drop(listener_a);
+        let addr = listener_b.local_addr().unwrap();
+        // Leave the connection pending on the listener side so dropping the
+        // selected listener exercises the kernel's reuseport migration path
+        // instead of handing an already-accepted socket to userspace.
+        let client = connect(addr).await.unwrap();
+        assert!(
+            read_hits(&path_hits, SELECT_HITS_INDEX) > 0,
+            "initial selection path did not run",
+        );
 
-    // Confirm that the migrate-capable BPF path ran, not just the kernel's
-    // default SO_REUSEPORT selection logic choosing a surviving listener.
-    assert!(
-        read_hits(&path_hits, MIGRATE_HITS_INDEX) > 0,
-        "migration path did not run",
-    );
-    assert_eq!(read_hits(&path_hits, CLEAR_FALLBACK_HITS_INDEX), 0);
-    let surviving_group_indices = [1u32, MIGRATE_SOCKET_INDEX];
-    // Switch to polling on the underlying std listeners here: the
-    // migration path can make a connection accept-ready on the surviving
-    // listener without a fresh tokio readiness event.
-    let listener_b = listener_b.into_std().unwrap();
-    let listener_c = listener_c.into_std().unwrap();
-    let (accepted_idx, server) = wait_for_accept_polling([&listener_b, &listener_c]).await;
-    assert_eq!(
-        surviving_group_indices[accepted_idx], MIGRATE_SOCKET_INDEX,
-        "migration should steer the connection to listener C",
-    );
-    assert_connection_works(client, server).await;
+        drop(listener_a);
+
+        // Confirm that the migrate-capable BPF path ran, not just the kernel's
+        // default SO_REUSEPORT selection logic choosing a surviving listener.
+        assert!(
+            read_hits(&path_hits, MIGRATE_HITS_INDEX) > 0,
+            "migration path did not run",
+        );
+        assert_eq!(read_hits(&path_hits, CLEAR_FALLBACK_HITS_INDEX), 0);
+        let surviving_group_indices = [1u32, MIGRATE_SOCKET_INDEX];
+        // Switch to polling on the underlying std listeners here: the
+        // migration path can make a connection accept-ready on the surviving
+        // listener without a fresh tokio readiness event.
+        let listener_b = listener_b.into_std().unwrap();
+        let listener_c = listener_c.into_std().unwrap();
+        let (accepted_idx, server) = wait_for_accept_polling([&listener_b, &listener_c]).await;
+        assert_eq!(
+            surviving_group_indices[accepted_idx], MIGRATE_SOCKET_INDEX,
+            "migration should steer the connection to listener C",
+        );
+        assert_connection_works(client, server).await;
+    });
 }

@@ -4,7 +4,7 @@ use aya::{
     programs::{UProbe, uprobe::UProbeScope},
 };
 use integration_common::array::{ARRAY_LEN, GET_INDEX, GET_PTR_INDEX, GET_PTR_MUT_INDEX};
-use test_case::test_case;
+use rstest::rstest;
 
 #[unsafe(no_mangle)]
 #[inline(never)]
@@ -30,32 +30,24 @@ extern "C" fn get_ptr_mut(index: u32) {
     std::hint::black_box(index);
 }
 
-#[test_case(
+#[rstest]
+#[case::legacy(
     "RESULT_LEGACY",
     "ARRAY_LEGACY",
     "set_legacy",
     "get_legacy",
     "get_ptr_legacy",
     "get_ptr_mut_legacy"
-    ; "legacy"
 )]
-#[test_case(
-    "RESULT",
-    "ARRAY",
-    "set",
-    "get",
-    "get_ptr",
-    "get_ptr_mut"
-    ; "btf"
-)]
-#[test_log::test]
+#[case::btf("RESULT", "ARRAY", "set", "get", "get_ptr", "get_ptr_mut")]
+#[test_attr(test_log::test)]
 fn test_array(
-    result_map: &str,
-    array_map: &str,
-    set_prog: &str,
-    get_prog: &str,
-    get_ptr_prog: &str,
-    get_ptr_mut_prog: &str,
+    #[case] result_map: &str,
+    #[case] array_map: &str,
+    #[case] set_prog: &str,
+    #[case] get_prog: &str,
+    #[case] get_ptr_prog: &str,
+    #[case] get_ptr_mut_prog: &str,
 ) {
     let mut ebpf = EbpfLoader::new().load(crate::ARRAY).unwrap();
 

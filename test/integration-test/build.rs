@@ -74,6 +74,8 @@ fn main() -> Result<()> {
     let out_dir = env::var_os(OUT_DIR).ok_or_else(|| anyhow!("{OUT_DIR} not set"))?;
     let out_dir = PathBuf::from(out_dir);
 
+    // Keep this list synchronized with C_BPF_OBJECTS in BUILD.bazel. The Boolean controls whether
+    // to build the additional .BTF section used by the corresponding relocation test.
     const C_BPF: &[(&str, bool)] = &[
         ("ext.bpf.c", false),
         ("iter.bpf.c", true),
@@ -93,6 +95,11 @@ fn main() -> Result<()> {
         ("struct_flavors_reloc.bpf.c", true),
         ("text_64_64_reloc.c", false),
         ("variables_reloc.bpf.c", false),
+        ("ksyms.bpf.c", true),
+        ("ksyms_strong.bpf.c", true),
+        ("ksyms_typed_missing_var.bpf.c", true),
+        ("ksyms_typed_missing_kfunc.bpf.c", true),
+        ("ksyms_typeless_missing.bpf.c", true),
     ];
     const C_BPF_HEADERS: &[&str] = &["reloc.h", "struct_with_scalars.h"];
 

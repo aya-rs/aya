@@ -7,7 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.2.0 (2026-06-24)
+
+### Chore
+
+ - <csr-id-4f0559f2afeca1dfae120bacf1742d58268bca37/> Fix cippy errors
+
+### New Features
+
+ - <csr-id-a98b638fa95fd8edb8c015ee03154d2f03ecffc8/> add support for logging raw pointer types
+   * Requires the usage of `:p` display hint.
+   * Will, like stdlib, log with `0x` prefix.
+
+### Other
+
+ - <csr-id-49a828ec5655f6ecd0c38083c6c0dca217bad777/> reorder-keys
+   Group non-workspace keys before workspace ones for readability.
+ - <csr-id-2d782606fe984cb2ffebe7b98807a58494441a4c/> avoid Result::is_{ok,err}
+   These methods discard information. Discarding information is bad.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 10 commits contributed to the release.
+ - 4 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Dial the lints to 100 ([`2f8759c`](https://github.com/aya-rs/aya/commit/2f8759cc62e2a420eef463e271d354fcf65eca9d))
+    - Release crates ([`d238b2e`](https://github.com/aya-rs/aya/commit/d238b2ea6f1b2c1aa09a9050415b1c96329af0aa))
+    - Add support for logging raw pointer types ([`a98b638`](https://github.com/aya-rs/aya/commit/a98b638fa95fd8edb8c015ee03154d2f03ecffc8))
+    - Reorder-keys ([`49a828e`](https://github.com/aya-rs/aya/commit/49a828ec5655f6ecd0c38083c6c0dca217bad777))
+    - Introduce workspace lints, warn on unused crates ([`a43e40a`](https://github.com/aya-rs/aya/commit/a43e40ae1d1441ab4aea6a1a5d9ea36b56d62ff8))
+    - Bump edition to 2024 ([`f0a9f19`](https://github.com/aya-rs/aya/commit/f0a9f19ddc7f02143a02dcc2bf6be88fa2d84063))
+    - Avoid Result::is_{ok,err} ([`2d78260`](https://github.com/aya-rs/aya/commit/2d782606fe984cb2ffebe7b98807a58494441a4c))
+    - Narrow clippy allowances ([`41706d7`](https://github.com/aya-rs/aya/commit/41706d74e44f2c3589c28a7149beb4db185594f2))
+    - Simplify `parse_param` ([`1bf6a38`](https://github.com/aya-rs/aya/commit/1bf6a386197d019c0a548fdf488c9edf6c67c7e1))
+    - Fix cippy errors ([`4f0559f`](https://github.com/aya-rs/aya/commit/4f0559f2afeca1dfae120bacf1742d58268bca37))
+</details>
+
 ## v0.1.14 (2025-11-17)
+
+<csr-id-1bf6a386197d019c0a548fdf488c9edf6c67c7e1/>
+<csr-id-a98b638fa95fd8edb8c015ee03154d2f03ecffc8/>
+<csr-id-f0a9f19ddc7f02143a02dcc2bf6be88fa2d84063/>
+<csr-id-41706d74e44f2c3589c28a7149beb4db185594f2/>
 
 ### Improvements
 
@@ -28,6 +79,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-id-84e5e2894f226f4b2c7cb637a6f44d5773b927e6/>
 <csr-id-2223ab828d6db40a85cff4737f6164ed8ee9e42d/>
 <csr-id-83ec27f06b6859f455f2b2baf985b8fd3fb4adc5/>
+<csr-id-1d515fe810c6e646ca405d8f97803698deda148c/>
 
 ### Chore
 
@@ -96,7 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 18 commits contributed to the release over the course of 591 calendar days.
+ - 19 commits contributed to the release.
  - 9 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -107,6 +159,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release aya-log-parser v0.1.13 ([`04ee35d`](https://github.com/aya-rs/aya/commit/04ee35d1392ab7dc2d97c6e0f1449e98b1283ffe))
     - Add missing changelogs ([`1d515fe`](https://github.com/aya-rs/aya/commit/1d515fe810c6e646ca405d8f97803698deda148c))
     - Release aya-log-common v0.1.14, aya-log v0.2.0 ([`c22a696`](https://github.com/aya-rs/aya/commit/c22a6963d44befb5591d4b21c09767c43935cb54))
     - Don't use path deps in workspace ([`13b1fc6`](https://github.com/aya-rs/aya/commit/13b1fc63ef2ae083ba03ce9de24cb4f31f989d21))

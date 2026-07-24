@@ -6,12 +6,13 @@ use aya::{
     sys::{SyscallError, is_map_supported, is_program_supported},
 };
 use integration_common::stack_trace::TestResult;
-use test_case::test_case;
+use rstest::rstest;
 
-#[test_case("STACKS_LEGACY", "RESULT_LEGACY", "record_stackid_lsm_legacy" ; "legacy")]
-#[test_case("STACKS", "RESULT", "record_stackid_lsm" ; "btf")]
-#[test_log::test]
-fn record_stackid_lsm(stacks_map: &str, result_map: &str, prog: &str) {
+#[rstest]
+#[case::legacy("STACKS_LEGACY", "RESULT_LEGACY", "record_stackid_lsm_legacy")]
+#[case::btf("STACKS", "RESULT", "record_stackid_lsm")]
+#[test_attr(test_log::test)]
+fn record_stackid_lsm(#[case] stacks_map: &str, #[case] result_map: &str, #[case] prog: &str) {
     if !is_map_supported(MapType::StackTrace).unwrap() {
         eprintln!("skipping test - stack trace map not supported");
         return;

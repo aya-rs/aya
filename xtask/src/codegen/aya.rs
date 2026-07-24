@@ -35,17 +35,6 @@ fn codegen_internal_btf_bindings(libbpf_dir: &Path) -> Result<()> {
 }
 
 fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
-    let SysrootOptions {
-        aarch64_sysroot,
-        armv7_sysroot,
-        loongarch64_sysroot,
-        mips_sysroot,
-        mips64_sysroot,
-        powerpc64_sysroot,
-        riscv64_sysroot,
-        s390x_sysroot,
-        x86_64_sysroot,
-    } = opts;
     let dir = Path::new("aya-obj");
     let generated = dir.join("src/generated");
     create_dir_all(&generated)?;
@@ -87,6 +76,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
             "bpf_func_info",
             "bpf_line_info",
             "bpf_lpm_trie_key",
+            "bpf_cgroup_storage_key",
             "bpf_cpumap_val",
             "bpf_devmap_val",
             "bpf_stats_type",
@@ -192,17 +182,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
 
         // Set the sysroot. This is needed to ensure that the correct arch
         // specific headers are imported.
-        let sysroot = match arch {
-            Architecture::AArch64 => aarch64_sysroot,
-            Architecture::ARMv7 => armv7_sysroot,
-            Architecture::LoongArch64 => loongarch64_sysroot,
-            Architecture::Mips => mips_sysroot,
-            Architecture::Mips64 => mips64_sysroot,
-            Architecture::PowerPC64 => powerpc64_sysroot,
-            Architecture::RISCV64 => riscv64_sysroot,
-            Architecture::S390X => s390x_sysroot,
-            Architecture::X86_64 => x86_64_sysroot,
-        };
+        let sysroot = arch.sysroot(opts);
         bindgen = bindgen.clang_args(["-I", sysroot.to_str().unwrap()]);
 
         let bindings = bindgen.generate().context("bindgen failed")?;

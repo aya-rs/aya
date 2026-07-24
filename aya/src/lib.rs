@@ -38,13 +38,18 @@
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(missing_docs)]
-#![cfg_attr(test, expect(unused_crate_dependencies, reason = "used in doctests"))]
+#![cfg_attr(
+    all(test, not(feature = "test-helpers")),
+    expect(unused_crate_dependencies, reason = "used in doctests")
+)]
 
 mod bpf;
 pub mod maps;
 pub mod pin;
 pub mod programs;
 pub mod sys;
+#[cfg(feature = "test-helpers")]
+pub mod test_helpers;
 pub mod util;
 
 use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
@@ -52,6 +57,10 @@ use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd, RawFd};
 pub use aya_obj::btf::{Btf, BtfError};
 pub use bpf::*;
 pub use object::Endianness;
+pub use programs::{
+    RawTracePointRunOptions, RawTracePointTestRunResult, TestRun, TestRunAttrs, TestRunOptions,
+    TestRunResult,
+};
 #[doc(hidden)]
 pub use sys::netlink_set_link_up;
 

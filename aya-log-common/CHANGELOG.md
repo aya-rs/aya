@@ -7,7 +7,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.2.0 (2026-06-24)
+
+### New Features
+
+ - <csr-id-c1eb42780c8e0eba340808eb4b75df15ac434e61/> add typos-cli configuration and CI
+ - <csr-id-a98b638fa95fd8edb8c015ee03154d2f03ecffc8/> add support for logging raw pointer types
+   * Requires the usage of `:p` display hint.
+   * Will, like stdlib, log with `0x` prefix.
+
+### Other
+
+ - <csr-id-fe99fa1d2eee94c4bf60d698784cae3c43f3a71c/> run clippy with target=bpf
+   This build warnings from integration tests and makes `aya-ebpf`'s build
+   script stricter.
+ - <csr-id-214fe3c3673b182606c14d5e43f7f4ac512e47a7/> seal Argument
+ - <csr-id-353b83383dccc430619f3c6d95e17edd6ca8a96c/> zero copy!
+ - <csr-id-9be2d723ce5d7bf5f85d69d54aa5fd7f60d48edc/> Replace AsyncPerfEventArray with RingBuf
+   This doesn't get us to zero copy because the reserve/submit APIs do not
+   support DSTs for reasons I don't remember.
+   
+   Now that it is unused in userspace, move `LOG_BUF_CAPACITY` to
+   `aya-log-ebpf` by making its type `LogValueLength` which obviates the
+   need for `log_value_length_sufficient`.
+ - <csr-id-49a828ec5655f6ecd0c38083c6c0dca217bad777/> reorder-keys
+   Group non-workspace keys before workspace ones for readability.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 17 commits contributed to the release.
+ - 7 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 0 issues like '(#ID)' were seen in commit messages
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **Uncategorized**
+    - Add typos-cli configuration and CI ([`c1eb427`](https://github.com/aya-rs/aya/commit/c1eb42780c8e0eba340808eb4b75df15ac434e61))
+    - Remove no-longer-firing lint expectations ([`d43d8a9`](https://github.com/aya-rs/aya/commit/d43d8a9674217dc1fc91f4747f3c92a8c9d5e3f7))
+    - Dial the lints to 100 ([`2f8759c`](https://github.com/aya-rs/aya/commit/2f8759cc62e2a420eef463e271d354fcf65eca9d))
+    - Symlink licenses into aya-log{,-common} ([`3b28447`](https://github.com/aya-rs/aya/commit/3b28447573eca75420a3cfc9198735f5876e37da))
+    - Release crates ([`d238b2e`](https://github.com/aya-rs/aya/commit/d238b2ea6f1b2c1aa09a9050415b1c96329af0aa))
+    - Add support for logging raw pointer types ([`a98b638`](https://github.com/aya-rs/aya/commit/a98b638fa95fd8edb8c015ee03154d2f03ecffc8))
+    - Run clippy with target=bpf ([`fe99fa1`](https://github.com/aya-rs/aya/commit/fe99fa1d2eee94c4bf60d698784cae3c43f3a71c))
+    - Lint all crates; enable strict pointer lints ([`5f5305c`](https://github.com/aya-rs/aya/commit/5f5305c2a8ca0a739219093599dd57182d440ac1))
+    - Seal Argument ([`214fe3c`](https://github.com/aya-rs/aya/commit/214fe3c3673b182606c14d5e43f7f4ac512e47a7))
+    - Zero copy! ([`353b833`](https://github.com/aya-rs/aya/commit/353b83383dccc430619f3c6d95e17edd6ca8a96c))
+    - Replace AsyncPerfEventArray with RingBuf ([`9be2d72`](https://github.com/aya-rs/aya/commit/9be2d723ce5d7bf5f85d69d54aa5fd7f60d48edc))
+    - Replace macros with loops ([`6a9ef2b`](https://github.com/aya-rs/aya/commit/6a9ef2b43bd7394e01b3c601f480112e023a3101))
+    - Reorder-keys ([`49a828e`](https://github.com/aya-rs/aya/commit/49a828ec5655f6ecd0c38083c6c0dca217bad777))
+    - Introduce workspace lints, warn on unused crates ([`a43e40a`](https://github.com/aya-rs/aya/commit/a43e40ae1d1441ab4aea6a1a5d9ea36b56d62ff8))
+    - Bump edition to 2024 ([`f0a9f19`](https://github.com/aya-rs/aya/commit/f0a9f19ddc7f02143a02dcc2bf6be88fa2d84063))
+    - Use #[expect(...)] rather than #[allow(...)] ([`4101a5a`](https://github.com/aya-rs/aya/commit/4101a5a55d43cd9ead56497820c4d43018f74cbb))
+    - Appease clippy ([`0429ed2`](https://github.com/aya-rs/aya/commit/0429ed2fa299636428b65573456cffe0aac2beca))
+</details>
+
 ## v0.1.16 (2025-11-17)
+
+<csr-id-9be2d723ce5d7bf5f85d69d54aa5fd7f60d48edc/>
+<csr-id-214fe3c3673b182606c14d5e43f7f4ac512e47a7/>
+<csr-id-0429ed2fa299636428b65573456cffe0aac2beca/>
+<csr-id-5f5305c2a8ca0a739219093599dd57182d440ac1/>
 
 ### Breaking Changes
 
@@ -25,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 0.1.15 (2024-10-09)
 
 <csr-id-a75fc2f7691dad21822c2eff35281abd3c4b5d23/>
+<csr-id-c3f0c7dc3fb285da091454426eeda0723389f0f1/>
 
 ### Other
 
@@ -46,8 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 3 commits contributed to the release.
- - 223 days passed between releases.
+ - 4 commits contributed to the release over the course of 185 calendar days.
  - 2 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 
@@ -58,6 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release aya-log-common v0.1.15, aya-log-ebpf v0.1.1 ([`04bbbcc`](https://github.com/aya-rs/aya/commit/04bbbccffa6298dbfeb967ca9967611e283ac81d))
     - Prepare for aya-log-ebpf release ([`c3f0c7d`](https://github.com/aya-rs/aya/commit/c3f0c7dc3fb285da091454426eeda0723389f0f1))
     - Allow logging `core::net::Ipv4Addr` and `core::net::Ipv6Addr` ([`a75fc2f`](https://github.com/aya-rs/aya/commit/a75fc2f7691dad21822c2eff35281abd3c4b5d23))
     - Appease clippy ([`09442c2`](https://github.com/aya-rs/aya/commit/09442c2cbe9513365dfc1df8d4f7cf6f808a67ed))
@@ -111,7 +177,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    These were missed when the code was updated.
  - <csr-id-ca3f70b16a705bf26d2ccc7ce754de403be36223/> s/Result<usize, ()>/Option<NonZeroUsize>/
    `Option<NonZeroUsize>` is guaranteed to have the same size as `usize`,
-   which is not guarnateed for `Result`. This is a minor optimization, but
+   which is not guaranteed for `Result`. This is a minor optimization, but
    also results in simpler code.
  - <csr-id-3cfd886dc512872fd3948cdf3baa8c99fe27ef0f/> annotate logging functions inlining
    Some of these functions fail to compile when not inlined, so we should
@@ -249,7 +315,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <csr-read-only-do-not-edit/>
 
  - 38 commits contributed to the release.
- - 469 days passed between releases.
  - 18 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
 

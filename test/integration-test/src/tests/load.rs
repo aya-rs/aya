@@ -9,7 +9,7 @@ use aya::{
     pin::PinError,
     programs::{
         FlowDissector, KProbe, LinkOrder, ProbeKind, Program, ProgramError, SchedClassifier,
-        TcAttachType, TracePoint, UProbe, Xdp, XdpFlags,
+        TcAttachType, TracePoint, UProbe, Xdp, XdpMode,
         flow_dissector::{FlowDissectorLink, FlowDissectorLinkId},
         kprobe::{KProbeLink, KProbeLinkId},
         links::{FdLink, LinkError, PinnedLink},
@@ -19,19 +19,18 @@ use aya::{
         uprobe::{UProbeLink, UProbeLinkId, UProbeScope},
         xdp::{XdpLink, XdpLinkId},
     },
+    test_helpers::NetNsGuard,
     util::KernelVersion,
 };
 use aya_obj::programs::XdpAttachType;
-use test_case::test_case;
-
-use crate::utils::NetNsGuard;
+use rstest::rstest;
 
 const MAX_RETRIES: usize = 100;
 pub(crate) const RETRY_DURATION: Duration = Duration::from_millis(10);
 
 #[test_log::test]
 fn long_name() {
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     let mut bpf = Ebpf::load(crate::NAME_TEST).unwrap();
     let name_prog: &mut Xdp = bpf
@@ -40,7 +39,7 @@ fn long_name() {
         .try_into()
         .unwrap();
     name_prog.load().unwrap();
-    name_prog.attach("lo", XdpFlags::default()).unwrap();
+    name_prog.attach("lo", XdpMode::default()).unwrap();
 
     // We used to be able to assert with bpftool that the program name was short.
     // It seem though that it now uses the name from the ELF symbol table instead.
@@ -282,12 +281,12 @@ impl_unload_program_ops!(FlowDissector, FlowDissectorLinkId, FlowDissectorLink);
 
 #[test_log::test]
 fn unload_xdp() {
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     type P = Xdp;
 
     let program_name = "pass";
-    let attach = |prog: &mut P| prog.attach("lo", XdpFlags::default()).unwrap();
+    let attach = |prog: &mut P| prog.attach("lo", XdpMode::default()).unwrap();
     run_unload_program_test(
         crate::TEST,
         program_name,
@@ -373,14 +372,13 @@ fn basic_tracepoint() {
     );
 }
 
-#[test_case(UProbeScope::AllProcesses; "all_processes")]
-#[test_case(UProbeScope::CallingProcess; "calling_process")]
-#[test_case(
-    UProbeScope::OneProcess(NonZeroU32::new(std::process::id()).unwrap());
-    "one_process"
-)]
-#[test_log::test]
-fn basic_uprobe_scopes(scope: UProbeScope) {
+#[rstest]
+#[case::all_processes(UProbeScope::AllProcesses)]
+#[case::calling_process(UProbeScope::CallingProcess)]
+#[case::one_process(
+    UProbeScope::OneProcess(NonZeroU32::new(std::process::id()).unwrap()))]
+#[test_attr(test_log::test)]
+fn basic_uprobe_scopes(#[case] scope: UProbeScope) {
     type P = UProbe;
 
     let program_name = "test_uprobe";
@@ -416,12 +414,12 @@ fn basic_flow_dissector() {
 
 #[test_log::test]
 fn pin_link() {
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     type P = Xdp;
 
     let program_name = "pass";
-    let attach = |prog: &mut P| prog.attach("lo", XdpFlags::default()).unwrap();
+    let attach = |prog: &mut P| prog.attach("lo", XdpMode::default()).unwrap();
 
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
@@ -455,7 +453,7 @@ fn pin_tcx_link() {
         return;
     }
 
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     let program_name = "tcx_next";
     let pin_path = "/sys/fs/bpf/aya-tcx-test-veth0";
@@ -523,12 +521,12 @@ impl_pin_program_ops!(UProbe);
 
 #[test_log::test]
 fn pin_lifecycle() {
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     type P = Xdp;
 
     let program_name = "pass";
-    let attach = |prog: &mut P| prog.attach("lo", XdpFlags::default()).unwrap();
+    let attach = |prog: &mut P| prog.attach("lo", XdpMode::default()).unwrap();
     let program_pin = "/sys/fs/bpf/aya-xdp-test-prog";
     let link_pin = "/sys/fs/bpf/aya-xdp-test-veth0";
     let from_pin = |program_pin: &str| P::from_pin(program_pin, XdpAttachType::Interface).unwrap();

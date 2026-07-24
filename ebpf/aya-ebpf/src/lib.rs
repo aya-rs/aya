@@ -84,6 +84,13 @@ pub trait EbpfContext {
     }
 }
 
+#[cfg_attr(
+    runtime_symbol_lint,
+    expect(
+        invalid_runtime_symbol_definitions,
+        reason = "BPF subprograms cannot return pointers into the caller's stack"
+    )
+)]
 mod intrinsics {
     use super::cty::c_int;
 
@@ -194,6 +201,9 @@ fn lookup<K, V>(def: *mut c_void, key: &K) -> Option<NonNull<V>> {
     let key = ptr::from_ref(key);
     NonNull::new(unsafe { bpf_map_lookup_elem(def, key.cast()) }.cast())
 }
+
+/// `ENOENT` errno value, returned (negated) when [`lookup`] misses.
+pub(crate) const ENOENT: i32 = 2;
 
 /// A read-only global value that may be initialized by the loader.
 ///

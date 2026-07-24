@@ -50,6 +50,7 @@ pub struct UProbe {
 
 /// The location in the target object file to which the uprobe is to be
 /// attached.
+#[derive(Debug)]
 pub enum UProbeAttachLocation<'a> {
     /// The location of the target function in the target object file.
     Symbol(&'a str),
@@ -69,6 +70,93 @@ impl<'a> From<&'a str> for UProbeAttachLocation<'a> {
 impl From<u64> for UProbeAttachLocation<'static> {
     fn from(offset: u64) -> Self {
         Self::AbsoluteOffset(offset)
+    }
+}
+
+/// The type returned when constructing a [`UProbeAttachLocation`] fails.
+#[derive(Debug, Error)]
+pub enum UProbeAttachLocationError {
+    /// The instruction address is not in the containing section.
+    #[error(
+        "instruction address {instruction_address:#x} is not in section: \
+        before section address {section_address:#x}"
+    )]
+    AddressNotInSection {
+        /// The instruction's virtual address.
+        instruction_address: u64,
+        /// The containing section's virtual address.
+        section_address: u64,
+    },
+
+    /// The computed file offset does not fit in [`u64`].
+    #[error(
+        "computed file offset overflows u64: \
+        {instruction_address:#x} - {section_address:#x} + {section_offset:#x}"
+    )]
+    FileOffsetOverflow {
+        /// The instruction's virtual address.
+        instruction_address: u64,
+        /// The containing section's virtual address.
+        section_address: u64,
+        /// The containing section's file offset.
+        section_offset: u64,
+    },
+}
+
+impl UProbeAttachLocation<'static> {
+    /// Returns an attach location from an ELF virtual address.
+    ///
+    /// The kernel expects uprobes and uretprobes to be attached by object file
+    /// offset. If you have already resolved the instruction to an ELF virtual
+    /// address, pass that address together with the virtual address and file
+    /// offset of the section that contains it.
+    ///
+    /// This returns [`UProbeAttachLocation::AbsoluteOffset`] using the same
+    /// address translation used for uprobe attachment:
+    ///
+    /// ```text
+    /// file_offset = instruction_address - section_address + section_offset
+    /// ```
+    ///
+    /// The arguments correspond to ELF values as follows:
+    ///
+    /// - `instruction_address`: the instruction virtual address, typically a
+    ///   symbol's `st_value`.
+    /// - `section_address`: the containing section's virtual address
+    ///   (`sh_addr`).
+    /// - `section_offset`: the containing section's file offset (`sh_offset`).
+    ///
+    /// `instruction_address` must be greater than or equal to
+    /// `section_address`. The caller must pass the `section_address` and
+    /// `section_offset` for the section containing `instruction_address`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`UProbeAttachLocationError::AddressNotInSection`] if
+    /// `instruction_address` is less than `section_address`.
+    ///
+    /// Returns [`UProbeAttachLocationError::FileOffsetOverflow`] if the
+    /// computed file offset does not fit in [`u64`].
+    pub fn from_virtual_address(
+        instruction_address: u64,
+        section_address: u64,
+        section_offset: u64,
+    ) -> Result<Self, UProbeAttachLocationError> {
+        let section_relative_offset = instruction_address.checked_sub(section_address).ok_or(
+            UProbeAttachLocationError::AddressNotInSection {
+                instruction_address,
+                section_address,
+            },
+        )?;
+        let file_offset = section_relative_offset.checked_add(section_offset).ok_or(
+            UProbeAttachLocationError::FileOffsetOverflow {
+                instruction_address,
+                section_address,
+                section_offset,
+            },
+        )?;
+
+        Ok(Self::AbsoluteOffset(file_offset))
     }
 }
 
@@ -118,9 +206,11 @@ impl UProbe {
 
     /// Attaches the program.
     ///
-    /// Attaches the uprobe to the function `fn_name` defined in the `target`.
-    /// If the attach point specifies an offset, it is added to the address of
-    /// the target function. `scope` specifies which processes should trigger
+    /// Attaches the uprobe to `point` in the `target`. If the attach point is a
+    /// symbol offset, the offset is added to the address of the target function.
+    /// Absolute offsets must already be target object file offsets; use
+    /// [`UProbeAttachLocation::from_virtual_address()`] to construct one from an
+    /// ELF virtual address. `scope` specifies which processes should trigger
     /// the uprobe.
     ///
     /// The `target` argument can be an absolute or relative path to a binary or
@@ -774,7 +864,7 @@ fn symbol_translated_address(
 mod tests {
     use assert_matches::assert_matches;
     use object::{Architecture, BinaryFormat, Endianness, write::SectionKind};
-    use test_case::test_case;
+    use rstest::rstest;
 
     use super::*;
 
@@ -804,21 +894,53 @@ mod tests {
         );
     }
 
-    #[test_case("libssl.so", true; "shared_object_basename")]
-    #[test_case("bash", true; "binary_basename")]
-    #[test_case("foo.so.1", true; "versioned_shared_object_basename")]
-    #[test_case("/usr/bin/bash", false; "absolute_path")]
-    #[test_case("/aa", false; "root_absolute_path")]
-    #[test_case("./bin/foo", false; "current_dir_relative_path")]
-    #[test_case("./aa", false; "current_dir_relative_file")]
-    #[test_case("subdir/lib.so", false; "subdir_relative_path")]
-    #[test_case("../lib/foo", false; "parent_dir_relative_path")]
-    #[test_case("/", false; "root_dir")]
-    #[test_case(".", false; "current_dir")]
-    #[test_case("..", false; "parent_dir")]
-    #[test_case("foo/", false; "trailing_separator")]
-    fn test_is_basename_only(input: &str, expected: bool) {
+    #[rstest]
+    #[case::shared_object_basename("libssl.so", true)]
+    #[case::binary_basename("bash", true)]
+    #[case::versioned_shared_object_basename("foo.so.1", true)]
+    #[case::absolute_path("/usr/bin/bash", false)]
+    #[case::root_absolute_path("/aa", false)]
+    #[case::current_dir_relative_path("./bin/foo", false)]
+    #[case::current_dir_relative_file("./aa", false)]
+    #[case::subdir_relative_path("subdir/lib.so", false)]
+    #[case::parent_dir_relative_path("../lib/foo", false)]
+    #[case::root_dir("/", false)]
+    #[case::current_dir(".", false)]
+    #[case::parent_dir("..", false)]
+    #[case::trailing_separator("foo/", false)]
+    fn test_is_basename_only(#[case] input: &str, #[case] expected: bool) {
         assert_eq!(is_basename_only(Path::new(input)), expected);
+    }
+
+    #[test]
+    fn test_uprobe_attach_location_from_virtual_address() {
+        assert_matches!(
+            UProbeAttachLocation::from_virtual_address(0x601300, 0x35ff00, 0x15ff00),
+            Ok(UProbeAttachLocation::AbsoluteOffset(0x401300))
+        );
+    }
+
+    #[test]
+    fn test_uprobe_attach_location_from_virtual_address_errors_on_underflow() {
+        assert_matches!(
+            UProbeAttachLocation::from_virtual_address(1, 2, 0),
+            Err(UProbeAttachLocationError::AddressNotInSection {
+                instruction_address: 1,
+                section_address: 2,
+            })
+        );
+    }
+
+    #[test]
+    fn test_uprobe_attach_location_from_virtual_address_errors_on_overflow() {
+        assert_matches!(
+            UProbeAttachLocation::from_virtual_address(u64::MAX, 0, 1),
+            Err(UProbeAttachLocationError::FileOffsetOverflow {
+                instruction_address: u64::MAX,
+                section_address: 0,
+                section_offset: 1,
+            })
+        );
     }
 
     #[test]
@@ -1010,7 +1132,8 @@ mod tests {
         path: Option<&'static str>,
     }
 
-    #[test_case(
+    #[rstest]
+    #[case::bracketed_name(
         b"7ffd6fbea000-7ffd6fbec000  r-xp  00000000  00:00  0  [vdso]",
         ExpectedProcMapEntry {
             address: 0x7ffd6fbea000,
@@ -1020,10 +1143,8 @@ mod tests {
             dev: "00:00",
             inode: 0,
             path: Some("[vdso]"),
-        };
-        "bracketed_name"
-    )]
-    #[test_case(
+        })]
+    #[case::absolute_path(
         b"7f1bca83a000-7f1bca83c000  rw-p  00036000  fd:01  2895508  /usr/lib64/ld-linux-x86-64.so.2",
         ExpectedProcMapEntry {
             address: 0x7f1bca83a000,
@@ -1033,10 +1154,8 @@ mod tests {
             dev: "fd:01",
             inode: 2895508,
             path: Some("/usr/lib64/ld-linux-x86-64.so.2"),
-        };
-        "absolute_path"
-    )]
-    #[test_case(
+        })]
+    #[case::no_path(
         b"7f1bca5f9000-7f1bca601000  rw-p  00000000  00:00  0",
         ExpectedProcMapEntry {
             address: 0x7f1bca5f9000,
@@ -1046,10 +1165,8 @@ mod tests {
             dev: "00:00",
             inode: 0,
             path: None,
-        };
-        "no_path"
-    )]
-    #[test_case(
+        })]
+    #[case::relative_path_token(
         b"7f1bca5f9000-7f1bca601000  rw-p  00000000  00:00  0  deadbeef",
         ExpectedProcMapEntry {
             address: 0x7f1bca5f9000,
@@ -1059,10 +1176,8 @@ mod tests {
             dev: "00:00",
             inode: 0,
             path: Some("deadbeef"),
-        };
-        "relative_path_token"
-    )]
-    #[test_case(
+        })]
+    #[case::deleted_suffix_in_path(
         b"7f1bca83a000-7f1bca83c000  rw-p  00036000  fd:01  2895508  /usr/lib/libc.so.6 (deleted)",
         ExpectedProcMapEntry {
             address: 0x7f1bca83a000,
@@ -1072,11 +1187,9 @@ mod tests {
             dev: "fd:01",
             inode: 2895508,
             path: Some("/usr/lib/libc.so.6 (deleted)"),
-        };
-        "deleted_suffix_in_path"
-    )]
+        })]
     // The path field is the remainder of the line. It may contain whitespace and arbitrary tokens.
-    #[test_case(
+    #[case::path_remainder_with_spaces(
         b"71064dc000-71064df000 ---p 00000000 00:00 0  [page size compat] extra",
         ExpectedProcMapEntry {
             address: 0x71064dc000,
@@ -1086,10 +1199,8 @@ mod tests {
             dev: "00:00",
             inode: 0,
             path: Some("[page size compat] extra"),
-        };
-        "path_remainder_with_spaces"
-    )]
-    #[test_case(
+        })]
+    #[case::bracketed_name_with_spaces(
         b"724a0000-72aab000 rw-p 00000000 00:00 0 [anon:dalvik-zygote space] (deleted) extra",
         ExpectedProcMapEntry {
             address: 0x724a0000,
@@ -1099,10 +1210,8 @@ mod tests {
             dev: "00:00",
             inode: 0,
             path: Some("[anon:dalvik-zygote space] (deleted) extra"),
-        };
-        "bracketed_name_with_spaces"
-    )]
-    #[test_case(
+        })]
+    #[case::memfd_deleted(
         b"5ba3b000-5da3b000 r--s 00000000 00:01 1033 /memfd:jit-zygote-cache (deleted)",
         ExpectedProcMapEntry {
             address: 0x5ba3b000,
@@ -1112,10 +1221,8 @@ mod tests {
             dev: "00:01",
             inode: 1033,
             path: Some("/memfd:jit-zygote-cache (deleted)"),
-        };
-        "memfd_deleted"
-    )]
-    #[test_case(
+        })]
+    #[case::ashmem_with_spaces(
         b"6cd539c000-6cd559c000 rw-s 00000000 00:01 7215 /dev/ashmem/CursorWindow: /data/user/0/package/databases/kitefly.db (deleted)",
         ExpectedProcMapEntry {
             address: 0x6cd539c000,
@@ -1125,10 +1232,11 @@ mod tests {
             dev: "00:01",
             inode: 7215,
             path: Some("/dev/ashmem/CursorWindow: /data/user/0/package/databases/kitefly.db (deleted)"),
-        };
-        "ashmem_with_spaces"
-    )]
-    fn test_parse_proc_map_entry_ok(line: &'static [u8], expected: ExpectedProcMapEntry) {
+        })]
+    fn test_parse_proc_map_entry_ok(
+        #[case] line: &'static [u8],
+        #[case] expected: ExpectedProcMapEntry,
+    ) {
         use std::ffi::OsStr;
 
         let ExpectedProcMapEntry {
@@ -1152,13 +1260,14 @@ mod tests {
         });
     }
 
-    #[test_case(b"zzzz-7ffd6fbea000  r-xp  00000000  00:00  0  [vdso]"; "bad_address")]
-    #[test_case(b"7f1bca5f9000-7f1bca601000  r-xp  zzzz  00:00  0  [vdso]"; "bad_offset")]
-    #[test_case(b"7f1bca5f9000-7f1bca601000  r-xp  00000000  00:00  zzzz  [vdso]"; "bad_inode")]
-    #[test_case(b"7f1bca5f90007ffd6fbea000  r-xp  00000000  00:00  0  [vdso]"; "bad_address_range")]
-    #[test_case(b"7f1bca5f9000-7f1bca601000  r-xp  00000000"; "missing_fields")]
-    #[test_case(b"7f1bca5f9000-7f1bca601000-deadbeef  rw-p  00000000  00:00  0"; "bad_address_delimiter")]
-    fn test_parse_proc_map_entry_err(line: &'static [u8]) {
+    #[rstest]
+    #[case::bad_address(b"zzzz-7ffd6fbea000  r-xp  00000000  00:00  0  [vdso]")]
+    #[case::bad_offset(b"7f1bca5f9000-7f1bca601000  r-xp  zzzz  00:00  0  [vdso]")]
+    #[case::bad_inode(b"7f1bca5f9000-7f1bca601000  r-xp  00000000  00:00  zzzz  [vdso]")]
+    #[case::bad_address_range(b"7f1bca5f90007ffd6fbea000  r-xp  00000000  00:00  0  [vdso]")]
+    #[case::missing_fields(b"7f1bca5f9000-7f1bca601000  r-xp  00000000")]
+    #[case::bad_address_delimiter(b"7f1bca5f9000-7f1bca601000-deadbeef  rw-p  00000000  00:00  0")]
+    fn test_parse_proc_map_entry_err(#[case] line: &'static [u8]) {
         assert_matches!(
             ProcMapEntry::parse(line),
             Err(ProcMapError::ParseLine { line: _ })

@@ -13,7 +13,7 @@ pub use xsk_map::XskMap;
 use super::MapError;
 
 #[derive(Error, Debug)]
-/// Errors occuring from working with XDP maps.
+/// Errors occurring from working with XDP maps.
 pub enum XdpMapError {
     /// Chained programs are not supported.
     #[error("chained programs are not supported by the current kernel")]

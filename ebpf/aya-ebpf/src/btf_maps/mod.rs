@@ -1,26 +1,150 @@
 pub mod array;
 pub mod bloom_filter;
+pub mod cgroup_array;
+pub mod cgroup_storage;
+pub mod cgrp_storage;
+pub mod cpu_map;
+pub mod dev_map;
+pub mod dev_map_hash;
+pub mod hash_map;
+pub mod inode_storage;
 pub mod lpm_trie;
+pub mod of_maps;
 pub mod per_cpu_array;
 pub mod perf_event_array;
 pub mod perf_event_byte_array;
 pub mod program_array;
+pub mod queue;
 pub mod reuseport_sock_array;
 pub mod ring_buf;
 pub mod sk_storage;
+pub mod sock_hash;
+pub mod sock_map;
+pub mod stack;
 pub mod stack_trace;
+pub mod xsk_map;
 
 pub use array::Array;
 pub use bloom_filter::BloomFilter;
+pub use cgroup_array::CgroupArray;
+#[expect(
+    deprecated,
+    reason = "re-exporting the deprecated cgroup storage map types"
+)]
+pub use cgroup_storage::{CgroupStorage, PerCpuCgroupStorage};
+pub use cgrp_storage::CgrpStorage;
+pub use cpu_map::CpuMap;
+pub use dev_map::DevMap;
+pub use dev_map_hash::DevMapHash;
+pub use hash_map::{HashMap, LruHashMap, LruPerCpuHashMap, PerCpuHashMap};
+pub use inode_storage::InodeStorage;
 pub use lpm_trie::LpmTrie;
+pub use of_maps::{ArrayOfMaps, HashOfMaps};
 pub use per_cpu_array::PerCpuArray;
 pub use perf_event_array::PerfEventArray;
 pub use perf_event_byte_array::PerfEventByteArray;
 pub use program_array::ProgramArray;
+pub use queue::Queue;
 pub use reuseport_sock_array::ReusePortSockArray;
 pub use ring_buf::RingBuf;
 pub use sk_storage::SkStorage;
+pub use sock_hash::SockHash;
+pub use sock_map::SockMap;
+pub use stack::Stack;
 pub use stack_trace::StackTrace;
+pub use xsk_map::XskMap;
+
+mod private {
+    /// Sealed trait exposing the key and value types of a BTF map definition.
+    #[expect(
+        unnameable_types,
+        reason = "sealed trait pattern requires pub trait in private mod"
+    )]
+    pub trait MapDef {
+        /// The key type of this map.
+        type Key;
+        /// The value type of this map.
+        type Value;
+    }
+
+    /// Sealed marker for inner-map types whose `bpf_map_lookup_elem` returns
+    /// a reference that stays valid for the lifetime of the BPF program. Only
+    /// implemented for map families whose entries occupy stable, preallocated
+    /// slots (BPF arrays and per-CPU arrays); hash families opt out because
+    /// the entry behind a reference can be reused by any subsequent `insert`,
+    /// `remove`, or LRU eviction.
+    #[expect(
+        unnameable_types,
+        reason = "sealed trait pattern requires pub trait in private mod"
+    )]
+    pub trait SafeInnerLookup: MapDef {}
+}
+
+/// Key and value types of a BTF map definition.
+///
+/// Used by map-of-maps types to perform fused lookups that combine the outer
+/// and inner `bpf_map_lookup_elem` calls in a single method.
+///
+/// This trait is sealed and cannot be implemented outside this crate.
+pub trait MapDef: private::MapDef {}
+
+impl<T: private::MapDef> MapDef for T {}
+
+/// Marks a BTF map type whose fused inner lookup via [`ArrayOfMaps::get_value`]
+/// is safe without an additional `unsafe` contract from the caller.
+///
+/// Implemented for [`Array`] and [`PerCpuArray`]. Hash families do not
+/// implement this trait because their kernel-side allocators reuse slots on
+/// `insert`/`remove`/eviction, so a reference obtained by a previous lookup
+/// can alias an unrelated entry.
+///
+/// This trait is sealed and cannot be implemented outside this crate.
+pub trait SafeInnerLookup: private::SafeInnerLookup {}
+
+impl<T: private::SafeInnerLookup> SafeInnerLookup for T {}
+
+/// Wraps `bpf_redirect_map` for XDP redirect maps.
+///
+/// Returns `Ok(XDP_REDIRECT)` on success, or the lower two bits of `flags`
+/// as `Err` when the lookup misses.
+#[inline(always)]
+pub(crate) fn try_redirect_map(
+    ptr: *mut core::ffi::c_void,
+    key: u32,
+    flags: u64,
+) -> Result<u32, u32> {
+    let ret = unsafe { crate::helpers::bpf_redirect_map(ptr.cast(), key.into(), flags) };
+    match ret.unsigned_abs() as u32 {
+        crate::bindings::xdp_action::XDP_REDIRECT => Ok(crate::bindings::xdp_action::XDP_REDIRECT),
+        ret => Err(ret),
+    }
+}
+
+/// Performs the inner half of a fused map-of-maps lookup, returning a shared reference.
+///
+/// # Safety
+///
+/// The caller must ensure the returned reference does not alias a mutable
+/// pointer obtained from the same map element.
+#[inline(always)]
+pub(crate) unsafe fn lookup_inner<'a, M: private::MapDef>(
+    inner_map: core::ptr::NonNull<M>,
+    key: &M::Key,
+) -> Option<&'a M::Value> {
+    // SAFETY: Both pointers are returned by BPF helpers and are valid for
+    // the duration of the program. We only produce a shared reference.
+    unsafe { crate::lookup::<M::Key, M::Value>(inner_map.as_ptr().cast(), key).map(|p| p.as_ref()) }
+}
+
+/// Same as [`lookup_inner`] but returns a mutable pointer.
+#[inline(always)]
+pub(crate) fn lookup_inner_ptr_mut<M: private::MapDef>(
+    inner_map: core::ptr::NonNull<M>,
+    key: &M::Key,
+) -> Option<*mut M::Value> {
+    crate::lookup::<M::Key, M::Value>(inner_map.as_ptr().cast(), key)
+        .map(core::ptr::NonNull::as_ptr)
+}
 
 /// Defines a BTF-compatible map struct with flat `#[repr(C)]` layout.
 ///
@@ -34,7 +158,60 @@ pub use stack_trace::StackTrace;
 /// Generics are an optional list of type parameters (with optional defaults)
 /// optionally followed by a semicolon and const parameters (with optional
 /// defaults). Lifetimes and bounds are not supported.
+///
+/// # Map-of-maps support
+///
+/// For map-of-maps types (`ArrayOfMaps`, `HashOfMaps`), add an `inner_map` clause:
+///
+/// ```ignore
+/// btf_map_def!(
+///     pub struct HashOfMaps<K, V; const MAX_ENTRIES: usize, const FLAGS: usize = 0>,
+///     map_type: BPF_MAP_TYPE_HASH_OF_MAPS,
+///     max_entries: MAX_ENTRIES,
+///     map_flags: FLAGS,
+///     key_type: K,
+///     value_type: u32,
+///     inner_map: V,
+/// );
+/// ```
+///
+/// This generates a `values: [*const V; 0]` field for BTF relocation. The inner
+/// map type `V` is encoded in BTF so that loaders can resolve the inner map
+/// template.
 macro_rules! btf_map_def {
+    // Map-of-maps (with inner_map) - rewrites into the regular arm with a
+    // `values` extra field whose initializer is `[]` (a zero-length array).
+    (
+        $(#[$attr:meta])*
+        $vis:vis struct $name:ident<
+            $($ty_gen:ident $(= $ty_default:ty)?),+
+            $(; $(const $const_gen:ident : $const_ty:ty $(= $const_default:tt)?),+)?
+            $(,)?
+        >,
+        map_type: $map_type:ident,
+        max_entries: $max_entries:expr,
+        map_flags: $map_flags:expr,
+        key_type: $key_ty:ty,
+        value_type: $value_ty:ty,
+        inner_map: $inner_ty:ty
+        $(,)?
+    ) => {
+        $crate::btf_maps::btf_map_def!(
+            $(#[$attr])*
+            $vis struct $name<
+                $($ty_gen $(= $ty_default)?),+
+                $(; $(const $const_gen : $const_ty $(= $const_default)?),+)?
+            >,
+            map_type: $map_type,
+            max_entries: $max_entries,
+            map_flags: $map_flags,
+            key_type: $key_ty,
+            value_type: $value_ty,
+            values: [*const $inner_ty; 0] = []
+        );
+    };
+
+    // Regular map (with optional extra fields and initializers)
     (
         $(#[$attr:meta])*
         $vis:vis struct $name:ident<
@@ -47,7 +224,7 @@ macro_rules! btf_map_def {
         map_flags: $map_flags:expr,
         key_type: $key_ty:ty,
         value_type: $value_ty:ty
-        $(, $extra_field:ident : $extra_ty:ty)*
+        $(, $extra_field:ident : $extra_ty:ty = $extra_init:expr)*
         $(,)?
     ) => {
         $(#[$attr])*
@@ -68,6 +245,13 @@ macro_rules! btf_map_def {
             $($extra_field: $extra_ty,)*
         }
 
+        // SAFETY: The struct fields are placeholder raw pointers that the
+        // BTF loader patches at load time; they are never dereferenced
+        // from Rust code, so the wrapper has no aliasable state. Static
+        // declaration of BPF maps via `#[btf_map]` requires `Sync`. For
+        // per-CPU map types the current-CPU access semantic is enforced
+        // by the kernel inside `bpf_map_lookup_elem`, not by the wrapper,
+        // so this impl applies uniformly to shared and per-CPU variants.
         unsafe impl<
             $($ty_gen,)*
             $($(const $const_gen : $const_ty,)+)?
@@ -95,6 +279,7 @@ macro_rules! btf_map_def {
             $($ty_gen,)*
             $($($const_gen,)+)?
         > {
+            /// Returns a placeholder definition that the BPF loader patches at load time.
             pub const fn new() -> Self {
                 Self {
                     r#type: ::core::ptr::null(),
@@ -104,7 +289,7 @@ macro_rules! btf_map_def {
                     max_entries: ::core::ptr::null(),
                     map_flags: ::core::ptr::null(),
 
-                    $($extra_field: ::core::ptr::null(),)*
+                    $($extra_field: $extra_init,)*
                 }
             }
 
@@ -112,6 +297,17 @@ macro_rules! btf_map_def {
             pub(crate) const fn as_ptr(&self) -> *mut ::core::ffi::c_void {
                 ::core::ptr::from_ref(self).cast_mut().cast()
             }
+        }
+
+        impl<
+            $($ty_gen,)*
+            $($(const $const_gen : $const_ty,)+)?
+        > $crate::btf_maps::private::MapDef for $name<
+            $($ty_gen,)*
+            $($($const_gen,)+)?
+        > {
+            type Key = $key_ty;
+            type Value = $value_ty;
         }
     };
 }

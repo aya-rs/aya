@@ -30,6 +30,40 @@ pub mod bloom_filter {
     pub const CONTAINS_ABSENT_INDEX: u32 = 2;
 }
 
+pub mod fexit {
+    pub const TEST_RAN: u32 = 1;
+
+    pub const NO_ERROR: i32 = 0;
+    pub const RETVAL_MISMATCH: i32 = 1;
+    pub const ARG_MISMATCH: i32 = 2;
+
+    pub const TEST1_INDEX: u32 = 0;
+    pub const TEST2_INDEX: u32 = 1;
+    pub const TEST3_INDEX: u32 = 2;
+    pub const TEST4_INDEX: u32 = 3;
+    pub const TEST5_INDEX: u32 = 4;
+    pub const TEST6_INDEX: u32 = 5;
+    pub const TEST7_INDEX: u32 = 6;
+    pub const TEST8_INDEX: u32 = 7;
+    pub const TEST9_INDEX: u32 = 8;
+    pub const TEST10_INDEX: u32 = 9;
+
+    pub const TEST_COUNT: u32 = 10;
+
+    #[derive(Clone, Copy, Default)]
+    #[repr(C)]
+    pub struct TestResult {
+        /// Distinguishes a recorded result from a zero-initialised slot. Use a
+        /// `u32` flag instead of `bool` so this `Pod` type has no implicit
+        /// padding.
+        pub ran: u32,
+        pub error: i32,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
+
 pub mod bpf_probe_read {
     pub const RESULT_BUF_LEN: usize = 1024;
 
@@ -38,6 +72,27 @@ pub mod bpf_probe_read {
     pub struct TestResult {
         pub buf: [u8; RESULT_BUF_LEN],
         pub len: Option<Result<usize, i32>>,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
+
+pub mod cgroup_array {
+    /// Index holding a cgroup the task is under (expect `1`).
+    pub const UNDER_INDEX: u32 = 0;
+    /// Index holding a cgroup the task is not under (expect `0`).
+    pub const NOT_UNDER_INDEX: u32 = 1;
+
+    #[repr(C)]
+    #[derive(Clone, Copy, Default)]
+    pub struct TestResult {
+        /// `current_task_under_cgroup` for `UNDER_INDEX`: 1 under, 0 not, negative errno.
+        pub under: i64,
+        /// `current_task_under_cgroup` for `NOT_UNDER_INDEX`.
+        pub not_under: i64,
+        /// Distinguishes a recorded result from a zero-initialised slot.
+        pub ran: bool,
     }
 
     #[cfg(feature = "user")]
@@ -62,13 +117,22 @@ pub mod raw_tracepoint {
     #[repr(C)]
     #[derive(Clone, Copy)]
     pub struct SysEnterEvent {
-        pub common_type: u16,
-        pub common_flags: u8,
-        _padding: u8, // Padding must be explicit to ensure zero-initialization.
+        pub regs_addr: u64,
+        pub syscall_id: i64,
     }
 
     #[cfg(feature = "user")]
     unsafe impl aya::Pod for SysEnterEvent {}
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    pub struct TaskRenameEvent {
+        pub task_addr: u64,
+        pub comm_addr: u64,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TaskRenameEvent {}
 }
 
 pub mod ring_buf {
@@ -119,6 +183,21 @@ pub mod printk {
     pub const TEST_ISIZE: isize = isize::MIN;
 }
 
+pub mod btf_map_of_maps {
+    /// Capacity of each inner array shared between userspace and the eBPF probes.
+    pub const INNER_MAX_ENTRIES: u32 = 10;
+
+    #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+    #[repr(C)]
+    pub struct TestResult {
+        pub value: u32,
+        pub ran: u32,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for TestResult {}
+}
+
 pub mod sk_storage {
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
     #[repr(C)]
@@ -140,6 +219,12 @@ pub mod sk_storage {
 
     #[cfg(feature = "user")]
     unsafe impl aya::Pod for Value {}
+}
+
+pub mod local_storage {
+    /// Arbitrary non-zero marker the inode and cgroup storage probes write into
+    /// their map, distinguishing a stored value from a zero-initialised slot.
+    pub const SENTINEL: u64 = 0xAA;
 }
 
 pub mod lpm_trie {
@@ -164,8 +249,22 @@ pub mod sk_reuseport {
     pub const SELECT_HITS_INDEX: u32 = 0;
     pub const MIGRATE_HITS_INDEX: u32 = 1;
     pub const CLEAR_FALLBACK_HITS_INDEX: u32 = 2;
+    pub const PATH_HITS_MAX_ENTRIES: u32 = 3;
     pub const SELECT_SOCKET_INDEX: u32 = 0;
     pub const MIGRATE_SOCKET_INDEX: u32 = 2;
+}
+
+pub mod socket_filter {
+    pub const PASS_HITS_INDEX: u32 = 0;
+    pub const TRIM_HITS_INDEX: u32 = 1;
+
+    pub const REUSEPORT_SELECT_FIRST_HITS_INDEX: u32 = 2;
+    pub const REUSEPORT_SELECT_SECOND_HITS_INDEX: u32 = 3;
+    pub const PATH_HITS_MAX_ENTRIES: u32 = 4;
+
+    pub const TRIM_DELTA_BYTES: u32 = 4;
+    pub const REUSEPORT_FIRST_LISTENER_INDEX: i64 = 0;
+    pub const REUSEPORT_SECOND_LISTENER_INDEX: i64 = 1;
 }
 
 pub mod stack_trace {
@@ -180,4 +279,10 @@ pub mod stack_trace {
 
     #[cfg(feature = "user")]
     unsafe impl aya::Pod for TestResult {}
+}
+
+pub mod test_run {
+    pub const XDP_MODIFY_VAL: u8 = 0xAA;
+    pub const IF_INDEX: u32 = 1;
+    pub const XDP_MODIFY_LEN: usize = 16;
 }

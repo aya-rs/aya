@@ -125,47 +125,39 @@ impl UProbe {
 
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
     use syn::parse_quote;
-    use test_case::test_case;
 
     use super::*;
 
-    #[test_case(UProbeKind::UProbe, "", "uprobe"; "uprobe")]
-    #[test_case(UProbeKind::UProbe, "sleepable", "uprobe.s"; "uprobe_sleepable")]
-    #[test_case(
+    #[rstest]
+    #[case::uprobe(UProbeKind::UProbe, "", "uprobe")]
+    #[case::uprobe_sleepable(UProbeKind::UProbe, "sleepable", "uprobe.s")]
+    #[case::uprobe_with_path(
         UProbeKind::UProbe,
         r#"path = "/self/proc/exe", function = "trigger_uprobe""#,
-        "uprobe/self/proc/exe:trigger_uprobe";
-        "uprobe_with_path"
+        "uprobe/self/proc/exe:trigger_uprobe"
     )]
-    #[test_case(
+    #[case::uprobe_with_path_and_offset(
         UProbeKind::UProbe,
         r#"path = "/self/proc/exe", function = "foo", offset = "123""#,
-        "uprobe/self/proc/exe:foo+123";
-        "uprobe_with_path_and_offset"
+        "uprobe/self/proc/exe:foo+123"
     )]
-    #[test_case(UProbeKind::URetProbe, "", "uretprobe"; "uretprobe")]
-    #[test_case(UProbeKind::UProbe, "multi", "uprobe.multi"; "uprobe_multi")]
-    #[test_case(
-        UProbeKind::UProbe,
-        "multi, sleepable",
-        "uprobe.multi.s";
-        "uprobe_multi_sleepable"
-    )]
-    #[test_case(
+    #[case::uretprobe(UProbeKind::URetProbe, "", "uretprobe")]
+    #[case::uprobe_multi(UProbeKind::UProbe, "multi", "uprobe.multi")]
+    #[case::uprobe_multi_sleepable(UProbeKind::UProbe, "multi, sleepable", "uprobe.multi.s")]
+    #[case::uprobe_multi_with_path(
         UProbeKind::UProbe,
         r#"multi, path = "/self/proc/exe", function = "trigger_uprobe""#,
-        "uprobe.multi/self/proc/exe:trigger_uprobe";
-        "uprobe_multi_with_path"
+        "uprobe.multi/self/proc/exe:trigger_uprobe"
     )]
-    #[test_case(UProbeKind::URetProbe, "multi", "uretprobe.multi"; "uretprobe_multi")]
-    #[test_case(
+    #[case::uretprobe_multi(UProbeKind::URetProbe, "multi", "uretprobe.multi")]
+    #[case::uretprobe_multi_sleepable(
         UProbeKind::URetProbe,
         "multi, sleepable",
-        "uretprobe.multi.s";
-        "uretprobe_multi_sleepable"
+        "uretprobe.multi.s"
     )]
-    fn uprobe(kind: UProbeKind, attrs: &str, section_name: &str) {
+    fn uprobe(#[case] kind: UProbeKind, #[case] attrs: &str, #[case] section_name: &str) {
         let uprobe = UProbe::parse(
             kind,
             attrs.parse().unwrap(),

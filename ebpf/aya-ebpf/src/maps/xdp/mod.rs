@@ -6,7 +6,7 @@ mod xsk_map;
 use aya_ebpf_bindings::{bindings::xdp_action::XDP_REDIRECT, helpers::bpf_redirect_map};
 use aya_ebpf_cty::c_void;
 pub use cpu_map::CpuMap;
-pub use dev_map::DevMap;
+pub use dev_map::{DevMap, DevMapValue};
 pub use dev_map_hash::DevMapHash;
 pub use xsk_map::XskMap;
 

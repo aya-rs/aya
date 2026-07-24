@@ -85,7 +85,7 @@ use std::{
 use aya_obj::{
     VerifierLog,
     btf::BtfError,
-    generated::{bpf_attach_type, bpf_prog_info, bpf_prog_type},
+    generated::{BPF_F_TEST_XDP_LIVE_FRAMES, bpf_attach_type, bpf_prog_info, bpf_prog_type},
     programs::XdpAttachType,
 };
 use info::impl_info;
@@ -120,12 +120,12 @@ pub use crate::programs::{
     sk_reuseport::{SkReuseport, SkReuseportAttachType, SkReuseportError},
     sk_skb::{SkSkb, SkSkbKind},
     sock_ops::SockOps,
-    socket_filter::{SocketFilter, SocketFilterError},
-    tc::{SchedClassifier, TcAttachType, TcError},
+    socket_filter::{ReusePortSocketFilter, SocketFilter, SocketFilterError},
+    tc::{SchedClassifier, TcAttachType, TcError, TcHandle},
     tp_btf::BtfTracePoint,
     trace_point::{TracePoint, TracePointError},
     uprobe::{UProbe, UProbeError},
-    xdp::{Xdp, XdpError, XdpFlags},
+    xdp::{Xdp, XdpError, XdpMode},
 };
 use crate::{
     VerifierLogLevel,
@@ -141,7 +141,8 @@ use crate::{
     sys::{
         EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget, SyscallError, bpf_btf_get_fd_by_id,
         bpf_get_object, bpf_link_get_fd_by_id, bpf_load_program, bpf_pin_object,
-        bpf_prog_get_fd_by_id, bpf_prog_query, iter_link_ids, retry_with_verifier_logs,
+        bpf_prog_get_fd_by_id, bpf_prog_query, bpf_prog_test_run, bpf_prog_test_run_raw_tp,
+        bpf_prog_test_run_tracing, iter_link_ids, retry_with_verifier_logs,
     },
     util::KernelVersion,
 };
@@ -296,6 +297,8 @@ pub enum Program {
     TracePoint(TracePoint),
     /// A [`SocketFilter`] program
     SocketFilter(SocketFilter),
+    /// A [`ReusePortSocketFilter`] program
+    ReusePortSocketFilter(ReusePortSocketFilter),
     /// A [`Xdp`] program
     Xdp(Xdp),
     /// A [`SkMsg`] program
@@ -352,7 +355,7 @@ impl Program {
         match self {
             Self::KProbe(_) | Self::UProbe(_) => ProgramType::KProbe,
             Self::TracePoint(_) => ProgramType::TracePoint,
-            Self::SocketFilter(_) => ProgramType::SocketFilter,
+            Self::SocketFilter(_) | Self::ReusePortSocketFilter(_) => ProgramType::SocketFilter,
             Self::Xdp(_) => ProgramType::Xdp,
             Self::SkMsg(_) => ProgramType::SkMsg,
             Self::SkSkb(_) => ProgramType::SkSkb,
@@ -395,6 +398,7 @@ impl Program {
             Self::UProbe(p) => p.pin(path),
             Self::TracePoint(p) => p.pin(path),
             Self::SocketFilter(p) => p.pin(path),
+            Self::ReusePortSocketFilter(p) => p.pin(path),
             Self::Xdp(p) => p.pin(path),
             Self::SkMsg(p) => p.pin(path),
             Self::SkSkb(p) => p.pin(path),
@@ -429,6 +433,7 @@ impl Program {
             Self::UProbe(mut p) => p.unload(),
             Self::TracePoint(mut p) => p.unload(),
             Self::SocketFilter(mut p) => p.unload(),
+            Self::ReusePortSocketFilter(mut p) => p.unload(),
             Self::Xdp(mut p) => p.unload(),
             Self::SkMsg(mut p) => p.unload(),
             Self::SkSkb(mut p) => p.unload(),
@@ -465,6 +470,7 @@ impl Program {
             Self::UProbe(p) => p.fd(),
             Self::TracePoint(p) => p.fd(),
             Self::SocketFilter(p) => p.fd(),
+            Self::ReusePortSocketFilter(p) => p.fd(),
             Self::Xdp(p) => p.fd(),
             Self::SkMsg(p) => p.fd(),
             Self::SkSkb(p) => p.fd(),
@@ -502,6 +508,7 @@ impl Program {
             Self::UProbe(p) => p.info(),
             Self::TracePoint(p) => p.info(),
             Self::SocketFilter(p) => p.info(),
+            Self::ReusePortSocketFilter(p) => p.info(),
             Self::Xdp(p) => p.info(),
             Self::SkMsg(p) => p.info(),
             Self::SkSkb(p) => p.info(),
@@ -617,6 +624,27 @@ impl<T: Link> ProgramData<T> {
     fn fd(&self) -> Result<&ProgramFd, ProgramError> {
         self.fd.as_ref().ok_or(ProgramError::NotLoaded)
     }
+}
+
+fn test_run<T: Link>(
+    data: &ProgramData<T>,
+    opts: TestRunOptions<'_>,
+) -> Result<TestRunResult, ProgramError> {
+    let fd = data.fd()?.as_fd();
+    bpf_prog_test_run(fd, opts).map_err(Into::into)
+}
+
+fn test_run_raw_tp<T: Link>(
+    data: &ProgramData<T>,
+    opts: RawTracePointRunOptions,
+) -> Result<RawTracePointTestRunResult, ProgramError> {
+    let fd = data.fd()?.as_fd();
+    bpf_prog_test_run_raw_tp(fd, opts).map_err(Into::into)
+}
+
+fn test_run_tracing<T: Link>(data: &ProgramData<T>) -> Result<(), ProgramError> {
+    let fd = data.fd()?.as_fd();
+    bpf_prog_test_run_tracing(fd).map_err(Into::into)
 }
 
 fn unload_program<T: Link>(data: &mut ProgramData<T>) -> Result<(), ProgramError> {
@@ -803,9 +831,10 @@ macro_rules! impl_program_unload {
             impl $struct_name {
                 /// Unloads the program from the kernel.
                 ///
-                /// Links will be detached before unloading the program.  Note
-                /// that owned links obtained using `take_link()` will not be
-                /// detached.
+                /// Tracked links will be detached before unloading the program.
+                /// Attachment mechanisms that do not create tracked links are
+                /// not affected. Note that owned links obtained using
+                /// `take_link()` will not be detached.
                 pub fn unload(&mut self) -> Result<(), ProgramError> {
                     unload_program(&mut self.data)
                 }
@@ -825,6 +854,7 @@ impl_program_unload!(
     UProbe,
     TracePoint,
     SocketFilter,
+    ReusePortSocketFilter,
     Xdp,
     SkMsg,
     SkSkb,
@@ -869,6 +899,7 @@ impl_fd!(
     UProbe,
     TracePoint,
     SocketFilter,
+    ReusePortSocketFilter,
     Xdp,
     SkMsg,
     SkSkb,
@@ -894,6 +925,251 @@ impl_fd!(
     CgroupDevice,
     Iter,
 );
+
+/// Kernel-side execution attributes for [`TestRunOptions`].
+///
+/// Controls *how* the kernel runs the test (XDP batch size, and
+/// the associated flag bits), as opposed to *what* data is passed.
+#[derive(Debug)]
+pub struct TestRunAttrs {
+    pub(crate) batch_size: u32,
+    pub(crate) flags: u32,
+}
+
+impl TestRunAttrs {
+    /// Creates a new `TestRunAttrs` with default values.
+    pub const fn new() -> Self {
+        Self {
+            batch_size: 0,
+            flags: 0,
+        }
+    }
+
+    /// Sets the batch size for XDP live frames testing.
+    ///
+    /// This automatically sets the `BPF_F_TEST_XDP_LIVE_FRAMES` flag.
+    /// This option only works with `XDP` programs.
+    #[must_use]
+    pub const fn xdp_live_frames(mut self, batch_size: u32) -> Self {
+        self.batch_size = batch_size;
+        self.flags |= BPF_F_TEST_XDP_LIVE_FRAMES;
+        self
+    }
+}
+
+impl Default for TestRunAttrs {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Options for running a BPF program test.
+///
+/// See [kernel doc](https://docs.kernel.org/bpf/bpf_prog_run.html)
+/// and [ebpf.io](https://docs.ebpf.io/linux/syscall/BPF_PROG_TEST_RUN/) for detailed usage.
+#[derive(Debug)]
+pub struct TestRunOptions<'a> {
+    /// Input packet data to pass to the program.
+    pub data_in: Option<&'a [u8]>,
+    /// Output buffer for packet data modified by the program.
+    pub data_out: Option<&'a mut [u8]>,
+    /// Input context to pass to the program.
+    pub ctx_in: Option<&'a [u8]>,
+    /// Output buffer for context written back by the program.
+    pub ctx_out: Option<&'a mut [u8]>,
+    /// Number of times to repeat the test. Defaults to `1`.
+    pub repeat: u32,
+    /// Kernel execution attributes (XDP batch size).
+    pub attrs: TestRunAttrs,
+}
+
+impl Default for TestRunOptions<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TestRunOptions<'_> {
+    /// Creates a new `TestRunOptions` with default values.
+    pub const fn new() -> Self {
+        Self {
+            data_in: None,
+            data_out: None,
+            ctx_in: None,
+            ctx_out: None,
+            repeat: 1,
+            attrs: TestRunAttrs::new(),
+        }
+    }
+}
+
+/// Options for running a [`RawTracePoint`] program test via `BPF_PROG_TEST_RUN`.
+///
+/// The kernel's `bpf_prog_test_run_raw_tp` handler (v5.10, commit `b84e6faeed1`)
+/// is far more restrictive than the skb/XDP path:
+///
+/// - `data_in`, `data_out`, `ctx_out`, `repeat`, `batch_size` must all be zero/NULL;
+///   passing any of them returns `EINVAL`.
+/// - `ctx_in` is the only data path: a packed array of `u64` tracepoint arguments.
+/// - CPU pinning via `BPF_F_TEST_RUN_ON_CPU` is supported and is the primary
+///   reason to use `BPF_PROG_TEST_RUN` with raw tracepoints.
+///
+/// This struct deliberately omits the forbidden fields so misuse is a
+/// compile-time error rather than a runtime `EINVAL`.
+#[derive(Debug, Default)]
+pub struct RawTracePointRunOptions {
+    /// Fake tracepoint arguments, up to 12 `u64` values.
+    ///
+    /// Each element corresponds to one tracepoint argument in order. The kernel
+    /// copies the entire array into `ctx_in` before calling the program, which
+    /// reads them via `ctx.arg(n)`. Unused slots default to zero.
+    ///
+    /// The array size of 12 matches the kernel's maximum: the longest tracepoint
+    /// in the kernel takes 12 arguments. See
+    /// [`net/bpf/test_run.c`](https://github.com/torvalds/linux/blob/d91a46d680/net/bpf/test_run.c#L762).
+    pub args: [u64; 12],
+    /// If `Some(cpu)`, pin execution to that CPU via `BPF_F_TEST_RUN_ON_CPU`.
+    ///
+    /// The only flag the kernel accepts for raw tracepoints; `batch_size` and
+    /// all other [`TestRunAttrs`] knobs return `EINVAL`.
+    pub cpu: Option<u32>,
+}
+
+impl RawTracePointRunOptions {
+    /// Creates a new `RawTracePointRunOptions` with all arguments zeroed.
+    pub const fn new() -> Self {
+        Self {
+            args: [0; 12],
+            cpu: None,
+        }
+    }
+}
+
+/// Result of running a BPF program test.
+#[derive(Debug)]
+pub struct TestRunResult {
+    /// Return value from the program.
+    pub return_value: u32,
+    /// Duration of the test run.
+    pub duration: std::time::Duration,
+    /// Size of data written to `data_out`.
+    pub data_size_out: u32,
+    /// Size of context written to `ctx_out`.
+    pub ctx_size_out: u32,
+}
+
+/// Result of running a [`RawTracePoint`] program test via `BPF_PROG_TEST_RUN`.
+///
+/// Only `return_value` is returned by the kernel; `duration`, `data_size_out`,
+/// and `ctx_size_out` are omitted.
+#[derive(Debug)]
+pub struct RawTracePointTestRunResult {
+    /// Return value from the program.
+    pub return_value: u32,
+}
+
+/// Trait for BPF programs that support test execution via `BPF_PROG_TEST_RUN`.
+pub trait TestRun {
+    /// The options type used to configure a single test invocation.
+    ///
+    /// Different program types require different options: skb/XDP programs use
+    /// [`TestRunOptions`], raw tracepoint programs use
+    /// [`RawTracePointRunOptions`], and [`FExit`] programs use `()`. See
+    /// [`FExit`] for the tracing-specific test-run semantics.
+    type Opts<'a>;
+
+    /// The Result type for a single test invocation.
+    type Result;
+
+    /// Runs the program with test input data and returns the result.
+    ///
+    /// This function uses the kernel's `BPF_PROG_TEST_RUN` command to execute
+    /// the program in a test environment with provided input data.
+    ///
+    /// # Arguments
+    ///
+    /// * `opts` - Test run options including input/output data and context
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`Self::Result`] containing the program-specific test output.
+    ///
+    /// For most program types this is [`crate::TestRunResult`]. For
+    /// [`RawTracePoint`] it is [`RawTracePointTestRunResult`]. For [`FExit`]
+    /// it is `()`; see [`FExit`] for what a successful tracing test run means.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ProgramError::SyscallError`] if the underlying syscall fails.
+    /// Common errors include `-ENOSPC` if output buffers are too small.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let input_data = [0u8; 64];
+    /// let mut output_data = [0u8; 64];
+    ///
+    /// let opts = TestRunOptions {
+    ///     data_in: Some(&input_data),
+    ///     data_out: Some(&mut output_data),
+    ///     repeat: 1,
+    ///     ..Default::default()
+    /// };
+    ///
+    /// let result = program.test_run(opts)?;
+    /// println!("Program returned: {}, took {} ns", result.return_value, result.duration.as_nanos());
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    fn test_run(&self, opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError>;
+}
+
+macro_rules! impl_program_test_run {
+    ($($struct_name:ident), + $(,)?) => {
+        $(
+            impl TestRun for $struct_name {
+                type Opts<'a> = TestRunOptions<'a>;
+                type Result = TestRunResult;
+
+                fn test_run(&self, opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError> {
+                    test_run(&self.data, opts)
+                }
+            }
+        )+
+    }
+}
+
+impl_program_test_run!(
+    SocketFilter,
+    ReusePortSocketFilter,
+    SchedClassifier,
+    Xdp,
+    CgroupSkb,
+    FlowDissector,
+);
+
+impl TestRun for RawTracePoint {
+    type Opts<'a> = RawTracePointRunOptions;
+    type Result = RawTracePointTestRunResult;
+
+    fn test_run(&self, opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError> {
+        test_run_raw_tp(&self.data, opts)
+    }
+}
+
+impl TestRun for FExit {
+    // The kernel tracing test-run handler uses a fixed synthetic fentry/fexit
+    // call sequence; packet data, context data, repeat count, CPU pinning, and
+    // batch flags do not apply.
+    // https://github.com/torvalds/linux/blob/v7.1-rc4/net/bpf/test_run.c#L690-L735
+    type Opts<'a> = ();
+    // For fentry/fexit, test-run success only reports that the kernel's fixed
+    // synthetic call sequence ran.
+    type Result = ();
+
+    fn test_run(&self, _opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError> {
+        test_run_tracing(&self.data)
+    }
+}
 
 /// Trait implemented by the [`Program`] types which support the kernel's
 /// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f235dc3f69d13375b32f4209228e1cb96).
@@ -978,6 +1254,7 @@ impl_program_pin!(
     UProbe,
     TracePoint,
     SocketFilter,
+    ReusePortSocketFilter,
     Xdp,
     SkMsg,
     SkSkb,
@@ -1026,7 +1303,6 @@ macro_rules! impl_from_pin {
 // Use impl_from_pin if the program doesn't require additional data
 impl_from_pin!(
     TracePoint,
-    SocketFilter,
     SkMsg,
     CgroupSysctl,
     LircMode2,
@@ -1073,7 +1349,7 @@ macro_rules! impl_from_prog_info {
                 if info.program_type() != Self::PROGRAM_TYPE.into() {
                     return Err(ProgramError::UnexpectedProgramType {});
                 }
-                let ProgramInfo(bpf_progam_info) = info;
+                let ProgramInfo(bpf_program_info) = info;
                 let fd = info.fd()?;
                 let fd = fd.as_fd().try_clone_to_owned()?;
 
@@ -1082,7 +1358,7 @@ macro_rules! impl_from_prog_info {
                         Some(name),
                         crate::MockableFd::from_fd(fd),
                         Path::new(""),
-                        bpf_progam_info,
+                        bpf_program_info,
                         VerifierLogLevel::default(),
                     )?,
                     $($var,)?
@@ -1131,6 +1407,8 @@ impl_from_prog_info!(
     unsafe KProbe kind : ProbeKind,
     unsafe UProbe kind : ProbeKind,
     TracePoint,
+    SocketFilter,
+    ReusePortSocketFilter,
     Xdp attach_type : XdpAttachType,
     SkMsg,
     SkSkb kind : SkSkbKind,
@@ -1181,11 +1459,55 @@ macro_rules! impl_try_from_program {
     }
 }
 
+// Socket filters are special: Aya follows libbpf section rules, so
+// `SEC("socket")` always loads as `Program::SocketFilter`. There is no
+// `socket/reuseport` section to distinguish the reuseport use at load time.
+// The two uses have different return value semantics, so a program is not
+// expected to be meaningful for both; modeling them as separate program
+// abstractions is useful even though they share a section.
+macro_rules! impl_try_from_socket_filter_program {
+    ($ty:ident, $variant:ident, $other_variant:ident $(,)?) => {
+        impl<'a> TryFrom<&'a Program> for &'a $ty {
+            type Error = ProgramError;
+
+            fn try_from(program: &'a Program) -> Result<&'a $ty, ProgramError> {
+                match program {
+                    Program::$variant(p) => Ok(p),
+                    Program::$other_variant(p) => {
+                        // SAFETY: Both variants are `repr(transparent)`
+                        // wrappers around the same `ProgramData<FdLink>` field.
+                        Ok(unsafe { &*std::ptr::from_ref(p).cast::<$ty>() })
+                    }
+                    _ => Err(ProgramError::UnexpectedProgramType),
+                }
+            }
+        }
+
+        impl<'a> TryFrom<&'a mut Program> for &'a mut $ty {
+            type Error = ProgramError;
+
+            fn try_from(program: &'a mut Program) -> Result<&'a mut $ty, ProgramError> {
+                match program {
+                    Program::$variant(p) => Ok(p),
+                    Program::$other_variant(other) => {
+                        // SAFETY: Both variants are `repr(transparent)`
+                        // wrappers around the same `ProgramData<FdLink>` field.
+                        Ok(unsafe { &mut *std::ptr::from_mut(other).cast::<$ty>() })
+                    }
+                    _ => Err(ProgramError::UnexpectedProgramType),
+                }
+            }
+        }
+    };
+}
+
+impl_try_from_socket_filter_program!(SocketFilter, SocketFilter, ReusePortSocketFilter);
+impl_try_from_socket_filter_program!(ReusePortSocketFilter, ReusePortSocketFilter, SocketFilter);
+
 impl_try_from_program!(
     KProbe,
     UProbe,
     TracePoint,
-    SocketFilter,
     Xdp,
     SkMsg,
     SkSkb,
@@ -1217,6 +1539,7 @@ impl_info!(
     UProbe,
     TracePoint,
     SocketFilter,
+    ReusePortSocketFilter,
     Xdp,
     SkMsg,
     SkSkb,

@@ -1,29 +1,49 @@
+use core::ptr::NonNull;
+
 use aya_ebpf_cty::{c_long, c_void};
 
-use crate::{EbpfContext, bindings::__sk_buff, programs::sk_buff::SkBuff};
+use crate::{
+    EbpfContext, bindings::__sk_buff, helpers::bpf_skb_under_cgroup, programs::sk_buff::SkBuff,
+};
+
+pub(crate) mod sealed {
+    #[expect(unnameable_types, reason = "this is the sealed trait pattern")]
+    pub trait CgroupArrayMap {
+        fn as_ptr(&self) -> *mut core::ffi::c_void;
+    }
+}
+
+/// Map types that [`TcContext::skb_under_cgroup`] can target.
+///
+/// This trait is sealed; aya implements it for both the legacy
+/// [`crate::maps::CgroupArray`] and the BTF [`crate::btf_maps::CgroupArray`].
+pub trait CgroupArrayMap: sealed::CgroupArrayMap {}
+
+impl<T: sealed::CgroupArrayMap> CgroupArrayMap for T {}
 
 pub struct TcContext {
     pub skb: SkBuff,
 }
 
 impl TcContext {
-    pub const fn new(skb: *mut __sk_buff) -> Self {
-        let skb = SkBuff { skb };
+    #[inline]
+    pub const fn new(skb: NonNull<__sk_buff>) -> Self {
+        let skb = SkBuff::new(skb);
         Self { skb }
     }
 
     #[inline]
-    pub fn len(&self) -> u32 {
+    pub const fn len(&self) -> u32 {
         self.skb.len()
     }
 
     #[inline]
-    pub fn data(&self) -> usize {
+    pub const fn data(&self) -> usize {
         self.skb.data()
     }
 
     #[inline]
-    pub fn data_end(&self) -> usize {
+    pub const fn data_end(&self) -> usize {
         self.skb.data_end()
     }
 
@@ -184,6 +204,26 @@ impl TcContext {
     #[inline(always)]
     pub fn pull_data(&self, len: u32) -> Result<(), c_long> {
         self.skb.pull_data(len)
+    }
+
+    /// Returns whether the skb is a descendant of the cgroup at `index`.
+    ///
+    /// Wraps the `bpf_skb_under_cgroup` helper. This is only callable from
+    /// classifier programs.
+    ///
+    /// # Minimum kernel version
+    ///
+    /// The minimum kernel version required to use this feature is 4.8.
+    #[inline]
+    pub fn skb_under_cgroup<M: CgroupArrayMap>(&self, map: &M, index: u32) -> Result<bool, c_long> {
+        // SAFETY: `self.skb.skb` and `map` are valid pointers managed by aya.
+        let ret =
+            unsafe { bpf_skb_under_cgroup(self.skb.as_raw_ptr(), map.as_ptr().cast(), index) };
+        match ret {
+            1 => Ok(true),
+            0 => Ok(false),
+            ret => Err(ret),
+        }
     }
 }
 

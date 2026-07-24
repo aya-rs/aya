@@ -7,7 +7,928 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## v0.14.0 (2026-06-24)
+
+### Chore
+
+ - <csr-id-269dfaf4a20b99f2e3d384e3e5d13b226f507360/> Release aya-obj v0.3.0
+ - <csr-id-745065a74241ae8c39180c0cdc1a5444b5605dfb/> Add a docstring for `NetlinkError::raw_os_error()`
+ - <csr-id-23a5e06c75dd418f9e0956db18cbed3b80670440/> Use BPF_ADD from bindings
+   We should use the generated one, not the one provided by the libc crate.
+ - <csr-id-e8e268ba768e6fc34567aedb5206ff20a958f04e/> Fix clippy unused cfg_attr
+   clippy complained that cfg_attr is applied to the macro invocation and
+   therefore will not be expanded. This was a false-positive, however
+   when playing with cargo expand I did notice that the cfg and cfg_attr
+   section weren't propagating as I would expect them to.
+   
+   Adding a meta matcher to the impl_try_from_map macro allows us to
+   remove the need for AsyncPerfEventArray to be in a separate invocation
+   of the macro while also making sure that attributes do get propagated
+   to the generated functions.
+ - <csr-id-f6c5cb2ad2b09760ae5434785ed5d4d195d3a765/> set clippy unused_trait_names = warn
+   We have previously tried to import traits anonymously where possible but
+   enforcing this manually was hard.
+   
+   Since Rust 1.83 clippy can now enforce this for us.
+ - <csr-id-665d4f20bb53de0aa10545bb897ab73f0661a337/> remove aya_obj -> obj alias
+   When `aya::obj` was migrated to be its own crate `aya-obj`, the `obj`
+   alias was created to preserve existing imports that relied on
+   `crate::obj`.
+   
+   This resulted in 3 ways to import `aya-obj` objects:
+   - `use aya_obj::*`
+   - `use obj::*`
+   - `use crate::obj::*`
+   
+   The `obj` alias is now removed to avoid confusion, and all `obj` imports
+   are funneled through `aya_obj`.
+ - <csr-id-4f0559f2afeca1dfae120bacf1742d58268bca37/> Fix cippy errors
+
+### Documentation
+
+ - <csr-id-df053f095b67f8984ae31fd0ca1042f4e38c3378/> update docs for load to mention include_bytes_aligned
+   * docs: update docs for load to mention include_bytes_aligned
+   
+   This macro is required if you are bundling programs statically into your binary, which is not an uncommon thing to do.
+   
+   This change updates the documentation for the load function to mention this macro and the need for alignment.
+
+### New Features
+
+ - <csr-id-c1eb42780c8e0eba340808eb4b75df15ac434e61/> add typos-cli configuration and CI
+ - <csr-id-d8f5497884a23bd63f9264dbe3f80081b76f360d/> add `Ebpf::maps_disjoint_mut`
+   Implemented using `HashMap::get_disjoint_mut` introduced in Rust 1.86.0.
+ - <csr-id-7dba5a41ade97a3744c4cb71a22d7c81699a69e3/> Make LinkInfo and loaded_links public
+   We have had loaded_links in the API as `#[doc(hidden)]` for a while.
+   I've been using it in bpfman and it's been fine. This commit does the
+   minimal work required to make the API stable.
+   
+   We expose a `LinkInfo` type - similar to `ProgInfo` - which wraps the
+   generated type. In this case, `bpf_link_info`.
+   
+   A few accessor functions have been added for `id`, `link_type` and
+   `program_id`. There are many more fields that could be (eventually)
+   made public.
+   
+   As a convenience, `LinkInfo` can be retrieved from an existing FdLink
+   by using `FdLink::info()`.
+ - <csr-id-2b0dcfbd0938252f8ee8752e26abe7581561f9af/> Allow conversions to Program from ProgramInfo
+   Allow for a ProgramInfo to be converted into one of the program types
+   that we support. This allows for a user of Aya access to reattach,
+   pin or unload a program that was either, previously loaded, or was
+   loaded by another process.
+ - <csr-id-39cf6c12f27f02c945e70efb24b89c1bc372aac0/> Return error messages from netlink
+   This returns error strings from netlink since they are more informative
+   than the raw os error. For example:
+   
+   "Device or Resource Busy" vs. "XDP program already attached".
+ - <csr-id-bf2164c92f5280e8b9c7178b9cbf338931ce778d/> Add iterator program type
+   BPF iterators[0] are a way to dump kernel data into user-space and an
+   alternative to `/proc` filesystem.
+   
+   This change adds support for BPF iterators on the user-space side. It
+   provides a possibility to retrieve the outputs of BPF iterator programs
+   both from sync and async Rust code.
+   
+   [0] https://docs.kernel.org/bpf/bpf_iterators.html
+
+### Bug Fixes
+
+ - <csr-id-bf1899471bda7a97691876a379f3e04ceda685b3/> Prevent `NetNsGuard` from crossing threads
+   Dropping the guard on another thread would restore the wrong thread's
+   network namespace. Prevent this by marking `NetNsGuard` as `!Send`.
+ - <csr-id-e2ab3ee0e2ec85116f4529bcc97a5da4f7043e70/> Clean up after errors in `NetNsGuard::new()`
+ - <csr-id-215048bf9078af298072bf5ef8f36843e08b7799/> simplify BTF map detection and fix peek syscall name
+   Use `btf_value_type_id` alone to detect BTF maps in `parse_map_info`.
+   
+   Checking both type IDs here is redundant. Keyless BTF maps such as bloom
+   filters may leave `btf_key_type_id` unset, while `btf_value_type_id` still
+   reliably identifies the map as BTF-backed. Using the value type keeps the
+   logic smaller and avoids misclassifying keyless maps as legacy maps.
+   
+   Also update `BloomFilter::contains` to report `bpf_map_peek_elem` and adjust
+   the unit test to expect the correct syscall name.
+
+### Other
+
+ - <csr-id-7277a57ea8cdb74918d3096a4b22b6d814481973/> fix consumer ordering
+   RingBuf publishes the consumer position and then reads producer state to
+   decide whether to wait. The kernel commits a record and then reads the
+   consumer position to decide whether to notify. Without a full StoreLoad
+   barrier, both sides can read stale positions and leave a committed
+   record queued without a notification.
+   
+   The consumer store is SeqCst, but the later producer and record-header
+   loads are Acquire. Rust does not require that pair to provide StoreLoad
+   ordering. It happens to do so on tested x86-64 systems because LLVM
+   emits xchg for the store, and on AArch64 because its STLR and LDAR
+   instructions provide RCsc ordering. On powerpc64, however, LLVM places
+   sync before the store and isync after the load, leaving no full barrier
+   between them.
+   
+   Publish the consumer position with a Release store, then issue an
+   explicit SeqCst fence before checking the producer position or retrying
+   a busy record. This provides the StoreLoad barrier on every target while
+   retaining the Release ordering needed when the kernel reuses consumed
+   records.
+ - <csr-id-6fbf4c751d3e7093379a2f64cdf38b7265ca3c18/> support socket filter reuseport attach
+   Add ReusePortSocketFilter as the aya program abstraction for
+   attaching a BPF_PROG_TYPE_SOCKET_FILTER program as a SO_REUSEPORT
+   selector. Regular socket filters and reuseport selectors use different
+   attachment paths, different kernel slots, and different return-value
+   semantics, so modeling them as separate aya program views makes the
+   user-facing API explicit.
+   
+   Aya still follows libbpf section rules: socket filter programs load
+   from SEC("socket"), and aya does not introduce a socket/reuseport
+   section. Since the section cannot distinguish the two views,
+   ReusePortSocketFilter is selected by the user's try_into target type
+   over the same loaded program type.
+ - <csr-id-b5c672c69bf667dd6a0929c6712b535e1b3b3495/> properly check tracing support
+   Some arm64 kernels can load tracing programs but cannot attach BPF
+   trampolines until 6.4.
+ - <csr-id-3d0c7b839e09399fb64aaff40342fc2a3395563a/> support test-run for fexit
+   Add TestRun support for fexit programs so userspace can invoke the
+   kernel tracing test-run path.
+   
+   The tracing test-run path has no caller-provided input and no
+   meaningful program result for fentry/fexit, so the API reports only
+   success or syscall failure instead of exposing empty option or result
+   types.
+ - <csr-id-4bd00c569ef291b20a63a6892a4aae05d6a268d8/> add uprobe virtual address helper
+   Add a fallible `UProbeAttachLocation` constructor for callers that
+   have already resolved a symbol or instruction to an ELF virtual
+   address. The helper converts that address, together with the
+   containing section's address and file offset, into the target object
+   file offset expected by uprobes.
+   
+   Return typed errors when the instruction address cannot be in the
+   containing section or when the computed file offset overflows.
+ - <csr-id-1412bb3747801644abc773d8a1d7c5123fe7aec7/> relax SkReuseport receivers
+   SkReuseport attach and detach do not mutate program state. Change attach
+   to take &self, and make detach an associated function that only needs
+   a socket from the reuseport group.
+ - <csr-id-1ade96f5f87519c6e879b35412c68ec76759019f/> remove SocketFilter link abstraction
+   Socket filters follow the kernel's per-socket filter-slot model. A
+   socket has one filter slot, so attaching another socket filter replaces
+   the current filter instead of creating a second attachment.
+   
+   The detach API has the same shape: it clears the socket's current
+   filter slot and does not identify the program that installed it. That
+   makes a link-level RAII abstraction unsafe for SocketFilter, because an
+   old link or dropped program can detach a replacement filter.
+   
+   Stop returning a link handle from SocketFilter::attach and add an
+   explicit SocketFilter::detach(socket) operation instead. Document that
+   dropping SocketFilter or Ebpf does not detach socket filters.
+ - <csr-id-98d8feb63325c9576caf6aa2040c465c985ef5ee/> add classid to SchedClassifier netlink attach
+   Add `classid: Option<TcHandle>` to `NlOptions` and write it as
+   `TCA_BPF_CLASSID` inside `TCA_OPTIONS` when set. In direct-action
+   mode this attribute provides the major 16 bits of the resulting
+   class id; the minor 16 bits are written by the program at run time
+   via `__sk_buff::tc_classid`.
+   
+   The kernel encodes both `tcm_handle` and `TCA_BPF_CLASSID` as
+   `(major << 16) | minor`, so the same `TcHandle` type covers both
+   roles; the field name on `NlOptions` documents which role each
+   value plays.
+   
+   Store the value on `NlLink` so program replacement through
+   `SchedClassifierLink::attach_to_link` preserves the binding.
+   `cls_bpf_change` allocates a fresh `cls_bpf_prog` on every netlink
+   replace and conditionally binds `prog->res.classid` to the qdisc;
+   omitting the attribute on replace would silently clear the
+   binding.
+   
+   Expose `SchedClassifierLink::classid` for introspection and extend
+   `SchedClassifierLink::attached` to accept the classid alongside
+   the existing priority and handle.
+   
+   Reject `prog_name` longer than `CLS_BPF_NAME_LEN` explicitly. The
+   extra `TCA_BPF_CLASSID` slot leaves enough buffer slack to
+   serialize oversized names when `classid` is `None`, which the
+   implicit buffer overflow previously caught.
+ - <csr-id-d82050acac6fd803f51caa0cba7cb63b59076146/> introduce TcHandle newtype
+   Replace the raw u32 filter handle in NlOptions, NlLink, and the
+   netlink helpers with a TcHandle newtype encoding the kernel's
+   (major << 16) | minor layout. TcHandle::new(major, minor) mirrors
+   the M:N syntax accepted by tc(8).
+   
+   Expose TcHandle::AUTO_ASSIGN for the sentinel that asks the kernel
+   to allocate a handle, so callers can express intent at the type
+   level instead of passing a magic 0.
+ - <csr-id-bed496b37bd9969372d3263bfd2b02f61bef8def/> reuse helper probe internally
+   Use the helper feature probe for probe_read_kernel and attach-cookie
+   feature detection.
+ - <csr-id-faae977ae953a23839357e1a53f7419b3781c3a8/> add eBPF helper feature probe
+   Add a public probe for eBPF helper availability per program type. The
+   new API lets callers check whether a selected `(ProgramType,
+   BpfHelper)` pair is supported by the running kernel. Helper availability
+   is program-type specific, so this provides a more precise answer than
+   probing helper IDs or program types independently.
+   
+   For simplicity, expose the generated `bpf_func_id` type as `BpfHelper`
+   instead of introducing a separate Aya wrapper. This makes the public API
+   surface depend on generated platform bindings, but Aya's public API
+   checks already run with the same x86_64 assumption.
+ - <csr-id-df1e81c1302a29c51b6d21a92ee645d637e271ff/> fix program type constants
+   Correct the SkMsg and SockOps PROGRAM_TYPE constants so
+   from_program_info validates against the right kernel program type and
+   feature probes using these constants check the intended program type.
+ - <csr-id-d10c87e2506dfc78de9f79ae443999ae0a05e8e6/> implement BPF_PROG_TEST_RUN
+ - <csr-id-53cda5ffa0934f72f9828833c5dc376517adfd24/> add acquire fence on perf data_head load
+   The kernel publishes new perf records via smp_store_release on
+   data_head, so userspace must issue an acquire barrier after the
+   data_head load and before reading the record bytes. Without it,
+   weakly ordered targets (arm64, ppc64, riscv) may speculatively
+   read bytes that have not yet been published.
+   
+   The existing SeqCst fence before the data_tail store is the
+   release-side barrier; it does nothing for head-side ordering.
+   
+   See the comment on `data_head` in include/uapi/linux/perf_event.h
+   and perf_event_open(2).
+ - <csr-id-073912689c6c842bba594eae349b8ddd3b0c2d91/> Remove the `no_std` support
+   The original motivation for `no_std` support in `aya-obj` was to keep it
+   closer to `object`. In practice, though, one of `aya-obj`'s main jobs is
+   sanitizing bytecode and BTF, and that logic relies on dynamic data
+   structures.
+   
+   Given that, keeping `no_std` support no longer reflects how the crate is
+   actually used and only adds maintenance overhead.
+ - <csr-id-11b7b0982dede7f0f5ff4b3e0f0b8e4c0e2e3101/> cover BTF type-id strip for blocklisted map types
+   `bpf_create_map` zeroes `btf_key_type_id`, `btf_value_type_id`,
+   and `btf_fd` before `BPF_MAP_CREATE` for fourteen map types
+   whose kernel ops set `.map_check_btf` to `map_check_no_btf`.
+   Add a `test_case`-driven regression test covering every entry
+   in the strip list.
+ - <csr-id-18153c74fa12c8771e4f7904ed6abcb85261ac96/> tighten uprobe basename target check
+   is_basename_only currently accepts any path whose normalized
+   component count is one, which incorrectly includes `/`, `.`,
+   `..`, and paths with trailing separators such as `foo/`.
+   Those inputs are not bare basenames and can still trigger
+   ProcMap and ld.so resolution during scoped attaches.
+   
+   Use Path::file_name() equality to restrict basename-only
+   detection to paths consisting solely of a file name. Add
+   regression tests for the excluded edge cases.
+   
+   Also clarify that UProbe::attach accepts relative paths for
+   binary and shared library targets; the docs previously only
+   mentioned absolute paths and library names.
+ - <csr-id-e25040ffe14de4521fdcdb539ce0b234aa966e1c/> skip ProcMap for path-like uprobe targets
+ - <csr-id-759087ba7bd75267097b5d891a5d2a8be6ccf993/> replace pid Option<u32> with UProbeScope
+   Replace the pid Option in UProbe::attach with UProbeScope so the
+   all-processes, calling-process, and explicit-pid cases are all
+   expressed directly in the type.
+   
+   This removes pid=0 as a magic value from the public API, keeps the
+   calling-process case explicit, and uses the current pid for ProcMap
+   resolution introduced in the previous commit. Update docs and
+   integration tests to use the new scope-based API.
+ - <csr-id-8912e413f36b9839e514f475e8b47029706e9a35/> fix pid=0 handling in uprobe attach
+   perf_event_open treats pid=0 as the calling process/thread, so
+   Some(0) should carry that meaning in UProbe::attach. However,
+   aya unconditionally reads /proc/<pid>/maps when pid is Some, but
+   /proc/0/maps does not exist.
+   
+   Use the current pid only for the ProcMap lookup, and keep pid=0 for
+   the actual attach semantics. Add documentation and an integration test.
+ - <csr-id-decfe44005b4b10cf3a241b21c2c35bdf53fd045/> reject BPF_F_STACK_BUILD_ID in StackTraceMap
+   `BPF_F_STACK_BUILD_ID` switches stack entries to
+   `struct bpf_stack_build_id` (32 bytes), but `StackTraceMap::get`
+   unconditionally decodes values as `[u64]`, silently corrupting
+   reads of any stack map that sets the flag.
+   
+   Reject the flag in `StackTraceMap::new` with the new
+   `MapError::UnsupportedMapFlags` variant. Derive `max_stack_depth`
+   from the declared `value_size`; the sysctl previously consulted
+   is redundant with the kernel's own map_create check.
+   
+   Name the per-entry layout `StackEntry = u64` so the stride check
+   in `new` and the lookup buffer in `get` reference the same type.
+   
+   Report stride violations with a new
+   `MapError::InvalidValueStride { size, stride }` variant; the
+   existing `InvalidValueSize` displays "expected 8" when any
+   non-zero multiple of 8 would be valid.
+ - <csr-id-4940ee6c69196634de9bf2f3c434cb5a57f194e5/> add BPF_PROG_TYPE_SK_REUSEPORT support
+   Implement SK_REUSEPORT programs for programmable socket selection
+   within SO_REUSEPORT groups.
+   
+   SkReuseport attaches and detaches via setsockopt rather than
+   bpf_link, making it group-scoped: any socket in the group can
+   attach or detach the program, and dropping SkReuseport does not
+   detach it. Section parsing handles both sk_reuseport and
+   sk_reuseport/migrate with the correct expected_attach_type.
+   
+   ReusePortSockArray is available in legacy and BTF variants.
+   select_reuseport() is deduplicated across both via a pub(crate)
+   trait. SkReuseportContext exposes sk_reuseport_md field
+   accessors; sk() and migrating_sk() require Linux 5.14+.
+   
+   Integration tests verify socket steering, slot clearing with
+   fallback, and migrate-path selection.
+ - <csr-id-85246f00e984b0b3b0ccdaa422d301b31e109881/> fix TryFrom<FdLink> link type checks
+   Fix wrong bpf_link_type checks in TryFrom<FdLink> for UProbeLink,
+   KProbeLink and TracePointLink. Consolidate all TryFrom<FdLink>
+   implementations into an impl_try_from_fdlink! macro.
+   
+   Strengthen pin_lifecycle tests to verify the FdLink to link
+   conversion, covering this previously untested path.
+   
+   Found while working on #1417.
+ - <csr-id-48f9e00c2e148182172367d26b7e1b9095af16d5/> make Align not pub
+   This has no effect, so drop it. Tidy up a bit while I'm here and explain
+   the use of const references.
+ - <csr-id-98960db18a01fe4fa932423e22a712b37d21b03a/> avoid some allocations
+ - <csr-id-ed516b3ec040aa5f3b1fc4c5aa174fd0f8484355/> advance through write buffers
+   Refactor netlink attribute writers to consume and return the remaining
+   buffer instead of passing offsets through helper calls.
+ - <csr-id-52c33ebdf84d0d3f0dcd13d861216d1a052005a3/> use constants more consistently
+   Use returned lengths where possible rather than hard coding constants.
+ - <csr-id-68be4b7297ce1533904fc54b281aa2e796ad2a6f/> use checked accessors
+ - <csr-id-f49ef401a794789e1187bb06d506bd8742b66fcc/> avoid repeating NLA_ALIGNTO everywhere
+ - <csr-id-cdfa52de6ed7fb766b3139cf42fcbab06ce12ad3/> fix attach on 6.17
+   For LSM programs the target_btf_id is set at load time not attach time.
+   
+   Starting from
+   https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=1209339844601ec1766f4ff430673fbcfe42bb51
+   setting it at attach time results in EINVAL, because it happens to be
+   interpreted as bits of the mprog part of the union.
+ - <csr-id-c42157f0b566940b849b699109d1c660a0733fd3/> fix attachment failure with long program names
+   The netlink attribute buffer in TcRequest was only 64 bytes, which is
+   not enough when TC program names get close to the kernel's 256-byte
+   limit. This led to a misleading no space left error when attaching
+   programs with longer names.
+   
+   Bump the buffer size so it can precisely fit all the netlink attributes
+   and the max-length name.
+ - <csr-id-ae8c76d03757de8a7c07d2f3022362be179cbb07/> Fix `BloomFilter::contains` method
+   Require the caller to pass a reference, not the owned value. That makes
+   sure that the pointer is valid from the beginning.
+ - <csr-id-294e0c19413d5a7c073d17d79ad4d154283499ce/> Add helper for safe loading of globals
+ - <csr-id-7cbd816a7701ea414b6367abdee6cae878755d34/> document tcx link pinning for atomic program replacement
+   Add documentation and integration test for SchedClassifier link pinning,
+   which enables zero-downtime program updates in production environments.
+   
+   - Add link pinning example to SchedClassifier::attach_with_options()
+     showing atomic replacement workflow for TCX mode (kernel >= 6.6).
+   - Add pin_tcx_link() integration test verifying link persistence
+     across program unload and atomic replacement capability.
+ - <csr-id-775f42d781c9379016647f0abf1d42f57522d84d/> avoid trying to parse paths in proc maps
+   There are various oddities in how the kernel prints path including
+   "(deleted)" suffix, bracketed properties e.g. "[vdso]", ashmem and memfd
+   paths, and possibly others. Rather than try to handle these in
+   `ProcMapEntry::parse` just leave them as they appear and let the caller
+   deal with them.
+   
+   Change splitting behavior to any number of consecutive whitespace
+   characters between columns to account for padding.
+   
+   This allows uprobe attachment to succeed in the presence of deleted
+   mapped files and in more cases of android special attributes.
+   
+   Rewrite tests using `test_case`.
+ - <csr-id-eb25e6af2a14ef65075e75e06d6d7a78b3bc6d82/> avoid some allocations
+   Use `Path::display` in test assertions for better errors.
+ - <csr-id-efecc088b37a9438cb79f234fbfa735356816a64/> trim whitespace just once
+   Update tests to include the expected trailing newline.
+ - <csr-id-d1f72a580c640b7ad2ae71c3acd2ff4ef2bf02c0/> improve `ParseLine as Debug`
+   Print human-readable strings rather than sequences of bytes.
+ - <csr-id-80d79526a6fe3fff0ea07b018d0eed03f6d8de71/> move test_resolve_attach_path to tests module
+ - <csr-id-4984ddc0467a3e0fef92fd8ee6edb83a1274700a/> use integer::next_multiple_of
+   See https://github.com/rust-lang/rust-clippy/issues/14144.
+ - <csr-id-eb99da3cbb4bcf2b20c8d0797566dd330261aadb/> bundle attach location+cookie via UProbeAttachPoint
+   This follows the #1417 review discussion: by bundling location
+   + cookie into a UProbeAttachPoint we get a more idiomatic Into<_>
+   entry point, keep the one-to-one relationship enforced by the type
+   system, and make it easier to extend attach with multi-location
+   support without introducing parallel arrays or a brand new API.
+ - <csr-id-46221ad11dfb44fc0cc46425e1648c6750d98a5e/> use RAII to clean up in the error path
+ - <csr-id-72810f095f1461d5d254d37e7174bb47bd15f691/> ProbeKind is Entry/Return
+   We already have separate types for KProbe and UProbe.
+ - <csr-id-a4a3c1641f8b6006363be6c66516daf73a94aec7/> use exhaustive matches
+ - <csr-id-1944c4aa008d685053bb617b728e3e4f723d7672/> refactor perf_event_open_trace_point
+   Rewrite it in terms of perf_event_open.
+ - <csr-id-d4b2dde78ac88b0e7e9141e0675bd8888f23c1f6/> inline `perf_event_open_bpf`
+   This function has one caller and provides no abstraction.
+ - <csr-id-7e07f85edcbdbe2f5d1c49a872e56d1ff458991e/> privatize PerfLink
+   There's no way to obtain this type externally.
+ - <csr-id-27c7f1c84f29a6f5e775ce6761a87859a351d95d/> disambiguate `fd` names
+ - <csr-id-1791d497d3af39bd8da4eb666dece22c60e97281/> remove superfluous type ascription
+ - <csr-id-ab38afe95d16226f5a703bbb37c7842ee441c364/> support hardware breakpoints
+   Implement `PerfEventConfig::Breakpoint`, allowing users to attach
+   hardware breakpoints. Generate `HW_BREAKPOINT_*` and `struct
+   bpf_perf_event_data` in support of this feature and update the type of
+   `PerfEventContext` accordingly.
+   
+   Add a test exercising R, W, RW, and X breakpoints. Note that R
+   breakpoints are unsupported on x86, and this is asserted in the test.
+   
+   Extend the VM integration test harness and supporting infrastructure
+   (e.g. `download_kernel_images.sh`) to download kernel debug packages and
+   mount `System.map` in initramfs. This is needed (at least) on the aarch
+   6.1 Debian kernel which was not compiled with `CONFIG_KALLSYMS_ALL=y`
+   for some reason, and the locations of globals are not available in
+   kallsyms. To attach breakpoints to these symbols in the test pipeline,
+   we need to read them from System.map and apply the KASLR offset to get
+   their real address. The `System.map` file is not provided in the kernel
+   package by default, so we need to extract it from the corresponding
+   debug package. The KASLR offset is computed using `gunzip` which appears
+   in kallsyms on all Debian kernels tested.
+ - <csr-id-18c7f7ccd6d462516d94b8720d18f8b7b5d98361/> push down type safety
+   This makes it more difficult to mishandle callers of `perf_event_open`.
+   
+   Change `wakeup_events = 0` to 1; per `man 2 perf_event_open`:
+   
+     Prior to Linux 3.0, setting wakeup_events to 0 resulted in
+     no overflow notifications; more recent kernels treat 0 the
+     same as 1.
+ - <csr-id-7e405c216e0d806f96c76f2554d069722f97bec3/> simplify PerfEventScope
+ - <csr-id-4fbce44b6a49dd189a7a3520c66db45baf3832ea/> tolerate proc map trailing newline
+   Proc maps terminate with a newline so split(b'\n') yields an empty
+   slice at the end. Filter it out before parsing so the absolute-path
+   fallback for pid-scoped attach doesn't get short-circuited by a
+   ProcMap::ParseLine error.
+ - <csr-id-3a3c45100942c903c21e69595eff9e4289910835/> restore must_exist argument to set_global
+   In
+   https://github.com/aya-rs/aya/commit/03e84871773e09badf08bdef8e83b4f1256850a4
+   we deprecated set_global but accidentally broke its API by deleting the
+   must_exist argument.
+ - <csr-id-17c7c7951cb45a5903134b21658df7e989e672ed/> enable clippy::as_underscore
+ - <csr-id-03e84871773e09badf08bdef8e83b4f1256850a4/> rename `set_` methods on `EbpfLoader`
+   This loader is more of a builder, so these `set_` methods didn't
+   quite fit. See [this discussion][1] for the motivation.
+ - <csr-id-17171647f7e447698f0d4733a3dbb144ded53466/> fix producer position initialization
+   The RingBuf caches the last value it read of the producer so it doesn't
+   need to constantly contend on the actual producer cache line if lots of
+   messages have yet to be consumed. It was bogus to initialize this cache
+   at 0. This patch initializes it properly and adds testing.
+ - <csr-id-5802dc7a23ac878105b55710df6c75cb5e030c3a/> allow specifying a pin path for a named map
+   This commit extends the EbpfLoader with set_map_pin_path that allows the
+   caller to associate a named map with a pin path.
+   
+   One note is that this path is an absolute path, not relative to
+   `map_pin_path`, and it forces the map to be loaded from that path.
+ - <csr-id-1c924bb421dd731a7557ae4140f3bed7982894d2/> rename map_pin_path to default_map_pin_path
+   This is the path in which pinned maps are created or resolved. It
+   isn't actually the path for any specific map itself. This rename
+   makes way for a method `set_map_pin_path` that actually specifies
+   the pin path for a specific map.
+ - <csr-id-0144c0eb22d08b29ab6f9f5e97e1ea1d9866fd41/> defer cleanup to ensure unpin
+ - <csr-id-2e5f5efbf13c71dc1462d1221e77055c7c3e857a/> make ProgramInfo a proper enum
+   This allows us to distinguish between LSM and LSM_CGROUP programs and do
+   the proper capability check in is_program_supported.
+ - <csr-id-7224efcad8726439e9ac9ccdc28e19116bf00606/> patch up 0-size datasec
+   Use OnceCell for ENUM64 while I'm here as well.
+ - <csr-id-4c974d33a3b5728b49c82183666153aa20e14b30/> replace kernel version check with fallback
+ - <csr-id-3d7fbaad28fc8ad49f0a5afb08c686011ed25c5c/> enforce valid perf_event type & config combos
+   Add guardrails for when setting event type and config for perf_event
+   programs. The `PerfEventConfig` enum now defines the event `type` and
+   `config` of interest.
+   
+   Remove public re-exports, and add idiomatic Rust types for:
+   - perf_hw_id => HardwareEvent
+   - perf_sw_ids => SoftwareEvent
+   - perf_hw_cache_id => HwCacheEvent
+   - perf_hw_cache_op_id => HwCacheOp
+   - perf_hw_cache_op_result_id => HwCacheResult
+   
+   The motivation behind this is mainly for the `type` and `config` fields
+   of `bpf_link_info.perf_event.event`. The newly added enums are planned
+   to also be used in the `bpf_link_info` metadata.
+   
+   Although `Breakpoint`/`PERF_TYPE_BREAKPOINT` variant exists, it is not
+   fully implemented. It's only usage at the moment is in link info.
+ - <csr-id-82aec2696394f953c886f146f02673753a94cb0d/> add missing impl_try_into_fdlink
+ - <csr-id-fc5387c80626957017ceeb988322bc288f438059/> cgroup attachment type support
+ - <csr-id-8e752148155b49e3732a6563ee7ce1f8ecbf6307/> properly check for LSM support
+   Turns out this is not supported in aarch64 until 6.4.
+ - <csr-id-de42b80c74883f512542875e7cfa96b8634a8991/> add BPF_MAP_TYPE_SK_STORAGE
+   This map type requires BTF, and we can finally do it!
+ - <csr-id-6babf1796988af742711cdcdae691e4dbdd1641e/> use shared helpers
+ - <csr-id-75edc3d2948bea7b63edc60365e4cc10e414921b/> downcase log strings
+ - <csr-id-742f700dcc43fe9ad5ccdd23d1b6e55673807c06/> add newline between doc and imports
+ - <csr-id-263e864cd9e09848a9861a967763cf1069ae01c8/> add Map::from_map_data() for pinned map access
+   Enables creation of Map enum variants directly from MapData instances,
+   allowing user-space handles to pinned BPF maps without requiring the
+   original BPF object.
+   
+   Supports multiple BPF map types.
+ - <csr-id-0d1193720bc0e5915eff32b5d4edd21178a98991/> generate docs in macro
+   Remove a bunch of repetition and missing links.
+ - <csr-id-8ee12d337fbc1662350815dbde620f2f1b23f962/> fix rustdoc link in macro
+   `$wrapper` is not visible to rustdoc before expansion. Build the link
+   after expansion.
+ - <csr-id-35332f2288b0bbb8981233ae464715ea9217b081/> remove `AsyncPerfEventArray{,Buffer}`
+   Rather than support N async runtimes, push this to the user. The
+   relevant types (`PerfEventArrayBuffer` and `RingBuffer`) implement
+   `As{,Raw}Fd` which is sufficient with integration with tokio, smol, and
+   other async runtimes.
+ - <csr-id-ab182be622acb245db0adef58591978208bcdb2c/> `construct_debuglink_path()` should be infallible
+   `construct_debuglink_path()` returns a `Result`, but it doesn't actually
+   do anything that can fail. This means callers must do a useless
+   `unwrap()` to get at the return value.
+   
+   This fixes the signature to reflect that the function is infallible.
+ - <csr-id-3f02127b6b16f618aa2ccb444fcd1402c887ffaf/> `impl AsFd for RingBuf`
+   This bound is needed for e.g. `smol::Async`.
+ - <csr-id-4b5ba53a36b0c920969bbb9016330cd195e457dc/> implement TryFrom<[Program Type]> for FdLink for various program types
+   Implements TryFrom for FdLink for CgroupSkb, CgroupSock, CgroupSockAddr
+   and SockOps program types. This allows support for link pinning for
+   these program types, aligning with the documentation for FdLink.
+ - <csr-id-7a0dabc295a0d856f6c3611331c9434b83f63ae8/> short-circuit info field if non-zero
+   Short-circuits `CACHE` to true if the field is non-zero.
+   
+   This saves from executing the probing logic since the logic essentially
+   checks if the field can process (or doesn't error) non-zero value.
+ - <csr-id-23bc5b5836c3b8383f2f8a78bd3902e193a7a176/> cache feat probed info fields
+   Cached probed for ProgramInfo fields instead of exposing it through
+   global FEATURE. Probing occurs on cache miss, which happens when first
+   accessing the field, *and* if the field is 0.
+ - <csr-id-bd492860f585ad8b9612ef9c8addde2fb8d5e814/> add feature probing for map type
+   Add API that probes whether kernel supports a map type.
+ - <csr-id-ab77decd9a708147e679a12ba6be3774f8946dd8/> add feature probing program type
+   Adds API that probes whether kernel supports a program type.
+ - <csr-id-33c9f2b2b2cf5587139e36c0e05de13e72cf77fa/> uprobe: use PathBuf for ResolveSymbolError::DebuglinkAccessError
+   Makes no sense to use a string, as it's a path.
+   This breaks the public API.
+ - <csr-id-90d56048777ff571293a99450201562532fcaa7f/> uprobe attach: use mmap instead of reading whole binaries to memory
+ - <csr-id-647100faa7f4dff819642183c94b5a05389eb2af/> clean up resolve_symbol a bit
+   Instead of using intermediate values to extend the lifetime of the
+   object::File, we just separate the branches.
+ - <csr-id-3aded0e0a5c644569b0a268ea31c6c0edddea3b2/> move Mmap struct to aya::util
+ - <csr-id-fc69a069727475060ee6d9895ac2745b8965237f/> fix is_probe_read_kernel_supported in aarch64 kernels 5.5
+   In aarch64, with kernel 5.5, my programs that use `bpf_probe_read_user`
+   don't work successfully because `aya` is mistakenly re-writing it
+   `bpf_probe_read` because it falsely detects that the kernel doesn't
+   support `bpf_probe_read_user`.
+   
+   I hadn't updated my `aya` version in a while, but while updating it to
+   fix a separate issue (panics when parsing kernel versions of PVE
+   kernels) and running my test suite I saw tests failing on aarch64 5.5
+   kernels. A git bisect led me to this commit:
+   942ea51906fea4e3152e1bd3ef5832bc0df5b205 and further investigation in the
+   difference of the new and old assembly showed that the only difference
+   was subtracting 8 vs adding -8. When I put it back as adding 8 (but
+   without handwritten assembly) then things work as expected. Since it
+   used to be `BPF_ADD` and the commit that changed it was just about no
+   longer handwriting assembly without any reason for the switch to
+   `BPF_SUB` putting it back as `BPF_ADD` seems reasonable. 
+   
+   When using `BPF_SUB` 8, the handwritten program in this function
+   returns a permission error which is treated by this function as
+   `bpf_probe_read_kernel` not being supported when it is but for some
+   reason `BPF_SUB` is not. My guess is that it might be an early verifier
+   error but I am not 100% sure as I thought verifier errors are normally
+   `EINVAL` not `EPERM` but I have a vague memory of seeing `EPERM` in the
+   past for errors that happened very early in the verifier.
+ - <csr-id-3edc36af9d2a6a90a57d449e66267ca081aa6a86/> remove unhelpful comment
+ - <csr-id-49a828ec5655f6ecd0c38083c6c0dca217bad777/> reorder-keys
+   Group non-workspace keys before workspace ones for readability.
+ - <csr-id-f48b5a4a84a858dd3a24101a83a3b03c314f1c5c/> Ensure that truncated map names are NULL terminated
+   Limit of map names in eBPF is 16 bytes and they have to be NULL
+   terminated.
+   
+   Before this change, long names were truncated to 16 bytes.
+   `MAP_WITH_LOOOONG_NAAAAAAAAME` would become `MAP_WITH_LOOOONG`, which
+   doesn't contain the NULL byte.
+   
+   This change fixes that by truncating the name to 15 bytes, ensuring
+   that the 16th byte is NULL. `MAP_WITH_LOOOONG_NAAAAAAAAME` is truncated
+   to `MAP_WITH_LOOOON\0`.
+ - <csr-id-22c8f783e7d5dd2ddc8d973885e1895a6e842440/> allow program names to be static strings
+ - <csr-id-73a34e1571a606124c7e89ecf71ff001508643dc/> Add `XskMap::unset`
+ - <csr-id-ea76e0f62dbdff618789dfc9a9d8604a89f61f13/> parse complete entries from /proc/$pid/maps
+ - <csr-id-27d69c35f030dda687664af8dc2d2fd52d238c6b/> remove panics on indeterminate kernel version
+   Cache the current kernel version in a thread-local while I'm here.
+   
+   Closes https://github.com/aya-rs/aya/issues/1024.
+   Closes https://github.com/aya-rs/aya/pull/1042.
+ - <csr-id-9eefb48a0ad90831c09c7bd941d035b34e1f1771/> remove some copies
+   Replace truncation with proper NULL termination at the site of use.
+ - <csr-id-89aa638e05795be0ab86711d6e2ade2a8dbafcae/> add TODO to remove once_cell
+ - <csr-id-de1e80c1d1bab7fd73acc97e5adb0985712c35c7/> encode perf_event ioctl contract
+   Enumerate the possible ioctls in an enum and bake in the knowledge that
+   they all return 0 on success and -1 on error.
+ - <csr-id-eee7975ce42520513acda16977b21e19a1cd159d/> remove redundant TEST_SYSCALL use
+   This is already done in `syscall`.
+ - <csr-id-055e36e8d92c79c1a9cf61f1a08d2d9be4e74d14/> encode perf_event_open(2) contract
+   Per man 2 perf_event_open:
+   
+   > RETURN VALUE
+   >   On success, perf_event_open() returns the new file descriptor.  On
+   >   error, -1 is returned and errno is set to indicate the error.
+   
+   Bake this into our syscalls so we stop using `_` so much which can hide
+   information loss. Remove the type parameter to SysResult.
+ - <csr-id-bdd8ae2d0b443513c73143da968d400df9b05464/> avoid `_`
+   This can silently discard information, so we shouldn't do it.
+ - <csr-id-f6df60fa7072dfd7cfb09d0bc3bb1dad0f965940/> encode bpf(2) contract
+   Per man 2 bpf:
+   
+   > RETURN VALUE
+   >   For a successful call, the return value depends on the operation:
+   >
+   >   BPF_MAP_CREATE
+   >     The new file descriptor associated with the eBPF map.
+   >
+   >   BPF_PROG_LOAD
+   >     The new file descriptor associated with the eBPF program.
+   >
+   >   All other commands
+   >     Zero.
+   >
+   >   On error, -1 is returned, and errno is set to indicate the error.
+   
+   Bake this into our syscalls so we stop using `_` so much which can hide
+   information loss.
+ - <csr-id-2d782606fe984cb2ffebe7b98807a58494441a4c/> avoid Result::is_{ok,err}
+   These methods discard information. Discarding information is bad.
+ - <csr-id-dab1aa4e291e4301eca0bd6532449dc7079ff10a/> avoid retagging in tests
+ - <csr-id-f51ab800758689a67c312742ffdf9116e1e178c0/> attempt to preserve provenance
+   In tests, provide write provenance.
+ - <csr-id-888701425bbfc48365edd6f03d9872d5c86a3e18/> use MMap from ring_buf
+ - <csr-id-ff82c244f77f46da9245b42ede56c0500cd6b56f/> avoiding casting pointers to usize
+ - <csr-id-e17feca2d6d45365fc1d717f0735ee4dd9664ec3/> remove some stale comments
+ - <csr-id-9a47495227a03400fa2549b07fe8af131f21e759/> preserve pointer provenance
+ - <csr-id-122c49fca4ea1cdf89bbffbb48a440dfd3744937/> appease clippy
+   While I'm here convert a String to a PathBuf in an error to avoid lossy
+   conversions.
+   
+   See https://rust-lang.github.io/rust-clippy/master/index.html#io_other_error.
+ - <csr-id-9e1bcd0ab87f69bcd323eef680957a534b655fac/> Fix PerCpuHashMap NotFound
+   PerCpuHashMap was never returning MapError::KeyNotFound because
+   bpf_map_lookup_elem_per_cpu was replacing Ok(None) with
+   Ok(Some(zeroed_value)).
+   
+   Update bpf_map_lookup_elem_per_cpu to map the Option value.
+ - <csr-id-919833510095cfc49d1b9874429f403167227fbd/> remove outdated workaround
+   bindgen can handle these macros now.
+ - <csr-id-628b7fb0221321aa0cc649cd738c449a7dbb0108/> :programs::uprobe: add support for cookies
+ - <csr-id-85c73af1feb8d0b227ca2e7b61b8542c4eb8b918/> Improve the description of `take_link` methods
+   Don't mix the tenses.
+
+### Refactor
+
+ - <csr-id-8d1d15b7dabe29e3349327f6657e4def391dfe3f/> Return an error instead of panicking
+   Given that the test helpers are now exposed to users, avoid panicking
+   and return an error.
+   
+   Make `NetlinkError` public, making it possible for downstream users to
+   refer to the type while matching on the `AyaTestError::Netlink` variant.
+ - <csr-id-b9b92ce197171717d99cd9ea1eed29b1cfa0666b/> Move `utils.rs` from the `integration-test` crate to `aya`
+   Agave [0] has interest in using test helpers (e.g. `NetNsGuard`) outside
+   of Aya monorepo for testing their eBPF programs. Move `utils.rs` from
+   the `integration-test` crate to `test_helpers.rs` in the aya crate, to
+   make that possible. Guard that module with the `test-helpers` feature.
+   
+   [0] https://github.com/anza-xyz/agave
+
+### Test
+
+ - <csr-id-f10988d56a2ac7575cfd79c0eaec66b62a9b6227/> replace test-case with rstest
+   test-case relies on cooperating attribute macros when wrapping
+   generated parameterized tests. Stacking it with test_log can register
+   each generated case twice, so passing tests may run more than once and
+   mask order-sensitive or flaky behavior.
+   
+   Move the parameterized tests to rstest, but do not rely on rstest's
+   implicit test-attribute detection. rstest treats attributes whose path
+   ends in test as test attributes; that has its own failure mode if a
+   non-test decorator matches, potentially producing cases that do not run
+   as intended.
+   
+   Use explicit #[test_attr(...)] wrappers for every rstest case that
+   needs test_log or tokio, so generated tests get the intended harness
+   attribute instead of depending on implicit detection.
+
+### Commit Statistics
+
+<csr-read-only-do-not-edit/>
+
+ - 196 commits contributed to the release.
+ - 133 commits were understood as [conventional](https://www.conventionalcommits.org).
+ - 4 unique issues were worked on: [#1119](https://github.com/aya-rs/aya/issues/1119), [#1235](https://github.com/aya-rs/aya/issues/1235), [#1443](https://github.com/aya-rs/aya/issues/1443), [#1501](https://github.com/aya-rs/aya/issues/1501)
+
+### Commit Details
+
+<csr-read-only-do-not-edit/>
+
+<details><summary>view details</summary>
+
+ * **[#1119](https://github.com/aya-rs/aya/issues/1119)**
+    - Update docs for load to mention include_bytes_aligned ([`df053f0`](https://github.com/aya-rs/aya/commit/df053f095b67f8984ae31fd0ca1042f4e38c3378))
+ * **[#1235](https://github.com/aya-rs/aya/issues/1235)**
+    - Fix is_probe_read_kernel_supported in aarch64 kernels 5.5 ([`fc69a06`](https://github.com/aya-rs/aya/commit/fc69a069727475060ee6d9895ac2745b8965237f))
+ * **[#1443](https://github.com/aya-rs/aya/issues/1443)**
+    - Set value_size to 0 if loading ringbuffer ([`d022b8d`](https://github.com/aya-rs/aya/commit/d022b8dce40fb60271a1270b13efb60951208328))
+ * **[#1501](https://github.com/aya-rs/aya/issues/1501)**
+    - Aya, aya-ebpf, aya-obj: add BTF bloom filter support ([`904fbe2`](https://github.com/aya-rs/aya/commit/904fbe265e8a97c7c4869a0898bcfd71502aae62))
+ * **Uncategorized**
+    - Release aya-obj v0.3.0 ([`269dfaf`](https://github.com/aya-rs/aya/commit/269dfaf4a20b99f2e3d384e3e5d13b226f507360))
+    - Prevent `NetNsGuard` from crossing threads ([`bf18994`](https://github.com/aya-rs/aya/commit/bf1899471bda7a97691876a379f3e04ceda685b3))
+    - Clean up after errors in `NetNsGuard::new()` ([`e2ab3ee`](https://github.com/aya-rs/aya/commit/e2ab3ee0e2ec85116f4529bcc97a5da4f7043e70))
+    - Return an error instead of panicking ([`8d1d15b`](https://github.com/aya-rs/aya/commit/8d1d15b7dabe29e3349327f6657e4def391dfe3f))
+    - Add a docstring for `NetlinkError::raw_os_error()` ([`745065a`](https://github.com/aya-rs/aya/commit/745065a74241ae8c39180c0cdc1a5444b5605dfb))
+    - Move `utils.rs` from the `integration-test` crate to `aya` ([`b9b92ce`](https://github.com/aya-rs/aya/commit/b9b92ce197171717d99cd9ea1eed29b1cfa0666b))
+    - Fix consumer ordering ([`7277a57`](https://github.com/aya-rs/aya/commit/7277a57ea8cdb74918d3096a4b22b6d814481973))
+    - Aya, aya-ebpf: add InodeStorage and CgrpStorage ([`bd397b6`](https://github.com/aya-rs/aya/commit/bd397b644723b13bc4397acb0c792546d5df7215))
+    - Aya, aya-ebpf: add CgroupStorage and PerCpuCgroupStorage ([`9ec80ac`](https://github.com/aya-rs/aya/commit/9ec80ac6a91b8edbc51a0476560d38d843bf8031))
+    - Support socket filter reuseport attach ([`6fbf4c7`](https://github.com/aya-rs/aya/commit/6fbf4c751d3e7093379a2f64cdf38b7265ca3c18))
+    - Replace test-case with rstest ([`f10988d`](https://github.com/aya-rs/aya/commit/f10988d56a2ac7575cfd79c0eaec66b62a9b6227))
+    - Properly check tracing support ([`b5c672c`](https://github.com/aya-rs/aya/commit/b5c672c69bf667dd6a0929c6712b535e1b3b3495))
+    - Support test-run for fexit ([`3d0c7b8`](https://github.com/aya-rs/aya/commit/3d0c7b839e09399fb64aaff40342fc2a3395563a))
+    - Aya, aya-ebpf: add CgroupArray ([`eb73f8c`](https://github.com/aya-rs/aya/commit/eb73f8ca9260e48141a1bdf1a492799826a85515))
+    - Add typos-cli configuration and CI ([`c1eb427`](https://github.com/aya-rs/aya/commit/c1eb42780c8e0eba340808eb4b75df15ac434e61))
+    - Add uprobe virtual address helper ([`4bd00c5`](https://github.com/aya-rs/aya/commit/4bd00c569ef291b20a63a6892a4aae05d6a268d8))
+    - Relax SkReuseport receivers ([`1412bb3`](https://github.com/aya-rs/aya/commit/1412bb3747801644abc773d8a1d7c5123fe7aec7))
+    - Remove SocketFilter link abstraction ([`1ade96f`](https://github.com/aya-rs/aya/commit/1ade96f5f87519c6e879b35412c68ec76759019f))
+    - Add classid to SchedClassifier netlink attach ([`98d8feb`](https://github.com/aya-rs/aya/commit/98d8feb63325c9576caf6aa2040c465c985ef5ee))
+    - Introduce TcHandle newtype ([`d82050a`](https://github.com/aya-rs/aya/commit/d82050acac6fd803f51caa0cba7cb63b59076146))
+    - Reuse helper probe internally ([`bed496b`](https://github.com/aya-rs/aya/commit/bed496b37bd9969372d3263bfd2b02f61bef8def))
+    - Add eBPF helper feature probe ([`faae977`](https://github.com/aya-rs/aya/commit/faae977ae953a23839357e1a53f7419b3781c3a8))
+    - Fix program type constants ([`df1e81c`](https://github.com/aya-rs/aya/commit/df1e81c1302a29c51b6d21a92ee645d637e271ff))
+    - Aya, aya-ebpf, aya-obj: add HashOfMaps and ArrayOfMaps ([`4075b5e`](https://github.com/aya-rs/aya/commit/4075b5ec62beeb7b69c1d99847ec9c65ba85a49f))
+    - Make XDP attach mode type-safe ([`ae94e9e`](https://github.com/aya-rs/aya/commit/ae94e9e10719860fefd6199f95ad87ff5367e1db))
+    - Implement BPF_PROG_TEST_RUN ([`d10c87e`](https://github.com/aya-rs/aya/commit/d10c87e2506dfc78de9f79ae443999ae0a05e8e6))
+    - Aya, integration-test: replace read_events with try_fold/fold/for_each ([`be9d3fa`](https://github.com/aya-rs/aya/commit/be9d3faf26115e6ab4a00e41fb6aee966d12743e))
+    - Add acquire fence on perf data_head load ([`53cda5f`](https://github.com/aya-rs/aya/commit/53cda5ffa0934f72f9828833c5dc376517adfd24))
+    - Remove the `no_std` support ([`0739126`](https://github.com/aya-rs/aya/commit/073912689c6c842bba594eae349b8ddd3b0c2d91))
+    - Cover BTF type-id strip for blocklisted map types ([`11b7b09`](https://github.com/aya-rs/aya/commit/11b7b0982dede7f0f5ff4b3e0f0b8e4c0e2e3101))
+    - Tighten uprobe basename target check ([`18153c7`](https://github.com/aya-rs/aya/commit/18153c74fa12c8771e4f7904ed6abcb85261ac96))
+    - Skip ProcMap for path-like uprobe targets ([`e25040f`](https://github.com/aya-rs/aya/commit/e25040ffe14de4521fdcdb539ce0b234aa966e1c))
+    - Replace pid Option<u32> with UProbeScope ([`759087b`](https://github.com/aya-rs/aya/commit/759087ba7bd75267097b5d891a5d2a8be6ccf993))
+    - Fix pid=0 handling in uprobe attach ([`8912e41`](https://github.com/aya-rs/aya/commit/8912e413f36b9839e514f475e8b47029706e9a35))
+    - Reject BPF_F_STACK_BUILD_ID in StackTraceMap ([`decfe44`](https://github.com/aya-rs/aya/commit/decfe44005b4b10cf3a241b21c2c35bdf53fd045))
+    - Add BPF_PROG_TYPE_SK_REUSEPORT support ([`4940ee6`](https://github.com/aya-rs/aya/commit/4940ee6c69196634de9bf2f3c434cb5a57f194e5))
+    - Fix TryFrom<FdLink> link type checks ([`85246f0`](https://github.com/aya-rs/aya/commit/85246f00e984b0b3b0ccdaa422d301b31e109881))
+    - Simplify BTF map detection and fix peek syscall name ([`215048b`](https://github.com/aya-rs/aya/commit/215048bf9078af298072bf5ef8f36843e08b7799))
+    - Set fixed expected attach types ([`2ed3531`](https://github.com/aya-rs/aya/commit/2ed3531463d4d7ece84b973f0521d954c629191d))
+    - Remove duplicate attach type state ([`7b6b752`](https://github.com/aya-rs/aya/commit/7b6b752dc1536d6d13bebc939ce404781810fcbd))
+    - Make Align not pub ([`48f9e00`](https://github.com/aya-rs/aya/commit/48f9e00c2e148182172367d26b7e1b9095af16d5))
+    - Align by 8b in include_bytes_aligned. ([`a7144b9`](https://github.com/aya-rs/aya/commit/a7144b9a6efc963e1fdcc0716990846a9d407ae1))
+    - Avoid some allocations ([`98960db`](https://github.com/aya-rs/aya/commit/98960db18a01fe4fa932423e22a712b37d21b03a))
+    - Advance through write buffers ([`ed516b3`](https://github.com/aya-rs/aya/commit/ed516b3ec040aa5f3b1fc4c5aa174fd0f8484355))
+    - Use constants more consistently ([`52c33eb`](https://github.com/aya-rs/aya/commit/52c33ebdf84d0d3f0dcd13d861216d1a052005a3))
+    - Use checked accessors ([`68be4b7`](https://github.com/aya-rs/aya/commit/68be4b7297ce1533904fc54b281aa2e796ad2a6f))
+    - Avoid repeating NLA_ALIGNTO everywhere ([`f49ef40`](https://github.com/aya-rs/aya/commit/f49ef401a794789e1187bb06d506bd8742b66fcc))
+    - Rename EbpfGlobal to Global ([`b9cb76b`](https://github.com/aya-rs/aya/commit/b9cb76b302bdd1288b6486fb3a0627ea40cc3dbc))
+    - Fix attach on 6.17 ([`cdfa52d`](https://github.com/aya-rs/aya/commit/cdfa52de6ed7fb766b3139cf42fcbab06ce12ad3))
+    - Fix attachment failure with long program names ([`c42157f`](https://github.com/aya-rs/aya/commit/c42157f0b566940b849b699109d1c660a0733fd3))
+    - Fix `BloomFilter::contains` method ([`ae8c76d`](https://github.com/aya-rs/aya/commit/ae8c76d03757de8a7c07d2f3022362be179cbb07))
+    - Add helper for safe loading of globals ([`294e0c1`](https://github.com/aya-rs/aya/commit/294e0c19413d5a7c073d17d79ad4d154283499ce))
+    - Dial the lints to 100 ([`2f8759c`](https://github.com/aya-rs/aya/commit/2f8759cc62e2a420eef463e271d354fcf65eca9d))
+    - Enable unused_qualifications lint ([`e746618`](https://github.com/aya-rs/aya/commit/e746618143f010fe7f05635a1a6e1a8b723bfd31))
+    - Use usize::next_multiple_of ([`be872b1`](https://github.com/aya-rs/aya/commit/be872b1cff07365362925acc875a20609720f646))
+    - Aya, aya-ebpf: reduce duplication ([`f35f7a3`](https://github.com/aya-rs/aya/commit/f35f7a3610d8296d97c6f0a47e75dbb4188f5212))
+    - Document tcx link pinning for atomic program replacement ([`7cbd816`](https://github.com/aya-rs/aya/commit/7cbd816a7701ea414b6367abdee6cae878755d34))
+    - Avoid trying to parse paths in proc maps ([`775f42d`](https://github.com/aya-rs/aya/commit/775f42d781c9379016647f0abf1d42f57522d84d))
+    - Avoid some allocations ([`eb25e6a`](https://github.com/aya-rs/aya/commit/eb25e6af2a14ef65075e75e06d6d7a78b3bc6d82))
+    - Trim whitespace just once ([`efecc08`](https://github.com/aya-rs/aya/commit/efecc088b37a9438cb79f234fbfa735356816a64))
+    - Improve `ParseLine as Debug` ([`d1f72a5`](https://github.com/aya-rs/aya/commit/d1f72a580c640b7ad2ae71c3acd2ff4ef2bf02c0))
+    - Move test_resolve_attach_path to tests module ([`80d7952`](https://github.com/aya-rs/aya/commit/80d79526a6fe3fff0ea07b018d0eed03f6d8de71))
+    - Use integer::next_multiple_of ([`4984ddc`](https://github.com/aya-rs/aya/commit/4984ddc0467a3e0fef92fd8ee6edb83a1274700a))
+    - Bundle attach location+cookie via UProbeAttachPoint ([`eb99da3`](https://github.com/aya-rs/aya/commit/eb99da3cbb4bcf2b20c8d0797566dd330261aadb))
+    - Release crates ([`d238b2e`](https://github.com/aya-rs/aya/commit/d238b2ea6f1b2c1aa09a9050415b1c96329af0aa))
+    - Use RAII to clean up in the error path ([`46221ad`](https://github.com/aya-rs/aya/commit/46221ad11dfb44fc0cc46425e1648c6750d98a5e))
+    - ProbeKind is Entry/Return ([`72810f0`](https://github.com/aya-rs/aya/commit/72810f095f1461d5d254d37e7174bb47bd15f691))
+    - Use exhaustive matches ([`a4a3c16`](https://github.com/aya-rs/aya/commit/a4a3c1641f8b6006363be6c66516daf73a94aec7))
+    - Refactor perf_event_open_trace_point ([`1944c4a`](https://github.com/aya-rs/aya/commit/1944c4aa008d685053bb617b728e3e4f723d7672))
+    - Inline `perf_event_open_bpf` ([`d4b2dde`](https://github.com/aya-rs/aya/commit/d4b2dde78ac88b0e7e9141e0675bd8888f23c1f6))
+    - Privatize PerfLink ([`7e07f85`](https://github.com/aya-rs/aya/commit/7e07f85edcbdbe2f5d1c49a872e56d1ff458991e))
+    - Disambiguate `fd` names ([`27c7f1c`](https://github.com/aya-rs/aya/commit/27c7f1c84f29a6f5e775ce6761a87859a351d95d))
+    - Remove superfluous type ascription ([`1791d49`](https://github.com/aya-rs/aya/commit/1791d497d3af39bd8da4eb666dece22c60e97281))
+    - Support hardware breakpoints ([`ab38afe`](https://github.com/aya-rs/aya/commit/ab38afe95d16226f5a703bbb37c7842ee441c364))
+    - Add `Ebpf::maps_disjoint_mut` ([`d8f5497`](https://github.com/aya-rs/aya/commit/d8f5497884a23bd63f9264dbe3f80081b76f360d))
+    - Add clippy coverage for doctests ([`112ab47`](https://github.com/aya-rs/aya/commit/112ab47fcdf8ba4765e6f6416cbb7000c96292f8))
+    - Push down type safety ([`18c7f7c`](https://github.com/aya-rs/aya/commit/18c7f7ccd6d462516d94b8720d18f8b7b5d98361))
+    - Simplify PerfEventScope ([`7e405c2`](https://github.com/aya-rs/aya/commit/7e405c216e0d806f96c76f2554d069722f97bec3))
+    - Tolerate proc map trailing newline ([`4fbce44`](https://github.com/aya-rs/aya/commit/4fbce44b6a49dd189a7a3520c66db45baf3832ea))
+    - Restore must_exist argument to set_global ([`3a3c451`](https://github.com/aya-rs/aya/commit/3a3c45100942c903c21e69595eff9e4289910835))
+    - Add some type ascription ([`d73c65c`](https://github.com/aya-rs/aya/commit/d73c65caae5b494630a47119bcc571971f227c5a))
+    - Enable clippy::as_underscore ([`17c7c79`](https://github.com/aya-rs/aya/commit/17c7c7951cb45a5903134b21658df7e989e672ed))
+    - Rename `set_` methods on `EbpfLoader` ([`03e8487`](https://github.com/aya-rs/aya/commit/03e84871773e09badf08bdef8e83b4f1256850a4))
+    - Fix producer position initialization ([`1717164`](https://github.com/aya-rs/aya/commit/17171647f7e447698f0d4733a3dbb144ded53466))
+    - Allow specifying a pin path for a named map ([`5802dc7`](https://github.com/aya-rs/aya/commit/5802dc7a23ac878105b55710df6c75cb5e030c3a))
+    - Rename map_pin_path to default_map_pin_path ([`1c924bb`](https://github.com/aya-rs/aya/commit/1c924bb421dd731a7557ae4140f3bed7982894d2))
+    - Defer cleanup to ensure unpin ([`0144c0e`](https://github.com/aya-rs/aya/commit/0144c0eb22d08b29ab6f9f5e97e1ea1d9866fd41))
+    - Skip `cpumap_chain` when attachment fails ([`907920a`](https://github.com/aya-rs/aya/commit/907920a6293af62f2db6accce5a52649731ec2d9))
+    - Skip `lsm_cgroup` when loading fails ([`54bd3ac`](https://github.com/aya-rs/aya/commit/54bd3ac202f4825bbb43719f3d9c350ab3e1513e))
+    - Make ProgramInfo a proper enum ([`2e5f5ef`](https://github.com/aya-rs/aya/commit/2e5f5efbf13c71dc1462d1221e77055c7c3e857a))
+    - Patch up 0-size datasec ([`7224efc`](https://github.com/aya-rs/aya/commit/7224efcad8726439e9ac9ccdc28e19116bf00606))
+    - Promote BTF loading failure to error on BTF relocs ([`3ade19b`](https://github.com/aya-rs/aya/commit/3ade19b869dd3aa746d17e52bb3c7b683859e413))
+    - Replace kernel version check with fallback ([`4c974d3`](https://github.com/aya-rs/aya/commit/4c974d33a3b5728b49c82183666153aa20e14b30))
+    - Raise RLIMIT_MEMLOCK on kernel version < 5.11.0 ([`984a050`](https://github.com/aya-rs/aya/commit/984a0501c62251f4813a6758ddda69b5a9cb2325))
+    - Enforce valid perf_event type & config combos ([`3d7fbaa`](https://github.com/aya-rs/aya/commit/3d7fbaad28fc8ad49f0a5afb08c686011ed25c5c))
+    - Remove useless impl ([`c2fb7fe`](https://github.com/aya-rs/aya/commit/c2fb7fed6c4cc2b75a0188cddd8480789e99e0d5))
+    - Improve error output ([`f76fdf9`](https://github.com/aya-rs/aya/commit/f76fdf9da51852f5e13011b2d3ba6f9204943de7))
+    - Add missing impl_try_into_fdlink ([`82aec26`](https://github.com/aya-rs/aya/commit/82aec2696394f953c886f146f02673753a94cb0d))
+    - Remove unused error variant ([`6fc06b9`](https://github.com/aya-rs/aya/commit/6fc06b9fcf073447438b41a066497946293825d5))
+    - Cgroup attachment type support ([`fc5387c`](https://github.com/aya-rs/aya/commit/fc5387c80626957017ceeb988322bc288f438059))
+    - Properly check for LSM support ([`8e75214`](https://github.com/aya-rs/aya/commit/8e752148155b49e3732a6563ee7ce1f8ecbf6307))
+    - Add BPF_MAP_TYPE_SK_STORAGE ([`de42b80`](https://github.com/aya-rs/aya/commit/de42b80c74883f512542875e7cfa96b8634a8991))
+    - Use shared helpers ([`6babf17`](https://github.com/aya-rs/aya/commit/6babf1796988af742711cdcdae691e4dbdd1641e))
+    - Downcase log strings ([`75edc3d`](https://github.com/aya-rs/aya/commit/75edc3d2948bea7b63edc60365e4cc10e414921b))
+    - Add newline between doc and imports ([`742f700`](https://github.com/aya-rs/aya/commit/742f700dcc43fe9ad5ccdd23d1b6e55673807c06))
+    - Lint all crates; enable strict pointer lints ([`5f5305c`](https://github.com/aya-rs/aya/commit/5f5305c2a8ca0a739219093599dd57182d440ac1))
+    - Deny clippy::unnecessary_cast ([`d1bb7bc`](https://github.com/aya-rs/aya/commit/d1bb7bcc38a45a3d2e4bcfd6959075e0a035bbca))
+    - Deny clippy::fn_to_numeric_cast{,_with_truncation} ([`be4d74f`](https://github.com/aya-rs/aya/commit/be4d74fd06b0b58313daba2ffa845b0d53ec9e11))
+    - Deny clippy::char_lit_as_u8 ([`fa03dbd`](https://github.com/aya-rs/aya/commit/fa03dbdb46493255bf9cc0aff33e5b79520f14e8))
+    - Deny clippy::cast_precision_loss ([`a7206b9`](https://github.com/aya-rs/aya/commit/a7206b9098c33b8f81255df1d19822ebb0e67a9b))
+    - Deny clippy::cast_lossless ([`72104c4`](https://github.com/aya-rs/aya/commit/72104c4076b8b7b63155b72ef7053d42cd36f1e2))
+    - Add Map::from_map_data() for pinned map access ([`263e864`](https://github.com/aya-rs/aya/commit/263e864cd9e09848a9861a967763cf1069ae01c8))
+    - Remove superfluous commas ([`a3aa387`](https://github.com/aya-rs/aya/commit/a3aa387a2e8035660425cefb4f6171d5fdb7537e))
+    - Generate docs in macro ([`0d11937`](https://github.com/aya-rs/aya/commit/0d1193720bc0e5915eff32b5d4edd21178a98991))
+    - Fix rustdoc link in macro ([`8ee12d3`](https://github.com/aya-rs/aya/commit/8ee12d337fbc1662350815dbde620f2f1b23f962))
+    - Remove `AsyncPerfEventArray{,Buffer}` ([`35332f2`](https://github.com/aya-rs/aya/commit/35332f2288b0bbb8981233ae464715ea9217b081))
+    - `construct_debuglink_path()` should be infallible ([`ab182be`](https://github.com/aya-rs/aya/commit/ab182be622acb245db0adef58591978208bcdb2c))
+    - `impl AsFd for RingBuf` ([`3f02127`](https://github.com/aya-rs/aya/commit/3f02127b6b16f618aa2ccb444fcd1402c887ffaf))
+    - Implement TryFrom<[Program Type]> for FdLink for various program types ([`4b5ba53`](https://github.com/aya-rs/aya/commit/4b5ba53a36b0c920969bbb9016330cd195e457dc))
+    - Short-circuit info field if non-zero ([`7a0dabc`](https://github.com/aya-rs/aya/commit/7a0dabc295a0d856f6c3611331c9434b83f63ae8))
+    - Cache feat probed info fields ([`23bc5b5`](https://github.com/aya-rs/aya/commit/23bc5b5836c3b8383f2f8a78bd3902e193a7a176))
+    - Add feature probing for map type ([`bd49286`](https://github.com/aya-rs/aya/commit/bd492860f585ad8b9612ef9c8addde2fb8d5e814))
+    - Add feature probing program type ([`ab77dec`](https://github.com/aya-rs/aya/commit/ab77decd9a708147e679a12ba6be3774f8946dd8))
+    - Merge pull request #1262 from dave-tucker/stabilize-links ([`f74a157`](https://github.com/aya-rs/aya/commit/f74a1579074016168e4e64a32e902e8b50a75b85))
+    - Make LinkInfo and loaded_links public ([`7dba5a4`](https://github.com/aya-rs/aya/commit/7dba5a41ade97a3744c4cb71a22d7c81699a69e3))
+    - Uprobe: use PathBuf for ResolveSymbolError::DebuglinkAccessError ([`33c9f2b`](https://github.com/aya-rs/aya/commit/33c9f2b2b2cf5587139e36c0e05de13e72cf77fa))
+    - Uprobe attach: use mmap instead of reading whole binaries to memory ([`90d5604`](https://github.com/aya-rs/aya/commit/90d56048777ff571293a99450201562532fcaa7f))
+    - Clean up resolve_symbol a bit ([`647100f`](https://github.com/aya-rs/aya/commit/647100faa7f4dff819642183c94b5a05389eb2af))
+    - Move Mmap struct to aya::util ([`3aded0e`](https://github.com/aya-rs/aya/commit/3aded0e0a5c644569b0a268ea31c6c0edddea3b2))
+    - Appease `clippy::uninlined-format-args` ([`583709f`](https://github.com/aya-rs/aya/commit/583709f6a09c432b4e06ab9353bb4e397d58c451))
+    - Merge pull request #1240 from dave-tucker/use-gen-bpf-add ([`4c5fbef`](https://github.com/aya-rs/aya/commit/4c5fbef8691ce36c547fdf07b7ef8aecf9062c79))
+    - Use BPF_ADD from bindings ([`23a5e06`](https://github.com/aya-rs/aya/commit/23a5e06c75dd418f9e0956db18cbed3b80670440))
+    - Merge pull request #1209 from dave-tucker/from_prog_info ([`1db534d`](https://github.com/aya-rs/aya/commit/1db534defafa3d9529c38dcb165435273c6a827d))
+    - Merge pull request #1225 from dave-tucker/fix-clippy ([`d9ef2df`](https://github.com/aya-rs/aya/commit/d9ef2df2f0cfb402f6781c4684a752435cd309e8))
+    - Fix clippy unused cfg_attr ([`e8e268b`](https://github.com/aya-rs/aya/commit/e8e268ba768e6fc34567aedb5206ff20a958f04e))
+    - Allow conversions to Program from ProgramInfo ([`2b0dcfb`](https://github.com/aya-rs/aya/commit/2b0dcfbd0938252f8ee8752e26abe7581561f9af))
+    - Merge pull request #1224 from dave-tucker/unused_trait_names ([`9eecbe9`](https://github.com/aya-rs/aya/commit/9eecbe9d0e9dc1fdbbc87d41512d4202e26d4687))
+    - Add support for Flow Dissector programs ([`77b1c61`](https://github.com/aya-rs/aya/commit/77b1c6194c8f9bb69ffc6a60c3b8189b73e00e8f))
+    - Set clippy unused_trait_names = warn ([`f6c5cb2`](https://github.com/aya-rs/aya/commit/f6c5cb2ad2b09760ae5434785ed5d4d195d3a765))
+    - Remove unhelpful comment ([`3edc36a`](https://github.com/aya-rs/aya/commit/3edc36af9d2a6a90a57d449e66267ca081aa6a86))
+    - Reorder-keys ([`49a828e`](https://github.com/aya-rs/aya/commit/49a828ec5655f6ecd0c38083c6c0dca217bad777))
+    - Ensure that truncated map names are NULL terminated ([`f48b5a4`](https://github.com/aya-rs/aya/commit/f48b5a4a84a858dd3a24101a83a3b03c314f1c5c))
+    - Introduce workspace lints, warn on unused crates ([`a43e40a`](https://github.com/aya-rs/aya/commit/a43e40ae1d1441ab4aea6a1a5d9ea36b56d62ff8))
+    - Allow program names to be static strings ([`22c8f78`](https://github.com/aya-rs/aya/commit/22c8f783e7d5dd2ddc8d973885e1895a6e842440))
+    - Add `XskMap::unset` ([`73a34e1`](https://github.com/aya-rs/aya/commit/73a34e1571a606124c7e89ecf71ff001508643dc))
+    - Parse complete entries from /proc/$pid/maps ([`ea76e0f`](https://github.com/aya-rs/aya/commit/ea76e0f62dbdff618789dfc9a9d8604a89f61f13))
+    - Destructure ([`de0b7ce`](https://github.com/aya-rs/aya/commit/de0b7cee8d2de005bf09c26f4d549036607f6f51))
+    - Add punctuation ([`7084df6`](https://github.com/aya-rs/aya/commit/7084df68aa738f720c94a593ec72935f5a2e356e))
+    - Avoid allocations when parsing /proc/{pid}/maps ([`50ae0ee`](https://github.com/aya-rs/aya/commit/50ae0ee099385d9b8a743ea26529e0dd10dda18e))
+    - Revert "ci: remove cross toolchain" ([`e16f048`](https://github.com/aya-rs/aya/commit/e16f0482f8aafabd65836570ff55293a0681b145))
+    - Bump edition to 2024 ([`f0a9f19`](https://github.com/aya-rs/aya/commit/f0a9f19ddc7f02143a02dcc2bf6be88fa2d84063))
+    - Reduce the scope of expected warnings ([`ea5f7e3`](https://github.com/aya-rs/aya/commit/ea5f7e3015477717fc4a96fed2e5e7e496d2dd66))
+    - Use #[expect(...)] rather than #[allow(...)] ([`4101a5a`](https://github.com/aya-rs/aya/commit/4101a5a55d43cd9ead56497820c4d43018f74cbb))
+    - Remove panics on indeterminate kernel version ([`27d69c3`](https://github.com/aya-rs/aya/commit/27d69c35f030dda687664af8dc2d2fd52d238c6b))
+    - Remove some copies ([`9eefb48`](https://github.com/aya-rs/aya/commit/9eefb48a0ad90831c09c7bd941d035b34e1f1771))
+    - Add TODO to remove once_cell ([`89aa638`](https://github.com/aya-rs/aya/commit/89aa638e05795be0ab86711d6e2ade2a8dbafcae))
+    - Encode perf_event ioctl contract ([`de1e80c`](https://github.com/aya-rs/aya/commit/de1e80c1d1bab7fd73acc97e5adb0985712c35c7))
+    - Remove redundant TEST_SYSCALL use ([`eee7975`](https://github.com/aya-rs/aya/commit/eee7975ce42520513acda16977b21e19a1cd159d))
+    - Encode perf_event_open(2) contract ([`055e36e`](https://github.com/aya-rs/aya/commit/055e36e8d92c79c1a9cf61f1a08d2d9be4e74d14))
+    - Avoid `_` ([`bdd8ae2`](https://github.com/aya-rs/aya/commit/bdd8ae2d0b443513c73143da968d400df9b05464))
+    - Encode bpf(2) contract ([`f6df60f`](https://github.com/aya-rs/aya/commit/f6df60fa7072dfd7cfb09d0bc3bb1dad0f965940))
+    - Avoid Result::is_{ok,err} ([`2d78260`](https://github.com/aya-rs/aya/commit/2d782606fe984cb2ffebe7b98807a58494441a4c))
+    - Avoid retagging in tests ([`dab1aa4`](https://github.com/aya-rs/aya/commit/dab1aa4e291e4301eca0bd6532449dc7079ff10a))
+    - Attempt to preserve provenance ([`f51ab80`](https://github.com/aya-rs/aya/commit/f51ab800758689a67c312742ffdf9116e1e178c0))
+    - Use MMap from ring_buf ([`8887014`](https://github.com/aya-rs/aya/commit/888701425bbfc48365edd6f03d9872d5c86a3e18))
+    - Avoiding casting pointers to usize ([`ff82c24`](https://github.com/aya-rs/aya/commit/ff82c244f77f46da9245b42ede56c0500cd6b56f))
+    - Remove some stale comments ([`e17feca`](https://github.com/aya-rs/aya/commit/e17feca2d6d45365fc1d717f0735ee4dd9664ec3))
+    - Enable test under miri ([`935ba20`](https://github.com/aya-rs/aya/commit/935ba20224e4e777087151e521b1354f2a9245cd))
+    - Preserve pointer provenance ([`9a47495`](https://github.com/aya-rs/aya/commit/9a47495227a03400fa2549b07fe8af131f21e759))
+    - Appease clippy ([`122c49f`](https://github.com/aya-rs/aya/commit/122c49fca4ea1cdf89bbffbb48a440dfd3744937))
+    - Fix PerCpuHashMap NotFound ([`9e1bcd0`](https://github.com/aya-rs/aya/commit/9e1bcd0ab87f69bcd323eef680957a534b655fac))
+    - Remove outdated workaround ([`9198335`](https://github.com/aya-rs/aya/commit/919833510095cfc49d1b9874429f403167227fbd))
+    - Avoid handwritten assembly ([`942ea51`](https://github.com/aya-rs/aya/commit/942ea51906fea4e3152e1bd3ef5832bc0df5b205))
+    - Remove duplication ([`8ea11ef`](https://github.com/aya-rs/aya/commit/8ea11ef9e84832de6a1f12468e5d93d900ff31f3))
+    - Avoid raw slice construction ([`b010b0f`](https://github.com/aya-rs/aya/commit/b010b0f028409272bf65238834ed625693c0cb09))
+    - Remove aya_obj -> obj alias ([`665d4f2`](https://github.com/aya-rs/aya/commit/665d4f20bb53de0aa10545bb897ab73f0661a337))
+    - Merge pull request #690 from dave-tucker/netlink-errors ([`921e457`](https://github.com/aya-rs/aya/commit/921e45747bd96840b849637468b723ce25e15345))
+    - Return error messages from netlink ([`39cf6c1`](https://github.com/aya-rs/aya/commit/39cf6c12f27f02c945e70efb24b89c1bc372aac0))
+    - Appease clippy ([`0429ed2`](https://github.com/aya-rs/aya/commit/0429ed2fa299636428b65573456cffe0aac2beca))
+    - Use Set (instead of Map) to hold links ([`356cf45`](https://github.com/aya-rs/aya/commit/356cf45914408b1372d33f27a20ebd3ef75759ca))
+    - Appease clippy ([`69144a9`](https://github.com/aya-rs/aya/commit/69144a977ef33613610f0f7b9a94e432da3a2d59))
+    - Merge pull request #1133 from ajwerner/uprobe-cookie ([`114e7a6`](https://github.com/aya-rs/aya/commit/114e7a69069e610f5bdd840dd2f0d4d5de5b0694))
+    - :programs::uprobe: add support for cookies ([`628b7fb`](https://github.com/aya-rs/aya/commit/628b7fb0221321aa0cc649cd738c449a7dbb0108))
+    - Avoid useless conversions ([`78ee9a4`](https://github.com/aya-rs/aya/commit/78ee9a463429a1eda706f8974f965892ad86a6dd))
+    - Clean up C type imports ([`4257643`](https://github.com/aya-rs/aya/commit/4257643354263d69ed02b1e9385675560927da79))
+    - Narrow clippy allowances ([`41706d7`](https://github.com/aya-rs/aya/commit/41706d74e44f2c3589c28a7149beb4db185594f2))
+    - Fix cippy errors ([`4f0559f`](https://github.com/aya-rs/aya/commit/4f0559f2afeca1dfae120bacf1742d58268bca37))
+    - Define `{detach,take_link}` in macro when possible ([`119049f`](https://github.com/aya-rs/aya/commit/119049f2a21045b4f990523ccc95265ef4233d41))
+    - Improve the description of `take_link` methods ([`85c73af`](https://github.com/aya-rs/aya/commit/85c73af1feb8d0b227ca2e7b61b8542c4eb8b918))
+    - Add iterator program type ([`bf2164c`](https://github.com/aya-rs/aya/commit/bf2164c92f5280e8b9c7178b9cbf338931ce778d))
+    - Cargo fmt ([`a77db17`](https://github.com/aya-rs/aya/commit/a77db17ec8dac1ac75c0d0175a1e25749acb44b3))
+    - Avoid warning with `allow_unsupported_maps` ([`a167550`](https://github.com/aya-rs/aya/commit/a16755089bb642ded73a592ac25c6e21771b5792))
+</details>
+
 ## v0.13.2 (2025-11-17)
+
+<csr-id-35332f2288b0bbb8981233ae464715ea9217b081/>
+<csr-id-1c924bb421dd731a7557ae4140f3bed7982894d2/>
+<csr-id-03e84871773e09badf08bdef8e83b4f1256850a4/>
+<csr-id-f6df60fa7072dfd7cfb09d0bc3bb1dad0f965940/>
+<csr-id-055e36e8d92c79c1a9cf61f1a08d2d9be4e74d14/>
+<csr-id-de1e80c1d1bab7fd73acc97e5adb0985712c35c7/>
 
 ### Breaking Changes
 
@@ -17,19 +938,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### New Features
 
- - <csr-id-bf2164c92f5280e8b9c7178b9cbf338931ce778d/>, <csr-id-119049f2a21045b4f990523ccc95265ef4233d41/> Added the iterator program type and auto-generated `take_link`/`detach` helpers so iterator programs can be loaded and detached like any other attachment.
- - <csr-id-77b1c6194c8f9bb69ffc6a60c3b8189b73e00e8f/>, <csr-id-82aec2696394f953c886f146f02673753a94cb0d/> Added Flow Dissector program support, including ordered link attachment and full `FdLink` conversions for the new program type.
- - <csr-id-263e864cd9e09848a9861a967763cf1069ae01c8/>, <csr-id-73a34e1571a606124c7e89ecf71ff001508643dc/>, <csr-id-5802dc7a23ac878105b55710df6c75cb5e030c3a/> Made pinned maps easier to manage with `Map::from_map_data()`, `XskMap::unset()`, and the ability to pick a custom map pin directory.
- - <csr-id-7dba5a41ade97a3744c4cb71a22d7c81699a69e3/>, <csr-id-22c8f783e7d5dd2ddc8d973885e1895a6e842440/>, <csr-id-3f02127b6b16f618aa2ccb444fcd1402c887ffaf/> Exposed additional metadata and handles: `LinkInfo`/`loaded_links` are now public, program names can be `&'static str`, and ring buffers implement `AsFd`.
- - <csr-id-23bc5b5836c3b8383f2f8a78bd3902e193a7a176/>, <csr-id-bd492860f585ad8b9612ef9c8addde2fb8d5e814/>, <csr-id-de42b80c74883f512542875e7cfa96b8634a8991/> Expanded and cached feature probing, reducing redundant syscalls and adding built-in support for `BPF_MAP_TYPE_SK_STORAGE`.
- - <csr-id-d8f5497884a23bd63f9264dbe3f80081b76f360d/>, <csr-id-ab38afe95d16226f5a703bbb37c7842ee441c364/> Added `Ebpf::maps_disjoint_mut()` plus perf-event hardware breakpoint support to give loaders safer and more capable instrumentation hooks.
+ - <csr-id-bf2164c92f5280e8b9c7178b9cbf338931ce778d/> , <csr-id-119049f2a21045b4f990523ccc95265ef4233d41/> Added the iterator program type and auto-generated `take_link`/`detach` helpers so iterator programs can be loaded and detached like any other attachment.
+ - <csr-id-77b1c6194c8f9bb69ffc6a60c3b8189b73e00e8f/> , <csr-id-82aec2696394f953c886f146f02673753a94cb0d/> Added Flow Dissector program support, including ordered link attachment and full `FdLink` conversions for the new program type.
+ - <csr-id-263e864cd9e09848a9861a967763cf1069ae01c8/> , <csr-id-73a34e1571a606124c7e89ecf71ff001508643dc/>, <csr-id-5802dc7a23ac878105b55710df6c75cb5e030c3a/> Made pinned maps easier to manage with `Map::from_map_data()`, `XskMap::unset()`, and the ability to pick a custom map pin directory.
+ - <csr-id-7dba5a41ade97a3744c4cb71a22d7c81699a69e3/> , <csr-id-22c8f783e7d5dd2ddc8d973885e1895a6e842440/>, <csr-id-3f02127b6b16f618aa2ccb444fcd1402c887ffaf/> Exposed additional metadata and handles: `LinkInfo`/`loaded_links` are now public, program names can be `&'static str`, and ring buffers implement `AsFd`.
+ - <csr-id-23bc5b5836c3b8383f2f8a78bd3902e193a7a176/> , <csr-id-bd492860f585ad8b9612ef9c8addde2fb8d5e814/>, <csr-id-de42b80c74883f512542875e7cfa96b8634a8991/> Expanded and cached feature probing, reducing redundant syscalls and adding built-in support for `BPF_MAP_TYPE_SK_STORAGE`.
+ - <csr-id-d8f5497884a23bd63f9264dbe3f80081b76f360d/> , <csr-id-ab38afe95d16226f5a703bbb37c7842ee441c364/> Added `Ebpf::maps_disjoint_mut()` plus perf-event hardware breakpoint support to give loaders safer and more capable instrumentation hooks.
 
 ### Bug Fixes
 
  - <csr-id-39cf6c12f27f02c945e70efb24b89c1bc372aac0/> Netlink helpers now surface the kernel’s error message instead of returning opaque failures.
  - <csr-id-9e1bcd0ab87f69bcd323eef680957a534b655fac/> Fixed `PerCpuHashMap::get()` returning `KeyNotFound` when CPU slots were missing; Flow Dissector links now always convert into `FdLink` thanks to <csr-id-82aec2696394f953c886f146f02673753a94cb0d/>.
  - <csr-id-17171647f7e447698f0d4733a3dbb144ded53466/> Stabilised ring-buffer producer tracking so first events are no longer dropped, and `/proc/$pid/maps` parsing now tolerates trailing newlines (<csr-id-ea76e0f62dbdff618789dfc9a9d8604a89f61f13/>, <csr-id-4fbce44b6a49dd189a7a3520c66db45baf3832ea/>).
- - <csr-id-f48b5a4a84a858dd3a24101a83a3b03c314f1c5c/>, <csr-id-ab182be622acb245db0adef58591978208bcdb2c/> Map names are forced to be NULL-terminated and `construct_debuglink_path()` no longer fails due to missing components.
+ - <csr-id-f48b5a4a84a858dd3a24101a83a3b03c314f1c5c/> , <csr-id-ab182be622acb245db0adef58591978208bcdb2c/> Map names are forced to be NULL-terminated and `construct_debuglink_path()` no longer fails due to missing components.
 
 ### Maintenance
 
@@ -37,6 +958,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Continued to invest in documentation, resolver clean-ups, and lint/clippy hygiene across the crate so day-to-day maintenance stays manageable.
 
 ## 0.13.1 (2024-11-01)
+
+<csr-id-e575712c596d03b93f75d160e3d95241eb895d39/>
+<csr-id-70ac91dc1e6f209a701cd868db215763d65efa73/>
+<csr-id-481b73b6d8dd9a796d891bba137400c2a43a0afe/>
+<csr-id-c44f8b0f5bddd820a4a98cff293126c0146b827a/>
+<csr-id-02d1db5fc043fb7af90c14d13de6419ec5b9bcb5/>
+<csr-id-fbb09304a2de0d8baf7ea20c9727fcd2e4fb7f41/>
+<csr-id-88f5ac31142f1657b41b1ee0f217dcd9125b210a/>
+<csr-id-1634fa7188e40ed75da53517f1fdb7396c348c34/>
+<csr-id-cb8e47880082ccfcd75b02209b686e15426e9b6a/>
+<csr-id-cd1db86fd490b3c0f03229bd8999a2e67ccecfc4/>
+<csr-id-a25f501ecebaceaacdd1212fac34f528b51ad0fd/>
+<csr-id-fa6af6a20439cccd8ab961f83dce545fb5884dd4/>
+<csr-id-d413e2f285643cbeb665fd3c517e2c9d93d45825/>
+<csr-id-462514ed4c4c06e9618d029a57708c7fa14ab748/>
+<csr-id-e6e1bfeb58ac392637061640365b057182ee1b39/>
+<csr-id-b06ff402780b80862933791831c578e4c339fc96/>
+<csr-id-a4e68ebdbf0e0b591509f36316d12d9689d23f89/>
+<csr-id-e38eac6352ccb5c2b44d621161a27898744ea397/>
+<csr-id-eef7346fb2231f8741410381198015cceeebfac9/>
 
 ### Chore
 
@@ -304,7 +1245,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <csr-read-only-do-not-edit/>
 
- - 69 commits contributed to the release over the course of 241 calendar days.
+ - 70 commits contributed to the release over the course of 241 calendar days.
  - 247 days passed between releases.
  - 32 commits were understood as [conventional](https://www.conventionalcommits.org).
  - 0 issues like '(#ID)' were seen in commit messages
@@ -316,6 +1257,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <details><summary>view details</summary>
 
  * **Uncategorized**
+    - Release aya v0.13.1 ([`2791bad`](https://github.com/aya-rs/aya/commit/2791badd947e3abb459e5339a23a66d0a56c42d0))
     - Release aya-obj v0.2.1 ([`c6a34ca`](https://github.com/aya-rs/aya/commit/c6a34cade195d682e1eece5b71e3ab48e48f3cda))
     - Merge pull request #1073 from dave-tucker/reloc-bug ([`b2ac9fe`](https://github.com/aya-rs/aya/commit/b2ac9fe85db6c25d0b8155a75a2df96a80a19811))
     - Fill bss maps with zeros ([`ca0c32d`](https://github.com/aya-rs/aya/commit/ca0c32d1076af81349a52235a4b6fb3937a697b3))
@@ -332,7 +1274,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Use FdLink in SockOps programs ([`c44f8b0`](https://github.com/aya-rs/aya/commit/c44f8b0f5bddd820a4a98cff293126c0146b827a))
     - Remove unwrap and NonZero* in info ([`02d1db5`](https://github.com/aya-rs/aya/commit/02d1db5fc043fb7af90c14d13de6419ec5b9bcb5))
     - Merge pull request #985 from reyzell/main ([`40f3032`](https://github.com/aya-rs/aya/commit/40f303205f7a800877fe3f9a4fb1893141741e13))
-    - Add the option to support multiple and overrideable programs per cgroup ([`f790685`](https://github.com/aya-rs/aya/commit/f790685d759cbd97cb09ad48d87cdece28fbe579))
+    - Add the option to support multiple and overridable programs per cgroup ([`f790685`](https://github.com/aya-rs/aya/commit/f790685d759cbd97cb09ad48d87cdece28fbe579))
     - Merge pull request #1007 from tyrone-wu/aya/info-api ([`15eb935`](https://github.com/aya-rs/aya/commit/15eb935bce6d41fb67189c48ce582b074544e0ed))
     - Revamp MapInfo be more friendly with older kernels ([`fbb0930`](https://github.com/aya-rs/aya/commit/fbb09304a2de0d8baf7ea20c9727fcd2e4fb7f41))
     - Revamp ProgramInfo be more friendly with older kernels ([`88f5ac3`](https://github.com/aya-rs/aya/commit/88f5ac31142f1657b41b1ee0f217dcd9125b210a))
@@ -879,7 +1821,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Bug Fixes
 
  - <csr-id-c31cce4a368ac56b42196604ef110139d28a2f8e/> invalid transmute when calling fd
-   Corrent an invalid transmutation for sock_map.
+   Correct an invalid transmutation for sock_map.
    fd is already a ref of MapFd, so transmuting &fd to &SockMapFd is
    equivalent to transmuting &&SockMapFd into &SockMapFd which is buggy.
  - <csr-id-243986c1da440c763393a4a37d5b3922b6baa3cc/> Relax unnecessarily strict atomic ordering on probe event_alias
@@ -1102,7 +2044,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    the file descriptor we receive is valid. Additionally, this allows
    aya to internally easily duplicate this file descriptor using std
    library methods instead of manually calling `dup` which doesn't
-   duplicate with the CLOSE_ON_EXEC flag that is standard pratice to
+   duplicate with the CLOSE_ON_EXEC flag that is standard practice to
    avoid leaking the file descriptor when exec'ing.
  - <csr-id-d2e74e562dfa601397b3570ece1a51f5013b9928/> Use BorrowedFd when using the program fd in sys/bpf.rs
    This commit reveals but does not address a file descriptor leak in
@@ -1186,15 +2128,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    
    To avoid lifetime issues while having minimal impact to UX the
    `OwnedFd` returned from the BPF_BTF_LOAD syscall will be wrapped in an
-   `Arc` and shared accross the programs and maps of the loaded BPF
+   `Arc` and shared across the programs and maps of the loaded BPF
    file.
  - <csr-id-683a1cf2e4cdfba05ba35d708fecc4f43b0e83b3/> Make SysResult generic on Ok variant
  - <csr-id-76c78e3bf82eb77c947dd125ed6624dfa6f4cc1c/> bpf_prog_get_fd_by_id returns OwnedFd
  - <csr-id-96fa08bd82233268154edf30b106876f5a4f0e30/> Define dependencies on the workspace level
    This way we will avoid version mismatches and make differences in
    features across our crates clearer.
- - <csr-id-74b546827cdde13872e141e9e5b6cc9ac39efe1e/> Ignore embedded BTF error if not truely required
-   This allows fallback to BTF manual relocation when BTF loading fail when not truely required.
+ - <csr-id-74b546827cdde13872e141e9e5b6cc9ac39efe1e/> Ignore embedded BTF error if not truly required
+   This allows fallback to BTF manual relocation when BTF loading fail when not truly required.
  - <csr-id-8c61fc9ea6d1d52b38a238541fb229bc850c82ac/> compile C probes using build.rs
    - Add libbpf as a submodule. This prevents having to plumb its location
      around (which can't be passed to Cargo build scripts) and also
@@ -1356,7 +2298,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       - aya::{bpf_map_def, BtfMapDef, PinningType},
       - aya::programs::{CgroupSock*AttachType},
    
-   The new crate is currenly allowing missing_docs. Member visibility
+   The new crate is currently allowing missing_docs. Member visibility
    will be adjusted later to minimize exposure of implementation details.
  - <csr-id-81bc307dce452f0aacbfbe8c304089d11ddd8c5e/> migrate bindgen destination
  - <csr-id-aba99ea4b1f5694e115ae49e9dbe058d3e761fd8/> make btf::RelocationError private
@@ -1404,7 +2346,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    2. Adds From<PinnedLink> for FdLink to allow for ^ to be converted
    3. Adds From<FdLink> for XdpLink
  - <csr-id-18584e2259382bbb4e56007eacbe81dba25db05a/> Fix segfault in define_link_wrapper
-   The From<$wrapper> for $base implemention is refers to itself,
+   The From<$wrapper> for $base implementation is refers to itself,
    eventually causing a segfault.
  - <csr-id-f34ebeba99e409bb369a74687e1664a50c430c1e/> Improved BTF Type API
    This commit removes reliance on generated BtfType structs, as
@@ -1675,7 +2617,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Merge pull request #584 from marysaka/fix/btf-kern-optional ([`0766e70`](https://github.com/aya-rs/aya/commit/0766e705486df167b0d5cf736c1edc14880bce17))
     - Don't use env::tempdir ([`5407d4a`](https://github.com/aya-rs/aya/commit/5407d4a9a1885806a0f74abfc8cfe17baf13e124))
     - Remove "async" feature ([`fa91fb4`](https://github.com/aya-rs/aya/commit/fa91fb4f59be3505664f8088b6e3e8da2c372253))
-    - Ignore embedded BTF error if not truely required ([`74b5468`](https://github.com/aya-rs/aya/commit/74b546827cdde13872e141e9e5b6cc9ac39efe1e))
+    - Ignore embedded BTF error if not truly required ([`74b5468`](https://github.com/aya-rs/aya/commit/74b546827cdde13872e141e9e5b6cc9ac39efe1e))
     - Fix build ([`242d8c3`](https://github.com/aya-rs/aya/commit/242d8c33c4ff71f766f32f184f826d3216929faa))
     - Merge pull request #520 from astoycos/unsupported-map ([`eb60d65`](https://github.com/aya-rs/aya/commit/eb60d6561362e57955b2963b9a6b0a818281aabf))
     - Merge pull request #560 from astoycos/fix-perf-link-pin ([`edb7baf`](https://github.com/aya-rs/aya/commit/edb7baf9a37187027e4459a7c716b22c2204ca1f))
@@ -1841,7 +2783,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Use & ([`9991ffb`](https://github.com/aya-rs/aya/commit/9991ffb093bff3a10678c48f8c4c7610558ab809))
     - Add test case ([`e9ec257`](https://github.com/aya-rs/aya/commit/e9ec257328299551a750883075095f8a60f1cce3))
     - Use Borrow<T> instead ([`1247ffc`](https://github.com/aya-rs/aya/commit/1247ffc19b8d68d37c032a7b916e3f2b3531972f))
-    - Use a struct for setting priority and handle in SchedClassfier attach ([`af3de84`](https://github.com/aya-rs/aya/commit/af3de84b081941bd3139c7089618a53dfa37ac83))
+    - Use a struct for setting priority and handle in SchedClassifier attach ([`af3de84`](https://github.com/aya-rs/aya/commit/af3de84b081941bd3139c7089618a53dfa37ac83))
     - Support using handle in tc programs ([`ac07608`](https://github.com/aya-rs/aya/commit/ac07608b7922a545cd1de1996b66dcbdeb7fbbe1))
     - Merge pull request #397 from astoycos/refactor-map-api2 ([`d6cb1a1`](https://github.com/aya-rs/aya/commit/d6cb1a16ad0f8df483e2234fb01ab55bdbeaa8b8))
     - Fix doc links, update rustdoc args ([`82edd68`](https://github.com/aya-rs/aya/commit/82edd681c398f73de026a695837dd37643ed124a))
@@ -2256,7 +3198,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-bb8a813eefd86fbdb218174ccb7bfd2578ab9692/> use correct program name when relocating
  - <csr-id-e4d9774bf780eee5c3740d153df0682265089307/> Improve section detection
    This commit improves section detection.
-   Previously, a section named "xdp_metadata" would be interpretted as a
+   Previously, a section named "xdp_metadata" would be interpreted as a
    program section, which is incorrect. This commit first attempts to
    identify a BPF section by name, then by section.kind() ==
    SectionKind::Text (executable code). The computed section kind is
@@ -2640,7 +3582,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - <csr-id-bb15e82c1d8373700dda52f69d6c4bf6f5489a03/> add missing load() in kprobe example
  - <csr-id-d8d311738c974f3b6fad22006ab2b827d0925ce8/> support both bpf_map_def layout variants
    Libbpf and iproute2 use two slightly different `bpf_map_def` layouts. This change implements support for loading both.
- - <csr-id-5f0ff1698a12141ffe50e160de252f664773c140/> netlink: tc: use ptr::read_unaligned instead of deferencing a potentially unaligned ptr
+ - <csr-id-5f0ff1698a12141ffe50e160de252f664773c140/> netlink: tc: use ptr::read_unaligned instead of dereferencing a potentially unaligned ptr
  - <csr-id-7f2ceaf12e3aeadd81a55a75c268f254192cf866/> netlink: port TC code to using new nlattr utils
  - <csr-id-d9b5ab575f6e2cbca793881094e1846a39332fa1/> netlink: refactor nlattr writing code
  - <csr-id-c240a2c73381a6864f343c79069abfd5f9e9b729/> netlink: introduce NestedAttrs builder and switch XDP to it
@@ -2693,7 +3635,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Kprobe: remove pid argument ([`08c71df`](https://github.com/aya-rs/aya/commit/08c71dfeb19b2b4358d75baf5b95f8d4e6521935))
     - Add missing load() in kprobe example ([`bb15e82`](https://github.com/aya-rs/aya/commit/bb15e82c1d8373700dda52f69d6c4bf6f5489a03))
     - Support both bpf_map_def layout variants ([`d8d3117`](https://github.com/aya-rs/aya/commit/d8d311738c974f3b6fad22006ab2b827d0925ce8))
-    - Netlink: tc: use ptr::read_unaligned instead of deferencing a potentially unaligned ptr ([`5f0ff16`](https://github.com/aya-rs/aya/commit/5f0ff1698a12141ffe50e160de252f664773c140))
+    - Netlink: tc: use ptr::read_unaligned instead of dereferencing a potentially unaligned ptr ([`5f0ff16`](https://github.com/aya-rs/aya/commit/5f0ff1698a12141ffe50e160de252f664773c140))
     - Netlink: port TC code to using new nlattr utils ([`7f2ceaf`](https://github.com/aya-rs/aya/commit/7f2ceaf12e3aeadd81a55a75c268f254192cf866))
     - Netlink: refactor nlattr writing code ([`d9b5ab5`](https://github.com/aya-rs/aya/commit/d9b5ab575f6e2cbca793881094e1846a39332fa1))
     - Netlink: introduce NestedAttrs builder and switch XDP to it ([`c240a2c`](https://github.com/aya-rs/aya/commit/c240a2c73381a6864f343c79069abfd5f9e9b729))

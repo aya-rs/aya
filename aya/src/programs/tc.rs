@@ -139,6 +139,47 @@ pub enum TcAttachOptions {
     TcxOrder(LinkOrder),
 }
 
+/// A TC filter handle in `major:minor` form.
+///
+/// Matches the `M:N` syntax accepted by `tc(8)`. Use [`TcHandle::AUTO_ASSIGN`]
+/// to ask the kernel to allocate one.
+#[derive(Debug, Clone, Copy, Default, Hash, Eq, PartialEq)]
+#[doc(alias = "tcm_handle")]
+pub struct TcHandle {
+    /// Upper 16 bits when encoded as a u32.
+    major: u16,
+    /// Lower 16 bits when encoded as a u32.
+    minor: u16,
+}
+
+impl TcHandle {
+    /// Sentinel that asks the kernel to allocate a handle at attach time.
+    ///
+    /// Equal to [`Default::default`]. The allocated value is exposed by
+    /// [`SchedClassifierLink::handle`] after the program is attached.
+    pub const AUTO_ASSIGN: Self = Self { major: 0, minor: 0 };
+
+    /// Const equivalent of `Self { major, minor }`.
+    pub const fn new(major: u16, minor: u16) -> Self {
+        Self { major, minor }
+    }
+}
+
+impl From<TcHandle> for u32 {
+    fn from(TcHandle { major, minor }: TcHandle) -> Self {
+        (Self::from(major) << 16) | Self::from(minor)
+    }
+}
+
+impl From<u32> for TcHandle {
+    fn from(value: u32) -> Self {
+        Self {
+            major: (value >> 16) as u16,
+            minor: value as u16,
+        }
+    }
+}
+
 /// Options for [`SchedClassifier`] attach via netlink.
 #[derive(Debug, Default, Hash, Eq, PartialEq)]
 pub struct NlOptions {
@@ -146,8 +187,22 @@ pub struct NlOptions {
     /// If set to default (0), the system chooses the next highest priority or 49152 if no filters exist yet
     pub priority: u16,
     /// Handle used to uniquely identify a program at a given priority level.
-    /// If set to default (0), the system chooses a handle.
-    pub handle: u32,
+    ///
+    /// Defaults to [`TcHandle::AUTO_ASSIGN`], which lets the kernel pick one.
+    pub handle: TcHandle,
+    /// `classid` bound to this filter (also known as `flowid` in `tc(8)`).
+    ///
+    /// In direct-action mode the major 16 bits of the resulting class id come
+    /// from this attribute and the minor 16 bits come from the program at run
+    /// time via `__sk_buff::tc_classid`. This split requires Linux 4.6 (commit
+    /// [`3a461da1d03e`]).
+    ///
+    /// When [`None`], no attribute is sent and the filter is not bound to a
+    /// class.
+    ///
+    /// [`3a461da1d03e`]: https://github.com/torvalds/linux/commit/3a461da1d03e7a857edfa6a002040d07e118c639
+    #[doc(alias = "TCA_BPF_CLASSID")]
+    pub classid: Option<TcHandle>,
 }
 
 impl SchedClassifier {
@@ -290,10 +345,15 @@ impl SchedClassifier {
                 attach_type,
                 priority,
                 handle,
+                classid,
             }) => self.do_attach(
                 if_index,
                 attach_type,
-                TcAttachOptions::Netlink(NlOptions { priority, handle }),
+                TcAttachOptions::Netlink(NlOptions {
+                    priority,
+                    handle,
+                    classid,
+                }),
                 false,
             ),
         }
@@ -322,6 +382,7 @@ impl SchedClassifier {
                         &name,
                         options.priority,
                         options.handle,
+                        options.classid,
                         create,
                     )
                 }
@@ -334,6 +395,7 @@ impl SchedClassifier {
                         attach_type,
                         priority,
                         handle,
+                        classid: options.classid,
                     })))
             }
             TcAttachOptions::TcxOrder(options) => {
@@ -410,14 +472,15 @@ impl SchedClassifier {
 }
 
 #[derive(Debug, Hash, Eq, PartialEq)]
-pub(crate) struct NlLinkId(u32, TcAttachType, u16, u32);
+pub(crate) struct NlLinkId(u32, TcAttachType, u16, TcHandle);
 
 #[derive(Debug)]
 pub(crate) struct NlLink {
     if_index: u32,
     attach_type: TcAttachType,
     priority: u16,
-    handle: u32,
+    handle: TcHandle,
+    classid: Option<TcHandle>,
 }
 
 impl Link for NlLink {
@@ -517,20 +580,21 @@ impl SchedClassifierLink {
     ///
     /// # Examples
     /// ```no_run
-    /// # use aya::programs::tc::SchedClassifierLink;
+    /// # use aya::programs::tc::{SchedClassifierLink, TcHandle};
     /// # use aya::programs::TcAttachType;
     /// # #[derive(Debug, thiserror::Error)]
     /// # enum Error {
     /// #     #[error(transparent)]
     /// #     IO(#[from] std::io::Error),
     /// # }
-    /// # fn read_persisted_link_details() -> (&'static str, TcAttachType, u16, u32) {
-    /// #     ("eth0", TcAttachType::Ingress, 50, 1)
+    /// # fn read_persisted_link_details() -> (&'static str, TcAttachType, u16, TcHandle, Option<TcHandle>) {
+    /// #     ("eth0", TcAttachType::Ingress, 50, TcHandle::new(0, 1), None)
     /// # }
     /// // Get the link parameters from some external source. Where and how the parameters are
     /// // persisted is up to your application.
-    /// let (if_name, attach_type, priority, handle) = read_persisted_link_details();
-    /// let new_tc_link = SchedClassifierLink::attached(if_name, attach_type, priority, handle)?;
+    /// let (if_name, attach_type, priority, handle, classid) = read_persisted_link_details();
+    /// let new_tc_link =
+    ///     SchedClassifierLink::attached(if_name, attach_type, priority, handle, classid)?;
     ///
     /// # Ok::<(), Error>(())
     /// ```
@@ -538,7 +602,8 @@ impl SchedClassifierLink {
         if_name: &str,
         attach_type: TcAttachType,
         priority: u16,
-        handle: u32,
+        handle: TcHandle,
+        classid: Option<TcHandle>,
     ) -> Result<Self, io::Error> {
         let if_index = ifindex_from_ifname(if_name)?;
         Ok(Self(Some(TcLinkInner::NlLink(NlLink {
@@ -546,6 +611,7 @@ impl SchedClassifierLink {
             attach_type,
             priority,
             handle,
+            classid,
         }))))
     }
 
@@ -568,9 +634,19 @@ impl SchedClassifierLink {
     }
 
     /// Returns the assigned handle. If none was provided at attach time, this was allocated for you.
-    pub fn handle(&self) -> Result<u32, ProgramError> {
+    pub fn handle(&self) -> Result<TcHandle, ProgramError> {
         if let TcLinkInner::NlLink(n) = self.inner() {
             Ok(n.handle)
+        } else {
+            Err(TcError::InvalidLinkOperation.into())
+        }
+    }
+
+    /// Returns the `classid` bound to this filter, or [`None`] if the filter
+    /// is not bound to a class. See [`NlOptions::classid`].
+    pub fn classid(&self) -> Result<Option<TcHandle>, ProgramError> {
+        if let TcLinkInner::NlLink(n) = self.inner() {
+            Ok(n.classid)
         } else {
             Err(TcError::InvalidLinkOperation.into())
         }

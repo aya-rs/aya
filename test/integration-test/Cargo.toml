@@ -14,14 +14,15 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-aya = { path = "../../aya", version = "^0.13.2", default-features = false }
+aya = { path = "../../aya", version = "^0.14.0", default-features = false, features = [
+    "test-helpers",
+] }
 
 [dev-dependencies]
 anyhow = { workspace = true, features = ["std"] }
 assert_matches = { workspace = true }
-aya-log = { path = "../../aya-log", version = "^0.2.2", default-features = false }
-aya-obj = { path = "../../aya-obj", version = "^0.2.2" }
-bytes = { workspace = true }
+aya-log = { path = "../../aya-log", version = "^0.3.0", default-features = false }
+aya-obj = { path = "../../aya-obj", version = "^0.3.0" }
 epoll = { workspace = true }
 futures = { workspace = true, features = ["alloc"] }
 integration-common = { path = "../integration-common", features = ["user"] }
@@ -33,8 +34,9 @@ object = { workspace = true, features = ["elf", "read_core", "std"] }
 procfs = { workspace = true, features = ["flate2"] }
 rand = { workspace = true, features = ["thread_rng"] }
 rbpf = { workspace = true }
+rstest = { workspace = true }
 scopeguard = { workspace = true }
-test-case = { workspace = true }
+tempfile = { workspace = true }
 test-log = { workspace = true, features = ["log"] }
 tokio = { workspace = true, features = [
     "io-util",

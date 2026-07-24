@@ -1327,33 +1327,33 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::sk
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::sk_reuseport_md__bindgen_ty_4
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 impl<Storage> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::convert::AsRef<[u8]> + core::convert::AsMut<[u8]>
-pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::get(&self, bit_offset: usize, bit_width: u8) -> u64
-pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::get_bit(&self, index: usize) -> bool
-pub unsafe fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::raw_get(this: *const Self, bit_offset: usize, bit_width: u8) -> u64
-pub unsafe fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::raw_get_bit(this: *const Self, index: usize) -> bool
-pub unsafe fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::raw_set(this: *mut Self, bit_offset: usize, bit_width: u8, val: u64)
-pub unsafe fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::raw_set_bit(this: *mut Self, index: usize, val: bool)
-pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::set(&mut self, bit_offset: usize, bit_width: u8, val: u64)
-pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::set_bit(&mut self, index: usize, val: bool)
+pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::get(&self, usize, u8) -> u64
+pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::get_bit(&self, usize) -> bool
+pub unsafe fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::raw_get(*const Self, usize, u8) -> u64
+pub unsafe fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::raw_get_bit(*const Self, usize) -> bool
+pub unsafe fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::raw_set(*mut Self, usize, u8, u64)
+pub unsafe fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::raw_set_bit(*mut Self, usize, bool)
+pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::set(&mut self, usize, u8, u64)
+pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::set_bit(&mut self, usize, bool)
 impl<Storage> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
-pub const fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::new(storage: Storage) -> Self
+pub const fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::new(Storage) -> Self
 impl<Storage: core::clone::Clone> core::clone::Clone for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::clone(&self) -> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 impl<Storage: core::cmp::Eq> core::cmp::Eq for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 impl<Storage: core::cmp::Ord> core::cmp::Ord for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
-pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::cmp(&self, other: &aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>) -> core::cmp::Ordering
+pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::cmp(&self, &aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>) -> core::cmp::Ordering
 impl<Storage: core::cmp::PartialEq> core::cmp::PartialEq for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
-pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::eq(&self, other: &aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>) -> bool
+pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::eq(&self, &aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>) -> bool
+impl<Storage: core::cmp::PartialEq> core::marker::StructuralPartialEq for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 impl<Storage: core::cmp::PartialOrd> core::cmp::PartialOrd for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
-pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::partial_cmp(&self, other: &aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>) -> core::option::Option<core::cmp::Ordering>
+pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::partial_cmp(&self, &aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>) -> core::option::Option<core::cmp::Ordering>
 impl<Storage: core::default::Default> core::default::Default for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::default() -> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 impl<Storage: core::fmt::Debug> core::fmt::Debug for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
-pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<Storage: core::hash::Hash> core::hash::Hash for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
-pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+pub fn aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl<Storage: core::marker::Copy> core::marker::Copy for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
-impl<Storage> core::marker::StructuralPartialEq for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage>
 impl<Storage> core::marker::Freeze for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Freeze
 impl<Storage> core::marker::Send for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Send
 impl<Storage> core::marker::Sync for aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Sync
@@ -1364,14 +1364,14 @@ impl<Storage> core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindin
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::__IncompleteArrayField<T>(_, _)
 impl<T> aya_ebpf_bindings::bindings::__IncompleteArrayField<T>
 pub fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::as_mut_ptr(&mut self) -> *mut T
-pub unsafe fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::as_mut_slice(&mut self, len: usize) -> &mut [T]
+pub unsafe fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::as_mut_slice(&mut self, usize) -> &mut [T]
 pub fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::as_ptr(&self) -> *const T
-pub unsafe fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::as_slice(&self, len: usize) -> &[T]
+pub unsafe fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::as_slice(&self, usize) -> &[T]
 pub const fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::new() -> Self
 impl<T: core::default::Default> core::default::Default for aya_ebpf_bindings::bindings::__IncompleteArrayField<T>
 pub fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::default() -> aya_ebpf_bindings::bindings::__IncompleteArrayField<T>
 impl<T> core::fmt::Debug for aya_ebpf_bindings::bindings::__IncompleteArrayField<T>
-pub fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::fmt(&self, fmt: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::__IncompleteArrayField<T>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<T> core::marker::Freeze for aya_ebpf_bindings::bindings::__IncompleteArrayField<T> where T: core::marker::Freeze
 impl<T> core::marker::Send for aya_ebpf_bindings::bindings::__IncompleteArrayField<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_ebpf_bindings::bindings::__IncompleteArrayField<T> where T: core::marker::Sync
@@ -1448,7 +1448,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::value_type_btf_obj_fd: 
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
@@ -1493,7 +1493,7 @@ pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11::new_bitfield_1() ->
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
@@ -1514,7 +1514,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12::btf_token_fd: aya_ebpf
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_12
@@ -1536,7 +1536,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13::prog_id: aya_ebpf_bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
@@ -1567,7 +1567,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
@@ -1581,7 +1581,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
@@ -1599,7 +1599,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
@@ -1614,7 +1614,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
@@ -1631,7 +1631,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
@@ -1664,7 +1664,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
@@ -1706,7 +1706,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16::link_fd: aya_ebpf_bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
@@ -1720,7 +1720,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17::type_: aya_ebpf_bindin
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_17
@@ -1735,7 +1735,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18::link_fd: aya_ebpf_bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_18
@@ -1751,7 +1751,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19::prog_fd: aya_ebpf_bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
@@ -1781,7 +1781,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20::flags: aya_ebpf_bindin
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
@@ -1802,7 +1802,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3::values: aya_ebpf_bindin
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
@@ -1857,7 +1857,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5::pathname: aya_ebpf_bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_5
@@ -1903,7 +1903,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7::retval: aya_ebpf_bindin
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
@@ -1933,7 +1933,7 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9::info_len: aya_ebpf_bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
-pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_9
@@ -1952,7 +1952,7 @@ pub aya_ebpf_bindings::bindings::bpf_btf_info::name_len: aya_ebpf_bindings::bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_btf_info
 pub fn aya_ebpf_bindings::bindings::bpf_btf_info::clone(&self) -> aya_ebpf_bindings::bindings::bpf_btf_info
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_btf_info
-pub fn aya_ebpf_bindings::bindings::bpf_btf_info::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_btf_info::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_btf_info
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_btf_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_btf_info
@@ -1968,7 +1968,7 @@ pub aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx::minor: aya_ebpf_bindings::b
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
 pub fn aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx::clone(&self) -> aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
-pub fn aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_cgroup_dev_ctx
@@ -1983,7 +1983,7 @@ pub aya_ebpf_bindings::bindings::bpf_cgroup_storage_key::cgroup_inode_id: aya_eb
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
 pub fn aya_ebpf_bindings::bindings::bpf_cgroup_storage_key::clone(&self) -> aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
-pub fn aya_ebpf_bindings::bindings::bpf_cgroup_storage_key::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_cgroup_storage_key::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_cgroup_storage_key
@@ -2000,7 +2000,7 @@ pub aya_ebpf_bindings::bindings::bpf_core_relo::type_id: aya_ebpf_bindings::bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_core_relo
 pub fn aya_ebpf_bindings::bindings::bpf_core_relo::clone(&self) -> aya_ebpf_bindings::bindings::bpf_core_relo
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_core_relo
-pub fn aya_ebpf_bindings::bindings::bpf_core_relo::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_core_relo::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_core_relo
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_core_relo
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_core_relo
@@ -2040,7 +2040,7 @@ pub aya_ebpf_bindings::bindings::bpf_dynptr::__opaque: [aya_ebpf_bindings::bindi
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_dynptr
 pub fn aya_ebpf_bindings::bindings::bpf_dynptr::clone(&self) -> aya_ebpf_bindings::bindings::bpf_dynptr
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_dynptr
-pub fn aya_ebpf_bindings::bindings::bpf_dynptr::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_dynptr::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_dynptr
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_dynptr
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_dynptr
@@ -2078,7 +2078,7 @@ pub aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1::h_v
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
-pub fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1
@@ -2117,7 +2117,7 @@ pub aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1::ipv4
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
-pub fn aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_1
@@ -2132,7 +2132,7 @@ pub aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2::ipv6
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2::clone(&self) -> aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
-pub fn aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_flow_keys__bindgen_ty_1__bindgen_ty_2
@@ -2147,7 +2147,7 @@ pub aya_ebpf_bindings::bindings::bpf_func_info::type_id: aya_ebpf_bindings::bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_func_info
 pub fn aya_ebpf_bindings::bindings::bpf_func_info::clone(&self) -> aya_ebpf_bindings::bindings::bpf_func_info
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_func_info
-pub fn aya_ebpf_bindings::bindings::bpf_func_info::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_func_info::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_func_info
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_func_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_func_info
@@ -2164,18 +2164,18 @@ pub aya_ebpf_bindings::bindings::bpf_insn::imm: aya_ebpf_bindings::bindings::__s
 pub aya_ebpf_bindings::bindings::bpf_insn::off: aya_ebpf_bindings::bindings::__s16
 impl aya_ebpf_bindings::bindings::bpf_insn
 pub fn aya_ebpf_bindings::bindings::bpf_insn::dst_reg(&self) -> aya_ebpf_bindings::bindings::__u8
-pub unsafe fn aya_ebpf_bindings::bindings::bpf_insn::dst_reg_raw(this: *const Self) -> aya_ebpf_bindings::bindings::__u8
-pub fn aya_ebpf_bindings::bindings::bpf_insn::new_bitfield_1(dst_reg: aya_ebpf_bindings::bindings::__u8, src_reg: aya_ebpf_bindings::bindings::__u8) -> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 1]>
-pub fn aya_ebpf_bindings::bindings::bpf_insn::set_dst_reg(&mut self, val: aya_ebpf_bindings::bindings::__u8)
-pub unsafe fn aya_ebpf_bindings::bindings::bpf_insn::set_dst_reg_raw(this: *mut Self, val: aya_ebpf_bindings::bindings::__u8)
-pub fn aya_ebpf_bindings::bindings::bpf_insn::set_src_reg(&mut self, val: aya_ebpf_bindings::bindings::__u8)
-pub unsafe fn aya_ebpf_bindings::bindings::bpf_insn::set_src_reg_raw(this: *mut Self, val: aya_ebpf_bindings::bindings::__u8)
+pub unsafe fn aya_ebpf_bindings::bindings::bpf_insn::dst_reg_raw(*const Self) -> aya_ebpf_bindings::bindings::__u8
+pub fn aya_ebpf_bindings::bindings::bpf_insn::new_bitfield_1(aya_ebpf_bindings::bindings::__u8, aya_ebpf_bindings::bindings::__u8) -> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 1]>
+pub fn aya_ebpf_bindings::bindings::bpf_insn::set_dst_reg(&mut self, aya_ebpf_bindings::bindings::__u8)
+pub unsafe fn aya_ebpf_bindings::bindings::bpf_insn::set_dst_reg_raw(*mut Self, aya_ebpf_bindings::bindings::__u8)
+pub fn aya_ebpf_bindings::bindings::bpf_insn::set_src_reg(&mut self, aya_ebpf_bindings::bindings::__u8)
+pub unsafe fn aya_ebpf_bindings::bindings::bpf_insn::set_src_reg_raw(*mut Self, aya_ebpf_bindings::bindings::__u8)
 pub fn aya_ebpf_bindings::bindings::bpf_insn::src_reg(&self) -> aya_ebpf_bindings::bindings::__u8
-pub unsafe fn aya_ebpf_bindings::bindings::bpf_insn::src_reg_raw(this: *const Self) -> aya_ebpf_bindings::bindings::__u8
+pub unsafe fn aya_ebpf_bindings::bindings::bpf_insn::src_reg_raw(*const Self) -> aya_ebpf_bindings::bindings::__u8
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_insn
 pub fn aya_ebpf_bindings::bindings::bpf_insn::clone(&self) -> aya_ebpf_bindings::bindings::bpf_insn
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_insn
-pub fn aya_ebpf_bindings::bindings::bpf_insn::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_insn::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_insn
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_insn
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_insn
@@ -2189,7 +2189,7 @@ pub aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1::map_fd: aya_e
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
-pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
@@ -2205,7 +2205,7 @@ pub aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2::order: aya_eb
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2::clone(&self) -> aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
-pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_2
@@ -2221,7 +2221,7 @@ pub aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3::tid: aya_ebpf
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3::clone(&self) -> aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
-pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_3
@@ -2235,7 +2235,7 @@ pub aya_ebpf_bindings::bindings::bpf_iter_num::__opaque: [aya_ebpf_bindings::bin
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_iter_num
 pub fn aya_ebpf_bindings::bindings::bpf_iter_num::clone(&self) -> aya_ebpf_bindings::bindings::bpf_iter_num
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_iter_num
-pub fn aya_ebpf_bindings::bindings::bpf_iter_num::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_iter_num::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_iter_num
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_iter_num
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_iter_num
@@ -2252,7 +2252,7 @@ pub aya_ebpf_bindings::bindings::bpf_line_info::line_off: aya_ebpf_bindings::bin
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_line_info
 pub fn aya_ebpf_bindings::bindings::bpf_line_info::clone(&self) -> aya_ebpf_bindings::bindings::bpf_line_info
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_line_info
-pub fn aya_ebpf_bindings::bindings::bpf_line_info::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_line_info::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_line_info
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_line_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_line_info
@@ -2282,7 +2282,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::tp_n
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
@@ -2303,7 +2303,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10::ref
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_10
@@ -2337,7 +2337,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bin
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
@@ -2356,7 +2356,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bin
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
@@ -2376,7 +2376,7 @@ pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
@@ -2396,7 +2396,7 @@ pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
@@ -2411,7 +2411,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12::ifi
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_12
@@ -2426,7 +2426,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13::ifi
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_13
@@ -2442,7 +2442,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::targ
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
@@ -2457,7 +2457,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3::cgro
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_3
@@ -2486,7 +2486,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
@@ -2501,7 +2501,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
@@ -2516,7 +2516,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
@@ -2531,7 +2531,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5::netn
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_5
@@ -2545,7 +2545,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6::ifin
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_6
@@ -2559,7 +2559,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7::map_
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_7
@@ -2576,7 +2576,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8::prio
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_8
@@ -2594,7 +2594,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9::miss
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
-pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_9
@@ -2608,7 +2608,7 @@ pub aya_ebpf_bindings::bindings::bpf_list_head::__opaque: [aya_ebpf_bindings::bi
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_list_head
 pub fn aya_ebpf_bindings::bindings::bpf_list_head::clone(&self) -> aya_ebpf_bindings::bindings::bpf_list_head
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_list_head
-pub fn aya_ebpf_bindings::bindings::bpf_list_head::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_list_head::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_list_head
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_list_head
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_list_head
@@ -2622,7 +2622,7 @@ pub aya_ebpf_bindings::bindings::bpf_list_node::__opaque: [aya_ebpf_bindings::bi
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_list_node
 pub fn aya_ebpf_bindings::bindings::bpf_list_node::clone(&self) -> aya_ebpf_bindings::bindings::bpf_list_node
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_list_node
-pub fn aya_ebpf_bindings::bindings::bpf_list_node::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_list_node::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_list_node
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_list_node
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_list_node
@@ -2635,7 +2635,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_l
 pub aya_ebpf_bindings::bindings::bpf_lpm_trie_key::data: aya_ebpf_bindings::bindings::__IncompleteArrayField<aya_ebpf_bindings::bindings::__u8>
 pub aya_ebpf_bindings::bindings::bpf_lpm_trie_key::prefixlen: aya_ebpf_bindings::bindings::__u32
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_lpm_trie_key
-pub fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_lpm_trie_key
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_lpm_trie_key
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_lpm_trie_key
@@ -2648,7 +2648,7 @@ pub aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr::prefixlen: aya_ebpf_bindi
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 pub fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr::clone(&self) -> aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
-pub fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_lpm_trie_key_hdr
@@ -2702,7 +2702,7 @@ pub aya_ebpf_bindings::bindings::bpf_map_info::value_size: aya_ebpf_bindings::bi
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_map_info
 pub fn aya_ebpf_bindings::bindings::bpf_map_info::clone(&self) -> aya_ebpf_bindings::bindings::bpf_map_info
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_map_info
-pub fn aya_ebpf_bindings::bindings::bpf_map_info::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_map_info::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_map_info
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_map_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_map_info
@@ -2718,7 +2718,7 @@ pub aya_ebpf_bindings::bindings::bpf_perf_event_data::sample_period: aya_ebpf_bi
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_perf_event_data
 pub fn aya_ebpf_bindings::bindings::bpf_perf_event_data::clone(&self) -> aya_ebpf_bindings::bindings::bpf_perf_event_data
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_perf_event_data
-pub fn aya_ebpf_bindings::bindings::bpf_perf_event_data::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_perf_event_data::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_perf_event_data
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_perf_event_data
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_perf_event_data
@@ -2734,7 +2734,7 @@ pub aya_ebpf_bindings::bindings::bpf_perf_event_value::running: aya_ebpf_binding
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_perf_event_value
 pub fn aya_ebpf_bindings::bindings::bpf_perf_event_value::clone(&self) -> aya_ebpf_bindings::bindings::bpf_perf_event_value
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_perf_event_value
-pub fn aya_ebpf_bindings::bindings::bpf_perf_event_value::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_perf_event_value::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_perf_event_value
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_perf_event_value
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_perf_event_value
@@ -2749,7 +2749,7 @@ pub aya_ebpf_bindings::bindings::bpf_pidns_info::tgid: aya_ebpf_bindings::bindin
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_pidns_info
 pub fn aya_ebpf_bindings::bindings::bpf_pidns_info::clone(&self) -> aya_ebpf_bindings::bindings::bpf_pidns_info
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_pidns_info
-pub fn aya_ebpf_bindings::bindings::bpf_pidns_info::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_pidns_info::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_pidns_info
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_pidns_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_pidns_info
@@ -2800,14 +2800,14 @@ pub aya_ebpf_bindings::bindings::bpf_prog_info::xlated_prog_insns: aya_ebpf_bind
 pub aya_ebpf_bindings::bindings::bpf_prog_info::xlated_prog_len: aya_ebpf_bindings::bindings::__u32
 impl aya_ebpf_bindings::bindings::bpf_prog_info
 pub fn aya_ebpf_bindings::bindings::bpf_prog_info::gpl_compatible(&self) -> aya_ebpf_bindings::bindings::__u32
-pub unsafe fn aya_ebpf_bindings::bindings::bpf_prog_info::gpl_compatible_raw(this: *const Self) -> aya_ebpf_bindings::bindings::__u32
-pub fn aya_ebpf_bindings::bindings::bpf_prog_info::new_bitfield_1(gpl_compatible: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
-pub fn aya_ebpf_bindings::bindings::bpf_prog_info::set_gpl_compatible(&mut self, val: aya_ebpf_bindings::bindings::__u32)
-pub unsafe fn aya_ebpf_bindings::bindings::bpf_prog_info::set_gpl_compatible_raw(this: *mut Self, val: aya_ebpf_bindings::bindings::__u32)
+pub unsafe fn aya_ebpf_bindings::bindings::bpf_prog_info::gpl_compatible_raw(*const Self) -> aya_ebpf_bindings::bindings::__u32
+pub fn aya_ebpf_bindings::bindings::bpf_prog_info::new_bitfield_1(aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
+pub fn aya_ebpf_bindings::bindings::bpf_prog_info::set_gpl_compatible(&mut self, aya_ebpf_bindings::bindings::__u32)
+pub unsafe fn aya_ebpf_bindings::bindings::bpf_prog_info::set_gpl_compatible_raw(*mut Self, aya_ebpf_bindings::bindings::__u32)
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_prog_info
 pub fn aya_ebpf_bindings::bindings::bpf_prog_info::clone(&self) -> aya_ebpf_bindings::bindings::bpf_prog_info
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_prog_info
-pub fn aya_ebpf_bindings::bindings::bpf_prog_info::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_prog_info::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_prog_info
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_prog_info
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_prog_info
@@ -2819,7 +2819,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_p
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
 pub aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args::args: aya_ebpf_bindings::bindings::__IncompleteArrayField<aya_ebpf_bindings::bindings::__u64>
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
-pub fn aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
 impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_raw_tracepoint_args
@@ -2832,7 +2832,7 @@ pub aya_ebpf_bindings::bindings::bpf_rb_node::__opaque: [aya_ebpf_bindings::bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_rb_node
 pub fn aya_ebpf_bindings::bindings::bpf_rb_node::clone(&self) -> aya_ebpf_bindings::bindings::bpf_rb_node
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_rb_node
-pub fn aya_ebpf_bindings::bindings::bpf_rb_node::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_rb_node::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_rb_node
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_rb_node
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_rb_node
@@ -2846,7 +2846,7 @@ pub aya_ebpf_bindings::bindings::bpf_rb_root::__opaque: [aya_ebpf_bindings::bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_rb_root
 pub fn aya_ebpf_bindings::bindings::bpf_rb_root::clone(&self) -> aya_ebpf_bindings::bindings::bpf_rb_root
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_rb_root
-pub fn aya_ebpf_bindings::bindings::bpf_rb_root::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_rb_root::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_rb_root
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_rb_root
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_rb_root
@@ -2873,7 +2873,7 @@ pub aya_ebpf_bindings::bindings::bpf_refcount::__opaque: [aya_ebpf_bindings::bin
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_refcount
 pub fn aya_ebpf_bindings::bindings::bpf_refcount::clone(&self) -> aya_ebpf_bindings::bindings::bpf_refcount
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_refcount
-pub fn aya_ebpf_bindings::bindings::bpf_refcount::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_refcount::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_refcount
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_refcount
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_refcount
@@ -2929,7 +2929,7 @@ pub fn aya_ebpf_bindings::bindings::bpf_sock::new_bitfield_1() -> aya_ebpf_bindi
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_sock
 pub fn aya_ebpf_bindings::bindings::bpf_sock::clone(&self) -> aya_ebpf_bindings::bindings::bpf_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_sock
-pub fn aya_ebpf_bindings::bindings::bpf_sock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_sock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_sock
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock
@@ -3031,7 +3031,7 @@ pub aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1::spo
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
-pub fn aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_1
@@ -3048,7 +3048,7 @@ pub aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2::spo
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2::clone(&self) -> aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
-pub fn aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2
@@ -3080,7 +3080,7 @@ pub aya_ebpf_bindings::bindings::bpf_spin_lock::val: aya_ebpf_bindings::bindings
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_spin_lock
 pub fn aya_ebpf_bindings::bindings::bpf_spin_lock::clone(&self) -> aya_ebpf_bindings::bindings::bpf_spin_lock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_spin_lock
-pub fn aya_ebpf_bindings::bindings::bpf_spin_lock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_spin_lock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_spin_lock
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_spin_lock
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_spin_lock
@@ -3109,7 +3109,7 @@ pub aya_ebpf_bindings::bindings::bpf_sysctl::write: aya_ebpf_bindings::bindings:
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_sysctl
 pub fn aya_ebpf_bindings::bindings::bpf_sysctl::clone(&self) -> aya_ebpf_bindings::bindings::bpf_sysctl
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_sysctl
-pub fn aya_ebpf_bindings::bindings::bpf_sysctl::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_sysctl::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_sysctl
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_sysctl
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_sysctl
@@ -3148,7 +3148,7 @@ pub aya_ebpf_bindings::bindings::bpf_tcp_sock::total_retrans: aya_ebpf_bindings:
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_tcp_sock
 pub fn aya_ebpf_bindings::bindings::bpf_tcp_sock::clone(&self) -> aya_ebpf_bindings::bindings::bpf_tcp_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_tcp_sock
-pub fn aya_ebpf_bindings::bindings::bpf_tcp_sock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_tcp_sock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_tcp_sock
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_tcp_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_tcp_sock
@@ -3162,7 +3162,7 @@ pub aya_ebpf_bindings::bindings::bpf_timer::__opaque: [aya_ebpf_bindings::bindin
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_timer
 pub fn aya_ebpf_bindings::bindings::bpf_timer::clone(&self) -> aya_ebpf_bindings::bindings::bpf_timer
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_timer
-pub fn aya_ebpf_bindings::bindings::bpf_timer::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_timer::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_timer
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_timer
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_timer
@@ -3194,7 +3194,7 @@ pub aya_ebpf_bindings::bindings::bpf_xdp_sock::queue_id: aya_ebpf_bindings::bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_xdp_sock
 pub fn aya_ebpf_bindings::bindings::bpf_xdp_sock::clone(&self) -> aya_ebpf_bindings::bindings::bpf_xdp_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_xdp_sock
-pub fn aya_ebpf_bindings::bindings::bpf_xdp_sock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::bpf_xdp_sock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_xdp_sock
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_xdp_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_xdp_sock
@@ -3226,7 +3226,7 @@ pub aya_ebpf_bindings::bindings::btf_ptr::type_id: aya_ebpf_bindings::bindings::
 impl core::clone::Clone for aya_ebpf_bindings::bindings::btf_ptr
 pub fn aya_ebpf_bindings::bindings::btf_ptr::clone(&self) -> aya_ebpf_bindings::bindings::btf_ptr
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::btf_ptr
-pub fn aya_ebpf_bindings::bindings::btf_ptr::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::btf_ptr::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::btf_ptr
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::btf_ptr
 impl !core::marker::Send for aya_ebpf_bindings::bindings::btf_ptr
@@ -3239,7 +3239,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::btf_p
 impl core::clone::Clone for aya_ebpf_bindings::bindings::cgroup
 pub fn aya_ebpf_bindings::bindings::cgroup::clone(&self) -> aya_ebpf_bindings::bindings::cgroup
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::cgroup
-pub fn aya_ebpf_bindings::bindings::cgroup::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::cgroup::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::cgroup
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::cgroup
 impl core::marker::Send for aya_ebpf_bindings::bindings::cgroup
@@ -3252,7 +3252,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::cgrou
 impl core::clone::Clone for aya_ebpf_bindings::bindings::file
 pub fn aya_ebpf_bindings::bindings::file::clone(&self) -> aya_ebpf_bindings::bindings::file
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::file
-pub fn aya_ebpf_bindings::bindings::file::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::file::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::file
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::file
 impl core::marker::Send for aya_ebpf_bindings::bindings::file
@@ -3265,7 +3265,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::file
 impl core::clone::Clone for aya_ebpf_bindings::bindings::inode
 pub fn aya_ebpf_bindings::bindings::inode::clone(&self) -> aya_ebpf_bindings::bindings::inode
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::inode
-pub fn aya_ebpf_bindings::bindings::inode::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::inode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::inode
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::inode
 impl core::marker::Send for aya_ebpf_bindings::bindings::inode
@@ -3278,7 +3278,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::inode
 impl core::clone::Clone for aya_ebpf_bindings::bindings::iphdr
 pub fn aya_ebpf_bindings::bindings::iphdr::clone(&self) -> aya_ebpf_bindings::bindings::iphdr
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::iphdr
-pub fn aya_ebpf_bindings::bindings::iphdr::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::iphdr::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::iphdr
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::iphdr
 impl core::marker::Send for aya_ebpf_bindings::bindings::iphdr
@@ -3291,7 +3291,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::iphdr
 impl core::clone::Clone for aya_ebpf_bindings::bindings::ipv6hdr
 pub fn aya_ebpf_bindings::bindings::ipv6hdr::clone(&self) -> aya_ebpf_bindings::bindings::ipv6hdr
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::ipv6hdr
-pub fn aya_ebpf_bindings::bindings::ipv6hdr::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::ipv6hdr::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::ipv6hdr
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::ipv6hdr
 impl core::marker::Send for aya_ebpf_bindings::bindings::ipv6hdr
@@ -3304,7 +3304,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::ipv6h
 impl core::clone::Clone for aya_ebpf_bindings::bindings::linux_binprm
 pub fn aya_ebpf_bindings::bindings::linux_binprm::clone(&self) -> aya_ebpf_bindings::bindings::linux_binprm
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::linux_binprm
-pub fn aya_ebpf_bindings::bindings::linux_binprm::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::linux_binprm::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::linux_binprm
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::linux_binprm
 impl core::marker::Send for aya_ebpf_bindings::bindings::linux_binprm
@@ -3317,7 +3317,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::linux
 impl core::clone::Clone for aya_ebpf_bindings::bindings::mptcp_sock
 pub fn aya_ebpf_bindings::bindings::mptcp_sock::clone(&self) -> aya_ebpf_bindings::bindings::mptcp_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::mptcp_sock
-pub fn aya_ebpf_bindings::bindings::mptcp_sock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::mptcp_sock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::mptcp_sock
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::mptcp_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::mptcp_sock
@@ -3330,7 +3330,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::mptcp
 impl core::clone::Clone for aya_ebpf_bindings::bindings::path
 pub fn aya_ebpf_bindings::bindings::path::clone(&self) -> aya_ebpf_bindings::bindings::path
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::path
-pub fn aya_ebpf_bindings::bindings::path::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::path::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::path
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::path
 impl core::marker::Send for aya_ebpf_bindings::bindings::path
@@ -3364,7 +3364,7 @@ pub aya_ebpf_bindings::bindings::pt_regs::ss: aya_ebpf_cty::od::c_ulong
 impl core::clone::Clone for aya_ebpf_bindings::bindings::pt_regs
 pub fn aya_ebpf_bindings::bindings::pt_regs::clone(&self) -> aya_ebpf_bindings::bindings::pt_regs
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::pt_regs
-pub fn aya_ebpf_bindings::bindings::pt_regs::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::pt_regs::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::pt_regs
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::pt_regs
 impl core::marker::Send for aya_ebpf_bindings::bindings::pt_regs
@@ -3377,7 +3377,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::pt_re
 impl core::clone::Clone for aya_ebpf_bindings::bindings::seq_file
 pub fn aya_ebpf_bindings::bindings::seq_file::clone(&self) -> aya_ebpf_bindings::bindings::seq_file
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::seq_file
-pub fn aya_ebpf_bindings::bindings::seq_file::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::seq_file::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::seq_file
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::seq_file
 impl core::marker::Send for aya_ebpf_bindings::bindings::seq_file
@@ -3434,7 +3434,7 @@ pub aya_ebpf_bindings::bindings::sockaddr::sa_family: aya_ebpf_bindings::binding
 impl core::clone::Clone for aya_ebpf_bindings::bindings::sockaddr
 pub fn aya_ebpf_bindings::bindings::sockaddr::clone(&self) -> aya_ebpf_bindings::bindings::sockaddr
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::sockaddr
-pub fn aya_ebpf_bindings::bindings::sockaddr::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::sockaddr::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::sockaddr
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::sockaddr
 impl core::marker::Send for aya_ebpf_bindings::bindings::sockaddr
@@ -3447,7 +3447,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::socka
 impl core::clone::Clone for aya_ebpf_bindings::bindings::socket
 pub fn aya_ebpf_bindings::bindings::socket::clone(&self) -> aya_ebpf_bindings::bindings::socket
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::socket
-pub fn aya_ebpf_bindings::bindings::socket::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::socket::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::socket
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::socket
 impl core::marker::Send for aya_ebpf_bindings::bindings::socket
@@ -3460,7 +3460,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::socke
 impl core::clone::Clone for aya_ebpf_bindings::bindings::task_struct
 pub fn aya_ebpf_bindings::bindings::task_struct::clone(&self) -> aya_ebpf_bindings::bindings::task_struct
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::task_struct
-pub fn aya_ebpf_bindings::bindings::task_struct::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::task_struct::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::task_struct
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::task_struct
 impl core::marker::Send for aya_ebpf_bindings::bindings::task_struct
@@ -3473,7 +3473,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::task_
 impl core::clone::Clone for aya_ebpf_bindings::bindings::tcp6_sock
 pub fn aya_ebpf_bindings::bindings::tcp6_sock::clone(&self) -> aya_ebpf_bindings::bindings::tcp6_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::tcp6_sock
-pub fn aya_ebpf_bindings::bindings::tcp6_sock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::tcp6_sock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::tcp6_sock
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::tcp6_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::tcp6_sock
@@ -3486,7 +3486,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::tcp6_
 impl core::clone::Clone for aya_ebpf_bindings::bindings::tcp_request_sock
 pub fn aya_ebpf_bindings::bindings::tcp_request_sock::clone(&self) -> aya_ebpf_bindings::bindings::tcp_request_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::tcp_request_sock
-pub fn aya_ebpf_bindings::bindings::tcp_request_sock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::tcp_request_sock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::tcp_request_sock
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::tcp_request_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::tcp_request_sock
@@ -3499,7 +3499,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::tcp_r
 impl core::clone::Clone for aya_ebpf_bindings::bindings::tcp_sock
 pub fn aya_ebpf_bindings::bindings::tcp_sock::clone(&self) -> aya_ebpf_bindings::bindings::tcp_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::tcp_sock
-pub fn aya_ebpf_bindings::bindings::tcp_sock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::tcp_sock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::tcp_sock
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::tcp_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::tcp_sock
@@ -3512,7 +3512,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::tcp_s
 impl core::clone::Clone for aya_ebpf_bindings::bindings::tcp_timewait_sock
 pub fn aya_ebpf_bindings::bindings::tcp_timewait_sock::clone(&self) -> aya_ebpf_bindings::bindings::tcp_timewait_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::tcp_timewait_sock
-pub fn aya_ebpf_bindings::bindings::tcp_timewait_sock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::tcp_timewait_sock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::tcp_timewait_sock
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::tcp_timewait_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::tcp_timewait_sock
@@ -3525,7 +3525,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::tcp_t
 impl core::clone::Clone for aya_ebpf_bindings::bindings::tcphdr
 pub fn aya_ebpf_bindings::bindings::tcphdr::clone(&self) -> aya_ebpf_bindings::bindings::tcphdr
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::tcphdr
-pub fn aya_ebpf_bindings::bindings::tcphdr::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::tcphdr::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::tcphdr
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::tcphdr
 impl core::marker::Send for aya_ebpf_bindings::bindings::tcphdr
@@ -3538,7 +3538,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::tcphd
 impl core::clone::Clone for aya_ebpf_bindings::bindings::udp6_sock
 pub fn aya_ebpf_bindings::bindings::udp6_sock::clone(&self) -> aya_ebpf_bindings::bindings::udp6_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::udp6_sock
-pub fn aya_ebpf_bindings::bindings::udp6_sock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::udp6_sock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::udp6_sock
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::udp6_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::udp6_sock
@@ -3551,7 +3551,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::udp6_
 impl core::clone::Clone for aya_ebpf_bindings::bindings::unix_sock
 pub fn aya_ebpf_bindings::bindings::unix_sock::clone(&self) -> aya_ebpf_bindings::bindings::unix_sock
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::unix_sock
-pub fn aya_ebpf_bindings::bindings::unix_sock::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::unix_sock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::unix_sock
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::unix_sock
 impl core::marker::Send for aya_ebpf_bindings::bindings::unix_sock
@@ -3570,7 +3570,7 @@ pub aya_ebpf_bindings::bindings::xdp_md::rx_queue_index: aya_ebpf_bindings::bind
 impl core::clone::Clone for aya_ebpf_bindings::bindings::xdp_md
 pub fn aya_ebpf_bindings::bindings::xdp_md::clone(&self) -> aya_ebpf_bindings::bindings::xdp_md
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::xdp_md
-pub fn aya_ebpf_bindings::bindings::xdp_md::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub fn aya_ebpf_bindings::bindings::xdp_md::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf_bindings::bindings::xdp_md
 impl core::marker::Freeze for aya_ebpf_bindings::bindings::xdp_md
 impl core::marker::Send for aya_ebpf_bindings::bindings::xdp_md
@@ -3973,213 +3973,213 @@ pub type aya_ebpf_bindings::bindings::_bindgen_ty_9 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::bpf_user_pt_regs_t = aya_ebpf_bindings::bindings::pt_regs
 pub type aya_ebpf_bindings::bindings::sa_family_t = aya_ebpf_cty::c_ushort
 pub mod aya_ebpf_bindings::helpers
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_bind(ctx: *mut aya_ebpf_bindings::bindings::bpf_sock_addr, addr: *mut aya_ebpf_bindings::bindings::sockaddr, addr_len: aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_bprm_opts_set(bprm: *mut aya_ebpf_bindings::bindings::linux_binprm, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_btf_find_by_name_kind(name: *mut aya_ebpf_cty::ad::c_char, name_sz: aya_ebpf_cty::ad::c_int, kind: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_cgrp_storage_delete(map: *mut aya_ebpf_cty::c_void, cgroup: *mut aya_ebpf_bindings::bindings::cgroup) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_cgrp_storage_get(map: *mut aya_ebpf_cty::c_void, cgroup: *mut aya_ebpf_bindings::bindings::cgroup, value: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_cty::c_void
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_check_mtu(ctx: *mut aya_ebpf_cty::c_void, ifindex: aya_ebpf_bindings::bindings::__u32, mtu_len: *mut aya_ebpf_bindings::bindings::__u32, len_diff: aya_ebpf_bindings::bindings::__s32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_clone_redirect(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, ifindex: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_copy_from_user(dst: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, user_ptr: *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_copy_from_user_task(dst: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, user_ptr: *const aya_ebpf_cty::c_void, tsk: *mut aya_ebpf_bindings::bindings::task_struct, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_csum_diff(from: *mut aya_ebpf_bindings::bindings::__be32, from_size: aya_ebpf_bindings::bindings::__u32, to: *mut aya_ebpf_bindings::bindings::__be32, to_size: aya_ebpf_bindings::bindings::__u32, seed: aya_ebpf_bindings::bindings::__wsum) -> aya_ebpf_bindings::bindings::__s64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_csum_level(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, level: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_csum_update(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, csum: aya_ebpf_bindings::bindings::__wsum) -> aya_ebpf_bindings::bindings::__s64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_current_task_under_cgroup(map: *mut aya_ebpf_cty::c_void, index: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_d_path(path: *mut aya_ebpf_bindings::bindings::path, buf: *mut aya_ebpf_cty::ad::c_char, sz: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_data(ptr: *const aya_ebpf_bindings::bindings::bpf_dynptr, offset: aya_ebpf_bindings::bindings::__u32, len: aya_ebpf_bindings::bindings::__u32) -> *mut aya_ebpf_cty::c_void
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_from_mem(data: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64, ptr: *mut aya_ebpf_bindings::bindings::bpf_dynptr) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_read(dst: *mut aya_ebpf_cty::c_void, len: aya_ebpf_bindings::bindings::__u32, src: *const aya_ebpf_bindings::bindings::bpf_dynptr, offset: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_write(dst: *const aya_ebpf_bindings::bindings::bpf_dynptr, offset: aya_ebpf_bindings::bindings::__u32, src: *mut aya_ebpf_cty::c_void, len: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_fib_lookup(ctx: *mut aya_ebpf_cty::c_void, params: *mut aya_ebpf_bindings::bindings::bpf_fib_lookup, plen: aya_ebpf_cty::ad::c_int, flags: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_find_vma(task: *mut aya_ebpf_bindings::bindings::task_struct, addr: aya_ebpf_bindings::bindings::__u64, callback_fn: *mut aya_ebpf_cty::c_void, callback_ctx: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_for_each_map_elem(map: *mut aya_ebpf_cty::c_void, callback_fn: *mut aya_ebpf_cty::c_void, callback_ctx: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_attach_cookie(ctx: *mut aya_ebpf_cty::c_void) -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_branch_snapshot(entries: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_cgroup_classid(skb: *mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_bindings::bindings::__u32
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_current_ancestor_cgroup_id(ancestor_level: aya_ebpf_cty::ad::c_int) -> aya_ebpf_bindings::bindings::__u64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_bind(*mut aya_ebpf_bindings::bindings::bpf_sock_addr, *mut aya_ebpf_bindings::bindings::sockaddr, aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_bprm_opts_set(*mut aya_ebpf_bindings::bindings::linux_binprm, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_btf_find_by_name_kind(*mut aya_ebpf_cty::ad::c_char, aya_ebpf_cty::ad::c_int, aya_ebpf_bindings::bindings::__u32, aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_cgrp_storage_delete(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_bindings::bindings::cgroup) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_cgrp_storage_get(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_bindings::bindings::cgroup, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_cty::c_void
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_check_mtu(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__s32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_clone_redirect(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_copy_from_user(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_copy_from_user_task(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::c_void, *mut aya_ebpf_bindings::bindings::task_struct, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_csum_diff(*mut aya_ebpf_bindings::bindings::__be32, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_bindings::bindings::__be32, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__wsum) -> aya_ebpf_bindings::bindings::__s64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_csum_level(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_csum_update(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__wsum) -> aya_ebpf_bindings::bindings::__s64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_current_task_under_cgroup(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_d_path(*mut aya_ebpf_bindings::bindings::path, *mut aya_ebpf_cty::ad::c_char, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_data(*const aya_ebpf_bindings::bindings::bpf_dynptr, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u32) -> *mut aya_ebpf_cty::c_void
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_from_mem(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_bindings::bindings::bpf_dynptr) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_read(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_bindings::bindings::bpf_dynptr, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_write(*const aya_ebpf_bindings::bindings::bpf_dynptr, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_fib_lookup(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_bindings::bindings::bpf_fib_lookup, aya_ebpf_cty::ad::c_int, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_find_vma(*mut aya_ebpf_bindings::bindings::task_struct, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_for_each_map_elem(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_attach_cookie(*mut aya_ebpf_cty::c_void) -> aya_ebpf_bindings::bindings::__u64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_branch_snapshot(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_cgroup_classid(*mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_bindings::bindings::__u32
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_current_ancestor_cgroup_id(aya_ebpf_cty::ad::c_int) -> aya_ebpf_bindings::bindings::__u64
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_current_cgroup_id() -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_current_comm(buf: *mut aya_ebpf_cty::c_void, size_of_buf: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_current_comm(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_current_pid_tgid() -> aya_ebpf_bindings::bindings::__u64
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_current_task() -> aya_ebpf_bindings::bindings::__u64
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_current_task_btf() -> *mut aya_ebpf_bindings::bindings::task_struct
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_current_uid_gid() -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_func_arg(ctx: *mut aya_ebpf_cty::c_void, n: aya_ebpf_bindings::bindings::__u32, value: *mut aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_func_arg_cnt(ctx: *mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_func_ip(ctx: *mut aya_ebpf_cty::c_void) -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_func_ret(ctx: *mut aya_ebpf_cty::c_void, value: *mut aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_hash_recalc(skb: *mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_bindings::bindings::__u32
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_listener_sock(sk: *mut aya_ebpf_bindings::bindings::bpf_sock) -> *mut aya_ebpf_bindings::bindings::bpf_sock
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_local_storage(map: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_cty::c_void
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_netns_cookie(ctx: *mut aya_ebpf_cty::c_void) -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_ns_current_pid_tgid(dev: aya_ebpf_bindings::bindings::__u64, ino: aya_ebpf_bindings::bindings::__u64, nsdata: *mut aya_ebpf_bindings::bindings::bpf_pidns_info, size: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_func_arg(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_func_arg_cnt(*mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_func_ip(*mut aya_ebpf_cty::c_void) -> aya_ebpf_bindings::bindings::__u64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_func_ret(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_hash_recalc(*mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_bindings::bindings::__u32
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_listener_sock(*mut aya_ebpf_bindings::bindings::bpf_sock) -> *mut aya_ebpf_bindings::bindings::bpf_sock
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_local_storage(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_cty::c_void
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_netns_cookie(*mut aya_ebpf_cty::c_void) -> aya_ebpf_bindings::bindings::__u64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_ns_current_pid_tgid(aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_bindings::bindings::bpf_pidns_info, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_numa_node_id() -> aya_ebpf_cty::od::c_long
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_prandom_u32() -> aya_ebpf_bindings::bindings::__u32
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_retval() -> aya_ebpf_cty::ad::c_int
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_route_realm(skb: *mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_bindings::bindings::__u32
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_route_realm(*mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_bindings::bindings::__u32
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_smp_processor_id() -> aya_ebpf_bindings::bindings::__u32
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_socket_cookie(ctx: *mut aya_ebpf_cty::c_void) -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_socket_uid(skb: *mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_bindings::bindings::__u32
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_stack(ctx: *mut aya_ebpf_cty::c_void, buf: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_stackid(ctx: *mut aya_ebpf_cty::c_void, map: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_task_stack(task: *mut aya_ebpf_bindings::bindings::task_struct, buf: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_getsockopt(bpf_socket: *mut aya_ebpf_cty::c_void, level: aya_ebpf_cty::ad::c_int, optname: aya_ebpf_cty::ad::c_int, optval: *mut aya_ebpf_cty::c_void, optlen: aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_ima_file_hash(file: *mut aya_ebpf_bindings::bindings::file, dst: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_ima_inode_hash(inode: *mut aya_ebpf_bindings::bindings::inode, dst: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_inode_storage_delete(map: *mut aya_ebpf_cty::c_void, inode: *mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::ad::c_int
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_inode_storage_get(map: *mut aya_ebpf_cty::c_void, inode: *mut aya_ebpf_cty::c_void, value: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_cty::c_void
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_socket_cookie(*mut aya_ebpf_cty::c_void) -> aya_ebpf_bindings::bindings::__u64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_socket_uid(*mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_bindings::bindings::__u32
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_stack(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_stackid(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_get_task_stack(*mut aya_ebpf_bindings::bindings::task_struct, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_getsockopt(*mut aya_ebpf_cty::c_void, aya_ebpf_cty::ad::c_int, aya_ebpf_cty::ad::c_int, *mut aya_ebpf_cty::c_void, aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_ima_file_hash(*mut aya_ebpf_bindings::bindings::file, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_ima_inode_hash(*mut aya_ebpf_bindings::bindings::inode, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_inode_storage_delete(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::ad::c_int
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_inode_storage_get(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_cty::c_void
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_jiffies64() -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_kallsyms_lookup_name(name: *const aya_ebpf_cty::ad::c_char, name_sz: aya_ebpf_cty::ad::c_int, flags: aya_ebpf_cty::ad::c_int, res: *mut aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_kptr_xchg(map_value: *mut aya_ebpf_cty::c_void, ptr: *mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_cty::c_void
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_kallsyms_lookup_name(*const aya_ebpf_cty::ad::c_char, aya_ebpf_cty::ad::c_int, aya_ebpf_cty::ad::c_int, *mut aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_kptr_xchg(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_cty::c_void
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_ktime_get_boot_ns() -> aya_ebpf_bindings::bindings::__u64
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_ktime_get_coarse_ns() -> aya_ebpf_bindings::bindings::__u64
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_ktime_get_ns() -> aya_ebpf_bindings::bindings::__u64
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_ktime_get_tai_ns() -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_l3_csum_replace(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, offset: aya_ebpf_bindings::bindings::__u32, from: aya_ebpf_bindings::bindings::__u64, to: aya_ebpf_bindings::bindings::__u64, size: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_l4_csum_replace(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, offset: aya_ebpf_bindings::bindings::__u32, from: aya_ebpf_bindings::bindings::__u64, to: aya_ebpf_bindings::bindings::__u64, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_load_hdr_opt(skops: *mut aya_ebpf_bindings::bindings::bpf_sock_ops, searchby_res: *mut aya_ebpf_cty::c_void, len: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_loop(nr_loops: aya_ebpf_bindings::bindings::__u32, callback_fn: *mut aya_ebpf_cty::c_void, callback_ctx: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_lwt_push_encap(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, type_: aya_ebpf_bindings::bindings::__u32, hdr: *mut aya_ebpf_cty::c_void, len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_lwt_seg6_action(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, action: aya_ebpf_bindings::bindings::__u32, param: *mut aya_ebpf_cty::c_void, param_len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_lwt_seg6_adjust_srh(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, offset: aya_ebpf_bindings::bindings::__u32, delta: aya_ebpf_bindings::bindings::__s32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_lwt_seg6_store_bytes(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, offset: aya_ebpf_bindings::bindings::__u32, from: *const aya_ebpf_cty::c_void, len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_delete_elem(map: *mut aya_ebpf_cty::c_void, key: *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_lookup_elem(map: *mut aya_ebpf_cty::c_void, key: *const aya_ebpf_cty::c_void) -> *mut aya_ebpf_cty::c_void
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_lookup_percpu_elem(map: *mut aya_ebpf_cty::c_void, key: *const aya_ebpf_cty::c_void, cpu: aya_ebpf_bindings::bindings::__u32) -> *mut aya_ebpf_cty::c_void
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_peek_elem(map: *mut aya_ebpf_cty::c_void, value: *mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_pop_elem(map: *mut aya_ebpf_cty::c_void, value: *mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_push_elem(map: *mut aya_ebpf_cty::c_void, value: *const aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_update_elem(map: *mut aya_ebpf_cty::c_void, key: *const aya_ebpf_cty::c_void, value: *const aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_apply_bytes(msg: *mut aya_ebpf_bindings::bindings::sk_msg_md, bytes: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_cork_bytes(msg: *mut aya_ebpf_bindings::bindings::sk_msg_md, bytes: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_pop_data(msg: *mut aya_ebpf_bindings::bindings::sk_msg_md, start: aya_ebpf_bindings::bindings::__u32, len: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_pull_data(msg: *mut aya_ebpf_bindings::bindings::sk_msg_md, start: aya_ebpf_bindings::bindings::__u32, end: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_push_data(msg: *mut aya_ebpf_bindings::bindings::sk_msg_md, start: aya_ebpf_bindings::bindings::__u32, len: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_redirect_hash(msg: *mut aya_ebpf_bindings::bindings::sk_msg_md, map: *mut aya_ebpf_cty::c_void, key: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_redirect_map(msg: *mut aya_ebpf_bindings::bindings::sk_msg_md, map: *mut aya_ebpf_cty::c_void, key: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_override_return(regs: *mut aya_ebpf_bindings::bindings::pt_regs, rc: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_per_cpu_ptr(percpu_ptr: *const aya_ebpf_cty::c_void, cpu: aya_ebpf_bindings::bindings::__u32) -> *mut aya_ebpf_cty::c_void
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_perf_event_output(ctx: *mut aya_ebpf_cty::c_void, map: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64, data: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_perf_event_read(map: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_perf_event_read_value(map: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64, buf: *mut aya_ebpf_bindings::bindings::bpf_perf_event_value, buf_size: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_perf_prog_read_value(ctx: *mut aya_ebpf_bindings::bindings::bpf_perf_event_data, buf: *mut aya_ebpf_bindings::bindings::bpf_perf_event_value, buf_size: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_read(dst: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, unsafe_ptr: *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_read_kernel(dst: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, unsafe_ptr: *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_read_kernel_str(dst: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, unsafe_ptr: *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_read_str(dst: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, unsafe_ptr: *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_read_user(dst: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, unsafe_ptr: *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_read_user_str(dst: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, unsafe_ptr: *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_write_user(dst: *mut aya_ebpf_cty::c_void, src: *const aya_ebpf_cty::c_void, len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_rc_keydown(ctx: *mut aya_ebpf_cty::c_void, protocol: aya_ebpf_bindings::bindings::__u32, scancode: aya_ebpf_bindings::bindings::__u64, toggle: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_rc_pointer_rel(ctx: *mut aya_ebpf_cty::c_void, rel_x: aya_ebpf_bindings::bindings::__s32, rel_y: aya_ebpf_bindings::bindings::__s32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_rc_repeat(ctx: *mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_read_branch_records(ctx: *mut aya_ebpf_bindings::bindings::bpf_perf_event_data, buf: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_redirect(ifindex: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_redirect_map(map: *mut aya_ebpf_cty::c_void, key: aya_ebpf_bindings::bindings::__u64, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_redirect_neigh(ifindex: aya_ebpf_bindings::bindings::__u32, params: *mut aya_ebpf_bindings::bindings::bpf_redir_neigh, plen: aya_ebpf_cty::ad::c_int, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_redirect_peer(ifindex: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_reserve_hdr_opt(skops: *mut aya_ebpf_bindings::bindings::bpf_sock_ops, len: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_discard(data: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64)
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_discard_dynptr(ptr: *mut aya_ebpf_bindings::bindings::bpf_dynptr, flags: aya_ebpf_bindings::bindings::__u64)
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_output(ringbuf: *mut aya_ebpf_cty::c_void, data: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u64, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_query(ringbuf: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_reserve(ringbuf: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u64, flags: aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_cty::c_void
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_reserve_dynptr(ringbuf: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64, ptr: *mut aya_ebpf_bindings::bindings::bpf_dynptr) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_submit(data: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64)
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_submit_dynptr(ptr: *mut aya_ebpf_bindings::bindings::bpf_dynptr, flags: aya_ebpf_bindings::bindings::__u64)
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_send_signal(sig: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_send_signal_thread(sig: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_seq_printf(m: *mut aya_ebpf_bindings::bindings::seq_file, fmt: *const aya_ebpf_cty::ad::c_char, fmt_size: aya_ebpf_bindings::bindings::__u32, data: *const aya_ebpf_cty::c_void, data_len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_seq_printf_btf(m: *mut aya_ebpf_bindings::bindings::seq_file, ptr: *mut aya_ebpf_bindings::bindings::btf_ptr, ptr_size: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_seq_write(m: *mut aya_ebpf_bindings::bindings::seq_file, data: *const aya_ebpf_cty::c_void, len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_set_hash(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, hash: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_set_hash_invalid(skb: *mut aya_ebpf_bindings::bindings::__sk_buff)
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_set_retval(retval: aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::ad::c_int
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_setsockopt(bpf_socket: *mut aya_ebpf_cty::c_void, level: aya_ebpf_cty::ad::c_int, optname: aya_ebpf_cty::ad::c_int, optval: *mut aya_ebpf_cty::c_void, optlen: aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_ancestor_cgroup_id(sk: *mut aya_ebpf_cty::c_void, ancestor_level: aya_ebpf_cty::ad::c_int) -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_assign(ctx: *mut aya_ebpf_cty::c_void, sk: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_cgroup_id(sk: *mut aya_ebpf_cty::c_void) -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_fullsock(sk: *mut aya_ebpf_bindings::bindings::bpf_sock) -> *mut aya_ebpf_bindings::bindings::bpf_sock
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_lookup_tcp(ctx: *mut aya_ebpf_cty::c_void, tuple: *mut aya_ebpf_bindings::bindings::bpf_sock_tuple, tuple_size: aya_ebpf_bindings::bindings::__u32, netns: aya_ebpf_bindings::bindings::__u64, flags: aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_bindings::bindings::bpf_sock
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_lookup_udp(ctx: *mut aya_ebpf_cty::c_void, tuple: *mut aya_ebpf_bindings::bindings::bpf_sock_tuple, tuple_size: aya_ebpf_bindings::bindings::__u32, netns: aya_ebpf_bindings::bindings::__u64, flags: aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_bindings::bindings::bpf_sock
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_redirect_hash(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, map: *mut aya_ebpf_cty::c_void, key: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_redirect_map(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, map: *mut aya_ebpf_cty::c_void, key: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_release(sock: *mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_select_reuseport(reuse: *mut aya_ebpf_bindings::bindings::sk_reuseport_md, map: *mut aya_ebpf_cty::c_void, key: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_storage_delete(map: *mut aya_ebpf_cty::c_void, sk: *mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_storage_get(map: *mut aya_ebpf_cty::c_void, sk: *mut aya_ebpf_cty::c_void, value: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_cty::c_void
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_adjust_room(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, len_diff: aya_ebpf_bindings::bindings::__s32, mode: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_ancestor_cgroup_id(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, ancestor_level: aya_ebpf_cty::ad::c_int) -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_cgroup_classid(skb: *mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_cgroup_id(skb: *mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_change_head(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, len: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_change_proto(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, proto: aya_ebpf_bindings::bindings::__be16, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_change_tail(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, len: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_change_type(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, type_: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_ecn_set_ce(skb: *mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_get_tunnel_key(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, key: *mut aya_ebpf_bindings::bindings::bpf_tunnel_key, size: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_get_tunnel_opt(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, opt: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_get_xfrm_state(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, index: aya_ebpf_bindings::bindings::__u32, xfrm_state: *mut aya_ebpf_bindings::bindings::bpf_xfrm_state, size: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_load_bytes(skb: *const aya_ebpf_cty::c_void, offset: aya_ebpf_bindings::bindings::__u32, to: *mut aya_ebpf_cty::c_void, len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_load_bytes_relative(skb: *const aya_ebpf_cty::c_void, offset: aya_ebpf_bindings::bindings::__u32, to: *mut aya_ebpf_cty::c_void, len: aya_ebpf_bindings::bindings::__u32, start_header: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_output(ctx: *mut aya_ebpf_cty::c_void, map: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64, data: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_pull_data(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_set_tstamp(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, tstamp: aya_ebpf_bindings::bindings::__u64, tstamp_type: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_set_tunnel_key(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, key: *mut aya_ebpf_bindings::bindings::bpf_tunnel_key, size: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_set_tunnel_opt(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, opt: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_store_bytes(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, offset: aya_ebpf_bindings::bindings::__u32, from: *const aya_ebpf_cty::c_void, len: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_under_cgroup(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, map: *mut aya_ebpf_cty::c_void, index: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_vlan_pop(skb: *mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_vlan_push(skb: *mut aya_ebpf_bindings::bindings::__sk_buff, vlan_proto: aya_ebpf_bindings::bindings::__be16, vlan_tci: aya_ebpf_bindings::bindings::__u16) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_lookup_tcp(ctx: *mut aya_ebpf_cty::c_void, tuple: *mut aya_ebpf_bindings::bindings::bpf_sock_tuple, tuple_size: aya_ebpf_bindings::bindings::__u32, netns: aya_ebpf_bindings::bindings::__u64, flags: aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_bindings::bindings::bpf_sock
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_mptcp_sock(sk: *mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::mptcp_sock
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_tcp6_sock(sk: *mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::tcp6_sock
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_tcp_request_sock(sk: *mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::tcp_request_sock
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_tcp_sock(sk: *mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::tcp_sock
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_tcp_timewait_sock(sk: *mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::tcp_timewait_sock
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_udp6_sock(sk: *mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::udp6_sock
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_unix_sock(sk: *mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::unix_sock
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_snprintf(str_: *mut aya_ebpf_cty::ad::c_char, str_size: aya_ebpf_bindings::bindings::__u32, fmt: *const aya_ebpf_cty::ad::c_char, data: *mut aya_ebpf_bindings::bindings::__u64, data_len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_snprintf_btf(str_: *mut aya_ebpf_cty::ad::c_char, str_size: aya_ebpf_bindings::bindings::__u32, ptr: *mut aya_ebpf_bindings::bindings::btf_ptr, btf_ptr_size: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sock_from_file(file: *mut aya_ebpf_bindings::bindings::file) -> *mut aya_ebpf_bindings::bindings::socket
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sock_hash_update(skops: *mut aya_ebpf_bindings::bindings::bpf_sock_ops, map: *mut aya_ebpf_cty::c_void, key: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sock_map_update(skops: *mut aya_ebpf_bindings::bindings::bpf_sock_ops, map: *mut aya_ebpf_cty::c_void, key: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sock_ops_cb_flags_set(bpf_sock: *mut aya_ebpf_bindings::bindings::bpf_sock_ops, argval: aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_spin_lock(lock: *mut aya_ebpf_bindings::bindings::bpf_spin_lock) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_spin_unlock(lock: *mut aya_ebpf_bindings::bindings::bpf_spin_lock) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_store_hdr_opt(skops: *mut aya_ebpf_bindings::bindings::bpf_sock_ops, from: *const aya_ebpf_cty::c_void, len: aya_ebpf_bindings::bindings::__u32, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_strncmp(s1: *const aya_ebpf_cty::ad::c_char, s1_sz: aya_ebpf_bindings::bindings::__u32, s2: *const aya_ebpf_cty::ad::c_char) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_strtol(buf: *const aya_ebpf_cty::ad::c_char, buf_len: aya_ebpf_cty::od::c_ulong, flags: aya_ebpf_bindings::bindings::__u64, res: *mut aya_ebpf_cty::od::c_long) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_strtoul(buf: *const aya_ebpf_cty::ad::c_char, buf_len: aya_ebpf_cty::od::c_ulong, flags: aya_ebpf_bindings::bindings::__u64, res: *mut aya_ebpf_cty::od::c_ulong) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sys_bpf(cmd: aya_ebpf_bindings::bindings::__u32, attr: *mut aya_ebpf_cty::c_void, attr_size: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sys_close(fd: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sysctl_get_current_value(ctx: *mut aya_ebpf_bindings::bindings::bpf_sysctl, buf: *mut aya_ebpf_cty::ad::c_char, buf_len: aya_ebpf_cty::od::c_ulong) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sysctl_get_name(ctx: *mut aya_ebpf_bindings::bindings::bpf_sysctl, buf: *mut aya_ebpf_cty::ad::c_char, buf_len: aya_ebpf_cty::od::c_ulong, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sysctl_get_new_value(ctx: *mut aya_ebpf_bindings::bindings::bpf_sysctl, buf: *mut aya_ebpf_cty::ad::c_char, buf_len: aya_ebpf_cty::od::c_ulong) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_sysctl_set_new_value(ctx: *mut aya_ebpf_bindings::bindings::bpf_sysctl, buf: *const aya_ebpf_cty::ad::c_char, buf_len: aya_ebpf_cty::od::c_ulong) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_tail_call(ctx: *mut aya_ebpf_cty::c_void, prog_array_map: *mut aya_ebpf_cty::c_void, index: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_task_pt_regs(task: *mut aya_ebpf_bindings::bindings::task_struct) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_task_storage_delete(map: *mut aya_ebpf_cty::c_void, task: *mut aya_ebpf_bindings::bindings::task_struct) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_task_storage_get(map: *mut aya_ebpf_cty::c_void, task: *mut aya_ebpf_bindings::bindings::task_struct, value: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_cty::c_void
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_check_syncookie(sk: *mut aya_ebpf_cty::c_void, iph: *mut aya_ebpf_cty::c_void, iph_len: aya_ebpf_bindings::bindings::__u32, th: *mut aya_ebpf_bindings::bindings::tcphdr, th_len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_gen_syncookie(sk: *mut aya_ebpf_cty::c_void, iph: *mut aya_ebpf_cty::c_void, iph_len: aya_ebpf_bindings::bindings::__u32, th: *mut aya_ebpf_bindings::bindings::tcphdr, th_len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_bindings::bindings::__s64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_raw_check_syncookie_ipv4(iph: *mut aya_ebpf_bindings::bindings::iphdr, th: *mut aya_ebpf_bindings::bindings::tcphdr) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_raw_check_syncookie_ipv6(iph: *mut aya_ebpf_bindings::bindings::ipv6hdr, th: *mut aya_ebpf_bindings::bindings::tcphdr) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_raw_gen_syncookie_ipv4(iph: *mut aya_ebpf_bindings::bindings::iphdr, th: *mut aya_ebpf_bindings::bindings::tcphdr, th_len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_bindings::bindings::__s64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_raw_gen_syncookie_ipv6(iph: *mut aya_ebpf_bindings::bindings::ipv6hdr, th: *mut aya_ebpf_bindings::bindings::tcphdr, th_len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_bindings::bindings::__s64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_send_ack(tp: *mut aya_ebpf_cty::c_void, rcv_nxt: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_sock(sk: *mut aya_ebpf_bindings::bindings::bpf_sock) -> *mut aya_ebpf_bindings::bindings::bpf_tcp_sock
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_this_cpu_ptr(percpu_ptr: *const aya_ebpf_cty::c_void) -> *mut aya_ebpf_cty::c_void
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_timer_cancel(timer: *mut aya_ebpf_bindings::bindings::bpf_timer) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_timer_init(timer: *mut aya_ebpf_bindings::bindings::bpf_timer, map: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_timer_set_callback(timer: *mut aya_ebpf_bindings::bindings::bpf_timer, callback_fn: *mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_timer_start(timer: *mut aya_ebpf_bindings::bindings::bpf_timer, nsecs: aya_ebpf_bindings::bindings::__u64, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_trace_vprintk(fmt: *const aya_ebpf_cty::ad::c_char, fmt_size: aya_ebpf_bindings::bindings::__u32, data: *const aya_ebpf_cty::c_void, data_len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_user_ringbuf_drain(map: *mut aya_ebpf_cty::c_void, callback_fn: *mut aya_ebpf_cty::c_void, ctx: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_adjust_head(xdp_md: *mut aya_ebpf_bindings::bindings::xdp_md, delta: aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_adjust_meta(xdp_md: *mut aya_ebpf_bindings::bindings::xdp_md, delta: aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_adjust_tail(xdp_md: *mut aya_ebpf_bindings::bindings::xdp_md, delta: aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_get_buff_len(xdp_md: *mut aya_ebpf_bindings::bindings::xdp_md) -> aya_ebpf_bindings::bindings::__u64
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_load_bytes(xdp_md: *mut aya_ebpf_bindings::bindings::xdp_md, offset: aya_ebpf_bindings::bindings::__u32, buf: *mut aya_ebpf_cty::c_void, len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_output(ctx: *mut aya_ebpf_cty::c_void, map: *mut aya_ebpf_cty::c_void, flags: aya_ebpf_bindings::bindings::__u64, data: *mut aya_ebpf_cty::c_void, size: aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_store_bytes(xdp_md: *mut aya_ebpf_bindings::bindings::xdp_md, offset: aya_ebpf_bindings::bindings::__u32, buf: *mut aya_ebpf_cty::c_void, len: aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_l3_csum_replace(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_l4_csum_replace(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_load_hdr_opt(*mut aya_ebpf_bindings::bindings::bpf_sock_ops, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_loop(aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_lwt_push_encap(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_lwt_seg6_action(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_lwt_seg6_adjust_srh(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__s32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_lwt_seg6_store_bytes(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_delete_elem(*mut aya_ebpf_cty::c_void, *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_lookup_elem(*mut aya_ebpf_cty::c_void, *const aya_ebpf_cty::c_void) -> *mut aya_ebpf_cty::c_void
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_lookup_percpu_elem(*mut aya_ebpf_cty::c_void, *const aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> *mut aya_ebpf_cty::c_void
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_peek_elem(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_pop_elem(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_push_elem(*mut aya_ebpf_cty::c_void, *const aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_map_update_elem(*mut aya_ebpf_cty::c_void, *const aya_ebpf_cty::c_void, *const aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_apply_bytes(*mut aya_ebpf_bindings::bindings::sk_msg_md, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_cork_bytes(*mut aya_ebpf_bindings::bindings::sk_msg_md, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_pop_data(*mut aya_ebpf_bindings::bindings::sk_msg_md, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_pull_data(*mut aya_ebpf_bindings::bindings::sk_msg_md, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_push_data(*mut aya_ebpf_bindings::bindings::sk_msg_md, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_redirect_hash(*mut aya_ebpf_bindings::bindings::sk_msg_md, *mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_msg_redirect_map(*mut aya_ebpf_bindings::bindings::sk_msg_md, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_override_return(*mut aya_ebpf_bindings::bindings::pt_regs, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_per_cpu_ptr(*const aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> *mut aya_ebpf_cty::c_void
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_perf_event_output(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_perf_event_read(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_bindings::bindings::__u64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_perf_event_read_value(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_bindings::bindings::bpf_perf_event_value, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_perf_prog_read_value(*mut aya_ebpf_bindings::bindings::bpf_perf_event_data, *mut aya_ebpf_bindings::bindings::bpf_perf_event_value, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_read(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_read_kernel(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_read_kernel_str(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_read_str(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_read_user(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_read_user_str(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_probe_write_user(*mut aya_ebpf_cty::c_void, *const aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_rc_keydown(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_rc_pointer_rel(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__s32, aya_ebpf_bindings::bindings::__s32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_rc_repeat(*mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_read_branch_records(*mut aya_ebpf_bindings::bindings::bpf_perf_event_data, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_redirect(aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_redirect_map(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_redirect_neigh(aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_bindings::bindings::bpf_redir_neigh, aya_ebpf_cty::ad::c_int, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_redirect_peer(aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_reserve_hdr_opt(*mut aya_ebpf_bindings::bindings::bpf_sock_ops, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_discard(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64)
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_discard_dynptr(*mut aya_ebpf_bindings::bindings::bpf_dynptr, aya_ebpf_bindings::bindings::__u64)
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_output(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_query(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_bindings::bindings::__u64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_reserve(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_cty::c_void
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_reserve_dynptr(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_bindings::bindings::bpf_dynptr) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_submit(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64)
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_ringbuf_submit_dynptr(*mut aya_ebpf_bindings::bindings::bpf_dynptr, aya_ebpf_bindings::bindings::__u64)
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_send_signal(aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_send_signal_thread(aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_seq_printf(*mut aya_ebpf_bindings::bindings::seq_file, *const aya_ebpf_cty::ad::c_char, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_seq_printf_btf(*mut aya_ebpf_bindings::bindings::seq_file, *mut aya_ebpf_bindings::bindings::btf_ptr, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_seq_write(*mut aya_ebpf_bindings::bindings::seq_file, *const aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_set_hash(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_set_hash_invalid(*mut aya_ebpf_bindings::bindings::__sk_buff)
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_set_retval(aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::ad::c_int
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_setsockopt(*mut aya_ebpf_cty::c_void, aya_ebpf_cty::ad::c_int, aya_ebpf_cty::ad::c_int, *mut aya_ebpf_cty::c_void, aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_ancestor_cgroup_id(*mut aya_ebpf_cty::c_void, aya_ebpf_cty::ad::c_int) -> aya_ebpf_bindings::bindings::__u64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_assign(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_cgroup_id(*mut aya_ebpf_cty::c_void) -> aya_ebpf_bindings::bindings::__u64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_fullsock(*mut aya_ebpf_bindings::bindings::bpf_sock) -> *mut aya_ebpf_bindings::bindings::bpf_sock
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_lookup_tcp(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_bindings::bindings::bpf_sock_tuple, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_bindings::bindings::bpf_sock
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_lookup_udp(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_bindings::bindings::bpf_sock_tuple, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_bindings::bindings::bpf_sock
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_redirect_hash(*mut aya_ebpf_bindings::bindings::__sk_buff, *mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_redirect_map(*mut aya_ebpf_bindings::bindings::__sk_buff, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_release(*mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_select_reuseport(*mut aya_ebpf_bindings::bindings::sk_reuseport_md, *mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_storage_delete(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sk_storage_get(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_cty::c_void
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_adjust_room(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__s32, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_ancestor_cgroup_id(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_cty::ad::c_int) -> aya_ebpf_bindings::bindings::__u64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_cgroup_classid(*mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_bindings::bindings::__u64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_cgroup_id(*mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_bindings::bindings::__u64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_change_head(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_change_proto(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__be16, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_change_tail(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_change_type(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_ecn_set_ce(*mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_get_tunnel_key(*mut aya_ebpf_bindings::bindings::__sk_buff, *mut aya_ebpf_bindings::bindings::bpf_tunnel_key, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_get_tunnel_opt(*mut aya_ebpf_bindings::bindings::__sk_buff, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_get_xfrm_state(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_bindings::bindings::bpf_xfrm_state, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_load_bytes(*const aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_load_bytes_relative(*const aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_output(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_pull_data(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_set_tstamp(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_set_tunnel_key(*mut aya_ebpf_bindings::bindings::__sk_buff, *mut aya_ebpf_bindings::bindings::bpf_tunnel_key, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_set_tunnel_opt(*mut aya_ebpf_bindings::bindings::__sk_buff, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_store_bytes(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_under_cgroup(*mut aya_ebpf_bindings::bindings::__sk_buff, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_vlan_pop(*mut aya_ebpf_bindings::bindings::__sk_buff) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skb_vlan_push(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__be16, aya_ebpf_bindings::bindings::__u16) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_lookup_tcp(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_bindings::bindings::bpf_sock_tuple, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_bindings::bindings::bpf_sock
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_mptcp_sock(*mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::mptcp_sock
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_tcp6_sock(*mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::tcp6_sock
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_tcp_request_sock(*mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::tcp_request_sock
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_tcp_sock(*mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::tcp_sock
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_tcp_timewait_sock(*mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::tcp_timewait_sock
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_udp6_sock(*mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::udp6_sock
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_skc_to_unix_sock(*mut aya_ebpf_cty::c_void) -> *mut aya_ebpf_bindings::bindings::unix_sock
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_snprintf(*mut aya_ebpf_cty::ad::c_char, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::ad::c_char, *mut aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_snprintf_btf(*mut aya_ebpf_cty::ad::c_char, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_bindings::bindings::btf_ptr, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sock_from_file(*mut aya_ebpf_bindings::bindings::file) -> *mut aya_ebpf_bindings::bindings::socket
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sock_hash_update(*mut aya_ebpf_bindings::bindings::bpf_sock_ops, *mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sock_map_update(*mut aya_ebpf_bindings::bindings::bpf_sock_ops, *mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sock_ops_cb_flags_set(*mut aya_ebpf_bindings::bindings::bpf_sock_ops, aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_spin_lock(*mut aya_ebpf_bindings::bindings::bpf_spin_lock) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_spin_unlock(*mut aya_ebpf_bindings::bindings::bpf_spin_lock) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_store_hdr_opt(*mut aya_ebpf_bindings::bindings::bpf_sock_ops, *const aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_strncmp(*const aya_ebpf_cty::ad::c_char, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::ad::c_char) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_strtol(*const aya_ebpf_cty::ad::c_char, aya_ebpf_cty::od::c_ulong, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_cty::od::c_long) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_strtoul(*const aya_ebpf_cty::ad::c_char, aya_ebpf_cty::od::c_ulong, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_cty::od::c_ulong) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sys_bpf(aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sys_close(aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sysctl_get_current_value(*mut aya_ebpf_bindings::bindings::bpf_sysctl, *mut aya_ebpf_cty::ad::c_char, aya_ebpf_cty::od::c_ulong) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sysctl_get_name(*mut aya_ebpf_bindings::bindings::bpf_sysctl, *mut aya_ebpf_cty::ad::c_char, aya_ebpf_cty::od::c_ulong, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sysctl_get_new_value(*mut aya_ebpf_bindings::bindings::bpf_sysctl, *mut aya_ebpf_cty::ad::c_char, aya_ebpf_cty::od::c_ulong) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_sysctl_set_new_value(*mut aya_ebpf_bindings::bindings::bpf_sysctl, *const aya_ebpf_cty::ad::c_char, aya_ebpf_cty::od::c_ulong) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_tail_call(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_task_pt_regs(*mut aya_ebpf_bindings::bindings::task_struct) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_task_storage_delete(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_bindings::bindings::task_struct) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_task_storage_get(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_bindings::bindings::task_struct, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_cty::c_void
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_check_syncookie(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_bindings::bindings::tcphdr, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_gen_syncookie(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_bindings::bindings::tcphdr, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_bindings::bindings::__s64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_raw_check_syncookie_ipv4(*mut aya_ebpf_bindings::bindings::iphdr, *mut aya_ebpf_bindings::bindings::tcphdr) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_raw_check_syncookie_ipv6(*mut aya_ebpf_bindings::bindings::ipv6hdr, *mut aya_ebpf_bindings::bindings::tcphdr) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_raw_gen_syncookie_ipv4(*mut aya_ebpf_bindings::bindings::iphdr, *mut aya_ebpf_bindings::bindings::tcphdr, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_bindings::bindings::__s64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_raw_gen_syncookie_ipv6(*mut aya_ebpf_bindings::bindings::ipv6hdr, *mut aya_ebpf_bindings::bindings::tcphdr, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_bindings::bindings::__s64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_send_ack(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_tcp_sock(*mut aya_ebpf_bindings::bindings::bpf_sock) -> *mut aya_ebpf_bindings::bindings::bpf_tcp_sock
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_this_cpu_ptr(*const aya_ebpf_cty::c_void) -> *mut aya_ebpf_cty::c_void
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_timer_cancel(*mut aya_ebpf_bindings::bindings::bpf_timer) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_timer_init(*mut aya_ebpf_bindings::bindings::bpf_timer, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_timer_set_callback(*mut aya_ebpf_bindings::bindings::bpf_timer, *mut aya_ebpf_cty::c_void) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_timer_start(*mut aya_ebpf_bindings::bindings::bpf_timer, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_trace_vprintk(*const aya_ebpf_cty::ad::c_char, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_user_ringbuf_drain(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_adjust_head(*mut aya_ebpf_bindings::bindings::xdp_md, aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_adjust_meta(*mut aya_ebpf_bindings::bindings::xdp_md, aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_adjust_tail(*mut aya_ebpf_bindings::bindings::xdp_md, aya_ebpf_cty::ad::c_int) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_get_buff_len(*mut aya_ebpf_bindings::bindings::xdp_md) -> aya_ebpf_bindings::bindings::__u64
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_load_bytes(*mut aya_ebpf_bindings::bindings::xdp_md, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_output(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_xdp_store_bytes(*mut aya_ebpf_bindings::bindings::xdp_md, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long

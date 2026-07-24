@@ -1,10 +1,9 @@
 use aya::{
     Ebpf, EbpfLoader,
-    programs::{Extension, TracePoint, Xdp, XdpFlags, tc},
+    programs::{Extension, TracePoint, Xdp, XdpMode, tc},
+    test_helpers::NetNsGuard,
     util::KernelVersion,
 };
-
-use crate::utils::NetNsGuard;
 
 #[test_log::test]
 fn modprobe() {
@@ -14,7 +13,7 @@ fn modprobe() {
     // `/sbin/modprobe` to load the required kernel module.
     // In order for this test to pass, all of that machinery must work
     // correctly within the test environment.
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     tc::qdisc_add_clsact("lo").unwrap();
 }
@@ -29,12 +28,12 @@ fn xdp() {
         return;
     }
 
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     let mut bpf = Ebpf::load(crate::PASS).unwrap();
     let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
     dispatcher.load().unwrap();
-    dispatcher.attach("lo", XdpFlags::default()).unwrap();
+    dispatcher.attach("lo", XdpMode::default()).unwrap();
 }
 
 #[test_log::test]
@@ -67,12 +66,12 @@ fn extension() {
         return;
     }
 
-    let _netns = NetNsGuard::new();
+    let _netns = NetNsGuard::new().unwrap();
 
     let mut bpf = Ebpf::load(crate::MAIN).unwrap();
     let pass: &mut Xdp = bpf.program_mut("xdp_pass").unwrap().try_into().unwrap();
     pass.load().unwrap();
-    pass.attach("lo", XdpFlags::default()).unwrap();
+    pass.attach("lo", XdpMode::default()).unwrap();
 
     let mut bpf = EbpfLoader::new()
         .extension("xdp_drop")
