@@ -559,6 +559,7 @@ impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::queue::Queue<T, V
 pub mod aya::maps::ring_buf
 pub struct aya::maps::ring_buf::RingBuf<T>
 impl<T> aya::maps::ring_buf::RingBuf<T>
+pub fn aya::maps::ring_buf::RingBuf<T>::consume_batch<F>(&mut self, usize, F) -> usize where F: core::ops::function::FnMut(&[u8])
 pub fn aya::maps::ring_buf::RingBuf<T>::next(&mut self) -> core::option::Option<aya::maps::ring_buf::RingBufItem<'_>>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ring_buf::RingBuf<aya::maps::MapData>
 pub type aya::maps::ring_buf::RingBuf<aya::maps::MapData>::Error = aya::maps::MapError
