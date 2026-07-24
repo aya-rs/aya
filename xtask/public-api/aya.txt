@@ -359,6 +359,7 @@ pub struct aya::maps::lpm_trie::LpmTrie<T, K, V>
 impl<K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::create(u32, u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<T, K, V>
+pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::contains_key(&self, &aya::maps::lpm_trie::Key<K>, u64) -> core::result::Result<bool, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::get(&self, &aya::maps::lpm_trie::Key<K>, u64) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, aya::maps::lpm_trie::Key<K>, V, Self>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::keys(&self) -> aya::maps::MapKeys<'_, aya::maps::lpm_trie::Key<K>>
@@ -559,6 +560,7 @@ impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::queue::Queue<T, V
 pub mod aya::maps::ring_buf
 pub struct aya::maps::ring_buf::RingBuf<T>
 impl<T> aya::maps::ring_buf::RingBuf<T>
+pub fn aya::maps::ring_buf::RingBuf<T>::consume_batch<F>(&mut self, usize, F) -> usize where F: core::ops::function::FnMut(&[u8])
 pub fn aya::maps::ring_buf::RingBuf<T>::next(&mut self) -> core::option::Option<aya::maps::ring_buf::RingBufItem<'_>>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ring_buf::RingBuf<aya::maps::MapData>
 pub type aya::maps::ring_buf::RingBuf<aya::maps::MapData>::Error = aya::maps::MapError
@@ -1678,6 +1680,7 @@ pub struct aya::maps::LpmTrie<T, K, V>
 impl<K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::create(u32, u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<T, K, V>
+pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::contains_key(&self, &aya::maps::lpm_trie::Key<K>, u64) -> core::result::Result<bool, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::get(&self, &aya::maps::lpm_trie::Key<K>, u64) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, aya::maps::lpm_trie::Key<K>, V, Self>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::keys(&self) -> aya::maps::MapKeys<'_, aya::maps::lpm_trie::Key<K>>
@@ -1994,6 +1997,7 @@ impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ReusePortSockArra
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::ReusePortSockArray<T> where T: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::RingBuf<T>
 impl<T> aya::maps::ring_buf::RingBuf<T>
+pub fn aya::maps::ring_buf::RingBuf<T>::consume_batch<F>(&mut self, usize, F) -> usize where F: core::ops::function::FnMut(&[u8])
 pub fn aya::maps::ring_buf::RingBuf<T>::next(&mut self) -> core::option::Option<aya::maps::ring_buf::RingBufItem<'_>>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ring_buf::RingBuf<aya::maps::MapData>
 pub type aya::maps::ring_buf::RingBuf<aya::maps::MapData>::Error = aya::maps::MapError
