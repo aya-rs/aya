@@ -54,7 +54,12 @@ jobs:
         with:
           components: clippy,miri,rustfmt,rust-src
 
+      # Cache usage approaches GitHub's default 10 GB repository allowance.
+      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
+      # main caches that every PR can restore. Keep PRs restore-only.
       - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.event_name != 'pull_request' }}
 
       - uses: taiki-e/install-action@v2
         with:
@@ -132,7 +137,12 @@ jobs:
         with:
           targets: ${{ matrix.arch }}
 
+      # Cache usage approaches GitHub's default 10 GB repository allowance.
+      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
+      # main caches that every PR can restore. Keep PRs restore-only.
       - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.event_name != 'pull_request' }}
 
       - uses: taiki-e/install-action@cargo-hack
 
@@ -203,7 +213,12 @@ jobs:
       # Installed *after* nightly so it is the default.
       - uses: dtolnay/rust-toolchain@stable
 
+      # Cache usage approaches GitHub's default 10 GB repository allowance.
+      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
+      # main caches that every PR can restore. Keep PRs restore-only.
       - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.event_name != 'pull_request' }}
 
       - uses: taiki-e/install-action@v2
         with:
@@ -352,14 +367,24 @@ jobs:
         with:
           targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
 
+      # Cache usage approaches GitHub's default 10 GB repository allowance.
+      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
+      # main caches that every PR can restore. Keep PRs restore-only.
       - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.event_name != 'pull_request' }}
 
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-binstall,cargo-hack
       - run: cargo binstall --force bpf-linker
 
-      - uses: actions/cache@v6
+      - name: Restore VM integration test cache
+        id: vm-cache
+        # `local` is the native arm64 test job; it does not run a VM or
+        # populate the VM cache directory.
+        if: matrix.vm-kernels != 'local'
+        uses: actions/cache/restore@v6
         with:
           path: test/.tmp
           key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v2-${{ matrix.vm-kernels }}
@@ -378,6 +403,20 @@ jobs:
 
           cargo xtask integration-test vm --cache-dir test/.tmp \
             --kernel-arch ${{ matrix.vm-kernels }}
+
+      - name: Save VM integration test cache
+        # By default, caches expire after seven days without access.
+        # An exact hit refreshes that period, so the immutable entry need not
+        # be uploaded again.
+        # The native arm64 `local` job produces no VM cache artifacts to save.
+        if: >-
+          matrix.vm-kernels != 'local' &&
+          steps.vm-cache.outputs.cache-hit != 'true' &&
+          github.event_name != 'pull_request'
+        uses: actions/cache/save@v6
+        with:
+          path: test/.tmp
+          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v2-${{ matrix.vm-kernels }}
 
   check:
     if: always()
