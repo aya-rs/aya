@@ -7840,6 +7840,7 @@ pub macro aya::include_bytes_aligned!
 pub enum aya::EbpfError
 pub aya::EbpfError::BtfError(aya_obj::btf::btf::BtfError)
 pub aya::EbpfError::BtfRelocationError(aya_obj::btf::relocation::BtfRelocationError)
+pub aya::EbpfError::BtfSourceError(core::io::error::Error)
 pub aya::EbpfError::FileError
 pub aya::EbpfError::FileError::error: core::io::error::Error
 pub aya::EbpfError::FileError::path: std::path::PathBuf
@@ -7905,6 +7906,7 @@ pub struct aya::EbpfLoader<'a>
 impl<'a> aya::EbpfLoader<'a>
 pub const fn aya::EbpfLoader<'a>::allow_unsupported_maps(&mut self) -> &mut Self
 pub fn aya::EbpfLoader<'a>::btf(&mut self, &'a aya_obj::btf::btf::Btf) -> &mut Self
+pub fn aya::EbpfLoader<'a>::btf_source<F, D>(&mut self, F) -> &mut Self where F: core::ops::function::Fn() -> core::io::error::Result<D> + core::marker::Send + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe + core::panic::unwind_safe::UnwindSafe + 'static, D: core::convert::AsRef<[u8]>
 pub fn aya::EbpfLoader<'a>::default_map_pin_directory<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> &mut Self
 pub fn aya::EbpfLoader<'a>::extension(&mut self, &'a str) -> &mut Self
 pub fn aya::EbpfLoader<'a>::load(&mut self, &[u8]) -> core::result::Result<aya::Ebpf, aya::EbpfError>
