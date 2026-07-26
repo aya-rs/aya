@@ -113,7 +113,7 @@ pub fn features() -> &'static Features {
 /// ```
 #[derive(Debug)]
 pub struct EbpfLoader<'a> {
-    btf: Option<Cow<'a, Btf>>,
+    btf: TargetBtf<'a>,
     default_map_pin_directory: Option<PathBuf>,
     globals: HashMap<&'a str, (&'a [u8], bool)>,
     // Max entries overrides the max_entries field of the map that matches the provided name
@@ -126,6 +126,36 @@ pub struct EbpfLoader<'a> {
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
     allow_unsupported_maps: bool,
+}
+
+#[derive(Debug)]
+enum TargetBtf<'a> {
+    System,
+    Parsed(Cow<'a, Btf>),
+    Source(BtfSource),
+}
+
+type BtfParser = dyn Fn(&[u8]) -> Result<Btf, BtfError>;
+// Use `Fn` instead of `FnOnce`: when target BTF loading fails for an object with
+// only weak typed ksyms, loading continues, so a reused loader must be able to
+// retry the source.
+type BtfSourceFn = dyn Fn(&BtfParser) -> Result<Btf, EbpfError>
+    // Preserve `EbpfLoader`'s existing auto traits.
+    + Send
+    + Sync
+    + std::panic::RefUnwindSafe
+    + std::panic::UnwindSafe
+    // Keep captured state independent of `EbpfLoader`'s borrowed configuration.
+    + 'static;
+
+struct BtfSource {
+    read: Box<BtfSourceFn>,
+}
+
+impl std::fmt::Debug for BtfSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BtfSource").finish_non_exhaustive()
+    }
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -157,7 +187,7 @@ impl<'a> EbpfLoader<'a> {
     /// Creates a new loader instance.
     pub fn new() -> Self {
         Self {
-            btf: None,
+            btf: TargetBtf::System,
             default_map_pin_directory: None,
             globals: HashMap::new(),
             max_entries: HashMap::new(),
@@ -173,6 +203,10 @@ impl<'a> EbpfLoader<'a> {
     /// By default, the loader reads target `BTF` using [`Btf::from_sys_fs`] when
     /// the object contains CO-RE relocations or typed kernel symbols. Use this
     /// method to load `BTF` from a custom location.
+    ///
+    /// The parsed `BTF` can be shared across multiple loaders, avoiding repeated
+    /// parsing. To lazily read and parse target `BTF`, use
+    /// [`EbpfLoader::btf_source`].
     ///
     /// # Example
     ///
@@ -190,7 +224,50 @@ impl<'a> EbpfLoader<'a> {
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn btf(&mut self, btf: &'a Btf) -> &mut Self {
-        self.btf = Some(Cow::Borrowed(btf));
+        self.btf = TargetBtf::Parsed(Cow::Borrowed(btf));
+        self
+    }
+
+    /// Sets a factory for lazily reading the target [BTF](Btf) info.
+    ///
+    /// The factory is called only when the object contains CO-RE relocations or
+    /// typed kernel symbols. Once parsed, the target `BTF` is cached and reused
+    /// by this loader. To share one parsed value across multiple loaders, use
+    /// [`EbpfLoader::btf`] instead.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use std::fs::File;
+    ///
+    /// use aya::EbpfLoader;
+    ///
+    /// let bpf = EbpfLoader::new()
+    ///     .btf_source(|| File::open("/custom_btf_file"))
+    ///     .load_file("file.o")?;
+    ///
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    pub fn btf_source<F, R>(&mut self, source: F) -> &mut Self
+    where
+        F: Fn() -> io::Result<R>
+            + Send
+            + Sync
+            + std::panic::RefUnwindSafe
+            + std::panic::UnwindSafe
+            + 'static,
+        R: io::Read,
+    {
+        self.btf = TargetBtf::Source(BtfSource {
+            read: Box::new(move |parse| {
+                let mut reader = source().map_err(EbpfError::BtfSourceError)?;
+                let mut data = Vec::new();
+                reader
+                    .read_to_end(&mut data)
+                    .map_err(EbpfError::BtfSourceError)?;
+                parse(&data).map_err(EbpfError::BtfError)
+            }),
+        });
         self
     }
 
@@ -493,29 +570,47 @@ impl<'a> EbpfLoader<'a> {
             None
         };
 
-        if btf.is_none() && (obj.has_btf_relocations() || obj.has_typed_ksyms()) {
-            match Btf::from_sys_fs() {
-                Ok(kernel_btf) => *btf = Some(Cow::Owned(kernel_btf)),
-                Err(err) => {
-                    // CO-RE relocations and strong typed ksyms cannot be resolved without kernel
-                    // BTF, so preserve the original loading error.
-                    if obj.has_btf_relocations() || obj.has_strong_typed_ksyms() {
-                        return Err(err.into());
+        if obj.has_btf_relocations() || obj.has_typed_ksyms() {
+            let endianness = obj.endianness;
+            let target_btf: Result<Cow<'_, Btf>, EbpfError> = match btf {
+                TargetBtf::System => Btf::from_sys_fs().map(Cow::Owned).map_err(EbpfError::from),
+                TargetBtf::Parsed(btf) => Ok(Cow::Borrowed(btf)),
+                TargetBtf::Source(BtfSource { read }) => {
+                    read(&move |data| Btf::parse(data, endianness)).map(Cow::Owned)
+                }
+            };
+
+            match target_btf {
+                Ok(target_btf) => {
+                    let result = obj
+                        .relocate_btf(&target_btf)
+                        .map_err(EbpfError::from)
+                        .and_then(|()| {
+                            obj.resolve_externs(Some(&target_btf))
+                                .map_err(EbpfError::from)
+                        });
+
+                    if let Cow::Owned(target_btf) = target_btf {
+                        *btf = TargetBtf::Parsed(Cow::Owned(target_btf));
                     }
 
-                    // Unresolved weak typed ksyms are allowed and handled during extern
-                    // relocation.
-                    warn!("kernel BTF is unavailable; weak typed ksyms will be unresolved: {err}")
+                    result?;
+                }
+                Err(err) => {
+                    // CO-RE relocations and strong typed ksyms cannot be resolved without target
+                    // BTF, so preserve the original loading error.
+                    if obj.has_btf_relocations() || obj.has_strong_typed_ksyms() {
+                        return Err(err);
+                    }
+
+                    // Unresolved weak typed ksyms are allowed and handled during extern relocation.
+                    warn!("target BTF is unavailable; weak typed ksyms will be unresolved: {err}");
+                    obj.resolve_externs(None)?;
                 }
             }
+        } else {
+            obj.resolve_externs(None)?;
         }
-
-        let btf = btf.as_deref();
-        if let Some(btf) = btf {
-            obj.relocate_btf(btf)?;
-        }
-
-        obj.resolve_externs(btf)?;
 
         const fn is_map_of_maps(map_type: bpf_map_type) -> bool {
             matches!(
@@ -1243,6 +1338,10 @@ pub enum EbpfError {
         /// The original [`io::Error`]
         error: io::Error,
     },
+
+    /// Error reading target BTF
+    #[error("error reading BTF source")]
+    BtfSourceError(#[source] io::Error),
 
     /// Unexpected pinning type
     #[error("unexpected pinning type {name}")]
