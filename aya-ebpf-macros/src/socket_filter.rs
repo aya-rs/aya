@@ -1,5 +1,4 @@
 use proc_macro2::TokenStream;
-use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
 use syn::{ItemFn, spanned::Spanned as _};
 
@@ -8,9 +7,9 @@ pub(crate) struct SocketFilter {
 }
 
 impl SocketFilter {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self, Diagnostic> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> syn::Result<Self> {
         if !attrs.is_empty() {
-            return Err(attrs.span().error("unexpected attribute"));
+            return Err(syn::Error::new(attrs.span(), "unexpected attribute"));
         }
         let item = syn::parse2(item)?;
         Ok(Self { item })
@@ -21,6 +20,7 @@ impl SocketFilter {
         let ItemFn {
             attrs: _,
             vis,
+            modifiers: _,
             sig,
             block: _,
         } = item;

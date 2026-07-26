@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
 use syn::{Ident, ItemFn};
 
@@ -11,14 +10,14 @@ pub(crate) struct CgroupSkb {
 }
 
 impl CgroupSkb {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self, Diagnostic> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> syn::Result<Self> {
         let item: ItemFn = syn::parse2(item)?;
         let attach_type = if attrs.is_empty() {
             None
         } else {
             let ident: Ident = syn::parse2(attrs)?;
             if ident != "ingress" && ident != "egress" {
-                return Err(ident.span().error("invalid attach type"));
+                return Err(syn::Error::new(ident.span(), "invalid attach type"));
             }
             Some(ident)
         };
@@ -30,6 +29,7 @@ impl CgroupSkb {
         let ItemFn {
             attrs: _,
             vis,
+            modifiers: _,
             sig,
             block: _,
         } = item;

@@ -1,8 +1,8 @@
 use proc_macro2::TokenStream;
 use quote::{TokenStreamExt as _, quote};
 use syn::{
-    AngleBracketedGenericArguments, BareFnArg, ForeignItem, ForeignItemStatic, GenericArgument,
-    Ident, Item, Path, PathArguments, ReturnType, Token, Type, TypeBareFn, TypePath,
+    AngleBracketedGenericArguments, ForeignItem, ForeignItemStatic, GenericArgument, Ident, Item,
+    NamedArg, Path, PathArguments, ReturnType, Token, Type, TypeFnPtr, TypePath,
     punctuated::Punctuated,
 };
 
@@ -39,7 +39,7 @@ pub(crate) fn helper_from_item(item: &ForeignItemStatic, call_index: usize) -> O
         if let PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. }) = generics
         {
             if let Some(GenericArgument::Type(ty)) = args.first() {
-                if let Type::BareFn(TypeBareFn { inputs, output, .. }) = ty {
+                if let Type::FnPtr(TypeFnPtr { inputs, output, .. }) = ty {
                     return Some(Helper {
                         ident: &item.ident,
                         ty,
@@ -77,7 +77,7 @@ pub(crate) fn expand_helper(helper: &Helper<'_>) -> TokenStream {
     } = helper;
 
     let args = inputs.iter().map(
-        |BareFnArg {
+        |NamedArg {
              attrs: _,
              name,
              ty: _,
@@ -100,7 +100,7 @@ pub(crate) fn expand_helper(helper: &Helper<'_>) -> TokenStream {
 pub(crate) struct Helper<'a> {
     ident: &'a Ident,
     ty: &'a Type,
-    inputs: &'a Punctuated<BareFnArg, Token![,]>,
+    inputs: &'a Punctuated<NamedArg, Token![,]>,
     output: &'a ReturnType,
     call_index: usize,
 }

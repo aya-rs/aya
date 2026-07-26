@@ -91,7 +91,6 @@ num_enum = { version = "0.7", default-features = false }
 object = { version = "0.39", default-features = false }
 once_cell = { version = "1.20.1", default-features = false }
 proc-macro2 = { version = "1", default-features = false }
-proc-macro2-diagnostics = { version = "0.10.1", default-features = false }
 procfs = { version = "0.18.0", default-features = false }
 public-api = { version = "0.52.0", default-features = false }
 quote = { version = "1", default-features = false }
@@ -103,7 +102,7 @@ rustdoc-json = { version = "0.9.0", default-features = false }
 rustup-toolchain = { version = "0.1.5", default-features = false }
 rustversion = { version = "1.0.0", default-features = false }
 scopeguard = { version = "1.2.0", default-features = false }
-syn = { version = "2", default-features = false }
+syn = { version = "3", default-features = false }
 tar = { version = "0.4.44", default-features = false }
 tempfile = { version = "3", default-features = false }
 test-log = { version = "0.2.13", default-features = false }
