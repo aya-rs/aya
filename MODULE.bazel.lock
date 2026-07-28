@@ -292,6 +292,52 @@
         }
       }
     },
+    "@@linux.bzl+//:extensions.bzl%linux_images": {
+      "general": {
+        "bzlTransitiveDigest": "uavzYvzMompVjfsWqcLsEAXWUQgugbXy+6YO+fXYBkA=",
+        "usagesDigest": "ndu7PCaHoNa+kqjx9C+0FfjiHP3AmgWB+AQKeNgECp0=",
+        "recordedInputs": [
+          "REPO_MAPPING:,aya_linux_6_18_2 +linux_source_repository+aya_linux_6_18_2",
+          "REPO_MAPPING:,llvm llvm+"
+        ],
+        "generatedRepoSpecs": {
+          "aya_aarch64_kernel__linux_graph": {
+            "repoRuleId": "@@linux.bzl+//internal:linux_image_repository.bzl%linux_image",
+            "attributes": {
+              "config": "@@//test/kernel:aya_aarch64.config",
+              "config_mode": "allnoconfig",
+              "overlays": {},
+              "platform": "@@llvm+//platforms:linux_arm64",
+              "source": "@@+linux_source_repository+aya_linux_6_18_2//:Kconfig"
+            }
+          },
+          "aya_aarch64_kernel": {
+            "repoRuleId": "@@linux.bzl+//internal:linux_image_extension.bzl%_linux_image_facade_repository",
+            "attributes": {
+              "graph_repo": "aya_aarch64_kernel__linux_graph",
+              "variants": []
+            }
+          },
+          "aya_x86_64_kernel__linux_graph": {
+            "repoRuleId": "@@linux.bzl+//internal:linux_image_repository.bzl%linux_image",
+            "attributes": {
+              "config": "@@//test/kernel:aya_x86_64.config",
+              "config_mode": "allnoconfig",
+              "overlays": {},
+              "platform": "@@llvm+//platforms:linux_x86_64",
+              "source": "@@+linux_source_repository+aya_linux_6_18_2//:Kconfig"
+            }
+          },
+          "aya_x86_64_kernel": {
+            "repoRuleId": "@@linux.bzl+//internal:linux_image_extension.bzl%_linux_image_facade_repository",
+            "attributes": {
+              "graph_repo": "aya_x86_64_kernel__linux_graph",
+              "variants": []
+            }
+          }
+        }
+      }
+    },
     "@@protobuf+//python/dist:system_python.bzl%system_python_extension": {
       "general": {
         "bzlTransitiveDigest": "pmsA+awieucfllLc2n7k8xEoPp0i5LF9Hw6mGX0cqSQ=",

@@ -33,12 +33,12 @@ bazel_lib_toolchains = use_extension("@bazel_lib//lib:extensions.bzl", "toolchai
 bazel_lib_toolchains.copy_to_directory()
 use_repo(bazel_lib_toolchains, "copy_to_directory_toolchains")
 
-# Pin the unpublished linux.bzl repository-rule implementation.
+# Pin linux.bzl at the lazy shared-graph implementation.
 archive_override(
     module_name = "linux.bzl",
-    integrity = "sha256-Rs/XlfESl+NT7Pur+GcaWxraIrNR7itSfDmAkekLEGs=",
-    strip_prefix = "linux.bzl-52840012f0d17ae65ecbb0697ec895b44b077080",
-    urls = ["https://github.com/hermeticbuild/linux.bzl/archive/52840012f0d17ae65ecbb0697ec895b44b077080.tar.gz"],
+    integrity = "sha256-SXjVIi0utWaKoIRF4PAO4oSQqlIK3c6+VBKhQieQfBY=",
+    strip_prefix = "linux.bzl-d703b03d8409cc6c5dd01e7d2843806d0fd27aec",
+    urls = ["https://github.com/hermeticbuild/linux.bzl/archive/d703b03d8409cc6c5dd01e7d2843806d0fd27aec.tar.gz"],
 )
 
 # @rules_rs creates @rules_rust here; generated BUILD files and .bazelrc labels
@@ -138,23 +138,23 @@ linux_source_repository(
     version = "6.18.2",
 )
 
-linux_image = use_repo_rule(
-    "@linux.bzl",
-    "linux_image",
-)
-
-linux_image(
+linux_images = use_extension("@linux.bzl//:extensions.bzl", "linux_images")
+linux_images.image(
     name = "aya_aarch64_kernel",
     config = "//test/kernel:aya_aarch64.config",
     config_mode = "allnoconfig",
     platform = "@llvm//platforms:linux_arm64",
     source = "@aya_linux_6_18_2//:Kconfig",
 )
-
-linux_image(
+linux_images.image(
     name = "aya_x86_64_kernel",
     config = "//test/kernel:aya_x86_64.config",
     config_mode = "allnoconfig",
     platform = "@llvm//platforms:linux_x86_64",
     source = "@aya_linux_6_18_2//:Kconfig",
+)
+use_repo(
+    linux_images,
+    "aya_aarch64_kernel",
+    "aya_x86_64_kernel",
 )
