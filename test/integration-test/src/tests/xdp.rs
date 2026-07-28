@@ -227,7 +227,8 @@ fn cpumap_chain(#[case] cpus_name: &str, #[case] prog_name: &str) {
     // Generic devices did not support cpumap XDP programs until 5.15.
     //
     // See https://github.com/torvalds/linux/commit/11941f8a85362f612df61f4aaab0e41b64d2111d.
-    if KernelVersion::current().unwrap() < KernelVersion::new(5, 15, 0) {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 15, 0) {
         assert_matches!(result, Err(ProgramError::XdpError(XdpError::NetlinkError(err))) => {
             assert_eq!(err.raw_os_error(), Some(libc::EINVAL))
         });
@@ -237,6 +238,19 @@ fn cpumap_chain(#[case] cpus_name: &str, #[case] prog_name: &str) {
         return;
     }
     let _unused: XdpLinkId = result.unwrap();
+
+    // The generic cpumap attach above succeeds on arm64 5.15, but that kernel
+    // does not deliver cpumap-redirected packets back through the stack, so the
+    // HITS counters below never fire (the recv would then block until timeout).
+    // Delivery is reliable on arm64 from 6.1 onward and on all other
+    // architectures, so exercise the attach but skip the packet round-trip on
+    // the arm64 5.15.x series only.
+    if cfg!(target_arch = "aarch64") && kernel_version < KernelVersion::new(5, 16, 0) {
+        eprintln!(
+            "skipping cpumap redirect delivery check on kernel {kernel_version:?} - unreliable on arm64 5.15"
+        );
+        return;
+    }
 
     const PAYLOAD: &str = "hello cpumap";
 
