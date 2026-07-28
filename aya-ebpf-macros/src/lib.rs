@@ -79,7 +79,7 @@ pub fn map(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn kprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match KProbe::parse(KProbeKind::KProbe, attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -87,7 +87,7 @@ pub fn kprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn kretprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match KProbe::parse(KProbeKind::KRetProbe, attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -96,9 +96,9 @@ pub fn uprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match UProbe::parse(UProbeKind::UProbe, attrs.into(), item.into()) {
         Ok(prog) => match prog.expand() {
             Ok(tokens) => tokens,
-            Err(err) => err.emit_as_expr_tokens(),
+            Err(err) => err.into_compile_error(),
         },
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -107,9 +107,9 @@ pub fn uretprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match UProbe::parse(UProbeKind::URetProbe, attrs.into(), item.into()) {
         Ok(prog) => match prog.expand() {
             Ok(tokens) => tokens,
-            Err(err) => err.emit_as_expr_tokens(),
+            Err(err) => err.into_compile_error(),
         },
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -117,7 +117,7 @@ pub fn uretprobe(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn sock_ops(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SockOps::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -126,7 +126,7 @@ pub fn sock_ops(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn sk_msg(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SkMsg::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -157,7 +157,7 @@ pub fn sk_msg(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn xdp(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match Xdp::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -165,7 +165,7 @@ pub fn xdp(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn classifier(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SchedClassifier::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -174,7 +174,7 @@ pub fn classifier(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn cgroup_sysctl(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match CgroupSysctl::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -182,7 +182,7 @@ pub fn cgroup_sysctl(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn cgroup_sockopt(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match CgroupSockopt::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -190,7 +190,7 @@ pub fn cgroup_sockopt(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn cgroup_skb(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match CgroupSkb::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -230,7 +230,7 @@ pub fn cgroup_skb(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn cgroup_sock_addr(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match CgroupSockAddr::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -238,7 +238,7 @@ pub fn cgroup_sock_addr(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn cgroup_sock(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match CgroupSock::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -247,7 +247,7 @@ pub fn cgroup_sock(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match TracePoint::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -256,7 +256,7 @@ pub fn tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn perf_event(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match PerfEvent::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -487,7 +487,7 @@ pub fn stream_verdict(attrs: TokenStream, item: TokenStream) -> TokenStream {
 fn sk_skb(kind: SkSkbKind, attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SkSkb::parse(kind, attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -513,7 +513,7 @@ fn sk_skb(kind: SkSkbKind, attrs: TokenStream, item: TokenStream) -> TokenStream
 pub fn socket_filter(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SocketFilter::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -645,7 +645,7 @@ pub fn fexit(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn flow_dissector(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match FlowDissector::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -672,7 +672,7 @@ pub fn flow_dissector(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SkLookup::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -764,7 +764,7 @@ pub fn sk_lookup(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn sk_reuseport(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match SkReuseport::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }
@@ -794,7 +794,7 @@ pub fn sk_reuseport(attrs: TokenStream, item: TokenStream) -> TokenStream {
 pub fn cgroup_device(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match CgroupDevice::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
-        Err(err) => err.emit_as_expr_tokens(),
+        Err(err) => err.into_compile_error(),
     }
     .into()
 }

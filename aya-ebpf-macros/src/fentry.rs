@@ -35,6 +35,7 @@ impl FEntry {
         let ItemFn {
             attrs: _,
             vis,
+            modifiers: _,
             sig,
             block: _,
         } = item;

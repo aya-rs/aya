@@ -14,7 +14,7 @@ use std::{
 use anyhow::{Context as _, anyhow};
 use clap::Parser;
 use object::{Object, ObjectSection, Section};
-use test_distro::{read_to_end, resolve_modules_dir};
+use test_distro::{Compression, read_to_end, resolve_modules_dir};
 use walkdir::WalkDir;
 
 #[derive(Parser)]
@@ -53,10 +53,10 @@ fn main() -> anyhow::Result<()> {
             .to_str()
             .ok_or_else(|| anyhow!("{} is not valid utf-8", path.display()))?;
 
-        let (module_name, compressed) = if let Some(module_name) = module_name.strip_suffix(".xz") {
-            (module_name, true)
-        } else {
-            (module_name, false)
+        let (module_name, compression) = match module_name.rsplit_once('.') {
+            Some((module_name, "xz")) => (module_name, Compression::Xz),
+            Some((module_name, "zst")) => (module_name, Compression::Zstd),
+            _ => (module_name, Compression::None),
         };
 
         let module_name = if let Some(module_name) = module_name.strip_suffix(".ko") {
@@ -66,7 +66,7 @@ fn main() -> anyhow::Result<()> {
             continue;
         };
 
-        let contents = read_to_end(path, compressed)
+        let contents = read_to_end(path, compression)
             .with_context(|| format!("read_to_end({})", path.display()))?;
 
         read_aliases_from_module(&contents, module_name, &mut output)

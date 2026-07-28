@@ -18,7 +18,12 @@ aya-log-common = { path = "../aya-log-common", version = "^0.2.0", default-featu
 aya-log-parser = { path = "../aya-log-parser", version = "^0.2.0", default-features = false }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
-syn = { workspace = true }
+syn = { workspace = true, features = [
+    "derive",
+    "parsing",
+    "printing",
+    "proc-macro",
+] }
 
 [lib]
 proc-macro = true

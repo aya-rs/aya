@@ -1,5 +1,4 @@
 use proc_macro2::TokenStream;
-use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
 use syn::{Ident, ItemFn, spanned::Spanned as _};
 
@@ -24,7 +23,7 @@ pub(crate) struct SkReuseport {
 }
 
 impl SkReuseport {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self, Diagnostic> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> syn::Result<Self> {
         let section = if attrs.is_empty() {
             SkReuseportSection::Select
         } else {
@@ -32,7 +31,7 @@ impl SkReuseport {
             if attr == "migrate" {
                 SkReuseportSection::SelectOrMigrate
             } else {
-                return Err(attrs.span().error("unexpected attribute"));
+                return Err(syn::Error::new(attrs.span(), "unexpected attribute"));
             }
         };
         let item = syn::parse2(item)?;
@@ -44,6 +43,7 @@ impl SkReuseport {
         let ItemFn {
             attrs: _,
             vis,
+            modifiers: _,
             sig,
             block: _,
         } = item;

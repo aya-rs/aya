@@ -1,5 +1,4 @@
 use proc_macro2::TokenStream;
-use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
 use syn::{ItemFn, spanned::Spanned as _};
 
@@ -18,7 +17,7 @@ pub(crate) enum XdpMap {
 }
 
 impl Xdp {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self, Diagnostic> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> syn::Result<Self> {
         let item = syn::parse2(item)?;
         let span = attrs.span();
         let mut args: Args = syn::parse2(attrs)?;
@@ -28,9 +27,10 @@ impl Xdp {
             Some("cpumap") => Some(XdpMap::CpuMap),
             Some("devmap") => Some(XdpMap::DevMap),
             Some(name) => {
-                return Err(span.error(format!(
-                    "Invalid value. Expected 'cpumap' or 'devmap', found '{name}'"
-                )));
+                return Err(syn::Error::new(
+                    span,
+                    format!("Invalid value. Expected 'cpumap' or 'devmap', found '{name}'"),
+                ));
             }
             None => None,
         };
@@ -44,6 +44,7 @@ impl Xdp {
         let ItemFn {
             attrs: _,
             vis,
+            modifiers: _,
             sig,
             block: _,
         } = item;

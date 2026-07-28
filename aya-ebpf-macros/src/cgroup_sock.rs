@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
 use syn::{Ident, ItemFn, spanned::Spanned as _};
 
@@ -11,9 +10,9 @@ pub(crate) struct CgroupSock {
 }
 
 impl CgroupSock {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self, Diagnostic> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> syn::Result<Self> {
         if attrs.is_empty() {
-            return Err(attrs.span().error("missing attach type"));
+            return Err(syn::Error::new(attrs.span(), "missing attach type"));
         }
         let item: ItemFn = syn::parse2(item)?;
         let attach_type: Ident = syn::parse2(attrs)?;
@@ -22,7 +21,7 @@ impl CgroupSock {
             && attach_type != "sock_create"
             && attach_type != "sock_release"
         {
-            return Err(attach_type.span().error("invalid attach type"));
+            return Err(syn::Error::new(attach_type.span(), "invalid attach type"));
         }
         Ok(Self { item, attach_type })
     }
@@ -32,6 +31,7 @@ impl CgroupSock {
         let ItemFn {
             attrs: _,
             vis,
+            modifiers: _,
             sig,
             block: _,
         } = item;

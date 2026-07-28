@@ -27,8 +27,10 @@ public-api = { workspace = true }
 quote = { workspace = true }
 rustdoc-json = { workspace = true }
 rustup-toolchain = { workspace = true }
-syn = { workspace = true }
+syn = { workspace = true, features = ["full", "parsing", "printing"] }
 tar = { workspace = true }
 tempfile = { workspace = true }
+ureq = { workspace = true }
 walkdir = { workspace = true }
 xz2 = { workspace = true }
+zstd = { workspace = true }
