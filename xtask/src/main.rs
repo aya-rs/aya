@@ -1,10 +1,7 @@
 mod clippy;
 mod codegen;
 mod docs;
-mod http;
 mod public_api;
-mod run;
-mod ubuntu_mainline;
 
 use std::process::{Command, Output};
 
@@ -24,7 +21,7 @@ enum Subcommand {
     Clippy(clippy::Options),
     Codegen(codegen::Options),
     Docs,
-    IntegrationTest(run::Options),
+    IntegrationTest(aya_tool::integration_test::Options),
     PublicApi(public_api::Options),
 }
 
@@ -67,7 +64,7 @@ fn main() -> Result<()> {
         Subcommand::Clippy(opts) => clippy::run(opts),
         Subcommand::Codegen(opts) => codegen::codegen(opts, libbpf_dir),
         Subcommand::Docs => docs::docs(metadata),
-        Subcommand::IntegrationTest(opts) => run::run(opts),
+        Subcommand::IntegrationTest(opts) => aya_tool::integration_test::run(opts),
         Subcommand::PublicApi(opts) => public_api::public_api(opts, metadata),
     }
 }

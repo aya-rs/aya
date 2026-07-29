@@ -25,26 +25,32 @@ enum Command {
         #[clap(last = true, action)]
         bindgen_args: Vec<String>,
     },
+    /// Run integration tests
+    #[clap(name = "integration-test")]
+    IntegrationTest(aya_tool::integration_test::Options),
 }
 
 fn main() -> Result<(), anyhow::Error> {
     use std::io::Write as _;
 
     let Options { command } = Parser::parse();
-    let bindings = match command {
+    match command {
         Command::Generate {
             btf,
             header,
             names,
             bindgen_args,
         } => {
-            if let Some(header) = header {
+            let bindings = if let Some(header) = header {
                 generate(InputFile::Header(header), &names, &bindgen_args)
             } else {
                 generate(InputFile::Btf(btf), &names, &bindgen_args)
-            }
+            }?;
+            std::io::stdout().write_all(bindings.as_bytes())?;
         }
-    }?;
-    std::io::stdout().write_all(bindings.as_bytes())?;
+        Command::IntegrationTest(opts) => {
+            aya_tool::integration_test::run(opts)?;
+        }
+    }
     Ok(())
 }
