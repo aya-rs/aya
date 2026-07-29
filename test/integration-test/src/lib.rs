@@ -90,6 +90,7 @@ bpf_file!(
     XSK_MAP => "xsk_map",
     INODE_STORAGE => "inode_storage",
     CGRP_STORAGE => "cgrp_storage",
+    USER_RING_BUF => "user_ring_buf",
 );
 
 #[cfg(test)]
