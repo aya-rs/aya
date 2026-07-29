@@ -21,7 +21,7 @@ use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 use nix::sys::stat::{Mode, SFlag};
 use walkdir::WalkDir;
-use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors, libbpf_sys_env};
+use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors};
 
 use crate::{
     http::HttpClient,
@@ -330,7 +330,7 @@ impl<W: Write> CpioArchiveBuilder<W> {
 }
 
 /// Build and run the project.
-pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
+pub(crate) fn run(opts: Options) -> Result<()> {
     let Options {
         environment,
         package,
@@ -349,7 +349,6 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 let binaries = build(target, |cmd| {
                     if package == INTEGRATION_TEST_PACKAGE {
                         cmd.env(AYA_BUILD_INTEGRATION_BPF, "true");
-                        libbpf_sys_env(workspace_root, cmd);
                     }
                     cmd.envs(envs.iter().copied()).args([
                         "--package",

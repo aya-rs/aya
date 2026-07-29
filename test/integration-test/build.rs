@@ -31,6 +31,65 @@ use xtask::{AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR, exec, install_libbpf_headers_
 fn main() -> Result<()> {
     println!("cargo:rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
 
+    // libbpf-sys cross-compilation workarounds:
+    // - ac_cv_search_* variables skip autoconf checks
+    // - linux-libc-dev provides kernel UAPI headers (installed in CI)
+    // - CFLAGS adds ci/headers for elfutils
+    //
+    // See https://github.com/libbpf/libbpf-sys/issues/137.
+    for name in [
+        "ac_cv_search_argp_parse",
+        "ac_cv_search__obstack_free",
+        "ac_cv_search_gzdirect",
+        "ac_cv_search_fts_close",
+    ] {
+        println!("cargo:rustc-env={name}=none required");
+    }
+
+    const CFLAGS: &str = "CFLAGS";
+    {
+        let headers = env::var("CARGO_MANIFEST_DIR")
+            .map(PathBuf::from)
+            .unwrap()
+            .join("../../../ci/headers");
+        let mut cflags = OsString::new();
+        cflags.push("-I");
+        cflags.push(&headers);
+        if let Some(existing) = env::var_os(CFLAGS) {
+            cflags.push(" ");
+            cflags.push(existing);
+        }
+        println!("cargo:rustc-env={CFLAGS}={}", cflags.to_string_lossy());
+    }
+
+    if cfg!(target_os = "macos") {
+        // Add make wrapper that overrides AR/RANLIB for zlib cross build.
+        const PATH: &str = "PATH";
+        {
+            let bin_dir = env::var("CARGO_MANIFEST_DIR")
+                .map(PathBuf::from)
+                .unwrap()
+                .join("../../../ci/bin");
+            let mut path = OsString::new();
+            path.push(&bin_dir);
+            if let Some(existing) = env::var_os(PATH) {
+                path.push(":");
+                path.push(existing);
+            }
+            println!("cargo:rustc-env={PATH}={}", path.to_string_lossy());
+        }
+
+        for (key, value) in [
+            ("AR_x86_64_unknown_linux_musl", "x86_64-linux-musl-ar"),
+            (
+                "RANLIB_x86_64_unknown_linux_musl",
+                "x86_64-linux-musl-ranlib",
+            ),
+        ] {
+            println!("cargo:rustc-env={key}={value}");
+        }
+    }
+
     // TODO(https://github.com/rust-lang/cargo/issues/4001): generalize this and move it to
     // aya-build if we can determine that we're in a check build.
     let build_integration_bpf = env::var_os(AYA_BUILD_INTEGRATION_BPF)
