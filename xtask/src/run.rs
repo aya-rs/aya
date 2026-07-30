@@ -6,18 +6,20 @@ use std::{
     env,
     ffi::{OsStr, OsString},
     fmt::{Arguments, Write as _},
-    fs::{self, OpenOptions},
-    io::{BufRead as _, BufReader, Write as _},
-    ops::Deref as _,
+    fs::{self, File, OpenOptions},
+    io::{BufRead as _, BufReader, Write},
+    os::unix::ffi::OsStrExt as _,
     path::{Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
     sync::{Arc, Mutex},
     thread,
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use anyhow::{Context as _, Result, anyhow, bail};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
+use nix::sys::stat::{Mode, SFlag};
 use walkdir::WalkDir;
 use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors, libbpf_sys_env};
 
@@ -27,14 +29,6 @@ use crate::{
         KernelArchitecture, KernelPackage, download_ubuntu_mainline_kernel_packages,
     },
 };
-
-const GEN_INIT_CPIO_PATCH: &str = include_str!("../patches/gen_init_cpio.c.macos.diff");
-// We build gen_init_cpio as a host-side tool for creating the VM
-// initramfs. Pin the source file because we apply GEN_INIT_CPIO_PATCH
-// below and need stable patch input.
-// https://github.com/torvalds/linux/blob/v6.18/usr/gen_init_cpio.c
-const GEN_INIT_CPIO_VERSION: &str = "v6.18";
-const GEN_INIT_CPIO_PATH: &str = "usr/gen_init_cpio.c";
 
 struct GitHubLogGroup;
 
@@ -149,6 +143,192 @@ where
     Ok(executables)
 }
 
+/// Magic bytes of a newc archive, according to the [initramfs buffer format][initramfs-format]
+/// specification.
+///
+/// [initramfs-format]: https://github.com/torvalds/linux/blob/v7.1/Documentation/driver-api/early-userspace/buffer-format.rst
+const NEWC_MAGIC: &[u8] = b"070701";
+
+/// Length of the newc header, according to the [initramfs buffer format][initramfs-format]
+/// specification.
+///
+/// The 13 numeric fields contain 32-bit values, but they are not stored as four-byte binary
+/// integers. Each value is encoded as exactly eight ASCII hexadecimal bytes. Eight hexadecimal
+/// digits cover the full range of a `u32`; using a `u64` could produce more than eight digits and
+/// violate the fixed-width format. The header is therefore the six-byte magic followed by 13
+/// eight-byte fields.
+///
+/// [initramfs-format]: https://github.com/torvalds/linux/blob/v7.1/Documentation/driver-api/early-userspace/buffer-format.rst
+const NEWC_HEADER_LEN: u64 =
+    // Magic bytes.
+    6 +
+        // 13 fields encoded as eight ASCII hexadecimal bytes:
+        //
+        // * inode
+        // * mode
+        // * UID
+        // * GID
+        // * nlink
+        // * mtime
+        // * file_size
+        // * dev_major
+        // * dev_minor
+        // * rdev_major
+        // * rdev_minor
+        // * name_len
+        // * checksum
+        //
+        // See `CpioArchiveBuilder::append` for details about the purpose of these fields.
+        13 * 8;
+
+struct CpioArchiveBuilder<W: Write> {
+    current_inode: u32,
+    inner: W,
+}
+
+impl<W: Write> CpioArchiveBuilder<W> {
+    const fn new(inner: W) -> Self {
+        Self {
+            current_inode: 0,
+            inner,
+        }
+    }
+
+    /// Adds a new entry to this archive. The `name` must be relative to the
+    /// root (it must not start with `/`). The `nlink` parameter sets the number
+    /// of hard links for the entry.
+    fn append(
+        &mut self,
+        name: &[u8],
+        file_type: SFlag,
+        mode: Mode,
+        mtime: u32,
+        source: Option<&Path>,
+        nlink: u32,
+    ) -> Result<()> {
+        fn write_padding<W: Write>(writer: &mut W, len: u64) -> Result<()> {
+            const ZEROES: [u8; 3] = [0; 3];
+
+            let padding = ((4 - (len % 4)) % 4) as usize;
+            writer.write_all(&ZEROES[..padding])?;
+            Ok(())
+        }
+
+        let Self {
+            current_inode,
+            inner,
+        } = self;
+
+        let name_len = name
+            .len()
+            // `namesize` attribute in cpio header needs to include the null byte.
+            .checked_add(1)
+            .ok_or_else(|| {
+                anyhow!(
+                    "adding a null byte to name `{}` with length {} overflows",
+                    OsStr::from_bytes(name).display(),
+                    name.len()
+                )
+            })?;
+        let name_len_u32 = u32::try_from(name_len)
+            .with_context(|| format!("name length {name_len} does not fit in u32"))?;
+        let file_size = if let Some(source) = &source {
+            let file_size = fs::metadata(source)
+                .with_context(|| format!("failed to get metadata for {}", source.display()))?
+                .len();
+            u32::try_from(file_size)
+                .with_context(|| format!("cpio file size {file_size} does not fit in `u32`"))?
+        } else {
+            0
+        };
+        inner.write_all(NEWC_MAGIC)?;
+        write!(inner, "{current_inode:08x}")?;
+        write!(inner, "{:08x}", file_type.bits() | mode.bits())?;
+        // UID and GID, 0 represents `root`.
+        write!(inner, "{:08x}", 0)?;
+        write!(inner, "{:08x}", 0)?;
+        write!(inner, "{nlink:08x}")?;
+        write!(inner, "{mtime:08x}")?;
+        write!(inner, "{file_size:08x}")?;
+        // dev_major/dev_minor: file device number (0 for initramfs files).
+        write!(inner, "{:08x}", 0)?;
+        write!(inner, "{:08x}", 0)?;
+        // rdev_major/rdev_minor: device node number (0 for regular files/directories).
+        write!(inner, "{:08x}", 0)?;
+        write!(inner, "{:08x}", 0)?;
+        write!(inner, "{name_len_u32:08x}")?;
+        // Checksum; actual value not required anymore in newc cpio format.
+        write!(inner, "{:08x}", 0)?;
+        inner.write_all(name)?;
+        inner.write_all(b"\0")?;
+        write_padding(inner, NEWC_HEADER_LEN + name_len as u64)?;
+        if let Some(source) = source {
+            let mut src_file = File::open(source)
+                .with_context(|| format!("failed to open {}", source.display()))?;
+            let copied = std::io::copy(&mut src_file, inner)?;
+            if copied != u64::from(file_size) {
+                bail!(
+                    "cpio size mismatch for {}: header={} bytes, copied={} bytes",
+                    source.display(),
+                    file_size,
+                    copied
+                );
+            }
+            write_padding(inner, copied)?;
+        }
+
+        *current_inode = current_inode.checked_add(1).with_context(|| {
+            format!(
+                "`CpioArchiveBuilder` does not support adding more than {} entries",
+                u32::MAX
+            )
+        })?;
+
+        Ok(())
+    }
+
+    /// Adds a directory to this archive. The `path` must be relative to the
+    /// root (it must not start with `/`).
+    fn append_dir<P>(&mut self, path: P, mode: Mode, mtime: u32) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        self.append(
+            path.as_ref().as_os_str().as_encoded_bytes(),
+            SFlag::S_IFDIR,
+            mode,
+            mtime,
+            None,
+            // Directories have two hard links - `.` and `..`.
+            2,
+        )
+    }
+
+    /// Adds a file to this archive, using the contents of `source`. The `path`
+    /// must be relative against the root (it must not start from `/`).
+    fn append_file<P, S>(&mut self, path: P, source: S, mode: Mode, mtime: u32) -> Result<()>
+    where
+        P: AsRef<Path>,
+        S: AsRef<Path>,
+    {
+        self.append(
+            path.as_ref().as_os_str().as_encoded_bytes(),
+            SFlag::S_IFREG,
+            mode,
+            mtime,
+            Some(source.as_ref()),
+            // Create the file with only one hard link.
+            1,
+        )
+    }
+
+    /// Adds a trailer entry to this archive. The trailer entry must be the
+    /// last one.
+    fn append_trailer(&mut self) -> Result<()> {
+        self.append(b"TRAILER!!!", SFlag::empty(), Mode::empty(), 0, None, 1)
+    }
+}
+
 /// Build and run the project.
 pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
     let Options {
@@ -233,14 +413,10 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
         } => {
             // The user has asked us to run the tests on a VM. This is involved; strap in.
             //
-            // We need tools to build the initramfs; we use gen_init_cpio from the Linux repository,
-            // taking care to cache it.
-            //
             // We resolve Ubuntu Mainline kernel versions for the requested
             // architecture. We then build the init program and our test
-            // binaries for that architecture, and use
-            // gen_init_cpio to build an initramfs containing the test binaries.
-            // We're ready to run the VM.
+            // binaries for that architecture, and build an initramfs containing the test
+            // binaries. We're ready to run the VM.
             //
             // We start QEMU with the provided kernel image and the initramfs we built.
             //
@@ -252,62 +428,6 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
 
             fs::create_dir_all(&cache_dir).context("failed to create cache dir")?;
             let http_client = HttpClient::new();
-
-            let gen_init_cpio = cache_dir.join("gen_init_cpio");
-            {
-                let source_dir = cache_dir
-                    .join("gen_init_cpio-source")
-                    .join(GEN_INIT_CPIO_VERSION);
-                let dest_path = source_dir.join("gen_init_cpio.c");
-                let etag_path = source_dir.join("gen_init_cpio.etag");
-                let gen_init_cpio_url = format!(
-                    "https://raw.githubusercontent.com/torvalds/linux/{GEN_INIT_CPIO_VERSION}/{GEN_INIT_CPIO_PATH}"
-                );
-                http_client.download_to_path(&gen_init_cpio_url, &dest_path, &etag_path)?;
-
-                let mut patch = Command::new("patch");
-                patch
-                    .current_dir(&source_dir)
-                    .args(["--quiet", "--forward", "--output", "-"])
-                    .stdin(Stdio::piped())
-                    .stdout(Stdio::piped());
-                let mut patch_child = patch
-                    .spawn()
-                    .with_context(|| format!("failed to spawn {patch:?}"))?;
-
-                let Child { stdin, stdout, .. } = &mut patch_child;
-                let mut stdin = stdin.take().unwrap();
-                stdin
-                    .write_all(GEN_INIT_CPIO_PATCH.as_bytes())
-                    .with_context(|| format!("failed to write to {patch:?} stdin"))?;
-                drop(stdin); // Must explicitly close to signal EOF.
-                let stdout = stdout.take().unwrap();
-
-                let mut clang = Command::new("clang");
-                clang
-                    .args(["-g", "-O2", "-x", "c", "-", "-o"])
-                    .arg(&gen_init_cpio)
-                    .stdin(stdout);
-                let clang_child = clang
-                    .spawn()
-                    .with_context(|| format!("failed to spawn {clang:?}"))?;
-
-                let output = patch_child
-                    .wait_with_output()
-                    .with_context(|| format!("failed to wait for {patch:?}"))?;
-                let Output { status, .. } = &output;
-                if status.code() != Some(0) {
-                    bail!("{patch:?} failed: {output:?}")
-                }
-
-                let output = clang_child
-                    .wait_with_output()
-                    .with_context(|| format!("failed to wait for {clang:?}"))?;
-                let Output { status, .. } = &output;
-                if status.code() != Some(0) {
-                    bail!("{clang:?} failed: {output:?}")
-                }
-            }
 
             let extraction_root = tempfile::tempdir().context("tempdir failed")?;
             let kernel_packages = download_ubuntu_mainline_kernel_packages(
@@ -415,65 +535,53 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     .with_context(|| {
                         format!("failed to create {} for writing", initrd_image.display())
                     })?;
-
-                let mut gen_init_cpio = Command::new(&gen_init_cpio);
-                let mut gen_init_cpio_child = gen_init_cpio
-                    .arg("-")
-                    .stdin(Stdio::piped())
-                    .stdout(initrd_image_file)
-                    .spawn()
-                    .with_context(|| format!("failed to spawn {gen_init_cpio:?}"))?;
-                let Child { stdin, .. } = &mut gen_init_cpio_child;
-                let stdin = Arc::new(stdin.take().unwrap());
-                use std::os::unix::ffi::OsStrExt as _;
-
-                // Send input into gen_init_cpio for directories
-                //
-                // dir  /bin                  755 0 0
-                let write_dir = |out_path: &Path| {
-                    for bytes in [b"dir ", out_path.as_os_str().as_bytes(), b" ", b"755 0 0\n"] {
-                        stdin.deref().write_all(bytes).expect("write");
-                    }
-                };
-
-                // Send input into gen_init_cpio for files
-                //
-                // file /init    path-to-init 755 0 0
-                let write_file = |out_path: &Path, in_path: &Path, mode: &str| {
-                    for bytes in [
-                        b"file ",
-                        out_path.as_os_str().as_bytes(),
-                        b" ",
-                        in_path.as_os_str().as_bytes(),
-                        b" ",
-                        mode.as_bytes(),
-                        b"\n",
-                    ] {
-                        stdin.deref().write_all(bytes).expect("write");
-                    }
-                };
-
-                write_dir(Path::new("/bin"));
-                write_dir(Path::new("/sbin"));
-                write_dir(Path::new("/boot"));
-                write_dir(Path::new("/lib"));
-                write_dir(Path::new("/lib/modules"));
-
-                write_file(Path::new("/boot/config"), &config, "644 0 0");
+                let mut initrd_archive = CpioArchiveBuilder::new(initrd_image_file);
+                let mtime_secs = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+                let mtime = u32::try_from(mtime_secs).with_context(|| {
+                    format!("cpio supports only `u32` mtimes, got {mtime_secs}")
+                })?;
+                // Equivalent of 0o644.
+                let regular_mode = Mode::S_IRUSR | Mode::S_IWUSR | Mode::S_IRGRP | Mode::S_IROTH;
+                // Equivalent of 0x755.
+                let executable_mode =
+                    Mode::S_IRWXU | Mode::S_IRGRP | Mode::S_IXGRP | Mode::S_IROTH | Mode::S_IXOTH;
+                initrd_archive.append_dir("bin", executable_mode, mtime)?;
+                initrd_archive.append_dir("boot", executable_mode, mtime)?;
+                initrd_archive.append_file("boot/config", &config, regular_mode, mtime)?;
+                initrd_archive.append_file("boot/System.map", &system_map, regular_mode, mtime)?;
+                initrd_archive.append_dir("lib", executable_mode, mtime)?;
+                initrd_archive.append_dir("sbin", executable_mode, mtime)?;
                 if let Some(name) = config.file_name() {
-                    write_file(&Path::new("/boot").join(name), &config, "644 0 0");
+                    initrd_archive.append_file(
+                        Path::new("boot").join(name),
+                        &config,
+                        regular_mode,
+                        mtime,
+                    )?;
                 }
-
-                write_file(Path::new("/boot/System.map"), &system_map, "644 0 0");
                 if let Some(name) = system_map.file_name() {
-                    write_file(&Path::new("/boot").join(name), &system_map, "644 0 0");
+                    initrd_archive.append_file(
+                        Path::new("boot").join(name),
+                        system_map,
+                        regular_mode,
+                        mtime,
+                    )?;
                 }
-
                 for (name, path) in &test_distro {
                     if name == "init" {
-                        write_file(Path::new("/init"), path, "755 0 0");
+                        initrd_archive.append_file(
+                            PathBuf::from("init"),
+                            path,
+                            executable_mode,
+                            mtime,
+                        )?;
                     } else {
-                        write_file(&Path::new("/sbin").join(name), path, "755 0 0");
+                        initrd_archive.append_file(
+                            Path::new("sbin").join(name),
+                            path,
+                            executable_mode,
+                            mtime,
+                        )?;
                     }
                 }
 
@@ -500,7 +608,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     let entry = entry.context("read_dir failed")?;
                     let path = entry.path();
                     let metadata = entry.metadata().context("metadata failed")?;
-                    let out_path = Path::new("/lib/modules").join(
+                    let out_path = Path::new("lib/modules").join(
                         path.strip_prefix(&modules_dir).with_context(|| {
                             format!(
                                 "strip prefix {} failed for {}",
@@ -514,9 +622,9 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         reason = "we only want to copy regular files"
                     )]
                     if metadata.file_type().is_dir() {
-                        write_dir(&out_path);
+                        initrd_archive.append_dir(out_path, executable_mode, mtime)?;
                     } else if metadata.file_type().is_file() {
-                        write_file(&out_path, path, "644 0 0");
+                        initrd_archive.append_file(out_path, path, regular_mode, mtime)?;
                     }
                 }
 
@@ -527,21 +635,15 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         fs::copy(&binary, &path).with_context(|| {
                             format!("copy({}, {}) failed", binary.display(), path.display())
                         })?;
-                        let out_path = Path::new("/bin").join(&name);
-                        write_file(&out_path, &path, "755 0 0");
+                        let out_path = Path::new("bin").join(&name);
+                        initrd_archive.append_file(out_path, &path, executable_mode, mtime)?;
                     }
                 }
 
-                // Must explicitly close to signal EOF.
-                drop(stdin);
-
-                let output = gen_init_cpio_child
-                    .wait_with_output()
-                    .with_context(|| format!("failed to wait for {gen_init_cpio:?}"))?;
-                let Output { status, .. } = &output;
-                if status.code() != Some(0) {
-                    bail!("{gen_init_cpio:?} failed: {output:?}")
-                }
+                // Append the required trailer entry as the last one, then
+                // write the initramfs to the output file.
+                initrd_archive.append_trailer()?;
+                drop(initrd_archive);
 
                 let mut qemu = Command::new(format!("qemu-system-{guest_arch}"));
                 if let Some(machine) = machine {
