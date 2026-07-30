@@ -1,0 +1,7 @@
+[package]
+name = "aya-multierror"
+version = "0.1.0"
+edition = "2021"
+description = "Aggregate multiple errors with Display formatting"
+
+[dependencies]

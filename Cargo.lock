@@ -207,6 +207,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "aya-multierror"
+version = "0.1.0"
+
+[[package]]
 name = "aya-obj"
 version = "0.3.0"
 dependencies = [
@@ -1580,6 +1584,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert_matches",
+ "aya-multierror",
  "clap",
  "glob",
  "nix",
@@ -2206,6 +2211,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "ar",
+ "aya-multierror",
  "aya-tool",
  "cargo_metadata",
  "clap",

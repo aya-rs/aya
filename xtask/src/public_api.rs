@@ -6,11 +6,11 @@ use std::{
 };
 
 use anyhow::{Context as _, Result, bail};
+use aya_multierror::Errors;
 use cargo_metadata::{Metadata, Package, Target};
 use clap::Parser;
 use dialoguer::{Confirm, theme::ColorfulTheme};
 use diff::{Result as Diff, lines};
-use xtask::Errors;
 
 #[derive(Debug, Parser)]
 pub(crate) struct Options {
