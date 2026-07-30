@@ -1,8 +1,8 @@
-use std::{ffi::OsString, path::Path, process::Command};
+use std::{ffi::OsString, process::Command};
 
 use anyhow::Result;
 use clap::Parser;
-use xtask::{exec, libbpf_sys_env};
+use xtask::exec;
 
 #[derive(Parser)]
 pub(crate) struct Options {
@@ -10,7 +10,7 @@ pub(crate) struct Options {
     args: Vec<OsString>,
 }
 
-pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
+pub(crate) fn run(opts: Options) -> Result<()> {
     let Options { args } = opts;
 
     // `-C panic=abort` because "unwinding panics are not supported without
@@ -37,7 +37,6 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
         "panic=abort",
         "-Zpanic_abort_tests",
     ]);
-    libbpf_sys_env(workspace_root, &mut cmd);
     exec(&mut cmd)?;
 
     let base_rustdocflags = "--no-run -Z unstable-options --test-builder clippy-driver";
@@ -45,7 +44,6 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
     cmd.args(["+nightly", "hack", "test", "--doc"]);
     cmd.args(&args);
     cmd.args(["--feature-powerset"]);
-    libbpf_sys_env(workspace_root, &mut cmd);
     cmd.env("CLIPPY_ARGS", "--deny=warnings");
     cmd.env("RUSTDOCFLAGS", base_rustdocflags);
     exec(&mut cmd)?;
@@ -85,7 +83,6 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 cmd.args(["--package", package]);
             }
             cmd.args(["--", "--deny", "warnings"]);
-            libbpf_sys_env(workspace_root, &mut cmd);
             cmd.env("CLIPPY_ARGS", "--deny=warnings");
             cmd.env("RUSTFLAGS", &rustflags);
             exec(&mut cmd)?;
@@ -97,7 +94,6 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
         for package in ebpf_packages {
             cmd.args(["--package", package]);
         }
-        libbpf_sys_env(workspace_root, &mut cmd);
         cmd.env("CLIPPY_ARGS", "--deny=warnings");
         cmd.env("RUSTFLAGS", &rustflags);
         cmd.env("RUSTDOCFLAGS", format!("{base_rustdocflags} {rustflags}"));

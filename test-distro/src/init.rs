@@ -4,24 +4,7 @@
 //! in /bin, prints a final message ("init: success|failure"), and powers off the machine.
 
 use anyhow::Context as _;
-
-#[derive(Debug)]
-struct Errors(Vec<anyhow::Error>);
-
-impl std::fmt::Display for Errors {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let Self(errors) = self;
-        for (i, error) in errors.iter().enumerate() {
-            if i != 0 {
-                writeln!(f)?;
-            }
-            write!(f, "{error:?}")?;
-        }
-        Ok(())
-    }
-}
-
-impl std::error::Error for Errors {}
+use aya_multierror::Errors;
 
 fn run() -> anyhow::Result<()> {
     const RXRXRX: nix::sys::stat::Mode = nix::sys::stat::Mode::empty()
@@ -185,7 +168,7 @@ fn run() -> anyhow::Result<()> {
     if errors.is_empty() {
         Ok(())
     } else {
-        Err(Errors(errors).into())
+        Err(Errors::new(errors).into())
     }
 }
 

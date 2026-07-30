@@ -5,6 +5,7 @@ members = [
     "aya-log",
     "aya-log-common",
     "aya-log-parser",
+    "aya-multierror",
     "aya-obj",
     "aya-tool",
     "ebpf-panic",

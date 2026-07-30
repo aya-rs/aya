@@ -207,6 +207,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "aya-multierror"
+version = "0.1.0"
+
+[[package]]
 name = "aya-obj"
 version = "0.3.0"
 dependencies = [
@@ -223,10 +227,19 @@ name = "aya-tool"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "ar",
+ "aya-multierror",
  "bindgen",
+ "cargo_metadata",
  "clap",
+ "nix",
+ "tar",
  "tempfile",
  "thiserror",
+ "ureq",
+ "walkdir",
+ "xz2",
+ "zstd",
 ]
 
 [[package]]
@@ -1580,6 +1593,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "assert_matches",
+ "aya-multierror",
  "clap",
  "glob",
  "nix",
@@ -2205,26 +2219,20 @@ name = "xtask"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "ar",
+ "aya-multierror",
  "aya-tool",
  "cargo_metadata",
  "clap",
  "dialoguer",
  "diff",
  "indoc",
- "nix",
  "proc-macro2",
  "public-api",
  "quote",
  "rustdoc-json",
  "rustup-toolchain",
  "syn 3.0.3",
- "tar",
  "tempfile",
- "ureq",
- "walkdir",
- "xz2",
- "zstd",
 ]
 
 [[package]]
