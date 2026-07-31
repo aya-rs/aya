@@ -567,22 +567,13 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         mtime,
                     )?;
                 }
-                for (name, path) in &test_distro {
-                    if name == "init" {
-                        initrd_archive.append_file(
-                            PathBuf::from("init"),
-                            path,
-                            executable_mode,
-                            mtime,
-                        )?;
+                for (name, source) in &test_distro {
+                    let path = if name == "init" {
+                        PathBuf::from("init")
                     } else {
-                        initrd_archive.append_file(
-                            Path::new("sbin").join(name),
-                            path,
-                            executable_mode,
-                            mtime,
-                        )?;
-                    }
+                        Path::new("sbin").join(name)
+                    };
+                    initrd_archive.append_file(path, source, executable_mode, mtime)?;
                 }
 
                 // At this point we need to make a slight detour!
