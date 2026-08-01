@@ -534,12 +534,8 @@ impl UProbe {
                     match link {
                         Ok(link) => links.push(link),
                         Err(error) => {
-                            // FdLink and PerfLink currently detach infallibly; this Result exists
-                            // only because Link::detach requires it. If either starts surfacing
-                            // errors, update this rollback path to report all cleanup errors
-                            // alongside the attach error.
-                            let _unused: Result<(), ProgramError> =
-                                ProbeLinkInner::Many(links).detach();
+                            // Roll back the points attached so far before returning the attach error.
+                            let Ok(()) = ProbeLinkInner::Many(links).detach();
                             return Err(UProbeError::LegacyPerfAttachPointError {
                                 index,
                                 resolved_offset: offset,

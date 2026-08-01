@@ -1,5 +1,6 @@
 //! Perf attach links.
 use std::{
+    convert::Infallible,
     io,
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
 };
@@ -29,6 +30,7 @@ pub(crate) enum PerfLinkInner {
 
 impl Link for PerfLinkInner {
     type Id = PerfLinkIdInner;
+    type Error = Infallible;
 
     fn id(&self) -> Self::Id {
         match self {
@@ -37,7 +39,7 @@ impl Link for PerfLinkInner {
         }
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         match self {
             Self::Fd(link) => link.detach(),
             Self::PerfLink(link) => link.detach(),
@@ -62,14 +64,13 @@ pub(crate) struct PerfLink {
 
 impl Link for PerfLink {
     type Id = PerfLinkId;
+    type Error = Infallible;
 
     fn id(&self) -> Self::Id {
         PerfLinkId(self.perf_fd.as_raw_fd())
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
-        // ProbeLinkInner::Many relies on this method being infallible. If errors are surfaced here,
-        // update it to attempt every detach and aggregate all failures.
+    fn detach(self) -> Result<(), Self::Error> {
         let Self { perf_fd, event } = self;
         let _unused: io::Result<()> =
             perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::Disable);
