@@ -5342,19 +5342,17 @@ pub aya::programs::uprobe::UProbeAttachLocation::Symbol(&'a str)
 pub aya::programs::uprobe::UProbeAttachLocation::SymbolOffset(&'a str, u64)
 impl aya::programs::uprobe::UProbeAttachLocation<'static>
 pub fn aya::programs::uprobe::UProbeAttachLocation<'static>::from_virtual_address(u64, u64, u64) -> core::result::Result<Self, aya::programs::uprobe::UProbeAttachLocationError>
-impl core::convert::From<&u64> for aya::programs::uprobe::UProbeAttachLocation<'static>
-pub fn aya::programs::uprobe::UProbeAttachLocation<'static>::from(&u64) -> Self
 impl core::convert::From<u64> for aya::programs::uprobe::UProbeAttachLocation<'static>
 pub fn aya::programs::uprobe::UProbeAttachLocation<'static>::from(u64) -> Self
 impl<'a> core::clone::Clone for aya::programs::uprobe::UProbeAttachLocation<'a>
 pub fn aya::programs::uprobe::UProbeAttachLocation<'a>::clone(&self) -> aya::programs::uprobe::UProbeAttachLocation<'a>
-impl<'a> core::convert::From<&&'a str> for aya::programs::uprobe::UProbeAttachLocation<'a>
-pub fn aya::programs::uprobe::UProbeAttachLocation<'a>::from(&&'a str) -> Self
 impl<'a> core::convert::From<&'a str> for aya::programs::uprobe::UProbeAttachLocation<'a>
 pub fn aya::programs::uprobe::UProbeAttachLocation<'a>::from(&'a str) -> Self
 impl<'a> core::fmt::Debug for aya::programs::uprobe::UProbeAttachLocation<'a>
 pub fn aya::programs::uprobe::UProbeAttachLocation<'a>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<'a> core::marker::Copy for aya::programs::uprobe::UProbeAttachLocation<'a>
+impl<T> core::convert::From<&T> for aya::programs::uprobe::UProbeAttachLocation<'_> where T: core::marker::Copy, Self: core::convert::From<T>
+pub fn aya::programs::uprobe::UProbeAttachLocation<'_>::from(&T) -> Self
 impl<'a> core::marker::Freeze for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::marker::Send for aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::marker::Sync for aya::programs::uprobe::UProbeAttachLocation<'a>
