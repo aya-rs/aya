@@ -7,14 +7,14 @@ use std::{
     fmt::{self, Write},
     fs,
     io::{self, BufRead as _, Cursor, Read as _},
-    iter::once,
+    iter,
     num::NonZeroU32,
     os::{
         fd::{AsFd as _, BorrowedFd},
         unix::ffi::{OsStrExt as _, OsStringExt as _},
     },
     path::{Path, PathBuf},
-    slice::from_ref,
+    slice,
     sync::LazyLock,
 };
 
@@ -84,15 +84,20 @@ impl<'a> From<&'a str> for UProbeAttachLocation<'a> {
     }
 }
 
-impl<'a> From<&&'a str> for UProbeAttachLocation<'a> {
-    fn from(s: &&'a str) -> Self {
-        Self::Symbol(s)
-    }
-}
-
 impl From<u64> for UProbeAttachLocation<'static> {
     fn from(offset: u64) -> Self {
         Self::AbsoluteOffset(offset)
+    }
+}
+
+// Allow iterators over borrowed collections to reuse conversions implemented for their elements.
+impl<T> From<&T> for UProbeAttachLocation<'_>
+where
+    T: Copy,
+    Self: From<T>,
+{
+    fn from(value: &T) -> Self {
+        Self::from(*value)
     }
 }
 
@@ -183,12 +188,6 @@ impl UProbeAttachLocation<'static> {
     }
 }
 
-impl From<&u64> for UProbeAttachLocation<'static> {
-    fn from(offset: &u64) -> Self {
-        Self::AbsoluteOffset(*offset)
-    }
-}
-
 /// Describes a single attachment point along with its optional cookie.
 #[derive(Debug, Clone, Copy)]
 pub struct UProbeAttachPoint<'a> {
@@ -247,23 +246,26 @@ enum PendingOffset<'a> {
 impl ResolvedPoints {
     fn offsets(&self) -> &[u64] {
         match self {
-            Self::One { offset, .. } => from_ref(offset),
-            Self::Many { offsets, .. } => offsets,
+            Self::One { offset, cookie: _ } => slice::from_ref(offset),
+            Self::Many {
+                offsets,
+                cookies: _,
+            } => offsets,
         }
     }
 
     fn cookies(&self) -> Option<&[u64]> {
         match self {
-            Self::One {
-                cookie: Some(cookie),
-                ..
-            } => Some(from_ref(cookie)),
-            Self::One { cookie: None, .. } => None,
-            Self::Many { cookies, .. } => cookies.as_deref(),
+            Self::One { offset: _, cookie } => cookie.as_ref().map(slice::from_ref),
+            Self::Many {
+                offsets: _,
+                cookies,
+            } => cookies.as_deref(),
         }
     }
 }
 
+// Resolve points without losing their caller-defined order.
 fn resolve_points<'a, I>(
     path: &Path,
     first: I::Item,
@@ -276,6 +278,7 @@ where
     let first = first.into();
     let mut rest = rest.into_iter();
     let Some(second) = rest.next() else {
+        // Keep the single-point path allocation-free.
         let UProbeAttachPoint { location, cookie } = first;
         let (symbol, additional) = match location {
             UProbeAttachLocation::Symbol(symbol) => (Some(symbol), 0),
@@ -296,10 +299,12 @@ where
         return Ok(ResolvedPoints::One { offset, cookie });
     };
 
-    let points = once(first)
-        .chain(once(second.into()))
+    let points = iter::once(first)
+        .chain(iter::once(second.into()))
         .chain(rest.map(Into::into));
     let (lower, _) = points.size_hint();
+    // Preserve caller order across mixed absolute and symbolic locations so the resolved offsets
+    // remain aligned with cookies.
     let mut pending_offsets = Vec::with_capacity(lower);
     // `bpf_link_create()` expects either no cookie array at all or a full `u64`
     // array aligned with the requested attach points (`cnt == offsets.len()`).
@@ -331,6 +336,8 @@ where
         }
     }
 
+    // Resolve unique symbols together so the target and optional debug object are each mapped and
+    // scanned at most once per attach call.
     let offsets = resolve_pending_offsets(path, pending_offsets)?;
 
     Ok(ResolvedPoints::Many { offsets, cookies })
@@ -375,6 +382,13 @@ impl UProbe {
     /// Absolute offsets must already be target object file offsets; use
     /// [`UProbeAttachLocation::from_virtual_address()`] to construct one from an
     /// ELF virtual address.
+    ///
+    /// Symbol locations are resolved from `target` for each call. Aya does not
+    /// cache ELF symbol tables between calls, but resolves multiple symbol
+    /// locations in the same call as a batch. For repeated symbol-based
+    /// attachments, callers can avoid reparsing the object by resolving locations
+    /// externally and passing [`UProbeAttachLocation::AbsoluteOffset`] values
+    /// instead.
     ///
     /// On the multi-attach path, if any point has a cookie, Aya passes a full
     /// cookie array to the kernel; points without cookies are filled with `0`.
@@ -450,7 +464,33 @@ impl UProbe {
             target
         };
         let resolved = resolve_points(resolved_path, first, points)?;
-        self.attach_impl(resolved_path, &resolved, perf_event_pid, multi_link_pid)
+        match self.attach_mode {
+            AttachMode::Single => self.attach_single_impl(resolved_path, &resolved, perf_event_pid),
+            AttachMode::Multi => self.attach_multi_impl(resolved_path, &resolved, multi_link_pid),
+            AttachMode::Unknown => {
+                let multi_result = self.attach_multi_impl(resolved_path, &resolved, multi_link_pid);
+                match multi_result {
+                    Ok(link_id) => {
+                        self.attach_mode = AttachMode::Multi;
+                        Ok(link_id)
+                    }
+                    Err(multi_error) if should_fallback_to_single(&multi_error) => {
+                        match self.attach_single_impl(resolved_path, &resolved, perf_event_pid) {
+                            Ok(link_id) => {
+                                self.attach_mode = AttachMode::Single;
+                                Ok(link_id)
+                            }
+                            Err(single_error) => Err(UProbeError::AttachModeSelectionFailed {
+                                multi_error: Box::new(multi_error),
+                                single_error: Box::new(single_error),
+                            }
+                            .into()),
+                        }
+                    }
+                    Err(error) => Err(error),
+                }
+            }
+        }
     }
 
     /// Creates a program handle from a pinned entry on bpffs.
@@ -473,49 +513,17 @@ impl UProbe {
         })
     }
 
-    fn attach_impl(
-        &mut self,
-        path: &Path,
-        resolved: &ResolvedPoints,
-        perf_event_pid: Option<u32>,
-        multi_link_pid: u32,
-    ) -> Result<UProbeLinkId, ProgramError> {
-        match self.attach_mode {
-            AttachMode::Single => self.attach_single_impl(path, resolved, perf_event_pid),
-            AttachMode::Multi => self.attach_multi_impl(path, resolved, multi_link_pid),
-            AttachMode::Unknown => {
-                let multi_result = self.attach_multi_impl(path, resolved, multi_link_pid);
-                match multi_result {
-                    Ok(link_id) => {
-                        self.attach_mode = AttachMode::Multi;
-                        Ok(link_id)
-                    }
-                    Err(multi_error) if should_fallback_to_single(&multi_error) => {
-                        match self.attach_single_impl(path, resolved, perf_event_pid) {
-                            Ok(link_id) => {
-                                self.attach_mode = AttachMode::Single;
-                                Ok(link_id)
-                            }
-                            Err(single_error) => Err(UProbeError::AttachModeSelectionFailed {
-                                multi_error: Box::new(multi_error),
-                                single_error: Box::new(single_error),
-                            }
-                            .into()),
-                        }
-                    }
-                    Err(error) => Err(error),
-                }
-            }
-        }
-    }
-
     fn attach_single_impl(
         &mut self,
         path: &Path,
         resolved: &ResolvedPoints,
         pid: Option<u32>,
     ) -> Result<UProbeLinkId, ProgramError> {
-        let Self { data, kind, .. } = self;
+        let Self {
+            data,
+            kind,
+            attach_mode: _,
+        } = self;
         let path = path.as_os_str();
         match resolved {
             ResolvedPoints::One { offset, cookie } => {
@@ -558,7 +566,11 @@ impl UProbe {
         resolved: &ResolvedPoints,
         pid: u32,
     ) -> Result<UProbeLinkId, ProgramError> {
-        let Self { data, kind, .. } = self;
+        let Self {
+            data,
+            kind,
+            attach_mode: _,
+        } = self;
         let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
         let path_cstr = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
@@ -732,13 +744,19 @@ fn resolve_pending_offsets(
         .iter()
         .filter_map(|offset| match offset {
             PendingOffset::Absolute(_) => None,
-            PendingOffset::Symbol { symbol, .. } => Some((*symbol, None)),
+            PendingOffset::Symbol {
+                symbol,
+                additional: _,
+            } => Some((*symbol, None)),
         })
         .collect::<HashMap<_, _>>();
 
     if let Some(first_symbol) = pending_offsets.iter().find_map(|offset| match offset {
         PendingOffset::Absolute(_) => None,
-        PendingOffset::Symbol { symbol, .. } => Some(*symbol),
+        PendingOffset::Symbol {
+            symbol,
+            additional: _,
+        } => Some(*symbol),
     }) {
         let symbol_error = |fallback_symbol: &str, error: ResolveSymbolError| {
             let symbol = match &error {
@@ -764,12 +782,14 @@ fn resolve_pending_offsets(
 
         let unresolved_first_symbol = pending_offsets.iter().find_map(|offset| match offset {
             PendingOffset::Absolute(_) => None,
-            PendingOffset::Symbol { symbol, .. }
-                if resolved_symbols.get(symbol).is_some_and(Option::is_none) =>
-            {
-                Some(*symbol)
-            }
-            PendingOffset::Symbol { .. } => None,
+            PendingOffset::Symbol {
+                symbol,
+                additional: _,
+            } if resolved_symbols.get(symbol).is_some_and(Option::is_none) => Some(*symbol),
+            PendingOffset::Symbol {
+                symbol: _,
+                additional: _,
+            } => None,
         });
 
         if let Some(unresolved_first_symbol) = unresolved_first_symbol {
@@ -1043,7 +1063,7 @@ struct ProcMapEntry<'a> {
 fn split_ascii_whitespace_n(s: &[u8], mut n: usize) -> impl Iterator<Item = &[u8]> {
     let mut s = s.trim_ascii_end();
 
-    std::iter::from_fn(move || {
+    iter::from_fn(move || {
         if n == 0 {
             None
         } else {
@@ -1274,7 +1294,7 @@ impl LdSoCache {
             cursor.position() as usize + num_entries as usize * 12
         };
 
-        let entries = std::iter::repeat_with(|| {
+        let entries = iter::repeat_with(|| {
             let flags = read_i32(&mut cursor)?;
             let k_pos = read_u32(&mut cursor)? as usize;
             let v_pos = read_u32(&mut cursor)? as usize;
@@ -1444,7 +1464,7 @@ mod tests {
 
     #[test]
     fn test_resolve_points_one_preserves_cookie() {
-        let mut points = once(UProbeAttachPoint {
+        let mut points = iter::once(UProbeAttachPoint {
             location: UProbeAttachLocation::AbsoluteOffset(0x42),
             cookie: Some(0x42),
         });
