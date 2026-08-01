@@ -434,6 +434,7 @@ pub(crate) enum BpfLinkCreateArgs<'a> {
     },
     // since kernel 6.6
     Tcx(&'a LinkRef),
+    // since kernel 6.6
     UProbeMulti {
         path: &'a CStr,
         offsets: &'a [u64],
