@@ -2131,7 +2131,7 @@ mod tests {
             Ok(())
         );
         let program = obj.programs.remove("foo").unwrap();
-        match (program.section, expected_section) {
+        assert_matches!((program.section, expected_section),
             (
                 ProgramSection::UProbe {
                     sleepable: actual_sleepable,
@@ -2145,11 +2145,8 @@ mod tests {
                     multi: actual_multi,
                 },
                 ProgramSection::URetProbe { sleepable, multi },
-            ) => assert_eq!((actual_sleepable, actual_multi), (sleepable, multi)),
-            (section, expected_section) => {
-                panic!("unexpected section: {section:?}, expected: {expected_section:?}")
-            }
-        }
+            ) => assert_eq!((actual_sleepable, actual_multi), (sleepable, multi))
+        );
     }
 
     #[test]
