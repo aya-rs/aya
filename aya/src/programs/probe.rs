@@ -31,12 +31,13 @@ pub enum ProbeKind {
     Return,
 }
 
+/// Internal identifier for [`ProbeLinkInner`].
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub(crate) enum ProbeLinkIdInner {
-    // This includes native multi-probe links: the kernel represents many
-    // attachment points with one BPF link.
+    // One underlying link, which may represent one or multiple attachment points.
     One(PerfLinkIdInner),
-    // Legacy multi-point fallback creates one perf link per attachment point.
+    // Multiple underlying links, one per attachment point, created in single mode
+    // or after unknown-mode fallback.
     Many(Vec<PerfLinkIdInner>),
 }
 
@@ -44,19 +45,26 @@ pub(crate) enum ProbeLinkIdInner {
 /// may be backed by one native link or several legacy perf links.
 #[derive(Debug)]
 pub(crate) enum ProbeLinkInner {
-    // This includes native multi-probe links: the kernel represents many
-    // attachment points with one BPF link.
+    // One underlying link, which may represent one or multiple attachment points.
     One(PerfLinkInner),
-    // Legacy multi-point fallback creates one perf link per attachment point.
+    // Multiple underlying links, one per attachment point, created in single mode
+    // or after unknown-mode fallback.
     Many(Vec<PerfLinkInner>),
 }
 
 impl ProbeLinkInner {
     pub(crate) fn into_fd_links(self) -> Result<Vec<FdLink>, Self> {
         match self {
-            Self::One(PerfLinkInner::Fd(link)) => Ok(vec![link]),
-            Self::One(link @ PerfLinkInner::PerfLink(_)) => Err(Self::One(link)),
+            Self::One(link) => match link {
+                PerfLinkInner::Fd(link) => Ok(vec![link]),
+                link @ PerfLinkInner::PerfLink(_) => Err(Self::One(link)),
+            },
             Self::Many(links) => {
+                // `Many` represents either an explicit single-mode multi-point attach or an
+                // unknown-mode fallback to per-point attachment. Both create every link during one
+                // logical attach operation, and backend selection is process-wide, so the links
+                // are either all fd-backed or all perf-backed. Conversion is therefore
+                // all-or-nothing: the first link determines the result for the whole collection.
                 let mut fd_links = Vec::with_capacity(links.len());
                 let mut pending = links.into_iter();
 
