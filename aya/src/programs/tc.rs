@@ -485,12 +485,13 @@ pub(crate) struct NlLink {
 
 impl Link for NlLink {
     type Id = NlLinkId;
+    type Error = ProgramError;
 
     fn id(&self) -> Self::Id {
         NlLinkId(self.if_index, self.attach_type, self.priority, self.handle)
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         unsafe {
             netlink_qdisc_detach(
                 self.if_index as i32,
@@ -520,6 +521,7 @@ pub(crate) enum TcLinkInner {
 
 impl Link for TcLinkInner {
     type Id = TcLinkIdInner;
+    type Error = ProgramError;
 
     fn id(&self) -> Self::Id {
         match self {
@@ -528,9 +530,9 @@ impl Link for TcLinkInner {
         }
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         match self {
-            Self::Fd(link) => link.detach(),
+            Self::Fd(link) => link.detach().map_err(Into::into),
             Self::NlLink(link) => link.detach(),
         }
     }

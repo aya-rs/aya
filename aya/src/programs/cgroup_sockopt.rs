@@ -132,6 +132,7 @@ enum CgroupSockoptLinkInner {
 
 impl Link for CgroupSockoptLinkInner {
     type Id = CgroupSockoptLinkIdInner;
+    type Error = ProgramError;
 
     fn id(&self) -> Self::Id {
         match self {
@@ -140,9 +141,9 @@ impl Link for CgroupSockoptLinkInner {
         }
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         match self {
-            Self::Fd(fd) => fd.detach(),
+            Self::Fd(fd) => fd.detach().map_err(Into::into),
             Self::ProgAttach(p) => p.detach(),
         }
     }
