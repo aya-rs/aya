@@ -2,6 +2,7 @@
 use std::{
     borrow::Cow,
     collections::HashMap,
+    convert::Infallible,
     error::Error,
     ffi::{CStr, CString, OsStr, OsString},
     fmt::{self, Write},
@@ -534,11 +535,9 @@ impl UProbe {
                     match link {
                         Ok(link) => links.push(link),
                         Err(error) => {
-                            // FdLink and PerfLink currently detach infallibly; this Result exists
-                            // only because Link::detach requires it. If either starts surfacing
-                            // errors, update this rollback path to report all cleanup errors
-                            // alongside the attach error.
-                            let _unused: Result<(), ProgramError> =
+                            // Roll back all successfully attached points before returning the
+                            // original attach error.
+                            let _unused: Result<(), Infallible> =
                                 ProbeLinkInner::Many(links).detach();
                             return Err(UProbeError::LegacyPerfAttachPointError {
                                 index,

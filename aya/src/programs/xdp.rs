@@ -1,6 +1,7 @@
 //! eXpress Data Path (XDP) programs.
 
 use std::{
+    convert::Infallible,
     ffi::CString,
     hash::Hash,
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
@@ -252,6 +253,7 @@ pub(crate) struct NlLinkId(i32, RawFd);
 
 impl Link for NlLink {
     type Id = NlLinkId;
+    type Error = Infallible;
 
     fn id(&self) -> Self::Id {
         let Self {
@@ -262,7 +264,7 @@ impl Link for NlLink {
         NlLinkId(*if_index, *prog_fd)
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         let Self {
             if_index,
             prog_fd,
@@ -300,6 +302,7 @@ pub(crate) enum XdpLinkInner {
 
 impl Link for XdpLinkInner {
     type Id = XdpLinkIdInner;
+    type Error = Infallible;
 
     fn id(&self) -> Self::Id {
         match self {
@@ -308,7 +311,7 @@ impl Link for XdpLinkInner {
         }
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         match self {
             Self::Fd(link) => link.detach(),
             Self::NlLink(link) => link.detach(),

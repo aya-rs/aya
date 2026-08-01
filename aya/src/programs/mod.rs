@@ -75,6 +75,7 @@ pub mod xdp;
 
 use std::{
     borrow::Cow,
+    convert::Infallible,
     ffi::CString,
     io,
     os::fd::{AsFd, BorrowedFd},
@@ -249,6 +250,12 @@ pub enum ProgramError {
     /// An error occurred while working with Netlink.
     #[error(transparent)]
     NetlinkError(#[from] NetlinkError),
+}
+
+impl From<Infallible> for ProgramError {
+    fn from(error: Infallible) -> Self {
+        match error {}
+    }
 }
 
 /// A [`Program`] file descriptor.

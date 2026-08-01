@@ -150,12 +150,13 @@ impl LircLink {
 
 impl Link for LircLink {
     type Id = LircLinkId;
+    type Error = ProgramError;
 
     fn id(&self) -> Self::Id {
         LircLinkId(self.prog_fd.as_fd().as_raw_fd(), self.target_fd.as_raw_fd())
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         bpf_prog_detach(self.prog_fd.as_fd(), self.target_fd.as_fd(), BPF_LIRC_MODE2)
             .map_err(Into::into)
     }

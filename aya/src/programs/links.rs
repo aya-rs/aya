@@ -1,5 +1,6 @@
 //! Program links.
 use std::{
+    convert::Infallible,
     ffi::CString,
     io,
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
@@ -30,11 +31,14 @@ pub trait Link: std::fmt::Debug + Eq + std::hash::Hash + 'static {
     /// Unique Id
     type Id: std::fmt::Debug + Eq + std::hash::Hash + hashbrown::Equivalent<Self>;
 
+    /// The error returned when detaching the link.
+    type Error: Into<ProgramError>;
+
     /// Returns the link id
     fn id(&self) -> Self::Id;
 
     /// Detaches the `LinkOwnedLink` is gone... but this doesn't work :(
-    fn detach(self) -> Result<(), ProgramError>;
+    fn detach(self) -> Result<(), Self::Error>;
 }
 
 /// Program attachment mode.
@@ -89,6 +93,7 @@ where
             .take(&link_id)
             .ok_or(ProgramError::NotAttached)?
             .detach()
+            .map_err(Into::into)
     }
 
     pub(crate) fn forget(&mut self, link_id: T::Id) -> Result<T, ProgramError> {
@@ -99,7 +104,7 @@ where
 impl<T: Link> Links<T> {
     pub(crate) fn remove_all(&mut self) -> Result<(), ProgramError> {
         for link in self.links.drain() {
-            link.detach()?;
+            link.detach().map_err(Into::into)?;
         }
         Ok(())
     }
@@ -305,12 +310,13 @@ impl FdLink {
 
 impl Link for FdLink {
     type Id = FdLinkId;
+    type Error = Infallible;
 
     fn id(&self) -> Self::Id {
         FdLinkId(self.fd.as_raw_fd())
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         // detach is a noop since it consumes self. once self is consumed, drop will be triggered
         // and the link will be detached.
         //
@@ -419,6 +425,7 @@ impl ProgAttachLink {
 
 impl Link for ProgAttachLink {
     type Id = ProgAttachLinkId;
+    type Error = ProgramError;
 
     fn id(&self) -> Self::Id {
         ProgAttachLinkId(
@@ -428,7 +435,7 @@ impl Link for ProgAttachLink {
         )
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         bpf_prog_detach(
             self.prog_fd.as_fd(),
             self.target_fd.as_fd(),
@@ -511,20 +518,21 @@ macro_rules! define_link_wrapper {
                 use $crate::programs::links::Link as _;
 
                 if let Some(base) = self.0.take() {
-                    let _unused: Result<(), ProgramError> = base.detach();
+                    let _unused: Result<(), ProgramError> = base.detach().map_err(Into::into);
                 }
             }
         }
 
         impl $crate::programs::Link for $wrapper {
             type Id = $wrapper_id;
+            type Error = ProgramError;
 
             fn id(&self) -> Self::Id {
                 $wrapper_id(self.0.as_ref().unwrap().id())
             }
 
-            fn detach(mut self) -> Result<(), ProgramError> {
-                self.0.take().unwrap().detach()
+            fn detach(mut self) -> Result<(), Self::Error> {
+                self.0.take().unwrap().detach().map_err(Into::into)
             }
         }
 
@@ -773,12 +781,13 @@ mod tests {
 
     impl Link for TestLink {
         type Id = TestLinkId;
+        type Error = std::convert::Infallible;
 
         fn id(&self) -> Self::Id {
             TestLinkId(self.id.0, self.id.1)
         }
 
-        fn detach(self) -> Result<(), ProgramError> {
+        fn detach(self) -> Result<(), Self::Error> {
             *self.detached.borrow_mut() += 1;
             Ok(())
         }

@@ -1,4 +1,5 @@
 use std::{
+    convert::Infallible,
     ffi::{OsStr, OsString},
     fmt::{self, Write},
     fs::{self, OpenOptions},
@@ -94,6 +95,7 @@ impl From<FdLink> for ProbeLinkInner {
 
 impl Link for ProbeLinkInner {
     type Id = ProbeLinkIdInner;
+    type Error = Infallible;
 
     fn id(&self) -> Self::Id {
         match self {
@@ -102,19 +104,16 @@ impl Link for ProbeLinkInner {
         }
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         match self {
-            Self::One(link) => link.detach(),
+            Self::One(link) => link.detach()?,
             Self::Many(links) => {
-                // FdLink and PerfLink currently always return Ok from detach; Result is only
-                // required by Link's interface. If PerfLink starts returning detach errors, replace
-                // this with best-effort aggregation so every error can be reported.
                 for link in links {
                     link.detach()?;
                 }
-                Ok(())
             }
         }
+        Ok(())
     }
 }
 

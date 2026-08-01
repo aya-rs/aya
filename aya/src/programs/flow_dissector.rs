@@ -124,6 +124,7 @@ enum FlowDissectorLinkInner {
 
 impl Link for FlowDissectorLinkInner {
     type Id = FlowDissectorLinkIdInner;
+    type Error = ProgramError;
 
     fn id(&self) -> Self::Id {
         match self {
@@ -132,9 +133,9 @@ impl Link for FlowDissectorLinkInner {
         }
     }
 
-    fn detach(self) -> Result<(), ProgramError> {
+    fn detach(self) -> Result<(), Self::Error> {
         match self {
-            Self::Fd(fd) => fd.detach(),
+            Self::Fd(fd) => fd.detach().map_err(Into::into),
             Self::ProgAttach(p) => p.detach(),
         }
     }
