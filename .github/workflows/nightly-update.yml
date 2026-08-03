@@ -1,0 +1,46 @@
+name: update Rust nightly
+
+on:
+  schedule:
+    - cron: 00 3 * * *
+
+  workflow_dispatch:
+
+jobs:
+  update:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    environment: nightly-promotion
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Update the pinned Rust nightly
+        id: update
+        run: python3 scripts/update-rust-nightly.py update
+
+      - name: Update the Bazel lockfile
+        if: steps.update.outputs.rust-nightly != ''
+        run: bazel mod deps --lockfile_mode=update
+
+      - name: Create or update the Rust nightly pull request
+        id: pull-request
+        if: steps.update.outputs.rust-nightly != ''
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.CRABBY_GITHUB_TOKEN || github.token }}
+          branch: create-pull-request/rust-nightly
+          add-paths: |
+            MODULE.bazel
+            MODULE.bazel.lock
+          commit-message: 'build: update Rust to ${{ steps.update.outputs.rust-nightly }}'
+          title: 'build: update Rust to ${{ steps.update.outputs.rust-nightly }}'
+          body: Update the pinned Rust nightly and its generated inputs.
+
+      - name: Enable auto-merge
+        if: >-
+          !github.event.repository.fork &&
+          steps.pull-request.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.CRABBY_GITHUB_TOKEN }}
+          PULL_REQUEST: ${{ steps.pull-request.outputs.pull-request-number }}
+        run: gh pr merge "$PULL_REQUEST" --auto --squash
