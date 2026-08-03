@@ -49,9 +49,23 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - id: nightly
+        run: python3 -B scripts/update-rust-nightly.py
+
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ steps.nightly.outputs.rust-nightly }}
           components: clippy,miri,rustfmt,rust-src
+
+      - name: Alias the pinned Rust nightly
+        env:
+          RUST_NIGHTLY: ${{ steps.nightly.outputs.rust-nightly }}
+        run: |
+          set -euo pipefail
+
+          # Aya invokes `nightly` internally.
+          ln -s "$(rustup run "$RUST_NIGHTLY" rustc --print sysroot)" \
+            "$(rustup show home)/toolchains/nightly-$(rustup run "$RUST_NIGHTLY" rustc --print host-tuple)"
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
       # PR-scoped entries can only help reruns of one PR, but repeatedly evict
@@ -205,9 +219,23 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - id: nightly
+        run: python3 -B scripts/update-rust-nightly.py
+
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ steps.nightly.outputs.rust-nightly }}
           components: rust-src
+
+      - name: Alias the pinned Rust nightly
+        env:
+          RUST_NIGHTLY: ${{ steps.nightly.outputs.rust-nightly }}
+        run: |
+          set -euo pipefail
+
+          # Aya invokes `nightly` internally.
+          ln -s "$(rustup run "$RUST_NIGHTLY" rustc --print sysroot)" \
+            "$(rustup show home)/toolchains/nightly-$(rustup run "$RUST_NIGHTLY" rustc --print host-tuple)"
 
       # Installed *after* nightly so it is the default.
       - uses: dtolnay/rust-toolchain@stable
@@ -320,6 +348,9 @@ jobs:
         with:
           submodules: recursive
 
+      - id: nightly
+        run: python3 -B scripts/update-rust-nightly.py
+
       - name: Install prerequisites
         if: runner.os == 'Linux'
         run: |
@@ -357,9 +388,20 @@ jobs:
           find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
           | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ steps.nightly.outputs.rust-nightly }}
           components: rust-src
+
+      - name: Alias the pinned Rust nightly
+        env:
+          RUST_NIGHTLY: ${{ steps.nightly.outputs.rust-nightly }}
+        run: |
+          set -euo pipefail
+
+          # Aya invokes `nightly` internally.
+          ln -s "$(rustup run "$RUST_NIGHTLY" rustc --print sysroot)" \
+            "$(rustup show home)/toolchains/nightly-$(rustup run "$RUST_NIGHTLY" rustc --print host-tuple)"
 
       # Installed *after* nightly so it is the default.
       - uses: dtolnay/rust-toolchain@stable
@@ -427,6 +469,7 @@ jobs:
       - run-integration-test
     runs-on: ubuntu-latest
     steps:
-      - uses: re-actors/alls-green@release/v1
-        with:
-          jobs: ${{ toJSON(needs) }}
+      - name: Verify all required jobs succeeded
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: jq --exit-status 'length > 0 and all(.[]; . == "success")' <<< "$RESULTS"

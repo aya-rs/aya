@@ -23,9 +23,25 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - name: Resolve the pinned Rust nightly
+        id: nightly-pin
+        # Do not include imported bytecode in generated-file pull requests.
+        run: python3 -B scripts/update-rust-nightly.py
+
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ steps.nightly-pin.outputs.rust-nightly }}
           components: rustfmt, clippy
+
+      - name: Alias the pinned Rust nightly
+        env:
+          RUST_NIGHTLY: ${{ steps.nightly-pin.outputs.rust-nightly }}
+        run: |
+          set -euo pipefail
+
+          # Aya invokes `nightly` internally.
+          ln -s "$(rustup run "$RUST_NIGHTLY" rustc --print sysroot)" \
+            "$(rustup show home)/toolchains/nightly-$(rustup run "$RUST_NIGHTLY" rustc --print host-tuple)"
 
       - uses: Swatinem/rust-cache@v2
 

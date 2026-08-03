@@ -1,0 +1,44 @@
+name: Update a pinned Rust nightly
+description: Resolve or update the Rust nightly owned by the caller repository
+
+inputs:
+  updater-script:
+    description: Caller-local nightly updater
+    required: true
+  update:
+    description: Update the pinned nightly instead of resolving it
+    required: false
+    default: 'false'
+
+outputs:
+  rust-nightly:
+    description: Committed or updated Rust nightly
+    value: ${{ steps.updater.outputs.rust-nightly }}
+  metadata:
+    description: Committed or updated updater-specific metadata
+    value: ${{ steps.updater.outputs.metadata }}
+
+runs:
+  using: composite
+  steps:
+    - id: updater
+      shell: bash
+      env:
+        UPDATER_SCRIPT: ${{ inputs.updater-script }}
+        UPDATE: ${{ inputs.update }}
+      run: |
+        set -euo pipefail
+
+        if [[ "$UPDATE" == true ]]; then
+          set -- --update
+        else
+          set --
+        fi
+
+        # Run the caller-owned adapter with provider-owned helpers first.
+        # -P prevents caller-side import shadowing; -B avoids bytecode.
+        export PYTHONPATH="$GITHUB_ACTION_PATH/../../../scripts${PYTHONPATH:+:$PYTHONPATH}"
+
+        python3 -B -P "$GITHUB_WORKSPACE/$UPDATER_SCRIPT" \
+          --module "$GITHUB_WORKSPACE/MODULE.bazel" \
+          "$@"
