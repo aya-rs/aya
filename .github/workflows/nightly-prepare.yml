@@ -1,0 +1,83 @@
+name: prepare Rust nightly
+
+# Component ownership and caller contract: .github/actions/README.md.
+
+on:
+  workflow_call:
+    inputs:
+      updater-script:
+        description: Caller-local nightly updater
+        required: true
+        type: string
+      update-lockfile:
+        description: Regenerate the Bazel lockfile for nightly candidates
+        default: false
+        type: boolean
+    outputs:
+      module:
+        description: Base64-encoded candidate MODULE.bazel
+        value: ${{ jobs.prepare.outputs.module }}
+      module-lock:
+        description: Gzip- and base64-encoded candidate MODULE.bazel.lock
+        value: ${{ jobs.prepare.outputs.module-lock }}
+      rust-nightly:
+        description: Committed or proposed Rust nightly
+        value: ${{ jobs.prepare.outputs.rust-nightly }}
+      metadata:
+        description: Committed or proposed updater-specific metadata
+        value: ${{ jobs.prepare.outputs.metadata }}
+
+permissions: {}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      module: ${{ steps.update.outputs.module }}
+      module-lock: ${{ steps.lock.outputs.module-lock }}
+      rust-nightly: ${{ steps.update.outputs.rust-nightly || steps.pin.outputs.rust-nightly }}
+      metadata: ${{ steps.update.outputs.metadata || steps.pin.outputs.metadata }}
+    steps:
+      # Checkout resolves the caller; $/ below resolves this workflow's
+      # immutable provider revision.
+      - uses: actions/checkout@v7
+
+      - name: Resolve the pinned Rust nightly
+        id: pin
+        uses: $/.github/actions/update-nightly
+        with:
+          updater-script: ${{ inputs.updater-script }}
+
+      # Pull requests always use the last fully validated nightly.
+      - name: Update the pinned Rust nightly
+        id: update
+        if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        uses: $/.github/actions/update-nightly
+        with:
+          updater-script: ${{ inputs.updater-script }}
+          update: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Update the Bazel lockfile
+        id: lock
+        if: inputs.update-lockfile && steps.update.outputs.module != ''
+        run: |
+          set -euo pipefail
+
+          bazel mod deps --lockfile_mode=update
+
+          # Compress the lock below GitHub's 1 MB job-output limit.
+          {
+            printf 'module-lock='
+            gzip -n -c MODULE.bazel.lock | openssl base64 -A
+            printf '\n'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Verify the candidate
+        if: steps.update.outputs.module != ''
+        run: |
+          set -euo pipefail
+          git diff --check

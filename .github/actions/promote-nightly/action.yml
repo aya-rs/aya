@@ -1,0 +1,84 @@
+name: Promote a validated Rust nightly
+description: Atomically update a repository's validated Bazel nightly inputs
+
+inputs:
+  module:
+    description: Base64-encoded MODULE.bazel candidate
+    required: true
+  module-lock:
+    description: Gzip-compressed, base64-encoded MODULE.bazel.lock candidate
+    required: false
+    default: ''
+  rust-nightly:
+    description: Validated Rust nightly, such as nightly-2026-08-03
+    required: true
+  headline-prefix:
+    description: Commit headline before the nightly date
+    required: true
+  body:
+    description: Optional commit body
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Promote the validated Rust nightly
+      shell: bash
+      env:
+        BASE_COMMIT: ${{ github.sha }}
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        MODULE: ${{ inputs.module }}
+        MODULE_LOCK: ${{ inputs.module-lock }}
+        RUST_NIGHTLY: ${{ inputs.rust-nightly }}
+        HEADLINE_PREFIX: ${{ inputs.headline-prefix }}
+        COMMIT_BODY: ${{ inputs.body }}
+      run: |
+        set -euo pipefail
+
+        printf '%s' "$MODULE" | openssl base64 -d -A > MODULE.bazel
+
+        lock_file=/dev/null
+        include_lock=false
+        if [[ -n "$MODULE_LOCK" ]]; then
+          printf '%s' "$MODULE_LOCK" | openssl base64 -d -A | gzip -d > MODULE.bazel.lock
+          lock_file=MODULE.bazel.lock
+          include_lock=true
+        fi
+
+        # A merge starts its own run; never publish an older candidate.
+        jq -n \
+          --rawfile module MODULE.bazel \
+          --rawfile lock "$lock_file" \
+          --arg repository "$GITHUB_REPOSITORY" \
+          --arg branch "$DEFAULT_BRANCH" \
+          --arg expected "$BASE_COMMIT" \
+          --arg headline "$HEADLINE_PREFIX ${RUST_NIGHTLY#nightly-}" \
+          --arg body "$COMMIT_BODY" \
+          --argjson include_lock "$include_lock" \
+          '{
+            query: "mutation AdvanceRustNightly($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { oid url } } }",
+            variables: {
+              input: {
+                branch: {
+                  repositoryNameWithOwner: $repository,
+                  branchName: $branch
+                },
+                expectedHeadOid: $expected,
+                message: (
+                  {headline: $headline}
+                  + if $body == "" then {} else {body: $body} end
+                ),
+                fileChanges: {
+                  additions: (
+                    [{path: "MODULE.bazel", contents: ($module | @base64)}]
+                    + if $include_lock then
+                      [{path: "MODULE.bazel.lock", contents: ($lock | @base64)}]
+                    else [] end
+                  )
+                }
+              }
+            }
+          }' |
+          gh api graphql --input - \
+            --jq '.data.createCommitOnBranch.commit | "\(.oid) \(.url)"'

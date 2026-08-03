@@ -15,13 +15,26 @@ env:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Promoting a nightly pushes to main and starts another CI run.
+  # Do not let that new run cancel the promotion that started it.
+  cancel-in-progress: >-
+    ${{ github.ref != format('refs/heads/{0}', github.event.repository.default_branch) }}
 
 permissions: {}
 
 jobs:
+  prepare:
+    name: prepare Rust nightly
+    uses: ./.github/workflows/nightly-prepare.yml
+    permissions:
+      contents: read
+    with:
+      updater-script: scripts/update-rust-nightly.py
+      update-lockfile: true
+
   bazel:
     name: bazel (${{ matrix.os }})
+    needs: prepare
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -35,6 +48,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Each matrix job has its own checkout; validate the exact candidate.
+      - name: Apply the Rust nightly candidate
+        if: needs.prepare.outputs.module != ''
+        env:
+          MODULE: ${{ needs.prepare.outputs.module }}
+          MODULE_LOCK: ${{ needs.prepare.outputs.module-lock }}
+        run: |
+          set -euo pipefail
+
+          printf '%s' "$MODULE" | openssl base64 -d -A > MODULE.bazel
+          printf '%s' "$MODULE_LOCK" | openssl base64 -d -A | gzip -d > MODULE.bazel.lock
+
       - name: Test
         run: |
           set -euo pipefail
@@ -44,14 +69,26 @@ jobs:
             --remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY"
 
   lint:
+    needs: prepare
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ needs.prepare.outputs.rust-nightly }}
           components: clippy,miri,rustfmt,rust-src
+
+      - name: Alias the pinned Rust nightly
+        env:
+          RUST_NIGHTLY: ${{ needs.prepare.outputs.rust-nightly }}
+        run: |
+          set -euo pipefail
+
+          # Aya invokes `nightly` internally.
+          ln -s "$(rustup run "$RUST_NIGHTLY" rustc --print sysroot)" \
+            "$(rustup show home)/toolchains/nightly-$(rustup run "$RUST_NIGHTLY" rustc --print host-tuple)"
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
       # PR-scoped entries can only help reruns of one PR, but repeatedly evict
@@ -200,14 +237,26 @@ jobs:
             --feature-powerset
 
   build-test-aya-ebpf:
+    needs: prepare
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ needs.prepare.outputs.rust-nightly }}
           components: rust-src
+
+      - name: Alias the pinned Rust nightly
+        env:
+          RUST_NIGHTLY: ${{ needs.prepare.outputs.rust-nightly }}
+        run: |
+          set -euo pipefail
+
+          # Aya invokes `nightly` internally.
+          ln -s "$(rustup run "$RUST_NIGHTLY" rustc --print sysroot)" \
+            "$(rustup show home)/toolchains/nightly-$(rustup run "$RUST_NIGHTLY" rustc --print host-tuple)"
 
       # Installed *after* nightly so it is the default.
       - uses: dtolnay/rust-toolchain@stable
@@ -276,6 +325,7 @@ jobs:
           fi
 
   run-integration-test:
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -357,9 +407,20 @@ jobs:
           find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
           | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ needs.prepare.outputs.rust-nightly }}
           components: rust-src
+
+      - name: Alias the pinned Rust nightly
+        env:
+          RUST_NIGHTLY: ${{ needs.prepare.outputs.rust-nightly }}
+        run: |
+          set -euo pipefail
+
+          # Aya invokes `nightly` internally.
+          ln -s "$(rustup run "$RUST_NIGHTLY" rustc --print sysroot)" \
+            "$(rustup show home)/toolchains/nightly-$(rustup run "$RUST_NIGHTLY" rustc --print host-tuple)"
 
       # Installed *after* nightly so it is the default.
       - uses: dtolnay/rust-toolchain@stable
@@ -420,6 +481,7 @@ jobs:
   check:
     if: always()
     needs:
+      - prepare
       - bazel
       - lint
       - build-test-aya
@@ -427,6 +489,35 @@ jobs:
       - run-integration-test
     runs-on: ubuntu-latest
     steps:
-      - uses: re-actors/alls-green@release/v1
+      - name: Verify all required jobs succeeded
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: jq --exit-status 'length > 0 and all(.[]; . == "success")' <<< "$RESULTS"
+
+  promote:
+    name: promote Rust nightly
+    if: >-
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      needs.prepare.outputs.module != ''
+    needs:
+      - prepare
+      - check
+    runs-on: ubuntu-latest
+    # Only this main-only job can access the protected promotion credential.
+    environment: nightly-promotion
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
         with:
-          jobs: ${{ toJSON(needs) }}
+          persist-credentials: false
+
+      - name: Promote the validated Rust nightly
+        uses: ./.github/actions/promote-nightly
+        env:
+          GH_TOKEN: ${{ secrets.CRABBY_GITHUB_TOKEN || github.token }}
+        with:
+          module: ${{ needs.prepare.outputs.module }}
+          module-lock: ${{ needs.prepare.outputs.module-lock }}
+          rust-nightly: ${{ needs.prepare.outputs.rust-nightly }}
+          headline-prefix: 'build: update Rust nightly to'
