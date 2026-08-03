@@ -28,9 +28,12 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, Link as _, LinkError, PerfLinkInner, ProgramData, ProgramError, ProgramType,
+        FdLink, LinkError, PerfLinkInner, ProgramData, ProgramError, ProgramType,
         define_link_wrapper, load_program_with_attach_type, load_program_without_attach_type,
-        probe::{self, OsStringExt as _, Probe, ProbeKind, ProbeLinkIdInner, ProbeLinkInner},
+        probe::{
+            self, ManyProbeLinks, OsStringExt as _, Probe, ProbeKind, ProbeLinkIdInner,
+            ProbeLinkInner,
+        },
     },
     sys::{SyscallError, bpf_link_create_uprobe_multi},
     util::{KernelVersion, MMap},
@@ -527,30 +530,48 @@ impl UProbe {
         let path = path.as_os_str();
         match resolved {
             ResolvedPoints::One { offset, cookie } => {
-                let link = attach_single_point::<Self>(data, *kind, path, *offset, pid, *cookie)?;
-                data.links
-                    .insert(UProbeLink::from(ProbeLinkInner::from(link)))
+                probe::attach::<Self, UProbeLink>(data, *kind, path, *offset, pid, *cookie)
             }
             ResolvedPoints::Many { offsets, cookies } => {
-                let mut links = Vec::with_capacity(offsets.len());
+                let prog_fd = data.fd()?;
+                let prog_fd = prog_fd.as_fd();
+                let Some(&first_offset) = offsets.first() else {
+                    return Err(UProbeError::EmptyPoints {
+                        target: PathBuf::from(path),
+                    }
+                    .into());
+                };
+                let attach_error = |index, resolved_offset, attach_error| {
+                    ProgramError::from(UProbeError::LegacyPerfAttachPointError {
+                        index,
+                        resolved_offset,
+                        attach_error: Box::new(attach_error),
+                    })
+                };
+                let first_cookie = cookies
+                    .as_ref()
+                    .and_then(|cookies| cookies.first().copied());
+                let first_link = probe::attach_impl::<Self>(
+                    prog_fd,
+                    *kind,
+                    path,
+                    first_offset,
+                    pid,
+                    first_cookie,
+                )
+                .map_err(|error| attach_error(0, first_offset, error))?;
+                let mut links = ManyProbeLinks::from_first_link(first_link, offsets.len());
 
-                for (index, offset) in offsets.iter().copied().enumerate() {
+                for (index, offset) in offsets.iter().copied().enumerate().skip(1) {
                     let cookie = cookies
                         .as_ref()
                         .and_then(|cookies| cookies.get(index).copied());
-                    let link = attach_single_point::<Self>(data, *kind, path, offset, pid, cookie);
-                    match link {
-                        Ok(link) => links.push(link),
-                        Err(error) => {
-                            // Roll back the points attached so far before returning the attach error.
-                            let Ok(()) = ProbeLinkInner::Many(links).detach();
-                            return Err(UProbeError::LegacyPerfAttachPointError {
-                                index,
-                                resolved_offset: offset,
-                                attach_error: Box::new(error),
-                            }
-                            .into());
-                        }
+                    if let Err(error) =
+                        links.attach_point::<Self>(prog_fd, *kind, path, offset, pid, cookie)
+                    {
+                        // Explicitly detach links attached before this failure.
+                        links.detach();
+                        return Err(attach_error(index, offset, error));
                     }
                 }
 
@@ -652,6 +673,12 @@ define_link_wrapper!(
     UProbe,
 );
 
+impl From<PerfLinkInner> for UProbeLink {
+    fn from(link: PerfLinkInner) -> Self {
+        Self::from(ProbeLinkInner::from(link))
+    }
+}
+
 impl TryFrom<UProbeLink> for FdLink {
     type Error = LinkError;
 
@@ -691,19 +718,6 @@ impl UProbeLink {
     pub fn into_fd_links(self) -> Result<Vec<FdLink>, Self> {
         self.into_inner().into_fd_links().map_err(Self::from)
     }
-}
-
-fn attach_single_point<P: Probe>(
-    data: &ProgramData<UProbeLink>,
-    kind: ProbeKind,
-    path: &OsStr,
-    offset: u64,
-    pid: Option<u32>,
-    cookie: Option<u64>,
-) -> Result<PerfLinkInner, ProgramError> {
-    let prog_fd = data.fd()?;
-    let prog_fd = prog_fd.as_fd();
-    probe::attach_perf_link::<P>(prog_fd, kind, path, offset, pid, cookie)
 }
 
 fn find_symbol_in_object<'a>(obj: &'a object::File<'a>, symbol: &str) -> Option<Symbol<'a, 'a>> {
@@ -1455,7 +1469,7 @@ mod tests {
     use tempfile::tempdir;
 
     use super::*;
-    use crate::programs::FdLinkId;
+    use crate::programs::{FdLinkId, Link as _};
 
     fn mock_fd_link(raw_fd: i32) -> FdLink {
         let fd = unsafe { crate::MockableFd::from_raw_fd(raw_fd) };
@@ -1585,10 +1599,10 @@ mod tests {
     fn test_uprobe_link_into_fd_links_many() {
         let first_fd = crate::MockableFd::mock_signed_fd();
         let second_fd = first_fd + 1;
-        let link = UProbeLink::from(ProbeLinkInner::Many(vec![
-            PerfLinkInner::Fd(mock_fd_link(first_fd)),
-            PerfLinkInner::Fd(mock_fd_link(second_fd)),
-        ]));
+        let link = UProbeLink::from(ProbeLinkInner::Many(ManyProbeLinks::Fd(vec![
+            mock_fd_link(first_fd),
+            mock_fd_link(second_fd),
+        ])));
 
         let fd_links = link.into_fd_links().unwrap();
         assert_eq!(
