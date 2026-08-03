@@ -89,40 +89,43 @@ pub(crate) fn perf_attach(
     perf_fd: crate::MockableFd,
     cookie: Option<u64>,
 ) -> Result<PerfLinkInner, ProgramError> {
-    if cookie.is_some() && (!is_bpf_cookie_supported() || !FEATURES.bpf_perf_link()) {
-        return Err(ProgramError::AttachCookieNotSupported);
-    }
     if FEATURES.bpf_perf_link() {
-        let link_fd = bpf_link_create(
-            prog_fd,
-            LinkTarget::Fd(perf_fd.as_fd()),
-            BPF_PERF_EVENT,
-            0,
-            cookie.map(|bpf_cookie| BpfLinkCreateArgs::PerfEvent { bpf_cookie }),
-        )
-        .map_err(|io_error| SyscallError {
-            call: "bpf_link_create",
-            io_error,
-        })?;
-        Ok(PerfLinkInner::Fd(FdLink::new(link_fd)))
+        attach_bpf_link(prog_fd, perf_fd, cookie).map(PerfLinkInner::Fd)
     } else {
-        perf_attach_either(prog_fd, perf_fd, None)
+        if cookie.is_some() {
+            return Err(ProgramError::AttachCookieNotSupported);
+        }
+        attach_perf_event(prog_fd, perf_fd, None).map(PerfLinkInner::PerfLink)
     }
 }
 
-pub(crate) fn perf_attach_debugfs(
+pub(crate) fn attach_bpf_link(
     prog_fd: BorrowedFd<'_>,
     perf_fd: crate::MockableFd,
-    event: ProbeEvent,
-) -> Result<PerfLinkInner, ProgramError> {
-    perf_attach_either(prog_fd, perf_fd, Some(event))
+    cookie: Option<u64>,
+) -> Result<FdLink, ProgramError> {
+    if cookie.is_some() && !is_bpf_cookie_supported() {
+        return Err(ProgramError::AttachCookieNotSupported);
+    }
+    let link_fd = bpf_link_create(
+        prog_fd,
+        LinkTarget::Fd(perf_fd.as_fd()),
+        BPF_PERF_EVENT,
+        0,
+        cookie.map(|bpf_cookie| BpfLinkCreateArgs::PerfEvent { bpf_cookie }),
+    )
+    .map_err(|io_error| SyscallError {
+        call: "bpf_link_create",
+        io_error,
+    })?;
+    Ok(FdLink::new(link_fd))
 }
 
-fn perf_attach_either(
+pub(crate) fn attach_perf_event(
     prog_fd: BorrowedFd<'_>,
     perf_fd: crate::MockableFd,
     mut event: Option<ProbeEvent>,
-) -> Result<PerfLinkInner, ProgramError> {
+) -> Result<PerfLink, ProgramError> {
     perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::SetBpf(prog_fd)).map_err(
         |io_error| SyscallError {
             call: "PERF_EVENT_IOC_SET_BPF",
@@ -140,5 +143,5 @@ fn perf_attach_either(
         event.disarm();
     }
 
-    Ok(PerfLinkInner::PerfLink(PerfLink { perf_fd, event }))
+    Ok(PerfLink { perf_fd, event })
 }
