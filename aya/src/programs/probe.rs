@@ -12,9 +12,9 @@ use std::{
 
 use crate::{
     programs::{
-        FdLink, Link, PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError, id_as_key,
-        perf_attach, perf_attach_debugfs, trace_point::read_sys_fs_trace_point_id,
-        utils::find_tracefs_path,
+        FdLink, Link, PerfLink, PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError,
+        attach_bpf_link, attach_perf_event, id_as_key, perf_attach,
+        trace_point::read_sys_fs_trace_point_id, utils::find_tracefs_path,
     },
     sys::{SyscallError, perf_event_open_probe, perf_event_open_trace_point},
     util::KernelVersion,
@@ -41,15 +41,104 @@ pub(crate) enum ProbeLinkIdInner {
     Many(Vec<PerfLinkIdInner>),
 }
 
+/// Homogeneous per-point links created by an explicit single-mode attach or an
+/// unknown-mode fallback.
+///
+/// The first attached point selects the variant, making mixed fd-backed and
+/// perf-backed collections unrepresentable.
+#[derive(Debug)]
+pub(crate) enum ManyProbeLinks {
+    Fd(Vec<FdLink>),
+    PerfLink(Vec<PerfLink>),
+}
+
+impl ManyProbeLinks {
+    pub(crate) fn from_first_link(first: PerfLinkInner, capacity: usize) -> Self {
+        match first {
+            PerfLinkInner::Fd(link) => {
+                let mut links = Vec::with_capacity(capacity);
+                links.push(link);
+                Self::Fd(links)
+            }
+            PerfLinkInner::PerfLink(link) => {
+                let mut links = Vec::with_capacity(capacity);
+                links.push(link);
+                Self::PerfLink(links)
+            }
+        }
+    }
+
+    pub(crate) fn attach_point<P: Probe>(
+        &mut self,
+        prog_fd: BorrowedFd<'_>,
+        kind: ProbeKind,
+        fn_name: &OsStr,
+        offset: u64,
+        pid: Option<u32>,
+        cookie: Option<u64>,
+    ) -> Result<(), ProgramError> {
+        // The first attached point selected this variant, so subsequent points can use the same
+        // fd-backed or perf-backed path directly without repeating backend selection.
+        match self {
+            Self::Fd(links) => {
+                let perf_fd = create_as_probe::<P>(kind, fn_name, offset, pid)?;
+                links.push(attach_bpf_link(prog_fd, perf_fd, cookie)?);
+            }
+            Self::PerfLink(links) => {
+                if cookie.is_some() {
+                    return Err(ProgramError::AttachCookieNotSupported);
+                }
+                let link = if KernelVersion::at_least(4, 17, 0) {
+                    let perf_fd = create_as_probe::<P>(kind, fn_name, offset, pid)?;
+                    attach_perf_event(prog_fd, perf_fd, None)?
+                } else {
+                    let (perf_fd, event) = create_as_trace_point::<P>(kind, fn_name, offset, pid)?;
+                    attach_perf_event(prog_fd, perf_fd, Some(event))?
+                };
+                links.push(link);
+            }
+        }
+        Ok(())
+    }
+
+    fn ids(&self) -> Vec<PerfLinkIdInner> {
+        match self {
+            Self::Fd(links) => links
+                .iter()
+                .map(|link| PerfLinkIdInner::FdLinkId(link.id()))
+                .collect(),
+            Self::PerfLink(links) => links
+                .iter()
+                .map(|link| PerfLinkIdInner::PerfLinkId(link.id()))
+                .collect(),
+        }
+    }
+
+    pub(crate) fn detach(self) {
+        match self {
+            Self::Fd(links) => {
+                for link in links {
+                    let Ok(()) = link.detach();
+                }
+            }
+            Self::PerfLink(links) => {
+                for link in links {
+                    let Ok(()) = link.detach();
+                }
+            }
+        }
+    }
+}
+
 /// Internal representation shared by probe programs whose logical attachment
-/// may be backed by one native link or several legacy perf links.
+/// may be backed by one native link or several per-point links.
 #[derive(Debug)]
 pub(crate) enum ProbeLinkInner {
     // One underlying link, which may represent one or multiple attachment points.
     One(PerfLinkInner),
     // Multiple underlying links, one per attachment point, created in single mode
     // or after unknown-mode fallback.
-    Many(Vec<PerfLinkInner>),
+    Many(ManyProbeLinks),
 }
 
 impl ProbeLinkInner {
@@ -59,32 +148,8 @@ impl ProbeLinkInner {
                 PerfLinkInner::Fd(link) => Ok(vec![link]),
                 link @ PerfLinkInner::PerfLink(_) => Err(Self::One(link)),
             },
-            Self::Many(links) => {
-                // `Many` represents either an explicit single-mode multi-point attach or an
-                // unknown-mode fallback to per-point attachment. Both create every link during one
-                // logical attach operation, and backend selection is process-wide, so the links
-                // are either all fd-backed or all perf-backed. Conversion is therefore
-                // all-or-nothing: the first link determines the result for the whole collection.
-                let mut fd_links = Vec::with_capacity(links.len());
-                let mut pending = links.into_iter();
-
-                while let Some(link) = pending.next() {
-                    match link {
-                        PerfLinkInner::Fd(link) => fd_links.push(link),
-                        link @ PerfLinkInner::PerfLink(_) => {
-                            let mut links = fd_links
-                                .into_iter()
-                                .map(PerfLinkInner::Fd)
-                                .collect::<Vec<_>>();
-                            links.push(link);
-                            links.extend(pending);
-                            return Err(Self::Many(links));
-                        }
-                    }
-                }
-
-                Ok(fd_links)
-            }
+            Self::Many(ManyProbeLinks::Fd(links)) => Ok(links),
+            Self::Many(links @ ManyProbeLinks::PerfLink(_)) => Err(Self::Many(links)),
         }
     }
 }
@@ -108,7 +173,7 @@ impl Link for ProbeLinkInner {
     fn id(&self) -> Self::Id {
         match self {
             Self::One(link) => ProbeLinkIdInner::One(link.id()),
-            Self::Many(links) => ProbeLinkIdInner::Many(links.iter().map(Link::id).collect()),
+            Self::Many(links) => ProbeLinkIdInner::Many(links.ids()),
         }
     }
 
@@ -117,11 +182,7 @@ impl Link for ProbeLinkInner {
             Self::One(link) => {
                 let Ok(()) = link.detach();
             }
-            Self::Many(links) => {
-                for link in links {
-                    let Ok(()) = link.detach();
-                }
-            }
+            Self::Many(links) => links.detach(),
         }
         Ok(())
     }
@@ -252,11 +313,11 @@ pub(crate) fn attach<P: Probe, T: Link + From<PerfLinkInner>>(
     // Use debugfs to create probe
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
-    let link = attach_perf_link::<P>(prog_fd, kind, fn_name, offset, pid, cookie)?;
+    let link = attach_impl::<P>(prog_fd, kind, fn_name, offset, pid, cookie)?;
     program_data.links.insert(T::from(link))
 }
 
-pub(crate) fn attach_perf_link<P: Probe>(
+pub(crate) fn attach_impl<P: Probe>(
     prog_fd: BorrowedFd<'_>,
     kind: ProbeKind,
     fn_name: &OsStr,
@@ -272,7 +333,7 @@ pub(crate) fn attach_perf_link<P: Probe>(
             return Err(ProgramError::AttachCookieNotSupported);
         }
         let (perf_fd, event) = create_as_trace_point::<P>(kind, fn_name, offset, pid)?;
-        perf_attach_debugfs(prog_fd, perf_fd, event)
+        attach_perf_event(prog_fd, perf_fd, Some(event)).map(PerfLinkInner::PerfLink)
     }
 }
 

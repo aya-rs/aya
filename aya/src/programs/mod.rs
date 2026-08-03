@@ -137,7 +137,10 @@ use crate::{
             FdLink, FdLinkId, LinkError, LinkInfo, Links, ProgAttachLink, ProgAttachLinkId,
             define_link_wrapper, id_as_key, impl_try_from_fdlink, impl_try_into_fdlink,
         },
-        perf_attach::{PerfLinkIdInner, PerfLinkInner, perf_attach, perf_attach_debugfs},
+        perf_attach::{
+            PerfLink, PerfLinkIdInner, PerfLinkInner, attach_bpf_link, attach_perf_event,
+            perf_attach,
+        },
     },
     sys::{
         EbpfLoadProgramAttrs, NetlinkError, ProgQueryTarget, SyscallError, bpf_btf_get_fd_by_id,
