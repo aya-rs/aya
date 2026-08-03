@@ -42,7 +42,8 @@ jobs:
             --remote_header=x-buildbuddy-api-key=5CeVmFS0jDnutd00x9Xl
           )
 
-          bazel test //... "${bazel_args[@]}"
+          # The JVM defaults to ~25% of RAM, only ~1.75 GB on macOS runners.
+          bazel --host_jvm_args=-Xmx4g test //... "${bazel_args[@]}"
 
   lint:
     runs-on: ubuntu-latest
