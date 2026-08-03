@@ -1,0 +1,30 @@
+name: Regenerate derived files
+description: Regenerate and format source bindings
+
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/setup-rust-nightly
+      with:
+        components: rustfmt, clippy
+
+    - uses: Swatinem/rust-cache@v2
+      with:
+        shared-key: codegen
+        save-if: ${{ github.event_name != 'pull_request' }}
+
+    - name: Install headers
+      shell: bash
+      run: |
+        set -euxo pipefail
+        sudo apt -y update
+        sudo apt -y install libelf-dev libc6-dev libc6-dev-{arm64,armel,loong64,riscv64,ppc64el,s390x,mips,mips64}-cross
+
+    - name: Generate source bindings
+      shell: bash
+      run: cargo xtask codegen
+
+    # eBPF bindings are rewritten after bindgen, so format them explicitly.
+    - name: Format generated files
+      shell: bash
+      run: cargo fmt --all

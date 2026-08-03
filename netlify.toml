@@ -1,3 +1,4 @@
 [build]
+# Documentation still uses a floating nightly; unlike CI, it is not pinned.
 command = "rustup toolchain install nightly -c rust-src && cargo xtask docs"
 publish = "site"
