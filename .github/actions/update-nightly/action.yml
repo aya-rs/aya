@@ -1,0 +1,25 @@
+name: Update a pinned Rust nightly
+description: Update the Rust nightly owned by the caller repository
+
+inputs:
+  updater-script:
+    description: Caller-local nightly updater
+    required: true
+
+outputs:
+  rust-nightly:
+    description: Updated Rust nightly
+    value: ${{ steps.updater.outputs.rust-nightly }}
+
+runs:
+  using: composite
+  steps:
+    - id: updater
+      shell: bash
+      env:
+        UPDATER_SCRIPT: ${{ inputs.updater-script }}
+      run: |
+        set -euo pipefail
+
+        export RUST_NIGHTLY_UPDATER="$GITHUB_ACTION_PATH/../../../scripts/update-rust-nightly.py"
+        python3 "$GITHUB_WORKSPACE/$UPDATER_SCRIPT" update
