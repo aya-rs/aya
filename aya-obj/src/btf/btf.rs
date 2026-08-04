@@ -681,25 +681,19 @@ impl Btf {
                     if !features.is_supported(BtfFeature::Func) {
                         debug!("{kind}: not supported. replacing with TYPEDEF");
                         *t = BtfType::Typedef(Typedef::new(ty.name_offset, ty.btf_type));
-                    } else if !features.is_supported(BtfFeature::FuncGlobal)
-                        || name == "memset"
-                        || name == "memcpy"
-                        || name == "memmove"
-                        || name == "memcmp"
-                    {
+                    } else if ty.linkage() == FuncLinkage::Global {
                         // Sanitize BTF_FUNC_GLOBAL when not supported and ensure that
                         // memory builtins are marked as static. Globals are type checked
                         // and verified separately from their callers, while instead we
                         // want tracking info (eg bound checks) to be propagated to the
                         // memory builtins.
-                        if ty.linkage() == FuncLinkage::Global {
-                            if features.is_supported(BtfFeature::FuncGlobal) {
-                                debug!("changing FUNC {name} linkage to BTF_FUNC_STATIC");
-                            } else {
-                                debug!(
-                                    "{kind}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
-                                );
-                            }
+                        if matches!(name.as_ref(), "memset" | "memcpy" | "memmove" | "memcmp") {
+                            debug!("changing FUNC {name} linkage to BTF_FUNC_STATIC");
+                            ty.set_linkage(FuncLinkage::Static);
+                        } else if !features.is_supported(BtfFeature::FuncGlobal) {
+                            debug!(
+                                "{kind}: BTF_FUNC_GLOBAL not supported. replacing with BTF_FUNC_STATIC",
+                            );
                             ty.set_linkage(FuncLinkage::Static);
                         }
                     }
@@ -1342,6 +1336,35 @@ mod tests {
         assert_eq!(calls, 1);
         assert_matches!(btf.type_by_id(first).unwrap(), BtfType::Struct(_));
         assert_matches!(btf.type_by_id(second).unwrap(), BtfType::Struct(_));
+    }
+
+    #[test]
+    fn fixup_and_sanitize_only_probes_func_global_when_needed() {
+        for (name, linkage, expected_linkage, expected_probes) in [
+            ("static", FuncLinkage::Static, FuncLinkage::Static, 0),
+            ("memcpy", FuncLinkage::Global, FuncLinkage::Static, 0),
+            ("global", FuncLinkage::Global, FuncLinkage::Global, 1),
+        ] {
+            let mut btf = Btf::new();
+            let name_offset = btf.add_string(name);
+            let func_type_id = btf.add_type(BtfType::Func(Func::new(name_offset, 0, linkage)));
+            let mut func_global_probes = 0;
+
+            btf.fixup_and_sanitize(&HashMap::new(), &HashMap::new(), |feature| match feature {
+                BtfFeature::Func => true,
+                BtfFeature::FuncGlobal => {
+                    func_global_probes += 1;
+                    true
+                }
+                feature => panic!("unexpected probe for {feature:?}"),
+            })
+            .unwrap();
+
+            assert_eq!(func_global_probes, expected_probes, "{name}");
+            assert_matches!(btf.type_by_id(func_type_id).unwrap(), BtfType::Func(func) => {
+                assert_eq!(func.linkage(), expected_linkage, "{name}");
+            });
+        }
     }
 
     #[test]
