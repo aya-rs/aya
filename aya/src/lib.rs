@@ -44,6 +44,7 @@
 )]
 
 mod bpf;
+mod kernel_features;
 pub mod maps;
 pub mod pin;
 pub mod programs;
