@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::{
-    FEATURES,
+    kernel_features::FEATURES,
     programs::{
         FdLink, Link, PerfLink, PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError,
         attach_bpf_link, attach_perf_event, id_as_key, trace_point::read_sys_fs_trace_point_id,
