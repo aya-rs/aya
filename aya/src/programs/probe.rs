@@ -11,7 +11,7 @@ use std::{
 };
 
 use crate::{
-    FEATURES,
+    kernel_features::{FEATURES, Feature},
     programs::{
         FdLink, Link, PerfLink, PerfLinkIdInner, PerfLinkInner, ProgramData, ProgramError,
         attach_bpf_link, attach_perf_event, id_as_key, trace_point::read_sys_fs_trace_point_id,
@@ -312,7 +312,7 @@ pub(crate) fn attach_impl<P: Probe>(
     args: ProbeEventArgs<P::AttachTarget<'_>>,
     cookie: Option<u64>,
 ) -> Result<PerfLinkInner, ProgramError> {
-    if probe_pmu_supported() && FEATURES.bpf_perf_link() {
+    if probe_pmu_supported() && FEATURES.is_supported(Feature::BpfPerfLink) {
         attach_bpf_probe::<P>(prog_fd, args, cookie).map(PerfLinkInner::Fd)
     } else {
         attach_perf_event_probe::<P>(prog_fd, args, cookie).map(PerfLinkInner::PerfLink)

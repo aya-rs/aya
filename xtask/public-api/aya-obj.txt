@@ -61,6 +61,33 @@ impl core::marker::Unpin for aya_obj::btf::BtfError
 impl core::marker::UnsafeUnpin for aya_obj::btf::BtfError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfError
 impl !core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfError
+pub enum aya_obj::btf::BtfFeature
+pub aya_obj::btf::BtfFeature::DataSec
+pub aya_obj::btf::BtfFeature::DataSecZero
+pub aya_obj::btf::BtfFeature::DeclTag
+pub aya_obj::btf::BtfFeature::Enum64
+pub aya_obj::btf::BtfFeature::Float
+pub aya_obj::btf::BtfFeature::Func
+pub aya_obj::btf::BtfFeature::FuncGlobal
+pub aya_obj::btf::BtfFeature::TypeTag
+impl core::clone::Clone for aya_obj::btf::BtfFeature
+pub fn aya_obj::btf::BtfFeature::clone(&self) -> aya_obj::btf::BtfFeature
+impl core::cmp::Eq for aya_obj::btf::BtfFeature
+impl core::cmp::PartialEq for aya_obj::btf::BtfFeature
+pub fn aya_obj::btf::BtfFeature::eq(&self, &aya_obj::btf::BtfFeature) -> bool
+impl core::fmt::Debug for aya_obj::btf::BtfFeature
+pub fn aya_obj::btf::BtfFeature::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya_obj::btf::BtfFeature
+pub fn aya_obj::btf::BtfFeature::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for aya_obj::btf::BtfFeature
+impl core::marker::StructuralPartialEq for aya_obj::btf::BtfFeature
+impl core::marker::Freeze for aya_obj::btf::BtfFeature
+impl core::marker::Send for aya_obj::btf::BtfFeature
+impl core::marker::Sync for aya_obj::btf::BtfFeature
+impl core::marker::Unpin for aya_obj::btf::BtfFeature
+impl core::marker::UnsafeUnpin for aya_obj::btf::BtfFeature
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfFeature
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfFeature
 #[repr(u32)] pub enum aya_obj::btf::BtfKind
 pub aya_obj::btf::BtfKind::Array = 3
 pub aya_obj::btf::BtfKind::Const = 10
@@ -282,28 +309,6 @@ impl core::marker::Unpin for aya_obj::btf::BtfExt
 impl core::marker::UnsafeUnpin for aya_obj::btf::BtfExt
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfExt
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfExt
-pub struct aya_obj::btf::BtfFeatures
-impl aya_obj::btf::BtfFeatures
-pub const fn aya_obj::btf::BtfFeatures::btf_datasec(&self) -> bool
-pub const fn aya_obj::btf::BtfFeatures::btf_datasec_zero(&self) -> bool
-pub const fn aya_obj::btf::BtfFeatures::btf_decl_tag(&self) -> bool
-pub const fn aya_obj::btf::BtfFeatures::btf_enum64(&self) -> bool
-pub const fn aya_obj::btf::BtfFeatures::btf_float(&self) -> bool
-pub const fn aya_obj::btf::BtfFeatures::btf_func(&self) -> bool
-pub const fn aya_obj::btf::BtfFeatures::btf_func_global(&self) -> bool
-pub const fn aya_obj::btf::BtfFeatures::btf_kind_func_proto(&self) -> bool
-pub const fn aya_obj::btf::BtfFeatures::btf_type_tag(&self) -> bool
-impl core::default::Default for aya_obj::btf::BtfFeatures
-pub fn aya_obj::btf::BtfFeatures::default() -> aya_obj::btf::BtfFeatures
-impl core::fmt::Debug for aya_obj::btf::BtfFeatures
-pub fn aya_obj::btf::BtfFeatures::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for aya_obj::btf::BtfFeatures
-impl core::marker::Send for aya_obj::btf::BtfFeatures
-impl core::marker::Sync for aya_obj::btf::BtfFeatures
-impl core::marker::Unpin for aya_obj::btf::BtfFeatures
-impl core::marker::UnsafeUnpin for aya_obj::btf::BtfFeatures
-impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::btf::BtfFeatures
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::btf::BtfFeatures
 #[repr(C)] pub struct aya_obj::btf::BtfParam
 pub aya_obj::btf::BtfParam::btf_type: u32
 pub aya_obj::btf::BtfParam::name_offset: u32
@@ -4786,27 +4791,6 @@ impl core::marker::Unpin for aya_obj::ProgramSection
 impl core::marker::UnsafeUnpin for aya_obj::ProgramSection
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::ProgramSection
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::ProgramSection
-pub struct aya_obj::obj::Features
-impl aya_obj::Features
-pub const fn aya_obj::Features::bpf_cookie(&self) -> bool
-pub const fn aya_obj::Features::bpf_global_data(&self) -> bool
-pub const fn aya_obj::Features::bpf_name(&self) -> bool
-pub const fn aya_obj::Features::bpf_perf_link(&self) -> bool
-pub const fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
-pub const fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
-pub const fn aya_obj::Features::cpumap_prog_id(&self) -> bool
-pub const fn aya_obj::Features::devmap_prog_id(&self) -> bool
-impl core::default::Default for aya_obj::Features
-pub fn aya_obj::Features::default() -> aya_obj::Features
-impl core::fmt::Debug for aya_obj::Features
-pub fn aya_obj::Features::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for aya_obj::Features
-impl core::marker::Send for aya_obj::Features
-impl core::marker::Sync for aya_obj::Features
-impl core::marker::Unpin for aya_obj::Features
-impl core::marker::UnsafeUnpin for aya_obj::Features
-impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Features
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::Features
 pub struct aya_obj::obj::Function
 pub aya_obj::obj::Function::address: u64
 pub aya_obj::obj::Function::func_info: aya_obj::btf::FuncSecInfo
@@ -4847,12 +4831,12 @@ pub aya_obj::obj::Object::license: alloc::ffi::c_str::CString
 pub aya_obj::obj::Object::maps: std::collections::hash::map::HashMap<alloc::string::String, aya_obj::maps::Map>
 pub aya_obj::obj::Object::programs: std::collections::hash::map::HashMap<alloc::string::String, aya_obj::Program>
 impl aya_obj::Object
-pub fn aya_obj::Object::fixup_and_sanitize_btf(&mut self, &aya_obj::btf::BtfFeatures) -> core::result::Result<core::option::Option<&aya_obj::btf::Btf>, aya_obj::btf::BtfError>
+pub fn aya_obj::Object::fixup_and_sanitize_btf<F>(&mut self, impl core::ops::function::FnOnce() -> core::option::Option<F>) -> core::result::Result<core::option::Option<&aya_obj::btf::Btf>, aya_obj::btf::BtfError> where F: core::ops::function::FnMut(aya_obj::btf::BtfFeature) -> bool
 impl aya_obj::Object
 pub fn aya_obj::Object::has_btf_relocations(&self) -> bool
 pub fn aya_obj::Object::parse(&[u8]) -> core::result::Result<Self, aya_obj::ParseError>
 pub fn aya_obj::Object::patch_map_data(&mut self, std::collections::hash::map::HashMap<&str, (&[u8], bool)>) -> core::result::Result<(), aya_obj::ParseError>
-pub fn aya_obj::Object::sanitize_functions(&mut self, &aya_obj::Features)
+pub fn aya_obj::Object::sanitize_functions(&mut self, impl core::ops::function::FnOnce() -> bool)
 impl aya_obj::Object
 pub fn aya_obj::Object::has_strong_typed_ksyms(&self) -> bool
 pub fn aya_obj::Object::has_typed_ksyms(&self) -> bool
@@ -5430,27 +5414,6 @@ impl core::marker::Unpin for aya_obj::ProgramSection
 impl core::marker::UnsafeUnpin for aya_obj::ProgramSection
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::ProgramSection
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::ProgramSection
-pub struct aya_obj::Features
-impl aya_obj::Features
-pub const fn aya_obj::Features::bpf_cookie(&self) -> bool
-pub const fn aya_obj::Features::bpf_global_data(&self) -> bool
-pub const fn aya_obj::Features::bpf_name(&self) -> bool
-pub const fn aya_obj::Features::bpf_perf_link(&self) -> bool
-pub const fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
-pub const fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
-pub const fn aya_obj::Features::cpumap_prog_id(&self) -> bool
-pub const fn aya_obj::Features::devmap_prog_id(&self) -> bool
-impl core::default::Default for aya_obj::Features
-pub fn aya_obj::Features::default() -> aya_obj::Features
-impl core::fmt::Debug for aya_obj::Features
-pub fn aya_obj::Features::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for aya_obj::Features
-impl core::marker::Send for aya_obj::Features
-impl core::marker::Sync for aya_obj::Features
-impl core::marker::Unpin for aya_obj::Features
-impl core::marker::UnsafeUnpin for aya_obj::Features
-impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Features
-impl core::panic::unwind_safe::UnwindSafe for aya_obj::Features
 pub struct aya_obj::Function
 pub aya_obj::Function::address: u64
 pub aya_obj::Function::func_info: aya_obj::btf::FuncSecInfo
@@ -5491,12 +5454,12 @@ pub aya_obj::Object::license: alloc::ffi::c_str::CString
 pub aya_obj::Object::maps: std::collections::hash::map::HashMap<alloc::string::String, aya_obj::maps::Map>
 pub aya_obj::Object::programs: std::collections::hash::map::HashMap<alloc::string::String, aya_obj::Program>
 impl aya_obj::Object
-pub fn aya_obj::Object::fixup_and_sanitize_btf(&mut self, &aya_obj::btf::BtfFeatures) -> core::result::Result<core::option::Option<&aya_obj::btf::Btf>, aya_obj::btf::BtfError>
+pub fn aya_obj::Object::fixup_and_sanitize_btf<F>(&mut self, impl core::ops::function::FnOnce() -> core::option::Option<F>) -> core::result::Result<core::option::Option<&aya_obj::btf::Btf>, aya_obj::btf::BtfError> where F: core::ops::function::FnMut(aya_obj::btf::BtfFeature) -> bool
 impl aya_obj::Object
 pub fn aya_obj::Object::has_btf_relocations(&self) -> bool
 pub fn aya_obj::Object::parse(&[u8]) -> core::result::Result<Self, aya_obj::ParseError>
 pub fn aya_obj::Object::patch_map_data(&mut self, std::collections::hash::map::HashMap<&str, (&[u8], bool)>) -> core::result::Result<(), aya_obj::ParseError>
-pub fn aya_obj::Object::sanitize_functions(&mut self, &aya_obj::Features)
+pub fn aya_obj::Object::sanitize_functions(&mut self, impl core::ops::function::FnOnce() -> bool)
 impl aya_obj::Object
 pub fn aya_obj::Object::has_strong_typed_ksyms(&self) -> bool
 pub fn aya_obj::Object::has_typed_ksyms(&self) -> bool
