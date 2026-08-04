@@ -1,22 +1,23 @@
 use std::{
     borrow::Cow,
     collections::{HashMap, HashSet},
-    fs, io, iter,
+    fmt, fs, io, iter,
     os::fd::{AsFd as _, AsRawFd as _},
     path::{Path, PathBuf},
-    sync::{Arc, LazyLock},
+    sync::Arc,
 };
 
 use aya_obj::{
-    EbpfSectionKind, Features, KsymsError, Object, ParseError, ProgramSection,
-    btf::{Btf, BtfError, BtfFeatures, BtfRelocationError},
+    EbpfSectionKind, KsymsError, Object, ParseError, ProgramSection,
+    btf::{Btf, BtfError, BtfRelocationError},
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
 };
-use log::{debug, warn};
+use log::warn;
 use thiserror::Error;
 
 use crate::{
+    kernel_features::FEATURES,
     maps::{Map, MapData, MapError},
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSock, CgroupSockAddr, CgroupSockopt,
@@ -25,14 +26,7 @@ use crate::{
         SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SockOps, SocketFilter, TracePoint,
         UProbe, Xdp, uprobe::AttachMode,
     },
-    sys::{
-        bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
-        is_btf_datasec_supported, is_btf_datasec_zero_supported, is_btf_decl_tag_supported,
-        is_btf_enum64_supported, is_btf_float_supported, is_btf_func_global_supported,
-        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
-        is_probe_read_kernel_supported, is_prog_id_supported, is_prog_name_supported,
-        retry_with_verifier_logs,
-    },
+    sys::{bpf_load_btf, retry_with_verifier_logs},
     util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
 };
 
@@ -58,40 +52,6 @@ unsafe_impl_pod!(i8, u8, i16, u16, i32, u32, i64, u64, u128, i128);
 unsafe impl<T: Pod, const N: usize> Pod for [T; N] {}
 
 pub use aya_obj::maps::{PinningType, bpf_map_def};
-
-pub(crate) static FEATURES: LazyLock<Features> = LazyLock::new(detect_features);
-
-fn detect_features() -> Features {
-    let btf = is_btf_supported().then(|| {
-        BtfFeatures::new(
-            is_btf_func_supported(),
-            is_btf_func_global_supported(),
-            is_btf_datasec_supported(),
-            is_btf_datasec_zero_supported(),
-            is_btf_float_supported(),
-            is_btf_decl_tag_supported(),
-            is_btf_type_tag_supported(),
-            is_btf_enum64_supported(),
-        )
-    });
-    let f = Features::new(
-        is_prog_name_supported(),
-        is_probe_read_kernel_supported(),
-        is_perf_link_supported(),
-        is_bpf_global_data_supported(),
-        is_bpf_cookie_supported(),
-        is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP),
-        is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_DEVMAP),
-        btf,
-    );
-    debug!("BPF Feature Detection: {f:#?}");
-    f
-}
-
-/// Returns a reference to the detected BPF features.
-pub fn features() -> &'static Features {
-    &FEATURES
-}
 
 /// Builder style API for advanced loading of eBPF programs.
 ///
@@ -150,8 +110,8 @@ type BtfSourceFn = dyn Fn(&BtfParser) -> Result<Btf, EbpfError>
 
 struct BtfSource(Box<BtfSourceFn>);
 
-impl std::fmt::Debug for BtfSource {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Debug for BtfSource {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("BtfSource").finish_non_exhaustive()
     }
 }
@@ -501,8 +461,9 @@ impl<'a> EbpfLoader<'a> {
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
 
-        let btf_fd = if let Some(features) = &FEATURES.btf() {
-            if let Some(btf) = obj.fixup_and_sanitize_btf(features)? {
+        let btf_features = obj.btf.as_ref().and_then(|_| FEATURES.btf());
+        let btf_fd = if let Some(features) = btf_features {
+            if let Some(btf) = obj.fixup_and_sanitize_btf(|feature| features.supported(feature))? {
                 match load_btf(btf.to_bytes(), *verifier_log_level) {
                     Ok(btf_fd) => Some(Arc::new(btf_fd)),
                     // Only report an error here if the BTF is truly needed, otherwise proceed without.
@@ -624,8 +585,10 @@ impl<'a> EbpfLoader<'a> {
         let mut maps_of_maps: Vec<(String, aya_obj::Map)> = Vec::new();
 
         for (name, map_obj) in obj.maps.drain() {
-            if let (false, EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata) =
-                (FEATURES.bpf_global_data(), map_obj.section_kind())
+            if matches!(
+                map_obj.section_kind(),
+                EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata
+            ) && !FEATURES.bpf_global_data()
             {
                 continue;
             }
@@ -723,7 +686,7 @@ impl<'a> EbpfLoader<'a> {
         obj.relocate_externs()?;
 
         obj.relocate_calls(&text_sections)?;
-        obj.sanitize_functions(&FEATURES);
+        obj.sanitize_functions(|| FEATURES.bpf_probe_read_kernel());
 
         let programs = obj
             .programs

@@ -10,7 +10,7 @@ use aya_obj::generated::bpf_devmap_val;
 
 use super::{XdpMapError, dev_map::DevMapValue};
 use crate::{
-    FEATURES,
+    kernel_features::FEATURES,
     maps::{IterableMap, MapData, MapError, MapIter, MapKeys, check_kv_size, hash_map},
     programs::ProgramFd,
     sys::{SyscallError, bpf_map_lookup_elem},

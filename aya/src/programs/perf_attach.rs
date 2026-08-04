@@ -8,11 +8,11 @@ use std::{
 use aya_obj::generated::bpf_attach_type::BPF_PERF_EVENT;
 
 use crate::{
-    FEATURES,
+    kernel_features::FEATURES,
     programs::{FdLink, Link, ProgramError, id_as_key, probe::ProbeEvent},
     sys::{
         BpfLinkCreateArgs, LinkTarget, PerfEventIoctlRequest, SyscallError, bpf_link_create,
-        is_bpf_cookie_supported, perf_event_ioctl,
+        perf_event_ioctl,
     },
 };
 
@@ -104,7 +104,7 @@ pub(crate) fn attach_bpf_link(
     perf_fd: crate::MockableFd,
     cookie: Option<u64>,
 ) -> Result<FdLink, ProgramError> {
-    if cookie.is_some() && !is_bpf_cookie_supported() {
+    if cookie.is_some() && !FEATURES.bpf_cookie() {
         return Err(ProgramError::AttachCookieNotSupported);
     }
     let link_fd = bpf_link_create(

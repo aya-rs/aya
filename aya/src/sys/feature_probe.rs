@@ -2,11 +2,12 @@
 
 use std::{
     ffi::CStr,
-    mem,
+    io, mem,
     os::fd::{AsFd as _, AsRawFd as _},
     ptr,
 };
 
+pub use aya_obj::btf::BtfFeature;
 use aya_obj::{
     btf::{Btf, BtfKind},
     generated::{
@@ -17,8 +18,11 @@ use aya_obj::{
 use libc::{E2BIG, EBADF, EINVAL};
 
 use super::{
-    SyscallError, bpf_map_create, bpf_prog_load, bpf_raw_tracepoint_open, new_insn, unit_sys_bpf,
-    with_prog_insns, with_trivial_prog,
+    SyscallError, bpf_map_create, bpf_prog_load, bpf_raw_tracepoint_open, new_insn,
+    probe_bpf_global_data, probe_bpf_name, probe_btf, probe_btf_datasec, probe_btf_datasec_zero,
+    probe_btf_decl_tag, probe_btf_enum64, probe_btf_float, probe_btf_func, probe_btf_func_global,
+    probe_btf_type_tag, probe_perf_link, probe_prog_id, unit_sys_bpf, with_prog_insns,
+    with_trivial_prog,
 };
 use crate::{
     MockableFd,
@@ -30,6 +34,106 @@ use crate::{
 /// A BPF helper function.
 #[doc(alias = "bpf_func_id")]
 pub type BpfHelper = bpf_func_id;
+
+/// Whether the host kernel supports names for BPF programs and maps.
+///
+/// This function performs a new kernel probe on every call.
+/// `Ok(false)` is returned only when the kernel gives the expected response for an unsupported
+/// feature. Permission errors and other unexpected probe failures are returned as errors.
+///
+/// # Errors
+///
+/// Returns an I/O error if support cannot be determined.
+pub fn is_bpf_name_supported() -> io::Result<bool> {
+    probe_bpf_name()
+}
+
+/// Whether the host kernel supports attaching perf events using BPF links.
+///
+/// This function performs a new kernel probe on every call.
+/// `Ok(false)` is returned only when the kernel gives the expected response for an unsupported
+/// feature. Permission errors and other unexpected probe failures are returned as errors.
+///
+/// # Errors
+///
+/// Returns an I/O error if support cannot be determined.
+pub fn is_perf_link_supported() -> io::Result<bool> {
+    probe_perf_link()
+}
+
+/// Whether the host kernel supports BPF global data.
+///
+/// This function performs a new kernel probe on every call.
+/// `Ok(false)` is returned only when the kernel gives the expected response for an unsupported
+/// feature. Permission errors and other unexpected probe failures are returned as errors.
+///
+/// # Errors
+///
+/// Returns an I/O error if support cannot be determined.
+pub fn is_bpf_global_data_supported() -> io::Result<bool> {
+    probe_bpf_global_data()
+}
+
+/// Whether CPU map values support program IDs.
+///
+/// This function performs a new kernel probe on every call.
+/// `Ok(false)` is returned only when the kernel gives the expected response for an unsupported
+/// feature. Permission errors and other unexpected probe failures are returned as errors.
+///
+/// # Errors
+///
+/// Returns an I/O error if support cannot be determined.
+pub fn is_cpumap_prog_id_supported() -> io::Result<bool> {
+    probe_prog_id(bpf_map_type::BPF_MAP_TYPE_CPUMAP)
+}
+
+/// Whether device map and device map hash values support program IDs.
+///
+/// This function performs a new kernel probe on every call.
+/// `Ok(false)` is returned only when the kernel gives the expected response for an unsupported
+/// feature. Permission errors and other unexpected probe failures are returned as errors.
+///
+/// # Errors
+///
+/// Returns an I/O error if support cannot be determined.
+pub fn is_devmap_prog_id_supported() -> io::Result<bool> {
+    probe_prog_id(bpf_map_type::BPF_MAP_TYPE_DEVMAP)
+}
+
+/// Whether the host kernel supports BTF.
+///
+/// This function performs a new kernel probe on every call.
+/// `Ok(false)` is returned only when the kernel gives the expected response for an unsupported
+/// feature. Permission errors and other unexpected probe failures are returned as errors.
+///
+/// # Errors
+///
+/// Returns an I/O error if support cannot be determined.
+pub fn is_btf_supported() -> io::Result<bool> {
+    probe_btf()
+}
+
+/// Whether the host kernel supports the given [`BtfFeature`].
+///
+/// This function performs a new kernel probe on every call.
+/// `Ok(false)` is returned only when the kernel gives the expected response for an unsupported
+/// feature. Permission errors and other unexpected probe failures are returned as errors.
+///
+/// # Errors
+///
+/// Returns an I/O error if support cannot be determined.
+pub fn is_btf_feature_supported(feature: BtfFeature) -> io::Result<bool> {
+    match feature {
+        BtfFeature::Func => probe_btf_func(),
+        BtfFeature::FuncGlobal => probe_btf_func_global(),
+        BtfFeature::DataSec => probe_btf_datasec(),
+        BtfFeature::DataSecZero => probe_btf_datasec_zero(),
+        BtfFeature::Float => probe_btf_float(),
+        BtfFeature::DeclTag => probe_btf_decl_tag(),
+        BtfFeature::TypeTag => probe_btf_type_tag(),
+        BtfFeature::Enum64 => probe_btf_enum64(),
+    }
+}
 
 /// Whether the host kernel supports the [`BpfHelper`] for the [`ProgramType`].
 ///
@@ -551,5 +655,31 @@ fn probe_bpf_info<T>(fd: MockableFd, info: T) -> Result<bool, SyscallError> {
             call: "bpf_obj_get_info_by_fd",
             io_error,
         }),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cell::Cell;
+
+    use super::*;
+    use crate::sys::override_syscall;
+
+    // Syscall overrides are function pointers, so they cannot capture a local counter.
+    thread_local! {
+        static PROBE_CALLS: Cell<usize> = const { Cell::new(0) };
+    }
+
+    #[test]
+    fn public_feature_probe_runs_on_every_call() {
+        PROBE_CALLS.set(0);
+        override_syscall(|_| {
+            PROBE_CALLS.set(PROBE_CALLS.get() + 1);
+            Ok(MockableFd::mock_signed_fd().into())
+        });
+
+        assert!(is_bpf_name_supported().unwrap());
+        assert!(is_bpf_name_supported().unwrap());
+        assert_eq!(PROBE_CALLS.get(), 2);
     }
 }
