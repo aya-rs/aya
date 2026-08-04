@@ -7,9 +7,10 @@ use aya::{
     EbpfLoader,
     maps::ring_buf::RingBuf,
     programs::{
-        ProbeKind, ProgramError, UProbe,
+        ProbeKind, ProgramError, ProgramType, UProbe,
         uprobe::{UProbeAttachLocation, UProbeAttachPoint, UProbeError, UProbeScope},
     },
+    sys::{BpfHelper, is_helper_supported},
     util::KernelVersion,
 };
 
@@ -25,6 +26,10 @@ const UPROBE_SCOPE_CHILD: &str = "AYA_INTEGRATION_TEST_UPROBE_SCOPE_CHILD";
 // buffer on supported test systems, which is ample for the handful of `u64`
 // cookie records emitted by these tests.
 const RING_BUF_BYTE_SIZE: u32 = 512;
+
+fn bpf_cookie_supported() -> bool {
+    is_helper_supported(ProgramType::KProbe, BpfHelper::BPF_FUNC_get_attach_cookie).unwrap()
+}
 
 fn run_scope_child() {
     let status = Command::new(std::env::current_exe().unwrap())
@@ -49,7 +54,7 @@ fn uprobe_multi_scope_child() {
 
 #[test_log::test]
 fn test_uprobe_attach_multi() {
-    if !aya::features().bpf_cookie() {
+    if !bpf_cookie_supported() {
         eprintln!(
             "skipping test: bpf_get_attach_cookie is unsupported so the test program cannot load"
         );
@@ -130,7 +135,7 @@ fn test_uprobe_attach_multi() {
 
 #[test_log::test]
 fn test_uprobe_unknown_program_falls_back_to_multiple_single_points() {
-    if !aya::features().bpf_cookie() {
+    if !bpf_cookie_supported() {
         eprintln!(
             "skipping test: bpf_get_attach_cookie is unsupported so the test program cannot load"
         );
@@ -217,7 +222,7 @@ fn test_uprobe_unknown_program_falls_back_to_multiple_single_points() {
 
 #[test_log::test]
 fn test_uprobe_single_program_composite_link_drop_detaches_all_points() {
-    if !aya::features().bpf_cookie() {
+    if !bpf_cookie_supported() {
         eprintln!(
             "skipping test: bpf_get_attach_cookie is unsupported so the test program cannot load"
         );
@@ -281,7 +286,7 @@ fn test_uprobe_single_program_composite_link_drop_detaches_all_points() {
 
 #[test_log::test]
 fn test_uprobe_attach_multi_invalid_symbol() {
-    if !aya::features().bpf_cookie() {
+    if !bpf_cookie_supported() {
         eprintln!(
             "skipping test: bpf_get_attach_cookie is unsupported so the test program cannot load"
         );

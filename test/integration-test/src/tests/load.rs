@@ -19,6 +19,7 @@ use aya::{
         uprobe::{UProbeLink, UProbeLinkId, UProbeScope},
         xdp::{XdpLink, XdpLinkId},
     },
+    sys::is_perf_link_supported,
     util::KernelVersion,
 };
 use aya_obj::programs::XdpAttachType;
@@ -349,7 +350,7 @@ fn unload_kprobe() {
         crate::TEST,
         program_name,
         attach,
-        aya::features().bpf_perf_link(), // probe uses perf_attach.
+        is_perf_link_supported().unwrap(), // probe uses perf_attach.
     );
 }
 
@@ -363,7 +364,7 @@ fn basic_tracepoint() {
         crate::TEST,
         program_name,
         attach,
-        aya::features().bpf_perf_link(), // tracepoint uses perf_attach.
+        is_perf_link_supported().unwrap(), // tracepoint uses perf_attach.
     );
 }
 
@@ -386,7 +387,7 @@ fn basic_uprobe_scopes(#[case] scope: UProbeScope) {
         crate::TEST,
         program_name,
         attach,
-        aya::features().bpf_perf_link(), // probe uses perf_attach.
+        is_perf_link_supported().unwrap(), // probe uses perf_attach.
     );
 }
 
@@ -644,7 +645,7 @@ fn pin_lifecycle_tracepoint() {
         from_pin,
         attach,
         None,
-        aya::features().bpf_perf_link(), // tracepoint uses perf_attach.
+        is_perf_link_supported().unwrap(), // tracepoint uses perf_attach.
     );
 }
 
@@ -665,7 +666,7 @@ fn pin_lifecycle_kprobe() {
         from_pin,
         attach,
         None,
-        aya::features().bpf_perf_link(), // probe uses perf_attach.
+        is_perf_link_supported().unwrap(), // probe uses perf_attach.
     );
 }
 
@@ -699,7 +700,7 @@ fn pin_lifecycle_uprobe() {
         from_pin,
         attach,
         None,
-        aya::features().bpf_perf_link(), // probe uses perf_attach.
+        is_perf_link_supported().unwrap(), // probe uses perf_attach.
     );
 
     // Make sure the function isn't optimized out.

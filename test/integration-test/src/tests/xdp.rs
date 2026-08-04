@@ -5,6 +5,7 @@ use aya::{
     Ebpf,
     maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
     programs::{ProgramError, Xdp, XdpError, XdpMode, xdp::XdpLinkId},
+    sys::is_devmap_prog_id_supported,
     test_helpers::NetNsGuard,
     util::KernelVersion,
 };
@@ -269,7 +270,7 @@ fn devmap_set(
         let xdp: &mut Xdp = bpf.program_mut(prog).unwrap().try_into().unwrap();
         xdp.load().unwrap();
     }
-    if !aya::features().devmap_prog_id() {
+    if !is_devmap_prog_id_supported().unwrap() {
         let kernel_version = KernelVersion::current().unwrap();
         eprintln!(
             "skipping {dev_get_prog} and {dev_hash_get_prog} on kernel {kernel_version:?}, devmap program IDs are unavailable; see https://github.com/torvalds/linux/commit/fbee97feed9b"
