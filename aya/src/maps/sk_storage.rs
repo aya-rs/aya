@@ -44,18 +44,8 @@ impl<T: Borrow<MapData>, V: Pod> SkStorage<T, V> {
 
 impl<T: BorrowMut<MapData>, V: Pod> SkStorage<T, V> {
     /// Creates or updates the value associated with `socket`.
-    pub fn insert(
-        &mut self,
-        socket: &impl AsRawFd,
-        value: impl Borrow<V>,
-        flags: u64,
-    ) -> Result<(), MapError> {
-        hash_map::insert(
-            self.inner.borrow_mut(),
-            &socket.as_raw_fd(),
-            value.borrow(),
-            flags,
-        )
+    pub fn insert(&mut self, socket: &impl AsRawFd, value: &V, flags: u64) -> Result<(), MapError> {
+        hash_map::insert(self.inner.borrow_mut(), &socket.as_raw_fd(), value, flags)
     }
 
     /// Removes the storage associated with `socket`.

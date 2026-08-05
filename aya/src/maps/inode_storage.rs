@@ -44,18 +44,8 @@ impl<T: Borrow<MapData>, V: Pod> InodeStorage<T, V> {
 
 impl<T: BorrowMut<MapData>, V: Pod> InodeStorage<T, V> {
     /// Creates or updates the value associated with `inode`.
-    pub fn insert(
-        &mut self,
-        inode: &impl AsRawFd,
-        value: impl Borrow<V>,
-        flags: u64,
-    ) -> Result<(), MapError> {
-        hash_map::insert(
-            self.inner.borrow_mut(),
-            &inode.as_raw_fd(),
-            value.borrow(),
-            flags,
-        )
+    pub fn insert(&mut self, inode: &impl AsRawFd, value: &V, flags: u64) -> Result<(), MapError> {
+        hash_map::insert(self.inner.borrow_mut(), &inode.as_raw_fd(), value, flags)
     }
 
     /// Removes the storage associated with `inode`.

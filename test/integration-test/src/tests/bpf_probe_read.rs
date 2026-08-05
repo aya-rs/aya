@@ -83,7 +83,7 @@ fn set_kernel_buffer_element(bpf: &mut Ebpf, bytes: &[u8]) {
     bytes.resize(1024, 0xFF);
     let bytes: [u8; 1024] = bytes.try_into().unwrap();
     let mut m = Array::<_, [u8; 1024]>::try_from(bpf.map_mut("KERNEL_BUFFER").unwrap()).unwrap();
-    m.set(0, bytes, 0).unwrap();
+    m.set(0, &bytes, 0).unwrap();
 }
 
 #[track_caller]

@@ -28,10 +28,10 @@ use crate::{
 ///
 /// let mut bloom_filter = BloomFilter::try_from(bpf.map_mut("BLOOM_FILTER").unwrap())?;
 ///
-/// bloom_filter.insert(1, 0)?;
+/// bloom_filter.insert(&1, 0)?;
 ///
-/// assert_matches!(bloom_filter.contains(1, 0), Ok(()));
-/// assert_matches!(bloom_filter.contains(2, 0), Err(MapError::ElementNotFound));
+/// assert_matches!(bloom_filter.contains(&1, 0), Ok(()));
+/// assert_matches!(bloom_filter.contains(&2, 0), Err(MapError::ElementNotFound));
 ///
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
@@ -54,10 +54,10 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
     }
 
     /// Query the existence of the element.
-    pub fn contains(&self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
+    pub fn contains(&self, value: &V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
 
-        match bpf_map_peek_elem(fd, value.borrow(), flags).map_err(|io_error| SyscallError {
+        match bpf_map_peek_elem(fd, value, flags).map_err(|io_error| SyscallError {
             call: "bpf_map_peek_elem",
             io_error,
         })? {
@@ -69,9 +69,9 @@ impl<T: Borrow<MapData>, V: Pod> BloomFilter<T, V> {
 
 impl<T: BorrowMut<MapData>, V: Pod> BloomFilter<T, V> {
     /// Inserts a value into the map.
-    pub fn insert(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
+    pub fn insert(&mut self, value: &V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow_mut().fd().as_fd();
-        bpf_map_push_elem(fd, value.borrow(), flags)
+        bpf_map_push_elem(fd, value, flags)
             .map_err(|io_error| SyscallError {
                 call: "bpf_map_push_elem",
                 io_error,
@@ -153,7 +153,7 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
 
         assert_matches!(
-            bloom_filter.insert(1, 0),
+            bloom_filter.insert(&1, 0),
             Err(MapError::SyscallError(SyscallError { call: "bpf_map_push_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
         );
     }
@@ -171,7 +171,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert_matches!(bloom_filter.insert(0, 42), Ok(()));
+        assert_matches!(bloom_filter.insert(&0, 42), Ok(()));
     }
 
     #[test]
@@ -182,7 +182,7 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
 
         assert_matches!(
-            bloom_filter.contains(1, 0),
+            bloom_filter.contains(&1, 0),
             Err(MapError::SyscallError(SyscallError { call: "bpf_map_peek_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
         );
     }
@@ -200,7 +200,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert_matches!(bloom_filter.contains(1, 0), Err(MapError::ElementNotFound));
+        assert_matches!(bloom_filter.contains(&1, 0), Err(MapError::ElementNotFound));
     }
 
     #[test]
@@ -221,6 +221,6 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert_matches!(bloom_filter.contains(QUERY, 0), Ok(()));
+        assert_matches!(bloom_filter.contains(&QUERY, 0), Ok(()));
     }
 }

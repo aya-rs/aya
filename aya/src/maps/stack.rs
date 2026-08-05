@@ -24,8 +24,8 @@ use crate::{
 /// use aya::maps::Stack;
 ///
 /// let mut stack = Stack::try_from(bpf.map_mut("STACK").unwrap())?;
-/// stack.push(42, 0)?;
-/// stack.push(43, 0)?;
+/// stack.push(&42, 0)?;
+/// stack.push(&43, 0)?;
 /// assert_eq!(stack.pop(0)?, 43);
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
@@ -79,9 +79,9 @@ impl<T: BorrowMut<MapData>, V: Pod> Stack<T, V> {
     /// # Errors
     ///
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
-    pub fn push(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
+    pub fn push(&mut self, value: &V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
-        bpf_map_update_elem(fd, None::<&u32>, value.borrow(), flags)
+        bpf_map_update_elem(fd, None::<&u32>, value, flags)
             .map_err(|io_error| SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,

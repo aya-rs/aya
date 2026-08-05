@@ -20,7 +20,7 @@ fn inode_storage() {
     {
         let mut target_tgid: Array<_, u32> =
             Array::try_from(bpf.map_mut("TARGET_TGID").unwrap()).unwrap();
-        target_tgid.set(0, std::process::id(), 0).unwrap();
+        target_tgid.set(0, &std::process::id(), 0).unwrap();
     }
     let link_id = {
         let lsm: &mut Lsm = bpf
