@@ -72,22 +72,17 @@ impl ManyProbeLinks {
     pub(crate) fn attach_point<P: Probe>(
         &mut self,
         prog_fd: BorrowedFd<'_>,
-        kind: ProbeKind,
-        fn_name: &OsStr,
-        offset: u64,
-        pid: Option<u32>,
-        cookie: Option<u64>,
+        args: ProbeAttachArgs<P::AttachTarget<'_>>,
     ) -> Result<(), ProgramError> {
         // The first attached point selected this variant, so subsequent points can use the same
         // fd-backed or perf-backed path directly without repeating backend selection.
         match self {
             Self::Fd(links) => {
-                let link = attach_bpf_probe::<P>(prog_fd, kind, fn_name, offset, pid, cookie)?;
+                let link = attach_bpf_probe::<P>(prog_fd, args)?;
                 links.push(link);
             }
             Self::PerfLink(links) => {
-                let link =
-                    attach_perf_event_probe::<P>(prog_fd, kind, fn_name, offset, pid, cookie)?;
+                let link = attach_perf_event_probe::<P>(prog_fd, args)?;
                 links.push(link);
             }
         }
@@ -183,10 +178,21 @@ impl Link for ProbeLinkInner {
 
 id_as_key!(ProbeLinkInner, ProbeLinkIdInner);
 
+/// Common attachment arguments paired with a probe family's target type.
+pub(crate) struct ProbeAttachArgs<T> {
+    pub(crate) target: T,
+    pub(crate) kind: ProbeKind,
+    pub(crate) cookie: Option<u64>,
+}
+
 pub(crate) trait Probe {
+    type AttachTarget<'a>;
+
     const PMU: &'static str;
 
     type Error: Into<ProgramError>;
+
+    fn into_common_target(target: Self::AttachTarget<'_>) -> (&OsStr, u64, Option<u32>);
 
     fn file_error(filename: PathBuf, io_error: io::Error) -> Self::Error;
 
@@ -290,70 +296,48 @@ impl Drop for ProbeEvent {
 
 pub(crate) fn attach<P: Probe, T: Link + From<PerfLinkInner>>(
     program_data: &mut ProgramData<T>,
-    kind: ProbeKind,
-    // NB: the meaning of this argument is different for kprobe/kretprobe and uprobe/uretprobe; in
-    // the kprobe case it is the name of the function to attach to, in the uprobe case it is a path
-    // to the binary or library.
-    //
-    // TODO: consider encoding the type and the argument in the [`ProbeKind`] enum instead of a
-    // separate argument.
-    fn_name: &OsStr,
-    offset: u64,
-    pid: Option<u32>,
-    cookie: Option<u64>,
+    args: ProbeAttachArgs<P::AttachTarget<'_>>,
 ) -> Result<T::Id, ProgramError> {
     // https://github.com/torvalds/linux/commit/e12f03d7031a977356e3d7b75a68c2185ff8d155
     // Use debugfs to create probe
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();
-    let link = attach_impl::<P>(prog_fd, kind, fn_name, offset, pid, cookie)?;
+    let link = attach_impl::<P>(prog_fd, args)?;
     program_data.links.insert(T::from(link))
 }
 
 pub(crate) fn attach_impl<P: Probe>(
     prog_fd: BorrowedFd<'_>,
-    kind: ProbeKind,
-    fn_name: &OsStr,
-    offset: u64,
-    pid: Option<u32>,
-    cookie: Option<u64>,
+    args: ProbeAttachArgs<P::AttachTarget<'_>>,
 ) -> Result<PerfLinkInner, ProgramError> {
     if probe_pmu_supported() && FEATURES.bpf_perf_link() {
-        attach_bpf_probe::<P>(prog_fd, kind, fn_name, offset, pid, cookie).map(PerfLinkInner::Fd)
+        attach_bpf_probe::<P>(prog_fd, args).map(PerfLinkInner::Fd)
     } else {
-        attach_perf_event_probe::<P>(prog_fd, kind, fn_name, offset, pid, cookie)
-            .map(PerfLinkInner::PerfLink)
+        attach_perf_event_probe::<P>(prog_fd, args).map(PerfLinkInner::PerfLink)
     }
 }
 
 fn attach_bpf_probe<P: Probe>(
     prog_fd: BorrowedFd<'_>,
-    kind: ProbeKind,
-    fn_name: &OsStr,
-    offset: u64,
-    pid: Option<u32>,
-    cookie: Option<u64>,
+    args: ProbeAttachArgs<P::AttachTarget<'_>>,
 ) -> Result<FdLink, ProgramError> {
-    let perf_fd = create_as_probe::<P>(kind, fn_name, offset, pid)?;
+    let cookie = args.cookie;
+    let perf_fd = create_as_probe::<P>(args)?;
     attach_bpf_link(prog_fd, perf_fd, cookie)
 }
 
 fn attach_perf_event_probe<P: Probe>(
     prog_fd: BorrowedFd<'_>,
-    kind: ProbeKind,
-    fn_name: &OsStr,
-    offset: u64,
-    pid: Option<u32>,
-    cookie: Option<u64>,
+    args: ProbeAttachArgs<P::AttachTarget<'_>>,
 ) -> Result<PerfLink, ProgramError> {
-    if cookie.is_some() {
+    if args.cookie.is_some() {
         return Err(ProgramError::AttachCookieNotSupported);
     }
 
     let (perf_fd, event) = if probe_pmu_supported() {
-        (create_as_probe::<P>(kind, fn_name, offset, pid)?, None)
+        (create_as_probe::<P>(args)?, None)
     } else {
-        let (perf_fd, event) = create_as_trace_point::<P>(kind, fn_name, offset, pid)?;
+        let (perf_fd, event) = create_as_trace_point::<P>(args)?;
         (perf_fd, Some(event))
     };
     attach_perf_event(prog_fd, perf_fd, event)
@@ -371,15 +355,13 @@ fn detach_debug_fs<P: Probe>(event_alias: &OsStr) -> Result<(), ProgramError> {
 }
 
 fn create_as_probe<P: Probe>(
-    kind: ProbeKind,
-    fn_name: &OsStr,
-    offset: u64,
-    pid: Option<u32>,
+    args: ProbeAttachArgs<P::AttachTarget<'_>>,
 ) -> Result<crate::MockableFd, ProgramError> {
+    let (target, offset, pid) = P::into_common_target(args.target);
     let perf_ty = read_sys_fs_perf_type(P::PMU)
         .map_err(|(filename, io_error)| P::file_error(filename, io_error).into())?;
 
-    let ret_bit = match kind {
+    let ret_bit = match args.kind {
         ProbeKind::Return => Some(
             read_sys_fs_perf_ret_probe(P::PMU)
                 .map_err(|(filename, io_error)| P::file_error(filename, io_error).into())?,
@@ -387,7 +369,7 @@ fn create_as_probe<P: Probe>(
         ProbeKind::Entry => None,
     };
 
-    perf_event_open_probe(perf_ty, ret_bit, fn_name, offset, pid)
+    perf_event_open_probe(perf_ty, ret_bit, target, offset, pid)
         .map_err(|io_error| SyscallError {
             call: "perf_event_open",
             io_error,
@@ -396,14 +378,12 @@ fn create_as_probe<P: Probe>(
 }
 
 fn create_as_trace_point<P: Probe>(
-    kind: ProbeKind,
-    name: &OsStr,
-    offset: u64,
-    pid: Option<u32>,
+    args: ProbeAttachArgs<P::AttachTarget<'_>>,
 ) -> Result<(crate::MockableFd, ProbeEvent), ProgramError> {
     let tracefs = find_tracefs_path()?;
+    let (target, offset, pid) = P::into_common_target(args.target);
 
-    let event = create_probe_event::<P>(tracefs, kind, name, offset)
+    let event = create_probe_event::<P>(tracefs, args.kind, target, offset)
         .map_err(|(filename, io_error)| P::file_error(filename, io_error).into())?;
 
     let ProbeEvent {
@@ -423,7 +403,7 @@ fn create_as_trace_point<P: Probe>(
 fn create_probe_event<P: Probe>(
     tracefs: &Path,
     kind: ProbeKind,
-    fn_name: &OsStr,
+    target: &OsStr,
     offset: u64,
 ) -> Result<ProbeEvent, (PathBuf, io::Error)> {
     use std::os::unix::ffi::OsStrExt as _;
@@ -441,7 +421,7 @@ fn create_probe_event<P: Probe>(
         probe_type_prefix,
     )
     .unwrap();
-    for b in fn_name.as_bytes() {
+    for b in target.as_bytes() {
         let b = match *b {
             b'.' | b'/' | b'-' => b'_',
             b => b,
@@ -460,7 +440,7 @@ fn create_probe_event<P: Probe>(
     write!(&mut probe, "{}:{}s/", probe_type_prefix, P::PMU).unwrap();
     probe.push(&event_alias);
     probe.push(" ");
-    probe.push(fn_name);
+    probe.push(target);
     P::write_offset(&mut probe, kind, offset).unwrap();
     probe.push("\n");
 

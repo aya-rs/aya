@@ -15,7 +15,7 @@ use crate::{
         ProgramData, ProgramError, ProgramType, define_link_wrapper, impl_try_from_fdlink,
         impl_try_into_fdlink, load_program_without_attach_type,
         perf_attach::{PerfLinkIdInner, PerfLinkInner},
-        probe::{Probe, ProbeKind, attach},
+        probe::{Probe, ProbeAttachArgs, ProbeKind, attach},
     },
 };
 
@@ -47,6 +47,11 @@ use crate::{
 pub struct KProbe {
     pub(crate) data: ProgramData<KProbeLink>,
     pub(crate) kind: ProbeKind,
+}
+
+pub(crate) struct KProbeAttachTarget<'a> {
+    function: &'a OsStr,
+    offset: u64,
 }
 
 impl KProbe {
@@ -84,11 +89,14 @@ impl KProbe {
         let Self { data, kind } = self;
         attach::<Self, _>(
             data,
-            *kind,
-            fn_name.as_ref(),
-            offset,
-            None, // pid
-            None, // cookie
+            ProbeAttachArgs {
+                target: KProbeAttachTarget {
+                    function: fn_name.as_ref(),
+                    offset,
+                },
+                kind: *kind,
+                cookie: None,
+            },
         )
     }
 
@@ -105,9 +113,16 @@ impl KProbe {
 }
 
 impl Probe for KProbe {
+    type AttachTarget<'a> = KProbeAttachTarget<'a>;
+
     const PMU: &'static str = "kprobe";
 
     type Error = KProbeError;
+
+    fn into_common_target(target: Self::AttachTarget<'_>) -> (&OsStr, u64, Option<u32>) {
+        let KProbeAttachTarget { function, offset } = target;
+        (function, offset, None)
+    }
 
     fn file_error(filename: PathBuf, io_error: io::Error) -> Self::Error {
         KProbeError::FileError { filename, io_error }
