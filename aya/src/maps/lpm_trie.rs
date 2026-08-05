@@ -28,7 +28,7 @@ use crate::{
 /// // The following represents a key for the "8.8.8.8/16" subnet.
 /// // The first argument - the prefix length - represents how many bits should be matched against. The second argument is the actual data to be matched.
 /// let key = Key::new(16, u32::from(ipaddr).to_be());
-/// trie.insert(&key, 1, 0)?;
+/// trie.insert(&key, &1, 0)?;
 ///
 /// // LpmTrie matches against the longest (most accurate) key.
 /// let lookup = Key::new(32, u32::from(ipaddr).to_be());
@@ -38,7 +38,7 @@ use crate::{
 /// // If we were to insert a key with longer 'prefix_len'
 /// // our trie should match against it.
 /// let longer_key = Key::new(24, u32::from(ipaddr).to_be());
-/// trie.insert(&longer_key, 2, 0)?;
+/// trie.insert(&longer_key, &2, 0)?;
 /// let value = trie.get(&lookup, 0)?;
 /// assert_eq!(value, 2);
 /// # Ok::<(), aya::EbpfError>(())
@@ -143,13 +143,8 @@ impl<'a, T: Borrow<MapData>, K: Pod, V: Pod> IntoIterator for &'a LpmTrie<T, K, 
 
 impl<T: BorrowMut<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
     /// Inserts a key value pair into the map.
-    pub fn insert(
-        &mut self,
-        key: &Key<K>,
-        value: impl Borrow<V>,
-        flags: u64,
-    ) -> Result<(), MapError> {
-        hash_map::insert(self.inner.borrow_mut(), key, value.borrow(), flags)
+    pub fn insert(&mut self, key: &Key<K>, value: &V, flags: u64) -> Result<(), MapError> {
+        hash_map::insert(self.inner.borrow_mut(), key, value, flags)
     }
 
     /// Removes an element from the map.
@@ -257,7 +252,7 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
 
         assert_matches!(
-            trie.insert(&key, 1, 0),
+            trie.insert(&key, &1, 0),
             Err(MapError::SyscallError(SyscallError { call: "bpf_map_update_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
         );
     }
@@ -277,7 +272,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert_matches!(trie.insert(&key, 1, 0), Ok(()));
+        assert_matches!(trie.insert(&key, &1, 0), Ok(()));
     }
 
     #[test]

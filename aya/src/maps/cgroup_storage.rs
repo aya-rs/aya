@@ -93,18 +93,8 @@ impl<T: BorrowMut<MapData>, V: Pod> CgroupStorage<T, V> {
     ///
     /// Only existing entries can be updated; the kernel returns `ENOENT` for a
     /// cgroup that has no attached program using this map.
-    pub fn insert(
-        &mut self,
-        key: CgroupStorageKey,
-        value: impl Borrow<V>,
-        flags: u64,
-    ) -> Result<(), MapError> {
-        hash_map::insert(
-            self.inner.borrow_mut(),
-            &key.to_kernel(),
-            value.borrow(),
-            flags,
-        )
+    pub fn insert(&mut self, key: CgroupStorageKey, value: &V, flags: u64) -> Result<(), MapError> {
+        hash_map::insert(self.inner.borrow_mut(), &key.to_kernel(), value, flags)
     }
 }
 

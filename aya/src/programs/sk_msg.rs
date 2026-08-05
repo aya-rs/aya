@@ -55,7 +55,7 @@ use crate::{
 /// let mut client = TcpStream::connect("127.0.0.1:1234")?;
 /// let mut intercept_egress: SockHash<_, u32> = bpf.map_mut("INTERCEPT_EGRESS").unwrap().try_into()?;
 ///
-/// intercept_egress.insert(1234, client.as_raw_fd(), 0)?;
+/// intercept_egress.insert(&1234, client.as_raw_fd(), 0)?;
 ///
 /// // the write will be intercepted
 /// client.write_all(b"foo")?;

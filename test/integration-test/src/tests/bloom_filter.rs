@@ -88,9 +88,9 @@ fn bloom_filter_basic(
         "unexpected BloomFilter result for absent value: {absent_status}"
     );
 
-    filter.contains(PRESENT, 0).unwrap();
+    filter.contains(&PRESENT, 0).unwrap();
 
-    match filter.contains(USER_ABSENT, 0) {
+    match filter.contains(&USER_ABSENT, 0) {
         Ok(())
         // Bloom filters can yield false positives; treat both a miss and a hit as valid.
         | Err(MapError::ElementNotFound) => {}
@@ -99,8 +99,8 @@ fn bloom_filter_basic(
         }
     }
 
-    filter.insert(USER_PRESENT, 0).unwrap();
-    filter.contains(USER_PRESENT, 0).unwrap();
+    filter.insert(&USER_PRESENT, 0).unwrap();
+    filter.contains(&USER_PRESENT, 0).unwrap();
 
     trigger_bloom_contains(CONTAINS_PRESENT_INDEX, USER_PRESENT);
     assert_eq!(array.get(&CONTAINS_PRESENT_INDEX, 0).unwrap(), 0);

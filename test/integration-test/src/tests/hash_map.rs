@@ -74,7 +74,7 @@ fn hash_basic(
             .map(|i| EXPECTED + i as u64)
             .collect();
         map.insert(
-            0u32,
+            &0u32,
             PerCpuValues::try_from(expected_per_cpu.clone()).unwrap(),
             0,
         )
@@ -85,7 +85,7 @@ fn hash_basic(
         }
     } else {
         let mut map: HashMap<_, u32, u64> = bpf.map_mut(map_name).unwrap().try_into().unwrap();
-        map.insert(0u32, EXPECTED, 0).unwrap();
+        map.insert(&0u32, &EXPECTED, 0).unwrap();
     }
 
     let prog: &mut UProbe = bpf.program_mut(prog_name).unwrap().try_into().unwrap();

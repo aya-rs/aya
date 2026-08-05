@@ -23,9 +23,9 @@ use crate::{
 /// let mut redirect_ports = HashMap::try_from(bpf.map_mut("REDIRECT_PORTS").unwrap())?;
 ///
 /// // redirect port 80 to 8080
-/// redirect_ports.insert(80, 8080, 0);
+/// redirect_ports.insert(&80, &8080, 0);
 /// // redirect port 443 to 8443
-/// redirect_ports.insert(443, 8443, 0);
+/// redirect_ports.insert(&443, &8443, 0);
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[doc(alias = "BPF_MAP_TYPE_HASH")]
@@ -76,13 +76,8 @@ impl<'a, T: Borrow<MapData>, K: Pod, V: Pod> IntoIterator for &'a HashMap<T, K, 
 
 impl<T: BorrowMut<MapData>, K: Pod, V: Pod> HashMap<T, K, V> {
     /// Inserts a key-value pair into the map.
-    pub fn insert(
-        &mut self,
-        key: impl Borrow<K>,
-        value: impl Borrow<V>,
-        flags: u64,
-    ) -> Result<(), MapError> {
-        hash_map::insert(self.inner.borrow_mut(), key.borrow(), value.borrow(), flags)
+    pub fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), MapError> {
+        hash_map::insert(self.inner.borrow_mut(), key, value, flags)
     }
 
     /// Removes a key from the map.
@@ -207,7 +202,7 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
 
         assert_matches!(
-            hm.insert(1, 42, 0),
+            hm.insert(&1, &42, 0),
             Err(MapError::SyscallError(SyscallError { call: "bpf_map_update_elem", io_error })) if io_error.raw_os_error() == Some(EFAULT)
         );
     }
@@ -225,7 +220,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert_matches!(hm.insert(1, 42, 0), Ok(()));
+        assert_matches!(hm.insert(&1, &42, 0), Ok(()));
     }
 
     #[test]
@@ -241,7 +236,9 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        assert_matches!(hm.insert(Box::new(1), Box::new(42), 0), Ok(()));
+        let key = Box::new(1);
+        let value = Box::new(42);
+        assert_matches!(hm.insert(&key, &value, 0), Ok(()));
     }
 
     #[test]

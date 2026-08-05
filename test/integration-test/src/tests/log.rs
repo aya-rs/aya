@@ -50,7 +50,7 @@ fn log() {
         buffer
             .set(
                 0,
-                Buffer {
+                &Buffer {
                     buf: [0xff; BUF_LEN],
                     len: 3,
                 },

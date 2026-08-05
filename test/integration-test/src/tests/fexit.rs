@@ -66,7 +66,7 @@ fn fexit_reads_args_and_return_values_from_prog_test_run_targets(
     let mut bpf = Ebpf::load(crate::FEXIT).unwrap();
 
     let mut results: Array<_, TestResult> = bpf.take_map("RESULTS").unwrap().try_into().unwrap();
-    results.set(index, TestResult::default(), 0).unwrap();
+    results.set(index, &TestResult::default(), 0).unwrap();
 
     let prog: &mut FExit = bpf.program_mut(program).unwrap().try_into().unwrap();
     match prog.load(target, &btf) {

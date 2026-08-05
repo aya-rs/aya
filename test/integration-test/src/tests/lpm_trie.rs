@@ -23,10 +23,10 @@ fn lpm_trie_basic(#[case] prog_name: &str, #[case] routes_map: &str, #[case] res
         let mut routes: LpmTrie<_, [u8; 4], u32> =
             bpf.map_mut(routes_map).unwrap().try_into().unwrap();
         routes
-            .insert(&Key::new(16, [192, 168, 0, 0]), 42u32, 0)
+            .insert(&Key::new(16, [192, 168, 0, 0]), &42u32, 0)
             .unwrap();
         routes
-            .insert(&Key::new(24, [192, 168, 1, 0]), 7u32, 0)
+            .insert(&Key::new(24, [192, 168, 1, 0]), &7u32, 0)
             .unwrap();
     }
 

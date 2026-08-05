@@ -31,7 +31,7 @@ fn pin_and_reopen_hashmap() {
 
     let mut hash_to_pin: HashMap<_, u32, u8> =
         HashMap::try_from(bpf.map_mut("BAR").unwrap()).unwrap();
-    hash_to_pin.insert(0, 1, 0).unwrap();
+    hash_to_pin.insert(&0, &1, 0).unwrap();
 
     let mut rng = rand::rng();
     let pin_path = Path::new("/sys/fs/bpf/").join(format!(
@@ -54,7 +54,7 @@ fn pin_and_reopen_hashmap() {
     assert_eq!(hash_from_pin.get(&0, 0).unwrap(), 1);
 
     // Try updating data in the map using the pin to verify both maps point and can mutate the same data.
-    hash_from_pin.insert(0, 2, 0).unwrap();
+    hash_from_pin.insert(&0, &2, 0).unwrap();
     assert_eq!(hash_from_bpf.get(&0, 0).unwrap(), 2);
     assert_eq!(hash_from_pin.get(&0, 0).unwrap(), 2);
 }

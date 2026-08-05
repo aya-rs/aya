@@ -80,10 +80,10 @@ impl<T: Borrow<MapData>, K: Pod, V: FromMapData> HashOfMaps<T, K, V> {
 
 impl<T: BorrowMut<MapData>, K: Pod, V: InnerMap> HashOfMaps<T, K, V> {
     /// Inserts a key-value pair into the map.
-    pub fn insert(&mut self, key: impl Borrow<K>, value: &V, flags: u64) -> Result<(), MapError> {
+    pub fn insert(&mut self, key: &K, value: &V, flags: u64) -> Result<(), MapError> {
         hash_map::insert(
             self.inner.borrow_mut(),
-            key.borrow(),
+            key,
             &value.fd().as_fd().as_raw_fd(),
             flags,
         )
@@ -174,7 +174,7 @@ mod tests {
         override_syscall(|_| sys_error(EFAULT));
 
         assert_matches!(
-            hm.insert(1u32, &inner_map, 0),
+            hm.insert(&1u32, &inner_map, 0),
             Err(MapError::SyscallError(SyscallError {
                 call: "bpf_map_update_elem",
                 ..
@@ -198,7 +198,7 @@ mod tests {
             _ => sys_error(EFAULT),
         });
 
-        hm.insert(1u32, &inner_map, 0).unwrap();
+        hm.insert(&1u32, &inner_map, 0).unwrap();
     }
 
     #[test]

@@ -115,20 +115,15 @@ impl<T: BorrowMut<MapData>, K: Pod, V: Pod> PerCpuHashMap<T, K, V> {
     /// let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
     /// let mut hm = PerCpuHashMap::<_, u8, u32>::try_from(bpf.map_mut("PER_CPU_STORAGE").unwrap())?;
     /// hm.insert(
-    ///     RETRIES,
+    ///     &RETRIES,
     ///     PerCpuValues::try_from(vec![3u32; nr_cpus])?,
     ///     0,
     /// )?;
     /// # Ok::<(), Error>(())
     /// ```
-    pub fn insert(
-        &mut self,
-        key: impl Borrow<K>,
-        values: PerCpuValues<V>,
-        flags: u64,
-    ) -> Result<(), MapError> {
+    pub fn insert(&mut self, key: &K, values: PerCpuValues<V>, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow_mut().fd().as_fd();
-        bpf_map_update_elem_per_cpu(fd, key.borrow(), &values, flags)
+        bpf_map_update_elem_per_cpu(fd, key, &values, flags)
             .map_err(|io_error| SyscallError {
                 call: "bpf_map_update_elem",
                 io_error,
