@@ -137,7 +137,7 @@ fn test_xdp_modify_packet() {
         .unwrap()
         .try_into()
         .unwrap();
-    prog.load().unwrap();
+    prog.load(None).unwrap();
 
     let data_in = vec![0u8; PKT_V4_SIZE];
     let mut data_out = vec![0u8; PKT_V4_SIZE];
@@ -222,7 +222,7 @@ fn test_xdp_test_run() {
 
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
     let prog: &mut Xdp = bpf.program_mut("test_xdp").unwrap().try_into().unwrap();
-    prog.load().unwrap();
+    prog.load(None).unwrap();
 
     let data_in = vec![0u8; PKT_V4_SIZE];
     let mut data_out = vec![0u8; PKT_V4_SIZE];
@@ -308,7 +308,7 @@ fn test_xdp_context() {
         .unwrap()
         .try_into()
         .unwrap();
-    prog.load().unwrap();
+    prog.load(None).unwrap();
 
     let data_in = vec![0u8; PKT_V4_SIZE];
     let mut data_out = vec![0u8; PKT_V4_SIZE];
