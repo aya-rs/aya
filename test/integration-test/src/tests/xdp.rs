@@ -38,7 +38,7 @@ fn netlink_attach_to_link_replaces_program() {
         .unwrap()
         .try_into()
         .unwrap();
-    old.load().unwrap();
+    old.load(None).unwrap();
     let old_program_id = old.info().unwrap().id();
     let id = with_netlink_xdp(|| old.attach(if_index, XdpMode::Skb)).unwrap();
     let old_link = old.take_link(id).unwrap();
@@ -50,7 +50,7 @@ fn netlink_attach_to_link_replaces_program() {
         .unwrap()
         .try_into()
         .unwrap();
-    new.load().unwrap();
+    new.load(None).unwrap();
     let new_program_id = new.info().unwrap().id();
     assert_ne!(old_program_id, new_program_id);
     let id = new.attach_to_link(old_link).unwrap();
@@ -71,7 +71,7 @@ fn af_xdp(#[case] socks_name: &str, #[case] prog_name: &str) {
     let mut socks: XskMap<_> = bpf.take_map(socks_name).unwrap().try_into().unwrap();
 
     let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
-    xdp.load().unwrap();
+    xdp.load(None).unwrap();
     xdp.attach(c"lo", XdpMode::default()).unwrap();
 
     const SIZE: usize = 2 * 4096;
@@ -228,14 +228,14 @@ fn cpumap_chain(#[case] cpus_name: &str, #[case] prog_name: &str) {
             .unwrap()
             .try_into()
             .unwrap();
-        xdp.load().unwrap();
+        xdp.load(None).unwrap();
         xdp.fd().unwrap()
     };
     cpus.set(0, 2048, Some(xdp_chain_fd), 0).unwrap();
 
     // Load the main program
     let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
-    xdp.load().unwrap();
+    xdp.load(None).unwrap();
     let result = xdp.attach(c"lo", XdpMode::default());
     // Generic devices did not support cpumap XDP programs until 5.15.
     //
@@ -315,7 +315,7 @@ fn devmap_set(
     // `get` reads `bpf_devmap_val::bpf_prog.id` so it requires program-ID support.
     for prog in [dev_prog, dev_hash_prog] {
         let xdp: &mut Xdp = bpf.program_mut(prog).unwrap().try_into().unwrap();
-        xdp.load().unwrap();
+        xdp.load(None).unwrap();
     }
     if !is_devmap_prog_id_supported().unwrap() {
         let kernel_version = KernelVersion::current().unwrap();
@@ -326,7 +326,7 @@ fn devmap_set(
     }
     for prog in [dev_get_prog, dev_hash_get_prog] {
         let xdp: &mut Xdp = bpf.program_mut(prog).unwrap().try_into().unwrap();
-        xdp.load().unwrap();
+        xdp.load(None).unwrap();
     }
 }
 
@@ -340,5 +340,39 @@ fn devmap_get_ifindex(#[case] prog_name: &str) {
     let _netns = NetNsGuard::new().unwrap();
     let mut bpf = Ebpf::load(crate::DEV_MAP).unwrap();
     let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
-    xdp.load().unwrap();
+    xdp.load(None).unwrap();
+}
+
+// A program that calls `bpf_xdp_metadata_rx_timestamp` can only be loaded
+// when it is device-bound. Verify both sides of that contract: `load` is
+// rejected by the verifier while `load` with a device succeeds.
+#[test_log::test]
+#[ignore = "Requires specific NIC to test this - lots of them doesn't support hardware timestamping"]
+fn dev_bound_kfunc() {
+    if KernelVersion::current().unwrap() < KernelVersion::new(6, 3, 0) {
+        eprintln!("skipping test - device-bound XDP programs require Linux 6.3+");
+        return;
+    }
+
+    let _netns = NetNsGuard::new().unwrap();
+
+    {
+        let mut bpf = Ebpf::load(crate::KSYMS_XDP_DEV_BOUND_KFUNC).unwrap();
+        let xdp: &mut Xdp = bpf
+            .program_mut("xdp_dev_bound_kfunc")
+            .unwrap()
+            .try_into()
+            .unwrap();
+        assert_matches!(xdp.load(None), Err(ProgramError::LoadError { .. }));
+    }
+
+    {
+        let mut bpf = Ebpf::load(crate::KSYMS_XDP_DEV_BOUND_KFUNC).unwrap();
+        let xdp: &mut Xdp = bpf
+            .program_mut("xdp_dev_bound_kfunc")
+            .unwrap()
+            .try_into()
+            .unwrap();
+        xdp.load(Some(c"lo".into())).unwrap();
+    }
 }
