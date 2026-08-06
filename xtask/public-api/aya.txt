@@ -5595,6 +5595,8 @@ pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, u32, aya::programs
 pub fn aya::programs::xdp::Xdp::attach_to_link(&mut self, aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::load_dev_bound(&mut self, &str) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::load_dev_bound_by_if_index(&mut self, u32) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::detach(&mut self, aya::programs::xdp::XdpLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::take_link(&mut self, aya::programs::xdp::XdpLinkId) -> core::result::Result<aya::programs::xdp::XdpLink, aya::programs::ProgramError>
@@ -7558,6 +7560,8 @@ pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, u32, aya::programs
 pub fn aya::programs::xdp::Xdp::attach_to_link(&mut self, aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::load_dev_bound(&mut self, &str) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::load_dev_bound_by_if_index(&mut self, u32) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::detach(&mut self, aya::programs::xdp::XdpLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::take_link(&mut self, aya::programs::xdp::XdpLinkId) -> core::result::Result<aya::programs::xdp::XdpLink, aya::programs::ProgramError>

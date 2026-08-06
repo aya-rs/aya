@@ -294,3 +294,37 @@ fn devmap_get_ifindex(#[case] prog_name: &str) {
     let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     xdp.load().unwrap();
 }
+
+// A program that calls `bpf_xdp_metadata_rx_timestamp` can only be loaded
+// when it is device-bound. Verify both sides of that contract: `load` is
+// rejected by the verifier while `load_dev_bound` succeeds.
+#[test_log::test]
+#[ignore = "Requires specific NIC to test this - lots of them doesn't support hardware timestamping"]
+fn dev_bound_kfunc() {
+    if KernelVersion::current().unwrap() < KernelVersion::new(6, 3, 0) {
+        eprintln!("skipping test - device-bound XDP programs require Linux 6.3+");
+        return;
+    }
+
+    let _netns = NetNsGuard::new().unwrap();
+
+    {
+        let mut bpf = Ebpf::load(crate::KSYMS_XDP_DEV_BOUND_KFUNC).unwrap();
+        let xdp: &mut Xdp = bpf
+            .program_mut("xdp_dev_bound_kfunc")
+            .unwrap()
+            .try_into()
+            .unwrap();
+        assert_matches!(xdp.load(), Err(ProgramError::LoadError { .. }));
+    }
+
+    {
+        let mut bpf = Ebpf::load(crate::KSYMS_XDP_DEV_BOUND_KFUNC).unwrap();
+        let xdp: &mut Xdp = bpf
+            .program_mut("xdp_dev_bound_kfunc")
+            .unwrap()
+            .try_into()
+            .unwrap();
+        xdp.load_dev_bound("lo").unwrap();
+    }
+}
