@@ -9,8 +9,8 @@ use std::{
 
 use aya_obj::{
     generated::{
-        XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_SKB_MODE, bpf_link_type,
-        bpf_prog_type::BPF_PROG_TYPE_XDP,
+        BPF_F_XDP_DEV_BOUND_ONLY, XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_SKB_MODE,
+        bpf_attach_type, bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_XDP,
     },
     programs::XdpAttachType,
 };
@@ -20,8 +20,7 @@ use crate::{
     VerifierLogLevel,
     programs::{
         FdLink, Link, NetworkInterface, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, impl_try_from_fdlink, impl_try_into_fdlink,
-        load_program_with_attach_type,
+        define_link_wrapper, id_as_key, impl_try_from_fdlink, impl_try_into_fdlink, load_program,
     },
     sys::{
         LinkTarget, NetlinkError, SyscallError, bpf_link_create, bpf_link_update,
@@ -96,9 +95,41 @@ impl Xdp {
     pub const PROGRAM_TYPE: ProgramType = ProgramType::Xdp;
 
     /// Loads the program inside the kernel.
-    pub fn load(&mut self) -> Result<(), ProgramError> {
+    ///
+    /// Pass `None` for a regular load. Pass `Some(interface)` to bind the
+    /// program to a device, which lets the verifier accept calls to XDP
+    /// metadata kfuncs (e.g. `bpf_xdp_metadata_rx_timestamp`). The interface
+    /// can be a name such as `c"eth0"`, an interface index, or a
+    /// [`NetworkInterface`], for example `Some(c"eth0".into())`.
+    ///
+    /// A device-bound program is still executed by the kernel; the binding
+    /// only associates it with the device. To offload the program to the
+    /// device instead, attach with [`XdpMode::Hardware`].
+    ///
+    /// # Errors
+    ///
+    /// If no interface with the given name exists,
+    /// [`ProgramError::UnknownInterface`] is returned.
+    ///
+    /// # Minimum kernel version
+    ///
+    /// Binding to a device requires kernel 6.3.
+    pub fn load(&mut self, dev_bound: Option<NetworkInterface<'_>>) -> Result<(), ProgramError> {
         let Self { data, attach_type } = self;
-        load_program_with_attach_type(BPF_PROG_TYPE_XDP, *attach_type, data)
+        let (prog_ifindex, extra_flags) = match dev_bound {
+            Some(interface) => (
+                interface.if_index_for_program()?,
+                BPF_F_XDP_DEV_BOUND_ONLY,
+            ),
+            None => (0, 0),
+        };
+        load_program(
+            BPF_PROG_TYPE_XDP,
+            Some(bpf_attach_type::from(*attach_type)),
+            data,
+            prog_ifindex,
+            extra_flags,
+        )
     }
 
     /// Attaches the program to an interface specified by name or index.

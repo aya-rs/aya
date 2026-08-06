@@ -35,7 +35,7 @@ fn long_name() {
         .unwrap()
         .try_into()
         .unwrap();
-    name_prog.load().unwrap();
+    name_prog.load(None).unwrap();
     name_prog.attach(c"lo", XdpMode::default()).unwrap();
 
     // We used to be able to assert with bpftool that the program name was short.
@@ -47,7 +47,7 @@ fn long_name() {
 fn memmove() {
     let mut bpf = Ebpf::load(crate::MEMMOVE_TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut("do_dnat").unwrap().try_into().unwrap();
-    prog.load().unwrap();
+    prog.load(None).unwrap();
 }
 
 #[test_log::test]
@@ -209,13 +209,13 @@ trait UnloadProgramOps {
 }
 
 macro_rules! impl_unload_program_ops {
-    ($program:ty, $link_id:ty, $link:ty) => {
+    ($program:ty, $link_id:ty, $link:ty $(, load($($load_arg:expr),*))?) => {
         impl UnloadProgramOps for $program {
             type LinkId = $link_id;
             type OwnedLink = $link;
 
             fn load(&mut self) -> Result<(), ProgramError> {
-                <$program>::load(self)
+                <$program>::load(self $($(, $load_arg)*)?)
             }
 
             fn unload(&mut self) -> Result<(), ProgramError> {
@@ -229,7 +229,7 @@ macro_rules! impl_unload_program_ops {
     };
 }
 
-impl_unload_program_ops!(Xdp, XdpLinkId, XdpLink);
+impl_unload_program_ops!(Xdp, XdpLinkId, XdpLink, load(None));
 impl_unload_program_ops!(KProbe, KProbeLinkId, KProbeLink);
 impl_unload_program_ops!(TracePoint, TracePointLinkId, TracePointLink);
 impl_unload_program_ops!(UProbe, UProbeLinkId, UProbeLink);
