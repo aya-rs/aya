@@ -559,6 +559,7 @@ pub(crate) struct ProgramData<T: Link> {
     pub(crate) verifier_log_level: VerifierLogLevel,
     pub(crate) path: Option<PathBuf>,
     pub(crate) flags: u32,
+    pub(crate) prog_ifindex: u32,
 }
 
 impl<T: Link> ProgramData<T> {
@@ -580,6 +581,7 @@ impl<T: Link> ProgramData<T> {
             verifier_log_level,
             path: None,
             flags: 0,
+            prog_ifindex: 0,
         }
     }
 
@@ -607,6 +609,7 @@ impl<T: Link> ProgramData<T> {
             verifier_log_level,
             path: Some(path.to_path_buf()),
             flags: 0,
+            prog_ifindex: 0,
         })
     }
 
@@ -719,6 +722,7 @@ fn load_program<T: Link>(
         verifier_log_level,
         path: _,
         flags,
+        prog_ifindex,
     } = data;
     if fd.is_some() {
         return Err(ProgramError::AlreadyLoaded);
@@ -774,6 +778,7 @@ fn load_program<T: Link>(
         line_info_rec_size: *line_info_rec_size,
         line_info: line_info.clone(),
         flags: *flags,
+        prog_ifindex: *prog_ifindex,
     };
 
     let (ret, verifier_log) = retry_with_verifier_logs(10, |logger| {
