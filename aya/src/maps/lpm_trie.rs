@@ -386,4 +386,3 @@ mod tests {
         assert_matches!(trie.contains_key(&key, 0), Ok(false));
     }
 }
-
