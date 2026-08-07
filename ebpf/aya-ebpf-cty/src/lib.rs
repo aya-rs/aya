@@ -96,7 +96,14 @@ mod od {
 
 #[cfg(windows)]
 mod od {
+    #[cfg(target_pointer_width = "64")]
+    pub type c_long = i64;
+    #[cfg(target_pointer_width = "64")]
+    pub type c_ulong = u64;
+
+    #[cfg(not(target_pointer_width = "64"))]
     pub type c_long = i32;
+    #[cfg(not(target_pointer_width = "64"))]
     pub type c_ulong = u32;
 }
 
