@@ -825,7 +825,7 @@ impl<'a> AccessSpec<'a> {
                                 let parent = accessors.last().unwrap();
                                 let parent_ty = btf.type_by_id(parent.type_id)?;
                                 match parent_ty {
-                                    BtfType::Struct(s) => index == s.members.len() - 1,
+                                    BtfType::Struct(s) => parent.index == s.members.len() - 1,
                                     _ => false,
                                 }
                             };
@@ -1294,5 +1294,80 @@ impl ComputedRelocation {
             size: 0,
             type_id: None,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use assert_matches::assert_matches;
+
+    use super::*;
+    use crate::btf::Int;
+
+    fn flex_array_btf(trailing_members: usize) -> (Btf, u32) {
+        let mut btf = Btf::new();
+        let name_offset = btf.add_string("long unsigned int");
+        let u64_id = btf.add_type(BtfType::Int(Int::new(name_offset, 8, IntEncoding::None, 0)));
+        let array_id = btf.add_type(BtfType::Array(Array::new(0, u64_id, u64_id, 0)));
+
+        let name_offset = btf.add_string("args");
+        let mut members = vec![BtfMember {
+            name_offset,
+            btf_type: array_id,
+            offset: 0,
+        }];
+        for i in 0..trailing_members {
+            let name_offset = btf.add_string(&format!("trailing{i}"));
+            members.push(BtfMember {
+                name_offset,
+                btf_type: u64_id,
+                offset: 0,
+            });
+        }
+
+        let name_offset = btf.add_string("bpf_raw_tracepoint_args");
+        let struct_id = btf.add_type(BtfType::Struct(Struct::new(name_offset, members, 0)));
+        (btf, struct_id)
+    }
+
+    fn field_relocation(type_id: u32) -> Relocation {
+        Relocation {
+            kind: RelocationKind::FieldByteOffset,
+            ins_offset: 0,
+            type_id,
+            access_str_offset: 0,
+            number: 0,
+        }
+    }
+
+    #[test]
+    fn test_access_spec_flex_array_index() {
+        let (btf, struct_id) = flex_array_btf(0);
+        let relocation = field_relocation(struct_id);
+
+        // `args` is the last member of its struct and has zero declared elements, so it is a
+        // flexible array and any element index is in bounds.
+        for (spec, expected_bit_offset) in [("0:0:0", 0), ("0:0:1", 64), ("0:0:7", 448)] {
+            let access_spec = AccessSpec::new(&btf, struct_id, spec, relocation).unwrap();
+            assert_eq!(access_spec.bit_offset, expected_bit_offset);
+        }
+    }
+
+    #[test]
+    fn test_access_spec_zero_length_array_not_last_member() {
+        let (btf, struct_id) = flex_array_btf(1);
+        let relocation = field_relocation(struct_id);
+
+        // `args` is no longer the last member, so it is a zero-length array rather than a
+        // flexible one and every element index is out of bounds.
+        for spec in ["0:0:0", "0:0:1"] {
+            assert_matches!(
+                AccessSpec::new(&btf, struct_id, spec, relocation),
+                Err(RelocationError::InvalidAccessIndex {
+                    error: "array index out of bounds",
+                    ..
+                })
+            );
+        }
     }
 }
