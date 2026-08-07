@@ -28,6 +28,8 @@ fn lpm_trie_basic(#[case] prog_name: &str, #[case] routes_map: &str, #[case] res
         routes
             .insert(&Key::new(24, [192, 168, 1, 0]), &7u32, 0)
             .unwrap();
+        assert!(routes.contains_key(&Key::new(24, [192, 168, 1, 0]), 0).unwrap());
+        assert!(!routes.contains_key(&Key::new(32, [10, 0, 0, 1]), 0).unwrap());
     }
 
     let prog: &mut UProbe = bpf
