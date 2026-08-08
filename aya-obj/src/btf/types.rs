@@ -1209,8 +1209,13 @@ impl BtfType {
                     return Err(BtfError::InvalidTypeInfo);
                 }
                 let read_u32 = if endianness == Endianness::Little {
+                    #[allow(
+                        clippy::little_endian_bytes,
+                        reason = "we know the endianness is little"
+                    )]
                     u32::from_le_bytes
                 } else {
+                    #[allow(clippy::big_endian_bytes, reason = "we know the endianness is big")]
                     u32::from_be_bytes
                 };
                 Self::Int(Int {

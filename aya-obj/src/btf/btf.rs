@@ -1077,8 +1077,13 @@ impl BtfExt {
                 });
             }
             let read_u32 = if endianness == Endianness::Little {
+                #[allow(
+                    clippy::little_endian_bytes,
+                    reason = "we know the endianness is little"
+                )]
                 u32::from_le_bytes
             } else {
+                #[allow(clippy::big_endian_bytes, reason = "we know the endianness is big")]
                 u32::from_be_bytes
             };
             Ok(if len > 0 {
@@ -1224,8 +1229,13 @@ impl<'a> Iterator for SecInfoIter<'a> {
         }
 
         let read_u32 = if self.endianness == Endianness::Little {
+            #[allow(
+                clippy::little_endian_bytes,
+                reason = "we know the endianness is little"
+            )]
             u32::from_le_bytes
         } else {
+            #[allow(clippy::big_endian_bytes, reason = "we know the endianness is big")]
             u32::from_be_bytes
         };
         let name_offset = read_u32(data[self.offset..self.offset + 4].try_into().unwrap());
