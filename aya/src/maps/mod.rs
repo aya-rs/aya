@@ -944,19 +944,19 @@ impl MapData {
             io_error,
         })?;
 
-        Self::from_fd_inner(fd)
+        Self::from_fd_inner(fd, PinningType::ByName)
     }
 
     /// Loads a map from a map id.
     pub fn from_id(id: u32) -> Result<Self, MapError> {
         let fd = bpf_map_get_fd_by_id(id)?;
-        Self::from_fd_inner(fd)
+        Self::from_fd_inner(fd, PinningType::None)
     }
 
-    fn from_fd_inner(fd: crate::MockableFd) -> Result<Self, MapError> {
+    fn from_fd_inner(fd: crate::MockableFd, pinning: PinningType) -> Result<Self, MapError> {
         let MapInfo(info) = MapInfo::new_from_fd(fd.as_fd())?;
         Ok(Self {
-            obj: parse_map_info(info, PinningType::None),
+            obj: parse_map_info(info, pinning),
             fd: MapFd::from_fd(fd),
         })
     }
@@ -968,7 +968,7 @@ impl MapData {
     /// For example, you received an FD over Unix Domain Socket.
     pub fn from_fd(fd: OwnedFd) -> Result<Self, MapError> {
         let fd = crate::MockableFd::from_fd(fd);
-        Self::from_fd_inner(fd)
+        Self::from_fd_inner(fd, PinningType::None)
     }
 
     /// Allows the map to be pinned to the provided path.
