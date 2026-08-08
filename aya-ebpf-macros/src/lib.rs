@@ -16,6 +16,7 @@ mod kprobe;
 mod lsm;
 mod lsm_cgroup;
 mod map;
+mod map_layout;
 mod perf_event;
 mod raw_tracepoint;
 mod sk_lookup;
@@ -58,6 +59,52 @@ use tracepoint::TracePoint;
 use uprobe::{UProbe, UProbeKind};
 use xdp::Xdp;
 
+/// Marks a static as an eBPF BTF map definition.
+///
+/// Map keys and values must have an FFI-safe layout. Rust-native enums without
+/// a guaranteed representation, such as `Option<State>` below, are not
+/// FFI-safe even when nested in a `#[repr(C)]` type.
+///
+/// ```compile_fail
+/// use aya_ebpf::{btf_maps::HashMap, macros::btf_map};
+///
+/// #[repr(u32)]
+/// enum State {
+///     Started,
+///     Stopped,
+/// }
+///
+/// #[repr(C)]
+/// struct Value {
+///     state: Option<State>,
+/// }
+///
+/// #[btf_map]
+/// static VALUES: HashMap<u32, Value, 16> = HashMap::new();
+/// ```
+///
+/// Inner map keys and values in maps of maps are checked as well.
+///
+/// ```compile_fail
+/// use aya_ebpf::{
+///     btf_maps::{Array, ArrayOfMaps},
+///     macros::btf_map,
+/// };
+///
+/// #[repr(u32)]
+/// enum State {
+///     Started,
+///     Stopped,
+/// }
+///
+/// #[repr(C)]
+/// struct Value {
+///     state: Option<State>,
+/// }
+///
+/// #[btf_map]
+/// static VALUES: ArrayOfMaps<Array<Value, 16>, 4> = ArrayOfMaps::new();
+/// ```
 #[proc_macro_attribute]
 pub fn btf_map(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match BtfMap::parse(attrs.into(), item.into()) {
@@ -67,6 +114,29 @@ pub fn btf_map(attrs: TokenStream, item: TokenStream) -> TokenStream {
     .into()
 }
 
+/// Marks a static as an eBPF map definition.
+///
+/// Map keys and values must have an FFI-safe layout. Rust-native enums without
+/// a guaranteed representation, such as `Option<State>` below, are not
+/// FFI-safe even when nested in a `#[repr(C)]` type.
+///
+/// ```compile_fail
+/// use aya_ebpf::{macros::map, maps::HashMap};
+///
+/// #[repr(u32)]
+/// enum State {
+///     Started,
+///     Stopped,
+/// }
+///
+/// #[repr(C)]
+/// struct Value {
+///     state: Option<State>,
+/// }
+///
+/// #[map]
+/// static VALUES: HashMap<Value, u32> = HashMap::with_max_entries(16, 0);
+/// ```
 #[proc_macro_attribute]
 pub fn map(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match Map::parse(attrs.into(), item.into()) {

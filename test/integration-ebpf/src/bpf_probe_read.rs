@@ -8,7 +8,7 @@ use aya_ebpf::{
     maps::Array,
     programs::ProbeContext,
 };
-use integration_common::bpf_probe_read::{RESULT_BUF_LEN, TestResult};
+use integration_common::bpf_probe_read::{LEN_UNSET, RESULT_BUF_LEN, TestResult};
 #[cfg(not(test))]
 extern crate ebpf_panic;
 
@@ -30,7 +30,7 @@ fn read_str_bytes(
     let Some(TestResult { buf, len }) = dst else {
         return;
     };
-    *len = None;
+    *len = LEN_UNSET;
 
     // len comes from ctx.arg(1) so it's dynamic and the verifier doesn't see any bounds. We slice
     // here to ensure that the verifier can see the upper bound, or you get:
@@ -45,7 +45,10 @@ fn read_str_bytes(
         return;
     };
 
-    *len = Some(unsafe { fun(iptr, buf) }.map(<[_]>::len));
+    *len = match unsafe { fun(iptr, buf) } {
+        Ok(s) => s.len() as i64,
+        Err(e) => e.into(),
+    };
 }
 
 #[map]
