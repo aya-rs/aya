@@ -10,8 +10,8 @@ use std::{
 
 use aya_obj::{
     generated::{
-        XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_SKB_MODE, bpf_link_type,
-        bpf_prog_type::BPF_PROG_TYPE_XDP,
+        BPF_F_XDP_DEV_BOUND_ONLY, XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_SKB_MODE,
+        bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_XDP,
     },
     programs::XdpAttachType,
 };
@@ -99,6 +99,59 @@ impl Xdp {
     pub fn load(&mut self) -> Result<(), ProgramError> {
         let Self { data, attach_type } = self;
         load_program_with_attach_type(BPF_PROG_TYPE_XDP, *attach_type, data)
+    }
+
+    /// Binds the program to `interface` at load time so it can call XDP
+    /// metadata kfuncs (e.g. `bpf_xdp_metadata_rx_timestamp`).
+    ///
+    /// Must be called before [`Xdp::load`]. The program remains executed by
+    /// the kernel — this only associates it with a device so the verifier
+    /// permits device-bound kfuncs. To offload the program to the device
+    /// instead, attach with [`XdpMode::Hardware`].
+    ///
+    /// # Errors
+    ///
+    /// If the given `interface` does not exist
+    /// [`ProgramError::UnknownInterface`] is returned. If the program has
+    /// already been loaded [`ProgramError::AlreadyLoaded`] is returned.
+    ///
+    /// # Minimum kernel version
+    ///
+    /// The minimum kernel version required to use this feature is 6.3.
+    pub fn set_dev_bound(&mut self, interface: &str) -> Result<(), ProgramError> {
+        // TODO: avoid this unwrap by adding a new error variant.
+        let c_interface = CString::new(interface).unwrap();
+        let if_index = unsafe { libc::if_nametoindex(c_interface.as_ptr()) };
+        if if_index == 0 {
+            return Err(ProgramError::UnknownInterface {
+                name: interface.to_string(),
+            });
+        }
+        self.set_dev_bound_by_if_index(if_index)
+    }
+
+    /// Binds the program to the interface identified by `if_index` at load
+    /// time so it can call XDP metadata kfuncs
+    /// (e.g. `bpf_xdp_metadata_rx_timestamp`).
+    ///
+    /// Must be called before [`Xdp::load`]. See [`Xdp::set_dev_bound`] for
+    /// details.
+    ///
+    /// # Errors
+    ///
+    /// If the program has already been loaded
+    /// [`ProgramError::AlreadyLoaded`] is returned.
+    ///
+    /// # Minimum kernel version
+    ///
+    /// The minimum kernel version required to use this feature is 6.3.
+    pub const fn set_dev_bound_by_if_index(&mut self, if_index: u32) -> Result<(), ProgramError> {
+        if self.data.fd.is_some() {
+            return Err(ProgramError::AlreadyLoaded);
+        }
+        self.data.prog_ifindex = if_index;
+        self.data.flags |= BPF_F_XDP_DEV_BOUND_ONLY;
+        Ok(())
     }
 
     /// Attaches the program to the given `interface`.
@@ -325,3 +378,100 @@ impl_try_into_fdlink!(XdpLink, XdpLinkInner);
 impl_try_from_fdlink!(XdpLink, XdpLinkInner, bpf_link_type::BPF_LINK_TYPE_XDP);
 
 define_link_wrapper!(XdpLink, XdpLinkId, XdpLinkInner, XdpLinkIdInner, Xdp);
+
+#[cfg(test)]
+mod tests {
+    use std::os::fd::FromRawFd as _;
+
+    use assert_matches::assert_matches;
+
+    use super::*;
+    use crate::programs::{ProgramFd, links::Links};
+
+    fn new_xdp() -> Xdp {
+        Xdp {
+            data: ProgramData {
+                name: None,
+                obj: None,
+                fd: None,
+                links: Links::new(),
+                attach_btf_obj_fd: None,
+                attach_btf_id: None,
+                attach_prog_fd: None,
+                btf_fd: None,
+                verifier_log_level: VerifierLogLevel::default(),
+                path: None,
+                flags: 0,
+                prog_ifindex: 0,
+            },
+            attach_type: XdpAttachType::Interface,
+        }
+    }
+
+    #[test]
+    fn set_dev_bound_by_if_index_records_index_and_flag() {
+        let mut xdp = new_xdp();
+        xdp.set_dev_bound_by_if_index(7).unwrap();
+        assert_eq!(xdp.data.prog_ifindex, 7);
+        assert_eq!(
+            xdp.data.flags & BPF_F_XDP_DEV_BOUND_ONLY,
+            BPF_F_XDP_DEV_BOUND_ONLY
+        );
+    }
+
+    #[test]
+    fn set_dev_bound_by_if_index_preserves_existing_flags() {
+        let mut xdp = new_xdp();
+        // Simulate an unrelated flag such as BPF_F_XDP_HAS_FRAGS that a caller
+        // may have set before opting into device binding.
+        let preexisting = 0x1234_0000;
+        xdp.data.flags = preexisting;
+
+        xdp.set_dev_bound_by_if_index(3).unwrap();
+
+        assert_eq!(xdp.data.prog_ifindex, 3);
+        assert_eq!(xdp.data.flags, preexisting | BPF_F_XDP_DEV_BOUND_ONLY);
+    }
+
+    #[test]
+    fn set_dev_bound_by_if_index_is_idempotent() {
+        let mut xdp = new_xdp();
+        xdp.set_dev_bound_by_if_index(9).unwrap();
+        // A second call with a different index overrides the recorded index
+        // but keeps the flag set (verifies `|=` rather than `=`).
+        xdp.set_dev_bound_by_if_index(11).unwrap();
+        assert_eq!(xdp.data.prog_ifindex, 11);
+        assert_eq!(
+            xdp.data.flags & BPF_F_XDP_DEV_BOUND_ONLY,
+            BPF_F_XDP_DEV_BOUND_ONLY
+        );
+    }
+
+    #[test]
+    fn set_dev_bound_by_if_index_after_load_returns_already_loaded() {
+        let mut xdp = new_xdp();
+        let fd = unsafe { crate::MockableFd::from_raw_fd(crate::MockableFd::mock_signed_fd()) };
+        xdp.data.fd = Some(ProgramFd(fd));
+
+        assert_matches!(
+            xdp.set_dev_bound_by_if_index(1),
+            Err(ProgramError::AlreadyLoaded)
+        );
+        // Nothing must be mutated when the program is already loaded.
+        assert_eq!(xdp.data.prog_ifindex, 0);
+        assert_eq!(xdp.data.flags, 0);
+    }
+
+    #[test]
+    fn set_dev_bound_unknown_interface_returns_error() {
+        let mut xdp = new_xdp();
+        let name = "aya-nonexistent-iface-xyz123";
+        assert_matches!(
+            xdp.set_dev_bound(name),
+            Err(ProgramError::UnknownInterface { name: n }) if n == name
+        );
+        // No state should be mutated on lookup failure.
+        assert_eq!(xdp.data.prog_ifindex, 0);
+        assert_eq!(xdp.data.flags, 0);
+    }
+}
