@@ -19,6 +19,34 @@ impl SkMsgContext {
         unsafe { (*self.msg).size }
     }
 
+    pub fn family(&self) -> u32 {
+        unsafe { (*self.msg).family }
+    }
+
+    pub fn remote_ip4(&self) -> u32 {
+        unsafe { (*self.msg).remote_ip4 }
+    }
+
+    pub fn local_ip4(&self) -> u32 {
+        unsafe { (*self.msg).local_ip4 }
+    }
+
+    pub fn remote_ip6(&self) -> [u32; 4] {
+        unsafe { (*self.msg).remote_ip6 }
+    }
+
+    pub fn local_ip6(&self) -> [u32; 4] {
+        unsafe { (*self.msg).local_ip6 }
+    }
+
+    pub fn local_port(&self) -> u32 {
+        unsafe { (*self.msg).local_port }
+    }
+
+    pub fn remote_port(&self) -> u32 {
+        unsafe { (*self.msg).remote_port }
+    }
+
     pub fn data(&self) -> usize {
         unsafe { (*self.msg).__bindgen_anon_1.data as usize }
     }
