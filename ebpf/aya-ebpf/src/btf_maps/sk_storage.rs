@@ -31,29 +31,17 @@ impl<T> SkStorage<T> {
         unsafe { bpf_sk_storage_get(self.as_ptr(), sk.cast(), value.cast(), flags) }.cast::<T>()
     }
 
-    /// Gets a mutable reference to the value associated with `sk`.
-    ///
-    /// # Safety
-    ///
-    /// This function may dereference the pointer `sk`.
+    /// Gets a mutable reference to the value associated with the socket in `ctx`.
     #[inline(always)]
-    pub unsafe fn get_ptr_mut(&self, ctx: &SockAddrContext) -> *mut T {
+    pub fn get_ptr_mut(&self, ctx: &SockAddrContext) -> *mut T {
         self.get_ptr(ctx, ptr::null_mut(), 0)
     }
 
-    /// Gets a mutable reference to the value associated with `sk`.
+    /// Gets a mutable reference to the value associated with the socket in `ctx`.
     ///
-    /// If no value is associated with `sk`, `value` will be inserted.
-    ///
-    /// # Safety
-    ///
-    /// This function may dereference the pointer `sk`.
+    /// If no value is associated with the socket, `value` will be inserted.
     #[inline(always)]
-    pub unsafe fn get_or_insert_ptr_mut(
-        &self,
-        ctx: &SockAddrContext,
-        value: Option<&mut T>,
-    ) -> *mut T {
+    pub fn get_or_insert_ptr_mut(&self, ctx: &SockAddrContext, value: Option<&mut T>) -> *mut T {
         self.get_ptr(
             ctx,
             value.map_or(ptr::null_mut(), ptr::from_mut),
@@ -62,12 +50,8 @@ impl<T> SkStorage<T> {
     }
 
     /// Deletes the value associated with `sk`.
-    ///
-    /// # Safety
-    ///
-    /// This function may dereference the pointer `sk`.
     #[inline(always)]
-    pub unsafe fn delete(&self, sk: *mut bpf_sock) -> Result<(), i32> {
+    pub fn delete(&self, sk: *mut bpf_sock) -> Result<(), i32> {
         let ret = unsafe { bpf_sk_storage_delete(self.as_ptr(), sk.cast()) };
         if ret == 0 { Ok(()) } else { Err(ret as i32) }
     }

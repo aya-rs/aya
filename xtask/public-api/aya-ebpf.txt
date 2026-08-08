@@ -86,9 +86,9 @@ impl<V> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::cgroup_stor
 pub mod aya_ebpf::btf_maps::cgrp_storage
 #[repr(C)] pub struct aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
 impl<T> aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
-pub unsafe fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::delete(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup) -> core::result::Result<(), i32>
-pub unsafe fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::get_or_insert_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup, core::option::Option<&mut T>) -> *mut T
-pub unsafe fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::get_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup) -> *mut T
+pub fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::delete(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup) -> core::result::Result<(), i32>
+pub fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::get_or_insert_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup, core::option::Option<&mut T>) -> *mut T
+pub fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::get_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup) -> *mut T
 impl<T> aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
 pub const fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::new() -> Self
 impl<T> core::default::Default for aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
@@ -225,9 +225,9 @@ impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_saf
 pub mod aya_ebpf::btf_maps::inode_storage
 #[repr(C)] pub struct aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
 impl<T> aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
-pub unsafe fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::delete(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode) -> core::result::Result<(), i32>
-pub unsafe fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::get_or_insert_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode, core::option::Option<&mut T>) -> *mut T
-pub unsafe fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::get_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode) -> *mut T
+pub fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::delete(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode) -> core::result::Result<(), i32>
+pub fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::get_or_insert_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode, core::option::Option<&mut T>) -> *mut T
+pub fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::get_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode) -> *mut T
 impl<T> aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
 pub const fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::new() -> Self
 impl<T> core::default::Default for aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
@@ -424,9 +424,9 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::
 pub mod aya_ebpf::btf_maps::sk_storage
 #[repr(C)] pub struct aya_ebpf::btf_maps::sk_storage::SkStorage<T>
 impl<T> aya_ebpf::btf_maps::sk_storage::SkStorage<T>
-pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::delete(&self, *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock) -> core::result::Result<(), i32>
-pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_or_insert_ptr_mut(&self, &aya_ebpf::programs::sock_addr::SockAddrContext, core::option::Option<&mut T>) -> *mut T
-pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_ptr_mut(&self, &aya_ebpf::programs::sock_addr::SockAddrContext) -> *mut T
+pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::delete(&self, *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock) -> core::result::Result<(), i32>
+pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_or_insert_ptr_mut(&self, &aya_ebpf::programs::sock_addr::SockAddrContext, core::option::Option<&mut T>) -> *mut T
+pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_ptr_mut(&self, &aya_ebpf::programs::sock_addr::SockAddrContext) -> *mut T
 impl<T> aya_ebpf::btf_maps::sk_storage::SkStorage<T>
 pub const fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::new() -> Self
 impl<T> core::default::Default for aya_ebpf::btf_maps::sk_storage::SkStorage<T>
@@ -600,9 +600,9 @@ impl<V> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::cgroup_s
 impl<V> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V> where V: core::panic::unwind_safe::RefUnwindSafe
 #[repr(C)] pub struct aya_ebpf::btf_maps::CgrpStorage<T>
 impl<T> aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
-pub unsafe fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::delete(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup) -> core::result::Result<(), i32>
-pub unsafe fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::get_or_insert_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup, core::option::Option<&mut T>) -> *mut T
-pub unsafe fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::get_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup) -> *mut T
+pub fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::delete(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup) -> core::result::Result<(), i32>
+pub fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::get_or_insert_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup, core::option::Option<&mut T>) -> *mut T
+pub fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::get_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup) -> *mut T
 impl<T> aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
 pub const fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::new() -> Self
 impl<T> core::default::Default for aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
@@ -697,9 +697,9 @@ impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_saf
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS> where K: core::panic::unwind_safe::RefUnwindSafe, V: core::panic::unwind_safe::RefUnwindSafe
 #[repr(C)] pub struct aya_ebpf::btf_maps::InodeStorage<T>
 impl<T> aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
-pub unsafe fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::delete(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode) -> core::result::Result<(), i32>
-pub unsafe fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::get_or_insert_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode, core::option::Option<&mut T>) -> *mut T
-pub unsafe fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::get_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode) -> *mut T
+pub fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::delete(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode) -> core::result::Result<(), i32>
+pub fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::get_or_insert_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode, core::option::Option<&mut T>) -> *mut T
+pub fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::get_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode) -> *mut T
 impl<T> aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
 pub const fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::new() -> Self
 impl<T> core::default::Default for aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
@@ -892,9 +892,9 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS> where T: core::panic::unwind_safe::RefUnwindSafe
 #[repr(C)] pub struct aya_ebpf::btf_maps::SkStorage<T>
 impl<T> aya_ebpf::btf_maps::sk_storage::SkStorage<T>
-pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::delete(&self, *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock) -> core::result::Result<(), i32>
-pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_or_insert_ptr_mut(&self, &aya_ebpf::programs::sock_addr::SockAddrContext, core::option::Option<&mut T>) -> *mut T
-pub unsafe fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_ptr_mut(&self, &aya_ebpf::programs::sock_addr::SockAddrContext) -> *mut T
+pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::delete(&self, *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock) -> core::result::Result<(), i32>
+pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_or_insert_ptr_mut(&self, &aya_ebpf::programs::sock_addr::SockAddrContext, core::option::Option<&mut T>) -> *mut T
+pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_ptr_mut(&self, &aya_ebpf::programs::sock_addr::SockAddrContext) -> *mut T
 impl<T> aya_ebpf::btf_maps::sk_storage::SkStorage<T>
 pub const fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::new() -> Self
 impl<T> core::default::Default for aya_ebpf::btf_maps::sk_storage::SkStorage<T>
@@ -1325,9 +1325,9 @@ pub mod aya_ebpf::maps::sock_map
 #[repr(transparent)] pub struct aya_ebpf::maps::sock_map::SockMap
 impl aya_ebpf::maps::sock_map::SockMap
 pub const fn aya_ebpf::maps::sock_map::SockMap::pinned(u32, u32) -> Self
-pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, &aya_ebpf::programs::sk_msg::SkMsgContext, u32, u64) -> aya_ebpf_cty::od::c_long
+pub fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, &aya_ebpf::programs::sk_msg::SkMsgContext, u32, u64) -> aya_ebpf_cty::od::c_long
 pub fn aya_ebpf::maps::sock_map::SockMap::redirect_sk_lookup(&self, &aya_ebpf::programs::sk_lookup::SkLookupContext, u32, u64) -> core::result::Result<(), i32>
-pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, &aya_ebpf::programs::sk_buff::SkBuffContext, u32, u64) -> aya_ebpf_cty::od::c_long
+pub fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, &aya_ebpf::programs::sk_buff::SkBuffContext, u32, u64) -> aya_ebpf_cty::od::c_long
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, u32, *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::sock_map::SockMap::with_max_entries(u32, u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::sock_map::SockMap
@@ -1729,9 +1729,9 @@ impl<K> core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::sock_hash::Sock
 #[repr(transparent)] pub struct aya_ebpf::maps::SockMap
 impl aya_ebpf::maps::sock_map::SockMap
 pub const fn aya_ebpf::maps::sock_map::SockMap::pinned(u32, u32) -> Self
-pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, &aya_ebpf::programs::sk_msg::SkMsgContext, u32, u64) -> aya_ebpf_cty::od::c_long
+pub fn aya_ebpf::maps::sock_map::SockMap::redirect_msg(&self, &aya_ebpf::programs::sk_msg::SkMsgContext, u32, u64) -> aya_ebpf_cty::od::c_long
 pub fn aya_ebpf::maps::sock_map::SockMap::redirect_sk_lookup(&self, &aya_ebpf::programs::sk_lookup::SkLookupContext, u32, u64) -> core::result::Result<(), i32>
-pub unsafe fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, &aya_ebpf::programs::sk_buff::SkBuffContext, u32, u64) -> aya_ebpf_cty::od::c_long
+pub fn aya_ebpf::maps::sock_map::SockMap::redirect_skb(&self, &aya_ebpf::programs::sk_buff::SkBuffContext, u32, u64) -> aya_ebpf_cty::od::c_long
 pub unsafe fn aya_ebpf::maps::sock_map::SockMap::update(&self, u32, *mut aya_ebpf_bindings::x86_64::bindings::bpf_sock_ops, u64) -> core::result::Result<(), i32>
 pub const fn aya_ebpf::maps::sock_map::SockMap::with_max_entries(u32, u32) -> Self
 impl !core::marker::Freeze for aya_ebpf::maps::sock_map::SockMap
