@@ -30,6 +30,8 @@ C_BPF_OBJECTS = [
     ("bpf/ksyms_typed_missing_kfunc.bpf.c", True),
     ("bpf/ksyms_typed_missing_var.bpf.c", True),
     ("bpf/ksyms_typeless_missing.bpf.c", True),
+    ("bpf/tc_legacy_map.bpf.c", False),
+    ("bpf/tc_legacy_map_in_map.bpf.c", False),
 ]
 
 aya_c_bpf_objects(
