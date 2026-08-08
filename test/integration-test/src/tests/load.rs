@@ -19,6 +19,7 @@ use aya::{
         uprobe::{UProbeLink, UProbeLinkId, UProbeScope},
         xdp::{XdpLink, XdpLinkId},
     },
+    test_helpers::NetNsGuard,
     util::KernelVersion,
 };
 use aya_obj::programs::XdpAttachType;
@@ -29,6 +30,8 @@ pub(crate) const RETRY_DURATION: Duration = Duration::from_millis(10);
 
 #[test_log::test]
 fn long_name() {
+    let _netns = NetNsGuard::new().unwrap();
+
     let mut bpf = Ebpf::load(crate::NAME_TEST).unwrap();
     let name_prog: &mut Xdp = bpf
         .program_mut("ihaveaverylongname")
@@ -278,6 +281,8 @@ impl_unload_program_ops!(FlowDissector, FlowDissectorLinkId, FlowDissectorLink);
 
 #[test_log::test]
 fn unload_xdp() {
+    let _netns = NetNsGuard::new().unwrap();
+
     type P = Xdp;
 
     let program_name = "pass";
@@ -409,6 +414,8 @@ fn basic_flow_dissector() {
 
 #[test_log::test]
 fn pin_link() {
+    let _netns = NetNsGuard::new().unwrap();
+
     type P = Xdp;
 
     let program_name = "pass";
@@ -422,7 +429,7 @@ fn pin_link() {
     assert_loaded(program_name);
 
     let fd_link: FdLink = link.try_into().unwrap();
-    let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-lo").unwrap();
+    let pinned = fd_link.pin("/sys/fs/bpf/aya-xdp-test-veth0").unwrap();
 
     // because of the pin, the program is still attached
     prog.unload().unwrap();
@@ -446,11 +453,10 @@ fn pin_tcx_link() {
         return;
     }
 
-    use aya::test_helpers::NetNsGuard;
     let _netns = NetNsGuard::new().unwrap();
 
     let program_name = "tcx_next";
-    let pin_path = "/sys/fs/bpf/aya-tcx-test-lo";
+    let pin_path = "/sys/fs/bpf/aya-tcx-test-veth0";
     let mut bpf = Ebpf::load(crate::TCX).unwrap();
     let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
@@ -515,12 +521,14 @@ impl_pin_program_ops!(UProbe);
 
 #[test_log::test]
 fn pin_lifecycle() {
+    let _netns = NetNsGuard::new().unwrap();
+
     type P = Xdp;
 
     let program_name = "pass";
     let attach = |prog: &mut P| prog.attach("lo", XdpMode::default()).unwrap();
     let program_pin = "/sys/fs/bpf/aya-xdp-test-prog";
-    let link_pin = "/sys/fs/bpf/aya-xdp-test-lo";
+    let link_pin = "/sys/fs/bpf/aya-xdp-test-veth0";
     let from_pin = |program_pin: &str| P::from_pin(program_pin, XdpAttachType::Interface).unwrap();
 
     let kernel_version = KernelVersion::current().unwrap();
