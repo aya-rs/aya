@@ -168,6 +168,17 @@ pub enum MapError {
         name: String,
     },
 
+    /// The given pin path is not valid.
+    #[error("invalid pin path `{}`", path.display())]
+    InvalidPinPath {
+        /// The path.
+        path: std::path::PathBuf,
+
+        #[source]
+        /// The source error.
+        error: std::ffi::NulError,
+    },
+
     /// Failed to create map
     #[error("failed to create map `{name}`")]
     CreateError {
