@@ -11,6 +11,7 @@ use aya_obj::generated::{bpf_map_info, bpf_map_type};
 use super::{MapError, MapFd};
 use crate::{
     FEATURES,
+    pin::PinError,
     sys::{
         SyscallError, bpf_get_object, bpf_map_get_fd_by_id, bpf_map_get_info_by_fd, iter_map_ids,
     },
@@ -117,8 +118,15 @@ impl MapInfo {
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, MapError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|error| {
+            MapError::PinError {
+                name: None,
+                error: PinError::InvalidPinPath {
+                    path: path.as_ref().into(),
+                    error,
+                },
+            }
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,
