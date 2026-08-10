@@ -355,7 +355,9 @@ impl PinnedLink {
         use std::os::unix::ffi::OsStrExt as _;
 
         // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|e| {
+            LinkError::InvalidPathCString(path.as_ref().to_path_buf(), e.to_string())
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| {
             LinkError::SyscallError(SyscallError {
                 call: "BPF_OBJ_GET",
@@ -626,6 +628,10 @@ pub enum LinkError {
     /// Syscall failed.
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
+
+    /// Cannot convert given path to `CString`
+    #[error("Failed to convert given path {0} to CString: {1}")]
+    InvalidPathCString(PathBuf, String),
 }
 
 #[derive(Debug)]

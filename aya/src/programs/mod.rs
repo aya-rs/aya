@@ -242,10 +242,12 @@ pub enum ProgramError {
     },
 
     /// Cannot convert given interface name to cstring
-    #[error("Failed to convert interface name `{ifname}` to a cstring because of {error}")]
-    InvalidInterfaceCString {
-        /// ifname
-        ifname: String,
+    #[error("Failed to convert  `{name}` value `{value}` to a cstring because of `{error}`")]
+    InvalidCString {
+        /// name
+        name: String,
+        /// value
+        value: String,
         /// error msg
         error: String,
     },
@@ -625,8 +627,13 @@ impl<T: Link> ProgramData<T> {
     ) -> Result<Self, ProgramError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|e| {
+            ProgramError::InvalidCString {
+                name: String::from("Program data pinned path"),
+                value: path.as_ref().display().to_string(),
+                error: e.to_string(),
+            }
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "bpf_obj_get",
             io_error,

@@ -113,11 +113,11 @@ impl Xdp {
     /// When `bpf_link_create` is unavailable or rejects the request, the call
     /// transparently falls back to the legacy netlink-based attach path.
     pub fn attach(&mut self, interface: &str, mode: XdpMode) -> Result<XdpLinkId, ProgramError> {
-        let c_interface =
-            CString::new(interface).map_err(|e| ProgramError::InvalidInterfaceCString {
-                ifname: interface.to_string(),
-                error: e.to_string(),
-            })?;
+        let c_interface = CString::new(interface).map_err(|e| ProgramError::InvalidCString {
+            name: String::from("interface name"),
+            value: interface.to_string(),
+            error: e.to_string(),
+        })?;
         let if_index = unsafe { libc::if_nametoindex(c_interface.as_ptr()) };
         if if_index == 0 {
             return Err(ProgramError::UnknownInterface {
