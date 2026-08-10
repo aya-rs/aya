@@ -3332,6 +3332,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::CgroupAtt
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::CgroupAttachMode
 pub enum aya::programs::links::LinkError
 pub aya::programs::links::LinkError::InvalidLink
+pub aya::programs::links::LinkError::InvalidPathCString(std::path::PathBuf, alloc::string::String)
 pub aya::programs::links::LinkError::SyscallError(aya::sys::SyscallError)
 pub aya::programs::links::LinkError::UnknownLinkType(u32)
 impl core::convert::From<aya::sys::SyscallError> for aya::programs::links::LinkError
@@ -5993,6 +5994,9 @@ pub aya::programs::ProgramError::AttachCookieNotSupported
 pub aya::programs::ProgramError::Btf(aya_obj::btf::btf::BtfError)
 pub aya::programs::ProgramError::ExtensionError(aya::programs::extension::ExtensionError)
 pub aya::programs::ProgramError::IOError(core::io::error::Error)
+pub aya::programs::ProgramError::InvalidCString
+pub aya::programs::ProgramError::InvalidCString::error: alloc::string::String
+pub aya::programs::ProgramError::InvalidCString::value: alloc::string::String
 pub aya::programs::ProgramError::InvalidName
 pub aya::programs::ProgramError::InvalidName::name: alloc::string::String
 pub aya::programs::ProgramError::KProbeError(aya::programs::kprobe::KProbeError)
