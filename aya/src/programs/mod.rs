@@ -241,6 +241,15 @@ pub enum ProgramError {
         name: String,
     },
 
+    /// Cannot convert given interface name to cstring
+    #[error("Failed to convert interface name `{ifname}` to a cstring because of {error}")]
+    InvalidInterfaceCString {
+        /// ifname
+        ifname: String,
+        /// error msg
+        error: String,
+    },
+
     /// An error occurred while working with IO.
     #[error(transparent)]
     IOError(#[from] io::Error),
