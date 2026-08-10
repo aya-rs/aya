@@ -241,6 +241,17 @@ pub enum ProgramError {
         name: String,
     },
 
+    /// The given pin path is not valid.
+    #[error("invalid pin path `{}`", path.display())]
+    InvalidPinPath {
+        /// The path.
+        path: PathBuf,
+
+        #[source]
+        /// The source error.
+        error: std::ffi::NulError,
+    },
+
     /// An error occurred while working with IO.
     #[error(transparent)]
     IOError(#[from] io::Error),
@@ -616,8 +627,13 @@ impl<T: Link> ProgramData<T> {
     ) -> Result<Self, ProgramError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|error| {
+            ProgramError::InvalidPinPath {
+                path: path.as_ref().into(),
+                error,
+            }
+        })?;
+
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "bpf_obj_get",
             io_error,

@@ -372,8 +372,12 @@ impl SchedClassifier {
         match options {
             TcAttachOptions::Netlink(options) => {
                 let name = self.data.name.as_deref().unwrap_or_default();
-                // TODO: avoid this unwrap by adding a new error variant.
-                let name = CString::new(name).unwrap();
+                #[expect(
+                    clippy::map_err_ignore,
+                    reason = "We don't need NulError here as just exposing invalid name is sufficient"
+                )]
+                let name = CString::new(name)
+                    .map_err(|_| ProgramError::InvalidName { name: name.into() })?;
                 let (priority, handle) = unsafe {
                     netlink_qdisc_attach(
                         if_index as i32,
