@@ -242,10 +242,8 @@ pub enum ProgramError {
     },
 
     /// Cannot convert given field in name to cstring
-    #[error("Failed to convert  `{name}` value `{value}` to a cstring because of `{error}`")]
+    #[error("Failed to convert  `{value}` to a cstring because of `{error}`")]
     InvalidCString {
-        /// name
-        name: String,
         /// value
         value: String,
         /// error msg
@@ -629,7 +627,6 @@ impl<T: Link> ProgramData<T> {
 
         let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|e| {
             ProgramError::InvalidCString {
-                name: String::from("Program data pinned path"),
                 value: path.as_ref().display().to_string(),
                 error: e.to_string(),
             }

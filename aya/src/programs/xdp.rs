@@ -114,7 +114,6 @@ impl Xdp {
     /// transparently falls back to the legacy netlink-based attach path.
     pub fn attach(&mut self, interface: &str, mode: XdpMode) -> Result<XdpLinkId, ProgramError> {
         let c_interface = CString::new(interface).map_err(|e| ProgramError::InvalidCString {
-            name: String::from("interface name"),
             value: interface.to_string(),
             error: e.to_string(),
         })?;

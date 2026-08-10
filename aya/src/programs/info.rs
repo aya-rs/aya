@@ -226,7 +226,6 @@ impl ProgramInfo {
 
         let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|e| {
             ProgramError::InvalidCString {
-                name: String::from("program info path"),
                 value: path.as_ref().display().to_string(),
                 error: e.to_string(),
             }

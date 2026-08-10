@@ -373,7 +373,6 @@ impl SchedClassifier {
             TcAttachOptions::Netlink(options) => {
                 let name = self.data.name.as_deref().unwrap_or_default();
                 let name = CString::new(name).map_err(|e| ProgramError::InvalidCString {
-                    name: String::from("Sched Classifier Link data name"),
                     value: name.to_string(),
                     error: e.to_string(),
                 })?;
