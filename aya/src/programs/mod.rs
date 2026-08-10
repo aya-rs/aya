@@ -241,7 +241,7 @@ pub enum ProgramError {
         name: String,
     },
 
-    /// Cannot convert given interface name to cstring
+    /// Cannot convert given field in name to cstring
     #[error("Failed to convert  `{name}` value `{value}` to a cstring because of `{error}`")]
     InvalidCString {
         /// name
