@@ -1,0 +1,100 @@
+name: Update Rust nightly
+
+on:
+  push:
+    branches:
+      - main
+
+  schedule:
+    - cron: 00 3 * * *
+
+  workflow_dispatch:
+
+  workflow_call:
+    outputs:
+      rust-nightly:
+        description: Latest available Rust nightly
+        value: ${{ jobs.resolve.outputs.rust-nightly }}
+
+jobs:
+  # Shared: resolve a nightly for reusable-workflow callers.
+  resolve:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      rust-nightly: ${{ steps.resolve.outputs.rust-nightly }}
+      provider-repository: ${{ job.workflow_repository }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+
+      - name: Resolve the latest Rust nightly
+        id: resolve
+        run: |
+          nightly=$(python3 scripts/rust-nightly.py latest)
+          printf 'rust-nightly=%s\n' "$nightly" >> "$GITHUB_OUTPUT"
+
+  # Repository-local: regenerate files and publish the update pull request.
+  update:
+    needs: resolve
+    if: >-
+      github.repository == needs.resolve.outputs.provider-repository &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    # Keep one promotion running and only the newest promotion pending.
+    concurrency: nightly-promotion
+    # Only main can enter this environment and use its Crabby credential.
+    environment: nightly-promotion
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Update the pinned Rust nightly
+        run: |
+          set -euo pipefail
+
+          nightly='${{ needs.resolve.outputs.rust-nightly }}'
+          module=$(python3 scripts/rust-nightly.py update "$nightly" < MODULE.bazel)
+          if [[ -n "$module" ]]; then
+            printf '%s\n' "$module" > MODULE.bazel
+          fi
+
+      - uses: ./.github/actions/codegen
+
+      - name: Regenerate public API snapshots
+        run: cargo xtask public-api --bless
+
+      # rules_rs derives crate extension facts from Cargo.lock, so refresh the
+      # Bazel lockfile even when the Rust nightly did not change.
+      - name: Update the Bazel lockfile
+        run: bazel mod deps --lockfile_mode=update
+
+      - name: Create or update the Rust nightly pull request
+        id: pull-request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          # GitHub requires approval before GITHUB_TOKEN-created PRs run CI.
+          # Crabby starts required checks automatically so updates auto-merge.
+          # Forks use GITHUB_TOKEN and approve their checks manually.
+          token: ${{ secrets.CRABBY_GITHUB_TOKEN || github.token }}
+          branch: create-pull-request/rust-nightly
+          commit-message: 'build: regenerate with ${{ needs.resolve.outputs.rust-nightly }}'
+          title: 'build: regenerate with ${{ needs.resolve.outputs.rust-nightly }}'
+          body: Update the Rust nightly when needed and regenerate derived files.
+
+      - name: Enable auto-merge
+        # Forks do not receive the Crabby token required for auto-merge.
+        if: >-
+          !github.event.repository.fork &&
+          steps.pull-request.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ secrets.CRABBY_GITHUB_TOKEN }}
+          PULL_REQUEST: ${{ steps.pull-request.outputs.pull-request-number }}
+        run: gh pr merge "$PULL_REQUEST" --auto --rebase
