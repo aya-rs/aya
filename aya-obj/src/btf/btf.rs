@@ -185,7 +185,7 @@ pub enum BtfFeature {
     FuncGlobal,
     /// `BTF_KIND_VAR` and `BTF_KIND_DATASEC`.
     DataSec,
-    /// Zero-length `BTF_KIND_DATASEC` entries.
+    /// `BTF_KIND_DATASEC` types with zero entries.
     DataSecZero,
     /// `BTF_KIND_FLOAT`.
     Float,
