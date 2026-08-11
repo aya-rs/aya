@@ -16,6 +16,7 @@ workspace = true
 [dependencies]
 anyhow = { workspace = true, features = ["std"] }
 ar = { workspace = true }
+aya-multierror = { path = "../aya-multierror", version = "0.1.0", default-features = false }
 aya-tool = { path = "../aya-tool", version = "0.1.0", default-features = false }
 cargo_metadata = { workspace = true }
 clap = { workspace = true, features = ["derive"] }

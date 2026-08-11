@@ -17,11 +17,12 @@ use std::{
 };
 
 use anyhow::{Context as _, Result, anyhow, bail};
+use aya_multierror::Errors;
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 use nix::sys::stat::{Mode, SFlag};
 use walkdir::WalkDir;
-use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors};
+use xtask::AYA_BUILD_INTEGRATION_BPF;
 
 use crate::{
     http::HttpClient,
