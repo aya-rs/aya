@@ -1037,7 +1037,10 @@ fn feature_probe_result(
 }
 
 pub(crate) fn probe_bpf_name() -> io::Result<bool> {
-    with_trivial_prog(ProgramType::TracePoint, |attr| {
+    // Avoid making the name probe depend on CONFIG_BPF_EVENTS by using the same
+    // socket-filter carrier as libbpf.
+    // https://github.com/libbpf/libbpf/blob/v1.4.0/src/features.c#L23-L45
+    with_trivial_prog(ProgramType::SocketFilter, |attr| {
         let u = unsafe { &mut attr.__bindgen_anon_3 };
         let name = c"aya_name_check";
         let name_bytes = name.to_bytes();
