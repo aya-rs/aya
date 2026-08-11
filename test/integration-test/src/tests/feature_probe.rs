@@ -7,11 +7,22 @@ use aya::{
     Btf,
     maps::MapType,
     programs::{LsmAttachType, ProgramError, ProgramType},
-    sys::{BpfHelper, is_helper_supported, is_map_supported, is_program_supported},
+    sys::{
+        BpfHelper, BtfFeature, is_btf_feature_supported, is_helper_supported, is_map_supported,
+        is_program_supported,
+    },
     test_helpers::kernel_assert,
     util::KernelVersion,
 };
 use procfs::kernel_config;
+
+#[test_log::test]
+fn probe_empty_btf_datasec() {
+    kernel_assert!(
+        is_btf_feature_supported(BtfFeature::DataSecZero).unwrap(),
+        KernelVersion::new(5, 12, 0),
+    );
+}
 
 #[test_log::test]
 fn probe_supported_programs() {
