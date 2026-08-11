@@ -185,7 +185,7 @@ pub enum BtfFeature {
     FuncGlobal,
     /// `BTF_KIND_VAR` and `BTF_KIND_DATASEC`.
     DataSec,
-    /// Zero-length `BTF_KIND_DATASEC` entries.
+    /// `BTF_KIND_DATASEC` types with zero entries.
     DataSecZero,
     /// `BTF_KIND_FLOAT`.
     Float,
@@ -579,9 +579,17 @@ impl Btf {
                         let mut section_size = d.size;
                         let name_offset = d.name_offset;
 
-                        // Kernels before 5.12 reject zero-length DATASEC. See
-                        // https://github.com/torvalds/linux/commit/13ca51d5eb358edcb673afccb48c3440b9fda21b.
-                        if entries.is_empty() && !features.is_supported(BtfFeature::DataSecZero) {
+                        // For a DATASEC with zero entries, inject a filler in either case:
+                        // 1. Its section size is zero. The kernel rejects zero-sized DATASECs,
+                        //    so the filler makes the size non-zero.
+                        //    https://github.com/torvalds/linux/blob/9f4ad9e4/kernel/bpf/btf.c#L3543-L3546
+                        // 2. Its section size is non-zero, but the kernel does not support
+                        //    zero-entry DATASECs, as on kernels before Linux 5.12.
+                        //    https://github.com/torvalds/linux/commit/13ca51d5
+                        if entries.is_empty()
+                            && (section_size == 0
+                                || !features.is_supported(BtfFeature::DataSecZero))
+                        {
                             let filler_var_id = *filler_var_id.get_or_init(|| {
                                 let filler_type_name = self.add_string("__aya_datasec_filler_type");
                                 let filler_type_id = add_type(
@@ -608,7 +616,7 @@ impl Btf {
                             });
                             let filler_len = section_size.max(1);
                             debug!(
-                                "{kind} {name}: injecting filler entry for zero-length DATASEC (len={filler_len})"
+                                "{kind} {name}: injecting filler entry for zero-entry DATASEC (len={filler_len})"
                             );
                             entries.push(DataSecEntry {
                                 btf_type: filler_var_id,
@@ -1746,6 +1754,27 @@ mod tests {
         // Ensure we can convert to bytes and back again
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
+    }
+
+    #[test]
+    fn test_fixup_zero_sized_zero_entry_datasec_injects_filler() {
+        let mut btf = Btf::new();
+        let name = ".empty";
+        let name_offset = btf.add_string(name);
+        let datasec_type_id =
+            btf.add_type(BtfType::DataSec(DataSec::new(name_offset, Vec::new(), 0)));
+
+        btf.fixup_and_sanitize(
+            &HashMap::from([(name.to_owned(), (SectionIndex(0), 0))]),
+            &HashMap::new(),
+            supports([BtfFeature::DataSec, BtfFeature::DataSecZero]),
+        )
+        .unwrap();
+
+        assert_matches!(btf.type_by_id(datasec_type_id).unwrap(), BtfType::DataSec(fixed) => {
+            assert_eq!(fixed.size, 1);
+            assert_matches!(*fixed.entries, [DataSecEntry { offset: 0, size: 1, .. }]);
+        });
     }
 
     #[test]
