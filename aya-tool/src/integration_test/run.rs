@@ -1,5 +1,5 @@
-#![allow(clippy::print_stdout, reason = "xtask is a CLI tool")]
-#![allow(clippy::print_stderr, reason = "xtask is a CLI tool")]
+#![allow(clippy::print_stdout, reason = "aya-tool is a CLI tool")]
+#![allow(clippy::print_stderr, reason = "aya-tool is a CLI tool")]
 #![allow(clippy::use_debug, reason = "debug output aids troubleshooting")]
 
 use std::{
@@ -16,20 +16,21 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use anyhow::{Context as _, Result, anyhow, bail};
+use anyhow::{anyhow, bail, Context as _, Result};
 use aya_multierror::Errors;
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
 use nix::sys::stat::{Mode, SFlag};
 use walkdir::WalkDir;
-use xtask::AYA_BUILD_INTEGRATION_BPF;
 
-use crate::{
+use crate::integration_test::{
     http::HttpClient,
     ubuntu_mainline::{
-        KernelArchitecture, KernelPackage, download_ubuntu_mainline_kernel_packages,
+        download_ubuntu_mainline_kernel_packages, KernelArchitecture, KernelPackage,
     },
 };
+
+const AYA_BUILD_INTEGRATION_BPF: &str = "AYA_BUILD_INTEGRATION_BPF";
 
 struct GitHubLogGroup;
 
@@ -77,7 +78,7 @@ enum Environment {
 const INTEGRATION_TEST_PACKAGE: &str = "integration-test";
 
 #[derive(Parser)]
-pub(crate) struct Options {
+pub struct Options {
     #[clap(subcommand)]
     environment: Environment,
 
@@ -331,7 +332,7 @@ impl<W: Write> CpioArchiveBuilder<W> {
 }
 
 /// Build and run the project.
-pub(crate) fn run(opts: Options) -> Result<()> {
+pub fn run(opts: Options) -> Result<()> {
     let Options {
         environment,
         package,

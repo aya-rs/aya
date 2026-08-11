@@ -228,10 +228,19 @@ name = "aya-tool"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "ar",
+ "aya-multierror",
  "bindgen",
+ "cargo_metadata",
  "clap",
+ "nix",
+ "tar",
  "tempfile",
  "thiserror",
+ "ureq",
+ "walkdir",
+ "xz2",
+ "zstd",
 ]
 
 [[package]]
@@ -2211,7 +2220,6 @@ name = "xtask"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "ar",
  "aya-multierror",
  "aya-tool",
  "cargo_metadata",
@@ -2219,19 +2227,13 @@ dependencies = [
  "dialoguer",
  "diff",
  "indoc",
- "nix",
  "proc-macro2",
  "public-api",
  "quote",
  "rustdoc-json",
  "rustup-toolchain",
  "syn 3.0.3",
- "tar",
  "tempfile",
- "ureq",
- "walkdir",
- "xz2",
- "zstd",
 ]
 
 [[package]]

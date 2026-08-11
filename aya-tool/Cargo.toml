@@ -16,7 +16,16 @@ workspace = true
 
 [dependencies]
 anyhow = { workspace = true, default-features = true }
+ar = { workspace = true }
+aya-multierror = { path = "../aya-multierror", version = "0.1.0", default-features = false }
 bindgen = { workspace = true, default-features = true }
+cargo_metadata = { workspace = true }
 clap = { workspace = true, default-features = true, features = ["derive"] }
+nix = { workspace = true, features = ["fs"] }
+tar = { workspace = true }
 tempfile = { workspace = true }
 thiserror = { workspace = true }
+ureq = { workspace = true, default-features = false, features = ["rustls"] }
+walkdir = { workspace = true }
+xz2 = { workspace = true }
+zstd = { workspace = true }

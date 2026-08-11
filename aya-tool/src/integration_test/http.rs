@@ -1,4 +1,4 @@
-#![allow(clippy::print_stdout, reason = "xtask is a CLI tool")]
+#![allow(clippy::print_stdout, reason = "aya-tool is a CLI tool")]
 #![allow(clippy::use_debug, reason = "debug output aids troubleshooting")]
 
 use std::{
@@ -12,7 +12,7 @@ use std::{
 use anyhow::{Context as _, Result, anyhow, bail};
 use ureq::http::StatusCode;
 
-const USER_AGENT: &str = "aya-xtask";
+const USER_AGENT: &str = "aya-aya-tool";
 
 pub(crate) struct HttpClient {
     agent: ureq::Agent,
