@@ -1022,10 +1022,7 @@ fn feature_probe_result(
     unsupported_errors: &[i32],
 ) -> io::Result<bool> {
     match result {
-        Ok(fd) => {
-            drop(fd);
-            Ok(true)
-        }
+        Ok(_fd) => Ok(true),
         Err(error)
             if error
                 .raw_os_error()
@@ -1038,7 +1035,9 @@ fn feature_probe_result(
 }
 
 pub(crate) fn probe_bpf_name() -> io::Result<bool> {
-    with_trivial_prog(ProgramType::TracePoint, |attr| {
+    // Use a socket filter as the probe carrier, as libbpf does.
+    // https://github.com/libbpf/libbpf/blob/v1.4.0/src/features.c#L23-L45
+    with_trivial_prog(ProgramType::SocketFilter, |attr| {
         let u = unsafe { &mut attr.__bindgen_anon_3 };
         let name = c"aya_name_check";
         let name_bytes = name.to_bytes();
@@ -1174,10 +1173,7 @@ pub(crate) fn probe_perf_link() -> io::Result<bool> {
             Err(error) if error.raw_os_error() == Some(EBADF) => Ok(true),
             Err(error) if error.raw_os_error() == Some(EINVAL) => Ok(false),
             Err(error) => Err(error),
-            Ok(link_fd) => {
-                drop(link_fd);
-                Ok(true)
-            }
+            Ok(_link_fd) => Ok(true),
         }
     })
 }
