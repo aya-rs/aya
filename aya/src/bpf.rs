@@ -23,7 +23,7 @@ use crate::{
         CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe, LircMode2, Lsm,
         LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
         SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SockOps, SocketFilter, TracePoint,
-        UProbe, Xdp,
+        UProbe, Xdp, uprobe::AttachMode,
     },
     sys::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
@@ -113,7 +113,7 @@ pub fn features() -> &'static Features {
 /// ```
 #[derive(Debug)]
 pub struct EbpfLoader<'a> {
-    btf: Option<Cow<'a, Btf>>,
+    btf: TargetBtf<'a>,
     default_map_pin_directory: Option<PathBuf>,
     globals: HashMap<&'a str, (&'a [u8], bool)>,
     // Max entries overrides the max_entries field of the map that matches the provided name
@@ -126,6 +126,34 @@ pub struct EbpfLoader<'a> {
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
     allow_unsupported_maps: bool,
+}
+
+#[derive(Debug)]
+enum TargetBtf<'a> {
+    System,
+    Parsed(Cow<'a, Btf>),
+    Source(BtfSource),
+}
+
+type BtfParser = dyn Fn(&[u8]) -> Result<Btf, BtfError>;
+// Use `Fn` instead of `FnOnce`: when target BTF loading fails for an object with
+// only weak typed ksyms, loading continues, so a reused loader must be able to
+// retry the source.
+type BtfSourceFn = dyn Fn(&BtfParser) -> Result<Btf, EbpfError>
+    // Preserve `EbpfLoader`'s existing auto traits.
+    + Send
+    + Sync
+    + std::panic::RefUnwindSafe
+    + std::panic::UnwindSafe
+    // Keep captured state independent of `EbpfLoader`'s borrowed configuration.
+    + 'static;
+
+struct BtfSource(Box<BtfSourceFn>);
+
+impl std::fmt::Debug for BtfSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BtfSource").finish_non_exhaustive()
+    }
 }
 
 /// Builder style API for advanced loading of eBPF programs.
@@ -157,7 +185,7 @@ impl<'a> EbpfLoader<'a> {
     /// Creates a new loader instance.
     pub fn new() -> Self {
         Self {
-            btf: None,
+            btf: TargetBtf::System,
             default_map_pin_directory: None,
             globals: HashMap::new(),
             max_entries: HashMap::new(),
@@ -173,6 +201,10 @@ impl<'a> EbpfLoader<'a> {
     /// By default, the loader reads target `BTF` using [`Btf::from_sys_fs`] when
     /// the object contains CO-RE relocations or typed kernel symbols. Use this
     /// method to load `BTF` from a custom location.
+    ///
+    /// The parsed `BTF` can be shared across multiple loaders, avoiding repeated
+    /// parsing. To lazily read and parse target `BTF`, use
+    /// [`EbpfLoader::btf_source`].
     ///
     /// # Example
     ///
@@ -190,7 +222,45 @@ impl<'a> EbpfLoader<'a> {
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn btf(&mut self, btf: &'a Btf) -> &mut Self {
-        self.btf = Some(Cow::Borrowed(btf));
+        self.btf = TargetBtf::Parsed(Cow::Borrowed(btf));
+        self
+    }
+
+    /// Sets a callback for lazily loading the target [BTF](Btf) info.
+    ///
+    /// The callback is called only when the object contains CO-RE relocations or
+    /// typed kernel symbols. It receives a parser configured for the object's
+    /// endianness, allowing BTF to be parsed from a borrowed byte slice. Once
+    /// parsed, the target `BTF` is cached and reused by this loader. To share one
+    /// parsed value across multiple loaders, use [`EbpfLoader::btf`] instead.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use std::fs;
+    ///
+    /// use aya::{EbpfError, EbpfLoader};
+    ///
+    /// let bpf = EbpfLoader::new()
+    ///     .btf_source(|parse| {
+    ///         let data =
+    ///             fs::read("/custom_btf_file").map_err(EbpfError::BtfSourceError)?;
+    ///         Ok(parse(&data)?)
+    ///     })
+    ///     .load_file("file.o")?;
+    ///
+    /// # Ok::<(), aya::EbpfError>(())
+    /// ```
+    pub fn btf_source<F>(&mut self, source: F) -> &mut Self
+    where
+        F: Fn(&BtfParser) -> Result<Btf, EbpfError>
+            + Send
+            + Sync
+            + std::panic::RefUnwindSafe
+            + std::panic::UnwindSafe
+            + 'static,
+    {
+        self.btf = TargetBtf::Source(BtfSource(Box::new(source)));
         self
     }
 
@@ -450,8 +520,14 @@ impl<'a> EbpfLoader<'a> {
                                 }
                                 ProgramSection::KRetProbe
                                 | ProgramSection::KProbe
-                                | ProgramSection::UProbe { sleepable: _ }
-                                | ProgramSection::URetProbe { sleepable: _ }
+                                | ProgramSection::UProbe {
+                                    sleepable: _,
+                                    multi: _,
+                                }
+                                | ProgramSection::URetProbe {
+                                    sleepable: _,
+                                    multi: _,
+                                }
                                 | ProgramSection::TracePoint
                                 | ProgramSection::SocketFilter
                                 | ProgramSection::Xdp {
@@ -493,29 +569,47 @@ impl<'a> EbpfLoader<'a> {
             None
         };
 
-        if btf.is_none() && (obj.has_btf_relocations() || obj.has_typed_ksyms()) {
-            match Btf::from_sys_fs() {
-                Ok(kernel_btf) => *btf = Some(Cow::Owned(kernel_btf)),
-                Err(err) => {
-                    // CO-RE relocations and strong typed ksyms cannot be resolved without kernel
-                    // BTF, so preserve the original loading error.
-                    if obj.has_btf_relocations() || obj.has_strong_typed_ksyms() {
-                        return Err(err.into());
+        if obj.has_btf_relocations() || obj.has_typed_ksyms() {
+            let endianness = obj.endianness;
+            let target_btf: Result<Cow<'_, Btf>, EbpfError> = match btf {
+                TargetBtf::System => Btf::from_sys_fs().map(Cow::Owned).map_err(EbpfError::from),
+                TargetBtf::Parsed(btf) => Ok(Cow::Borrowed(btf)),
+                TargetBtf::Source(BtfSource(source)) => {
+                    source(&move |data| Btf::parse(data, endianness)).map(Cow::Owned)
+                }
+            };
+
+            match target_btf {
+                Ok(target_btf) => {
+                    let result = obj
+                        .relocate_btf(&target_btf)
+                        .map_err(EbpfError::from)
+                        .and_then(|()| {
+                            obj.resolve_externs(Some(&target_btf))
+                                .map_err(EbpfError::from)
+                        });
+
+                    if let Cow::Owned(target_btf) = target_btf {
+                        *btf = TargetBtf::Parsed(Cow::Owned(target_btf));
                     }
 
-                    // Unresolved weak typed ksyms are allowed and handled during extern
-                    // relocation.
-                    warn!("kernel BTF is unavailable; weak typed ksyms will be unresolved: {err}")
+                    result?;
+                }
+                Err(err) => {
+                    // CO-RE relocations and strong typed ksyms cannot be resolved without target
+                    // BTF, so preserve the original loading error.
+                    if obj.has_btf_relocations() || obj.has_strong_typed_ksyms() {
+                        return Err(err);
+                    }
+
+                    // Unresolved weak typed ksyms are allowed and handled during extern relocation.
+                    warn!("target BTF is unavailable; weak typed ksyms will be unresolved: {err}");
+                    obj.resolve_externs(None)?;
                 }
             }
+        } else {
+            obj.resolve_externs(None)?;
         }
-
-        let btf = btf.as_deref();
-        if let Some(btf) = btf {
-            obj.relocate_btf(btf)?;
-        }
-
-        obj.resolve_externs(btf)?;
 
         const fn is_map_of_maps(map_type: bpf_map_type) -> bool {
             matches!(
@@ -656,7 +750,7 @@ impl<'a> EbpfLoader<'a> {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             kind: ProbeKind::Return,
                         }),
-                        ProgramSection::UProbe { sleepable } => {
+                        ProgramSection::UProbe { sleepable, multi } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
@@ -665,9 +759,14 @@ impl<'a> EbpfLoader<'a> {
                             Program::UProbe(UProbe {
                                 data,
                                 kind: ProbeKind::Entry,
+                                attach_mode: if *multi {
+                                    AttachMode::Multi
+                                } else {
+                                    AttachMode::Single
+                                },
                             })
                         }
-                        ProgramSection::URetProbe { sleepable } => {
+                        ProgramSection::URetProbe { sleepable, multi } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
                             if *sleepable {
@@ -676,6 +775,11 @@ impl<'a> EbpfLoader<'a> {
                             Program::UProbe(UProbe {
                                 data,
                                 kind: ProbeKind::Return,
+                                attach_mode: if *multi {
+                                    AttachMode::Multi
+                                } else {
+                                    AttachMode::Single
+                                },
                             })
                         }
                         ProgramSection::TracePoint => Program::TracePoint(TracePoint {
@@ -928,6 +1032,8 @@ const fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
 mod tests {
     use aya_obj::generated::bpf_map_type::*;
 
+    use super::{Btf, BtfSource, EbpfLoader, TargetBtf};
+
     const PAGE_SIZE: u32 = 4096;
     const NUM_CPUS: u32 = 4;
 
@@ -974,6 +1080,26 @@ mod tests {
                 .unwrap()
             );
         }
+    }
+
+    #[test]
+    fn test_btf_source_can_parse_borrowed_subslice() {
+        let mut loader = EbpfLoader::new();
+        loader.btf_source(|parse| {
+            // This models an mmap opened by the callback: its backing storage
+            // can be dropped once the borrowed subslice has been parsed.
+            let data = [0, 1, 2, 3];
+            Ok(parse(&data[1..3])?)
+        });
+
+        let TargetBtf::Source(BtfSource(source)) = &loader.btf else {
+            panic!("expected a BTF source");
+        };
+        source(&|data| {
+            assert_eq!(data, [1, 2]);
+            Ok(Btf::new())
+        })
+        .unwrap();
     }
 }
 
@@ -1182,7 +1308,7 @@ impl Ebpf {
     ///
     /// let program: &mut UProbe = bpf.program_mut("SSL_read").unwrap().try_into()?;
     /// program.load()?;
-    /// program.attach("SSL_read", "libssl", UProbeScope::AllProcesses)?;
+    /// program.attach(["SSL_read"], "libssl", UProbeScope::AllProcesses)?;
     /// # Ok::<(), aya::EbpfError>(())
     /// ```
     pub fn program_mut(&mut self, name: &str) -> Option<&mut Program> {
@@ -1243,6 +1369,10 @@ pub enum EbpfError {
         /// The original [`io::Error`]
         error: io::Error,
     },
+
+    /// Error reading target BTF
+    #[error("error reading BTF source")]
+    BtfSourceError(#[source] io::Error),
 
     /// Unexpected pinning type
     #[error("unexpected pinning type {name}")]

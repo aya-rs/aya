@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
 use syn::{ItemFn, spanned::Spanned as _};
 
@@ -13,7 +12,7 @@ pub(crate) struct TracePoint {
 }
 
 impl TracePoint {
-    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> Result<Self, Diagnostic> {
+    pub(crate) fn parse(attrs: TokenStream, item: TokenStream) -> syn::Result<Self> {
         let item = syn::parse2(item)?;
         let span = attrs.span();
         let mut args: Args = syn::parse2(attrs)?;
@@ -29,7 +28,10 @@ impl TracePoint {
                 item,
                 name_and_category: Some((name, category)),
             }),
-            _ => Err(span.error("expected `name` and `category` arguments")),
+            _ => Err(syn::Error::new(
+                span,
+                "expected `name` and `category` arguments",
+            )),
         }
     }
 
@@ -45,6 +47,7 @@ impl TracePoint {
         let ItemFn {
             attrs: _,
             vis,
+            modifiers: _,
             sig,
             block: _,
         } = item;

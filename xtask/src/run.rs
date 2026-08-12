@@ -3,26 +3,51 @@
 #![allow(clippy::use_debug, reason = "debug output aids troubleshooting")]
 
 use std::{
-    collections::BTreeMap,
     env,
     ffi::{OsStr, OsString},
-    fmt::{Debug, Write as _},
+    fmt::{Arguments, Write as _},
     fs::{self, File, OpenOptions},
-    io::{BufRead as _, BufReader, Write as _},
-    ops::Deref as _,
-    path::{self, Path, PathBuf},
+    io::{BufRead as _, BufReader, BufWriter, Write},
+    os::unix::ffi::OsStrExt as _,
+    path::{Path, PathBuf},
     process::{Child, ChildStdin, Command, Output, Stdio},
     sync::{Arc, Mutex},
     thread,
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use anyhow::{Context as _, Result, anyhow, bail};
 use cargo_metadata::{Artifact, CompilerMessage, Message, Target};
 use clap::Parser;
+use nix::sys::stat::{Mode, SFlag};
 use walkdir::WalkDir;
 use xtask::{AYA_BUILD_INTEGRATION_BPF, Errors, libbpf_sys_env};
 
-const GEN_INIT_CPIO_PATCH: &str = include_str!("../patches/gen_init_cpio.c.macos.diff");
+use crate::{
+    http::HttpClient,
+    ubuntu_mainline::{
+        KernelArchitecture, KernelPackage, download_ubuntu_mainline_kernel_packages,
+    },
+};
+
+struct GitHubLogGroup;
+
+impl GitHubLogGroup {
+    fn new(title: Arguments<'_>) -> Option<Self> {
+        if env::var_os("GITHUB_ACTIONS").is_none_or(|value| value != "true") {
+            return None;
+        }
+
+        println!("::group::{title}");
+        Some(Self)
+    }
+}
+
+impl Drop for GitHubLogGroup {
+    fn drop(&mut self) {
+        println!("::endgroup::");
+    }
+}
 
 #[derive(Parser)]
 enum Environment {
@@ -38,15 +63,13 @@ enum Environment {
         #[clap(long)]
         cache_dir: PathBuf,
 
-        /// The Github API token to use if network requests to Github are made.
-        ///
-        /// This may be required if Github rate limits are exceeded.
-        #[clap(long)]
-        github_api_token: Option<String>,
+        /// Ubuntu Mainline architecture to resolve kernel version arguments for.
+        #[clap(long, value_enum)]
+        kernel_arch: KernelArchitecture,
 
-        /// Debian kernel archives (.deb) to boot in the VM.
-        #[clap(required = true)]
-        kernel_archives: Vec<PathBuf>,
+        /// Ubuntu Mainline versions such as 5.15 or 6.6.
+        #[clap(required = true, value_name = "VERSION")]
+        kernels: Vec<String>,
     },
 }
 
@@ -120,100 +143,189 @@ where
     Ok(executables)
 }
 
-enum Disposition<T> {
-    Skip,
-    Unpack(T),
+/// Magic bytes of a newc archive, according to the [initramfs buffer format][initramfs-format]
+/// specification.
+///
+/// [initramfs-format]: https://github.com/torvalds/linux/blob/v7.1/Documentation/driver-api/early-userspace/buffer-format.rst
+const NEWC_MAGIC: &[u8] = b"070701";
+
+/// Length of the newc header, according to the [initramfs buffer format][initramfs-format]
+/// specification.
+///
+/// The 13 numeric fields contain 32-bit values, but they are not stored as four-byte binary
+/// integers. Each value is encoded as exactly eight ASCII hexadecimal bytes. Eight hexadecimal
+/// digits cover the full range of a `u32`; using a `u64` could produce more than eight digits and
+/// violate the fixed-width format. The header is therefore the six-byte magic followed by 13
+/// eight-byte fields.
+///
+/// [initramfs-format]: https://github.com/torvalds/linux/blob/v7.1/Documentation/driver-api/early-userspace/buffer-format.rst
+const NEWC_HEADER_LEN: u64 =
+    // Magic bytes.
+    6 +
+        // 13 fields encoded as eight ASCII hexadecimal bytes:
+        //
+        // * inode
+        // * mode
+        // * UID
+        // * GID
+        // * nlink
+        // * mtime
+        // * file_size
+        // * dev_major
+        // * dev_minor
+        // * rdev_major
+        // * rdev_minor
+        // * name_len
+        // * checksum
+        //
+        // See `CpioArchiveBuilder::append` for details about the purpose of these fields.
+        13 * 8;
+
+struct CpioArchiveBuilder<W: Write> {
+    current_inode: u32,
+    inner: W,
 }
 
-enum ControlFlow {
-    Continue,
-    Break,
-}
-
-fn with_deb<S, F>(archive: &Path, dest: &Path, mut state: S, mut select: F) -> Result<S>
-where
-    F: for<'state> FnMut(
-        &'state mut S,
-        &Path,
-        tar::EntryType,
-    ) -> Disposition<(Option<&'state mut Vec<PathBuf>>, ControlFlow)>,
-{
-    fs::create_dir_all(dest).with_context(|| format!("failed to create {}", dest.display()))?;
-
-    let archive_reader = File::open(archive)
-        .with_context(|| format!("failed to open the deb package {}", archive.display()))?;
-    let mut archive_reader = ar::Archive::new(archive_reader);
-    // `ar` entries are borrowed from the reader, so the reader
-    // cannot implement `Iterator` (because `Iterator::Item` is not
-    // a GAT).
-    //
-    // https://github.com/mdsteele/rust-ar/issues/15
-    let mut data_tar_xz_entries = 0;
-    let start = std::time::Instant::now();
-    while let Some(entry) = archive_reader.next_entry() {
-        let entry = entry.with_context(|| format!("({}).next_entry()", archive.display()))?;
-        const DATA_TAR_XZ: &str = "data.tar.xz";
-        if entry.header().identifier() != DATA_TAR_XZ.as_bytes() {
-            continue;
-        }
-        data_tar_xz_entries += 1;
-        let entry_reader = xz2::read::XzDecoder::new(entry);
-        let mut entry_reader = tar::Archive::new(entry_reader);
-        let entries = entry_reader
-            .entries()
-            .with_context(|| format!("({}/{DATA_TAR_XZ}).entries()", archive.display()))?;
-        for (i, entry) in entries.enumerate() {
-            let mut entry = entry
-                .with_context(|| format!("({}/{DATA_TAR_XZ}).entries()[{i}]", archive.display()))?;
-            let path = entry.path().with_context(|| {
-                format!(
-                    "({}/{DATA_TAR_XZ}).entries()[{i}].path()",
-                    archive.display()
-                )
-            })?;
-            let entry_type = entry.header().entry_type();
-            let (selected, control_flow) = match select(&mut state, path.as_ref(), entry_type) {
-                Disposition::Skip => continue,
-                Disposition::Unpack(unpack) => unpack,
-            };
-            if let Some(selected) = selected {
-                println!(
-                    "{}[{}] in {:?}",
-                    archive.display(),
-                    path.display(),
-                    start.elapsed()
-                );
-                selected.push(dest.join(path));
-            }
-            let unpacked = entry.unpack_in(dest).with_context(|| {
-                format!(
-                    "({}/{DATA_TAR_XZ})[{i}].unpack_in({})",
-                    archive.display(),
-                    dest.display(),
-                )
-            })?;
-            assert!(
-                unpacked,
-                "({}/{DATA_TAR_XZ})[{i}].unpack_in({})",
-                archive.display(),
-                dest.display(),
-            );
-            match control_flow {
-                ControlFlow::Continue => {}
-                ControlFlow::Break => break,
-            }
+impl<W: Write> CpioArchiveBuilder<W> {
+    const fn new(inner: W) -> Self {
+        Self {
+            current_inode: 0,
+            inner,
         }
     }
-    println!("{} in {:?}", archive.display(), start.elapsed());
-    assert_eq!(data_tar_xz_entries, 1);
-    Ok(state)
-}
 
-fn one<T: Debug>(slice: &[T]) -> Result<&T> {
-    if let [item] = slice {
-        Ok(item)
-    } else {
-        bail!("expected [{}], got {slice:?}", std::any::type_name::<T>())
+    /// Adds a new entry to this archive. The `name` must be relative to the
+    /// root (it must not start with `/`). The `nlink` parameter sets the number
+    /// of hard links for the entry.
+    fn append(
+        &mut self,
+        name: &[u8],
+        file_type: SFlag,
+        mode: Mode,
+        mtime: u32,
+        source: Option<&Path>,
+        nlink: u32,
+    ) -> Result<()> {
+        fn write_padding<W: Write>(writer: &mut W, len: u64) -> Result<()> {
+            const ZEROES: [u8; 3] = [0; 3];
+
+            let padding = ((4 - (len % 4)) % 4) as usize;
+            writer.write_all(&ZEROES[..padding])?;
+            Ok(())
+        }
+
+        let Self {
+            current_inode,
+            inner,
+        } = self;
+
+        let name_len = name
+            .len()
+            // `namesize` attribute in cpio header needs to include the null byte.
+            .checked_add(1)
+            .ok_or_else(|| {
+                anyhow!(
+                    "adding a null byte to name `{}` with length {} overflows",
+                    OsStr::from_bytes(name).display(),
+                    name.len()
+                )
+            })?;
+        let name_len_u32 = u32::try_from(name_len)
+            .with_context(|| format!("name length {name_len} does not fit in u32"))?;
+        let file_size = if let Some(source) = &source {
+            let file_size = fs::metadata(source)
+                .with_context(|| format!("failed to get metadata for {}", source.display()))?
+                .len();
+            u32::try_from(file_size)
+                .with_context(|| format!("cpio file size {file_size} does not fit in `u32`"))?
+        } else {
+            0
+        };
+        inner.write_all(NEWC_MAGIC)?;
+        write!(inner, "{current_inode:08x}")?;
+        write!(inner, "{:08x}", file_type.bits() | mode.bits())?;
+        // UID and GID, 0 represents `root`.
+        write!(inner, "{:08x}", 0)?;
+        write!(inner, "{:08x}", 0)?;
+        write!(inner, "{nlink:08x}")?;
+        write!(inner, "{mtime:08x}")?;
+        write!(inner, "{file_size:08x}")?;
+        // dev_major/dev_minor: file device number (0 for initramfs files).
+        write!(inner, "{:08x}", 0)?;
+        write!(inner, "{:08x}", 0)?;
+        // rdev_major/rdev_minor: device node number (0 for regular files/directories).
+        write!(inner, "{:08x}", 0)?;
+        write!(inner, "{:08x}", 0)?;
+        write!(inner, "{name_len_u32:08x}")?;
+        // Checksum; actual value not required anymore in newc cpio format.
+        write!(inner, "{:08x}", 0)?;
+        inner.write_all(name)?;
+        inner.write_all(b"\0")?;
+        write_padding(inner, NEWC_HEADER_LEN + name_len as u64)?;
+        if let Some(source) = source {
+            let mut src_file = File::open(source)
+                .with_context(|| format!("failed to open {}", source.display()))?;
+            let copied = std::io::copy(&mut src_file, inner)?;
+            if copied != u64::from(file_size) {
+                bail!(
+                    "cpio size mismatch for {}: header={} bytes, copied={} bytes",
+                    source.display(),
+                    file_size,
+                    copied
+                );
+            }
+            write_padding(inner, copied)?;
+        }
+
+        *current_inode = current_inode.checked_add(1).with_context(|| {
+            format!(
+                "`CpioArchiveBuilder` does not support adding more than {} entries",
+                u32::MAX
+            )
+        })?;
+
+        Ok(())
+    }
+
+    /// Adds a directory to this archive. The `path` must be relative to the
+    /// root (it must not start with `/`).
+    fn append_dir<P>(&mut self, path: P, mode: Mode, mtime: u32) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        self.append(
+            path.as_ref().as_os_str().as_encoded_bytes(),
+            SFlag::S_IFDIR,
+            mode,
+            mtime,
+            None,
+            // Directories have two hard links - `.` and `..`.
+            2,
+        )
+    }
+
+    /// Adds a file to this archive, using the contents of `source`. The `path`
+    /// must be relative against the root (it must not start from `/`).
+    fn append_file<P, S>(&mut self, path: P, source: S, mode: Mode, mtime: u32) -> Result<()>
+    where
+        P: AsRef<Path>,
+        S: AsRef<Path>,
+    {
+        self.append(
+            path.as_ref().as_os_str().as_encoded_bytes(),
+            SFlag::S_IFREG,
+            mode,
+            mtime,
+            Some(source.as_ref()),
+            // Create the file with only one hard link.
+            1,
+        )
+    }
+
+    /// Adds a trailer entry to this archive. The trailer entry must be the
+    /// last one.
+    fn append_trailer(&mut self) -> Result<()> {
+        self.append(b"TRAILER!!!", SFlag::empty(), Mode::empty(), 0, None, 1)
     }
 }
 
@@ -296,17 +408,14 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
         }
         Environment::VM {
             cache_dir,
-            github_api_token,
-            kernel_archives,
+            kernel_arch,
+            kernels,
         } => {
             // The user has asked us to run the tests on a VM. This is involved; strap in.
             //
-            // We need tools to build the initramfs; we use gen_init_cpio from the Linux repository,
-            // taking care to cache it.
-            //
-            // We iterate the kernel images, using the `file` program to guess the target
-            // architecture. We then build the init program and our test binaries for that
-            // architecture, and use gen_init_cpio to build an initramfs containing the test
+            // We resolve Ubuntu Mainline kernel versions for the requested
+            // architecture. We then build the init program and our test
+            // binaries for that architecture, and build an initramfs containing the test
             // binaries. We're ready to run the VM.
             //
             // We start QEMU with the provided kernel image and the initramfs we built.
@@ -318,279 +427,40 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
             // The end.
 
             fs::create_dir_all(&cache_dir).context("failed to create cache dir")?;
-
-            let gen_init_cpio = cache_dir.join("gen_init_cpio");
-            {
-                let dest_path = cache_dir.join("gen_init_cpio.c");
-                let etag_path = cache_dir.join("gen_init_cpio.etag");
-                let dest_path_exists = dest_path.try_exists().with_context(|| {
-                    format!("failed to check existence of {}", dest_path.display())
-                })?;
-                let etag_path_exists = etag_path.try_exists().with_context(|| {
-                    format!("failed to check existence of {}", etag_path.display())
-                })?;
-                if dest_path_exists != etag_path_exists {
-                    println!(
-                        "({}).exists()={} != ({})={} (mismatch)",
-                        dest_path.display(),
-                        dest_path_exists,
-                        etag_path.display(),
-                        etag_path_exists,
-                    )
-                }
-
-                // Currently unused. Can be used for authenticated requests if needed in the future.
-                drop(github_api_token);
-
-                let mut curl = Command::new("curl");
-                curl.args([
-                    "-sfSL",
-                    "https://raw.githubusercontent.com/torvalds/linux/master/usr/gen_init_cpio.c",
-                    "--output",
-                ])
-                .arg(&dest_path);
-                for arg in ["--etag-compare", "--etag-save"] {
-                    curl.arg(arg).arg(&etag_path);
-                }
-
-                let output = curl
-                    .output()
-                    .with_context(|| format!("failed to run {curl:?}"))?;
-                let Output { status, .. } = &output;
-                if status.code() != Some(0) {
-                    if dest_path_exists {
-                        println!(
-                            "{curl:?} failed ({status:?}); using cached {}",
-                            dest_path.display()
-                        );
-                    } else {
-                        bail!("{curl:?} failed: {output:?}")
-                    }
-                }
-
-                let mut patch = Command::new("patch");
-                patch
-                    .current_dir(&cache_dir)
-                    .args(["--quiet", "--forward", "--output", "-"])
-                    .stdin(Stdio::piped())
-                    .stdout(Stdio::piped());
-                let mut patch_child = patch
-                    .spawn()
-                    .with_context(|| format!("failed to spawn {patch:?}"))?;
-
-                let Child { stdin, stdout, .. } = &mut patch_child;
-                let mut stdin = stdin.take().unwrap();
-                stdin
-                    .write_all(GEN_INIT_CPIO_PATCH.as_bytes())
-                    .with_context(|| format!("failed to write to {patch:?} stdin"))?;
-                drop(stdin); // Must explicitly close to signal EOF.
-                let stdout = stdout.take().unwrap();
-
-                let mut clang = Command::new("clang");
-                clang
-                    .args(["-g", "-O2", "-x", "c", "-", "-o"])
-                    .arg(&gen_init_cpio)
-                    .stdin(stdout);
-                let clang_child = clang
-                    .spawn()
-                    .with_context(|| format!("failed to spawn {clang:?}"))?;
-
-                let output = patch_child
-                    .wait_with_output()
-                    .with_context(|| format!("failed to wait for {patch:?}"))?;
-                let Output { status, .. } = &output;
-                if status.code() != Some(0) {
-                    bail!("{patch:?} failed: {output:?}")
-                }
-
-                let output = clang_child
-                    .wait_with_output()
-                    .with_context(|| format!("failed to wait for {clang:?}"))?;
-                let Output { status, .. } = &output;
-                if status.code() != Some(0) {
-                    bail!("{clang:?} failed: {output:?}")
-                }
-            }
+            let http_client = HttpClient::new();
 
             let extraction_root = tempfile::tempdir().context("tempdir failed")?;
-
-            #[derive(Eq, PartialEq, Ord, PartialOrd)]
-            struct KernelPackageKey<'a> {
-                base: &'a [u8],
-            }
-
-            #[derive(Default)]
-            struct KernelPackageGroup<'a> {
-                kernel: Vec<&'a Path>,
-                debug: Vec<&'a Path>,
-            }
-
-            let mut package_groups = BTreeMap::new();
-            for archive in &kernel_archives {
-                let file_name = archive.file_name().ok_or_else(|| {
-                    anyhow!("archive path missing filename: {}", archive.display())
-                })?;
-                let file_name = file_name.as_encoded_bytes();
-                // TODO(https://github.com/rust-lang/rust/issues/112811): use split_once when stable.
-                let package_name = file_name
-                    .split(|&byte| byte == b'_')
-                    .next()
-                    .ok_or_else(|| anyhow!("unexpected archive filename: {}", archive.display()))?;
-                let (base, is_debug) = if let Some(base) = package_name.strip_suffix(b"-dbg") {
-                    (base, true)
-                } else if let Some(base) = package_name.strip_suffix(b"-dbgsym") {
-                    (base, true)
-                } else if let Some(base) = package_name.strip_suffix(b"-unsigned") {
-                    (base, false)
-                } else {
-                    bail!("unexpected archive filename: {}", archive.display())
-                };
-                let KernelPackageGroup { kernel, debug } =
-                    package_groups.entry(KernelPackageKey { base }).or_default();
-                let dst = if is_debug { debug } else { kernel };
-                dst.push(archive.as_path());
-            }
+            let kernel_packages = download_ubuntu_mainline_kernel_packages(
+                &http_client,
+                &cache_dir,
+                extraction_root.path(),
+                kernel_arch,
+                &kernels,
+            )?;
 
             let mut errors = Vec::new();
-            for (index, (KernelPackageKey { base }, KernelPackageGroup { kernel, debug })) in
-                package_groups.into_iter().enumerate()
-            {
-                let base = {
-                    use std::os::unix::ffi::OsStrExt as _;
-                    OsStr::from_bytes(base)
-                };
+            for kernel_package in kernel_packages {
+                let KernelPackage {
+                    base,
+                    kernel_image,
+                    config,
+                    modules_dir,
+                    system_map,
+                } = kernel_package;
+                // Fold each kernel's integration test output in GitHub Actions.
+                let _github_group =
+                    GitHubLogGroup::new(format_args!("VM integration tests on {}", base.display()));
 
-                let kernel_archive = one(kernel.as_slice())
-                    .with_context(|| format!("kernel archive for {}", base.display()))?;
-                let debug_archive = one(debug.as_slice())
-                    .with_context(|| format!("debug archive for {}", base.display()))?;
-
-                let (kernel_images, configs, modules_dirs) = with_deb(
-                    kernel_archive,
-                    &extraction_root
-                        .path()
-                        .join(format!("kernel-archive-{index}-image")),
-                    (Vec::new(), Vec::new(), Vec::new()),
-                    |(kernel_images, configs, modules_dirs), path, entry_type| {
-                        if let Some(path) = ["./lib/modules/", "./usr/lib/modules/"]
-                            .into_iter()
-                            .find_map(|modules_dir| {
-                                // TODO(https://github.com/rust-lang/rust-clippy/issues/14112): Remove this
-                                // allowance when the lint behaves more sensibly.
-                                #[expect(clippy::manual_ok_err, reason = "type ascription")]
-                                match path.strip_prefix(modules_dir) {
-                                    Ok(path) => Some(path),
-                                    Err(path::StripPrefixError { .. }) => None,
-                                }
-                            })
-                        {
-                            return Disposition::Unpack((
-                                (path.iter().count() == 1).then_some(modules_dirs),
-                                ControlFlow::Continue,
-                            ));
-                        }
-                        if !entry_type.is_file() {
-                            return Disposition::Skip;
-                        }
-                        let name = match path.strip_prefix("./boot/") {
-                            Ok(path) => {
-                                if let Some(path::Component::Normal(name)) =
-                                    path.components().next()
-                                {
-                                    name
-                                } else {
-                                    return Disposition::Skip;
-                                }
-                            }
-                            Err(path::StripPrefixError { .. }) => return Disposition::Skip,
-                        };
-                        let name = name.as_encoded_bytes();
-                        if name.starts_with(b"vmlinuz-") {
-                            Disposition::Unpack((Some(kernel_images), ControlFlow::Continue))
-                        } else if name.starts_with(b"config-") {
-                            Disposition::Unpack((Some(configs), ControlFlow::Continue))
-                        } else {
-                            Disposition::Skip
-                        }
-                    },
-                )?;
-                let kernel_image = one(kernel_images.as_slice())
-                    .with_context(|| format!("kernel image in {}", kernel_archive.display()))?;
-                let config = one(configs.as_slice())
-                    .with_context(|| format!("config in {}", kernel_archive.display()))?;
-                let modules_dir = one(modules_dirs.as_slice()).with_context(|| {
-                    format!("modules directory in {}", kernel_archive.display())
-                })?;
-
-                let system_maps = with_deb(
-                    debug_archive,
-                    &extraction_root
-                        .path()
-                        .join(format!("kernel-archive-{index}-debug")),
-                    Vec::new(),
-                    |system_maps: &mut Vec<PathBuf>, path, entry_type| {
-                        if entry_type != tar::EntryType::Regular {
-                            return Disposition::Skip;
-                        }
-                        let name = match path.strip_prefix("./usr/lib/debug/boot/") {
-                            Ok(path) => {
-                                if let Some(path::Component::Normal(name)) =
-                                    path.components().next()
-                                {
-                                    name
-                                } else {
-                                    return Disposition::Skip;
-                                }
-                            }
-                            Err(path::StripPrefixError { .. }) => {
-                                return Disposition::Skip;
-                            }
-                        };
-                        if name.as_encoded_bytes().starts_with(b"System.map-") {
-                            // We only expect one System.map in the debug archive; ordinarily
-                            // we'd walk the whole archive to assert this fact but it turns out
-                            // that doing so takes around 10 seconds while stopping early takes
-                            // around 1ms.
-                            Disposition::Unpack((Some(system_maps), ControlFlow::Break))
-                        } else {
-                            Disposition::Skip
-                        }
-                    },
-                )?;
-                let system_map = one(system_maps.as_slice())
-                    .with_context(|| format!("System.map in {}", debug_archive.display()))?;
-
-                // Guess the guest architecture.
-                let mut file = Command::new("file");
-                let output = file
-                    .arg("--brief")
-                    .arg(kernel_image)
-                    .output()
-                    .with_context(|| format!("failed to run {file:?}"))?;
-                let Output { status, .. } = &output;
-                if status.code() != Some(0) {
-                    bail!("{file:?} failed: {output:?}")
-                }
-                let Output { stdout, .. } = output;
-
-                // Now parse the output of the file command, which looks something like
-                //
-                // - Linux kernel ARM64 boot executable Image, little-endian, 4K pages
-                //
-                // - Linux kernel x86 boot executable bzImage, version 6.1.0-10-cloud-amd64 [..]
-
-                let stdout = String::from_utf8(stdout)
-                    .with_context(|| format!("invalid UTF-8 in {file:?} stdout"))?;
-                let (_, stdout) = stdout
-                    .split_once("Linux kernel")
-                    .ok_or_else(|| anyhow!("failed to parse {file:?} stdout: {stdout}"))?;
-                let (guest_arch, _) = stdout
-                    .split_once("boot executable")
-                    .ok_or_else(|| anyhow!("failed to parse {file:?} stdout: {stdout}"))?;
-                let guest_arch = guest_arch.trim();
-
-                let (guest_arch, machine, cpu, console) = match guest_arch {
-                    "ARM64" => (
+                // Fixed VM launch configuration for each supported kernel
+                // architecture.
+                let (guest_arch, machine, cpu, console) = match kernel_arch {
+                    KernelArchitecture::Amd64 => (
+                        "x86_64",
+                        None,
+                        cfg!(target_arch = "x86_64").then_some("host"),
+                        "ttyS0",
+                    ),
+                    KernelArchitecture::Arm64 => (
                         "aarch64",
                         Some("virt"),
                         // NB: we'd prefer to write:
@@ -616,19 +486,17 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         Some("neoverse-n1"),
                         "ttyAMA0",
                     ),
-                    "x86" => (
-                        "x86_64",
-                        None,
-                        cfg!(target_arch = "x86_64").then_some("host"),
-                        "ttyS0",
-                    ),
-                    guest_arch => (guest_arch, None, None, "ttyS0"),
                 };
 
                 let target = format!("{guest_arch}-unknown-linux-musl");
 
-                let test_distro_args =
-                    ["--package", "test-distro", "--release", "--features", "xz2"];
+                let test_distro_args = [
+                    "--package",
+                    "test-distro",
+                    "--release",
+                    "--features",
+                    "xz2,zstd",
+                ];
                 let test_distro: Vec<(String, PathBuf)> =
                     build(Some(&target), |cmd| cmd.args(test_distro_args))
                         .context("building test-distro package failed")?;
@@ -667,66 +535,46 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     .with_context(|| {
                         format!("failed to create {} for writing", initrd_image.display())
                     })?;
-
-                let mut gen_init_cpio = Command::new(&gen_init_cpio);
-                let mut gen_init_cpio_child = gen_init_cpio
-                    .arg("-")
-                    .stdin(Stdio::piped())
-                    .stdout(initrd_image_file)
-                    .spawn()
-                    .with_context(|| format!("failed to spawn {gen_init_cpio:?}"))?;
-                let Child { stdin, .. } = &mut gen_init_cpio_child;
-                let stdin = Arc::new(stdin.take().unwrap());
-                use std::os::unix::ffi::OsStrExt as _;
-
-                // Send input into gen_init_cpio for directories
-                //
-                // dir  /bin                  755 0 0
-                let write_dir = |out_path: &Path| {
-                    for bytes in [b"dir ", out_path.as_os_str().as_bytes(), b" ", b"755 0 0\n"] {
-                        stdin.deref().write_all(bytes).expect("write");
-                    }
-                };
-
-                // Send input into gen_init_cpio for files
-                //
-                // file /init    path-to-init 755 0 0
-                let write_file = |out_path: &Path, in_path: &Path, mode: &str| {
-                    for bytes in [
-                        b"file ",
-                        out_path.as_os_str().as_bytes(),
-                        b" ",
-                        in_path.as_os_str().as_bytes(),
-                        b" ",
-                        mode.as_bytes(),
-                        b"\n",
-                    ] {
-                        stdin.deref().write_all(bytes).expect("write");
-                    }
-                };
-
-                write_dir(Path::new("/bin"));
-                write_dir(Path::new("/sbin"));
-                write_dir(Path::new("/boot"));
-                write_dir(Path::new("/lib"));
-                write_dir(Path::new("/lib/modules"));
-
-                write_file(Path::new("/boot/config"), config, "644 0 0");
+                let buffered_file = BufWriter::new(initrd_image_file);
+                let mut initrd_archive = CpioArchiveBuilder::new(buffered_file);
+                let mtime_secs = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+                let mtime = u32::try_from(mtime_secs).with_context(|| {
+                    format!("cpio supports only `u32` mtimes, got {mtime_secs}")
+                })?;
+                // Equivalent of 0o644.
+                let regular_mode = Mode::S_IRUSR | Mode::S_IWUSR | Mode::S_IRGRP | Mode::S_IROTH;
+                // Equivalent of 0x755.
+                let executable_mode =
+                    Mode::S_IRWXU | Mode::S_IRGRP | Mode::S_IXGRP | Mode::S_IROTH | Mode::S_IXOTH;
+                initrd_archive.append_dir("bin", executable_mode, mtime)?;
+                initrd_archive.append_dir("boot", executable_mode, mtime)?;
+                initrd_archive.append_file("boot/config", &config, regular_mode, mtime)?;
+                initrd_archive.append_file("boot/System.map", &system_map, regular_mode, mtime)?;
+                initrd_archive.append_dir("lib", executable_mode, mtime)?;
+                initrd_archive.append_dir("sbin", executable_mode, mtime)?;
                 if let Some(name) = config.file_name() {
-                    write_file(&Path::new("/boot").join(name), config, "644 0 0");
+                    initrd_archive.append_file(
+                        Path::new("boot").join(name),
+                        &config,
+                        regular_mode,
+                        mtime,
+                    )?;
                 }
-
-                write_file(Path::new("/boot/System.map"), system_map, "644 0 0");
                 if let Some(name) = system_map.file_name() {
-                    write_file(&Path::new("/boot").join(name), system_map, "644 0 0");
+                    initrd_archive.append_file(
+                        Path::new("boot").join(name),
+                        system_map,
+                        regular_mode,
+                        mtime,
+                    )?;
                 }
-
-                for (name, path) in &test_distro {
-                    if name == "init" {
-                        write_file(Path::new("/init"), path, "755 0 0");
+                for (name, source) in &test_distro {
+                    let path = if name == "init" {
+                        PathBuf::from("init")
                     } else {
-                        write_file(&Path::new("/sbin").join(name), path, "755 0 0");
-                    }
+                        Path::new("sbin").join(name)
+                    };
+                    initrd_archive.append_file(path, source, executable_mode, mtime)?;
                 }
 
                 // At this point we need to make a slight detour!
@@ -737,7 +585,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     .arg("run")
                     .args(test_distro_args)
                     .args(["--bin", "depmod", "--", "-b"])
-                    .arg(modules_dir)
+                    .arg(&modules_dir)
                     .output()
                     .with_context(|| format!("failed to run {cargo:?}"))?;
                 let Output { status, .. } = &output;
@@ -748,12 +596,12 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 // Now our modules.alias file is built, we can recursively
                 // walk the modules directory and add all the files to the
                 // initramfs.
-                for entry in WalkDir::new(modules_dir) {
+                for entry in WalkDir::new(&modules_dir) {
                     let entry = entry.context("read_dir failed")?;
                     let path = entry.path();
                     let metadata = entry.metadata().context("metadata failed")?;
-                    let out_path = Path::new("/lib/modules").join(
-                        path.strip_prefix(modules_dir).with_context(|| {
+                    let out_path = Path::new("lib/modules").join(
+                        path.strip_prefix(&modules_dir).with_context(|| {
                             format!(
                                 "strip prefix {} failed for {}",
                                 path.display(),
@@ -766,9 +614,9 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         reason = "we only want to copy regular files"
                     )]
                     if metadata.file_type().is_dir() {
-                        write_dir(&out_path);
+                        initrd_archive.append_dir(out_path, executable_mode, mtime)?;
                     } else if metadata.file_type().is_file() {
-                        write_file(&out_path, path, "644 0 0");
+                        initrd_archive.append_file(out_path, path, regular_mode, mtime)?;
                     }
                 }
 
@@ -779,21 +627,16 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                         fs::copy(&binary, &path).with_context(|| {
                             format!("copy({}, {}) failed", binary.display(), path.display())
                         })?;
-                        let out_path = Path::new("/bin").join(&name);
-                        write_file(&out_path, &path, "755 0 0");
+                        let out_path = Path::new("bin").join(&name);
+                        initrd_archive.append_file(out_path, &path, executable_mode, mtime)?;
                     }
                 }
 
-                // Must explicitly close to signal EOF.
-                drop(stdin);
-
-                let output = gen_init_cpio_child
-                    .wait_with_output()
-                    .with_context(|| format!("failed to wait for {gen_init_cpio:?}"))?;
-                let Output { status, .. } = &output;
-                if status.code() != Some(0) {
-                    bail!("{gen_init_cpio:?} failed: {output:?}")
-                }
+                // Append the required trailer entry as the last one, then
+                // write the initramfs to the output file.
+                initrd_archive.append_trailer()?;
+                initrd_archive.inner.flush()?;
+                drop(initrd_archive);
 
                 let mut qemu = Command::new(format!("qemu-system-{guest_arch}"));
                 if let Some(machine) = machine {
@@ -829,11 +672,13 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 // out of `/sys/kernel/security/lsm` and LSM tests exercise
                 // only load/attach, missing runtime regressions.
                 kernel_args.push(" lsm=bpf");
-                qemu.args(["-no-reboot", "-nographic", "-m", "1024M", "-smp", "2"])
+                // Ubuntu Mainline arm64 packages can make the initramfs large
+                // enough that 1G fails to unpack it, leaving a broken rootfs.
+                qemu.args(["-no-reboot", "-nographic", "-m", "2048M", "-smp", "2"])
                     .arg("-append")
                     .arg(kernel_args)
                     .arg("-kernel")
-                    .arg(kernel_image)
+                    .arg(&kernel_image)
                     .arg("-initrd")
                     .arg(&initrd_image);
                 let mut qemu_child = qemu
@@ -917,15 +762,15 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     }
                 }
 
-                let output = qemu_child
-                    .wait_with_output()
+                let status = qemu_child
+                    .wait()
                     .with_context(|| format!("failed to wait for {qemu:?}"))?;
-                let Output { status, .. } = &output;
-                if status.code() != Some(0) {
-                    bail!("{qemu:?} failed: {output:?}")
-                }
 
                 stderr.join().unwrap()?;
+
+                if status.code() != Some(0) {
+                    bail!("{qemu:?} failed: {status}")
+                }
 
                 let outcome = outcome.ok_or_else(|| anyhow!("init did not exit"))?;
                 match outcome {

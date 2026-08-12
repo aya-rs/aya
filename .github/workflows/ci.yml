@@ -9,6 +9,8 @@ on:
     - cron: 00 4 * * *
 
 env:
+  # This key is intentionally public so fork pull requests can use BuildBuddy.
+  BUILDBUDDY_API_KEY: 5CeVmFS0jDnutd00x9Xl
   CARGO_TERM_COLOR: always
 
 concurrency:
@@ -36,13 +38,47 @@ jobs:
       - name: Test
         run: |
           set -euo pipefail
-          bazel_args=(
-            --config=remote
-            # This key is intentionally public so fork pull requests can use BuildBuddy.
-            --remote_header=x-buildbuddy-api-key=5CeVmFS0jDnutd00x9Xl
-          )
+          # The default JVM heap is under 2 GB on 7 GB macOS runners.
+          bazel --host_jvm_args=-Xmx4g test //... \
+            --config=remote \
+            --remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY"
 
-          bazel test //... "${bazel_args[@]}"
+  codegen:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - uses: ./.github/actions/codegen
+      - name: Check generated files
+        id: generated
+        run: |
+          changes=$(git status --porcelain --untracked-files=all)
+          if [[ -n "$changes" ]]; then
+            printf '%s\n' "$changes"
+            git add --all
+            git diff --cached --binary HEAD > "$RUNNER_TEMP/generated.patch"
+
+            {
+              printf 'Generated files are out of date. Download and apply the patch:\n\n'
+              printf '    gh run download %s --repo %s --name generated-files\n' \
+                "$GITHUB_RUN_ID" "$GITHUB_REPOSITORY"
+              printf '    git apply generated.patch\n'
+              printf '    rm generated.patch\n'
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Upload generated files
+        if: failure() && steps.generated.outcome == 'failure'
+        uses: actions/upload-artifact@v7
+        with:
+          name: generated-files
+          path: ${{ runner.temp }}/generated.patch
+          overwrite: true
 
   lint:
     runs-on: ubuntu-latest
@@ -50,13 +86,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: ./.github/actions/setup-rust-nightly
         with:
           components: clippy,miri,rustfmt,rust-src
 
+      # Cache usage approaches GitHub's default 10 GB repository allowance.
+      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
+      # main caches that every PR can restore. Keep PRs restore-only.
       - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2.85.4
         with:
           tool: cargo-hack,taplo-cli,typos-cli
 
@@ -79,27 +120,7 @@ jobs:
 
       - run: cargo xtask clippy
 
-      # On the `aya-rs/aya` repository, regenerate the public API on a schedule.
-      #
-      # On all other events and repositories assert the public API is up to date.
       - run: cargo xtask public-api
-        if: ${{ !(github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
-      - run: cargo xtask public-api --bless
-        if: ${{ (github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
-      - uses: peter-evans/create-pull-request@v8
-        if: ${{ (github.event_name == 'schedule' && github.repository == 'aya-rs/aya') }}
-        with:
-          # GitHub actions aren't allowed to trigger other actions to prevent
-          # abuse; the canonical workaround is to use a sufficiently authorized
-          # token.
-          #
-          # See https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#workarounds-to-trigger-further-workflow-runs.
-          token: ${{ secrets.CRABBY_GITHUB_TOKEN }}
-          branch: create-pull-request/public-api
-          commit-message: 'public-api: regenerate'
-          title: 'public-api: regenerate'
-          body: |
-            **Automated changes**
 
       - name: Run miri
         run: |
@@ -132,7 +153,12 @@ jobs:
         with:
           targets: ${{ matrix.arch }}
 
+      # Cache usage approaches GitHub's default 10 GB repository allowance.
+      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
+      # main caches that every PR can restore. Keep PRs restore-only.
       - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.event_name != 'pull_request' }}
 
       - uses: taiki-e/install-action@cargo-hack
 
@@ -196,16 +222,21 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: ./.github/actions/setup-rust-nightly
         with:
           components: rust-src
 
       # Installed *after* nightly so it is the default.
       - uses: dtolnay/rust-toolchain@stable
 
+      # Cache usage approaches GitHub's default 10 GB repository allowance.
+      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
+      # main caches that every PR can restore. Keep PRs restore-only.
       - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2.85.4
         with:
           tool: cargo-binstall,cargo-hack
       - run: cargo binstall --force bpf-linker
@@ -276,11 +307,13 @@ jobs:
         # for CI. We use arm64 runners to avoid cross-compilation.
         os:
           - ubuntu-24.04-arm
-        download-kernel-images:
+        vm-kernels:
           - arm64 5.10
+          - arm64 5.15
           - arm64 6.1
+          - arm64 6.6
           - arm64 6.12
-          - arm64 6.17
+          - arm64 6.18
         skip-local:
           - true
         include:
@@ -288,15 +321,15 @@ jobs:
             # Just one kernel to keep things fast. We just want to keep things from rotting on
             # macOS. We use amd64 because otherwise qemu tries to use HVF and hits a hard error:
             # qemu-system-aarch64: -accel hvf: Error: ret = HV_UNSUPPORTED (0xfae9400f, at ../target/arm/hvf/hvf.c:956)
-            download-kernel-images: amd64 5.10
+            vm-kernels: amd64 5.10
 
           # We don't use ubuntu-latest because we care about the apt packages available.
           - os: ubuntu-24.04
-            download-kernel-images: amd64 5.10 6.1 6.12 6.17
+            vm-kernels: amd64 5.10 5.15 6.1 6.6 6.12 6.18
           - os: ubuntu-24.04-arm
             # Native arm runner for local tests only; arm runners don't support
             # nested virtualization so running them here would be slow.
-            download-kernel-images: local
+            vm-kernels: local
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -325,7 +358,6 @@ jobs:
             linux-libc-dev \
             liblzma-dev \
             llvm \
-            lynx \
             musl-tools \
             qemu-system-{arm,x86}
 
@@ -336,14 +368,13 @@ jobs:
           # Dependencies are tracked in `Brewfile`.
           brew trust --formula filosottile/musl-cross/musl-cross
           brew bundle
-          echo $(brew --prefix curl)/bin >> $GITHUB_PATH
           echo $(brew --prefix llvm)/bin >> $GITHUB_PATH
 
           # https://github.com/actions/setup-python/issues/577
           find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
           | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: ./.github/actions/setup-rust-nightly
         with:
           components: rust-src
 
@@ -352,24 +383,27 @@ jobs:
         with:
           targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
 
+      # Cache usage approaches GitHub's default 10 GB repository allowance.
+      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
+      # main caches that every PR can restore. Keep PRs restore-only.
       - uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@v2.85.4
         with:
           tool: cargo-binstall,cargo-hack
       - run: cargo binstall --force bpf-linker
 
-      - uses: actions/cache@v6
+      - name: Restore VM integration test cache
+        id: vm-cache
+        # `local` is the native arm64 test job; it does not run a VM or
+        # populate the VM cache directory.
+        if: matrix.vm-kernels != 'local'
+        uses: actions/cache/restore@v6
         with:
           path: test/.tmp
-          key: ${{ runner.arch }}-${{ runner.os }}-test-cache-${{ matrix.download-kernel-images }}
-
-      - name: Download debian kernels
-        if: matrix.download-kernel-images != 'local'
-        run: |
-          set -euxo pipefail
-
-          .github/scripts/download_kernel_images.sh test/.tmp/debian-kernels ${{ matrix.download-kernel-images }}
+          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v2-${{ matrix.vm-kernels }}
 
       - name: Cleanup stale kernels and modules
         run: rm -rf test/.tmp/boot test/.tmp/lib
@@ -379,24 +413,39 @@ jobs:
         run: cargo xtask integration-test local
 
       - name: Run virtualized integration tests
-        if: matrix.download-kernel-images != 'local'
+        if: matrix.vm-kernels != 'local'
         run: |
           set -euxo pipefail
 
-          find test/.tmp -name '*.deb' -print0 | sort -Vz | xargs -t -0 \
-            cargo xtask integration-test vm --cache-dir test/.tmp \
-              --github-api-token ${{ secrets.GITHUB_TOKEN }}
+          cargo xtask integration-test vm --cache-dir test/.tmp \
+            --kernel-arch ${{ matrix.vm-kernels }}
+
+      - name: Save VM integration test cache
+        # By default, caches expire after seven days without access.
+        # An exact hit refreshes that period, so the immutable entry need not
+        # be uploaded again.
+        # The native arm64 `local` job produces no VM cache artifacts to save.
+        if: >-
+          matrix.vm-kernels != 'local' &&
+          steps.vm-cache.outputs.cache-hit != 'true' &&
+          github.event_name != 'pull_request'
+        uses: actions/cache/save@v6
+        with:
+          path: test/.tmp
+          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v2-${{ matrix.vm-kernels }}
 
   check:
     if: always()
     needs:
       - bazel
+      - codegen
       - lint
       - build-test-aya
       - build-test-aya-ebpf
       - run-integration-test
     runs-on: ubuntu-latest
     steps:
-      - uses: re-actors/alls-green@release/v1
-        with:
-          jobs: ${{ toJSON(needs) }}
+      - name: Verify all required jobs succeeded
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: jq --exit-status 'length > 0 and all(.[]; . == "success")' <<< "$RESULTS"

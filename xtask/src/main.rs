@@ -1,8 +1,10 @@
 mod clippy;
 mod codegen;
 mod docs;
+mod http;
 mod public_api;
 mod run;
+mod ubuntu_mainline;
 
 use std::process::{Command, Output};
 

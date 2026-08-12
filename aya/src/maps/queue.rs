@@ -24,8 +24,8 @@ use crate::{
 /// use aya::maps::Queue;
 ///
 /// let mut queue = Queue::try_from(bpf.map_mut("ARRAY").unwrap())?;
-/// queue.push(42, 0)?;
-/// queue.push(43, 0)?;
+/// queue.push(&42, 0)?;
+/// queue.push(&43, 0)?;
 /// assert_eq!(queue.pop(0)?, 42);
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
@@ -79,9 +79,9 @@ impl<T: BorrowMut<MapData>, V: Pod> Queue<T, V> {
     /// # Errors
     ///
     /// [`MapError::SyscallError`] if `bpf_map_update_elem` fails.
-    pub fn push(&mut self, value: impl Borrow<V>, flags: u64) -> Result<(), MapError> {
+    pub fn push(&mut self, value: &V, flags: u64) -> Result<(), MapError> {
         let fd = self.inner.borrow().fd().as_fd();
-        bpf_map_push_elem(fd, value.borrow(), flags)
+        bpf_map_push_elem(fd, value, flags)
             .map_err(|io_error| SyscallError {
                 call: "bpf_map_push_elem",
                 io_error,

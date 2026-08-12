@@ -40,7 +40,7 @@ impl MapKind {
                     .unwrap_or_else(|| panic!("missing map {name}"))
                     .try_into()
                     .unwrap_or_else(|err| panic!("map {name} is not a SockHash: {err}"));
-                m.insert(0u32, canary.as_raw_fd(), 0)
+                m.insert(&0u32, canary.as_raw_fd(), 0)
                     .expect("insert canary");
             }
             Self::Map => {

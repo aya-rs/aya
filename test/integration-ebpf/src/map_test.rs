@@ -31,7 +31,7 @@ fn simple_prog(_ctx: SkBuffContext) -> i64 {
     // If we use the literal value `0` instead of the local variable `i`, then an additional
     // `.rodata` map will be associated with the program.
     let i = 0;
-    BAZ.get_ptr(i);
+    BAZ.get_ptr(&i);
 
     0
 }
@@ -44,7 +44,7 @@ fn simple_prog_mut(_ctx: ProbeContext) -> i64 {
         }
     }
 
-    if let Some(map_value) = BAZ.get_ptr_mut(0) {
+    if let Some(map_value) = BAZ.get_ptr_mut(&0) {
         unsafe {
             *map_value += 1;
         }

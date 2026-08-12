@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
 use syn::{ItemFn, spanned::Spanned as _};
 
@@ -34,7 +33,7 @@ impl KProbe {
         kind: KProbeKind,
         attrs: TokenStream,
         item: TokenStream,
-    ) -> Result<Self, Diagnostic> {
+    ) -> syn::Result<Self> {
         let item = syn::parse2(item)?;
         let span = attrs.span();
         let mut args: Args = syn::parse2(attrs)?;
@@ -44,7 +43,9 @@ impl KProbe {
             .as_deref()
             .map(str::parse)
             .transpose()
-            .map_err(|err| span.error(format!("failed to parse `offset` argument: {err}")))?;
+            .map_err(|err| {
+                syn::Error::new(span, format!("failed to parse `offset` argument: {err}"))
+            })?;
         args.into_error()?;
 
         Ok(Self {
@@ -65,6 +66,7 @@ impl KProbe {
         let ItemFn {
             attrs: _,
             vis,
+            modifiers: _,
             sig,
             block: _,
         } = item;

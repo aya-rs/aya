@@ -50,8 +50,10 @@ use tokio::{
         format!("{MARKER}_ISIZE:{TEST_ISIZE}"),
         format!("{MARKER}_MULTI_printk:{TEST_U8:x},{TEST_I32:x}"),
     ])]
+// bpf_trace_vprintk was added in Linux 5.16; see
+// https://docs.ebpf.io/linux/helper-function/bpf_trace_vprintk/.
 #[case::many(
-    Some(("bpf_trace_vprintk", KernelVersion::new(5, 15, 0))),
+    Some(("bpf_trace_vprintk", KernelVersion::new(5, 16, 0))),
     "test_bpf_printk_for_many_args",
     [
         format!("{MARKER}_MULTI_vprintk:{TEST_U8},{TEST_U16},{TEST_I8},{TEST_I16}")
@@ -80,7 +82,7 @@ async fn bpf_printk<const N: usize>(
         .unwrap();
     prog.load().unwrap();
     prog.attach(
-        "trigger_bpf_printk",
+        ["trigger_bpf_printk"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )

@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 
 use proc_macro2::TokenStream;
-use proc_macro2_diagnostics::{Diagnostic, SpanDiagnosticExt as _};
 use quote::quote;
 use syn::{ItemFn, spanned::Spanned as _};
 
@@ -37,7 +36,7 @@ impl UProbe {
         kind: UProbeKind,
         attrs: TokenStream,
         item: TokenStream,
-    ) -> Result<Self, Diagnostic> {
+    ) -> syn::Result<Self> {
         let item = syn::parse2(item)?;
         let span = attrs.span();
         let mut args: Args = syn::parse2(attrs)?;
@@ -48,7 +47,9 @@ impl UProbe {
             .as_deref()
             .map(str::parse)
             .transpose()
-            .map_err(|err| span.error(format!("failed to parse `offset` argument: {err}")))?;
+            .map_err(|err| {
+                syn::Error::new(span, format!("failed to parse `offset` argument: {err}"))
+            })?;
         let sleepable = args.pop_bool("sleepable");
         let multi = args.pop_bool("multi");
         args.into_error()?;
@@ -63,7 +64,7 @@ impl UProbe {
         })
     }
 
-    pub(crate) fn expand(&self) -> Result<TokenStream, Diagnostic> {
+    pub(crate) fn expand(&self) -> syn::Result<TokenStream> {
         let Self {
             kind,
             path,
@@ -76,6 +77,7 @@ impl UProbe {
         let ItemFn {
             attrs: _,
             vis,
+            modifiers: _,
             sig,
             block: _,
         } = item;
@@ -94,9 +96,9 @@ impl UProbe {
             Some(path) => {
                 let path = path.strip_prefix("/").unwrap_or(path);
                 // TODO: check this in parse instead.
-                let function = function
-                    .as_deref()
-                    .ok_or_else(|| item.sig.span().error("expected `function` attribute"))?;
+                let function = function.as_deref().ok_or_else(|| {
+                    syn::Error::new(item.sig.span(), "expected `function` attribute")
+                })?;
                 match offset {
                     None => format!("{prefix}/{path}:{function}").into(),
                     Some(offset) => format!("{prefix}/{path}:{function}+{offset}").into(),

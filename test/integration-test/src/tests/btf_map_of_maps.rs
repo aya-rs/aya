@@ -23,7 +23,7 @@ impl MapKind {
             Self::Hash => {
                 let mut outer: HashOfMaps<&mut MapData, u32, Array<MapData, u32>> =
                     ebpf.map_mut("HASH_OF_MAPS").unwrap().try_into().unwrap();
-                outer.insert(key, inner, 0).unwrap();
+                outer.insert(&key, inner, 0).unwrap();
             }
         }
     }
@@ -53,8 +53,9 @@ fn load_and_attach(ebpf: &mut Ebpf, name: &str) {
         .try_into()
         .unwrap();
     prog.load().unwrap();
+    let symbol = format!("trigger_{name}");
     prog.attach(
-        format!("trigger_{name}").as_str(),
+        [symbol.as_str()],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )
@@ -107,7 +108,7 @@ fn btf_map_of_maps(
     let mut ebpf = Ebpf::load(crate::BTF_MAP_OF_MAPS).unwrap();
 
     let mut inner: Array<MapData, u32> = Array::create(INNER_MAX_ENTRIES, 0).unwrap();
-    inner.set(0, expected, 0).unwrap();
+    inner.set(0, &expected, 0).unwrap();
 
     kind.insert_inner(&mut ebpf, 0, &inner);
 
@@ -130,10 +131,10 @@ fn btf_map_of_maps_get_value(
     let mut ebpf = Ebpf::load(crate::BTF_MAP_OF_MAPS).unwrap();
 
     let mut inner_1: Array<MapData, u32> = Array::create(INNER_MAX_ENTRIES, 0).unwrap();
-    inner_1.set(0, expected_get, 0).unwrap();
+    inner_1.set(0, &expected_get, 0).unwrap();
 
     let mut inner_2: Array<MapData, u32> = Array::create(INNER_MAX_ENTRIES, 0).unwrap();
-    inner_2.set(0, 0u32, 0).unwrap();
+    inner_2.set(0, &0u32, 0).unwrap();
 
     kind.insert_inner(&mut ebpf, 0, &inner_1);
     kind.insert_inner(&mut ebpf, 1, &inner_2);
@@ -154,19 +155,19 @@ fn btf_hash_of_maps_dynamic() {
     let mut inner_1: Array<MapData, u32> = Array::create(INNER_MAX_ENTRIES, 0).unwrap();
     let mut inner_2: Array<MapData, u32> = Array::create(INNER_MAX_ENTRIES, 0).unwrap();
 
-    inner_1.set(0, 1000u32, 0).unwrap();
-    inner_2.set(0, 2000u32, 0).unwrap();
+    inner_1.set(0, &1000u32, 0).unwrap();
+    inner_2.set(0, &2000u32, 0).unwrap();
 
     {
         let mut outer: HashOfMaps<&mut MapData, u32, Array<MapData, u32>> =
             ebpf.map_mut("HASH_OF_MAPS").unwrap().try_into().unwrap();
-        outer.insert(10u32, &inner_1, 0).unwrap();
-        outer.insert(11u32, &inner_2, 0).unwrap();
+        outer.insert(&10u32, &inner_1, 0).unwrap();
+        outer.insert(&11u32, &inner_2, 0).unwrap();
     }
 
     assert_eq!(inner_1.get(&0, 0).unwrap(), 1000);
     assert_eq!(inner_2.get(&0, 0).unwrap(), 2000);
 
-    inner_1.set(1, 3000u32, 0).unwrap();
+    inner_1.set(1, &3000u32, 0).unwrap();
     assert_eq!(inner_1.get(&1, 0).unwrap(), 3000);
 }

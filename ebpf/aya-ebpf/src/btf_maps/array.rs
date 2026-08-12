@@ -1,4 +1,4 @@
-use core::{borrow::Borrow, ptr::NonNull};
+use core::ptr::NonNull;
 
 use crate::{btf_maps::btf_map_def, insert, lookup};
 
@@ -51,7 +51,7 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> Array<T, MAX_ENTRIES, FLAG
 
     /// Sets the value of the element at the given index.
     #[inline(always)]
-    pub fn set(&self, index: u32, value: impl Borrow<T>, flags: u64) -> Result<(), i32> {
-        insert(self.as_ptr(), &index, value.borrow(), flags)
+    pub fn set(&self, index: u32, value: &T, flags: u64) -> Result<(), i32> {
+        insert(self.as_ptr(), &index, value, flags)
     }
 }

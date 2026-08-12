@@ -26,6 +26,7 @@ impl LsmCgroup {
         let ItemFn {
             attrs: _,
             vis,
+            modifiers: _,
             sig,
             block: _,
         } = item;

@@ -43,7 +43,7 @@ fn tail_call_empty(#[case] result_map: &str, #[case] entry_prog: &str) {
     prog.load()
         .unwrap_or_else(|err| panic!("load {entry_prog}: {err}"));
     prog.attach(
-        "trigger_tail_call_empty",
+        ["trigger_tail_call_empty"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )
@@ -106,7 +106,7 @@ fn tail_call_success(
             .unwrap_or_else(|err| panic!("load {entry_prog}: {err}"));
         entry
             .attach(
-                "trigger_tail_call_success",
+                ["trigger_tail_call_success"],
                 "/proc/self/exe",
                 UProbeScope::AllProcesses,
             )

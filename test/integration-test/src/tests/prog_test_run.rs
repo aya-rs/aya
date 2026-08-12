@@ -75,7 +75,7 @@ fn test_run_repeat() {
 
     let mut exec_count: Array<_, u64> = bpf.take_map("EXEC_COUNT").unwrap().try_into().unwrap();
 
-    exec_count.set(0, 0, 0).unwrap();
+    exec_count.set(0, &0, 0).unwrap();
 
     let prog: &mut SchedClassifier = bpf
         .program_mut("test_count_exec")
@@ -264,7 +264,7 @@ fn test_raw_tracepoint_test_run() {
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
 
     let mut last_arg: Array<_, u64> = bpf.take_map("LAST_ARG").unwrap().try_into().unwrap();
-    last_arg.set(0, 0, 0).unwrap();
+    last_arg.set(0, &0, 0).unwrap();
 
     let prog: &mut RawTracePoint = bpf.program_mut("test_raw_tp").unwrap().try_into().unwrap();
     prog.load().unwrap();

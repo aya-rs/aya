@@ -29,8 +29,8 @@ fn text_64_64_reloc() {
     let mut bpf = load_and_attach("test_text_64_64_reloc", crate::TEXT_64_64_RELOC);
 
     let mut m = aya::maps::Array::<_, u64>::try_from(bpf.map_mut("RESULTS").unwrap()).unwrap();
-    m.set(0, 1, 0).unwrap();
-    m.set(1, 2, 0).unwrap();
+    m.set(0, &1, 0).unwrap();
+    m.set(1, &2, 0).unwrap();
 
     trigger_relocations_program();
 
@@ -56,7 +56,7 @@ fn load_and_attach(name: &str, bytes: &[u8]) -> Ebpf {
     prog.load().unwrap();
 
     prog.attach(
-        "trigger_relocations_program",
+        ["trigger_relocations_program"],
         "/proc/self/exe",
         UProbeScope::AllProcesses,
     )
