@@ -21,8 +21,6 @@
     "https://bcr.bazel.build/modules/apple_support/1.24.1/MODULE.bazel": "f46e8ddad60aef170ee92b2f3d00ef66c147ceafea68b6877cb45bd91737f5f8",
     "https://bcr.bazel.build/modules/apple_support/1.24.2/MODULE.bazel": "0e62471818affb9f0b26f128831d5c40b074d32e6dda5a0d3852847215a41ca4",
     "https://bcr.bazel.build/modules/apple_support/1.24.2/source.json": "2c22c9827093250406c5568da6c54e6fdf0ef06238def3d99c71b12feb057a8d",
-    "https://bcr.bazel.build/modules/aspect_tools_telemetry/0.3.3/MODULE.bazel": "37c764292861c2f70314efa9846bb6dbb44fc0308903b3285da6528305450183",
-    "https://bcr.bazel.build/modules/aspect_tools_telemetry/0.3.3/source.json": "605086bbc197743a0d360f7ddc550a1d4dfa0441bc807236e17170f636153348",
     "https://bcr.bazel.build/modules/bazel_features/1.1.0/MODULE.bazel": "cfd42ff3b815a5f39554d97182657f8c4b9719568eb7fded2b9135f084bf760b",
     "https://bcr.bazel.build/modules/bazel_features/1.1.1/MODULE.bazel": "27b8c79ef57efe08efccbd9dd6ef70d61b4798320b8d3c134fd571f78963dbcd",
     "https://bcr.bazel.build/modules/bazel_features/1.10.0/MODULE.bazel": "f75e8807570484a99be90abcd52b5e1f390362c258bcb73106f4544957a48101",
@@ -237,8 +235,6 @@
     "https://bcr.bazel.build/modules/rules_python/1.7.0/source.json": "028a084b65dcf8f4dc4f82f8778dbe65df133f234b316828a82e060d81bdce32",
     "https://bcr.bazel.build/modules/rules_qemu/0.3.0/MODULE.bazel": "2ddd5524b5a8eeee5fb4049018e99111232206c9c37e2cd063a78190cc18f94f",
     "https://bcr.bazel.build/modules/rules_qemu/0.3.0/source.json": "40443bb588205be9bb19455d576579a916f72d3faf5704c9934808581a21da18",
-    "https://bcr.bazel.build/modules/rules_rs/0.0.93/MODULE.bazel": "f7e7525037bd27967a4cfbe7c2fd5ecc780b190f3a48637fe399e114f4d09622",
-    "https://bcr.bazel.build/modules/rules_rs/0.0.93/source.json": "7edc3e1f220a7766865609d17fd0e6f927b9897ef98c5f5f58c3027c2606cfbd",
     "https://bcr.bazel.build/modules/rules_shell/0.2.0/MODULE.bazel": "fda8a652ab3c7d8fee214de05e7a9916d8b28082234e8d2c0094505c5268ed3c",
     "https://bcr.bazel.build/modules/rules_shell/0.3.0/MODULE.bazel": "de4402cd12f4cc8fda2354fce179fdb068c0b9ca1ec2d2b17b3e21b24c1a937b",
     "https://bcr.bazel.build/modules/rules_shell/0.4.1/MODULE.bazel": "00e501db01bbf4e3e1dd1595959092c2fadf2087b2852d3f553b5370f5633592",
@@ -273,27 +269,6 @@
   },
   "selectedYankedVersions": {},
   "moduleExtensions": {
-    "@@aspect_tools_telemetry+//:extension.bzl%telemetry": {
-      "general": {
-        "bzlTransitiveDigest": "cl5A2O84vDL6Tt+Qga8FCj1DUDGqn+e7ly5rZ+4xvcc=",
-        "usagesDigest": "HTyqOSJVnMu2K3Z0Av//uKNmEOAilOhnN/IEdkaeaJE=",
-        "recordedInputs": [
-          "REPO_MAPPING:aspect_tools_telemetry+,bazel_lib bazel_lib+",
-          "REPO_MAPPING:aspect_tools_telemetry+,bazel_skylib bazel_skylib+"
-        ],
-        "generatedRepoSpecs": {
-          "aspect_tools_telemetry_report": {
-            "repoRuleId": "@@aspect_tools_telemetry+//:extension.bzl%tel_repository",
-            "attributes": {
-              "deps": {
-                "rules_rs": "0.0.93",
-                "aspect_tools_telemetry": "0.3.3"
-              }
-            }
-          }
-        }
-      }
-    },
     "@@protobuf+//python/dist:system_python.bzl%system_python_extension": {
       "general": {
         "bzlTransitiveDigest": "pmsA+awieucfllLc2n7k8xEoPp0i5LF9Hw6mGX0cqSQ=",
@@ -936,6 +911,7 @@
       "jiff_0.2.24": "{\"dependencies\":[{\"kind\":\"dev\",\"name\":\"anyhow\",\"req\":\"^1.0.81\"},{\"features\":[\"serde\"],\"kind\":\"dev\",\"name\":\"chrono\",\"req\":\"^0.4.38\"},{\"kind\":\"dev\",\"name\":\"chrono-tz\",\"req\":\"^0.10.0\"},{\"kind\":\"dev\",\"name\":\"hifitime\",\"req\":\"^3.9.0\",\"target\":\"cfg(not(target_family = \\\"wasm\\\"))\"},{\"kind\":\"dev\",\"name\":\"humantime\",\"req\":\"^2.1.0\"},{\"kind\":\"dev\",\"name\":\"insta\",\"req\":\"^1.39.0\"},{\"name\":\"jiff-static\",\"req\":\"=0.2.24\",\"target\":\"cfg(any())\"},{\"name\":\"jiff-static\",\"optional\":true,\"req\":\"^0.2\"},{\"name\":\"jiff-tzdb\",\"optional\":true,\"req\":\"^0.1.6\"},{\"name\":\"jiff-tzdb-platform\",\"optional\":true,\"req\":\"^0.1.3\",\"target\":\"cfg(any(windows, target_family = \\\"wasm\\\"))\"},{\"name\":\"js-sys\",\"optional\":true,\"req\":\"^0.3.50\",\"target\":\"cfg(all(any(target_arch = \\\"wasm32\\\", target_arch = \\\"wasm64\\\"), target_os = \\\"unknown\\\"))\"},{\"default_features\":false,\"name\":\"log\",\"optional\":true,\"req\":\"^0.4.21\"},{\"kind\":\"dev\",\"name\":\"log\",\"req\":\"^0.4.21\"},{\"default_features\":false,\"name\":\"portable-atomic\",\"req\":\"^1.10.0\",\"target\":\"cfg(not(target_has_atomic = \\\"ptr\\\"))\"},{\"default_features\":false,\"name\":\"portable-atomic-util\",\"req\":\"^0.2.4\",\"target\":\"cfg(not(target_has_atomic = \\\"ptr\\\"))\"},{\"default_features\":false,\"kind\":\"dev\",\"name\":\"quickcheck\",\"req\":\"^1.0.3\"},{\"features\":[\"derive\"],\"kind\":\"dev\",\"name\":\"serde\",\"req\":\"^1.0.203\"},{\"default_features\":false,\"name\":\"serde_core\",\"optional\":true,\"req\":\"^1.0.221\"},{\"kind\":\"dev\",\"name\":\"serde_json\",\"req\":\"^1.0.117\"},{\"kind\":\"dev\",\"name\":\"serde_yaml\",\"req\":\"^0.9.34\"},{\"kind\":\"dev\",\"name\":\"tabwriter\",\"req\":\"^1.4.0\"},{\"features\":[\"local-offset\",\"macros\",\"parsing\"],\"kind\":\"dev\",\"name\":\"time\",\"req\":\"^0.3.36\"},{\"kind\":\"dev\",\"name\":\"time-tz\",\"req\":\"^2.0.0\"},{\"kind\":\"dev\",\"name\":\"tzfile\",\"req\":\"^0.1.3\"},{\"kind\":\"dev\",\"name\":\"walkdir\",\"req\":\"^2.5.0\"},{\"name\":\"wasm-bindgen\",\"optional\":true,\"req\":\"^0.2.70\",\"target\":\"cfg(all(any(target_arch = \\\"wasm32\\\", target_arch = \\\"wasm64\\\"), target_os = \\\"unknown\\\"))\"},{\"default_features\":false,\"features\":[\"Win32_Foundation\",\"Win32_System_Time\"],\"name\":\"windows-sys\",\"optional\":true,\"req\":\">=0.52.0, <=0.61\",\"target\":\"cfg(windows)\"}],\"features\":{\"alloc\":[\"serde_core?/alloc\",\"portable-atomic-util/alloc\"],\"default\":[\"std\",\"tz-system\",\"tz-fat\",\"tzdb-bundle-platform\",\"tzdb-zoneinfo\",\"tzdb-concatenated\",\"perf-inline\"],\"js\":[\"dep:wasm-bindgen\",\"dep:js-sys\"],\"logging\":[\"dep:log\"],\"perf-inline\":[],\"serde\":[\"dep:serde_core\"],\"static\":[\"static-tz\",\"jiff-static?/tzdb\"],\"static-tz\":[\"dep:jiff-static\"],\"std\":[\"alloc\",\"log?/std\",\"serde_core?/std\"],\"tz-fat\":[\"jiff-static?/tz-fat\"],\"tz-system\":[\"std\",\"dep:windows-sys\"],\"tzdb-bundle-always\":[\"dep:jiff-tzdb\",\"alloc\"],\"tzdb-bundle-platform\":[\"dep:jiff-tzdb-platform\",\"alloc\"],\"tzdb-concatenated\":[\"std\"],\"tzdb-zoneinfo\":[\"std\"]}}",
       "jobserver_0.1.34": "{\"dependencies\":[{\"features\":[\"std\"],\"name\":\"getrandom\",\"req\":\"^0.3.2\",\"target\":\"cfg(windows)\"},{\"name\":\"libc\",\"req\":\"^0.2.171\",\"target\":\"cfg(unix)\"},{\"features\":[\"fs\"],\"kind\":\"dev\",\"name\":\"nix\",\"req\":\"^0.28.0\",\"target\":\"cfg(unix)\"},{\"kind\":\"dev\",\"name\":\"tempfile\",\"req\":\"^3.10.1\"}],\"features\":{}}",
       "js-sys_0.3.82": "{\"dependencies\":[{\"default_features\":false,\"name\":\"once_cell\",\"req\":\"^1.12\"},{\"default_features\":false,\"name\":\"wasm-bindgen\",\"req\":\"=0.2.105\"}],\"features\":{\"default\":[\"std\"],\"std\":[\"wasm-bindgen/std\"]}}",
+      "jsonc-parser_0.26.2": "{\"dependencies\":[{\"name\":\"indexmap\",\"optional\":true,\"req\":\"^2.2.6\"},{\"kind\":\"dev\",\"name\":\"pretty_assertions\",\"req\":\"^1.0.0\"},{\"name\":\"serde_json\",\"optional\":true,\"req\":\"^1.0\"},{\"name\":\"unicode-width\",\"optional\":true,\"req\":\"^0.2.0\"}],\"features\":{\"cst\":[],\"error_unicode_width\":[\"unicode-width\"],\"preserve_order\":[\"indexmap\",\"serde_json/preserve_order\"],\"serde\":[\"serde_json\"]}}",
       "lazy_static_1.5.0": "{\"dependencies\":[{\"kind\":\"dev\",\"name\":\"doc-comment\",\"req\":\"^0.3.1\"},{\"default_features\":false,\"features\":[\"once\"],\"name\":\"spin\",\"optional\":true,\"req\":\"^0.9.8\"},{\"kind\":\"dev\",\"name\":\"trybuild\",\"req\":\"^1\"}],\"features\":{\"spin_no_std\":[\"spin\"]}}",
       "leb128_0.2.6": "{\"dependencies\":[{\"kind\":\"dev\",\"name\":\"quickcheck\",\"req\":\"^1.1\"}],\"features\":{\"nightly\":[]}}",
       "leb128fmt_0.1.0": "{\"dependencies\":[],\"features\":{\"alloc\":[],\"default\":[\"std\"],\"std\":[]}}",
@@ -1274,6 +1250,7 @@
       "2026-08-13/rust-std-nightly-powerpc64-unknown-linux-gnu.tar.xz": "8d65dd71e9794bc84ecc1d0001514cf64e0b3fecae208eebf44cca9e286948f5",
       "2026-08-13/rust-std-nightly-powerpc64le-unknown-linux-gnu.tar.xz": "36560febb66ecfc307c946c1ab7296438755c1f871bba7f2fa42d328138c98d5",
       "2026-08-13/rust-std-nightly-powerpc64le-unknown-linux-musl.tar.xz": "4edb5dd1788dedcb5da02fec95bfdc3a77c025dd6f274728ae873e8be08563a9",
+      "2026-08-13/rust-std-nightly-riscv32imac-unknown-none-elf.tar.xz": "e6c7ff3e6403a305567e2ee7978fc519d15b9c1d0f246374564bded5ece5e038",
       "2026-08-13/rust-std-nightly-riscv32imc-unknown-none-elf.tar.xz": "413cb1b3916fb7d2692e2a54e67cfc694bace1a8f4a636ace055ce9556631ce4",
       "2026-08-13/rust-std-nightly-riscv64gc-unknown-linux-gnu.tar.xz": "7d145a25f58bbb3f319f7c908b218c1b2975d356741529687a8645ea74a9550d",
       "2026-08-13/rust-std-nightly-riscv64gc-unknown-linux-musl.tar.xz": "3a1a6c56a1e8f59f536f44024d1cea09b62b500a548caecb080b7a6e2b20cc1d",

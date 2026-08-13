@@ -7,7 +7,7 @@ use std::{
 
 use bytes::BufMut as _;
 use log::debug;
-use object::{Endianness, SectionIndex};
+use object::{Endian as _, Endianness, SectionIndex};
 
 use crate::{
     Object,
@@ -1076,13 +1076,8 @@ impl BtfExt {
                     section_len: data.len(),
                 });
             }
-            let read_u32 = if endianness == Endianness::Little {
-                u32::from_le_bytes
-            } else {
-                u32::from_be_bytes
-            };
             Ok(if len > 0 {
-                read_u32(data[offset..offset + 4].try_into().unwrap()) as usize
+                endianness.read_u32(data[offset..offset + 4].try_into().unwrap()) as usize
             } else {
                 0
             })
@@ -1223,12 +1218,9 @@ impl<'a> Iterator for SecInfoIter<'a> {
             return None;
         }
 
-        let read_u32 = if self.endianness == Endianness::Little {
-            u32::from_le_bytes
-        } else {
-            u32::from_be_bytes
-        };
-        let name_offset = read_u32(data[self.offset..self.offset + 4].try_into().unwrap());
+        let name_offset = self
+            .endianness
+            .read_u32(data[self.offset..self.offset + 4].try_into().unwrap());
         self.offset += 4;
         let num_info = u32::from_ne_bytes(data[self.offset..self.offset + 4].try_into().unwrap());
         self.offset += 4;

@@ -41,6 +41,16 @@ archive_override(
     urls = ["https://github.com/hermeticbuild/linux.bzl/archive/e18628f3e177022c2ff0cf93a2e5f2d408f7d2fc.tar.gz"],
 )
 
+# bpf-linker 0.11.0 matches the LLVM version in the pinned Rust nightly.
+#
+# TODO(https://github.com/hermeticbuild/rules_rs/pull/216): remove this override.
+archive_override(
+    module_name = "rules_rs",
+    integrity = "sha256-LLQc7Z+LibTURbgV16Ro7V5pf/OIkm88Pw36ldvBr0A=",
+    strip_prefix = "rules_rs-ca6a5c62bbea1b35e11298723cfd4a9db13a43d2",
+    urls = ["https://github.com/hermeticbuild/rules_rs/archive/ca6a5c62bbea1b35e11298723cfd4a9db13a43d2.tar.gz"],
+)
+
 # @rules_rs creates @rules_rust here; generated BUILD files and .bazelrc labels
 # reference @rules_rust directly.
 rules_rust = use_extension("@rules_rs//rs:rules_rust.bzl", "rules_rust")
