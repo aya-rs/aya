@@ -1068,18 +1068,20 @@ impl BtfExt {
         let rec_size = |offset, len| {
             let offset = hdr_len as usize + offset as usize;
             let len = len as usize;
-            // check that there's at least enough space for the `rec_size` field
-            if (len > 0 && len < 4) || offset + len > data.len() {
-                return Err(BtfError::InvalidInfo {
+            let data = data.get(offset..).ok_or(BtfError::InvalidInfo {
+                offset,
+                len,
+                section_len: data.len(),
+            })?;
+            Ok(if len == 0 {
+                0
+            } else {
+                let (data, _remainder) = data.split_first_chunk().ok_or(BtfError::InvalidInfo {
                     offset,
                     len,
                     section_len: data.len(),
-                });
-            }
-            Ok(if len > 0 {
-                endianness.read_u32(data[offset..offset + 4].try_into().unwrap()) as usize
-            } else {
-                0
+                })?;
+                endianness.read_u32(*data) as usize
             })
         };
 
@@ -1193,7 +1195,6 @@ impl BtfExt {
 
 pub(crate) struct SecInfoIter<'a> {
     data: &'a [u8],
-    offset: usize,
     rec_size: usize,
     endianness: Endianness,
 }
@@ -1203,7 +1204,6 @@ impl<'a> SecInfoIter<'a> {
         Self {
             data,
             rec_size,
-            offset: 0,
             endianness,
         }
     }
@@ -1213,26 +1213,37 @@ impl<'a> Iterator for SecInfoIter<'a> {
     type Item = SecInfo<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let data = self.data;
-        if self.offset + 8 >= data.len() {
-            return None;
-        }
-
-        let name_offset = self
-            .endianness
-            .read_u32(data[self.offset..self.offset + 4].try_into().unwrap());
-        self.offset += 4;
-        let num_info = u32::from_ne_bytes(data[self.offset..self.offset + 4].try_into().unwrap());
-        self.offset += 4;
-
-        let data = &data[self.offset..self.offset + (self.rec_size * num_info as usize)];
-        self.offset += self.rec_size * num_info as usize;
-
-        Some(SecInfo {
-            name_offset,
-            num_info,
+        let Self {
             data,
-        })
+            rec_size,
+            endianness,
+        } = self;
+
+        loop {
+            let remainder = *data;
+
+            let (name_offset, remainder) = remainder.split_first_chunk()?;
+            let name_offset = endianness.read_u32(*name_offset);
+
+            let (num_info, remainder) = remainder.split_first_chunk()?;
+            let num_info = endianness.read_u32(*num_info);
+
+            let (section_data, remainder) = remainder.split_at_checked(
+                *rec_size * usize::try_from(num_info).expect("u32 fits in usize"),
+            )?;
+
+            *data = remainder;
+
+            if section_data.is_empty() {
+                continue;
+            }
+
+            break Some(SecInfo {
+                name_offset,
+                num_info,
+                data: section_data,
+            });
+        }
     }
 }
 

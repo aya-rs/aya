@@ -1205,14 +1205,14 @@ impl BtfType {
                 btf_type: ty[2],
             }),
             BtfKind::Int => {
-                if size_of::<u32>() > data.len() {
-                    return Err(BtfError::InvalidTypeInfo);
-                }
+                let (data, _remainder) =
+                    data.split_first_chunk().ok_or(BtfError::InvalidTypeInfo)?;
+                let data = endianness.read_u32(*data);
                 Self::Int(Int {
                     name_offset: ty[0],
                     info: ty[1],
                     size: ty[2],
-                    data: endianness.read_u32(data[..size_of::<u32>()].try_into().unwrap()),
+                    data,
                 })
             }
             BtfKind::Float => Self::Float(Float {
