@@ -1193,7 +1193,6 @@ impl BtfExt {
 
 pub(crate) struct SecInfoIter<'a> {
     data: &'a [u8],
-    offset: usize,
     rec_size: usize,
     endianness: Endianness,
 }
@@ -1203,7 +1202,6 @@ impl<'a> SecInfoIter<'a> {
         Self {
             data,
             rec_size,
-            offset: 0,
             endianness,
         }
     }
@@ -1213,25 +1211,27 @@ impl<'a> Iterator for SecInfoIter<'a> {
     type Item = SecInfo<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let data = self.data;
-        if self.offset + 8 >= data.len() {
-            return None;
-        }
+        let Self {
+            data,
+            rec_size,
+            endianness,
+        } = self;
 
-        let name_offset = self
-            .endianness
-            .read_u32(data[self.offset..self.offset + 4].try_into().unwrap());
-        self.offset += 4;
-        let num_info = u32::from_ne_bytes(data[self.offset..self.offset + 4].try_into().unwrap());
-        self.offset += 4;
+        let (name_offset, rest) = data.split_first_chunk()?;
+        let name_offset = endianness.read_u32(*name_offset);
+        *data = rest;
 
-        let data = &data[self.offset..self.offset + (self.rec_size * num_info as usize)];
-        self.offset += self.rec_size * num_info as usize;
+        let (num_info, rest) = data.split_first_chunk()?;
+        let num_info = endianness.read_u32(*num_info);
+        *data = rest;
+
+        let (section_data, rest) = data.split_at(*rec_size * num_info as usize);
+        *data = rest;
 
         Some(SecInfo {
             name_offset,
             num_info,
-            data,
+            data: section_data,
         })
     }
 }
