@@ -12,8 +12,8 @@ use std::{
 
 use log::debug;
 use object::{
-    Endianness, ObjectSymbol as _, ObjectSymbolTable as _, RelocationTarget, SectionIndex,
-    SectionKind, SymbolKind,
+    Endian as _, Endianness, ObjectSymbol as _, ObjectSymbolTable as _, RelocationTarget,
+    SectionIndex, SectionKind, SymbolKind,
     read::{Object as _, ObjectSection as _, Section as ObjSection},
 };
 
@@ -1199,24 +1199,15 @@ fn parse_license(data: &[u8]) -> Result<CString, ParseError> {
 }
 
 fn parse_version(data: &[u8], endianness: Endianness) -> Result<Option<u32>, ParseError> {
-    let data = match data.len() {
-        4 => data.try_into().unwrap(),
-        _ => {
-            return Err(ParseError::InvalidKernelVersion {
+    let data = data
+        .try_into()
+        .map_err(
+            |std::array::TryFromSliceError { .. }| ParseError::InvalidKernelVersion {
                 data: data.to_vec(),
-            });
-        }
-    };
+            },
+        )?;
 
-    #[expect(
-        clippy::big_endian_bytes,
-        clippy::little_endian_bytes,
-        reason = "that's the point"
-    )]
-    let v = match endianness {
-        Endianness::Big => u32::from_be_bytes(data),
-        Endianness::Little => u32::from_le_bytes(data),
-    };
+    let v = endianness.read_u32(data);
 
     Ok(if v == KERNEL_VERSION_ANY {
         None
