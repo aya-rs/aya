@@ -97,7 +97,7 @@ jobs:
         with:
           save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@268d08cfa3895aea617a6ec2fceec44faa4fa4ea
+      - uses: taiki-e/install-action@v2.85.13
         with:
           tool: cargo-hack,taplo-cli,typos-cli
 
@@ -160,7 +160,7 @@ jobs:
         with:
           save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@268d08cfa3895aea617a6ec2fceec44faa4fa4ea
+      - uses: taiki-e/install-action@v2.85.13
         with:
           tool: cargo-hack
 
@@ -238,9 +238,9 @@ jobs:
         with:
           save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@268d08cfa3895aea617a6ec2fceec44faa4fa4ea
+      - uses: taiki-e/install-action@v2.85.13
         with:
-          tool: bpf-linker@0.11.0,cargo-hack
+          tool: bpf-linker,cargo-hack
 
       - name: Build & test for all BPF architectures
         env:
@@ -391,9 +391,9 @@ jobs:
         with:
           save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@268d08cfa3895aea617a6ec2fceec44faa4fa4ea
+      - uses: taiki-e/install-action@v2.85.13
         with:
-          tool: bpf-linker@0.11.0,cargo-hack
+          tool: bpf-linker,cargo-hack
 
       - name: Restore VM integration test cache
         id: vm-cache
