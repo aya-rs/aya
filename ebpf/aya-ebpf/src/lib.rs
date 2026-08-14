@@ -31,6 +31,7 @@
 #![warn(clippy::cast_lossless, clippy::cast_sign_loss)]
 #![no_std]
 
+pub mod arena;
 mod args;
 pub mod bindings;
 #[cfg(generic_const_exprs)]
