@@ -5,6 +5,35 @@ pub use aya::Endianness
 pub use aya::PinningType
 pub use aya::bpf_map_def
 pub mod aya::maps
+pub mod aya::maps::arena
+pub struct aya::maps::arena::Arena<T>
+impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::arena::Arena<T>
+pub fn aya::maps::arena::Arena<T>::as_ptr(&self) -> *mut u8
+pub unsafe fn aya::maps::arena::Arena<T>::atomic_u32_at(&self, usize) -> core::result::Result<&core::sync::atomic::AtomicU32, aya::maps::MapError>
+pub unsafe fn aya::maps::arena::Arena<T>::atomic_u64_at(&self, usize) -> core::result::Result<&core::sync::atomic::AtomicU64, aya::maps::MapError>
+pub fn aya::maps::arena::Arena<T>::is_empty(&self) -> bool
+pub fn aya::maps::arena::Arena<T>::len(&self) -> usize
+pub unsafe fn aya::maps::arena::Arena<T>::read_at<V: aya::Pod>(&self, usize) -> core::result::Result<V, aya::maps::MapError>
+pub fn aya::maps::arena::Arena<T>::user_base(&self) -> u64
+pub unsafe fn aya::maps::arena::Arena<T>::write_at<V: aya::Pod>(&self, usize, V) -> core::result::Result<(), aya::maps::MapError>
+impl core::convert::TryFrom<aya::maps::Map> for aya::maps::arena::Arena<aya::maps::MapData>
+pub type aya::maps::arena::Arena<aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::arena::Arena<aya::maps::MapData>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::arena::Arena<&'a aya::maps::MapData>
+pub type aya::maps::arena::Arena<&'a aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::arena::Arena<&'a aya::maps::MapData>::try_from(&'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::arena::Arena<&'a mut aya::maps::MapData>
+pub type aya::maps::arena::Arena<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::arena::Arena<&'a mut aya::maps::MapData>::try_from(&'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug> core::fmt::Debug for aya::maps::arena::Arena<T>
+pub fn aya::maps::arena::Arena<T>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T> core::marker::Freeze for aya::maps::arena::Arena<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for aya::maps::arena::Arena<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya::maps::arena::Arena<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for aya::maps::arena::Arena<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::arena::Arena<T> where T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::arena::Arena<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::arena::Arena<T> where T: core::panic::unwind_safe::UnwindSafe
 pub mod aya::maps::array
 pub struct aya::maps::array::Array<T, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::array::Array<T, V>
@@ -927,6 +956,7 @@ impl<T> core::marker::UnsafeUnpin for aya::maps::XskMap<T> where T: core::marker
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::XskMap<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::XskMap<T> where T: core::panic::unwind_safe::UnwindSafe
 pub enum aya::maps::Map
+pub aya::maps::Map::Arena(aya::maps::MapData)
 pub aya::maps::Map::Array(aya::maps::MapData)
 pub aya::maps::Map::ArrayOfMaps(aya::maps::MapData)
 pub aya::maps::Map::BloomFilter(aya::maps::MapData)
@@ -984,6 +1014,9 @@ pub fn aya::maps::SockMap<aya::maps::MapData>::try_from(aya::maps::Map) -> core:
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::XskMap<aya::maps::MapData>
 pub type aya::maps::XskMap<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::XskMap<aya::maps::MapData>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<aya::maps::Map> for aya::maps::arena::Arena<aya::maps::MapData>
+pub type aya::maps::arena::Arena<aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::arena::Arena<aya::maps::MapData>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::PerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::perf::PerfEventArray<aya::maps::MapData>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1115,6 +1148,9 @@ pub fn aya::maps::SockMap<&'a aya::maps::MapData>::try_from(&'a aya::maps::Map) 
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::XskMap<&'a aya::maps::MapData>
 pub type aya::maps::XskMap<&'a aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::XskMap<&'a aya::maps::MapData>::try_from(&'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::arena::Arena<&'a aya::maps::MapData>
+pub type aya::maps::arena::Arena<&'a aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::arena::Arena<&'a aya::maps::MapData>::try_from(&'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::perf::PerfEventArray<&'a aya::maps::MapData>::try_from(&'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1148,6 +1184,9 @@ pub fn aya::maps::SockMap<&'a mut aya::maps::MapData>::try_from(&'a mut aya::map
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::XskMap<&'a mut aya::maps::MapData>
 pub type aya::maps::XskMap<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::XskMap<&'a mut aya::maps::MapData>::try_from(&'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::arena::Arena<&'a mut aya::maps::MapData>
+pub type aya::maps::arena::Arena<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::arena::Arena<&'a mut aya::maps::MapData>::try_from(&'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
 impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::perf::PerfEventArray<&'a mut aya::maps::MapData>::try_from(&'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -1213,10 +1252,26 @@ impl core::marker::UnsafeUnpin for aya::maps::Map
 impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::Map
 impl core::panic::unwind_safe::UnwindSafe for aya::maps::Map
 pub enum aya::maps::MapError
+pub aya::maps::MapError::ArenaMmapError
+pub aya::maps::MapError::ArenaMmapError::address: u64
+pub aya::maps::MapError::ArenaMmapError::io_error: core::io::error::Error
+pub aya::maps::MapError::ArenaMmapError::length: usize
+pub aya::maps::MapError::ArenaNotMmapped
+pub aya::maps::MapError::ArenaOutOfBounds
+pub aya::maps::MapError::ArenaOutOfBounds::arena_size: usize
+pub aya::maps::MapError::ArenaOutOfBounds::offset: usize
+pub aya::maps::MapError::ArenaOutOfBounds::size: usize
 pub aya::maps::MapError::CreateError
 pub aya::maps::MapError::CreateError::io_error: core::io::error::Error
 pub aya::maps::MapError::CreateError::name: alloc::string::String
 pub aya::maps::MapError::ElementNotFound
+pub aya::maps::MapError::IncompatiblePinnedArena
+pub aya::maps::MapError::IncompatiblePinnedArena::name: alloc::string::String
+pub aya::maps::MapError::IncompatiblePinnedArena::reason: &'static str
+pub aya::maps::MapError::InvalidArenaMmap
+pub aya::maps::MapError::InvalidArenaMmap::address: u64
+pub aya::maps::MapError::InvalidArenaMmap::max_entries: u32
+pub aya::maps::MapError::InvalidArenaMmap::reason: &'static str
 pub aya::maps::MapError::InvalidKeySize
 pub aya::maps::MapError::InvalidKeySize::expected: usize
 pub aya::maps::MapError::InvalidKeySize::size: usize
@@ -1243,6 +1298,12 @@ pub aya::maps::MapError::PinError::name: core::option::Option<alloc::string::Str
 pub aya::maps::MapError::ProgIdNotSupported
 pub aya::maps::MapError::ProgramNotLoaded
 pub aya::maps::MapError::SyscallError(aya::sys::SyscallError)
+pub aya::maps::MapError::UnalignedArenaAccess
+pub aya::maps::MapError::UnalignedArenaAccess::alignment: usize
+pub aya::maps::MapError::UnalignedArenaAccess::offset: usize
+pub aya::maps::MapError::UnexpectedArenaMmapAddress
+pub aya::maps::MapError::UnexpectedArenaMmapAddress::actual: u64
+pub aya::maps::MapError::UnexpectedArenaMmapAddress::requested: u64
 pub aya::maps::MapError::Unsupported
 pub aya::maps::MapError::Unsupported::map_type: aya_obj::generated::linux_bindings_x86_64::bpf_map_type
 pub aya::maps::MapError::Unsupported::name: alloc::string::String
@@ -1327,6 +1388,34 @@ impl core::marker::Unpin for aya::maps::MapType
 impl core::marker::UnsafeUnpin for aya::maps::MapType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::MapType
 impl core::panic::unwind_safe::UnwindSafe for aya::maps::MapType
+pub struct aya::maps::Arena<T>
+impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::arena::Arena<T>
+pub fn aya::maps::arena::Arena<T>::as_ptr(&self) -> *mut u8
+pub unsafe fn aya::maps::arena::Arena<T>::atomic_u32_at(&self, usize) -> core::result::Result<&core::sync::atomic::AtomicU32, aya::maps::MapError>
+pub unsafe fn aya::maps::arena::Arena<T>::atomic_u64_at(&self, usize) -> core::result::Result<&core::sync::atomic::AtomicU64, aya::maps::MapError>
+pub fn aya::maps::arena::Arena<T>::is_empty(&self) -> bool
+pub fn aya::maps::arena::Arena<T>::len(&self) -> usize
+pub unsafe fn aya::maps::arena::Arena<T>::read_at<V: aya::Pod>(&self, usize) -> core::result::Result<V, aya::maps::MapError>
+pub fn aya::maps::arena::Arena<T>::user_base(&self) -> u64
+pub unsafe fn aya::maps::arena::Arena<T>::write_at<V: aya::Pod>(&self, usize, V) -> core::result::Result<(), aya::maps::MapError>
+impl core::convert::TryFrom<aya::maps::Map> for aya::maps::arena::Arena<aya::maps::MapData>
+pub type aya::maps::arena::Arena<aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::arena::Arena<aya::maps::MapData>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a aya::maps::Map> for aya::maps::arena::Arena<&'a aya::maps::MapData>
+pub type aya::maps::arena::Arena<&'a aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::arena::Arena<&'a aya::maps::MapData>::try_from(&'a aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<'a> core::convert::TryFrom<&'a mut aya::maps::Map> for aya::maps::arena::Arena<&'a mut aya::maps::MapData>
+pub type aya::maps::arena::Arena<&'a mut aya::maps::MapData>::Error = aya::maps::MapError
+pub fn aya::maps::arena::Arena<&'a mut aya::maps::MapData>::try_from(&'a mut aya::maps::Map) -> core::result::Result<Self, Self::Error>
+impl<T: core::fmt::Debug> core::fmt::Debug for aya::maps::arena::Arena<T>
+pub fn aya::maps::arena::Arena<T>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T> core::marker::Freeze for aya::maps::arena::Arena<T> where T: core::marker::Freeze
+impl<T> core::marker::Send for aya::maps::arena::Arena<T> where T: core::marker::Send
+impl<T> core::marker::Sync for aya::maps::arena::Arena<T> where T: core::marker::Sync
+impl<T> core::marker::Unpin for aya::maps::arena::Arena<T> where T: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya::maps::arena::Arena<T> where T: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::arena::Arena<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::arena::Arena<T> where T: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::Array<T, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::array::Array<T, V>
 pub fn aya::maps::array::Array<T, V>::get(&self, &u32, u64) -> core::result::Result<V, aya::maps::MapError>

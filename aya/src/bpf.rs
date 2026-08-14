@@ -29,7 +29,8 @@ use crate::{
         bpf_load_btf, is_bpf_cookie_supported, is_bpf_global_data_supported,
         is_btf_datasec_supported, is_btf_datasec_zero_supported, is_btf_decl_tag_supported,
         is_btf_enum64_supported, is_btf_float_supported, is_btf_func_global_supported,
-        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported, is_perf_link_supported,
+        is_btf_func_supported, is_btf_supported, is_btf_type_tag_supported,
+        is_ldimm64_full_range_offset_supported, is_perf_link_supported,
         is_probe_read_kernel_supported, is_prog_id_supported, is_prog_name_supported,
         retry_with_verifier_logs,
     },
@@ -82,6 +83,7 @@ fn detect_features() -> Features {
         is_bpf_cookie_supported(),
         is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_CPUMAP),
         is_prog_id_supported(bpf_map_type::BPF_MAP_TYPE_DEVMAP),
+        is_ldimm64_full_range_offset_supported(),
         btf,
     );
     debug!("BPF Feature Detection: {f:#?}");
@@ -664,6 +666,13 @@ impl<'a> EbpfLoader<'a> {
             if let Some(value_size) = value_size_override(map_type) {
                 map_obj.set_value_size(value_size)
             }
+            if map_type == bpf_map_type::BPF_MAP_TYPE_ARENA {
+                set_arena_data_offset(
+                    &mut map_obj,
+                    page_size(),
+                    FEATURES.ldimm64_full_range_offset(),
+                )?;
+            }
 
             let btf_fd = btf_fd.as_deref().map(|fd| fd.as_fd());
 
@@ -929,6 +938,7 @@ fn parse_map(
     let (name, map) = data;
     let map_type = bpf_map_type::try_from(map.obj().map_type()).map_err(MapError::from)?;
     let map = match map_type {
+        bpf_map_type::BPF_MAP_TYPE_ARENA => Map::Arena(map),
         bpf_map_type::BPF_MAP_TYPE_ARRAY => Map::Array(map),
         bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY => Map::PerCpuArray(map),
         bpf_map_type::BPF_MAP_TYPE_PROG_ARRAY => Map::ProgramArray(map),
@@ -1007,6 +1017,68 @@ fn value_size_override(map_type: bpf_map_type) -> Option<u32> {
     }
 }
 
+fn set_arena_data_offset(
+    map: &mut aya_obj::Map,
+    page_size: usize,
+    ldimm64_full_range_offset: bool,
+) -> Result<(), MapError> {
+    let max_entries = map.max_entries();
+    let map_extra = map.map_extra();
+    let Some(data) = map.arena_data_mut() else {
+        return Ok(());
+    };
+
+    let map_offset = arena_data_offset(
+        max_entries,
+        map_extra,
+        data.data().len(),
+        page_size,
+        ldimm64_full_range_offset,
+    )?;
+    data.set_map_offset(map_offset);
+    Ok(())
+}
+
+fn arena_data_offset(
+    max_entries: u32,
+    map_extra: u64,
+    data_size: usize,
+    page_size: usize,
+    ldimm64_full_range_offset: bool,
+) -> Result<u32, MapError> {
+    let arena_size = usize::try_from(max_entries)
+        .ok()
+        .and_then(|pages| pages.checked_mul(page_size))
+        .ok_or(MapError::InvalidArenaMmap {
+            address: map_extra,
+            max_entries,
+            reason: "mapping size overflows usize",
+        })?;
+    if data_size > arena_size {
+        return Err(MapError::ArenaOutOfBounds {
+            offset: 0,
+            size: data_size,
+            arena_size,
+        });
+    }
+
+    // Older kernels restrict direct map-value offsets to less than 1 << 29.
+    // Kernels supporting full-range offsets accept the arena's full 32-bit address range, allowing
+    // globals to be placed at the end of the arena. This mirrors libbpf:
+    // https://github.com/libbpf/libbpf/blob/f7081a6baf3f54949aacb8c2fc11bb30783b83e9/src/libbpf.c#L7444-L7450
+    let map_offset = if ldimm64_full_range_offset {
+        let data_size = data_size.div_ceil(page_size) * page_size;
+        u32::try_from(arena_size - data_size).map_err(|_error| MapError::InvalidArenaMmap {
+            address: map_extra,
+            max_entries,
+            reason: "arena data offset exceeds the 32-bit address range",
+        })?
+    } else {
+        0
+    };
+    Ok(map_offset)
+}
+
 // Adjusts the byte size of a RingBuf map to match a power-of-two multiple of the page size.
 //
 // This mirrors the logic used by libbpf.
@@ -1030,9 +1102,11 @@ const fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
 
 #[cfg(test)]
 mod tests {
+    use assert_matches::assert_matches;
     use aya_obj::generated::bpf_map_type::*;
 
     use super::{Btf, BtfSource, EbpfLoader, TargetBtf};
+    use crate::maps::MapError;
 
     const PAGE_SIZE: u32 = 4096;
     const NUM_CPUS: u32 = 4;
@@ -1100,6 +1174,44 @@ mod tests {
             Ok(Btf::new())
         })
         .unwrap();
+    }
+
+    #[test]
+    fn test_arena_data_offset() {
+        use super::arena_data_offset;
+
+        assert_eq!(
+            arena_data_offset(4, 0, 1, PAGE_SIZE as usize, false).unwrap(),
+            0
+        );
+        assert_eq!(
+            arena_data_offset(4, 0, 1, PAGE_SIZE as usize, true).unwrap(),
+            3 * PAGE_SIZE
+        );
+        assert_eq!(
+            arena_data_offset(4, 0, PAGE_SIZE as usize + 1, PAGE_SIZE as usize, true).unwrap(),
+            2 * PAGE_SIZE
+        );
+    }
+
+    #[test]
+    fn test_arena_data_offset_rejects_data_larger_than_arena() {
+        use super::arena_data_offset;
+
+        assert_matches!(
+            arena_data_offset(
+                1,
+                0,
+                PAGE_SIZE as usize + 1,
+                PAGE_SIZE as usize,
+                true,
+            ),
+            Err(MapError::ArenaOutOfBounds {
+                offset: 0,
+                size,
+                arena_size,
+            }) if size == PAGE_SIZE as usize + 1 && arena_size == PAGE_SIZE as usize
+        );
     }
 }
 

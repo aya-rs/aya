@@ -16,6 +16,8 @@ pub aya_obj::btf::BtfError::InvalidLineInfo
 pub aya_obj::btf::BtfError::InvalidLineInfo::len: usize
 pub aya_obj::btf::BtfError::InvalidLineInfo::offset: usize
 pub aya_obj::btf::BtfError::InvalidLineInfo::section_len: usize
+pub aya_obj::btf::BtfError::InvalidMapExtra
+pub aya_obj::btf::BtfError::InvalidMapExtra::name: alloc::string::String
 pub aya_obj::btf::BtfError::InvalidRelocationInfo
 pub aya_obj::btf::BtfError::InvalidRelocationKind
 pub aya_obj::btf::BtfError::InvalidRelocationKind::kind: u32
@@ -4496,6 +4498,8 @@ pub enum aya_obj::maps::Map
 pub aya_obj::maps::Map::Btf(aya_obj::maps::BtfMap)
 pub aya_obj::maps::Map::Legacy(aya_obj::maps::LegacyMap)
 impl aya_obj::maps::Map
+pub const fn aya_obj::maps::Map::arena_data(&self) -> core::option::Option<&aya_obj::maps::ArenaData>
+pub const fn aya_obj::maps::Map::arena_data_mut(&mut self) -> core::option::Option<&mut aya_obj::maps::ArenaData>
 pub fn aya_obj::maps::Map::data(&self) -> &[u8]
 pub fn aya_obj::maps::Map::data_mut(&mut self) -> &mut alloc::vec::Vec<u8>
 pub fn aya_obj::maps::Map::inner(&self) -> core::option::Option<Self>
@@ -4562,6 +4566,23 @@ impl core::marker::Unpin for aya_obj::maps::PinningType
 impl core::marker::UnsafeUnpin for aya_obj::maps::PinningType
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::PinningType
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::PinningType
+pub struct aya_obj::maps::ArenaData
+impl aya_obj::maps::ArenaData
+pub fn aya_obj::maps::ArenaData::data(&self) -> &[u8]
+pub const fn aya_obj::maps::ArenaData::map_offset(&self) -> u32
+pub const fn aya_obj::maps::ArenaData::section_index(&self) -> usize
+pub const fn aya_obj::maps::ArenaData::set_map_offset(&mut self, u32)
+impl core::clone::Clone for aya_obj::maps::ArenaData
+pub fn aya_obj::maps::ArenaData::clone(&self) -> aya_obj::maps::ArenaData
+impl core::fmt::Debug for aya_obj::maps::ArenaData
+pub fn aya_obj::maps::ArenaData::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya_obj::maps::ArenaData
+impl core::marker::Send for aya_obj::maps::ArenaData
+impl core::marker::Sync for aya_obj::maps::ArenaData
+impl core::marker::Unpin for aya_obj::maps::ArenaData
+impl core::marker::UnsafeUnpin for aya_obj::maps::ArenaData
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::ArenaData
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::ArenaData
 pub struct aya_obj::maps::BtfMap
 pub aya_obj::maps::BtfMap::def: aya_obj::maps::BtfMapDef
 impl core::clone::Clone for aya_obj::maps::BtfMap
@@ -4642,6 +4663,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::bpf_map_def
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::bpf_map_def
 pub mod aya_obj::obj
 pub enum aya_obj::obj::EbpfSectionKind
+pub aya_obj::obj::EbpfSectionKind::ArenaData
 pub aya_obj::obj::EbpfSectionKind::Bss
 pub aya_obj::obj::EbpfSectionKind::Btf
 pub aya_obj::obj::EbpfSectionKind::BtfExt
@@ -4671,8 +4693,15 @@ impl core::marker::UnsafeUnpin for aya_obj::EbpfSectionKind
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::EbpfSectionKind
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::EbpfSectionKind
 pub enum aya_obj::obj::ParseError
+pub aya_obj::obj::ParseError::ArenaMapNotBtfDefined
+pub aya_obj::obj::ParseError::ArenaMapNotFound
 pub aya_obj::obj::ParseError::BtfError(aya_obj::btf::BtfError)
+pub aya_obj::obj::ParseError::DuplicateArenaDataSection
 pub aya_obj::obj::ParseError::ElfError(object::read::Error)
+pub aya_obj::obj::ParseError::InvalidArenaDataSection
+pub aya_obj::obj::ParseError::InvalidArenaDataSize
+pub aya_obj::obj::ParseError::InvalidArenaDataSize::data_len: usize
+pub aya_obj::obj::ParseError::InvalidArenaDataSize::size: u64
 pub aya_obj::obj::ParseError::InvalidGlobalData
 pub aya_obj::obj::ParseError::InvalidGlobalData::data_size: usize
 pub aya_obj::obj::ParseError::InvalidGlobalData::name: alloc::string::String
@@ -4695,6 +4724,7 @@ pub aya_obj::obj::ParseError::MapSymbolNameNotFound
 pub aya_obj::obj::ParseError::MapSymbolNameNotFound::i: usize
 pub aya_obj::obj::ParseError::MissingLicenseNullTerminator
 pub aya_obj::obj::ParseError::MissingLicenseNullTerminator::data: alloc::vec::Vec<u8>
+pub aya_obj::obj::ParseError::MultipleArenaMaps
 pub aya_obj::obj::ParseError::NoBTF
 pub aya_obj::obj::ParseError::NoSymbolsForSection
 pub aya_obj::obj::ParseError::NoSymbolsForSection::section_name: alloc::string::String
@@ -4796,6 +4826,7 @@ pub const fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
 pub const fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
 pub const fn aya_obj::Features::cpumap_prog_id(&self) -> bool
 pub const fn aya_obj::Features::devmap_prog_id(&self) -> bool
+pub const fn aya_obj::Features::ldimm64_full_range_offset(&self) -> bool
 impl core::default::Default for aya_obj::Features
 pub fn aya_obj::Features::default() -> aya_obj::Features
 impl core::fmt::Debug for aya_obj::Features
@@ -5219,6 +5250,7 @@ impl core::marker::UnsafeUnpin for aya_obj::relocation::EbpfRelocationError
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::relocation::EbpfRelocationError
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::relocation::EbpfRelocationError
 pub enum aya_obj::EbpfSectionKind
+pub aya_obj::EbpfSectionKind::ArenaData
 pub aya_obj::EbpfSectionKind::Bss
 pub aya_obj::EbpfSectionKind::Btf
 pub aya_obj::EbpfSectionKind::BtfExt
@@ -5287,6 +5319,8 @@ pub enum aya_obj::Map
 pub aya_obj::Map::Btf(aya_obj::maps::BtfMap)
 pub aya_obj::Map::Legacy(aya_obj::maps::LegacyMap)
 impl aya_obj::maps::Map
+pub const fn aya_obj::maps::Map::arena_data(&self) -> core::option::Option<&aya_obj::maps::ArenaData>
+pub const fn aya_obj::maps::Map::arena_data_mut(&mut self) -> core::option::Option<&mut aya_obj::maps::ArenaData>
 pub fn aya_obj::maps::Map::data(&self) -> &[u8]
 pub fn aya_obj::maps::Map::data_mut(&mut self) -> &mut alloc::vec::Vec<u8>
 pub fn aya_obj::maps::Map::inner(&self) -> core::option::Option<Self>
@@ -5315,8 +5349,15 @@ impl core::marker::UnsafeUnpin for aya_obj::maps::Map
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::maps::Map
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::maps::Map
 pub enum aya_obj::ParseError
+pub aya_obj::ParseError::ArenaMapNotBtfDefined
+pub aya_obj::ParseError::ArenaMapNotFound
 pub aya_obj::ParseError::BtfError(aya_obj::btf::BtfError)
+pub aya_obj::ParseError::DuplicateArenaDataSection
 pub aya_obj::ParseError::ElfError(object::read::Error)
+pub aya_obj::ParseError::InvalidArenaDataSection
+pub aya_obj::ParseError::InvalidArenaDataSize
+pub aya_obj::ParseError::InvalidArenaDataSize::data_len: usize
+pub aya_obj::ParseError::InvalidArenaDataSize::size: u64
 pub aya_obj::ParseError::InvalidGlobalData
 pub aya_obj::ParseError::InvalidGlobalData::data_size: usize
 pub aya_obj::ParseError::InvalidGlobalData::name: alloc::string::String
@@ -5339,6 +5380,7 @@ pub aya_obj::ParseError::MapSymbolNameNotFound
 pub aya_obj::ParseError::MapSymbolNameNotFound::i: usize
 pub aya_obj::ParseError::MissingLicenseNullTerminator
 pub aya_obj::ParseError::MissingLicenseNullTerminator::data: alloc::vec::Vec<u8>
+pub aya_obj::ParseError::MultipleArenaMaps
 pub aya_obj::ParseError::NoBTF
 pub aya_obj::ParseError::NoSymbolsForSection
 pub aya_obj::ParseError::NoSymbolsForSection::section_name: alloc::string::String
@@ -5440,6 +5482,7 @@ pub const fn aya_obj::Features::bpf_probe_read_kernel(&self) -> bool
 pub const fn aya_obj::Features::btf(&self) -> core::option::Option<&aya_obj::btf::BtfFeatures>
 pub const fn aya_obj::Features::cpumap_prog_id(&self) -> bool
 pub const fn aya_obj::Features::devmap_prog_id(&self) -> bool
+pub const fn aya_obj::Features::ldimm64_full_range_offset(&self) -> bool
 impl core::default::Default for aya_obj::Features
 pub fn aya_obj::Features::default() -> aya_obj::Features
 impl core::fmt::Debug for aya_obj::Features

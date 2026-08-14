@@ -144,6 +144,22 @@ pub enum Map {
 }
 
 impl Map {
+    /// Returns the initial arena data associated with this map.
+    pub const fn arena_data(&self) -> Option<&ArenaData> {
+        match self {
+            Self::Legacy(_) => None,
+            Self::Btf(map) => map.arena_data.as_ref(),
+        }
+    }
+
+    /// Returns the initial arena data associated with this map as mutable.
+    pub const fn arena_data_mut(&mut self) -> Option<&mut ArenaData> {
+        match self {
+            Self::Legacy(_) => None,
+            Self::Btf(map) => map.arena_data.as_mut(),
+        }
+    }
+
     /// Returns the map type
     pub const fn map_type(&self) -> u32 {
         match self {
@@ -282,6 +298,7 @@ impl Map {
                     section_index: 0,
                     symbol_index: 0,
                     data: Vec::new(),
+                    arena_data: None,
                 })
             }),
         }
@@ -311,6 +328,38 @@ impl Map {
             symbol_index: None,
             data: Vec::new(),
         })
+    }
+}
+
+/// Initial contents of an arena's `.addr_space.1` section.
+#[derive(Debug, Clone)]
+pub struct ArenaData {
+    pub(crate) section_index: usize,
+    pub(crate) bytes: Vec<u8>,
+    pub(crate) map_offset: u32,
+}
+
+impl ArenaData {
+    /// Returns the ELF section index of `.addr_space.1`.
+    pub const fn section_index(&self) -> usize {
+        self.section_index
+    }
+
+    /// Returns the bytes used to initialize a newly created arena.
+    pub fn data(&self) -> &[u8] {
+        &self.bytes
+    }
+
+    /// Returns the runtime byte offset of the initial data within the arena map.
+    ///
+    /// This is not an ELF file offset or a userspace virtual address.
+    pub const fn map_offset(&self) -> u32 {
+        self.map_offset
+    }
+
+    /// Sets the runtime byte offset of the initial data within the arena map.
+    pub const fn set_map_offset(&mut self, offset: u32) {
+        self.map_offset = offset;
     }
 }
 
@@ -348,4 +397,5 @@ pub struct BtfMap {
     pub(crate) section_index: usize,
     pub(crate) symbol_index: usize,
     pub(crate) data: Vec<u8>,
+    pub(crate) arena_data: Option<ArenaData>,
 }

@@ -24,9 +24,11 @@ use crate::{
     },
     generated::{
         BPF_CALL, BPF_F_RDONLY_PROG, BPF_JMP, BPF_K, bpf_func_id, bpf_insn, bpf_map_info,
-        bpf_map_type::BPF_MAP_TYPE_ARRAY,
+        bpf_map_type::{BPF_MAP_TYPE_ARENA, BPF_MAP_TYPE_ARRAY},
     },
-    maps::{BtfMap, BtfMapDef, LegacyMap, MINIMUM_MAP_SIZE, Map, PinningType, bpf_map_def},
+    maps::{
+        ArenaData, BtfMap, BtfMapDef, LegacyMap, MINIMUM_MAP_SIZE, Map, PinningType, bpf_map_def,
+    },
     programs::{
         CgroupSkbAttachType, CgroupSockAddrAttachType, CgroupSockAttachType,
         CgroupSockoptAttachType, SkReuseportAttachType, SkSkbKind, XdpAttachType,
@@ -36,6 +38,7 @@ use crate::{
 };
 
 const KERNEL_VERSION_ANY: u32 = 0xFFFF_FFFE;
+const ARENA_DATA_SECTION_NAME: &str = ".addr_space.1";
 
 /// Features implements BPF and BTF feature detection
 #[derive(Default, Debug)]
@@ -47,6 +50,7 @@ pub struct Features {
     bpf_cookie: bool,
     cpumap_prog_id: bool,
     devmap_prog_id: bool,
+    ldimm64_full_range_offset: bool,
     btf: Option<BtfFeatures>,
 }
 
@@ -65,6 +69,7 @@ impl Features {
         bpf_cookie: bool,
         cpumap_prog_id: bool,
         devmap_prog_id: bool,
+        ldimm64_full_range_offset: bool,
         btf: Option<BtfFeatures>,
     ) -> Self {
         Self {
@@ -75,6 +80,7 @@ impl Features {
             bpf_cookie,
             cpumap_prog_id,
             devmap_prog_id,
+            ldimm64_full_range_offset,
             btf,
         }
     }
@@ -117,6 +123,11 @@ impl Features {
         self.devmap_prog_id
     }
 
+    /// Returns whether direct map value offsets can use the full 32-bit range.
+    pub const fn ldimm64_full_range_offset(&self) -> bool {
+        self.ldimm64_full_range_offset
+    }
+
     /// If BTF is supported, returns which BTF features are supported.
     pub const fn btf(&self) -> Option<&BtfFeatures> {
         self.btf.as_ref()
@@ -147,6 +158,7 @@ pub struct Object {
     pub(crate) symbol_table: HashMap<usize, Symbol>,
     pub(crate) symbols_by_section: HashMap<SectionIndex, Vec<usize>>,
     pub(crate) section_infos: HashMap<String, (SectionIndex, u64)>,
+    pub(crate) pending_arena_data: Option<ArenaData>,
     // symbol_offset_by_name caches symbols that could be referenced from a
     // BTF VAR type so the offsets can be fixed up
     pub(crate) symbol_offset_by_name: HashMap<String, u64>,
@@ -566,6 +578,8 @@ impl Object {
             bpf_obj.parse_section(Section::try_from(&s)?)?;
         }
 
+        bpf_obj.resolve_arena_data()?;
+
         Ok(bpf_obj)
     }
 
@@ -583,8 +597,40 @@ impl Object {
             symbol_table: HashMap::new(),
             symbols_by_section: HashMap::new(),
             section_infos: HashMap::new(),
+            pending_arena_data: None,
             symbol_offset_by_name: HashMap::new(),
         }
+    }
+
+    fn resolve_arena_data(&mut self) -> Result<(), ParseError> {
+        let mut arena_maps = self
+            .maps
+            .iter_mut()
+            .filter(|(_, map)| map.map_type() == BPF_MAP_TYPE_ARENA as u32);
+        let arena_map = arena_maps.next();
+
+        if arena_maps.next().is_some() {
+            return Err(ParseError::MultipleArenaMaps);
+        }
+
+        let Some(arena_data) = self.pending_arena_data.take() else {
+            return Ok(());
+        };
+        let Some((name, map)) = arena_map else {
+            return Err(ParseError::ArenaMapNotFound);
+        };
+        let Map::Btf(map) = map else {
+            return Err(ParseError::ArenaMapNotBtfDefined);
+        };
+
+        debug!(
+            "resolved arena data section {} ({} bytes) to map {name}",
+            arena_data.section_index,
+            arena_data.bytes.len(),
+        );
+        map.arena_data = Some(arena_data);
+
+        Ok(())
     }
 
     /// Returns true if this object contains CO-RE relocations.
@@ -833,6 +879,7 @@ impl Object {
                                 section_index: section.index.0,
                                 symbol_index: *symbol_index,
                                 data: Vec::new(),
+                                arena_data: None,
                             }),
                         );
                     }
@@ -897,6 +944,35 @@ impl Object {
             EbpfSectionKind::Data | EbpfSectionKind::Rodata | EbpfSectionKind::Bss => {
                 self.maps
                     .insert(section.name.to_string(), parse_data_map_section(&section));
+            }
+            EbpfSectionKind::ArenaData => {
+                if section.size == 0 {
+                    return Ok(());
+                }
+                // libbpf does not require SHF_WRITE for an SHT_PROGBITS `.addr_space.1`, so
+                // accept both writable and read-only initialized data.
+                // https://github.com/libbpf/libbpf/blob/f7081a6baf3f54949aacb8c2fc11bb30783b83e9/src/libbpf.c#L4027-L4029
+                if !matches!(
+                    section.elf_kind,
+                    SectionKind::Data | SectionKind::ReadOnlyData
+                ) {
+                    return Err(ParseError::InvalidArenaDataSection);
+                }
+                if section.data.len() as u64 != section.size {
+                    return Err(ParseError::InvalidArenaDataSize {
+                        size: section.size,
+                        data_len: section.data.len(),
+                    });
+                }
+                if self.pending_arena_data.is_some() {
+                    return Err(ParseError::DuplicateArenaDataSection);
+                }
+
+                self.pending_arena_data = Some(ArenaData {
+                    section_index: section.index.0,
+                    bytes: section.data.to_vec(),
+                    map_offset: 0,
+                });
             }
             EbpfSectionKind::Text => self.parse_text_section(section)?,
             EbpfSectionKind::Btf => self.parse_btf(&section)?,
@@ -1057,6 +1133,26 @@ pub enum ParseError {
     #[error("no symbols found in the {section_name} section")]
     NoSymbolsForSection { section_name: String },
 
+    #[error("multiple `{ARENA_DATA_SECTION_NAME}` sections are not supported")]
+    DuplicateArenaDataSection,
+
+    #[error("section `{ARENA_DATA_SECTION_NAME}` must be an initialized ELF data section")]
+    InvalidArenaDataSection,
+
+    #[error(
+        "section `{ARENA_DATA_SECTION_NAME}` declares size {size}, but contains {data_len} bytes"
+    )]
+    InvalidArenaDataSize { size: u64, data_len: usize },
+
+    #[error("only one BPF_MAP_TYPE_ARENA map is supported per object")]
+    MultipleArenaMaps,
+
+    #[error("section `{ARENA_DATA_SECTION_NAME}` requires a BPF_MAP_TYPE_ARENA map")]
+    ArenaMapNotFound,
+
+    #[error("the arena associated with `{ARENA_DATA_SECTION_NAME}` must be defined in `.maps`")]
+    ArenaMapNotBtfDefined,
+
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]
     NoBTF,
@@ -1085,6 +1181,8 @@ pub enum EbpfSectionKind {
     Rodata,
     /// `.bss`
     Bss,
+    /// `.addr_space.1`
+    ArenaData,
     /// `.text`
     Text,
     /// `.BTF`
@@ -1099,7 +1197,9 @@ pub enum EbpfSectionKind {
 
 impl EbpfSectionKind {
     fn from_name(name: &str) -> Self {
-        if name.starts_with("license") {
+        if name == ARENA_DATA_SECTION_NAME {
+            Self::ArenaData
+        } else if name.starts_with("license") {
             Self::License
         } else if name.starts_with("version") {
             Self::Version
@@ -1129,6 +1229,7 @@ impl EbpfSectionKind {
 struct Section<'a> {
     index: SectionIndex,
     kind: EbpfSectionKind,
+    elf_kind: SectionKind,
     address: u64,
     name: &'a str,
     data: &'a [u8],
@@ -1146,9 +1247,10 @@ impl<'a> TryFrom<&'a ObjSection<'_, '_>> for Section<'a> {
             error,
         };
         let name = section.name().map_err(map_err)?;
+        let elf_kind = section.kind();
         let kind = match EbpfSectionKind::from_name(name) {
             EbpfSectionKind::Undefined => {
-                if section.kind() == SectionKind::Text && section.size() > 0 {
+                if elf_kind == SectionKind::Text && section.size() > 0 {
                     EbpfSectionKind::Program
                 } else {
                     EbpfSectionKind::Undefined
@@ -1159,6 +1261,7 @@ impl<'a> TryFrom<&'a ObjSection<'_, '_>> for Section<'a> {
         Ok(Section {
             index,
             kind,
+            elf_kind,
             address: section.address(),
             name,
             data: section.data().map_err(map_err)?,
@@ -1237,6 +1340,37 @@ fn get_map_field(btf: &Btf, type_id: u32) -> Result<u32, BtfError> {
         }
     };
     Ok(arr.len)
+}
+
+fn get_map_extra(btf: &Btf, type_id: u32, map_name: &str) -> Result<u64, BtfError> {
+    let type_id = btf.resolve_type(type_id)?;
+
+    let invalid = || BtfError::InvalidMapExtra {
+        name: map_name.to_owned(),
+    };
+
+    match btf.type_by_id(type_id)? {
+        BtfType::Ptr(_) => get_map_field(btf, type_id).map(u64::from),
+        BtfType::Enum(en) => {
+            let [variant] = en.variants.as_slice() else {
+                return Err(invalid());
+            };
+
+            if en.is_signed() {
+                Ok(i64::from(variant.value as i32) as u64)
+            } else {
+                Ok(u64::from(variant.value))
+            }
+        }
+        BtfType::Enum64(en) => {
+            let [variant] = en.variants.as_slice() else {
+                return Err(invalid());
+            };
+
+            Ok((u64::from(variant.value_high) << 32) | u64::from(variant.value_low))
+        }
+        _ => Err(BtfError::UnexpectedBtfType { type_id }),
+    }
 }
 
 // Parse '.bss' '.data' and '.rodata' sections. These sections are arrays of
@@ -1387,7 +1521,7 @@ fn parse_btf_map_struct(
                 map_def.map_flags = get_map_field(btf, m.btf_type)?;
             }
             "map_extra" => {
-                map_def.map_extra = get_map_field(btf, m.btf_type)?.into();
+                map_def.map_extra = get_map_extra(btf, m.btf_type, map_name)?;
             }
             "pinning" => {
                 if is_inner {
@@ -1475,6 +1609,7 @@ pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
             section_index: 0,
             symbol_index: 0,
             data: Vec::new(),
+            arena_data: None,
         })
     } else {
         Map::Legacy(LegacyMap {
@@ -1558,7 +1693,10 @@ mod tests {
     use rstest::rstest;
 
     use super::*;
-    use crate::generated::{bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, btf_ext_header};
+    use crate::{
+        btf::{BtfEnum, BtfEnum64, BtfMember, Enum, Enum64, Ptr},
+        generated::{bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, btf_ext_header},
+    };
 
     const FAKE_INS_LEN: u64 = 8;
 
@@ -1572,6 +1710,7 @@ mod tests {
         Section {
             index: SectionIndex(idx),
             kind,
+            elf_kind: SectionKind::Data,
             address: 0,
             name,
             data,
@@ -1616,6 +1755,127 @@ mod tests {
         unsafe { crate::util::bytes_of(val) }
     }
 
+    fn fake_btf_arena_map(section_index: usize, symbol_index: usize) -> Map {
+        Map::Btf(BtfMap {
+            def: BtfMapDef {
+                map_type: BPF_MAP_TYPE_ARENA as u32,
+                ..Default::default()
+            },
+            inner_def: None,
+            section_index,
+            symbol_index,
+            data: Vec::new(),
+            arena_data: None,
+        })
+    }
+
+    #[test]
+    fn test_get_map_extra_from_ptr_to_array() {
+        let mut btf = Btf::new();
+        let array = btf.add_type(BtfType::Array(Array::new(0, 0, 0, u32::MAX)));
+        let ptr = btf.add_type(BtfType::Ptr(Ptr::new(0, array)));
+
+        assert_eq!(
+            get_map_extra(&btf, ptr, "arena").unwrap(),
+            u64::from(u32::MAX)
+        );
+    }
+
+    #[test]
+    fn test_get_map_extra_from_enum() {
+        let mut btf = Btf::new();
+        let en = btf.add_type(BtfType::Enum(Enum::new(
+            0,
+            true,
+            vec![BtfEnum::new(0, u32::MAX)],
+        )));
+
+        assert_eq!(get_map_extra(&btf, en, "arena").unwrap(), u64::MAX);
+    }
+
+    #[test]
+    fn test_get_map_extra_from_enum64() {
+        let mut btf = Btf::new();
+        let value = 1u64 << 44;
+        let en = btf.add_type(BtfType::Enum64(Enum64::new(
+            0,
+            false,
+            vec![BtfEnum64::new(0, value)],
+        )));
+
+        assert_eq!(get_map_extra(&btf, en, "arena").unwrap(), value);
+    }
+
+    #[test]
+    fn test_get_map_extra_rejects_empty_enum() {
+        let mut btf = Btf::new();
+        let en = btf.add_type(BtfType::Enum(Enum::new(0, false, Vec::new())));
+
+        assert_matches!(
+            get_map_extra(&btf, en, "arena"),
+            Err(BtfError::InvalidMapExtra { name }) if name == "arena"
+        );
+    }
+
+    #[test]
+    fn test_get_map_extra_rejects_multiple_enum_variants() {
+        let mut btf = Btf::new();
+        let en = btf.add_type(BtfType::Enum(Enum::new(
+            0,
+            false,
+            vec![BtfEnum::new(0, 1), BtfEnum::new(0, 2)],
+        )));
+        let en64 = btf.add_type(BtfType::Enum64(Enum64::new(
+            0,
+            false,
+            vec![BtfEnum64::new(0, 1), BtfEnum64::new(0, 2)],
+        )));
+
+        for type_id in [en, en64] {
+            assert_matches!(
+                get_map_extra(&btf, type_id, "arena"),
+                Err(BtfError::InvalidMapExtra { name }) if name == "arena"
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_map_extra_rejects_unexpected_type() {
+        let mut btf = Btf::new();
+        let type_id = btf.add_type(BtfType::Struct(Struct::new(0, Vec::new(), 0)));
+
+        assert_matches!(
+            get_map_extra(&btf, type_id, "arena"),
+            Err(BtfError::UnexpectedBtfType { type_id: id }) if id == type_id
+        );
+    }
+
+    #[test]
+    fn test_parse_btf_map_struct_map_extra_enum64() {
+        let mut btf = Btf::new();
+        let map_extra_name = btf.add_string("map_extra");
+        let value = 1u64 << 44;
+        let map_extra = btf.add_type(BtfType::Enum64(Enum64::new(
+            0,
+            false,
+            vec![BtfEnum64::new(0, value)],
+        )));
+        let map = Struct::new(
+            0,
+            vec![BtfMember {
+                name_offset: map_extra_name,
+                btf_type: map_extra,
+                offset: 0,
+            }],
+            8,
+        );
+
+        let (map_def, inner_def) = parse_btf_map_struct(&btf, &map, "arena", false).unwrap();
+
+        assert_eq!(map_def.map_extra, value);
+        assert!(inner_def.is_none());
+    }
+
     #[test]
     fn test_parse_map_info_keyless_btf_map() {
         let mut info = unsafe { mem::zeroed::<bpf_map_info>() };
@@ -1640,6 +1900,220 @@ mod tests {
     #[test]
     fn test_parse_generic_error() {
         assert_matches!(Object::parse(&b"foo"[..]), Err(ParseError::ElfError(_)))
+    }
+
+    #[test]
+    fn test_arena_data_section_kind() {
+        assert_eq!(
+            EbpfSectionKind::from_name(ARENA_DATA_SECTION_NAME),
+            EbpfSectionKind::ArenaData
+        );
+        assert_eq!(
+            EbpfSectionKind::from_name(".addr_space.2"),
+            EbpfSectionKind::Undefined
+        );
+    }
+
+    #[test]
+    fn test_parse_arena_data_section() {
+        let mut obj = fake_obj();
+        let data = [1, 2, 3, 4];
+
+        obj.parse_section(fake_section(
+            EbpfSectionKind::ArenaData,
+            ARENA_DATA_SECTION_NAME,
+            &data,
+            Some(7),
+        ))
+        .unwrap();
+
+        assert!(obj.maps.is_empty());
+        assert_matches!(
+            obj.pending_arena_data.as_ref(),
+            Some(ArenaData {
+                section_index: 7,
+                bytes,
+                map_offset: 0,
+            }) if bytes == &data
+        );
+    }
+
+    #[test]
+    fn test_parse_zero_initialized_arena_data_section() {
+        let mut obj = fake_obj();
+        let data = [0; 4];
+
+        obj.parse_section(fake_section(
+            EbpfSectionKind::ArenaData,
+            ARENA_DATA_SECTION_NAME,
+            &data,
+            Some(7),
+        ))
+        .unwrap();
+
+        assert_eq!(obj.pending_arena_data.unwrap().bytes, data);
+    }
+
+    #[test]
+    fn test_empty_arena_data_section_is_ignored() {
+        let mut obj = fake_obj();
+
+        obj.parse_section(fake_section(
+            EbpfSectionKind::ArenaData,
+            ARENA_DATA_SECTION_NAME,
+            &[],
+            Some(7),
+        ))
+        .unwrap();
+
+        assert!(obj.pending_arena_data.is_none());
+    }
+
+    #[test]
+    fn test_arena_data_section_must_be_initialized_data() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(Section {
+                index: SectionIndex(7),
+                kind: EbpfSectionKind::ArenaData,
+                elf_kind: SectionKind::UninitializedData,
+                address: 0,
+                name: ARENA_DATA_SECTION_NAME,
+                data: &[],
+                size: 4,
+                relocations: Vec::new(),
+            }),
+            Err(ParseError::InvalidArenaDataSection)
+        );
+    }
+
+    #[test]
+    fn test_read_only_arena_data_section_is_accepted() {
+        let mut obj = fake_obj();
+        let mut section = fake_section(
+            EbpfSectionKind::ArenaData,
+            ARENA_DATA_SECTION_NAME,
+            &[1, 2, 3, 4],
+            Some(7),
+        );
+        section.elf_kind = SectionKind::ReadOnlyData;
+
+        obj.parse_section(section).unwrap();
+
+        assert_eq!(obj.pending_arena_data.unwrap().bytes, [1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn test_arena_data_section_size_must_match_data() {
+        let mut obj = fake_obj();
+
+        assert_matches!(
+            obj.parse_section(Section {
+                index: SectionIndex(7),
+                kind: EbpfSectionKind::ArenaData,
+                elf_kind: SectionKind::Data,
+                address: 0,
+                name: ARENA_DATA_SECTION_NAME,
+                data: &[1, 2],
+                size: 4,
+                relocations: Vec::new(),
+            }),
+            Err(ParseError::InvalidArenaDataSize {
+                size: 4,
+                data_len: 2,
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_duplicate_arena_data_section() {
+        let mut obj = fake_obj();
+        let section = || {
+            fake_section(
+                EbpfSectionKind::ArenaData,
+                ARENA_DATA_SECTION_NAME,
+                &[0],
+                Some(7),
+            )
+        };
+
+        obj.parse_section(section()).unwrap();
+        assert_matches!(
+            obj.parse_section(section()),
+            Err(ParseError::DuplicateArenaDataSection)
+        );
+    }
+
+    #[test]
+    fn test_arena_data_requires_arena_map() {
+        let mut obj = fake_obj();
+        obj.parse_section(fake_section(
+            EbpfSectionKind::ArenaData,
+            ARENA_DATA_SECTION_NAME,
+            &[0],
+            Some(7),
+        ))
+        .unwrap();
+
+        assert_matches!(obj.resolve_arena_data(), Err(ParseError::ArenaMapNotFound));
+    }
+
+    #[test]
+    fn test_only_one_arena_map_is_supported() {
+        let mut obj = fake_obj();
+        obj.maps
+            .insert("arena_1".to_owned(), fake_btf_arena_map(1, 1));
+        obj.maps
+            .insert("arena_2".to_owned(), fake_btf_arena_map(1, 2));
+
+        assert_matches!(obj.resolve_arena_data(), Err(ParseError::MultipleArenaMaps));
+    }
+
+    #[test]
+    fn test_arena_data_requires_btf_defined_map() {
+        let mut obj = fake_obj();
+        obj.parse_section(fake_section(
+            EbpfSectionKind::ArenaData,
+            ARENA_DATA_SECTION_NAME,
+            &[0],
+            Some(7),
+        ))
+        .unwrap();
+        obj.maps.insert(
+            "arena".to_owned(),
+            Map::new_from_params(BPF_MAP_TYPE_ARENA as u32, 0, 0, 1, 0),
+        );
+
+        assert_matches!(
+            obj.resolve_arena_data(),
+            Err(ParseError::ArenaMapNotBtfDefined)
+        );
+    }
+
+    #[test]
+    fn test_resolve_arena_data() {
+        let mut obj = fake_obj();
+        obj.parse_section(fake_section(
+            EbpfSectionKind::ArenaData,
+            ARENA_DATA_SECTION_NAME,
+            &[1, 2, 3, 4],
+            Some(7),
+        ))
+        .unwrap();
+        obj.maps
+            .insert("arena".to_owned(), fake_btf_arena_map(1, 1));
+
+        obj.resolve_arena_data().unwrap();
+
+        let arena_data = obj.maps["arena"].arena_data().unwrap();
+        assert_eq!(arena_data.section_index(), 7);
+        assert_eq!(arena_data.data(), &[1, 2, 3, 4]);
+        assert_eq!(arena_data.map_offset(), 0);
+
+        let arena_data = obj.maps.get_mut("arena").unwrap().arena_data_mut().unwrap();
+        arena_data.set_map_offset(0xffff_f000);
+        assert_eq!(arena_data.map_offset(), 0xffff_f000);
     }
 
     #[test]

@@ -68,9 +68,10 @@ use crate::{
         SyscallError, bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
         bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object,
     },
-    util::nr_cpus,
+    util::{MMap, nr_cpus, page_size},
 };
 
+pub mod arena;
 pub mod array;
 pub mod bloom_filter;
 pub mod cgroup_storage;
@@ -89,6 +90,7 @@ pub mod stack;
 pub mod stack_trace;
 pub mod xdp;
 
+pub use arena::Arena;
 pub use array::{Array, CgroupArray, PerCpuArray, ProgramArray};
 pub use bloom_filter::BloomFilter;
 #[expect(
@@ -214,6 +216,26 @@ pub enum MapError {
         max_entries: u32,
     },
 
+    /// An arena access exceeds the userspace mapping.
+    #[error("arena access at offset {offset} with size {size} exceeds the arena size {arena_size}")]
+    ArenaOutOfBounds {
+        /// Byte offset within the arena.
+        offset: usize,
+        /// Size of the requested access.
+        size: usize,
+        /// Size of the arena mapping.
+        arena_size: usize,
+    },
+
+    /// An arena access is not correctly aligned.
+    #[error("arena access at offset {offset} requires {alignment}-byte alignment")]
+    UnalignedArenaAccess {
+        /// Byte offset within the arena.
+        offset: usize,
+        /// Required alignment.
+        alignment: usize,
+    },
+
     /// Key not found
     #[error("key not found")]
     KeyNotFound,
@@ -247,6 +269,51 @@ pub enum MapError {
     /// Program IDs are not supported
     #[error("program ids are not supported by the current kernel")]
     ProgIdNotSupported,
+
+    /// The arena map is missing its memory mapping
+    #[error("the arena map has no memory mapping")]
+    ArenaNotMmapped,
+
+    /// Invalid arena memory-mapping parameters.
+    #[error("invalid arena mapping at {address:#x} with {max_entries} pages: {reason}")]
+    InvalidArenaMmap {
+        /// Requested userspace address, or zero for a kernel-selected address.
+        address: u64,
+        /// Number of pages in the arena.
+        max_entries: u32,
+        /// Reason the parameters are invalid.
+        reason: &'static str,
+    },
+
+    /// Failed to map an arena into userspace.
+    #[error("failed to mmap arena at {address:#x} with length {length}")]
+    ArenaMmapError {
+        /// Requested userspace address, or zero for a kernel-selected address.
+        address: u64,
+        /// Mapping length in bytes.
+        length: usize,
+        /// Original [`io::Error`].
+        #[source]
+        io_error: io::Error,
+    },
+
+    /// The arena was not mapped at its requested userspace address.
+    #[error("arena mmap returned address {actual:#x}, expected {requested:#x}")]
+    UnexpectedArenaMmapAddress {
+        /// Requested userspace address.
+        requested: u64,
+        /// Address returned by `mmap`.
+        actual: u64,
+    },
+
+    /// A pinned arena is incompatible with its ELF map definition.
+    #[error("pinned arena map `{name}` is incompatible: {reason}")]
+    IncompatiblePinnedArena {
+        /// Arena map name.
+        name: String,
+        /// Incompatible field.
+        reason: &'static str,
+    },
 
     /// Unsupported Map type
     #[error(
@@ -304,6 +371,8 @@ impl AsFd for MapFd {
 /// eBPF map types.
 #[derive(Debug)]
 pub enum Map {
+    /// An [`Arena`] map.
+    Arena(MapData),
     /// An [`Array`] map.
     Array(MapData),
     /// An [`ArrayOfMaps`] map.
@@ -370,6 +439,7 @@ impl Map {
     /// Returns the low level map type.
     const fn map_type(&self) -> u32 {
         match self {
+            Self::Arena(map) => map.obj.map_type(),
             Self::Array(map) => map.obj.map_type(),
             Self::ArrayOfMaps(map) => map.obj.map_type(),
             Self::BloomFilter(map) => map.obj.map_type(),
@@ -409,6 +479,7 @@ impl Map {
     /// is deleted. All parent directories in the given `path` must already exist.
     pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
         match self {
+            Self::Arena(map) => map.pin(path),
             Self::Array(map) => map.pin(path),
             Self::ArrayOfMaps(map) => map.pin(path),
             Self::BloomFilter(map) => map.pin(path),
@@ -486,7 +557,7 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_TASK_STORAGE => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_CGRP_STORAGE => Self::CgrpStorage(map_data),
-            bpf_map_type::BPF_MAP_TYPE_ARENA => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_ARENA => Self::Arena(map_data),
             bpf_map_type::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED => {
                 Self::PerCpuCgroupStorage(map_data)
             }
@@ -613,6 +684,7 @@ macro_rules! impl_try_from_map {
 }
 
 impl_try_from_map!(() {
+    Arena,
     CgroupArray,
     CpuMap,
     DevMap,
@@ -807,6 +879,142 @@ pub(crate) const fn check_v_size<V>(map: &MapData) -> Result<(), MapError> {
 pub struct MapData {
     obj: aya_obj::Map,
     fd: MapFd,
+    /// For arena maps, the shared mapping of the arena region.
+    ///
+    /// Created eagerly (at map creation / open time) because the kernel fixes
+    /// the arena's user-space base address on first `mmap`, and the verifier
+    /// needs that address when it processes programs using the arena.
+    mmap: Option<MMap>,
+}
+
+#[derive(Clone, Copy)]
+enum ArenaMapOrigin {
+    Created,
+    Reused,
+}
+
+/// Maps an arena into userspace before programs using it are loaded.
+///
+/// A reused arena created without `map_extra` has no discoverable userspace
+/// address, so its fd remains usable by eBPF while userspace access is
+/// unavailable.
+fn mmap_arena(
+    fd: &MapFd,
+    max_entries: u32,
+    map_extra: u64,
+    origin: ArenaMapOrigin,
+) -> Result<Option<MMap>, MapError> {
+    if matches!(origin, ArenaMapOrigin::Reused) && map_extra == 0 {
+        return Ok(None);
+    }
+
+    let invalid = |reason| MapError::InvalidArenaMmap {
+        address: map_extra,
+        max_entries,
+        reason,
+    };
+    let len = usize::try_from(max_entries)
+        .ok()
+        .and_then(|pages| pages.checked_mul(page_size()))
+        .ok_or_else(|| invalid("mapping size overflows usize"))?;
+
+    let address = if map_extra == 0 {
+        None
+    } else {
+        let address = usize::try_from(map_extra)
+            .map_err(|_error| invalid("address does not fit in usize"))?;
+        Some(
+            ptr::NonNull::new(ptr::without_provenance_mut::<libc::c_void>(address))
+                .ok_or_else(|| invalid("address is null"))?,
+        )
+    };
+
+    let flags = libc::MAP_SHARED
+        | if address.is_some() {
+            libc::MAP_FIXED_NOREPLACE
+        } else {
+            0
+        };
+    let mmap = MMap::new(
+        address,
+        fd.as_fd(),
+        len,
+        libc::PROT_READ | libc::PROT_WRITE,
+        flags,
+        0,
+    )
+    .map_err(
+        |SyscallError { call: _, io_error }| MapError::ArenaMmapError {
+            address: map_extra,
+            length: len,
+            io_error,
+        },
+    )?;
+
+    if let Some(address) = address {
+        if mmap.ptr() != address {
+            let actual = mmap.ptr().addr().get() as u64;
+            return Err(MapError::UnexpectedArenaMmapAddress {
+                requested: map_extra,
+                actual,
+            });
+        }
+    }
+
+    Ok(Some(mmap))
+}
+
+fn initialize_arena_data(mmap: &mut MMap, map_offset: u32, data: &[u8]) -> Result<(), MapError> {
+    let offset = map_offset as usize;
+    let size = data.len();
+    let arena_size = mmap.len();
+    let end = offset.checked_add(size).ok_or(MapError::ArenaOutOfBounds {
+        offset,
+        size,
+        arena_size,
+    })?;
+    let destination = mmap
+        .as_mut()
+        .get_mut(offset..end)
+        .ok_or(MapError::ArenaOutOfBounds {
+            offset,
+            size,
+            arena_size,
+        })?;
+    destination.copy_from_slice(data);
+    Ok(())
+}
+
+fn check_pinned_arena_compatibility(
+    obj: &aya_obj::Map,
+    info: &aya_obj::generated::bpf_map_info,
+    name: &str,
+) -> Result<(), MapError> {
+    let incompatible = |reason| MapError::IncompatiblePinnedArena {
+        name: name.to_owned(),
+        reason,
+    };
+
+    if info.type_ != obj.map_type() {
+        return Err(incompatible("map type differs"));
+    }
+    if info.key_size != obj.key_size() {
+        return Err(incompatible("key size differs"));
+    }
+    if info.value_size != obj.value_size() {
+        return Err(incompatible("value size differs"));
+    }
+    if info.max_entries != obj.max_entries() {
+        return Err(incompatible("max entries differs"));
+    }
+    if info.map_flags != obj.map_flags() {
+        return Err(incompatible("map flags differ"));
+    }
+    if info.map_extra != obj.map_extra() {
+        return Err(incompatible("map_extra differs"));
+    }
+
+    Ok(())
 }
 
 impl MapData {
@@ -853,10 +1061,22 @@ impl MapData {
                 io_error,
             }
         })?;
-        Ok(Self {
-            obj,
-            fd: MapFd::from_fd(fd),
-        })
+        let fd = MapFd::from_fd(fd);
+        let mut mmap = if obj.map_type() == bpf_map_type::BPF_MAP_TYPE_ARENA as u32 {
+            mmap_arena(
+                &fd,
+                obj.max_entries(),
+                obj.map_extra(),
+                ArenaMapOrigin::Created,
+            )?
+        } else {
+            None
+        };
+        // Reused arenas contain persistent runtime state, so only initialize a newly created map.
+        if let (Some(mmap), Some(data)) = (mmap.as_mut(), obj.arena_data()) {
+            initialize_arena_data(mmap, data.map_offset(), data.data())?;
+        }
+        Ok(Self { obj, fd, mmap })
     }
 
     pub(crate) fn create_pinned_by_name<P: AsRef<Path>>(
@@ -882,30 +1102,50 @@ impl MapData {
                 });
             }
         };
-        if let Ok(fd) = bpf_get_object(&path_string) {
-            Ok(Self {
-                obj,
-                fd: MapFd::from_fd(fd),
-            })
-        } else {
-            let inner_map;
-            let inner_map_fd = if let Some(inner) = inner_map_obj {
-                inner_map = Self::create(inner, &format!("{name}.inner"), btf_fd)?;
-                Some(inner_map.fd().as_fd())
-            } else {
-                None
-            };
-            let map = Self::create_with_inner_map_fd(obj, name, btf_fd, inner_map_fd)?;
-            map.pin(path).map_err(|error| MapError::PinError {
+        match bpf_get_object(&path_string) {
+            Ok(fd) => {
+                let fd = MapFd::from_fd(fd);
+                let mmap = if obj.map_type() == bpf_map_type::BPF_MAP_TYPE_ARENA as u32 {
+                    let MapInfo(info) = MapInfo::new_from_fd(fd.as_fd())?;
+                    check_pinned_arena_compatibility(&obj, &info, name)?;
+                    mmap_arena(
+                        &fd,
+                        info.max_entries,
+                        info.map_extra,
+                        ArenaMapOrigin::Reused,
+                    )?
+                } else {
+                    None
+                };
+                Ok(Self { obj, fd, mmap })
+            }
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                let inner_map;
+                let inner_map_fd = if let Some(inner) = inner_map_obj {
+                    inner_map = Self::create(inner, &format!("{name}.inner"), btf_fd)?;
+                    Some(inner_map.fd().as_fd())
+                } else {
+                    None
+                };
+                let map = Self::create_with_inner_map_fd(obj, name, btf_fd, inner_map_fd)?;
+                map.pin(path).map_err(|error| MapError::PinError {
+                    name: Some(name.into()),
+                    error,
+                })?;
+                Ok(map)
+            }
+            Err(io_error) => Err(MapError::PinError {
                 name: Some(name.into()),
-                error,
-            })?;
-            Ok(map)
+                error: PinError::SyscallError(SyscallError {
+                    call: "BPF_OBJ_GET",
+                    io_error,
+                }),
+            }),
         }
     }
 
     pub(crate) fn finalize(&mut self) -> Result<(), MapError> {
-        let Self { obj, fd } = self;
+        let Self { obj, fd, mmap: _ } = self;
         if !obj.data().is_empty() {
             bpf_map_update_elem_ptr(fd.as_fd(), &0, obj.data_mut().as_mut_ptr(), 0)
                 .map_err(|io_error| SyscallError {
@@ -923,6 +1163,11 @@ impl MapData {
                 .map_err(MapError::from)?;
         }
         Ok(())
+    }
+
+    /// For arena maps, returns the shared mapping of the arena region.
+    pub(crate) const fn arena_mmap(&self) -> Option<&MMap> {
+        self.mmap.as_ref()
     }
 
     /// Loads a map from a pinned path in bpffs.
@@ -955,10 +1200,17 @@ impl MapData {
 
     fn from_fd_inner(fd: crate::MockableFd) -> Result<Self, MapError> {
         let MapInfo(info) = MapInfo::new_from_fd(fd.as_fd())?;
-        Ok(Self {
-            obj: parse_map_info(info, PinningType::None),
-            fd: MapFd::from_fd(fd),
-        })
+        let arena = (info.type_ == bpf_map_type::BPF_MAP_TYPE_ARENA as u32)
+            .then_some((info.max_entries, info.map_extra));
+        let obj = parse_map_info(info, PinningType::None);
+        let fd = MapFd::from_fd(fd);
+        let mmap = match arena {
+            Some((max_entries, map_extra)) => {
+                mmap_arena(&fd, max_entries, map_extra, ArenaMapOrigin::Reused)?
+            }
+            None => None,
+        };
+        Ok(Self { obj, fd, mmap })
     }
 
     /// Loads a map from a file descriptor.
@@ -998,7 +1250,11 @@ impl MapData {
     pub fn pin<P: AsRef<Path>>(&self, path: P) -> Result<(), PinError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        let Self { fd, obj: _ } = self;
+        let Self {
+            fd,
+            obj: _,
+            mmap: _,
+        } = self;
         let path = path.as_ref();
         let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
             PinError::InvalidPinPath {
@@ -1015,12 +1271,20 @@ impl MapData {
 
     /// Returns the file descriptor of the map.
     pub const fn fd(&self) -> &MapFd {
-        let Self { obj: _, fd } = self;
+        let Self {
+            obj: _,
+            fd,
+            mmap: _,
+        } = self;
         fd
     }
 
     pub(crate) const fn obj(&self) -> &aya_obj::Map {
-        let Self { obj, fd: _ } = self;
+        let Self {
+            obj,
+            fd: _,
+            mmap: _,
+        } = self;
         obj
     }
 
@@ -1281,17 +1545,222 @@ mod test_utils {
 
 #[cfg(test)]
 mod tests {
-    use std::{ffi::c_char, os::fd::AsRawFd as _};
+    use std::{
+        ffi::c_char,
+        os::fd::{AsRawFd as _, FromRawFd as _},
+    };
 
     use assert_matches::assert_matches;
     use aya_obj::generated::{bpf_cmd, bpf_map_info};
     use libc::EFAULT;
 
     use super::*;
-    use crate::sys::{Syscall, override_syscall};
+    use crate::sys::{MmapCall, Syscall, TEST_MMAP_CALL, TEST_MMAP_RET, override_syscall};
 
     fn new_obj_map() -> aya_obj::Map {
         test_utils::new_obj_map::<u32>(bpf_map_type::BPF_MAP_TYPE_HASH)
+    }
+
+    fn arena_map_info(map_extra: u64) -> bpf_map_info {
+        bpf_map_info {
+            type_: bpf_map_type::BPF_MAP_TYPE_ARENA as u32,
+            max_entries: 2,
+            map_flags: aya_obj::generated::BPF_F_MMAPABLE,
+            map_extra,
+            // Make `parse_map_info` preserve `map_extra` in a BTF map.
+            btf_value_type_id: 1,
+            ..unsafe { std::mem::zeroed() }
+        }
+    }
+
+    fn new_arena_obj(map_extra: u64) -> aya_obj::Map {
+        parse_map_info(arena_map_info(map_extra), PinningType::None)
+    }
+
+    fn new_test_map_fd() -> MapFd {
+        let fd = unsafe { crate::MockableFd::from_raw_fd(crate::MockableFd::mock_signed_fd()) };
+        MapFd::from_fd(fd)
+    }
+
+    fn set_mmap_return(address: *mut libc::c_void) {
+        TEST_MMAP_RET.with(|ret| *ret.borrow_mut() = address);
+        TEST_MMAP_CALL.with(|call| *call.borrow_mut() = None);
+    }
+
+    fn take_mmap_call() -> Option<MmapCall> {
+        TEST_MMAP_CALL.with(|call| call.borrow_mut().take())
+    }
+
+    fn write_map_info(attr: &mut aya_obj::generated::bpf_attr, info: bpf_map_info) {
+        let info_address = unsafe { attr.info.info } as usize;
+        let info_ptr: *mut bpf_map_info = ptr::with_exposed_provenance_mut(info_address);
+        unsafe { info_ptr.write(info) }
+    }
+
+    #[test]
+    fn test_mmap_created_arena_at_kernel_selected_address() {
+        let fd = new_test_map_fd();
+        let returned = ptr::without_provenance_mut(page_size() * 8);
+        set_mmap_return(returned);
+
+        let mmap = mmap_arena(&fd, 2, 0, ArenaMapOrigin::Created)
+            .unwrap()
+            .unwrap();
+        assert_eq!(mmap.ptr().as_ptr(), returned);
+        assert_eq!(
+            take_mmap_call(),
+            Some(MmapCall {
+                address: ptr::null_mut(),
+                length: page_size() * 2,
+                protection: libc::PROT_READ | libc::PROT_WRITE,
+                flags: libc::MAP_SHARED,
+                fd: crate::MockableFd::mock_signed_fd(),
+                offset: 0,
+            })
+        );
+    }
+
+    #[test]
+    fn test_mmap_created_arena_at_fixed_address() {
+        let fd = new_test_map_fd();
+        let requested = page_size() * 8;
+        let requested_ptr = ptr::without_provenance_mut(requested);
+        set_mmap_return(requested_ptr);
+
+        mmap_arena(&fd, 2, requested as u64, ArenaMapOrigin::Created)
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            take_mmap_call(),
+            Some(MmapCall {
+                address: requested_ptr,
+                length: page_size() * 2,
+                protection: libc::PROT_READ | libc::PROT_WRITE,
+                flags: libc::MAP_SHARED | libc::MAP_FIXED_NOREPLACE,
+                fd: crate::MockableFd::mock_signed_fd(),
+                offset: 0,
+            })
+        );
+    }
+
+    #[test]
+    fn test_initialize_arena_data() {
+        let fd = new_test_map_fd();
+        let mut backing = vec![0u8; page_size() * 2];
+        set_mmap_return(backing.as_mut_ptr().cast());
+        let mut mmap = mmap_arena(&fd, 2, 0, ArenaMapOrigin::Created)
+            .unwrap()
+            .unwrap();
+        let offset = page_size() + 3;
+
+        initialize_arena_data(&mut mmap, offset as u32, &[1, 2, 3, 4]).unwrap();
+
+        assert_eq!(&backing[offset..offset + 4], &[1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn test_initialize_arena_data_checks_bounds() {
+        let fd = new_test_map_fd();
+        let mut backing = vec![0u8; page_size()];
+        set_mmap_return(backing.as_mut_ptr().cast());
+        let mut mmap = mmap_arena(&fd, 1, 0, ArenaMapOrigin::Created)
+            .unwrap()
+            .unwrap();
+        let offset = page_size() - 1;
+
+        assert_matches!(
+            initialize_arena_data(&mut mmap, offset as u32, &[1, 2]),
+            Err(MapError::ArenaOutOfBounds {
+                offset: error_offset,
+                size: 2,
+                arena_size,
+            }) if error_offset == offset && arena_size == page_size()
+        );
+    }
+
+    #[test]
+    fn test_mmap_reused_arena() {
+        let fd = new_test_map_fd();
+        let requested = page_size() * 8;
+        set_mmap_return(ptr::without_provenance_mut(requested));
+
+        assert!(
+            mmap_arena(&fd, 2, requested as u64, ArenaMapOrigin::Reused,)
+                .unwrap()
+                .is_some()
+        );
+        assert!(take_mmap_call().is_some());
+
+        set_mmap_return(ptr::without_provenance_mut(requested));
+        assert!(
+            mmap_arena(&fd, 2, 0, ArenaMapOrigin::Reused)
+                .unwrap()
+                .is_none()
+        );
+        assert_eq!(take_mmap_call(), None);
+    }
+
+    #[test]
+    fn test_mmap_arena_rejects_unexpected_address() {
+        let fd = new_test_map_fd();
+        let requested = page_size() * 8;
+        let actual = requested + page_size();
+        set_mmap_return(ptr::without_provenance_mut(actual));
+
+        assert_matches!(
+            mmap_arena(
+                &fd,
+                2,
+                requested as u64,
+                ArenaMapOrigin::Created,
+            ),
+            Err(MapError::UnexpectedArenaMmapAddress {
+                requested: expected,
+                actual: returned,
+            }) if expected == requested as u64 && returned == actual as u64
+        );
+    }
+
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn test_mmap_arena_preserves_mmap_error() {
+        let fd = new_test_map_fd();
+        let requested = page_size() * 8;
+        set_mmap_return(libc::MAP_FAILED);
+        unsafe {
+            *libc::__errno_location() = libc::EEXIST;
+        }
+
+        assert_matches!(
+            mmap_arena(
+                &fd,
+                2,
+                requested as u64,
+                ArenaMapOrigin::Created,
+            ),
+            Err(MapError::ArenaMmapError {
+                address,
+                length,
+                io_error,
+            }) if address == requested as u64
+                && length == page_size() * 2
+                && io_error.raw_os_error() == Some(libc::EEXIST)
+        );
+    }
+
+    #[test]
+    fn test_pinned_arena_compatibility() {
+        let info = arena_map_info((page_size() * 8) as u64);
+        let obj = parse_map_info(info, PinningType::ByName);
+        check_pinned_arena_compatibility(&obj, &info, "arena").unwrap();
+
+        let mut incompatible = info;
+        incompatible.map_extra += page_size() as u64;
+        assert_matches!(
+            check_pinned_arena_compatibility(&obj, &incompatible, "arena"),
+            Err(MapError::IncompatiblePinnedArena { name, reason: "map_extra differs" })
+                if name == "arena"
+        );
     }
 
     #[test]
@@ -1325,8 +1794,57 @@ mod tests {
             Ok(MapData {
                 obj: _,
                 fd,
+                mmap: _,
             }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd())
         );
+    }
+
+    #[test]
+    fn test_from_arena_map_id_uses_map_info_for_mmap() {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_GET_FD_BY_ID,
+                ..
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                attr,
+            } => {
+                write_map_info(attr, arena_map_info((page_size() * 8) as u64));
+                Ok(0)
+            }
+            call => panic!("unexpected syscall {call:?}"),
+        });
+        let requested = page_size() * 8;
+        set_mmap_return(ptr::without_provenance_mut(requested));
+
+        let map = MapData::from_id(1234).unwrap();
+        assert!(map.mmap.is_some());
+        assert_eq!(take_mmap_call().unwrap().address.addr(), requested);
+    }
+
+    #[test]
+    fn test_reused_arena_without_fixed_address_is_not_mmapped() {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_GET_FD_BY_ID,
+                ..
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                attr,
+            } => {
+                write_map_info(attr, arena_map_info(0));
+                Ok(0)
+            }
+            call => panic!("unexpected syscall {call:?}"),
+        });
+        set_mmap_return(ptr::without_provenance_mut(page_size() * 8));
+
+        let map = MapData::from_id(1234).unwrap();
+        assert!(map.mmap.is_none());
+        assert_eq!(take_mmap_call(), None);
+        assert_matches!(Arena::new(map), Err(MapError::ArenaNotMmapped));
     }
 
     #[test]
@@ -1338,14 +1856,116 @@ mod tests {
             } => Ok(crate::MockableFd::mock_signed_fd().into()),
             _ => Err((-1, io::Error::from_raw_os_error(EFAULT))),
         });
+        set_mmap_return(ptr::null_mut());
 
         assert_matches!(
             MapData::create(new_obj_map(), "foo", None),
             Ok(MapData {
                 obj: _,
                 fd,
+                mmap: _,
             }) => assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd())
         );
+        assert_eq!(take_mmap_call(), None);
+    }
+
+    #[test]
+    fn test_create_arena_mmaps_before_returning() {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                ..
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            call => panic!("unexpected syscall {call:?}"),
+        });
+        let requested = page_size() * 8;
+        set_mmap_return(ptr::without_provenance_mut(requested));
+
+        let map = MapData::create(new_arena_obj(requested as u64), "arena", None).unwrap();
+        assert!(map.mmap.is_some());
+        assert_eq!(take_mmap_call().unwrap().address.addr(), requested);
+    }
+
+    #[test]
+    fn test_create_pinned_map_only_creates_on_not_found() {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET,
+                ..
+            } => Err((-1, io::Error::from_raw_os_error(libc::EACCES))),
+            call => panic!("unexpected syscall {call:?}"),
+        });
+
+        assert_matches!(
+            MapData::create_pinned_by_name("/sys/fs/bpf/arena", new_arena_obj(0), "arena", None, None),
+            Err(MapError::PinError {
+                name: Some(name),
+                error: PinError::SyscallError(SyscallError { call: "BPF_OBJ_GET", io_error }),
+            }) if name == "arena" && io_error.raw_os_error() == Some(libc::EACCES)
+        );
+    }
+
+    #[test]
+    fn test_create_pinned_map_creates_on_not_found() {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET,
+                ..
+            } => Err((-1, io::Error::from_raw_os_error(libc::ENOENT))),
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                ..
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_PIN,
+                ..
+            } => Ok(0),
+            call => panic!("unexpected syscall {call:?}"),
+        });
+        let returned = ptr::without_provenance_mut(page_size() * 8);
+        set_mmap_return(returned);
+
+        let map = MapData::create_pinned_by_name(
+            "/sys/fs/bpf/arena",
+            new_arena_obj(0),
+            "arena",
+            None,
+            None,
+        )
+        .unwrap();
+        assert_eq!(map.mmap.unwrap().ptr().as_ptr(), returned);
+        assert!(take_mmap_call().is_some());
+    }
+
+    #[test]
+    fn test_reused_pinned_arena_uses_actual_map_info() {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET,
+                ..
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                attr,
+            } => {
+                write_map_info(attr, arena_map_info((page_size() * 8) as u64));
+                Ok(0)
+            }
+            call => panic!("unexpected syscall {call:?}"),
+        });
+        let requested = page_size() * 8;
+        set_mmap_return(ptr::without_provenance_mut(requested));
+
+        let map = MapData::create_pinned_by_name(
+            "/sys/fs/bpf/arena",
+            new_arena_obj(requested as u64),
+            "arena",
+            None,
+            None,
+        )
+        .unwrap();
+        assert!(map.mmap.is_some());
+        assert_eq!(take_mmap_call().unwrap().address.addr(), requested);
     }
 
     #[test]
@@ -1369,6 +1989,7 @@ mod tests {
             Ok(MapData {
                 obj,
                 fd,
+                mmap: _,
             }) => {
                 assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
                 assert_eq!(obj.max_entries(), nr_cpus as u32)
@@ -1384,6 +2005,7 @@ mod tests {
             Ok(MapData {
                 obj,
                 fd,
+                mmap: _,
             }) => {
                 assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
                 assert_eq!(obj.max_entries(), nr_cpus as u32)
@@ -1399,6 +2021,7 @@ mod tests {
             Ok(MapData {
                 obj,
                 fd,
+                mmap: _,
             }) => {
                 assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
                 assert_eq!(obj.max_entries(), 1)

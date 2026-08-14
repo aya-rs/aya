@@ -22,6 +22,7 @@ where
     runtime.block_on(test())
 }
 
+mod arena;
 mod array;
 mod bloom_filter;
 mod bpf_probe_read;

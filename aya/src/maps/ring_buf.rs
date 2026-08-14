@@ -203,6 +203,7 @@ struct ConsumerMetadata {
 impl ConsumerMetadata {
     fn new(fd: BorrowedFd<'_>, offset: usize, page_size: usize) -> Result<Self, MapError> {
         let mmap = MMap::new(
+            None,
             fd,
             page_size,
             PROT_READ | PROT_WRITE,
@@ -305,7 +306,14 @@ impl ProducerData {
         //
         // [0]: https://github.com/torvalds/linux/blob/3f01e9fe/kernel/bpf/ringbuf.c#L108-L124
         let len = page_size + 2 * usize::try_from(byte_size).unwrap();
-        let mmap = MMap::new(fd, len, PROT_READ, MAP_SHARED, offset.try_into().unwrap())?;
+        let mmap = MMap::new(
+            None,
+            fd,
+            len,
+            PROT_READ,
+            MAP_SHARED,
+            offset.try_into().unwrap(),
+        )?;
 
         // The producer position may be non-zero if the map is being loaded from a pin, or the map
         // has been used previously; load the initial value of the producer position from the mmap.
