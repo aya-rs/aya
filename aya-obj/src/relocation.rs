@@ -63,6 +63,13 @@ pub enum RelocationError {
         caller_name: String,
     },
 
+    /// BTF function info mismatch
+    #[error("BTF function info for `{name}` does not match the program")]
+    FunctionInfoMismatch {
+        /// The function name
+        name: String,
+    },
+
     /// Unknown function
     #[error(
         "program at section {section_index} and address {address:#x} was not found while relocating"
@@ -502,6 +509,12 @@ impl<'a> FunctionLinker<'a> {
             return Ok(*fun_ins_index);
         }
 
+        if fun.func_info.func_info.is_empty() != program.func_info.func_info.is_empty() {
+            return Err(RelocationError::FunctionInfoMismatch {
+                name: fun.name.clone(),
+            });
+        }
+
         // append fun.instructions to the program and record that `fun.address` has been inserted
         // at `start_ins`. We'll use `start_ins` to do pc-relative calls.
         let start_ins = program.instructions.len();
@@ -685,6 +698,7 @@ mod test {
     use super::*;
     use crate::{
         extern_types::ExternType,
+        generated::bpf_func_info,
         maps::{BtfMap, LegacyMap},
     };
 
@@ -750,6 +764,69 @@ mod test {
             line_info: Default::default(),
             func_info_rec_size: Default::default(),
             line_info_rec_size: Default::default(),
+        }
+    }
+
+    fn add_func_info(fun: &mut Function, type_id: u32) {
+        fun.func_info.num_info = 1;
+        fun.func_info.func_info.push(bpf_func_info {
+            insn_off: 0,
+            type_id,
+        });
+    }
+
+    fn link_test_functions(
+        program_has_func_info: bool,
+        callee_has_func_info: bool,
+    ) -> Result<Function, RelocationError> {
+        let mut call = ins(&[0x85, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]);
+        call.set_src_reg(BPF_PSEUDO_CALL as u8);
+        let mut program = fake_func("program", vec![call]);
+        let mut callee = fake_func(
+            "callee",
+            vec![ins(&[0x95, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])],
+        );
+        callee.address = INS_SIZE as u64;
+        callee.section_offset = INS_SIZE;
+
+        if program_has_func_info {
+            add_func_info(&mut program, 1);
+        }
+        if callee_has_func_info {
+            add_func_info(&mut callee, 2);
+        }
+
+        let functions = BTreeMap::from([((callee.section_index.0, callee.address), callee)]);
+        let relocations = HashMap::new();
+        let symbol_table = HashMap::new();
+        let text_sections = HashSet::new();
+
+        FunctionLinker::new(&functions, &relocations, &symbol_table, &text_sections).link(&program)
+    }
+
+    #[test]
+    fn test_function_linker_rejects_mismatched_func_info() {
+        for (program_has_func_info, callee_has_func_info) in [(true, false), (false, true)] {
+            let err = link_test_functions(program_has_func_info, callee_has_func_info).unwrap_err();
+
+            assert!(matches!(
+                err,
+                RelocationError::FunctionInfoMismatch { name } if name == "callee"
+            ));
+        }
+    }
+
+    #[test]
+    fn test_function_linker_accepts_matching_func_info() {
+        for has_func_info in [false, true] {
+            let fun = link_test_functions(has_func_info, has_func_info).unwrap();
+
+            assert_eq!(fun.instructions.len(), 2);
+            assert_eq!(
+                fun.func_info.func_info.len(),
+                usize::from(has_func_info) * 2
+            );
+            assert_eq!(fun.func_info.num_info, u32::from(has_func_info) * 2);
         }
     }
 
