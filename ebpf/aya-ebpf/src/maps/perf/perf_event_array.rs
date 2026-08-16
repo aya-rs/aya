@@ -13,6 +13,11 @@ pub struct PerfEventArray<T> {
     _t: PhantomData<T>,
 }
 
+impl<T> super::super::__MapLayout for PerfEventArray<T> {
+    type Key = u32;
+    type Value = u32;
+}
+
 impl<T> PerfEventArray<T> {
     pub const fn new(flags: u32) -> Self {
         Self::new_with_pinning(flags, PinningType::None)

@@ -254,3 +254,13 @@ where
         unsafe { ptr::read_volatile(self.value.as_ptr()) }
     }
 }
+
+/// Wrapper used by the layout checks emitted by `#[map]` and `#[btf_map]`.
+///
+/// `improper_ctypes_definitions` rejects bare array and `()` function
+/// parameters even though both are valid map key/value layouts; as fields of a
+/// `repr(C)` struct the same types are checked for layout stability only. The
+/// trailing `u8` keeps the struct from becoming zero-sized when `T` is `()`.
+#[doc(hidden)]
+#[repr(C)]
+pub struct __LayoutCheck<T>(T, u8);
