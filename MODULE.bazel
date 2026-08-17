@@ -20,7 +20,7 @@ bazel_dep(name = "pahole", version = "1.31")
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "rules_cc", version = "0.2.19")
 bazel_dep(name = "rules_qemu", version = "0.3.0")
-bazel_dep(name = "rules_rs", version = "0.0.93")
+bazel_dep(name = "rules_rs", version = "0.0.104")
 
 # with_cfg.bzl applies the BPF target settings to Rust and C BPF targets.
 bazel_dep(name = "with_cfg.bzl", version = "0.14.6")
@@ -40,17 +40,6 @@ archive_override(
     integrity = "sha256-2gveHVEG4EE5x3N4kDnUftB7ed/6RRFslFwDquObqRg=",
     strip_prefix = "linux.bzl-e18628f3e177022c2ff0cf93a2e5f2d408f7d2fc",
     urls = ["https://github.com/hermeticbuild/linux.bzl/archive/e18628f3e177022c2ff0cf93a2e5f2d408f7d2fc.tar.gz"],
-)
-
-# bpf-linker 0.11.0 matches the LLVM version in the pinned Rust nightly.
-#
-# TODO(https://github.com/hermeticbuild/rules_rs/commit/ae39edf0e): remove this
-# override when released.
-archive_override(
-    module_name = "rules_rs",
-    integrity = "sha256-eXcJ8APUg3qSuiGXCiUNUEfJlv+CzJZh44g7aGotgPo=",
-    strip_prefix = "rules_rs-ae39edf0e330ab707985cfb207946751ecf0045c",
-    urls = ["https://github.com/hermeticbuild/rules_rs/archive/ae39edf0e330ab707985cfb207946751ecf0045c.tar.gz"],
 )
 
 # @rules_rs creates @rules_rust here; generated BUILD files and .bazelrc labels
@@ -86,7 +75,7 @@ use_repo(qemu, "qemu_system_toolchains", "qemu_user_toolchains")
 
 register_toolchains(
     "@copy_to_directory_toolchains//:all",
-    "@default_rust_toolchains//:all",
+    "@default_rust_toolchains//...",
     "@llvm//toolchain:all",
     "@qemu_system_toolchains//:all",
 )
