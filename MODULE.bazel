@@ -25,8 +25,9 @@ bazel_dep(name = "rules_rs", version = "0.0.93")
 # with_cfg.bzl applies the BPF target settings to Rust and C BPF targets.
 bazel_dep(name = "with_cfg.bzl", version = "0.14.6")
 
-# lzma-sys uses @xz//:lzma instead of compiling vendored liblzma in build.rs.
+# These hermetic targets are used instead of build scripts below.
 bazel_dep(name = "xz", version = "5.4.5.bcr.8")
+bazel_dep(name = "zstd", version = "1.5.7.bcr.1")
 
 # //test/integration-test:bpf_out_dir uses copy_to_directory.
 bazel_lib_toolchains = use_extension("@bazel_lib//lib:extensions.bzl", "toolchains")
@@ -109,11 +110,16 @@ crate.from_cargo(
     ],
 )
 
-# Replace lzma-sys's build.rs with the hermetic @xz//:lzma target.
+# Replace build scripts with hermetic targets.
 crate.annotation(
     crate = "lzma-sys",
     gen_build_script = "off",
     deps = ["@xz//:lzma"],
+)
+crate.annotation(
+    crate = "zstd-sys",
+    gen_build_script = "off",
+    deps = ["@zstd"],
 )
 
 # Replace libbpf-sys's build.rs with @libbpf and export the bundled vmlinux.h
