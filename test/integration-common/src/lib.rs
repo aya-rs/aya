@@ -281,6 +281,10 @@ pub mod stack_trace {
     unsafe impl aya::Pod for TestResult {}
 }
 
+pub mod tc_classid {
+    pub const EXPECTED_CLASSID: u32 = 0x0001_0001;
+}
+
 pub mod test_run {
     pub const XDP_MODIFY_VAL: u8 = 0xAA;
     pub const IF_INDEX: u32 = 1;
