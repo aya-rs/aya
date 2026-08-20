@@ -35,6 +35,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Check Starlark
+        run: bazel run //bazel/format:format.check
+
       - name: Test
         run: |
           set -euo pipefail
