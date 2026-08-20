@@ -3,6 +3,8 @@
 
 load("@aspect_rules_lint//format:defs.bzl", "format_multirun")
 
+exports_files(["pyproject.toml"])
+
 format_multirun(
     name = "format",
     starlark = "@buildifier_prebuilt//:buildifier",
