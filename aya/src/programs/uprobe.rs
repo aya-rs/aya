@@ -413,6 +413,11 @@ impl UProbe {
     /// method first attempts the multi path and falls back to the per-point
     /// path on mode-related failures.
     ///
+    /// Callers that must select or generate the ELF section before loading can use
+    /// [`is_uprobe_multi_supported`](crate::sys::is_uprobe_multi_supported) with the
+    /// [`UProbeMultiFeature`](crate::sys::UProbeMultiFeature) required by their intended
+    /// scope before choosing `uprobe.multi`.
+    ///
     /// The returned value can be used to detach, see [`UProbe::detach`].
     ///
     /// The cookie is supported since kernel 5.15, and it is made available to
