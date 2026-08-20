@@ -37,7 +37,7 @@ fn probe_uprobe_multi() {
     );
 
     // Multi-uprobe requires a 64-bit kernel, even when CONFIG_UPROBES=y.
-    // https://github.com/torvalds/linux/blob/7d0a66e4/kernel/trace/bpf_trace.c#L3168-L3170
+    // https://github.com/torvalds/linux/blob/7d0a66e4b/kernel/trace/bpf_trace.c#L3168-L3170
     let kernel_config = kernel_config().unwrap();
     if !["CONFIG_UPROBES", "CONFIG_64BIT"]
         .into_iter()
