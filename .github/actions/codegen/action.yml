@@ -1,11 +1,17 @@
 name: Regenerate source bindings
 description: Regenerate and format source bindings
 
+inputs:
+  toolchain:
+    description: Immutable Rust nightly toolchain to use
+    required: true
+
 runs:
   using: composite
   steps:
-    - uses: ./.github/actions/setup-rust-nightly
+    - uses: ./.github/actions/setup-rust
       with:
+        toolchain: ${{ inputs.toolchain }}
         components: rustfmt, clippy
 
     - uses: Swatinem/rust-cache@v2

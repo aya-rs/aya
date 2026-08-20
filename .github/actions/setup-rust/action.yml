@@ -1,29 +1,31 @@
-name: Set up the pinned Rust nightly
-description: Install and alias the Rust nightly pinned in MODULE.bazel
+name: Set up a pinned Rust toolchain
+description: Install Aya's committed stable or nightly Rust toolchain
 
 inputs:
+  toolchain:
+    description: Immutable Rust toolchain to install
+    required: true
   components:
     description: Rust toolchain components to install
-    required: true
+    required: false
+  targets:
+    description: Rust targets to install
+    required: false
 
 runs:
   using: composite
   steps:
-    - id: nightly
-      shell: bash
-      run: |
-        nightly=$(python3 scripts/rust-nightly.py current < MODULE.bazel)
-        printf 'rust-nightly=%s\n' "$nightly" >> "$GITHUB_OUTPUT"
-
     - uses: dtolnay/rust-toolchain@master
       with:
-        toolchain: ${{ steps.nightly.outputs.rust-nightly }}
+        toolchain: ${{ inputs.toolchain }}
         components: ${{ inputs.components }}
+        targets: ${{ inputs.targets }}
 
     - name: Alias the pinned Rust nightly
+      if: startsWith(inputs.toolchain, 'nightly-')
       shell: bash
       env:
-        RUST_NIGHTLY: ${{ steps.nightly.outputs.rust-nightly }}
+        RUST_NIGHTLY: ${{ inputs.toolchain }}
       run: |
         set -euo pipefail
 
