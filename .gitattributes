@@ -1,0 +1,2 @@
+# Exclude dev-only Bazel packages from downstream target discovery.
+/scripts/BUILD.bazel export-ignore
