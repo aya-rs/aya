@@ -24,6 +24,7 @@ path = "src/depmod.rs"
 [dependencies]
 anyhow = { workspace = true, features = ["std"] }
 assert_matches = { workspace = true }
+aya-multierror = { path = "../aya-multierror", version = "0.1.0" }
 clap = { workspace = true, default-features = true, features = ["derive"] }
 glob = { workspace = true }
 nix = { workspace = true, features = [

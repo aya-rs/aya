@@ -1,4 +1,4 @@
-#![allow(clippy::print_stdout, reason = "xtask is a CLI tool")]
+#![allow(clippy::print_stdout, reason = "aya-tool is a CLI tool")]
 #![allow(clippy::use_debug, reason = "debug output aids troubleshooting")]
 
 use std::{
@@ -15,7 +15,7 @@ use std::{
 use anyhow::{Context as _, Result, anyhow, bail};
 use clap::ValueEnum;
 
-use crate::http::{HttpClient, url_file_name};
+use crate::integration_test::http::{HttpClient, url_file_name};
 
 // Ubuntu documents the Mainline archive as per-tag release directories
 // containing generic/lowlatency kernel .deb packages.
