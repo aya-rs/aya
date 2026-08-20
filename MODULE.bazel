@@ -53,12 +53,23 @@ use_repo(rules_rust, "rules_rust")
 
 # Aya's eBPF crates use generic_const_exprs, asm_experimental_arch, and
 # core_intrinsics, so the hermetic Rust toolchain must be a pinned nightly.
+# CI reads these same version attributes; scripts/rust-toolchain-pins.py
+# advances them with Buildozer.
 toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")
 toolchains.toolchain(
+    name = "default_rust_toolchains",
     edition = "2024",
     version = "nightly/2026-08-20",
 )
-use_repo(toolchains, "default_rust_toolchains")
+
+# Cargo CI uses stable, but Bazel's eBPF targets still require nightly. Expose
+# the stable repository without registering it as a default toolchain.
+toolchains.toolchain(
+    name = "stable_rust_toolchains",
+    edition = "2024",
+    version = "1.97.1",
+)
+use_repo(toolchains, "default_rust_toolchains", "stable_rust_toolchains")
 
 # Each qemu-system toolchain is compatible with the corresponding
 # //bazel:bpf_target_arch value. bazel/vm.bzl transitions that value for each
