@@ -20,13 +20,14 @@ bazel_dep(name = "pahole", version = "1.31")
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "rules_cc", version = "0.2.19")
 bazel_dep(name = "rules_qemu", version = "0.3.0")
-bazel_dep(name = "rules_rs", version = "0.0.93")
+bazel_dep(name = "rules_rs", version = "0.0.104")
 
 # with_cfg.bzl applies the BPF target settings to Rust and C BPF targets.
 bazel_dep(name = "with_cfg.bzl", version = "0.14.6")
 
-# lzma-sys uses @xz//:lzma instead of compiling vendored liblzma in build.rs.
+# These hermetic targets are used instead of build scripts below.
 bazel_dep(name = "xz", version = "5.4.5.bcr.8")
+bazel_dep(name = "zstd", version = "1.5.7.bcr.1")
 
 # //test/integration-test:bpf_out_dir uses copy_to_directory.
 bazel_lib_toolchains = use_extension("@bazel_lib//lib:extensions.bzl", "toolchains")
@@ -51,7 +52,7 @@ use_repo(rules_rust, "rules_rust")
 toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")
 toolchains.toolchain(
     edition = "2024",
-    version = "nightly/2026-08-02",
+    version = "nightly/2026-08-20",
 )
 use_repo(toolchains, "default_rust_toolchains")
 
@@ -74,7 +75,7 @@ use_repo(qemu, "qemu_system_toolchains", "qemu_user_toolchains")
 
 register_toolchains(
     "@copy_to_directory_toolchains//:all",
-    "@default_rust_toolchains//:all",
+    "@default_rust_toolchains//...",
     "@llvm//toolchain:all",
     "@qemu_system_toolchains//:all",
 )
@@ -98,11 +99,16 @@ crate.from_cargo(
     ],
 )
 
-# Replace lzma-sys's build.rs with the hermetic @xz//:lzma target.
+# Replace build scripts with hermetic targets.
 crate.annotation(
     crate = "lzma-sys",
     gen_build_script = "off",
     deps = ["@xz//:lzma"],
+)
+crate.annotation(
+    crate = "zstd-sys",
+    gen_build_script = "off",
+    deps = ["@zstd"],
 )
 
 # Replace libbpf-sys's build.rs with @libbpf and export the bundled vmlinux.h

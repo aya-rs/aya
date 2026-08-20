@@ -264,15 +264,15 @@ fn devmap_set(
 
     // Load each probe so the BPF verifier validates the wrapper-generated
     // bytecode. `redirect` works on every kernel that supports the map type;
-    // `get` reads `bpf_devmap_val::bpf_prog.id` so it requires 5.8+.
+    // `get` reads `bpf_devmap_val::bpf_prog.id` so it requires program-ID support.
     for prog in [dev_prog, dev_hash_prog] {
         let xdp: &mut Xdp = bpf.program_mut(prog).unwrap().try_into().unwrap();
         xdp.load().unwrap();
     }
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 8, 0) {
+    if !aya::features().devmap_prog_id() {
+        let kernel_version = KernelVersion::current().unwrap();
         eprintln!(
-            "skipping {dev_get_prog} and {dev_hash_get_prog} on kernel {kernel_version:?}, bpf_devmap_val was added in 5.8; see https://github.com/torvalds/linux/commit/fbee97feed9b"
+            "skipping {dev_get_prog} and {dev_hash_get_prog} on kernel {kernel_version:?}, devmap program IDs are unavailable; see https://github.com/torvalds/linux/commit/fbee97feed9b"
         );
         return;
     }

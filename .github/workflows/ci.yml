@@ -97,7 +97,7 @@ jobs:
         with:
           save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@v2.85.4
+      - uses: taiki-e/install-action@v2.85.13
         with:
           tool: cargo-hack,taplo-cli,typos-cli
 
@@ -160,7 +160,9 @@ jobs:
         with:
           save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@cargo-hack
+      - uses: taiki-e/install-action@v2.85.13
+        with:
+          tool: cargo-hack
 
       # This is magic, it sets `$CARGO_BUILD_TARGET`.
       - uses: taiki-e/setup-cross-toolchain-action@v1
@@ -236,10 +238,9 @@ jobs:
         with:
           save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@v2.85.4
+      - uses: taiki-e/install-action@v2.85.13
         with:
-          tool: cargo-binstall,cargo-hack
-      - run: cargo binstall --force bpf-linker
+          tool: bpf-linker,cargo-hack
 
       - name: Build & test for all BPF architectures
         env:
@@ -390,10 +391,9 @@ jobs:
         with:
           save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@v2.85.4
+      - uses: taiki-e/install-action@v2.85.13
         with:
-          tool: cargo-binstall,cargo-hack
-      - run: cargo binstall --force bpf-linker
+          tool: bpf-linker,cargo-hack
 
       - name: Restore VM integration test cache
         id: vm-cache
