@@ -18,11 +18,11 @@ use aya_obj::{
 use libc::{E2BIG, EBADF, EINVAL};
 
 use super::{
-    SyscallError, bpf_map_create, bpf_prog_load, bpf_raw_tracepoint_open, new_insn,
-    probe_bpf_global_data, probe_bpf_name, probe_btf, probe_btf_datasec, probe_btf_datasec_zero,
-    probe_btf_decl_tag, probe_btf_enum64, probe_btf_float, probe_btf_func, probe_btf_func_global,
-    probe_btf_type_tag, probe_perf_link, probe_prog_id, unit_sys_bpf, with_prog_insns,
-    with_trivial_prog,
+    SyscallError, UProbeMultiFeature, bpf_map_create, bpf_prog_load, bpf_raw_tracepoint_open,
+    new_insn, probe_bpf_global_data, probe_bpf_name, probe_btf, probe_btf_datasec,
+    probe_btf_datasec_zero, probe_btf_decl_tag, probe_btf_enum64, probe_btf_float, probe_btf_func,
+    probe_btf_func_global, probe_btf_type_tag, probe_perf_link, probe_prog_id,
+    probe_uprobe_multi_link, unit_sys_bpf, with_prog_insns, with_trivial_prog,
 };
 use crate::{
     MockableFd,
@@ -59,6 +59,37 @@ pub fn is_bpf_name_supported() -> io::Result<bool> {
 /// Returns an I/O error if support cannot be determined.
 pub fn is_perf_link_supported() -> io::Result<bool> {
     probe_perf_link()
+}
+
+/// Whether the host kernel supports the requested [`UProbeMultiFeature`].
+///
+/// [`UProbeMultiFeature::LinkCreation`] checks only multi-uprobe link creation. It can therefore
+/// report support on kernels with the initial, thread-scoped PID filtering behavior.
+///
+/// [`UProbeMultiFeature::ProcessScopedPidFilter`] additionally checks for the fix that makes a PID
+/// select the entire process. See the [kernel fix][kernel-fix] and [libbpf's probe][libbpf-probe].
+/// Callers that attach across all processes do not depend on this behavior and can query only
+/// [`UProbeMultiFeature::LinkCreation`].
+///
+/// This interface is intended for callers that must choose between regular and multi-uprobe
+/// programs before loading them, including callers that generate eBPF bytecode dynamically. Aya
+/// cannot make that choice because the required PID-filtering semantics depend on the eventual
+/// attachment scope. Callers should query the capability required by their intended scope and
+/// apply their own fallback policy.
+///
+/// [kernel-fix]: https://github.com/torvalds/linux/commit/46ba0e49
+/// [libbpf-probe]: https://github.com/libbpf/libbpf/blob/f5dcbae7/src/features.c#L397-L424
+///
+/// The result is not cached; this function performs a new kernel probe on every call.
+/// `Ok(false)` is returned only when the kernel gives the expected response for an unsupported
+/// requested capability. Permission errors and other unexpected probe failures are returned as
+/// errors.
+///
+/// # Errors
+///
+/// Returns an I/O error if support cannot be determined.
+pub fn is_uprobe_multi_supported(feature: UProbeMultiFeature) -> io::Result<bool> {
+    probe_uprobe_multi_link(feature)
 }
 
 /// Whether the host kernel supports BPF global data.
