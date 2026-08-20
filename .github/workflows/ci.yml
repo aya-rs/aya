@@ -89,8 +89,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: ./.github/actions/setup-rust-nightly
+      - uses: ./.github/actions/setup-rust
         with:
+          channel: nightly
           components: clippy,miri,rustfmt,rust-src
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
@@ -152,8 +153,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: ./.github/actions/setup-rust
         with:
+          channel: stable
           targets: ${{ matrix.arch }}
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
@@ -227,12 +229,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: ./.github/actions/setup-rust-nightly
+      - uses: ./.github/actions/setup-rust
         with:
+          channel: nightly
           components: rust-src
 
       # Installed *after* nightly so it is the default.
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: ./.github/actions/setup-rust
+        with:
+          channel: stable
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
       # PR-scoped entries can only help reruns of one PR, but repeatedly evict
@@ -378,13 +383,15 @@ jobs:
           find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
           | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
 
-      - uses: ./.github/actions/setup-rust-nightly
+      - uses: ./.github/actions/setup-rust
         with:
+          channel: nightly
           components: rust-src
 
       # Installed *after* nightly so it is the default.
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: ./.github/actions/setup-rust
         with:
+          channel: stable
           targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.

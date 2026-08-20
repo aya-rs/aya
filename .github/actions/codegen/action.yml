@@ -4,8 +4,9 @@ description: Regenerate and format source bindings
 runs:
   using: composite
   steps:
-    - uses: ./.github/actions/setup-rust-nightly
+    - uses: ./.github/actions/setup-rust
       with:
+        channel: nightly
         components: rustfmt, clippy
 
     - uses: Swatinem/rust-cache@v2
