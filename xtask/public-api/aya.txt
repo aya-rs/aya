@@ -2502,6 +2502,7 @@ pub struct aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub const aya::programs::cgroup_sock_addr::CgroupSockAddr::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach_to_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
@@ -2545,6 +2546,9 @@ pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::eq(&self, &Self) -> 
 impl core::convert::TryFrom<aya::programs::cgroup_sock_addr::CgroupSockAddrLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<aya::programs::links::FdLink> for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
+pub type aya::programs::cgroup_sock_addr::CgroupSockAddrLink::Error = aya::programs::links::LinkError
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::try_from(aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
@@ -3334,6 +3338,8 @@ pub enum aya::programs::links::LinkError
 pub aya::programs::links::LinkError::InvalidLink
 pub aya::programs::links::LinkError::SyscallError(aya::sys::SyscallError)
 pub aya::programs::links::LinkError::UnknownLinkType(u32)
+impl core::convert::From<aya::programs::links::LinkError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(aya::programs::links::LinkError) -> Self
 impl core::convert::From<aya::sys::SyscallError> for aya::programs::links::LinkError
 pub fn aya::programs::links::LinkError::from(aya::sys::SyscallError) -> Self
 impl core::error::Error for aya::programs::links::LinkError
@@ -3446,6 +3452,9 @@ pub fn aya::programs::links::FdLink::try_from(aya::programs::iter::IterLink) -> 
 impl core::convert::TryFrom<aya::programs::kprobe::KProbeLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(aya::programs::kprobe::KProbeLink) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<aya::programs::links::FdLink> for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
+pub type aya::programs::cgroup_sock_addr::CgroupSockAddrLink::Error = aya::programs::links::LinkError
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLink::try_from(aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<aya::programs::links::FdLink> for aya::programs::iter::IterLink
 pub type aya::programs::iter::IterLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::iter::IterLink::try_from(aya::programs::links::FdLink) -> core::result::Result<Self, Self::Error>
@@ -5996,6 +6005,7 @@ pub aya::programs::ProgramError::IOError(core::io::error::Error)
 pub aya::programs::ProgramError::InvalidName
 pub aya::programs::ProgramError::InvalidName::name: alloc::string::String
 pub aya::programs::ProgramError::KProbeError(aya::programs::kprobe::KProbeError)
+pub aya::programs::ProgramError::LinkError(aya::programs::links::LinkError)
 pub aya::programs::ProgramError::LoadError
 pub aya::programs::ProgramError::LoadError::io_error: core::io::error::Error
 pub aya::programs::ProgramError::LoadError::verifier_log: aya_obj::VerifierLog
@@ -6021,6 +6031,8 @@ impl core::convert::From<aya::programs::extension::ExtensionError> for aya::prog
 pub fn aya::programs::ProgramError::from(aya::programs::extension::ExtensionError) -> Self
 impl core::convert::From<aya::programs::kprobe::KProbeError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::kprobe::KProbeError) -> Self
+impl core::convert::From<aya::programs::links::LinkError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(aya::programs::links::LinkError) -> Self
 impl core::convert::From<aya::programs::sk_reuseport::SkReuseportError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::sk_reuseport::SkReuseportError) -> Self
 impl core::convert::From<aya::programs::socket_filter::SocketFilterError> for aya::programs::ProgramError
@@ -6455,6 +6467,7 @@ pub struct aya::programs::CgroupSockAddr
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub const aya::programs::cgroup_sock_addr::CgroupSockAddr::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach_to_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr

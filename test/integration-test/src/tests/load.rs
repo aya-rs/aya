@@ -8,8 +8,8 @@ use aya::{
     maps::{Array, RingBuf},
     pin::PinError,
     programs::{
-        FlowDissector, KProbe, LinkOrder, ProbeKind, Program, ProgramError, SchedClassifier,
-        TcAttachType, TracePoint, UProbe, Xdp, XdpMode,
+        CgroupAttachMode, CgroupSockAddr, FlowDissector, KProbe, LinkOrder, ProbeKind, Program,
+        ProgramError, SchedClassifier, TcAttachType, TracePoint, UProbe, Xdp, XdpMode,
         flow_dissector::{FlowDissectorLink, FlowDissectorLinkId},
         kprobe::{KProbeLink, KProbeLinkId},
         links::{FdLink, LinkError, PinnedLink},
@@ -475,6 +475,58 @@ fn pin_tcx_link() {
     // Load a new program and atomically replace the old one using attach_to_link
     let mut bpf = Ebpf::load(crate::TCX).unwrap();
     let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let old_link = PinnedLink::from_pin(pin_path).unwrap();
+    let link = FdLink::from(old_link).try_into().unwrap();
+    let _link_id = prog.attach_to_link(link).unwrap();
+
+    assert_loaded(program_name);
+
+    // Clean up: remove the stale pin file and drop the bpf instance (which drops the program and link)
+    remove_file(pin_path).unwrap();
+    drop(bpf);
+    assert_unloaded(program_name);
+}
+
+#[test_log::test]
+fn pin_cgroup_link() {
+    // bpf_link for cgroup programs requires kernel >= 5.7; below that `attach`
+    // produces a BPF_PROG_ATTACH link, which cannot be pinned or updated.
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 7, 0) {
+        eprintln!("skipping pin_cgroup_link test on kernel {kernel_version:?}");
+        return;
+    }
+
+    use aya::test_helpers::{Cgroup, NetNsGuard};
+    let _netns = NetNsGuard::new().unwrap();
+    let root_cgroup = Cgroup::root().unwrap();
+    let cgroup = root_cgroup
+        .create_child("aya-test-pin-cgroup-link")
+        .unwrap();
+    let cgroup_fd = cgroup.fd().unwrap();
+
+    let program_name = "cgroup_connect";
+    let pin_path = "/sys/fs/bpf/aya-cgroup-test-connect4";
+    let mut bpf = Ebpf::load(crate::CGROUP_CONNECT).unwrap();
+    let prog: &mut CgroupSockAddr = bpf.program_mut(program_name).unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let link_id = prog.attach(&cgroup_fd, CgroupAttachMode::Single).unwrap();
+    let link = prog.take_link(link_id).unwrap();
+    assert_loaded(program_name);
+
+    let fd_link: FdLink = link.try_into().unwrap();
+    fd_link.pin(pin_path).unwrap();
+
+    // Because of the pin, the program is still attached
+    prog.unload().unwrap();
+    assert_loaded(program_name);
+
+    // Load a new program and atomically replace the old one using attach_to_link
+    let mut bpf = Ebpf::load(crate::CGROUP_CONNECT).unwrap();
+    let prog: &mut CgroupSockAddr = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
     let old_link = PinnedLink::from_pin(pin_path).unwrap();
