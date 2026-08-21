@@ -12,7 +12,7 @@ use crate::{
         BPF_CALL, BPF_DW, BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_PSEUDO_BTF_ID, BPF_PSEUDO_CALL,
         BPF_PSEUDO_FUNC, BPF_PSEUDO_KFUNC_CALL, BPF_PSEUDO_MAP_FD, BPF_PSEUDO_MAP_VALUE, bpf_insn,
     },
-    maps::Map,
+    maps::{ArenaData, Map},
     obj::{Function, Object},
     util::{HashMap, HashSet},
 };
@@ -142,6 +142,9 @@ impl Object {
             maps_by_section.insert(map.section_index(), (name, fd, map));
             if let Some(index) = map.symbol_index() {
                 maps_by_symbol.insert(index, (name, fd, map));
+            }
+            if let Some(arena_data) = map.arena_data() {
+                maps_by_section.insert(arena_data.section_index(), (name, fd, map));
             }
         }
 
@@ -410,7 +413,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             continue;
         }
 
-        let (_name, fd, map) = if let Some(m) = maps_by_symbol.get(&rel.symbol_index) {
+        let (target, arena_data_offset) = if let Some(m) = maps_by_symbol.get(&rel.symbol_index) {
             let map = &m.2;
             debug!(
                 "relocating map by symbol index {:?}, kind {:?} at insn {ins_index} in section {}",
@@ -419,7 +422,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
                 fun.section_index.0
             );
             debug_assert_eq!(map.symbol_index().unwrap(), rel.symbol_index);
-            m
+            (m, None)
         } else {
             let Some(m) = maps_by_section.get(&section_index) else {
                 debug!("failed relocating map by section index {section_index}");
@@ -430,29 +433,49 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
                 });
             };
             let map = &m.2;
+            let arena_data_offset = map
+                .arena_data()
+                .filter(|data| data.section_index() == section_index)
+                .map(ArenaData::map_offset);
             debug!(
                 "relocating map by section index {}, kind {:?} at insn {ins_index} in section {}",
-                map.section_index(),
+                section_index,
                 map.section_kind(),
                 fun.section_index.0,
             );
 
-            debug_assert_eq!(map.symbol_index(), None);
-            debug_assert!(matches!(
-                map.section_kind(),
-                EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata
-            ));
-            m
+            if arena_data_offset.is_none() {
+                debug_assert_eq!(map.symbol_index(), None);
+                debug_assert!(matches!(
+                    map.section_kind(),
+                    EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata
+                ));
+                debug_assert_eq!(map.section_index(), section_index);
+            }
+            (m, arena_data_offset)
         };
-        debug_assert_eq!(map.section_index(), section_index);
+        let (_name, fd, map) = *target;
 
-        if map.data().is_empty() {
+        if arena_data_offset.is_some() && instructions.get(ins_index + 1).is_none() {
+            return Err(RelocationError::InvalidRelocationOffset {
+                offset: rel.offset,
+                relocation_number: rel_n,
+            });
+        }
+
+        if arena_data_offset.is_none() && map.data().is_empty() {
             instructions[ins_index].set_src_reg(BPF_PSEUDO_MAP_FD as u8);
         } else {
+            let addend = instructions[ins_index].imm;
             instructions[ins_index].set_src_reg(BPF_PSEUDO_MAP_VALUE as u8);
-            instructions[ins_index + 1].imm = instructions[ins_index].imm + sym.address as i32;
+            instructions[ins_index + 1].imm = match arena_data_offset {
+                Some(map_offset) => (addend as u32)
+                    .wrapping_add(sym.address as u32)
+                    .wrapping_add(map_offset) as i32,
+                None => addend + sym.address as i32,
+            };
         }
-        instructions[ins_index].imm = *fd;
+        instructions[ins_index].imm = fd;
     }
 
     Ok(())
@@ -685,7 +708,8 @@ mod test {
     use super::*;
     use crate::{
         extern_types::ExternType,
-        maps::{BtfMap, LegacyMap},
+        generated::bpf_map_type::BPF_MAP_TYPE_ARENA,
+        maps::{BtfMap, BtfMapDef, LegacyMap},
     };
 
     fn fake_sym(index: usize, section_index: usize, address: u64, name: &str, size: u64) -> Symbol {
@@ -736,6 +760,25 @@ mod test {
             section_index: 0,
             symbol_index,
             data: Vec::new(),
+            arena_data: None,
+        })
+    }
+
+    fn fake_arena_map(symbol_index: usize, arena_section_index: usize) -> Map {
+        Map::Btf(BtfMap {
+            def: BtfMapDef {
+                map_type: BPF_MAP_TYPE_ARENA as u32,
+                ..Default::default()
+            },
+            inner_def: None,
+            section_index: 5,
+            symbol_index,
+            data: Vec::new(),
+            arena_data: Some(ArenaData {
+                section_index: arena_section_index,
+                bytes: vec![0; 128],
+                map_offset: 0,
+            }),
         })
     }
 
@@ -941,6 +984,124 @@ mod test {
 
         assert_eq!(fun.instructions[1].src_reg(), BPF_PSEUDO_MAP_FD as u8);
         assert_eq!(fun.instructions[1].imm, 2);
+    }
+
+    #[test]
+    fn test_arena_data_relocation() {
+        let mut instruction = ins(&[0x18, 0, 0, 0, 0, 0, 0, 0]);
+        instruction.set_dst_reg(1);
+        instruction.imm = 4;
+        let mut fun = fake_func("test", vec![instruction, ins(&[0; 8])]);
+        let symbol_table = HashMap::from([(2, fake_sym(2, 7, 64, "counter", 8))]);
+        let relocations = [Relocation {
+            offset: 0,
+            symbol_index: 2,
+            size: 64,
+        }];
+        let map = fake_arena_map(1, 7);
+        let maps_by_section = HashMap::from([(7, ("arena", 12, &map))]);
+
+        relocate_maps(
+            &mut fun,
+            relocations.iter(),
+            &maps_by_section,
+            &HashMap::new(),
+            &symbol_table,
+            &HashSet::new(),
+        )
+        .unwrap();
+
+        assert_eq!(fun.instructions[0].src_reg(), BPF_PSEUDO_MAP_VALUE as u8);
+        assert_eq!(fun.instructions[0].imm, 12);
+        assert_eq!(fun.instructions[1].imm, 68);
+    }
+
+    #[test]
+    fn test_arena_data_relocation_uses_full_range_map_offset() {
+        let mut instruction = ins(&[0x18, 0, 0, 0, 0, 0, 0, 0]);
+        instruction.set_dst_reg(1);
+        instruction.imm = 4;
+        let mut fun = fake_func("test", vec![instruction, ins(&[0; 8])]);
+        let symbol_table = HashMap::from([(2, fake_sym(2, 7, 0x2000, "counter", 8))]);
+        let relocations = [Relocation {
+            offset: 0,
+            symbol_index: 2,
+            size: 64,
+        }];
+        let mut map = fake_arena_map(1, 7);
+        map.arena_data_mut().unwrap().set_map_offset(0x7fff_f000);
+        let maps_by_section = HashMap::from([(7, ("arena", 12, &map))]);
+
+        relocate_maps(
+            &mut fun,
+            relocations.iter(),
+            &maps_by_section,
+            &HashMap::new(),
+            &symbol_table,
+            &HashSet::new(),
+        )
+        .unwrap();
+
+        assert_eq!(fun.instructions[0].src_reg(), BPF_PSEUDO_MAP_VALUE as u8);
+        assert_eq!(fun.instructions[0].imm, 12);
+        assert_eq!(fun.instructions[1].imm, 0x8000_1004u32 as i32);
+    }
+
+    #[test]
+    fn test_arena_map_symbol_relocation() {
+        let mut fun = fake_func(
+            "test",
+            vec![ins(&[0x18, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])],
+        );
+        let symbol_table = HashMap::from([(1, fake_sym(1, 5, 0, "arena", 0))]);
+        let relocations = [Relocation {
+            offset: 0,
+            symbol_index: 1,
+            size: 64,
+        }];
+        let map = fake_arena_map(1, 7);
+        let maps_by_symbol = HashMap::from([(1, ("arena", 12, &map))]);
+
+        relocate_maps(
+            &mut fun,
+            relocations.iter(),
+            &HashMap::new(),
+            &maps_by_symbol,
+            &symbol_table,
+            &HashSet::new(),
+        )
+        .unwrap();
+
+        assert_eq!(fun.instructions[0].src_reg(), BPF_PSEUDO_MAP_FD as u8);
+        assert_eq!(fun.instructions[0].imm, 12);
+    }
+
+    #[test]
+    fn test_arena_data_relocation_requires_second_instruction() {
+        let mut fun = fake_func(
+            "test",
+            vec![ins(&[0x18, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])],
+        );
+        let symbol_table = HashMap::from([(2, fake_sym(2, 7, 0, "counter", 8))]);
+        let relocations = [Relocation {
+            offset: 0,
+            symbol_index: 2,
+            size: 64,
+        }];
+        let map = fake_arena_map(1, 7);
+        let maps_by_section = HashMap::from([(7, ("arena", 12, &map))]);
+
+        assert_matches::assert_matches!(
+            relocate_maps(
+                &mut fun,
+                relocations.iter(),
+                &maps_by_section,
+                &HashMap::new(),
+                &symbol_table,
+                &HashSet::new(),
+            ),
+            Err(RelocationError::InvalidRelocationOffset { offset: 0, .. })
+        );
     }
 
     #[test]

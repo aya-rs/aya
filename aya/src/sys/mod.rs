@@ -8,6 +8,8 @@ mod perf_event;
 #[cfg(test)]
 mod fake;
 
+#[cfg(test)]
+use std::os::fd::AsRawFd as _;
 use std::{
     ffi::{c_int, c_void},
     io,
@@ -154,10 +156,6 @@ fn syscall(call: Syscall<'_>) -> SysResult {
     }
 }
 
-#[cfg_attr(
-    test,
-    expect(unused_variables, reason = "TODO: we should validate all arguments")
-)]
 pub(crate) unsafe fn mmap(
     addr: *mut c_void,
     len: usize,
@@ -168,6 +166,16 @@ pub(crate) unsafe fn mmap(
 ) -> *mut c_void {
     #[cfg(test)]
     {
+        TEST_MMAP_CALL.with(|call| {
+            *call.borrow_mut() = Some(MmapCall {
+                address: addr,
+                length: len,
+                protection: prot,
+                flags,
+                fd: fd.as_raw_fd(),
+                offset,
+            })
+        });
         TEST_MMAP_RET.with(|ret| *ret.borrow())
     }
 

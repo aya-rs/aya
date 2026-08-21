@@ -1,3 +1,4 @@
+pub mod arena;
 pub mod array;
 pub mod bloom_filter;
 pub mod cgroup_array;
@@ -24,6 +25,7 @@ pub mod stack;
 pub mod stack_trace;
 pub mod xsk_map;
 
+pub use arena::Arena;
 pub use array::Array;
 pub use bloom_filter::BloomFilter;
 pub use cgroup_array::CgroupArray;

@@ -108,6 +108,13 @@ pub enum BtfError {
         type_id: u32,
     },
 
+    /// Invalid `map_extra` map-definition field.
+    #[error("BTF map `{name}`: invalid `map_extra` field")]
+    InvalidMapExtra {
+        /// Map containing the invalid definition.
+        name: String,
+    },
+
     /// unknown BTF type
     #[error("unknown BTF type `{type_name}`")]
     UnknownBtfTypeName {

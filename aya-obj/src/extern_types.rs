@@ -506,6 +506,7 @@ mod tests {
             symbol_table: Default::default(),
             symbols_by_section: Default::default(),
             section_infos: Default::default(),
+            pending_arena_data: None,
             symbol_offset_by_name: Default::default(),
         }
     }
@@ -526,6 +527,7 @@ mod tests {
             symbol_table: Default::default(),
             symbols_by_section: Default::default(),
             section_infos: Default::default(),
+            pending_arena_data: None,
             symbol_offset_by_name: Default::default(),
         }
     }

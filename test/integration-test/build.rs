@@ -77,6 +77,7 @@ fn main() -> Result<()> {
     // Keep this list synchronized with C_BPF_OBJECTS in BUILD.bazel. The Boolean controls whether
     // to build the additional .BTF section used by the corresponding relocation test.
     const C_BPF: &[(&str, bool)] = &[
+        ("arena-loader.bpf.c", false),
         ("ext.bpf.c", false),
         ("iter.bpf.c", true),
         ("main.bpf.c", false),

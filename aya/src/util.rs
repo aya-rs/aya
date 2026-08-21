@@ -438,7 +438,7 @@ pub(crate) fn bytes_of_bpf_name(bpf_name: &[core::ffi::c_char; 16]) -> &[u8] {
 // MMap corresponds to a memory-mapped region.
 //
 // The data is unmapped in Drop.
-#[cfg_attr(test, derive(Debug))]
+#[derive(Debug)]
 pub(crate) struct MMap {
     ptr: ptr::NonNull<c_void>,
     len: usize,
@@ -451,13 +451,15 @@ unsafe impl Sync for MMap {}
 
 impl MMap {
     pub(crate) fn new(
+        address: Option<ptr::NonNull<c_void>>,
         fd: BorrowedFd<'_>,
         len: usize,
         prot: c_int,
         flags: c_int,
         offset: off_t,
     ) -> Result<Self, SyscallError> {
-        match unsafe { mmap(ptr::null_mut(), len, prot, flags, fd, offset) } {
+        let address = address.map_or(ptr::null_mut(), ptr::NonNull::as_ptr);
+        match unsafe { mmap(address, len, prot, flags, fd, offset) } {
             MAP_FAILED => Err(SyscallError {
                 call: "mmap",
                 io_error: io::Error::last_os_error(),
@@ -480,6 +482,7 @@ impl MMap {
     pub(crate) fn map_copy_read_only(path: &Path) -> Result<Self, io::Error> {
         let file = File::open(path)?;
         Self::new(
+            None,
             file.as_fd(),
             file.metadata()?.len().try_into().map_err(|e| {
                 io::Error::new(
@@ -497,12 +500,23 @@ impl MMap {
     pub(crate) const fn ptr(&self) -> ptr::NonNull<c_void> {
         self.ptr
     }
+
+    pub(crate) const fn len(&self) -> usize {
+        self.len
+    }
 }
 
 impl AsRef<[u8]> for MMap {
     fn as_ref(&self) -> &[u8] {
         let Self { ptr, len } = self;
         unsafe { slice::from_raw_parts(ptr.as_ptr().cast(), *len) }
+    }
+}
+
+impl AsMut<[u8]> for MMap {
+    fn as_mut(&mut self) -> &mut [u8] {
+        let Self { ptr, len } = self;
+        unsafe { slice::from_raw_parts_mut(ptr.as_ptr().cast(), *len) }
     }
 }
 

@@ -1,10 +1,44 @@
 pub mod aya_ebpf
 pub use aya_ebpf::cty
 pub use aya_ebpf::macros
+pub mod aya_ebpf::arena
+#[repr(transparent)] pub struct aya_ebpf::arena::ArenaPtr<T>
+impl<T> aya_ebpf::arena::ArenaPtr<T>
+pub fn aya_ebpf::arena::ArenaPtr<T>::as_ptr(self) -> *mut T
+pub const fn aya_ebpf::arena::ArenaPtr<T>::as_user_va(self) -> u64
+pub const fn aya_ebpf::arena::ArenaPtr<T>::from_user_va(u64) -> Self
+pub const fn aya_ebpf::arena::ArenaPtr<T>::is_null(self) -> bool
+pub const fn aya_ebpf::arena::ArenaPtr<T>::null() -> Self
+pub unsafe fn aya_ebpf::arena::ArenaPtr<T>::read(self) -> T where T: core::marker::Copy
+pub unsafe fn aya_ebpf::arena::ArenaPtr<T>::write(self, T) where T: core::marker::Copy
+impl<T> core::clone::Clone for aya_ebpf::arena::ArenaPtr<T>
+pub fn aya_ebpf::arena::ArenaPtr<T>::clone(&self) -> Self
+impl<T> core::marker::Copy for aya_ebpf::arena::ArenaPtr<T>
+impl<T> core::marker::Freeze for aya_ebpf::arena::ArenaPtr<T>
+impl<T> !core::marker::Send for aya_ebpf::arena::ArenaPtr<T>
+impl<T> !core::marker::Sync for aya_ebpf::arena::ArenaPtr<T>
+impl<T> core::marker::Unpin for aya_ebpf::arena::ArenaPtr<T>
+impl<T> core::marker::UnsafeUnpin for aya_ebpf::arena::ArenaPtr<T>
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::arena::ArenaPtr<T> where T: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::arena::ArenaPtr<T> where T: core::panic::unwind_safe::RefUnwindSafe
 pub mod aya_ebpf::bindings
 pub use aya_ebpf::bindings::<<aya_ebpf_bindings::bindings::*>>
 pub use aya_ebpf::bindings::pt_regs
 pub mod aya_ebpf::btf_maps
+pub mod aya_ebpf::btf_maps::arena
+#[repr(C)] pub struct aya_ebpf::btf_maps::arena::Arena<const PAGES: usize, const FLAGS: usize>
+impl<const PAGES: usize, const FLAGS: usize> aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+pub const fn aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>::new() -> Self
+pub fn aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>::ptr_from_user_va<T>(&self, u64) -> aya_ebpf::arena::ArenaPtr<T>
+impl<const PAGES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+pub fn aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>::default() -> Self
+impl<const PAGES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+impl<const PAGES: usize, const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+impl<const PAGES: usize, const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+impl<const PAGES: usize, const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+impl<const PAGES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+impl<const PAGES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+impl<const PAGES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
 pub mod aya_ebpf::btf_maps::array
 #[repr(C)] pub struct aya_ebpf::btf_maps::array::Array<T, const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
@@ -520,6 +554,19 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_e
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>
+#[repr(C)] pub struct aya_ebpf::btf_maps::Arena<const PAGES: usize, const FLAGS: usize>
+impl<const PAGES: usize, const FLAGS: usize> aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+pub const fn aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>::new() -> Self
+pub fn aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>::ptr_from_user_va<T>(&self, u64) -> aya_ebpf::arena::ArenaPtr<T>
+impl<const PAGES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+pub fn aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>::default() -> Self
+impl<const PAGES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+impl<const PAGES: usize, const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+impl<const PAGES: usize, const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+impl<const PAGES: usize, const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+impl<const PAGES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+impl<const PAGES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
+impl<const PAGES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::arena::Arena<PAGES, FLAGS>
 #[repr(C)] pub struct aya_ebpf::btf_maps::Array<T, const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::get(&self, u32) -> core::option::Option<&T>

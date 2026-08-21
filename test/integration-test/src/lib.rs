@@ -7,6 +7,7 @@ macro_rules! bpf_file {
 }
 
 bpf_file!(
+    ARENA_LOADER => "arena-loader.bpf.o",
     EXT => "ext.bpf.o",
     ITER_TASK => "iter.bpf.o",
     MAIN => "main.bpf.o",
@@ -44,6 +45,7 @@ bpf_file!(
     TEXT_64_64_RELOC => "text_64_64_reloc.o",
     VARIABLES_RELOC => "variables_reloc.bpf.o",
 
+    ARENA => "arena",
     ARRAY => "array",
     BLOOM_FILTER => "bloom_filter",
     BPF_PROBE_READ => "bpf_probe_read",

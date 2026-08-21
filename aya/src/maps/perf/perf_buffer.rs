@@ -123,6 +123,7 @@ impl PerfBuffer {
         .map_err(|io_error| PerfBufferError::OpenError { io_error })?;
         let size = page_size * page_count;
         let mmap = MMap::new(
+            None,
             fd.as_fd(),
             size + page_size,
             PROT_READ | PROT_WRITE,

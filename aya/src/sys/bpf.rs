@@ -92,7 +92,8 @@ pub(crate) fn bpf_create_map(
                 | bpf_map_type::BPF_MAP_TYPE_SOCKHASH
                 | bpf_map_type::BPF_MAP_TYPE_QUEUE
                 | bpf_map_type::BPF_MAP_TYPE_STACK
-                | bpf_map_type::BPF_MAP_TYPE_RINGBUF,
+                | bpf_map_type::BPF_MAP_TYPE_RINGBUF
+                | bpf_map_type::BPF_MAP_TYPE_ARENA,
             ) => {
                 u.btf_key_type_id = 0;
                 u.btf_value_type_id = 0;
@@ -809,7 +810,7 @@ fn bpf_obj_get_info_by_fd<T, F: FnOnce(&mut T)>(
     init(&mut info);
 
     attr.info.bpf_fd = fd.as_raw_fd() as u32;
-    attr.info.info = ptr::from_ref(&info) as u64;
+    attr.info.info = ptr::from_mut(&mut info).expose_provenance() as u64;
     attr.info.info_len = size_of_val(&info) as u32;
 
     match unit_sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
@@ -1208,6 +1209,76 @@ pub(crate) fn is_bpf_global_data_supported() -> bool {
 
         bpf_prog_load(&mut attr).is_ok()
     } else {
+        false
+    }
+}
+
+pub(crate) fn is_ldimm64_full_range_offset_supported() -> bool {
+    let map = MapData::create(
+        aya_obj::Map::Legacy(LegacyMap {
+            def: bpf_map_def {
+                map_type: bpf_map_type::BPF_MAP_TYPE_ARRAY as u32,
+                key_size: 4,
+                value_size: 1,
+                max_entries: 1,
+                ..Default::default()
+            },
+            inner_def: None,
+            section_index: 0,
+            section_kind: EbpfSectionKind::Maps,
+            symbol_index: None,
+            data: Vec::new(),
+        }),
+        "aya_ldimm64",
+        None,
+    );
+
+    let Ok(map) = map else {
+        return false;
+    };
+
+    let instructions = [
+        new_insn(
+            (BPF_LD | BPF_DW | BPF_IMM) as u8,
+            1,
+            BPF_PSEUDO_MAP_VALUE as u8,
+            0,
+            map.fd().as_fd().as_raw_fd(),
+        ),
+        new_insn(0, 0, 0, 0, 1 << 30),
+        new_insn((BPF_JMP | BPF_EXIT) as u8, 0, 0, 0, 0),
+    ];
+
+    let (result, verifier_log) = retry_with_verifier_logs(10, |log_buf| {
+        with_prog_insns(ProgramType::SocketFilter, &instructions, |attr| {
+            let u = unsafe { &mut attr.__bindgen_anon_3 };
+
+            if !log_buf.is_empty() {
+                u.log_level = VerifierLogLevel::DEBUG.bits();
+                u.log_buf = log_buf.as_mut_ptr() as u64;
+                u.log_size = log_buf.len() as u32;
+            }
+
+            bpf_prog_load(attr)
+        })
+    });
+
+    let Err(error) = result else {
+        warn!("ldimm64 full-range-offset probe unexpectedly succeeded");
+        return false;
+    };
+
+    let verifier_log = verifier_log.to_string();
+
+    if verifier_log.contains("direct value offset of") {
+        false
+    } else if verifier_log.contains("invalid access to map value pointer") {
+        true
+    } else {
+        warn!(
+            "ldimm64 full-range-offset probe failed unexpectedly: {error}; verifier output: \
+             {verifier_log}"
+        );
         false
     }
 }
@@ -1678,6 +1749,7 @@ bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
     #[case::queue(bpf_map_type::BPF_MAP_TYPE_QUEUE)]
     #[case::stack(bpf_map_type::BPF_MAP_TYPE_STACK)]
     #[case::ringbuf(bpf_map_type::BPF_MAP_TYPE_RINGBUF)]
+    #[case::arena(bpf_map_type::BPF_MAP_TYPE_ARENA)]
     fn test_btf_blocklist_strips_type_ids(#[case] map_type: bpf_map_type) {
         const BTF_FD: i32 = 42;
 

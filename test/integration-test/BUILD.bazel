@@ -7,6 +7,7 @@ load("//bazel:vm.bzl", "aya_qemu_vm_test")
 # Keep this list synchronized with C_BPF in build.rs. The Boolean requests the
 # additional .BTF section used by the corresponding relocation test.
 C_BPF_OBJECTS = [
+    ("bpf/arena-loader.bpf.c", False),
     ("bpf/ext.bpf.c", False),
     ("bpf/iter.bpf.c", True),
     ("bpf/main.bpf.c", False),

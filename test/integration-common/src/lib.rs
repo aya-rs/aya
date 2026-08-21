@@ -1,5 +1,36 @@
 #![no_std]
 
+pub mod arena {
+    /// Lives at offset 0 of the arena; the rendezvous point between the
+    /// userspace test and the BPF program.
+    #[repr(C)]
+    #[derive(Clone, Copy, Debug, Default)]
+    pub struct Root {
+        /// Incremented by the BPF program on every trigger.
+        pub counter: u64,
+        /// Sum of the list nodes' values, computed by the BPF program.
+        pub sum: u64,
+        /// User-space virtual address of the first list node (0 = empty).
+        pub head: u64,
+    }
+
+    /// A linked list node, allocated in the arena by the userspace test.
+    ///
+    /// `next` holds a user-space virtual address; the BPF side re-blesses it
+    /// with an `addr_space_cast` before dereferencing (via `ArenaPtr`).
+    #[repr(C)]
+    #[derive(Clone, Copy, Debug, Default)]
+    pub struct Node {
+        pub value: u64,
+        pub next: u64,
+    }
+
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for Root {}
+    #[cfg(feature = "user")]
+    unsafe impl aya::Pod for Node {}
+}
+
 pub mod array {
     pub const GET_INDEX: u32 = 0;
     pub const GET_PTR_INDEX: u32 = 1;
