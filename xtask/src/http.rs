@@ -91,7 +91,15 @@ impl HttpClient {
                 .with_context(|| format!("failed to create {}", parent.display()))?;
         }
 
-        let mut request = self.agent.get(url).header("User-Agent", USER_AGENT);
+        let mut request = self
+            .agent
+            .get(url)
+            .config()
+            // TODO: Remove this override once ureq stops applying
+            // `timeout_recv_response` while reading the response body.
+            .timeout_recv_response(None)
+            .build()
+            .header("User-Agent", USER_AGENT);
         if dest_path_exists {
             let etag = fs::read_to_string(etag_path).ok();
             if let Some(etag) = etag
