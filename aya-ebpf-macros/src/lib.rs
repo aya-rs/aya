@@ -438,15 +438,15 @@ pub fn btf_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
 ///
 ///
 ///#[stream_parser]
-///fn stream_parser(ctx: SkBuffContext) -> u32 {
+///fn stream_parser(ctx: SkBuffContext) -> i32 {
 ///    match try_stream_parser(ctx) {
 ///        Ok(ret) => ret,
 ///        Err(ret) => ret,
 ///    }
 ///}
 ///
-///fn try_stream_parser(ctx: SkBuffContext) -> Result<u32, u32> {
-///    Ok(ctx.len())
+///fn try_stream_parser(ctx: SkBuffContext) -> Result<i32, i32> {
+///    Ok(ctx.len() as i32)
 ///}
 /// ```
 #[proc_macro_attribute]
