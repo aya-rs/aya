@@ -52,7 +52,7 @@ use_repo(rules_rust, "rules_rust")
 toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")
 toolchains.toolchain(
     edition = "2024",
-    version = "nightly/2026-08-21",
+    version = "nightly/2026-08-22",
 )
 use_repo(toolchains, "default_rust_toolchains")
 
