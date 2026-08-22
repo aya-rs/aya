@@ -8,6 +8,7 @@ use core::{
 };
 
 use aya_ebpf::{
+    helpers::bpf_get_current_comm,
     macros::{map, uprobe},
     maps::Array,
     programs::ProbeContext,
@@ -84,6 +85,10 @@ fn test_log(ctx: ProbeContext) {
     );
     let ptr = 0xdeadbeef as *const u8;
     debug!(&ctx, "ptr: {:p}", ptr);
+
+    if let Ok(comm) = bpf_get_current_comm() {
+        info!(&ctx, "comm: {:s}", comm);
+    }
 
     // Testing compilation only.
     if false {
