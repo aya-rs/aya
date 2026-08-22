@@ -52,7 +52,7 @@ impl SkSkb {
             SkSkbKind::StreamVerdict => quote! { u32 },
             SkSkbKind::StreamParser => quote! { i32 },
         };
-        
+
         quote! {
             #[unsafe(no_mangle)]
             #[unsafe(link_section = #section_name)]
