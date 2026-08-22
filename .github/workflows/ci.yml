@@ -97,7 +97,7 @@ jobs:
         with:
           save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@v2.85.13
+      - uses: taiki-e/install-action@v2.86.3
         with:
           tool: cargo-hack,taplo-cli,typos-cli
 
@@ -160,7 +160,7 @@ jobs:
         with:
           save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@v2.85.13
+      - uses: taiki-e/install-action@v2.86.3
         with:
           tool: cargo-hack
 
@@ -238,7 +238,7 @@ jobs:
         with:
           save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@v2.85.13
+      - uses: taiki-e/install-action@v2.86.3
         with:
           tool: bpf-linker,cargo-hack
 
@@ -391,7 +391,7 @@ jobs:
         with:
           save-if: ${{ github.event_name != 'pull_request' }}
 
-      - uses: taiki-e/install-action@v2.85.13
+      - uses: taiki-e/install-action@v2.86.3
         with:
           tool: bpf-linker,cargo-hack
 
