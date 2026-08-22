@@ -20,6 +20,23 @@ concurrency:
 permissions: {}
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      rust-toolchains: ${{ steps.toolchains.outputs.rust-toolchains }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read the committed Rust toolchains
+        id: toolchains
+        run: |
+          set -euo pipefail
+
+          toolchains=$(python3 -B scripts/rust-toolchain-pins.py current)
+          printf 'rust-toolchains=%s\n' "$toolchains" >> "$GITHUB_OUTPUT"
+
   bazel:
     name: bazel (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -35,6 +52,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Check Starlark
+        run: bazel run //bazel/format:format.check
+
       - name: Test
         run: |
           set -euo pipefail
@@ -44,6 +64,7 @@ jobs:
             --remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY"
 
   codegen:
+    needs: prepare
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -53,6 +74,8 @@ jobs:
           submodules: recursive
 
       - uses: ./.github/actions/codegen
+        with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
       - name: Check generated files
         id: generated
         run: |
@@ -81,13 +104,15 @@ jobs:
           overwrite: true
 
   lint:
+    needs: prepare
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - uses: ./.github/actions/setup-rust-nightly
+      - uses: ./.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
           components: clippy,miri,rustfmt,rust-src
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
@@ -134,6 +159,7 @@ jobs:
             --workspace
 
   build-test-aya:
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -149,8 +175,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: ./.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).stable }}
           targets: ${{ matrix.arch }}
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
@@ -219,17 +246,21 @@ jobs:
             --feature-powerset
 
   build-test-aya-ebpf:
+    needs: prepare
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - uses: ./.github/actions/setup-rust-nightly
+      - uses: ./.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
           components: rust-src
 
       # Installed *after* nightly so it is the default.
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).stable }}
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
       # PR-scoped entries can only help reruns of one PR, but repeatedly evict
@@ -294,6 +325,7 @@ jobs:
           fi
 
   run-integration-test:
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -375,13 +407,15 @@ jobs:
           find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
           | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
 
-      - uses: ./.github/actions/setup-rust-nightly
+      - uses: ./.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
           components: rust-src
 
       # Installed *after* nightly so it is the default.
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: ./.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).stable }}
           targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
@@ -437,6 +471,7 @@ jobs:
   check:
     if: always()
     needs:
+      - prepare
       - bazel
       - codegen
       - lint

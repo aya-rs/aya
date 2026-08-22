@@ -1,4 +1,4 @@
-name: Update Rust nightly
+name: Update Rust toolchains
 
 on:
   push:
@@ -14,28 +14,15 @@ on:
     outputs:
       rust-nightly:
         description: Latest available Rust nightly
-        value: ${{ jobs.resolve.outputs.rust-nightly }}
+        value: ${{ fromJSON(jobs.resolve.outputs.rust-toolchains).nightly.rust }}
 
 jobs:
-  # Shared: resolve a nightly for reusable-workflow callers.
   resolve:
-    runs-on: ubuntu-latest
     permissions:
       contents: read
-    outputs:
-      rust-nightly: ${{ steps.resolve.outputs.rust-nightly }}
-      provider-repository: ${{ job.workflow_repository }}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          repository: ${{ job.workflow_repository }}
-          ref: ${{ job.workflow_sha }}
-
-      - name: Resolve the latest Rust nightly
-        id: resolve
-        run: |
-          nightly=$(python3 scripts/rust-nightly.py latest)
-          printf 'rust-nightly=%s\n' "$nightly" >> "$GITHUB_OUTPUT"
+    uses: ./.github/workflows/rust-toolchains.yml
+    with:
+      channels: stable nightly
 
   # Repository-local: regenerate files and publish the update pull request.
   update:
@@ -56,27 +43,23 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Update the pinned Rust nightly
-        run: |
-          set -euo pipefail
+      - name: Update the pinned Rust toolchains
+        env:
+          TOOLCHAINS: ${{ needs.resolve.outputs.rust-toolchains }}
+        run: python3 -B scripts/rust-toolchain-pins.py update "$TOOLCHAINS"
 
-          nightly='${{ needs.resolve.outputs.rust-nightly }}'
-          module=$(python3 scripts/rust-nightly.py update "$nightly" < MODULE.bazel)
-          if [[ -n "$module" ]]; then
-            printf '%s\n' "$module" > MODULE.bazel
-          fi
+      # Keep the lockfile synchronized with the native toolchain declarations.
+      - name: Update the Bazel lockfile
+        run: bazel mod deps --lockfile_mode=update
 
       - uses: ./.github/actions/codegen
+        with:
+          toolchain: ${{ fromJSON(needs.resolve.outputs.rust-toolchains).nightly.rust }}
 
       - name: Regenerate public API snapshots
         run: cargo xtask public-api --bless
 
-      # rules_rs derives crate extension facts from Cargo.lock, so refresh the
-      # Bazel lockfile even when the Rust nightly did not change.
-      - name: Update the Bazel lockfile
-        run: bazel mod deps --lockfile_mode=update
-
-      - name: Create or update the Rust nightly pull request
+      - name: Create or update the Rust toolchain pull request
         id: pull-request
         uses: peter-evans/create-pull-request@v8
         with:
@@ -85,9 +68,9 @@ jobs:
           # Forks use GITHUB_TOKEN and approve their checks manually.
           token: ${{ secrets.CRABBY_GITHUB_TOKEN || github.token }}
           branch: create-pull-request/rust-nightly
-          commit-message: 'build: regenerate with ${{ needs.resolve.outputs.rust-nightly }}'
-          title: 'build: regenerate with ${{ needs.resolve.outputs.rust-nightly }}'
-          body: Update the Rust nightly when needed and regenerate derived files.
+          commit-message: 'build: update Rust ${{ fromJSON(needs.resolve.outputs.rust-toolchains).stable.rust }}, ${{ fromJSON(needs.resolve.outputs.rust-toolchains).nightly.rust }}'
+          title: 'build: update Rust ${{ fromJSON(needs.resolve.outputs.rust-toolchains).stable.rust }}, ${{ fromJSON(needs.resolve.outputs.rust-toolchains).nightly.rust }}'
+          body: Update the Rust stable and nightly pins when needed and regenerate derived files.
 
       - name: Enable auto-merge
         # Forks do not receive the Crabby token required for auto-merge.
