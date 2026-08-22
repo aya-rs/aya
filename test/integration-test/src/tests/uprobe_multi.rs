@@ -87,7 +87,7 @@ fn test_uprobe_attach_multi() {
         },
     ];
     let attach_res = prog.attach(
-        &points,
+        points,
         Path::new("/proc/self/exe"),
         UProbeScope::CallingProcess,
     );
@@ -171,7 +171,7 @@ fn test_uprobe_unknown_program_falls_back_to_multiple_single_points() {
     ];
     let link_id = prog
         .attach(
-            &points,
+            points,
             Path::new("/proc/self/exe"),
             UProbeScope::CallingProcess,
         )
@@ -196,7 +196,7 @@ fn test_uprobe_unknown_program_falls_back_to_multiple_single_points() {
     // second attach verifies the handle remains usable after fallback and detach.
     let link_id = prog
         .attach(
-            &points,
+            points,
             Path::new("/proc/self/exe"),
             UProbeScope::CallingProcess,
         )
@@ -251,7 +251,7 @@ fn test_uprobe_single_program_composite_link_drop_detaches_all_points() {
     ];
     let link_id = prog
         .attach(
-            &points,
+            points,
             Path::new("/proc/self/exe"),
             UProbeScope::AllProcesses,
         )
@@ -302,7 +302,7 @@ fn test_uprobe_attach_multi_invalid_symbol() {
     let points = [PROG_A, PROG_SYMBOL_INVALID];
 
     let attach_res = prog.attach(
-        &points,
+        points,
         Path::new("/proc/self/exe"),
         UProbeScope::AllProcesses,
     );
