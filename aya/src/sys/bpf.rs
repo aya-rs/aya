@@ -1445,12 +1445,33 @@ pub(crate) fn probe_btf_type_tag() -> io::Result<bool> {
     )
 }
 
+const BPF_PROG_LOAD_ATTEMPTS: usize = 5;
+
 pub(super) fn bpf_prog_load(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
-    // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
-    with_raised_rlimit_retry(
-        || unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) },
-        &[EPERM],
-    )
+    // The verifier aborts program verification with EAGAIN when a signal is pending so that it
+    // can release the resources used by the current verification attempt:
+    // https://github.com/torvalds/linux/blob/c3494801/kernel/bpf/verifier.c#L5151-L5155
+    // Match libbpf by retrying this transient failure, with a bounded attempt count so that
+    // continuously delivered signals cannot cause an infinite loop:
+    // https://github.com/libbpf/libbpf/blob/f7081a6b/src/bpf.c#L125-L133
+    // https://github.com/torvalds/linux/commit/d6d418bd
+    let mut attempts = BPF_PROG_LOAD_ATTEMPTS;
+    loop {
+        // SAFETY: BPF_PROG_LOAD returns a new file descriptor.
+        let result = with_raised_rlimit_retry(
+            || unsafe { fd_sys_bpf(bpf_cmd::BPF_PROG_LOAD, attr) },
+            &[EPERM],
+        );
+        if attempts == 1
+            || !matches!(
+                result.as_ref(),
+                Err(error) if error.raw_os_error() == Some(libc::EAGAIN)
+            )
+        {
+            return result;
+        }
+        attempts -= 1;
+    }
 }
 
 fn sys_bpf(cmd: bpf_cmd, attr: &mut bpf_attr) -> io::Result<i64> {
@@ -1568,6 +1589,8 @@ pub(crate) fn retry_with_verifier_logs<T>(
 
 #[cfg(test)]
 mod tests {
+    use std::cell::Cell;
+
     use aya_obj::{
         generated::bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, maps::PinningType, obj::parse_map_info,
     };
@@ -1576,6 +1599,54 @@ mod tests {
 
     use super::*;
     use crate::sys::override_syscall;
+
+    thread_local! {
+        static BPF_PROG_LOAD_CALLS: Cell<usize> = const { Cell::new(0) };
+    }
+
+    #[test]
+    fn test_bpf_prog_load_retries_eagain_then_succeeds() {
+        BPF_PROG_LOAD_CALLS.set(0);
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_PROG_LOAD,
+                attr: _,
+            } => {
+                let calls = BPF_PROG_LOAD_CALLS.get() + 1;
+                BPF_PROG_LOAD_CALLS.set(calls);
+                if calls == 1 {
+                    Err((-1, io::Error::from_raw_os_error(libc::EAGAIN)))
+                } else {
+                    Ok(crate::MockableFd::mock_signed_fd().into())
+                }
+            }
+            unexpected => panic!("unexpected syscall: {unexpected:?}"),
+        });
+
+        let mut attr = unsafe { mem::zeroed() };
+        bpf_prog_load(&mut attr).unwrap();
+        assert_eq!(BPF_PROG_LOAD_CALLS.get(), 2);
+    }
+
+    #[test]
+    fn test_bpf_prog_load_stops_after_attempt_limit() {
+        BPF_PROG_LOAD_CALLS.set(0);
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_PROG_LOAD,
+                attr: _,
+            } => {
+                BPF_PROG_LOAD_CALLS.set(BPF_PROG_LOAD_CALLS.get() + 1);
+                Err((-1, io::Error::from_raw_os_error(libc::EAGAIN)))
+            }
+            unexpected => panic!("unexpected syscall: {unexpected:?}"),
+        });
+
+        let mut attr = unsafe { mem::zeroed() };
+        let error = bpf_prog_load(&mut attr).unwrap_err();
+        assert_eq!(error.raw_os_error(), Some(libc::EAGAIN));
+        assert_eq!(BPF_PROG_LOAD_CALLS.get(), BPF_PROG_LOAD_ATTEMPTS);
+    }
 
     #[test]
     fn test_attach_with_attributes() {
