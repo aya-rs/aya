@@ -116,11 +116,12 @@ jobs:
           components: clippy,miri,rustfmt,rust-src
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
-      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
-      # main caches that every PR can restore. Keep PRs restore-only.
+      # Only save default-branch entries, which every branch and PR can
+      # restore, so branch- and PR-scoped entries do not evict shared caches.
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.event_name != 'pull_request' }}
+          save-if: >-
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
       - uses: taiki-e/install-action@v2.86.3
         with:
@@ -181,11 +182,12 @@ jobs:
           targets: ${{ matrix.arch }}
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
-      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
-      # main caches that every PR can restore. Keep PRs restore-only.
+      # Only save default-branch entries, which every branch and PR can
+      # restore, so branch- and PR-scoped entries do not evict shared caches.
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.event_name != 'pull_request' }}
+          save-if: >-
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
       - uses: taiki-e/install-action@v2.86.3
         with:
@@ -263,11 +265,12 @@ jobs:
           toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).stable }}
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
-      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
-      # main caches that every PR can restore. Keep PRs restore-only.
+      # Only save default-branch entries, which every branch and PR can
+      # restore, so branch- and PR-scoped entries do not evict shared caches.
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.event_name != 'pull_request' }}
+          save-if: >-
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
       - uses: taiki-e/install-action@v2.86.3
         with:
@@ -419,11 +422,12 @@ jobs:
           targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
-      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
-      # main caches that every PR can restore. Keep PRs restore-only.
+      # Only save default-branch entries, which every branch and PR can
+      # restore, so branch- and PR-scoped entries do not evict shared caches.
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.event_name != 'pull_request' }}
+          save-if: >-
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
       - uses: taiki-e/install-action@v2.86.3
         with:
@@ -462,7 +466,7 @@ jobs:
         if: >-
           matrix.vm-kernels != 'local' &&
           steps.vm-cache.outputs.cache-hit != 'true' &&
-          github.event_name != 'pull_request'
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         uses: actions/cache/save@v6
         with:
           path: test/.tmp

@@ -11,9 +11,6 @@ on:
       rust-toolchains:
         description: Immutable toolchain names and rustc commits by channel
         value: ${{ jobs.resolve.outputs.rust-toolchains }}
-      provider-repository:
-        description: Repository containing this workflow
-        value: ${{ jobs.resolve.outputs.provider-repository }}
 
 permissions:
   contents: read
@@ -23,7 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       rust-toolchains: ${{ steps.resolve.outputs.rust-toolchains }}
-      provider-repository: ${{ job.workflow_repository }}
     steps:
       - uses: actions/checkout@v7
         with:

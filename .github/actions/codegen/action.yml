@@ -17,7 +17,8 @@ runs:
     - uses: Swatinem/rust-cache@v2
       with:
         shared-key: codegen
-        save-if: ${{ github.event_name != 'pull_request' }}
+        save-if: >-
+          ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
     - name: Install headers
       shell: bash

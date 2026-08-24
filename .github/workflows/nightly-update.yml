@@ -1,6 +1,12 @@
 name: Update Rust toolchains
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/nightly-update.yml
+      - .github/workflows/rust-toolchains.yml
+      - scripts/rust_toolchains.py
+
   push:
     branches:
       - main
@@ -16,13 +22,14 @@ jobs:
       contents: read
     uses: ./.github/workflows/rust-toolchains.yml
     with:
-      channels: stable nightly
+      channels: >-
+        ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+        'stable nightly' || 'stable beta nightly' }}
 
   # Repository-local: regenerate files and publish the update pull request.
   update:
     needs: resolve
     if: >-
-      github.repository == needs.resolve.outputs.provider-repository &&
       github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
     permissions:
