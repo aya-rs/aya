@@ -398,6 +398,18 @@ fn flavorless_name(name: &str) -> &str {
     name.split_once("___").map_or(name, |x| x.0)
 }
 
+// An array is potentially variable length if it has 0 elements and is the last field of the parent
+// struct, like libbpf's is_flex_arr().
+fn is_flex_array(btf: &Btf, array_len: u32, parent: &Accessor) -> Result<bool, BtfError> {
+    if array_len != 0 {
+        return Ok(false);
+    }
+    Ok(match btf.type_by_id(parent.type_id)? {
+        BtfType::Struct(s) => parent.index == s.members.len() - 1,
+        _ => false,
+    })
+}
+
 fn find_candidates<'target>(
     local_ty: &BtfType,
     local_name: &str,
@@ -542,16 +554,11 @@ fn match_candidate<'target>(
                             return Ok(None);
                         };
 
-                        let var_len = array.len == 0 && {
-                            // an array is potentially variable length if it's the last field
-                            // of the parent struct and has 0 elements
-                            let parent = target_spec.accessors.last().unwrap();
-                            let parent_ty = candidate.btf.type_by_id(parent.type_id)?;
-                            match parent_ty {
-                                BtfType::Struct(s) => parent.index == s.members.len() - 1,
-                                _ => false,
-                            }
-                        };
+                        let var_len = is_flex_array(
+                            candidate.btf,
+                            array.len,
+                            target_spec.accessors.last().unwrap(),
+                        )?;
                         if !var_len && accessor.index >= array.len as usize {
                             return Ok(None);
                         }
@@ -819,16 +826,7 @@ impl<'a> AccessSpec<'a> {
 
                         BtfType::Array(Array { array, .. }) => {
                             type_id = btf.resolve_type(array.element_type)?;
-                            let var_len = array.len == 0 && {
-                                // an array is potentially variable length if it's the last field
-                                // of the parent struct and has 0 elements
-                                let parent = accessors.last().unwrap();
-                                let parent_ty = btf.type_by_id(parent.type_id)?;
-                                match parent_ty {
-                                    BtfType::Struct(s) => parent.index == s.members.len() - 1,
-                                    _ => false,
-                                }
-                            };
+                            let var_len = is_flex_array(btf, array.len, accessors.last().unwrap())?;
                             if !var_len && index >= array.len as usize {
                                 return Err(RelocationError::InvalidAccessIndex {
                                     type_name: btf.err_type_name(ty),
