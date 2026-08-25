@@ -2489,13 +2489,13 @@ impl<T: core::default::Default> core::default::Default for aya_obj::generated::_
 pub fn aya_obj::generated::__IncompleteArrayField<T>::default() -> aya_obj::generated::__IncompleteArrayField<T>
 impl<T> core::fmt::Debug for aya_obj::generated::__IncompleteArrayField<T>
 pub fn aya_obj::generated::__IncompleteArrayField<T>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<T> core::marker::Freeze for aya_obj::generated::__IncompleteArrayField<T> where T: core::marker::Freeze
-impl<T> core::marker::Send for aya_obj::generated::__IncompleteArrayField<T> where T: core::marker::Send
-impl<T> core::marker::Sync for aya_obj::generated::__IncompleteArrayField<T> where T: core::marker::Sync
-impl<T> core::marker::Unpin for aya_obj::generated::__IncompleteArrayField<T> where T: core::marker::Unpin
-impl<T> core::marker::UnsafeUnpin for aya_obj::generated::__IncompleteArrayField<T> where T: core::marker::UnsafeUnpin
-impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::__IncompleteArrayField<T> where T: core::panic::unwind_safe::RefUnwindSafe
-impl<T> core::panic::unwind_safe::UnwindSafe for aya_obj::generated::__IncompleteArrayField<T> where T: core::panic::unwind_safe::UnwindSafe
+impl<T> core::marker::Freeze for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::Freeze, [T; 0]: core::marker::Freeze
+impl<T> core::marker::Send for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::Send, [T; 0]: core::marker::Send
+impl<T> core::marker::Sync for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::Sync, [T; 0]: core::marker::Sync
+impl<T> core::marker::Unpin for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::Unpin, [T; 0]: core::marker::Unpin
+impl<T> core::marker::UnsafeUnpin for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::UnsafeUnpin, [T; 0]: core::marker::UnsafeUnpin
+impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::panic::unwind_safe::RefUnwindSafe, [T; 0]: core::panic::unwind_safe::RefUnwindSafe
+impl<T> core::panic::unwind_safe::UnwindSafe for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::panic::unwind_safe::UnwindSafe, [T; 0]: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_obj::generated::bpf_attr__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::btf_fd: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_1::btf_key_type_id: aya_obj::generated::__u32
