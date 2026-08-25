@@ -45,8 +45,8 @@ impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> SockHash<K, MAX_ENTRIES, F
     // Enforces kernel constraints (kernel/net/core/sock_map.c sock_hash_alloc):
     // key_size must be > 0 and <= MAX_BPF_STACK (512). `const _: ()` is
     // forbidden in a generic impl, and a named associated const is lazy
-    // without a reference, hence `let () = Self::_CHECK` in every method.
-    const _CHECK: () = {
+    // without a reference, hence `let () = Self::CHECK` in every method.
+    const CHECK: () = {
         assert!(size_of::<K>() > 0, "SockHash key must be non-zero sized.");
         assert!(
             size_of::<K>() <= 512,
@@ -60,7 +60,7 @@ impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> SockHash<K, MAX_ENTRIES, F
 
     /// Inserts the socket from `sk_ops` into the map under `key`.
     pub fn update(&self, key: &mut K, sk_ops: &mut bpf_sock_ops, flags: u64) -> Result<(), i32> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         let ret = unsafe {
             bpf_sock_hash_update(
                 ptr::from_mut(sk_ops),
@@ -74,7 +74,7 @@ impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> SockHash<K, MAX_ENTRIES, F
 
     /// Redirects the message in `ctx` to the socket at `key`.
     pub fn redirect_msg(&self, ctx: &SkMsgContext, key: &mut K, flags: u64) -> c_long {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         unsafe {
             bpf_msg_redirect_hash(
                 ctx.msg,
@@ -87,7 +87,7 @@ impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> SockHash<K, MAX_ENTRIES, F
 
     /// Redirects the socket buffer in `ctx` to the socket at `key`.
     pub fn redirect_skb(&self, ctx: &SkBuffContext, key: &mut K, flags: u64) -> c_long {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         unsafe {
             bpf_sk_redirect_hash(
                 ctx.skb.as_raw_ptr(),
@@ -118,7 +118,7 @@ impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> SockHash<K, MAX_ENTRIES, F
         key: &K,
         flags: u64,
     ) -> Result<(), i32> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         let sk = lookup(self.as_ptr(), key).ok_or(-ENOENT)?;
         let ret = unsafe { bpf_sk_assign(ctx.as_ptr().cast(), sk.as_ptr(), flags) };
         let _: c_long = unsafe { bpf_sk_release(sk.as_ptr()) };

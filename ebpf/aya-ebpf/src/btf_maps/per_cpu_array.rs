@@ -57,8 +57,8 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> PerCpuArray<T, MAX_ENTRIES
     // Enforces kernel constraints from kernel/bpf/arraymap.c and the
     // per-CPU allocator alignment invariant. `const _: ()` is forbidden in
     // a generic impl, and a named associated const is lazy without a
-    // reference, hence `let () = Self::_CHECK` in every method.
-    const _CHECK: () = {
+    // reference, hence `let () = Self::CHECK` in every method.
+    const CHECK: () = {
         assert!(
             size_of::<T>() >= 1,
             "per-CPU array value must be non-zero sized.",
@@ -81,21 +81,21 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> PerCpuArray<T, MAX_ENTRIES
     /// if `index` is out of bounds.
     #[inline(always)]
     pub fn get(&self, index: u32) -> Option<&T> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         unsafe { self.lookup(index).map(|p| p.as_ref()) }
     }
 
     /// Returns a const pointer to the current CPU's slot at `index`.
     #[inline(always)]
     pub fn get_ptr(&self, index: u32) -> Option<*const T> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         unsafe { self.lookup(index).map(|p| p.as_ptr().cast_const()) }
     }
 
     /// Returns a mutable pointer to the current CPU's slot at `index`.
     #[inline(always)]
     pub fn get_ptr_mut(&self, index: u32) -> Option<*mut T> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         unsafe { self.lookup(index).map(NonNull::as_ptr) }
     }
 
@@ -110,7 +110,7 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> PerCpuArray<T, MAX_ENTRIES
     /// rejected by the kernel for arrays.
     #[inline(always)]
     pub fn set(&self, index: u32, value: &T, flags: u64) -> Result<(), i32> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         insert(self.as_ptr(), &index, value, flags)
     }
 }

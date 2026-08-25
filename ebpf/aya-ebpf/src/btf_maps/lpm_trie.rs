@@ -47,8 +47,8 @@ impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> LpmTrie<K, V, MAX_ENTRI
     // Enforces kernel constraints (kernel/bpf/lpm_trie.c) and value
     // alignment on the returned reference. `const _: ()` is forbidden in
     // a generic impl, and a named associated const is lazy without a
-    // reference, hence `let () = Self::_CHECK` in every method.
-    const _CHECK: () = {
+    // reference, hence `let () = Self::CHECK` in every method.
+    const CHECK: () = {
         assert!(
             size_of::<Key<K>>() >= 5,
             "LPM trie key must be at least 5 bytes (prefix_len + one data byte).",
@@ -92,21 +92,21 @@ impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> LpmTrie<K, V, MAX_ENTRI
     /// Returns `None` if no prefix in the trie matches.
     #[inline(always)]
     pub fn get(&self, key: &Key<K>) -> Option<&V> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         lookup(self.as_ptr(), key).map(|p| unsafe { p.as_ref() })
     }
 
     /// Inserts or updates the value for the exact `(prefix_len, data)` pair.
     #[inline(always)]
     pub fn insert(&self, key: &Key<K>, value: &V, flags: u64) -> Result<(), i32> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         insert(self.as_ptr(), key, value, flags)
     }
 
     /// Removes the entry for the exact `(prefix_len, data)` pair.
     #[inline(always)]
     pub fn remove(&self, key: &Key<K>) -> Result<(), i32> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         remove(self.as_ptr(), key)
     }
 }

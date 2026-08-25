@@ -29,7 +29,7 @@ btf_map_def!(
 );
 
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> XskMap<MAX_ENTRIES, FLAGS> {
-    const _CHECK: () = {
+    const CHECK: () = {
         assert!(
             MAX_ENTRIES > 0,
             "XskMap max_entries must be greater than zero.",
@@ -42,7 +42,7 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> XskMap<MAX_ENTRIES, FLAGS> {
     /// inserted there.
     #[inline(always)]
     pub fn get(&self, index: u32) -> Option<u32> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         let value = lookup(self.as_ptr(), &index)?;
         let value: &bpf_xdp_sock = unsafe { value.as_ref() };
         Some(value.queue_id)
@@ -57,7 +57,7 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> XskMap<MAX_ENTRIES, FLAGS> {
     /// current one, the kernel drops the packet.
     #[inline(always)]
     pub fn redirect(&self, index: u32, flags: u64) -> Result<u32, u32> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         super::try_redirect_map(self.as_ptr(), index, flags)
     }
 }
