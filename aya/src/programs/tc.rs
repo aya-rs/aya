@@ -371,9 +371,14 @@ impl SchedClassifier {
 
         match options {
             TcAttachOptions::Netlink(options) => {
-                let name = self.data.name.as_deref().unwrap_or_default();
-                // TODO: avoid this unwrap by adding a new error variant.
-                let name = CString::new(name).unwrap();
+                let name: &str = self.data.name.as_deref().unwrap_or_default();
+                let name = CString::new(name).map_err(|err @ std::ffi::NulError { .. }| {
+                    let name = err.into_vec();
+                    // SAFETY: CString::new received a &str, and into_vec()
+                    // returns its original bytes unchanged, so they are valid UTF-8.
+                    let name = unsafe { String::from_utf8_unchecked(name) };
+                    ProgramError::InvalidName { name }
+                })?;
                 let (priority, handle) = unsafe {
                     netlink_qdisc_attach(
                         if_index as i32,

@@ -188,6 +188,8 @@ pub enum ProgramError {
     UnknownInterface {
         /// interface name
         name: String,
+        /// optional error incase of invalid ``CString`` conversion
+        error: Option<std::ffi::NulError>,
     },
 
     /// The program is not of the expected type.
@@ -240,6 +242,10 @@ pub enum ProgramError {
         /// program name
         name: String,
     },
+
+    /// An error occurred while working with a pinned BPF object
+    #[error(transparent)]
+    PinError(#[from] PinError),
 
     /// An error occurred while working with IO.
     #[error(transparent)]
@@ -616,8 +622,12 @@ impl<T: Link> ProgramData<T> {
     ) -> Result<Self, ProgramError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|error| {
+            PinError::InvalidPinPath {
+                path: path.as_ref().into(),
+                error,
+            }
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "bpf_obj_get",
             io_error,
@@ -747,9 +757,11 @@ fn load_program<T: Link>(
     let target_kernel_version =
         kernel_version.unwrap_or_else(|| KernelVersion::current().map_or(0, KernelVersion::code));
 
-    let prog_name = if let Some(name) = name.as_deref() {
+    let prog_name = if let Some::<&str>(name) = name.as_deref() {
         let prog_name = CString::new(name).map_err(|err @ std::ffi::NulError { .. }| {
             let name = err.into_vec();
+            // SAFETY: CString::new received a &str, and into_vec()
+            // returns its original bytes unchanged, so they are valid UTF-8.
             let name = unsafe { String::from_utf8_unchecked(name) };
             ProgramError::InvalidName { name }
         })?;
