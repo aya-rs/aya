@@ -147,7 +147,7 @@ pub(crate) fn perf_event_open_probe(
         attr.config = 1 << ret_bit;
     }
 
-    let c_name = CString::new(name.as_bytes()).unwrap();
+    let c_name = CString::new(name.as_bytes())?;
 
     attr.size = size_of::<perf_event_attr>() as u32;
     attr.type_ = ty;
