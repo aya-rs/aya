@@ -52,7 +52,13 @@ impl RawTracePoint {
     ///
     /// The returned value can be used to detach, see [`RawTracePoint::detach`].
     pub fn attach(&mut self, tp_name: &str) -> Result<RawTracePointLinkId, ProgramError> {
-        let tp_name_c = CString::new(tp_name).unwrap();
+        let tp_name_c = CString::new(tp_name).map_err(|err @ std::ffi::NulError { .. }| {
+            let name = err.into_vec();
+            // SAFETY: CString::new received a &str, and into_vec()
+            // returns its original bytes unchanged, so they are valid UTF-8.
+            let name = unsafe { String::from_utf8_unchecked(name) };
+            ProgramError::InvalidName { name }
+        })?;
         attach_raw_tracepoint(&mut self.data, Some(&tp_name_c))
     }
 }
