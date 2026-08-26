@@ -34,7 +34,7 @@ macro_rules! define_btf_hash_map {
         );
 
         impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> $name<K, V, MAX_ENTRIES, FLAGS> {
-            const _CHECK: () = {
+            const CHECK: () = {
                 assert!(
                     size_of::<K>() > 0,
                     concat!(stringify!($name), " key must be non-zero sized."),
@@ -60,7 +60,7 @@ macro_rules! define_btf_hash_map {
             $(#[$get_attr])+
             #[inline(always)]
             pub unsafe fn get(&self, key: &K) -> Option<&V> {
-                let () = Self::_CHECK;
+                let () = Self::CHECK;
                 // SAFETY: The caller upholds the aliasing invariants documented above.
                 unsafe { self.lookup(key).map(|p| p.as_ref()) }
             }
@@ -72,7 +72,7 @@ macro_rules! define_btf_hash_map {
             /// pointer is safe.
             #[inline(always)]
             pub fn get_ptr(&self, key: &K) -> Option<*const V> {
-                let () = Self::_CHECK;
+                let () = Self::CHECK;
                 unsafe { self.lookup(key).map(|p| p.as_ptr().cast_const()) }
             }
 
@@ -82,7 +82,7 @@ macro_rules! define_btf_hash_map {
             /// caller must additionally avoid concurrent writes.
             #[inline(always)]
             pub fn get_ptr_mut(&self, key: &K) -> Option<*mut V> {
-                let () = Self::_CHECK;
+                let () = Self::CHECK;
                 unsafe { self.lookup(key).map(NonNull::as_ptr) }
             }
 
@@ -102,14 +102,14 @@ macro_rules! define_btf_hash_map {
                 value: &V,
                 flags: u64,
             ) -> Result<(), i32> {
-                let () = Self::_CHECK;
+                let () = Self::CHECK;
                 insert(self.as_ptr(), key, value, flags)
             }
 
             /// Removes the entry for `key`.
             #[inline(always)]
             pub fn remove(&self, key: &K) -> Result<(), i32> {
-                let () = Self::_CHECK;
+                let () = Self::CHECK;
                 remove(self.as_ptr(), key)
             }
         }

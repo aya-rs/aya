@@ -174,7 +174,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
         // Set target triple. This will set the right flags (which you can see
         // running clang -target=X  -E - -dM </dev/null)
         let target = arch.target();
-        bindgen = bindgen.clang_args(&["-target", target]);
+        bindgen = bindgen.clang_args(["-target", target]);
 
         // Set the sysroot. This is needed to ensure that the correct arch
         // specific headers are imported.

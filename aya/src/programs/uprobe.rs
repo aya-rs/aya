@@ -31,8 +31,8 @@ use crate::{
         FdLink, LinkError, PerfLinkInner, ProgramData, ProgramError, ProgramType,
         define_link_wrapper, load_program_with_attach_type, load_program_without_attach_type,
         probe::{
-            self, ManyProbeLinks, OsStringExt as _, Probe, ProbeKind, ProbeLinkIdInner,
-            ProbeLinkInner,
+            self, ManyProbeLinks, OsStringExt as _, Probe, ProbeEventArgs, ProbeKind,
+            ProbeLinkIdInner, ProbeLinkInner,
         },
     },
     sys::{SyscallError, bpf_link_create_uprobe_multi},
@@ -59,6 +59,12 @@ pub struct UProbe {
     pub(crate) data: ProgramData<UProbeLink>,
     pub(crate) kind: ProbeKind,
     pub(crate) attach_mode: AttachMode,
+}
+
+pub(crate) struct UProbeAttachTarget<'a> {
+    path: &'a OsStr,
+    offset: u64,
+    pid: Option<u32>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -528,9 +534,18 @@ impl UProbe {
         } = self;
         let path = path.as_os_str();
         match resolved {
-            ResolvedPoints::One { offset, cookie } => {
-                probe::attach::<Self, UProbeLink>(data, *kind, path, *offset, pid, *cookie)
-            }
+            ResolvedPoints::One { offset, cookie } => probe::attach::<Self, UProbeLink>(
+                data,
+                ProbeEventArgs {
+                    target: UProbeAttachTarget {
+                        path,
+                        offset: *offset,
+                        pid,
+                    },
+                    kind: *kind,
+                },
+                *cookie,
+            ),
             ResolvedPoints::Many { offsets, cookies } => {
                 let prog_fd = data.fd()?;
                 let prog_fd = prog_fd.as_fd();
@@ -554,10 +569,14 @@ impl UProbe {
                     .and_then(|cookies| cookies.first().copied());
                 let first_link = probe::attach_impl::<Self>(
                     prog_fd,
-                    *kind,
-                    path,
-                    first_offset,
-                    pid,
+                    ProbeEventArgs {
+                        target: UProbeAttachTarget {
+                            path,
+                            offset: first_offset,
+                            pid,
+                        },
+                        kind: *kind,
+                    },
                     first_cookie,
                 )
                 .map_err(|error| attach_error(0, first_offset, error))?;
@@ -567,7 +586,14 @@ impl UProbe {
                     let cookie = cookies
                         .as_ref()
                         .and_then(|cookies| cookies.get(index).copied());
-                    match links.attach_point::<Self>(prog_fd, *kind, path, offset, pid, cookie) {
+                    match links.attach_point::<Self>(
+                        prog_fd,
+                        ProbeEventArgs {
+                            target: UProbeAttachTarget { path, offset, pid },
+                            kind: *kind,
+                        },
+                        cookie,
+                    ) {
                         Ok(()) => {}
                         Err(error) => {
                             // Explicitly detach links attached before this failure.
@@ -614,9 +640,16 @@ impl UProbe {
 }
 
 impl Probe for UProbe {
+    type AttachTarget<'a> = UProbeAttachTarget<'a>;
+
     const PMU: &'static str = "uprobe";
 
     type Error = UProbeError;
+
+    fn into_common_target(target: Self::AttachTarget<'_>) -> (&OsStr, u64, Option<u32>) {
+        let UProbeAttachTarget { path, offset, pid } = target;
+        (path, offset, pid)
+    }
 
     fn file_error(filename: PathBuf, io_error: io::Error) -> Self::Error {
         UProbeError::FileError { filename, io_error }

@@ -18,7 +18,12 @@ use aya_obj::generated::{bpf_attr, bpf_cmd, bpf_stats_type, perf_event_attr};
 pub(crate) use bpf::*;
 #[cfg(test)]
 pub(crate) use fake::*;
-pub use feature_probe::{BpfHelper, is_helper_supported, is_map_supported, is_program_supported};
+pub use feature_probe::{
+    BpfHelper, BtfFeature, is_bpf_global_data_supported, is_bpf_name_supported,
+    is_btf_feature_supported, is_btf_supported, is_cpumap_prog_id_supported,
+    is_devmap_prog_id_supported, is_helper_supported, is_map_supported, is_perf_link_supported,
+    is_program_supported,
+};
 pub use netlink::NetlinkError;
 #[doc(hidden)]
 pub use netlink::netlink_set_link_up;

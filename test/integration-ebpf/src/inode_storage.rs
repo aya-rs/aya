@@ -32,7 +32,7 @@ fn inode_storage_test(ctx: LsmContext) -> i32 {
         return retval;
     }
     let inode: *mut inode = ctx.arg(0);
-    let storage = unsafe { INODE_STORAGE.get_or_insert_ptr_mut(inode, None) };
+    let storage = INODE_STORAGE.get_or_insert_ptr_mut(inode, None);
     if !storage.is_null() {
         unsafe { *storage = SENTINEL }
     }

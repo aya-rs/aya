@@ -10,8 +10,7 @@ use aya_obj::generated::{bpf_map_info, bpf_map_type};
 
 use super::{MapError, MapFd};
 use crate::{
-    FEATURES,
-    pin::PinError,
+    kernel_features::{FEATURES, Feature},
     sys::{
         SyscallError, bpf_get_object, bpf_map_get_fd_by_id, bpf_map_get_info_by_fd, iter_map_ids,
     },
@@ -97,7 +96,7 @@ impl MapInfo {
     /// Introduced in kernel v4.15.
     pub fn name_as_str(&self) -> Option<&str> {
         let name = std::str::from_utf8(self.name()).ok()?;
-        (FEATURES.bpf_name() || !name.is_empty()).then_some(name)
+        (!name.is_empty() || FEATURES.is_supported(Feature::BpfName)).then_some(name)
     }
 
     /// Returns a file descriptor referencing the map.

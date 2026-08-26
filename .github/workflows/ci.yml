@@ -20,6 +20,23 @@ concurrency:
 permissions: {}
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      rust-toolchains: ${{ steps.toolchains.outputs.rust-toolchains }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read the committed Rust toolchains
+        id: toolchains
+        run: |
+          set -euo pipefail
+
+          toolchains=$(python3 -B scripts/rust-toolchain-pins.py current)
+          printf 'rust-toolchains=%s\n' "$toolchains" >> "$GITHUB_OUTPUT"
+
   bazel:
     name: bazel (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -35,6 +52,9 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Check Starlark
+        run: bazel run //bazel/format:format.check
+
       - name: Test
         run: |
           set -euo pipefail
@@ -44,6 +64,7 @@ jobs:
             --remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY"
 
   codegen:
+    needs: prepare
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -53,6 +74,8 @@ jobs:
           submodules: recursive
 
       - uses: ./.github/actions/codegen
+        with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
       - name: Check generated files
         id: generated
         run: |
@@ -81,23 +104,26 @@ jobs:
           overwrite: true
 
   lint:
+    needs: prepare
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - uses: ./.github/actions/setup-rust-nightly
+      - uses: ./.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
           components: clippy,miri,rustfmt,rust-src
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
-      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
-      # main caches that every PR can restore. Keep PRs restore-only.
+      # Only save default-branch entries, which every branch and PR can
+      # restore, so branch- and PR-scoped entries do not evict shared caches.
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.event_name != 'pull_request' }}
+          save-if: >-
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
-      - uses: taiki-e/install-action@v2.85.4
+      - uses: taiki-e/install-action@v2.86.3
         with:
           tool: cargo-hack,taplo-cli,typos-cli
 
@@ -134,6 +160,7 @@ jobs:
             --workspace
 
   build-test-aya:
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -149,18 +176,22 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: ./.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).stable }}
           targets: ${{ matrix.arch }}
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
-      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
-      # main caches that every PR can restore. Keep PRs restore-only.
+      # Only save default-branch entries, which every branch and PR can
+      # restore, so branch- and PR-scoped entries do not evict shared caches.
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.event_name != 'pull_request' }}
+          save-if: >-
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
-      - uses: taiki-e/install-action@cargo-hack
+      - uses: taiki-e/install-action@v2.86.3
+        with:
+          tool: cargo-hack
 
       # This is magic, it sets `$CARGO_BUILD_TARGET`.
       - uses: taiki-e/setup-cross-toolchain-action@v1
@@ -217,29 +248,33 @@ jobs:
             --feature-powerset
 
   build-test-aya-ebpf:
+    needs: prepare
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - uses: ./.github/actions/setup-rust-nightly
+      - uses: ./.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
           components: rust-src
 
       # Installed *after* nightly so it is the default.
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).stable }}
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
-      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
-      # main caches that every PR can restore. Keep PRs restore-only.
+      # Only save default-branch entries, which every branch and PR can
+      # restore, so branch- and PR-scoped entries do not evict shared caches.
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.event_name != 'pull_request' }}
+          save-if: >-
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
-      - uses: taiki-e/install-action@v2.85.4
+      - uses: taiki-e/install-action@v2.86.3
         with:
-          tool: cargo-binstall,cargo-hack
-      - run: cargo binstall --force bpf-linker
+          tool: bpf-linker,cargo-hack
 
       - name: Build & test for all BPF architectures
         env:
@@ -293,6 +328,7 @@ jobs:
           fi
 
   run-integration-test:
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -374,26 +410,28 @@ jobs:
           find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
           | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
 
-      - uses: ./.github/actions/setup-rust-nightly
+      - uses: ./.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
           components: rust-src
 
       # Installed *after* nightly so it is the default.
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: ./.github/actions/setup-rust
         with:
+          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).stable }}
           targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
 
       # Cache usage approaches GitHub's default 10 GB repository allowance.
-      # PR-scoped entries can only help reruns of one PR, but repeatedly evict
-      # main caches that every PR can restore. Keep PRs restore-only.
+      # Only save default-branch entries, which every branch and PR can
+      # restore, so branch- and PR-scoped entries do not evict shared caches.
       - uses: Swatinem/rust-cache@v2
         with:
-          save-if: ${{ github.event_name != 'pull_request' }}
+          save-if: >-
+            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
-      - uses: taiki-e/install-action@v2.85.4
+      - uses: taiki-e/install-action@v2.86.3
         with:
-          tool: cargo-binstall,cargo-hack
-      - run: cargo binstall --force bpf-linker
+          tool: bpf-linker,cargo-hack
 
       - name: Restore VM integration test cache
         id: vm-cache
@@ -428,7 +466,7 @@ jobs:
         if: >-
           matrix.vm-kernels != 'local' &&
           steps.vm-cache.outputs.cache-hit != 'true' &&
-          github.event_name != 'pull_request'
+          github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         uses: actions/cache/save@v6
         with:
           path: test/.tmp
@@ -437,6 +475,7 @@ jobs:
   check:
     if: always()
     needs:
+      - prepare
       - bazel
       - codegen
       - lint
