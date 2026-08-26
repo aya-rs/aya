@@ -16,6 +16,7 @@ use super::{
 };
 use crate::{
     kernel_features::{FEATURES, Feature},
+    pin::PinError,
     sys::{
         SyscallError, bpf_get_object, bpf_prog_get_fd_by_id, bpf_prog_get_info_by_fd,
         feature_probe::{is_prog_info_license_supported, is_prog_info_map_ids_supported},
@@ -224,8 +225,12 @@ impl ProgramInfo {
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, ProgramError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|error| {
+            ProgramError::PinError(PinError::InvalidPinPath {
+                path: path.as_ref().into(),
+                error,
+            })
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "BPF_OBJ_GET",
             io_error,

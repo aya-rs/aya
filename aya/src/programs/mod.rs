@@ -241,6 +241,10 @@ pub enum ProgramError {
         name: String,
     },
 
+    /// An error occurred while working with a pinned BPF object
+    #[error(transparent)]
+    PinError(#[from] PinError),
+
     /// An error occurred while working with IO.
     #[error(transparent)]
     IOError(#[from] io::Error),
@@ -616,8 +620,12 @@ impl<T: Link> ProgramData<T> {
     ) -> Result<Self, ProgramError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).map_err(|error| {
+            ProgramError::PinError(PinError::InvalidPinPath {
+                path: path.as_ref().into(),
+                error,
+            })
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "bpf_obj_get",
             io_error,
