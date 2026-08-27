@@ -300,13 +300,6 @@ impl<'a> Toolchain<'a> {
 /// Emit cfg flags that describe the desired BPF target architecture.
 #[expect(clippy::print_stdout, reason = "println! is used for cargo:warning")]
 pub fn emit_bpf_target_arch_cfg() -> Result<()> {
-    // The presence of this environment variable indicates that `--cfg
-    // bpf_target_arch="..."` was passed to the compiler, so we don't need to
-    // emit it again. Note that we cannot *set* this environment variable - it
-    // is set by cargo.
-    const BPF_TARGET_ARCH: &str = "CARGO_CFG_BPF_TARGET_ARCH";
-    println!("cargo:rerun-if-env-changed={BPF_TARGET_ARCH}");
-
     // Users may directly set this environment variable in situations where
     // using RUSTFLAGS to set `--cfg bpf_target_arch="..."` is not possible or
     // not ergonomic. In contrast to RUSTFLAGS this mechanism reuses the target
@@ -314,15 +307,12 @@ pub fn emit_bpf_target_arch_cfg() -> Result<()> {
     const AYA_BPF_TARGET_ARCH: &str = "AYA_BPF_TARGET_ARCH";
     println!("cargo:rerun-if-env-changed={AYA_BPF_TARGET_ARCH}");
 
-    const HOST: &str = "HOST";
-    println!("cargo:rerun-if-env-changed={HOST}");
-
-    if env::var_os(BPF_TARGET_ARCH).is_none() {
-        let host = env::var_os(HOST).ok_or_else(|| anyhow!("{HOST} not set"))?;
-        let host = host
-            .into_string()
-            .map_err(|host| anyhow!("OsString::into_string({HOST}={})", host.display()))?;
-        let host = host.as_str();
+    // The presence of this environment variable indicates that `--cfg
+    // bpf_target_arch="..."` was passed to the compiler, so we don't need to
+    // emit it again. Note that we cannot *set* this environment variable - it
+    // is set by cargo.
+    if env::var_os("CARGO_CFG_BPF_TARGET_ARCH").is_none() {
+        let host;
 
         let bpf_target_arch = if let Some(bpf_target_arch) = env::var_os(AYA_BPF_TARGET_ARCH) {
             bpf_target_arch
@@ -335,11 +325,31 @@ pub fn emit_bpf_target_arch_cfg() -> Result<()> {
                 })?
                 .into()
         } else {
-            target_arch_fixup(
+            const TARGET_ARCH: &str = "CARGO_CFG_TARGET_ARCH";
+            let target_arch =
+                env::var_os(TARGET_ARCH).ok_or_else(|| anyhow!("{TARGET_ARCH} not set"))?;
+            let target_arch = target_arch.into_string().map_err(|target_arch| {
+                anyhow!(
+                    "OsString::into_string({TARGET_ARCH}={})",
+                    target_arch.display()
+                )
+            })?;
+            let target_arch = if target_arch == "bpf" {
+                const HOST: &str = "HOST";
+                host = {
+                    let host = env::var_os(HOST).ok_or_else(|| anyhow!("{HOST} not set"))?;
+                    host.into_string().map_err(|host| {
+                        anyhow!("OsString::into_string({HOST}={})", host.display())
+                    })?
+                };
+                let host = host.as_str();
                 host.split_once('-')
                     .map_or(host, |(arch, _rest)| arch)
-                    .into(),
-            )
+                    .into()
+            } else {
+                target_arch.into()
+            };
+            target_arch_fixup(target_arch)
         };
         println!("cargo:rustc-cfg=bpf_target_arch=\"{bpf_target_arch}\"");
     }
