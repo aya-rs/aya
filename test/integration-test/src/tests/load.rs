@@ -345,7 +345,7 @@ fn unload_kprobe() {
     type P = KProbe;
 
     let program_name = "test_kprobe";
-    let attach = |prog: &mut P| prog.attach("try_to_wake_up").unwrap();
+    let attach = |prog: &mut P| prog.attach(["try_to_wake_up"]).unwrap();
     run_unload_program_test(
         crate::TEST,
         program_name,
@@ -706,7 +706,7 @@ fn pin_lifecycle_kprobe() {
     type P = KProbe;
 
     let program_name = "test_kprobe";
-    let attach = |prog: &mut P| prog.attach("try_to_wake_up").unwrap();
+    let attach = |prog: &mut P| prog.attach(["try_to_wake_up"]).unwrap();
     let program_pin = "/sys/fs/bpf/aya-kprobe-test-prog";
     let link_pin = "/sys/fs/bpf/aya-kprobe-test-try-to-wake-up";
     let from_pin = |program_pin: &str| P::from_pin(program_pin, ProbeKind::Entry).unwrap();

@@ -31,7 +31,7 @@ use crate::{
         FdLink, LinkError, PerfLinkInner, ProgramData, ProgramError, ProgramType,
         define_link_wrapper, load_program_with_attach_type, load_program_without_attach_type,
         probe::{
-            self, ManyProbeLinks, OsStringExt as _, Probe, ProbeEventArgs, ProbeKind,
+            self, AttachMode, ManyProbeLinks, OsStringExt as _, Probe, ProbeEventArgs, ProbeKind,
             ProbeLinkIdInner, ProbeLinkInner,
         },
     },
@@ -65,13 +65,6 @@ pub(crate) struct UProbeAttachTarget<'a> {
     path: &'a OsStr,
     offset: u64,
     pid: Option<u32>,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum AttachMode {
-    Single,
-    Multi,
-    Unknown,
 }
 
 /// The location in the target object file to which the uprobe is to be
