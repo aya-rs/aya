@@ -22,7 +22,7 @@
 //! program.load()?;
 //! // intercept_wakeups will be called every time try_to_wake_up() is called
 //! // inside the kernel
-//! program.attach("try_to_wake_up")?;
+//! program.attach(["try_to_wake_up"])?;
 //! # Ok::<(), aya::EbpfError>(())
 //! ```
 //!
@@ -1442,7 +1442,10 @@ macro_rules! impl_from_prog_info {
 }
 
 impl_from_prog_info!(
-    unsafe KProbe kind : ProbeKind,
+    /// As with [`Self::from_pin`], this constructor starts in unknown mode
+    /// because it does not know whether the original program came from a
+    /// legacy or multi-kprobe section. The first attachment selects a mode.
+    unsafe KProbe kind : ProbeKind => { attach_mode: AttachMode::Unknown },
     /// As with [`Self::from_pin`], this constructor starts in unknown mode
     /// because it does not know whether the original program came from an
     /// `uprobe` or `uprobe.multi` section. As a result, [`Self::attach`]
