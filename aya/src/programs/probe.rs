@@ -32,6 +32,13 @@ pub enum ProbeKind {
     Return,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum AttachMode {
+    Single,
+    Multi,
+    Unknown,
+}
+
 /// Internal identifier for [`ProbeLinkInner`].
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub(crate) enum ProbeLinkIdInner {

@@ -92,6 +92,7 @@ use aya_obj::{
 use info::impl_info;
 pub use info::{LsmAttachType, ProgramInfo, ProgramType, loaded_programs};
 use libc::ENOSPC;
+pub(crate) use probe::AttachMode;
 use tc::SchedClassifierLink;
 use thiserror::Error;
 
@@ -1446,7 +1447,7 @@ impl_from_prog_info!(
     /// because it does not know whether the original program came from an
     /// `uprobe` or `uprobe.multi` section. As a result, [`Self::attach`]
     /// performs runtime mode selection.
-    unsafe UProbe kind : ProbeKind => { attach_mode: uprobe::AttachMode::Unknown },
+    unsafe UProbe kind : ProbeKind => { attach_mode: AttachMode::Unknown },
     TracePoint,
     SocketFilter,
     ReusePortSocketFilter,
