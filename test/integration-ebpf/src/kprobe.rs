@@ -48,7 +48,7 @@ fn test_kprobe_cookie_trigger(ctx: ProbeContext) -> u32 {
         return 0;
     }
 
-    // Distinguish attachments with and without a cookie.
+    // Legacy and fallback tests distinguish the two attachment points by cookie.
     let cookie = unsafe { helpers::bpf_get_attach_cookie(ctx.as_ptr()) };
     let index = match cookie {
         0 => COOKIE_NONE_INDEX,
