@@ -25,6 +25,7 @@ pub(crate) struct KProbe {
     kind: KProbeKind,
     function: Option<String>,
     offset: Option<u64>,
+    is_multi: bool,
     item: ItemFn,
 }
 
@@ -46,12 +47,23 @@ impl KProbe {
             .map_err(|err| {
                 syn::Error::new(span, format!("failed to parse `offset` argument: {err}"))
             })?;
+        let is_multi = args.pop_bool("multi");
         args.into_error()?;
+
+        // `kprobe.multi` sections accept a function-name pattern, but no offset:
+        // https://github.com/torvalds/linux/blob/46d9f15a5/Documentation/bpf/libbpf/program_types.rst#L245-L247
+        if is_multi && offset.is_some() {
+            return Err(syn::Error::new(
+                span,
+                "`multi` cannot be combined with `offset`",
+            ));
+        }
 
         Ok(Self {
             kind,
             function,
             offset,
+            is_multi,
             item,
         })
     }
@@ -61,6 +73,7 @@ impl KProbe {
             kind,
             function,
             offset,
+            is_multi,
             item,
         } = self;
         let ItemFn {
@@ -70,11 +83,15 @@ impl KProbe {
             sig,
             block: _,
         } = item;
+        let mut prefix = kind.to_string();
+        if *is_multi {
+            prefix.push_str(".multi");
+        }
         let section_name: Cow<'_, _> = match function {
-            None => self.kind.to_string().into(),
+            None => prefix.into(),
             Some(function) => match offset {
-                None => format!("{kind}/{function}").into(),
-                Some(offset) => format!("{kind}/{function}+{offset}").into(),
+                None => format!("{prefix}/{function}").into(),
+                Some(offset) => format!("{prefix}/{function}+{offset}").into(),
             },
         };
         let probe_type = if section_name.as_ref().starts_with("kprobe") {
@@ -98,15 +115,44 @@ impl KProbe {
 
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
     use syn::parse_quote;
 
     use super::*;
 
-    #[test]
-    fn test_kprobe() {
+    #[rstest]
+    #[case::kprobe(KProbeKind::KProbe, "", "kprobe")]
+    #[case::kprobe_with_function(
+        KProbeKind::KProbe,
+        r#"function = "fib_lookup""#,
+        "kprobe/fib_lookup"
+    )]
+    #[case::kprobe_with_function_and_offset(
+        KProbeKind::KProbe,
+        r#"function = "fib_lookup", offset = "10""#,
+        "kprobe/fib_lookup+10"
+    )]
+    #[case::kretprobe(KProbeKind::KRetProbe, "", "kretprobe")]
+    #[case::kprobe_multi(KProbeKind::KProbe, "multi", "kprobe.multi")]
+    #[case::kprobe_multi_with_function(
+        KProbeKind::KProbe,
+        r#"multi, function = "fib_lookup""#,
+        "kprobe.multi/fib_lookup"
+    )]
+    #[case::kretprobe_multi(KProbeKind::KRetProbe, "multi", "kretprobe.multi")]
+    #[case::kretprobe_multi_with_pattern(
+        KProbeKind::KRetProbe,
+        r#"multi, function = "fib_*""#,
+        "kretprobe.multi/fib_*"
+    )]
+    fn emits_expected_section(
+        #[case] kind: KProbeKind,
+        #[case] attrs: &str,
+        #[case] section_name: &str,
+    ) {
         let kprobe = KProbe::parse(
-            KProbeKind::KProbe,
-            parse_quote! {},
+            kind,
+            attrs.parse().unwrap(),
             parse_quote! {
                 fn foo(ctx: ProbeContext) -> u32 {
                     0
@@ -114,13 +160,19 @@ mod tests {
             },
         )
         .unwrap();
+
+        let probe_type = match kind {
+            KProbeKind::KProbe => quote! { ProbeContext },
+            KProbeKind::KRetProbe => quote! { RetProbeContext },
+        };
+
         assert_eq!(
             kprobe.expand().to_string(),
             quote! {
                 #[unsafe(no_mangle)]
-                #[unsafe(link_section = "kprobe")]
+                #[unsafe(link_section = #section_name)]
                 fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
+                    let _ = foo(::aya_ebpf::programs::#probe_type::new(ctx));
                     return 0;
 
                     fn foo(ctx: ProbeContext) -> u32 {
@@ -132,98 +184,22 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_kprobe_with_function() {
-        let kprobe = KProbe::parse(
+    #[rstest]
+    #[case::offset(r#"multi, offset = "10""#)]
+    #[case::function_and_offset(r#"multi, function = "fib_lookup", offset = "10""#)]
+    fn kprobe_multi_rejects_offset(#[case] attrs: &str) {
+        let Err(err) = KProbe::parse(
             KProbeKind::KProbe,
-            parse_quote! {
-                function = "fib_lookup"
-            },
+            attrs.parse().unwrap(),
             parse_quote! {
                 fn foo(ctx: ProbeContext) -> u32 {
                     0
                 }
             },
-        )
-        .unwrap();
-        assert_eq!(
-            kprobe.expand().to_string(),
-            quote! {
-                #[unsafe(no_mangle)]
-                #[unsafe(link_section = "kprobe/fib_lookup")]
-                fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
-                    return 0;
+        ) else {
+            panic!("expected multi-kprobe offset to be rejected");
+        };
 
-                    fn foo(ctx: ProbeContext) -> u32 {
-                        0
-                    }
-                }
-            }
-            .to_string()
-        );
-    }
-
-    #[test]
-    fn test_kprobe_with_function_and_offset() {
-        let kprobe = KProbe::parse(
-            KProbeKind::KProbe,
-            parse_quote! {
-                function = "fib_lookup",
-                offset = "10"
-            },
-            parse_quote! {
-                fn foo(ctx: ProbeContext) -> u32 {
-                    0
-                }
-            },
-        )
-        .unwrap();
-        assert_eq!(
-            kprobe.expand().to_string(),
-            quote! {
-                #[unsafe(no_mangle)]
-                #[unsafe(link_section = "kprobe/fib_lookup+10")]
-                fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_ebpf::programs::ProbeContext::new(ctx));
-                    return 0;
-
-                    fn foo(ctx: ProbeContext) -> u32 {
-                        0
-                    }
-                }
-            }
-            .to_string()
-        );
-    }
-
-    #[test]
-    fn test_kretprobe() {
-        let kprobe = KProbe::parse(
-            KProbeKind::KRetProbe,
-            parse_quote! {},
-            parse_quote! {
-                fn foo(ctx: ProbeContext) -> u32 {
-                    0
-                }
-            },
-        )
-        .unwrap();
-        assert_eq!(
-            kprobe.expand().to_string(),
-            quote! {
-                #[unsafe(no_mangle)]
-                #[unsafe(link_section = "kretprobe")]
-                fn foo(ctx: *mut ::core::ffi::c_void) -> u32 {
-                    let _ = foo(::aya_ebpf::programs::RetProbeContext::new(ctx));
-                    return 0;
-
-                    fn foo(ctx: ProbeContext) -> u32 {
-                        0
-                    }
-                }
-            }
-            .to_string()
-        );
+        assert_eq!(err.to_string(), "`multi` cannot be combined with `offset`");
     }
 }
