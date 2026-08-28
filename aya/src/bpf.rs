@@ -483,6 +483,8 @@ impl<'a> EbpfLoader<'a> {
                             }
                             ProgramSection::KRetProbe
                             | ProgramSection::KProbe
+                            | ProgramSection::KRetProbeMulti
+                            | ProgramSection::KProbeMulti
                             | ProgramSection::UProbe {
                                 sleepable: _,
                                 multi: _,
@@ -706,16 +708,28 @@ impl<'a> EbpfLoader<'a> {
                     })
                 } else {
                     match &section {
-                        ProgramSection::KProbe => Program::KProbe(KProbe {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            kind: ProbeKind::Entry,
-                            attach_mode: AttachMode::Single,
-                        }),
-                        ProgramSection::KRetProbe => Program::KProbe(KProbe {
-                            data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
-                            kind: ProbeKind::Return,
-                            attach_mode: AttachMode::Single,
-                        }),
+                        ProgramSection::KProbe | ProgramSection::KProbeMulti => {
+                            Program::KProbe(KProbe {
+                                data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
+                                kind: ProbeKind::Entry,
+                                attach_mode: if matches!(section, ProgramSection::KProbeMulti) {
+                                    AttachMode::Multi
+                                } else {
+                                    AttachMode::Single
+                                },
+                            })
+                        }
+                        ProgramSection::KRetProbe | ProgramSection::KRetProbeMulti => {
+                            Program::KProbe(KProbe {
+                                data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
+                                kind: ProbeKind::Return,
+                                attach_mode: if matches!(section, ProgramSection::KRetProbeMulti) {
+                                    AttachMode::Multi
+                                } else {
+                                    AttachMode::Single
+                                },
+                            })
+                        }
                         ProgramSection::UProbe { sleepable, multi } => {
                             let mut data =
                                 ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level);
