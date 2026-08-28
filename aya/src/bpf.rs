@@ -482,8 +482,8 @@ impl<'a> EbpfLoader<'a> {
                             | ProgramSection::Iter { sleepable: _ } => {
                                 return Err(EbpfError::BtfError(err));
                             }
-                            ProgramSection::KRetProbe
-                            | ProgramSection::KProbe
+                            ProgramSection::KRetProbe { multi: _ }
+                            | ProgramSection::KProbe { multi: _ }
                             | ProgramSection::UProbe {
                                 sleepable: _,
                                 multi: _,
@@ -711,15 +711,23 @@ impl<'a> EbpfLoader<'a> {
                     })
                 } else {
                     match &section {
-                        ProgramSection::KProbe => Program::KProbe(KProbe {
+                        ProgramSection::KProbe { multi } => Program::KProbe(KProbe {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             kind: ProbeKind::Entry,
-                            attach_mode: AttachMode::Single,
+                            attach_mode: if *multi {
+                                AttachMode::Multi
+                            } else {
+                                AttachMode::Single
+                            },
                         }),
-                        ProgramSection::KRetProbe => Program::KProbe(KProbe {
+                        ProgramSection::KRetProbe { multi } => Program::KProbe(KProbe {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             kind: ProbeKind::Return,
-                            attach_mode: AttachMode::Single,
+                            attach_mode: if *multi {
+                                AttachMode::Multi
+                            } else {
+                                AttachMode::Single
+                            },
                         }),
                         ProgramSection::UProbe { sleepable, multi } => {
                             let mut data =
