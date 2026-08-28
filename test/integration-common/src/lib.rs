@@ -64,6 +64,14 @@ pub mod fexit {
     unsafe impl aya::Pod for TestResult {}
 }
 
+pub mod kprobe {
+    pub const HITS_INDEX: u32 = 0;
+    pub const COOKIE_NONE_INDEX: u32 = 0;
+    pub const COOKIE_SET_INDEX: u32 = 1;
+    pub const COOKIE_UNEXPECTED_INDEX: u32 = 2;
+    pub const EXPECTED_COOKIE: u64 = 0x11;
+}
+
 pub mod bpf_probe_read {
     pub const RESULT_BUF_LEN: usize = 1024;
 

@@ -660,7 +660,7 @@ impl Probe for UProbe {
         UProbeError::FileError { filename, io_error }
     }
 
-    fn write_offset<W: Write>(w: &mut W, _: ProbeKind, offset: u64) -> fmt::Result {
+    fn write_offset<W: Write>(w: &mut W, offset: u64) -> fmt::Result {
         write!(w, ":{offset:#x}")
     }
 }

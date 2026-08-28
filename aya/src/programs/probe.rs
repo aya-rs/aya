@@ -196,7 +196,7 @@ pub(crate) trait Probe {
 
     fn file_error(filename: PathBuf, io_error: io::Error) -> Self::Error;
 
-    fn write_offset<W: Write>(w: &mut W, kind: ProbeKind, offset: u64) -> fmt::Result;
+    fn write_offset<W: Write>(w: &mut W, offset: u64) -> fmt::Result;
 }
 
 pub(crate) fn lines(bytes: &[u8]) -> impl Iterator<Item = &OsStr> {
@@ -423,7 +423,7 @@ fn create_probe_event<P: Probe>(
     probe.push(&event_alias);
     probe.push(" ");
     probe.push(target);
-    P::write_offset(&mut probe, kind, offset).unwrap();
+    P::write_offset(&mut probe, offset).unwrap();
     probe.push("\n");
 
     let events_file_name = tracefs.join(format!("{}_events", P::PMU));
