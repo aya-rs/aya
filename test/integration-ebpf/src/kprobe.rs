@@ -5,21 +5,28 @@
 #![feature(core_intrinsics)]
 
 use aya_ebpf::{
-    EbpfContext as _, Global,
+    EbpfContext as _, Global, helpers,
     macros::{kprobe, map},
     maps::Array,
     programs::ProbeContext,
 };
+use integration_common::kprobe::{
+    COOKIE_NONE_INDEX, COOKIE_SET_INDEX, COOKIE_UNEXPECTED_INDEX, EXPECTED_COOKIE, HITS_INDEX,
+};
+
 #[cfg(not(test))]
 extern crate ebpf_panic;
-
-const INDEX: u32 = 0;
 
 #[unsafe(no_mangle)]
 static TARGET_TGID: Global<u32> = Global::new(0);
 
 #[map]
 static HITS: Array<u64> = Array::with_max_entries(1, 0);
+
+// Count hits with no cookie, hits with EXPECTED_COOKIE, and unexpected hits separately.
+// Userspace requires both expected counters to increase and no new unexpected hits.
+#[map]
+static COOKIE_HITS: Array<u64> = Array::with_max_entries(3, 0);
 
 #[inline(always)]
 fn should_count(ctx: &ProbeContext) -> bool {
@@ -32,7 +39,29 @@ fn test_kprobe_trigger(ctx: ProbeContext) -> u32 {
         return 0;
     }
 
-    let Some(hits) = HITS.get_ptr_mut(INDEX) else {
+    increment(&HITS, HITS_INDEX)
+}
+
+#[kprobe]
+fn test_kprobe_cookie_trigger(ctx: ProbeContext) -> u32 {
+    if !should_count(&ctx) {
+        return 0;
+    }
+
+    // Distinguish attachments with and without a cookie.
+    let cookie = unsafe { helpers::bpf_get_attach_cookie(ctx.as_ptr()) };
+    let index = match cookie {
+        0 => COOKIE_NONE_INDEX,
+        EXPECTED_COOKIE => COOKIE_SET_INDEX,
+        _ => COOKIE_UNEXPECTED_INDEX,
+    };
+
+    increment(&COOKIE_HITS, index)
+}
+
+#[inline(always)]
+fn increment(hits: &Array<u64>, index: u32) -> u32 {
+    let Some(hits) = hits.get_ptr_mut(index) else {
         return 0;
     };
 
