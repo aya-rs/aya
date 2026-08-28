@@ -11,7 +11,9 @@ use std::{
     slice,
 };
 
-use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE};
+use aya_obj::generated::{
+    bpf_attach_type::BPF_TRACE_KPROBE_MULTI, bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_KPROBE,
+};
 use libc::{EINVAL, ENOTSUP, EOPNOTSUPP};
 use thiserror::Error;
 
@@ -19,7 +21,7 @@ use crate::{
     VerifierLogLevel,
     programs::{
         FdLink, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        load_program_without_attach_type,
+        load_program_with_attach_type, load_program_without_attach_type,
         probe::{
             self, AttachMode, ManyProbeLinks, Probe, ProbeEventArgs, ProbeKind, ProbeLinkIdInner,
             ProbeLinkInner, impl_probe_link,
@@ -164,9 +166,16 @@ impl KProbe {
         let Self {
             data,
             kind: _,
-            attach_mode: _,
+            attach_mode,
         } = self;
-        load_program_without_attach_type(BPF_PROG_TYPE_KPROBE, data)
+        match attach_mode {
+            AttachMode::Multi => {
+                load_program_with_attach_type(BPF_PROG_TYPE_KPROBE, BPF_TRACE_KPROBE_MULTI, data)
+            }
+            AttachMode::Single | AttachMode::Unknown => {
+                load_program_without_attach_type(BPF_PROG_TYPE_KPROBE, data)
+            }
+        }
     }
 
     /// Returns [`ProbeKind::Entry`] if the program is a `kprobe`, or
@@ -572,7 +581,7 @@ mod tests {
     };
 
     use assert_matches::assert_matches;
-    use aya_obj::generated::{bpf_attach_type::BPF_TRACE_KPROBE_MULTI, bpf_cmd};
+    use aya_obj::generated::bpf_cmd;
     use rstest::rstest;
 
     use super::*;

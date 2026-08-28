@@ -4792,7 +4792,9 @@ pub aya_obj::obj::ProgramSection::FlowDissector
 pub aya_obj::obj::ProgramSection::Iter
 pub aya_obj::obj::ProgramSection::Iter::sleepable: bool
 pub aya_obj::obj::ProgramSection::KProbe
+pub aya_obj::obj::ProgramSection::KProbeMulti
 pub aya_obj::obj::ProgramSection::KRetProbe
+pub aya_obj::obj::ProgramSection::KRetProbeMulti
 pub aya_obj::obj::ProgramSection::LircMode2
 pub aya_obj::obj::ProgramSection::Lsm
 pub aya_obj::obj::ProgramSection::Lsm::sleepable: bool
@@ -5417,7 +5419,9 @@ pub aya_obj::ProgramSection::FlowDissector
 pub aya_obj::ProgramSection::Iter
 pub aya_obj::ProgramSection::Iter::sleepable: bool
 pub aya_obj::ProgramSection::KProbe
+pub aya_obj::ProgramSection::KProbeMulti
 pub aya_obj::ProgramSection::KRetProbe
+pub aya_obj::ProgramSection::KRetProbeMulti
 pub aya_obj::ProgramSection::LircMode2
 pub aya_obj::ProgramSection::Lsm
 pub aya_obj::ProgramSection::Lsm::sleepable: bool
