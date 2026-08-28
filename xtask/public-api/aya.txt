@@ -3215,6 +3215,27 @@ impl core::marker::UnsafeUnpin for aya::programs::iter::IterLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::iter::IterLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::IterLinkId
 pub mod aya::programs::kprobe
+pub enum aya::programs::kprobe::KProbeAttachLocation<'a>
+pub aya::programs::kprobe::KProbeAttachLocation::Function(&'a std::ffi::os_str::OsStr)
+pub aya::programs::kprobe::KProbeAttachLocation::FunctionOffset(&'a std::ffi::os_str::OsStr, u64)
+impl<'a> aya::programs::kprobe::KProbeAttachLocation<'a>
+pub fn aya::programs::kprobe::KProbeAttachLocation<'a>::with_offset<T: core::convert::AsRef<std::ffi::os_str::OsStr> + ?core::marker::Sized>(&'a T, u64) -> Self
+impl core::convert::From<&aya::programs::kprobe::KProbeAttachLocation<'_>> for aya::programs::kprobe::KProbeAttachLocation<'_>
+pub fn aya::programs::kprobe::KProbeAttachLocation<'_>::from(&Self) -> Self
+impl<'a, T: core::convert::AsRef<std::ffi::os_str::OsStr> + ?core::marker::Sized> core::convert::From<&'a T> for aya::programs::kprobe::KProbeAttachLocation<'a>
+pub fn aya::programs::kprobe::KProbeAttachLocation<'a>::from(&'a T) -> Self
+impl<'a> core::clone::Clone for aya::programs::kprobe::KProbeAttachLocation<'a>
+pub fn aya::programs::kprobe::KProbeAttachLocation<'a>::clone(&self) -> Self
+impl<'a> core::fmt::Debug for aya::programs::kprobe::KProbeAttachLocation<'a>
+pub fn aya::programs::kprobe::KProbeAttachLocation<'a>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Copy for aya::programs::kprobe::KProbeAttachLocation<'a>
+impl<'a> core::marker::Freeze for aya::programs::kprobe::KProbeAttachLocation<'a>
+impl<'a> core::marker::Send for aya::programs::kprobe::KProbeAttachLocation<'a>
+impl<'a> core::marker::Sync for aya::programs::kprobe::KProbeAttachLocation<'a>
+impl<'a> core::marker::Unpin for aya::programs::kprobe::KProbeAttachLocation<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::programs::kprobe::KProbeAttachLocation<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::kprobe::KProbeAttachLocation<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbeAttachLocation<'a>
 pub enum aya::programs::kprobe::KProbeError
 pub aya::programs::kprobe::KProbeError::FileError
 pub aya::programs::kprobe::KProbeError::FileError::filename: std::path::PathBuf
@@ -3237,7 +3258,7 @@ impl !core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbeErro
 pub struct aya::programs::kprobe::KProbe
 impl aya::programs::kprobe::KProbe
 pub const aya::programs::kprobe::KProbe::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::kprobe::KProbe::attach<T: core::convert::AsRef<std::ffi::os_str::OsStr>>(&mut self, T, u64) -> core::result::Result<aya::programs::kprobe::KProbeLinkId, aya::programs::ProgramError>
+pub fn aya::programs::kprobe::KProbe::attach<'a, P>(&mut self, P) -> core::result::Result<aya::programs::kprobe::KProbeLinkId, aya::programs::ProgramError> where P: core::convert::Into<aya::programs::kprobe::KProbeAttachPoint<'a>>
 pub fn aya::programs::kprobe::KProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub const fn aya::programs::kprobe::KProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::kprobe::KProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -3272,6 +3293,25 @@ impl core::marker::Unpin for aya::programs::kprobe::KProbe
 impl core::marker::UnsafeUnpin for aya::programs::kprobe::KProbe
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::kprobe::KProbe
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbe
+pub struct aya::programs::kprobe::KProbeAttachPoint<'a>
+pub aya::programs::kprobe::KProbeAttachPoint::cookie: core::option::Option<u64>
+pub aya::programs::kprobe::KProbeAttachPoint::location: aya::programs::kprobe::KProbeAttachLocation<'a>
+impl core::convert::From<&aya::programs::kprobe::KProbeAttachPoint<'_>> for aya::programs::kprobe::KProbeAttachPoint<'_>
+pub fn aya::programs::kprobe::KProbeAttachPoint<'_>::from(&Self) -> Self
+impl<'a, L: core::convert::Into<aya::programs::kprobe::KProbeAttachLocation<'a>>> core::convert::From<L> for aya::programs::kprobe::KProbeAttachPoint<'a>
+pub fn aya::programs::kprobe::KProbeAttachPoint<'a>::from(L) -> Self
+impl<'a> core::clone::Clone for aya::programs::kprobe::KProbeAttachPoint<'a>
+pub fn aya::programs::kprobe::KProbeAttachPoint<'a>::clone(&self) -> Self
+impl<'a> core::fmt::Debug for aya::programs::kprobe::KProbeAttachPoint<'a>
+pub fn aya::programs::kprobe::KProbeAttachPoint<'a>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Copy for aya::programs::kprobe::KProbeAttachPoint<'a>
+impl<'a> core::marker::Freeze for aya::programs::kprobe::KProbeAttachPoint<'a>
+impl<'a> core::marker::Send for aya::programs::kprobe::KProbeAttachPoint<'a>
+impl<'a> core::marker::Sync for aya::programs::kprobe::KProbeAttachPoint<'a>
+impl<'a> core::marker::Unpin for aya::programs::kprobe::KProbeAttachPoint<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::programs::kprobe::KProbeAttachPoint<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::kprobe::KProbeAttachPoint<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbeAttachPoint<'a>
 pub struct aya::programs::kprobe::KProbeLink(_)
 impl aya::programs::links::Link for aya::programs::kprobe::KProbeLink
 pub type aya::programs::kprobe::KProbeLink::Error = aya::programs::ProgramError
@@ -6841,7 +6881,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::Iter
 pub struct aya::programs::KProbe
 impl aya::programs::kprobe::KProbe
 pub const aya::programs::kprobe::KProbe::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::kprobe::KProbe::attach<T: core::convert::AsRef<std::ffi::os_str::OsStr>>(&mut self, T, u64) -> core::result::Result<aya::programs::kprobe::KProbeLinkId, aya::programs::ProgramError>
+pub fn aya::programs::kprobe::KProbe::attach<'a, P>(&mut self, P) -> core::result::Result<aya::programs::kprobe::KProbeLinkId, aya::programs::ProgramError> where P: core::convert::Into<aya::programs::kprobe::KProbeAttachPoint<'a>>
 pub fn aya::programs::kprobe::KProbe::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya::programs::ProbeKind) -> core::result::Result<Self, aya::programs::ProgramError>
 pub const fn aya::programs::kprobe::KProbe::kind(&self) -> aya::programs::ProbeKind
 pub fn aya::programs::kprobe::KProbe::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
