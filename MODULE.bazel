@@ -59,7 +59,7 @@ toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "too
 toolchains.toolchain(
     name = "default_rust_toolchains",
     edition = "2024",
-    version = "nightly/2026-08-27",
+    version = "nightly/2026-08-28",
 )
 
 # Cargo CI uses stable, but Bazel's eBPF targets still require nightly. Expose
