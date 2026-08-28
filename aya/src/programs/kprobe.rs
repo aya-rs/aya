@@ -39,7 +39,7 @@ use crate::{
 ///
 /// let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
 /// program.load()?;
-/// program.attach("try_to_wake_up", 0)?;
+/// program.attach("try_to_wake_up")?;
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[derive(Debug)]
@@ -47,6 +47,75 @@ use crate::{
 pub struct KProbe {
     pub(crate) data: ProgramData<KProbeLink>,
     pub(crate) kind: ProbeKind,
+}
+
+/// A kernel function location accepted by [`KProbe::attach`].
+#[derive(Debug, Clone, Copy)]
+pub enum KProbeAttachLocation<'a> {
+    /// The entry or return of a kernel function.
+    Function(&'a OsStr),
+    /// A byte offset relative to a kernel function.
+    FunctionOffset(&'a OsStr, u64),
+}
+
+impl<'a> KProbeAttachLocation<'a> {
+    /// Creates a location at `offset` bytes from the start of `function`.
+    ///
+    /// Function-relative offsets require the legacy attachment path and cannot
+    /// be used by programs loaded from `kprobe.multi` or `kretprobe.multi`
+    /// sections.
+    pub fn with_offset<T: AsRef<OsStr> + ?Sized>(function: &'a T, offset: u64) -> Self {
+        Self::FunctionOffset(function.as_ref(), offset)
+    }
+
+    const fn function(&self) -> &OsStr {
+        match self {
+            Self::Function(function) | Self::FunctionOffset(function, _) => function,
+        }
+    }
+
+    const fn function_offset(&self) -> Option<u64> {
+        match self {
+            Self::Function(_) => None,
+            Self::FunctionOffset(_, offset) => Some(*offset),
+        }
+    }
+}
+
+impl<'a, T: AsRef<OsStr> + ?Sized> From<&'a T> for KProbeAttachLocation<'a> {
+    fn from(function: &'a T) -> Self {
+        Self::Function(function.as_ref())
+    }
+}
+
+impl From<&Self> for KProbeAttachLocation<'_> {
+    fn from(location: &Self) -> Self {
+        *location
+    }
+}
+
+/// Describes one kernel attachment point and its optional cookie.
+#[derive(Debug, Clone, Copy)]
+pub struct KProbeAttachPoint<'a> {
+    /// The location to attach to.
+    pub location: KProbeAttachLocation<'a>,
+    /// Optional value exposed to eBPF through `bpf_get_attach_cookie()`.
+    pub cookie: Option<u64>,
+}
+
+impl<'a, L: Into<KProbeAttachLocation<'a>>> From<L> for KProbeAttachPoint<'a> {
+    fn from(location: L) -> Self {
+        Self {
+            location: location.into(),
+            cookie: None,
+        }
+    }
+}
+
+impl From<&Self> for KProbeAttachPoint<'_> {
+    fn from(point: &Self) -> Self {
+        *point
+    }
 }
 
 pub(crate) struct KProbeAttachTarget<'a> {
@@ -70,33 +139,33 @@ impl KProbe {
         self.kind
     }
 
-    /// Attaches the program.
+    /// Attaches the program to a kernel function.
     ///
-    /// Attaches the probe to the given function name inside the kernel. If
-    /// `offset` is non-zero, it is added to the address of the target
-    /// function.
+    /// `point` may be a function name, a [`KProbeAttachLocation`], or a
+    /// [`KProbeAttachPoint`] pairing a location with a cookie exposed to eBPF
+    /// through `bpf_get_attach_cookie()`.
     ///
-    /// If the program is a `kprobe`, it is attached to the *start* address of the target function.
-    /// Conversely if the program is a `kretprobe`, it is attached to the return address of the
-    /// target function.
+    /// If the program is a `kprobe`, it is attached to the *start* address of the target
+    /// function. Conversely, if the program is a `kretprobe`, it is attached to the return
+    /// address of the target function.
     ///
     /// The returned value can be used to detach from the given function, see [`KProbe::detach`].
-    pub fn attach<T: AsRef<OsStr>>(
-        &mut self,
-        fn_name: T,
-        offset: u64,
-    ) -> Result<KProbeLinkId, ProgramError> {
+    pub fn attach<'a, P>(&mut self, point: P) -> Result<KProbeLinkId, ProgramError>
+    where
+        P: Into<KProbeAttachPoint<'a>>,
+    {
+        let point = point.into();
         let Self { data, kind } = self;
         attach::<Self, _>(
             data,
             ProbeEventArgs {
                 target: KProbeAttachTarget {
-                    function: fn_name.as_ref(),
-                    offset,
+                    function: point.location.function(),
+                    offset: point.location.function_offset().unwrap_or_default(),
                 },
                 kind: *kind,
             },
-            None,
+            point.cookie,
         )
     }
 
