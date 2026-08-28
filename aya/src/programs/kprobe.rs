@@ -18,11 +18,11 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, LinkError, PerfLinkInner, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, load_program_without_attach_type,
+        FdLink, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+        load_program_without_attach_type,
         probe::{
             self, AttachMode, ManyProbeLinks, Probe, ProbeEventArgs, ProbeKind, ProbeLinkIdInner,
-            ProbeLinkInner,
+            ProbeLinkInner, impl_probe_link,
         },
     },
     sys::{SyscallError, bpf_link_create_kprobe_multi},
@@ -434,54 +434,7 @@ define_link_wrapper!(
     ProbeLinkIdInner,
     KProbe,
 );
-
-impl From<PerfLinkInner> for KProbeLink {
-    fn from(link: PerfLinkInner) -> Self {
-        Self::from(ProbeLinkInner::from(link))
-    }
-}
-
-impl TryFrom<KProbeLink> for FdLink {
-    type Error = LinkError;
-
-    fn try_from(value: KProbeLink) -> Result<Self, Self::Error> {
-        match value.into_inner() {
-            ProbeLinkInner::One(PerfLinkInner::Fd(link)) => Ok(link),
-            inner => {
-                // The wrapper owns detachment, including for legacy links.
-                drop(KProbeLink::new(inner));
-                Err(LinkError::InvalidLink)
-            }
-        }
-    }
-}
-
-impl TryFrom<FdLink> for KProbeLink {
-    type Error = LinkError;
-
-    fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        let info = crate::sys::bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
-        if info.type_ == bpf_link_type::BPF_LINK_TYPE_PERF_EVENT as u32
-            || info.type_ == bpf_link_type::BPF_LINK_TYPE_KPROBE_MULTI as u32
-        {
-            return Ok(Self::new(ProbeLinkInner::from(fd_link)));
-        }
-        Err(LinkError::InvalidLink)
-    }
-}
-
-impl KProbeLink {
-    /// Returns the underlying fd-backed links when available.
-    ///
-    /// A single [`KProbeLink`] may correspond to multiple [`FdLink`] values
-    /// when a legacy program is attached to multiple points.
-    ///
-    /// If the underlying link representation is not fd-backed, the original
-    /// [`KProbeLink`] is returned.
-    pub fn into_fd_links(self) -> Result<Vec<FdLink>, Self> {
-        self.into_inner().into_fd_links().map_err(Self::from)
-    }
-}
+impl_probe_link!(KProbeLink, bpf_link_type::BPF_LINK_TYPE_KPROBE_MULTI,);
 
 fn try_attach_kprobe_multi_link(
     prog_fd: BorrowedFd<'_>,
