@@ -709,10 +709,12 @@ impl<'a> EbpfLoader<'a> {
                         ProgramSection::KProbe => Program::KProbe(KProbe {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             kind: ProbeKind::Entry,
+                            attach_mode: AttachMode::Single,
                         }),
                         ProgramSection::KRetProbe => Program::KProbe(KProbe {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             kind: ProbeKind::Return,
+                            attach_mode: AttachMode::Single,
                         }),
                         ProgramSection::UProbe { sleepable, multi } => {
                             let mut data =

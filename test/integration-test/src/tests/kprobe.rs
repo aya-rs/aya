@@ -22,7 +22,7 @@ fn kprobe_triggers() {
         .try_into()
         .unwrap();
     prog.load().unwrap();
-    prog.attach("try_to_wake_up").unwrap();
+    prog.attach(["try_to_wake_up"]).unwrap();
 
     let hits_before = read_hits(&hits);
 
