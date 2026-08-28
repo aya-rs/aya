@@ -718,7 +718,9 @@ impl TryFrom<UProbeLink> for FdLink {
     fn try_from(value: UProbeLink) -> Result<Self, Self::Error> {
         match value.into_inner() {
             ProbeLinkInner::One(PerfLinkInner::Fd(link)) => Ok(link),
-            ProbeLinkInner::One(PerfLinkInner::PerfLink(_)) | ProbeLinkInner::Many(_) => {
+            inner => {
+                // The wrapper owns detachment, including for legacy links.
+                drop(UProbeLink::new(inner));
                 Err(LinkError::InvalidLink)
             }
         }
