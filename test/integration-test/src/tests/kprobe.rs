@@ -1,4 +1,4 @@
-use std::{ffi::OsStr, sync::mpsc::sync_channel, thread};
+use std::{ffi::OsStr, fs, io::Read as _, sync::mpsc::sync_channel, thread};
 
 use assert_matches::assert_matches;
 use aya::{
@@ -13,6 +13,8 @@ use aya::{
 use integration_common::kprobe::{
     COOKIE_NONE_INDEX, COOKIE_SET_INDEX, COOKIE_UNEXPECTED_INDEX, EXPECTED_COOKIE, HITS_INDEX,
 };
+use nix::unistd::gettid;
+use procfs::kernel_config;
 
 use super::utils::is_bazel_kernel;
 
@@ -25,6 +27,19 @@ fn kprobe_helper_supported(helper: BpfHelper) -> bool {
         "Bazel kernels require kprobe helper {helper:?}"
     );
     supported
+}
+
+fn kprobe_multi_required() -> bool {
+    let kernel_config = kernel_config().unwrap();
+    let bazel_kernel = is_bazel_kernel();
+    ["CONFIG_FPROBE", "CONFIG_64BIT"].into_iter().all(|key| {
+        let enabled = matches!(kernel_config.get(key), Some(procfs::ConfigSetting::Yes));
+        assert!(
+            !bazel_kernel || enabled,
+            "source-built integration kernels require {key}=y"
+        );
+        enabled
+    })
 }
 
 #[test_log::test]
@@ -53,6 +68,116 @@ fn kprobe_triggers() {
     assert!(
         hits_after > hits_before,
         "expected kprobe hits to increase, before={hits_before}, after={hits_after}"
+    );
+}
+
+#[test_log::test]
+fn kprobe_multi_triggers() {
+    let require_multi = kprobe_multi_required();
+
+    // bpf_get_func_ip (Linux 5.15+) lets the fixture verify each cookie against
+    // the function that triggered it. Native multi-kprobe requires Linux 5.18+,
+    // so this check does not raise the minimum kernel version for this test.
+    if !kprobe_helper_supported(BpfHelper::BPF_FUNC_get_attach_cookie)
+        || !kprobe_helper_supported(BpfHelper::BPF_FUNC_get_func_ip)
+    {
+        eprintln!(
+            "skipping test: required kprobe helpers are unsupported so the test program cannot load"
+        );
+        return;
+    }
+
+    let target_tgid = std::process::id();
+    let cookie_set_function_ip = kernel_symbol_address("schedule");
+    let cookie_none_function_ip = kernel_symbol_address("try_to_wake_up");
+    let mut bpf = EbpfLoader::new()
+        .override_global("TARGET_TGID", &target_tgid, true)
+        .override_global("COOKIE_SET_FUNCTION_IP", &cookie_set_function_ip, true)
+        .override_global("COOKIE_NONE_FUNCTION_IP", &cookie_none_function_ip, true)
+        .load(crate::KPROBE)
+        .unwrap();
+
+    let cookie_hits = Array::try_from(bpf.take_map("COOKIE_HITS").unwrap()).unwrap();
+    let prog: &mut KProbe = bpf
+        .program_mut("test_kprobe_multi_trigger")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+
+    assert_matches!(
+        prog.attach([KProbeAttachLocation::with_offset("schedule", 0)]),
+        Err(ProgramError::KProbeError(
+            KProbeError::FunctionOffsetRequiresSingleMode
+        ))
+    );
+
+    // The eBPF fixture validates each cookie against the current function IP,
+    // so swapping these parallel kernel ABI entries makes the test fail.
+    let points = [
+        KProbeAttachPoint {
+            location: KProbeAttachLocation::from("schedule"),
+            cookie: Some(EXPECTED_COOKIE),
+        },
+        KProbeAttachPoint {
+            location: KProbeAttachLocation::from("try_to_wake_up"),
+            cookie: None,
+        },
+    ];
+    let link_id = match prog.attach(points) {
+        Ok(link_id) => link_id,
+        Err(ProgramError::KProbeError(KProbeError::MultiLinkNotSupported)) if !require_multi => {
+            eprintln!("skipping test: native multi-kprobe links are unavailable");
+            return;
+        }
+        Err(error) => panic!("multi-kprobe attach failed: {error:?}"),
+    };
+
+    let hits_before = read_cookie_hits(&cookie_hits);
+    trigger_scheduler();
+    let hits_after = read_cookie_hits(&cookie_hits);
+    assert_expected_cookie_hits(hits_before, hits_after);
+
+    prog.detach(link_id).unwrap();
+    let hits_detached = read_cookie_hits(&cookie_hits);
+    trigger_scheduler();
+    let hits_after_detach = read_cookie_hits(&cookie_hits);
+    assert_eq!(
+        hits_after_detach, hits_detached,
+        "detaching a native multi-kprobe link must remove every attachment"
+    );
+}
+
+#[test_log::test]
+fn kretprobe_multi_reads_return_value() {
+    const READ_LEN: usize = 32;
+
+    if !kprobe_multi_required() {
+        eprintln!("skipping test: native multi-kprobe requires CONFIG_FPROBE=y and CONFIG_64BIT=y");
+        return;
+    }
+
+    let mut file = fs::File::open("/dev/zero").unwrap();
+    let target_tid = u32::try_from(gettid().as_raw()).unwrap();
+    let mut bpf = EbpfLoader::new()
+        .override_global("TARGET_TID", &target_tid, true)
+        .load(crate::KPROBE)
+        .unwrap();
+    let return_value: Array<_, i64> = bpf.take_map("RETURN_VALUE").unwrap().try_into().unwrap();
+    let prog: &mut KProbe = bpf
+        .program_mut("test_kretprobe_multi_return")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().unwrap();
+    prog.attach(["vfs_read"]).unwrap();
+
+    // Use /dev/zero so this small read returns a known, nonzero byte count.
+    assert_eq!(file.read(&mut [0; READ_LEN]).unwrap(), READ_LEN);
+    assert_eq!(
+        return_value.get(&0, 0).unwrap(),
+        i64::try_from(READ_LEN).unwrap(),
+        "the return probe must capture vfs_read's return value"
     );
 }
 
@@ -238,6 +363,20 @@ fn read_hits(hits: &Array<MapData, u64>) -> u64 {
 
 fn read_cookie_hits(hits: &Array<MapData, u64>) -> [u64; 3] {
     std::array::from_fn(|index| hits.get(&(index as u32), 0).unwrap())
+}
+
+fn kernel_symbol_address(name: &str) -> u64 {
+    fs::read_to_string("/proc/kallsyms")
+        .unwrap()
+        .lines()
+        .find_map(|line| {
+            let mut fields = line.split_ascii_whitespace();
+            let address = fields.next()?;
+            let _kind = fields.next()?;
+            (fields.next()? == name).then(|| u64::from_str_radix(address, 16).unwrap())
+        })
+        .filter(|address| *address != 0)
+        .unwrap_or_else(|| panic!("kernel symbol `{name}` has no visible address"))
 }
 
 fn assert_expected_cookie_hits(before: [u64; 3], after: [u64; 3]) {
