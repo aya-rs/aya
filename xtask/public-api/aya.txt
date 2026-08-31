@@ -3470,6 +3470,12 @@ pub fn aya::programs::xdp::XdpLink::try_from(aya::programs::links::FdLink) -> co
 impl core::convert::TryFrom<aya::programs::perf_event::PerfEventLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(aya::programs::perf_event::PerfEventLink) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<aya::programs::sk_msg::SkMsgLink> for aya::programs::links::FdLink
+pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
+pub fn aya::programs::links::FdLink::try_from(aya::programs::sk_msg::SkMsgLink) -> core::result::Result<Self, Self::Error>
+impl core::convert::TryFrom<aya::programs::sk_skb::SkSkbLink> for aya::programs::links::FdLink
+pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
+pub fn aya::programs::links::FdLink::try_from(aya::programs::sk_skb::SkSkbLink) -> core::result::Result<Self, Self::Error>
 impl core::convert::TryFrom<aya::programs::sock_ops::SockOpsLink> for aya::programs::links::FdLink
 pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::FdLink::try_from(aya::programs::sock_ops::SockOpsLink) -> core::result::Result<Self, Self::Error>
@@ -3576,14 +3582,6 @@ pub fn aya::programs::links::ProgAttachLink::id(&self) -> Self::Id
 impl core::cmp::Eq for aya::programs::links::ProgAttachLink
 impl core::cmp::PartialEq for aya::programs::links::ProgAttachLink
 pub fn aya::programs::links::ProgAttachLink::eq(&self, &Self) -> bool
-impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sk_msg::SkMsgLink
-pub fn aya::programs::sk_msg::SkMsgLink::from(aya::programs::links::ProgAttachLink) -> aya::programs::sk_msg::SkMsgLink
-impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sk_skb::SkSkbLink
-pub fn aya::programs::sk_skb::SkSkbLink::from(aya::programs::links::ProgAttachLink) -> aya::programs::sk_skb::SkSkbLink
-impl core::convert::From<aya::programs::sk_msg::SkMsgLink> for aya::programs::links::ProgAttachLink
-pub fn aya::programs::links::ProgAttachLink::from(aya::programs::sk_msg::SkMsgLink) -> aya::programs::links::ProgAttachLink
-impl core::convert::From<aya::programs::sk_skb::SkSkbLink> for aya::programs::links::ProgAttachLink
-pub fn aya::programs::links::ProgAttachLink::from(aya::programs::sk_skb::SkSkbLink) -> aya::programs::links::ProgAttachLink
 impl core::fmt::Debug for aya::programs::links::ProgAttachLink
 pub fn aya::programs::links::ProgAttachLink::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::links::ProgAttachLink
@@ -4546,10 +4544,9 @@ pub fn aya::programs::sk_msg::SkMsgLink::id(&self) -> Self::Id
 impl core::cmp::Eq for aya::programs::sk_msg::SkMsgLink
 impl core::cmp::PartialEq for aya::programs::sk_msg::SkMsgLink
 pub fn aya::programs::sk_msg::SkMsgLink::eq(&self, &Self) -> bool
-impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sk_msg::SkMsgLink
-pub fn aya::programs::sk_msg::SkMsgLink::from(aya::programs::links::ProgAttachLink) -> aya::programs::sk_msg::SkMsgLink
-impl core::convert::From<aya::programs::sk_msg::SkMsgLink> for aya::programs::links::ProgAttachLink
-pub fn aya::programs::links::ProgAttachLink::from(aya::programs::sk_msg::SkMsgLink) -> aya::programs::links::ProgAttachLink
+impl core::convert::TryFrom<aya::programs::sk_msg::SkMsgLink> for aya::programs::links::FdLink
+pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
+pub fn aya::programs::links::FdLink::try_from(aya::programs::sk_msg::SkMsgLink) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::programs::sk_msg::SkMsgLink
 pub fn aya::programs::sk_msg::SkMsgLink::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::sk_msg::SkMsgLink
@@ -4687,10 +4684,9 @@ pub fn aya::programs::sk_skb::SkSkbLink::id(&self) -> Self::Id
 impl core::cmp::Eq for aya::programs::sk_skb::SkSkbLink
 impl core::cmp::PartialEq for aya::programs::sk_skb::SkSkbLink
 pub fn aya::programs::sk_skb::SkSkbLink::eq(&self, &Self) -> bool
-impl core::convert::From<aya::programs::links::ProgAttachLink> for aya::programs::sk_skb::SkSkbLink
-pub fn aya::programs::sk_skb::SkSkbLink::from(aya::programs::links::ProgAttachLink) -> aya::programs::sk_skb::SkSkbLink
-impl core::convert::From<aya::programs::sk_skb::SkSkbLink> for aya::programs::links::ProgAttachLink
-pub fn aya::programs::links::ProgAttachLink::from(aya::programs::sk_skb::SkSkbLink) -> aya::programs::links::ProgAttachLink
+impl core::convert::TryFrom<aya::programs::sk_skb::SkSkbLink> for aya::programs::links::FdLink
+pub type aya::programs::links::FdLink::Error = aya::programs::links::LinkError
+pub fn aya::programs::links::FdLink::try_from(aya::programs::sk_skb::SkSkbLink) -> core::result::Result<Self, Self::Error>
 impl core::fmt::Debug for aya::programs::sk_skb::SkSkbLink
 pub fn aya::programs::sk_skb::SkSkbLink::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::sk_skb::SkSkbLink
