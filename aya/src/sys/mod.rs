@@ -22,7 +22,7 @@ pub use feature_probe::{
     BpfHelper, BtfFeature, is_bpf_global_data_supported, is_bpf_name_supported,
     is_btf_feature_supported, is_btf_supported, is_cpumap_prog_id_supported,
     is_devmap_prog_id_supported, is_helper_supported, is_map_supported, is_perf_link_supported,
-    is_program_supported,
+    is_program_supported, is_uprobe_multi_supported,
 };
 pub use netlink::NetlinkError;
 #[doc(hidden)]
@@ -30,6 +30,18 @@ pub use netlink::netlink_set_link_up;
 pub(crate) use netlink::*;
 pub(crate) use perf_event::*;
 use thiserror::Error;
+
+/// A multi-uprobe capability that can be probed independently.
+#[derive(Clone, Copy, Debug)]
+pub enum UProbeMultiFeature {
+    /// Support for creating links with the `BPF_TRACE_UPROBE_MULTI` attach type.
+    LinkCreation,
+    /// Correct process-wide filtering when a multi-uprobe link is attached to a process ID.
+    ///
+    /// Initial multi-uprobe implementations filtered on one thread instead of all threads sharing
+    /// the process address space.
+    ProcessScopedPidFilter,
+}
 
 pub(crate) type SysResult = Result<i64, (i64, io::Error)>;
 

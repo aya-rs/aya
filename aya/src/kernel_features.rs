@@ -3,9 +3,10 @@ use std::{fmt, io, sync::OnceLock};
 use crate::{
     programs::ProgramType,
     sys::{
-        BpfHelper, BtfFeature, is_bpf_global_data_supported, is_bpf_name_supported,
-        is_btf_feature_supported, is_btf_supported, is_cpumap_prog_id_supported,
-        is_devmap_prog_id_supported, is_helper_supported, is_perf_link_supported,
+        BpfHelper, BtfFeature, UProbeMultiFeature, is_bpf_global_data_supported,
+        is_bpf_name_supported, is_btf_feature_supported, is_btf_supported,
+        is_cpumap_prog_id_supported, is_devmap_prog_id_supported, is_helper_supported,
+        is_perf_link_supported, probe_uprobe_multi_link,
     },
 };
 
@@ -71,6 +72,8 @@ pub(crate) enum Feature {
     CpuMapProgId,
     DevMapProgId,
     Btf,
+    #[expect(dead_code, reason = "reserved for future USDT attach mode selection")]
+    UProbeMultiLink,
 }
 
 /// Kernel feature support used internally by Aya.
@@ -87,6 +90,7 @@ pub(crate) struct Features {
     cpumap_prog_id: FeatureProbe,
     devmap_prog_id: FeatureProbe,
     btf: FeatureProbe,
+    uprobe_multi_link: FeatureProbe,
     btf_capabilities: BtfFeatures,
 }
 
@@ -101,6 +105,10 @@ impl Features {
             cpumap_prog_id: feature_probe!(is_cpumap_prog_id_supported),
             devmap_prog_id: feature_probe!(is_devmap_prog_id_supported),
             btf: feature_probe!(is_btf_supported),
+            uprobe_multi_link: feature_probe!(
+                probe_uprobe_multi_link,
+                UProbeMultiFeature::ProcessScopedPidFilter
+            ),
             btf_capabilities: BtfFeatures::new(),
         }
     }
@@ -115,6 +123,7 @@ impl Features {
             cpumap_prog_id,
             devmap_prog_id,
             btf,
+            uprobe_multi_link,
             btf_capabilities: _,
         } = self;
         let probe = match feature {
@@ -126,6 +135,7 @@ impl Features {
             Feature::CpuMapProgId => cpumap_prog_id,
             Feature::DevMapProgId => devmap_prog_id,
             Feature::Btf => btf,
+            Feature::UProbeMultiLink => uprobe_multi_link,
         };
         probe.get()
     }

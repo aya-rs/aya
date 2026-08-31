@@ -8,8 +8,8 @@ use aya::{
     maps::MapType,
     programs::{LsmAttachType, ProgramError, ProgramType},
     sys::{
-        BpfHelper, BtfFeature, is_btf_feature_supported, is_helper_supported, is_map_supported,
-        is_program_supported,
+        BpfHelper, BtfFeature, UProbeMultiFeature, is_btf_feature_supported, is_helper_supported,
+        is_map_supported, is_program_supported, is_uprobe_multi_supported,
     },
     test_helpers::kernel_assert,
     util::KernelVersion,
@@ -22,6 +22,42 @@ fn probe_empty_btf_datasec() {
         is_btf_feature_supported(BtfFeature::DataSecZero).unwrap(),
         KernelVersion::new(5, 12, 0),
     );
+}
+
+#[test_log::test]
+fn probe_uprobe_multi() {
+    let current = KernelVersion::current().unwrap();
+    let link_creation = is_uprobe_multi_supported(UProbeMultiFeature::LinkCreation).unwrap();
+    let process_scoped_pid_filter =
+        is_uprobe_multi_supported(UProbeMultiFeature::ProcessScopedPidFilter).unwrap();
+
+    assert!(
+        !process_scoped_pid_filter || link_creation,
+        "process-scoped PID filtering requires multi-uprobe link support"
+    );
+
+    // Use known upstream version boundaries as an oracle for the probe results.
+    if current < KernelVersion::new(6, 6, 0) {
+        assert!(!link_creation, "multi-uprobe predates kernel {current}");
+        assert!(
+            !process_scoped_pid_filter,
+            "multi-uprobe PID filtering predates kernel {current}"
+        );
+    } else {
+        assert!(
+            link_creation,
+            "kernel {current} includes multi-uprobe links"
+        );
+    }
+
+    if current >= KernelVersion::new(6, 10, 0) {
+        // Linux 6.10 includes process-scoped PID filtering. The fix was also backported to some
+        // stable kernels, so versions between 6.6 and 6.10 cannot be classified by version alone.
+        assert!(
+            process_scoped_pid_filter,
+            "kernel {current} includes process-scoped multi-uprobe PID filtering"
+        );
+    }
 }
 
 #[test_log::test]

@@ -7802,6 +7802,21 @@ impl core::marker::Unpin for aya::sys::Stats
 impl core::marker::UnsafeUnpin for aya::sys::Stats
 impl core::panic::unwind_safe::RefUnwindSafe for aya::sys::Stats
 impl core::panic::unwind_safe::UnwindSafe for aya::sys::Stats
+pub enum aya::sys::UProbeMultiFeature
+pub aya::sys::UProbeMultiFeature::LinkCreation
+pub aya::sys::UProbeMultiFeature::ProcessScopedPidFilter
+impl core::clone::Clone for aya::sys::UProbeMultiFeature
+pub fn aya::sys::UProbeMultiFeature::clone(&self) -> aya::sys::UProbeMultiFeature
+impl core::fmt::Debug for aya::sys::UProbeMultiFeature
+pub fn aya::sys::UProbeMultiFeature::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya::sys::UProbeMultiFeature
+impl core::marker::Freeze for aya::sys::UProbeMultiFeature
+impl core::marker::Send for aya::sys::UProbeMultiFeature
+impl core::marker::Sync for aya::sys::UProbeMultiFeature
+impl core::marker::Unpin for aya::sys::UProbeMultiFeature
+impl core::marker::UnsafeUnpin for aya::sys::UProbeMultiFeature
+impl core::panic::unwind_safe::RefUnwindSafe for aya::sys::UProbeMultiFeature
+impl core::panic::unwind_safe::UnwindSafe for aya::sys::UProbeMultiFeature
 pub struct aya::sys::NetlinkError(_)
 impl aya::sys::NetlinkError
 pub fn aya::sys::NetlinkError::raw_os_error(&self) -> core::option::Option<i32>
@@ -7861,6 +7876,7 @@ pub fn aya::sys::is_helper_supported(aya::programs::ProgramType, aya::sys::BpfHe
 pub fn aya::sys::is_map_supported(aya::maps::MapType) -> core::result::Result<bool, aya::sys::SyscallError>
 pub fn aya::sys::is_perf_link_supported() -> core::io::error::Result<bool>
 pub fn aya::sys::is_program_supported(aya::programs::ProgramType) -> core::result::Result<bool, aya::programs::ProgramError>
+pub fn aya::sys::is_uprobe_multi_supported(aya::sys::UProbeMultiFeature) -> core::io::error::Result<bool>
 pub type aya::sys::BpfHelper = aya_obj::generated::linux_bindings_x86_64::bpf_func_id
 pub mod aya::test_helpers
 pub enum aya::test_helpers::AyaTestError

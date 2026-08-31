@@ -25,8 +25,8 @@ use aya_obj::{
     maps::{LegacyMap, bpf_map_def},
 };
 use libc::{
-    E2BIG, EBADF, EINVAL, ENOENT, ENOMEM, ENOSPC, EPERM, RLIM_INFINITY, RLIMIT_MEMLOCK, getrlimit,
-    rlim_t, rlimit, setrlimit,
+    E2BIG, EBADF, EINVAL, ENOENT, ENOMEM, ENOSPC, EOPNOTSUPP, EPERM, RLIM_INFINITY, RLIMIT_MEMLOCK,
+    getrlimit, rlim_t, rlimit, setrlimit,
 };
 use log::warn;
 
@@ -37,7 +37,7 @@ use crate::{
         LsmAttachType, ProgramType, RawTracePointRunOptions, RawTracePointTestRunResult,
         TestRunOptions, TestRunResult, links::LinkRef,
     },
-    sys::{Syscall, SyscallError, syscall},
+    sys::{Syscall, SyscallError, UProbeMultiFeature, syscall},
     util::KernelVersion,
 };
 
@@ -1177,6 +1177,77 @@ pub(crate) fn probe_perf_link() -> io::Result<bool> {
             Err(error) => match error.raw_os_error() {
                 Some(EBADF) => Ok(true),
                 Some(EINVAL) => Ok(false),
+                _ => Err(error),
+            },
+        }
+    })
+}
+
+pub(crate) fn probe_uprobe_multi_link(feature: UProbeMultiFeature) -> io::Result<bool> {
+    with_trivial_prog(ProgramType::KProbe, |attr| {
+        let u = unsafe { &mut attr.__bindgen_anon_3 };
+        u.expected_attach_type = bpf_attach_type::BPF_TRACE_UPROBE_MULTI as u32;
+
+        let prog_fd = match bpf_prog_load(attr) {
+            Ok(fd) => fd,
+            // The probe program is known to be valid, so these errors mean the kernel does not
+            // accept the required program type or load attribute. Any other error means the probe
+            // itself failed.
+            Err(error) => match error.raw_os_error() {
+                Some(EINVAL | E2BIG) => return Ok(false),
+                _ => return Err(error),
+            },
+        };
+        let prog_fd = prog_fd.as_fd();
+        let path = c"/";
+        let offsets = [0];
+        let create_link = |pid| {
+            let args = BpfLinkCreateArgs::UProbeMulti {
+                path,
+                offsets: &offsets,
+                ref_ctr_offsets: None,
+                cookies: None,
+                pid,
+                flags: 0,
+            };
+            bpf_link_create(
+                prog_fd,
+                LinkTarget::None,
+                bpf_attach_type::BPF_TRACE_UPROBE_MULTI,
+                0,
+                Some(args),
+            )
+        };
+
+        // Follow libbpf's basic-link probe. "/" resolves to a directory, so a kernel that
+        // dispatches BPF_TRACE_UPROBE_MULTI reaches the regular-file check and returns EBADF.
+        // https://github.com/libbpf/libbpf/blob/f5dcbae7/src/features.c#L362-L395
+        // https://github.com/torvalds/linux/blob/89ae89f5/kernel/trace/bpf_trace.c#L3119-L3133
+        match create_link(0).map(|_: crate::MockableFd| ()) {
+            Ok(()) => return Ok(false),
+            Err(error) => match error.raw_os_error() {
+                Some(EBADF) => {}
+                Some(EINVAL | EOPNOTSUPP) => return Ok(false),
+                _ => return Err(error),
+            },
+        }
+
+        if matches!(feature, UProbeMultiFeature::LinkCreation) {
+            return Ok(true);
+        }
+
+        // Follow libbpf's probe for the process-scoped PID-filter fix. Fixed kernels reject
+        // pid == -1 with EINVAL before resolving "/", while affected kernels inspect the path
+        // first and return EBADF. The same fix changes runtime filtering from task identity to
+        // address-space identity.
+        // https://github.com/libbpf/libbpf/blob/f5dcbae7/src/features.c#L397-L424
+        // https://github.com/torvalds/linux/commit/46ba0e49
+        let invalid_pid: u32 = -1i32 as u32;
+        match create_link(invalid_pid).map(|_: crate::MockableFd| ()) {
+            Ok(()) => Ok(false),
+            Err(error) => match error.raw_os_error() {
+                Some(EINVAL) => Ok(true),
+                Some(EBADF | EOPNOTSUPP) => Ok(false),
                 _ => Err(error),
             },
         }
