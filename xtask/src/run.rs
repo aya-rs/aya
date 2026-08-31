@@ -67,7 +67,7 @@ enum Environment {
         #[clap(long, value_enum)]
         kernel_arch: KernelArchitecture,
 
-        /// Ubuntu Mainline versions such as 5.15 or 6.6.
+        /// Ubuntu Mainline kernel selectors, such as 5.15, 6.6, or latest-stable.
         #[clap(required = true, value_name = "VERSION")]
         kernels: Vec<String>,
     },
