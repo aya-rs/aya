@@ -32,7 +32,7 @@ btf_map_def!(
 );
 
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> CgroupArray<MAX_ENTRIES, FLAGS> {
-    const _CHECK: () = {
+    const CHECK: () = {
         assert!(
             MAX_ENTRIES > 0,
             "CgroupArray max_entries must be greater than zero."
@@ -45,7 +45,7 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> CgroupArray<MAX_ENTRIES, FLAG
     /// 4.9 or newer. This is only callable from tracing programs, for example
     /// kprobes and tracepoints.
     pub fn current_task_under_cgroup(&self, index: u32) -> Result<bool, c_long> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         // SAFETY: `self` is a valid pointer managed by aya.
         let ret = unsafe { bpf_current_task_under_cgroup(self.as_ptr().cast(), index) };
         match ret {
@@ -61,8 +61,8 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> crate::programs::tc::sealed::
 {
     fn as_ptr(&self) -> *mut core::ffi::c_void {
         // `skb_under_cgroup` reaches the map only through this method, so it is
-        // the sole enforcement site for `_CHECK` on that path.
-        let () = Self::_CHECK;
+        // the sole enforcement site for `CHECK` on that path.
+        let () = Self::CHECK;
         self.as_ptr()
     }
 }

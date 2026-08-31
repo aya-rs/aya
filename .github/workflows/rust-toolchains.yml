@@ -1,0 +1,38 @@
+name: Resolve Rust toolchains
+
+on:
+  workflow_call:
+    inputs:
+      channels:
+        description: Space-separated Rust channels to resolve
+        type: string
+        default: nightly
+    outputs:
+      rust-toolchains:
+        description: Immutable toolchain names and rustc commits by channel
+        value: ${{ jobs.resolve.outputs.rust-toolchains }}
+
+permissions:
+  contents: read
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      rust-toolchains: ${{ steps.resolve.outputs.rust-toolchains }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+
+      - name: Resolve immutable Rust toolchains
+        id: resolve
+        env:
+          CHANNELS: ${{ inputs.channels }}
+        run: |
+          set -euo pipefail
+
+          read -r -a channels <<< "$CHANNELS"
+          toolchains=$(python3 scripts/rust_toolchains.py "${channels[@]}")
+          printf 'rust-toolchains=%s\n' "$toolchains" >> "$GITHUB_OUTPUT"

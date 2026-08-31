@@ -1,17 +1,24 @@
 name: Regenerate source bindings
 description: Regenerate and format source bindings
 
+inputs:
+  toolchain:
+    description: Immutable Rust nightly toolchain to use
+    required: true
+
 runs:
   using: composite
   steps:
-    - uses: ./.github/actions/setup-rust-nightly
+    - uses: ./.github/actions/setup-rust
       with:
+        toolchain: ${{ inputs.toolchain }}
         components: rustfmt, clippy
 
     - uses: Swatinem/rust-cache@v2
       with:
         shared-key: codegen
-        save-if: ${{ github.event_name != 'pull_request' }}
+        save-if: >-
+          ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
 
     - name: Install headers
       shell: bash

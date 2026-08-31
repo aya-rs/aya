@@ -56,7 +56,7 @@ btf_map_def!(
 );
 
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> DevMap<MAX_ENTRIES, FLAGS> {
-    const _CHECK: () = {
+    const CHECK: () = {
         assert!(
             MAX_ENTRIES > 0,
             "DevMap max_entries must be greater than zero.",
@@ -74,7 +74,7 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> DevMap<MAX_ENTRIES, FLAGS> {
     /// written there.
     #[inline(always)]
     pub fn get(&self, index: u32) -> Option<DevMapValue> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         devmap_get(self.as_ptr(), index)
     }
 
@@ -88,7 +88,7 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> DevMap<MAX_ENTRIES, FLAGS> {
     /// written there.
     #[inline(always)]
     pub fn get_ifindex(&self, index: u32) -> Option<u32> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         devmap_get_ifindex(self.as_ptr(), index)
     }
 
@@ -98,7 +98,7 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> DevMap<MAX_ENTRIES, FLAGS> {
     /// lower two bits of `flags`, propagated as the `Err` variant.
     #[inline(always)]
     pub fn redirect(&self, index: u32, flags: u64) -> Result<u32, u32> {
-        let () = Self::_CHECK;
+        let () = Self::CHECK;
         super::try_redirect_map(self.as_ptr(), index, flags)
     }
 }
