@@ -23,6 +23,7 @@ use crate::http::{HttpClient, url_file_name};
 const UBUNTU_MAINLINE_URL: &str = "https://kernel.ubuntu.com/mainline/";
 const UBUNTU_MAINLINE_IMAGE_PACKAGE_PREFIX: &str = "linux-image-unsigned-";
 const UBUNTU_MAINLINE_MODULES_PACKAGE_PREFIX: &str = "linux-modules-";
+const LATEST_STABLE_KERNEL_VERSION: &str = "latest-stable";
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
 pub(crate) enum KernelArchitecture {
@@ -119,29 +120,48 @@ fn ubuntu_mainline_kernel_urls(
 ) -> Result<UbuntuMainlineKernelUrls> {
     const MAX_MAINLINE_BUILD_CANDIDATES: usize = 10;
 
-    // For a line such as 6.6, select the newest v6.6.y build that has
-    // packages for the requested architecture. Ubuntu may publish newer
-    // release directories while architecture artifacts are still missing.
-    // Check only a bounded number of recent builds so an unavailable LTS line
-    // fails instead of degrading indefinitely.
+    // For a series such as 6.6, select the newest v6.6.y build that has packages
+    // for the requested architecture. `latest-stable` instead considers release
+    // directories across all series whose names match vMAJOR.MINOR[.PATCH].
+    // Ubuntu may publish newer release directories while architecture
+    // artifacts are still missing. Check only a bounded number of recent
+    // builds so an unavailable line fails instead of degrading indefinitely.
     let mainline_html = client
         .get_text(UBUNTU_MAINLINE_URL)
         .context("failed to list Ubuntu Mainline releases")?;
+    let latest_stable = version == LATEST_STABLE_KERNEL_VERSION;
+    let version_prefix = format!("v{version}.");
     let mut mainline_versions = directory_listing_urls(&mainline_html, UBUNTU_MAINLINE_URL)
         .filter_map(|url| {
             let name = url_file_name(url.as_ref()).ok()?;
-            let patch = name.strip_prefix(&format!("v{version}."))?;
-            if !patch.chars().all(|char| char.is_ascii_digit()) {
+
+            // Build a [major, minor, patch] key so `latest-stable` can compare
+            // candidates across kernel series. Ubuntu names a base release
+            // directory `v7.2` but uses `7.2.0` in its package names, so
+            // normalize an omitted patch number to zero. Entries such as
+            // `v7.3-rc1` and `daily` fail this parsing and are skipped.
+            let mut numbers = name.strip_prefix('v')?.split('.');
+            let major = numbers.next()?.parse().ok()?;
+            let minor = numbers.next()?.parse().ok()?;
+            let patch = numbers.next().map_or(Some(0), |patch| patch.parse().ok())?;
+            if numbers.next().is_some() {
                 return None;
             }
-            Some((patch.parse::<u64>().ok()?, name.to_owned()))
+            let version_numbers = [major, minor, patch];
+
+            // A fixed series only keeps matching directories. `latest-stable`
+            // keeps every stable version parsed above.
+            if !latest_stable && !name.starts_with(&version_prefix) {
+                return None;
+            }
+            Some((version_numbers, name.to_owned()))
         })
         .collect::<Vec<_>>();
-    mainline_versions.sort_by_key(|(patch, _)| *patch);
+    mainline_versions.sort_by_key(|(version_numbers, _)| *version_numbers);
 
     let architecture = architecture.as_str();
     let mut skipped = Vec::new();
-    for (_, mainline_version) in mainline_versions
+    for (version_numbers, mainline_version) in mainline_versions
         .into_iter()
         .rev()
         .take(MAX_MAINLINE_BUILD_CANDIDATES)
@@ -167,14 +187,10 @@ fn ubuntu_mainline_kernel_urls(
         // The VM needs the unsigned image to boot and the matching modules
         // package for config, System.map, and the module tree. Keep both on
         // the generic flavor for the same release.
-        let image_prefix = format!(
-            "{UBUNTU_MAINLINE_IMAGE_PACKAGE_PREFIX}{}-",
-            mainline_version.trim_start_matches('v')
-        );
-        let modules_prefix = format!(
-            "{UBUNTU_MAINLINE_MODULES_PACKAGE_PREFIX}{}-",
-            mainline_version.trim_start_matches('v')
-        );
+        let [major, minor, patch] = version_numbers;
+        let package_version = format!("{major}.{minor}.{patch}");
+        let image_prefix = format!("{UBUNTU_MAINLINE_IMAGE_PACKAGE_PREFIX}{package_version}-");
+        let modules_prefix = format!("{UBUNTU_MAINLINE_MODULES_PACKAGE_PREFIX}{package_version}-");
 
         let mut image_matches = Vec::new();
         let mut modules_matches = Vec::new();
@@ -234,6 +250,8 @@ fn ubuntu_mainline_kernel_urls(
                 "selected Ubuntu Mainline {mainline_version} for {version} {architecture}; skipped newer incomplete builds: {}",
                 skipped.join(", ")
             );
+        } else if version == LATEST_STABLE_KERNEL_VERSION {
+            println!("selected Ubuntu Mainline {mainline_version} for {version} {architecture}");
         }
 
         return Ok(UbuntuMainlineKernelUrls {
