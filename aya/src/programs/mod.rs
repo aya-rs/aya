@@ -183,6 +183,10 @@ pub enum ProgramError {
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
 
+    /// An error occurred while working with a link.
+    #[error(transparent)]
+    LinkError(#[from] LinkError),
+
     /// The network interface does not exist.
     #[error("unknown network interface {name}")]
     UnknownInterface {

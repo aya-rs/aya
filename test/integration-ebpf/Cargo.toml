@@ -201,6 +201,10 @@ name = "cgroup_array"
 path = "src/cgroup_array.rs"
 
 [[bin]]
+name = "cgroup_connect"
+path = "src/cgroup_connect.rs"
+
+[[bin]]
 name = "cgroup_storage"
 path = "src/cgroup_storage.rs"
 
