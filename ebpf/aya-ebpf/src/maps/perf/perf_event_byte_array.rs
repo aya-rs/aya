@@ -10,6 +10,11 @@ pub struct PerfEventByteArray {
     def: MapDef,
 }
 
+impl super::super::__MapLayout for PerfEventByteArray {
+    type Key = u32;
+    type Value = u32;
+}
+
 impl PerfEventByteArray {
     pub const fn new(flags: u32) -> Self {
         Self::new_with_pinning(flags, PinningType::None)
