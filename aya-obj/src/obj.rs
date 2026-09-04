@@ -439,8 +439,10 @@ impl Object {
                     address: symbol.address(),
                     size: symbol.size(),
                     is_definition: symbol.is_definition(),
-                    kind: symbol.kind(),
+                    // Undefined symbols are external references; defined globals are not.
+                    is_external: symbol.is_undefined(),
                     is_weak: symbol.is_weak(),
+                    kind: symbol.kind(),
                 };
                 bpf_obj.symbol_table.insert(symbol.index().0, sym);
                 if let Some(section_idx) = symbol.section().index() {
@@ -556,7 +558,7 @@ impl Object {
     }
 
     fn parse_btf(&mut self, section: &Section<'_>) -> Result<(), BtfError> {
-        self.btf = Some(Btf::parse(section.data, self.endianness)?);
+        self.btf = Some(Btf::parse_bpf_object(section.data, self.endianness)?);
 
         Ok(())
     }
@@ -1520,6 +1522,7 @@ mod tests {
                 size,
                 is_definition: false,
                 kind: SymbolKind::Text,
+                is_external: false,
                 is_weak: false,
             },
         );
@@ -2735,8 +2738,9 @@ mod tests {
                 address: 0,
                 size: 3,
                 is_definition: true,
-                kind: SymbolKind::Data,
+                is_external: false,
                 is_weak: false,
+                kind: SymbolKind::Data,
             },
         );
 

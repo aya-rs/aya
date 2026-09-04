@@ -115,8 +115,9 @@ pub(crate) struct Symbol {
     pub(crate) address: u64,
     pub(crate) size: u64,
     pub(crate) is_definition: bool,
-    pub(crate) kind: SymbolKind,
+    pub(crate) is_external: bool,
     pub(crate) is_weak: bool,
+    pub(crate) kind: SymbolKind,
 }
 
 impl Symbol {
@@ -405,8 +406,11 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
             continue;
         };
 
-        // calls and relocation to .text symbols are handled in a separate step
-        if insn_is_call(instructions[ins_index]) || text_sections.contains(&section_index) {
+        // function calls and text relocations are handled later by `FunctionLinker`
+        // this pass only rewrites relocations for maps and other data sections
+        if insn_is_call(instructions[ins_index])
+            || (text_sections.contains(&section_index) && !sym.is_external)
+        {
             continue;
         }
 
@@ -555,10 +559,13 @@ impl<'a> FunctionLinker<'a> {
                     if sym.is_extern() {
                         return false;
                     }
+                    // only consider relocations that target text sections here
+                    // map and data relocations were already rewritten by `relocate_maps`
                     sym.kind == SymbolKind::Text
-                        || sym.section_index.is_some_and(|section_index| {
-                            self.text_sections.contains(&section_index)
-                        })
+                        || (!sym.is_external
+                            && sym.section_index.is_some_and(|section_index| {
+                                self.text_sections.contains(&section_index)
+                            }))
                 });
 
             // not a call and not a text relocation, we don't need to do anything
@@ -696,8 +703,9 @@ mod test {
             address,
             size,
             is_definition: false,
-            kind: SymbolKind::Data,
+            is_external: false,
             is_weak: false,
+            kind: SymbolKind::Data,
         }
     }
 
@@ -709,6 +717,7 @@ mod test {
             address: 0,
             size: 0,
             is_definition: false,
+            is_external: true,
             kind: SymbolKind::Unknown,
             is_weak,
         }
