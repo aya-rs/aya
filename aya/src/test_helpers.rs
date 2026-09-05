@@ -2,6 +2,7 @@
 
 use std::{
     borrow::Cow,
+    ffi::CString,
     fs,
     io::{self, BufRead as _, BufReader, Write as _},
     marker::PhantomData,
@@ -13,7 +14,10 @@ use std::{
 
 use libc::if_nametoindex;
 
-use crate::{netlink_set_link_up, sys::NetlinkError};
+use crate::{
+    netlink_set_link_up,
+    sys::{NetlinkError, netlink_create_netkit},
+};
 
 /// The cgroup-relative name of the file to which a PID is written to assign
 /// that process to the cgroup.
@@ -477,6 +481,33 @@ impl Drop for NetNsGuard {
             }
         }
     }
+}
+
+fn ifindex(if_name: &str) -> io::Result<u32> {
+    let if_name =
+        CString::new(if_name).map_err(|err| io::Error::new(io::ErrorKind::InvalidInput, err))?;
+    let idx = unsafe { if_nametoindex(if_name.as_ptr()) };
+    if idx == 0 {
+        Err(io::Error::last_os_error())
+    } else {
+        Ok(idx)
+    }
+}
+
+/// Creates a Netkit pair using netlink and brings both interfaces up.
+pub fn create_netkit_link(primary: &str, peer: &str) -> io::Result<()> {
+    let primary_name =
+        CString::new(primary).map_err(|err| io::Error::new(io::ErrorKind::InvalidInput, err))?;
+    let peer_name =
+        CString::new(peer).map_err(|err| io::Error::new(io::ErrorKind::InvalidInput, err))?;
+    netlink_create_netkit(&primary_name, &peer_name).map_err(io::Error::other)?;
+
+    for if_name in [primary, peer] {
+        let idx = ifindex(if_name)?;
+        unsafe { netlink_set_link_up(idx as i32) }.map_err(io::Error::other)?;
+    }
+
+    Ok(())
 }
 
 /// Asserts a condition based on the running kernel version.

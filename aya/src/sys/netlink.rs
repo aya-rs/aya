@@ -424,6 +424,73 @@ pub(crate) fn netlink_find_filter_with_name(
     }))
 }
 
+// IFLA_NETKIT_PEER_INFO from the Linux UAPI.
+// https://github.com/torvalds/linux/blob/999cb275/include/uapi/linux/if_link.h#L1295-L1303
+#[cfg(any(test, feature = "test-helpers"))]
+const IFLA_NETKIT_PEER_INFO: u16 = 1;
+
+#[cfg(any(test, feature = "test-helpers"))]
+fn netkit_request(primary: &CStr, peer: &CStr) -> io::Result<Request<128>> {
+    use libc::{IFLA_IFNAME, IFLA_INFO_DATA, IFLA_INFO_KIND, IFLA_LINKINFO, IFNAMSIZ, RTM_NEWLINK};
+
+    for name in [primary, peer] {
+        if name.to_bytes().is_empty() || name.to_bytes_with_nul().len() > IFNAMSIZ {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "invalid interface name length",
+            ));
+        }
+    }
+
+    // Safety: Request and its ifinfomsg are POD.
+    let mut req = unsafe { mem::zeroed::<Request<128>>() };
+    let header_len = size_of::<nlmsghdr>() + size_of::<ifinfomsg>();
+    req.header = nlmsghdr {
+        nlmsg_len: header_len as u32,
+        nlmsg_flags: (NLM_F_REQUEST | NLM_F_ACK | NLM_F_CREATE | NLM_F_EXCL) as u16,
+        nlmsg_type: RTM_NEWLINK,
+        nlmsg_pid: 0,
+        nlmsg_seq: 1,
+    };
+    req.if_info.ifi_family = AF_UNSPEC as u8;
+
+    // The peer payload starts with an ifinfomsg, followed by link attributes.
+    // https://github.com/torvalds/linux/blob/35613731/drivers/net/netkit.c#L333-L338
+    let mut peer_buf = [0; 64];
+    let (rest, peer_header_len) = write_bytes(
+        &mut peer_buf,
+        &bytes_of(&req)[size_of::<nlmsghdr>()..header_len],
+    )?;
+    let (_, peer_name_len) = write_attr_bytes(rest, IFLA_IFNAME, peer.to_bytes_with_nul())?;
+
+    let mut data_buf = [0; 64];
+    let (_, data_len) = write_attr_bytes(
+        &mut data_buf,
+        IFLA_NETKIT_PEER_INFO,
+        &peer_buf[..peer_header_len + peer_name_len],
+    )?;
+
+    let (rest, name_len) =
+        write_attr_bytes(&mut req.attrs, IFLA_IFNAME, primary.to_bytes_with_nul())?;
+    let mut info = NestedAttrs::new(rest, IFLA_LINKINFO);
+    info.write_attr_bytes(IFLA_INFO_KIND, c"netkit".to_bytes_with_nul())?;
+    info.write_attr_bytes(IFLA_INFO_DATA | NLA_F_NESTED as u16, &data_buf[..data_len])?;
+    let info_len = info.finish()?;
+    req.header.nlmsg_len += (name_len + info_len) as u32;
+    Ok(req)
+}
+
+#[cfg(feature = "test-helpers")]
+pub(crate) fn netlink_create_netkit(primary: &CStr, peer: &CStr) -> Result<(), NetlinkError> {
+    let req = netkit_request(primary, peer).map_err(NetlinkErrorInternal::from)?;
+    let sock = NetlinkSocket::open()?;
+    sock.send(&bytes_of(&req)[..req.header.nlmsg_len as usize])?;
+    for msg in sock.recv() {
+        msg?;
+    }
+    Ok(())
+}
+
 #[doc(hidden)]
 pub unsafe fn netlink_set_link_up(if_index: i32) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
@@ -454,13 +521,13 @@ pub unsafe fn netlink_set_link_up(if_index: i32) -> Result<(), NetlinkError> {
 
 #[derive(Copy, Clone)]
 #[repr(C)]
-struct Request {
+struct Request<const N: usize = 64> {
     header: nlmsghdr,
     if_info: ifinfomsg,
-    attrs: [u8; 64],
+    attrs: [u8; N],
 }
 
-unsafe impl Pod for Request {}
+unsafe impl<const N: usize> Pod for Request<N> {}
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -852,6 +919,67 @@ mod tests {
     use rstest::rstest;
 
     use super::*;
+
+    #[test]
+    fn netkit_request_encodes_peer() {
+        use libc::{IFLA_IFNAME, IFLA_INFO_DATA, IFLA_INFO_KIND, IFLA_LINKINFO, RTM_NEWLINK};
+
+        // Exercise the maximum interface name length and nested peer payload.
+        let primary = c"primary12345678";
+        let peer = c"peer12345678901";
+        let req = netkit_request(primary, peer).unwrap();
+        assert_eq!(req.header.nlmsg_type, RTM_NEWLINK);
+        assert_eq!(
+            req.header.nlmsg_flags,
+            (NLM_F_REQUEST | NLM_F_ACK | NLM_F_CREATE | NLM_F_EXCL) as u16
+        );
+        let len = req.header.nlmsg_len as usize - size_of::<nlmsghdr>() - size_of::<ifinfomsg>();
+        let attrs = NlAttrsIterator::new(&req.attrs[..len])
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(attrs.len(), 2);
+        assert_eq!(attrs[0].header.nla_type, IFLA_IFNAME);
+        assert_eq!(attrs[0].data, primary.to_bytes_with_nul());
+        assert_eq!(
+            attrs[1].header.nla_type,
+            IFLA_LINKINFO | NLA_F_NESTED as u16
+        );
+        let info = NlAttrsIterator::new(attrs[1].data)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(info.len(), 2);
+        assert_eq!(info[0].header.nla_type, IFLA_INFO_KIND);
+        assert_eq!(info[0].data, c"netkit".to_bytes_with_nul());
+        assert_eq!(
+            info[1].header.nla_type,
+            IFLA_INFO_DATA | NLA_F_NESTED as u16
+        );
+        let data = NlAttrsIterator::new(info[1].data)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(data.len(), 1);
+        assert_eq!(data[0].header.nla_type, IFLA_NETKIT_PEER_INFO);
+        let (header, attrs) = data[0].data.split_at(size_of::<ifinfomsg>());
+        assert_eq!(header, &[0; size_of::<ifinfomsg>()]);
+        let peer_attrs = NlAttrsIterator::new(attrs)
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap();
+        assert_eq!(peer_attrs.len(), 1);
+        assert_eq!(peer_attrs[0].header.nla_type, IFLA_IFNAME);
+        assert_eq!(peer_attrs[0].data, peer.to_bytes_with_nul());
+    }
+
+    #[test]
+    fn netkit_request_rejects_invalid_name_lengths() {
+        for name in [c"", c"1234567890123456"] {
+            for (primary, peer) in [(name, c"peer"), (c"primary", name)] {
+                assert_eq!(
+                    netkit_request(primary, peer).err().unwrap().kind(),
+                    io::ErrorKind::InvalidInput
+                );
+            }
+        }
+    }
 
     #[test]
     fn test_nested_attrs() {
