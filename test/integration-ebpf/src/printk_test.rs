@@ -2,7 +2,6 @@
 
 #![no_std]
 #![no_main]
-#![expect(unused_crate_dependencies, reason = "used in other bins")]
 
 use aya_ebpf::{helpers::bpf_printk, macros::uprobe, programs::ProbeContext};
 use integration_common::printk::{
