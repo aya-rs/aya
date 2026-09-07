@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![expect(unused_crate_dependencies, reason = "used in other bins")]
 #![expect(
     deprecated,
     reason = "exercising the deprecated cgroup storage map types"

@@ -57,8 +57,6 @@
 //! [Log]: https://docs.rs/log/0.4.14/log/trait.Log.html
 //! [log]: https://docs.rs/log
 
-#![cfg_attr(test, expect(unused_crate_dependencies, reason = "used in doctests"))]
-
 use std::{
     fmt::{LowerHex, UpperHex},
     net::{Ipv4Addr, Ipv6Addr},

@@ -1,5 +1,3 @@
-#![expect(unused_crate_dependencies, reason = "used in bin")]
-
 use std::{env, ffi::OsString, path::Path, process::Command};
 
 use anyhow::{Context as _, Result, bail};

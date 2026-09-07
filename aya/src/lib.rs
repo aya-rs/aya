@@ -38,10 +38,6 @@
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(missing_docs)]
-#![cfg_attr(
-    all(test, not(feature = "test-helpers")),
-    expect(unused_crate_dependencies, reason = "used in doctests")
-)]
 
 mod bpf;
 mod kernel_features;
