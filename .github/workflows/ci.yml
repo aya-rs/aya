@@ -441,7 +441,15 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: test/.tmp
-          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v2-${{ matrix.vm-kernels }}
+          # xtask does not resolve the exact package versions until after this
+          # step, so they cannot be included in the restore key. Restore by the
+          # stable matrix prefix instead. The trailing `-` delimits the matrix
+          # value, preventing overlap between prefixes such as `6.1` and `6.12`.
+          #
+          # When several keys match a prefix, GitHub selects the most recently
+          # created cache:
+          # https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#cache-key-matching
+          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v3-${{ matrix.vm-kernels }}-
 
       - name: Cleanup stale kernels and modules
         run: rm -rf test/.tmp/boot test/.tmp/lib
@@ -458,19 +466,28 @@ jobs:
           cargo xtask integration-test vm --cache-dir test/.tmp \
             --kernel-arch ${{ matrix.vm-kernels }}
 
-      - name: Save VM integration test cache
-        # By default, caches expire after seven days without access.
-        # An exact hit refreshes that period, so the immutable entry need not
-        # be uploaded again.
-        # The native arm64 `local` job produces no VM cache artifacts to save.
+      - name: Compute VM integration test cache key
+        id: vm-cache-key
         if: >-
           matrix.vm-kernels != 'local' &&
-          steps.vm-cache.outputs.cache-hit != 'true' &&
           github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        run: |
+          set -euo pipefail
+          printf 'key=%s%s\n' \
+            "${{ steps.vm-cache.outputs.cache-primary-key }}" \
+            "${{ hashFiles('test/.tmp/**') }}" \
+            >> "$GITHUB_OUTPUT"
+
+      - name: Save VM integration test cache
+        # The local job skips both restore and key computation, so the empty
+        # outputs compare equal and this step is skipped. Only default-branch VM
+        # jobs produce a non-empty computed key; save when it differs from the
+        # restored key. actions/cache/save ignores empty keys from other jobs.
+        if: steps.vm-cache.outputs.cache-matched-key != steps.vm-cache-key.outputs.key
         uses: actions/cache/save@v6
         with:
           path: test/.tmp
-          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v2-${{ matrix.vm-kernels }}
+          key: ${{ steps.vm-cache-key.outputs.key }}
 
   check:
     if: always()
