@@ -27,9 +27,21 @@ C_BPF_OBJECTS = [
     ("bpf/variables_reloc.bpf.c", False),
     ("bpf/ksyms.bpf.c", True),
     ("bpf/ksyms_strong.bpf.c", True),
-    ("bpf/ksyms_typed_missing_kfunc.bpf.c", True),
     ("bpf/ksyms_typed_missing_var.bpf.c", True),
+    ("bpf/ksyms_typed_missing_kfunc.bpf.c", True),
     ("bpf/ksyms_typeless_missing.bpf.c", True),
+    ("bpf/kconfig.bpf.c", False),
+    ("bpf/kconfig_missing_strong.bpf.c", False),
+    ("bpf/kconfig_unknown_weak.bpf.c", False),
+    ("bpf/kconfig_unsigned_u8.bpf.c", False),
+    ("bpf/kconfig_signed_i8.bpf.c", False),
+    ("bpf/kconfig_invalid_bool.bpf.c", False),
+    ("bpf/kconfig_invalid_array.bpf.c", False),
+    ("bpf/kconfig_int_tristate.bpf.c", False),
+    ("bpf/kconfig_non_tristate_enum.bpf.c", False),
+    ("bpf/kconfig_string_tristate.bpf.c", False),
+    ("bpf/kconfig_tristate_enum.bpf.c", False),
+    ("bpf/kconfig_unknown_linux_strong.bpf.c", False),
 ]
 
 aya_c_bpf_objects(

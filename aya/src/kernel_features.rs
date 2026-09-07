@@ -1,7 +1,7 @@
 use std::{fmt, io, sync::OnceLock};
 
 use crate::{
-    programs::ProgramType,
+    programs::{ProgramType, is_syscall_wrapper_supported},
     sys::{
         BpfHelper, BtfFeature, is_bpf_global_data_supported, is_bpf_name_supported,
         is_btf_feature_supported, is_btf_supported, is_cpumap_prog_id_supported,
@@ -70,6 +70,7 @@ pub(crate) enum Feature {
     BpfCookie,
     CpuMapProgId,
     DevMapProgId,
+    BpfSyscallWrapper,
     Btf,
 }
 
@@ -86,6 +87,7 @@ pub(crate) struct Features {
     bpf_cookie: FeatureProbe,
     cpumap_prog_id: FeatureProbe,
     devmap_prog_id: FeatureProbe,
+    bpf_syscall_wrapper: FeatureProbe,
     btf: FeatureProbe,
     btf_capabilities: BtfFeatures,
 }
@@ -100,6 +102,9 @@ impl Features {
             bpf_cookie: feature_probe!(probe_bpf_cookie_feature),
             cpumap_prog_id: feature_probe!(is_cpumap_prog_id_supported),
             devmap_prog_id: feature_probe!(is_devmap_prog_id_supported),
+            bpf_syscall_wrapper: FeatureProbe::new("is_syscall_wrapper_supported", || {
+                Ok(is_syscall_wrapper_supported())
+            }),
             btf: feature_probe!(is_btf_supported),
             btf_capabilities: BtfFeatures::new(),
         }
@@ -114,6 +119,7 @@ impl Features {
             bpf_cookie,
             cpumap_prog_id,
             devmap_prog_id,
+            bpf_syscall_wrapper,
             btf,
             btf_capabilities: _,
         } = self;
@@ -125,6 +131,7 @@ impl Features {
             Feature::BpfCookie => bpf_cookie,
             Feature::CpuMapProgId => cpumap_prog_id,
             Feature::DevMapProgId => devmap_prog_id,
+            Feature::BpfSyscallWrapper => bpf_syscall_wrapper,
             Feature::Btf => btf,
         };
         probe.get()
