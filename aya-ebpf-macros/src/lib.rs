@@ -1,5 +1,3 @@
-#![cfg_attr(test, expect(unused_crate_dependencies, reason = "used in doctests"))]
-
 pub(crate) mod args;
 mod btf_map;
 mod btf_tracepoint;

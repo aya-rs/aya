@@ -1,8 +1,3 @@
-#![expect(
-    unused_crate_dependencies,
-    reason = "integration-ebpf library target; see below"
-)]
-
 use std::{
     env,
     ffi::OsString,
