@@ -138,65 +138,123 @@ pub struct Function {
 /// - `fmod_ret+`, `fmod_ret.s+`
 /// - `iter+`, `iter.s+`
 #[derive(Debug, Clone)]
-#[expect(missing_docs, reason = "TODO")]
 pub enum ProgramSection {
+    /// A kretprobe, fired when a kernel function returns (`kretprobe`).
     KRetProbe,
+    /// A kprobe, fired when a kernel function is entered (`kprobe`).
     KProbe,
+    /// A uprobe, fired when a userspace function is entered (`uprobe`).
     UProbe {
+        /// Whether the program is sleepable, parsed from the `.s` suffix.
         sleepable: bool,
+        /// Whether the program attaches to multiple targets, parsed from the
+        /// `.multi` suffix.
         multi: bool,
     },
+    /// A uretprobe, fired when a userspace function returns (`uretprobe`).
     URetProbe {
+        /// Whether the program is sleepable, parsed from the `.s` suffix.
         sleepable: bool,
+        /// Whether the program attaches to multiple targets, parsed from the
+        /// `.multi` suffix.
         multi: bool,
     },
+    /// A kernel tracepoint program (`tracepoint`, `tp`).
     TracePoint,
+    /// A socket filter program (`socket`).
     SocketFilter,
+    /// An XDP program, run on packets at the network driver level (`xdp`).
     Xdp {
+        /// Whether the program supports multi-buffer (fragmented) packets,
+        /// parsed from the `xdp.frags` section name.
         frags: bool,
+        /// The attach type parsed from the section name (e.g. `cpumap`,
+        /// `devmap`, or a plain interface).
         attach_type: XdpAttachType,
     },
+    /// A program run on messages sent from a socket in a sockmap (`sk_msg`).
     SkMsg,
+    /// A program attached to the stream parser/verdict of a socket in a
+    /// sockmap (`sk_skb`).
     SkSkbStream {
+        /// Whether this program is the stream parser or the stream verdict.
         kind: SkSkbKind,
     },
+    /// A program invoked for socket operation callbacks (`sockops`).
     SockOps,
+    /// A traffic control (tc) classifier program (`classifier`).
     SchedClassifier,
+    /// A program filtering packets on a cgroup (`cgroup_skb`, `cgroup/skb`).
     CgroupSkb {
+        /// The attach type parsed from the section name, or `None` when the
+        /// section did not specify a direction.
         attach_type: Option<CgroupSkbAttachType>,
     },
+    /// A program attached to socket address operations on a cgroup, such as
+    /// `bind` or `connect` (`cgroup/bind4`, `cgroup/connect6`, ...).
     CgroupSockAddr {
+        /// The attach type parsed from the section name.
         attach_type: CgroupSockAddrAttachType,
     },
+    /// A program controlling `sysctl` access on a cgroup (`cgroup/sysctl`).
     CgroupSysctl,
+    /// A program attached to `getsockopt`/`setsockopt` on a cgroup
+    /// (`cgroup/getsockopt`, `cgroup/setsockopt`).
     CgroupSockopt {
+        /// The attach type parsed from the section name.
         attach_type: CgroupSockoptAttachType,
     },
+    /// A program decoding infrared signals in LIRC mode2 (`lirc_mode2`).
     LircMode2,
+    /// A program attached to a perf event (`perf_event`).
     PerfEvent,
+    /// A raw tracepoint program (`raw_tp`, `raw_tracepoint`).
     RawTracePoint,
+    /// A Linux Security Module (LSM) hook program (`lsm`).
     Lsm {
+        /// Whether the program is sleepable, parsed from the `.s` suffix.
         sleepable: bool,
     },
+    /// A cgroup-scoped LSM hook program (`lsm_cgroup`).
     LsmCgroup,
+    /// A BTF-typed raw tracepoint program (`tp_btf`).
     BtfTracePoint,
+    /// A program attached to the entry of a kernel function via a BPF
+    /// trampoline (`fentry`).
     FEntry {
+        /// Whether the program is sleepable, parsed from the `.s` suffix.
         sleepable: bool,
     },
+    /// A program attached to the exit of a kernel function via a BPF
+    /// trampoline (`fexit`).
     FExit {
+        /// Whether the program is sleepable, parsed from the `.s` suffix.
         sleepable: bool,
     },
+    /// A flow dissector program (`flow_dissector`).
     FlowDissector,
+    /// An extension program that replaces a function in another program
+    /// (`freplace`).
     Extension,
+    /// A program selecting a socket for an incoming packet (`sk_lookup`).
     SkLookup,
+    /// A program selecting a socket from a reuseport group (`sk_reuseport`).
     SkReuseport {
+        /// The attach type parsed from the section name (plain selection or
+        /// select-or-migrate).
         attach_type: SkReuseportAttachType,
     },
+    /// A program attached to socket lifecycle events on a cgroup, such as
+    /// socket creation or bind (`cgroup/sock`, `cgroup/post_bind4`, ...).
     CgroupSock {
+        /// The attach type parsed from the section name.
         attach_type: CgroupSockAttachType,
     },
+    /// A program controlling device access on a cgroup (`cgroup/dev`).
     CgroupDevice,
+    /// A BPF iterator program (`iter`).
     Iter {
+        /// Whether the program is sleepable, parsed from the `.s` suffix.
         sleepable: bool,
     },
 }
