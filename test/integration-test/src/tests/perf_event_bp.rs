@@ -138,9 +138,14 @@ where
             // arm64 rejects per-task kernel breakpoints (the scopes that carry
             // a PID) to avoid single-step bookkeeping, see
             // https://github.com/torvalds/linux/blob/v6.12/arch/arm64/kernel/hw_breakpoint.c#L566-L571.
+            // arm32 rejects per-CPU user-space breakpoints.
+            // https://github.com/torvalds/linux/blob/v6.12/arch/arm/kernel/hw_breakpoint.c#L593-L625
             let scope_supported = type_supported
-                && (!cfg!(target_arch = "aarch64")
-                    || matches!(scope, PerfEventScope::AllProcessesOneCpu { cpu: _ }));
+                && match scope {
+                    PerfEventScope::CallingProcess { cpu: _ } => !cfg!(target_arch = "aarch64"),
+                    PerfEventScope::OneProcess { pid: _, cpu: _ } => !cfg!(target_arch = "aarch64"),
+                    PerfEventScope::AllProcessesOneCpu { cpu: _ } => !cfg!(target_arch = "arm"),
+                };
             let attach = prog.attach(
                 PerfEventConfig::Breakpoint(config),
                 *scope,
@@ -195,6 +200,27 @@ fn get_address(symbols: &HashMap<&str, Vec<u64>>, name: &str) -> Option<u64> {
 
 #[test_log::test]
 fn perf_event_bp() {
+    if cfg!(target_arch = "arm") {
+        // ARM32 rejects kernel-space hardware breakpoints. Exercise a per-task
+        // user-space ReadWrite watchpoint instead.
+        // https://github.com/torvalds/linux/blob/v6.12/arch/arm/kernel/hw_breakpoint.c#L593-L625
+        let mut watched = 0u8;
+        let watched_ptr = &raw mut watched;
+        let address = watched_ptr.addr() as u64;
+        run_breakpoint_case(
+            BreakpointConfig::Data {
+                r#type: PerfBreakpointType::ReadWrite,
+                address,
+                length: PerfBreakpointLength::Len1,
+            },
+            // SAFETY: watched_ptr points to the local value for the entire call.
+            || unsafe { watched_ptr.write_volatile(1) },
+            address,
+        );
+        assert_eq!(watched, 1);
+        return;
+    }
+
     // Search for the address of modprobe_path. Prefer to grab it directly from
     // kallsyms, but if it's not there we can grab it from System.map and apply
     // the kaslr offset.

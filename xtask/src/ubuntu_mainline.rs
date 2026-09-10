@@ -21,13 +21,12 @@ use crate::http::{HttpClient, url_file_name};
 // containing generic/lowlatency kernel .deb packages.
 // https://wiki.ubuntu.com/Kernel/MainlineBuilds
 const UBUNTU_MAINLINE_URL: &str = "https://kernel.ubuntu.com/mainline/";
-const UBUNTU_MAINLINE_IMAGE_PACKAGE_PREFIX: &str = "linux-image-unsigned-";
-const UBUNTU_MAINLINE_MODULES_PACKAGE_PREFIX: &str = "linux-modules-";
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
 pub(crate) enum KernelArchitecture {
     Amd64,
     Arm64,
+    Armhf,
 }
 
 impl KernelArchitecture {
@@ -35,6 +34,16 @@ impl KernelArchitecture {
         match self {
             Self::Amd64 => "amd64",
             Self::Arm64 => "arm64",
+            Self::Armhf => "armhf",
+        }
+    }
+
+    // Ubuntu Mainline publishes armhf images as linux-image packages.
+    const fn image_package_prefix(self) -> &'static str {
+        match self {
+            Self::Amd64 => "linux-image-unsigned-",
+            Self::Arm64 => "linux-image-unsigned-",
+            Self::Armhf => "linux-image-",
         }
     }
 }
@@ -139,6 +148,7 @@ fn ubuntu_mainline_kernel_urls(
         .collect::<Vec<_>>();
     mainline_versions.sort_by_key(|(patch, _)| *patch);
 
+    let image_package_prefix = architecture.image_package_prefix();
     let architecture = architecture.as_str();
     let mut skipped = Vec::new();
     for (_, mainline_version) in mainline_versions
@@ -164,15 +174,14 @@ fn ubuntu_mainline_kernel_urls(
             .get_text(&base_url)
             .with_context(|| format!("failed to list Ubuntu Mainline packages at {base_url}"))?;
 
-        // The VM needs the unsigned image to boot and the matching modules
-        // package for config, System.map, and the module tree. Keep both on
-        // the generic flavor for the same release.
+        // Pair the image with the generic modules package for config,
+        // System.map, and the module tree from the same release.
         let image_prefix = format!(
-            "{UBUNTU_MAINLINE_IMAGE_PACKAGE_PREFIX}{}-",
+            "{image_package_prefix}{}-",
             mainline_version.trim_start_matches('v')
         );
         let modules_prefix = format!(
-            "{UBUNTU_MAINLINE_MODULES_PACKAGE_PREFIX}{}-",
+            "linux-modules-{}-",
             mainline_version.trim_start_matches('v')
         );
 
@@ -187,8 +196,7 @@ fn ubuntu_mainline_kernel_urls(
                 continue;
             };
             // Ubuntu Mainline documents generic and lowlatency kernel packages.
-            // The VM runner uses generic packages, and the unsigned image package
-            // must be paired with the matching generic modules package.
+            // The VM runner uses generic image and modules packages together.
             // https://wiki.ubuntu.com/Kernel/MainlineBuilds
             if !package_name.ends_with("-generic") || !file_name.ends_with(&package_suffix) {
                 continue;
@@ -225,7 +233,7 @@ fn ubuntu_mainline_kernel_urls(
             .split_once('_')
             .ok_or_else(|| anyhow!("unexpected Ubuntu Mainline image package URL: {image}"))?;
         let base = image_package_name
-            .strip_prefix(UBUNTU_MAINLINE_IMAGE_PACKAGE_PREFIX)
+            .strip_prefix(image_package_prefix)
             .ok_or_else(|| anyhow!("unexpected Ubuntu Mainline image package URL: {image}"))?
             .to_owned();
 
@@ -727,8 +735,8 @@ fn unpack_ubuntu_mainline_kernel_package(
     let base = PathBuf::from(base);
 
     // Ubuntu Mainline generic kernels are assembled from two packages:
-    // linux-image-unsigned provides vmlinuz, while linux-modules provides
-    // config, System.map, and modules.
+    // The image package provides vmlinuz; linux-modules provides config,
+    // System.map, and modules.
     let contents = unpack_ubuntu_mainline_image_package(
         image,
         &extraction_root.join(format!("kernel-archive-{index}-image")),

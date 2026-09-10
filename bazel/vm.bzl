@@ -8,7 +8,7 @@ _QEMU_SYSTEM_TOOLCHAIN_TYPE = "@rules_qemu//qemu:exec_toolchain_type"
 # initramfs as declared runfiles.
 _GUESTS = {
     "aarch64": struct(
-        cpu = "neoverse-n1",  # QEMU "max" has broken aarch64 CI before.
+        cpu = "max",
         kernel_args = "console=ttyAMA0 lsm=bpf panic=-1",
         platform = "@rules_rs//rs/platforms:aarch64-unknown-linux-musl",
         smp = "2",
