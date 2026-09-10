@@ -453,42 +453,29 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
 
                 // Fixed VM launch configuration for each supported kernel
                 // architecture.
-                let (guest_arch, machine, cpu, console) = match kernel_arch {
+                let (guest_arch, machine, cpu, console, target) = match kernel_arch {
                     KernelArchitecture::Amd64 => (
                         "x86_64",
                         None,
                         cfg!(target_arch = "x86_64").then_some("host"),
                         "ttyS0",
+                        "x86_64-unknown-linux-musl",
                     ),
                     KernelArchitecture::Arm64 => (
                         "aarch64",
                         Some("virt"),
-                        // NB: we'd prefer to write:
-                        //
-                        // ```
-                        // Some(if cfg!(target_arch = "aarch64") {
-                        //   "host"
-                        // } else {
-                        //   "neoverse-n1"
-                        // }))
-                        // ```
-                        //
-                        // but that only works in the presence of KVM or HVF and
-                        // Github arm64 runners do not support nested
-                        // virtualization. Since we aren't doing our own KVM/HVF
-                        // detection (we let QEMU pick the best accelerator), we
-                        // hardcode the emulated cpu.
-                        //
-                        // We use neoverse-n1 since it's relatively new but not
-                        // too new. We used to use "max" and let QEMU pick the
-                        // newest available cpu, until one day that triggered a
-                        // QEMU bug that broke CI.
-                        Some("neoverse-n1"),
+                        Some("max"),
                         "ttyAMA0",
+                        "aarch64-unknown-linux-musl",
+                    ),
+                    KernelArchitecture::Armhf => (
+                        "arm",
+                        Some("virt"),
+                        Some("max"),
+                        "ttyAMA0",
+                        "armv7-unknown-linux-musleabihf",
                     ),
                 };
-
-                let target = format!("{guest_arch}-unknown-linux-musl");
 
                 let test_distro_args = [
                     "--package",
@@ -498,7 +485,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     "xz2,zstd",
                 ];
                 let test_distro: Vec<(String, PathBuf)> =
-                    build(Some(&target), |cmd| cmd.args(test_distro_args))
+                    build(Some(target), |cmd| cmd.args(test_distro_args))
                         .context("building test-distro package failed")?;
 
                 // Set up cross compilation.
@@ -523,7 +510,7 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                     &[]
                 };
 
-                let binaries = binaries(&package, Some(&target), envs)?;
+                let binaries = binaries(&package, Some(target), envs)?;
 
                 let tmp_dir = tempfile::tempdir().context("tempdir failed")?;
 
