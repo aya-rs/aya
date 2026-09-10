@@ -136,6 +136,28 @@ impl<T> RingBuf<T> {
         } = self;
         producer.next(consumer)
     }
+
+    /// Drains available items up to `max_items` from the ring buffer, invoking `f` for each item.
+    ///
+    /// The slice passed to `f` is borrowed from the ring buffer and is only valid for the duration
+    /// of the closure invocation.
+    ///
+    /// Returns the number of items processed.
+    pub fn consume_batch<F>(&mut self, max_items: usize, mut f: F) -> usize
+    where
+        F: FnMut(&[u8]),
+    {
+        let mut count = 0;
+        while count < max_items {
+            if let Some(item) = self.next() {
+                f(&item);
+                count += 1;
+            } else {
+                break;
+            }
+        }
+        count
+    }
 }
 
 impl<T: Borrow<MapData>> AsFd for RingBuf<T> {
