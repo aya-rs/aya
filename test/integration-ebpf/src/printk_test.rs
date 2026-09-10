@@ -2,14 +2,27 @@
 
 #![no_std]
 #![no_main]
+#![allow(
+    unused_crate_dependencies,
+    reason = "ebpf_panic is only required for non-test eBPF builds; importing it unconditionally would register its panic handler during tests and conflict with std"
+)]
+
+#[cfg(not(test))]
+extern crate ebpf_panic;
+
+// Required for satisfying unused-crate-dependencies lint
+#[rustfmt::skip]
+use aya_log_ebpf as _;
+#[rustfmt::skip]
+use integration_ebpf as _;
+#[rustfmt::skip]
+use network_types as _;
 
 use aya_ebpf::{helpers::bpf_printk, macros::uprobe, programs::ProbeContext};
 use integration_common::printk::{
     C_MARKER, TEST_CHAR, TEST_I8, TEST_I16, TEST_I32, TEST_I64, TEST_ISIZE, TEST_U8, TEST_U16,
     TEST_U32, TEST_U64, TEST_USIZE,
 };
-#[cfg(not(test))]
-extern crate ebpf_panic;
 
 #[uprobe]
 fn test_bpf_printk(_ctx: ProbeContext) {

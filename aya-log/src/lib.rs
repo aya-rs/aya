@@ -74,8 +74,12 @@ use aya::{
 };
 pub use aya_log_common::Level;
 use aya_log_common::{ArgumentKind, DisplayHint, LogValueLength, RecordFieldKind};
+#[cfg(test)]
+use env_logger as _;
 use log::{Log, Record, error};
 use thiserror::Error;
+#[cfg(test)]
+use tokio as _;
 
 #[derive(Copy, Clone)]
 #[repr(transparent)]

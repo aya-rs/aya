@@ -1,9 +1,24 @@
-#![no_std]
-#![no_main]
-
 //! BTF-compatible map-of-maps tests.
 //!
 //! Uses BTF map definitions compatible with both aya and libbpf loaders.
+
+#![no_std]
+#![no_main]
+#![allow(
+    unused_crate_dependencies,
+    reason = "ebpf_panic is only required for non-test eBPF builds; importing it unconditionally would register its panic handler during tests and conflict with std"
+)]
+
+#[cfg(not(test))]
+extern crate ebpf_panic;
+
+// Required for satisfying unused-crate-dependencies lint
+#[rustfmt::skip]
+use aya_log_ebpf as _;
+#[rustfmt::skip]
+use integration_ebpf as _;
+#[rustfmt::skip]
+use network_types as _;
 
 use aya_ebpf::{
     btf_maps::{Array, ArrayOfMaps, HashOfMaps},
@@ -11,9 +26,6 @@ use aya_ebpf::{
     programs::ProbeContext,
 };
 use integration_common::btf_map_of_maps::{INNER_MAX_ENTRIES, TestResult};
-
-#[cfg(not(test))]
-extern crate ebpf_panic;
 
 #[btf_map]
 static ARRAY_OF_MAPS: ArrayOfMaps<Array<u32, { INNER_MAX_ENTRIES as usize }>, 4> =

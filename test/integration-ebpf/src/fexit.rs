@@ -1,5 +1,20 @@
 #![no_std]
 #![no_main]
+#![allow(
+    unused_crate_dependencies,
+    reason = "ebpf_panic is only required for non-test eBPF builds; importing it unconditionally would register its panic handler during tests and conflict with std"
+)]
+
+#[cfg(not(test))]
+extern crate ebpf_panic;
+
+// Required for satisfying unused-crate-dependencies lint
+#[rustfmt::skip]
+use aya_log_ebpf as _;
+#[rustfmt::skip]
+use integration_ebpf as _;
+#[rustfmt::skip]
+use network_types as _;
 
 use core::ffi::c_void;
 
@@ -14,8 +29,6 @@ use integration_common::fexit::{
     TEST3_INDEX, TEST4_INDEX, TEST5_INDEX, TEST6_INDEX, TEST7_INDEX, TEST8_INDEX, TEST9_INDEX,
     TEST10_INDEX, TestResult,
 };
-#[cfg(not(test))]
-extern crate ebpf_panic;
 
 // FEXIT program return values are ignored by the tracing test-run path.
 const DUMMY_FEXIT_PROG_RETVAL: i32 = 0xa7a;
