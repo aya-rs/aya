@@ -1,11 +1,36 @@
+use assert_matches::assert_matches;
 use aya::{
     Ebpf, RawTracePointRunOptions, TestRunOptions, TestRunResult,
     maps::Array,
     programs::{
-        RawTracePoint, RawTracePointTestRunResult, SchedClassifier, SocketFilter, TestRun as _, Xdp,
+        ProgramError, RawTracePoint, RawTracePointTestRunResult, SchedClassifier, SocketFilter,
+        TestRun as _, Xdp,
     },
+    util::KernelVersion,
 };
 use integration_common::test_run::{IF_INDEX, XDP_MODIFY_LEN, XDP_MODIFY_VAL};
+use libc::EINVAL;
+
+fn test_run_or_expect_unsupported<T: std::fmt::Debug>(
+    result: Result<T, ProgramError>,
+    since: KernelVersion,
+) -> Option<T> {
+    match result {
+        Ok(value) => Some(value),
+        Err(error) => {
+            let kernel_version = KernelVersion::current().unwrap();
+            assert!(
+                kernel_version < since,
+                "bpf_prog_test_run failed on {kernel_version}: {error}"
+            );
+            assert_matches!(error, ProgramError::SyscallError(error) => {
+                assert_eq!(error.call, "bpf_prog_test_run");
+                assert_eq!(error.io_error.raw_os_error(), Some(EINVAL));
+            });
+            None
+        }
+    }
+}
 
 // https://github.com/torvalds/linux/blob/8fdb05de/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L48
 // `sizeof(pkt_v4)` = Size(Ethernet) + Size(IPv4) + Size(TCP) = 14 + 20 + 20
@@ -21,15 +46,10 @@ fn bytes_of<T: Sized>(val: &T) -> &[u8] {
 
 #[test_log::test]
 fn test_classifier_test_run() {
-    let kernel_version = aya::util::KernelVersion::current().unwrap();
     // BPF_PROG_TEST_RUN was introduced in v4.12 (1cf1cae963c2, "bpf: introduce
     // BPF_PROG_TEST_RUN command") with support for sched_cls (used here) and
     // sched_act program types. On kernels before v4.12 the syscall command does
     // not exist and the bpf(2) call returns EINVAL.
-    if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
-        return;
-    }
-
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
     let prog: &mut SchedClassifier = bpf
         .program_mut("test_classifier")
@@ -47,12 +67,15 @@ fn test_classifier_test_run() {
         ..TestRunOptions::default()
     };
 
-    let TestRunResult {
+    let Some(TestRunResult {
         return_value,
         duration,
         data_size_out,
         ctx_size_out,
-    } = prog.test_run(opts).unwrap();
+    }) = test_run_or_expect_unsupported(prog.test_run(opts), KernelVersion::new(4, 12, 0))
+    else {
+        return;
+    };
 
     assert_eq!(return_value, 1, "Expected SK_PASS(1)");
     assert!(!duration.is_zero());
@@ -62,15 +85,10 @@ fn test_classifier_test_run() {
 
 #[test_log::test]
 fn test_run_repeat() {
-    let kernel_version = aya::util::KernelVersion::current().unwrap();
     // BPF_PROG_TEST_RUN was introduced in v4.12 (1cf1cae963c2, "bpf: introduce
     // BPF_PROG_TEST_RUN command") with support for sched_cls (used here) and
     // sched_act program types.
     // The `repeat` field in the BPF_PROG_TEST_RUN attribute struct was present from v4.12
-    if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
-        return;
-    }
-
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
 
     let mut exec_count: Array<_, u64> = bpf.take_map("EXEC_COUNT").unwrap().try_into().unwrap();
@@ -93,12 +111,15 @@ fn test_run_repeat() {
         repeat: 50,
         ..TestRunOptions::default()
     };
-    let TestRunResult {
+    let Some(TestRunResult {
         return_value,
         duration,
         data_size_out,
         ctx_size_out,
-    } = prog.test_run(opts).unwrap();
+    }) = test_run_or_expect_unsupported(prog.test_run(opts), KernelVersion::new(4, 12, 0))
+    else {
+        return;
+    };
 
     let final_count: u64 = exec_count.get(&0, 0).unwrap();
     assert_eq!(return_value, 1, "Expected SK_PASS(1)");
@@ -110,8 +131,7 @@ fn test_run_repeat() {
 
 #[test_log::test]
 fn test_xdp_modify_packet() {
-    let kernel_version = aya::util::KernelVersion::current().unwrap();
-    // Two separate kernel requirements combine to set this guard at v5.8:
+    // Two kernel changes affect how this test runs on older kernels:
     //
     // 1. The test_xdp_modify eBPF program uses a bounded for-loop to overwrite
     //    packet bytes. Before v5.3 (94079b64255f, "bpf: bounded loops"), the BPF
@@ -123,10 +143,8 @@ fn test_xdp_modify_packet() {
     //    xdp.frame_sz in bpf_prog_test_run_xdp"), frame_sz was left as zero, causing
     //    bpf_prog_test_run to return an error or produce incorrect data_out contents.
     //
-    // v5.8 is the stricter of the two requirements, so we guard at v5.8.
-    if kernel_version < aya::util::KernelVersion::new(5, 8, 0) {
-        return;
-    }
+    // Exercise the output assertion on every kernel; a silent output mismatch
+    // cannot be treated as an expected unsupported syscall response.
 
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
     let prog: &mut Xdp = bpf
@@ -134,7 +152,25 @@ fn test_xdp_modify_packet() {
         .unwrap()
         .try_into()
         .unwrap();
-    prog.load().unwrap();
+    let load = prog.load();
+    let load = if KernelVersion::current().unwrap() < KernelVersion::new(5, 3, 0) {
+        match load {
+            Ok(()) => Ok(()),
+            Err(error) => {
+                // https://github.com/torvalds/linux/blob/v5.2/kernel/bpf/verifier.c#L5467-L5474
+                assert_matches!(error, ProgramError::LoadError { io_error, verifier_log } => {
+                    assert_eq!(io_error.raw_os_error(), Some(EINVAL));
+                    assert!(verifier_log.to_string().contains("back-edge from insn"), "{verifier_log}");
+                });
+                return;
+            }
+        }
+    } else {
+        load
+    };
+    if super::load_or_expect_unsupported_jit(load).is_none() {
+        return;
+    }
 
     let data_in = vec![0u8; PKT_V4_SIZE];
     let mut data_out = vec![0u8; PKT_V4_SIZE];
@@ -164,16 +200,11 @@ fn test_xdp_modify_packet() {
 
 #[test_log::test]
 fn test_socket_filter_test_run() {
-    let kernel_version = aya::util::KernelVersion::current().unwrap();
     // BPF_PROG_TEST_RUN was introduced in v4.12 but initially only supported
     // sched_cls and sched_act program types. Support for BPF_PROG_TYPE_SOCKET_FILTER
     // was added in v4.16 (61f3c964dfd2, "bpf: allow socket_filter programs to use
     // bpf_prog_test_run"). On earlier kernels, calling BPF_PROG_TEST_RUN on a socket
     // filter program returns EINVAL.
-    if kernel_version < aya::util::KernelVersion::new(4, 16, 0) {
-        return;
-    }
-
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
     let prog: &mut SocketFilter = bpf
         .program_mut("test_sock_filter")
@@ -191,12 +222,15 @@ fn test_socket_filter_test_run() {
         ..TestRunOptions::default()
     };
 
-    let TestRunResult {
+    let Some(TestRunResult {
         return_value,
         duration,
         data_size_out,
         ctx_size_out,
-    } = prog.test_run(opts).unwrap();
+    }) = test_run_or_expect_unsupported(prog.test_run(opts), KernelVersion::new(4, 16, 0))
+    else {
+        return;
+    };
 
     assert_eq!(return_value as usize, PKT_V4_SIZE - PKT_ETH_HDR_SIZE);
     assert!(!duration.is_zero());
@@ -206,16 +240,13 @@ fn test_socket_filter_test_run() {
 
 #[test_log::test]
 fn test_xdp_test_run() {
-    let kernel_version = aya::util::KernelVersion::current().unwrap();
     // XDP test-run with a writable data_out buffer requires the kernel to properly
     // initialize xdp_buff.frame_sz during test execution. Before v5.8
     // (bc56c919fce7, "bpf: Add xdp.frame_sz in bpf_prog_test_run_xdp"), frame_sz
     // was left as zero. The kernel uses frame_sz to compute available headroom and
     // tailroom; with frame_sz=0 those bounds are wrong and bpf_prog_test_run may
     // return an error or silently produce incorrect data_out contents.
-    if kernel_version < aya::util::KernelVersion::new(5, 8, 0) {
-        return;
-    }
+    // Exercise the test run and inspect its result even on earlier kernels.
 
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
     let prog: &mut Xdp = bpf.program_mut("test_xdp").unwrap().try_into().unwrap();
@@ -245,7 +276,6 @@ fn test_xdp_test_run() {
 
 #[test_log::test]
 fn test_raw_tracepoint_test_run() {
-    let kernel_version = aya::util::KernelVersion::current().unwrap();
     // BPF_PROG_TEST_RUN support for BPF_PROG_TYPE_RAW_TRACEPOINT was added in
     // v5.10 (b84e6faeed1, "bpf: Implement bpf_prog_test_run for raw_tp").
     // Before v5.10, calling BPF_PROG_TEST_RUN on a raw tracepoint program
@@ -257,10 +287,6 @@ fn test_raw_tracepoint_test_run() {
     // program can read tracepoint arguments without the tracepoint firing for
     // real. This makes it possible to unit-test argument parsing logic in
     // isolation.
-    if kernel_version < aya::util::KernelVersion::new(5, 10, 0) {
-        return;
-    }
-
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
 
     let mut last_arg: Array<_, u64> = bpf.take_map("LAST_ARG").unwrap().try_into().unwrap();
@@ -278,7 +304,11 @@ fn test_raw_tracepoint_test_run() {
     let mut opts = RawTracePointRunOptions::default();
     opts.args[0] = SENTINEL;
 
-    let RawTracePointTestRunResult { return_value } = prog.test_run(opts).unwrap();
+    let Some(RawTracePointTestRunResult { return_value }) =
+        test_run_or_expect_unsupported(prog.test_run(opts), KernelVersion::new(5, 10, 0))
+    else {
+        return;
+    };
 
     let stored: u64 = last_arg.get(&0, 0).unwrap();
     assert_eq!(stored, SENTINEL);
@@ -287,7 +317,6 @@ fn test_raw_tracepoint_test_run() {
 
 #[test_log::test]
 fn test_xdp_context() {
-    let kernel_version = aya::util::KernelVersion::current().unwrap();
     // BPF_PROG_TEST_RUN gained ctx_in/ctx_out support for XDP programs in v5.15.
     // Two commits together enabled this: 47316f4a3053 ("bpf: Support input xdp_md
     // context in BPF_PROG_TEST_RUN") wired up the ctx_in/ctx_out fields so the
@@ -295,10 +324,6 @@ fn test_xdp_context() {
     // caller-supplied context, and ec94670fcb3b added ingress_ifindex propagation
     // into the live xdp_buff. Before v5.15, passing ctx_in for an XDP program
     // returns EINVAL because the kernel does not recognise or forward the context.
-    if kernel_version < aya::util::KernelVersion::new(5, 15, 0) {
-        return;
-    }
-
     let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
     let prog: &mut Xdp = bpf
         .program_mut("test_xdp_context")
@@ -346,12 +371,15 @@ fn test_xdp_context() {
         ..TestRunOptions::default()
     };
 
-    let TestRunResult {
+    let Some(TestRunResult {
         return_value,
         duration,
         data_size_out,
         ctx_size_out,
-    } = prog.test_run(opts).unwrap();
+    }) = test_run_or_expect_unsupported(prog.test_run(opts), KernelVersion::new(5, 15, 0))
+    else {
+        return;
+    };
 
     assert_eq!(return_value, 2, "Expected XDP_PASS(2)");
     assert!(!duration.is_zero());

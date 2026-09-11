@@ -1,32 +1,37 @@
 use std::path::Path;
 
+use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::{HashMap, Map, MapData, MapType},
-    programs::{ProgramType, SocketFilter},
-    sys::{is_map_supported, is_program_supported},
+    programs::{ProgramError, ProgramType, SocketFilter},
+    sys::is_program_supported,
 };
+use libc::EINVAL;
 use rand::RngExt as _;
 use scopeguard::defer;
 
 #[test_log::test]
 fn pin_and_reopen_hashmap() {
-    // This ProgramType and these two MapTypes are needed because the MAP_TEST sample program uses all three.
-    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
-        eprintln!("skipping test - socket_filter program not supported");
-        return;
-    } else if !is_map_supported(MapType::Hash).unwrap() {
-        eprintln!("skipping test - hash map not supported");
-        return;
-    } else if !is_map_supported(MapType::Array).unwrap() {
-        eprintln!("skipping test - array map not supported");
-        return;
-    }
-
     // Load the eBPF program to create the file descriptor associated with the BAR map. This is
     // required to read and write to the map which we test below.
-    let mut bpf: Ebpf = Ebpf::load(crate::MAP_TEST).unwrap();
+    let missing = super::unsupported_map_names([
+        (MapType::Array, &["FOO"][..]),
+        (MapType::Hash, &["BAR", "MAP_WITH_LOOOONG_NAAAAAAAAME"][..]),
+    ]);
+    let Some(mut bpf) =
+        super::map_load_or_expect_unsupported(Ebpf::load(crate::MAP_TEST), &missing)
+    else {
+        return;
+    };
     let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
+    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
+        assert_matches!(prog.load(), Err(ProgramError::LoadError { io_error, verifier_log }) => {
+            assert_eq!(io_error.raw_os_error(), Some(EINVAL));
+            assert!(verifier_log.to_string().is_empty(), "{verifier_log}");
+        });
+        return;
+    }
     prog.load().unwrap();
 
     let mut hash_to_pin: HashMap<_, u32, u8> =

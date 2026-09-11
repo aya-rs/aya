@@ -1,6 +1,7 @@
 use aya::{
     Ebpf, EbpfLoader,
-    programs::{Extension, TracePoint, Xdp, XdpMode, tc},
+    programs::{Extension, ProgramError, ProgramType, TracePoint, Xdp, XdpMode, tc},
+    sys::is_program_supported,
     test_helpers::NetNsGuard,
     util::KernelVersion,
 };
@@ -21,18 +22,24 @@ fn modprobe() {
 #[test_log::test]
 fn xdp() {
     let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 18, 0) {
-        eprintln!(
-            "skipping test on kernel {kernel_version:?}, support for BPF_F_XDP_HAS_FRAGS was added in 5.18.0; see https://github.com/torvalds/linux/commit/c2f2cdb"
-        );
-        return;
+    let mut bpf = Ebpf::load(crate::PASS).unwrap();
+    let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
+    match dispatcher.load() {
+        Ok(()) => {}
+        Err(error) => {
+            assert!(
+                kernel_version < KernelVersion::new(5, 18, 0),
+                "failed to load XDP dispatcher on {kernel_version}: {error}"
+            );
+            assert_matches::assert_matches!(error, ProgramError::LoadError { io_error, verifier_log } => {
+                assert_eq!(io_error.raw_os_error(), Some(libc::EINVAL), "{verifier_log}");
+                assert!(verifier_log.to_string().is_empty(), "{verifier_log}");
+            });
+            return;
+        }
     }
 
     let _netns = NetNsGuard::new().unwrap();
-
-    let mut bpf = Ebpf::load(crate::PASS).unwrap();
-    let dispatcher: &mut Xdp = bpf.program_mut("pass").unwrap().try_into().unwrap();
-    dispatcher.load().unwrap();
     dispatcher.attach("lo", XdpMode::default()).unwrap();
 }
 
@@ -60,12 +67,7 @@ fn two_progs() {
 
 #[test_log::test]
 fn extension() {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 9, 0) {
-        eprintln!("skipping test on kernel {kernel_version:?}, XDP uses netlink");
-        return;
-    }
-
+    let extension_supported = is_program_supported(ProgramType::Extension).unwrap();
     let _netns = NetNsGuard::new().unwrap();
 
     let mut bpf = Ebpf::load(crate::MAIN).unwrap();
@@ -78,7 +80,22 @@ fn extension() {
         .load(crate::EXT)
         .unwrap();
     let drop_: &mut Extension = bpf.program_mut("xdp_drop").unwrap().try_into().unwrap();
-    drop_
-        .load(pass.fd().unwrap().try_clone().unwrap(), "xdp_pass")
-        .unwrap();
+    let result = drop_.load(pass.fd().unwrap().try_clone().unwrap(), "xdp_pass");
+    match result {
+        Ok(()) => {}
+        Err(error) => {
+            assert_matches::assert_matches!(error, ProgramError::LoadError { io_error, verifier_log } => {
+                assert_eq!(io_error.raw_os_error(), Some(libc::EINVAL), "{verifier_log}");
+                if !extension_supported && KernelVersion::current().unwrap() < KernelVersion::new(5, 6, 0) {
+                    // BPF_PROG_TYPE_EXT first appeared in Linux 5.6. Unknown
+                    // program types are rejected before the verifier runs.
+                    // https://github.com/torvalds/linux/blob/v5.6/include/uapi/linux/bpf.h#L183
+                    assert!(verifier_log.to_string().is_empty(), "{verifier_log}");
+                } else {
+                    assert!(super::vmlinux_btf_missing(), "{verifier_log}");
+                    assert!(verifier_log.to_string().contains("Cannot replace static functions"), "{verifier_log}");
+                }
+            });
+        }
+    }
 }

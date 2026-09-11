@@ -1,10 +1,9 @@
 use assert_matches::assert_matches;
 use aya::{
-    Btf, Ebpf,
+    Ebpf,
     programs::{Lsm, LsmAttachType, LsmCgroup, ProgramError, ProgramType},
     sys::{SyscallError, is_program_supported},
     test_helpers::Cgroup,
-    util::KernelVersion,
 };
 
 macro_rules! expect_permission_denied {
@@ -22,7 +21,9 @@ macro_rules! expect_permission_denied {
 
 #[test]
 fn lsm() {
-    let btf = Btf::from_sys_fs().unwrap();
+    let Some(btf) = super::kernel_btf() else {
+        return;
+    };
 
     let mut bpf: Ebpf = Ebpf::load(crate::TEST).unwrap();
     let prog = bpf.program_mut("test_lsm").unwrap();
@@ -31,17 +32,23 @@ fn lsm() {
 
     assert_matches!(std::net::TcpListener::bind("127.0.0.1:0"), Ok(_));
 
-    let link_id = {
-        let result = prog.attach();
-        if !is_program_supported(ProgramType::Lsm(LsmAttachType::Mac)).unwrap() {
-            assert_matches!(result, Err(ProgramError::SyscallError(SyscallError { call, io_error })) => {
+    let mac_attach_supported = is_program_supported(ProgramType::Lsm(LsmAttachType::Mac)).unwrap();
+    let link_id = match prog.attach() {
+        Ok(link_id) => {
+            assert!(mac_attach_supported);
+            link_id
+        }
+        Err(error) => {
+            assert!(
+                !mac_attach_supported,
+                "unexpected LSM attach error: {error}"
+            );
+            assert_matches!(error, ProgramError::SyscallError(SyscallError { call, io_error }) => {
                 assert_eq!(call, "bpf_raw_tracepoint_open");
                 assert_eq!(io_error.raw_os_error(), Some(524));
             });
-            eprintln!("skipping test - LSM programs not supported");
             return;
         }
-        result.unwrap()
     };
 
     expect_permission_denied!(std::net::TcpListener::bind("127.0.0.1:0"));
@@ -53,18 +60,28 @@ fn lsm() {
 
 #[test]
 fn lsm_cgroup() {
+    let Some(btf) = super::kernel_btf() else {
+        return;
+    };
     let mut bpf: Ebpf = Ebpf::load(crate::TEST).unwrap();
     let prog = bpf.program_mut("test_lsm_cgroup").unwrap();
     let prog: &mut LsmCgroup = prog.try_into().unwrap();
-    let btf = Btf::from_sys_fs().expect("could not get btf from sys");
+    let cgroup_lsm_supported =
+        is_program_supported(ProgramType::Lsm(LsmAttachType::Cgroup)).unwrap();
     match prog.load("socket_bind", &btf) {
-        Ok(()) => {}
+        Ok(()) => assert!(cgroup_lsm_supported),
         Err(err) => match err {
-            ProgramError::LoadError { io_error, .. }
-                if !is_program_supported(ProgramType::Lsm(LsmAttachType::Cgroup)).unwrap() =>
-            {
-                assert_eq!(io_error.raw_os_error(), Some(libc::EINVAL));
-                eprintln!("skipping test - LSM cgroup programs not supported at load");
+            ProgramError::LoadError {
+                io_error,
+                verifier_log,
+            } => {
+                assert!(!cgroup_lsm_supported, "{verifier_log}");
+                assert_eq!(
+                    io_error.raw_os_error(),
+                    Some(libc::EINVAL),
+                    "{verifier_log}"
+                );
+                assert!(verifier_log.to_string().is_empty(), "{verifier_log}");
                 return;
             }
             err => panic!("unexpected error loading LSM cgroup program: {err}"),
@@ -77,21 +94,20 @@ fn lsm_cgroup() {
     let root = Cgroup::root().unwrap();
     let cgroup = root.create_child("aya-test-lsm-cgroup").unwrap();
 
-    let link_id = {
-        let result = prog.attach(cgroup.fd().unwrap());
-
-        // See https://www.exein.io/blog/exploring-bpf-lsm-support-on-aarch64-with-ftrace.
-        if cfg!(target_arch = "aarch64")
-            && KernelVersion::current().unwrap() < KernelVersion::new(6, 4, 0)
-        {
-            assert_matches!(result, Err(ProgramError::SyscallError(SyscallError { call, io_error })) => {
+    let mac_attach_supported = is_program_supported(ProgramType::Lsm(LsmAttachType::Mac)).unwrap();
+    let link_id = match prog.attach(cgroup.fd().unwrap()) {
+        Ok(link_id) => link_id,
+        Err(error) => {
+            assert!(
+                !mac_attach_supported,
+                "unexpected LSM cgroup attach error: {error}"
+            );
+            assert_matches!(error, ProgramError::SyscallError(SyscallError { call, io_error }) => {
                 assert_eq!(call, "bpf_link_create");
                 assert_eq!(io_error.raw_os_error(), Some(524));
             });
-            eprintln!("skipping test - LSM cgroup programs not supported at attach");
             return;
         }
-        result.unwrap()
     };
 
     let cgroup = cgroup.into_cgroup();

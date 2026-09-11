@@ -7,18 +7,13 @@ use aya::{
     Ebpf,
     maps::{Array, MapData},
     programs::{UProbe, uprobe::UProbeScope},
+    sys::BpfHelper,
     util::KernelVersion,
 };
 use integration_common::strncmp::TestResult;
 
 #[test_log::test]
 fn bpf_strncmp() {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 17, 0) {
-        eprintln!("skipping test on kernel {kernel_version:?}, bpf_strncmp was added in 5.17");
-        return;
-    }
-
     let mut bpf = Ebpf::load(crate::STRNCMP).unwrap();
 
     {
@@ -27,7 +22,18 @@ fn bpf_strncmp() {
             .unwrap()
             .try_into()
             .unwrap();
-        prog.load().unwrap();
+        match prog.load() {
+            Ok(()) => {}
+            Err(error) => {
+                if KernelVersion::current().unwrap() < KernelVersion::new(5, 17, 0) {
+                    super::assert_unsupported_helper(error, BpfHelper::BPF_FUNC_strncmp);
+                    return;
+                }
+                if super::load_or_expect_unsupported_jit::<()>(Err(error)).is_none() {
+                    return;
+                }
+            }
+        }
 
         prog.attach(
             ["trigger_bpf_strncmp"],

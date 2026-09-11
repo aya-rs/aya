@@ -2,7 +2,6 @@ use aya::{
     EbpfLoader,
     maps::{Array, MapType},
     programs::{UProbe, uprobe::UProbeScope},
-    sys::is_map_supported,
 };
 use integration_common::linear_data_structures::{PEEK_INDEX, POP_INDEX};
 
@@ -21,7 +20,6 @@ macro_rules! define_linear_ds_host_test {
         pop_fn: $pop_fn:ident,
         peek_fn: $peek_fn:ident,
         test_fn: $test_fn:ident,
-        map_type: $map_type:expr,
         order: $order:expr,
     ) => {
         #[unsafe(no_mangle)]
@@ -44,13 +42,17 @@ macro_rules! define_linear_ds_host_test {
 
         #[test_log::test]
         fn $test_fn() {
-            if !is_map_supported($map_type).unwrap() {
-                eprintln!("skipping test - {:?} map not supported", $map_type);
+            // The ELF defines both stacks and queues, including their legacy variants.
+            let missing = super::unsupported_map_names([
+                (MapType::Stack, &["TEST_STACK", "TEST_STACK_LEGACY"][..]),
+                (MapType::Queue, &["TEST_QUEUE", "TEST_QUEUE_LEGACY"]),
+            ]);
+            let Some(mut bpf) = super::map_load_or_expect_unsupported(
+                EbpfLoader::new().load(crate::LINEAR_DATA_STRUCTURES),
+                &missing,
+            ) else {
                 return;
-            }
-            let mut bpf = EbpfLoader::new()
-                .load(crate::LINEAR_DATA_STRUCTURES)
-                .unwrap();
+            };
             for (prog_name, symbol) in [
                 ($push_prog, stringify!($push_fn)),
                 ($peek_prog, stringify!($peek_fn)),
@@ -91,7 +93,6 @@ define_linear_ds_host_test!(
     pop_fn: trigger_stack_pop_legacy,
     peek_fn: trigger_stack_peek_legacy,
     test_fn: stack_basic_legacy,
-    map_type: MapType::Stack,
     order: Order::Lifo,
 );
 
@@ -104,7 +105,6 @@ define_linear_ds_host_test!(
     pop_fn: trigger_stack_pop,
     peek_fn: trigger_stack_peek,
     test_fn: stack_basic_btf,
-    map_type: MapType::Stack,
     order: Order::Lifo,
 );
 
@@ -117,7 +117,6 @@ define_linear_ds_host_test!(
     pop_fn: trigger_queue_pop_legacy,
     peek_fn: trigger_queue_peek_legacy,
     test_fn: queue_basic_legacy,
-    map_type: MapType::Queue,
     order: Order::Fifo,
 );
 
@@ -130,6 +129,5 @@ define_linear_ds_host_test!(
     pop_fn: trigger_queue_pop,
     peek_fn: trigger_queue_peek,
     test_fn: queue_basic_btf,
-    map_type: MapType::Queue,
     order: Order::Fifo,
 );

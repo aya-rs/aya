@@ -19,7 +19,7 @@ use aya::{
         uprobe::{UProbeLink, UProbeLinkId, UProbeScope},
         xdp::{XdpLink, XdpLinkId},
     },
-    sys::is_perf_link_supported,
+    sys::{SyscallError, is_perf_link_supported},
     util::KernelVersion,
 };
 use aya_obj::programs::XdpAttachType;
@@ -48,7 +48,7 @@ fn long_name() {
 fn memmove() {
     let mut bpf = Ebpf::load(crate::MEMMOVE_TEST).unwrap();
     let prog: &mut Xdp = bpf.program_mut("do_dnat").unwrap().try_into().unwrap();
-    prog.load().unwrap();
+    let _: Option<()> = super::load_or_expect_unsupported_jit(prog.load());
 }
 
 #[test_log::test]
@@ -185,10 +185,20 @@ fn poll_loaded_program_id(name: &str) -> impl Iterator<Item = Option<u32>> + '_ 
             if !first {
                 thread::sleep(RETRY_DURATION);
             }
-            // Ignore race failures which can happen when the tests delete a
-            // program in the middle of a `loaded_programs()` call.
+            // A program can disappear between GET_NEXT_ID and GET_FD_BY_ID.
             loaded_programs()
-                .filter_map(Result::ok)
+                .filter_map(|result| match result {
+                    Ok(program) => Some(program),
+                    Err(error) => {
+                        if let ProgramError::SyscallError(syscall) = &error
+                            && syscall.call == "bpf_prog_get_fd_by_id"
+                            && syscall.io_error.raw_os_error() == Some(libc::ENOENT)
+                        {
+                            return None;
+                        }
+                        panic!("unexpected error enumerating programs: {error}");
+                    }
+                })
                 .find_map(|prog| (prog.name() == name.as_bytes()).then(|| prog.id()))
         })
 }
@@ -206,10 +216,20 @@ fn assert_loaded_and_linked(name: &str) {
             if !first {
                 thread::sleep(RETRY_DURATION);
             }
-            // Ignore race failures which can happen when the tests delete a
-            // program in the middle of a `loaded_programs()` call.
+            // A link can disappear between GET_NEXT_ID and GET_FD_BY_ID.
             loaded_links()
-                .filter_map(Result::ok)
+                .filter_map(|result| match result {
+                    Ok(link) => Some(link),
+                    Err(error) => {
+                        if let LinkError::SyscallError(syscall) = &error
+                            && syscall.call == "bpf_link_get_fd_by_id"
+                            && syscall.io_error.raw_os_error() == Some(libc::ENOENT)
+                        {
+                            return None;
+                        }
+                        panic!("unexpected error enumerating links: {error}");
+                    }
+                })
                 .find_map(|link| (link.program_id() == prog_id).then_some(link.id()))
         });
     assert!(
@@ -442,11 +462,6 @@ fn pin_link() {
 fn pin_tcx_link() {
     // TCX links require kernel >= 6.6
     let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(6, 6, 0) {
-        eprintln!("skipping pin_tcx_link test on kernel {kernel_version:?}");
-        return;
-    }
-
     use aya::test_helpers::NetNsGuard;
     let _netns = NetNsGuard::new().unwrap();
 
@@ -456,13 +471,25 @@ fn pin_tcx_link() {
     let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
-    let link_id = prog
-        .attach_with_options(
-            "lo",
-            TcAttachType::Ingress,
-            TcAttachOptions::TcxOrder(LinkOrder::default()),
-        )
-        .unwrap();
+    let attach = prog.attach_with_options(
+        "lo",
+        TcAttachType::Ingress,
+        TcAttachOptions::TcxOrder(LinkOrder::default()),
+    );
+    let link_id = match attach {
+        Ok(link_id) => link_id,
+        Err(error) => {
+            assert!(
+                kernel_version < KernelVersion::new(6, 6, 0),
+                "TCX attach failed on {kernel_version}: {error}"
+            );
+            assert_matches!(error, ProgramError::SyscallError(SyscallError { call, io_error }) => {
+                assert_eq!(call, "bpf_mprog_attach");
+                assert_eq!(io_error.raw_os_error(), Some(libc::EINVAL));
+            });
+            return;
+        }
+    };
     let link = prog.take_link(link_id).unwrap();
     assert_loaded(program_name);
 
@@ -495,11 +522,6 @@ fn pin_cgroup_link() {
     // bpf_link for cgroup programs requires kernel >= 5.7; below that `attach`
     // produces a BPF_PROG_ATTACH link, which cannot be pinned or updated.
     let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 7, 0) {
-        eprintln!("skipping pin_cgroup_link test on kernel {kernel_version:?}");
-        return;
-    }
-
     use aya::test_helpers::{Cgroup, NetNsGuard};
     let _netns = NetNsGuard::new().unwrap();
     let root_cgroup = Cgroup::root().unwrap();
@@ -518,7 +540,14 @@ fn pin_cgroup_link() {
     let link = prog.take_link(link_id).unwrap();
     assert_loaded(program_name);
 
-    let fd_link: FdLink = link.try_into().unwrap();
+    let fd_link: FdLink = match link.try_into() {
+        Ok(link) => link,
+        Err(error) => {
+            assert!(kernel_version < KernelVersion::new(5, 7, 0));
+            assert_matches!(error, LinkError::InvalidLink);
+            return;
+        }
+    };
     fd_link.pin(pin_path).unwrap();
 
     // Because of the pin, the program is still attached
@@ -578,10 +607,15 @@ fn pin_lifecycle() {
 
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 18, 0) {
-        eprintln!(
-            "skipping test on kernel {kernel_version:?}, support for BPF_F_XDP_HAS_FRAGS was added in 5.18.0; see https://github.com/torvalds/linux/commit/c2f2cdb"
-        );
-        return;
+        let mut bpf = Ebpf::load(crate::PASS).unwrap();
+        let prog: &mut Xdp = bpf.program_mut(program_name).unwrap().try_into().unwrap();
+        if let Err(error) = prog.load() {
+            assert_matches!(error, ProgramError::LoadError { io_error, verifier_log } => {
+                assert_eq!(io_error.raw_os_error(), Some(libc::EINVAL), "{verifier_log}");
+                assert!(verifier_log.to_string().is_empty(), "{verifier_log}");
+            });
+            return;
+        }
     }
     run_pin_program_lifecycle_test(
         crate::PASS,

@@ -377,13 +377,12 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
                 // Some kernels can load tracing and LSM programs but cannot attach BPF
                 // trampolines: `bpf_raw_tracepoint_open` routes them to
                 // `bpf_tracing_prog_attach()`, and trampoline registration can fail with
-                // `-ENOTSUPP`. Probe attach support explicitly. This is notably seen on arm64
-                // kernels before 6.4.
+                // `-ENOTSUPP`. Probe attach support explicitly; arm64 gained
+                // arch_prepare_bpf_trampoline in v6.0.
                 //
                 // https://github.com/torvalds/linux/blob/v6.3/kernel/bpf/syscall.c#L3319-L3333
                 // https://github.com/torvalds/linux/blob/v6.3/kernel/bpf/trampoline.c#L234-L237
-                //
-                // h/t to https://www.exein.io/blog/exploring-bpf-lsm-support-on-aarch64-with-ftrace.
+                // https://github.com/torvalds/linux/blob/v6.0/arch/arm64/net/bpf_jit_comp.c#L1759-L1765
                 //
                 // The same test for cGroup LSM programs would require attaching to a real cgroup,
                 // which is more involved and not possible in the general case.

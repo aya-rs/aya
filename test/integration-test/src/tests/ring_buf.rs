@@ -14,7 +14,7 @@ use assert_matches::assert_matches;
 use aya::{
     Ebpf, EbpfLoader,
     maps::{Array, MapData, ring_buf::RingBuf},
-    programs::{UProbe, uprobe::UProbeScope},
+    programs::{ProgramError, UProbe, uprobe::UProbeScope},
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
 use integration_common::ring_buf::Registers;
@@ -62,7 +62,7 @@ const RING_BUF_VARIANTS: &[RingBufVariant] = &[
 const RING_BUF_MAX_ENTRIES: usize = 512;
 
 impl RingBufTest {
-    fn new(variant: RingBufVariant) -> Self {
+    fn new(variant: RingBufVariant) -> Result<Self, ProgramError> {
         Self::new_with_mutators(variant, |_loader| {}, |_bpf| {})
     }
 
@@ -73,7 +73,7 @@ impl RingBufTest {
         variant: RingBufVariant,
         loader_fn: impl FnOnce(&mut EbpfLoader<'loader>),
         bpf_fn: impl FnOnce(&mut Ebpf),
-    ) -> Self {
+    ) -> Result<Self, ProgramError> {
         const RING_BUF_BYTE_SIZE: u32 =
             (RING_BUF_MAX_ENTRIES * (size_of::<u64>() + BPF_RINGBUF_HDR_SZ as usize)) as u32;
 
@@ -90,7 +90,7 @@ impl RingBufTest {
         let regs = bpf.take_map(variant.regs).unwrap();
         let regs = Array::<_, Registers>::try_from(regs).unwrap();
         let prog: &mut UProbe = bpf.program_mut(variant.prog).unwrap().try_into().unwrap();
-        prog.load().unwrap();
+        prog.load()?;
         prog.attach(
             ["ring_buf_trigger_ebpf_program"],
             "/proc/self/exe",
@@ -98,22 +98,23 @@ impl RingBufTest {
         )
         .unwrap();
 
-        Self {
+        Ok(Self {
             bpf,
             ring_buf,
             regs,
-        }
+        })
     }
 }
 
 struct WithData(RingBufTest, Vec<u64>);
 
 impl WithData {
-    fn new(n: usize, variant: RingBufVariant) -> Self {
-        Self(RingBufTest::new(variant), {
+    fn new(n: usize, variant: RingBufVariant) -> Result<Self, ProgramError> {
+        let ring_buf = RingBufTest::new(variant)?;
+        Ok(Self(ring_buf, {
             let mut rng = rand::rng();
             std::iter::repeat_with(|| rng.random()).take(n).collect()
-        })
+        }))
     }
 }
 
@@ -125,14 +126,17 @@ impl WithData {
 #[case::write_more_items_than_capacity(RING_BUF_MAX_ENTRIES * 8)]
 fn ring_buf(#[case] n: usize) {
     for &variant in RING_BUF_VARIANTS {
-        let WithData(
+        let Some(WithData(
             RingBufTest {
                 mut ring_buf,
                 regs,
                 bpf: _bpf,
             },
             data,
-        ) = WithData::new(n, variant);
+        )) = super::load_or_expect_unsupported_jit(WithData::new(n, variant))
+        else {
+            continue;
+        };
 
         // Note that after expected_capacity has been submitted, reserve calls in the probe will fail
         // and the probe will give up.
@@ -262,14 +266,18 @@ fn ring_buf_mismatch_large() {
 #[test_log::test]
 async fn ring_buf_async_with_drops() {
     for &variant in RING_BUF_VARIANTS {
-        let WithData(
+        let Some(WithData(
             RingBufTest {
                 ring_buf,
                 regs,
                 bpf: _bpf,
             },
             data,
-        ) = WithData::new(RING_BUF_MAX_ENTRIES * 8, variant);
+        )) =
+            super::load_or_expect_unsupported_jit(WithData::new(RING_BUF_MAX_ENTRIES * 8, variant))
+        else {
+            continue;
+        };
 
         let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
 
@@ -361,14 +369,18 @@ async fn ring_buf_async_with_drops() {
 #[test_log::test]
 async fn ring_buf_async_no_drop() {
     for &variant in RING_BUF_VARIANTS {
-        let WithData(
+        let Some(WithData(
             RingBufTest {
                 ring_buf,
                 regs,
                 bpf: _bpf,
             },
             data,
-        ) = WithData::new(RING_BUF_MAX_ENTRIES * 3, variant);
+        )) =
+            super::load_or_expect_unsupported_jit(WithData::new(RING_BUF_MAX_ENTRIES * 3, variant))
+        else {
+            continue;
+        };
 
         let writer = {
             let mut rng = rand::rng();
@@ -431,11 +443,14 @@ async fn ring_buf_async_no_drop() {
 #[test_log::test]
 fn ring_buf_epoll_wakeup() {
     for &variant in RING_BUF_VARIANTS {
-        let RingBufTest {
+        let Some(RingBufTest {
             mut ring_buf,
             bpf: _bpf,
             regs: _,
-        } = RingBufTest::new(variant);
+        }) = super::load_or_expect_unsupported_jit(RingBufTest::new(variant))
+        else {
+            continue;
+        };
 
         let epoll_fd = epoll::create(false).unwrap();
         epoll::ctl(
@@ -468,11 +483,14 @@ fn ring_buf_epoll_wakeup() {
 #[test_log::test]
 async fn ring_buf_asyncfd_events() {
     for &variant in RING_BUF_VARIANTS {
-        let RingBufTest {
+        let Some(RingBufTest {
             ring_buf,
             regs: _,
             bpf: _bpf,
-        } = RingBufTest::new(variant);
+        }) = super::load_or_expect_unsupported_jit(RingBufTest::new(variant))
+        else {
+            continue;
+        };
 
         let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
         let mut total_events = 0;
@@ -536,20 +554,28 @@ async fn ring_buf_pinned() {
     for &variant in RING_BUF_VARIANTS {
         let pin_path =
             Path::new("/sys/fs/bpf/").join(format!("ring_buf_{}", rand::rng().random::<u64>()));
+        defer! {
+            match std::fs::remove_file(&pin_path) {
+                Ok(()) => (),
+                Err(err) => assert_eq!(err.kind(), std::io::ErrorKind::NotFound, "{err}"),
+            }
+        }
 
-        let RingBufTest {
+        let Some(RingBufTest {
             mut ring_buf,
             regs: _,
             bpf,
-        } = RingBufTest::new_with_mutators(
+        }) = super::load_or_expect_unsupported_jit(RingBufTest::new_with_mutators(
             variant,
             |_loader| {},
             |bpf| {
                 let ring_buf = bpf.map_mut(variant.map).unwrap();
                 ring_buf.pin(&pin_path).unwrap();
             },
-        );
-        defer! { std::fs::remove_file(&pin_path).unwrap() }
+        ))
+        else {
+            continue;
+        };
 
         // Write a few items to the ring buffer.
         let to_write_before_reopen = [2, 4, 6, 8];
@@ -576,7 +602,8 @@ async fn ring_buf_pinned() {
                 loader.map_pin_path(variant.map, &pin_path);
             },
             |_bpf| {},
-        );
+        )
+        .expect("reopen the pinned ring buffer after the first load succeeded");
         let to_write_after_reopen = [10, 12];
 
         // Write some more data.

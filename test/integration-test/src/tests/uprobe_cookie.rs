@@ -1,31 +1,30 @@
 use aya::{
     EbpfLoader,
-    maps::ring_buf::RingBuf,
+    maps::{MapType, ring_buf::RingBuf},
     programs::{
         UProbe,
         uprobe::{UProbeAttachPoint, UProbeScope},
     },
+    sys::BpfHelper,
     util::KernelVersion,
 };
 
 #[test_log::test]
 fn test_uprobe_cookie() {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 15, 0) {
-        eprintln!(
-            "skipping test on kernel {kernel_version:?}, bpf_get_attach_cookie was added in 5.15"
-        );
-        return;
-    }
     // Ring buffer sizes are rounded up to a page-sized power-of-two multiple when
     // the object is loaded. Using 512 here therefore yields a one-page ring
     // buffer on supported test systems, which is ample for the handful of `u64`
     // cookie records emitted by this test.
     const RING_BUF_BYTE_SIZE: u32 = 512;
-    let mut bpf = EbpfLoader::new()
-        .map_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
-        .load(crate::UPROBE_COOKIE)
-        .unwrap();
+    let missing = super::unsupported_map_names([(MapType::RingBuf, &["RING_BUF"][..])]);
+    let Some(mut bpf) = super::map_load_or_expect_unsupported(
+        EbpfLoader::new()
+            .map_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
+            .load(crate::UPROBE_COOKIE),
+        &missing,
+    ) else {
+        return;
+    };
     let ring_buf = bpf.take_map("RING_BUF").unwrap();
     let mut ring_buf = RingBuf::try_from(ring_buf).unwrap();
     let prog: &mut UProbe = bpf
@@ -33,7 +32,17 @@ fn test_uprobe_cookie() {
         .unwrap()
         .try_into()
         .unwrap();
-    prog.load().unwrap();
+    match prog.load() {
+        Ok(()) => {}
+        Err(error) => {
+            assert!(
+                KernelVersion::current().unwrap() < KernelVersion::new(5, 15, 0),
+                "unexpected uprobe cookie load failure: {error}"
+            );
+            super::assert_unsupported_helper(error, BpfHelper::BPF_FUNC_get_attach_cookie);
+            return;
+        }
+    }
     const PROG_A: &str = "uprobe_cookie_trigger_ebpf_program_a";
     const PROG_B: &str = "uprobe_cookie_trigger_ebpf_program_b";
     let attach = |prog: &mut UProbe, fn_name: &str, cookie| {

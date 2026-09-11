@@ -1,8 +1,9 @@
+use assert_matches::assert_matches;
 use aya::{
-    Btf, Ebpf,
+    Ebpf,
     maps::Array,
     programs::{FExit, ProgramError, ProgramType, TestRun as _},
-    sys::is_program_supported,
+    sys::{BpfHelper, SyscallError, is_program_supported},
     util::KernelVersion,
 };
 use aya_obj::btf::BtfError;
@@ -45,22 +46,10 @@ fn fexit_reads_args_and_return_values_from_prog_test_run_targets(
     // https://github.com/torvalds/linux/blob/v5.17/kernel/trace/bpf_trace.c#L1122-L1127
     // https://github.com/torvalds/linux/blob/v5.17/kernel/trace/bpf_trace.c#L1679-L1683
     let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 17, 0) {
-        eprintln!("skipping test on kernel {kernel_version:?} - bpf_get_func_ret requires 5.17");
-        return;
-    }
+    let tracing_supported = is_program_supported(ProgramType::Tracing).unwrap();
 
-    if !is_program_supported(ProgramType::Tracing).unwrap() {
-        eprintln!("skipping test - tracing programs not supported");
+    let Some(btf) = super::kernel_btf() else {
         return;
-    }
-
-    let btf = match Btf::from_sys_fs() {
-        Ok(btf) => btf,
-        Err(err) => {
-            eprintln!("skipping test - kernel BTF not available: {err}");
-            return;
-        }
     };
 
     let mut bpf = Ebpf::load(crate::FEXIT).unwrap();
@@ -71,19 +60,48 @@ fn fexit_reads_args_and_return_values_from_prog_test_run_targets(
     let prog: &mut FExit = bpf.program_mut(program).unwrap().try_into().unwrap();
     match prog.load(target, &btf) {
         Ok(()) => {}
-        // The kernel's tracing test-run targets have grown over time. Keep
-        // older kernels useful by skipping only the case whose target is not in
-        // BTF, instead of skipping the whole fexit test.
-        Err(ProgramError::Btf(BtfError::UnknownBtfTypeName { type_name }))
-            if type_name == target =>
-        {
-            eprintln!("skipping fexit target {target} - missing from kernel BTF");
+        // Each test case uses a specific BTF target. Assert the missing target
+        // that Aya actually looked up before reaching the verifier.
+        Err(ProgramError::Btf(BtfError::UnknownBtfTypeName { type_name })) => {
+            assert_eq!(type_name, target);
             return;
         }
-        Err(err) => panic!("unexpected error loading {program}: {err}"),
+        Err(error) => {
+            if kernel_version < KernelVersion::new(5, 17, 0) {
+                let helper_rejected = match &error {
+                    ProgramError::LoadError {
+                        io_error: _,
+                        verifier_log,
+                    } => verifier_log
+                        .to_string()
+                        .contains(&format!("#{}", BpfHelper::BPF_FUNC_get_func_ret as u32)),
+                    _ => false,
+                };
+                if helper_rejected || tracing_supported {
+                    super::assert_unsupported_helper(error, BpfHelper::BPF_FUNC_get_func_ret);
+                    return;
+                }
+            }
+            if !tracing_supported {
+                assert_matches!(error, ProgramError::LoadError { io_error, verifier_log } => {
+                    assert_eq!(io_error.raw_os_error(), Some(libc::EINVAL), "{verifier_log}");
+                    assert!(verifier_log.to_string().is_empty(), "{verifier_log}");
+                });
+                return;
+            }
+            panic!("unexpected error loading {program}: {error}");
+        }
     }
 
-    prog.attach().unwrap();
+    let attached = prog.attach();
+    if !tracing_supported {
+        assert_matches!(attached, Err(ProgramError::SyscallError(SyscallError { call, io_error })) => {
+            assert_eq!(call, "bpf_raw_tracepoint_open");
+            assert_eq!(io_error.raw_os_error(), Some(524));
+        });
+        return;
+    }
+    attached.unwrap();
     // This triggers the kernel's fixed tracing test-run sequence. For FENTRY and
     // FEXIT, a successful syscall only means that sequence ran; the test-run
     // retval carries no additional result. The eBPF program checks the traced

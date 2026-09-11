@@ -5,31 +5,9 @@ use aya::{
         tc::{NlOptions, TcAttachOptions, TcHandle, qdisc_add_clsact},
     },
     test_helpers::NetNsGuard,
-    util::KernelVersion,
 };
 
 use crate::TCX;
-
-/// Returns true if the kernel autoloads `cls_bpf` on netlink attach.
-///
-/// Before kernel commit 2c15a5ae ("net/sched: Load modules via their alias",
-/// released 6.10) the netlink TC code asks modprobe for `cls_bpf` by its
-/// canonical name. The test-distro modprobe stub only resolves modules through
-/// `modules.alias` entries, and `cls_bpf.ko` ships no self-alias, so the
-/// autoload fails inside the VM. The netlink TC features themselves only
-/// require 4.6.
-///
-/// See <https://github.com/torvalds/linux/commit/2c15a5aee2f32e341d1585fa1867eece76a1edb8>.
-fn cls_bpf_autoloads() -> bool {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(6, 10, 0) {
-        eprintln!(
-            "skipping on kernel {kernel_version:?}: test-distro modprobe cannot autoload cls_bpf"
-        );
-        return false;
-    }
-    true
-}
 
 /// Verify that `classid` set on the initial netlink attach is preserved when
 /// the program is later replaced via [`SchedClassifier::attach_to_link`].
@@ -40,10 +18,6 @@ fn cls_bpf_autoloads() -> bool {
 /// silently cleared on program replacement.
 #[test_log::test]
 fn netlink_attach_to_link_preserves_classid() {
-    if !cls_bpf_autoloads() {
-        return;
-    }
-
     let _netns = NetNsGuard::new().unwrap();
 
     qdisc_add_clsact("lo").unwrap();
@@ -77,10 +51,6 @@ fn netlink_attach_to_link_preserves_classid() {
 /// handle reported after attach must differ from the sentinel.
 #[test_log::test]
 fn netlink_attach_auto_assigns_handle() {
-    if !cls_bpf_autoloads() {
-        return;
-    }
-
     let _netns = NetNsGuard::new().unwrap();
 
     qdisc_add_clsact("lo").unwrap();
@@ -104,10 +74,6 @@ fn netlink_attach_auto_assigns_handle() {
 /// Verify that an explicit [`TcHandle`] is preserved across netlink attach.
 #[test_log::test]
 fn netlink_attach_preserves_explicit_handle() {
-    if !cls_bpf_autoloads() {
-        return;
-    }
-
     let _netns = NetNsGuard::new().unwrap();
 
     qdisc_add_clsact("lo").unwrap();

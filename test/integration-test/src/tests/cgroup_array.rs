@@ -4,7 +4,7 @@ use aya::{
     EbpfLoader,
     maps::{Array, CgroupArray, MapType},
     programs::{SchedClassifier, UProbe, uprobe::UProbeScope},
-    sys::is_map_supported,
+    sys::BpfHelper,
     test_helpers::Cgroup,
     util::KernelVersion,
 };
@@ -26,22 +26,14 @@ fn current_task_under_cgroup(
     #[case] result_map: &str,
     #[case] prog: &str,
 ) {
-    if !is_map_supported(MapType::CgroupArray).unwrap() {
-        eprintln!("skipping test - cgroup array map not supported");
+    let missing =
+        super::unsupported_map_names([(MapType::CgroupArray, &["CGROUPS", "CGROUPS_LEGACY"][..])]);
+    let Some(mut bpf) = super::map_load_or_expect_unsupported(
+        EbpfLoader::new().load(crate::CGROUP_ARRAY),
+        &missing,
+    ) else {
         return;
-    }
-
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(4, 9, 0) {
-        eprintln!(
-            "skipping test - bpf_current_task_under_cgroup added in 4.9, kernel is {kernel_version:?}"
-        );
-        return;
-    }
-
-    let mut bpf = EbpfLoader::new()
-        .load(crate::CGROUP_ARRAY)
-        .expect("load cgroup_array program");
+    };
 
     // Load and attach the uprobe first so the loaded program holds a reference
     // to the cgroup array; the typed map below can then be dropped safely.
@@ -51,9 +43,20 @@ fn current_task_under_cgroup(
             .unwrap_or_else(|| panic!("missing program {prog}"))
             .try_into()
             .unwrap_or_else(|err| panic!("program {prog} is not a uprobe: {err}"));
-        program
-            .load()
-            .unwrap_or_else(|err| panic!("load {prog}: {err}"));
+        match program.load() {
+            Ok(()) => {}
+            Err(error) => {
+                assert!(
+                    KernelVersion::current().unwrap() < KernelVersion::new(4, 9, 0),
+                    "load {prog}: {error}"
+                );
+                super::assert_unsupported_helper(
+                    error,
+                    BpfHelper::BPF_FUNC_current_task_under_cgroup,
+                );
+                return;
+            }
+        }
         program
             .attach(
                 ["trigger_current_task_under_cgroup"],
@@ -93,14 +96,14 @@ fn current_task_under_cgroup(
 
 #[test_log::test]
 fn skb_under_cgroup_loads() {
-    if !is_map_supported(MapType::CgroupArray).unwrap() {
-        eprintln!("skipping test - cgroup array map not supported");
+    let missing =
+        super::unsupported_map_names([(MapType::CgroupArray, &["CGROUPS", "CGROUPS_LEGACY"][..])]);
+    let Some(mut bpf) = super::map_load_or_expect_unsupported(
+        EbpfLoader::new().load(crate::CGROUP_ARRAY),
+        &missing,
+    ) else {
         return;
-    }
-
-    let mut bpf = EbpfLoader::new()
-        .load(crate::CGROUP_ARRAY)
-        .expect("load cgroup_array program");
+    };
 
     let program: &mut SchedClassifier = bpf
         .program_mut("skb_under_cgroup")

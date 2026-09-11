@@ -1,6 +1,9 @@
 use aya::{
     Ebpf,
-    programs::{LinkOrder, ProgramId, SchedClassifier, TcAttachType, tc::TcAttachOptions},
+    programs::{
+        LinkOrder, ProgramError, ProgramId, SchedClassifier, TcAttachType, tc::TcAttachOptions,
+    },
+    sys::SyscallError,
     test_helpers::NetNsGuard,
     util::KernelVersion,
 };
@@ -8,12 +11,34 @@ use aya::{
 #[test_log::test]
 fn tcx() {
     let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(6, 6, 0) {
-        eprintln!("skipping tcx_attach test on kernel {kernel_version:?}");
-        return;
-    }
-
     let _netns = NetNsGuard::new().unwrap();
+
+    let mut default_bpf = Ebpf::load(crate::TCX).unwrap();
+    let default: &mut SchedClassifier = default_bpf
+        .program_mut("tcx_next")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    default.load().unwrap();
+    let attach = default.attach_with_options(
+        "lo",
+        TcAttachType::Ingress,
+        TcAttachOptions::TcxOrder(LinkOrder::default()),
+    );
+    match attach {
+        Ok(_) => {}
+        Err(error) => {
+            assert!(
+                kernel_version < KernelVersion::new(6, 6, 0),
+                "TCX attach failed on {kernel_version}: {error}"
+            );
+            assert_matches::assert_matches!(error, ProgramError::SyscallError(SyscallError { call, io_error }) => {
+                assert_eq!(call, "bpf_mprog_attach");
+                assert_eq!(io_error.raw_os_error(), Some(libc::EINVAL));
+            });
+            return;
+        }
+    }
 
     // We need a dedicated `Ebpf` instance for each program that we load
     // since TCX does not allow the same program ID to be attached multiple
@@ -55,7 +80,6 @@ fn tcx() {
         };
     }
 
-    attach_program_with_link_order!(default, LinkOrder::default());
     attach_program_with_link_order!(first, LinkOrder::first());
     attach_program_with_link_order!(last, last_link_id, LinkOrder::last());
 

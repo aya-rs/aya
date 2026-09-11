@@ -18,6 +18,7 @@ use std::{
 use aya::{
     Ebpf,
     programs::{UProbe, uprobe::UProbeScope},
+    sys::BpfHelper,
     util::KernelVersion,
 };
 use integration_common::printk::{
@@ -53,34 +54,37 @@ use tokio::{
 // bpf_trace_vprintk was added in Linux 5.16; see
 // https://docs.ebpf.io/linux/helper-function/bpf_trace_vprintk/.
 #[case::many(
-    Some(("bpf_trace_vprintk", KernelVersion::new(5, 16, 0))),
+    Some((BpfHelper::BPF_FUNC_trace_vprintk, KernelVersion::new(5, 16, 0))),
     "test_bpf_printk_for_many_args",
     [
         format!("{MARKER}_MULTI_vprintk:{TEST_U8},{TEST_U16},{TEST_I8},{TEST_I16}")
     ])]
 #[test_attr(tokio::test)]
 async fn bpf_printk<const N: usize>(
-    #[case] minimum_kernel_version: Option<(&str, KernelVersion)>,
+    #[case] minimum_kernel_version: Option<(BpfHelper, KernelVersion)>,
     #[case] bpf_program_name: &str,
     #[case] expected: [String; N],
 ) {
-    if let Some((helper_name, minimum_kernel_version)) = minimum_kernel_version {
-        let kernel_version = KernelVersion::current().unwrap();
-        if kernel_version < minimum_kernel_version {
-            eprintln!(
-                "skipping test on kernel {kernel_version:?}, {helper_name} was introduced in {minimum_kernel_version:?}"
-            );
-            return;
-        }
-    }
-
     let mut ebpf = Ebpf::load(crate::PRINTK_TEST).unwrap();
     let prog: &mut UProbe = ebpf
         .program_mut(bpf_program_name)
         .unwrap()
         .try_into()
         .unwrap();
-    prog.load().unwrap();
+    match prog.load() {
+        Ok(()) => {}
+        Err(error) => {
+            let Some((helper, minimum)) = minimum_kernel_version else {
+                panic!("load {bpf_program_name}: {error}");
+            };
+            assert!(
+                KernelVersion::current().unwrap() < minimum,
+                "load {bpf_program_name}: {error}"
+            );
+            super::assert_unsupported_helper(error, helper);
+            return;
+        }
+    }
     prog.attach(
         ["trigger_bpf_printk"],
         "/proc/self/exe",

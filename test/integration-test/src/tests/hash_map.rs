@@ -2,7 +2,6 @@ use aya::{
     EbpfLoader,
     maps::{Array, HashMap, MapType, PerCpuHashMap, PerCpuValues},
     programs::{UProbe, uprobe::UProbeScope},
-    sys::is_map_supported,
     util::nr_cpus,
 };
 use rstest::rstest;
@@ -56,14 +55,20 @@ fn hash_basic(
     #[case] map_name: &str,
     #[case] result_map: &str,
 ) {
-    if matches!(map_type, MapType::LruHash | MapType::LruPerCpuHash)
-        && !is_map_supported(map_type).unwrap()
-    {
-        eprintln!("skipping test - {map_type:?} not supported");
+    // Both LRU variants are present in the ELF, independent of this case's map.
+    let missing = super::unsupported_map_names([
+        (MapType::LruHash, &["LRU_HASH_BTF", "LRU_HASH_LEGACY"][..]),
+        (
+            MapType::LruPerCpuHash,
+            &["LRU_PER_CPU_HASH_BTF", "LRU_PER_CPU_HASH_LEGACY"],
+        ),
+    ]);
+    let Some(mut bpf) =
+        super::map_load_or_expect_unsupported(EbpfLoader::new().load(crate::HASH_MAP), &missing)
+    else {
         return;
-    }
+    };
     let per_cpu = matches!(map_type, MapType::PerCpuHash | MapType::LruPerCpuHash);
-    let mut bpf = EbpfLoader::new().load(crate::HASH_MAP).unwrap();
 
     if per_cpu {
         let mut map: PerCpuHashMap<_, u32, u64> =

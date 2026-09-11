@@ -1,11 +1,8 @@
-use std::{
-    path::Path,
-    process::{Command, Stdio},
-};
+use std::{path::Path, process::Command};
 
 use aya::{
-    EbpfLoader,
-    maps::ring_buf::RingBuf,
+    Ebpf, EbpfLoader,
+    maps::{MapType, ring_buf::RingBuf},
     programs::{
         ProbeKind, ProgramError, ProgramType, UProbe,
         uprobe::{UProbeAttachLocation, UProbeAttachPoint, UProbeError, UProbeScope},
@@ -31,20 +28,65 @@ fn bpf_cookie_supported() -> bool {
     is_helper_supported(ProgramType::KProbe, BpfHelper::BPF_FUNC_get_attach_cookie).unwrap()
 }
 
+fn load_uprobe_multi() -> Option<Ebpf> {
+    let missing = super::unsupported_map_names([(MapType::RingBuf, &["RING_BUF"][..])]);
+    let loaded = EbpfLoader::new()
+        .map_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
+        .load(crate::UPROBE_MULTI);
+    super::map_load_or_expect_unsupported(loaded, &missing)
+}
+
+fn load_cookie_program(prog: &mut UProbe) -> bool {
+    let loaded = prog.load();
+    if bpf_cookie_supported() {
+        loaded.unwrap();
+        true
+    } else {
+        super::assert_unsupported_helper(
+            loaded.unwrap_err(),
+            BpfHelper::BPF_FUNC_get_attach_cookie,
+        );
+        false
+    }
+}
+
+fn uprobe_multi_supported_by_kernel() -> bool {
+    let kernel_version = KernelVersion::current().unwrap();
+    let kernel_config = procfs::kernel_config().unwrap();
+    // The multi-uprobe link rejects 32-bit kernels even after its introduction in 6.6.
+    // https://github.com/gregkh/linux/blob/v6.12.109/kernel/trace/bpf_trace.c#L3317-L3320
+    kernel_version >= KernelVersion::new(6, 6, 0)
+        && matches!(
+            kernel_config.get("CONFIG_64BIT"),
+            Some(procfs::ConfigSetting::Yes)
+        )
+}
+
 fn run_scope_child() {
-    let status = Command::new(std::env::current_exe().unwrap())
+    let output = Command::new(std::env::current_exe().unwrap())
         .arg("tests::uprobe_multi::uprobe_multi_scope_child")
         .arg("--exact")
         .env(UPROBE_SCOPE_CHILD, "1")
-        .stdout(Stdio::null())
-        .status()
+        .output()
         .unwrap();
-    assert!(status.success(), "scope test child failed: {status}");
+    assert!(
+        output.status.success(),
+        "scope test child failed: {}\nstdout: {}\nstderr: {}",
+        output.status,
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr),
+    );
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(
+        stdout.contains("running 1 test"),
+        "scope test child did not run: {stdout}"
+    );
 }
 
 #[test]
 fn uprobe_multi_scope_child() {
     if std::env::var_os(UPROBE_SCOPE_CHILD).is_none() {
+        run_scope_child();
         return;
     }
 
@@ -54,20 +96,15 @@ fn uprobe_multi_scope_child() {
 
 #[test_log::test]
 fn test_uprobe_attach_multi() {
-    if !bpf_cookie_supported() {
-        eprintln!(
-            "skipping test: bpf_get_attach_cookie is unsupported so the test program cannot load"
-        );
+    let Some(mut bpf) = load_uprobe_multi() else {
         return;
-    }
-    let mut bpf = EbpfLoader::new()
-        .map_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
-        .load(crate::UPROBE_MULTI)
-        .unwrap();
+    };
     let ring_buf = bpf.take_map("RING_BUF").unwrap();
     let mut ring_buf = RingBuf::try_from(ring_buf).unwrap();
     let prog: &mut UProbe = bpf.program_mut(UPROBE_MULTI).unwrap().try_into().unwrap();
-    prog.load().unwrap();
+    if !load_cookie_program(prog) {
+        return;
+    }
 
     const COOKIE_A: u64 = 0x11;
     const COOKIE_B: u64 = 0x22;
@@ -94,11 +131,9 @@ fn test_uprobe_attach_multi() {
     let link_id = match attach_res {
         Ok(link) => link,
         Err(ProgramError::UProbeError(UProbeError::MultiLinkNotSupported)) => {
-            let kernel_version = KernelVersion::current().unwrap();
-            let multi_min = KernelVersion::new(6, 6, 0);
             assert!(
-                kernel_version < multi_min,
-                "kernel {kernel_version:?} is >= 6.6 but returned MultiLinkNotSupported"
+                !uprobe_multi_supported_by_kernel(),
+                "kernel supports multi-uprobes but returned MultiLinkNotSupported"
             );
             return;
         }
@@ -135,21 +170,16 @@ fn test_uprobe_attach_multi() {
 
 #[test_log::test]
 fn test_uprobe_unknown_program_falls_back_to_multiple_single_points() {
-    if !bpf_cookie_supported() {
-        eprintln!(
-            "skipping test: bpf_get_attach_cookie is unsupported so the test program cannot load"
-        );
+    let Some(mut bpf) = load_uprobe_multi() else {
         return;
-    }
-    let mut bpf = EbpfLoader::new()
-        .map_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
-        .load(crate::UPROBE_MULTI)
-        .unwrap();
+    };
     let ring_buf = bpf.take_map("RING_BUF").unwrap();
     let mut ring_buf = RingBuf::try_from(ring_buf).unwrap();
     let info = {
         let prog: &mut UProbe = bpf.program_mut(UPROBE_SINGLE).unwrap().try_into().unwrap();
-        prog.load().unwrap();
+        if !load_cookie_program(prog) {
+            return;
+        }
         prog.info().unwrap()
     };
     // Handles reconstructed from program info do not know whether the original
@@ -222,20 +252,15 @@ fn test_uprobe_unknown_program_falls_back_to_multiple_single_points() {
 
 #[test_log::test]
 fn test_uprobe_single_program_composite_link_drop_detaches_all_points() {
-    if !bpf_cookie_supported() {
-        eprintln!(
-            "skipping test: bpf_get_attach_cookie is unsupported so the test program cannot load"
-        );
+    let Some(mut bpf) = load_uprobe_multi() else {
         return;
-    }
-    let mut bpf = EbpfLoader::new()
-        .map_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
-        .load(crate::UPROBE_MULTI)
-        .unwrap();
+    };
     let ring_buf = bpf.take_map("RING_BUF").unwrap();
     let mut ring_buf = RingBuf::try_from(ring_buf).unwrap();
     let prog: &mut UProbe = bpf.program_mut(UPROBE_SINGLE).unwrap().try_into().unwrap();
-    prog.load().unwrap();
+    if !load_cookie_program(prog) {
+        return;
+    }
 
     const COOKIE_A: u64 = 0x55;
     const COOKIE_B: u64 = 0x66;
@@ -286,18 +311,13 @@ fn test_uprobe_single_program_composite_link_drop_detaches_all_points() {
 
 #[test_log::test]
 fn test_uprobe_attach_multi_invalid_symbol() {
-    if !bpf_cookie_supported() {
-        eprintln!(
-            "skipping test: bpf_get_attach_cookie is unsupported so the test program cannot load"
-        );
+    let Some(mut bpf) = load_uprobe_multi() else {
+        return;
+    };
+    let prog: &mut UProbe = bpf.program_mut(UPROBE_MULTI).unwrap().try_into().unwrap();
+    if !load_cookie_program(prog) {
         return;
     }
-    let mut bpf = EbpfLoader::new()
-        .map_max_entries("RING_BUF", RING_BUF_BYTE_SIZE)
-        .load(crate::UPROBE_MULTI)
-        .unwrap();
-    let prog: &mut UProbe = bpf.program_mut(UPROBE_MULTI).unwrap().try_into().unwrap();
-    prog.load().unwrap();
 
     let points = [PROG_A, PROG_SYMBOL_INVALID];
 
@@ -311,13 +331,9 @@ fn test_uprobe_attach_multi_invalid_symbol() {
             assert_eq!(symbol, PROG_SYMBOL_INVALID);
         }
         Err(ProgramError::UProbeError(UProbeError::MultiLinkNotSupported)) => {
-            let kernel_version = KernelVersion::current().unwrap();
-            // Multi-uprobe landed in Linux 6.6 (see BPF_TRACE_UPROBE_MULTI in
-            // https://elixir.bootlin.com/linux/v6.6/source/include/uapi/linux/bpf.h#L1042).
-            let multi_min = KernelVersion::new(6, 6, 0);
             assert!(
-                kernel_version < multi_min,
-                "kernel {kernel_version:?} is >= 6.6 but returned MultiLinkNotSupported"
+                !uprobe_multi_supported_by_kernel(),
+                "kernel supports multi-uprobes but returned MultiLinkNotSupported"
             );
         }
         Err(err) => panic!("unexpected error for invalid symbol: {err:?}"),

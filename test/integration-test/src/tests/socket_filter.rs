@@ -17,7 +17,7 @@ use integration_common::socket_filter::{
     REUSEPORT_SELECT_FIRST_HITS_INDEX, REUSEPORT_SELECT_SECOND_HITS_INDEX, TRIM_DELTA_BYTES,
     TRIM_HITS_INDEX,
 };
-use libc::{EINVAL, ENOENT};
+use libc::{EINVAL, ENOENT, ENOPROTOOPT};
 use tokio::{
     net::{TcpListener, TcpSocket, TcpStream, UnixDatagram},
     time::timeout,
@@ -36,18 +36,50 @@ fn read_hits(hits: &Array<MapData, u64>, index: u32) -> u64 {
     hits.get(&index, 0).unwrap()
 }
 
+fn load_filter_or_expect_unsupported(result: Result<(), ProgramError>) -> bool {
+    if is_program_supported(ProgramType::SocketFilter).unwrap() {
+        result.expect("load socket filter");
+        true
+    } else {
+        assert_matches!(result, Err(ProgramError::LoadError { io_error, verifier_log }) => {
+            assert_eq!(io_error.raw_os_error(), Some(EINVAL));
+            assert!(verifier_log.to_string().is_empty(), "{verifier_log}");
+        });
+        false
+    }
+}
+
 fn reuseport_detach_supported() -> bool {
     let kernel_version = KernelVersion::current().unwrap();
     // `SO_DETACH_REUSEPORT_BPF` is handled starting in Linux 5.3:
     // https://github.com/torvalds/linux/blob/v5.3/net/core/sock.c#L1042-L1044
-    if kernel_version < KernelVersion::new(5, 3, 0) {
-        eprintln!(
-            "skipping test on kernel {kernel_version:?}, SO_DETACH_REUSEPORT_BPF requires 5.3"
-        );
-        return false;
+    // A listener without SO_REUSEPORT gets EINVAL when the option exists:
+    // https://github.com/torvalds/linux/blob/v5.3/net/core/sock_reuseport.c#L336-L343
+    let listener = std::net::TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+    let error = ReusePortSocketFilter::detach(&listener).unwrap_err();
+    let io_error = match error {
+        ProgramError::SocketFilterError(SocketFilterError::SetsockoptError {
+            option,
+            io_error,
+        }) => {
+            assert_eq!(option, "SO_DETACH_REUSEPORT_BPF");
+            io_error
+        }
+        error => panic!("unexpected reuseport detach error: {error}"),
+    };
+    match io_error.raw_os_error() {
+        Some(EINVAL) => true,
+        Some(ENOPROTOOPT) => {
+            // Earlier kernels reject the unknown option with ENOPROTOOPT:
+            // https://github.com/torvalds/linux/blob/v5.2/net/core/sock.c#L1174-L1176
+            assert!(
+                kernel_version < KernelVersion::new(5, 3, 0),
+                "missing reuseport detach support on {kernel_version}"
+            );
+            false
+        }
+        _ => panic!("unexpected reuseport detach failure: {io_error}"),
     }
-
-    true
 }
 
 fn reuseport_listener(port: u16) -> io::Result<TcpListener> {
@@ -114,11 +146,6 @@ async fn send_and_assert(sender: &UnixDatagram, receiver: &UnixDatagram, trim_by
 
 #[test_log::test(tokio::test)]
 async fn socket_filter_program_can_pass_packets() {
-    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
-        eprintln!("skipping test - socket_filter program not supported");
-        return;
-    }
-
     let (sender, receiver) = UnixDatagram::pair().unwrap();
 
     let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
@@ -128,7 +155,9 @@ async fn socket_filter_program_can_pass_packets() {
         .unwrap()
         .try_into()
         .unwrap();
-    prog.load().unwrap();
+    if !load_filter_or_expect_unsupported(prog.load()) {
+        return;
+    }
     prog.attach(&receiver).unwrap();
 
     send_and_assert(&sender, &receiver, 0).await;
@@ -140,11 +169,6 @@ async fn socket_filter_program_can_pass_packets() {
 
 #[test_log::test(tokio::test)]
 async fn socket_filter_program_can_trim_packets_and_detach() {
-    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
-        eprintln!("skipping test - socket_filter program not supported");
-        return;
-    }
-
     let (sender, receiver) = UnixDatagram::pair().unwrap();
 
     let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
@@ -154,7 +178,9 @@ async fn socket_filter_program_can_trim_packets_and_detach() {
         .unwrap()
         .try_into()
         .unwrap();
-    prog.load().unwrap();
+    if !load_filter_or_expect_unsupported(prog.load()) {
+        return;
+    }
     prog.attach(&receiver).unwrap();
 
     send_and_assert(&sender, &receiver, TRIM_DELTA_BYTES as usize).await;
@@ -173,11 +199,6 @@ async fn socket_filter_program_can_trim_packets_and_detach() {
 
 #[test_log::test]
 fn socket_filter_attach_types_use_separate_slots() {
-    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
-        eprintln!("skipping test - socket_filter program not supported");
-        return;
-    }
-
     if !reuseport_detach_supported() {
         return;
     }
@@ -194,7 +215,9 @@ fn socket_filter_attach_types_use_separate_slots() {
                 .unwrap()
                 .try_into()
                 .unwrap();
-            prog.load().unwrap();
+            if !load_filter_or_expect_unsupported(prog.load()) {
+                return;
+            }
             prog.attach(&listener).unwrap();
         }
 
@@ -274,11 +297,6 @@ fn socket_filter_attach_types_use_separate_slots() {
 
 #[test_log::test]
 fn socket_filter_reuseport_selects_listener_and_detaches() {
-    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
-        eprintln!("skipping test - socket_filter program not supported");
-        return;
-    }
-
     if !reuseport_detach_supported() {
         return;
     }
@@ -294,7 +312,9 @@ fn socket_filter_reuseport_selects_listener_and_detaches() {
             .unwrap()
             .try_into()
             .unwrap();
-        prog.load().unwrap();
+        if !load_filter_or_expect_unsupported(prog.load()) {
+            return;
+        }
         prog.attach(&first).unwrap();
 
         let _client = TcpStream::connect(addr).await.unwrap();
@@ -334,11 +354,6 @@ fn socket_filter_reuseport_selects_listener_and_detaches() {
 
 #[test_log::test]
 fn socket_filter_reuseport_stays_attached_after_ebpf_drop() {
-    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
-        eprintln!("skipping test - socket_filter program not supported");
-        return;
-    }
-
     if !reuseport_detach_supported() {
         return;
     }
@@ -357,7 +372,9 @@ fn socket_filter_reuseport_stays_attached_after_ebpf_drop() {
                 .unwrap()
                 .try_into()
                 .unwrap();
-            prog.load().unwrap();
+            if !load_filter_or_expect_unsupported(prog.load()) {
+                return;
+            }
             prog.attach(&first).unwrap();
             path_hits
         };
@@ -388,11 +405,6 @@ fn socket_filter_reuseport_stays_attached_after_ebpf_drop() {
 
 #[test_log::test]
 fn socket_filter_reuseport_replacement_uses_latest_program() {
-    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
-        eprintln!("skipping test - socket_filter program not supported");
-        return;
-    }
-
     if !reuseport_detach_supported() {
         return;
     }
@@ -413,7 +425,9 @@ fn socket_filter_reuseport_replacement_uses_latest_program() {
                 .unwrap()
                 .try_into()
                 .unwrap();
-            first_prog.load().unwrap();
+            if !load_filter_or_expect_unsupported(first_prog.load()) {
+                return;
+            }
             first_prog.attach(&first).unwrap();
         }
 
@@ -465,19 +479,6 @@ fn socket_filter_reuseport_replacement_uses_latest_program() {
 
 #[test_log::test(tokio::test)]
 async fn socket_filter_reuseport_errors_without_reuseport() {
-    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
-        eprintln!("skipping test - socket_filter program not supported");
-        return;
-    }
-
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(4, 6, 0) {
-        eprintln!(
-            "skipping test on kernel {kernel_version:?}, TCP SO_ATTACH_REUSEPORT_EBPF requires 4.6"
-        );
-        return;
-    }
-
     let listener = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).await.unwrap();
 
     let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
@@ -486,7 +487,9 @@ async fn socket_filter_reuseport_errors_without_reuseport() {
         .unwrap()
         .try_into()
         .unwrap();
-    prog.load().unwrap();
+    if !load_filter_or_expect_unsupported(prog.load()) {
+        return;
+    }
 
     // A bound listener without `SO_REUSEPORT` has no reuseport group; the
     // `SO_ATTACH_REUSEPORT_EBPF` path rejects that in `reuseport_attach_prog()`
@@ -505,11 +508,6 @@ async fn socket_filter_reuseport_errors_without_reuseport() {
 
 #[test_log::test(tokio::test)]
 async fn socket_filter_replacement_stays_attached_until_explicit_detach() {
-    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
-        eprintln!("skipping test - socket_filter program not supported");
-        return;
-    }
-
     let (sender, receiver) = UnixDatagram::pair().unwrap();
 
     let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
@@ -520,7 +518,9 @@ async fn socket_filter_replacement_stays_attached_until_explicit_detach() {
         .unwrap()
         .try_into()
         .unwrap();
-    pass_prog.load().unwrap();
+    if !load_filter_or_expect_unsupported(pass_prog.load()) {
+        return;
+    }
     pass_prog.attach(&receiver).unwrap();
 
     send_and_assert(&sender, &receiver, 0).await;
@@ -575,11 +575,6 @@ async fn socket_filter_replacement_stays_attached_until_explicit_detach() {
 
 #[test_log::test(tokio::test)]
 async fn socket_filter_stays_attached_after_ebpf_drop() {
-    if !is_program_supported(ProgramType::SocketFilter).unwrap() {
-        eprintln!("skipping test - socket_filter program not supported");
-        return;
-    }
-
     let (sender, receiver) = UnixDatagram::pair().unwrap();
     let path_hits: Array<_, u64> = {
         let mut ebpf = Ebpf::load(crate::SOCKET_FILTER).unwrap();
@@ -589,7 +584,9 @@ async fn socket_filter_stays_attached_after_ebpf_drop() {
             .unwrap()
             .try_into()
             .unwrap();
-        prog.load().unwrap();
+        if !load_filter_or_expect_unsupported(prog.load()) {
+            return;
+        }
         prog.attach(&receiver).unwrap();
         path_hits
     };

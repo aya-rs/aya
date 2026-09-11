@@ -13,7 +13,51 @@ use aya::{
     sys::SyscallError,
     util::online_cpus,
 };
+use aya_obj::generated::{
+    HW_BREAKPOINT_LEN_1, HW_BREAKPOINT_RW, PERF_FLAG_FD_CLOEXEC, perf_event_attr,
+    perf_event_sample_format::PERF_SAMPLE_RAW, perf_type_id::PERF_TYPE_BREAKPOINT,
+};
 use scopeguard::defer;
+
+#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64", target_arch = "arm")))]
+compile_error!("perf_event_bp requires an architecture-specific breakpoint case");
+
+const ARM32_KERNEL_BREAKPOINT_ADDRESS: u64 = 0xffff_fffc;
+
+fn arm32_kernel_breakpoint_error() -> i32 {
+    let mut attr = unsafe { std::mem::zeroed::<perf_event_attr>() };
+    attr.type_ = PERF_TYPE_BREAKPOINT as u32;
+    attr.size = size_of::<perf_event_attr>() as u32;
+    attr.bp_type = HW_BREAKPOINT_RW;
+    attr.__bindgen_anon_3.bp_addr = ARM32_KERNEL_BREAKPOINT_ADDRESS;
+    attr.__bindgen_anon_4.bp_len = u64::from(HW_BREAKPOINT_LEN_1);
+    attr.__bindgen_anon_1.sample_period = 1;
+    attr.sample_type = PERF_SAMPLE_RAW as u64;
+    attr.set_precise_ip(2);
+
+    // ARM32 reports ENODEV when hardware debug monitor mode is unavailable,
+    // or EPERM for a kernel-space breakpoint when the monitor is available:
+    // https://github.com/gregkh/linux/blob/v6.12.109/arch/arm/kernel/hw_breakpoint.c#L591-L600
+    // https://github.com/gregkh/linux/blob/v6.12.109/arch/arm/kernel/hw_breakpoint.c#L635-L641
+    // SAFETY: attr points to a fully initialized perf_event_attr for this syscall.
+    let fd = unsafe {
+        libc::syscall(
+            libc::SYS_perf_event_open,
+            &attr,
+            0,
+            -1,
+            -1,
+            PERF_FLAG_FD_CLOEXEC,
+        )
+    };
+    assert_eq!(fd, -1, "ARM32 unexpectedly accepted a kernel breakpoint");
+    let error = std::io::Error::last_os_error();
+    match error.raw_os_error() {
+        Some(libc::EPERM) => libc::EPERM,
+        Some(libc::ENODEV) => libc::ENODEV,
+        _ => panic!("unexpected ARM32 kernel breakpoint failure: {error}"),
+    }
+}
 
 fn find_system_map() -> Vec<PathBuf> {
     const BOOT_PATH: &str = "/boot/";
@@ -138,9 +182,14 @@ where
             // arm64 rejects per-task kernel breakpoints (the scopes that carry
             // a PID) to avoid single-step bookkeeping, see
             // https://github.com/torvalds/linux/blob/v6.12/arch/arm64/kernel/hw_breakpoint.c#L566-L571.
+            // arm32 rejects per-CPU user-space breakpoints.
+            // https://github.com/torvalds/linux/blob/v6.12/arch/arm/kernel/hw_breakpoint.c#L593-L625
             let scope_supported = type_supported
-                && (!cfg!(target_arch = "aarch64")
-                    || matches!(scope, PerfEventScope::AllProcessesOneCpu { cpu: _ }));
+                && match scope {
+                    PerfEventScope::CallingProcess { cpu: _ } => !cfg!(target_arch = "aarch64"),
+                    PerfEventScope::OneProcess { pid: _, cpu: _ } => !cfg!(target_arch = "aarch64"),
+                    PerfEventScope::AllProcessesOneCpu { cpu: _ } => !cfg!(target_arch = "arm"),
+                };
             let attach = prog.attach(
                 PerfEventConfig::Breakpoint(config),
                 *scope,
@@ -195,6 +244,53 @@ fn get_address(symbols: &HashMap<&str, Vec<u64>>, name: &str) -> Option<u64> {
 
 #[test_log::test]
 fn perf_event_bp() {
+    if cfg!(target_arch = "arm") {
+        let expected_errno = arm32_kernel_breakpoint_error();
+        let mut bpf = Ebpf::load(crate::PERF_EVENT_BP).unwrap();
+        let prog: &mut aya::programs::PerfEvent = bpf
+            .program_mut("perf_event_bp")
+            .unwrap()
+            .try_into()
+            .unwrap();
+        prog.load().unwrap();
+        let attach = prog.attach(
+            PerfEventConfig::Breakpoint(BreakpointConfig::Data {
+                r#type: PerfBreakpointType::ReadWrite,
+                address: ARM32_KERNEL_BREAKPOINT_ADDRESS,
+                length: PerfBreakpointLength::Len1,
+            }),
+            PerfEventScope::CallingProcess { cpu: None },
+            SamplePolicy::Period(1),
+            true,
+        );
+        assert_matches!(attach, Err(ProgramError::SyscallError(SyscallError {
+            call: "perf_event_open",
+            io_error,
+        })) => assert_eq!(io_error.raw_os_error(), Some(expected_errno)));
+
+        if expected_errno == libc::ENODEV {
+            return;
+        }
+        // ARM32 rejects kernel-space hardware breakpoints. Exercise a per-task
+        // user-space ReadWrite watchpoint instead.
+        // https://github.com/torvalds/linux/blob/v6.12/arch/arm/kernel/hw_breakpoint.c#L593-L625
+        let mut watched = 0u8;
+        let watched_ptr = &raw mut watched;
+        let address = watched_ptr.addr() as u64;
+        run_breakpoint_case(
+            BreakpointConfig::Data {
+                r#type: PerfBreakpointType::ReadWrite,
+                address,
+                length: PerfBreakpointLength::Len1,
+            },
+            // SAFETY: watched_ptr points to the local value for the entire call.
+            || unsafe { watched_ptr.write_volatile(1) },
+            address,
+        );
+        assert_eq!(watched, 1);
+        return;
+    }
+
     // Search for the address of modprobe_path. Prefer to grab it directly from
     // kallsyms, but if it's not there we can grab it from System.map and apply
     // the kaslr offset.
@@ -296,25 +392,22 @@ fn perf_event_bp() {
     // Just for fun.
     assert_eq!(modprobe_contents_before, modprobe_contents_after);
 
-    let execute_addr = {
-        let getpgid_symbol = if cfg!(target_arch = "x86_64") {
-            "__x64_sys_getpgid"
-        } else if cfg!(target_arch = "aarch64") {
-            "__arm64_sys_getpgid"
-        } else {
-            panic!("unsupported architecture");
-        };
-        get_address(&kernel_symbols, getpgid_symbol)
-            .unwrap_or_else(|| panic!("{getpgid_symbol} not found in {kernel_symbols:?}"))
-    };
-
-    run_breakpoint_case(
-        BreakpointConfig::Instruction {
-            address: execute_addr,
-        },
-        || {
-            nix::unistd::getpgid(None).unwrap();
-        },
-        execute_addr,
-    );
+    #[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
+    {
+        #[cfg(target_arch = "x86_64")]
+        let getpgid_symbol = "__x64_sys_getpgid";
+        #[cfg(target_arch = "aarch64")]
+        let getpgid_symbol = "__arm64_sys_getpgid";
+        let execute_addr = get_address(&kernel_symbols, getpgid_symbol)
+            .unwrap_or_else(|| panic!("{getpgid_symbol} not found in {kernel_symbols:?}"));
+        run_breakpoint_case(
+            BreakpointConfig::Instruction {
+                address: execute_addr,
+            },
+            || {
+                nix::unistd::getpgid(None).unwrap();
+            },
+            execute_addr,
+        );
+    }
 }

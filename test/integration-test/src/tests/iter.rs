@@ -1,11 +1,13 @@
 use std::io::BufRead as _;
 
-use aya::{Btf, Ebpf, programs::Iter};
+use aya::{Ebpf, programs::Iter};
 
 #[test_log::test]
 fn iter_task() {
+    let Some(btf) = super::kernel_btf() else {
+        return;
+    };
     let mut ebpf = Ebpf::load(crate::ITER_TASK).unwrap();
-    let btf = Btf::from_sys_fs().unwrap();
     let prog: &mut Iter = ebpf.program_mut("iter_task").unwrap().try_into().unwrap();
     prog.load("task", &btf).unwrap();
 

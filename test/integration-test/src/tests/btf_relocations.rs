@@ -100,7 +100,9 @@ fn btf_source_is_not_called_when_unneeded() {
 
 fn assert_relocation(mut bpf: Ebpf, expected: u64) {
     let program: &mut UProbe = bpf.program_mut("program").unwrap().try_into().unwrap();
-    program.load().unwrap();
+    if super::load_or_expect_unsupported_jit(program.load()).is_none() {
+        return;
+    }
     program
         .attach(
             ["trigger_btf_relocations_program"],
