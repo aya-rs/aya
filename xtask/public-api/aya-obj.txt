@@ -5159,6 +5159,8 @@ pub mod aya_obj::relocation
 pub enum aya_obj::relocation::RelocationError
 pub aya_obj::relocation::RelocationError::ExternNotFound
 pub aya_obj::relocation::RelocationError::ExternNotFound::name: alloc::string::String
+pub aya_obj::relocation::RelocationError::FunctionInfoMismatch
+pub aya_obj::relocation::RelocationError::FunctionInfoMismatch::name: alloc::string::String
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::offset: u64
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::relocation_number: usize
