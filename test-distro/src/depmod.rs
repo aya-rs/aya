@@ -13,7 +13,7 @@ use std::{
 
 use anyhow::{Context as _, anyhow};
 use clap::Parser;
-use object::{Object, ObjectSection, Section};
+use object::{Object as _, ObjectSection as _, Section};
 use test_distro::{Compression, read_to_end, resolve_modules_dir};
 use walkdir::WalkDir;
 
@@ -42,6 +42,7 @@ fn main() -> anyhow::Result<()> {
     let mut output = BufWriter::new(&f);
     for entry in WalkDir::new(modules_dir) {
         let entry = entry.context("failed to read entry in walkdir")?;
+        #[expect(clippy::filetype_is_file, reason = "only regular files can be modules")]
         if !entry.file_type().is_file() {
             continue;
         }
@@ -59,9 +60,7 @@ fn main() -> anyhow::Result<()> {
             _ => (module_name, Compression::None),
         };
 
-        let module_name = if let Some(module_name) = module_name.strip_suffix(".ko") {
-            module_name
-        } else {
+        let Some(module_name) = module_name.strip_suffix(".ko") else {
             // Not a kernel module
             continue;
         };
