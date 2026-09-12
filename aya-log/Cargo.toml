@@ -3,7 +3,6 @@ description = "A logging library for eBPF programs."
 documentation = "https://docs.rs/aya-log"
 keywords = ["bpf", "ebpf", "log", "logging"]
 name = "aya-log"
-readme = "README.md"
 version = "0.3.0"
 
 authors.workspace = true
