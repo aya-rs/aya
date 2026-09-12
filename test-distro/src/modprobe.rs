@@ -53,7 +53,7 @@ fn try_main(quiet: bool, name: String) -> anyhow::Result<()> {
     let module_path = glob(&pattern)
         .with_context(|| format!("failed to glob: {pattern}"))?
         .next()
-        .ok_or_else(|| anyhow!("module not found: {}", module))?
+        .ok_or_else(|| anyhow!("module not found: {module}"))?
         .context("glob error")?;
 
     output!(quiet, "loading module: {}", module_path.display());
@@ -84,7 +84,7 @@ fn try_main(quiet: bool, name: String) -> anyhow::Result<()> {
             if e == nix::errno::Errno::EEXIST {
                 Err(anyhow!("module already loaded"))
             } else {
-                Err(anyhow!("failed to load module: {}", e))
+                Err(anyhow!("failed to load module: {e}"))
             }
         }
     }
@@ -110,7 +110,7 @@ fn resolve_alias(quiet: bool, module_dir: &Path, name: &str) -> anyhow::Result<S
             return Ok(module.to_string());
         }
     }
-    bail!("alias not found: {}", name)
+    bail!("alias not found: {name}")
 }
 
 fn parse_alias_line(line: &str) -> anyhow::Result<Option<(&str, &str)>> {
