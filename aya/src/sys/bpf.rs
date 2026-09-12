@@ -158,6 +158,7 @@ pub(crate) struct EbpfLoadProgramAttrs<'a> {
     pub(crate) line_info_rec_size: usize,
     pub(crate) line_info: LineSecInfo,
     pub(crate) flags: u32,
+    pub(crate) prog_ifindex: u32,
 }
 
 pub(crate) fn bpf_load_program(
@@ -177,6 +178,7 @@ pub(crate) fn bpf_load_program(
     }
 
     u.prog_flags = aya_attr.flags;
+    u.prog_ifindex = aya_attr.prog_ifindex;
     u.prog_type = aya_attr.ty as u32;
     if let Some(v) = aya_attr.expected_attach_type {
         u.expected_attach_type = v as u32;
