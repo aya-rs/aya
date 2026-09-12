@@ -8,6 +8,8 @@ use std::{
 
 use anyhow::{Context as _, Ok, Result, anyhow};
 use cargo_metadata::{Metadata, MetadataCommand, Package, Target, TargetKind};
+// Keep this build dependency in Cargo's graph to invalidate eBPF artifacts after source changes.
+use integration_ebpf as _;
 use xtask::{AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR, exec, install_libbpf_headers_cmd};
 
 /// This file, along with the xtask crate, allows analysis tools such as `cargo check`, `cargo

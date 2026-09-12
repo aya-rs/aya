@@ -29,23 +29,23 @@ name = "array"
 path = "src/array.rs"
 
 [[bin]]
-name = "bloom_filter"
+name = "bloom-filter"
 path = "src/bloom_filter.rs"
 
 [[bin]]
-name = "bpf_probe_read"
+name = "bpf-probe-read"
 path = "src/bpf_probe_read.rs"
 
 [[bin]]
-name = "btf_maps_plain"
+name = "btf-maps-plain"
 path = "src/btf_maps_plain.rs"
 
 [[bin]]
-name = "cpu_map"
+name = "cpu-map"
 path = "src/cpu_map.rs"
 
 [[bin]]
-name = "dev_map"
+name = "dev-map"
 path = "src/dev_map.rs"
 
 [[bin]]
@@ -53,7 +53,7 @@ name = "fexit"
 path = "src/fexit.rs"
 
 [[bin]]
-name = "hash_map"
+name = "hash-map"
 path = "src/hash_map.rs"
 
 [[bin]]
@@ -61,7 +61,7 @@ name = "kprobe"
 path = "src/kprobe.rs"
 
 [[bin]]
-name = "linear_data_structures"
+name = "linear-data-structures"
 path = "src/linear_data_structures.rs"
 
 [[bin]]
@@ -69,19 +69,19 @@ name = "log"
 path = "src/log.rs"
 
 [[bin]]
-name = "lpm_trie"
+name = "lpm-trie"
 path = "src/lpm_trie.rs"
 
 [[bin]]
-name = "map_test"
+name = "map-test"
 path = "src/map_test.rs"
 
 [[bin]]
-name = "memmove_test"
+name = "memmove-test"
 path = "src/memmove_test.rs"
 
 [[bin]]
-name = "name_test"
+name = "name-test"
 path = "src/name_test.rs"
 
 [[bin]]
@@ -89,19 +89,19 @@ name = "pass"
 path = "src/pass.rs"
 
 [[bin]]
-name = "per_cpu_array"
+name = "per-cpu-array"
 path = "src/per_cpu_array.rs"
 
 [[bin]]
-name = "perf_event_array"
+name = "perf-event-array"
 path = "src/perf_event_array.rs"
 
 [[bin]]
-name = "perf_event_byte_array"
+name = "perf-event-byte-array"
 path = "src/perf_event_byte_array.rs"
 
 [[bin]]
-name = "raw_tracepoint"
+name = "raw-tracepoint"
 path = "src/raw_tracepoint.rs"
 
 [[bin]]
@@ -109,31 +109,31 @@ name = "relocations"
 path = "src/relocations.rs"
 
 [[bin]]
-name = "ring_buf"
+name = "ring-buf"
 path = "src/ring_buf.rs"
 
 [[bin]]
-name = "sk_storage"
+name = "sk-storage"
 path = "src/sk_storage.rs"
 
 [[bin]]
-name = "sock_hash"
+name = "sock-hash"
 path = "src/sock_hash.rs"
 
 [[bin]]
-name = "sock_map"
+name = "sock-map"
 path = "src/sock_map.rs"
 
 [[bin]]
-name = "simple_prog"
+name = "simple-prog"
 path = "src/simple_prog.rs"
 
 [[bin]]
-name = "sk_reuseport"
+name = "sk-reuseport"
 path = "src/sk_reuseport.rs"
 
 [[bin]]
-name = "socket_filter"
+name = "socket-filter"
 path = "src/socket_filter.rs"
 
 [[bin]]
@@ -149,69 +149,69 @@ name = "test"
 path = "src/test.rs"
 
 [[bin]]
-name = "test_run"
+name = "test-run"
 path = "src/test_run.rs"
 
 [[bin]]
-name = "two_progs"
+name = "two-progs"
 path = "src/two_progs.rs"
 
 [[bin]]
-name = "xdp_sec"
+name = "xdp-sec"
 path = "src/xdp_sec.rs"
 
 [[bin]]
-name = "uprobe_cookie"
+name = "uprobe-cookie"
 path = "src/uprobe_cookie.rs"
 
 [[bin]]
-name = "uprobe_multi"
+name = "uprobe-multi"
 path = "src/uprobe_multi.rs"
 
 [[bin]]
-name = "perf_event_bp"
+name = "perf-event-bp"
 path = "src/perf_event_bp.rs"
 
 [[bin]]
-name = "printk_test"
+name = "printk-test"
 path = "src/printk_test.rs"
 
 [[bin]]
-name = "prog_array"
+name = "prog-array"
 path = "src/prog_array.rs"
 
 [[bin]]
-name = "stack_trace"
+name = "stack-trace"
 path = "src/stack_trace.rs"
 
 [[bin]]
-name = "stack_trace_lsm"
+name = "stack-trace-lsm"
 path = "src/stack_trace_lsm.rs"
 
 [[bin]]
-name = "btf_map_of_maps"
+name = "btf-map-of-maps"
 path = "src/btf_map_of_maps.rs"
 
 [[bin]]
-name = "xsk_map"
+name = "xsk-map"
 path = "src/xsk_map.rs"
 
 [[bin]]
-name = "cgroup_array"
+name = "cgroup-array"
 path = "src/cgroup_array.rs"
 
 [[bin]]
-name = "cgroup_connect"
+name = "cgroup-connect"
 path = "src/cgroup_connect.rs"
 
 [[bin]]
-name = "cgroup_storage"
+name = "cgroup-storage"
 path = "src/cgroup_storage.rs"
 
 [[bin]]
-name = "inode_storage"
+name = "inode-storage"
 path = "src/inode_storage.rs"
 
 [[bin]]
-name = "cgrp_storage"
+name = "cgrp-storage"
 path = "src/cgrp_storage.rs"

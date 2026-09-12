@@ -127,6 +127,12 @@ jobs:
         with:
           tool: cargo-hack,taplo-cli,typos-cli
 
+      # Clippy denies compiler warnings; fetch checks Cargo's manifest warnings.
+      - name: Check Cargo manifest warnings
+        env:
+          CARGO_BUILD_WARNINGS: deny
+        run: cargo +nightly fetch --locked
+
       - run: git ls-files -- '*.c' '*.h' | xargs clang-format --dry-run --Werror
 
       - uses: DavidAnson/markdownlint-cli2-action@v24
