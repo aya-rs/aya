@@ -99,6 +99,8 @@ mod util;
 pub use extern_types::KsymsError;
 pub use maps::Map;
 pub use obj::*;
+#[cfg(test)]
+use rbpf as _;
 
 /// An error returned from the verifier.
 ///

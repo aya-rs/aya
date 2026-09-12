@@ -1,5 +1,20 @@
 #![no_std]
 #![no_main]
+#![allow(
+    unused_crate_dependencies,
+    reason = "ebpf_panic is only required for non-test eBPF builds; importing it unconditionally would register its panic handler during tests and conflict with std"
+)]
+
+#[cfg(not(test))]
+extern crate ebpf_panic;
+
+// Required for satisfying unused-crate-dependencies lint
+#[rustfmt::skip]
+use aya_log_ebpf as _;
+#[rustfmt::skip]
+use integration_ebpf as _;
+#[rustfmt::skip]
+use network_types as _;
 
 use aya_ebpf::{
     bindings::{sk_action::SK_PASS, xdp_action},
@@ -8,8 +23,6 @@ use aya_ebpf::{
     programs::{RawTracePointContext, SkBuffContext, TcContext, XdpContext},
 };
 use integration_common::test_run::{IF_INDEX, XDP_MODIFY_LEN, XDP_MODIFY_VAL};
-#[cfg(not(test))]
-extern crate ebpf_panic;
 
 #[map]
 static EXEC_COUNT: Array<u64> = Array::with_max_entries(1, 0);

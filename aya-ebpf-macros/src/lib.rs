@@ -27,6 +27,8 @@ mod tracepoint;
 mod uprobe;
 mod xdp;
 
+#[cfg(test)]
+use aya_ebpf as _;
 use btf_map::BtfMap;
 use btf_tracepoint::BtfTracePoint;
 use cgroup_device::CgroupDevice;

@@ -3,6 +3,21 @@
 #![expect(internal_features, reason = "atomic_xadd is unstable")]
 #![expect(unstable_features, reason = "atomic_xadd is unstable")]
 #![feature(core_intrinsics)]
+#![allow(
+    unused_crate_dependencies,
+    reason = "ebpf_panic is only required for non-test eBPF builds; importing it unconditionally would register its panic handler during tests and conflict with std"
+)]
+
+#[cfg(not(test))]
+extern crate ebpf_panic;
+
+// Required for satisfying unused-crate-dependencies lint
+#[rustfmt::skip]
+use aya_log_ebpf as _;
+#[rustfmt::skip]
+use integration_ebpf as _;
+#[rustfmt::skip]
+use network_types as _;
 
 use aya_ebpf::{
     btf_maps::RingBuf as BtfRingBuf,
@@ -11,8 +26,6 @@ use aya_ebpf::{
     programs::ProbeContext,
 };
 use integration_common::ring_buf::Registers;
-#[cfg(not(test))]
-extern crate ebpf_panic;
 
 #[btf_map]
 static RING_BUF: BtfRingBuf<u64, 0, 0> = BtfRingBuf::new();
