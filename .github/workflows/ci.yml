@@ -343,13 +343,15 @@ jobs:
         # for CI. We use arm64 runners to avoid cross-compilation.
         os:
           - ubuntu-24.04-arm
-        vm-kernels:
-          - arm64 5.10
-          - arm64 5.15
-          - arm64 6.1
-          - arm64 6.6
-          - arm64 6.12
-          - arm64 6.18
+        kernel-arch:
+          - arm64
+        vm-kernels: &kernel_versions
+          - '5.10'
+          - '5.15'
+          - '6.1'
+          - '6.6'
+          - '6.12'
+          - '6.18'
         skip-local:
           - true
         include:
@@ -357,12 +359,20 @@ jobs:
             # Just one kernel to keep things fast. We just want to keep things from rotting on
             # macOS. We use amd64 because otherwise qemu tries to use HVF and hits a hard error:
             # qemu-system-aarch64: -accel hvf: Error: ret = HV_UNSUPPORTED (0xfae9400f, at ../target/arm/hvf/hvf.c:956)
-            vm-kernels: amd64 5.10
+            kernel-arch: amd64
+            vm-kernels:
+              - '5.10'
 
           # We don't use ubuntu-latest because we care about the apt packages available.
           - os: ubuntu-24.04
-            vm-kernels: amd64 5.10 5.15 6.1 6.6 6.12 6.18
+            kernel-arch: amd64
+            vm-kernels: *kernel_versions
+          - os: ubuntu-24.04
+            kernel-arch: armhf
+            vm-kernels: *kernel_versions
+            skip-local: true
           - os: ubuntu-24.04-arm
+            kernel-arch: arm64
             # Native arm runner for local tests only; arm runners don't support
             # nested virtualization so running them here would be slow.
             vm-kernels: local
@@ -441,7 +451,7 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: test/.tmp
-          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v2-${{ matrix.vm-kernels }}
+          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v2-${{ matrix.kernel-arch }}-${{ join(matrix.vm-kernels, '-') }}
 
       - name: Cleanup stale kernels and modules
         run: rm -rf test/.tmp/boot test/.tmp/lib
@@ -450,13 +460,24 @@ jobs:
         if: runner.os == 'Linux' && matrix.skip-local != true
         run: cargo xtask integration-test local
 
+      - name: Install cross toolchain
+        if: >-
+          runner.os == 'Linux' &&
+          matrix.kernel-arch != fromJSON('{"X64":"amd64","ARM64":"arm64"}')[runner.arch]
+        uses: taiki-e/setup-cross-toolchain-action@v1
+        with:
+          target: ${{ fromJSON('{"amd64":"x86_64-unknown-linux-musl","arm64":"aarch64-unknown-linux-musl","armhf":"armv7-unknown-linux-musleabihf"}')[matrix.kernel-arch] }}
+          runner: none
+
       - name: Run virtualized integration tests
         if: matrix.vm-kernels != 'local'
         run: |
           set -euxo pipefail
 
-          cargo xtask integration-test vm --cache-dir test/.tmp \
-            --kernel-arch ${{ matrix.vm-kernels }}
+          # The cross-toolchain action sets CARGO_BUILD_TARGET globally.
+          # Run xtask on the host; it passes --target for guest binaries.
+          env -u CARGO_BUILD_TARGET cargo xtask integration-test vm --cache-dir test/.tmp \
+            --kernel-arch ${{ matrix.kernel-arch }} ${{ join(matrix.vm-kernels, ' ') }}
 
       - name: Save VM integration test cache
         # By default, caches expire after seven days without access.
@@ -470,7 +491,7 @@ jobs:
         uses: actions/cache/save@v6
         with:
           path: test/.tmp
-          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v2-${{ matrix.vm-kernels }}
+          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v2-${{ matrix.kernel-arch }}-${{ join(matrix.vm-kernels, '-') }}
 
   check:
     if: always()
