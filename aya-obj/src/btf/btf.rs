@@ -426,12 +426,14 @@ impl Btf {
 
     pub(crate) fn type_size(&self, root_type_id: u32) -> Result<usize, BtfError> {
         let mut type_id = root_type_id;
-        let mut n_elems = 1;
+        let mut n_elems: u32 = 1;
         for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
             let ty = self.types.type_by_id(type_id)?;
             let size = match ty {
                 BtfType::Array(Array { array, .. }) => {
-                    n_elems = array.len;
+                    n_elems = n_elems
+                        .checked_mul(array.len)
+                        .ok_or(BtfError::InvalidTypeInfo)?;
                     type_id = array.element_type;
                     continue;
                 }
@@ -446,7 +448,10 @@ impl Btf {
                     }
                 }
             };
-            return Ok((size * n_elems) as usize);
+            return size
+                .checked_mul(n_elems)
+                .map(|size| size as usize)
+                .ok_or(BtfError::InvalidTypeInfo);
         }
 
         Err(BtfError::MaximumTypeDepthReached {
@@ -1401,6 +1406,45 @@ mod tests {
         assert_eq!(header.type_len, 0x2a5464);
         assert_eq!(header.str_off, 0x2a5464);
         assert_eq!(header.str_len, 0x1c6410);
+    }
+
+    #[test]
+    fn test_type_size_for_arrays() {
+        let mut btf = Btf::new();
+        let char_type = btf.add_type(BtfType::Int(Int::new(0, 1, IntEncoding::None, 0)));
+        let inner_array = btf.add_type(BtfType::Array(Array::new(0, char_type, char_type, 3)));
+        let outer_array = btf.add_type(BtfType::Array(Array::new(0, inner_array, char_type, 2)));
+
+        assert_eq!(btf.type_size(inner_array).unwrap(), 3);
+        assert_eq!(btf.type_size(outer_array).unwrap(), 6);
+    }
+
+    #[test]
+    fn test_type_size_rejects_overflow() {
+        let mut btf = Btf::new();
+        let char_type = btf.add_type(BtfType::Int(Int::new(0, 1, IntEncoding::None, 0)));
+        let inner_array = btf.add_type(BtfType::Array(Array::new(
+            0,
+            char_type,
+            char_type,
+            u32::MAX,
+        )));
+        let outer_array = btf.add_type(BtfType::Array(Array::new(0, inner_array, char_type, 2)));
+
+        assert_matches!(btf.type_size(outer_array), Err(BtfError::InvalidTypeInfo));
+
+        let two_byte_type = btf.add_type(BtfType::Int(Int::new(0, 2, IntEncoding::None, 0)));
+        let too_large_array = btf.add_type(BtfType::Array(Array::new(
+            0,
+            two_byte_type,
+            char_type,
+            u32::MAX,
+        )));
+
+        assert_matches!(
+            btf.type_size(too_large_array),
+            Err(BtfError::InvalidTypeInfo)
+        );
     }
 
     #[test]
