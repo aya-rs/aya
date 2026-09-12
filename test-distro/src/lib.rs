@@ -36,7 +36,7 @@ pub fn resolve_modules_dir() -> anyhow::Result<Cow<'static, Path>> {
     Ok(modules_dir.into())
 }
 
-pub fn read_to_end(path: &std::path::Path, compression: Compression) -> anyhow::Result<Vec<u8>> {
+pub fn read_to_end(path: &Path, compression: Compression) -> anyhow::Result<Vec<u8>> {
     use std::io::Read as _;
 
     let mut f = std::fs::File::open(path).context("open()")?;
@@ -44,6 +44,10 @@ pub fn read_to_end(path: &std::path::Path, compression: Compression) -> anyhow::
     let mut contents = Vec::new();
 
     match compression {
+        #[expect(
+            clippy::verbose_file_reads,
+            reason = "https://github.com/rust-lang/rust-clippy/issues/8051"
+        )]
         Compression::None => f.read_to_end(&mut contents),
         Compression::Xz => {
             #[cfg(feature = "xz2")]
