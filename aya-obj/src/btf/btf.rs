@@ -426,12 +426,14 @@ impl Btf {
 
     pub(crate) fn type_size(&self, root_type_id: u32) -> Result<usize, BtfError> {
         let mut type_id = root_type_id;
-        let mut n_elems = 1;
+        let mut n_elems: usize = 1;
         for () in core::iter::repeat_n((), MAX_RESOLVE_DEPTH) {
             let ty = self.types.type_by_id(type_id)?;
             let size = match ty {
                 BtfType::Array(Array { array, .. }) => {
-                    n_elems = array.len;
+                    n_elems = n_elems
+                        .checked_mul(array.len as usize)
+                        .ok_or(BtfError::UnexpectedBtfType { type_id })?;
                     type_id = array.element_type;
                     continue;
                 }
@@ -446,7 +448,11 @@ impl Btf {
                     }
                 }
             };
-            return Ok((size * n_elems) as usize);
+            return (size as usize)
+                .checked_mul(n_elems)
+                .ok_or(BtfError::UnexpectedBtfType {
+                    type_id: root_type_id,
+                });
         }
 
         Err(BtfError::MaximumTypeDepthReached {
@@ -2223,5 +2229,38 @@ mod tests {
         // Ensure we can convert to bytes and back again.
         let raw = btf.to_bytes();
         Btf::parse(&raw, Endianness::default()).unwrap();
+    }
+
+    #[test]
+    fn test_multidimensional_array_type_size() {
+        let mut btf = Btf::new();
+        let name_offset = btf.add_string("char");
+        let char_type_id = btf.add_type(BtfType::Int(Int::new(
+            name_offset,
+            1,
+            IntEncoding::Signed,
+            0,
+        )));
+        let name_offset = btf.add_string("u32");
+        let u32_type_id =
+            btf.add_type(BtfType::Int(Int::new(name_offset, 4, IntEncoding::None, 0)));
+
+        // 1D array: char[3] -> size 3
+        let array_1d = btf.add_type(BtfType::Array(Array::new(0, char_type_id, u32_type_id, 3)));
+        assert_eq!(btf.type_size(array_1d).unwrap(), 3);
+
+        // 2D array: char[2][3] -> size 6
+        let array_2d = btf.add_type(BtfType::Array(Array::new(0, array_1d, u32_type_id, 2)));
+        assert_eq!(btf.type_size(array_2d).unwrap(), 6);
+
+        // 3D array: char[4][2][3] -> size 24
+        let array_3d = btf.add_type(BtfType::Array(Array::new(0, array_2d, u32_type_id, 4)));
+        assert_eq!(btf.type_size(array_3d).unwrap(), 24);
+
+        // Typedef to array: typedef char row_t[3]; row_t matrix[2]; -> size 6
+        let name_offset = btf.add_string("row_t");
+        let typedef_id = btf.add_type(BtfType::Typedef(Typedef::new(name_offset, array_1d)));
+        let matrix_id = btf.add_type(BtfType::Array(Array::new(0, typedef_id, u32_type_id, 2)));
+        assert_eq!(btf.type_size(matrix_id).unwrap(), 6);
     }
 }
