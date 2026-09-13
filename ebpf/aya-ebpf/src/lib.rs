@@ -155,25 +155,27 @@ pub fn check_bounds_signed<T: Into<i64>>(value: T, lower: T, upper: T) -> bool {
     let value = value.into();
     let lower = lower.into();
     let upper = upper.into();
-    #[cfg(target_arch = "bpf")]
-    unsafe {
-        let mut in_bounds = 0u64;
-        core::arch::asm!(
-            "if {value} s< {lower} goto +2",
-            "if {value} s> {upper} goto +1",
-            "{i} = 1",
-            i = inout(reg) in_bounds,
-            lower = in(reg) lower,
-            upper = in(reg) upper,
-            value = in(reg) value,
-        );
-        in_bounds == 1
-    }
-    // We only need this for doc tests which are compiled for the host target
-    #[expect(clippy::unreachable, reason = "only used for doc tests")]
-    #[cfg(not(target_arch = "bpf"))]
-    {
-        unreachable!("value={value} lower={lower} upper={upper}");
+    cfg_select! {
+        target_arch = "bpf" => unsafe {
+            let mut in_bounds = 0u64;
+            core::arch::asm!(
+                "if {value} s< {lower} goto +2",
+                "if {value} s> {upper} goto +1",
+                "{i} = 1",
+                i = inout(reg) in_bounds,
+                lower = in(reg) lower,
+                upper = in(reg) upper,
+                value = in(reg) value,
+            );
+            in_bounds == 1
+        },
+        _ => {
+            // We only need this for doc tests which are compiled for the host target
+            #[expect(clippy::unreachable, reason = "only used for doc tests")]
+            {
+                unreachable!("value={value} lower={lower} upper={upper}")
+            }
+        }
     }
 }
 

@@ -82,37 +82,32 @@ impl MockableFd {
         1337
     }
 
-    #[cfg(not(test))]
     const fn from_fd(fd: OwnedFd) -> Self {
-        Self { fd }
-    }
-
-    #[cfg(test)]
-    const fn from_fd(fd: OwnedFd) -> Self {
+        #[cfg(test)]
         let fd = Some(fd);
         Self { fd }
     }
 
-    #[cfg(not(test))]
     const fn inner(&self) -> &OwnedFd {
         let Self { fd } = self;
+        #[cfg(test)]
+        let fd = fd.as_ref().unwrap();
         fd
     }
 
-    #[cfg(test)]
-    const fn inner(&self) -> &OwnedFd {
-        let Self { fd } = self;
-        fd.as_ref().unwrap()
-    }
-
-    #[cfg(not(test))]
-    fn into_inner(self) -> OwnedFd {
-        self.fd
-    }
-
-    #[cfg(test)]
-    fn into_inner(mut self) -> OwnedFd {
-        self.fd.take().unwrap()
+    cfg_select! {
+        test => {
+            fn into_inner(mut self) -> OwnedFd {
+                let Self { fd } = &mut self;
+                fd.take().unwrap()
+            }
+        }
+        _ => {
+            fn into_inner(self) -> OwnedFd {
+                let Self { fd } = self;
+                fd
+            }
+        }
     }
 
     fn try_clone(&self) -> std::io::Result<Self> {
