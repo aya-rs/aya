@@ -50,29 +50,23 @@ pub fn read_to_end(path: &Path, compression: Compression) -> anyhow::Result<Vec<
         )]
         Compression::None => f.read_to_end(&mut contents),
         Compression::Xz => {
-            #[cfg(feature = "xz2")]
-            {
-                reserve_decompressed_capacity(&mut contents, &f)?;
-                xz2::read::XzDecoder::new(f).read_to_end(&mut contents)
-            }
-
-            #[cfg(not(feature = "xz2"))]
-            {
-                anyhow::bail!("cannot read {} without xz2 feature", path.display());
+            cfg_select! {
+                feature = "xz2" => {
+                    reserve_decompressed_capacity(&mut contents, &f)?;
+                    xz2::read::XzDecoder::new(f).read_to_end(&mut contents)
+                }
+                _ => anyhow::bail!("cannot read {} without xz2 feature", path.display()),
             }
         }
         Compression::Zstd => {
-            #[cfg(feature = "zstd")]
-            {
-                reserve_decompressed_capacity(&mut contents, &f)?;
-                zstd::stream::read::Decoder::new(f)
-                    .context("zstd decoder")?
-                    .read_to_end(&mut contents)
-            }
-
-            #[cfg(not(feature = "zstd"))]
-            {
-                anyhow::bail!("cannot read {} without zstd feature", path.display());
+            cfg_select! {
+                feature = "zstd" => {
+                    reserve_decompressed_capacity(&mut contents, &f)?;
+                    zstd::stream::read::Decoder::new(f)
+                        .context("zstd decoder")?
+                        .read_to_end(&mut contents)
+                }
+                _ => anyhow::bail!("cannot read {} without zstd feature", path.display()),
             }
         }
     }
