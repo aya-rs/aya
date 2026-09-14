@@ -23,8 +23,9 @@ impl HttpClient {
         const REQUEST_PHASE_TIMEOUT: Duration = Duration::from_secs(30);
         const REQUEST_GLOBAL_TIMEOUT: Duration = Duration::from_secs(15 * 60);
 
-        // Keep request setup and metadata responses short. Downloads override
-        // the response limits and use the global limit for the transfer.
+        // Keep request setup and metadata responses short. Downloads retain
+        // the header timeout but disable the body timeout. The global timeout
+        // still bounds the entire request, including reading the body.
         let config = ureq::Agent::config_builder()
             .timeout_resolve(Some(REQUEST_PHASE_TIMEOUT))
             .timeout_connect(Some(REQUEST_PHASE_TIMEOUT))
@@ -94,10 +95,6 @@ impl HttpClient {
             .agent
             .get(url)
             .config()
-            // ureq 3.3 also applies the header timeout while reading the body.
-            // TODO(https://github.com/algesten/ureq/pull/1194): remove this
-            // override once the locked ureq dependency includes the fix.
-            .timeout_recv_response(None)
             // The body timeout is documented as a total duration, not an idle timeout.
             // Large packages use the global limit instead of the metadata limit.
             .timeout_recv_body(None)
