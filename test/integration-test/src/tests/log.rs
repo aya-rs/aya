@@ -204,6 +204,14 @@ fn log() {
         })
     );
 
+    // The comm is the name of the current process, which varies by test runner.
+    // We just assert the log was emitted with the right level and a non-empty body.
+    let comm_log = records.next().unwrap();
+    assert!(comm_log.body.starts_with("comm: "));
+    assert!(!comm_log.body.trim_start_matches("comm: ").is_empty());
+    assert_eq!(comm_log.level, Level::Info);
+    assert_eq!(comm_log.target, "log");
+
     assert_eq!(
         records.next(),
         Some(&CapturedLog {
