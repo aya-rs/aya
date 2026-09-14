@@ -469,10 +469,10 @@ impl Object {
         }
 
         for s in obj.sections() {
-            if let Ok(name) = s.name() {
-                if name == ".BTF" || name == ".BTF.ext" {
-                    continue;
-                }
+            if let Ok(name) = s.name()
+                && (name == ".BTF" || name == ".BTF.ext")
+            {
+                continue;
             }
 
             bpf_obj.parse_section(Section::try_from(&s)?)?;
@@ -1413,11 +1413,12 @@ pub const fn parse_map_info(info: bpf_map_info, pinned: PinningType) -> Map {
 
 /// Copies a block of eBPF instructions
 pub fn copy_instructions(data: &[u8]) -> Result<Vec<bpf_insn>, ParseError> {
-    if !data.len().is_multiple_of(size_of::<bpf_insn>()) {
+    let (chunks, tail) = data.as_chunks::<{ size_of::<bpf_insn>() }>();
+    if !tail.is_empty() {
         return Err(ParseError::InvalidProgramCode);
     }
-    let instructions = data
-        .chunks_exact(size_of::<bpf_insn>())
+    let instructions = chunks
+        .iter()
         .map(|d| unsafe { ptr::read_unaligned(d.as_ptr().cast()) })
         .collect::<Vec<_>>();
     Ok(instructions)

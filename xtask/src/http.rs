@@ -21,7 +21,7 @@ pub(crate) struct HttpClient {
 impl HttpClient {
     pub(crate) fn new() -> Self {
         const REQUEST_PHASE_TIMEOUT: Duration = Duration::from_secs(30);
-        const REQUEST_GLOBAL_TIMEOUT: Duration = Duration::from_secs(15 * 60);
+        const REQUEST_GLOBAL_TIMEOUT: Duration = Duration::from_mins(15);
 
         // Keep request setup and metadata responses short. Downloads retain
         // the header timeout but disable the body timeout. The global timeout
@@ -181,11 +181,10 @@ impl HttpClient {
         if let Some(etag) = etag {
             fs::write(etag_path, etag)
                 .with_context(|| format!("failed to write {}", etag_path.display()))?;
-        } else if let Err(error) = fs::remove_file(etag_path) {
-            if error.kind() != io::ErrorKind::NotFound {
-                return Err(error)
-                    .with_context(|| format!("failed to remove {}", etag_path.display()));
-            }
+        } else if let Err(error) = fs::remove_file(etag_path)
+            && error.kind() != io::ErrorKind::NotFound
+        {
+            return Err(error).with_context(|| format!("failed to remove {}", etag_path.display()));
         }
 
         Ok(())

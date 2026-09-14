@@ -873,14 +873,13 @@ impl Btf {
                         f.set_linkage(FuncLinkage::Global);
                     }
 
-                    if let Some(placeholder_name_offset) = placeholder_name_offset {
-                        if let BtfType::FuncProto(func_proto) =
+                    if let Some(placeholder_name_offset) = placeholder_name_offset
+                        && let BtfType::FuncProto(func_proto) =
                             &mut self.types.types[proto_id as usize]
-                        {
-                            for param in &mut func_proto.params {
-                                if param.btf_type != 0 && param.name_offset == 0 {
-                                    param.name_offset = placeholder_name_offset;
-                                }
+                    {
+                        for param in &mut func_proto.params {
+                            if param.btf_type != 0 && param.name_offset == 0 {
+                                param.name_offset = placeholder_name_offset;
                             }
                         }
                     }

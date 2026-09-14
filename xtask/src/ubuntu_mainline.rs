@@ -89,14 +89,14 @@ fn directory_listing_urls<'a>(
         // Normalize Apache directory listing links to absolute URLs so callers
         // can compare and inspect them without carrying base URL state, e.g.
         // `/mainline/v6.18.32/`, `arm64/`, and `linux-modules-...deb`.
-        if href.starts_with('/') {
-            if let Some(scheme_end) = base_url.find("://") {
-                let host_start = scheme_end + "://".len();
-                let origin_end = base_url[host_start..]
-                    .find('/')
-                    .map_or(base_url.len(), |index| host_start + index);
-                return Cow::Owned(format!("{}{}", &base_url[..origin_end], href));
-            }
+        if href.starts_with('/')
+            && let Some(scheme_end) = base_url.find("://")
+        {
+            let host_start = scheme_end + "://".len();
+            let origin_end = base_url[host_start..]
+                .find('/')
+                .map_or(base_url.len(), |index| host_start + index);
+            return Cow::Owned(format!("{}{}", &base_url[..origin_end], href));
         }
 
         match href.split_once("://") {

@@ -286,10 +286,10 @@ impl Drop for ProbeEvent {
             event_alias,
             detach_debug_fs,
         } = self;
-        if let Some((detach_debug_fs, is_guard)) = detach_debug_fs {
-            if *is_guard {
-                let _unused: Result<(), ProgramError> = detach_debug_fs(event_alias);
-            }
+        if let Some((detach_debug_fs, is_guard)) = detach_debug_fs
+            && *is_guard
+        {
+            let _unused: Result<(), ProgramError> = detach_debug_fs(event_alias);
         }
     }
 }

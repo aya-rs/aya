@@ -1565,18 +1565,17 @@ pub(crate) fn retry_with_verifier_logs<T>(
     let mut retries = 0;
     loop {
         let ret = f(log_buf.as_mut_slice());
-        if retries != max_retries {
-            if let Err(io_error) = &ret {
-                if retries == 0 || io_error.raw_os_error() == Some(ENOSPC) {
-                    let len = (log_buf.capacity() * 10).clamp(MIN_LOG_BUF_SIZE, MAX_LOG_BUF_SIZE);
-                    log_buf.resize(len, 0);
-                    if let Some(first) = log_buf.first_mut() {
-                        *first = 0;
-                    }
-                    retries += 1;
-                    continue;
-                }
+        if retries != max_retries
+            && let Err(io_error) = &ret
+            && (retries == 0 || io_error.raw_os_error() == Some(ENOSPC))
+        {
+            let len = (log_buf.capacity() * 10).clamp(MIN_LOG_BUF_SIZE, MAX_LOG_BUF_SIZE);
+            log_buf.resize(len, 0);
+            if let Some(first) = log_buf.first_mut() {
+                *first = 0;
             }
+            retries += 1;
+            continue;
         }
         if let Some(pos) = log_buf.iter().position(|b| *b == 0) {
             log_buf.truncate(pos);

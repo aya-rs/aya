@@ -260,15 +260,15 @@ fn list_loaded_maps() {
             Err(err) => panic!("{err:?}"),
         })
         .collect();
-    if let Ok(info) = &prog.info() {
-        if let Some(map_ids) = info.map_ids().unwrap() {
-            assert_eq!(2, map_ids.len());
-            for id in map_ids {
-                assert!(
-                    maps.iter().any(|m| m.id() == id),
-                    "expected `loaded_maps()` to have `map_ids` from program",
-                );
-            }
+    if let Ok(info) = &prog.info()
+        && let Some(map_ids) = info.map_ids().unwrap()
+    {
+        assert_eq!(2, map_ids.len());
+        for id in map_ids {
+            assert!(
+                maps.iter().any(|m| m.id() == id),
+                "expected `loaded_maps()` to have `map_ids` from program",
+            );
         }
     }
 

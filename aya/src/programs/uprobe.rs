@@ -1254,15 +1254,13 @@ impl<T: AsRef<[u8]>> ProcMap<T> {
             } = entry?;
             if let Some(path) = path {
                 let path = Path::new(path);
-                if let Some(filename) = path.file_name() {
-                    if let Some(suffix) = filename.strip_prefix(lib) {
-                        if suffix.is_empty()
-                            || suffix.starts_with(OsStr::new(".so"))
-                            || suffix.starts_with(OsStr::new("-"))
-                        {
-                            return Ok(Some(path));
-                        }
-                    }
+                if let Some(filename) = path.file_name()
+                    && let Some(suffix) = filename.strip_prefix(lib)
+                    && (suffix.is_empty()
+                        || suffix.starts_with(OsStr::new(".so"))
+                        || suffix.starts_with(OsStr::new("-")))
+                {
+                    return Ok(Some(path));
                 }
             }
         }
