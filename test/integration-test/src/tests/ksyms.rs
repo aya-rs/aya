@@ -260,13 +260,13 @@ fn ksyms_typeless() {
 
     // Typeless ksym: init_task - cross-verify with kallsyms when available
     let typeless_addr = output.get(&output_keys::TYPELESS_ADDR, 0).unwrap();
-    if typeless_addr != 0 {
-        if let Some(kallsyms_addr) = expected_addr {
-            assert_eq!(
-                typeless_addr, kallsyms_addr,
-                "BPF-resolved init_task ({typeless_addr:#x}) != kallsyms ({kallsyms_addr:#x})"
-            );
-        }
+    if typeless_addr != 0
+        && let Some(kallsyms_addr) = expected_addr
+    {
+        assert_eq!(
+            typeless_addr, kallsyms_addr,
+            "BPF-resolved init_task ({typeless_addr:#x}) != kallsyms ({kallsyms_addr:#x})"
+        );
     }
 
     // Weak typeless ksym (nonexistent) should be 0

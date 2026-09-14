@@ -368,10 +368,9 @@ fn relocate_btf_functions<'target>(
                     } else if let (Some(cand_comp_rel_target), Some(target_comp_rel_target)) = (
                         cand_comp_rel.target.as_ref(),
                         target_comp_rel.target.as_ref(),
-                    ) {
-                        if cand_comp_rel_target.value != target_comp_rel_target.value {
-                            return Some(cand_name);
-                        }
+                    ) && cand_comp_rel_target.value != target_comp_rel_target.value
+                    {
+                        return Some(cand_name);
                     }
 
                     None

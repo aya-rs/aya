@@ -53,11 +53,11 @@ pub const extern "C" fn trigger_btf_hash_of_maps_get_value() {
 #[uprobe]
 pub(crate) fn test_btf_array_of_maps(_ctx: ProbeContext) -> u32 {
     if let Some(ptr) = RESULTS.get_ptr_mut(0) {
-        if let Some(inner) = ARRAY_OF_MAPS.get(0) {
-            if let Some(val) = inner.get(0) {
-                unsafe {
-                    (*ptr).value = *val;
-                }
+        if let Some(inner) = ARRAY_OF_MAPS.get(0)
+            && let Some(val) = inner.get(0)
+        {
+            unsafe {
+                (*ptr).value = *val;
             }
         }
         unsafe {
@@ -70,11 +70,11 @@ pub(crate) fn test_btf_array_of_maps(_ctx: ProbeContext) -> u32 {
 #[uprobe]
 pub(crate) fn test_btf_hash_of_maps(_ctx: ProbeContext) -> u32 {
     if let Some(ptr) = RESULTS.get_ptr_mut(1) {
-        if let Some(inner) = unsafe { HASH_OF_MAPS.get(&0u32) } {
-            if let Some(val) = inner.get(0) {
-                unsafe {
-                    (*ptr).value = *val;
-                }
+        if let Some(inner) = unsafe { HASH_OF_MAPS.get(&0u32) }
+            && let Some(val) = inner.get(0)
+        {
+            unsafe {
+                (*ptr).value = *val;
             }
         }
         unsafe {
