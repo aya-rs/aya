@@ -162,6 +162,15 @@ fn log() {
     assert_eq!(
         records.next(),
         Some(&CapturedLog {
+            body: "ip as segments: ipv6: 2001:db8::1".into(),
+            level: Level::Info,
+            target: "log".into(),
+        })
+    );
+
+    assert_eq!(
+        records.next(),
+        Some(&CapturedLog {
             body: "mac lc: 04:20:06:09:00:40, mac uc: 04:20:06:09:00:40".into(),
             level: Level::Trace,
             target: "log".into(),

@@ -754,13 +754,13 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             ArgumentKind::ArrU16Len8 => {
-                let data: [u8; 16] = value
+                let (chunks, []) = value.as_chunks::<2>() else {
+                    return Err(());
+                };
+                let chunks: [[u8; 2]; 8] = chunks
                     .try_into()
                     .map_err(|std::array::TryFromSliceError { .. }| ())?;
-                let mut value: [u16; 8] = Default::default();
-                for (i, s) in data.chunks_exact(2).enumerate() {
-                    value[i] = (u16::from(s[1]) << 8) | u16::from(s[0]);
-                }
+                let value = chunks.map(u16::from_ne_bytes);
                 full_log_msg.push_str(&value.format(last_hint.take())?);
             }
             ArgumentKind::Bytes => {
@@ -1234,7 +1234,7 @@ mod test {
         len += DisplayHint::Ip.write(&mut input[len..]).unwrap().get();
 
         let ipv6 = Ipv6Addr::new(0x2001, 0xdb8, 0, 0, 0, 0, 0x1, 0x1);
-        let ipv6_arr = ipv6.octets();
+        let ipv6_arr = ipv6.segments();
         len += ipv6_arr.write(&mut input[len..]).unwrap().get();
 
         let len = u16::try_from(len).unwrap();
