@@ -359,6 +359,7 @@ pub struct aya::maps::lpm_trie::LpmTrie<T, K, V>
 impl<K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::create(u32, u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<T, K, V>
+pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::contains_key(&self, &aya::maps::lpm_trie::Key<K>, u64) -> core::result::Result<bool, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::get(&self, &aya::maps::lpm_trie::Key<K>, u64) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, aya::maps::lpm_trie::Key<K>, V, Self>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::keys(&self) -> aya::maps::MapKeys<'_, aya::maps::lpm_trie::Key<K>>
@@ -1678,6 +1679,7 @@ pub struct aya::maps::LpmTrie<T, K, V>
 impl<K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<aya::maps::MapData, K, V>::create(u32, u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::lpm_trie::LpmTrie<T, K, V>
+pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::contains_key(&self, &aya::maps::lpm_trie::Key<K>, u64) -> core::result::Result<bool, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::get(&self, &aya::maps::lpm_trie::Key<K>, u64) -> core::result::Result<V, aya::maps::MapError>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::iter(&self) -> aya::maps::MapIter<'_, aya::maps::lpm_trie::Key<K>, V, Self>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::keys(&self) -> aya::maps::MapKeys<'_, aya::maps::lpm_trie::Key<K>>
