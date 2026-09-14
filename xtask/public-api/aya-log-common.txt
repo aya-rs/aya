@@ -117,6 +117,8 @@ impl aya_log_common::Argument for &[u8]
 pub fn &[u8]::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 impl aya_log_common::Argument for &str
 pub fn &str::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
+impl aya_log_common::Argument for [u16; 8]
+pub fn [u16; 8]::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 impl aya_log_common::Argument for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 impl aya_log_common::Argument for core::net::ip_addr::IpAddr

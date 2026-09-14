@@ -265,6 +265,17 @@ impl<const N: usize> Argument for [u8; N] {
     }
 }
 
+impl sealed::Sealed for [u16; 8] {}
+impl Argument for [u16; 8] {
+    fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
+        // SAFETY: Self has no padding, and every bit pattern is valid for u8.
+        // The byte array has the same size and weaker alignment. The returned
+        // reference remains borrowed from self and exposes its native bytes.
+        let bytes = unsafe { core::mem::transmute::<&Self, &[u8; size_of::<Self>()]>(self) };
+        (ArgumentKind::ArrU16Len8, bytes)
+    }
+}
+
 impl sealed::Sealed for &[u8] {}
 impl Argument for &[u8] {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {

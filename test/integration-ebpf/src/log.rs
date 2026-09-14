@@ -64,6 +64,12 @@ fn test_log(ctx: ProbeContext) {
         ipv6.octets()
     );
 
+    info!(
+        &ctx,
+        "ip as segments: ipv6: {:i}",
+        black_box(ipv6.segments())
+    );
+
     let mac = [4u8, 32u8, 6u8, 9u8, 0u8, 64u8];
     trace!(&ctx, "mac lc: {:mac}, mac uc: {:MAC}", mac, mac);
     let hex = 0x2f;
