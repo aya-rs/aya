@@ -399,6 +399,25 @@ fn flavorless_name(name: &str) -> &str {
     name.split_once("___").map_or(name, |x| x.0)
 }
 
+// Whether an array access may go past the declared element count.
+fn is_flex_array(btf: &Btf, array_len: u32, parent: &Accessor) -> Result<bool, BtfError> {
+    // A zero-length array is a flexible array member, whose real length is only known at runtime,
+    // when it is the last field of its parent struct; anywhere else it holds no elements at all.
+    if array_len != 0 {
+        return Ok(false);
+    }
+    let Accessor {
+        type_id,
+        index,
+        name: _,
+    } = parent;
+    let parent_ty = btf.type_by_id(*type_id)?;
+    Ok(match parent_ty {
+        BtfType::Struct(s) => *index == s.members.len() - 1,
+        _ => false,
+    })
+}
+
 fn find_candidates<'target>(
     local_ty: &BtfType,
     local_name: &str,
@@ -519,7 +538,7 @@ fn match_candidate<'target>(
         | RelocationKind::FieldLShift64
         | RelocationKind::FieldRShift64 => {
             let mut target_id = candidate.type_id;
-            for (i, accessor) in local_spec.accessors.iter().enumerate() {
+            for accessor in &local_spec.accessors {
                 target_id = candidate.btf.resolve_type(target_id)?;
 
                 if accessor.name.is_some() {
@@ -536,24 +555,15 @@ fn match_candidate<'target>(
                         return Ok(None);
                     }
                 } else {
-                    // i = 0 is the base struct. for i > 0, we need to potentially do bounds checking
-                    if i > 0 {
+                    // The root has no parent; subsequent unnamed accessors index arrays.
+                    if let Some(parent) = target_spec.accessors.last() {
                         let target_ty = candidate.btf.type_by_id(target_id)?;
                         let BtfType::Array(Array { array, .. }) = target_ty else {
                             return Ok(None);
                         };
 
-                        let var_len = array.len == 0 && {
-                            // an array is potentially variable length if it's the last field
-                            // of the parent struct and has 0 elements
-                            let parent = target_spec.accessors.last().unwrap();
-                            let parent_ty = candidate.btf.type_by_id(parent.type_id)?;
-                            match parent_ty {
-                                BtfType::Struct(s) => parent.index == s.members.len() - 1,
-                                _ => false,
-                            }
-                        };
-                        if !var_len && accessor.index >= array.len as usize {
+                        let is_flex = is_flex_array(candidate.btf, array.len, parent)?;
+                        if !is_flex && accessor.index >= array.len as usize {
                             return Ok(None);
                         }
                         target_id = candidate.btf.resolve_type(array.element_type)?;
@@ -782,22 +792,29 @@ impl<'a> AccessSpec<'a> {
             | RelocationKind::FieldSigned
             | RelocationKind::FieldLShift64
             | RelocationKind::FieldRShift64 => {
-                let mut accessors = vec![Accessor {
+                // Keep the current accessor separate so array accesses always have a parent.
+                let mut accessor = Accessor {
                     type_id,
                     index: parts[0],
                     name: None,
-                }];
-                let mut bit_offset = accessors[0].index * btf.type_size(type_id)?;
+                };
+                let mut accessors = Vec::new();
+                let size = btf.type_size(type_id)?;
+                let mut bit_offset = accessor.index * size;
                 for index in parts.iter().skip(1).copied() {
                     type_id = btf.resolve_type(type_id)?;
                     let ty = btf.type_by_id(type_id)?;
 
-                    match ty {
+                    let next_accessor = match ty {
                         BtfType::Struct(Struct { members, .. })
                         | BtfType::Union(Union { members, .. }) => {
                             if index >= members.len() {
                                 return Err(RelocationError::InvalidAccessIndex {
-                                    access_path: access_path(btf, root, &accessors),
+                                    access_path: access_path(
+                                        btf,
+                                        root,
+                                        accessors.iter().chain([&accessor]),
+                                    ),
                                     spec: spec.to_string(),
                                     index,
                                     len: members.len(),
@@ -808,45 +825,44 @@ impl<'a> AccessSpec<'a> {
                             let member = &members[index];
                             bit_offset += ty.member_bit_offset(member).unwrap();
 
-                            if member.name_offset != 0 {
-                                accessors.push(Accessor {
+                            let next_accessor = if member.name_offset != 0 {
+                                let name = btf.string_at(member.name_offset)?;
+                                Some(Accessor {
                                     type_id,
                                     index,
-                                    name: Some(btf.string_at(member.name_offset)?.to_string()),
-                                });
-                            }
+                                    name: Some(name.to_string()),
+                                })
+                            } else {
+                                None
+                            };
 
                             type_id = member.btf_type;
+                            next_accessor
                         }
 
                         BtfType::Array(Array { array, .. }) => {
                             type_id = btf.resolve_type(array.element_type)?;
-                            let var_len = array.len == 0 && {
-                                // an array is potentially variable length if it's the last field
-                                // of the parent struct and has 0 elements
-                                let parent = accessors.last().unwrap();
-                                let parent_ty = btf.type_by_id(parent.type_id)?;
-                                match parent_ty {
-                                    BtfType::Struct(s) => index == s.members.len() - 1,
-                                    _ => false,
-                                }
-                            };
-                            if !var_len && index >= array.len as usize {
+                            let is_flex = is_flex_array(btf, array.len, &accessor)?;
+                            if !is_flex && index >= array.len as usize {
                                 return Err(RelocationError::InvalidAccessIndex {
-                                    access_path: access_path(btf, root, &accessors),
+                                    access_path: access_path(
+                                        btf,
+                                        root,
+                                        accessors.iter().chain([&accessor]),
+                                    ),
                                     spec: spec.to_string(),
                                     index,
                                     len: array.len as usize,
                                     error: "array index out of bounds",
                                 });
                             }
-                            accessors.push(Accessor {
+                            let size = btf.type_size(type_id)?;
+                            bit_offset += index * size * 8;
+                            Some(Accessor {
                                 type_id,
                                 index,
                                 name: None,
-                            });
-                            let size = btf.type_size(type_id)?;
-                            bit_offset += index * size * 8;
+                            })
                         }
                         rel_kind => {
                             return Err(RelocationError::InvalidRelocationKindForType {
@@ -856,8 +872,13 @@ impl<'a> AccessSpec<'a> {
                                 error: "field relocation on a type that doesn't have fields",
                             });
                         }
+                    };
+                    if let Some(next_accessor) = next_accessor {
+                        accessors.push(accessor);
+                        accessor = next_accessor;
                     }
                 }
+                accessors.push(accessor);
 
                 AccessSpec {
                     btf,

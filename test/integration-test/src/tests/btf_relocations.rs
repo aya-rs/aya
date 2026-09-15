@@ -57,6 +57,17 @@ use rstest::rstest;
     0xCCCCCCCCDDDDDDDD
 )]
 #[case(crate::FIELD_RELOC_BPF, crate::FIELD_RELOC_BTF, 1)]
+#[case(crate::FLEX_ARRAY_RELOC_BPF, crate::FLEX_ARRAY_RELOC_BTF, 24)]
+#[case::target_fixed_array(
+    crate::TARGET_FIXED_ARRAY_RELOC_BPF,
+    crate::TARGET_FIXED_ARRAY_RELOC_BTF,
+    0
+)]
+#[case::target_nonfinal_zero_array(
+    crate::TARGET_NONFINAL_ZERO_ARRAY_RELOC_BPF,
+    crate::TARGET_NONFINAL_ZERO_ARRAY_RELOC_BTF,
+    0
+)]
 #[case(crate::POINTER_RELOC_BPF, crate::POINTER_RELOC_BTF, 21)]
 #[case(crate::STRUCT_FLAVORS_RELOC_BPF, crate::STRUCT_FLAVORS_RELOC_BTF, 2)]
 #[test_attr(test_log::test)]
@@ -69,6 +80,10 @@ fn relocation_tests(#[case] bpf: &[u8], #[case] btf: &[u8], #[case] expected: u6
 }
 
 #[rstest]
+#[case::nonfinal_zero_array(
+    crate::NONFINAL_ZERO_ARRAY_RELOC_BPF,
+    "invalid access string `0:0:1` at `relocated_nonfinal_zero_array.args`: array index out of bounds (index 1, length 0)"
+)]
 #[case::nested_array_bounds(
     crate::NESTED_ARRAY_BOUNDS_RELOC_BPF,
     "invalid access string `0:0:0:0:0:1` at `relocated_nested_array.rows[0].args`: array index out of bounds (index 1, length 1)"
@@ -127,10 +142,13 @@ fn assert_relocation(mut bpf: Ebpf, expected: u64) {
         )
         .unwrap();
 
+    let mut output_map: Array<_, u64> = bpf.take_map("output_map").unwrap().try_into().unwrap();
+    let key = 0;
+    // Require the program to write the result, including when the expected value is zero.
+    output_map.set(key, &!expected, 0).unwrap();
+
     trigger_btf_relocations_program();
 
-    let output_map: Array<_, u64> = bpf.take_map("output_map").unwrap().try_into().unwrap();
-    let key = 0;
     assert_eq!(output_map.get(&key, 0).unwrap(), expected)
 }
 
