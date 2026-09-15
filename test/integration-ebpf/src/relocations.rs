@@ -12,7 +12,7 @@ use aya_ebpf::{
 extern crate ebpf_panic;
 
 #[map]
-static RESULTS: Array<u64> = Array::with_max_entries(3, 0);
+static RESULTS: Array<u64> = Array::with_max_entries(4, 0);
 
 #[uprobe]
 fn test_64_32_call_relocs(_ctx: ProbeContext) {
@@ -25,9 +25,14 @@ fn test_64_32_call_relocs(_ctx: ProbeContext) {
     // this will link set_result_backward after set_result. Then will do a
     // backward call to set_result.
     set_result_backward(2, hint::black_box(3));
+
+    // This callee shares an address with an already linked function in a
+    // different section, but must execute its own body.
+    set_result_other_section(hint::black_box(3), hint::black_box(4));
 }
 
 #[inline(never)]
+#[unsafe(link_section = ".text.relocations")]
 fn set_result(index: u32, value: u64) {
     unsafe {
         if let Some(v) = RESULTS.get_ptr_mut(index) {
@@ -37,6 +42,13 @@ fn set_result(index: u32, value: u64) {
 }
 
 #[inline(never)]
+#[unsafe(link_section = ".text.relocations")]
 fn set_result_backward(index: u32, value: u64) {
     set_result(index, value);
+}
+
+#[inline(never)]
+#[unsafe(link_section = ".text.relocations_other")]
+fn set_result_other_section(index: u32, value: u64) {
+    set_result(index, value.wrapping_add(1));
 }
