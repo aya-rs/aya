@@ -14,6 +14,7 @@ fn relocations() {
     assert_eq!(m.get(&0, 0).unwrap(), 1);
     assert_eq!(m.get(&1, 0).unwrap(), 2);
     assert_eq!(m.get(&2, 0).unwrap(), 3);
+    assert_eq!(m.get(&3, 0).unwrap(), 5);
 }
 
 #[test_log::test]

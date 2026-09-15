@@ -1,6 +1,9 @@
 //! Program relocation handling.
 
-use std::{borrow::ToOwned as _, collections::BTreeMap};
+use std::{
+    borrow::ToOwned as _,
+    collections::{BTreeMap, hash_map::Entry},
+};
 
 use log::debug;
 use object::{SectionIndex, SymbolKind};
@@ -460,7 +463,7 @@ fn relocate_maps<'a, I: Iterator<Item = &'a Relocation>>(
 
 struct FunctionLinker<'a> {
     functions: &'a BTreeMap<(usize, u64), Function>,
-    linked_functions: HashMap<u64, usize>,
+    linked_functions: HashMap<(SectionIndex, u64), usize>,
     relocations: &'a HashMap<SectionIndex, HashMap<u64, Relocation>>,
     symbol_table: &'a HashMap<usize, Symbol>,
     text_sections: &'a HashSet<usize>,
@@ -498,24 +501,29 @@ impl<'a> FunctionLinker<'a> {
         program: &mut Function,
         fun: &Function,
     ) -> Result<usize, RelocationError> {
-        if let Some(fun_ins_index) = self.linked_functions.get(&fun.address) {
-            return Ok(*fun_ins_index);
-        }
+        let Function {
+            address,
+            name,
+            section_index,
+            section_offset: _,
+            instructions,
+            func_info: _,
+            line_info: _,
+            func_info_rec_size: _,
+            line_info_rec_size: _,
+        } = fun;
+        let start_ins = match self.linked_functions.entry((*section_index, *address)) {
+            Entry::Occupied(entry) => return Ok(*entry.get()),
+            Entry::Vacant(entry) => *entry.insert(program.instructions.len()),
+        };
 
-        // append fun.instructions to the program and record that `fun.address` has been inserted
-        // at `start_ins`. We'll use `start_ins` to do pc-relative calls.
-        let start_ins = program.instructions.len();
-        program.instructions.extend(&fun.instructions);
-        debug!(
-            "linked function `{}` at instruction {}",
-            fun.name, start_ins
-        );
+        // Append the function once and use its instruction offset for pc-relative calls.
+        program.instructions.extend(instructions);
+        debug!("linked function `{name}` at instruction {start_ins}");
 
         // link func and line info into the main program
         // the offset needs to be adjusted
         Self::link_func_and_line_info(program, fun, start_ins);
-
-        self.linked_functions.insert(fun.address, start_ins);
 
         // relocate `fun`, recursively linking in all the callees
         self.relocate(program, fun)?;
