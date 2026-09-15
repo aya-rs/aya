@@ -61,6 +61,7 @@ mod sk_lookup;
 mod sk_reuseport;
 mod sk_storage;
 mod smoke;
+mod sock_map;
 mod socket_filter;
 mod stack_trace;
 mod stack_trace_lsm;
