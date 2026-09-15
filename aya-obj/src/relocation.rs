@@ -66,6 +66,13 @@ pub enum RelocationError {
         caller_name: String,
     },
 
+    /// BTF function info mismatch
+    #[error("BTF function info for `{name}` does not match the program")]
+    FunctionInfoMismatch {
+        /// The function name
+        name: String,
+    },
+
     /// Unknown function
     #[error(
         "program at section {section_index} and address {address:#x} was not found while relocating"
@@ -507,11 +514,14 @@ impl<'a> FunctionLinker<'a> {
             section_index,
             section_offset: _,
             instructions,
-            func_info: _,
+            func_info,
             line_info: _,
             func_info_rec_size: _,
             line_info_rec_size: _,
         } = fun;
+        if func_info.func_info.is_empty() != program.func_info.func_info.is_empty() {
+            return Err(RelocationError::FunctionInfoMismatch { name: name.clone() });
+        }
         let start_ins = match self.linked_functions.entry((*section_index, *address)) {
             Entry::Occupied(entry) => return Ok(*entry.get()),
             Entry::Vacant(entry) => *entry.insert(program.instructions.len()),

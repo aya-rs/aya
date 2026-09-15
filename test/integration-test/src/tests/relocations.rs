@@ -1,8 +1,33 @@
+use std::error::Error as _;
+
+use assert_matches::assert_matches;
 use aya::{
-    Ebpf,
-    programs::{UProbe, Xdp, uprobe::UProbeScope},
+    Ebpf, EbpfError,
+    programs::{SocketFilter, UProbe, Xdp, uprobe::UProbeScope},
     util::KernelVersion,
 };
+use aya_obj::relocation::RelocationError;
+use rstest::rstest;
+
+#[rstest]
+#[case::missing_callee(crate::FUNC_INFO_MISSING_CALLEE)]
+#[case::missing_program(crate::FUNC_INFO_MISSING_PROGRAM)]
+#[test_log::test]
+fn mismatched_func_info(#[case] bytes: &[u8]) {
+    let error = Ebpf::load(bytes).unwrap_err();
+    let error = assert_matches!(error, EbpfError::RelocationError(error) => error);
+    let error = error.source().unwrap();
+    let error = error.downcast_ref::<RelocationError>().unwrap();
+    let name = assert_matches!(error, RelocationError::FunctionInfoMismatch { name } => name);
+    assert_eq!(name, "callee");
+}
+
+#[test_log::test]
+fn absent_func_info() {
+    let mut bpf = Ebpf::load(crate::FUNC_INFO_ABSENT).unwrap();
+    let program: &mut SocketFilter = bpf.program_mut("entry").unwrap().try_into().unwrap();
+    program.load().unwrap();
+}
 
 #[test_log::test]
 fn relocations() {

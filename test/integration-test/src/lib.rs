@@ -43,6 +43,9 @@ bpf_file!(
 
     TEXT_64_64_RELOC => "text_64_64_reloc.o",
     VARIABLES_RELOC => "variables_reloc.bpf.o",
+    FUNC_INFO_MISSING_CALLEE => "func_info_missing_callee.bpf.o",
+    FUNC_INFO_MISSING_PROGRAM => "func_info_missing_program.bpf.o",
+    FUNC_INFO_ABSENT => "func_info_absent.bpf.o",
 
     ARRAY => "array",
     BLOOM_FILTER => "bloom-filter",
