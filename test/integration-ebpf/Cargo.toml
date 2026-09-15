@@ -141,7 +141,7 @@ name = "strncmp"
 path = "src/strncmp.rs"
 
 [[bin]]
-name = "tc_classid"
+name = "tc-classid"
 path = "src/tc_classid.rs"
 
 [[bin]]
