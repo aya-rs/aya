@@ -100,6 +100,8 @@ fn main() -> Result<()> {
         ("ksyms_typed_missing_var.bpf.c", true),
         ("ksyms_typed_missing_kfunc.bpf.c", true),
         ("ksyms_typeless_missing.bpf.c", true),
+        ("tc_legacy_map.bpf.c", false),
+        ("tc_legacy_map_in_map.bpf.c", false),
     ];
     const C_BPF_HEADERS: &[&str] = &["reloc.h", "struct_with_scalars.h"];
 
