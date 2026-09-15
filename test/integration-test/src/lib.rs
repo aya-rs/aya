@@ -36,6 +36,7 @@ bpf_file!(
     ENUM_UNSIGNED_64_CHECKED_VARIANTS_RELOC_BTF => "enum_unsigned_64_checked_variants_reloc.bpf.target.o",
     FIELD_RELOC_BPF => "field_reloc.bpf.o",
     FIELD_RELOC_BTF => "field_reloc.bpf.target.o",
+    NESTED_ARRAY_BOUNDS_RELOC_BPF => "nested_array_bounds_reloc.bpf.o",
     POINTER_RELOC_BPF => "pointer_reloc.bpf.o",
     POINTER_RELOC_BTF => "pointer_reloc.bpf.target.o",
     STRUCT_FLAVORS_RELOC_BPF => "struct_flavors_reloc.bpf.o",

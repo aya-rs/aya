@@ -1,10 +1,14 @@
-use std::sync::{
-    Arc,
-    atomic::{AtomicUsize, Ordering},
+use std::{
+    error::Error as _,
+    sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    },
 };
 
+use assert_matches::assert_matches;
 use aya::{
-    Ebpf, EbpfLoader, Endianness,
+    Ebpf, EbpfError, EbpfLoader, Endianness,
     maps::Array,
     programs::{UProbe, uprobe::UProbeScope},
 };
@@ -62,6 +66,20 @@ fn relocation_tests(#[case] bpf: &[u8], #[case] btf: &[u8], #[case] expected: u6
     let bpf = EbpfLoader::new().btf(&btf).load(bpf).unwrap();
 
     assert_relocation(bpf, expected);
+}
+
+#[rstest]
+#[case::nested_array_bounds(
+    crate::NESTED_ARRAY_BOUNDS_RELOC_BPF,
+    "invalid access string `0:0:0:0:0:1` at `relocated_nested_array.rows[0].args`: array index out of bounds (index 1, length 1)"
+)]
+#[test_attr(test_log::test)]
+fn array_out_of_bounds(#[case] bpf: &[u8], #[case] expected: &str) {
+    // Local access validation fails before target matching.
+    let btf = Btf::new();
+    let error = EbpfLoader::new().btf(&btf).load(bpf).unwrap_err();
+    let error = assert_matches!(error, EbpfError::BtfRelocationError(error) => error);
+    assert_eq!(error.source().unwrap().to_string(), expected);
 }
 
 #[test_log::test]

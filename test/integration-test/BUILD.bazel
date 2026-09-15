@@ -21,6 +21,7 @@ C_BPF_OBJECTS = [
     ("bpf/enum_unsigned_64_checked_variants_reloc.bpf.c", True),
     ("bpf/enum_unsigned_64_reloc.bpf.c", True),
     ("bpf/field_reloc.bpf.c", True),
+    ("bpf/nested_array_bounds_reloc.bpf.c", False),
     ("bpf/pointer_reloc.bpf.c", True),
     ("bpf/struct_flavors_reloc.bpf.c", True),
     ("bpf/text_64_64_reloc.c", False),

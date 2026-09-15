@@ -88,6 +88,7 @@ fn main() -> Result<()> {
         ("enum_unsigned_64_checked_variants_reloc.bpf.c", true),
         ("enum_unsigned_64_reloc.bpf.c", true),
         ("field_reloc.bpf.c", true),
+        ("nested_array_bounds_reloc.bpf.c", false),
         ("pointer_reloc.bpf.c", true),
         ("struct_flavors_reloc.bpf.c", true),
         ("text_64_64_reloc.c", false),

@@ -88,16 +88,18 @@ enum RelocationError {
     },
 
     /// Invalid access string
-    #[error("invalid access string `{spec}` for type `{}`: {error}", err_type_name(.type_name))]
+    #[error(
+        "invalid access string `{spec}` at `{access_path}`: {error} (index {index}, length {len})"
+    )]
     InvalidAccessIndex {
-        /// The type name
-        type_name: Option<String>,
+        /// The path to the indexed container
+        access_path: String,
         /// The access string
         spec: String,
         /// The index
         index: usize,
-        /// The max index
-        max_index: usize,
+        /// The number of elements in the indexed container
+        len: usize,
         /// The error message
         error: &'static str,
     },
@@ -683,6 +685,7 @@ impl<'a> AccessSpec<'a> {
 
         let mut type_id = btf.resolve_type(root_type_id)?;
         let ty = btf.type_by_id(type_id)?;
+        let root = (type_id, ty);
 
         let spec = match relocation.kind {
             RelocationKind::TypeIdLocal
@@ -750,10 +753,10 @@ impl<'a> AccessSpec<'a> {
                 };
                 let name_offset =
                     name_offset.ok_or_else(|| RelocationError::InvalidAccessIndex {
-                        type_name: btf.err_type_name(ty),
+                        access_path: access_path(btf, root, []),
                         spec: spec.to_string(),
                         index,
-                        max_index: n_variants,
+                        len: n_variants,
                         error: "tried to access nonexistent enum variant",
                     })?;
                 let name = btf.string_at(name_offset)?;
@@ -794,10 +797,10 @@ impl<'a> AccessSpec<'a> {
                         | BtfType::Union(Union { members, .. }) => {
                             if index >= members.len() {
                                 return Err(RelocationError::InvalidAccessIndex {
-                                    type_name: btf.err_type_name(ty),
+                                    access_path: access_path(btf, root, &accessors),
                                     spec: spec.to_string(),
                                     index,
-                                    max_index: members.len(),
+                                    len: members.len(),
                                     error: "out of bounds struct or union access",
                                 });
                             }
@@ -830,10 +833,10 @@ impl<'a> AccessSpec<'a> {
                             };
                             if !var_len && index >= array.len as usize {
                                 return Err(RelocationError::InvalidAccessIndex {
-                                    type_name: btf.err_type_name(ty),
+                                    access_path: access_path(btf, root, &accessors),
                                     spec: spec.to_string(),
                                     index,
-                                    max_index: array.len as usize,
+                                    len: array.len as usize,
                                     error: "array index out of bounds",
                                 });
                             }
@@ -876,6 +879,38 @@ struct Accessor {
     type_id: u32,
     index: usize,
     name: Option<String>,
+}
+
+fn access_path<'a>(
+    btf: &Btf,
+    (type_id, ty): (u32, &BtfType),
+    accessors: impl IntoIterator<Item = &'a Accessor>,
+) -> String {
+    let mut path = btf
+        .err_type_name(ty)
+        .filter(|name| !name.is_empty())
+        .unwrap_or_else(|| format!("<{:?} #{type_id}>", ty.kind()));
+    for (position, accessor) in accessors.into_iter().enumerate() {
+        let Accessor {
+            type_id: _,
+            index,
+            name,
+        } = accessor;
+        match name {
+            Some(name) => {
+                path.push('.');
+                path.push_str(name);
+            }
+            None => {
+                if position != 0 || *index != 0 {
+                    path.push('[');
+                    path.push_str(&index.to_string());
+                    path.push(']');
+                }
+            }
+        }
+    }
+    path
 }
 
 #[derive(Debug)]
