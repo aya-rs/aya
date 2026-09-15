@@ -3,6 +3,23 @@
 #![expect(internal_features, reason = "atomic_xadd is unstable")]
 #![expect(unstable_features, reason = "atomic_xadd is unstable")]
 #![feature(core_intrinsics)]
+#![allow(
+    unused_crate_dependencies,
+    reason = "ebpf_panic is only required for non-test eBPF builds; importing it unconditionally would register its panic handler during tests and conflict with std"
+)]
+
+#[cfg(not(test))]
+extern crate ebpf_panic;
+
+// Required for satisfying unused-crate-dependencies lint
+#[rustfmt::skip]
+use aya_log_ebpf as _;
+#[rustfmt::skip]
+use integration_ebpf as _;
+#[rustfmt::skip]
+use integration_common as _;
+#[rustfmt::skip]
+use network_types as _;
 
 use aya_ebpf::{
     EbpfContext as _, Global,
@@ -10,8 +27,6 @@ use aya_ebpf::{
     maps::Array,
     programs::ProbeContext,
 };
-#[cfg(not(test))]
-extern crate ebpf_panic;
 
 const INDEX: u32 = 0;
 

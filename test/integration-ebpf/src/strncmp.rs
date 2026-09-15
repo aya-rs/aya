@@ -1,5 +1,20 @@
 #![no_std]
 #![no_main]
+#![allow(
+    unused_crate_dependencies,
+    reason = "ebpf_panic is only required for non-test eBPF builds; importing it unconditionally would register its panic handler during tests and conflict with std"
+)]
+
+#[cfg(not(test))]
+extern crate ebpf_panic;
+
+// Required for satisfying unused-crate-dependencies lint
+#[rustfmt::skip]
+use aya_log_ebpf as _;
+#[rustfmt::skip]
+use integration_ebpf as _;
+#[rustfmt::skip]
+use network_types as _;
 
 use aya_ebpf::{
     cty::c_long,
@@ -9,8 +24,6 @@ use aya_ebpf::{
     programs::ProbeContext,
 };
 use integration_common::strncmp::TestResult;
-#[cfg(not(test))]
-extern crate ebpf_panic;
 
 #[map]
 static RESULT: Array<TestResult> = Array::with_max_entries(1, 0);

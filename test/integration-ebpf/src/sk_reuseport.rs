@@ -1,5 +1,20 @@
 #![no_std]
 #![no_main]
+#![allow(
+    unused_crate_dependencies,
+    reason = "ebpf_panic is only required for non-test eBPF builds; importing it unconditionally would register its panic handler during tests and conflict with std"
+)]
+
+#[cfg(not(test))]
+extern crate ebpf_panic;
+
+// Required for satisfying unused-crate-dependencies lint
+#[rustfmt::skip]
+use aya_log_ebpf as _;
+#[rustfmt::skip]
+use integration_ebpf as _;
+#[rustfmt::skip]
+use network_types as _;
 
 use aya_ebpf::{
     bindings::sk_action::{SK_DROP, SK_PASS},
@@ -12,8 +27,6 @@ use integration_common::sk_reuseport::{
     CLEAR_FALLBACK_HITS_INDEX, MIGRATE_HITS_INDEX, MIGRATE_SOCKET_INDEX, PATH_HITS_MAX_ENTRIES,
     SELECT_HITS_INDEX, SELECT_SOCKET_INDEX,
 };
-#[cfg(not(test))]
-extern crate ebpf_panic;
 
 const SOCKET_COUNT: u32 = 10;
 const SOCKET_COUNT_USIZE: usize = SOCKET_COUNT as usize;

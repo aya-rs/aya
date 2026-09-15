@@ -1,6 +1,27 @@
 use std::{env, ffi::OsString, path::Path, process::Command};
 
 use anyhow::{Context as _, Result, bail};
+// Added to satisfy `unused-crate-dependencies` lint
+use ar as _;
+use aya_tool as _;
+use cargo_metadata as _;
+use clap as _;
+use dialoguer as _;
+use diff as _;
+use indoc as _;
+use nix as _;
+use proc_macro2 as _;
+use public_api as _;
+use quote as _;
+use rustdoc_json as _;
+use rustup_toolchain as _;
+use syn as _;
+use tar as _;
+use tempfile as _;
+use ureq as _;
+use walkdir as _;
+use xz2 as _;
+use zstd as _;
 
 pub const AYA_BUILD_INTEGRATION_BPF: &str = "AYA_BUILD_INTEGRATION_BPF";
 pub const LIBBPF_DIR: &str = "xtask/libbpf";

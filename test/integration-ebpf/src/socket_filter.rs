@@ -1,5 +1,20 @@
 #![no_std]
 #![no_main]
+#![allow(
+    unused_crate_dependencies,
+    reason = "ebpf_panic is only required for non-test eBPF builds; importing it unconditionally would register its panic handler during tests and conflict with std"
+)]
+
+#[cfg(not(test))]
+extern crate ebpf_panic;
+
+// Required for satisfying unused-crate-dependencies lint
+#[rustfmt::skip]
+use aya_log_ebpf as _;
+#[rustfmt::skip]
+use integration_ebpf as _;
+#[rustfmt::skip]
+use network_types as _;
 
 use aya_ebpf::{
     macros::{map, socket_filter},
@@ -11,8 +26,6 @@ use integration_common::socket_filter::{
     REUSEPORT_SECOND_LISTENER_INDEX, REUSEPORT_SELECT_FIRST_HITS_INDEX,
     REUSEPORT_SELECT_SECOND_HITS_INDEX, TRIM_DELTA_BYTES, TRIM_HITS_INDEX,
 };
-#[cfg(not(test))]
-extern crate ebpf_panic;
 
 #[map(name = "path_hits")]
 static PATH_HITS: Array<u64> = Array::with_max_entries(PATH_HITS_MAX_ENTRIES, 0);

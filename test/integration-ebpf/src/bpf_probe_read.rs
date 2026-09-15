@@ -1,5 +1,20 @@
 #![no_std]
 #![no_main]
+#![allow(
+    unused_crate_dependencies,
+    reason = "ebpf_panic is only required for non-test eBPF builds; importing it unconditionally would register its panic handler during tests and conflict with std"
+)]
+
+#[cfg(not(test))]
+extern crate ebpf_panic;
+
+// Required for satisfying unused-crate-dependencies lint
+#[rustfmt::skip]
+use aya_log_ebpf as _;
+#[rustfmt::skip]
+use integration_ebpf as _;
+#[rustfmt::skip]
+use network_types as _;
 
 use aya_ebpf::{
     helpers::{bpf_probe_read_kernel_str_bytes, bpf_probe_read_user_str_bytes},
@@ -8,8 +23,6 @@ use aya_ebpf::{
     programs::ProbeContext,
 };
 use integration_common::bpf_probe_read::{RESULT_BUF_LEN, TestResult};
-#[cfg(not(test))]
-extern crate ebpf_panic;
 
 fn read_str_bytes(
     fun: unsafe fn(*const u8, &mut [u8]) -> Result<&[u8], i32>,

@@ -1,7 +1,10 @@
 use std::path::PathBuf;
 
 use aya_tool::generate::{InputFile, generate};
+use bindgen as _;
 use clap::Parser;
+use tempfile as _;
+use thiserror as _;
 
 #[derive(Parser)]
 pub struct Options {
