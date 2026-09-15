@@ -67,7 +67,10 @@ pub mod btf;
 mod extern_types;
 #[expect(
     clippy::all,
+    clippy::allow_attributes,
+    clippy::allow_attributes_without_reason,
     clippy::as_pointer_underscore,
+    clippy::branches_sharing_code,
     clippy::cast_lossless,
     clippy::decimal_literal_representation,
     clippy::missing_const_for_fn,

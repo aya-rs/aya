@@ -2454,6 +2454,11 @@ pub fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::set(&mut self, usize,
 pub fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::set_bit(&mut self, usize, bool)
 impl<Storage> aya_obj::generated::__BindgenBitfieldUnit<Storage>
 pub const fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::new(Storage) -> Self
+impl<const N: usize> aya_obj::generated::__BindgenBitfieldUnit<[u8; N]>
+pub const fn aya_obj::generated::__BindgenBitfieldUnit<[u8; N]>::get_const<const BIT_OFFSET: usize, const BIT_WIDTH: u8>(&self) -> u64
+pub unsafe const fn aya_obj::generated::__BindgenBitfieldUnit<[u8; N]>::raw_get_const<const BIT_OFFSET: usize, const BIT_WIDTH: u8>(*const Self) -> u64
+pub unsafe fn aya_obj::generated::__BindgenBitfieldUnit<[u8; N]>::raw_set_const<const BIT_OFFSET: usize, const BIT_WIDTH: u8>(*mut Self, u64)
+pub fn aya_obj::generated::__BindgenBitfieldUnit<[u8; N]>::set_const<const BIT_OFFSET: usize, const BIT_WIDTH: u8>(&mut self, u64)
 impl<Storage: core::clone::Clone> core::clone::Clone for aya_obj::generated::__BindgenBitfieldUnit<Storage>
 pub fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::clone(&self) -> aya_obj::generated::__BindgenBitfieldUnit<Storage>
 impl<Storage: core::cmp::Eq> core::cmp::Eq for aya_obj::generated::__BindgenBitfieldUnit<Storage>
@@ -2529,7 +2534,6 @@ impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bind
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::__bindgen_anon_1: aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::__bindgen_anon_2: aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
-pub aya_obj::generated::bpf_attr__bindgen_ty_10::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::attach_flags: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::attach_type: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_attr__bindgen_ty_10::link_attach_flags: aya_obj::generated::__u64
@@ -2552,7 +2556,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_attr__b
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_attr__bindgen_ty_10
 #[repr(C)] pub struct aya_obj::generated::bpf_attr__bindgen_ty_11
 pub aya_obj::generated::bpf_attr__bindgen_ty_11::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
-pub aya_obj::generated::bpf_attr__bindgen_ty_11::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_attr__bindgen_ty_11::cookie: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_11::name: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_attr__bindgen_ty_11::prog_fd: aya_obj::generated::__u32
@@ -3104,7 +3107,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_func_in
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_func_info
 #[repr(C)] pub struct aya_obj::generated::bpf_insn
 pub aya_obj::generated::bpf_insn::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 1]>
-pub aya_obj::generated::bpf_insn::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_insn::code: aya_obj::generated::__u8
 pub aya_obj::generated::bpf_insn::imm: aya_obj::generated::__s32
 pub aya_obj::generated::bpf_insn::off: aya_obj::generated::__s16
@@ -3201,7 +3203,6 @@ impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info_
 #[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::__bindgen_anon_1: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
-pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::type_: aya_obj::generated::__u32
 impl aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::new_bitfield_1() -> aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
@@ -3253,7 +3254,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_in
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 #[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
-pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::cookie: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::name_len: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::tp_name: aya_obj::generated::__u64
@@ -3273,7 +3273,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_in
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 #[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
-pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::config: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::cookie: aya_obj::generated::__u64
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::type_: aya_obj::generated::__u32
@@ -3532,7 +3531,6 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_map_inf
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_map_info
 #[repr(C)] pub struct aya_obj::generated::bpf_prog_info
 pub aya_obj::generated::bpf_prog_info::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 4]>
-pub aya_obj::generated::bpf_prog_info::_bitfield_align_1: [u8; 0]
 pub aya_obj::generated::bpf_prog_info::attach_btf_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_prog_info::attach_btf_obj_id: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_prog_info::btf_id: aya_obj::generated::__u32
@@ -3779,7 +3777,6 @@ pub aya_obj::generated::perf_event_attr::__bindgen_anon_4: aya_obj::generated::p
 pub aya_obj::generated::perf_event_attr::__reserved_2: aya_obj::generated::__u16
 pub aya_obj::generated::perf_event_attr::__reserved_3: aya_obj::generated::__u32
 pub aya_obj::generated::perf_event_attr::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 8]>
-pub aya_obj::generated::perf_event_attr::_bitfield_align_1: [u32; 0]
 pub aya_obj::generated::perf_event_attr::aux_sample_size: aya_obj::generated::__u32
 pub aya_obj::generated::perf_event_attr::aux_watermark: aya_obj::generated::__u32
 pub aya_obj::generated::perf_event_attr::bp_type: aya_obj::generated::__u32
@@ -4014,8 +4011,8 @@ impl core::marker::UnsafeUnpin for aya_obj::generated::perf_event_mmap_page
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_event_mmap_page
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_event_mmap_page
 #[repr(C)] pub struct aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
+pub aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::_bindgen_align: [u64; 0]
 pub aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::_bitfield_1: aya_obj::generated::__BindgenBitfieldUnit<[u8; 8]>
-pub aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::_bitfield_align_1: [u64; 0]
 impl aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_____res(&self) -> aya_obj::generated::__u64
 pub unsafe fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::cap_____res_raw(*const Self) -> aya_obj::generated::__u64
