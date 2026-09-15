@@ -69,17 +69,30 @@ where
     pub fn get(&self, bit_offset: usize, bit_width: u8) -> u64 {
         debug_assert!(bit_width <= 64);
         debug_assert!(bit_offset / 8 < self.storage.as_ref().len());
-        debug_assert!((bit_offset + (bit_width as usize)) / 8 <= self.storage.as_ref().len());
-        let mut val = 0;
-        for i in 0..(bit_width as usize) {
-            if self.get_bit(i + bit_offset) {
-                let index = if cfg!(target_endian = "big") {
-                    bit_width as usize - 1 - i
-                } else {
-                    i
-                };
-                val |= 1 << index;
+        debug_assert!((bit_offset + (bit_width as usize) + 7) / 8 <= self.storage.as_ref().len());
+        if bit_width == 0 {
+            return 0;
+        }
+        let mut val = 0u64;
+        let storage = self.storage.as_ref();
+        let start_byte = bit_offset / 8;
+        let bit_shift = bit_offset % 8;
+        let bytes_needed = (bit_width as usize + bit_shift + 7) / 8;
+        if cfg!(target_endian = "big") {
+            for i in 0..bytes_needed {
+                val |= (storage[start_byte + i].reverse_bits() as u64) << (i * 8);
             }
+        } else {
+            for i in 0..bytes_needed {
+                val |= (storage[start_byte + i] as u64) << (i * 8);
+            }
+        }
+        val >>= bit_shift;
+        if bit_width < 64 {
+            val &= (1u64 << bit_width) - 1;
+        }
+        if cfg!(target_endian = "big") {
+            val = val.reverse_bits() >> (64 - bit_width as usize);
         }
         val
     }
@@ -87,17 +100,34 @@ where
     pub unsafe fn raw_get(this: *const Self, bit_offset: usize, bit_width: u8) -> u64 {
         debug_assert!(bit_width <= 64);
         debug_assert!(bit_offset / 8 < core::mem::size_of::<Storage>());
-        debug_assert!((bit_offset + (bit_width as usize)) / 8 <= core::mem::size_of::<Storage>());
-        let mut val = 0;
-        for i in 0..(bit_width as usize) {
-            if unsafe { Self::raw_get_bit(this, i + bit_offset) } {
-                let index = if cfg!(target_endian = "big") {
-                    bit_width as usize - 1 - i
-                } else {
-                    i
-                };
-                val |= 1 << index;
+        debug_assert!(
+            (bit_offset + (bit_width as usize) + 7) / 8 <= core::mem::size_of::<Storage>()
+        );
+        if bit_width == 0 {
+            return 0;
+        }
+        let mut val = 0u64;
+        let start_byte = bit_offset / 8;
+        let bit_shift = bit_offset % 8;
+        let bytes_needed = (bit_width as usize + bit_shift + 7) / 8;
+        let storage_ptr = unsafe { core::ptr::addr_of!((*this).storage) as *const u8 };
+        if cfg!(target_endian = "big") {
+            for i in 0..bytes_needed {
+                let byte = unsafe { *storage_ptr.add(start_byte + i) };
+                val |= (byte.reverse_bits() as u64) << (i * 8);
             }
+        } else {
+            for i in 0..bytes_needed {
+                let byte = unsafe { *storage_ptr.add(start_byte + i) };
+                val |= (byte as u64) << (i * 8);
+            }
+        }
+        val >>= bit_shift;
+        if bit_width < 64 {
+            val &= (1u64 << bit_width) - 1;
+        }
+        if cfg!(target_endian = "big") {
+            val = val.reverse_bits() >> (64 - bit_width as usize);
         }
         val
     }
@@ -105,32 +135,357 @@ where
     pub fn set(&mut self, bit_offset: usize, bit_width: u8, val: u64) {
         debug_assert!(bit_width <= 64);
         debug_assert!(bit_offset / 8 < self.storage.as_ref().len());
-        debug_assert!((bit_offset + (bit_width as usize)) / 8 <= self.storage.as_ref().len());
-        for i in 0..(bit_width as usize) {
-            let mask = 1 << i;
-            let val_bit_is_set = val & mask == mask;
-            let index = if cfg!(target_endian = "big") {
-                bit_width as usize - 1 - i
+        debug_assert!((bit_offset + (bit_width as usize) + 7) / 8 <= self.storage.as_ref().len());
+        if bit_width == 0 {
+            return;
+        }
+        let mut val = val;
+        if bit_width < 64 {
+            val &= (1u64 << bit_width) - 1;
+        }
+        if cfg!(target_endian = "big") {
+            val = val.reverse_bits() >> (64 - bit_width as usize);
+        }
+        let storage = self.storage.as_mut();
+        let start_byte = bit_offset / 8;
+        let bit_shift = bit_offset % 8;
+        let bytes_needed = (bit_width as usize + bit_shift + 7) / 8;
+        val <<= bit_shift;
+        let field_mask = if bit_width as usize + bit_shift >= 64 {
+            !0u64 << bit_shift
+        } else {
+            ((1u64 << bit_width) - 1) << bit_shift
+        };
+        for i in 0..bytes_needed {
+            let byte_val = (val >> (i * 8)) as u8;
+            let byte_mask = (field_mask >> (i * 8)) as u8;
+            if cfg!(target_endian = "big") {
+                let byte = storage[start_byte + i].reverse_bits();
+                let new_byte = (byte & !byte_mask) | (byte_val & byte_mask);
+                storage[start_byte + i] = new_byte.reverse_bits();
             } else {
-                i
-            };
-            self.set_bit(index + bit_offset, val_bit_is_set);
+                storage[start_byte + i] =
+                    (storage[start_byte + i] & !byte_mask) | (byte_val & byte_mask);
+            }
         }
     }
     #[inline]
     pub unsafe fn raw_set(this: *mut Self, bit_offset: usize, bit_width: u8, val: u64) {
         debug_assert!(bit_width <= 64);
         debug_assert!(bit_offset / 8 < core::mem::size_of::<Storage>());
-        debug_assert!((bit_offset + (bit_width as usize)) / 8 <= core::mem::size_of::<Storage>());
-        for i in 0..(bit_width as usize) {
-            let mask = 1 << i;
-            let val_bit_is_set = val & mask == mask;
-            let index = if cfg!(target_endian = "big") {
-                bit_width as usize - 1 - i
+        debug_assert!(
+            (bit_offset + (bit_width as usize) + 7) / 8 <= core::mem::size_of::<Storage>()
+        );
+        if bit_width == 0 {
+            return;
+        }
+        let mut val = val;
+        if bit_width < 64 {
+            val &= (1u64 << bit_width) - 1;
+        }
+        if cfg!(target_endian = "big") {
+            val = val.reverse_bits() >> (64 - bit_width as usize);
+        }
+        let start_byte = bit_offset / 8;
+        let bit_shift = bit_offset % 8;
+        let bytes_needed = (bit_width as usize + bit_shift + 7) / 8;
+        val <<= bit_shift;
+        let field_mask = if bit_width as usize + bit_shift >= 64 {
+            !0u64 << bit_shift
+        } else {
+            ((1u64 << bit_width) - 1) << bit_shift
+        };
+        let storage_ptr = unsafe { core::ptr::addr_of_mut!((*this).storage) as *mut u8 };
+        for i in 0..bytes_needed {
+            let byte_val = (val >> (i * 8)) as u8;
+            let byte_mask = (field_mask >> (i * 8)) as u8;
+            let byte_ptr = unsafe { storage_ptr.add(start_byte + i) };
+            if cfg!(target_endian = "big") {
+                let byte = unsafe { (*byte_ptr).reverse_bits() };
+                let new_byte = (byte & !byte_mask) | (byte_val & byte_mask);
+                unsafe { *byte_ptr = new_byte.reverse_bits() };
             } else {
-                i
+                unsafe { *byte_ptr = (*byte_ptr & !byte_mask) | (byte_val & byte_mask) };
+            }
+        }
+    }
+}
+#[doc = " Const-generic methods for efficient bitfield access when offset and width"]
+#[doc = " are known at compile time."]
+impl<const N: usize> __BindgenBitfieldUnit<[u8; N]> {
+    #[doc = " Get a field using const generics for compile-time optimization."]
+    #[doc = " Uses native word size operations when the field fits in usize."]
+    #[inline]
+    pub const fn get_const<const BIT_OFFSET: usize, const BIT_WIDTH: u8>(&self) -> u64 {
+        debug_assert!(BIT_WIDTH <= 64);
+        debug_assert!(BIT_OFFSET / 8 < N);
+        debug_assert!((BIT_OFFSET + (BIT_WIDTH as usize) + 7) / 8 <= N);
+        if BIT_WIDTH == 0 {
+            return 0;
+        }
+        let start_byte = BIT_OFFSET / 8;
+        let bit_shift = BIT_OFFSET % 8;
+        let bytes_needed = (BIT_WIDTH as usize + bit_shift + 7) / 8;
+        if BIT_WIDTH as usize + bit_shift <= usize::BITS as usize {
+            let mut val = 0usize;
+            if cfg!(target_endian = "big") {
+                let mut i = 0;
+                while i < bytes_needed {
+                    val |= (self.storage[start_byte + i].reverse_bits() as usize) << (i * 8);
+                    i += 1;
+                }
+            } else {
+                let mut i = 0;
+                while i < bytes_needed {
+                    val |= (self.storage[start_byte + i] as usize) << (i * 8);
+                    i += 1;
+                }
+            }
+            val >>= bit_shift;
+            if (BIT_WIDTH as u32) < usize::BITS {
+                val &= (1usize << BIT_WIDTH) - 1;
+            }
+            if cfg!(target_endian = "big") {
+                val = val.reverse_bits() >> (usize::BITS as usize - BIT_WIDTH as usize);
+            }
+            val as u64
+        } else {
+            let mut val = 0u64;
+            if cfg!(target_endian = "big") {
+                let mut i = 0;
+                while i < bytes_needed {
+                    val |= (self.storage[start_byte + i].reverse_bits() as u64) << (i * 8);
+                    i += 1;
+                }
+            } else {
+                let mut i = 0;
+                while i < bytes_needed {
+                    val |= (self.storage[start_byte + i] as u64) << (i * 8);
+                    i += 1;
+                }
+            }
+            val >>= bit_shift;
+            if BIT_WIDTH < 64 {
+                val &= (1u64 << BIT_WIDTH) - 1;
+            }
+            if cfg!(target_endian = "big") {
+                val = val.reverse_bits() >> (64 - BIT_WIDTH as usize);
+            }
+            val
+        }
+    }
+    #[doc = " Set a field using const generics for compile-time optimization."]
+    #[doc = " Uses native word size operations when the field fits in usize."]
+    #[inline]
+    pub fn set_const<const BIT_OFFSET: usize, const BIT_WIDTH: u8>(&mut self, val: u64) {
+        debug_assert!(BIT_WIDTH <= 64);
+        debug_assert!(BIT_OFFSET / 8 < N);
+        debug_assert!((BIT_OFFSET + (BIT_WIDTH as usize) + 7) / 8 <= N);
+        if BIT_WIDTH == 0 {
+            return;
+        }
+        let start_byte = BIT_OFFSET / 8;
+        let bit_shift = BIT_OFFSET % 8;
+        let bytes_needed = (BIT_WIDTH as usize + bit_shift + 7) / 8;
+        if BIT_WIDTH as usize + bit_shift <= usize::BITS as usize {
+            let mut val = val as usize;
+            if (BIT_WIDTH as u32) < usize::BITS {
+                val &= (1usize << BIT_WIDTH) - 1;
+            }
+            if cfg!(target_endian = "big") {
+                val = val.reverse_bits() >> (usize::BITS as usize - BIT_WIDTH as usize);
+            }
+            val <<= bit_shift;
+            let field_mask = if BIT_WIDTH as usize + bit_shift >= usize::BITS as usize {
+                !0usize << bit_shift
+            } else {
+                ((1usize << BIT_WIDTH) - 1) << bit_shift
             };
-            unsafe { Self::raw_set_bit(this, index + bit_offset, val_bit_is_set) };
+            let mut i = 0;
+            while i < bytes_needed {
+                let byte_val = (val >> (i * 8)) as u8;
+                let byte_mask = (field_mask >> (i * 8)) as u8;
+                if cfg!(target_endian = "big") {
+                    let byte = self.storage[start_byte + i].reverse_bits();
+                    let new_byte = (byte & !byte_mask) | (byte_val & byte_mask);
+                    self.storage[start_byte + i] = new_byte.reverse_bits();
+                } else {
+                    self.storage[start_byte + i] =
+                        (self.storage[start_byte + i] & !byte_mask) | (byte_val & byte_mask);
+                }
+                i += 1;
+            }
+        } else {
+            let mut val = val;
+            if BIT_WIDTH < 64 {
+                val &= (1u64 << BIT_WIDTH) - 1;
+            }
+            if cfg!(target_endian = "big") {
+                val = val.reverse_bits() >> (64 - BIT_WIDTH as usize);
+            }
+            val <<= bit_shift;
+            let field_mask = if BIT_WIDTH as usize + bit_shift >= 64 {
+                !0u64 << bit_shift
+            } else {
+                ((1u64 << BIT_WIDTH) - 1) << bit_shift
+            };
+            let mut i = 0;
+            while i < bytes_needed {
+                let byte_val = (val >> (i * 8)) as u8;
+                let byte_mask = (field_mask >> (i * 8)) as u8;
+                if cfg!(target_endian = "big") {
+                    let byte = self.storage[start_byte + i].reverse_bits();
+                    let new_byte = (byte & !byte_mask) | (byte_val & byte_mask);
+                    self.storage[start_byte + i] = new_byte.reverse_bits();
+                } else {
+                    self.storage[start_byte + i] =
+                        (self.storage[start_byte + i] & !byte_mask) | (byte_val & byte_mask);
+                }
+                i += 1;
+            }
+        }
+    }
+    #[doc = " Raw pointer get using const generics for compile-time optimization."]
+    #[doc = " Uses native word size operations when the field fits in usize."]
+    #[inline]
+    pub const unsafe fn raw_get_const<const BIT_OFFSET: usize, const BIT_WIDTH: u8>(
+        this: *const Self,
+    ) -> u64 {
+        debug_assert!(BIT_WIDTH <= 64);
+        debug_assert!(BIT_OFFSET / 8 < N);
+        debug_assert!((BIT_OFFSET + (BIT_WIDTH as usize) + 7) / 8 <= N);
+        if BIT_WIDTH == 0 {
+            return 0;
+        }
+        let start_byte = BIT_OFFSET / 8;
+        let bit_shift = BIT_OFFSET % 8;
+        let bytes_needed = (BIT_WIDTH as usize + bit_shift + 7) / 8;
+        let storage_ptr = unsafe { core::ptr::addr_of!((*this).storage) as *const u8 };
+        if BIT_WIDTH as usize + bit_shift <= usize::BITS as usize {
+            let mut val = 0usize;
+            if cfg!(target_endian = "big") {
+                let mut i = 0;
+                while i < bytes_needed {
+                    let byte = unsafe { *storage_ptr.add(start_byte + i) };
+                    val |= (byte.reverse_bits() as usize) << (i * 8);
+                    i += 1;
+                }
+            } else {
+                let mut i = 0;
+                while i < bytes_needed {
+                    let byte = unsafe { *storage_ptr.add(start_byte + i) };
+                    val |= (byte as usize) << (i * 8);
+                    i += 1;
+                }
+            }
+            val >>= bit_shift;
+            if (BIT_WIDTH as u32) < usize::BITS {
+                val &= (1usize << BIT_WIDTH) - 1;
+            }
+            if cfg!(target_endian = "big") {
+                val = val.reverse_bits() >> (usize::BITS as usize - BIT_WIDTH as usize);
+            }
+            val as u64
+        } else {
+            let mut val = 0u64;
+            if cfg!(target_endian = "big") {
+                let mut i = 0;
+                while i < bytes_needed {
+                    let byte = unsafe { *storage_ptr.add(start_byte + i) };
+                    val |= (byte.reverse_bits() as u64) << (i * 8);
+                    i += 1;
+                }
+            } else {
+                let mut i = 0;
+                while i < bytes_needed {
+                    let byte = unsafe { *storage_ptr.add(start_byte + i) };
+                    val |= (byte as u64) << (i * 8);
+                    i += 1;
+                }
+            }
+            val >>= bit_shift;
+            if BIT_WIDTH < 64 {
+                val &= (1u64 << BIT_WIDTH) - 1;
+            }
+            if cfg!(target_endian = "big") {
+                val = val.reverse_bits() >> (64 - BIT_WIDTH as usize);
+            }
+            val
+        }
+    }
+    #[doc = " Raw pointer set using const generics for compile-time optimization."]
+    #[doc = " Uses native word size operations when the field fits in usize."]
+    #[inline]
+    pub unsafe fn raw_set_const<const BIT_OFFSET: usize, const BIT_WIDTH: u8>(
+        this: *mut Self,
+        val: u64,
+    ) {
+        debug_assert!(BIT_WIDTH <= 64);
+        debug_assert!(BIT_OFFSET / 8 < N);
+        debug_assert!((BIT_OFFSET + (BIT_WIDTH as usize) + 7) / 8 <= N);
+        if BIT_WIDTH == 0 {
+            return;
+        }
+        let start_byte = BIT_OFFSET / 8;
+        let bit_shift = BIT_OFFSET % 8;
+        let bytes_needed = (BIT_WIDTH as usize + bit_shift + 7) / 8;
+        let storage_ptr = this.cast::<[u8; N]>().cast::<u8>();
+        if BIT_WIDTH as usize + bit_shift <= usize::BITS as usize {
+            let mut val = val as usize;
+            if (BIT_WIDTH as u32) < usize::BITS {
+                val &= (1usize << BIT_WIDTH) - 1;
+            }
+            if cfg!(target_endian = "big") {
+                val = val.reverse_bits() >> (usize::BITS as usize - BIT_WIDTH as usize);
+            }
+            val <<= bit_shift;
+            let field_mask = if BIT_WIDTH as usize + bit_shift >= usize::BITS as usize {
+                !0usize << bit_shift
+            } else {
+                ((1usize << BIT_WIDTH) - 1) << bit_shift
+            };
+            let mut i = 0;
+            while i < bytes_needed {
+                let byte_val = (val >> (i * 8)) as u8;
+                let byte_mask = (field_mask >> (i * 8)) as u8;
+                let byte_ptr = unsafe { storage_ptr.add(start_byte + i) };
+                if cfg!(target_endian = "big") {
+                    let byte = unsafe { (*byte_ptr).reverse_bits() };
+                    let new_byte = (byte & !byte_mask) | (byte_val & byte_mask);
+                    unsafe { *byte_ptr = new_byte.reverse_bits() };
+                } else {
+                    unsafe { *byte_ptr = (*byte_ptr & !byte_mask) | (byte_val & byte_mask) };
+                }
+                i += 1;
+            }
+        } else {
+            let mut val = val;
+            if BIT_WIDTH < 64 {
+                val &= (1u64 << BIT_WIDTH) - 1;
+            }
+            if cfg!(target_endian = "big") {
+                val = val.reverse_bits() >> (64 - BIT_WIDTH as usize);
+            }
+            val <<= bit_shift;
+            let field_mask = if BIT_WIDTH as usize + bit_shift >= 64 {
+                !0u64 << bit_shift
+            } else {
+                ((1u64 << BIT_WIDTH) - 1) << bit_shift
+            };
+            let mut i = 0;
+            while i < bytes_needed {
+                let byte_val = (val >> (i * 8)) as u8;
+                let byte_mask = (field_mask >> (i * 8)) as u8;
+                let byte_ptr = unsafe { storage_ptr.add(start_byte + i) };
+                if cfg!(target_endian = "big") {
+                    let byte = unsafe { (*byte_ptr).reverse_bits() };
+                    let new_byte = (byte & !byte_mask) | (byte_val & byte_mask);
+                    unsafe { *byte_ptr = new_byte.reverse_bits() };
+                } else {
+                    unsafe { *byte_ptr = (*byte_ptr & !byte_mask) | (byte_val & byte_mask) };
+                }
+                i += 1;
+            }
         }
     }
 }
@@ -366,96 +721,98 @@ pub type __be16 = __u16;
 pub type __be32 = __u32;
 pub type __wsum = __u32;
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct linux_binprm {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct tcphdr {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct seq_file {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct tcp6_sock {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct tcp_sock {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct tcp_timewait_sock {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct tcp_request_sock {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct udp6_sock {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct unix_sock {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct task_struct {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct cgroup {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct path {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct inode {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct socket {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct file {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct mptcp_sock {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct iphdr {
     _unused: [u8; 0],
 }
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug)]
 pub struct ipv6hdr {
     _unused: [u8; 0],
 }
 pub mod bpf_cond_pseudo_jmp {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_MAY_GOTO: Type = 0;
 }
@@ -476,86 +833,90 @@ pub type _bindgen_ty_1 = ::aya_ebpf_cty::c_uint;
 #[derive(Debug, Copy, Clone)]
 pub struct bpf_insn {
     pub code: __u8,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 1usize]>,
     pub off: __s16,
     pub imm: __s32,
 }
 impl bpf_insn {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn dst_reg(&self) -> __u8 {
-        unsafe { ::core::mem::transmute(self._bitfield_1.get(0usize, 4u8) as u8) }
+        unsafe { ::core::mem::transmute(self._bitfield_1.get_const::<0usize, 4u8>() as u8) }
     }
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn set_dst_reg(&mut self, val: __u8) {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
-            self._bitfield_1.set(0usize, 4u8, val as u64)
+            self._bitfield_1.set_const::<0usize, 4u8>(val as u64)
         }
     }
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub unsafe fn dst_reg_raw(this: *const Self) -> __u8 {
         unsafe {
-            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
-                ::core::ptr::addr_of!((*this)._bitfield_1),
-                0usize,
-                4u8,
-            ) as u8)
+            ::core::mem::transmute(
+                <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get_const::<0usize, 4u8>(
+                    ::core::ptr::addr_of!((*this)._bitfield_1),
+                ) as u8,
+            )
         }
     }
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub unsafe fn set_dst_reg_raw(this: *mut Self, val: __u8) {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
-            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set_const::<0usize, 4u8>(
                 ::core::ptr::addr_of_mut!((*this)._bitfield_1),
-                0usize,
-                4u8,
                 val as u64,
             )
         }
     }
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn src_reg(&self) -> __u8 {
-        unsafe { ::core::mem::transmute(self._bitfield_1.get(4usize, 4u8) as u8) }
+        unsafe { ::core::mem::transmute(self._bitfield_1.get_const::<4usize, 4u8>() as u8) }
     }
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn set_src_reg(&mut self, val: __u8) {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
-            self._bitfield_1.set(4usize, 4u8, val as u64)
+            self._bitfield_1.set_const::<4usize, 4u8>(val as u64)
         }
     }
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub unsafe fn src_reg_raw(this: *const Self) -> __u8 {
         unsafe {
-            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get(
-                ::core::ptr::addr_of!((*this)._bitfield_1),
-                4usize,
-                4u8,
-            ) as u8)
+            ::core::mem::transmute(
+                <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_get_const::<4usize, 4u8>(
+                    ::core::ptr::addr_of!((*this)._bitfield_1),
+                ) as u8,
+            )
         }
     }
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub unsafe fn set_src_reg_raw(this: *mut Self, val: __u8) {
         unsafe {
             let val: u8 = ::core::mem::transmute(val);
-            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set(
+            <__BindgenBitfieldUnit<[u8; 1usize]>>::raw_set_const::<4usize, 4u8>(
                 ::core::ptr::addr_of_mut!((*this)._bitfield_1),
-                4usize,
-                4u8,
                 val as u64,
             )
         }
     }
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1(dst_reg: __u8, src_reg: __u8) -> __BindgenBitfieldUnit<[u8; 1usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 1usize]> = Default::default();
-        __bindgen_bitfield_unit.set(0usize, 4u8, {
+        __bindgen_bitfield_unit.set_const::<0usize, 4u8>({
             let dst_reg: u8 = unsafe { ::core::mem::transmute(dst_reg) };
             dst_reg as u64
         });
-        __bindgen_bitfield_unit.set(4usize, 4u8, {
+        __bindgen_bitfield_unit.set_const::<4usize, 4u8>({
             let src_reg: u8 = unsafe { ::core::mem::transmute(src_reg) };
             src_reg as u64
         });
@@ -591,6 +952,8 @@ pub struct bpf_cgroup_storage_key {
     pub attach_type: __u32,
 }
 pub mod bpf_cgroup_iter_order {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_CGROUP_ITER_ORDER_UNSPEC: Type = 0;
     pub const BPF_CGROUP_ITER_SELF_ONLY: Type = 1;
@@ -625,6 +988,8 @@ pub struct bpf_iter_link_info__bindgen_ty_3 {
     pub pid_fd: __u32,
 }
 pub mod bpf_cmd {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_MAP_CREATE: Type = 0;
     pub const BPF_MAP_LOOKUP_ELEM: Type = 1;
@@ -667,6 +1032,8 @@ pub mod bpf_cmd {
     pub const __MAX_BPF_CMD: Type = 37;
 }
 pub mod bpf_map_type {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_MAP_TYPE_UNSPEC: Type = 0;
     pub const BPF_MAP_TYPE_HASH: Type = 1;
@@ -707,6 +1074,8 @@ pub mod bpf_map_type {
     pub const __MAX_BPF_MAP_TYPE: Type = 34;
 }
 pub mod bpf_prog_type {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_PROG_TYPE_UNSPEC: Type = 0;
     pub const BPF_PROG_TYPE_SOCKET_FILTER: Type = 1;
@@ -744,6 +1113,8 @@ pub mod bpf_prog_type {
     pub const __MAX_BPF_PROG_TYPE: Type = 33;
 }
 pub mod bpf_attach_type {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_CGROUP_INET_INGRESS: Type = 0;
     pub const BPF_CGROUP_INET_EGRESS: Type = 1;
@@ -804,6 +1175,8 @@ pub mod bpf_attach_type {
     pub const __MAX_BPF_ATTACH_TYPE: Type = 56;
 }
 pub mod bpf_link_type {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_LINK_TYPE_UNSPEC: Type = 0;
     pub const BPF_LINK_TYPE_RAW_TRACEPOINT: Type = 1;
@@ -822,6 +1195,8 @@ pub mod bpf_link_type {
     pub const __MAX_BPF_LINK_TYPE: Type = 14;
 }
 pub mod bpf_perf_event_type {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_PERF_EVENT_UNSPEC: Type = 0;
     pub const BPF_PERF_EVENT_UPROBE: Type = 1;
@@ -836,6 +1211,8 @@ pub type _bindgen_ty_2 = ::aya_ebpf_cty::c_uint;
 pub const BPF_F_UPROBE_MULTI_RETURN: _bindgen_ty_3 = 1;
 pub type _bindgen_ty_3 = ::aya_ebpf_cty::c_uint;
 pub mod bpf_addr_space_cast {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_ADDR_SPACE_CAST: Type = 1;
 }
@@ -865,10 +1242,14 @@ pub const BPF_F_SEGV_ON_FAULT: _bindgen_ty_5 = 131072;
 pub const BPF_F_NO_USER_CONV: _bindgen_ty_5 = 262144;
 pub type _bindgen_ty_5 = ::aya_ebpf_cty::c_uint;
 pub mod bpf_stats_type {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_STATS_RUN_TIME: Type = 0;
 }
 pub mod bpf_stack_build_id_status {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_STACK_BUILD_ID_EMPTY: Type = 0;
     pub const BPF_STACK_BUILD_ID_VALID: Type = 1;
@@ -1076,7 +1457,6 @@ pub struct bpf_attr__bindgen_ty_10 {
     pub attach_flags: __u32,
     pub prog_ids: __u64,
     pub __bindgen_anon_2: bpf_attr__bindgen_ty_10__bindgen_ty_2,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
     pub prog_attach_flags: __u64,
     pub link_ids: __u64,
@@ -1097,6 +1477,7 @@ pub union bpf_attr__bindgen_ty_10__bindgen_ty_2 {
 }
 impl bpf_attr__bindgen_ty_10 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 4usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -1107,12 +1488,12 @@ impl bpf_attr__bindgen_ty_10 {
 pub struct bpf_attr__bindgen_ty_11 {
     pub name: __u64,
     pub prog_fd: __u32,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
     pub cookie: __u64,
 }
 impl bpf_attr__bindgen_ty_11 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 4usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -1296,6 +1677,8 @@ pub struct bpf_attr__bindgen_ty_20 {
     pub bpffs_fd: __u32,
 }
 pub mod bpf_func_id {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_FUNC_unspec: Type = 0;
     pub const BPF_FUNC_map_lookup_elem: Type = 1;
@@ -1584,16 +1967,22 @@ pub const BPF_SK_LOOKUP_F_REPLACE: _bindgen_ty_25 = 1;
 pub const BPF_SK_LOOKUP_F_NO_REUSEPORT: _bindgen_ty_25 = 2;
 pub type _bindgen_ty_25 = ::aya_ebpf_cty::c_uint;
 pub mod bpf_adj_room_mode {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_ADJ_ROOM_NET: Type = 0;
     pub const BPF_ADJ_ROOM_MAC: Type = 1;
 }
 pub mod bpf_hdr_start_off {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_HDR_START_MAC: Type = 0;
     pub const BPF_HDR_START_NET: Type = 1;
 }
 pub mod bpf_lwt_encap_mode {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_LWT_ENCAP_SEG6: Type = 0;
     pub const BPF_LWT_ENCAP_SEG6_INLINE: Type = 1;
@@ -1605,6 +1994,8 @@ pub const BPF_F_BROADCAST: _bindgen_ty_27 = 8;
 pub const BPF_F_EXCLUDE_INGRESS: _bindgen_ty_27 = 16;
 pub type _bindgen_ty_27 = ::aya_ebpf_cty::c_uint;
 pub mod _bindgen_ty_28 {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_SKB_TSTAMP_UNSPEC: Type = 0;
     pub const BPF_SKB_TSTAMP_DELIVERY_MONO: Type = 1;
@@ -1645,7 +2036,6 @@ pub struct __sk_buff {
     pub __bindgen_anon_2: __sk_buff__bindgen_ty_2,
     pub gso_size: __u32,
     pub tstamp_type: __u8,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 3usize]>,
     pub hwtstamp: __u64,
 }
@@ -1653,11 +2043,11 @@ pub struct __sk_buff {
 #[derive(Copy, Clone)]
 pub union __sk_buff__bindgen_ty_1 {
     pub flow_keys: *mut bpf_flow_keys,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl __sk_buff__bindgen_ty_1 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -1667,11 +2057,11 @@ impl __sk_buff__bindgen_ty_1 {
 #[derive(Copy, Clone)]
 pub union __sk_buff__bindgen_ty_2 {
     pub sk: *mut bpf_sock,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl __sk_buff__bindgen_ty_2 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -1679,6 +2069,7 @@ impl __sk_buff__bindgen_ty_2 {
 }
 impl __sk_buff {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 3usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 3usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -1729,6 +2120,8 @@ pub union bpf_xfrm_state__bindgen_ty_1 {
     pub remote_ipv6: [__u32; 4usize],
 }
 pub mod bpf_ret_code {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_OK: Type = 0;
     pub const BPF_DROP: Type = 2;
@@ -1749,7 +2142,6 @@ pub struct bpf_sock {
     pub src_ip6: [__u32; 4usize],
     pub src_port: __u32,
     pub dst_port: __be16,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 2usize]>,
     pub dst_ip4: __u32,
     pub dst_ip6: [__u32; 4usize],
@@ -1758,6 +2150,7 @@ pub struct bpf_sock {
 }
 impl bpf_sock {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 2usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 2usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -1821,6 +2214,8 @@ pub struct bpf_sock_tuple__bindgen_ty_1__bindgen_ty_2 {
     pub dport: __be16,
 }
 pub mod tcx_action_base {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_int;
     pub const TCX_NEXT: Type = -1;
     pub const TCX_PASS: Type = 0;
@@ -1833,6 +2228,8 @@ pub struct bpf_xdp_sock {
     pub queue_id: __u32,
 }
 pub mod xdp_action {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const XDP_ABORTED: Type = 0;
     pub const XDP_DROP: Type = 1;
@@ -1875,6 +2272,8 @@ pub union bpf_cpumap_val__bindgen_ty_1 {
     pub id: __u32,
 }
 pub mod sk_action {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const SK_DROP: Type = 0;
     pub const SK_PASS: Type = 1;
@@ -1898,11 +2297,11 @@ pub struct sk_msg_md {
 #[derive(Copy, Clone)]
 pub union sk_msg_md__bindgen_ty_1 {
     pub data: *mut ::aya_ebpf_cty::c_void,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl sk_msg_md__bindgen_ty_1 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -1912,11 +2311,11 @@ impl sk_msg_md__bindgen_ty_1 {
 #[derive(Copy, Clone)]
 pub union sk_msg_md__bindgen_ty_2 {
     pub data_end: *mut ::aya_ebpf_cty::c_void,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl sk_msg_md__bindgen_ty_2 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -1926,11 +2325,11 @@ impl sk_msg_md__bindgen_ty_2 {
 #[derive(Copy, Clone)]
 pub union sk_msg_md__bindgen_ty_3 {
     pub sk: *mut bpf_sock,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl sk_msg_md__bindgen_ty_3 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -1953,11 +2352,11 @@ pub struct sk_reuseport_md {
 #[derive(Copy, Clone)]
 pub union sk_reuseport_md__bindgen_ty_1 {
     pub data: *mut ::aya_ebpf_cty::c_void,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl sk_reuseport_md__bindgen_ty_1 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -1967,11 +2366,11 @@ impl sk_reuseport_md__bindgen_ty_1 {
 #[derive(Copy, Clone)]
 pub union sk_reuseport_md__bindgen_ty_2 {
     pub data_end: *mut ::aya_ebpf_cty::c_void,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl sk_reuseport_md__bindgen_ty_2 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -1981,11 +2380,11 @@ impl sk_reuseport_md__bindgen_ty_2 {
 #[derive(Copy, Clone)]
 pub union sk_reuseport_md__bindgen_ty_3 {
     pub sk: *mut bpf_sock,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl sk_reuseport_md__bindgen_ty_3 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -1995,11 +2394,11 @@ impl sk_reuseport_md__bindgen_ty_3 {
 #[derive(Copy, Clone)]
 pub union sk_reuseport_md__bindgen_ty_4 {
     pub migrating_sk: *mut bpf_sock,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl sk_reuseport_md__bindgen_ty_4 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -2021,7 +2420,6 @@ pub struct bpf_prog_info {
     pub map_ids: __u64,
     pub name: [::aya_ebpf_cty::c_char; 16usize],
     pub ifindex: __u32,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
     pub netns_dev: __u64,
     pub netns_ino: __u64,
@@ -2050,42 +2448,45 @@ pub struct bpf_prog_info {
 }
 impl bpf_prog_info {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn gpl_compatible(&self) -> __u32 {
-        unsafe { ::core::mem::transmute(self._bitfield_1.get(0usize, 1u8) as u32) }
+        unsafe { ::core::mem::transmute(self._bitfield_1.get_const::<0usize, 1u8>() as u32) }
     }
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn set_gpl_compatible(&mut self, val: __u32) {
         unsafe {
             let val: u32 = ::core::mem::transmute(val);
-            self._bitfield_1.set(0usize, 1u8, val as u64)
+            self._bitfield_1.set_const::<0usize, 1u8>(val as u64)
         }
     }
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub unsafe fn gpl_compatible_raw(this: *const Self) -> __u32 {
         unsafe {
-            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 4usize]>>::raw_get(
-                ::core::ptr::addr_of!((*this)._bitfield_1),
-                0usize,
-                1u8,
-            ) as u32)
+            ::core::mem::transmute(
+                <__BindgenBitfieldUnit<[u8; 4usize]>>::raw_get_const::<0usize, 1u8>(
+                    ::core::ptr::addr_of!((*this)._bitfield_1),
+                ) as u32,
+            )
         }
     }
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub unsafe fn set_gpl_compatible_raw(this: *mut Self, val: __u32) {
         unsafe {
             let val: u32 = ::core::mem::transmute(val);
-            <__BindgenBitfieldUnit<[u8; 4usize]>>::raw_set(
+            <__BindgenBitfieldUnit<[u8; 4usize]>>::raw_set_const::<0usize, 1u8>(
                 ::core::ptr::addr_of_mut!((*this)._bitfield_1),
-                0usize,
-                1u8,
                 val as u64,
             )
         }
     }
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1(gpl_compatible: __u32) -> __BindgenBitfieldUnit<[u8; 4usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
-        __bindgen_bitfield_unit.set(0usize, 1u8, {
+        __bindgen_bitfield_unit.set_const::<0usize, 1u8>({
             let gpl_compatible: u32 = unsafe { ::core::mem::transmute(gpl_compatible) };
             gpl_compatible as u64
         });
@@ -2251,7 +2652,6 @@ pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_10 {
 #[derive(Copy, Clone)]
 pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_11 {
     pub type_: __u32,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
     pub __bindgen_anon_1: bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1,
 }
@@ -2286,12 +2686,12 @@ pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_
 pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3 {
     pub tp_name: __u64,
     pub name_len: __u32,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
     pub cookie: __u64,
 }
 impl bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 4usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -2302,12 +2702,12 @@ impl bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3 {
 pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4 {
     pub config: __u64,
     pub type_: __u32,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
     pub cookie: __u64,
 }
 impl bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 4usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -2315,6 +2715,7 @@ impl bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4 {
 }
 impl bpf_link_info__bindgen_ty_1__bindgen_ty_11 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 4usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -2350,11 +2751,11 @@ pub struct bpf_sock_addr {
 #[derive(Copy, Clone)]
 pub union bpf_sock_addr__bindgen_ty_1 {
     pub sk: *mut bpf_sock,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl bpf_sock_addr__bindgen_ty_1 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -2416,11 +2817,11 @@ pub union bpf_sock_ops__bindgen_ty_1 {
 #[derive(Copy, Clone)]
 pub union bpf_sock_ops__bindgen_ty_2 {
     pub sk: *mut bpf_sock,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl bpf_sock_ops__bindgen_ty_2 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -2430,11 +2831,11 @@ impl bpf_sock_ops__bindgen_ty_2 {
 #[derive(Copy, Clone)]
 pub union bpf_sock_ops__bindgen_ty_3 {
     pub skb_data: *mut ::aya_ebpf_cty::c_void,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl bpf_sock_ops__bindgen_ty_3 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -2444,11 +2845,11 @@ impl bpf_sock_ops__bindgen_ty_3 {
 #[derive(Copy, Clone)]
 pub union bpf_sock_ops__bindgen_ty_4 {
     pub skb_data_end: *mut ::aya_ebpf_cty::c_void,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl bpf_sock_ops__bindgen_ty_4 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -2496,10 +2897,14 @@ pub const BPF_TCP_BOUND_INACTIVE: _bindgen_ty_31 = 13;
 pub const BPF_TCP_MAX_STATES: _bindgen_ty_31 = 14;
 pub type _bindgen_ty_31 = ::aya_ebpf_cty::c_uint;
 pub mod _bindgen_ty_33 {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_LOAD_HDR_OPT_TCP_SYN: Type = 1;
 }
 pub mod _bindgen_ty_34 {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_WRITE_HDR_TCP_CURRENT_MSS: Type = 1;
     pub const BPF_WRITE_HDR_TCP_SYNACK_COOKIE: Type = 2;
@@ -2613,16 +3018,22 @@ pub union bpf_redir_neigh__bindgen_ty_1 {
     pub ipv6_nh: [__u32; 4usize],
 }
 pub mod bpf_check_mtu_flags {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_MTU_CHK_SEGS: Type = 1;
 }
 pub mod bpf_check_mtu_ret {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_MTU_CHK_RET_SUCCESS: Type = 0;
     pub const BPF_MTU_CHK_RET_FRAG_NEEDED: Type = 1;
     pub const BPF_MTU_CHK_RET_SEGS_TOOBIG: Type = 2;
 }
 pub mod bpf_task_fd_type {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_FD_TYPE_RAW_TRACEPOINT: Type = 0;
     pub const BPF_FD_TYPE_TRACEPOINT: Type = 1;
@@ -2745,11 +3156,11 @@ pub struct bpf_sockopt {
 #[derive(Copy, Clone)]
 pub union bpf_sockopt__bindgen_ty_1 {
     pub sk: *mut bpf_sock,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl bpf_sockopt__bindgen_ty_1 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -2759,11 +3170,11 @@ impl bpf_sockopt__bindgen_ty_1 {
 #[derive(Copy, Clone)]
 pub union bpf_sockopt__bindgen_ty_2 {
     pub optval: *mut ::aya_ebpf_cty::c_void,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl bpf_sockopt__bindgen_ty_2 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -2773,11 +3184,11 @@ impl bpf_sockopt__bindgen_ty_2 {
 #[derive(Copy, Clone)]
 pub union bpf_sockopt__bindgen_ty_3 {
     pub optval_end: *mut ::aya_ebpf_cty::c_void,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl bpf_sockopt__bindgen_ty_3 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -2798,7 +3209,6 @@ pub struct bpf_sk_lookup {
     pub remote_ip4: __u32,
     pub remote_ip6: [__u32; 4usize],
     pub remote_port: __be16,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 2usize]>,
     pub local_ip4: __u32,
     pub local_ip6: [__u32; 4usize],
@@ -2815,11 +3225,11 @@ pub union bpf_sk_lookup__bindgen_ty_1 {
 #[derive(Copy, Clone)]
 pub union bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1 {
     pub sk: *mut bpf_sock,
-    pub _bitfield_align_1: [u8; 0],
     pub _bitfield_1: __BindgenBitfieldUnit<[u8; 8usize]>,
 }
 impl bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1 {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -2827,6 +3237,7 @@ impl bpf_sk_lookup__bindgen_ty_1__bindgen_ty_1 {
 }
 impl bpf_sk_lookup {
     #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 2usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 2usize]> = Default::default();
         __bindgen_bitfield_unit
@@ -2840,6 +3251,8 @@ pub struct btf_ptr {
     pub flags: __u32,
 }
 pub mod bpf_core_relo_kind {
+    #[allow(unused_imports)]
+    use super::*;
     pub type Type = ::aya_ebpf_cty::c_uint;
     pub const BPF_CORE_FIELD_BYTE_OFFSET: Type = 0;
     pub const BPF_CORE_FIELD_BYTE_SIZE: Type = 1;
