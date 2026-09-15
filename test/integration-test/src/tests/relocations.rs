@@ -1,12 +1,18 @@
 use aya::{
     Ebpf,
-    programs::{UProbe, Xdp, uprobe::UProbeScope},
+    programs::{ProgramError, UProbe, Xdp, uprobe::UProbeScope},
+    sys::BpfHelper,
     util::KernelVersion,
 };
 
 #[test_log::test]
 fn relocations() {
-    let bpf = load_and_attach("test_64_32_call_relocs", crate::RELOCATIONS);
+    let Some(bpf) = super::load_or_expect_unsupported_jit(load_and_attach(
+        "test_64_32_call_relocs",
+        crate::RELOCATIONS,
+    )) else {
+        return;
+    };
 
     trigger_relocations_program();
 
@@ -19,14 +25,21 @@ fn relocations() {
 #[test_log::test]
 fn text_64_64_reloc() {
     let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 13, 0) {
-        eprintln!(
-            "skipping test on kernel {kernel_version:?}, support for bpf_for_each_map_elem was added in 5.13.0; see https://github.com/torvalds/linux/commit/69c087b"
-        );
+    let load = load_and_attach("test_text_64_64_reloc", crate::TEXT_64_64_RELOC);
+    let load = if kernel_version < KernelVersion::new(5, 13, 0) {
+        match load {
+            Ok(bpf) => Ok(bpf),
+            Err(error) => {
+                super::assert_unsupported_helper(error, BpfHelper::BPF_FUNC_for_each_map_elem);
+                return;
+            }
+        }
+    } else {
+        load
+    };
+    let Some(mut bpf) = super::load_or_expect_unsupported_jit(load) else {
         return;
-    }
-
-    let mut bpf = load_and_attach("test_text_64_64_reloc", crate::TEXT_64_64_RELOC);
+    };
 
     let mut m = aya::maps::Array::<_, u64>::try_from(bpf.map_mut("RESULTS").unwrap()).unwrap();
     m.set(0, &1, 0).unwrap();
@@ -49,11 +62,11 @@ fn variables_reloc() {
     prog.load().unwrap();
 }
 
-fn load_and_attach(name: &str, bytes: &[u8]) -> Ebpf {
+fn load_and_attach(name: &str, bytes: &[u8]) -> Result<Ebpf, ProgramError> {
     let mut bpf = Ebpf::load(bytes).unwrap();
 
     let prog: &mut UProbe = bpf.program_mut(name).unwrap().try_into().unwrap();
-    prog.load().unwrap();
+    prog.load()?;
 
     prog.attach(
         ["trigger_relocations_program"],
@@ -62,7 +75,7 @@ fn load_and_attach(name: &str, bytes: &[u8]) -> Ebpf {
     )
     .unwrap();
 
-    bpf
+    Ok(bpf)
 }
 
 #[unsafe(no_mangle)]

@@ -17,7 +17,7 @@ use integration_common::sk_reuseport::{
     CLEAR_FALLBACK_HITS_INDEX, MIGRATE_HITS_INDEX, MIGRATE_SOCKET_INDEX, SELECT_HITS_INDEX,
     SELECT_SOCKET_INDEX,
 };
-use libc::{EINVAL, ENOENT};
+use libc::{EACCES, ENOENT};
 use rstest::rstest;
 use tokio::{
     io::{AsyncReadExt as _, AsyncWriteExt as _},
@@ -303,27 +303,18 @@ fn sk_reuseport_migrates_to_expected_listener(
     #[case] migrate_prog: &str,
 ) {
     let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 14, 0) {
-        eprintln!("skipping test on kernel {kernel_version:?}, sk_reuseport/migrate requires 5.14");
-        return;
-    }
-
     run_netns_tokio(async || {
-        match std::fs::write("/proc/sys/net/ipv4/tcp_migrate_req", "1") {
-            Ok(()) => {}
-            Err(err)
-                if matches!(
-                    err.kind(),
-                    ErrorKind::NotFound
-                        | ErrorKind::PermissionDenied
-                        | ErrorKind::ReadOnlyFilesystem
-                ) =>
-            {
-                eprintln!("skipping test - tcp_migrate_req not configurable in test netns: {err}");
-                return;
+        let migration_available = match std::fs::write("/proc/sys/net/ipv4/tcp_migrate_req", "1") {
+            Ok(()) => true,
+            Err(error) => {
+                assert!(
+                    kernel_version < KernelVersion::new(5, 14, 0),
+                    "missing tcp_migrate_req on {kernel_version}: {error}"
+                );
+                assert_eq!(error.kind(), ErrorKind::NotFound);
+                false
             }
-            Err(err) => panic!("unexpected error configuring tcp_migrate_req: {err}"),
-        }
+        };
 
         let mut ebpf = Ebpf::load(crate::SK_REUSEPORT).unwrap();
         let mut socket_array: ReusePortSockArray<_> =
@@ -339,20 +330,18 @@ fn sk_reuseport_migrates_to_expected_listener(
         }
 
         let prog: &mut SkReuseport = ebpf.program_mut(migrate_prog).unwrap().try_into().unwrap();
-        match prog.load() {
-            Ok(()) => {}
-            Err(ProgramError::LoadError { io_error, .. })
-                if io_error.raw_os_error() == Some(EINVAL) =>
-            {
-                eprintln!(
-                    "skipping test - kernel rejected BPF_SK_REUSEPORT_SELECT_OR_MIGRATE at load"
+        let load = prog.load();
+        if !migration_available {
+            assert_matches!(load, Err(ProgramError::LoadError { io_error, verifier_log }) => {
+                assert_eq!(io_error.raw_os_error(), Some(EACCES), "{verifier_log}");
+                assert!(
+                    verifier_log.to_string().contains("invalid bpf_context access"),
+                    "{verifier_log}"
                 );
-                return;
-            }
-            Err(err) => {
-                panic!("unexpected error loading sk_reuseport/migrate program: {err}")
-            }
+            });
+            return;
         }
+        load.expect("load sk_reuseport/migrate program");
 
         {
             // Limit the mutable borrow of `ebpf` from `program_mut()` to this block.

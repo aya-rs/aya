@@ -1,7 +1,5 @@
 //! Test feature probing against kernel version.
 
-use std::io::ErrorKind;
-
 use assert_matches::assert_matches;
 use aya::{
     Btf,
@@ -87,9 +85,6 @@ fn probe_supported_programs() {
             lirc_mode2_config,
             "current={current}"
         );
-        if !lirc_mode2_config {
-            eprintln!("CONFIG_BPF_LIRC_MODE2 required for lirc_mode2 program type");
-        }
     } else {
         assert!(
             !is_supported!(ProgramType::LircMode2),
@@ -113,13 +108,11 @@ fn probe_supported_programs() {
     let kern_version = KernelVersion::new(5, 3, 0);
     kernel_assert!(is_supported!(ProgramType::CgroupSockopt), kern_version);
 
-    // `is_program_supported` checks attach support through `BPF_RAW_TRACEPOINT_OPEN`;
-    // tracing and LSM programs go through `bpf_tracing_prog_attach()`, which links a
-    // BPF trampoline. On arm64 kernels before 6.4 this can fail with `-ENOTSUPP`.
-    // https://github.com/torvalds/linux/blob/v6.3/kernel/bpf/syscall.c#L3319-L3333
-    // https://github.com/torvalds/linux/blob/v6.3/kernel/bpf/trampoline.c#L234-L237
+    // arm64 acquired a BPF trampoline implementation in v6.0. Earlier arm64
+    // kernels recognize tracing programs but reject trampoline attachment.
+    // https://github.com/torvalds/linux/blob/v6.0/arch/arm64/net/bpf_jit_comp.c#L1759-L1765
     let kern_version = if cfg!(target_arch = "aarch64") {
-        KernelVersion::new(6, 4, 0)
+        KernelVersion::new(6, 0, 0)
     } else {
         KernelVersion::new(5, 5, 0)
     };
@@ -131,8 +124,7 @@ fn probe_supported_programs() {
 
     {
         let kern_version = if cfg!(target_arch = "aarch64") {
-            // Same attach-time BPF trampoline limitation as tracing above.
-            KernelVersion::new(6, 4, 0)
+            KernelVersion::new(6, 0, 0)
         } else {
             KernelVersion::new(5, 7, 0)
         };
@@ -154,9 +146,6 @@ fn probe_supported_programs() {
                 lsm_enabled,
                 "current={current}"
             );
-            if !lsm_enabled {
-                eprintln!("CONFIG_BPF_LSM required for lsm program type");
-            }
         } else {
             assert!(
                 !is_supported!(ProgramType::Lsm(LsmAttachType::Mac)),
@@ -181,12 +170,6 @@ fn probe_supported_helpers() {
         ($prog_type:expr, $helper:expr) => {
             match is_helper_supported($prog_type, $helper) {
                 Ok(supported) => supported,
-                Err(ProgramError::SyscallError(err))
-                    if err.io_error.kind() == ErrorKind::PermissionDenied =>
-                {
-                    eprintln!("BPF_PROG_LOAD permission required for helper probing");
-                    return;
-                }
                 Err(err) => panic!("unexpected helper probe error: {err:?}"),
             }
         };
@@ -1418,5 +1401,14 @@ fn probe_supported_maps() {
     kernel_assert!(is_supported!(MapType::CgrpStorage), kern_version);
 
     let kern_version = KernelVersion::new(6, 9, 0);
-    kernel_assert!(is_supported!(MapType::Arena), kern_version);
+    // The arena implementation is built only with CONFIG_MMU and CONFIG_64BIT.
+    // https://github.com/gregkh/linux/blob/v6.12.109/kernel/bpf/Makefile#L18-L19
+    let kernel_config = kernel_config().unwrap();
+    let has_arena = ["CONFIG_MMU", "CONFIG_64BIT"]
+        .into_iter()
+        .all(|key| matches!(kernel_config.get(key), Some(procfs::ConfigSetting::Yes)));
+    assert_eq!(
+        is_supported!(MapType::Arena),
+        KernelVersion::current().unwrap() >= kern_version && has_arena
+    );
 }

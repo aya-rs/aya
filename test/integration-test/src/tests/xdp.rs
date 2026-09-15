@@ -3,7 +3,7 @@ use std::{ffi::CString, net::UdpSocket, num::NonZeroU32, time::Duration};
 use assert_matches::assert_matches;
 use aya::{
     Ebpf,
-    maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
+    maps::{Array, CpuMap, DevMap, DevMapHash, MapType, XskMap},
     programs::{ProgramError, Xdp, XdpError, XdpMode, xdp::XdpLinkId},
     sys::is_devmap_prog_id_supported,
     test_helpers::NetNsGuard,
@@ -47,11 +47,16 @@ fn af_xdp(#[case] socks_name: &str, #[case] prog_name: &str) {
     let sock = match Socket::with_shared(&iface, &umem) {
         Ok(sock) => sock,
         Err(err) => {
-            if err.get_raw() == libc::ENOPROTOOPT {
-                eprintln!("skipping test - AF_XDP sockets not available: {err}");
-                return;
-            }
-            panic!("failed to create AF_XDP socket: {err} {}", err.get_raw());
+            let config = procfs::kernel_config().unwrap();
+            assert!(
+                !matches!(
+                    config.get("CONFIG_XDP_SOCKETS"),
+                    Some(procfs::ConfigSetting::Yes)
+                ),
+                "AF_XDP socket creation failed despite CONFIG_XDP_SOCKETS=y: {err}"
+            );
+            assert_eq!(err.get_raw(), libc::ENOPROTOOPT, "{err}");
+            return;
         }
     };
 
@@ -189,20 +194,22 @@ fn cpumap_chain(#[case] cpus_name: &str, #[case] prog_name: &str) {
     // Load the main program
     let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     xdp.load().unwrap();
-    let result = xdp.attach("lo", XdpMode::default());
     // Generic devices did not support cpumap XDP programs until 5.15.
     //
     // See https://github.com/torvalds/linux/commit/11941f8a85362f612df61f4aaab0e41b64d2111d.
-    if KernelVersion::current().unwrap() < KernelVersion::new(5, 15, 0) {
-        assert_matches!(result, Err(ProgramError::XdpError(XdpError::NetlinkError(err))) => {
-            assert_eq!(err.raw_os_error(), Some(libc::EINVAL))
-        });
-        eprintln!(
-            "skipping test - cpumap attachment not supported on generic (loopback) interface"
-        );
-        return;
-    }
-    let _unused: XdpLinkId = result.unwrap();
+    let _unused: XdpLinkId = match xdp.attach("lo", XdpMode::default()) {
+        Ok(link_id) => link_id,
+        Err(error) => {
+            assert!(
+                KernelVersion::current().unwrap() < KernelVersion::new(5, 15, 0),
+                "unexpected cpumap XDP attach failure: {error}"
+            );
+            assert_matches!(error, ProgramError::XdpError(XdpError::NetlinkError(err)) => {
+                assert_eq!(err.raw_os_error(), Some(libc::EINVAL))
+            });
+            return;
+        }
+    };
 
     const PAYLOAD: &str = "hello cpumap";
 
@@ -250,7 +257,15 @@ fn devmap_set(
 ) {
     let _netns = NetNsGuard::new().unwrap();
 
-    let mut bpf = Ebpf::load(crate::DEV_MAP).unwrap();
+    let missing = super::unsupported_map_names([
+        (MapType::DevMap, &["DEVS", "DEVS_BTF"][..]),
+        (MapType::DevMapHash, &["DEVS_HASH", "DEVS_HASH_BTF"]),
+    ]);
+    let Some(mut bpf) = super::map_load_or_expect_unsupported(Ebpf::load(crate::DEV_MAP), &missing)
+    else {
+        return;
+    };
+    let prog_id_supported = is_devmap_prog_id_supported().unwrap();
     let mut devs: DevMap<_> = bpf.take_map(devs_name).unwrap().try_into().unwrap();
     let mut devs_hash: DevMapHash<_> = bpf.take_map(devs_hash_name).unwrap().try_into().unwrap();
 
@@ -270,16 +285,20 @@ fn devmap_set(
         let xdp: &mut Xdp = bpf.program_mut(prog).unwrap().try_into().unwrap();
         xdp.load().unwrap();
     }
-    if !is_devmap_prog_id_supported().unwrap() {
-        let kernel_version = KernelVersion::current().unwrap();
-        eprintln!(
-            "skipping {dev_get_prog} and {dev_hash_get_prog} on kernel {kernel_version:?}, devmap program IDs are unavailable; see https://github.com/torvalds/linux/commit/fbee97feed9b"
-        );
-        return;
-    }
     for prog in [dev_get_prog, dev_hash_get_prog] {
         let xdp: &mut Xdp = bpf.program_mut(prog).unwrap().try_into().unwrap();
-        xdp.load().unwrap();
+        let load = xdp.load();
+        if prog_id_supported {
+            load.unwrap();
+        } else {
+            // Aya uses 4-byte devmap values when program IDs are unavailable.
+            // Reading bpf_devmap_val::bpf_prog.id must fail verification:
+            // https://github.com/torvalds/linux/blob/v5.10/kernel/bpf/verifier.c#L2550-L2564
+            assert_matches!(load, Err(ProgramError::LoadError { io_error, verifier_log }) => {
+                assert_eq!(io_error.raw_os_error(), Some(libc::EACCES), "{verifier_log}");
+                assert!(verifier_log.to_string().contains("invalid access to map value, value_size=4"), "{verifier_log}");
+            });
+        }
     }
 }
 

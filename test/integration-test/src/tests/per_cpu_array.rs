@@ -2,7 +2,6 @@ use aya::{
     EbpfLoader,
     maps::{Array, MapType, PerCpuArray, PerCpuValues},
     programs::{UProbe, uprobe::UProbeScope},
-    sys::is_map_supported,
     util::nr_cpus,
 };
 use integration_common::array::{GET_INDEX, GET_PTR_INDEX, GET_PTR_MUT_INDEX};
@@ -51,14 +50,14 @@ fn per_cpu_array_basic(
     #[case] get_ptr_mut_prog: &str,
     #[case] set_prog: &str,
 ) {
-    if !is_map_supported(MapType::PerCpuArray).unwrap() {
-        eprintln!("skipping test - per-cpu array map not supported");
+    let missing =
+        super::unsupported_map_names([(MapType::PerCpuArray, &["ARRAY", "ARRAY_LEGACY"][..])]);
+    let Some(mut bpf) = super::map_load_or_expect_unsupported(
+        EbpfLoader::new().load(crate::PER_CPU_ARRAY),
+        &missing,
+    ) else {
         return;
-    }
-
-    let mut bpf = EbpfLoader::new()
-        .load(crate::PER_CPU_ARRAY)
-        .expect("load per_cpu_array program");
+    };
 
     for (prog_name, symbol) in [
         (get_prog, "trigger_get"),

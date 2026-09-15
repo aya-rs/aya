@@ -2,7 +2,6 @@ use aya::{
     EbpfLoader,
     maps::{Array, MapType, ProgramArray},
     programs::{UProbe, uprobe::UProbeScope},
-    sys::is_map_supported,
 };
 use integration_common::prog_array::{
     FAILURE_SENTINEL, RESULT_INDEX, SUCCESS_INDEX, SUCCESS_SENTINEL,
@@ -26,14 +25,13 @@ extern "C" fn trigger_tail_call_success() {
 #[case::btf("RESULT", "tail_call_empty")]
 #[test_attr(test_log::test)]
 fn tail_call_empty(#[case] result_map: &str, #[case] entry_prog: &str) {
-    if !is_map_supported(MapType::ProgramArray).unwrap() {
-        eprintln!("skipping test - program array map not supported");
+    let missing =
+        super::unsupported_map_names([(MapType::ProgramArray, &["ARRAY", "ARRAY_LEGACY"][..])]);
+    let Some(mut bpf) =
+        super::map_load_or_expect_unsupported(EbpfLoader::new().load(crate::PROG_ARRAY), &missing)
+    else {
         return;
-    }
-
-    let mut bpf = EbpfLoader::new()
-        .load(crate::PROG_ARRAY)
-        .expect("load prog_array program");
+    };
 
     let prog: &mut UProbe = bpf
         .program_mut(entry_prog)
@@ -75,14 +73,13 @@ fn tail_call_success(
     #[case] entry_prog: &str,
     #[case] target_prog: &str,
 ) {
-    if !is_map_supported(MapType::ProgramArray).unwrap() {
-        eprintln!("skipping test - program array map not supported");
+    let missing =
+        super::unsupported_map_names([(MapType::ProgramArray, &["ARRAY", "ARRAY_LEGACY"][..])]);
+    let Some(mut bpf) =
+        super::map_load_or_expect_unsupported(EbpfLoader::new().load(crate::PROG_ARRAY), &missing)
+    else {
         return;
-    }
-
-    let mut bpf = EbpfLoader::new()
-        .load(crate::PROG_ARRAY)
-        .expect("load prog_array program");
+    };
 
     {
         let target: &mut UProbe = bpf

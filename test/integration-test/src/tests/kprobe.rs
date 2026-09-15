@@ -21,7 +21,9 @@ fn kprobe_triggers() {
         .unwrap()
         .try_into()
         .unwrap();
-    prog.load().unwrap();
+    if super::load_or_expect_unsupported_jit(prog.load()).is_none() {
+        return;
+    }
     prog.attach("try_to_wake_up", 0).unwrap();
 
     let hits_before = read_hits(&hits);

@@ -2,7 +2,6 @@ use aya::{
     EbpfLoader,
     maps::{Array, MapError, MapType, bloom_filter::BloomFilter},
     programs::{UProbe, uprobe::UProbeScope},
-    sys::is_map_supported,
 };
 use integration_common::bloom_filter::{
     CONTAINS_ABSENT_INDEX, CONTAINS_PRESENT_INDEX, INSERT_INDEX,
@@ -43,14 +42,14 @@ fn bloom_filter_basic(
     #[case] insert_prog: &str,
     #[case] contains_prog: &str,
 ) {
-    if !is_map_supported(MapType::BloomFilter).unwrap() {
-        eprintln!("skipping test - bloom filter map not supported");
+    let missing =
+        super::unsupported_map_names([(MapType::BloomFilter, &["FILTER", "FILTER_LEGACY"][..])]);
+    let Some(mut bpf) = super::map_load_or_expect_unsupported(
+        EbpfLoader::new().load(crate::BLOOM_FILTER),
+        &missing,
+    ) else {
         return;
-    }
-
-    let mut bpf = EbpfLoader::new()
-        .load(crate::BLOOM_FILTER)
-        .expect("load bloom_filter program");
+    };
 
     for (prog_name, symbol) in [
         (insert_prog, "trigger_bloom_insert"),

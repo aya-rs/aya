@@ -5,14 +5,15 @@ use std::{
     time::Duration,
 };
 
+use assert_matches::assert_matches;
 use aya::{
     Ebpf, EbpfLoader,
     maps::{Array, MapType, SockHash, SockMap},
-    programs::{ProgramType, SkLookup},
-    sys::{is_map_supported, is_program_supported},
+    programs::{ProgramError, ProgramType, SkLookup},
+    sys::is_program_supported,
     test_helpers::NetNsGuard,
 };
-use libc::ENOENT;
+use libc::{EINVAL, ENOENT};
 use rstest::rstest;
 
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
@@ -55,6 +56,27 @@ impl MapKind {
     }
 }
 
+fn load_sk_lookup(prog: &mut SkLookup) -> bool {
+    if is_program_supported(ProgramType::SkLookup).unwrap() {
+        prog.load().expect("load sk_lookup program");
+        true
+    } else {
+        assert_matches!(prog.load(), Err(ProgramError::LoadError { io_error, verifier_log }) => {
+            assert_eq!(io_error.raw_os_error(), Some(EINVAL));
+            assert!(verifier_log.to_string().is_empty(), "{verifier_log}");
+        });
+        false
+    }
+}
+
+fn load_maps_or_expect_unsupported(bpf_bytes: &[u8], kind: MapKind) -> Option<Ebpf> {
+    let missing = super::unsupported_map_names([
+        (kind.map_type(), &["SOCKETS_LEGACY", "SOCKETS_BTF"][..]),
+        (MapType::Array, &["LAST_ERRNO"][..]),
+    ]);
+    super::map_load_or_expect_unsupported(EbpfLoader::new().load(bpf_bytes), &missing)
+}
+
 #[rstest]
 #[case::sock_hash_legacy(crate::SOCK_HASH, MapKind::Hash, "SOCKETS_LEGACY", "sk_lookup_legacy")]
 #[case::sock_hash_btf(crate::SOCK_HASH, MapKind::Hash, "SOCKETS_BTF", "sk_lookup_btf")]
@@ -67,12 +89,15 @@ fn redirect_sk_lookup(
     #[case] map_name: &str,
     #[case] prog_name: &str,
 ) {
-    if !is_map_supported(kind.map_type()).unwrap() {
-        eprintln!("skipping test - {:?} not supported", kind.map_type());
+    let Some(mut bpf) = load_maps_or_expect_unsupported(bpf_bytes, kind) else {
         return;
-    }
-    if !is_program_supported(ProgramType::SkLookup).unwrap() {
-        eprintln!("skipping test - sk_lookup not supported");
+    };
+    let prog: &mut SkLookup = bpf
+        .program_mut(prog_name)
+        .unwrap_or_else(|| panic!("missing program {prog_name}"))
+        .try_into()
+        .unwrap_or_else(|err| panic!("program {prog_name} is not an SkLookup: {err}"));
+    if !load_sk_lookup(prog) {
         return;
     }
 
@@ -87,8 +112,6 @@ fn redirect_sk_lookup(
         probe.local_addr().expect("probe local_addr")
     };
 
-    let mut bpf = EbpfLoader::new().load(bpf_bytes).expect("load bpf program");
-
     kind.insert_canary(&mut bpf, map_name, &canary);
 
     let prog: &mut SkLookup = bpf
@@ -96,8 +119,6 @@ fn redirect_sk_lookup(
         .unwrap_or_else(|| panic!("missing program {prog_name}"))
         .try_into()
         .unwrap_or_else(|err| panic!("program {prog_name} is not an SkLookup: {err}"));
-    prog.load()
-        .unwrap_or_else(|err| panic!("load {prog_name}: {err}"));
     prog.attach(&netns)
         .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
 
@@ -120,12 +141,15 @@ fn redirect_sk_lookup_miss_propagates_enoent(
     #[case] kind: MapKind,
     #[case] prog_name: &str,
 ) {
-    if !is_map_supported(kind.map_type()).unwrap() {
-        eprintln!("skipping test - {:?} not supported", kind.map_type());
+    let Some(mut bpf) = load_maps_or_expect_unsupported(bpf_bytes, kind) else {
         return;
-    }
-    if !is_program_supported(ProgramType::SkLookup).unwrap() {
-        eprintln!("skipping test - sk_lookup not supported");
+    };
+    let prog: &mut SkLookup = bpf
+        .program_mut(prog_name)
+        .unwrap_or_else(|| panic!("missing program {prog_name}"))
+        .try_into()
+        .unwrap_or_else(|err| panic!("program {prog_name} is not an SkLookup: {err}"));
+    if !load_sk_lookup(prog) {
         return;
     }
 
@@ -138,15 +162,11 @@ fn redirect_sk_lookup_miss_propagates_enoent(
         probe.local_addr().expect("probe local_addr")
     };
 
-    let mut bpf = EbpfLoader::new().load(bpf_bytes).expect("load bpf program");
-
     let prog: &mut SkLookup = bpf
         .program_mut(prog_name)
         .unwrap_or_else(|| panic!("missing program {prog_name}"))
         .try_into()
         .unwrap_or_else(|err| panic!("program {prog_name} is not an SkLookup: {err}"));
-    prog.load()
-        .unwrap_or_else(|err| panic!("load {prog_name}: {err}"));
     prog.attach(&netns)
         .unwrap_or_else(|err| panic!("attach {prog_name}: {err}"));
 

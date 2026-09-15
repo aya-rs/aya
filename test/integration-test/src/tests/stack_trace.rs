@@ -2,7 +2,6 @@ use aya::{
     EbpfLoader,
     maps::{Array, MapType, StackTraceMap},
     programs::{UProbe, uprobe::UProbeScope},
-    sys::is_map_supported,
 };
 use integration_common::stack_trace::TestResult;
 use rstest::rstest;
@@ -18,14 +17,13 @@ extern "C" fn trigger_record_stackid() {
 #[case::btf("STACKS", "RESULT", "record_stackid")]
 #[test_attr(test_log::test)]
 fn record_stackid(#[case] stacks_map: &str, #[case] result_map: &str, #[case] prog: &str) {
-    if !is_map_supported(MapType::StackTrace).unwrap() {
-        eprintln!("skipping test - stack trace map not supported");
+    let missing =
+        super::unsupported_map_names([(MapType::StackTrace, &["STACKS", "STACKS_LEGACY"][..])]);
+    let Some(mut bpf) =
+        super::map_load_or_expect_unsupported(EbpfLoader::new().load(crate::STACK_TRACE), &missing)
+    else {
         return;
-    }
-
-    let mut bpf = EbpfLoader::new()
-        .load(crate::STACK_TRACE)
-        .expect("load stack_trace program");
+    };
 
     let uprobe: &mut UProbe = bpf
         .program_mut(prog)

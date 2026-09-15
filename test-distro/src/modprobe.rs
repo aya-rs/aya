@@ -3,7 +3,7 @@
 //! This implementation is incredibly naive and is only designed to work within
 //! the constraints of the test environment. Not for production use.
 
-use std::{fs::File, io::BufRead as _, path::Path};
+use std::{borrow::Cow, fs::File, io::BufRead as _, path::Path};
 
 use anyhow::{Context as _, anyhow, bail};
 use clap::Parser;
@@ -53,7 +53,7 @@ fn try_main(quiet: bool, name: String) -> anyhow::Result<()> {
     let module_path = glob(&pattern)
         .with_context(|| format!("failed to glob: {pattern}"))?
         .next()
-        .ok_or_else(|| anyhow!("module not found: {}", module))?
+        .ok_or_else(|| anyhow!("module not found: {module}"))?
         .context("glob error")?;
 
     output!(quiet, "loading module: {}", module_path.display());
@@ -84,13 +84,17 @@ fn try_main(quiet: bool, name: String) -> anyhow::Result<()> {
             if e == nix::errno::Errno::EEXIST {
                 Err(anyhow!("module already loaded"))
             } else {
-                Err(anyhow!("failed to load module: {}", e))
+                Err(anyhow!("failed to load module: {e}"))
             }
         }
     }
 }
 
-fn resolve_alias(quiet: bool, module_dir: &Path, name: &str) -> anyhow::Result<String> {
+fn resolve_alias<'a>(
+    quiet: bool,
+    module_dir: &Path,
+    name: &'a str,
+) -> anyhow::Result<Cow<'a, str>> {
     let modules_alias = module_dir.join("modules.alias");
     output!(
         quiet,
@@ -107,10 +111,12 @@ fn resolve_alias(quiet: bool, module_dir: &Path, name: &str) -> anyhow::Result<S
             continue;
         };
         if alias == name {
-            return Ok(module.to_string());
+            return Ok(Cow::Owned(module.to_owned()));
         }
     }
-    bail!("alias not found: {}", name)
+    // Older kernels ask modprobe for a module's canonical name instead of an alias.
+    // The caller resolves that name against the installed module files.
+    Ok(Cow::Borrowed(name))
 }
 
 fn parse_alias_line(line: &str) -> anyhow::Result<Option<(&str, &str)>> {

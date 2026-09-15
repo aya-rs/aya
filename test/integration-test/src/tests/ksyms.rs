@@ -5,8 +5,16 @@ use std::{
     io::{BufRead as _, BufReader},
 };
 
-use aya::{Btf, Ebpf, EbpfError, maps::Array, programs::BtfTracePoint, util::KernelVersion};
-use aya_obj::KsymsError;
+use assert_matches::assert_matches;
+use aya::{
+    Btf, Ebpf, EbpfError,
+    maps::Array,
+    programs::{BtfTracePoint, ProgramError},
+};
+use aya_obj::{
+    KsymsError,
+    btf::{BtfError, BtfKind},
+};
 use test_log::test;
 
 const PROC_KALLSYMS: &str = "/proc/kallsyms";
@@ -50,7 +58,6 @@ fn kallsyms_find(symbol_name: &str) -> Option<u64> {
 /// Check if PERCPU DATASEC exists in kernel BTF.
 /// Required for `bpf_this_cpu_ptr`/`bpf_per_cpu_ptr` to work.
 fn btf_has_percpu_datasec(btf: &Btf) -> bool {
-    use aya_obj::btf::BtfKind;
     btf.id_by_type_name_kind(".data..percpu", BtfKind::DataSec)
         .is_ok()
 }
@@ -79,37 +86,33 @@ mod output_keys_strong {
 /// Tests: strong ksym (`bpf_prog_active`), `bpf_this_cpu_ptr`, `bpf_per_cpu_ptr`.
 #[test]
 fn ksyms_typed_strong() {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 10, 0) {
-        eprintln!("skipping test on kernel {kernel_version:?}, typed ksyms require kernel >= 5.10");
+    let Some(btf) = super::kernel_btf() else {
+        return;
+    };
+
+    let var_in_btf = match btf.id_by_type_name_kind("bpf_prog_active", BtfKind::Var) {
+        Ok(_id) => true,
+        Err(BtfError::UnknownBtfTypeName { type_name }) => {
+            assert_eq!(type_name, "bpf_prog_active");
+            false
+        }
+        Err(error) => panic!("unexpected kernel BTF error: {error}"),
+    };
+    let loaded = Ebpf::load(crate::KSYMS_STRONG);
+    if !var_in_btf {
+        assert_matches!(loaded, Err(EbpfError::KsymsError(KsymsError::VariableNotFound { name })) => {
+            assert_eq!(name, "bpf_prog_active");
+        });
         return;
     }
+    let mut bpf = loaded.unwrap();
 
-    let btf = Btf::from_sys_fs().unwrap();
-
-    if !btf_has_percpu_datasec(&btf) {
-        eprintln!("skipping test, no PERCPU DATASEC in kernel BTF");
-        return;
-    }
-
-    // Strong typed ksyms require the symbol to be in kallsyms.
-    // With CONFIG_KALLSYMS_ALL=n, only function symbols are exported,
-    // not variables like bpf_prog_active. The verifier uses
-    // bpf_kallsyms_lookup_name() internally and will reject the program
-    // if the symbol address cannot be resolved.
-    if !kallsyms_available() {
-        eprintln!("skipping test, kallsyms not available");
-        return;
-    }
-    if kallsyms_find("bpf_prog_active").is_none() {
-        eprintln!(
-            "skipping test, bpf_prog_active kallsyms not available \
-            (usually due to CONFIG_KALLSYMS_ALL kernel configuration disabled)"
-        );
-        return;
-    }
-
-    let mut bpf = Ebpf::load(crate::KSYMS_STRONG).unwrap();
+    let config = procfs::kernel_config().unwrap();
+    let kallsyms_all = matches!(
+        config.get("CONFIG_KALLSYMS_ALL"),
+        Some(procfs::ConfigSetting::Yes)
+    );
+    let percpu_datasec = btf_has_percpu_datasec(&btf);
 
     let prog: &mut BtfTracePoint = bpf
         .program_mut("ksyms_typed_strong")
@@ -117,9 +120,27 @@ fn ksyms_typed_strong() {
         .try_into()
         .unwrap();
 
-    if let Err(e) = prog.load(SYS_ENTER, &btf) {
-        panic!("failed to load program {SYS_ENTER}: {e:?}");
+    let loaded = prog.load(SYS_ENTER, &btf);
+    if !kallsyms_all {
+        // The verifier resolves a BTF variable's address through kallsyms.
+        // https://github.com/torvalds/linux/blob/v5.15/kernel/bpf/verifier.c#L11260-L11266
+        assert_matches!(loaded, Err(ProgramError::LoadError { io_error, verifier_log }) => {
+            assert_eq!(io_error.raw_os_error(), Some(libc::ENOENT), "{verifier_log}");
+            assert!(verifier_log.to_string().contains("failed to find the address for kernel symbol 'bpf_prog_active'"), "{verifier_log}");
+        });
+        return;
     }
+    if !percpu_datasec {
+        // Without the BTF per-CPU section the verifier cannot type this ksym
+        // as the argument required by bpf_this_cpu_ptr.
+        // https://github.com/torvalds/linux/blob/v5.15/kernel/bpf/verifier.c#L11272-L11295
+        assert_matches!(loaded, Err(ProgramError::LoadError { io_error, verifier_log }) => {
+            assert_eq!(io_error.raw_os_error(), Some(libc::EACCES), "{verifier_log}");
+            assert!(verifier_log.to_string().contains("expected=percpu"), "{verifier_log}");
+        });
+        return;
+    }
+    loaded.unwrap();
     prog.attach().unwrap();
 
     // Trigger the tracepoint
@@ -167,12 +188,9 @@ fn ksyms_typed_strong() {
 /// Tests: weak nonexistent typed ksym = 0, kfunc resolution.
 #[test]
 fn ksyms_typed_weak() {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 10, 0) {
-        eprintln!("skipping test on kernel {kernel_version:?}, typed ksyms require kernel >= 5.10");
+    let Some(btf) = super::kernel_btf() else {
         return;
-    }
-
+    };
     let mut bpf = Ebpf::load(crate::KSYMS).unwrap();
     let prog: &mut BtfTracePoint = bpf
         .program_mut("ksyms_typed_weak")
@@ -180,7 +198,6 @@ fn ksyms_typed_weak() {
         .try_into()
         .unwrap();
 
-    let btf = Btf::from_sys_fs().unwrap();
     if let Err(e) = prog.load(SYS_ENTER, &btf) {
         panic!("failed to load program {SYS_ENTER}: {e:?}");
     }
@@ -208,27 +225,14 @@ fn ksyms_typed_weak() {
     let kfunc2_addr = output.get(&output_keys::KFUNC2_ADDR, 0).unwrap();
     let kfunc2_called = output.get(&output_keys::KFUNC2_CALLED, 0).unwrap();
 
-    // Consistency: if resolved, must be callable
-    if kfunc_addr != 0 {
-        assert_eq!(kfunc_called, 1, "kfunc resolved but not called");
-    }
-    if kfunc2_addr != 0 {
-        assert_eq!(kfunc2_called, 1, "kfunc2 resolved but not called");
-    }
+    assert_eq!(kfunc_called, u64::from(kfunc_addr != 0));
+    assert_eq!(kfunc2_called, u64::from(kfunc2_addr != 0));
 }
 
 /// Test typeless ksym resolution (kallsyms-based).
 /// Tests: `init_task` address + kallsyms cross-check, weak nonexistent = 0.
 #[test]
 fn ksyms_typeless() {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 10, 0) {
-        eprintln!(
-            "skipping test on kernel {kernel_version:?}, typeless ksyms require kernel >= 5.10"
-        );
-        return;
-    }
-
     let kallsyms_ok = kallsyms_available();
     let expected_addr = if kallsyms_ok {
         kallsyms_find("init_task")
@@ -236,6 +240,9 @@ fn ksyms_typeless() {
         None
     };
 
+    let Some(btf) = super::kernel_btf() else {
+        return;
+    };
     let mut bpf = Ebpf::load(crate::KSYMS).unwrap();
     let prog: &mut BtfTracePoint = bpf
         .program_mut("ksyms_typeless")
@@ -243,7 +250,6 @@ fn ksyms_typeless() {
         .try_into()
         .unwrap();
 
-    let btf = Btf::from_sys_fs().unwrap();
     if let Err(e) = prog.load(SYS_ENTER, &btf) {
         panic!("failed to load program {SYS_ENTER}: {e:?}");
     }
@@ -258,16 +264,9 @@ fn ksyms_typeless() {
     let marker = output.get(&output_keys::TYPELESS_MARKER, 0).unwrap();
     assert_eq!(marker, 0xCAFEBABE, "BPF program did not execute");
 
-    // Typeless ksym: init_task - cross-verify with kallsyms when available
+    // Typeless weak ksym: resolve init_task exactly when kallsyms exposes it.
     let typeless_addr = output.get(&output_keys::TYPELESS_ADDR, 0).unwrap();
-    if typeless_addr != 0 {
-        if let Some(kallsyms_addr) = expected_addr {
-            assert_eq!(
-                typeless_addr, kallsyms_addr,
-                "BPF-resolved init_task ({typeless_addr:#x}) != kallsyms ({kallsyms_addr:#x})"
-            );
-        }
-    }
+    assert_eq!(typeless_addr, expected_addr.unwrap_or(0));
 
     // Weak typeless ksym (nonexistent) should be 0
     let weak_typeless = output.get(&output_keys::WEAK_TYPELESS, 0).unwrap();
@@ -279,13 +278,11 @@ fn ksyms_typeless() {
 
 #[test]
 fn ksyms_typed_missing_var_fails_at_load() {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 10, 0) {
-        eprintln!("skipping test on kernel {kernel_version:?}, typed ksyms require kernel >= 5.10");
+    let err = Ebpf::load(crate::KSYMS_TYPED_MISSING_VAR).unwrap_err();
+    if super::vmlinux_btf_missing() {
+        super::assert_missing_vmlinux_btf_on_load(err);
         return;
     }
-
-    let err = Ebpf::load(crate::KSYMS_TYPED_MISSING_VAR).unwrap_err();
     match err {
         EbpfError::KsymsError(KsymsError::VariableNotFound { name }) => {
             assert_eq!(name, "totally_bogus_symbol");
@@ -296,13 +293,11 @@ fn ksyms_typed_missing_var_fails_at_load() {
 
 #[test]
 fn ksyms_typed_missing_kfunc_fails_at_load() {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 10, 0) {
-        eprintln!("skipping test on kernel {kernel_version:?}, typed ksyms require kernel >= 5.10");
+    let err = Ebpf::load(crate::KSYMS_TYPED_MISSING_KFUNC).unwrap_err();
+    if super::vmlinux_btf_missing() {
+        super::assert_missing_vmlinux_btf_on_load(err);
         return;
     }
-
-    let err = Ebpf::load(crate::KSYMS_TYPED_MISSING_KFUNC).unwrap_err();
     match err {
         EbpfError::KsymsError(KsymsError::FunctionNotFound { name }) => {
             assert_eq!(name, "nonexistent_kfunc");
@@ -313,18 +308,6 @@ fn ksyms_typed_missing_kfunc_fails_at_load() {
 
 #[test]
 fn ksyms_typeless_missing_fails_at_load() {
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 10, 0) {
-        eprintln!(
-            "skipping test on kernel {kernel_version:?}, typeless ksyms require kernel >= 5.10"
-        );
-        return;
-    }
-    if !kallsyms_available() {
-        eprintln!("skipping test, kallsyms not available");
-        return;
-    }
-
     let err = Ebpf::load(crate::KSYMS_TYPELESS_MISSING).unwrap_err();
     match err {
         EbpfError::KsymsError(KsymsError::VariableNotFound { name }) => {

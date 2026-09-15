@@ -13,9 +13,7 @@ use aya::{
     EbpfLoader,
     maps::{CgroupStorage, CgroupStorageKey, MapType, PerCpuCgroupStorage},
     programs::{CgroupAttachMode, CgroupSockAddr},
-    sys::is_map_supported,
     test_helpers::{Cgroup, NetNsGuard},
-    util::KernelVersion,
 };
 use aya_obj::generated::bpf_attach_type::BPF_CGROUP_INET4_CONNECT;
 use rstest::rstest;
@@ -25,24 +23,16 @@ use rstest::rstest;
 #[case::btf("STORAGE", "PERCPU", "connect4_btf")]
 #[test_attr(test_log::test)]
 fn cgroup_storage(#[case] storage_map: &str, #[case] percpu_map: &str, #[case] prog: &str) {
-    if !is_map_supported(MapType::CgroupStorage).unwrap()
-        || !is_map_supported(MapType::PerCpuCgroupStorage).unwrap()
-    {
-        eprintln!("skipping test - cgroup storage maps not supported");
+    let missing = super::unsupported_map_names([
+        (MapType::CgroupStorage, &["STORAGE", "STORAGE_LEGACY"][..]),
+        (MapType::PerCpuCgroupStorage, &["PERCPU", "PERCPU_LEGACY"]),
+    ]);
+    let Some(mut bpf) = super::map_load_or_expect_unsupported(
+        EbpfLoader::new().load(crate::CGROUP_STORAGE),
+        &missing,
+    ) else {
         return;
-    }
-
-    let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(4, 20, 0) {
-        eprintln!(
-            "skipping test - per-cpu cgroup storage added in 4.20, kernel is {kernel_version:?}"
-        );
-        return;
-    }
-
-    let mut bpf = EbpfLoader::new()
-        .load(crate::CGROUP_STORAGE)
-        .expect("load cgroup_storage program");
+    };
 
     let _netns = NetNsGuard::new().unwrap();
     let root = Cgroup::root().unwrap();
