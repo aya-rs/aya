@@ -1,7 +1,6 @@
 //! eBPF program using only `btf_maps` (no legacy maps).
 //!
-//! This program is used to test that libbpf can load BTF maps
-//! produced by aya-ebpf's `btf_maps` module.
+//! This program tests BTF map loading with Aya and libbpf.
 
 #![no_std]
 #![no_main]
@@ -16,12 +15,14 @@ use aya_ebpf::{
 };
 
 #[btf_map]
-static BTF_ARRAY: Array<u64, 16> = Array::new();
+static BTF_ARRAY: Array<[[u32; 3]; 2], 16> = Array::new();
 
 #[uprobe]
 fn btf_maps_plain(_ctx: ProbeContext) -> u32 {
     if let Some(value) = BTF_ARRAY.get(0) {
-        *value as u32
+        let [_, row] = value;
+        let [_, _, value] = row;
+        *value
     } else {
         0
     }
