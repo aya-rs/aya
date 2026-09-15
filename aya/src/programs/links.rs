@@ -579,10 +579,13 @@ macro_rules! impl_try_into_fdlink {
             type Error = $crate::programs::LinkError;
 
             fn try_from(value: $wrapper) -> Result<Self, Self::Error> {
-                if let $inner::Fd(fd) = value.into_inner() {
-                    Ok(fd)
-                } else {
-                    Err($crate::programs::LinkError::InvalidLink)
+                match value.into_inner() {
+                    $inner::Fd(fd) => Ok(fd),
+                    inner => {
+                        // The wrapper owns detachment, including for legacy links.
+                        drop($wrapper::new(inner));
+                        Err($crate::programs::LinkError::InvalidLink)
+                    }
                 }
             }
         }

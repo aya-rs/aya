@@ -9,9 +9,11 @@ use crate::{
     VerifierLogLevel,
     maps::sock::SockMapFd,
     programs::{
-        CgroupAttachMode, ProgAttachLink, ProgAttachLinkId, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, load_program_without_attach_type,
+        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program_without_attach_type,
     },
+    sys::{LinkTarget, SyscallError, bpf_link_create},
+    util::KernelVersion,
 };
 
 /// A program used to intercept ingress socket buffers.
@@ -79,8 +81,31 @@ impl SkSkb {
         let Self { data, kind } = self;
         let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
-        let link = ProgAttachLink::attach(prog_fd, map.as_fd(), *kind, CgroupAttachMode::Single)?;
-
+        let attach_type = *kind;
+        // Sockmap links were added separately from cgroup links in Linux 6.10.
+        // https://github.com/torvalds/linux/commit/699c23f02c65cbfc3e638f14ce0d70c23a2e1f02
+        let link = if KernelVersion::at_least(6, 10, 0) {
+            let link_fd = bpf_link_create(
+                prog_fd,
+                LinkTarget::Fd(map.as_fd()),
+                attach_type,
+                CgroupAttachMode::Single.into(),
+                None,
+            )
+            .map_err(|io_error| SyscallError {
+                call: "bpf_link_create",
+                io_error,
+            })?;
+            SkSkbLinkInner::Fd(FdLink::new(link_fd))
+        } else {
+            let link = ProgAttachLink::attach(
+                prog_fd,
+                map.as_fd(),
+                attach_type,
+                CgroupAttachMode::Single,
+            )?;
+            SkSkbLinkInner::ProgAttach(link)
+        };
         data.links.insert(SkSkbLink::new(link))
     }
 
@@ -96,10 +121,51 @@ impl SkSkb {
     }
 }
 
+#[derive(Debug, Hash, Eq, PartialEq)]
+enum SkSkbLinkIdInner {
+    Fd(<FdLink as Link>::Id),
+    ProgAttach(<ProgAttachLink as Link>::Id),
+}
+
+#[derive(Debug)]
+enum SkSkbLinkInner {
+    Fd(FdLink),
+    ProgAttach(ProgAttachLink),
+}
+
+impl Link for SkSkbLinkInner {
+    type Id = SkSkbLinkIdInner;
+    type Error = ProgramError;
+
+    fn id(&self) -> Self::Id {
+        match self {
+            Self::Fd(fd) => SkSkbLinkIdInner::Fd(fd.id()),
+            Self::ProgAttach(p) => SkSkbLinkIdInner::ProgAttach(p.id()),
+        }
+    }
+
+    fn detach(self) -> Result<(), Self::Error> {
+        match self {
+            Self::Fd(fd) => fd.detach().map_err(Into::into),
+            Self::ProgAttach(p) => p.detach(),
+        }
+    }
+}
+
+id_as_key!(SkSkbLinkInner, SkSkbLinkIdInner);
+
 define_link_wrapper!(
     SkSkbLink,
     SkSkbLinkId,
-    ProgAttachLink,
-    ProgAttachLinkId,
+    SkSkbLinkInner,
+    SkSkbLinkIdInner,
     SkSkb,
 );
+
+impl_try_into_fdlink!(SkSkbLink, SkSkbLinkInner);
+
+impl From<ProgAttachLink> for SkSkbLink {
+    fn from(link: ProgAttachLink) -> Self {
+        Self::new(SkSkbLinkInner::ProgAttach(link))
+    }
+}
