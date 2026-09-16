@@ -1020,6 +1020,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::_bindgen_ty
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::_bindgen_ty_36
 #[repr(u32)] pub enum aya_obj::generated::_bindgen_ty_37
 pub aya_obj::generated::_bindgen_ty_37::BPF_FIB_LOOKUP_DIRECT = 1
+pub aya_obj::generated::_bindgen_ty_37::BPF_FIB_LOOKUP_MARK = 32
 pub aya_obj::generated::_bindgen_ty_37::BPF_FIB_LOOKUP_OUTPUT = 2
 pub aya_obj::generated::_bindgen_ty_37::BPF_FIB_LOOKUP_SKIP_NEIGH = 4
 pub aya_obj::generated::_bindgen_ty_37::BPF_FIB_LOOKUP_SRC = 16
@@ -1510,13 +1511,14 @@ pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_NETKIT = 13
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_NETNS = 5
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_PERF_EVENT = 7
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_RAW_TRACEPOINT = 1
+pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_SOCKMAP = 14
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_STRUCT_OPS = 9
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_TCX = 11
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_TRACING = 2
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_UNSPEC = 0
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_UPROBE_MULTI = 12
 pub aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_XDP = 6
-pub aya_obj::generated::bpf_link_type::__MAX_BPF_LINK_TYPE = 14
+pub aya_obj::generated::bpf_link_type::__MAX_BPF_LINK_TYPE = 15
 impl core::clone::Clone for aya_obj::generated::bpf_link_type
 pub fn aya_obj::generated::bpf_link_type::clone(&self) -> aya_obj::generated::bpf_link_type
 impl core::cmp::Eq for aya_obj::generated::bpf_link_type
@@ -2305,6 +2307,7 @@ pub aya_obj::generated::bpf_link_info__bindgen_ty_1::netkit: aya_obj::generated:
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::netns: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::perf_event: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::raw_tracepoint: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1::sockmap: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::struct_ops: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::tcx: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1::tracing: aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
@@ -3320,6 +3323,21 @@ impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bi
 impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+#[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14::attach_type: aya_obj::generated::__u32
+pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14::map_id: aya_obj::generated::__u32
+impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14::clone(&self) -> aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
+impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
+pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
+impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
+impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
+impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
+impl core::marker::Unpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
+impl core::marker::UnsafeUnpin for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
 #[repr(C)] pub struct aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2::attach_type: aya_obj::generated::__u32
 pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2::target_btf_id: aya_obj::generated::__u32
@@ -4115,6 +4133,7 @@ pub const aya_obj::generated::BPF_FIB_LKUP_RET_SUCCESS: aya_obj::generated::_bin
 pub const aya_obj::generated::BPF_FIB_LKUP_RET_UNREACHABLE: aya_obj::generated::_bindgen_ty_38
 pub const aya_obj::generated::BPF_FIB_LKUP_RET_UNSUPP_LWT: aya_obj::generated::_bindgen_ty_38
 pub const aya_obj::generated::BPF_FIB_LOOKUP_DIRECT: aya_obj::generated::_bindgen_ty_37
+pub const aya_obj::generated::BPF_FIB_LOOKUP_MARK: aya_obj::generated::_bindgen_ty_37
 pub const aya_obj::generated::BPF_FIB_LOOKUP_OUTPUT: aya_obj::generated::_bindgen_ty_37
 pub const aya_obj::generated::BPF_FIB_LOOKUP_SKIP_NEIGH: aya_obj::generated::_bindgen_ty_37
 pub const aya_obj::generated::BPF_FIB_LOOKUP_SRC: aya_obj::generated::_bindgen_ty_37

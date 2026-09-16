@@ -26,6 +26,7 @@ impl TryFrom<u32> for bpf_link_type {
             x if x == Self::BPF_LINK_TYPE_TCX as u32 => Self::BPF_LINK_TYPE_TCX,
             x if x == Self::BPF_LINK_TYPE_UPROBE_MULTI as u32 => Self::BPF_LINK_TYPE_UPROBE_MULTI,
             x if x == Self::BPF_LINK_TYPE_NETKIT as u32 => Self::BPF_LINK_TYPE_NETKIT,
+            x if x == Self::BPF_LINK_TYPE_SOCKMAP as u32 => Self::BPF_LINK_TYPE_SOCKMAP,
             _ => return Err(InvalidTypeBinding { value: link_type }),
         })
     }

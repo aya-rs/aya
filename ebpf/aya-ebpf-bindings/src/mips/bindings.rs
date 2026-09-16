@@ -1192,7 +1192,8 @@ pub mod bpf_link_type {
     pub const BPF_LINK_TYPE_TCX: Type = 11;
     pub const BPF_LINK_TYPE_UPROBE_MULTI: Type = 12;
     pub const BPF_LINK_TYPE_NETKIT: Type = 13;
-    pub const __MAX_BPF_LINK_TYPE: Type = 14;
+    pub const BPF_LINK_TYPE_SOCKMAP: Type = 14;
+    pub const __MAX_BPF_LINK_TYPE: Type = 15;
 }
 pub mod bpf_perf_event_type {
     #[allow(unused_imports)]
@@ -2556,6 +2557,7 @@ pub union bpf_link_info__bindgen_ty_1 {
     pub perf_event: bpf_link_info__bindgen_ty_1__bindgen_ty_11,
     pub tcx: bpf_link_info__bindgen_ty_1__bindgen_ty_12,
     pub netkit: bpf_link_info__bindgen_ty_1__bindgen_ty_13,
+    pub sockmap: bpf_link_info__bindgen_ty_1__bindgen_ty_14,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2740,6 +2742,12 @@ pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_12 {
 #[derive(Debug, Copy, Clone)]
 pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_13 {
     pub ifindex: __u32,
+    pub attach_type: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_14 {
+    pub map_id: __u32,
     pub attach_type: __u32,
 }
 #[repr(C)]
@@ -2953,6 +2961,7 @@ pub const BPF_FIB_LOOKUP_OUTPUT: _bindgen_ty_37 = 2;
 pub const BPF_FIB_LOOKUP_SKIP_NEIGH: _bindgen_ty_37 = 4;
 pub const BPF_FIB_LOOKUP_TBID: _bindgen_ty_37 = 8;
 pub const BPF_FIB_LOOKUP_SRC: _bindgen_ty_37 = 16;
+pub const BPF_FIB_LOOKUP_MARK: _bindgen_ty_37 = 32;
 pub type _bindgen_ty_37 = ::aya_ebpf_cty::c_uint;
 pub const BPF_FIB_LKUP_RET_SUCCESS: _bindgen_ty_38 = 0;
 pub const BPF_FIB_LKUP_RET_BLACKHOLE: _bindgen_ty_38 = 1;
@@ -2978,10 +2987,9 @@ pub struct bpf_fib_lookup {
     pub __bindgen_anon_3: bpf_fib_lookup__bindgen_ty_3,
     pub __bindgen_anon_4: bpf_fib_lookup__bindgen_ty_4,
     pub __bindgen_anon_5: bpf_fib_lookup__bindgen_ty_5,
-    pub smac: [__u8; 6usize],
-    pub dmac: [__u8; 6usize],
+    pub __bindgen_anon_6: bpf_fib_lookup__bindgen_ty_6,
 }
-#[repr(C)]
+#[repr(C, packed(2))]
 #[derive(Copy, Clone)]
 pub union bpf_fib_lookup__bindgen_ty_1 {
     pub tot_len: __u16,
@@ -3017,6 +3025,23 @@ pub union bpf_fib_lookup__bindgen_ty_5 {
 pub struct bpf_fib_lookup__bindgen_ty_5__bindgen_ty_1 {
     pub h_vlan_proto: __be16,
     pub h_vlan_TCI: __be16,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_fib_lookup__bindgen_ty_6 {
+    pub __bindgen_anon_1: bpf_fib_lookup__bindgen_ty_6__bindgen_ty_1,
+    pub __bindgen_anon_2: bpf_fib_lookup__bindgen_ty_6__bindgen_ty_2,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct bpf_fib_lookup__bindgen_ty_6__bindgen_ty_1 {
+    pub mark: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct bpf_fib_lookup__bindgen_ty_6__bindgen_ty_2 {
+    pub smac: [__u8; 6usize],
+    pub dmac: [__u8; 6usize],
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -3116,6 +3141,11 @@ pub struct bpf_spin_lock {
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct bpf_timer {
+    pub __opaque: [__u64; 2usize],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct bpf_wq {
     pub __opaque: [__u64; 2usize],
 }
 #[repr(C)]

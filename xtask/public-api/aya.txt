@@ -3364,6 +3364,7 @@ pub aya::programs::links::LinkType::Netkit = 13
 pub aya::programs::links::LinkType::Netns = 5
 pub aya::programs::links::LinkType::PerfEvent = 7
 pub aya::programs::links::LinkType::RawTracePoint = 1
+pub aya::programs::links::LinkType::SockMap = 14
 pub aya::programs::links::LinkType::StructOps = 9
 pub aya::programs::links::LinkType::Tcx = 11
 pub aya::programs::links::LinkType::Tracing = 2

@@ -191,6 +191,9 @@ pub enum LinkType {
     /// A Netkit link type.
     #[doc(alias = "BPF_LINK_TYPE_NETKIT")]
     Netkit = bpf_link_type::BPF_LINK_TYPE_NETKIT as isize,
+    /// A socket map link type.
+    #[doc(alias = "BPF_LINK_TYPE_SOCKMAP")]
+    SockMap = bpf_link_type::BPF_LINK_TYPE_SOCKMAP as isize,
 }
 
 impl TryFrom<bpf_link_type> for LinkType {
@@ -212,6 +215,7 @@ impl TryFrom<bpf_link_type> for LinkType {
             bpf_link_type::BPF_LINK_TYPE_TCX => Ok(Self::Tcx),
             bpf_link_type::BPF_LINK_TYPE_UPROBE_MULTI => Ok(Self::UProbeMulti),
             bpf_link_type::BPF_LINK_TYPE_NETKIT => Ok(Self::Netkit),
+            bpf_link_type::BPF_LINK_TYPE_SOCKMAP => Ok(Self::SockMap),
             bpf_link_type::__MAX_BPF_LINK_TYPE => Err(LinkError::UnknownLinkType(link_type as u32)),
         }
     }

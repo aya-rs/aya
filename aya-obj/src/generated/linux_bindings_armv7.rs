@@ -1011,7 +1011,8 @@ pub enum bpf_link_type {
     BPF_LINK_TYPE_TCX = 11,
     BPF_LINK_TYPE_UPROBE_MULTI = 12,
     BPF_LINK_TYPE_NETKIT = 13,
-    __MAX_BPF_LINK_TYPE = 14,
+    BPF_LINK_TYPE_SOCKMAP = 14,
+    __MAX_BPF_LINK_TYPE = 15,
 }
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -1972,6 +1973,7 @@ pub union bpf_link_info__bindgen_ty_1 {
     pub perf_event: bpf_link_info__bindgen_ty_1__bindgen_ty_11,
     pub tcx: bpf_link_info__bindgen_ty_1__bindgen_ty_12,
     pub netkit: bpf_link_info__bindgen_ty_1__bindgen_ty_13,
+    pub sockmap: bpf_link_info__bindgen_ty_1__bindgen_ty_14,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2158,6 +2160,12 @@ pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_13 {
     pub ifindex: __u32,
     pub attach_type: __u32,
 }
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_14 {
+    pub map_id: __u32,
+    pub attach_type: __u32,
+}
 pub const BPF_SOCK_OPS_RTO_CB_FLAG: _bindgen_ty_29 = _bindgen_ty_29::BPF_SOCK_OPS_RTO_CB_FLAG;
 pub const BPF_SOCK_OPS_RETRANS_CB_FLAG: _bindgen_ty_29 =
     _bindgen_ty_29::BPF_SOCK_OPS_RETRANS_CB_FLAG;
@@ -2293,6 +2301,7 @@ pub const BPF_FIB_LOOKUP_OUTPUT: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP
 pub const BPF_FIB_LOOKUP_SKIP_NEIGH: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_SKIP_NEIGH;
 pub const BPF_FIB_LOOKUP_TBID: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_TBID;
 pub const BPF_FIB_LOOKUP_SRC: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_SRC;
+pub const BPF_FIB_LOOKUP_MARK: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_MARK;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum _bindgen_ty_37 {
@@ -2301,6 +2310,7 @@ pub enum _bindgen_ty_37 {
     BPF_FIB_LOOKUP_SKIP_NEIGH = 4,
     BPF_FIB_LOOKUP_TBID = 8,
     BPF_FIB_LOOKUP_SRC = 16,
+    BPF_FIB_LOOKUP_MARK = 32,
 }
 pub const BPF_FIB_LKUP_RET_SUCCESS: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_SUCCESS;
 pub const BPF_FIB_LKUP_RET_BLACKHOLE: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_BLACKHOLE;
