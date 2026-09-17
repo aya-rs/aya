@@ -978,12 +978,13 @@ pub enum ParseError {
         address: u64,
     },
 
-    /// A relocation refers to a symbol that does not exist at the given address.
+    /// While parsing a text section, no symbol starts at the address of the
+    /// next instruction.
     #[error("unknown symbol in section `{section_index}` at address {address:#X}")]
     UnknownSymbol {
-        /// The index of the section referencing the symbol.
+        /// The index of the text section being parsed.
         section_index: usize,
-        /// The address at which no symbol was found.
+        /// The address in the section at which no symbol was found.
         address: u64,
     },
 
@@ -996,15 +997,16 @@ pub enum ParseError {
         name: Option<String>,
     },
 
-    /// The declared size of a global data symbol does not match the size of the
-    /// data backing it.
+    /// Global data could not be patched into a map, either because the size of
+    /// the provided data does not match the symbol's size, or because the
+    /// symbol's address range lies outside the map's data.
     #[error("symbol {name} has size `{sym_size}`, but provided data is of size `{data_size}`")]
     InvalidGlobalData {
         /// The name of the symbol.
         name: String,
         /// The size declared by the symbol.
         sym_size: u64,
-        /// The size of the data backing the symbol.
+        /// The size of the data provided to patch the symbol with.
         data_size: usize,
     },
 
@@ -1022,10 +1024,10 @@ pub enum ParseError {
         index: usize,
     },
 
-    /// A map in the `maps` section has no associated symbol name.
+    /// A symbol in the `maps` section has no name.
     #[error("the map number {i} in the `maps` section doesn't have a symbol name")]
     MapSymbolNameNotFound {
-        /// The position of the map within the `maps` section.
+        /// The index of the unnamed symbol in the symbol table.
         i: usize,
     },
 
