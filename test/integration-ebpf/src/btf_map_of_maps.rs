@@ -6,14 +6,16 @@
 //! Uses BTF map definitions compatible with both aya and libbpf loaders.
 
 use aya_ebpf::{
-    btf_maps::{Array, ArrayOfMaps, HashOfMaps},
+    btf_maps::{Array, ArrayOfMaps, HashOfMaps, RingBuf},
     macros::{btf_map, uprobe},
     programs::ProbeContext,
 };
-use integration_common::btf_map_of_maps::{INNER_MAX_ENTRIES, TestResult};
+use integration_common::btf_map_of_maps::{INNER_MAX_ENTRIES, RING_VALUE, TestResult};
 
 #[cfg(not(test))]
 extern crate ebpf_panic;
+
+const INNER_RING_BUF_BYTE_SIZE: u32 = 1024 * 1024;
 
 #[btf_map]
 static ARRAY_OF_MAPS: ArrayOfMaps<Array<u32, { INNER_MAX_ENTRIES as usize }>, 4> =
@@ -22,6 +24,10 @@ static ARRAY_OF_MAPS: ArrayOfMaps<Array<u32, { INNER_MAX_ENTRIES as usize }>, 4>
 #[btf_map]
 static HASH_OF_MAPS: HashOfMaps<u32, Array<u32, { INNER_MAX_ENTRIES as usize }>, 4> =
     HashOfMaps::new();
+
+#[btf_map]
+static RING_BUFS: ArrayOfMaps<RingBuf<u64, { INNER_RING_BUF_BYTE_SIZE as usize }>, 1> =
+    ArrayOfMaps::new();
 
 #[btf_map]
 static RESULTS: Array<TestResult, 4> = Array::new();
@@ -47,6 +53,12 @@ pub const extern "C" fn trigger_btf_array_of_maps_get_value() {
 #[unsafe(no_mangle)]
 #[inline(never)]
 pub const extern "C" fn trigger_btf_hash_of_maps_get_value() {
+    core::hint::black_box(());
+}
+
+#[unsafe(no_mangle)]
+#[inline(never)]
+pub const extern "C" fn trigger_btf_array_of_ring_bufs() {
     core::hint::black_box(());
 }
 
@@ -126,4 +138,10 @@ pub(crate) fn test_btf_hash_of_maps_get_value(_ctx: ProbeContext) -> u32 {
     }
 
     0
+}
+
+#[uprobe]
+pub(crate) fn test_btf_array_of_ring_bufs(_ctx: ProbeContext) -> Result<(), i32> {
+    let ring_buf = RING_BUFS.get(0).ok_or(-1)?;
+    ring_buf.output(&RING_VALUE, 0)
 }
