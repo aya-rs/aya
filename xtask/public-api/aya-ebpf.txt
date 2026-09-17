@@ -323,21 +323,22 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin 
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS> where *const T: core::panic::unwind_safe::RefUnwindSafe, *const [i32; MAX_ENTRIES]: core::panic::unwind_safe::RefUnwindSafe, *const [i32; FLAGS]: core::panic::unwind_safe::RefUnwindSafe
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS> where *const T: core::panic::unwind_safe::UnwindSafe, *const [i32; MAX_ENTRIES]: core::panic::unwind_safe::UnwindSafe, *const [i32; FLAGS]: core::panic::unwind_safe::UnwindSafe
 pub mod aya_ebpf::btf_maps::perf_event_array
-#[repr(C)] pub struct aya_ebpf::btf_maps::perf_event_array::PerfEventArray<const FLAGS: usize>
-impl<const FLAGS: usize> aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>
-pub const fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>::new() -> Self
-impl<const FLAGS: usize> aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>
-pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>::output<T, C: aya_ebpf::EbpfContext>(&self, &C, &T, u32)
-pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>::output_at_index<T, C: aya_ebpf::EbpfContext>(&self, &C, u32, &T, u32)
-impl<const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>
-pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>::default() -> Self
-impl<const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>
-impl<const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS> where *const [i32; FLAGS]: core::marker::Freeze
-impl<const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>
-impl<const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS> where *const [i32; FLAGS]: core::marker::Unpin
-impl<const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS> where *const [i32; FLAGS]: core::marker::UnsafeUnpin
-impl<const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS> where *const [i32; FLAGS]: core::panic::unwind_safe::RefUnwindSafe
-impl<const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS> where *const [i32; FLAGS]: core::panic::unwind_safe::UnwindSafe
+#[repr(C)] pub struct aya_ebpf::btf_maps::perf_event_array::PerfEventArray<const MAX_ENTRIES: usize, const FLAGS: usize>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::output<T, C: aya_ebpf::EbpfContext>(&self, &C, &T, u32)
+pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::output_at_index<T, C: aya_ebpf::EbpfContext>(&self, &C, u32, &T, u32)
+pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::read_value(&self, u32) -> core::result::Result<aya_ebpf::maps::perf::PerfEventValue, i32>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::default() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS> where *const [i32; MAX_ENTRIES]: core::marker::Freeze, *const [i32; FLAGS]: core::marker::Freeze
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS> where *const [i32; MAX_ENTRIES]: core::marker::Unpin, *const [i32; FLAGS]: core::marker::Unpin
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS> where *const [i32; MAX_ENTRIES]: core::marker::UnsafeUnpin, *const [i32; FLAGS]: core::marker::UnsafeUnpin
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS> where *const [i32; MAX_ENTRIES]: core::panic::unwind_safe::RefUnwindSafe, *const [i32; FLAGS]: core::panic::unwind_safe::RefUnwindSafe
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS> where *const [i32; MAX_ENTRIES]: core::panic::unwind_safe::UnwindSafe, *const [i32; FLAGS]: core::panic::unwind_safe::UnwindSafe
 pub mod aya_ebpf::btf_maps::perf_event_byte_array
 #[repr(C)] pub struct aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<const FLAGS: usize>
 impl<const FLAGS: usize> aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>
@@ -812,21 +813,22 @@ impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS> where *const K: core::marker::UnsafeUnpin, *const V: core::marker::UnsafeUnpin, *const [i32; MAX_ENTRIES]: core::marker::UnsafeUnpin, *const [i32; FLAGS]: core::marker::UnsafeUnpin
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS> where *const K: core::panic::unwind_safe::RefUnwindSafe, *const V: core::panic::unwind_safe::RefUnwindSafe, *const [i32; MAX_ENTRIES]: core::panic::unwind_safe::RefUnwindSafe, *const [i32; FLAGS]: core::panic::unwind_safe::RefUnwindSafe
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS> where *const K: core::panic::unwind_safe::UnwindSafe, *const V: core::panic::unwind_safe::UnwindSafe, *const [i32; MAX_ENTRIES]: core::panic::unwind_safe::UnwindSafe, *const [i32; FLAGS]: core::panic::unwind_safe::UnwindSafe
-#[repr(C)] pub struct aya_ebpf::btf_maps::PerfEventArray<const FLAGS: usize>
-impl<const FLAGS: usize> aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>
-pub const fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>::new() -> Self
-impl<const FLAGS: usize> aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>
-pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>::output<T, C: aya_ebpf::EbpfContext>(&self, &C, &T, u32)
-pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>::output_at_index<T, C: aya_ebpf::EbpfContext>(&self, &C, u32, &T, u32)
-impl<const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>
-pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>::default() -> Self
-impl<const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>
-impl<const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS> where *const [i32; FLAGS]: core::marker::Freeze
-impl<const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS>
-impl<const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS> where *const [i32; FLAGS]: core::marker::Unpin
-impl<const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS> where *const [i32; FLAGS]: core::marker::UnsafeUnpin
-impl<const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS> where *const [i32; FLAGS]: core::panic::unwind_safe::RefUnwindSafe
-impl<const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<FLAGS> where *const [i32; FLAGS]: core::panic::unwind_safe::UnwindSafe
+#[repr(C)] pub struct aya_ebpf::btf_maps::PerfEventArray<const MAX_ENTRIES: usize, const FLAGS: usize>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::output<T, C: aya_ebpf::EbpfContext>(&self, &C, &T, u32)
+pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::output_at_index<T, C: aya_ebpf::EbpfContext>(&self, &C, u32, &T, u32)
+pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::read_value(&self, u32) -> core::result::Result<aya_ebpf::maps::perf::PerfEventValue, i32>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
+pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::default() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Freeze for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS> where *const [i32; MAX_ENTRIES]: core::marker::Freeze, *const [i32; FLAGS]: core::marker::Freeze
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> !core::marker::Send for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Unpin for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS> where *const [i32; MAX_ENTRIES]: core::marker::Unpin, *const [i32; FLAGS]: core::marker::Unpin
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::UnsafeUnpin for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS> where *const [i32; MAX_ENTRIES]: core::marker::UnsafeUnpin, *const [i32; FLAGS]: core::marker::UnsafeUnpin
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS> where *const [i32; MAX_ENTRIES]: core::panic::unwind_safe::RefUnwindSafe, *const [i32; FLAGS]: core::panic::unwind_safe::RefUnwindSafe
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS> where *const [i32; MAX_ENTRIES]: core::panic::unwind_safe::UnwindSafe, *const [i32; FLAGS]: core::panic::unwind_safe::UnwindSafe
 #[repr(C)] pub struct aya_ebpf::btf_maps::PerfEventByteArray<const FLAGS: usize>
 impl<const FLAGS: usize> aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>
 pub const fn aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>::new() -> Self
@@ -1196,6 +1198,7 @@ pub const fn aya_ebpf::maps::PerfEventArray<T>::new(u32) -> Self
 pub fn aya_ebpf::maps::PerfEventArray<T>::output<C: aya_ebpf::EbpfContext>(&self, &C, &T, u32)
 pub fn aya_ebpf::maps::PerfEventArray<T>::output_at_index<C: aya_ebpf::EbpfContext>(&self, &C, u32, &T, u32)
 pub const fn aya_ebpf::maps::PerfEventArray<T>::pinned(u32) -> Self
+pub fn aya_ebpf::maps::PerfEventArray<T>::read_value(&self, u32) -> core::result::Result<aya_ebpf::maps::perf::PerfEventValue, i32>
 impl<T> !core::marker::Freeze for aya_ebpf::maps::PerfEventArray<T>
 impl<T> core::marker::Send for aya_ebpf::maps::PerfEventArray<T> where core::marker::PhantomData<T>: core::marker::Send
 impl<T> core::marker::Sync for aya_ebpf::maps::PerfEventArray<T> where core::marker::PhantomData<T>: core::marker::Sync
@@ -1216,6 +1219,26 @@ impl core::marker::Unpin for aya_ebpf::maps::PerfEventByteArray
 impl core::marker::UnsafeUnpin for aya_ebpf::maps::PerfEventByteArray
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::PerfEventByteArray
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::PerfEventByteArray
+#[repr(C)] pub struct aya_ebpf::maps::perf::PerfEventValue
+pub aya_ebpf::maps::perf::PerfEventValue::counter: u64
+pub aya_ebpf::maps::perf::PerfEventValue::enabled_nanos: u64
+pub aya_ebpf::maps::perf::PerfEventValue::running_nanos: u64
+impl core::clone::Clone for aya_ebpf::maps::perf::PerfEventValue
+pub fn aya_ebpf::maps::perf::PerfEventValue::clone(&self) -> aya_ebpf::maps::perf::PerfEventValue
+impl core::cmp::Eq for aya_ebpf::maps::perf::PerfEventValue
+impl core::cmp::PartialEq for aya_ebpf::maps::perf::PerfEventValue
+pub fn aya_ebpf::maps::perf::PerfEventValue::eq(&self, &aya_ebpf::maps::perf::PerfEventValue) -> bool
+impl core::fmt::Debug for aya_ebpf::maps::perf::PerfEventValue
+pub fn aya_ebpf::maps::perf::PerfEventValue::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_ebpf::maps::perf::PerfEventValue
+impl core::marker::StructuralPartialEq for aya_ebpf::maps::perf::PerfEventValue
+impl core::marker::Freeze for aya_ebpf::maps::perf::PerfEventValue
+impl core::marker::Send for aya_ebpf::maps::perf::PerfEventValue
+impl core::marker::Sync for aya_ebpf::maps::perf::PerfEventValue
+impl core::marker::Unpin for aya_ebpf::maps::perf::PerfEventValue
+impl core::marker::UnsafeUnpin for aya_ebpf::maps::perf::PerfEventValue
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::perf::PerfEventValue
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::perf::PerfEventValue
 pub mod aya_ebpf::maps::program_array
 #[repr(transparent)] pub struct aya_ebpf::maps::program_array::ProgramArray
 impl aya_ebpf::maps::program_array::ProgramArray
@@ -1638,6 +1661,7 @@ pub const fn aya_ebpf::maps::PerfEventArray<T>::new(u32) -> Self
 pub fn aya_ebpf::maps::PerfEventArray<T>::output<C: aya_ebpf::EbpfContext>(&self, &C, &T, u32)
 pub fn aya_ebpf::maps::PerfEventArray<T>::output_at_index<C: aya_ebpf::EbpfContext>(&self, &C, u32, &T, u32)
 pub const fn aya_ebpf::maps::PerfEventArray<T>::pinned(u32) -> Self
+pub fn aya_ebpf::maps::PerfEventArray<T>::read_value(&self, u32) -> core::result::Result<aya_ebpf::maps::perf::PerfEventValue, i32>
 impl<T> !core::marker::Freeze for aya_ebpf::maps::PerfEventArray<T>
 impl<T> core::marker::Send for aya_ebpf::maps::PerfEventArray<T> where core::marker::PhantomData<T>: core::marker::Send
 impl<T> core::marker::Sync for aya_ebpf::maps::PerfEventArray<T> where core::marker::PhantomData<T>: core::marker::Sync
@@ -1658,6 +1682,26 @@ impl core::marker::Unpin for aya_ebpf::maps::PerfEventByteArray
 impl core::marker::UnsafeUnpin for aya_ebpf::maps::PerfEventByteArray
 impl !core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::PerfEventByteArray
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::PerfEventByteArray
+#[repr(C)] pub struct aya_ebpf::maps::PerfEventValue
+pub aya_ebpf::maps::PerfEventValue::counter: u64
+pub aya_ebpf::maps::PerfEventValue::enabled_nanos: u64
+pub aya_ebpf::maps::PerfEventValue::running_nanos: u64
+impl core::clone::Clone for aya_ebpf::maps::perf::PerfEventValue
+pub fn aya_ebpf::maps::perf::PerfEventValue::clone(&self) -> aya_ebpf::maps::perf::PerfEventValue
+impl core::cmp::Eq for aya_ebpf::maps::perf::PerfEventValue
+impl core::cmp::PartialEq for aya_ebpf::maps::perf::PerfEventValue
+pub fn aya_ebpf::maps::perf::PerfEventValue::eq(&self, &aya_ebpf::maps::perf::PerfEventValue) -> bool
+impl core::fmt::Debug for aya_ebpf::maps::perf::PerfEventValue
+pub fn aya_ebpf::maps::perf::PerfEventValue::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_ebpf::maps::perf::PerfEventValue
+impl core::marker::StructuralPartialEq for aya_ebpf::maps::perf::PerfEventValue
+impl core::marker::Freeze for aya_ebpf::maps::perf::PerfEventValue
+impl core::marker::Send for aya_ebpf::maps::perf::PerfEventValue
+impl core::marker::Sync for aya_ebpf::maps::perf::PerfEventValue
+impl core::marker::Unpin for aya_ebpf::maps::perf::PerfEventValue
+impl core::marker::UnsafeUnpin for aya_ebpf::maps::perf::PerfEventValue
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::maps::perf::PerfEventValue
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::maps::perf::PerfEventValue
 #[repr(transparent)] pub struct aya_ebpf::maps::ProgramArray
 impl aya_ebpf::maps::program_array::ProgramArray
 pub const fn aya_ebpf::maps::program_array::ProgramArray::pinned(u32, u32) -> Self

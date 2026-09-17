@@ -72,8 +72,10 @@ impl Link for PerfLink {
 
     fn detach(self) -> Result<(), Self::Error> {
         let Self { perf_fd, event } = self;
-        let _unused: io::Result<()> =
-            perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::Disable);
+        let _unused: io::Result<()> = perf_event_ioctl(
+            perf_fd.as_fd(),
+            PerfEventIoctlRequest::Disable { group: false },
+        );
         if let Some(event) = event {
             let _unused: Result<(), ProgramError> = event.detach();
         }
@@ -132,11 +134,13 @@ pub(crate) fn attach_perf_event(
             io_error,
         },
     )?;
-    perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::Enable).map_err(|io_error| {
-        SyscallError {
-            call: "PERF_EVENT_IOC_ENABLE",
-            io_error,
-        }
+    perf_event_ioctl(
+        perf_fd.as_fd(),
+        PerfEventIoctlRequest::Enable { group: false },
+    )
+    .map_err(|io_error| SyscallError {
+        call: "PERF_EVENT_IOC_ENABLE",
+        io_error,
     })?;
 
     if let Some(event) = event.as_mut() {
