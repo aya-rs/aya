@@ -137,9 +137,11 @@ impl<T: Borrow<MapData>> PerfEventArray<T> {
 impl<T: BorrowMut<MapData>> PerfEventArray<T> {
     /// Stores `event` at `index`.
     ///
-    /// The object that owns `event` must remain alive for as long as the event
-    /// is in use. For example, [`PerfEventArrayBuffer`](super::PerfEventArrayBuffer)
-    /// disables its perf event when dropped.
+    /// The object that owns `event`, such as a
+    /// [`PerfEventArrayBuffer`](super::PerfEventArrayBuffer) or
+    /// [`PerfEventGroup`](crate::programs::perf_event::PerfEventGroup), must
+    /// remain alive for as long as the event is in use. Both types disable
+    /// their perf events when dropped.
     ///
     /// The event remains stored at `index` until it is replaced or removed with
     /// [`PerfEventArray::unset`]

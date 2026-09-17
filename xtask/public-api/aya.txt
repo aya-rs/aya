@@ -4294,6 +4294,61 @@ impl core::marker::Unpin for aya::programs::perf_event::PerfEvent
 impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfEvent
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEvent
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEvent
+pub struct aya::programs::perf_event::PerfEventGroup
+impl aya::programs::perf_event::PerfEventGroup
+pub fn aya::programs::perf_event::PerfEventGroup::disable(&self) -> core::io::error::Result<()>
+pub fn aya::programs::perf_event::PerfEventGroup::enable(&self) -> core::io::error::Result<()>
+pub fn aya::programs::perf_event::PerfEventGroup::events(&self) -> impl core::iter::traits::iterator::Iterator<Item = std::os::fd::owned::BorrowedFd<'_>>
+pub fn aya::programs::perf_event::PerfEventGroup::open(aya::programs::perf_event::PerfEventConfig, impl core::iter::traits::collect::IntoIterator<Item = aya::programs::perf_event::PerfEventConfig>, aya::programs::perf_event::PerfEventScope) -> core::result::Result<Self, aya::programs::perf_event::PerfEventGroupOpenError>
+pub fn aya::programs::perf_event::PerfEventGroup::read(&mut self) -> core::io::error::Result<aya::programs::perf_event::PerfEventGroupRead<'_>>
+pub fn aya::programs::perf_event::PerfEventGroup::reset(&self) -> core::io::error::Result<()>
+impl core::fmt::Debug for aya::programs::perf_event::PerfEventGroup
+pub fn aya::programs::perf_event::PerfEventGroup::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::perf_event::PerfEventGroup
+pub fn aya::programs::perf_event::PerfEventGroup::drop(&mut self)
+impl core::marker::Freeze for aya::programs::perf_event::PerfEventGroup
+impl core::marker::Send for aya::programs::perf_event::PerfEventGroup
+impl core::marker::Sync for aya::programs::perf_event::PerfEventGroup
+impl core::marker::Unpin for aya::programs::perf_event::PerfEventGroup
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfEventGroup
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEventGroup
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEventGroup
+pub struct aya::programs::perf_event::PerfEventGroupOpenError
+pub aya::programs::perf_event::PerfEventGroupOpenError::event_index: usize
+pub aya::programs::perf_event::PerfEventGroupOpenError::io_error: core::io::error::Error
+impl core::error::Error for aya::programs::perf_event::PerfEventGroupOpenError
+pub fn aya::programs::perf_event::PerfEventGroupOpenError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::programs::perf_event::PerfEventGroupOpenError
+pub fn aya::programs::perf_event::PerfEventGroupOpenError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::perf_event::PerfEventGroupOpenError
+pub fn aya::programs::perf_event::PerfEventGroupOpenError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::perf_event::PerfEventGroupOpenError
+impl core::marker::Send for aya::programs::perf_event::PerfEventGroupOpenError
+impl core::marker::Sync for aya::programs::perf_event::PerfEventGroupOpenError
+impl core::marker::Unpin for aya::programs::perf_event::PerfEventGroupOpenError
+impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfEventGroupOpenError
+impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEventGroupOpenError
+impl !core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEventGroupOpenError
+pub struct aya::programs::perf_event::PerfEventGroupRead<'a>
+pub aya::programs::perf_event::PerfEventGroupRead::enabled: core::time::Duration
+pub aya::programs::perf_event::PerfEventGroupRead::running: core::time::Duration
+pub aya::programs::perf_event::PerfEventGroupRead::values: &'a [u64]
+impl<'a> core::clone::Clone for aya::programs::perf_event::PerfEventGroupRead<'a>
+pub fn aya::programs::perf_event::PerfEventGroupRead<'a>::clone(&self) -> aya::programs::perf_event::PerfEventGroupRead<'a>
+impl<'a> core::cmp::Eq for aya::programs::perf_event::PerfEventGroupRead<'a>
+impl<'a> core::cmp::PartialEq for aya::programs::perf_event::PerfEventGroupRead<'a>
+pub fn aya::programs::perf_event::PerfEventGroupRead<'a>::eq(&self, &aya::programs::perf_event::PerfEventGroupRead<'a>) -> bool
+impl<'a> core::fmt::Debug for aya::programs::perf_event::PerfEventGroupRead<'a>
+pub fn aya::programs::perf_event::PerfEventGroupRead<'a>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Copy for aya::programs::perf_event::PerfEventGroupRead<'a>
+impl<'a> core::marker::StructuralPartialEq for aya::programs::perf_event::PerfEventGroupRead<'a>
+impl<'a> core::marker::Freeze for aya::programs::perf_event::PerfEventGroupRead<'a>
+impl<'a> core::marker::Send for aya::programs::perf_event::PerfEventGroupRead<'a>
+impl<'a> core::marker::Sync for aya::programs::perf_event::PerfEventGroupRead<'a>
+impl<'a> core::marker::Unpin for aya::programs::perf_event::PerfEventGroupRead<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::programs::perf_event::PerfEventGroupRead<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEventGroupRead<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEventGroupRead<'a>
 pub struct aya::programs::perf_event::PerfEventLink(_)
 impl aya::programs::links::Link for aya::programs::perf_event::PerfEventLink
 pub type aya::programs::perf_event::PerfEventLink::Error = aya::programs::ProgramError

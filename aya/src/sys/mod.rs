@@ -48,8 +48,9 @@ pub(crate) type SysResult = Result<i64, (i64, io::Error)>;
 #[cfg_attr(test, expect(dead_code, reason = "test stubs cut above this"))]
 #[derive(Debug)]
 pub(crate) enum PerfEventIoctlRequest<'a> {
-    Enable,
-    Disable,
+    Enable { group: bool },
+    Disable { group: bool },
+    Reset { group: bool },
     SetBpf(BorrowedFd<'a>),
 }
 
@@ -69,6 +70,10 @@ pub(crate) enum Syscall<'a> {
     PerfEventIoctl {
         fd: BorrowedFd<'a>,
         request: PerfEventIoctlRequest<'a>,
+    },
+    PerfEventRead {
+        fd: BorrowedFd<'a>,
+        values: &'a mut [u64],
     },
 }
 
@@ -110,6 +115,11 @@ impl std::fmt::Debug for Syscall<'_> {
                 .field("fd", fd)
                 .field("request", request)
                 .finish(),
+            Self::PerfEventRead { fd, values } => f
+                .debug_struct("Syscall::PerfEventRead")
+                .field("fd", fd)
+                .field("counter_count", &values.len())
+                .finish(),
         }
     }
 }
@@ -122,6 +132,8 @@ fn syscall(call: Syscall<'_>) -> SysResult {
 
     #[cfg(not(test))]
     {
+        use std::os::fd::AsRawFd as _;
+
         let ret = unsafe {
             match call {
                 Syscall::Ebpf { cmd, attr } => {
@@ -135,19 +147,25 @@ fn syscall(call: Syscall<'_>) -> SysResult {
                     flags,
                 } => libc::syscall(libc::SYS_perf_event_open, &attr, pid, cpu, group, flags),
                 Syscall::PerfEventIoctl { fd, request } => {
-                    use std::os::fd::AsRawFd as _;
-
                     let fd = fd.as_raw_fd();
                     match request {
-                        PerfEventIoctlRequest::Enable => libc::syscall(
+                        PerfEventIoctlRequest::Enable { group } => libc::syscall(
                             libc::SYS_ioctl,
                             fd,
                             aya_obj::generated::PERF_EVENT_IOC_ENABLE,
+                            libc::c_ulong::from(group),
                         ),
-                        PerfEventIoctlRequest::Disable => libc::syscall(
+                        PerfEventIoctlRequest::Disable { group } => libc::syscall(
                             libc::SYS_ioctl,
                             fd,
                             aya_obj::generated::PERF_EVENT_IOC_DISABLE,
+                            libc::c_ulong::from(group),
+                        ),
+                        PerfEventIoctlRequest::Reset { group } => libc::syscall(
+                            libc::SYS_ioctl,
+                            fd,
+                            aya_obj::generated::PERF_EVENT_IOC_RESET,
+                            libc::c_ulong::from(group),
                         ),
                         PerfEventIoctlRequest::SetBpf(bpf_fd) => libc::syscall(
                             libc::SYS_ioctl,
@@ -157,6 +175,11 @@ fn syscall(call: Syscall<'_>) -> SysResult {
                         ),
                     }
                 }
+                Syscall::PerfEventRead { fd, values } => libc::read(
+                    fd.as_raw_fd(),
+                    values.as_mut_ptr().cast(),
+                    size_of_val(values),
+                ) as libc::c_long,
             }
         };
         // c_long is i32 on armv7.
