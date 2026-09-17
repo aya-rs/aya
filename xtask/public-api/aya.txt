@@ -558,6 +558,8 @@ impl<T, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::queue::Queue<T
 impl<T, V> core::panic::unwind_safe::UnwindSafe for aya::maps::queue::Queue<T, V> where T: core::panic::unwind_safe::UnwindSafe, core::marker::PhantomData<V>: core::panic::unwind_safe::UnwindSafe
 pub mod aya::maps::ring_buf
 pub struct aya::maps::ring_buf::RingBuf<T>
+impl aya::maps::ring_buf::RingBuf<aya::maps::MapData>
+pub fn aya::maps::ring_buf::RingBuf<aya::maps::MapData>::create(u32, u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<T> aya::maps::ring_buf::RingBuf<T>
 pub fn aya::maps::ring_buf::RingBuf<T>::next(&mut self) -> core::option::Option<aya::maps::ring_buf::RingBufItem<'_>>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ring_buf::RingBuf<aya::maps::MapData>
@@ -1993,6 +1995,8 @@ impl<T> core::marker::UnsafeUnpin for aya::maps::ReusePortSockArray<T> where T: 
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ReusePortSockArray<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::ReusePortSockArray<T> where T: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::RingBuf<T>
+impl aya::maps::ring_buf::RingBuf<aya::maps::MapData>
+pub fn aya::maps::ring_buf::RingBuf<aya::maps::MapData>::create(u32, u32) -> core::result::Result<Self, aya::maps::MapError>
 impl<T> aya::maps::ring_buf::RingBuf<T>
 pub fn aya::maps::ring_buf::RingBuf<T>::next(&mut self) -> core::option::Option<aya::maps::ring_buf::RingBufItem<'_>>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::ring_buf::RingBuf<aya::maps::MapData>

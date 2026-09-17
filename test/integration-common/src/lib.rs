@@ -186,6 +186,7 @@ pub mod printk {
 pub mod btf_map_of_maps {
     /// Capacity of each inner array shared between userspace and the eBPF probes.
     pub const INNER_MAX_ENTRIES: u32 = 10;
+    pub const RING_VALUE: u64 = 0x1234_5678_9ABC_DEF0;
 
     #[derive(Copy, Clone, Debug, Eq, PartialEq)]
     #[repr(C)]
