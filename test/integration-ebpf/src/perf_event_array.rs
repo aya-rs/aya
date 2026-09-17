@@ -12,7 +12,10 @@ use aya_ebpf::{
 };
 
 #[btf_map]
-static EVENTS: BtfPerfEventArray = BtfPerfEventArray::new();
+static EVENTS: BtfPerfEventArray<0, 0> = BtfPerfEventArray::new();
+
+#[btf_map]
+static COUNTERS: BtfPerfEventArray<2, 0> = BtfPerfEventArray::new();
 
 #[map]
 static EVENTS_LEGACY: LegacyPerfEventArray<u64> = LegacyPerfEventArray::new(0);
@@ -29,3 +32,10 @@ macro_rules! define_perf_event_array_test {
 
 define_perf_event_array_test!(EVENTS, emit_event);
 define_perf_event_array_test!(EVENTS_LEGACY, emit_event_legacy);
+
+#[uprobe]
+fn read_counter(ctx: ProbeContext) {
+    if let (Ok(task_clock), Ok(cpu_clock)) = (COUNTERS.read_value(0), COUNTERS.read_value(1)) {
+        EVENTS.output(&ctx, &[task_clock, cpu_clock], 0);
+    }
+}

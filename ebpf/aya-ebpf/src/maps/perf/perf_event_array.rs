@@ -1,5 +1,6 @@
 use core::{marker::PhantomData, ptr};
 
+use super::{PerfEventValue, read_value};
 use crate::{
     EbpfContext,
     bindings::{BPF_F_CURRENT_CPU, bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY},
@@ -27,6 +28,24 @@ impl<T> PerfEventArray<T> {
             def: MapDef::new::<u32, u32>(BPF_MAP_TYPE_PERF_EVENT_ARRAY, 0, flags, pinning),
             _t: PhantomData,
         }
+    }
+
+    /// Reads the perf event stored at `index`.
+    ///
+    /// The returned value includes the counter and the time it was enabled and
+    /// running. The latter two values allow callers to account for PMU
+    /// multiplexing.
+    ///
+    /// # Errors
+    ///
+    /// Returns a negative error code from `bpf_perf_event_read_value()`.
+    ///
+    /// # Minimum kernel version
+    ///
+    /// The minimum kernel version required to use this method is 4.15.
+    #[inline(always)]
+    pub fn read_value(&self, index: u32) -> Result<PerfEventValue, i32> {
+        read_value(self.def.as_ptr(), index)
     }
 
     pub fn output<C: EbpfContext>(&self, ctx: &C, data: &T, flags: u32) {
