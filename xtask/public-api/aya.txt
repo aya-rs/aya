@@ -452,7 +452,6 @@ impl<T, K, V> core::panic::unwind_safe::RefUnwindSafe for aya::maps::HashOfMaps<
 impl<T, K, V> core::panic::unwind_safe::UnwindSafe for aya::maps::HashOfMaps<T, K, V> where T: core::panic::unwind_safe::UnwindSafe, core::marker::PhantomData<(K, V)>: core::panic::unwind_safe::UnwindSafe
 pub mod aya::maps::perf
 pub enum aya::maps::perf::PerfBufferError
-pub aya::maps::perf::PerfBufferError::IOError(core::io::error::Error)
 pub aya::maps::perf::PerfBufferError::InvalidPageCount
 pub aya::maps::perf::PerfBufferError::InvalidPageCount::page_count: usize
 pub aya::maps::perf::PerfBufferError::MMapError
@@ -461,8 +460,6 @@ pub aya::maps::perf::PerfBufferError::OpenError
 pub aya::maps::perf::PerfBufferError::OpenError::io_error: core::io::error::Error
 pub aya::maps::perf::PerfBufferError::PerfEventEnableError
 pub aya::maps::perf::PerfBufferError::PerfEventEnableError::io_error: core::io::error::Error
-impl core::convert::From<core::io::error::Error> for aya::maps::perf::PerfBufferError
-pub fn aya::maps::perf::PerfBufferError::from(core::io::error::Error) -> Self
 impl core::error::Error for aya::maps::perf::PerfBufferError
 pub fn aya::maps::perf::PerfBufferError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya::maps::perf::PerfBufferError
@@ -495,7 +492,8 @@ pub struct aya::maps::perf::PerfEventArray<T>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::perf::PerfEventArray<T>
 pub fn aya::maps::perf::PerfEventArray<T>::pin<P: core::convert::AsRef<std::path::Path>>(&self, P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::PerfEventArray<T>
-pub fn aya::maps::perf::PerfEventArray<T>::open(&mut self, u32, core::option::Option<usize>) -> core::result::Result<aya::maps::perf::PerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
+pub fn aya::maps::perf::PerfEventArray<T>::set(&mut self, u32, &impl std::os::fd::owned::AsFd) -> core::result::Result<(), aya::maps::MapError>
+pub fn aya::maps::perf::PerfEventArray<T>::unset(&mut self, u32) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::PerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::perf::PerfEventArray<aya::maps::MapData>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
@@ -512,23 +510,26 @@ impl<T> core::marker::Unpin for aya::maps::perf::PerfEventArray<T> where alloc::
 impl<T> core::marker::UnsafeUnpin for aya::maps::perf::PerfEventArray<T> where alloc::sync::Arc<T>: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfEventArray<T> where alloc::sync::Arc<T>: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfEventArray<T> where alloc::sync::Arc<T>: core::panic::unwind_safe::UnwindSafe
-pub struct aya::maps::perf::PerfEventArrayBuffer<T>
-impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::PerfEventArrayBuffer<T>
-pub fn aya::maps::perf::PerfEventArrayBuffer<T>::fold<C, F>(&mut self, C, F) -> C where F: core::ops::function::FnMut(C, aya::maps::perf::PerfEvent<'_>) -> C
-pub fn aya::maps::perf::PerfEventArrayBuffer<T>::for_each<F>(&mut self, F) where F: core::ops::function::FnMut(aya::maps::perf::PerfEvent<'_>)
-pub fn aya::maps::perf::PerfEventArrayBuffer<T>::readable(&self) -> bool
-pub fn aya::maps::perf::PerfEventArrayBuffer<T>::try_fold<B, C, F>(&mut self, C, F) -> core::ops::control_flow::ControlFlow<B, C> where F: core::ops::function::FnMut(C, aya::maps::perf::PerfEvent<'_>) -> core::ops::control_flow::ControlFlow<B, C>
-impl<T: core::borrow::BorrowMut<aya::maps::MapData>> std::os::fd::owned::AsFd for aya::maps::perf::PerfEventArrayBuffer<T>
-pub fn aya::maps::perf::PerfEventArrayBuffer<T>::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
-impl<T: core::borrow::BorrowMut<aya::maps::MapData>> std::os::fd::raw::AsRawFd for aya::maps::perf::PerfEventArrayBuffer<T>
-pub fn aya::maps::perf::PerfEventArrayBuffer<T>::as_raw_fd(&self) -> std::os::fd::raw::RawFd
-impl<T> core::marker::Freeze for aya::maps::perf::PerfEventArrayBuffer<T> where alloc::sync::Arc<T>: core::marker::Freeze
-impl<T> core::marker::Send for aya::maps::perf::PerfEventArrayBuffer<T> where alloc::sync::Arc<T>: core::marker::Send
-impl<T> core::marker::Sync for aya::maps::perf::PerfEventArrayBuffer<T> where alloc::sync::Arc<T>: core::marker::Sync
-impl<T> core::marker::Unpin for aya::maps::perf::PerfEventArrayBuffer<T> where alloc::sync::Arc<T>: core::marker::Unpin
-impl<T> core::marker::UnsafeUnpin for aya::maps::perf::PerfEventArrayBuffer<T> where alloc::sync::Arc<T>: core::marker::UnsafeUnpin
-impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfEventArrayBuffer<T> where alloc::sync::Arc<T>: core::panic::unwind_safe::RefUnwindSafe
-impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfEventArrayBuffer<T> where alloc::sync::Arc<T>: core::panic::unwind_safe::UnwindSafe
+pub struct aya::maps::perf::PerfEventArrayBuffer
+impl aya::maps::perf::PerfEventArrayBuffer
+pub fn aya::maps::perf::PerfEventArrayBuffer::fold<C, F>(&mut self, C, F) -> C where F: core::ops::function::FnMut(C, aya::maps::perf::PerfEvent<'_>) -> C
+pub fn aya::maps::perf::PerfEventArrayBuffer::for_each<F>(&mut self, F) where F: core::ops::function::FnMut(aya::maps::perf::PerfEvent<'_>)
+pub fn aya::maps::perf::PerfEventArrayBuffer::open(u32, usize) -> core::result::Result<Self, aya::maps::perf::PerfBufferError>
+pub fn aya::maps::perf::PerfEventArrayBuffer::readable(&self) -> bool
+pub fn aya::maps::perf::PerfEventArrayBuffer::try_fold<B, C, F>(&mut self, C, F) -> core::ops::control_flow::ControlFlow<B, C> where F: core::ops::function::FnMut(C, aya::maps::perf::PerfEvent<'_>) -> core::ops::control_flow::ControlFlow<B, C>
+impl core::ops::drop::Drop for aya::maps::perf::PerfEventArrayBuffer
+pub fn aya::maps::perf::PerfEventArrayBuffer::drop(&mut self)
+impl std::os::fd::owned::AsFd for aya::maps::perf::PerfEventArrayBuffer
+pub fn aya::maps::perf::PerfEventArrayBuffer::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
+impl std::os::fd::raw::AsRawFd for aya::maps::perf::PerfEventArrayBuffer
+pub fn aya::maps::perf::PerfEventArrayBuffer::as_raw_fd(&self) -> std::os::fd::raw::RawFd
+impl core::marker::Freeze for aya::maps::perf::PerfEventArrayBuffer
+impl core::marker::Send for aya::maps::perf::PerfEventArrayBuffer
+impl core::marker::Sync for aya::maps::perf::PerfEventArrayBuffer
+impl core::marker::Unpin for aya::maps::perf::PerfEventArrayBuffer
+impl core::marker::UnsafeUnpin for aya::maps::perf::PerfEventArrayBuffer
+impl core::panic::unwind_safe::RefUnwindSafe for aya::maps::perf::PerfEventArrayBuffer
+impl core::panic::unwind_safe::UnwindSafe for aya::maps::perf::PerfEventArrayBuffer
 pub mod aya::maps::queue
 pub struct aya::maps::queue::Queue<T, V: aya::Pod>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, V: aya::Pod> aya::maps::queue::Queue<T, V>
@@ -1903,7 +1904,8 @@ pub struct aya::maps::PerfEventArray<T>
 impl<T: core::borrow::Borrow<aya::maps::MapData>> aya::maps::perf::PerfEventArray<T>
 pub fn aya::maps::perf::PerfEventArray<T>::pin<P: core::convert::AsRef<std::path::Path>>(&self, P) -> core::result::Result<(), aya::pin::PinError>
 impl<T: core::borrow::BorrowMut<aya::maps::MapData>> aya::maps::perf::PerfEventArray<T>
-pub fn aya::maps::perf::PerfEventArray<T>::open(&mut self, u32, core::option::Option<usize>) -> core::result::Result<aya::maps::perf::PerfEventArrayBuffer<T>, aya::maps::perf::PerfBufferError>
+pub fn aya::maps::perf::PerfEventArray<T>::set(&mut self, u32, &impl std::os::fd::owned::AsFd) -> core::result::Result<(), aya::maps::MapError>
+pub fn aya::maps::perf::PerfEventArray<T>::unset(&mut self, u32) -> core::result::Result<(), aya::maps::MapError>
 impl core::convert::TryFrom<aya::maps::Map> for aya::maps::perf::PerfEventArray<aya::maps::MapData>
 pub type aya::maps::perf::PerfEventArray<aya::maps::MapData>::Error = aya::maps::MapError
 pub fn aya::maps::perf::PerfEventArray<aya::maps::MapData>::try_from(aya::maps::Map) -> core::result::Result<Self, Self::Error>
