@@ -850,22 +850,16 @@ impl MapData {
         let c_name = CString::new(name)
             .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
 
-        // BPF_MAP_TYPE_PERF_EVENT_ARRAY's max_entries should not exceed the number of
-        // CPUs.
-        //
         // By default, the newest versions of Aya, libbpf and cilium/ebpf define `max_entries` of
         // `PerfEventArray` as `0`, with an intention to get it replaced with a correct value
         // by the loader.
         //
-        // We allow custom values (potentially coming either from older versions of aya-ebpf or
-        // programs written in C) as long as they don't exceed the number of CPUs.
-        //
-        // Otherwise, when the value is `0` or too large, we set it to the number of CPUs.
-        if obj.map_type() == bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32 {
+        // When the value is `0`, we set it to the number of CPUs.
+        if obj.map_type() == bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32
+            && obj.max_entries() == 0
+        {
             let nr_cpus = nr_cpus().map_err(|(_, error)| MapError::IoError(error))? as u32;
-            if obj.max_entries() == 0 || obj.max_entries() > nr_cpus {
-                obj.set_max_entries(nr_cpus);
-            }
+            obj.set_max_entries(nr_cpus);
         }
 
         let fd = bpf_create_map(&c_name, &obj, btf_fd, inner_map_fd).map_err(|io_error| {
@@ -1381,7 +1375,7 @@ mod tests {
 
         let nr_cpus = nr_cpus().unwrap();
 
-        // Create with max_entries > nr_cpus is clamped to nr_cpus
+        // Create with max_entries > nr_cpus is unchanged
         assert_matches!(
             MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
                 bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
@@ -1392,7 +1386,7 @@ mod tests {
                 fd,
             }) => {
                 assert_eq!(fd.as_fd().as_raw_fd(), crate::MockableFd::mock_signed_fd());
-                assert_eq!(obj.max_entries(), nr_cpus as u32)
+                assert_eq!(obj.max_entries(), 65535)
             }
         );
 

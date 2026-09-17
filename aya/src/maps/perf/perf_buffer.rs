@@ -143,8 +143,11 @@ impl PerfEventArrayBuffer {
             fd,
         };
 
-        perf_event_ioctl(perf_buf.fd.as_fd(), PerfEventIoctlRequest::Enable)
-            .map_err(|io_error| PerfBufferError::PerfEventEnableError { io_error })?;
+        perf_event_ioctl(
+            perf_buf.fd.as_fd(),
+            PerfEventIoctlRequest::Enable { group: false },
+        )
+        .map_err(|io_error| PerfBufferError::PerfEventEnableError { io_error })?;
 
         Ok(perf_buf)
     }
@@ -356,8 +359,10 @@ impl AsRawFd for PerfEventArrayBuffer {
 
 impl Drop for PerfEventArrayBuffer {
     fn drop(&mut self) {
-        let _unused: io::Result<()> =
-            perf_event_ioctl(self.fd.as_fd(), PerfEventIoctlRequest::Disable);
+        let _unused: io::Result<()> = perf_event_ioctl(
+            self.fd.as_fd(),
+            PerfEventIoctlRequest::Disable { group: false },
+        );
     }
 }
 
@@ -398,7 +403,9 @@ mod tests {
         override_syscall(|call| match call {
             Syscall::PerfEventOpen { .. } => Ok(crate::MockableFd::mock_signed_fd().into()),
             Syscall::PerfEventIoctl { .. } => Ok(0),
-            call @ Syscall::Ebpf { .. } => panic!("unexpected syscall: {call:?}"),
+            call @ (Syscall::Ebpf { .. } | Syscall::PerfEventRead { .. }) => {
+                panic!("unexpected syscall: {call:?}")
+            }
         });
         TEST_MMAP_RET.with(|ret| *ret.borrow_mut() = buf.cast());
     }
