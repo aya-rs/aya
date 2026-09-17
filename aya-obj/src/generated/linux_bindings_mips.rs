@@ -2644,6 +2644,16 @@ pub enum perf_event_sample_format {
     PERF_SAMPLE_WEIGHT_STRUCT = 16777216,
     PERF_SAMPLE_MAX = 33554432,
 }
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum perf_event_read_format {
+    PERF_FORMAT_TOTAL_TIME_ENABLED = 1,
+    PERF_FORMAT_TOTAL_TIME_RUNNING = 2,
+    PERF_FORMAT_ID = 4,
+    PERF_FORMAT_GROUP = 8,
+    PERF_FORMAT_LOST = 16,
+    PERF_FORMAT_MAX = 32,
+}
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct perf_event_attr {

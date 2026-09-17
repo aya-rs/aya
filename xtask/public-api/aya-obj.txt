@@ -1803,6 +1803,31 @@ impl core::marker::Unpin for aya_obj::generated::nlmsgerr_attrs
 impl core::marker::UnsafeUnpin for aya_obj::generated::nlmsgerr_attrs
 impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::nlmsgerr_attrs
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::nlmsgerr_attrs
+#[repr(u32)] pub enum aya_obj::generated::perf_event_read_format
+pub aya_obj::generated::perf_event_read_format::PERF_FORMAT_GROUP = 8
+pub aya_obj::generated::perf_event_read_format::PERF_FORMAT_ID = 4
+pub aya_obj::generated::perf_event_read_format::PERF_FORMAT_LOST = 16
+pub aya_obj::generated::perf_event_read_format::PERF_FORMAT_MAX = 32
+pub aya_obj::generated::perf_event_read_format::PERF_FORMAT_TOTAL_TIME_ENABLED = 1
+pub aya_obj::generated::perf_event_read_format::PERF_FORMAT_TOTAL_TIME_RUNNING = 2
+impl core::clone::Clone for aya_obj::generated::perf_event_read_format
+pub fn aya_obj::generated::perf_event_read_format::clone(&self) -> aya_obj::generated::perf_event_read_format
+impl core::cmp::Eq for aya_obj::generated::perf_event_read_format
+impl core::cmp::PartialEq for aya_obj::generated::perf_event_read_format
+pub fn aya_obj::generated::perf_event_read_format::eq(&self, &aya_obj::generated::perf_event_read_format) -> bool
+impl core::fmt::Debug for aya_obj::generated::perf_event_read_format
+pub fn aya_obj::generated::perf_event_read_format::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya_obj::generated::perf_event_read_format
+pub fn aya_obj::generated::perf_event_read_format::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::Copy for aya_obj::generated::perf_event_read_format
+impl core::marker::StructuralPartialEq for aya_obj::generated::perf_event_read_format
+impl core::marker::Freeze for aya_obj::generated::perf_event_read_format
+impl core::marker::Send for aya_obj::generated::perf_event_read_format
+impl core::marker::Sync for aya_obj::generated::perf_event_read_format
+impl core::marker::Unpin for aya_obj::generated::perf_event_read_format
+impl core::marker::UnsafeUnpin for aya_obj::generated::perf_event_read_format
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::generated::perf_event_read_format
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::generated::perf_event_read_format
 #[repr(u32)] pub enum aya_obj::generated::perf_event_sample_format
 pub aya_obj::generated::perf_event_sample_format::PERF_SAMPLE_ADDR = 8
 pub aya_obj::generated::perf_event_sample_format::PERF_SAMPLE_AUX = 1048576
