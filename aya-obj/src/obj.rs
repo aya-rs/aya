@@ -147,16 +147,18 @@ pub enum ProgramSection {
     UProbe {
         /// Whether the program is sleepable, parsed from the `.s` suffix.
         sleepable: bool,
-        /// Whether the program attaches to multiple targets, parsed from the
-        /// `.multi` suffix.
+        /// Whether the section name is `uprobe.multi` or `uprobe.multi.s`. Such
+        /// programs are loaded with the `BPF_TRACE_UPROBE_MULTI` attach type
+        /// and attached through a `uprobe_multi` link.
         multi: bool,
     },
     /// A uretprobe, fired when a userspace function returns (`uretprobe`).
     URetProbe {
         /// Whether the program is sleepable, parsed from the `.s` suffix.
         sleepable: bool,
-        /// Whether the program attaches to multiple targets, parsed from the
-        /// `.multi` suffix.
+        /// Whether the section name is `uretprobe.multi` or `uretprobe.multi.s`. Such
+        /// programs are loaded with the `BPF_TRACE_UPROBE_MULTI` attach type
+        /// and attached through a `uprobe_multi` link.
         multi: bool,
     },
     /// A kernel tracepoint program (`tracepoint`, `tp`).
