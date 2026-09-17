@@ -1,12 +1,15 @@
 use std::{
     ffi::{CString, OsStr, c_long, c_uint},
     io, mem,
-    os::fd::{BorrowedFd, FromRawFd as _},
+    os::fd::{AsRawFd as _, BorrowedFd, FromRawFd as _},
 };
 
 use aya_obj::generated::{
     HW_BREAKPOINT_LEN_1, HW_BREAKPOINT_LEN_2, HW_BREAKPOINT_LEN_4, HW_BREAKPOINT_LEN_8,
     HW_BREAKPOINT_X, PERF_FLAG_FD_CLOEXEC, perf_event_attr,
+    perf_event_read_format::{
+        PERF_FORMAT_GROUP, PERF_FORMAT_TOTAL_TIME_ENABLED, PERF_FORMAT_TOTAL_TIME_RUNNING,
+    },
     perf_event_sample_format::PERF_SAMPLE_RAW,
     perf_type_id::{
         PERF_TYPE_BREAKPOINT, PERF_TYPE_HARDWARE, PERF_TYPE_HW_CACHE, PERF_TYPE_RAW,
@@ -29,8 +32,51 @@ pub(crate) fn perf_event_open(
     inherit: bool,
     flags: u32,
 ) -> io::Result<crate::MockableFd> {
-    let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
+    let mut attr = perf_event_attr(config);
+    attr.sample_type = PERF_SAMPLE_RAW as u64;
+    attr.set_inherit(u64::from(inherit));
 
+    match sample_policy {
+        SamplePolicy::Period(period) => {
+            attr.__bindgen_anon_1.sample_period = period;
+        }
+        SamplePolicy::Frequency(frequency) => {
+            attr.set_freq(1);
+            attr.__bindgen_anon_1.sample_freq = frequency;
+        }
+    }
+
+    match wakeup_policy {
+        WakeupPolicy::Events(events) => {
+            attr.__bindgen_anon_2.wakeup_events = events;
+        }
+        WakeupPolicy::Watermark(watermark) => {
+            attr.set_watermark(1);
+            attr.__bindgen_anon_2.wakeup_watermark = watermark;
+        }
+    }
+
+    let (pid, cpu) = perf_event_scope(scope);
+    perf_event_sys(attr, pid, cpu, None, flags)
+}
+
+pub(crate) fn perf_event_open_group_member(
+    config: PerfEventConfig,
+    scope: PerfEventScope,
+    group: Option<BorrowedFd<'_>>,
+) -> io::Result<crate::MockableFd> {
+    let mut attr = perf_event_attr(config);
+    attr.read_format = PERF_FORMAT_TOTAL_TIME_ENABLED as u64
+        | PERF_FORMAT_TOTAL_TIME_RUNNING as u64
+        | PERF_FORMAT_GROUP as u64;
+    attr.set_disabled(u64::from(group.is_none()));
+
+    let (pid, cpu) = perf_event_scope(scope);
+    perf_event_sys(attr, pid, cpu, group, PERF_FLAG_FD_CLOEXEC)
+}
+
+fn perf_event_attr(config: PerfEventConfig) -> perf_event_attr {
+    let mut attr = unsafe { mem::zeroed::<perf_event_attr>() };
     let (perf_type, config) = match config {
         PerfEventConfig::Pmu { pmu_type, config } => (pmu_type, config),
         PerfEventConfig::Hardware(hw_event) => (
@@ -100,36 +146,15 @@ pub(crate) fn perf_event_open(
     attr.config = config;
     attr.size = size_of::<perf_event_attr>() as u32;
     attr.type_ = perf_type;
-    attr.sample_type = PERF_SAMPLE_RAW as u64;
-    attr.set_inherit(u64::from(inherit));
+    attr
+}
 
-    match sample_policy {
-        SamplePolicy::Period(period) => {
-            attr.__bindgen_anon_1.sample_period = period;
-        }
-        SamplePolicy::Frequency(frequency) => {
-            attr.set_freq(1);
-            attr.__bindgen_anon_1.sample_freq = frequency;
-        }
-    }
-
-    match wakeup_policy {
-        WakeupPolicy::Events(events) => {
-            attr.__bindgen_anon_2.wakeup_events = events;
-        }
-        WakeupPolicy::Watermark(watermark) => {
-            attr.set_watermark(1);
-            attr.__bindgen_anon_2.wakeup_watermark = watermark;
-        }
-    }
-
-    let (pid, cpu) = match scope {
+fn perf_event_scope(scope: PerfEventScope) -> (pid_t, i32) {
+    match scope {
         PerfEventScope::CallingProcess { cpu } => (0, cpu.map_or(-1, |cpu| cpu as i32)),
         PerfEventScope::OneProcess { pid, cpu } => (pid as i32, cpu.map_or(-1, |cpu| cpu as i32)),
         PerfEventScope::AllProcessesOneCpu { cpu } => (-1, cpu as i32),
-    };
-
-    perf_event_sys(attr, pid, cpu, flags)
+    }
 }
 
 pub(crate) fn perf_event_open_probe(
@@ -159,7 +184,7 @@ pub(crate) fn perf_event_open_probe(
         None => (-1, 0),
     };
 
-    perf_event_sys(attr, pid, cpu, PERF_FLAG_FD_CLOEXEC)
+    perf_event_sys(attr, pid, cpu, None, PERF_FLAG_FD_CLOEXEC)
 }
 
 pub(crate) fn perf_event_open_trace_point(
@@ -194,17 +219,43 @@ pub(crate) fn perf_event_ioctl(
         })
 }
 
+pub(crate) fn perf_event_read(fd: BorrowedFd<'_>, values: &mut [u64]) -> io::Result<()> {
+    let len = size_of_val(values);
+    let read = loop {
+        match syscall(Syscall::PerfEventRead { fd, values }) {
+            Ok(read) => break read,
+            Err((_, io_error)) if io_error.kind() == io::ErrorKind::Interrupted => {}
+            Err((_, io_error)) => return Err(io_error),
+        }
+    };
+    let read = usize::try_from(read).map_err(|error| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            format!("perf event read returned an invalid byte count: {error}"),
+        )
+    })?;
+    if read != len {
+        return Err(io::Error::new(
+            io::ErrorKind::UnexpectedEof,
+            format!("perf event read returned {read} bytes, expected {len}"),
+        ));
+    }
+    Ok(())
+}
+
 fn perf_event_sys(
     attr: perf_event_attr,
     pid: pid_t,
     cpu: i32,
+    group: Option<BorrowedFd<'_>>,
     flags: u32,
 ) -> io::Result<crate::MockableFd> {
+    let group = group.map_or(-1, |fd| fd.as_raw_fd());
     let fd = syscall(Syscall::PerfEventOpen {
         attr,
         pid,
         cpu,
-        group: -1,
+        group,
         flags,
     })
     .map_err(|(code, io_error)| {
