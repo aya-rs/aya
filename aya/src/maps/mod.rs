@@ -738,12 +738,12 @@ impl sealed::InnerMap for MapFd {
 }
 
 macro_rules! impl_creatable_map {
-    ($ty:ident<MapData $(, $p:ident: Pod)*>, $map_type:expr, $key_size:expr, $value_size:expr, $name:expr) => {
+    ($ty:ident<MapData $(, $p:ident: Pod)*>, $map_type:expr, $key_size:expr, $value_size:expr, $capacity:ident, $name:expr) => {
         impl<$($p: Pod),*> $ty<MapData, $($p),*> {
-            /// Creates a standalone map with the given `max_entries` capacity and `flags`.
-            pub fn create(max_entries: u32, flags: u32) -> Result<Self, MapError> {
+            /// Creates a standalone map with the given capacity and `flags`.
+            pub fn create($capacity: u32, flags: u32) -> Result<Self, MapError> {
                 let obj = aya_obj::Map::new_from_params(
-                    $map_type as u32, $key_size, $value_size, max_entries, flags,
+                    $map_type as u32, $key_size, $value_size, $capacity, flags,
                 );
                 Self::new(MapData::create(obj, $name, None)?)
             }
@@ -752,21 +752,29 @@ macro_rules! impl_creatable_map {
 }
 
 impl_creatable_map!(Array<MapData, V: Pod>,
-    bpf_map_type::BPF_MAP_TYPE_ARRAY, size_of::<u32>() as u32, size_of::<V>() as u32, "standalone_array");
+    bpf_map_type::BPF_MAP_TYPE_ARRAY, size_of::<u32>() as u32, size_of::<V>() as u32, max_entries, "standalone_array");
 impl_creatable_map!(PerCpuArray<MapData, V: Pod>,
-    bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY, size_of::<u32>() as u32, size_of::<V>() as u32, "standalone_percpu_array");
+    bpf_map_type::BPF_MAP_TYPE_PERCPU_ARRAY, size_of::<u32>() as u32, size_of::<V>() as u32, max_entries, "standalone_percpu_array");
 impl_creatable_map!(BloomFilter<MapData, V: Pod>,
-    bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, 0, size_of::<V>() as u32, "standalone_bloom_filter");
+    bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, 0, size_of::<V>() as u32, max_entries, "standalone_bloom_filter");
 impl_creatable_map!(Queue<MapData, V: Pod>,
-    bpf_map_type::BPF_MAP_TYPE_QUEUE, 0, size_of::<V>() as u32, "standalone_queue");
+    bpf_map_type::BPF_MAP_TYPE_QUEUE, 0, size_of::<V>() as u32, max_entries, "standalone_queue");
 impl_creatable_map!(Stack<MapData, V: Pod>,
-    bpf_map_type::BPF_MAP_TYPE_STACK, 0, size_of::<V>() as u32, "standalone_stack");
+    bpf_map_type::BPF_MAP_TYPE_STACK, 0, size_of::<V>() as u32, max_entries, "standalone_stack");
 impl_creatable_map!(HashMap<MapData, K: Pod, V: Pod>,
-    bpf_map_type::BPF_MAP_TYPE_HASH, size_of::<K>() as u32, size_of::<V>() as u32, "standalone_hash");
+    bpf_map_type::BPF_MAP_TYPE_HASH, size_of::<K>() as u32, size_of::<V>() as u32, max_entries, "standalone_hash");
 impl_creatable_map!(PerCpuHashMap<MapData, K: Pod, V: Pod>,
-    bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH, size_of::<K>() as u32, size_of::<V>() as u32, "standalone_percpu_hash");
+    bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH, size_of::<K>() as u32, size_of::<V>() as u32, max_entries, "standalone_percpu_hash");
 impl_creatable_map!(LpmTrie<MapData, K: Pod, V: Pod>,
-    bpf_map_type::BPF_MAP_TYPE_LPM_TRIE, size_of::<lpm_trie::Key<K>>() as u32, size_of::<V>() as u32, "standalone_lpm_trie");
+    bpf_map_type::BPF_MAP_TYPE_LPM_TRIE, size_of::<lpm_trie::Key<K>>() as u32, size_of::<V>() as u32, max_entries, "standalone_lpm_trie");
+impl_creatable_map!(
+    RingBuf<MapData>,
+    bpf_map_type::BPF_MAP_TYPE_RINGBUF,
+    0,
+    0,
+    byte_size,
+    "standalone_ring_buf"
+);
 
 pub(crate) const fn check_bounds(map: &MapData, index: u32) -> Result<(), MapError> {
     let max_entries = map.obj.max_entries();

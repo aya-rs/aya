@@ -1,9 +1,9 @@
 use aya::{
     Ebpf,
-    maps::{Array, ArrayOfMaps, HashOfMaps, MapData},
+    maps::{Array, ArrayOfMaps, HashOfMaps, MapData, RingBuf},
     programs::{UProbe, uprobe::UProbeScope},
 };
-use integration_common::btf_map_of_maps::INNER_MAX_ENTRIES;
+use integration_common::btf_map_of_maps::{INNER_MAX_ENTRIES, RING_BUF_BYTE_SIZE, RING_VALUE};
 use rstest::rstest;
 
 #[derive(Clone, Copy, Debug)]
@@ -95,6 +95,12 @@ extern "C" fn trigger_btf_hash_of_maps_get_value() {
     std::hint::black_box(());
 }
 
+#[unsafe(no_mangle)]
+#[inline(never)]
+extern "C" fn trigger_btf_array_of_ring_bufs() {
+    std::hint::black_box(());
+}
+
 #[rstest]
 #[case::array_of_maps(MapKind::Array, "btf_array_of_maps", 0, 42)]
 #[case::hash_of_maps(MapKind::Hash, "btf_hash_of_maps", 1, 55)]
@@ -170,4 +176,28 @@ fn btf_hash_of_maps_dynamic() {
 
     inner_1.set(1, &3000u32, 0).unwrap();
     assert_eq!(inner_1.get(&1, 0).unwrap(), 3000);
+}
+
+#[test_log::test]
+fn btf_array_of_ring_bufs() {
+    let mut ebpf = Ebpf::load(crate::BTF_MAP_OF_MAPS).unwrap();
+
+    {
+        let ring_buf = RingBuf::create(RING_BUF_BYTE_SIZE, 0).unwrap();
+        let mut outer: ArrayOfMaps<&mut MapData, RingBuf<MapData>> =
+            ebpf.map_mut("RING_BUFS").unwrap().try_into().unwrap();
+        outer.set(0, &ring_buf, 0).unwrap();
+    }
+
+    load_and_attach(&mut ebpf, "btf_array_of_ring_bufs");
+    trigger_btf_array_of_ring_bufs();
+
+    let outer: ArrayOfMaps<&MapData, RingBuf<MapData>> =
+        ebpf.map("RING_BUFS").unwrap().try_into().unwrap();
+    let mut ring_buf = outer.get(&0, 0).unwrap();
+    let item = ring_buf.next().unwrap();
+    assert_eq!(
+        u64::from_ne_bytes(item.as_ref().try_into().unwrap()),
+        RING_VALUE
+    );
 }
