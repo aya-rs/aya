@@ -2,7 +2,7 @@ use std::{
     convert::Infallible,
     io,
     ops::ControlFlow,
-    os::fd::{AsFd, BorrowedFd},
+    os::fd::{AsFd, AsRawFd, BorrowedFd, RawFd},
     ptr::{self, NonNull},
     slice,
     sync::atomic::{self, Ordering},
@@ -20,13 +20,14 @@ use crate::{
         PerfEventConfig, PerfEventScope, SamplePolicy, SoftwareEvent, WakeupPolicy,
     },
     sys::{PerfEventIoctlRequest, SyscallError, perf_event_ioctl, perf_event_open},
-    util::MMap,
+    util::{MMap, page_size},
 };
 
 /// Perf buffer error.
 #[derive(Error, Debug)]
 pub enum PerfBufferError {
-    /// the page count value passed to [`PerfEventArray::open`](crate::maps::PerfEventArray::open) is invalid.
+    /// The page count passed to
+    /// [`PerfEventArrayBuffer::open`](super::PerfEventArrayBuffer::open) is invalid.
     #[error("invalid page count {page_count}, the value must be a power of two")]
     InvalidPageCount {
         /// the page count
@@ -56,10 +57,6 @@ pub enum PerfBufferError {
         /// the source of this error
         io_error: io::Error,
     },
-
-    /// An IO error occurred.
-    #[error(transparent)]
-    IOError(#[from] io::Error),
 }
 
 /// An event read from a perf event array buffer.
@@ -94,24 +91,32 @@ pub enum PerfEvent<'a> {
     },
 }
 
+/// A ring buffer that receives events emitted with `bpf_perf_event_output()`.
 #[cfg_attr(test, derive(Debug))]
-pub(crate) struct PerfBuffer {
+pub struct PerfEventArrayBuffer {
     mmap: MMap,
     size: usize,
     page_size: usize,
     fd: crate::MockableFd,
 }
 
-impl PerfBuffer {
-    pub(crate) fn open(
-        cpu: u32,
-        page_size: usize,
-        page_count: usize,
-    ) -> Result<Self, PerfBufferError> {
+impl PerfEventArrayBuffer {
+    /// Opens a perf buffer for `cpu`.
+    ///
+    /// `page_count` must be a power of two.
+    /// The buffer must be inserted into a [`PerfEventArray`](super::PerfEventArray)
+    /// before an eBPF program can write events to it.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PerfBufferError`] if `page_count` is invalid, or if the perf
+    /// event cannot be opened, mapped, or enabled.
+    pub fn open(cpu: u32, page_count: usize) -> Result<Self, PerfBufferError> {
         if !page_count.is_power_of_two() {
             return Err(PerfBufferError::InvalidPageCount { page_count });
         }
 
+        let page_size = page_size();
         let fd = perf_event_open(
             PerfEventConfig::Software(SoftwareEvent::BpfOutput),
             PerfEventScope::AllProcessesOneCpu { cpu },
@@ -194,11 +199,16 @@ impl PerfBuffer {
         unsafe { self.buf().as_ptr().byte_add(self.page_size) }.cast::<u8>()
     }
 
-    pub(crate) fn readable(&self) -> bool {
+    /// Returns true if the buffer contains events that have not been read.
+    pub fn readable(&self) -> bool {
         self.data_head() != self.data_tail()
     }
 
-    pub(crate) fn try_fold<B, C, F>(&mut self, init: C, mut f: F) -> ControlFlow<B, C>
+    /// Processes available events until the buffer is drained or `f` breaks.
+    ///
+    /// The slices in [`PerfEvent::Sample`] borrow directly from the mapped ring
+    /// buffer and are valid only for the closure invocation.
+    pub fn try_fold<B, C, F>(&mut self, init: C, mut f: F) -> ControlFlow<B, C>
     where
         F: FnMut(C, PerfEvent<'_>) -> ControlFlow<B, C>,
     {
@@ -216,7 +226,7 @@ impl PerfBuffer {
         let mut guard = scopeguard::guard(initial_tail, |tail| {
             if tail != initial_tail {
                 atomic::fence(Ordering::SeqCst);
-                // SAFETY: `data_tail_ptr` was derived from a `&mut PerfBuffer`
+                // SAFETY: `data_tail_ptr` was derived from a `&mut PerfEventArrayBuffer`
                 // outliving this scope; userspace is the sole writer of
                 // `data_tail`.
                 unsafe {
@@ -294,7 +304,7 @@ impl PerfBuffer {
                     PerfEvent::Lost { count }
                 }
                 event_type => {
-                    // `PerfBuffer::open` configures `SoftwareEvent::BpfOutput`
+                    // `PerfEventArrayBuffer::open` configures `SoftwareEvent::BpfOutput`
                     // with no side-band attr flags [1]; the kernel only emits
                     // SAMPLE and LOST.
                     //
@@ -313,7 +323,8 @@ impl PerfBuffer {
         ControlFlow::Continue(acc)
     }
 
-    pub(crate) fn fold<C, F>(&mut self, init: C, mut f: F) -> C
+    /// Processes all available events and returns the final accumulator.
+    pub fn fold<C, F>(&mut self, init: C, mut f: F) -> C
     where
         F: FnMut(C, PerfEvent<'_>) -> C,
     {
@@ -322,7 +333,8 @@ impl PerfBuffer {
         acc
     }
 
-    pub(crate) fn for_each<F>(&mut self, mut f: F)
+    /// Processes all available events with `f`.
+    pub fn for_each<F>(&mut self, mut f: F)
     where
         F: FnMut(PerfEvent<'_>),
     {
@@ -330,13 +342,19 @@ impl PerfBuffer {
     }
 }
 
-impl AsFd for PerfBuffer {
+impl AsFd for PerfEventArrayBuffer {
     fn as_fd(&self) -> BorrowedFd<'_> {
         self.fd.as_fd()
     }
 }
 
-impl Drop for PerfBuffer {
+impl AsRawFd for PerfEventArrayBuffer {
+    fn as_raw_fd(&self) -> RawFd {
+        self.as_fd().as_raw_fd()
+    }
+}
+
+impl Drop for PerfEventArrayBuffer {
     fn drop(&mut self) {
         let _unused: io::Result<()> =
             perf_event_ioctl(self.fd.as_fd(), PerfEventIoctlRequest::Disable);
@@ -380,15 +398,15 @@ mod tests {
     #[test]
     fn test_invalid_page_count() {
         assert_matches!(
-            PerfBuffer::open(1, PAGE_SIZE, 0),
+            PerfEventArrayBuffer::open(1, 0),
             Err(PerfBufferError::InvalidPageCount { .. })
         );
         assert_matches!(
-            PerfBuffer::open(1, PAGE_SIZE, 3),
+            PerfEventArrayBuffer::open(1, 3),
             Err(PerfBufferError::InvalidPageCount { .. })
         );
         assert_matches!(
-            PerfBuffer::open(1, PAGE_SIZE, 5),
+            PerfEventArrayBuffer::open(1, 5),
             Err(PerfBufferError::InvalidPageCount { .. })
         );
     }
@@ -454,7 +472,7 @@ mod tests {
         }
 
         fake_mmap(&mut mmapped_buf);
-        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
+        let mut buf = PerfEventArrayBuffer::open(1, 1).unwrap();
 
         let mut payloads = Vec::new();
         buf.for_each(|event| match event {
@@ -495,7 +513,7 @@ mod tests {
         );
 
         fake_mmap(&mut mmapped_buf);
-        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
+        let mut buf = PerfEventArrayBuffer::open(1, 1).unwrap();
 
         let mut events = Vec::new();
         buf.for_each(|event| match event {
@@ -547,7 +565,7 @@ mod tests {
         let expected = fixture_wrap_data(&mut mmapped_buf);
 
         fake_mmap(&mut mmapped_buf);
-        let mut buf = PerfBuffer::open(1, PAGE_SIZE, 1).unwrap();
+        let mut buf = PerfEventArrayBuffer::open(1, 1).unwrap();
 
         let mut got: Vec<u8> = Vec::new();
         buf.for_each(|event| match event {

@@ -1,6 +1,9 @@
 use aya::{
     EbpfLoader,
-    maps::{PerfEventArray, perf::PerfEvent},
+    maps::{
+        PerfEventArray,
+        perf::{PerfEvent, PerfEventArrayBuffer},
+    },
     programs::{UProbe, uprobe::UProbeScope},
     util::online_cpus,
 };
@@ -27,7 +30,11 @@ fn emit_event(#[case] bpf_obj: &[u8], #[case] events_map: &str, #[case] prog: &s
     let cpus = online_cpus().map_err(|(_, error)| error).unwrap();
     let mut buffers: Vec<_> = cpus
         .into_iter()
-        .map(|cpu| perf.open(cpu, None).unwrap())
+        .map(|cpu| {
+            let buffer = PerfEventArrayBuffer::open(cpu, 2).unwrap();
+            perf.set(cpu, &buffer).unwrap();
+            buffer
+        })
         .collect();
 
     let uprobe: &mut UProbe = bpf
