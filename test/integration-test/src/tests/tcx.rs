@@ -1,15 +1,67 @@
+use std::{net::UdpSocket, time::Duration};
+
 use aya::{
     Ebpf,
-    programs::{LinkOrder, ProgramId, SchedClassifier, TcAttachType, tc::TcAttachOptions},
+    maps::Array,
+    programs::{
+        LinkOrder, ProgramId, SchedClassifier, TcAttachType,
+        tc::{NlOptions, TcAttachOptions, qdisc_add_clsact},
+    },
     test_helpers::NetNsGuard,
     util::KernelVersion,
 };
+use rstest::rstest;
+
+#[rstest]
+#[case::default(None)]
+#[case::netlink(Some(TcAttachOptions::Netlink(NlOptions::default())))]
+#[test_attr(test_log::test)]
+fn tc_attach(
+    #[values(TcAttachType::Ingress, TcAttachType::Egress)] attach_type: TcAttachType,
+    #[case] options: Option<TcAttachOptions>,
+) {
+    let _netns = NetNsGuard::new().unwrap();
+    qdisc_add_clsact("lo").unwrap();
+
+    let mut ebpf = Ebpf::load(crate::TCX).unwrap();
+    let mut seen: Array<_, u32> = ebpf.take_map("SEEN").unwrap().try_into().unwrap();
+    let prog: &mut SchedClassifier = ebpf.program_mut("tcx_next").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+    let link = match options {
+        None => prog.attach("lo", attach_type),
+        Some(options) => prog.attach_with_options("lo", attach_type, options),
+    }
+    .unwrap();
+
+    let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
+    let addr = socket.local_addr().unwrap();
+    socket
+        .set_read_timeout(Some(Duration::from_secs(60)))
+        .unwrap();
+    let round_trip = || {
+        const PAYLOAD: &[u8] = b"hello tc";
+        assert_eq!(socket.send_to(PAYLOAD, addr).unwrap(), PAYLOAD.len());
+        let mut buf = [0; PAYLOAD.len() + 1];
+        // Receiving the datagram ensures both TC hooks have finished before
+        // inspecting the map, including when checking that detach took effect.
+        let len = socket.recv(&mut buf).unwrap();
+        assert_eq!(&buf[..len], PAYLOAD);
+    };
+
+    round_trip();
+    assert_eq!(seen.get(&0, 0).unwrap(), 1);
+
+    prog.detach(link).unwrap();
+    seen.set(0, &0, 0).unwrap();
+    round_trip();
+    assert_eq!(seen.get(&0, 0).unwrap(), 0);
+}
 
 #[test_log::test]
-fn tcx() {
+fn tcx_link_order() {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(6, 6, 0) {
-        eprintln!("skipping tcx_attach test on kernel {kernel_version:?}");
+        eprintln!("skipping tcx_link_order test on kernel {kernel_version:?}");
         return;
     }
 
