@@ -3,7 +3,7 @@
 //! This implementation is incredibly naive and is only designed to work within
 //! the constraints of the test environment. Not for production use.
 
-use std::{fs::File, io::BufRead as _, path::Path};
+use std::{fs::File, io::BufRead as _};
 
 use anyhow::{Context as _, anyhow, bail};
 use clap::Parser;
@@ -41,15 +41,9 @@ fn try_main(quiet: bool, name: String) -> anyhow::Result<()> {
     let modules_dir = resolve_modules_dir()?;
 
     output!(quiet, "resolving alias for module: {}", name);
-    let module = resolve_alias(quiet, &modules_dir, &name)?;
+    let module = resolve_alias(quiet, modules_dir, &name)?;
 
-    let pattern = format!(
-        "{}/kernel/**/{}.ko*",
-        modules_dir
-            .to_str()
-            .ok_or_else(|| anyhow!("failed to convert {} to string", modules_dir.display()))?,
-        module
-    );
+    let pattern = format!("{modules_dir}/kernel/**/{module}.ko*");
     let module_path = glob(&pattern)
         .with_context(|| format!("failed to glob: {pattern}"))?
         .next()
@@ -90,15 +84,11 @@ fn try_main(quiet: bool, name: String) -> anyhow::Result<()> {
     }
 }
 
-fn resolve_alias(quiet: bool, module_dir: &Path, name: &str) -> anyhow::Result<String> {
-    let modules_alias = module_dir.join("modules.alias");
-    output!(
-        quiet,
-        "opening modules.alias file: {}",
-        modules_alias.display()
-    );
-    let alias_file = File::open(&modules_alias)
-        .with_context(|| format!("open(): {}", modules_alias.display()))?;
+fn resolve_alias(quiet: bool, module_dir: &str, name: &str) -> anyhow::Result<String> {
+    let modules_alias = format!("{module_dir}/modules.alias");
+    output!(quiet, "opening modules.alias file: {}", modules_alias);
+    let alias_file =
+        File::open(&modules_alias).with_context(|| format!("open(): {modules_alias}"))?;
     let alias_file = std::io::BufReader::new(alias_file);
 
     for line in alias_file.lines() {

@@ -30,15 +30,8 @@ anyhow = { workspace = true, features = ["std"] }
 assert_matches = { workspace = true }
 clap = { workspace = true, default-features = true, features = ["derive"] }
 glob = { workspace = true }
-nix = { workspace = true, features = [
-    "user",
-    "fs",
-    "mount",
-    "reboot",
-    "kmod",
-    "feature",
-] }
+nix = { workspace = true, features = ["fs", "mount", "reboot", "kmod"] }
 object = { workspace = true, features = ["elf", "read_core", "std"] }
 walkdir = { workspace = true }
-xz2 = { workspace = true, optional = true } # Optional to allow building without a cross toolchain.
-zstd = { workspace = true, optional = true } # Optional to allow building without a cross toolchain.
+xz2 = { workspace = true, optional = true }                                 # Optional to allow building without a cross toolchain.
+zstd = { workspace = true, optional = true }                                # Optional to allow building without a cross toolchain.
