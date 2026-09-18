@@ -142,9 +142,7 @@ impl<T: BorrowMut<MapData>> DevMapHash<T> {
             // Default is valid as the kernel will only consider fd > 0:
             // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/devmap.c#L866
             // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/devmap.c#L918
-            value.bpf_prog.fd = program
-                .map(|prog| prog.as_fd().as_raw_fd())
-                .unwrap_or_default();
+            value.bpf_prog.fd = program.map_or_default(|prog| prog.as_fd().as_raw_fd());
             hash_map::insert(self.inner.borrow_mut(), &key, &value, flags)?;
         } else {
             if program.is_some() {
