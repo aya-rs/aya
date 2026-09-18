@@ -114,6 +114,7 @@ struct UbuntuMainlineKernelUrls {
 
 fn ubuntu_mainline_kernel_urls(
     client: &HttpClient,
+    mainline_html: &str,
     version: &str,
     architecture: KernelArchitecture,
 ) -> Result<UbuntuMainlineKernelUrls> {
@@ -124,10 +125,7 @@ fn ubuntu_mainline_kernel_urls(
     // release directories while architecture artifacts are still missing.
     // Check only a bounded number of recent builds so an unavailable LTS line
     // fails instead of degrading indefinitely.
-    let mainline_html = client
-        .get_text(UBUNTU_MAINLINE_URL)
-        .context("failed to list Ubuntu Mainline releases")?;
-    let mut mainline_versions = directory_listing_urls(&mainline_html, UBUNTU_MAINLINE_URL)
+    let mut mainline_versions = directory_listing_urls(mainline_html, UBUNTU_MAINLINE_URL)
         .filter_map(|url| {
             let name = url_file_name(url.as_ref()).ok()?;
             let patch = name.strip_prefix(&format!("v{version}."))?;
@@ -267,10 +265,15 @@ fn download_ubuntu_mainline_kernel_archives(
     fs::create_dir_all(&output_dir)
         .with_context(|| format!("failed to create {}", output_dir.display()))?;
 
+    // Every requested kernel series uses the same release index. Fetch it once
+    // so resolving multiple series does not repeat this network dependency.
+    let mainline_html = client
+        .get_text(UBUNTU_MAINLINE_URL)
+        .context("failed to list Ubuntu Mainline releases")?;
     let mut archives = Vec::new();
     let mut keep = HashSet::new();
     for version in versions {
-        let urls = ubuntu_mainline_kernel_urls(client, version, architecture)
+        let urls = ubuntu_mainline_kernel_urls(client, &mainline_html, version, architecture)
             .with_context(|| format!("failed to resolve Ubuntu Mainline kernel {version}"))?;
         let mut keep_archive = |archive: &Path| -> Result<()> {
             let file_name = archive
