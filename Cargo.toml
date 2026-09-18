@@ -359,6 +359,7 @@ single_use_lifetimes = "warn"
 tail_expr_drop_order = "warn"
 trivial_casts = "warn"
 trivial_numeric_casts = "warn"
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(rust_analyzer)"] }
 unit_bindings = "warn"
 unnameable_types = "warn"
 unreachable_pub = "warn"
