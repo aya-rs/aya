@@ -38,6 +38,10 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> RingBuf<T, MAX_ENTRIES, FL
     ///
     /// Returns `None` if the ring buffer is full.
     #[cfg(generic_const_exprs)]
+    #[expect(
+        private_bounds,
+        reason = "the bound only checks alignment at compile time"
+    )]
     pub fn reserve(&self, flags: u64) -> Option<RingBufEntry<T>>
     where
         T: 'static,
@@ -66,6 +70,10 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> RingBuf<T, MAX_ENTRIES, FL
     ///
     /// Returns `None` if the ring buffer is full.
     #[cfg(generic_const_exprs)]
+    #[expect(
+        private_bounds,
+        reason = "the bound only checks alignment at compile time"
+    )]
     pub fn reserve_untyped<U: 'static>(&self, flags: u64) -> Option<RingBufEntry<U>>
     where
         Assert<{ 8 % align_of::<U>() == 0 }>: IsTrue,
