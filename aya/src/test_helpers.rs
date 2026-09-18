@@ -13,7 +13,7 @@ use std::{
 
 use libc::if_nametoindex;
 
-use crate::{netlink_set_link_up, sys::NetlinkError};
+use crate::sys::{NetlinkError, netlink_set_link_up};
 
 /// The cgroup-relative name of the file to which a PID is written to assign
 /// that process to the cgroup.
