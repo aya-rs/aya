@@ -41,9 +41,10 @@ const NLMSG_HDR_ALIGN_LEN: usize = nla_align!(NLMSG_HDR_LEN);
 const NLA_HDR_LEN: usize = size_of::<nlattr>();
 const NLA_HDR_ALIGN_LEN: usize = nla_align!(NLA_HDR_LEN);
 
-/// `CLS_BPF_NAME_LEN` from the Linux kernel.
+/// `CLS_BPF_NAME_LEN` from the Linux kernel, plus the trailing NUL.
+/// The kernel's `NLA_NUL_STRING` limit excludes the terminator.
 /// <https://github.com/torvalds/linux/blob/v6.19/net/sched/cls_bpf.c#L28>
-const CLS_BPF_NAME_LEN: usize = 256;
+const CLS_BPF_NAME_LEN: usize = 256 + 1;
 
 // Size of the attribute buffer needed by write_tc_attach_attrs:
 // TCA_KIND + nested TCA_OPTIONS containing TCA_BPF_CLASSID, TCA_BPF_FD,
@@ -63,7 +64,7 @@ const fn tc_request_attrs_size() -> usize {
     + NLA_HDR_ALIGN_LEN + nla_align!(size_of::<u32>())
 }
 
-const _: () = assert!(tc_request_attrs_size() == 296);
+const _: () = assert!(tc_request_attrs_size() == 300);
 
 /// A private error type for internal use in this module.
 #[derive(Error, Debug)]
@@ -994,26 +995,6 @@ mod tests {
 
         let raw = u32::from_ne_bytes(classid.data.try_into().ok()?);
         Some(raw.into())
-    }
-
-    /// Verify that [`TcRequest`] fits a `CLS_BPF_NAME_LEN`-byte program name.
-    ///
-    /// Before the buffer was enlarged, serializing the netlink attributes for
-    /// long names failed with "no space left".
-    #[test]
-    fn tc_request_fits_max_length_name() {
-        tc_request(&[b'a'; CLS_BPF_NAME_LEN], None).unwrap();
-    }
-
-    /// Verify that a name exceeding `CLS_BPF_NAME_LEN` is rejected before the
-    /// netlink request is built.
-    #[test]
-    fn tc_request_rejects_oversized_name() {
-        let Err(err) = tc_request(&[b'a'; CLS_BPF_NAME_LEN + 1], None) else {
-            panic!("expected oversized name to be rejected");
-        };
-        assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
-        assert_eq!(err.to_string(), "program name exceeds CLS_BPF_NAME_LEN");
     }
 
     /// Verify that the `classid` value supplied to [`write_tc_attach_attrs`]

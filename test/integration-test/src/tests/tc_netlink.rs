@@ -1,11 +1,15 @@
+use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     programs::{
-        SchedClassifier, TcAttachType,
-        tc::{NlOptions, TcAttachOptions, TcHandle, qdisc_add_clsact},
+        ProgramError, SchedClassifier, TcAttachType,
+        tc::{
+            NlOptions, TcAttachOptions, TcError, TcHandle, qdisc_add_clsact, qdisc_detach_program,
+        },
     },
     test_helpers::NetNsGuard,
 };
+use rstest::rstest;
 
 use crate::TCX;
 
@@ -97,4 +101,42 @@ fn netlink_attach_preserves_explicit_handle() {
 
     let link = prog.take_link(link_id).unwrap();
     assert_eq!(link.handle().unwrap(), handle);
+}
+
+// The kernel's NLA_NUL_STRING limit excludes the trailing NUL. Adjacent lengths
+// also exercise the padding between TCA_BPF_NAME and TCA_BPF_FLAGS.
+#[rstest]
+#[case::unaligned(254, true)]
+#[case::aligned(255, true)]
+#[case::maximum(256, true)]
+#[case::too_long(257, false)]
+#[test_log::test]
+fn netlink_program_name(#[case] len: usize, #[case] valid: bool) {
+    let _netns = NetNsGuard::new().unwrap();
+    qdisc_add_clsact("lo").unwrap();
+
+    let mut bpf = Ebpf::load(TCX).unwrap();
+    let prog: &mut SchedClassifier = bpf.program_mut("tcx_next").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let name = "a".repeat(len);
+    let mut prog =
+        SchedClassifier::from_program_info(prog.info().unwrap(), name.clone().into()).unwrap();
+    let result = prog.attach_with_options(
+        "lo",
+        TcAttachType::Ingress,
+        TcAttachOptions::Netlink(NlOptions {
+            classid: Some(TcHandle::new(1, 1)),
+            ..Default::default()
+        }),
+    );
+    if valid {
+        let _link = prog.take_link(result.unwrap()).unwrap();
+        // Looking up the full name verifies that the kernel received it intact.
+        qdisc_detach_program("lo", TcAttachType::Ingress, &name).unwrap();
+    } else {
+        assert_matches!(result, Err(ProgramError::TcError(TcError::NetlinkError(err))) => {
+            assert_eq!(err.to_string(), "program name exceeds CLS_BPF_NAME_LEN");
+        });
+    }
 }
