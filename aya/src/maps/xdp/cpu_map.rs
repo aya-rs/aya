@@ -154,8 +154,7 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
             // Default is valid as the kernel will only consider fd > 0:
             // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/cpumap.c#L466
             value.bpf_prog.fd = program
-                .map(|prog| prog.as_fd().as_raw_fd())
-                .unwrap_or_default();
+                .map_or_default(|prog| prog.as_fd().as_raw_fd());
             bpf_map_update_elem(fd, Some(&cpu_index), &value, flags)
         } else {
             if program.is_some() {

@@ -102,12 +102,12 @@ pub(crate) fn bpf_create_map(
                 // key type even when a value BTF type is provided.
                 u.btf_key_type_id = 0;
                 u.btf_value_type_id = m.def.btf_value_type_id;
-                u.btf_fd = btf_fd.map(|fd| fd.as_raw_fd()).unwrap_or_default() as u32;
+                u.btf_fd = btf_fd.map_or_default(|fd| fd.as_raw_fd()) as u32;
             }
             _ => {
                 u.btf_key_type_id = m.def.btf_key_type_id;
                 u.btf_value_type_id = m.def.btf_value_type_id;
-                u.btf_fd = btf_fd.map(|fd| fd.as_raw_fd()).unwrap_or_default() as u32;
+                u.btf_fd = btf_fd.map_or_default(|fd| fd.as_raw_fd()) as u32;
             }
         }
     }
@@ -514,11 +514,9 @@ pub(crate) fn bpf_link_create(
                 multi.flags = flags;
                 multi.pid = pid;
                 multi.ref_ctr_offsets = ref_ctr_offsets
-                    .map(|slice| slice.as_ptr() as u64)
-                    .unwrap_or_default();
+                    .map_or_default(|slice| slice.as_ptr() as u64);
                 multi.cookies = cookies
-                    .map(|slice| slice.as_ptr() as u64)
-                    .unwrap_or_default();
+                    .map_or_default(|slice| slice.as_ptr() as u64);
             }
         }
     }
