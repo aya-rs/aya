@@ -672,9 +672,9 @@ pub(crate) fn run(opts: Options, workspace_root: &Path) -> Result<()> {
                 // out of `/sys/kernel/security/lsm` and LSM tests exercise
                 // only load/attach, missing runtime regressions.
                 kernel_args.push(" lsm=bpf");
-                // Ubuntu Mainline arm64 packages can make the initramfs large
-                // enough that 1G fails to unpack it, leaving a broken rootfs.
-                qemu.args(["-no-reboot", "-nographic", "-m", "2048M", "-smp", "2"])
+                // Ubuntu Mainline packages can make the initramfs large enough
+                // that 2G fails to unpack it, leaving a broken rootfs.
+                qemu.args(["-no-reboot", "-nographic", "-m", "3072M", "-smp", "2"])
                     .arg("-append")
                     .arg(kernel_args)
                     .arg("-kernel")
