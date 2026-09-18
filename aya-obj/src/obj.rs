@@ -1431,41 +1431,39 @@ fn get_func_and_line_info(
     offset: usize,
     rewrite_insn_off: bool,
 ) -> (FuncSecInfo, LineSecInfo, usize, usize) {
-    btf_ext
-        .map(|btf_ext| {
-            let instruction_offset = (offset / INS_SIZE) as u32;
-            let symbol_size_instructions = (symbol.size as usize / INS_SIZE) as u32;
+    btf_ext.map_or_default(|btf_ext| {
+        let instruction_offset = (offset / INS_SIZE) as u32;
+        let symbol_size_instructions = (symbol.size as usize / INS_SIZE) as u32;
 
-            let mut func_info = btf_ext.func_info.get(section.name);
-            func_info.func_info.retain_mut(|f| {
-                let retain = f.insn_off == instruction_offset;
-                if retain && rewrite_insn_off {
-                    f.insn_off = 0;
-                }
-                retain
-            });
+        let mut func_info = btf_ext.func_info.get(section.name);
+        func_info.func_info.retain_mut(|f| {
+            let retain = f.insn_off == instruction_offset;
+            if retain && rewrite_insn_off {
+                f.insn_off = 0;
+            }
+            retain
+        });
 
-            let mut line_info = btf_ext.line_info.get(section.name);
-            line_info
-                .line_info
-                .retain_mut(|l| match l.insn_off.checked_sub(instruction_offset) {
-                    None => false,
-                    Some(insn_off) => {
-                        let retain = insn_off < symbol_size_instructions;
-                        if retain && rewrite_insn_off {
-                            l.insn_off = insn_off
-                        }
-                        retain
+        let mut line_info = btf_ext.line_info.get(section.name);
+        line_info
+            .line_info
+            .retain_mut(|l| match l.insn_off.checked_sub(instruction_offset) {
+                None => false,
+                Some(insn_off) => {
+                    let retain = insn_off < symbol_size_instructions;
+                    if retain && rewrite_insn_off {
+                        l.insn_off = insn_off
                     }
-                });
-            (
-                func_info,
-                line_info,
-                btf_ext.func_info_rec_size(),
-                btf_ext.line_info_rec_size(),
-            )
-        })
-        .unwrap_or_default()
+                    retain
+                }
+            });
+        (
+            func_info,
+            line_info,
+            btf_ext.func_info_rec_size(),
+            btf_ext.line_info_rec_size(),
+        )
+    })
 }
 
 #[cfg(test)]
