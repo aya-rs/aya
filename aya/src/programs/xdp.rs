@@ -160,7 +160,7 @@ impl Xdp {
                 // Fall back to netlink-based attachment.
 
                 let if_index = if_index as i32;
-                unsafe { netlink_set_xdp_fd(if_index, Some(prog_fd), None, mode) }
+                netlink_set_xdp_fd(if_index, Some(prog_fd), None, mode)
                     .map_err(XdpError::NetlinkError)?;
 
                 let prog_fd = prog_fd.as_raw_fd();
@@ -215,18 +215,16 @@ impl Xdp {
             }) => {
                 // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
                 let old_prog_fd = unsafe { BorrowedFd::borrow_raw(old_prog_fd) };
-                unsafe {
-                    // Preserve the atomic replacement contract for netlink
-                    // links: only replace the current XDP program if it still
-                    // matches the program fd recorded in this link. The
-                    // netlink API expresses that compare-and-replace operation
-                    // with XDP_FLAGS_REPLACE and IFLA_XDP_EXPECTED_FD, which
-                    // were added in Linux 5.7. On older kernels this request
-                    // is expected to fail in the kernel instead of degrading to
-                    // an unconditional replacement.
-                    netlink_set_xdp_fd(if_index, Some(prog_fd), Some(old_prog_fd), mode)
-                        .map_err(XdpError::NetlinkError)?;
-                }
+                // Preserve the atomic replacement contract for netlink
+                // links: only replace the current XDP program if it still
+                // matches the program fd recorded in this link. The
+                // netlink API expresses that compare-and-replace operation
+                // with XDP_FLAGS_REPLACE and IFLA_XDP_EXPECTED_FD, which
+                // were added in Linux 5.7. On older kernels this request
+                // is expected to fail in the kernel instead of degrading to
+                // an unconditional replacement.
+                netlink_set_xdp_fd(if_index, Some(prog_fd), Some(old_prog_fd), mode)
+                    .map_err(XdpError::NetlinkError)?;
 
                 let prog_fd = prog_fd.as_raw_fd();
                 self.data
@@ -280,8 +278,7 @@ impl Link for NlLink {
             // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
             unsafe { BorrowedFd::borrow_raw(prog_fd) }
         });
-        let _unused: Result<(), NetlinkError> =
-            unsafe { netlink_set_xdp_fd(if_index, None, prog_fd, mode) };
+        let _unused: Result<(), NetlinkError> = netlink_set_xdp_fd(if_index, None, prog_fd, mode);
         Ok(())
     }
 }

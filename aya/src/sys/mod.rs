@@ -25,8 +25,6 @@ pub use feature_probe::{
     is_program_supported, is_uprobe_multi_supported,
 };
 pub use netlink::NetlinkError;
-#[doc(hidden)]
-pub use netlink::netlink_set_link_up;
 pub(crate) use netlink::*;
 pub(crate) use perf_event::*;
 use thiserror::Error;
