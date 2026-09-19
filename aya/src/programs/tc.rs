@@ -374,18 +374,16 @@ impl SchedClassifier {
                 let name = self.data.name.as_deref().unwrap_or_default();
                 // TODO: avoid this unwrap by adding a new error variant.
                 let name = CString::new(name).unwrap();
-                let (priority, handle) = unsafe {
-                    netlink_qdisc_attach(
-                        if_index as i32,
-                        &attach_type,
-                        prog_fd,
-                        &name,
-                        options.priority,
-                        options.handle,
-                        options.classid,
-                        create,
-                    )
-                }
+                let (priority, handle) = netlink_qdisc_attach(
+                    if_index as i32,
+                    &attach_type,
+                    prog_fd,
+                    &name,
+                    options.priority,
+                    options.handle,
+                    options.classid,
+                    create,
+                )
                 .map_err(TcError::NetlinkError)?;
 
                 self.data
@@ -492,15 +490,15 @@ impl Link for NlLink {
     }
 
     fn detach(self) -> Result<(), Self::Error> {
-        unsafe {
-            netlink_qdisc_detach(
-                self.if_index as i32,
-                self.attach_type,
-                self.priority,
-                self.handle,
-            )
-        }
-        .map_err(ProgramError::NetlinkError)?;
+        let Self {
+            if_index,
+            attach_type,
+            priority,
+            handle,
+            classid: _,
+        } = self;
+        netlink_qdisc_detach(if_index as i32, attach_type, priority, handle)
+            .map_err(ProgramError::NetlinkError)?;
         Ok(())
     }
 }
@@ -661,7 +659,7 @@ impl SchedClassifierLink {
 /// programs can be attached.
 pub fn qdisc_add_clsact(if_name: &str) -> Result<(), TcError> {
     let if_index = ifindex_from_ifname(if_name)?;
-    unsafe { netlink_qdisc_add_clsact(if_index as i32).map_err(TcError::NetlinkError) }
+    netlink_qdisc_add_clsact(if_index as i32).map_err(TcError::NetlinkError)
 }
 
 /// Detaches the programs with the given name.
@@ -691,7 +689,7 @@ pub fn qdisc_detach_program(
     }
 
     for (prio, handle) in filter_info {
-        unsafe { netlink_qdisc_detach(if_index, attach_type, prio, handle)? }
+        netlink_qdisc_detach(if_index, attach_type, prio, handle)?;
     }
 
     Ok(())
