@@ -1,21 +1,8 @@
 // clang-format off
 #include <vmlinux.h>
 #include <bpf/bpf_helpers.h>
+#include <bpf_elf.h>
 // clang-format on
-
-// Layout of iproute2/tc's legacy map declaration struct.
-// https://github.com/iproute2/iproute2/blob/v6.10.0/include/bpf_elf.h#L32-L42
-struct bpf_elf_map {
-  __u32 type;
-  __u32 size_key;
-  __u32 size_value;
-  __u32 max_elem;
-  __u32 flags;
-  __u32 id;
-  __u32 pinning;
-  __u32 inner_id;
-  __u32 inner_idx;
-};
 
 // Declares itself as an inner map for a would-be map-of-maps by setting
 // inner_id. Aya does not support map-in-map for legacy maps, so this must be

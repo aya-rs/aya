@@ -10,7 +10,9 @@ use anyhow::{Context as _, Ok, Result, anyhow};
 use cargo_metadata::{Metadata, MetadataCommand, Package, Target, TargetKind};
 // Keep this build dependency in Cargo's graph to invalidate eBPF artifacts after source changes.
 use integration_ebpf as _;
-use xtask::{AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR, exec, install_libbpf_headers_cmd};
+use xtask::{
+    AYA_BUILD_INTEGRATION_BPF, IPROUTE2_DIR, LIBBPF_DIR, exec, install_libbpf_headers_cmd,
+};
 
 /// This file, along with the xtask crate, allows analysis tools such as `cargo check`, `cargo
 /// clippy`, and even `cargo build` to work as users expect. Prior to this file's existence, this
@@ -108,7 +110,7 @@ fn main() -> Result<()> {
         ("tc_legacy_map.bpf.c", false),
         ("tc_legacy_map_in_map.bpf.c", false),
     ];
-    const C_BPF_HEADERS: &[&str] = &["reloc.h", "struct_with_scalars.h"];
+    const C_BPF_HEADERS: &[&str] = &["headers/asm/types.h", "reloc.h", "struct_with_scalars.h"];
 
     if build_integration_bpf {
         const CARGO_CFG_TARGET_ENDIAN: &str = "CARGO_CFG_TARGET_ENDIAN";
@@ -124,6 +126,9 @@ fn main() -> Result<()> {
 
         let libbpf_dir = workspace_root.join(LIBBPF_DIR);
         println!("cargo:rerun-if-changed={libbpf_dir}");
+
+        let iproute2_dir = workspace_root.join(IPROUTE2_DIR);
+        println!("cargo:rerun-if-changed={iproute2_dir}");
 
         let libbpf_headers_dir = out_dir.join("libbpf_headers");
         let mut cmd = install_libbpf_headers_cmd(&libbpf_dir, &libbpf_headers_dir);
@@ -155,6 +160,16 @@ fn main() -> Result<()> {
         // submodule which happens to include such a file, we use it.
         let libbpf_vmlinux_dir = libbpf_dir.join(".github/actions/build-selftests");
 
+        // NB: the tc fixtures declare their maps using iproute2's own bpf_elf.h rather than a copy
+        // of struct bpf_elf_map, so that they are compiled against the layout tc emits.
+        //
+        // bpf_elf.h includes <asm/types.h> for the fixed-width typedefs. That header belongs to
+        // the kernel UAPI headers, which -nostdlibinc excludes, and the libbpf headers installed
+        // above provide no asm directory. vmlinux.h already defines the typedefs it is included
+        // for, so an empty stub is enough to satisfy the include.
+        let iproute2_headers_dir = iproute2_dir.join("include");
+        let bpf_headers_dir = bpf_dir.join("headers");
+
         let clang = || {
             let mut cmd = Command::new("clang");
             cmd.arg("-nostdlibinc")
@@ -162,6 +177,10 @@ fn main() -> Result<()> {
                 .arg(&libbpf_headers_dir)
                 .arg("-I")
                 .arg(&libbpf_vmlinux_dir)
+                .arg("-I")
+                .arg(&iproute2_headers_dir)
+                .arg("-I")
+                .arg(&bpf_headers_dir)
                 .args(["-g", "-O2", "-target", target, "-c"])
                 .arg(&target_arch);
             cmd
