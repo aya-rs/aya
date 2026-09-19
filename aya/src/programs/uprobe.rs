@@ -28,11 +28,11 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, LinkError, PerfLinkInner, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, load_program_with_attach_type, load_program_without_attach_type,
+        FdLink, PerfLinkInner, ProgramData, ProgramError, ProgramType, define_link_wrapper,
+        load_program_with_attach_type, load_program_without_attach_type,
         probe::{
-            self, ManyProbeLinks, OsStringExt as _, Probe, ProbeEventArgs, ProbeKind,
-            ProbeLinkIdInner, ProbeLinkInner,
+            self, AttachMode, ManyProbeLinks, OsStringExt as _, Probe, ProbeEventArgs, ProbeKind,
+            ProbeLinkIdInner, ProbeLinkInner, impl_probe_link,
         },
     },
     sys::{SyscallError, bpf_link_create_uprobe_multi},
@@ -65,13 +65,6 @@ pub(crate) struct UProbeAttachTarget<'a> {
     path: &'a OsStr,
     offset: u64,
     pid: Option<u32>,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum AttachMode {
-    Single,
-    Multi,
-    Unknown,
 }
 
 /// The location in the target object file to which the uprobe is to be
@@ -712,53 +705,7 @@ define_link_wrapper!(
     ProbeLinkIdInner,
     UProbe,
 );
-
-impl From<PerfLinkInner> for UProbeLink {
-    fn from(link: PerfLinkInner) -> Self {
-        Self::from(ProbeLinkInner::from(link))
-    }
-}
-
-impl TryFrom<UProbeLink> for FdLink {
-    type Error = LinkError;
-
-    fn try_from(value: UProbeLink) -> Result<Self, Self::Error> {
-        match value.into_inner() {
-            ProbeLinkInner::One(PerfLinkInner::Fd(link)) => Ok(link),
-            ProbeLinkInner::One(PerfLinkInner::PerfLink(_)) | ProbeLinkInner::Many(_) => {
-                Err(LinkError::InvalidLink)
-            }
-        }
-    }
-}
-
-impl TryFrom<FdLink> for UProbeLink {
-    type Error = LinkError;
-
-    fn try_from(fd_link: FdLink) -> Result<Self, Self::Error> {
-        let info = crate::sys::bpf_link_get_info_by_fd(fd_link.fd.as_fd())?;
-        if info.type_ == bpf_link_type::BPF_LINK_TYPE_PERF_EVENT as u32
-            || info.type_ == bpf_link_type::BPF_LINK_TYPE_UPROBE_MULTI as u32
-        {
-            return Ok(Self::new(ProbeLinkInner::from(fd_link)));
-        }
-        Err(LinkError::InvalidLink)
-    }
-}
-
-impl UProbeLink {
-    /// Returns the underlying fd-backed links when available.
-    ///
-    /// A single [`UProbeLink`] may correspond to multiple [`FdLink`] values
-    /// when [`UProbe::attach`] falls back to the legacy single-point attach
-    /// path for multiple attachment points.
-    ///
-    /// If the underlying link representation is not fd-backed, the original
-    /// [`UProbeLink`] is returned.
-    pub fn into_fd_links(self) -> Result<Vec<FdLink>, Self> {
-        self.into_inner().into_fd_links().map_err(Self::from)
-    }
-}
+impl_probe_link!(UProbeLink, bpf_link_type::BPF_LINK_TYPE_UPROBE_MULTI,);
 
 fn find_symbol_in_object<'a>(obj: &'a object::File<'a>, symbol: &str) -> Option<Symbol<'a, 'a>> {
     obj.dynamic_symbols()

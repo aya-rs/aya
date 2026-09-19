@@ -32,6 +32,13 @@ pub enum ProbeKind {
     Return,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum AttachMode {
+    Single,
+    Multi,
+    Unknown,
+}
+
 /// Internal identifier for [`ProbeLinkInner`].
 #[derive(Debug, Hash, Eq, PartialEq)]
 pub(crate) enum ProbeLinkIdInner {
@@ -154,6 +161,66 @@ impl From<FdLink> for ProbeLinkInner {
         Self::One(PerfLinkInner::Fd(link))
     }
 }
+
+macro_rules! impl_probe_link {
+    ($wrapper:ident, $multi_link_type:expr $(,)?) => {
+        impl From<$crate::programs::perf_attach::PerfLinkInner> for $wrapper {
+            fn from(link: $crate::programs::perf_attach::PerfLinkInner) -> Self {
+                Self::from($crate::programs::probe::ProbeLinkInner::from(link))
+            }
+        }
+
+        impl TryFrom<$wrapper> for $crate::programs::FdLink {
+            type Error = $crate::programs::LinkError;
+
+            fn try_from(value: $wrapper) -> Result<Self, Self::Error> {
+                match value.into_inner() {
+                    $crate::programs::probe::ProbeLinkInner::One(
+                        $crate::programs::perf_attach::PerfLinkInner::Fd(link),
+                    ) => Ok(link),
+                    inner => {
+                        // The wrapper owns detachment, including for legacy links.
+                        drop($wrapper::new(inner));
+                        Err($crate::programs::LinkError::InvalidLink)
+                    }
+                }
+            }
+        }
+
+        impl TryFrom<$crate::programs::FdLink> for $wrapper {
+            type Error = $crate::programs::LinkError;
+
+            fn try_from(fd_link: $crate::programs::FdLink) -> Result<Self, Self::Error> {
+                let info =
+                    $crate::sys::bpf_link_get_info_by_fd(std::os::fd::AsFd::as_fd(&fd_link.fd))?;
+                if info.type_ == aya_obj::generated::bpf_link_type::BPF_LINK_TYPE_PERF_EVENT as u32
+                    || info.type_ == ($multi_link_type) as u32
+                {
+                    return Ok(Self::new($crate::programs::probe::ProbeLinkInner::from(
+                        fd_link,
+                    )));
+                }
+                Err($crate::programs::LinkError::InvalidLink)
+            }
+        }
+
+        impl $wrapper {
+            /// Returns the underlying fd-backed links when available.
+            ///
+            /// One probe link may correspond to multiple
+            /// [`FdLink`](crate::programs::FdLink) values when a legacy program
+            /// is attached to multiple points.
+            ///
+            /// If the underlying link representation is not fd-backed, the
+            /// original probe link is returned.
+            pub fn into_fd_links(self) -> Result<Vec<$crate::programs::FdLink>, Self> {
+                self.into_inner().into_fd_links().map_err(Self::from)
+            }
+        }
+    };
+}
+
+pub(crate) use impl_probe_link;
 
 impl Link for ProbeLinkInner {
     type Id = ProbeLinkIdInner;
