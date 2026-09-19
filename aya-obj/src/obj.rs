@@ -908,8 +908,8 @@ impl Function {
 
 /// Errors caught during parsing the object file
 #[derive(Debug, thiserror::Error)]
-#[expect(missing_docs, reason = "TODO")]
 pub enum ParseError {
+    /// The ELF data of the object file could not be parsed.
     #[error("error parsing ELF data")]
     ElfError(object::read::Error),
 
@@ -917,60 +917,126 @@ pub enum ParseError {
     #[error("BTF error")]
     BtfError(#[from] BtfError),
 
+    /// The `license` section is not a NULL-terminated string.
     #[error("invalid license `{data:?}`: missing NULL terminator")]
-    MissingLicenseNullTerminator { data: Vec<u8> },
+    MissingLicenseNullTerminator {
+        /// The raw contents of the `license` section.
+        data: Vec<u8>,
+    },
 
+    /// The `license` section does not contain a valid license string.
     #[error("invalid license `{data:?}`")]
-    InvalidLicense { data: Vec<u8> },
+    InvalidLicense {
+        /// The raw contents of the `license` section.
+        data: Vec<u8>,
+    },
 
+    /// The `version` section does not contain a valid kernel version.
     #[error("invalid kernel version `{data:?}`")]
-    InvalidKernelVersion { data: Vec<u8> },
+    InvalidKernelVersion {
+        /// The raw contents of the `version` section.
+        data: Vec<u8>,
+    },
 
+    /// The section at the given index could not be parsed.
     #[error("error parsing section with index {index}")]
     SectionError {
+        /// The index of the section that failed to parse.
         index: usize,
+        /// The underlying parsing error.
         error: object::read::Error,
     },
 
+    /// A relocation refers to a target that is not supported.
     #[error("unsupported relocation target")]
     UnsupportedRelocationTarget,
 
+    /// A program section name could not be parsed into a known section type.
     #[error("invalid program section `{section}`")]
-    InvalidProgramSection { section: String },
+    InvalidProgramSection {
+        /// The section name that could not be parsed.
+        section: String,
+    },
 
+    /// A program section does not contain valid instructions.
     #[error("invalid program code")]
     InvalidProgramCode,
 
+    /// The definition of the named map could not be parsed.
     #[error("error parsing map `{name}`")]
-    InvalidMapDefinition { name: String },
+    InvalidMapDefinition {
+        /// The name of the map whose definition failed to parse.
+        name: String,
+    },
 
+    /// Two or more symbols in the same section share the same address.
     #[error("two or more symbols in section `{section_index}` have the same address {address:#X}")]
-    SymbolTableConflict { section_index: usize, address: u64 },
+    SymbolTableConflict {
+        /// The index of the section containing the conflicting symbols.
+        section_index: usize,
+        /// The address shared by the conflicting symbols.
+        address: u64,
+    },
 
+    /// While parsing a text section, no symbol starts at the address of the
+    /// next instruction.
     #[error("unknown symbol in section `{section_index}` at address {address:#X}")]
-    UnknownSymbol { section_index: usize, address: u64 },
+    UnknownSymbol {
+        /// The index of the text section being parsed.
+        section_index: usize,
+        /// The address in the section at which no symbol was found.
+        address: u64,
+    },
 
+    /// A symbol in the symbol table is invalid.
     #[error("invalid symbol, index `{index}` name: {}", .name.as_deref().unwrap_or("[unknown]"))]
-    InvalidSymbol { index: usize, name: Option<String> },
+    InvalidSymbol {
+        /// The index of the symbol in the symbol table.
+        index: usize,
+        /// The name of the symbol, if one is available.
+        name: Option<String>,
+    },
 
+    /// Global data could not be patched into a map, either because the size of
+    /// the provided data does not match the symbol's size, or because the
+    /// symbol's address range lies outside the map's data.
     #[error("symbol {name} has size `{sym_size}`, but provided data is of size `{data_size}`")]
     InvalidGlobalData {
+        /// The name of the symbol.
         name: String,
+        /// The size declared by the symbol.
         sym_size: u64,
+        /// The size of the data provided to patch the symbol with.
         data_size: usize,
     },
 
+    /// A symbol with the given name was not found in the symbol table.
     #[error("symbol with name {name} not found in the symbols table")]
-    SymbolNotFound { name: String },
+    SymbolNotFound {
+        /// The name of the symbol that was not found.
+        name: String,
+    },
 
+    /// No map was found for the section at the given index.
     #[error("map for section with index {index} not found")]
-    MapNotFound { index: usize },
+    MapNotFound {
+        /// The index of the section.
+        index: usize,
+    },
 
+    /// A symbol in the `maps` section has no name.
     #[error("the map number {i} in the `maps` section doesn't have a symbol name")]
-    MapSymbolNameNotFound { i: usize },
+    MapSymbolNameNotFound {
+        /// The index of the unnamed symbol in the symbol table.
+        i: usize,
+    },
 
+    /// The named section does not contain any symbols.
     #[error("no symbols found in the {section_name} section")]
-    NoSymbolsForSection { section_name: String },
+    NoSymbolsForSection {
+        /// The name of the section.
+        section_name: String,
+    },
 
     /// No BTF parsed for object
     #[error("no BTF parsed for object")]
