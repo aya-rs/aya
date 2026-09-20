@@ -1274,8 +1274,9 @@ impl Object {
                 materialize_scalar_value(symbol_name, &data, type_size, false, Some(1), endianness)?
             }
             BtfType::Int(int)
-                if matches!(int.encoding(), IntEncoding::Signed | IntEncoding::None)
-                    && matches!(int.size, 1 | 2 | 4 | 8) =>
+                if (matches!(int.encoding(), IntEncoding::Signed | IntEncoding::None)
+                    && matches!(int.size, 1 | 2 | 4 | 8))
+                    || (int.encoding() == IntEncoding::Char && int.size == 1) =>
             {
                 if let Some(value) = tristate_marker {
                     if int.size != 1 {
@@ -1918,6 +1919,48 @@ mod tests {
                 assert_eq!(func.linkage(), expected_linkage, "{name}");
             });
         }
+    }
+
+    #[test]
+    fn materialize_kconfig_extern_accepts_char_encoding() {
+        let mut btf = Btf::new();
+        let type_id = btf.add_type(BtfType::Int(Int::new(0, 1, IntEncoding::Char, 0)));
+        let var = Var::new(0, type_id, VarLinkage::Extern);
+
+        for (value, expected) in [
+            (b"n".as_slice(), b'n'),
+            (b"y".as_slice(), b'y'),
+            (b"m".as_slice(), b'm'),
+            (&[0, 0, 0, 0, 0, 0, 0, 0], 0),
+            (&[65, 0, 0, 0, 0, 0, 0, 0], 65),
+            (&[255, 0, 0, 0, 0, 0, 0, 0], 255),
+        ] {
+            assert_eq!(
+                Object::materialize_kconfig_extern(
+                    &btf,
+                    &var,
+                    "CONFIG_CHAR_VALUE",
+                    Some(value),
+                    false,
+                    Endianness::Little,
+                )
+                .unwrap(),
+                (1, vec![expected])
+            );
+        }
+
+        assert_matches!(
+            Object::materialize_kconfig_extern(
+                &btf,
+                &var,
+                "CONFIG_CHAR_VALUE",
+                Some(&[0, 1, 0, 0, 0, 0, 0, 0]),
+                false,
+                Endianness::Little,
+            ),
+            Err(BtfError::ExternalSymbolValueOutOfRange { symbol_name })
+                if symbol_name == "CONFIG_CHAR_VALUE"
+        );
     }
 
     fn materialize_test_scalar(
