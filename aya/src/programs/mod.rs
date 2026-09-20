@@ -238,7 +238,7 @@ pub enum ProgramError {
     #[error(transparent)]
     Btf(#[from] BtfError),
 
-    /// The program is not attached.
+    /// The program name is invalid.
     #[error("the program name `{name}` is invalid")]
     InvalidName {
         /// program name
