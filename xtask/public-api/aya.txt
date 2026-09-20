@@ -1227,6 +1227,7 @@ pub aya::maps::MapError::InvalidMapType
 pub aya::maps::MapError::InvalidMapType::map_type: u32
 pub aya::maps::MapError::InvalidName
 pub aya::maps::MapError::InvalidName::name: alloc::string::String
+pub aya::maps::MapError::InvalidName::source: alloc::ffi::c_str::NulError
 pub aya::maps::MapError::InvalidValueSize
 pub aya::maps::MapError::InvalidValueSize::expected: usize
 pub aya::maps::MapError::InvalidValueSize::size: usize
@@ -2228,6 +2229,10 @@ pub aya::pin::PinError::InvalidPinPath::path: std::path::PathBuf
 pub aya::pin::PinError::NoFd
 pub aya::pin::PinError::NoFd::name: alloc::string::String
 pub aya::pin::PinError::SyscallError(aya::sys::SyscallError)
+impl core::convert::From<aya::pin::PinError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(aya::pin::PinError) -> Self
+impl core::convert::From<aya::pin::PinError> for aya::programs::links::LinkError
+pub fn aya::programs::links::LinkError::from(aya::pin::PinError) -> Self
 impl core::convert::From<aya::sys::SyscallError> for aya::pin::PinError
 pub fn aya::pin::PinError::from(aya::sys::SyscallError) -> Self
 impl core::error::Error for aya::pin::PinError
@@ -3343,8 +3348,11 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::CgroupAtt
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::CgroupAttachMode
 pub enum aya::programs::links::LinkError
 pub aya::programs::links::LinkError::InvalidLink
+pub aya::programs::links::LinkError::PinError(aya::pin::PinError)
 pub aya::programs::links::LinkError::SyscallError(aya::sys::SyscallError)
 pub aya::programs::links::LinkError::UnknownLinkType(u32)
+impl core::convert::From<aya::pin::PinError> for aya::programs::links::LinkError
+pub fn aya::programs::links::LinkError::from(aya::pin::PinError) -> Self
 impl core::convert::From<aya::programs::links::LinkError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::links::LinkError) -> Self
 impl core::convert::From<aya::sys::SyscallError> for aya::programs::links::LinkError
@@ -4399,6 +4407,25 @@ impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfEventLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEventLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEventLinkId
 pub mod aya::programs::raw_trace_point
+pub enum aya::programs::raw_trace_point::RawTracePointError
+pub aya::programs::raw_trace_point::RawTracePointError::InvalidTracePointName
+pub aya::programs::raw_trace_point::RawTracePointError::InvalidTracePointName::source: alloc::ffi::c_str::NulError
+pub aya::programs::raw_trace_point::RawTracePointError::InvalidTracePointName::tp_name: alloc::string::String
+impl core::convert::From<aya::programs::raw_trace_point::RawTracePointError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(aya::programs::raw_trace_point::RawTracePointError) -> Self
+impl core::error::Error for aya::programs::raw_trace_point::RawTracePointError
+pub fn aya::programs::raw_trace_point::RawTracePointError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::programs::raw_trace_point::RawTracePointError
+pub fn aya::programs::raw_trace_point::RawTracePointError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::raw_trace_point::RawTracePointError
+pub fn aya::programs::raw_trace_point::RawTracePointError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::raw_trace_point::RawTracePointError
+impl core::marker::Send for aya::programs::raw_trace_point::RawTracePointError
+impl core::marker::Sync for aya::programs::raw_trace_point::RawTracePointError
+impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePointError
+impl core::marker::UnsafeUnpin for aya::programs::raw_trace_point::RawTracePointError
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePointError
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePointError
 pub struct aya::programs::raw_trace_point::RawTracePoint
 impl aya::programs::raw_trace_point::RawTracePoint
 pub const aya::programs::raw_trace_point::RawTracePoint::PROGRAM_TYPE: aya::programs::ProgramType
@@ -5023,9 +5050,9 @@ pub aya::programs::tc::TcError::InvalidLinkOperation
 pub aya::programs::tc::TcError::InvalidTcxAttach(u32)
 pub aya::programs::tc::TcError::IoError(core::io::error::Error)
 pub aya::programs::tc::TcError::NetlinkError(aya::sys::NetlinkError)
-pub aya::programs::tc::TcError::NulError(alloc::ffi::c_str::NulError)
-impl core::convert::From<alloc::ffi::c_str::NulError> for aya::programs::tc::TcError
-pub fn aya::programs::tc::TcError::from(alloc::ffi::c_str::NulError) -> Self
+pub aya::programs::tc::TcError::NulError
+pub aya::programs::tc::TcError::NulError::name: alloc::string::String
+pub aya::programs::tc::TcError::NulError::source: alloc::ffi::c_str::NulError
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::tc::TcError) -> Self
 impl core::convert::From<aya::sys::NetlinkError> for aya::programs::tc::TcError
@@ -5620,7 +5647,12 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeLi
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeLinkId
 pub mod aya::programs::xdp
 pub enum aya::programs::xdp::XdpError
+pub aya::programs::xdp::XdpError::InvalidInterfaceName
+pub aya::programs::xdp::XdpError::InvalidInterfaceName::name: alloc::string::String
+pub aya::programs::xdp::XdpError::InvalidInterfaceName::source: alloc::ffi::c_str::NulError
 pub aya::programs::xdp::XdpError::NetlinkError(aya::sys::NetlinkError)
+pub aya::programs::xdp::XdpError::UnknownInterface
+pub aya::programs::xdp::XdpError::UnknownInterface::name: alloc::string::String
 impl core::convert::From<aya::programs::xdp::XdpError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::xdp::XdpError) -> Self
 impl core::convert::From<aya::sys::NetlinkError> for aya::programs::xdp::XdpError
@@ -6071,6 +6103,7 @@ pub aya::programs::ProgramError::ExtensionError(aya::programs::extension::Extens
 pub aya::programs::ProgramError::IOError(core::io::error::Error)
 pub aya::programs::ProgramError::InvalidName
 pub aya::programs::ProgramError::InvalidName::name: alloc::string::String
+pub aya::programs::ProgramError::InvalidName::source: alloc::ffi::c_str::NulError
 pub aya::programs::ProgramError::KProbeError(aya::programs::kprobe::KProbeError)
 pub aya::programs::ProgramError::LinkError(aya::programs::links::LinkError)
 pub aya::programs::ProgramError::LoadError
@@ -6080,6 +6113,8 @@ pub aya::programs::ProgramError::MapError(aya::maps::MapError)
 pub aya::programs::ProgramError::NetlinkError(aya::sys::NetlinkError)
 pub aya::programs::ProgramError::NotAttached
 pub aya::programs::ProgramError::NotLoaded
+pub aya::programs::ProgramError::PinError(aya::pin::PinError)
+pub aya::programs::ProgramError::RawTracePointError(aya::programs::raw_trace_point::RawTracePointError)
 pub aya::programs::ProgramError::SkReuseportError(aya::programs::sk_reuseport::SkReuseportError)
 pub aya::programs::ProgramError::SocketFilterError(aya::programs::socket_filter::SocketFilterError)
 pub aya::programs::ProgramError::SyscallError(aya::sys::SyscallError)
@@ -6087,11 +6122,11 @@ pub aya::programs::ProgramError::TcError(aya::programs::tc::TcError)
 pub aya::programs::ProgramError::TracePointError(aya::programs::trace_point::TracePointError)
 pub aya::programs::ProgramError::UProbeError(aya::programs::uprobe::UProbeError)
 pub aya::programs::ProgramError::UnexpectedProgramType
-pub aya::programs::ProgramError::UnknownInterface
-pub aya::programs::ProgramError::UnknownInterface::name: alloc::string::String
 pub aya::programs::ProgramError::XdpError(aya::programs::xdp::XdpError)
 impl core::convert::From<aya::maps::MapError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::maps::MapError) -> Self
+impl core::convert::From<aya::pin::PinError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(aya::pin::PinError) -> Self
 impl core::convert::From<aya::programs::ProgramError> for aya::EbpfError
 pub fn aya::EbpfError::from(aya::programs::ProgramError) -> Self
 impl core::convert::From<aya::programs::extension::ExtensionError> for aya::programs::ProgramError
@@ -6100,6 +6135,8 @@ impl core::convert::From<aya::programs::kprobe::KProbeError> for aya::programs::
 pub fn aya::programs::ProgramError::from(aya::programs::kprobe::KProbeError) -> Self
 impl core::convert::From<aya::programs::links::LinkError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::links::LinkError) -> Self
+impl core::convert::From<aya::programs::raw_trace_point::RawTracePointError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(aya::programs::raw_trace_point::RawTracePointError) -> Self
 impl core::convert::From<aya::programs::sk_reuseport::SkReuseportError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::sk_reuseport::SkReuseportError) -> Self
 impl core::convert::From<aya::programs::socket_filter::SocketFilterError> for aya::programs::ProgramError
@@ -6252,9 +6289,9 @@ pub aya::programs::TcError::InvalidLinkOperation
 pub aya::programs::TcError::InvalidTcxAttach(u32)
 pub aya::programs::TcError::IoError(core::io::error::Error)
 pub aya::programs::TcError::NetlinkError(aya::sys::NetlinkError)
-pub aya::programs::TcError::NulError(alloc::ffi::c_str::NulError)
-impl core::convert::From<alloc::ffi::c_str::NulError> for aya::programs::tc::TcError
-pub fn aya::programs::tc::TcError::from(alloc::ffi::c_str::NulError) -> Self
+pub aya::programs::TcError::NulError
+pub aya::programs::TcError::NulError::name: alloc::string::String
+pub aya::programs::TcError::NulError::source: alloc::ffi::c_str::NulError
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::tc::TcError) -> Self
 impl core::convert::From<aya::sys::NetlinkError> for aya::programs::tc::TcError
@@ -6333,7 +6370,12 @@ impl core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeError
 pub enum aya::programs::XdpError
+pub aya::programs::XdpError::InvalidInterfaceName
+pub aya::programs::XdpError::InvalidInterfaceName::name: alloc::string::String
+pub aya::programs::XdpError::InvalidInterfaceName::source: alloc::ffi::c_str::NulError
 pub aya::programs::XdpError::NetlinkError(aya::sys::NetlinkError)
+pub aya::programs::XdpError::UnknownInterface
+pub aya::programs::XdpError::UnknownInterface::name: alloc::string::String
 impl core::convert::From<aya::programs::xdp::XdpError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::xdp::XdpError) -> Self
 impl core::convert::From<aya::sys::NetlinkError> for aya::programs::xdp::XdpError

@@ -49,7 +49,7 @@
 //! implement the [Pod] trait.
 use std::{
     borrow::Borrow,
-    ffi::CString,
+    ffi::{CString, NulError},
     io,
     marker::PhantomData,
     ops::Deref,
@@ -166,6 +166,8 @@ pub enum MapError {
     InvalidName {
         /// The map name
         name: String,
+        /// The source error
+        source: NulError,
     },
 
     /// Failed to create map
@@ -848,8 +850,10 @@ impl MapData {
         btf_fd: Option<BorrowedFd<'_>>,
         inner_map_fd: Option<BorrowedFd<'_>>,
     ) -> Result<Self, MapError> {
-        let c_name = CString::new(name)
-            .map_err(|std::ffi::NulError { .. }| MapError::InvalidName { name: name.into() })?;
+        let c_name = CString::new(name).map_err(|source| MapError::InvalidName {
+            name: name.into(),
+            source,
+        })?;
 
         // By default, the newest versions of Aya, libbpf and cilium/ebpf define `max_entries` of
         // `PerfEventArray` as `0`, with an intention to get it replaced with a correct value
