@@ -1,5 +1,10 @@
 //! Network traffic control programs.
-use std::{ffi::CString, io, os::fd::AsFd as _, path::Path};
+use std::{
+    ffi::{CString, NulError},
+    io,
+    os::fd::AsFd as _,
+    path::Path,
+};
 
 use aya_obj::generated::{
     TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
@@ -88,9 +93,15 @@ pub enum TcError {
     /// a netlink error occurred.
     #[error(transparent)]
     NetlinkError(#[from] NetlinkError),
-    /// the provided string contains a nul byte.
-    #[error(transparent)]
-    NulError(#[from] std::ffi::NulError),
+    /// The name passed to TC operation is invalid `CString`
+    #[error("tc operation received and invalid cstring name `{name}`")]
+    NulError {
+        /// The name argument that was passed
+        name: String,
+        #[source]
+        /// The source error
+        source: NulError,
+    },
     /// an IO error occurred.
     #[error(transparent)]
     IoError(#[from] io::Error),
@@ -371,9 +382,11 @@ impl SchedClassifier {
 
         match options {
             TcAttachOptions::Netlink(options) => {
-                let name = self.data.name.as_deref().unwrap_or_default();
-                // TODO: avoid this unwrap by adding a new error variant.
-                let name = CString::new(name).unwrap();
+                let name: &str = self.data.name.as_deref().unwrap_or_default();
+                let name = CString::new(name).map_err(|source| ProgramError::InvalidName {
+                    name: name.into(),
+                    source,
+                })?;
                 let (priority, handle) = netlink_qdisc_attach(
                     if_index as i32,
                     attach_type,
@@ -674,7 +687,10 @@ pub fn qdisc_detach_program(
     attach_type: TcAttachType,
     name: &str,
 ) -> Result<(), TcError> {
-    let cstr = CString::new(name).map_err(TcError::NulError)?;
+    let cstr = CString::new(name).map_err(|source| TcError::NulError {
+        name: name.into(),
+        source,
+    })?;
     let if_index = ifindex_from_ifname(if_name)? as i32;
 
     let sock = NetlinkSocket::open().map_err(NetlinkError::from)?;
