@@ -487,6 +487,7 @@ impl Map {
             bpf_map_type::BPF_MAP_TYPE_USER_RINGBUF => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_CGRP_STORAGE => Self::CgrpStorage(map_data),
             bpf_map_type::BPF_MAP_TYPE_ARENA => Self::Unsupported(map_data),
+            bpf_map_type::BPF_MAP_TYPE_INSN_ARRAY => Self::Unsupported(map_data),
             bpf_map_type::BPF_MAP_TYPE_PERCPU_CGROUP_STORAGE_DEPRECATED => {
                 Self::PerCpuCgroupStorage(map_data)
             }

@@ -1291,6 +1291,7 @@ pub aya::maps::MapType::DevMapHash = 25
 pub aya::maps::MapType::Hash = 1
 pub aya::maps::MapType::HashOfMaps = 13
 pub aya::maps::MapType::InodeStorage = 28
+pub aya::maps::MapType::InsnArray = 34
 pub aya::maps::MapType::LpmTrie = 11
 pub aya::maps::MapType::LruHash = 9
 pub aya::maps::MapType::LruPerCpuHash = 10

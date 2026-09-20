@@ -12,7 +12,8 @@ use aya_obj::{
     btf::{Btf, BtfKind},
     generated::{
         BPF_CALL, BPF_EXIT, BPF_F_MMAPABLE, BPF_F_NO_PREALLOC, BPF_JMP, bpf_attr,
-        bpf_cgroup_storage_key, bpf_cmd, bpf_func_id, bpf_map_type, bpf_prog_info,
+        bpf_cgroup_storage_key, bpf_cmd, bpf_func_id, bpf_insn_array_value, bpf_map_type,
+        bpf_prog_info,
     },
 };
 use libc::{E2BIG, EBADF, EINVAL};
@@ -514,6 +515,8 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
             => (0, 0, page_size() as u32),
         MapType::Arena                  // https://github.com/torvalds/linux/blob/a38297e3f/kernel/bpf/arena.c#L380
             => (0, 0, 1),
+        MapType::InsnArray              // https://github.com/torvalds/linux/blob/05f7e89ab/kernel/bpf/bpf_insn_array.c#L26-L32
+            => (u32_size, size_of::<bpf_insn_array_value>() as u32, 1),
     };
 
     // SAFETY: all-zero byte-pattern valid for `bpf_attr`
