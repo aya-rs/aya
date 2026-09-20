@@ -1,0 +1,141 @@
+diff --git a/internal/arm64_host_tools.bzl b/internal/arm64_host_tools.bzl
+--- a/internal/arm64_host_tools.bzl
++++ b/internal/arm64_host_tools.bzl
+@@ -80,5 +80,6 @@
+         source_root = common.source_root,
+         source_tree = common.source_tree,
+         sorttable_tool = common.sorttable_tool,
++        sorttable_mcount_tool = common.sorttable_mcount_tool,
+         vdsomunge_tool = package_label(vdsomunge_tool),
+     )
+diff --git a/internal/cmd/sorttablerun/main.go b/internal/cmd/sorttablerun/main.go
+--- a/internal/cmd/sorttablerun/main.go
++++ b/internal/cmd/sorttablerun/main.go
+@@ -18,6 +18,7 @@
+ 	config := flag.String("config", "", "resolved Linux .config")
+ 	nm := flag.String("nm", "", "llvm-nm executable")
+ 	sorttable := flag.String("sorttable", "", "sorttable executable")
++	sorttableMcount := flag.String("sorttable_mcount", "", "sorttable executable with MCOUNT_SORT_ENABLED")
+ 	in := flag.String("in", "", "input vmlinux")
+ 	nmOut := flag.String("nm_out", "", "output llvm-nm data")
+ 	out := flag.String("out", "", "output vmlinux")
+@@ -27,13 +28,13 @@
+ 		fmt.Fprintln(os.Stderr, "-config, -nm, -in, -nm_out, and -out are required")
+ 		os.Exit(2)
+ 	}
+-	if err := run(*config, *nm, *sorttable, *in, *nmOut, *out); err != nil {
++	if err := run(*config, *nm, *sorttable, *sorttableMcount, *in, *nmOut, *out); err != nil {
+ 		fmt.Fprintf(os.Stderr, "sorttablerun: %v\n", err)
+ 		os.Exit(1)
+ 	}
+ }
+ 
+-func run(configPath, nmPath, sorttablePath, inPath, nmOutPath, outPath string) error {
++func run(configPath, nmPath, sorttablePath, sorttableMcountPath, inPath, nmOutPath, outPath string) error {
+ 	enabled, err := configEnabled(configPath, "CONFIG_BUILDTIME_TABLE_SORT")
+ 	if err != nil {
+ 		return err
+@@ -43,6 +44,16 @@
+ 	}
+ 	if !enabled {
+ 		return os.WriteFile(nmOutPath, nil, 0o644)
++	}
++	mcountEnabled, err := configEnabled(configPath, "CONFIG_BUILDTIME_MCOUNT_SORT")
++	if err != nil {
++		return err
++	}
++	if mcountEnabled {
++		if sorttableMcountPath == "" {
++			return fmt.Errorf("CONFIG_BUILDTIME_MCOUNT_SORT=y requires sorttable_mcount")
++		}
++		sorttablePath = sorttableMcountPath
+ 	}
+ 	if sorttablePath == "" {
+ 		return fmt.Errorf("CONFIG_BUILDTIME_TABLE_SORT=y requires sorttable")
+diff --git a/internal/common_host_tools.bzl b/internal/common_host_tools.bzl
+--- a/internal/common_host_tools.bzl
++++ b/internal/common_host_tools.bzl
+@@ -76,16 +76,19 @@
+         deps = [source_label(source_repo, "scripts_headers_cc")],
+     )
+ 
+-    cc_binary(
+-        name = sorttable_tool,
+-        srcs = [source_label(source_repo, "scripts/sorttable.c")],
+-        visibility = visibility,
+-        deps = [
+-            Label("@libelf//:elf_headers"),
+-            source_label(source_repo, "scripts_headers_cc"),
+-            source_label(source_repo, "tools_headers_cc"),
+-        ],
+-    )
++    # Select the variant after resolving CONFIG_BUILDTIME_MCOUNT_SORT.
++    for suffix, copts in [("", []), ("_mcount", ["-DMCOUNT_SORT_ENABLED"])]:
++        cc_binary(
++            name = sorttable_tool + suffix,
++            srcs = [source_label(source_repo, "scripts/sorttable.c")],
++            copts = copts,
++            visibility = visibility,
++            deps = [
++                Label("@libelf//:elf_headers"),
++                source_label(source_repo, "scripts_headers_cc"),
++                source_label(source_repo, "tools_headers_cc"),
++            ],
++        )
+ 
+     cc_binary(
+         name = resolve_btfids_tool,
+@@ -107,6 +110,7 @@
+         probe_config = package_label(probe_config),
+         resolve_btfids_tool = package_label(resolve_btfids_tool),
+         sorttable_tool = package_label(sorttable_tool),
++        sorttable_mcount_tool = package_label(sorttable_tool + "_mcount"),
+         source_asn1_compiler = package_label(asn1_compiler),
+         source_label_package = source_label_package(source_repo),
+         source_repo = source_repo,
+diff --git a/internal/linux.bzl b/internal/linux.bzl
+--- a/internal/linux.bzl
++++ b/internal/linux.bzl
+@@ -220,6 +220,7 @@
+         "source_root": source_root,
+         "source_tree": source_tree,
+         "sorttable_tool": host_tools.sorttable_tool,
++        "sorttable_mcount_tool": host_tools.sorttable_mcount_tool,
+         "srcarch": arch.srcarch,
+         "target_compatible_with": [arch.platform],
+         "visibility": package_visibility,
+diff --git a/internal/linux_objects.bzl b/internal/linux_objects.bzl
+--- a/internal/linux_objects.bzl
++++ b/internal/linux_objects.bzl
+@@ -3973,6 +3973,9 @@
+     args.add("-nm", ctx.executable._llvm_nm)
+     if sorttable_path:
+         args.add("-sorttable", sorttable_path)
++    if ctx.executable.sorttable_mcount_tool:
++        inputs.append(ctx.executable.sorttable_mcount_tool)
++        args.add("-sorttable_mcount", ctx.executable.sorttable_mcount_tool)
+     args.add("-in", input)
+     args.add("-nm_out", nm_out)
+     args.add("-out", out)
+@@ -4589,6 +4592,11 @@
+             doc = "Kernel-source-specific scripts/sorttable executable. Required when BUILDTIME_TABLE_SORT is enabled.",
+             executable = True,
+         ),
++        "sorttable_mcount_tool": attr.label(
++            cfg = "exec",
++            doc = "scripts/sorttable compiled with MCOUNT_SORT_ENABLED. Required when BUILDTIME_MCOUNT_SORT is enabled.",
++            executable = True,
++        ),
+         "_llvm_nm": attr.label(
+             allow_single_file = True,
+             cfg = "exec",
+diff --git a/internal/x86_host_tools.bzl b/internal/x86_host_tools.bzl
+--- a/internal/x86_host_tools.bzl
++++ b/internal/x86_host_tools.bzl
+@@ -473,5 +473,6 @@
+         source_root = common.source_root,
+         source_tree = common.source_tree,
+         sorttable_tool = common.sorttable_tool,
++        sorttable_mcount_tool = common.sorttable_mcount_tool,
+         x86_relocs_tool = package_label(relocs_tool),
+     )

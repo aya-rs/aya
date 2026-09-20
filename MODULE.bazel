@@ -39,9 +39,14 @@ bazel_lib_toolchains.copy_to_directory()
 use_repo(bazel_lib_toolchains, "copy_to_directory_toolchains")
 
 # Pin the linux.bzl revision that provides the deterministic C initramfs rule.
+# Patch sorttable to honor the resolved CONFIG_BUILDTIME_MCOUNT_SORT setting.
+# TODO(https://github.com/hermeticbuild/linux.bzl/pull/87): Remove this temporary
+# workaround once the pinned revision includes the upstream fix.
 archive_override(
     module_name = "linux.bzl",
     integrity = "sha256-2gveHVEG4EE5x3N4kDnUftB7ed/6RRFslFwDquObqRg=",
+    patch_args = ["-p1"],
+    patches = ["//bazel:linux-bzl-mcount-sort.patch"],
     strip_prefix = "linux.bzl-e18628f3e177022c2ff0cf93a2e5f2d408f7d2fc",
     urls = ["https://github.com/hermeticbuild/linux.bzl/archive/e18628f3e177022c2ff0cf93a2e5f2d408f7d2fc.tar.gz"],
 )
