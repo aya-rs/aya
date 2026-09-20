@@ -293,10 +293,10 @@ impl FdLink {
         use std::os::unix::ffi::OsStrExt as _;
 
         let path = path.as_ref();
-        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
+        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|source| {
             PinError::InvalidPinPath {
                 path: path.into(),
-                error,
+                source,
             }
         })?;
         bpf_pin_object(self.fd.as_fd(), &path_string).map_err(|io_error| SyscallError {
@@ -358,15 +358,21 @@ impl PinnedLink {
     pub fn from_pin<P: AsRef<Path>>(path: P) -> Result<Self, LinkError> {
         use std::os::unix::ffi::OsStrExt as _;
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path = path.as_ref();
+        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|source| {
+            PinError::InvalidPinPath {
+                path: path.into(),
+                source,
+            }
+        })?;
+
         let fd = bpf_get_object(&path_string).map_err(|io_error| {
             LinkError::SyscallError(SyscallError {
                 call: "BPF_OBJ_GET",
                 io_error,
             })
         })?;
-        Ok(Self::new(path.as_ref().to_path_buf(), FdLink::new(fd)))
+        Ok(Self::new(path.to_path_buf(), FdLink::new(fd)))
     }
 
     /// Removes the pinned link from the filesystem and returns an [`FdLink`].
@@ -633,6 +639,10 @@ pub enum LinkError {
     /// Syscall failed.
     #[error(transparent)]
     SyscallError(#[from] SyscallError),
+
+    /// An error occurred while working with a pinned BPF object
+    #[error(transparent)]
+    PinError(#[from] PinError),
 }
 
 #[derive(Debug)]
