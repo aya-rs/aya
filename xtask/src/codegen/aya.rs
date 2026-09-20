@@ -63,6 +63,7 @@ fn codegen_bindings(opts: &SysrootOptions, libbpf_dir: &Path) -> Result<()> {
             // BPF
             "bpf_cmd",
             "bpf_insn",
+            "bpf_insn_array_value",
             "bpf_attr",
             "bpf_map_type",
             "bpf_prog_type",

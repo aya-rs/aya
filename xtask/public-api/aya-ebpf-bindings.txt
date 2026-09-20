@@ -1,16 +1,23 @@
 pub mod aya_ebpf_bindings
 pub mod aya_ebpf_bindings::bindings
 pub mod aya_ebpf_bindings::bindings::_bindgen_ty_28
+pub const aya_ebpf_bindings::bindings::_bindgen_ty_28::BPF_SKB_CLOCK_MONOTONIC: aya_ebpf_bindings::bindings::_bindgen_ty_28::Type
+pub const aya_ebpf_bindings::bindings::_bindgen_ty_28::BPF_SKB_CLOCK_REALTIME: aya_ebpf_bindings::bindings::_bindgen_ty_28::Type
+pub const aya_ebpf_bindings::bindings::_bindgen_ty_28::BPF_SKB_CLOCK_TAI: aya_ebpf_bindings::bindings::_bindgen_ty_28::Type
 pub const aya_ebpf_bindings::bindings::_bindgen_ty_28::BPF_SKB_TSTAMP_DELIVERY_MONO: aya_ebpf_bindings::bindings::_bindgen_ty_28::Type
 pub const aya_ebpf_bindings::bindings::_bindgen_ty_28::BPF_SKB_TSTAMP_UNSPEC: aya_ebpf_bindings::bindings::_bindgen_ty_28::Type
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_28::Type = aya_ebpf_cty::ad::c_uint
-pub mod aya_ebpf_bindings::bindings::_bindgen_ty_33
-pub const aya_ebpf_bindings::bindings::_bindgen_ty_33::BPF_LOAD_HDR_OPT_TCP_SYN: aya_ebpf_bindings::bindings::_bindgen_ty_33::Type
-pub type aya_ebpf_bindings::bindings::_bindgen_ty_33::Type = aya_ebpf_cty::ad::c_uint
 pub mod aya_ebpf_bindings::bindings::_bindgen_ty_34
-pub const aya_ebpf_bindings::bindings::_bindgen_ty_34::BPF_WRITE_HDR_TCP_CURRENT_MSS: aya_ebpf_bindings::bindings::_bindgen_ty_34::Type
-pub const aya_ebpf_bindings::bindings::_bindgen_ty_34::BPF_WRITE_HDR_TCP_SYNACK_COOKIE: aya_ebpf_bindings::bindings::_bindgen_ty_34::Type
+pub const aya_ebpf_bindings::bindings::_bindgen_ty_34::BPF_LOAD_HDR_OPT_TCP_SYN: aya_ebpf_bindings::bindings::_bindgen_ty_34::Type
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_34::Type = aya_ebpf_cty::ad::c_uint
+pub mod aya_ebpf_bindings::bindings::_bindgen_ty_35
+pub const aya_ebpf_bindings::bindings::_bindgen_ty_35::BPF_WRITE_HDR_TCP_CURRENT_MSS: aya_ebpf_bindings::bindings::_bindgen_ty_35::Type
+pub const aya_ebpf_bindings::bindings::_bindgen_ty_35::BPF_WRITE_HDR_TCP_SYNACK_COOKIE: aya_ebpf_bindings::bindings::_bindgen_ty_35::Type
+pub type aya_ebpf_bindings::bindings::_bindgen_ty_35::Type = aya_ebpf_cty::ad::c_uint
+pub mod aya_ebpf_bindings::bindings::_bindgen_ty_6
+pub const aya_ebpf_bindings::bindings::_bindgen_ty_6::BPF_STREAM_STDERR: aya_ebpf_bindings::bindings::_bindgen_ty_6::Type
+pub const aya_ebpf_bindings::bindings::_bindgen_ty_6::BPF_STREAM_STDOUT: aya_ebpf_bindings::bindings::_bindgen_ty_6::Type
+pub type aya_ebpf_bindings::bindings::_bindgen_ty_6::Type = aya_ebpf_cty::ad::c_uint
 pub mod aya_ebpf_bindings::bindings::bpf_addr_space_cast
 pub const aya_ebpf_bindings::bindings::bpf_addr_space_cast::BPF_ADDR_SPACE_CAST: aya_ebpf_bindings::bindings::bpf_addr_space_cast::Type
 pub type aya_ebpf_bindings::bindings::bpf_addr_space_cast::Type = aya_ebpf_cty::ad::c_uint
@@ -68,10 +75,13 @@ pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_TCX_EGRESS: aya_ebpf
 pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_TCX_INGRESS: aya_ebpf_bindings::bindings::bpf_attach_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_TRACE_FENTRY: aya_ebpf_bindings::bindings::bpf_attach_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_TRACE_FEXIT: aya_ebpf_bindings::bindings::bpf_attach_type::Type
+pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_TRACE_FSESSION: aya_ebpf_bindings::bindings::bpf_attach_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_TRACE_ITER: aya_ebpf_bindings::bindings::bpf_attach_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_TRACE_KPROBE_MULTI: aya_ebpf_bindings::bindings::bpf_attach_type::Type
+pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_TRACE_KPROBE_SESSION: aya_ebpf_bindings::bindings::bpf_attach_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_TRACE_RAW_TP: aya_ebpf_bindings::bindings::bpf_attach_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_TRACE_UPROBE_MULTI: aya_ebpf_bindings::bindings::bpf_attach_type::Type
+pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_TRACE_UPROBE_SESSION: aya_ebpf_bindings::bindings::bpf_attach_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_XDP: aya_ebpf_bindings::bindings::bpf_attach_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_XDP_CPUMAP: aya_ebpf_bindings::bindings::bpf_attach_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_attach_type::BPF_XDP_DEVMAP: aya_ebpf_bindings::bindings::bpf_attach_type::Type
@@ -79,6 +89,7 @@ pub const aya_ebpf_bindings::bindings::bpf_attach_type::__MAX_BPF_ATTACH_TYPE: a
 pub type aya_ebpf_bindings::bindings::bpf_attach_type::Type = aya_ebpf_cty::ad::c_uint
 pub mod aya_ebpf_bindings::bindings::bpf_cgroup_iter_order
 pub const aya_ebpf_bindings::bindings::bpf_cgroup_iter_order::BPF_CGROUP_ITER_ANCESTORS_UP: aya_ebpf_bindings::bindings::bpf_cgroup_iter_order::Type
+pub const aya_ebpf_bindings::bindings::bpf_cgroup_iter_order::BPF_CGROUP_ITER_CHILDREN: aya_ebpf_bindings::bindings::bpf_cgroup_iter_order::Type
 pub const aya_ebpf_bindings::bindings::bpf_cgroup_iter_order::BPF_CGROUP_ITER_DESCENDANTS_POST: aya_ebpf_bindings::bindings::bpf_cgroup_iter_order::Type
 pub const aya_ebpf_bindings::bindings::bpf_cgroup_iter_order::BPF_CGROUP_ITER_DESCENDANTS_PRE: aya_ebpf_bindings::bindings::bpf_cgroup_iter_order::Type
 pub const aya_ebpf_bindings::bindings::bpf_cgroup_iter_order::BPF_CGROUP_ITER_ORDER_UNSPEC: aya_ebpf_bindings::bindings::bpf_cgroup_iter_order::Type
@@ -119,6 +130,7 @@ pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_MAP_UPDATE_ELEM: aya_ebpf_bi
 pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_OBJ_GET: aya_ebpf_bindings::bindings::bpf_cmd::Type
 pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_OBJ_GET_INFO_BY_FD: aya_ebpf_bindings::bindings::bpf_cmd::Type
 pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_OBJ_PIN: aya_ebpf_bindings::bindings::bpf_cmd::Type
+pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_PROG_ASSOC_STRUCT_OPS: aya_ebpf_bindings::bindings::bpf_cmd::Type
 pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_PROG_ATTACH: aya_ebpf_bindings::bindings::bpf_cmd::Type
 pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_PROG_BIND_MAP: aya_ebpf_bindings::bindings::bpf_cmd::Type
 pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_PROG_DETACH: aya_ebpf_bindings::bindings::bpf_cmd::Type
@@ -127,6 +139,7 @@ pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_PROG_GET_NEXT_ID: aya_ebpf_b
 pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_PROG_LOAD: aya_ebpf_bindings::bindings::bpf_cmd::Type
 pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_PROG_QUERY: aya_ebpf_bindings::bindings::bpf_cmd::Type
 pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_PROG_RUN: aya_ebpf_bindings::bindings::bpf_cmd::Type
+pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_PROG_STREAM_READ_BY_FD: aya_ebpf_bindings::bindings::bpf_cmd::Type
 pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_PROG_TEST_RUN: aya_ebpf_bindings::bindings::bpf_cmd::Type
 pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_RAW_TRACEPOINT_OPEN: aya_ebpf_bindings::bindings::bpf_cmd::Type
 pub const aya_ebpf_bindings::bindings::bpf_cmd::BPF_TASK_FD_QUERY: aya_ebpf_bindings::bindings::bpf_cmd::Type
@@ -370,6 +383,9 @@ pub mod aya_ebpf_bindings::bindings::bpf_hdr_start_off
 pub const aya_ebpf_bindings::bindings::bpf_hdr_start_off::BPF_HDR_START_MAC: aya_ebpf_bindings::bindings::bpf_hdr_start_off::Type
 pub const aya_ebpf_bindings::bindings::bpf_hdr_start_off::BPF_HDR_START_NET: aya_ebpf_bindings::bindings::bpf_hdr_start_off::Type
 pub type aya_ebpf_bindings::bindings::bpf_hdr_start_off::Type = aya_ebpf_cty::ad::c_uint
+pub mod aya_ebpf_bindings::bindings::bpf_kfunc_flags
+pub const aya_ebpf_bindings::bindings::bpf_kfunc_flags::BPF_F_PAD_ZEROS: aya_ebpf_bindings::bindings::bpf_kfunc_flags::Type
+pub type aya_ebpf_bindings::bindings::bpf_kfunc_flags::Type = aya_ebpf_cty::ad::c_uint
 pub mod aya_ebpf_bindings::bindings::bpf_link_type
 pub const aya_ebpf_bindings::bindings::bpf_link_type::BPF_LINK_TYPE_CGROUP: aya_ebpf_bindings::bindings::bpf_link_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_link_type::BPF_LINK_TYPE_ITER: aya_ebpf_bindings::bindings::bpf_link_type::Type
@@ -408,6 +424,7 @@ pub const aya_ebpf_bindings::bindings::bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH: a
 pub const aya_ebpf_bindings::bindings::bpf_map_type::BPF_MAP_TYPE_HASH: aya_ebpf_bindings::bindings::bpf_map_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_map_type::BPF_MAP_TYPE_HASH_OF_MAPS: aya_ebpf_bindings::bindings::bpf_map_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_map_type::BPF_MAP_TYPE_INODE_STORAGE: aya_ebpf_bindings::bindings::bpf_map_type::Type
+pub const aya_ebpf_bindings::bindings::bpf_map_type::BPF_MAP_TYPE_INSN_ARRAY: aya_ebpf_bindings::bindings::bpf_map_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_map_type::BPF_MAP_TYPE_LPM_TRIE: aya_ebpf_bindings::bindings::bpf_map_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_map_type::BPF_MAP_TYPE_LRU_HASH: aya_ebpf_bindings::bindings::bpf_map_type::Type
 pub const aya_ebpf_bindings::bindings::bpf_map_type::BPF_MAP_TYPE_LRU_PERCPU_HASH: aya_ebpf_bindings::bindings::bpf_map_type::Type
@@ -562,7 +579,9 @@ pub aya_ebpf_bindings::bindings::bpf_attr::iter_create: aya_ebpf_bindings::bindi
 pub aya_ebpf_bindings::bindings::bpf_attr::link_create: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14
 pub aya_ebpf_bindings::bindings::bpf_attr::link_detach: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_16
 pub aya_ebpf_bindings::bindings::bpf_attr::link_update: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15
+pub aya_ebpf_bindings::bindings::bpf_attr::prog_assoc_struct_ops: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22
 pub aya_ebpf_bindings::bindings::bpf_attr::prog_bind_map: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_19
+pub aya_ebpf_bindings::bindings::bpf_attr::prog_stream_read: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21
 pub aya_ebpf_bindings::bindings::bpf_attr::query: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_10
 pub aya_ebpf_bindings::bindings::bpf_attr::raw_tracepoint: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_11
 pub aya_ebpf_bindings::bindings::bpf_attr::task_fd_query: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_13
@@ -632,6 +651,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bp
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_2
 #[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3::cgroup: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3::kprobe_multi: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3::netfilter: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3::netkit: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
@@ -676,6 +696,19 @@ impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+#[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1::relative_fd: aya_ebpf_bindings::bindings::__u32
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1::relative_id: aya_ebpf_bindings::bindings::__u32
+impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
+impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
+impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
+impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
+impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
+impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
 #[repr(C)] pub union aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1::new_map_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1::new_prog_fd: aya_ebpf_bindings::bindings::__u32
@@ -1435,6 +1468,8 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::btf_fd: aya_ebpf_bindin
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::btf_key_type_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::btf_value_type_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::btf_vmlinux_value_type_id: aya_ebpf_bindings::bindings::__u32
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::excl_prog_hash: aya_ebpf_bindings::bindings::__u64
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::excl_prog_hash_size: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::inner_map_fd: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::key_size: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1::map_extra: aya_ebpf_bindings::bindings::__u64
@@ -1686,6 +1721,19 @@ impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_1
 impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9::expected_revision: aya_ebpf_bindings::bindings::__u64
+impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
+impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
+impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
+impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
+impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
+impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15::__bindgen_anon_2: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_15__bindgen_ty_2
@@ -1790,6 +1838,39 @@ impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_2
 impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_20
+#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21::prog_fd: aya_ebpf_bindings::bindings::__u32
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21::stream_buf: aya_ebpf_bindings::bindings::__u64
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21::stream_buf_len: aya_ebpf_bindings::bindings::__u32
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21::stream_id: aya_ebpf_bindings::bindings::__u32
+impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21
+impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21
+impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21
+impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21
+impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21
+impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_21
+#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22::flags: aya_ebpf_bindings::bindings::__u32
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22::map_fd: aya_ebpf_bindings::bindings::__u32
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22::prog_fd: aya_ebpf_bindings::bindings::__u32
+impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22
+impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22
+pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22
+impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22
+impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22
+impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22
+impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_22
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3::count: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_3::elem_flags: aya_ebpf_bindings::bindings::__u64
@@ -1819,12 +1900,14 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::core_relo_rec_size: aya
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::core_relos: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::expected_attach_type: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::fd_array: aya_ebpf_bindings::bindings::__u64
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::fd_array_cnt: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::func_info: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::func_info_cnt: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::func_info_rec_size: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::insn_cnt: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::insns: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::kern_version: aya_ebpf_bindings::bindings::__u32
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::keyring_id: aya_ebpf_bindings::bindings::__s32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::license: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::line_info: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::line_info_cnt: aya_ebpf_bindings::bindings::__u32
@@ -1839,6 +1922,8 @@ pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::prog_ifindex: aya_ebpf_
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::prog_name: [aya_ebpf_cty::ad::c_char; 16]
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::prog_token_fd: aya_ebpf_bindings::bindings::__s32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::prog_type: aya_ebpf_bindings::bindings::__u32
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::signature: aya_ebpf_bindings::bindings::__u64
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::signature_size: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4
 pub fn aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4::clone(&self) -> aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4
 impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_4
@@ -1914,6 +1999,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bp
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_7
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8__bindgen_ty_1
+pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8::fd_by_id_token_fd: aya_ebpf_bindings::bindings::__s32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8::next_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8::open_flags: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_attr__bindgen_ty_8
@@ -2211,6 +2297,25 @@ impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_insn
 impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_insn
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_insn
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_insn
+#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_insn_array_value
+pub aya_ebpf_bindings::bindings::bpf_insn_array_value::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
+pub aya_ebpf_bindings::bindings::bpf_insn_array_value::jitted_off: aya_ebpf_bindings::bindings::__u32
+pub aya_ebpf_bindings::bindings::bpf_insn_array_value::orig_off: aya_ebpf_bindings::bindings::__u32
+pub aya_ebpf_bindings::bindings::bpf_insn_array_value::xlated_off: aya_ebpf_bindings::bindings::__u32
+impl aya_ebpf_bindings::bindings::bpf_insn_array_value
+pub fn aya_ebpf_bindings::bindings::bpf_insn_array_value::new_bitfield_1() -> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
+impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_insn_array_value
+pub fn aya_ebpf_bindings::bindings::bpf_insn_array_value::clone(&self) -> aya_ebpf_bindings::bindings::bpf_insn_array_value
+impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_insn_array_value
+pub fn aya_ebpf_bindings::bindings::bpf_insn_array_value::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_insn_array_value
+impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_insn_array_value
+impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_insn_array_value
+impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_insn_array_value
+impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_insn_array_value
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_insn_array_value
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_insn_array_value
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_insn_array_value
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1::map_fd: aya_ebpf_bindings::bindings::__u32
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_iter_link_info__bindgen_ty_1
@@ -2304,8 +2409,12 @@ impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
+pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
+pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::cookie: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::tp_name: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::tp_name_len: aya_ebpf_bindings::bindings::__u32
+impl aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::new_bitfield_1() -> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_1
@@ -2360,6 +2469,7 @@ pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bin
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::file_name: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::name_len: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::offset: aya_ebpf_bindings::bindings::__u32
+pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::ref_ctr_offset: aya_ebpf_bindings::bindings::__u64
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
@@ -2475,9 +2585,13 @@ impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_link_info__b
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_14
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_14
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
+pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::_bitfield_1: aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::attach_type: aya_ebpf_bindings::bindings::__u32
+pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::cookie: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::target_btf_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::target_obj_id: aya_ebpf_bindings::bindings::__u32
+impl aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
+pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::new_bitfield_1() -> aya_ebpf_bindings::bindings::__BindgenBitfieldUnit<[u8; 4]>
 impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 pub fn aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2::clone(&self) -> aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_link_info__bindgen_ty_1__bindgen_ty_2
@@ -2727,6 +2841,8 @@ pub aya_ebpf_bindings::bindings::bpf_map_info::btf_key_type_id: aya_ebpf_binding
 pub aya_ebpf_bindings::bindings::bpf_map_info::btf_value_type_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_map_info::btf_vmlinux_id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_map_info::btf_vmlinux_value_type_id: aya_ebpf_bindings::bindings::__u32
+pub aya_ebpf_bindings::bindings::bpf_map_info::hash: aya_ebpf_bindings::bindings::__u64
+pub aya_ebpf_bindings::bindings::bpf_map_info::hash_size: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_map_info::id: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_map_info::ifindex: aya_ebpf_bindings::bindings::__u32
 pub aya_ebpf_bindings::bindings::bpf_map_info::key_size: aya_ebpf_bindings::bindings::__u32
@@ -3154,6 +3270,20 @@ impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_sysctl
 impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_sysctl
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_sysctl
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_sysctl
+#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_task_work
+pub aya_ebpf_bindings::bindings::bpf_task_work::__opaque: aya_ebpf_bindings::bindings::__u64
+impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_task_work
+pub fn aya_ebpf_bindings::bindings::bpf_task_work::clone(&self) -> aya_ebpf_bindings::bindings::bpf_task_work
+impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_task_work
+pub fn aya_ebpf_bindings::bindings::bpf_task_work::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_task_work
+impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_task_work
+impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_task_work
+impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_task_work
+impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_task_work
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_task_work
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_task_work
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_task_work
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_tcp_sock
 pub aya_ebpf_bindings::bindings::bpf_tcp_sock::bytes_acked: aya_ebpf_bindings::bindings::__u64
 pub aya_ebpf_bindings::bindings::bpf_tcp_sock::bytes_received: aya_ebpf_bindings::bindings::__u64
@@ -3207,6 +3337,23 @@ impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_timer
 impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_timer
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_timer
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_timer
+#[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_token_info
+pub aya_ebpf_bindings::bindings::bpf_token_info::allowed_attachs: aya_ebpf_bindings::bindings::__u64
+pub aya_ebpf_bindings::bindings::bpf_token_info::allowed_cmds: aya_ebpf_bindings::bindings::__u64
+pub aya_ebpf_bindings::bindings::bpf_token_info::allowed_maps: aya_ebpf_bindings::bindings::__u64
+pub aya_ebpf_bindings::bindings::bpf_token_info::allowed_progs: aya_ebpf_bindings::bindings::__u64
+impl core::clone::Clone for aya_ebpf_bindings::bindings::bpf_token_info
+pub fn aya_ebpf_bindings::bindings::bpf_token_info::clone(&self) -> aya_ebpf_bindings::bindings::bpf_token_info
+impl core::fmt::Debug for aya_ebpf_bindings::bindings::bpf_token_info
+pub fn aya_ebpf_bindings::bindings::bpf_token_info::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for aya_ebpf_bindings::bindings::bpf_token_info
+impl core::marker::Freeze for aya_ebpf_bindings::bindings::bpf_token_info
+impl core::marker::Send for aya_ebpf_bindings::bindings::bpf_token_info
+impl core::marker::Sync for aya_ebpf_bindings::bindings::bpf_token_info
+impl core::marker::Unpin for aya_ebpf_bindings::bindings::bpf_token_info
+impl core::marker::UnsafeUnpin for aya_ebpf_bindings::bindings::bpf_token_info
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf_bindings::bindings::bpf_token_info
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf_bindings::bindings::bpf_token_info
 #[repr(C)] pub struct aya_ebpf_bindings::bindings::bpf_tunnel_key
 pub aya_ebpf_bindings::bindings::bpf_tunnel_key::__bindgen_anon_1: aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_1
 pub aya_ebpf_bindings::bindings::bpf_tunnel_key::__bindgen_anon_2: aya_ebpf_bindings::bindings::bpf_tunnel_key__bindgen_ty_2
@@ -3593,36 +3740,36 @@ pub const aya_ebpf_bindings::bindings::BPF_CSUM_LEVEL_DEC: aya_ebpf_bindings::bi
 pub const aya_ebpf_bindings::bindings::BPF_CSUM_LEVEL_INC: aya_ebpf_bindings::bindings::_bindgen_ty_16
 pub const aya_ebpf_bindings::bindings::BPF_CSUM_LEVEL_QUERY: aya_ebpf_bindings::bindings::_bindgen_ty_16
 pub const aya_ebpf_bindings::bindings::BPF_CSUM_LEVEL_RESET: aya_ebpf_bindings::bindings::_bindgen_ty_16
-pub const aya_ebpf_bindings::bindings::BPF_DEVCG_ACC_MKNOD: aya_ebpf_bindings::bindings::_bindgen_ty_35
-pub const aya_ebpf_bindings::bindings::BPF_DEVCG_ACC_READ: aya_ebpf_bindings::bindings::_bindgen_ty_35
-pub const aya_ebpf_bindings::bindings::BPF_DEVCG_ACC_WRITE: aya_ebpf_bindings::bindings::_bindgen_ty_35
-pub const aya_ebpf_bindings::bindings::BPF_DEVCG_DEV_BLOCK: aya_ebpf_bindings::bindings::_bindgen_ty_36
-pub const aya_ebpf_bindings::bindings::BPF_DEVCG_DEV_CHAR: aya_ebpf_bindings::bindings::_bindgen_ty_36
+pub const aya_ebpf_bindings::bindings::BPF_DEVCG_ACC_MKNOD: aya_ebpf_bindings::bindings::_bindgen_ty_36
+pub const aya_ebpf_bindings::bindings::BPF_DEVCG_ACC_READ: aya_ebpf_bindings::bindings::_bindgen_ty_36
+pub const aya_ebpf_bindings::bindings::BPF_DEVCG_ACC_WRITE: aya_ebpf_bindings::bindings::_bindgen_ty_36
+pub const aya_ebpf_bindings::bindings::BPF_DEVCG_DEV_BLOCK: aya_ebpf_bindings::bindings::_bindgen_ty_37
+pub const aya_ebpf_bindings::bindings::BPF_DEVCG_DEV_CHAR: aya_ebpf_bindings::bindings::_bindgen_ty_37
 pub const aya_ebpf_bindings::bindings::BPF_DIV: u32
 pub const aya_ebpf_bindings::bindings::BPF_DW: u32
 pub const aya_ebpf_bindings::bindings::BPF_END: u32
 pub const aya_ebpf_bindings::bindings::BPF_EXIST: aya_ebpf_bindings::bindings::_bindgen_ty_4
 pub const aya_ebpf_bindings::bindings::BPF_EXIT: u32
 pub const aya_ebpf_bindings::bindings::BPF_FETCH: u32
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_BLACKHOLE: aya_ebpf_bindings::bindings::_bindgen_ty_38
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_FRAG_NEEDED: aya_ebpf_bindings::bindings::_bindgen_ty_38
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_FWD_DISABLED: aya_ebpf_bindings::bindings::_bindgen_ty_38
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_NOT_FWDED: aya_ebpf_bindings::bindings::_bindgen_ty_38
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_NO_NEIGH: aya_ebpf_bindings::bindings::_bindgen_ty_38
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_NO_SRC_ADDR: aya_ebpf_bindings::bindings::_bindgen_ty_38
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_PROHIBIT: aya_ebpf_bindings::bindings::_bindgen_ty_38
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_SUCCESS: aya_ebpf_bindings::bindings::_bindgen_ty_38
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_UNREACHABLE: aya_ebpf_bindings::bindings::_bindgen_ty_38
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_UNSUPP_LWT: aya_ebpf_bindings::bindings::_bindgen_ty_38
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LOOKUP_DIRECT: aya_ebpf_bindings::bindings::_bindgen_ty_37
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LOOKUP_MARK: aya_ebpf_bindings::bindings::_bindgen_ty_37
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LOOKUP_OUTPUT: aya_ebpf_bindings::bindings::_bindgen_ty_37
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LOOKUP_SKIP_NEIGH: aya_ebpf_bindings::bindings::_bindgen_ty_37
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LOOKUP_SRC: aya_ebpf_bindings::bindings::_bindgen_ty_37
-pub const aya_ebpf_bindings::bindings::BPF_FIB_LOOKUP_TBID: aya_ebpf_bindings::bindings::_bindgen_ty_37
-pub const aya_ebpf_bindings::bindings::BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG: aya_ebpf_bindings::bindings::_bindgen_ty_39
-pub const aya_ebpf_bindings::bindings::BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP: aya_ebpf_bindings::bindings::_bindgen_ty_39
-pub const aya_ebpf_bindings::bindings::BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL: aya_ebpf_bindings::bindings::_bindgen_ty_39
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_BLACKHOLE: aya_ebpf_bindings::bindings::_bindgen_ty_39
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_FRAG_NEEDED: aya_ebpf_bindings::bindings::_bindgen_ty_39
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_FWD_DISABLED: aya_ebpf_bindings::bindings::_bindgen_ty_39
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_NOT_FWDED: aya_ebpf_bindings::bindings::_bindgen_ty_39
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_NO_NEIGH: aya_ebpf_bindings::bindings::_bindgen_ty_39
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_NO_SRC_ADDR: aya_ebpf_bindings::bindings::_bindgen_ty_39
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_PROHIBIT: aya_ebpf_bindings::bindings::_bindgen_ty_39
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_SUCCESS: aya_ebpf_bindings::bindings::_bindgen_ty_39
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_UNREACHABLE: aya_ebpf_bindings::bindings::_bindgen_ty_39
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LKUP_RET_UNSUPP_LWT: aya_ebpf_bindings::bindings::_bindgen_ty_39
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LOOKUP_DIRECT: aya_ebpf_bindings::bindings::_bindgen_ty_38
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LOOKUP_MARK: aya_ebpf_bindings::bindings::_bindgen_ty_38
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LOOKUP_OUTPUT: aya_ebpf_bindings::bindings::_bindgen_ty_38
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LOOKUP_SKIP_NEIGH: aya_ebpf_bindings::bindings::_bindgen_ty_38
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LOOKUP_SRC: aya_ebpf_bindings::bindings::_bindgen_ty_38
+pub const aya_ebpf_bindings::bindings::BPF_FIB_LOOKUP_TBID: aya_ebpf_bindings::bindings::_bindgen_ty_38
+pub const aya_ebpf_bindings::bindings::BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG: aya_ebpf_bindings::bindings::_bindgen_ty_40
+pub const aya_ebpf_bindings::bindings::BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP: aya_ebpf_bindings::bindings::_bindgen_ty_40
+pub const aya_ebpf_bindings::bindings::BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL: aya_ebpf_bindings::bindings::_bindgen_ty_40
 pub const aya_ebpf_bindings::bindings::BPF_FROM_BE: u32
 pub const aya_ebpf_bindings::bindings::BPF_FROM_LE: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_ADJ_ROOM_DECAP_L3_IPV4: aya_ebpf_bindings::bindings::_bindgen_ty_17
@@ -3637,11 +3784,13 @@ pub const aya_ebpf_bindings::bindings::BPF_F_ADJ_ROOM_NO_CSUM_RESET: aya_ebpf_bi
 pub const aya_ebpf_bindings::bindings::BPF_F_AFTER: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_ALLOW_MULTI: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_ALLOW_OVERRIDE: u32
+pub const aya_ebpf_bindings::bindings::BPF_F_ALL_CPUS: aya_ebpf_bindings::bindings::_bindgen_ty_4
 pub const aya_ebpf_bindings::bindings::BPF_F_ANY_ALIGNMENT: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_BEFORE: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_BPRM_SECUREEXEC: aya_ebpf_bindings::bindings::_bindgen_ty_26
 pub const aya_ebpf_bindings::bindings::BPF_F_BROADCAST: aya_ebpf_bindings::bindings::_bindgen_ty_27
 pub const aya_ebpf_bindings::bindings::BPF_F_CLONE: aya_ebpf_bindings::bindings::_bindgen_ty_5
+pub const aya_ebpf_bindings::bindings::BPF_F_CPU: aya_ebpf_bindings::bindings::_bindgen_ty_4
 pub const aya_ebpf_bindings::bindings::BPF_F_CTXLEN_MASK: aya_ebpf_bindings::bindings::_bindgen_ty_14
 pub const aya_ebpf_bindings::bindings::BPF_F_CURRENT_CPU: aya_ebpf_bindings::bindings::_bindgen_ty_14
 pub const aya_ebpf_bindings::bindings::BPF_F_CURRENT_NETNS: aya_ebpf_bindings::bindings::_bindgen_ty_15
@@ -3649,17 +3798,18 @@ pub const aya_ebpf_bindings::bindings::BPF_F_DONT_FRAGMENT: aya_ebpf_bindings::b
 pub const aya_ebpf_bindings::bindings::BPF_F_EXCLUDE_INGRESS: aya_ebpf_bindings::bindings::_bindgen_ty_27
 pub const aya_ebpf_bindings::bindings::BPF_F_FAST_STACK_CMP: aya_ebpf_bindings::bindings::_bindgen_ty_11
 pub const aya_ebpf_bindings::bindings::BPF_F_GET_BRANCH_RECORDS_SIZE: aya_ebpf_bindings::bindings::_bindgen_ty_21
-pub const aya_ebpf_bindings::bindings::BPF_F_HDR_FIELD_MASK: aya_ebpf_bindings::bindings::_bindgen_ty_7
+pub const aya_ebpf_bindings::bindings::BPF_F_HDR_FIELD_MASK: aya_ebpf_bindings::bindings::_bindgen_ty_8
 pub const aya_ebpf_bindings::bindings::BPF_F_ID: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_INDEX_MASK: aya_ebpf_bindings::bindings::_bindgen_ty_14
-pub const aya_ebpf_bindings::bindings::BPF_F_INGRESS: aya_ebpf_bindings::bindings::_bindgen_ty_9
+pub const aya_ebpf_bindings::bindings::BPF_F_INGRESS: aya_ebpf_bindings::bindings::_bindgen_ty_27
 pub const aya_ebpf_bindings::bindings::BPF_F_INNER_MAP: aya_ebpf_bindings::bindings::_bindgen_ty_5
-pub const aya_ebpf_bindings::bindings::BPF_F_INVALIDATE_HASH: aya_ebpf_bindings::bindings::_bindgen_ty_6
+pub const aya_ebpf_bindings::bindings::BPF_F_INVALIDATE_HASH: aya_ebpf_bindings::bindings::_bindgen_ty_7
+pub const aya_ebpf_bindings::bindings::BPF_F_IPV6: aya_ebpf_bindings::bindings::_bindgen_ty_9
 pub const aya_ebpf_bindings::bindings::BPF_F_KPROBE_MULTI_RETURN: aya_ebpf_bindings::bindings::_bindgen_ty_2
 pub const aya_ebpf_bindings::bindings::BPF_F_LINK: aya_ebpf_bindings::bindings::_bindgen_ty_5
 pub const aya_ebpf_bindings::bindings::BPF_F_LOCK: aya_ebpf_bindings::bindings::_bindgen_ty_4
-pub const aya_ebpf_bindings::bindings::BPF_F_MARK_ENFORCE: aya_ebpf_bindings::bindings::_bindgen_ty_8
-pub const aya_ebpf_bindings::bindings::BPF_F_MARK_MANGLED_0: aya_ebpf_bindings::bindings::_bindgen_ty_8
+pub const aya_ebpf_bindings::bindings::BPF_F_MARK_ENFORCE: aya_ebpf_bindings::bindings::_bindgen_ty_9
+pub const aya_ebpf_bindings::bindings::BPF_F_MARK_MANGLED_0: aya_ebpf_bindings::bindings::_bindgen_ty_9
 pub const aya_ebpf_bindings::bindings::BPF_F_MMAPABLE: aya_ebpf_bindings::bindings::_bindgen_ty_5
 pub const aya_ebpf_bindings::bindings::BPF_F_NETFILTER_IP_DEFRAG: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_NO_COMMON_LRU: aya_ebpf_bindings::bindings::_bindgen_ty_5
@@ -3668,12 +3818,15 @@ pub const aya_ebpf_bindings::bindings::BPF_F_NO_TUNNEL_KEY: aya_ebpf_bindings::b
 pub const aya_ebpf_bindings::bindings::BPF_F_NO_USER_CONV: aya_ebpf_bindings::bindings::_bindgen_ty_5
 pub const aya_ebpf_bindings::bindings::BPF_F_NUMA_NODE: aya_ebpf_bindings::bindings::_bindgen_ty_5
 pub const aya_ebpf_bindings::bindings::BPF_F_PATH_FD: aya_ebpf_bindings::bindings::_bindgen_ty_5
+pub const aya_ebpf_bindings::bindings::BPF_F_PREORDER: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_PRESERVE_ELEMS: aya_ebpf_bindings::bindings::_bindgen_ty_5
-pub const aya_ebpf_bindings::bindings::BPF_F_PSEUDO_HDR: aya_ebpf_bindings::bindings::_bindgen_ty_8
+pub const aya_ebpf_bindings::bindings::BPF_F_PSEUDO_HDR: aya_ebpf_bindings::bindings::_bindgen_ty_9
 pub const aya_ebpf_bindings::bindings::BPF_F_QUERY_EFFECTIVE: u32
+pub const aya_ebpf_bindings::bindings::BPF_F_RB_OVERWRITE: aya_ebpf_bindings::bindings::_bindgen_ty_5
 pub const aya_ebpf_bindings::bindings::BPF_F_RDONLY: aya_ebpf_bindings::bindings::_bindgen_ty_5
 pub const aya_ebpf_bindings::bindings::BPF_F_RDONLY_PROG: aya_ebpf_bindings::bindings::_bindgen_ty_5
-pub const aya_ebpf_bindings::bindings::BPF_F_RECOMPUTE_CSUM: aya_ebpf_bindings::bindings::_bindgen_ty_6
+pub const aya_ebpf_bindings::bindings::BPF_F_RECOMPUTE_CSUM: aya_ebpf_bindings::bindings::_bindgen_ty_7
+pub const aya_ebpf_bindings::bindings::BPF_F_REDIRECT_FLAGS: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_REPLACE: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_REUSE_STACKID: aya_ebpf_bindings::bindings::_bindgen_ty_11
 pub const aya_ebpf_bindings::bindings::BPF_F_SEGV_ON_FAULT: aya_ebpf_bindings::bindings::_bindgen_ty_5
@@ -3686,10 +3839,11 @@ pub const aya_ebpf_bindings::bindings::BPF_F_SYSCTL_BASE_NAME: aya_ebpf_bindings
 pub const aya_ebpf_bindings::bindings::BPF_F_TEST_REG_INVARIANTS: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_TEST_RND_HI32: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_TEST_RUN_ON_CPU: u32
+pub const aya_ebpf_bindings::bindings::BPF_F_TEST_SKB_CHECKSUM_COMPLETE: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_TEST_STATE_FREQ: u32
 pub const aya_ebpf_bindings::bindings::BPF_F_TEST_XDP_LIVE_FRAMES: u32
-pub const aya_ebpf_bindings::bindings::BPF_F_TIMER_ABS: aya_ebpf_bindings::bindings::_bindgen_ty_41
-pub const aya_ebpf_bindings::bindings::BPF_F_TIMER_CPU_PIN: aya_ebpf_bindings::bindings::_bindgen_ty_41
+pub const aya_ebpf_bindings::bindings::BPF_F_TIMER_ABS: aya_ebpf_bindings::bindings::_bindgen_ty_42
+pub const aya_ebpf_bindings::bindings::BPF_F_TIMER_CPU_PIN: aya_ebpf_bindings::bindings::_bindgen_ty_42
 pub const aya_ebpf_bindings::bindings::BPF_F_TOKEN_FD: aya_ebpf_bindings::bindings::_bindgen_ty_5
 pub const aya_ebpf_bindings::bindings::BPF_F_TUNINFO_FLAGS: aya_ebpf_bindings::bindings::_bindgen_ty_13
 pub const aya_ebpf_bindings::bindings::BPF_F_TUNINFO_IPV6: aya_ebpf_bindings::bindings::_bindgen_ty_10
@@ -3725,6 +3879,7 @@ pub const aya_ebpf_bindings::bindings::BPF_K: u32
 pub const aya_ebpf_bindings::bindings::BPF_LD: u32
 pub const aya_ebpf_bindings::bindings::BPF_LDX: u32
 pub const aya_ebpf_bindings::bindings::BPF_LEN: u32
+pub const aya_ebpf_bindings::bindings::BPF_LOAD_ACQ: u32
 pub const aya_ebpf_bindings::bindings::BPF_LOCAL_STORAGE_GET_F_CREATE: aya_ebpf_bindings::bindings::_bindgen_ty_20
 pub const aya_ebpf_bindings::bindings::BPF_LSH: u32
 pub const aya_ebpf_bindings::bindings::BPF_MAXINSNS: u32
@@ -3751,6 +3906,7 @@ pub const aya_ebpf_bindings::bindings::BPF_RB_AVAIL_DATA: aya_ebpf_bindings::bin
 pub const aya_ebpf_bindings::bindings::BPF_RB_CONS_POS: aya_ebpf_bindings::bindings::_bindgen_ty_23
 pub const aya_ebpf_bindings::bindings::BPF_RB_FORCE_WAKEUP: aya_ebpf_bindings::bindings::_bindgen_ty_22
 pub const aya_ebpf_bindings::bindings::BPF_RB_NO_WAKEUP: aya_ebpf_bindings::bindings::_bindgen_ty_22
+pub const aya_ebpf_bindings::bindings::BPF_RB_OVERWRITE_POS: aya_ebpf_bindings::bindings::_bindgen_ty_23
 pub const aya_ebpf_bindings::bindings::BPF_RB_PROD_POS: aya_ebpf_bindings::bindings::_bindgen_ty_23
 pub const aya_ebpf_bindings::bindings::BPF_RB_RING_SIZE: aya_ebpf_bindings::bindings::_bindgen_ty_23
 pub const aya_ebpf_bindings::bindings::BPF_REG_0: aya_ebpf_bindings::bindings::_bindgen_ty_1
@@ -3772,48 +3928,54 @@ pub const aya_ebpf_bindings::bindings::BPF_RSH: u32
 pub const aya_ebpf_bindings::bindings::BPF_SK_LOOKUP_F_NO_REUSEPORT: aya_ebpf_bindings::bindings::_bindgen_ty_25
 pub const aya_ebpf_bindings::bindings::BPF_SK_LOOKUP_F_REPLACE: aya_ebpf_bindings::bindings::_bindgen_ty_25
 pub const aya_ebpf_bindings::bindings::BPF_SK_STORAGE_GET_F_CREATE: aya_ebpf_bindings::bindings::_bindgen_ty_20
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB: aya_ebpf_bindings::bindings::_bindgen_ty_30
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
 pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_ALL_CB_FLAGS: aya_ebpf_bindings::bindings::_bindgen_ty_29
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_BASE_RTT: aya_ebpf_bindings::bindings::_bindgen_ty_30
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_HDR_OPT_LEN_CB: aya_ebpf_bindings::bindings::_bindgen_ty_30
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_NEEDS_ECN: aya_ebpf_bindings::bindings::_bindgen_ty_30
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_BASE_RTT: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_HDR_OPT_LEN_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_NEEDS_ECN: aya_ebpf_bindings::bindings::_bindgen_ty_31
 pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_PARSE_ALL_HDR_OPT_CB_FLAG: aya_ebpf_bindings::bindings::_bindgen_ty_29
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_PARSE_HDR_OPT_CB: aya_ebpf_bindings::bindings::_bindgen_ty_30
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_PARSE_HDR_OPT_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
 pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_PARSE_UNKNOWN_HDR_OPT_CB_FLAG: aya_ebpf_bindings::bindings::_bindgen_ty_29
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB: aya_ebpf_bindings::bindings::_bindgen_ty_30
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_RETRANS_CB: aya_ebpf_bindings::bindings::_bindgen_ty_30
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_RETRANS_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
 pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_RETRANS_CB_FLAG: aya_ebpf_bindings::bindings::_bindgen_ty_29
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_RTO_CB: aya_ebpf_bindings::bindings::_bindgen_ty_30
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_RTO_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
 pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_RTO_CB_FLAG: aya_ebpf_bindings::bindings::_bindgen_ty_29
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_RTT_CB: aya_ebpf_bindings::bindings::_bindgen_ty_30
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_RTT_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
 pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_RTT_CB_FLAG: aya_ebpf_bindings::bindings::_bindgen_ty_29
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_RWND_INIT: aya_ebpf_bindings::bindings::_bindgen_ty_30
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_STATE_CB: aya_ebpf_bindings::bindings::_bindgen_ty_30
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_RWND_INIT: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_STATE_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
 pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_STATE_CB_FLAG: aya_ebpf_bindings::bindings::_bindgen_ty_29
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_TCP_CONNECT_CB: aya_ebpf_bindings::bindings::_bindgen_ty_30
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_TCP_LISTEN_CB: aya_ebpf_bindings::bindings::_bindgen_ty_30
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_TIMEOUT_INIT: aya_ebpf_bindings::bindings::_bindgen_ty_30
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_VOID: aya_ebpf_bindings::bindings::_bindgen_ty_30
-pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_WRITE_HDR_OPT_CB: aya_ebpf_bindings::bindings::_bindgen_ty_30
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_TCP_CONNECT_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_TCP_LISTEN_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_TIMEOUT_INIT: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_TSTAMP_ACK_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_TSTAMP_SCHED_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_TSTAMP_SENDMSG_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_TSTAMP_SND_HW_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_TSTAMP_SND_SW_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_VOID: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_WRITE_HDR_OPT_CB: aya_ebpf_bindings::bindings::_bindgen_ty_31
 pub const aya_ebpf_bindings::bindings::BPF_SOCK_OPS_WRITE_HDR_OPT_CB_FLAG: aya_ebpf_bindings::bindings::_bindgen_ty_29
 pub const aya_ebpf_bindings::bindings::BPF_ST: u32
+pub const aya_ebpf_bindings::bindings::BPF_STORE_REL: u32
 pub const aya_ebpf_bindings::bindings::BPF_STX: u32
 pub const aya_ebpf_bindings::bindings::BPF_SUB: u32
 pub const aya_ebpf_bindings::bindings::BPF_TAG_SIZE: u32
-pub const aya_ebpf_bindings::bindings::BPF_TCP_BOUND_INACTIVE: aya_ebpf_bindings::bindings::_bindgen_ty_31
-pub const aya_ebpf_bindings::bindings::BPF_TCP_CLOSE: aya_ebpf_bindings::bindings::_bindgen_ty_31
-pub const aya_ebpf_bindings::bindings::BPF_TCP_CLOSE_WAIT: aya_ebpf_bindings::bindings::_bindgen_ty_31
-pub const aya_ebpf_bindings::bindings::BPF_TCP_CLOSING: aya_ebpf_bindings::bindings::_bindgen_ty_31
-pub const aya_ebpf_bindings::bindings::BPF_TCP_ESTABLISHED: aya_ebpf_bindings::bindings::_bindgen_ty_31
-pub const aya_ebpf_bindings::bindings::BPF_TCP_FIN_WAIT1: aya_ebpf_bindings::bindings::_bindgen_ty_31
-pub const aya_ebpf_bindings::bindings::BPF_TCP_FIN_WAIT2: aya_ebpf_bindings::bindings::_bindgen_ty_31
-pub const aya_ebpf_bindings::bindings::BPF_TCP_LAST_ACK: aya_ebpf_bindings::bindings::_bindgen_ty_31
-pub const aya_ebpf_bindings::bindings::BPF_TCP_LISTEN: aya_ebpf_bindings::bindings::_bindgen_ty_31
-pub const aya_ebpf_bindings::bindings::BPF_TCP_MAX_STATES: aya_ebpf_bindings::bindings::_bindgen_ty_31
-pub const aya_ebpf_bindings::bindings::BPF_TCP_NEW_SYN_RECV: aya_ebpf_bindings::bindings::_bindgen_ty_31
-pub const aya_ebpf_bindings::bindings::BPF_TCP_SYN_RECV: aya_ebpf_bindings::bindings::_bindgen_ty_31
-pub const aya_ebpf_bindings::bindings::BPF_TCP_SYN_SENT: aya_ebpf_bindings::bindings::_bindgen_ty_31
-pub const aya_ebpf_bindings::bindings::BPF_TCP_TIME_WAIT: aya_ebpf_bindings::bindings::_bindgen_ty_31
+pub const aya_ebpf_bindings::bindings::BPF_TCP_BOUND_INACTIVE: aya_ebpf_bindings::bindings::_bindgen_ty_32
+pub const aya_ebpf_bindings::bindings::BPF_TCP_CLOSE: aya_ebpf_bindings::bindings::_bindgen_ty_32
+pub const aya_ebpf_bindings::bindings::BPF_TCP_CLOSE_WAIT: aya_ebpf_bindings::bindings::_bindgen_ty_32
+pub const aya_ebpf_bindings::bindings::BPF_TCP_CLOSING: aya_ebpf_bindings::bindings::_bindgen_ty_32
+pub const aya_ebpf_bindings::bindings::BPF_TCP_ESTABLISHED: aya_ebpf_bindings::bindings::_bindgen_ty_32
+pub const aya_ebpf_bindings::bindings::BPF_TCP_FIN_WAIT1: aya_ebpf_bindings::bindings::_bindgen_ty_32
+pub const aya_ebpf_bindings::bindings::BPF_TCP_FIN_WAIT2: aya_ebpf_bindings::bindings::_bindgen_ty_32
+pub const aya_ebpf_bindings::bindings::BPF_TCP_LAST_ACK: aya_ebpf_bindings::bindings::_bindgen_ty_32
+pub const aya_ebpf_bindings::bindings::BPF_TCP_LISTEN: aya_ebpf_bindings::bindings::_bindgen_ty_32
+pub const aya_ebpf_bindings::bindings::BPF_TCP_MAX_STATES: aya_ebpf_bindings::bindings::_bindgen_ty_32
+pub const aya_ebpf_bindings::bindings::BPF_TCP_NEW_SYN_RECV: aya_ebpf_bindings::bindings::_bindgen_ty_32
+pub const aya_ebpf_bindings::bindings::BPF_TCP_SYN_RECV: aya_ebpf_bindings::bindings::_bindgen_ty_32
+pub const aya_ebpf_bindings::bindings::BPF_TCP_SYN_SENT: aya_ebpf_bindings::bindings::_bindgen_ty_32
+pub const aya_ebpf_bindings::bindings::BPF_TCP_TIME_WAIT: aya_ebpf_bindings::bindings::_bindgen_ty_32
 pub const aya_ebpf_bindings::bindings::BPF_TO_BE: u32
 pub const aya_ebpf_bindings::bindings::BPF_TO_LE: u32
 pub const aya_ebpf_bindings::bindings::BPF_W: u32
@@ -3953,17 +4115,16 @@ pub type aya_ebpf_bindings::bindings::_bindgen_ty_26 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_27 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_29 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_3 = aya_ebpf_cty::ad::c_uint
-pub type aya_ebpf_bindings::bindings::_bindgen_ty_30 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_31 = aya_ebpf_cty::ad::c_uint
-pub type aya_ebpf_bindings::bindings::_bindgen_ty_35 = aya_ebpf_cty::ad::c_uint
+pub type aya_ebpf_bindings::bindings::_bindgen_ty_32 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_36 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_37 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_38 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_39 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_4 = aya_ebpf_cty::ad::c_uint
-pub type aya_ebpf_bindings::bindings::_bindgen_ty_41 = aya_ebpf_cty::ad::c_uint
+pub type aya_ebpf_bindings::bindings::_bindgen_ty_40 = aya_ebpf_cty::ad::c_uint
+pub type aya_ebpf_bindings::bindings::_bindgen_ty_42 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_5 = aya_ebpf_cty::ad::c_uint
-pub type aya_ebpf_bindings::bindings::_bindgen_ty_6 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_7 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_8 = aya_ebpf_cty::ad::c_uint
 pub type aya_ebpf_bindings::bindings::_bindgen_ty_9 = aya_ebpf_cty::ad::c_uint
@@ -3983,11 +4144,11 @@ pub unsafe fn aya_ebpf_bindings::helpers::bpf_csum_diff(*mut aya_ebpf_bindings::
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_csum_level(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_csum_update(*mut aya_ebpf_bindings::bindings::__sk_buff, aya_ebpf_bindings::bindings::__wsum) -> aya_ebpf_bindings::bindings::__s64
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_current_task_under_cgroup(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_d_path(*mut aya_ebpf_bindings::bindings::path, *mut aya_ebpf_cty::ad::c_char, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_data(*const aya_ebpf_bindings::bindings::bpf_dynptr, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u32) -> *mut aya_ebpf_cty::c_void
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_from_mem(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_bindings::bindings::bpf_dynptr) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_read(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, *const aya_ebpf_bindings::bindings::bpf_dynptr, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
-pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_write(*const aya_ebpf_bindings::bindings::bpf_dynptr, aya_ebpf_bindings::bindings::__u32, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u32, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_d_path(*const aya_ebpf_bindings::bindings::path, *mut aya_ebpf_cty::ad::c_char, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_data(*const aya_ebpf_bindings::bindings::bpf_dynptr, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64) -> *mut aya_ebpf_cty::c_void
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_from_mem(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_bindings::bindings::bpf_dynptr) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_read(*mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64, *const aya_ebpf_bindings::bindings::bpf_dynptr, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
+pub unsafe fn aya_ebpf_bindings::helpers::bpf_dynptr_write(*const aya_ebpf_bindings::bindings::bpf_dynptr, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_fib_lookup(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_bindings::bindings::bpf_fib_lookup, aya_ebpf_cty::ad::c_int, aya_ebpf_bindings::bindings::__u32) -> aya_ebpf_cty::od::c_long
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_find_vma(*mut aya_ebpf_bindings::bindings::task_struct, aya_ebpf_bindings::bindings::__u64, *mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long
 pub unsafe fn aya_ebpf_bindings::helpers::bpf_for_each_map_elem(*mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, *mut aya_ebpf_cty::c_void, aya_ebpf_bindings::bindings::__u64) -> aya_ebpf_cty::od::c_long

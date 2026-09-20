@@ -51,6 +51,7 @@ impl TryFrom<u32> for bpf_map_type {
             x if x == Self::BPF_MAP_TYPE_USER_RINGBUF as u32 => Self::BPF_MAP_TYPE_USER_RINGBUF,
             x if x == Self::BPF_MAP_TYPE_CGRP_STORAGE as u32 => Self::BPF_MAP_TYPE_CGRP_STORAGE,
             x if x == Self::BPF_MAP_TYPE_ARENA as u32 => Self::BPF_MAP_TYPE_ARENA,
+            x if x == Self::BPF_MAP_TYPE_INSN_ARRAY as u32 => Self::BPF_MAP_TYPE_INSN_ARRAY,
             _ => return Err(InvalidTypeBinding { value: map_type }),
         })
     }
