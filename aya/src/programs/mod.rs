@@ -76,7 +76,7 @@ pub mod xdp;
 use std::{
     borrow::Cow,
     convert::Infallible,
-    ffi::CString,
+    ffi::{CString, NulError},
     io,
     os::fd::{AsFd, BorrowedFd},
     path::{Path, PathBuf},
@@ -187,13 +187,6 @@ pub enum ProgramError {
     #[error(transparent)]
     LinkError(#[from] LinkError),
 
-    /// The network interface does not exist.
-    #[error("unknown network interface {name}")]
-    UnknownInterface {
-        /// interface name
-        name: String,
-    },
-
     /// The program is not of the expected type.
     #[error("unexpected program type")]
     UnexpectedProgramType,
@@ -243,7 +236,13 @@ pub enum ProgramError {
     InvalidName {
         /// program name
         name: String,
+        /// the source error
+        source: NulError,
     },
+
+    /// An error occurred while working with a pinned BPF object
+    #[error(transparent)]
+    PinError(#[from] PinError),
 
     /// An error occurred while working with IO.
     #[error(transparent)]
@@ -619,9 +618,14 @@ impl<T: Link> ProgramData<T> {
         verifier_log_level: VerifierLogLevel,
     ) -> Result<Self, ProgramError> {
         use std::os::unix::ffi::OsStrExt as _;
+        let path = path.as_ref();
 
-        // TODO: avoid this unwrap by adding a new error variant.
-        let path_string = CString::new(path.as_ref().as_os_str().as_bytes()).unwrap();
+        let path_string = CString::new(path.as_os_str().as_bytes()).map_err(|error| {
+            PinError::InvalidPinPath {
+                path: path.into(),
+                error,
+            }
+        })?;
         let fd = bpf_get_object(&path_string).map_err(|io_error| SyscallError {
             call: "bpf_obj_get",
             io_error,
@@ -629,7 +633,7 @@ impl<T: Link> ProgramData<T> {
 
         let info = ProgramInfo::new_from_fd(fd.as_fd())?;
         let name = info.name_as_str().map(ToOwned::to_owned).map(Into::into);
-        Self::from_bpf_prog_info(name, fd, path.as_ref(), info.0, verifier_log_level)
+        Self::from_bpf_prog_info(name, fd, path, info.0, verifier_log_level)
     }
 }
 
@@ -751,11 +755,10 @@ fn load_program<T: Link>(
     let target_kernel_version =
         kernel_version.unwrap_or_else(|| KernelVersion::current().map_or(0, KernelVersion::code));
 
-    let prog_name = if let Some(name) = name.as_deref() {
-        let prog_name = CString::new(name).map_err(|err @ std::ffi::NulError { .. }| {
-            let name = err.into_vec();
-            let name = unsafe { String::from_utf8_unchecked(name) };
-            ProgramError::InvalidName { name }
+    let prog_name = if let Some::<&str>(name) = name.as_deref() {
+        let prog_name = CString::new(name).map_err(|source| ProgramError::InvalidName {
+            name: name.into(),
+            source,
         })?;
         Some(prog_name)
     } else {
