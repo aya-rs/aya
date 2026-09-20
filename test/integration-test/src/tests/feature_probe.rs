@@ -1473,4 +1473,7 @@ fn probe_supported_maps() {
 
     let kern_version = KernelVersion::new(6, 9, 0);
     kernel_assert!(is_supported!(MapType::Arena), kern_version);
+
+    let kern_version = KernelVersion::new(6, 19, 0);
+    kernel_assert!(is_supported!(MapType::InsnArray), kern_version);
 }

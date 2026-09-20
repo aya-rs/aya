@@ -512,6 +512,8 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
             => (0, 0, page_size() as u32),
         MapType::Arena                  // https://elixir.bootlin.com/linux/v6.9/source/kernel/bpf/arena.c#L380
             => (0, 0, 1),
+        MapType::InsnArray              // https://github.com/torvalds/linux/blob/v6.19/kernel/bpf/bpf_insn_array.c#L26
+            => (4, 16, 1),
     };
 
     // SAFETY: all-zero byte-pattern valid for `bpf_attr`

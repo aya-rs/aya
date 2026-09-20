@@ -105,6 +105,9 @@ impl TryFrom<u32> for bpf_attach_type {
             x if x == Self::BPF_CGROUP_UNIX_GETSOCKNAME as u32 => Self::BPF_CGROUP_UNIX_GETSOCKNAME,
             x if x == Self::BPF_NETKIT_PRIMARY as u32 => Self::BPF_NETKIT_PRIMARY,
             x if x == Self::BPF_NETKIT_PEER as u32 => Self::BPF_NETKIT_PEER,
+            x if x == Self::BPF_TRACE_KPROBE_SESSION as u32 => Self::BPF_TRACE_KPROBE_SESSION,
+            x if x == Self::BPF_TRACE_UPROBE_SESSION as u32 => Self::BPF_TRACE_UPROBE_SESSION,
+            x if x == Self::BPF_TRACE_FSESSION as u32 => Self::BPF_TRACE_FSESSION,
             _ => return Err(InvalidTypeBinding { value: attach_type }),
         })
     }
