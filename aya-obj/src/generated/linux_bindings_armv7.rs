@@ -583,12 +583,15 @@ pub const BPF_EXIT: u32 = 144;
 pub const BPF_FETCH: u32 = 1;
 pub const BPF_XCHG: u32 = 225;
 pub const BPF_CMPXCHG: u32 = 241;
+pub const BPF_LOAD_ACQ: u32 = 256;
+pub const BPF_STORE_REL: u32 = 272;
 pub const BPF_F_ALLOW_OVERRIDE: u32 = 1;
 pub const BPF_F_ALLOW_MULTI: u32 = 2;
 pub const BPF_F_REPLACE: u32 = 4;
 pub const BPF_F_BEFORE: u32 = 8;
 pub const BPF_F_AFTER: u32 = 16;
 pub const BPF_F_ID: u32 = 32;
+pub const BPF_F_PREORDER: u32 = 64;
 pub const BPF_F_STRICT_ALIGNMENT: u32 = 1;
 pub const BPF_F_ANY_ALIGNMENT: u32 = 2;
 pub const BPF_F_TEST_RND_HI32: u32 = 4;
@@ -609,8 +612,10 @@ pub const BPF_PSEUDO_KFUNC_CALL: u32 = 2;
 pub const BPF_F_QUERY_EFFECTIVE: u32 = 1;
 pub const BPF_F_TEST_RUN_ON_CPU: u32 = 1;
 pub const BPF_F_TEST_XDP_LIVE_FRAMES: u32 = 2;
+pub const BPF_F_TEST_SKB_CHECKSUM_COMPLETE: u32 = 4;
 pub const BPF_BUILD_ID_SIZE: u32 = 20;
 pub const BPF_OBJ_NAME_LEN: u32 = 16;
+pub const BPF_F_REDIRECT_FLAGS: u32 = 25;
 pub const BPF_TAG_SIZE: u32 = 8;
 pub const BTF_INT_SIGNED: u32 = 1;
 pub const BTF_INT_CHAR: u32 = 2;
@@ -802,6 +807,7 @@ pub enum bpf_cgroup_iter_order {
     BPF_CGROUP_ITER_DESCENDANTS_PRE = 2,
     BPF_CGROUP_ITER_DESCENDANTS_POST = 3,
     BPF_CGROUP_ITER_ANCESTORS_UP = 4,
+    BPF_CGROUP_ITER_CHILDREN = 5,
 }
 impl bpf_cmd {
     pub const BPF_PROG_RUN: bpf_cmd = bpf_cmd::BPF_PROG_TEST_RUN;
@@ -846,7 +852,9 @@ pub enum bpf_cmd {
     BPF_LINK_DETACH = 34,
     BPF_PROG_BIND_MAP = 35,
     BPF_TOKEN_CREATE = 36,
-    __MAX_BPF_CMD = 37,
+    BPF_PROG_STREAM_READ_BY_FD = 37,
+    BPF_PROG_ASSOC_STRUCT_OPS = 38,
+    __MAX_BPF_CMD = 39,
 }
 impl bpf_map_type {
     pub const BPF_MAP_TYPE_CGROUP_STORAGE: bpf_map_type =
@@ -893,7 +901,8 @@ pub enum bpf_map_type {
     BPF_MAP_TYPE_USER_RINGBUF = 31,
     BPF_MAP_TYPE_CGRP_STORAGE = 32,
     BPF_MAP_TYPE_ARENA = 33,
-    __MAX_BPF_MAP_TYPE = 34,
+    BPF_MAP_TYPE_INSN_ARRAY = 34,
+    __MAX_BPF_MAP_TYPE = 35,
 }
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -992,7 +1001,10 @@ pub enum bpf_attach_type {
     BPF_CGROUP_UNIX_GETSOCKNAME = 53,
     BPF_NETKIT_PRIMARY = 54,
     BPF_NETKIT_PEER = 55,
-    __MAX_BPF_ATTACH_TYPE = 56,
+    BPF_TRACE_KPROBE_SESSION = 56,
+    BPF_TRACE_UPROBE_SESSION = 57,
+    BPF_TRACE_FSESSION = 58,
+    __MAX_BPF_ATTACH_TYPE = 59,
 }
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -1033,6 +1045,8 @@ pub const BPF_ANY: _bindgen_ty_4 = 0;
 pub const BPF_NOEXIST: _bindgen_ty_4 = 1;
 pub const BPF_EXIST: _bindgen_ty_4 = 2;
 pub const BPF_F_LOCK: _bindgen_ty_4 = 4;
+pub const BPF_F_CPU: _bindgen_ty_4 = 8;
+pub const BPF_F_ALL_CPUS: _bindgen_ty_4 = 16;
 pub type _bindgen_ty_4 = ::core::ffi::c_uint;
 pub const BPF_F_NO_PREALLOC: _bindgen_ty_5 = 1;
 pub const BPF_F_NO_COMMON_LRU: _bindgen_ty_5 = 2;
@@ -1053,11 +1067,20 @@ pub const BPF_F_VTYPE_BTF_OBJ_FD: _bindgen_ty_5 = 32768;
 pub const BPF_F_TOKEN_FD: _bindgen_ty_5 = 65536;
 pub const BPF_F_SEGV_ON_FAULT: _bindgen_ty_5 = 131072;
 pub const BPF_F_NO_USER_CONV: _bindgen_ty_5 = 262144;
+pub const BPF_F_RB_OVERWRITE: _bindgen_ty_5 = 524288;
 pub type _bindgen_ty_5 = ::core::ffi::c_uint;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum bpf_stats_type {
     BPF_STATS_RUN_TIME = 0,
+}
+pub const BPF_STREAM_STDOUT: _bindgen_ty_6 = _bindgen_ty_6::BPF_STREAM_STDOUT;
+pub const BPF_STREAM_STDERR: _bindgen_ty_6 = _bindgen_ty_6::BPF_STREAM_STDERR;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_6 {
+    BPF_STREAM_STDOUT = 1,
+    BPF_STREAM_STDERR = 2,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1082,6 +1105,8 @@ pub union bpf_attr {
     pub iter_create: bpf_attr__bindgen_ty_18,
     pub prog_bind_map: bpf_attr__bindgen_ty_19,
     pub token_create: bpf_attr__bindgen_ty_20,
+    pub prog_stream_read: bpf_attr__bindgen_ty_21,
+    pub prog_assoc_struct_ops: bpf_attr__bindgen_ty_22,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1102,6 +1127,8 @@ pub struct bpf_attr__bindgen_ty_1 {
     pub map_extra: __u64,
     pub value_type_btf_obj_fd: __s32,
     pub map_token_fd: __s32,
+    pub excl_prog_hash: __u64,
+    pub excl_prog_hash_size: __u32,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1159,6 +1186,10 @@ pub struct bpf_attr__bindgen_ty_4 {
     pub core_relo_rec_size: __u32,
     pub log_true_size: __u32,
     pub prog_token_fd: __s32,
+    pub fd_array_cnt: __u32,
+    pub signature: __u64,
+    pub signature_size: __u32,
+    pub keyring_id: __s32,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1222,6 +1253,7 @@ pub struct bpf_attr__bindgen_ty_8 {
     pub __bindgen_anon_1: bpf_attr__bindgen_ty_8__bindgen_ty_1,
     pub next_id: __u32,
     pub open_flags: __u32,
+    pub fd_by_id_token_fd: __s32,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1348,6 +1380,7 @@ pub union bpf_attr__bindgen_ty_14__bindgen_ty_3 {
     pub tcx: bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6,
     pub uprobe_multi: bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7,
     pub netkit: bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8,
+    pub cgroup: bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1420,6 +1453,18 @@ pub union bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1 {
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9 {
+    pub __bindgen_anon_1: bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1,
+    pub expected_revision: __u64,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1 {
+    pub relative_fd: __u32,
+    pub relative_id: __u32,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
 pub struct bpf_attr__bindgen_ty_15 {
     pub link_fd: __u32,
     pub __bindgen_anon_1: bpf_attr__bindgen_ty_15__bindgen_ty_1,
@@ -1466,6 +1511,21 @@ pub struct bpf_attr__bindgen_ty_19 {
 pub struct bpf_attr__bindgen_ty_20 {
     pub flags: __u32,
     pub bpffs_fd: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_21 {
+    pub stream_buf: __u64,
+    pub stream_buf_len: __u32,
+    pub stream_id: __u32,
+    pub prog_fd: __u32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct bpf_attr__bindgen_ty_22 {
+    pub map_fd: __u32,
+    pub prog_fd: __u32,
+    pub flags: __u32,
 }
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -1684,16 +1744,15 @@ pub enum bpf_func_id {
     BPF_FUNC_cgrp_storage_delete = 211,
     __BPF_FUNC_MAX_ID = 212,
 }
-pub const BPF_F_RECOMPUTE_CSUM: _bindgen_ty_6 = 1;
-pub const BPF_F_INVALIDATE_HASH: _bindgen_ty_6 = 2;
-pub type _bindgen_ty_6 = ::core::ffi::c_uint;
-pub const BPF_F_HDR_FIELD_MASK: _bindgen_ty_7 = 15;
+pub const BPF_F_RECOMPUTE_CSUM: _bindgen_ty_7 = 1;
+pub const BPF_F_INVALIDATE_HASH: _bindgen_ty_7 = 2;
 pub type _bindgen_ty_7 = ::core::ffi::c_uint;
-pub const BPF_F_PSEUDO_HDR: _bindgen_ty_8 = 16;
-pub const BPF_F_MARK_MANGLED_0: _bindgen_ty_8 = 32;
-pub const BPF_F_MARK_ENFORCE: _bindgen_ty_8 = 64;
+pub const BPF_F_HDR_FIELD_MASK: _bindgen_ty_8 = 15;
 pub type _bindgen_ty_8 = ::core::ffi::c_uint;
-pub const BPF_F_INGRESS: _bindgen_ty_9 = 1;
+pub const BPF_F_PSEUDO_HDR: _bindgen_ty_9 = 16;
+pub const BPF_F_MARK_MANGLED_0: _bindgen_ty_9 = 32;
+pub const BPF_F_MARK_ENFORCE: _bindgen_ty_9 = 64;
+pub const BPF_F_IPV6: _bindgen_ty_9 = 128;
 pub type _bindgen_ty_9 = ::core::ffi::c_uint;
 pub const BPF_F_TUNINFO_IPV6: _bindgen_ty_10 = 1;
 pub type _bindgen_ty_10 = ::core::ffi::c_uint;
@@ -1771,6 +1830,7 @@ pub const BPF_RB_AVAIL_DATA: _bindgen_ty_23 = _bindgen_ty_23::BPF_RB_AVAIL_DATA;
 pub const BPF_RB_RING_SIZE: _bindgen_ty_23 = _bindgen_ty_23::BPF_RB_RING_SIZE;
 pub const BPF_RB_CONS_POS: _bindgen_ty_23 = _bindgen_ty_23::BPF_RB_CONS_POS;
 pub const BPF_RB_PROD_POS: _bindgen_ty_23 = _bindgen_ty_23::BPF_RB_PROD_POS;
+pub const BPF_RB_OVERWRITE_POS: _bindgen_ty_23 = _bindgen_ty_23::BPF_RB_OVERWRITE_POS;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum _bindgen_ty_23 {
@@ -1778,6 +1838,7 @@ pub enum _bindgen_ty_23 {
     BPF_RB_RING_SIZE = 1,
     BPF_RB_CONS_POS = 2,
     BPF_RB_PROD_POS = 3,
+    BPF_RB_OVERWRITE_POS = 4,
 }
 pub const BPF_RINGBUF_BUSY_BIT: _bindgen_ty_24 = 2147483648;
 pub const BPF_RINGBUF_DISCARD_BIT: _bindgen_ty_24 = 1073741824;
@@ -1794,17 +1855,22 @@ pub enum _bindgen_ty_25 {
 }
 pub const BPF_F_BPRM_SECUREEXEC: _bindgen_ty_26 = 1;
 pub type _bindgen_ty_26 = ::core::ffi::c_uint;
+pub const BPF_F_INGRESS: _bindgen_ty_27 = 1;
 pub const BPF_F_BROADCAST: _bindgen_ty_27 = 8;
 pub const BPF_F_EXCLUDE_INGRESS: _bindgen_ty_27 = 16;
 pub type _bindgen_ty_27 = ::core::ffi::c_uint;
 pub const BPF_SKB_TSTAMP_UNSPEC: _bindgen_ty_28 = _bindgen_ty_28::BPF_SKB_TSTAMP_UNSPEC;
 pub const BPF_SKB_TSTAMP_DELIVERY_MONO: _bindgen_ty_28 =
     _bindgen_ty_28::BPF_SKB_TSTAMP_DELIVERY_MONO;
+pub const BPF_SKB_CLOCK_REALTIME: _bindgen_ty_28 = _bindgen_ty_28::BPF_SKB_TSTAMP_UNSPEC;
+pub const BPF_SKB_CLOCK_MONOTONIC: _bindgen_ty_28 = _bindgen_ty_28::BPF_SKB_TSTAMP_DELIVERY_MONO;
+pub const BPF_SKB_CLOCK_TAI: _bindgen_ty_28 = _bindgen_ty_28::BPF_SKB_CLOCK_TAI;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum _bindgen_ty_28 {
     BPF_SKB_TSTAMP_UNSPEC = 0,
     BPF_SKB_TSTAMP_DELIVERY_MONO = 1,
+    BPF_SKB_CLOCK_TAI = 2,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -1938,6 +2004,8 @@ pub struct bpf_map_info {
     pub btf_value_type_id: __u32,
     pub btf_vmlinux_id: __u32,
     pub map_extra: __u64,
+    pub hash: __u64,
+    pub hash_size: __u32,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1980,6 +2048,16 @@ pub union bpf_link_info__bindgen_ty_1 {
 pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_1 {
     pub tp_name: __u64,
     pub tp_name_len: __u32,
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
+    pub cookie: __u64,
+}
+impl bpf_link_info__bindgen_ty_1__bindgen_ty_1 {
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 4usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
+        __bindgen_bitfield_unit
+    }
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -1987,6 +2065,16 @@ pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_2 {
     pub attach_type: __u32,
     pub target_obj_id: __u32,
     pub target_btf_id: __u32,
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
+    pub cookie: __u64,
+}
+impl bpf_link_info__bindgen_ty_1__bindgen_ty_2 {
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 4usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
+        __bindgen_bitfield_unit
+    }
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2097,6 +2185,7 @@ pub struct bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_
     pub name_len: __u32,
     pub offset: __u32,
     pub cookie: __u64,
+    pub ref_ctr_offset: __u64,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2190,29 +2279,38 @@ pub enum _bindgen_ty_29 {
     BPF_SOCK_OPS_WRITE_HDR_OPT_CB_FLAG = 64,
     BPF_SOCK_OPS_ALL_CB_FLAGS = 127,
 }
-pub const BPF_SOCK_OPS_VOID: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_VOID;
-pub const BPF_SOCK_OPS_TIMEOUT_INIT: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_TIMEOUT_INIT;
-pub const BPF_SOCK_OPS_RWND_INIT: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_RWND_INIT;
-pub const BPF_SOCK_OPS_TCP_CONNECT_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_TCP_CONNECT_CB;
-pub const BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB: _bindgen_ty_30 =
-    _bindgen_ty_30::BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB;
-pub const BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB: _bindgen_ty_30 =
-    _bindgen_ty_30::BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB;
-pub const BPF_SOCK_OPS_NEEDS_ECN: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_NEEDS_ECN;
-pub const BPF_SOCK_OPS_BASE_RTT: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_BASE_RTT;
-pub const BPF_SOCK_OPS_RTO_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_RTO_CB;
-pub const BPF_SOCK_OPS_RETRANS_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_RETRANS_CB;
-pub const BPF_SOCK_OPS_STATE_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_STATE_CB;
-pub const BPF_SOCK_OPS_TCP_LISTEN_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_TCP_LISTEN_CB;
-pub const BPF_SOCK_OPS_RTT_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_RTT_CB;
-pub const BPF_SOCK_OPS_PARSE_HDR_OPT_CB: _bindgen_ty_30 =
-    _bindgen_ty_30::BPF_SOCK_OPS_PARSE_HDR_OPT_CB;
-pub const BPF_SOCK_OPS_HDR_OPT_LEN_CB: _bindgen_ty_30 = _bindgen_ty_30::BPF_SOCK_OPS_HDR_OPT_LEN_CB;
-pub const BPF_SOCK_OPS_WRITE_HDR_OPT_CB: _bindgen_ty_30 =
-    _bindgen_ty_30::BPF_SOCK_OPS_WRITE_HDR_OPT_CB;
+pub const BPF_SOCK_OPS_VOID: _bindgen_ty_31 = _bindgen_ty_31::BPF_SOCK_OPS_VOID;
+pub const BPF_SOCK_OPS_TIMEOUT_INIT: _bindgen_ty_31 = _bindgen_ty_31::BPF_SOCK_OPS_TIMEOUT_INIT;
+pub const BPF_SOCK_OPS_RWND_INIT: _bindgen_ty_31 = _bindgen_ty_31::BPF_SOCK_OPS_RWND_INIT;
+pub const BPF_SOCK_OPS_TCP_CONNECT_CB: _bindgen_ty_31 = _bindgen_ty_31::BPF_SOCK_OPS_TCP_CONNECT_CB;
+pub const BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB: _bindgen_ty_31 =
+    _bindgen_ty_31::BPF_SOCK_OPS_ACTIVE_ESTABLISHED_CB;
+pub const BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB: _bindgen_ty_31 =
+    _bindgen_ty_31::BPF_SOCK_OPS_PASSIVE_ESTABLISHED_CB;
+pub const BPF_SOCK_OPS_NEEDS_ECN: _bindgen_ty_31 = _bindgen_ty_31::BPF_SOCK_OPS_NEEDS_ECN;
+pub const BPF_SOCK_OPS_BASE_RTT: _bindgen_ty_31 = _bindgen_ty_31::BPF_SOCK_OPS_BASE_RTT;
+pub const BPF_SOCK_OPS_RTO_CB: _bindgen_ty_31 = _bindgen_ty_31::BPF_SOCK_OPS_RTO_CB;
+pub const BPF_SOCK_OPS_RETRANS_CB: _bindgen_ty_31 = _bindgen_ty_31::BPF_SOCK_OPS_RETRANS_CB;
+pub const BPF_SOCK_OPS_STATE_CB: _bindgen_ty_31 = _bindgen_ty_31::BPF_SOCK_OPS_STATE_CB;
+pub const BPF_SOCK_OPS_TCP_LISTEN_CB: _bindgen_ty_31 = _bindgen_ty_31::BPF_SOCK_OPS_TCP_LISTEN_CB;
+pub const BPF_SOCK_OPS_RTT_CB: _bindgen_ty_31 = _bindgen_ty_31::BPF_SOCK_OPS_RTT_CB;
+pub const BPF_SOCK_OPS_PARSE_HDR_OPT_CB: _bindgen_ty_31 =
+    _bindgen_ty_31::BPF_SOCK_OPS_PARSE_HDR_OPT_CB;
+pub const BPF_SOCK_OPS_HDR_OPT_LEN_CB: _bindgen_ty_31 = _bindgen_ty_31::BPF_SOCK_OPS_HDR_OPT_LEN_CB;
+pub const BPF_SOCK_OPS_WRITE_HDR_OPT_CB: _bindgen_ty_31 =
+    _bindgen_ty_31::BPF_SOCK_OPS_WRITE_HDR_OPT_CB;
+pub const BPF_SOCK_OPS_TSTAMP_SCHED_CB: _bindgen_ty_31 =
+    _bindgen_ty_31::BPF_SOCK_OPS_TSTAMP_SCHED_CB;
+pub const BPF_SOCK_OPS_TSTAMP_SND_SW_CB: _bindgen_ty_31 =
+    _bindgen_ty_31::BPF_SOCK_OPS_TSTAMP_SND_SW_CB;
+pub const BPF_SOCK_OPS_TSTAMP_SND_HW_CB: _bindgen_ty_31 =
+    _bindgen_ty_31::BPF_SOCK_OPS_TSTAMP_SND_HW_CB;
+pub const BPF_SOCK_OPS_TSTAMP_ACK_CB: _bindgen_ty_31 = _bindgen_ty_31::BPF_SOCK_OPS_TSTAMP_ACK_CB;
+pub const BPF_SOCK_OPS_TSTAMP_SENDMSG_CB: _bindgen_ty_31 =
+    _bindgen_ty_31::BPF_SOCK_OPS_TSTAMP_SENDMSG_CB;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum _bindgen_ty_30 {
+pub enum _bindgen_ty_31 {
     BPF_SOCK_OPS_VOID = 0,
     BPF_SOCK_OPS_TIMEOUT_INIT = 1,
     BPF_SOCK_OPS_RWND_INIT = 2,
@@ -2229,24 +2327,29 @@ pub enum _bindgen_ty_30 {
     BPF_SOCK_OPS_PARSE_HDR_OPT_CB = 13,
     BPF_SOCK_OPS_HDR_OPT_LEN_CB = 14,
     BPF_SOCK_OPS_WRITE_HDR_OPT_CB = 15,
+    BPF_SOCK_OPS_TSTAMP_SCHED_CB = 16,
+    BPF_SOCK_OPS_TSTAMP_SND_SW_CB = 17,
+    BPF_SOCK_OPS_TSTAMP_SND_HW_CB = 18,
+    BPF_SOCK_OPS_TSTAMP_ACK_CB = 19,
+    BPF_SOCK_OPS_TSTAMP_SENDMSG_CB = 20,
 }
-pub const BPF_TCP_ESTABLISHED: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_ESTABLISHED;
-pub const BPF_TCP_SYN_SENT: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_SYN_SENT;
-pub const BPF_TCP_SYN_RECV: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_SYN_RECV;
-pub const BPF_TCP_FIN_WAIT1: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_FIN_WAIT1;
-pub const BPF_TCP_FIN_WAIT2: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_FIN_WAIT2;
-pub const BPF_TCP_TIME_WAIT: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_TIME_WAIT;
-pub const BPF_TCP_CLOSE: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_CLOSE;
-pub const BPF_TCP_CLOSE_WAIT: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_CLOSE_WAIT;
-pub const BPF_TCP_LAST_ACK: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_LAST_ACK;
-pub const BPF_TCP_LISTEN: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_LISTEN;
-pub const BPF_TCP_CLOSING: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_CLOSING;
-pub const BPF_TCP_NEW_SYN_RECV: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_NEW_SYN_RECV;
-pub const BPF_TCP_BOUND_INACTIVE: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_BOUND_INACTIVE;
-pub const BPF_TCP_MAX_STATES: _bindgen_ty_31 = _bindgen_ty_31::BPF_TCP_MAX_STATES;
+pub const BPF_TCP_ESTABLISHED: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_ESTABLISHED;
+pub const BPF_TCP_SYN_SENT: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_SYN_SENT;
+pub const BPF_TCP_SYN_RECV: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_SYN_RECV;
+pub const BPF_TCP_FIN_WAIT1: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_FIN_WAIT1;
+pub const BPF_TCP_FIN_WAIT2: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_FIN_WAIT2;
+pub const BPF_TCP_TIME_WAIT: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_TIME_WAIT;
+pub const BPF_TCP_CLOSE: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_CLOSE;
+pub const BPF_TCP_CLOSE_WAIT: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_CLOSE_WAIT;
+pub const BPF_TCP_LAST_ACK: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_LAST_ACK;
+pub const BPF_TCP_LISTEN: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_LISTEN;
+pub const BPF_TCP_CLOSING: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_CLOSING;
+pub const BPF_TCP_NEW_SYN_RECV: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_NEW_SYN_RECV;
+pub const BPF_TCP_BOUND_INACTIVE: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_BOUND_INACTIVE;
+pub const BPF_TCP_MAX_STATES: _bindgen_ty_32 = _bindgen_ty_32::BPF_TCP_MAX_STATES;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum _bindgen_ty_31 {
+pub enum _bindgen_ty_32 {
     BPF_TCP_ESTABLISHED = 1,
     BPF_TCP_SYN_SENT = 2,
     BPF_TCP_SYN_RECV = 3,
@@ -2262,49 +2365,49 @@ pub enum _bindgen_ty_31 {
     BPF_TCP_BOUND_INACTIVE = 13,
     BPF_TCP_MAX_STATES = 14,
 }
-pub const BPF_LOAD_HDR_OPT_TCP_SYN: _bindgen_ty_33 = _bindgen_ty_33::BPF_LOAD_HDR_OPT_TCP_SYN;
-#[repr(u32)]
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum _bindgen_ty_33 {
-    BPF_LOAD_HDR_OPT_TCP_SYN = 1,
-}
-pub const BPF_WRITE_HDR_TCP_CURRENT_MSS: _bindgen_ty_34 =
-    _bindgen_ty_34::BPF_WRITE_HDR_TCP_CURRENT_MSS;
-pub const BPF_WRITE_HDR_TCP_SYNACK_COOKIE: _bindgen_ty_34 =
-    _bindgen_ty_34::BPF_WRITE_HDR_TCP_SYNACK_COOKIE;
+pub const BPF_LOAD_HDR_OPT_TCP_SYN: _bindgen_ty_34 = _bindgen_ty_34::BPF_LOAD_HDR_OPT_TCP_SYN;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum _bindgen_ty_34 {
-    BPF_WRITE_HDR_TCP_CURRENT_MSS = 1,
-    BPF_WRITE_HDR_TCP_SYNACK_COOKIE = 2,
+    BPF_LOAD_HDR_OPT_TCP_SYN = 1,
 }
-pub const BPF_DEVCG_ACC_MKNOD: _bindgen_ty_35 = _bindgen_ty_35::BPF_DEVCG_ACC_MKNOD;
-pub const BPF_DEVCG_ACC_READ: _bindgen_ty_35 = _bindgen_ty_35::BPF_DEVCG_ACC_READ;
-pub const BPF_DEVCG_ACC_WRITE: _bindgen_ty_35 = _bindgen_ty_35::BPF_DEVCG_ACC_WRITE;
+pub const BPF_WRITE_HDR_TCP_CURRENT_MSS: _bindgen_ty_35 =
+    _bindgen_ty_35::BPF_WRITE_HDR_TCP_CURRENT_MSS;
+pub const BPF_WRITE_HDR_TCP_SYNACK_COOKIE: _bindgen_ty_35 =
+    _bindgen_ty_35::BPF_WRITE_HDR_TCP_SYNACK_COOKIE;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum _bindgen_ty_35 {
+    BPF_WRITE_HDR_TCP_CURRENT_MSS = 1,
+    BPF_WRITE_HDR_TCP_SYNACK_COOKIE = 2,
+}
+pub const BPF_DEVCG_ACC_MKNOD: _bindgen_ty_36 = _bindgen_ty_36::BPF_DEVCG_ACC_MKNOD;
+pub const BPF_DEVCG_ACC_READ: _bindgen_ty_36 = _bindgen_ty_36::BPF_DEVCG_ACC_READ;
+pub const BPF_DEVCG_ACC_WRITE: _bindgen_ty_36 = _bindgen_ty_36::BPF_DEVCG_ACC_WRITE;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_36 {
     BPF_DEVCG_ACC_MKNOD = 1,
     BPF_DEVCG_ACC_READ = 2,
     BPF_DEVCG_ACC_WRITE = 4,
 }
-pub const BPF_DEVCG_DEV_BLOCK: _bindgen_ty_36 = _bindgen_ty_36::BPF_DEVCG_DEV_BLOCK;
-pub const BPF_DEVCG_DEV_CHAR: _bindgen_ty_36 = _bindgen_ty_36::BPF_DEVCG_DEV_CHAR;
-#[repr(u32)]
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum _bindgen_ty_36 {
-    BPF_DEVCG_DEV_BLOCK = 1,
-    BPF_DEVCG_DEV_CHAR = 2,
-}
-pub const BPF_FIB_LOOKUP_DIRECT: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_DIRECT;
-pub const BPF_FIB_LOOKUP_OUTPUT: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_OUTPUT;
-pub const BPF_FIB_LOOKUP_SKIP_NEIGH: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_SKIP_NEIGH;
-pub const BPF_FIB_LOOKUP_TBID: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_TBID;
-pub const BPF_FIB_LOOKUP_SRC: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_SRC;
-pub const BPF_FIB_LOOKUP_MARK: _bindgen_ty_37 = _bindgen_ty_37::BPF_FIB_LOOKUP_MARK;
+pub const BPF_DEVCG_DEV_BLOCK: _bindgen_ty_37 = _bindgen_ty_37::BPF_DEVCG_DEV_BLOCK;
+pub const BPF_DEVCG_DEV_CHAR: _bindgen_ty_37 = _bindgen_ty_37::BPF_DEVCG_DEV_CHAR;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum _bindgen_ty_37 {
+    BPF_DEVCG_DEV_BLOCK = 1,
+    BPF_DEVCG_DEV_CHAR = 2,
+}
+pub const BPF_FIB_LOOKUP_DIRECT: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LOOKUP_DIRECT;
+pub const BPF_FIB_LOOKUP_OUTPUT: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LOOKUP_OUTPUT;
+pub const BPF_FIB_LOOKUP_SKIP_NEIGH: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LOOKUP_SKIP_NEIGH;
+pub const BPF_FIB_LOOKUP_TBID: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LOOKUP_TBID;
+pub const BPF_FIB_LOOKUP_SRC: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LOOKUP_SRC;
+pub const BPF_FIB_LOOKUP_MARK: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LOOKUP_MARK;
+#[repr(u32)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+pub enum _bindgen_ty_38 {
     BPF_FIB_LOOKUP_DIRECT = 1,
     BPF_FIB_LOOKUP_OUTPUT = 2,
     BPF_FIB_LOOKUP_SKIP_NEIGH = 4,
@@ -2312,23 +2415,23 @@ pub enum _bindgen_ty_37 {
     BPF_FIB_LOOKUP_SRC = 16,
     BPF_FIB_LOOKUP_MARK = 32,
 }
-pub const BPF_FIB_LKUP_RET_SUCCESS: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_SUCCESS;
-pub const BPF_FIB_LKUP_RET_BLACKHOLE: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_BLACKHOLE;
-pub const BPF_FIB_LKUP_RET_UNREACHABLE: _bindgen_ty_38 =
-    _bindgen_ty_38::BPF_FIB_LKUP_RET_UNREACHABLE;
-pub const BPF_FIB_LKUP_RET_PROHIBIT: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_PROHIBIT;
-pub const BPF_FIB_LKUP_RET_NOT_FWDED: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_NOT_FWDED;
-pub const BPF_FIB_LKUP_RET_FWD_DISABLED: _bindgen_ty_38 =
-    _bindgen_ty_38::BPF_FIB_LKUP_RET_FWD_DISABLED;
-pub const BPF_FIB_LKUP_RET_UNSUPP_LWT: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_UNSUPP_LWT;
-pub const BPF_FIB_LKUP_RET_NO_NEIGH: _bindgen_ty_38 = _bindgen_ty_38::BPF_FIB_LKUP_RET_NO_NEIGH;
-pub const BPF_FIB_LKUP_RET_FRAG_NEEDED: _bindgen_ty_38 =
-    _bindgen_ty_38::BPF_FIB_LKUP_RET_FRAG_NEEDED;
-pub const BPF_FIB_LKUP_RET_NO_SRC_ADDR: _bindgen_ty_38 =
-    _bindgen_ty_38::BPF_FIB_LKUP_RET_NO_SRC_ADDR;
+pub const BPF_FIB_LKUP_RET_SUCCESS: _bindgen_ty_39 = _bindgen_ty_39::BPF_FIB_LKUP_RET_SUCCESS;
+pub const BPF_FIB_LKUP_RET_BLACKHOLE: _bindgen_ty_39 = _bindgen_ty_39::BPF_FIB_LKUP_RET_BLACKHOLE;
+pub const BPF_FIB_LKUP_RET_UNREACHABLE: _bindgen_ty_39 =
+    _bindgen_ty_39::BPF_FIB_LKUP_RET_UNREACHABLE;
+pub const BPF_FIB_LKUP_RET_PROHIBIT: _bindgen_ty_39 = _bindgen_ty_39::BPF_FIB_LKUP_RET_PROHIBIT;
+pub const BPF_FIB_LKUP_RET_NOT_FWDED: _bindgen_ty_39 = _bindgen_ty_39::BPF_FIB_LKUP_RET_NOT_FWDED;
+pub const BPF_FIB_LKUP_RET_FWD_DISABLED: _bindgen_ty_39 =
+    _bindgen_ty_39::BPF_FIB_LKUP_RET_FWD_DISABLED;
+pub const BPF_FIB_LKUP_RET_UNSUPP_LWT: _bindgen_ty_39 = _bindgen_ty_39::BPF_FIB_LKUP_RET_UNSUPP_LWT;
+pub const BPF_FIB_LKUP_RET_NO_NEIGH: _bindgen_ty_39 = _bindgen_ty_39::BPF_FIB_LKUP_RET_NO_NEIGH;
+pub const BPF_FIB_LKUP_RET_FRAG_NEEDED: _bindgen_ty_39 =
+    _bindgen_ty_39::BPF_FIB_LKUP_RET_FRAG_NEEDED;
+pub const BPF_FIB_LKUP_RET_NO_SRC_ADDR: _bindgen_ty_39 =
+    _bindgen_ty_39::BPF_FIB_LKUP_RET_NO_SRC_ADDR;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum _bindgen_ty_38 {
+pub enum _bindgen_ty_39 {
     BPF_FIB_LKUP_RET_SUCCESS = 0,
     BPF_FIB_LKUP_RET_BLACKHOLE = 1,
     BPF_FIB_LKUP_RET_UNREACHABLE = 2,
@@ -2350,15 +2453,15 @@ pub enum bpf_task_fd_type {
     BPF_FD_TYPE_UPROBE = 4,
     BPF_FD_TYPE_URETPROBE = 5,
 }
-pub const BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG: _bindgen_ty_39 =
-    _bindgen_ty_39::BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG;
-pub const BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL: _bindgen_ty_39 =
-    _bindgen_ty_39::BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL;
-pub const BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP: _bindgen_ty_39 =
-    _bindgen_ty_39::BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP;
+pub const BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG: _bindgen_ty_40 =
+    _bindgen_ty_40::BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG;
+pub const BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL: _bindgen_ty_40 =
+    _bindgen_ty_40::BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL;
+pub const BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP: _bindgen_ty_40 =
+    _bindgen_ty_40::BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
-pub enum _bindgen_ty_39 {
+pub enum _bindgen_ty_40 {
     BPF_FLOW_DISSECTOR_F_PARSE_1ST_FRAG = 1,
     BPF_FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL = 2,
     BPF_FLOW_DISSECTOR_F_STOP_AT_ENCAP = 4,
@@ -2377,9 +2480,25 @@ pub struct bpf_line_info {
     pub line_off: __u32,
     pub line_col: __u32,
 }
-pub const BPF_F_TIMER_ABS: _bindgen_ty_41 = 1;
-pub const BPF_F_TIMER_CPU_PIN: _bindgen_ty_41 = 2;
-pub type _bindgen_ty_41 = ::core::ffi::c_uint;
+pub const BPF_F_TIMER_ABS: _bindgen_ty_42 = 1;
+pub const BPF_F_TIMER_CPU_PIN: _bindgen_ty_42 = 2;
+pub type _bindgen_ty_42 = ::core::ffi::c_uint;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct bpf_insn_array_value {
+    pub orig_off: __u32,
+    pub xlated_off: __u32,
+    pub jitted_off: __u32,
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
+}
+impl bpf_insn_array_value {
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn new_bitfield_1() -> __BindgenBitfieldUnit<[u8; 4usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
+        __bindgen_bitfield_unit
+    }
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct btf_header {
@@ -2405,29 +2524,29 @@ pub union btf_type__bindgen_ty_1 {
     pub size: __u32,
     pub type_: __u32,
 }
-pub const BTF_KIND_UNKN: _bindgen_ty_42 = 0;
-pub const BTF_KIND_INT: _bindgen_ty_42 = 1;
-pub const BTF_KIND_PTR: _bindgen_ty_42 = 2;
-pub const BTF_KIND_ARRAY: _bindgen_ty_42 = 3;
-pub const BTF_KIND_STRUCT: _bindgen_ty_42 = 4;
-pub const BTF_KIND_UNION: _bindgen_ty_42 = 5;
-pub const BTF_KIND_ENUM: _bindgen_ty_42 = 6;
-pub const BTF_KIND_FWD: _bindgen_ty_42 = 7;
-pub const BTF_KIND_TYPEDEF: _bindgen_ty_42 = 8;
-pub const BTF_KIND_VOLATILE: _bindgen_ty_42 = 9;
-pub const BTF_KIND_CONST: _bindgen_ty_42 = 10;
-pub const BTF_KIND_RESTRICT: _bindgen_ty_42 = 11;
-pub const BTF_KIND_FUNC: _bindgen_ty_42 = 12;
-pub const BTF_KIND_FUNC_PROTO: _bindgen_ty_42 = 13;
-pub const BTF_KIND_VAR: _bindgen_ty_42 = 14;
-pub const BTF_KIND_DATASEC: _bindgen_ty_42 = 15;
-pub const BTF_KIND_FLOAT: _bindgen_ty_42 = 16;
-pub const BTF_KIND_DECL_TAG: _bindgen_ty_42 = 17;
-pub const BTF_KIND_TYPE_TAG: _bindgen_ty_42 = 18;
-pub const BTF_KIND_ENUM64: _bindgen_ty_42 = 19;
-pub const NR_BTF_KINDS: _bindgen_ty_42 = 20;
-pub const BTF_KIND_MAX: _bindgen_ty_42 = 19;
-pub type _bindgen_ty_42 = ::core::ffi::c_uint;
+pub const BTF_KIND_UNKN: _bindgen_ty_43 = 0;
+pub const BTF_KIND_INT: _bindgen_ty_43 = 1;
+pub const BTF_KIND_PTR: _bindgen_ty_43 = 2;
+pub const BTF_KIND_ARRAY: _bindgen_ty_43 = 3;
+pub const BTF_KIND_STRUCT: _bindgen_ty_43 = 4;
+pub const BTF_KIND_UNION: _bindgen_ty_43 = 5;
+pub const BTF_KIND_ENUM: _bindgen_ty_43 = 6;
+pub const BTF_KIND_FWD: _bindgen_ty_43 = 7;
+pub const BTF_KIND_TYPEDEF: _bindgen_ty_43 = 8;
+pub const BTF_KIND_VOLATILE: _bindgen_ty_43 = 9;
+pub const BTF_KIND_CONST: _bindgen_ty_43 = 10;
+pub const BTF_KIND_RESTRICT: _bindgen_ty_43 = 11;
+pub const BTF_KIND_FUNC: _bindgen_ty_43 = 12;
+pub const BTF_KIND_FUNC_PROTO: _bindgen_ty_43 = 13;
+pub const BTF_KIND_VAR: _bindgen_ty_43 = 14;
+pub const BTF_KIND_DATASEC: _bindgen_ty_43 = 15;
+pub const BTF_KIND_FLOAT: _bindgen_ty_43 = 16;
+pub const BTF_KIND_DECL_TAG: _bindgen_ty_43 = 17;
+pub const BTF_KIND_TYPE_TAG: _bindgen_ty_43 = 18;
+pub const BTF_KIND_ENUM64: _bindgen_ty_43 = 19;
+pub const NR_BTF_KINDS: _bindgen_ty_43 = 20;
+pub const BTF_KIND_MAX: _bindgen_ty_43 = 19;
+pub type _bindgen_ty_43 = ::core::ffi::c_uint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct btf_enum {
@@ -2454,10 +2573,10 @@ pub struct btf_param {
     pub name_off: __u32,
     pub type_: __u32,
 }
-pub const BTF_VAR_STATIC: _bindgen_ty_43 = 0;
-pub const BTF_VAR_GLOBAL_ALLOCATED: _bindgen_ty_43 = 1;
-pub const BTF_VAR_GLOBAL_EXTERN: _bindgen_ty_43 = 2;
-pub type _bindgen_ty_43 = ::core::ffi::c_uint;
+pub const BTF_VAR_STATIC: _bindgen_ty_44 = 0;
+pub const BTF_VAR_GLOBAL_ALLOCATED: _bindgen_ty_44 = 1;
+pub const BTF_VAR_GLOBAL_EXTERN: _bindgen_ty_44 = 2;
+pub type _bindgen_ty_44 = ::core::ffi::c_uint;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum btf_func_linkage {
@@ -2482,24 +2601,24 @@ pub struct btf_var_secinfo {
 pub struct btf_decl_tag {
     pub component_idx: __s32,
 }
-pub const HW_BREAKPOINT_LEN_1: _bindgen_ty_44 = 1;
-pub const HW_BREAKPOINT_LEN_2: _bindgen_ty_44 = 2;
-pub const HW_BREAKPOINT_LEN_3: _bindgen_ty_44 = 3;
-pub const HW_BREAKPOINT_LEN_4: _bindgen_ty_44 = 4;
-pub const HW_BREAKPOINT_LEN_5: _bindgen_ty_44 = 5;
-pub const HW_BREAKPOINT_LEN_6: _bindgen_ty_44 = 6;
-pub const HW_BREAKPOINT_LEN_7: _bindgen_ty_44 = 7;
-pub const HW_BREAKPOINT_LEN_8: _bindgen_ty_44 = 8;
-pub type _bindgen_ty_44 = ::core::ffi::c_uint;
-pub const HW_BREAKPOINT_EMPTY: _bindgen_ty_45 = 0;
-pub const HW_BREAKPOINT_R: _bindgen_ty_45 = 1;
-pub const HW_BREAKPOINT_W: _bindgen_ty_45 = 2;
-pub const HW_BREAKPOINT_RW: _bindgen_ty_45 = 3;
-pub const HW_BREAKPOINT_X: _bindgen_ty_45 = 4;
-pub const HW_BREAKPOINT_INVALID: _bindgen_ty_45 = 7;
+pub const HW_BREAKPOINT_LEN_1: _bindgen_ty_45 = 1;
+pub const HW_BREAKPOINT_LEN_2: _bindgen_ty_45 = 2;
+pub const HW_BREAKPOINT_LEN_3: _bindgen_ty_45 = 3;
+pub const HW_BREAKPOINT_LEN_4: _bindgen_ty_45 = 4;
+pub const HW_BREAKPOINT_LEN_5: _bindgen_ty_45 = 5;
+pub const HW_BREAKPOINT_LEN_6: _bindgen_ty_45 = 6;
+pub const HW_BREAKPOINT_LEN_7: _bindgen_ty_45 = 7;
+pub const HW_BREAKPOINT_LEN_8: _bindgen_ty_45 = 8;
 pub type _bindgen_ty_45 = ::core::ffi::c_uint;
+pub const HW_BREAKPOINT_EMPTY: _bindgen_ty_46 = 0;
+pub const HW_BREAKPOINT_R: _bindgen_ty_46 = 1;
+pub const HW_BREAKPOINT_W: _bindgen_ty_46 = 2;
+pub const HW_BREAKPOINT_RW: _bindgen_ty_46 = 3;
+pub const HW_BREAKPOINT_X: _bindgen_ty_46 = 4;
+pub const HW_BREAKPOINT_INVALID: _bindgen_ty_46 = 7;
+pub type _bindgen_ty_46 = ::core::ffi::c_uint;
 impl nlmsgerr_attrs {
-    pub const NLMSGERR_ATTR_MAX: nlmsgerr_attrs = nlmsgerr_attrs::NLMSGERR_ATTR_COOKIE;
+    pub const NLMSGERR_ATTR_MAX: nlmsgerr_attrs = nlmsgerr_attrs::NLMSGERR_ATTR_MISS_NEST;
 }
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
@@ -2508,19 +2627,22 @@ pub enum nlmsgerr_attrs {
     NLMSGERR_ATTR_MSG = 1,
     NLMSGERR_ATTR_OFFS = 2,
     NLMSGERR_ATTR_COOKIE = 3,
-    __NLMSGERR_ATTR_MAX = 4,
+    NLMSGERR_ATTR_POLICY = 4,
+    NLMSGERR_ATTR_MISS_TYPE = 5,
+    NLMSGERR_ATTR_MISS_NEST = 6,
+    __NLMSGERR_ATTR_MAX = 7,
 }
-pub const IFLA_XDP_UNSPEC: _bindgen_ty_94 = 0;
-pub const IFLA_XDP_FD: _bindgen_ty_94 = 1;
-pub const IFLA_XDP_ATTACHED: _bindgen_ty_94 = 2;
-pub const IFLA_XDP_FLAGS: _bindgen_ty_94 = 3;
-pub const IFLA_XDP_PROG_ID: _bindgen_ty_94 = 4;
-pub const IFLA_XDP_DRV_PROG_ID: _bindgen_ty_94 = 5;
-pub const IFLA_XDP_SKB_PROG_ID: _bindgen_ty_94 = 6;
-pub const IFLA_XDP_HW_PROG_ID: _bindgen_ty_94 = 7;
-pub const IFLA_XDP_EXPECTED_FD: _bindgen_ty_94 = 8;
-pub const __IFLA_XDP_MAX: _bindgen_ty_94 = 9;
-pub type _bindgen_ty_94 = ::core::ffi::c_uint;
+pub const IFLA_XDP_UNSPEC: _bindgen_ty_95 = 0;
+pub const IFLA_XDP_FD: _bindgen_ty_95 = 1;
+pub const IFLA_XDP_ATTACHED: _bindgen_ty_95 = 2;
+pub const IFLA_XDP_FLAGS: _bindgen_ty_95 = 3;
+pub const IFLA_XDP_PROG_ID: _bindgen_ty_95 = 4;
+pub const IFLA_XDP_DRV_PROG_ID: _bindgen_ty_95 = 5;
+pub const IFLA_XDP_SKB_PROG_ID: _bindgen_ty_95 = 6;
+pub const IFLA_XDP_HW_PROG_ID: _bindgen_ty_95 = 7;
+pub const IFLA_XDP_EXPECTED_FD: _bindgen_ty_95 = 8;
+pub const __IFLA_XDP_MAX: _bindgen_ty_95 = 9;
+pub type _bindgen_ty_95 = ::core::ffi::c_uint;
 impl nf_inet_hooks {
     pub const NF_INET_INGRESS: nf_inet_hooks = nf_inet_hooks::NF_INET_NUMHOOKS;
 }
@@ -2534,16 +2656,16 @@ pub enum nf_inet_hooks {
     NF_INET_POST_ROUTING = 4,
     NF_INET_NUMHOOKS = 5,
 }
-pub const NFPROTO_UNSPEC: _bindgen_ty_101 = 0;
-pub const NFPROTO_INET: _bindgen_ty_101 = 1;
-pub const NFPROTO_IPV4: _bindgen_ty_101 = 2;
-pub const NFPROTO_ARP: _bindgen_ty_101 = 3;
-pub const NFPROTO_NETDEV: _bindgen_ty_101 = 5;
-pub const NFPROTO_BRIDGE: _bindgen_ty_101 = 7;
-pub const NFPROTO_IPV6: _bindgen_ty_101 = 10;
-pub const NFPROTO_DECNET: _bindgen_ty_101 = 12;
-pub const NFPROTO_NUMPROTO: _bindgen_ty_101 = 13;
-pub type _bindgen_ty_101 = ::core::ffi::c_uint;
+pub const NFPROTO_UNSPEC: _bindgen_ty_103 = 0;
+pub const NFPROTO_INET: _bindgen_ty_103 = 1;
+pub const NFPROTO_IPV4: _bindgen_ty_103 = 2;
+pub const NFPROTO_ARP: _bindgen_ty_103 = 3;
+pub const NFPROTO_NETDEV: _bindgen_ty_103 = 5;
+pub const NFPROTO_BRIDGE: _bindgen_ty_103 = 7;
+pub const NFPROTO_IPV6: _bindgen_ty_103 = 10;
+pub const NFPROTO_DECNET: _bindgen_ty_103 = 12;
+pub const NFPROTO_NUMPROTO: _bindgen_ty_103 = 13;
+pub type _bindgen_ty_103 = ::core::ffi::c_uint;
 #[repr(u32)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub enum perf_type_id {
@@ -2677,9 +2799,10 @@ pub struct perf_event_attr {
     pub sample_max_stack: __u16,
     pub __reserved_2: __u16,
     pub aux_sample_size: __u32,
-    pub __reserved_3: __u32,
+    pub __bindgen_anon_5: perf_event_attr__bindgen_ty_5,
     pub sig_data: __u64,
     pub config3: __u64,
+    pub config4: __u64,
 }
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -2708,6 +2831,187 @@ pub union perf_event_attr__bindgen_ty_4 {
     pub kprobe_addr: __u64,
     pub probe_offset: __u64,
     pub config2: __u64,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union perf_event_attr__bindgen_ty_5 {
+    pub aux_action: __u32,
+    pub __bindgen_anon_1: perf_event_attr__bindgen_ty_5__bindgen_ty_1,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct perf_event_attr__bindgen_ty_5__bindgen_ty_1 {
+    pub _bindgen_align: [u32; 0],
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 4usize]>,
+}
+impl perf_event_attr__bindgen_ty_5__bindgen_ty_1 {
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn aux_start_paused(&self) -> __u32 {
+        unsafe { ::core::mem::transmute(self._bitfield_1.get_const::<0usize, 1u8>() as u32) }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn set_aux_start_paused(&mut self, val: __u32) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            self._bitfield_1.set_const::<0usize, 1u8>(val as u64)
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub unsafe fn aux_start_paused_raw(this: *const Self) -> __u32 {
+        unsafe {
+            ::core::mem::transmute(
+                <__BindgenBitfieldUnit<[u8; 4usize]>>::raw_get_const::<0usize, 1u8>(
+                    ::core::ptr::addr_of!((*this)._bitfield_1),
+                ) as u32,
+            )
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub unsafe fn set_aux_start_paused_raw(this: *mut Self, val: __u32) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 4usize]>>::raw_set_const::<0usize, 1u8>(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                val as u64,
+            )
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn aux_pause(&self) -> __u32 {
+        unsafe { ::core::mem::transmute(self._bitfield_1.get_const::<1usize, 1u8>() as u32) }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn set_aux_pause(&mut self, val: __u32) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            self._bitfield_1.set_const::<1usize, 1u8>(val as u64)
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub unsafe fn aux_pause_raw(this: *const Self) -> __u32 {
+        unsafe {
+            ::core::mem::transmute(
+                <__BindgenBitfieldUnit<[u8; 4usize]>>::raw_get_const::<1usize, 1u8>(
+                    ::core::ptr::addr_of!((*this)._bitfield_1),
+                ) as u32,
+            )
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub unsafe fn set_aux_pause_raw(this: *mut Self, val: __u32) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 4usize]>>::raw_set_const::<1usize, 1u8>(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                val as u64,
+            )
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn aux_resume(&self) -> __u32 {
+        unsafe { ::core::mem::transmute(self._bitfield_1.get_const::<2usize, 1u8>() as u32) }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn set_aux_resume(&mut self, val: __u32) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            self._bitfield_1.set_const::<2usize, 1u8>(val as u64)
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub unsafe fn aux_resume_raw(this: *const Self) -> __u32 {
+        unsafe {
+            ::core::mem::transmute(
+                <__BindgenBitfieldUnit<[u8; 4usize]>>::raw_get_const::<2usize, 1u8>(
+                    ::core::ptr::addr_of!((*this)._bitfield_1),
+                ) as u32,
+            )
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub unsafe fn set_aux_resume_raw(this: *mut Self, val: __u32) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 4usize]>>::raw_set_const::<2usize, 1u8>(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                val as u64,
+            )
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn __reserved_3(&self) -> __u32 {
+        unsafe { ::core::mem::transmute(self._bitfield_1.get_const::<3usize, 29u8>() as u32) }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn set___reserved_3(&mut self, val: __u32) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            self._bitfield_1.set_const::<3usize, 29u8>(val as u64)
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub unsafe fn __reserved_3_raw(this: *const Self) -> __u32 {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 4usize]>>::raw_get_const::<
+                3usize,
+                29u8,
+            >(::core::ptr::addr_of!((*this)._bitfield_1))
+                as u32)
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub unsafe fn set___reserved_3_raw(this: *mut Self, val: __u32) {
+        unsafe {
+            let val: u32 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 4usize]>>::raw_set_const::<3usize, 29u8>(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                val as u64,
+            )
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn new_bitfield_1(
+        aux_start_paused: __u32,
+        aux_pause: __u32,
+        aux_resume: __u32,
+        __reserved_3: __u32,
+    ) -> __BindgenBitfieldUnit<[u8; 4usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 4usize]> = Default::default();
+        __bindgen_bitfield_unit.set_const::<0usize, 1u8>({
+            let aux_start_paused: u32 = unsafe { ::core::mem::transmute(aux_start_paused) };
+            aux_start_paused as u64
+        });
+        __bindgen_bitfield_unit.set_const::<1usize, 1u8>({
+            let aux_pause: u32 = unsafe { ::core::mem::transmute(aux_pause) };
+            aux_pause as u64
+        });
+        __bindgen_bitfield_unit.set_const::<2usize, 1u8>({
+            let aux_resume: u32 = unsafe { ::core::mem::transmute(aux_resume) };
+            aux_resume as u64
+        });
+        __bindgen_bitfield_unit.set_const::<3usize, 29u8>({
+            let __reserved_3: u32 = unsafe { ::core::mem::transmute(__reserved_3) };
+            __reserved_3 as u64
+        });
+        __bindgen_bitfield_unit
+    }
 }
 impl perf_event_attr {
     #[inline]
@@ -4007,15 +4311,85 @@ impl perf_event_attr {
     }
     #[inline]
     #[allow(unnecessary_transmutes)]
+    pub fn defer_callchain(&self) -> __u64 {
+        unsafe { ::core::mem::transmute(self._bitfield_1.get_const::<38usize, 1u8>() as u64) }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn set_defer_callchain(&mut self, val: __u64) {
+        unsafe {
+            let val: u64 = ::core::mem::transmute(val);
+            self._bitfield_1.set_const::<38usize, 1u8>(val as u64)
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub unsafe fn defer_callchain_raw(this: *const Self) -> __u64 {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 8usize]>>::raw_get_const::<
+                38usize,
+                1u8,
+            >(::core::ptr::addr_of!((*this)._bitfield_1))
+                as u64)
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub unsafe fn set_defer_callchain_raw(this: *mut Self, val: __u64) {
+        unsafe {
+            let val: u64 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 8usize]>>::raw_set_const::<38usize, 1u8>(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                val as u64,
+            )
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn defer_output(&self) -> __u64 {
+        unsafe { ::core::mem::transmute(self._bitfield_1.get_const::<39usize, 1u8>() as u64) }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub fn set_defer_output(&mut self, val: __u64) {
+        unsafe {
+            let val: u64 = ::core::mem::transmute(val);
+            self._bitfield_1.set_const::<39usize, 1u8>(val as u64)
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub unsafe fn defer_output_raw(this: *const Self) -> __u64 {
+        unsafe {
+            ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 8usize]>>::raw_get_const::<
+                39usize,
+                1u8,
+            >(::core::ptr::addr_of!((*this)._bitfield_1))
+                as u64)
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
+    pub unsafe fn set_defer_output_raw(this: *mut Self, val: __u64) {
+        unsafe {
+            let val: u64 = ::core::mem::transmute(val);
+            <__BindgenBitfieldUnit<[u8; 8usize]>>::raw_set_const::<39usize, 1u8>(
+                ::core::ptr::addr_of_mut!((*this)._bitfield_1),
+                val as u64,
+            )
+        }
+    }
+    #[inline]
+    #[allow(unnecessary_transmutes)]
     pub fn __reserved_1(&self) -> __u64 {
-        unsafe { ::core::mem::transmute(self._bitfield_1.get_const::<38usize, 26u8>() as u64) }
+        unsafe { ::core::mem::transmute(self._bitfield_1.get_const::<40usize, 24u8>() as u64) }
     }
     #[inline]
     #[allow(unnecessary_transmutes)]
     pub fn set___reserved_1(&mut self, val: __u64) {
         unsafe {
             let val: u64 = ::core::mem::transmute(val);
-            self._bitfield_1.set_const::<38usize, 26u8>(val as u64)
+            self._bitfield_1.set_const::<40usize, 24u8>(val as u64)
         }
     }
     #[inline]
@@ -4023,8 +4397,8 @@ impl perf_event_attr {
     pub unsafe fn __reserved_1_raw(this: *const Self) -> __u64 {
         unsafe {
             ::core::mem::transmute(<__BindgenBitfieldUnit<[u8; 8usize]>>::raw_get_const::<
-                38usize,
-                26u8,
+                40usize,
+                24u8,
             >(::core::ptr::addr_of!((*this)._bitfield_1))
                 as u64)
         }
@@ -4034,7 +4408,7 @@ impl perf_event_attr {
     pub unsafe fn set___reserved_1_raw(this: *mut Self, val: __u64) {
         unsafe {
             let val: u64 = ::core::mem::transmute(val);
-            <__BindgenBitfieldUnit<[u8; 8usize]>>::raw_set_const::<38usize, 26u8>(
+            <__BindgenBitfieldUnit<[u8; 8usize]>>::raw_set_const::<40usize, 24u8>(
                 ::core::ptr::addr_of_mut!((*this)._bitfield_1),
                 val as u64,
             )
@@ -4080,6 +4454,8 @@ impl perf_event_attr {
         inherit_thread: __u64,
         remove_on_exec: __u64,
         sigtrap: __u64,
+        defer_callchain: __u64,
+        defer_output: __u64,
         __reserved_1: __u64,
     ) -> __BindgenBitfieldUnit<[u8; 8usize]> {
         let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 8usize]> = Default::default();
@@ -4233,7 +4609,15 @@ impl perf_event_attr {
             let sigtrap: u64 = unsafe { ::core::mem::transmute(sigtrap) };
             sigtrap as u64
         });
-        __bindgen_bitfield_unit.set_const::<38usize, 26u8>({
+        __bindgen_bitfield_unit.set_const::<38usize, 1u8>({
+            let defer_callchain: u64 = unsafe { ::core::mem::transmute(defer_callchain) };
+            defer_callchain as u64
+        });
+        __bindgen_bitfield_unit.set_const::<39usize, 1u8>({
+            let defer_output: u64 = unsafe { ::core::mem::transmute(defer_output) };
+            defer_output as u64
+        });
+        __bindgen_bitfield_unit.set_const::<40usize, 24u8>({
             let __reserved_1: u64 = unsafe { ::core::mem::transmute(__reserved_1) };
             __reserved_1 as u64
         });
@@ -4603,22 +4987,23 @@ pub enum perf_event_type {
     PERF_RECORD_CGROUP = 19,
     PERF_RECORD_TEXT_POKE = 20,
     PERF_RECORD_AUX_OUTPUT_HW_ID = 21,
-    PERF_RECORD_MAX = 22,
+    PERF_RECORD_CALLCHAIN_DEFERRED = 22,
+    PERF_RECORD_MAX = 23,
 }
-pub const TCA_BPF_UNSPEC: _bindgen_ty_156 = 0;
-pub const TCA_BPF_ACT: _bindgen_ty_156 = 1;
-pub const TCA_BPF_POLICE: _bindgen_ty_156 = 2;
-pub const TCA_BPF_CLASSID: _bindgen_ty_156 = 3;
-pub const TCA_BPF_OPS_LEN: _bindgen_ty_156 = 4;
-pub const TCA_BPF_OPS: _bindgen_ty_156 = 5;
-pub const TCA_BPF_FD: _bindgen_ty_156 = 6;
-pub const TCA_BPF_NAME: _bindgen_ty_156 = 7;
-pub const TCA_BPF_FLAGS: _bindgen_ty_156 = 8;
-pub const TCA_BPF_FLAGS_GEN: _bindgen_ty_156 = 9;
-pub const TCA_BPF_TAG: _bindgen_ty_156 = 10;
-pub const TCA_BPF_ID: _bindgen_ty_156 = 11;
-pub const __TCA_BPF_MAX: _bindgen_ty_156 = 12;
-pub type _bindgen_ty_156 = ::core::ffi::c_uint;
+pub const TCA_BPF_UNSPEC: _bindgen_ty_164 = 0;
+pub const TCA_BPF_ACT: _bindgen_ty_164 = 1;
+pub const TCA_BPF_POLICE: _bindgen_ty_164 = 2;
+pub const TCA_BPF_CLASSID: _bindgen_ty_164 = 3;
+pub const TCA_BPF_OPS_LEN: _bindgen_ty_164 = 4;
+pub const TCA_BPF_OPS: _bindgen_ty_164 = 5;
+pub const TCA_BPF_FD: _bindgen_ty_164 = 6;
+pub const TCA_BPF_NAME: _bindgen_ty_164 = 7;
+pub const TCA_BPF_FLAGS: _bindgen_ty_164 = 8;
+pub const TCA_BPF_FLAGS_GEN: _bindgen_ty_164 = 9;
+pub const TCA_BPF_TAG: _bindgen_ty_164 = 10;
+pub const TCA_BPF_ID: _bindgen_ty_164 = 11;
+pub const __TCA_BPF_MAX: _bindgen_ty_164 = 12;
+pub type _bindgen_ty_164 = ::core::ffi::c_uint;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ifinfomsg {
@@ -4640,22 +5025,22 @@ pub struct tcmsg {
     pub tcm_parent: __u32,
     pub tcm_info: __u32,
 }
-pub const TCA_UNSPEC: _bindgen_ty_176 = 0;
-pub const TCA_KIND: _bindgen_ty_176 = 1;
-pub const TCA_OPTIONS: _bindgen_ty_176 = 2;
-pub const TCA_STATS: _bindgen_ty_176 = 3;
-pub const TCA_XSTATS: _bindgen_ty_176 = 4;
-pub const TCA_RATE: _bindgen_ty_176 = 5;
-pub const TCA_FCNT: _bindgen_ty_176 = 6;
-pub const TCA_STATS2: _bindgen_ty_176 = 7;
-pub const TCA_STAB: _bindgen_ty_176 = 8;
-pub const TCA_PAD: _bindgen_ty_176 = 9;
-pub const TCA_DUMP_INVISIBLE: _bindgen_ty_176 = 10;
-pub const TCA_CHAIN: _bindgen_ty_176 = 11;
-pub const TCA_HW_OFFLOAD: _bindgen_ty_176 = 12;
-pub const TCA_INGRESS_BLOCK: _bindgen_ty_176 = 13;
-pub const TCA_EGRESS_BLOCK: _bindgen_ty_176 = 14;
-pub const TCA_DUMP_FLAGS: _bindgen_ty_176 = 15;
-pub const TCA_EXT_WARN_MSG: _bindgen_ty_176 = 16;
-pub const __TCA_MAX: _bindgen_ty_176 = 17;
-pub type _bindgen_ty_176 = ::core::ffi::c_uint;
+pub const TCA_UNSPEC: _bindgen_ty_192 = 0;
+pub const TCA_KIND: _bindgen_ty_192 = 1;
+pub const TCA_OPTIONS: _bindgen_ty_192 = 2;
+pub const TCA_STATS: _bindgen_ty_192 = 3;
+pub const TCA_XSTATS: _bindgen_ty_192 = 4;
+pub const TCA_RATE: _bindgen_ty_192 = 5;
+pub const TCA_FCNT: _bindgen_ty_192 = 6;
+pub const TCA_STATS2: _bindgen_ty_192 = 7;
+pub const TCA_STAB: _bindgen_ty_192 = 8;
+pub const TCA_PAD: _bindgen_ty_192 = 9;
+pub const TCA_DUMP_INVISIBLE: _bindgen_ty_192 = 10;
+pub const TCA_CHAIN: _bindgen_ty_192 = 11;
+pub const TCA_HW_OFFLOAD: _bindgen_ty_192 = 12;
+pub const TCA_INGRESS_BLOCK: _bindgen_ty_192 = 13;
+pub const TCA_EGRESS_BLOCK: _bindgen_ty_192 = 14;
+pub const TCA_DUMP_FLAGS: _bindgen_ty_192 = 15;
+pub const TCA_EXT_WARN_MSG: _bindgen_ty_192 = 16;
+pub const __TCA_MAX: _bindgen_ty_192 = 17;
+pub type _bindgen_ty_192 = ::core::ffi::c_uint;
