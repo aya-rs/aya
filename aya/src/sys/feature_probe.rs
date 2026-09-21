@@ -11,8 +11,8 @@ pub use aya_obj::btf::BtfFeature;
 use aya_obj::{
     btf::{Btf, BtfKind},
     generated::{
-        BPF_CALL, BPF_EXIT, BPF_F_MMAPABLE, BPF_F_NO_PREALLOC, BPF_JMP, bpf_attr, bpf_cmd,
-        bpf_func_id, bpf_map_type, bpf_prog_info,
+        BPF_CALL, BPF_EXIT, BPF_F_MMAPABLE, BPF_F_NO_PREALLOC, BPF_JMP, bpf_attr,
+        bpf_cgroup_storage_key, bpf_cmd, bpf_func_id, bpf_map_type, bpf_prog_info,
     },
 };
 use libc::{E2BIG, EBADF, EINVAL};
@@ -463,6 +463,8 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
 pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
     // Each `bpf_map_ops` struct contains their own `.map_alloc()` & `.map_alloc_check()` that does
     // field validation on map_create.
+    let u32_size = size_of::<u32>() as u32;
+    let u64_size = size_of::<u64>() as u32;
     let (key_size, value_size, max_entries) = match map_type {
         MapType::Unspecified => return Ok(false),
         MapType::Hash                   // https://github.com/torvalds/linux/blob/bfa76d495/kernel/bpf/hashtab.c#L349
@@ -472,7 +474,7 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
             => (1, 1, 1),
         MapType::Array                  // https://github.com/torvalds/linux/blob/bfa76d495/kernel/bpf/arraymap.c#L138
         | MapType::PerCpuArray          // https://github.com/torvalds/linux/blob/2dcd0af56/kernel/bpf/arraymap.c#L283
-            => (4, 1, 1),
+            => (u32_size, 1, 1),
         MapType::ProgramArray           // https://github.com/torvalds/linux/blob/64291f7db/kernel/bpf/arraymap.c#L239
         | MapType::PerfEventArray       // https://github.com/torvalds/linux/blob/6a13feb9c/kernel/bpf/arraymap.c#L312
         | MapType::CgroupArray          // https://github.com/torvalds/linux/blob/c8d2bc9bc/kernel/bpf/arraymap.c#L562
@@ -483,17 +485,17 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
         | MapType::XskMap               // https://github.com/torvalds/linux/blob/94710cac0/kernel/bpf/xskmap.c#L224
         | MapType::ReuseportSockArray   // https://github.com/torvalds/linux/blob/8fe28cb58/kernel/bpf/reuseport_array.c#L357
         | MapType::DevMapHash           // https://github.com/torvalds/linux/blob/219d54332/kernel/bpf/devmap.c#L713
-            => (4, 4, 1),
+            => (u32_size, u32_size, 1),
         MapType::StackTrace             // https://github.com/torvalds/linux/blob/2dcd0af56/kernel/bpf/stackmap.c#L272
-            => (4, 8, 1),
+            => (u32_size, u64_size, 1),
         MapType::LpmTrie                // https://github.com/torvalds/linux/blob/a351e9b9f/kernel/bpf/lpm_trie.c#L509
-            => (8, 1, 1),
+            => (u64_size, 1, 1),
         MapType::HashOfMaps             // https://github.com/torvalds/linux/blob/6f7da2904/kernel/bpf/hashtab.c#L1301
         | MapType::SockHash             // https://github.com/torvalds/linux/blob/94710cac0/kernel/bpf/sockmap.c#L2507
-            => (1, 4, 1),
+            => (1, u32_size, 1),
         MapType::CgroupStorage          // https://github.com/torvalds/linux/blob/84df9525b/kernel/bpf/local_storage.c#L246
         | MapType::PerCpuCgroupStorage  // https://github.com/torvalds/linux/blob/8fe28cb58/kernel/bpf/local_storage.c#L313
-            => (16, 1, 0),
+            => (size_of::<bpf_cgroup_storage_key>() as u32, 1, 0),
         MapType::Queue                  // https://github.com/torvalds/linux/blob/8fe28cb58/kernel/bpf/queue_stack_maps.c#L267
         | MapType::Stack                // https://github.com/torvalds/linux/blob/8fe28cb58/kernel/bpf/queue_stack_maps.c#L280
         | MapType::BloomFilter          // https://github.com/torvalds/linux/blob/df0cc57e0/kernel/bpf/bloom_filter.c#L193
@@ -502,9 +504,9 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
         | MapType::InodeStorage         // https://github.com/torvalds/linux/blob/2c85ebc57/kernel/bpf/bpf_inode_storage.c#L239
         | MapType::TaskStorage          // https://github.com/torvalds/linux/blob/f40ddce88/kernel/bpf/bpf_task_storage.c#L285
         | MapType::CgrpStorage          // https://github.com/torvalds/linux/blob/c9c3395d5/kernel/bpf/bpf_cgrp_storage.c#L216
-            => (4, 1, 0),
+            => (size_of::<libc::c_int>() as u32, 1, 0),
         MapType::StructOps              // https://github.com/torvalds/linux/blob/7111951b8/kernel/bpf/bpf_struct_ops.c#L607
-            => (4, 0, 1),
+            => (u32_size, 0, 1),
         MapType::RingBuf                // https://github.com/torvalds/linux/blob/bcf876870/kernel/bpf/ringbuf.c#L296
         | MapType::UserRingBuf          // https://github.com/torvalds/linux/blob/830b3c68c/kernel/bpf/ringbuf.c#L356
         // `max_entries` is required to be multiple of kernel page size & power of 2:
