@@ -8078,6 +8078,8 @@ pub aya::EbpfError::ProgramError(aya::programs::ProgramError)
 pub aya::EbpfError::RelocationError(aya_obj::relocation::EbpfRelocationError)
 pub aya::EbpfError::UnexpectedPinningType
 pub aya::EbpfError::UnexpectedPinningType::name: u32
+impl core::convert::From<aya::KConfigError> for aya::EbpfError
+pub fn aya::EbpfError::from(aya::KConfigError) -> Self
 impl core::convert::From<aya::maps::MapError> for aya::EbpfError
 pub fn aya::EbpfError::from(aya::maps::MapError) -> Self
 impl core::convert::From<aya::programs::ProgramError> for aya::EbpfError
@@ -8113,6 +8115,8 @@ pub aya::KConfigError::NotFound::paths: alloc::vec::Vec<std::path::PathBuf>
 pub aya::KConfigError::Read
 pub aya::KConfigError::Read::error: core::io::error::Error
 pub aya::KConfigError::Read::path: std::path::PathBuf
+impl core::convert::From<aya::KConfigError> for aya::EbpfError
+pub fn aya::EbpfError::from(aya::KConfigError) -> Self
 impl core::error::Error for aya::KConfigError
 pub fn aya::KConfigError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
 impl core::fmt::Debug for aya::KConfigError
