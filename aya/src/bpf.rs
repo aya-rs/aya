@@ -742,18 +742,14 @@ impl<'a> EbpfLoader<'a> {
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
         let kconfig = match (kconfig, obj.has_config_kconfig_externs()?) {
-            (KConfigMode::Auto, true) => Some(Cow::Owned(
-                KConfig::current().map_err(EbpfError::KConfigError)?,
-            )),
+            (KConfigMode::Auto, true) => Some(Cow::Owned(KConfig::current()?)),
             (KConfigMode::Auto, false)
                 if obj.btf.as_ref().is_some_and(|btf| {
                     btf.id_by_type_name_kind(".kconfig", BtfKind::DataSec)
                         .is_ok()
                 }) =>
             {
-                Some(Cow::Owned(
-                    KConfig::with_raw_config(None).map_err(EbpfError::KConfigError)?,
-                ))
+                Some(Cow::Owned(KConfig::with_raw_config(None)?))
             }
             (KConfigMode::Auto, false) | (KConfigMode::Disabled, _) => None,
             (KConfigMode::Explicit(kconfig), _) => Some(Cow::Borrowed(kconfig)),
@@ -1413,6 +1409,16 @@ mod tests {
                     && line.contains(char::REPLACEMENT_CHARACTER)
         ));
     }
+
+    #[test]
+    fn test_kconfig_error_source() {
+        use std::error::Error as _;
+
+        let error = super::EbpfError::from(super::KConfigError::MalformedLine {
+            line: "CONFIG_BROKEN".to_owned(),
+        });
+        assert!(error.source().unwrap().is::<super::KConfigError>());
+    }
 }
 
 impl Default for EbpfLoader<'_> {
@@ -1701,9 +1707,9 @@ pub enum EbpfError {
     #[error("BTF error: {0}")]
     BtfError(#[from] BtfError),
 
-    /// Error reading kernel config data
+    /// Error resolving kernel configuration
     #[error("kernel config error: {0}")]
-    KConfigError(KConfigError),
+    KConfigError(#[from] KConfigError),
 
     /// Error performing relocations
     #[error("error relocating function")]
