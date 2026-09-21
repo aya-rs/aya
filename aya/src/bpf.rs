@@ -10,7 +10,7 @@ use std::{
 
 use aya_obj::{
     EbpfSectionKind, KsymsError, Object, ParseError, ProgramSection,
-    btf::{Btf, BtfError, BtfRelocationError},
+    btf::{Btf, BtfError, BtfKind, BtfRelocationError},
     generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
 };
@@ -745,10 +745,17 @@ impl<'a> EbpfLoader<'a> {
             (KConfigMode::Auto, true) => Some(Cow::Owned(
                 KConfig::current().map_err(EbpfError::KConfigError)?,
             )),
-            (KConfigMode::Auto, false) => Some(Cow::Owned(
-                KConfig::with_raw_config(None).map_err(EbpfError::KConfigError)?,
-            )),
-            (KConfigMode::Disabled, _) => None,
+            (KConfigMode::Auto, false)
+                if obj.btf.as_ref().is_some_and(|btf| {
+                    btf.id_by_type_name_kind(".kconfig", BtfKind::DataSec)
+                        .is_ok()
+                }) =>
+            {
+                Some(Cow::Owned(
+                    KConfig::with_raw_config(None).map_err(EbpfError::KConfigError)?,
+                ))
+            }
+            (KConfigMode::Auto, false) | (KConfigMode::Disabled, _) => None,
             (KConfigMode::Explicit(kconfig), _) => Some(Cow::Borrowed(kconfig)),
         };
         if let Some(kconfig) = kconfig.as_ref() {
