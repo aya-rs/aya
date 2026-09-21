@@ -312,7 +312,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
     //
     // Otherwise, if the program types are not supported, then the verifier log will be empty.
     //
-    // [0] https://elixir.bootlin.com/linux/v5.5/source/kernel/bpf/verifier.c#L9535
+    // [0] https://github.com/torvalds/linux/blob/d5226fa6d/kernel/bpf/verifier.c#L9535
     let mut verifier_log = matches!(
         program_type,
         ProgramType::Tracing | ProgramType::Extension | ProgramType::Lsm(_)
@@ -329,11 +329,11 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
     // expected message.
     let attach_btf_id = match program_type {
         // `bpf_fentry_test1` symbol from:
-        // https://elixir.bootlin.com/linux/v5.5/source/net/bpf/test_run.c#L112
+        // https://github.com/torvalds/linux/blob/d5226fa6d/net/bpf/test_run.c#L112
         ProgramType::Tracing => Some("bpf_fentry_test1"),
         // `bpf_lsm_bpf` symbol from:
-        // - https://elixir.bootlin.com/linux/v5.7/source/include/linux/lsm_hook_defs.h#L364
-        // - or https://elixir.bootlin.com/linux/v5.11/source/kernel/bpf/bpf_lsm.c#L135 on later versions
+        // - https://github.com/torvalds/linux/blob/3d77e6a88/include/linux/lsm_hook_defs.h#L364
+        // - or https://github.com/torvalds/linux/blob/f40ddce88/kernel/bpf/bpf_lsm.c#L135 on later versions
         ProgramType::Lsm(_) => Some("bpf_lsm_bpf"),
         _ => None,
     }
@@ -378,8 +378,8 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
                     // If the verifier log is empty, then it was immediately rejected by the
                     // kernel, meaning the types are not supported.
                     //
-                    // [0] https://elixir.bootlin.com/linux/v5.5/source/kernel/bpf/verifier.c#L9535
-                    // [1] https://elixir.bootlin.com/linux/v5.9/source/kernel/bpf/verifier.c#L10849
+                    // [0] https://github.com/torvalds/linux/blob/d5226fa6d/kernel/bpf/verifier.c#L9535
+                    // [1] https://github.com/torvalds/linux/blob/bbf5c9790/kernel/bpf/verifier.c#L10849
                     let supported = matches!(
                         verifier_log,
                         Some(verifier_log) if verifier_log.starts_with(b"Tracing programs must provide btf_id")
@@ -389,7 +389,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
                 // `E2BIG` from `bpf_check_uarg_tail_zero()`[0] indicates that the kernel detected
                 // non-zero fields in `bpf_attr` that does not exist at its current version.
                 //
-                // [0] https://elixir.bootlin.com/linux/v4.18/source/kernel/bpf/syscall.c#L71
+                // [0] https://github.com/torvalds/linux/blob/94710cac0/kernel/bpf/syscall.c#L71
                 Some(E2BIG) => Ok(false),
                 // `ENOTSUPP` from `check_struct_ops_btf_id()`[0] indicates that it reached the
                 // verifier section, meaning the kernel is at least aware of the type's existence.
@@ -397,7 +397,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
                 // Otherwise, it will produce `EINVAL`, meaning the type is immediately rejected
                 // and does not exist.
                 //
-                // [0] https://elixir.bootlin.com/linux/v5.6/source/kernel/bpf/verifier.c#L9740
+                // [0] https://github.com/torvalds/linux/blob/7111951b8/kernel/bpf/verifier.c#L9740
                 Some(524) if program_type == ProgramType::StructOps => Ok(true),
                 _ => Err(ProgramError::SyscallError(SyscallError {
                     call: "bpf_prog_load",
@@ -411,8 +411,8 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
                 // `-ENOTSUPP`. Probe attach support explicitly. This is notably seen on arm64
                 // kernels before 6.4.
                 //
-                // https://github.com/torvalds/linux/blob/v6.3/kernel/bpf/syscall.c#L3319-L3333
-                // https://github.com/torvalds/linux/blob/v6.3/kernel/bpf/trampoline.c#L234-L237
+                // https://github.com/torvalds/linux/blob/457391b03/kernel/bpf/syscall.c#L3319-L3333
+                // https://github.com/torvalds/linux/blob/457391b03/kernel/bpf/trampoline.c#L234-L237
                 //
                 // h/t to https://www.exein.io/blog/exploring-bpf-lsm-support-on-aarch64-with-ftrace.
                 //
