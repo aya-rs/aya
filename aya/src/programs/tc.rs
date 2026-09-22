@@ -296,7 +296,8 @@ impl SchedClassifier {
     /// let link_id = match PinnedLink::from_pin(pin_path) {
     ///     Ok(old) => {
     ///         let link = FdLink::from(old).try_into()?;
-    ///         prog.adopt_link(link)?
+    ///         // This caller chooses to release its link reference if adoption fails.
+    ///         prog.adopt_link(link).map_err(|(error, _link)| error)?
     ///     }
     ///     Err(LinkError::SyscallError(SyscallError { io_error, .. }))
     ///         if io_error.kind() == io::ErrorKind::NotFound =>
@@ -346,17 +347,17 @@ impl SchedClassifier {
 }
 
 impl LinkUpdate for TcLinkInner {
-    fn update(self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<Self, ProgramError> {
+    fn update(&mut self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<(), ProgramError> {
         match self {
-            Self::Fd(link) => Ok(Self::Fd(link.update(prog_fd, name)?)),
-            Self::NlLink(link) => Ok(Self::NlLink(link.update(prog_fd, name)?)),
+            Self::Fd(link) => link.update(prog_fd, name),
+            Self::NlLink(link) => link.update(prog_fd, name),
         }
     }
 }
 
 impl LinkUpdate for NlLink {
-    fn update(self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<Self, ProgramError> {
-        Self::attach(
+    fn update(&mut self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<(), ProgramError> {
+        let link = Self::attach(
             self.if_index,
             self.parent,
             NlOptions {
@@ -367,7 +368,10 @@ impl LinkUpdate for NlLink {
             prog_fd,
             name,
             false, // Replace the existing filter.
-        )
+        )?;
+        // Preserve the old filter identity until replacement succeeds.
+        *self = link;
+        Ok(())
     }
 }
 

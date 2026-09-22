@@ -2512,7 +2512,7 @@ pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach<T: std::os::fd::o
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::adopt_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::adopt_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, (aya::programs::ProgramError, aya::programs::cgroup_sock_addr::CgroupSockAddrLink)>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::detach(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::take_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLink, aya::programs::ProgramError>
@@ -5080,7 +5080,7 @@ pub const aya::programs::tc::SchedClassifier::PROGRAM_TYPE: aya::programs::Progr
 pub fn aya::programs::tc::SchedClassifier::attach<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, impl core::convert::Into<aya::programs::tc::TcAttach>) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
-pub fn aya::programs::tc::SchedClassifier::adopt_link(&mut self, aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::adopt_link(&mut self, aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, (aya::programs::ProgramError, aya::programs::tc::SchedClassifierLink)>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::detach(&mut self, aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::take_link(&mut self, aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<aya::programs::tc::SchedClassifierLink, aya::programs::ProgramError>
@@ -5681,7 +5681,7 @@ pub fn aya::programs::xdp::Xdp::attach<'a>(&mut self, impl core::convert::Into<a
 pub fn aya::programs::xdp::Xdp::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::xdp::Xdp
-pub fn aya::programs::xdp::Xdp::adopt_link(&mut self, aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::adopt_link(&mut self, aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, (aya::programs::ProgramError, aya::programs::xdp::XdpLink)>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::detach(&mut self, aya::programs::xdp::XdpLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::take_link(&mut self, aya::programs::xdp::XdpLinkId) -> core::result::Result<aya::programs::xdp::XdpLink, aya::programs::ProgramError>
@@ -6590,7 +6590,7 @@ pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach<T: std::os::fd::o
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::adopt_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::adopt_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, (aya::programs::ProgramError, aya::programs::cgroup_sock_addr::CgroupSockAddrLink)>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::detach(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::take_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLink, aya::programs::ProgramError>
@@ -7266,7 +7266,7 @@ pub const aya::programs::tc::SchedClassifier::PROGRAM_TYPE: aya::programs::Progr
 pub fn aya::programs::tc::SchedClassifier::attach<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, impl core::convert::Into<aya::programs::tc::TcAttach>) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
-pub fn aya::programs::tc::SchedClassifier::adopt_link(&mut self, aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::adopt_link(&mut self, aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, (aya::programs::ProgramError, aya::programs::tc::SchedClassifierLink)>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::detach(&mut self, aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::take_link(&mut self, aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<aya::programs::tc::SchedClassifierLink, aya::programs::ProgramError>
@@ -7694,7 +7694,7 @@ pub fn aya::programs::xdp::Xdp::attach<'a>(&mut self, impl core::convert::Into<a
 pub fn aya::programs::xdp::Xdp::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::xdp::Xdp
-pub fn aya::programs::xdp::Xdp::adopt_link(&mut self, aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::adopt_link(&mut self, aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, (aya::programs::ProgramError, aya::programs::xdp::XdpLink)>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::detach(&mut self, aya::programs::xdp::XdpLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::take_link(&mut self, aya::programs::xdp::XdpLinkId) -> core::result::Result<aya::programs::xdp::XdpLink, aya::programs::ProgramError>

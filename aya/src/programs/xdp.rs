@@ -187,23 +187,23 @@ impl Xdp {
 }
 
 impl LinkUpdate for XdpLinkInner {
-    fn update(self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<Self, ProgramError> {
+    fn update(&mut self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<(), ProgramError> {
         match self {
-            Self::Fd(link) => Ok(Self::Fd(link.update(prog_fd, name)?)),
-            Self::NlLink(link) => Ok(Self::NlLink(link.update(prog_fd, name)?)),
+            Self::Fd(link) => link.update(prog_fd, name),
+            Self::NlLink(link) => link.update(prog_fd, name),
         }
     }
 }
 
 impl LinkUpdate for NlLink {
-    fn update(self, prog_fd: BorrowedFd<'_>, _name: Option<&str>) -> Result<Self, ProgramError> {
+    fn update(&mut self, prog_fd: BorrowedFd<'_>, _name: Option<&str>) -> Result<(), ProgramError> {
         let Self {
             if_index,
             prog_fd: old_prog_fd,
             mode,
         } = self;
         // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
-        let old_prog_fd = unsafe { BorrowedFd::borrow_raw(old_prog_fd) };
+        let expected_fd = unsafe { BorrowedFd::borrow_raw(*old_prog_fd) };
         // Preserve the atomic replacement contract for netlink
         // links: only replace the current XDP program if it still
         // matches the program fd recorded in this link. The
@@ -212,14 +212,11 @@ impl LinkUpdate for NlLink {
         // were added in Linux 5.7. On older kernels this request
         // is expected to fail in the kernel instead of degrading to
         // an unconditional replacement.
-        netlink_set_xdp_fd(if_index, Some(prog_fd), Some(old_prog_fd), mode)
+        netlink_set_xdp_fd(*if_index, Some(prog_fd), Some(expected_fd), *mode)
             .map_err(XdpError::NetlinkError)?;
-
-        Ok(Self {
-            if_index,
-            prog_fd: prog_fd.as_raw_fd(),
-            mode,
-        })
+        // Failed replacement must leave the old fd available for retry or detach.
+        *old_prog_fd = prog_fd.as_raw_fd();
+        Ok(())
     }
 }
 
