@@ -2,7 +2,7 @@ use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     programs::{
-        ProgramError, SchedClassifier, TcAttachType,
+        Link as _, LinkOrder, ProgramError, SchedClassifier, TcAttachType,
         tc::{
             NlOptions, TcAttachOptions, TcError, TcHandle, qdisc_add_clsact, qdisc_detach_program,
         },
@@ -33,13 +33,13 @@ fn netlink_attach_to_link_preserves_classid() {
     let classid = TcHandle::new(1, 1);
 
     let link_id = prog
-        .attach_with_options(
+        .attach(
             "lo",
             TcAttachType::Ingress,
-            TcAttachOptions::Netlink(NlOptions {
+            NlOptions {
                 classid: Some(classid),
                 ..Default::default()
-            }),
+            },
         )
         .unwrap();
 
@@ -64,11 +64,7 @@ fn netlink_attach_auto_assigns_handle() {
     prog.load().unwrap();
 
     let link_id = prog
-        .attach_with_options(
-            "lo",
-            TcAttachType::Ingress,
-            TcAttachOptions::Netlink(NlOptions::default()),
-        )
+        .attach("lo", TcAttachType::Ingress, NlOptions::default())
         .unwrap();
 
     let link = prog.take_link(link_id).unwrap();
@@ -89,13 +85,13 @@ fn netlink_attach_preserves_explicit_handle() {
     let handle = TcHandle::new(1, 0xfffe);
 
     let link_id = prog
-        .attach_with_options(
+        .attach(
             "lo",
             TcAttachType::Ingress,
-            TcAttachOptions::Netlink(NlOptions {
+            NlOptions {
                 handle,
                 ..Default::default()
-            }),
+            },
         )
         .unwrap();
 
@@ -123,13 +119,13 @@ fn netlink_program_name(#[case] len: usize, #[case] valid: bool, #[case] by_inde
     let name = "a".repeat(len);
     let mut prog =
         SchedClassifier::from_program_info(prog.info().unwrap(), name.clone().into()).unwrap();
-    let result = prog.attach_with_options(
+    let result = prog.attach(
         "lo",
         TcAttachType::Ingress,
-        TcAttachOptions::Netlink(NlOptions {
+        NlOptions {
             classid: Some(TcHandle::new(1, 1)),
             ..Default::default()
-        }),
+        },
     );
     if valid {
         let _link = prog.take_link(result.unwrap()).unwrap();
@@ -146,4 +142,30 @@ fn netlink_program_name(#[case] len: usize, #[case] valid: bool, #[case] by_inde
             assert_eq!(err.to_string(), "program name exceeds CLS_BPF_NAME_LEN");
         });
     }
+}
+
+#[test_log::test]
+fn custom_attach_uses_netlink() {
+    let _netns = NetNsGuard::new().unwrap();
+    qdisc_add_clsact("lo").unwrap();
+
+    let mut bpf = Ebpf::load(TCX).unwrap();
+    let prog: &mut SchedClassifier = bpf.program_mut("tcx_next").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    // Address the clsact ingress hook through its custom parent handle.
+    let parent = TcHandle::new(0xffff, 0xfff2).into();
+    let attach_type = TcAttachType::Custom(parent);
+    let id = prog
+        .attach("lo", attach_type, TcAttachOptions::Auto)
+        .unwrap();
+    let link = prog.take_link(id).unwrap();
+    assert_eq!(link.attach_type().unwrap(), attach_type);
+    assert_ne!(link.handle().unwrap(), TcHandle::AUTO_ASSIGN);
+    link.detach().unwrap();
+
+    assert_matches!(
+        prog.attach("lo", attach_type, LinkOrder::default()),
+        Err(ProgramError::TcError(TcError::InvalidTcxAttach(value))) if value == parent
+    );
 }

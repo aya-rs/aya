@@ -14,7 +14,6 @@ use aya::{
         kprobe::{KProbeLink, KProbeLinkId},
         links::{FdLink, LinkError, PinnedLink},
         loaded_links, loaded_programs,
-        tc::TcAttachOptions,
         trace_point::{TracePointLink, TracePointLinkId},
         uprobe::{UProbeLink, UProbeLinkId, UProbeScope},
         xdp::{XdpLink, XdpLinkId},
@@ -457,11 +456,7 @@ fn pin_tcx_link() {
     prog.load().unwrap();
 
     let link_id = prog
-        .attach_with_options(
-            "lo",
-            TcAttachType::Ingress,
-            TcAttachOptions::TcxOrder(LinkOrder::default()),
-        )
+        .attach("lo", TcAttachType::Ingress, LinkOrder::default())
         .unwrap();
     let link = prog.take_link(link_id).unwrap();
     assert_loaded(program_name);
