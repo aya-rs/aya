@@ -241,6 +241,10 @@ pub enum KConfigMode {
     /// Automatically read the current kernel config when real `CONFIG_*` externs are required.
     Auto,
     /// Disable `__kconfig` extern patching.
+    ///
+    /// Objects containing unresolved `__kconfig` externs may fail to load.
+    /// To avoid reading system configuration while still resolving externs,
+    /// use [`KConfigMode::Explicit`].
     Disabled,
     /// Use caller-provided kernel config values without reading system configuration.
     Explicit(KConfig),
