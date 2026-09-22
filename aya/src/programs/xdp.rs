@@ -177,10 +177,23 @@ impl Xdp {
         Ok(Self { data, attach_type })
     }
 
-    /// Atomically replaces the program referenced by the provided link.
+    /// Takes ownership of an existing link, associating it with this program.
     ///
-    /// Ownership of the link will transfer to this program.
-    pub fn attach_to_link(&mut self, link: XdpLink) -> Result<XdpLinkId, ProgramError> {
+    /// The program referenced by the link is atomically replaced with this program, while
+    /// retaining the attachment target and its options. Other links managed by this program
+    /// are unaffected. The returned ID can be used with [`Self::detach`] or [`Self::take_link`].
+    ///
+    /// The link is consumed even if adoption fails. For a file-descriptor-backed link,
+    /// failure closes this reference and may detach the previous program if there are no
+    /// other references or pins keeping the link alive.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if this program is not loaded, the new program is incompatible
+    /// with the attachment, or the kernel or link backend does not support updating it.
+    /// Legacy `BPF_PROG_ATTACH` links return
+    /// [`LinkError::InvalidLink`](crate::programs::links::LinkError::InvalidLink).
+    pub fn adopt_link(&mut self, link: XdpLink) -> Result<XdpLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         match link.into_inner() {

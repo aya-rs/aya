@@ -32,14 +32,14 @@ fn netlink_from_parts_without_filter() {
 }
 
 /// Verify that `classid` set on the initial netlink attach is preserved when
-/// the program is later replaced via [`SchedClassifier::attach_to_link`].
+/// the program is later replaced via [`SchedClassifier::adopt_link`].
 ///
 /// `cls_bpf_change` allocates a fresh `cls_bpf_prog` on every netlink replace
 /// and only sets `prog->res.classid` if the request carries `TCA_BPF_CLASSID`;
 /// without preservation in [`NlOptions::classid`] the binding would be
 /// silently cleared on program replacement.
 #[test_log::test]
-fn netlink_attach_to_link_preserves_classid() {
+fn netlink_adopt_link_preserves_classid() {
     let _netns = NetNsGuard::new().unwrap();
 
     qdisc_add_clsact("lo").unwrap();
@@ -64,7 +64,7 @@ fn netlink_attach_to_link_preserves_classid() {
     let link = prog.take_link(link_id).unwrap();
     assert_eq!(link.classid().unwrap(), Some(classid));
 
-    let new_link_id = prog.attach_to_link(link).unwrap();
+    let new_link_id = prog.adopt_link(link).unwrap();
     let new_link = prog.take_link(new_link_id).unwrap();
     assert_eq!(new_link.classid().unwrap(), Some(classid));
 }

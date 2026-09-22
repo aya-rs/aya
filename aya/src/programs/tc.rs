@@ -268,7 +268,7 @@ impl SchedClassifier {
     /// let link_id = match PinnedLink::from_pin(pin_path) {
     ///     Ok(old) => {
     ///         let link = FdLink::from(old).try_into()?;
-    ///         prog.attach_to_link(link)?
+    ///         prog.adopt_link(link)?
     ///     }
     ///     Err(LinkError::SyscallError(SyscallError { io_error, .. }))
     ///         if io_error.kind() == io::ErrorKind::NotFound =>
@@ -322,10 +322,23 @@ impl SchedClassifier {
         }
     }
 
-    /// Atomically replaces the program referenced by the provided link.
+    /// Takes ownership of an existing link, associating it with this program.
     ///
-    /// Ownership of the link will transfer to this program.
-    pub fn attach_to_link(
+    /// The program referenced by the link is atomically replaced with this program, while
+    /// retaining the attachment target and its options. Other links managed by this program
+    /// are unaffected. The returned ID can be used with [`Self::detach`] or [`Self::take_link`].
+    ///
+    /// The link is consumed even if adoption fails. For a file-descriptor-backed link,
+    /// failure closes this reference and may detach the previous program if there are no
+    /// other references or pins keeping the link alive.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if this program is not loaded, the new program is incompatible
+    /// with the attachment, or the kernel or link backend does not support updating it.
+    /// Legacy `BPF_PROG_ATTACH` links return
+    /// [`LinkError::InvalidLink`].
+    pub fn adopt_link(
         &mut self,
         link: SchedClassifierLink,
     ) -> Result<SchedClassifierLinkId, ProgramError> {

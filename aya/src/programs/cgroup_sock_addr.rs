@@ -28,6 +28,10 @@ use crate::{
 ///
 /// The minimum kernel version required to use this feature is 4.17.
 ///
+/// On kernels before 5.7, [`Self::attach`] creates legacy `BPF_PROG_ATTACH` links,
+/// which [`Self::adopt_link`] rejects with
+/// [`LinkError::InvalidLink`](crate::programs::links::LinkError::InvalidLink).
+///
 /// # Examples
 ///
 /// ```no_run
@@ -106,15 +110,23 @@ impl CgroupSockAddr {
         }
     }
 
-    /// Atomically replaces the program referenced by the provided link.
+    /// Takes ownership of an existing link, associating it with this program.
     ///
-    /// Ownership of the link will transfer to this program.
+    /// The program referenced by the link is atomically replaced with this program, while
+    /// retaining the attachment target and its options. Other links managed by this program
+    /// are unaffected. The returned ID can be used with [`Self::detach`] or [`Self::take_link`].
+    ///
+    /// The link is consumed even if adoption fails. For a file-descriptor-backed link,
+    /// failure closes this reference and may detach the previous program if there are no
+    /// other references or pins keeping the link alive.
     ///
     /// # Errors
     ///
-    /// Returns [`LinkError::InvalidLink`] for a `BPF_PROG_ATTACH` attachment,
-    /// which is what kernels before 5.7 get, as it's currently not supported.
-    pub fn attach_to_link(
+    /// Returns an error if this program is not loaded, the new program is incompatible
+    /// with the attachment, or the kernel or link backend does not support updating it.
+    /// Legacy `BPF_PROG_ATTACH` links return
+    /// [`LinkError::InvalidLink`].
+    pub fn adopt_link(
         &mut self,
         link: CgroupSockAddrLink,
     ) -> Result<CgroupSockAddrLinkId, ProgramError> {
