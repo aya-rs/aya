@@ -16,7 +16,7 @@ use rstest::rstest;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
 #[test_log::test]
-fn netlink_attach_to_link_replaces_program() {
+fn netlink_adopt_link_replaces_program() {
     if KernelVersion::current().unwrap() < KernelVersion::new(5, 7, 0) {
         eprintln!("skipping test - atomic netlink XDP replacement requires Linux 5.7");
         return;
@@ -53,7 +53,7 @@ fn netlink_attach_to_link_replaces_program() {
     new.load().unwrap();
     let new_program_id = new.info().unwrap().id();
     assert_ne!(old_program_id, new_program_id);
-    let id = new.attach_to_link(old_link).unwrap();
+    let id = new.adopt_link(old_link).unwrap();
     drop(old_bpf);
     assert_eq!(attached_program(), new_program_id);
     new.detach(id).unwrap();

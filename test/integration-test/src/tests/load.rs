@@ -471,14 +471,14 @@ fn pin_tcx_link() {
     prog.unload().unwrap();
     assert_loaded(program_name);
 
-    // Load a new program and atomically replace the old one using attach_to_link
+    // Load a new program and atomically replace the old one using adopt_link
     let mut bpf = Ebpf::load(crate::TCX).unwrap();
     let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
     let old_link = PinnedLink::from_pin(pin_path).unwrap();
     let link = FdLink::from(old_link).try_into().unwrap();
-    let _link_id = prog.attach_to_link(link).unwrap();
+    let _link_id = prog.adopt_link(link).unwrap();
 
     assert_loaded(program_name);
 
@@ -523,14 +523,14 @@ fn pin_cgroup_link() {
     prog.unload().unwrap();
     assert_loaded(program_name);
 
-    // Load a new program and atomically replace the old one using attach_to_link
+    // Load a new program and atomically replace the old one using adopt_link
     let mut bpf = Ebpf::load(crate::CGROUP_CONNECT).unwrap();
     let prog: &mut CgroupSockAddr = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
     let old_link = PinnedLink::from_pin(pin_path).unwrap();
     let link = FdLink::from(old_link).try_into().unwrap();
-    let _link_id = prog.attach_to_link(link).unwrap();
+    let _link_id = prog.adopt_link(link).unwrap();
 
     assert_loaded(program_name);
 
@@ -588,9 +588,7 @@ fn pin_lifecycle() {
         link_pin,
         from_pin,
         attach,
-        Some(|prog: &mut P, pinned: FdLink| {
-            prog.attach_to_link(pinned.try_into().unwrap()).unwrap()
-        }),
+        Some(|prog: &mut P, pinned: FdLink| prog.adopt_link(pinned.try_into().unwrap()).unwrap()),
         /* expect_fd_link: */
         true, // xdp fallback is automatic, minimum version unclear.
     );
@@ -604,7 +602,7 @@ fn run_pin_program_lifecycle_test<P>(
     link_pin: &str,
     from_pin: fn(&str) -> P,
     attach: fn(&mut P) -> P::LinkId,
-    attach_to_link: Option<fn(&mut P, FdLink) -> P::LinkId>,
+    adopt_link: Option<fn(&mut P, FdLink) -> P::LinkId>,
     expect_fd_link: bool,
 ) where
     P: UnloadProgramOps + PinProgramOps,
@@ -651,12 +649,12 @@ fn run_pin_program_lifecycle_test<P>(
                         .try_into()
                         .expect("pinned link should round-trip through FdLink");
                     let link: FdLink = link.try_into().unwrap();
-                    if let Some(attach_to_link) = attach_to_link {
+                    if let Some(adopt_link) = adopt_link {
                         let mut bpf = Ebpf::load(bpf_image).unwrap();
                         let prog: &mut P =
                             bpf.program_mut(program_name).unwrap().try_into().unwrap();
                         prog.load().unwrap();
-                        attach_to_link(prog, link);
+                        adopt_link(prog, link);
                         assert_loaded(program_name);
                     }
                 }
