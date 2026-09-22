@@ -21,8 +21,8 @@ use crate::{
     pin::PinError,
     programs::{MultiProgLink, MultiProgram, ProgramError, ProgramFd, ProgramId},
     sys::{
-        SyscallError, bpf_get_object, bpf_link_get_info_by_fd, bpf_pin_object, bpf_prog_attach,
-        bpf_prog_detach,
+        SyscallError, bpf_get_object, bpf_link_get_info_by_fd, bpf_link_update, bpf_pin_object,
+        bpf_prog_attach, bpf_prog_detach,
     },
 };
 
@@ -39,6 +39,13 @@ pub trait Link: std::fmt::Debug + Eq + std::hash::Hash + 'static {
 
     /// Detaches the `LinkOwnedLink` is gone... but this doesn't work :(
     fn detach(self) -> Result<(), Self::Error>;
+}
+
+/// Updates the program referenced by an attachment, retaining its backend and target.
+///
+/// The optional name is used by legacy TC filters.
+pub(crate) trait LinkUpdate: Sized {
+    fn update(self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<Self, ProgramError>;
 }
 
 /// Program attachment mode.
@@ -330,6 +337,16 @@ impl Link for FdLink {
     }
 }
 
+impl LinkUpdate for FdLink {
+    fn update(self, prog_fd: BorrowedFd<'_>, _name: Option<&str>) -> Result<Self, ProgramError> {
+        bpf_link_update(self.fd.as_fd(), prog_fd, None, 0).map_err(|io_error| SyscallError {
+            call: "bpf_link_update",
+            io_error,
+        })?;
+        Ok(self)
+    }
+}
+
 id_as_key!(FdLink, FdLinkId);
 
 impl From<PinnedLink> for FdLink {
@@ -501,8 +518,7 @@ macro_rules! define_link_wrapper {
 
         #[expect(clippy::allow_attributes, reason = "macro")]
         #[allow(dead_code, reason = "macro")]
-        // allow dead code since currently XDP/TC are the only consumers of inner and
-        // into_inner
+        // Some wrappers do not need direct access to the underlying link.
         impl $wrapper {
             const fn new(base: $base) -> $wrapper {
                 $wrapper(Some(base))
@@ -576,6 +592,68 @@ macro_rules! define_link_wrapper {
 }
 
 pub(crate) use define_link_wrapper;
+
+macro_rules! impl_program_adopt_link {
+    (
+        $program:ident, $wrapper:ident, $wrapper_id:ident
+        $(,)?
+    ) => {
+        impl $program {
+            /// Takes ownership of an existing link, associating it with this program.
+            ///
+            /// The program referenced by the link is atomically replaced with this program, while
+            /// retaining the attachment target and its options. Other links managed by this program
+            /// are unaffected. The returned ID can be used with [`Self::detach`] or [`Self::take_link`].
+            ///
+            /// The link is consumed even if adoption fails. For a file-descriptor-backed link,
+            /// failure closes this reference and may detach the previous program if there are no
+            /// other references or pins keeping the link alive.
+            ///
+            /// # Errors
+            ///
+            /// Returns [`ProgramError::NotLoaded`] if this program is not loaded.
+            /// Returns an error if the new program is incompatible with the attachment, or the
+            /// kernel or link backend does not support updating it.
+            /// Legacy `BPF_PROG_ATTACH` links return [`crate::programs::LinkError::InvalidLink`].
+            pub fn adopt_link(&mut self, link: $wrapper) -> Result<$wrapper_id, ProgramError> {
+                use std::os::fd::AsFd as _;
+
+                use $crate::programs::links::LinkUpdate as _;
+
+                let prog_fd = self.fd()?.as_fd();
+                let link = link
+                    .into_inner()
+                    .update(prog_fd, self.data.name.as_deref())?;
+                self.data.links.insert($wrapper::new(link))
+            }
+        }
+    };
+    // Cgroup programs use this arm for their Fd/ProgAttach link enums.
+    // Updates Fd links and rejects legacy BPF_PROG_ATTACH links.
+    (
+        $program:ident, $wrapper:ident, $wrapper_id:ident, $inner:ident
+        $(,)?
+    ) => {
+        impl $crate::programs::links::LinkUpdate for $inner {
+            fn update(
+                self,
+                prog_fd: std::os::fd::BorrowedFd<'_>,
+                name: Option<&str>,
+            ) -> Result<Self, ProgramError> {
+                match self {
+                    Self::Fd(link) => Ok(Self::Fd($crate::programs::links::LinkUpdate::update(
+                        link, prog_fd, name,
+                    )?)),
+                    Self::ProgAttach(_) => Err($crate::programs::LinkError::InvalidLink.into()),
+                }
+            }
+        }
+
+        $crate::programs::links::impl_program_adopt_link!($program, $wrapper, $wrapper_id,);
+    };
+}
+
+pub(crate) use impl_program_adopt_link;
 
 macro_rules! impl_try_into_fdlink {
     ($wrapper:ident, $inner:ident) => {
