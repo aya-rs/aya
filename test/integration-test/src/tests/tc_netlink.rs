@@ -1,15 +1,73 @@
+use std::{io, os::fd::AsFd as _};
+
 use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     programs::{
-        ProgramError, SchedClassifier, TcAttach, TcAttachType,
-        tc::{NlOptions, TcError, TcHandle, qdisc_add_clsact, qdisc_detach_program},
+        Link as _, ProgramError, SchedClassifier, TcAttach, TcAttachType,
+        tc::{
+            NlOptions, SchedClassifierLink, TcError, TcHandle, qdisc_add_clsact,
+            qdisc_detach_program,
+        },
     },
     test_helpers::NetNsGuard,
 };
+use libbpf_rs::{TC_INGRESS, TcHook};
 use rstest::rstest;
 
 use crate::TCX;
+
+#[test_log::test]
+fn netlink_from_parts_detaches_filter() {
+    let _netns = NetNsGuard::new().unwrap();
+    qdisc_add_clsact("lo").unwrap();
+
+    let mut bpf = Ebpf::load(TCX).unwrap();
+    let prog: &mut SchedClassifier = bpf.program_mut("tcx_next").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+    let program_id = prog.info().unwrap().id();
+    let parent: TcHandle = TcAttachType::Ingress.into();
+    let id = prog
+        .attach(
+            "lo",
+            TcAttach::Netlink {
+                parent,
+                options: NlOptions::default(),
+            },
+        )
+        .unwrap();
+    let link = prog.take_link(id).unwrap();
+    let priority = link.priority().unwrap();
+    let handle = link.handle().unwrap();
+    let if_index = unsafe { libc::if_nametoindex(c"lo".as_ptr()) };
+    assert_ne!(if_index, 0);
+    let mut query = TcHook::new(prog.fd().unwrap().as_fd());
+    query
+        .ifindex(if_index as i32)
+        .attach_point(TC_INGRESS)
+        .priority(priority.into())
+        .handle(handle.into());
+    assert_eq!(query.query().unwrap(), program_id);
+
+    let reconstructed = SchedClassifierLink::from_netlink_parts(
+        "lo",
+        link.parent().unwrap(),
+        priority,
+        handle,
+        link.classid().unwrap(),
+    )
+    .unwrap();
+    // Both wrappers identify the same kernel filter. Suppress the original
+    // wrapper's Drop (which would detach it) so this test verifies cleanup
+    // through the reconstructed link. The original netlink wrapper owns no fd.
+    let _original_link = std::mem::ManuallyDrop::new(link);
+    assert_eq!(query.query().unwrap(), program_id);
+    reconstructed.detach().unwrap();
+    assert_matches!(
+        qdisc_detach_program("lo", parent, "tcx_next"),
+        Err(TcError::IoError(error)) if error.kind() == io::ErrorKind::NotFound
+    );
+}
 
 /// Verify that `classid` set on the initial netlink attach is preserved when
 /// the program is later replaced via [`SchedClassifier::attach_to_link`].

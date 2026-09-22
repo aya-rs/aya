@@ -5120,8 +5120,8 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::SchedClassif
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifier
 pub struct aya::programs::tc::SchedClassifierLink(_)
 impl aya::programs::tc::SchedClassifierLink
-pub fn aya::programs::tc::SchedClassifierLink::attached<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcHandle, u16, aya::programs::tc::TcHandle, core::option::Option<aya::programs::tc::TcHandle>) -> core::result::Result<Self, core::io::error::Error>
 pub fn aya::programs::tc::SchedClassifierLink::classid(&self) -> core::result::Result<core::option::Option<aya::programs::tc::TcHandle>, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifierLink::from_netlink_parts<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcHandle, u16, aya::programs::tc::TcHandle, core::option::Option<aya::programs::tc::TcHandle>) -> core::result::Result<Self, core::io::error::Error>
 pub fn aya::programs::tc::SchedClassifierLink::handle(&self) -> core::result::Result<aya::programs::tc::TcHandle, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifierLink::parent(&self) -> core::result::Result<aya::programs::tc::TcHandle, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifierLink::priority(&self) -> core::result::Result<u16, aya::programs::ProgramError>
