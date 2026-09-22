@@ -1,5 +1,10 @@
 //! Network traffic control programs.
-use std::{ffi::CString, io, os::fd::AsFd as _, path::Path};
+use std::{
+    ffi::CString,
+    io,
+    os::fd::{AsFd as _, BorrowedFd},
+    path::Path,
+};
 
 use aya_obj::generated::{
     TC_H_CLSACT, TC_H_MIN_EGRESS, TC_H_MIN_INGRESS,
@@ -13,13 +18,13 @@ use super::{FdLink, ProgramInfo};
 use crate::{
     VerifierLogLevel,
     programs::{
-        Link, LinkError, LinkOrder, NetworkInterface, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, impl_try_from_fdlink, impl_try_into_fdlink,
-        load_program_without_attach_type, query,
+        Link, LinkError, LinkOrder, LinkUpdate, NetworkInterface, ProgramData, ProgramError,
+        ProgramType, define_link_wrapper, id_as_key, impl_program_adopt_link, impl_try_from_fdlink,
+        impl_try_into_fdlink, load_program_without_attach_type, query,
     },
     sys::{
         BpfLinkCreateArgs, LinkTarget, NetlinkError, NetlinkSocket, ProgQueryTarget, SyscallError,
-        bpf_link_create, bpf_link_update, bpf_prog_get_fd_by_id, netlink_find_filter_with_name,
+        bpf_link_create, bpf_prog_get_fd_by_id, netlink_find_filter_with_name,
         netlink_qdisc_add_clsact, netlink_qdisc_attach, netlink_qdisc_detach,
     },
     util::{KernelVersion, tc_handler_make},
@@ -312,70 +317,13 @@ impl SchedClassifier {
                 {
                     self.attach_tcx(if_index, attach_type, LinkOrder::default())
                 } else {
-                    self.attach_netlink(if_index, attach_type, NlOptions::default(), true)
+                    self.attach_netlink(if_index, attach_type, NlOptions::default())
                 }
             }
             TcAttachOptions::Netlink(options) => {
-                self.attach_netlink(if_index, attach_type, options, true)
+                self.attach_netlink(if_index, attach_type, options)
             }
             TcAttachOptions::TcxOrder(order) => self.attach_tcx(if_index, attach_type, order),
-        }
-    }
-
-    /// Takes ownership of an existing link, associating it with this program.
-    ///
-    /// The program referenced by the link is atomically replaced with this program, while
-    /// retaining the attachment target and its options. Other links managed by this program
-    /// are unaffected. The returned ID can be used with [`Self::detach`] or [`Self::take_link`].
-    ///
-    /// The link is consumed even if adoption fails. For a file-descriptor-backed link,
-    /// failure closes this reference and may detach the previous program if there are no
-    /// other references or pins keeping the link alive.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if this program is not loaded, the new program is incompatible
-    /// with the attachment, or the kernel or link backend does not support updating it.
-    /// Legacy `BPF_PROG_ATTACH` links return
-    /// [`LinkError::InvalidLink`].
-    pub fn adopt_link(
-        &mut self,
-        link: SchedClassifierLink,
-    ) -> Result<SchedClassifierLinkId, ProgramError> {
-        let prog_fd = self.fd()?;
-        let prog_fd = prog_fd.as_fd();
-        match link.into_inner() {
-            TcLinkInner::Fd(link) => {
-                let fd = link.fd;
-                let link_fd = fd.as_fd();
-
-                bpf_link_update(link_fd.as_fd(), prog_fd, None, 0).map_err(|io_error| {
-                    SyscallError {
-                        call: "bpf_link_update",
-                        io_error,
-                    }
-                })?;
-
-                self.data
-                    .links
-                    .insert(SchedClassifierLink::new(TcLinkInner::Fd(FdLink::new(fd))))
-            }
-            TcLinkInner::NlLink(NlLink {
-                if_index,
-                attach_type,
-                priority,
-                handle,
-                classid,
-            }) => self.attach_netlink(
-                if_index,
-                attach_type,
-                NlOptions {
-                    priority,
-                    handle,
-                    classid,
-                },
-                false,
-            ),
         }
     }
 
@@ -384,7 +332,6 @@ impl SchedClassifier {
         if_index: u32,
         attach_type: TcAttachType,
         options: NlOptions,
-        create: bool,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
@@ -400,7 +347,7 @@ impl SchedClassifier {
             options.priority,
             options.handle,
             options.classid,
-            create,
+            true,
         )
         .map_err(TcError::NetlinkError)?;
 
@@ -561,6 +508,41 @@ impl Link for TcLinkInner {
     }
 }
 
+impl LinkUpdate for TcLinkInner {
+    fn update(self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<Self, ProgramError> {
+        match self {
+            Self::Fd(link) => link.update(prog_fd, name).map(Self::Fd),
+            Self::NlLink(NlLink {
+                if_index,
+                attach_type,
+                priority,
+                handle,
+                classid,
+            }) => {
+                let name = CString::new(name.unwrap_or_default()).unwrap();
+                let (priority, handle) = netlink_qdisc_attach(
+                    if_index as i32,
+                    attach_type,
+                    prog_fd,
+                    &name,
+                    priority,
+                    handle,
+                    classid,
+                    false,
+                )
+                .map_err(TcError::NetlinkError)?;
+                Ok(Self::NlLink(NlLink {
+                    if_index,
+                    attach_type,
+                    priority,
+                    handle,
+                    classid,
+                }))
+            }
+        }
+    }
+}
+
 id_as_key!(TcLinkInner, TcLinkIdInner);
 
 impl<'a> TryFrom<&'a SchedClassifierLink> for &'a FdLink {
@@ -589,6 +571,8 @@ define_link_wrapper!(
     TcLinkIdInner,
     SchedClassifier,
 );
+
+impl_program_adopt_link!(SchedClassifier, SchedClassifierLink, SchedClassifierLinkId);
 
 impl SchedClassifierLink {
     /// Reconstructs an owned link to an existing netlink TC filter from its known parts.

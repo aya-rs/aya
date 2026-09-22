@@ -21,8 +21,8 @@ use crate::{
     pin::PinError,
     programs::{MultiProgLink, MultiProgram, ProgramError, ProgramFd, ProgramId},
     sys::{
-        SyscallError, bpf_get_object, bpf_link_get_info_by_fd, bpf_pin_object, bpf_prog_attach,
-        bpf_prog_detach,
+        SyscallError, bpf_get_object, bpf_link_get_info_by_fd, bpf_link_update, bpf_pin_object,
+        bpf_prog_attach, bpf_prog_detach,
     },
 };
 
@@ -39,6 +39,14 @@ pub trait Link: std::fmt::Debug + Eq + std::hash::Hash + 'static {
 
     /// Detaches the `LinkOwnedLink` is gone... but this doesn't work :(
     fn detach(self) -> Result<(), Self::Error>;
+}
+
+/// Updates the program referenced by an attachment, retaining its backend and target.
+///
+/// The optional name is used by legacy TC filters. Implementations consume the attachment;
+/// the program-level API takes ownership of the updated link on success.
+pub(crate) trait LinkUpdate: Sized {
+    fn update(self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<Self, ProgramError>;
 }
 
 /// Program attachment mode.
@@ -330,6 +338,16 @@ impl Link for FdLink {
     }
 }
 
+impl LinkUpdate for FdLink {
+    fn update(self, prog_fd: BorrowedFd<'_>, _name: Option<&str>) -> Result<Self, ProgramError> {
+        bpf_link_update(self.fd.as_fd(), prog_fd, None, 0).map_err(|io_error| SyscallError {
+            call: "bpf_link_update",
+            io_error,
+        })?;
+        Ok(self)
+    }
+}
+
 id_as_key!(FdLink, FdLinkId);
 
 impl From<PinnedLink> for FdLink {
@@ -577,6 +595,60 @@ macro_rules! define_link_wrapper {
 
 pub(crate) use define_link_wrapper;
 
+macro_rules! impl_program_adopt_link {
+    ($program:ident, $wrapper:ident, $wrapper_id:ident $(,)?) => {
+        impl $program {
+            /// Takes ownership of an existing link, associating it with this program.
+            ///
+            /// The program referenced by the link is atomically replaced with this program, while
+            /// retaining the attachment target and its options. Other links managed by this program
+            /// are unaffected. The returned ID can be used with [`Self::detach`] or [`Self::take_link`].
+            ///
+            /// The link is consumed even if adoption fails. For a file-descriptor-backed link,
+            /// failure closes this reference and may detach the previous program if there are no
+            /// other references or pins keeping the link alive.
+            ///
+            /// # Errors
+            ///
+            /// Returns an error if this program is not loaded, the new program is incompatible
+            /// with the attachment, or the kernel or link backend does not support updating it.
+            /// Legacy `BPF_PROG_ATTACH` links return
+            /// [`LinkError::InvalidLink`](crate::programs::links::LinkError::InvalidLink).
+            pub fn adopt_link(&mut self, link: $wrapper) -> Result<$wrapper_id, ProgramError> {
+                use std::os::fd::AsFd as _;
+
+                use $crate::programs::links::LinkUpdate as _;
+
+                let fd = self.fd()?.as_fd();
+                let name = self.data.name.as_deref();
+                let link = link.into_inner().update(fd, name)?;
+                self.data.links.insert($wrapper::new(link))
+            }
+        }
+    };
+    ($program:ident, $wrapper:ident, $wrapper_id:ident, $inner:ident $(,)?) => {
+        impl $crate::programs::links::LinkUpdate for $inner {
+            fn update(
+                self,
+                prog_fd: std::os::fd::BorrowedFd<'_>,
+                name: Option<&str>,
+            ) -> Result<Self, ProgramError> {
+                match self {
+                    Self::Fd(link) => {
+                        $crate::programs::links::LinkUpdate::update(link, prog_fd, name)
+                            .map(Self::Fd)
+                    }
+                    Self::ProgAttach(_) => Err($crate::programs::LinkError::InvalidLink.into()),
+                }
+            }
+        }
+
+        $crate::programs::links::impl_program_adopt_link!($program, $wrapper, $wrapper_id);
+    };
+}
+
+pub(crate) use impl_program_adopt_link;
+
 macro_rules! impl_try_into_fdlink {
     ($wrapper:ident, $inner:ident) => {
         impl TryFrom<$wrapper> for $crate::programs::FdLink {
@@ -755,17 +827,69 @@ impl LinkOrder {
 
 #[cfg(test)]
 mod tests {
-    use std::{cell::RefCell, fs::File, rc::Rc};
+    use std::{
+        cell::RefCell,
+        fs::File,
+        io,
+        os::fd::{AsFd as _, FromRawFd as _},
+        rc::Rc,
+    };
 
     use assert_matches::assert_matches;
-    use aya_obj::generated::{BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE};
+    use aya_obj::generated::{BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE, bpf_cmd};
     use tempfile::tempdir;
 
-    use super::{FdLink, Link, Links};
+    use super::{FdLink, Link, LinkUpdate as _, Links};
     use crate::{
         programs::{CgroupAttachMode, ProgramError},
-        sys::override_syscall,
+        sys::{Syscall, override_syscall},
     };
+
+    #[test]
+    fn fd_link_update_retains_link_id() {
+        let fd = crate::MockableFd::mock_signed_fd();
+        let link = FdLink::new(unsafe { crate::MockableFd::from_raw_fd(fd) });
+        let program = unsafe { crate::MockableFd::from_raw_fd(fd + 1) };
+        let id = link.id();
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_LINK_UPDATE,
+                attr,
+            } => {
+                let update = unsafe { attr.link_update };
+                assert_eq!(update.link_fd, crate::MockableFd::mock_unsigned_fd());
+                assert_eq!(
+                    unsafe { update.__bindgen_anon_1.new_prog_fd },
+                    update.link_fd + 1
+                );
+                assert_eq!(unsafe { update.__bindgen_anon_2.old_prog_fd }, 0);
+                assert_eq!(update.flags, 0);
+                Ok(0)
+            }
+            call => panic!("unexpected syscall: {call:?}"),
+        });
+        let link = link.update(program.as_fd(), None).unwrap();
+        assert_eq!(link.id(), id);
+    }
+
+    #[test]
+    fn fd_link_update_propagates_error() {
+        let fd = crate::MockableFd::mock_signed_fd();
+        let link = FdLink::new(unsafe { crate::MockableFd::from_raw_fd(fd) });
+        let program = unsafe { crate::MockableFd::from_raw_fd(fd + 1) };
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_LINK_UPDATE,
+                ..
+            } => Err((-1, io::Error::from_raw_os_error(libc::EINVAL))),
+            call => panic!("unexpected syscall: {call:?}"),
+        });
+        assert_matches!(
+            link.update(program.as_fd(), None),
+            Err(ProgramError::SyscallError(error))
+                if error.call == "bpf_link_update" && error.io_error.raw_os_error() == Some(libc::EINVAL)
+        );
+    }
 
     #[derive(Debug, Hash, Eq, PartialEq)]
     struct TestLinkId(u8, u8);

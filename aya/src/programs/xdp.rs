@@ -19,14 +19,11 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, Link, NetworkInterface, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, impl_try_from_fdlink, impl_try_into_fdlink,
-        load_program_with_attach_type,
+        FdLink, Link, LinkUpdate, NetworkInterface, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, id_as_key, impl_program_adopt_link, impl_try_from_fdlink,
+        impl_try_into_fdlink, load_program_with_attach_type,
     },
-    sys::{
-        LinkTarget, NetlinkError, SyscallError, bpf_link_create, bpf_link_update,
-        netlink_set_xdp_fd,
-    },
+    sys::{LinkTarget, NetlinkError, SyscallError, bpf_link_create, netlink_set_xdp_fd},
     util::KernelVersion,
 };
 
@@ -176,69 +173,6 @@ impl Xdp {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data, attach_type })
     }
-
-    /// Takes ownership of an existing link, associating it with this program.
-    ///
-    /// The program referenced by the link is atomically replaced with this program, while
-    /// retaining the attachment target and its options. Other links managed by this program
-    /// are unaffected. The returned ID can be used with [`Self::detach`] or [`Self::take_link`].
-    ///
-    /// The link is consumed even if adoption fails. For a file-descriptor-backed link,
-    /// failure closes this reference and may detach the previous program if there are no
-    /// other references or pins keeping the link alive.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if this program is not loaded, the new program is incompatible
-    /// with the attachment, or the kernel or link backend does not support updating it.
-    /// Legacy `BPF_PROG_ATTACH` links return
-    /// [`LinkError::InvalidLink`](crate::programs::links::LinkError::InvalidLink).
-    pub fn adopt_link(&mut self, link: XdpLink) -> Result<XdpLinkId, ProgramError> {
-        let prog_fd = self.fd()?;
-        let prog_fd = prog_fd.as_fd();
-        match link.into_inner() {
-            XdpLinkInner::Fd(fd_link) => {
-                let link_fd = fd_link.fd;
-                bpf_link_update(link_fd.as_fd(), prog_fd, None, 0).map_err(|io_error| {
-                    SyscallError {
-                        call: "bpf_link_update",
-                        io_error,
-                    }
-                })?;
-
-                self.data
-                    .links
-                    .insert(XdpLink::new(XdpLinkInner::Fd(FdLink::new(link_fd))))
-            }
-            XdpLinkInner::NlLink(NlLink {
-                if_index,
-                prog_fd: old_prog_fd,
-                mode,
-            }) => {
-                // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
-                let old_prog_fd = unsafe { BorrowedFd::borrow_raw(old_prog_fd) };
-                // Preserve the atomic replacement contract for netlink
-                // links: only replace the current XDP program if it still
-                // matches the program fd recorded in this link. The
-                // netlink API expresses that compare-and-replace operation
-                // with XDP_FLAGS_REPLACE and IFLA_XDP_EXPECTED_FD, which
-                // were added in Linux 5.7. On older kernels this request
-                // is expected to fail in the kernel instead of degrading to
-                // an unconditional replacement.
-                netlink_set_xdp_fd(if_index, Some(prog_fd), Some(old_prog_fd), mode)
-                    .map_err(XdpError::NetlinkError)?;
-
-                let prog_fd = prog_fd.as_raw_fd();
-                self.data
-                    .links
-                    .insert(XdpLink::new(XdpLinkInner::NlLink(NlLink {
-                        if_index,
-                        prog_fd,
-                        mode,
-                    })))
-            }
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -318,12 +252,45 @@ impl Link for XdpLinkInner {
     }
 }
 
+impl LinkUpdate for XdpLinkInner {
+    fn update(self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<Self, ProgramError> {
+        match self {
+            Self::Fd(link) => link.update(prog_fd, name).map(Self::Fd),
+            Self::NlLink(NlLink {
+                if_index,
+                prog_fd: old_prog_fd,
+                mode,
+            }) => {
+                // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
+                let old_prog_fd = unsafe { BorrowedFd::borrow_raw(old_prog_fd) };
+                // Preserve the atomic replacement contract for netlink
+                // links: only replace the current XDP program if it still
+                // matches the program fd recorded in this link. The
+                // netlink API expresses that compare-and-replace operation
+                // with XDP_FLAGS_REPLACE and IFLA_XDP_EXPECTED_FD, which
+                // were added in Linux 5.7. On older kernels this request
+                // is expected to fail in the kernel instead of degrading to
+                // an unconditional replacement.
+                netlink_set_xdp_fd(if_index, Some(prog_fd), Some(old_prog_fd), mode)
+                    .map_err(XdpError::NetlinkError)?;
+                Ok(Self::NlLink(NlLink {
+                    if_index,
+                    prog_fd: prog_fd.as_raw_fd(),
+                    mode,
+                }))
+            }
+        }
+    }
+}
+
 id_as_key!(XdpLinkInner, XdpLinkIdInner);
 
 impl_try_into_fdlink!(XdpLink, XdpLinkInner);
 impl_try_from_fdlink!(XdpLink, XdpLinkInner, bpf_link_type::BPF_LINK_TYPE_XDP);
 
 define_link_wrapper!(XdpLink, XdpLinkId, XdpLinkInner, XdpLinkIdInner, Xdp);
+
+impl_program_adopt_link!(Xdp, XdpLink, XdpLinkId);
 
 #[cfg(test)]
 mod tests {
