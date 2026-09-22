@@ -63,10 +63,22 @@ fn netlink_adopt_link_preserves_classid() {
 
     let link = prog.take_link(link_id).unwrap();
     assert_eq!(link.classid().unwrap(), Some(classid));
+    let priority = link.priority().unwrap();
+    let handle = link.handle().unwrap();
 
-    let new_link_id = prog.adopt_link(link).unwrap();
-    let new_link = prog.take_link(new_link_id).unwrap();
+    // Use a separate program instance so the returned ID must work with the
+    // receiving program even after the old owner is dropped.
+    let mut new_bpf = Ebpf::load(TCX).unwrap();
+    let new_prog: &mut SchedClassifier =
+        new_bpf.program_mut("tcx_next").unwrap().try_into().unwrap();
+    new_prog.load().unwrap();
+    let new_link_id = new_prog.adopt_link(link).unwrap();
+    drop(bpf);
+    let new_link = new_prog.take_link(new_link_id).unwrap();
+    // Check the metadata retained by the link wrapper after adoption.
     assert_eq!(new_link.classid().unwrap(), Some(classid));
+    assert_eq!(new_link.priority().unwrap(), priority);
+    assert_eq!(new_link.handle().unwrap(), handle);
 }
 
 /// Verify that [`TcHandle::AUTO_ASSIGN`] triggers kernel allocation: the

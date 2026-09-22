@@ -4,7 +4,7 @@ use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
-    programs::{ProgramError, Xdp, XdpError, XdpMode, xdp::XdpLinkId},
+    programs::{ProgramError, Xdp, XdpError, XdpMode, links::FdLink, xdp::XdpLinkId},
     sys::is_devmap_prog_id_supported,
     test_helpers::NetNsGuard,
     util::KernelVersion,
@@ -12,6 +12,8 @@ use aya::{
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use rstest::rstest;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
+
+use super::load::assert_link_program;
 
 #[test_log::test]
 fn attach_by_index() {
@@ -23,6 +25,49 @@ fn attach_by_index() {
     assert_ne!(index, 0);
     let id = xdp.attach(index, XdpMode::Skb).unwrap();
     xdp.detach(id).unwrap();
+}
+
+#[test_log::test]
+fn adopt_link_transfers_ownership() {
+    if KernelVersion::current().unwrap() < KernelVersion::new(5, 9, 0) {
+        eprintln!("skipping test - XDP BPF links require Linux 5.9");
+        return;
+    }
+    let _netns = NetNsGuard::new().unwrap();
+    let mut old_bpf = Ebpf::load(crate::XDP_SEC).unwrap();
+    let old: &mut Xdp = old_bpf
+        .program_mut("xdp_plain")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    old.load().unwrap();
+    let id = old.attach("lo", XdpMode::Skb).unwrap();
+    let link = old.take_link(id).unwrap();
+    let link = FdLink::try_from(link).unwrap();
+    // Keep the kernel link ID to distinguish updating a link from creating a new one.
+    let kernel_id = link.info().unwrap().id();
+
+    let mut new_bpf = Ebpf::load(crate::XDP_SEC).unwrap();
+    let new: &mut Xdp = new_bpf
+        .program_mut("xdp_plain")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    new.load().unwrap();
+    let program_id = new.info().unwrap().id();
+    let id = new.adopt_link(link.try_into().unwrap()).unwrap();
+    // Dropping the old owner must leave the same link attached to the new program.
+    drop(old_bpf);
+
+    let link = FdLink::try_from(new.take_link(id).unwrap()).unwrap();
+    let info = link.info().unwrap();
+    assert_eq!(info.id(), kernel_id);
+    assert_eq!(info.program_id(), program_id);
+
+    // The receiving program must also be able to adopt its own link and detach it.
+    let id = new.adopt_link(link.try_into().unwrap()).unwrap();
+    new.detach(id).unwrap();
+    assert_link_program(kernel_id, None);
 }
 
 #[rstest]
