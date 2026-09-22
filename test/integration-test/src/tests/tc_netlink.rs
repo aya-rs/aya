@@ -1,9 +1,14 @@
+use std::io;
+
 use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     programs::{
-        ProgramError, SchedClassifier, TcAttach, TcAttachType,
-        tc::{NlOptions, TcError, TcHandle, qdisc_add_clsact, qdisc_detach_program},
+        Link as _, ProgramError, SchedClassifier, TcAttach, TcAttachType,
+        tc::{
+            NlOptions, SchedClassifierLink, TcError, TcHandle, qdisc_add_clsact,
+            qdisc_detach_program,
+        },
     },
     test_helpers::NetNsGuard,
 };
@@ -77,6 +82,24 @@ fn netlink_attach_auto_assigns_handle() {
 
     let link = prog.take_link(link_id).unwrap();
     assert_ne!(link.handle().unwrap(), TcHandle::AUTO_ASSIGN);
+    let reconstructed = SchedClassifierLink::from_netlink_parts(
+        c"lo",
+        link.parent().unwrap(),
+        link.priority().unwrap(),
+        link.handle().unwrap(),
+        link.classid().unwrap(),
+    )
+    .unwrap();
+    // The original netlink wrapper owns no fd. Only the reconstructed wrapper
+    // should detach the filter shared by these two wrappers.
+    let _original_link = std::mem::ManuallyDrop::new(link);
+    reconstructed.detach().unwrap();
+    assert_matches!(
+        qdisc_detach_program(c"lo", TcAttachType::Ingress.into(), "tcx_next"),
+        Err(TcError::IoError(error)) => {
+            assert_eq!(error.kind(), io::ErrorKind::NotFound);
+        }
+    );
 }
 
 /// Verify that an explicit [`TcHandle`] is preserved across netlink attach.
