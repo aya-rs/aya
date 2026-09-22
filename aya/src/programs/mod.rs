@@ -76,7 +76,7 @@ pub mod xdp;
 use std::{
     borrow::Cow,
     convert::Infallible,
-    ffi::CString,
+    ffi::{CString, NulError},
     io,
     os::fd::{AsFd, BorrowedFd},
     path::{Path, PathBuf},
@@ -147,8 +147,65 @@ use crate::{
         bpf_prog_get_fd_by_id, bpf_prog_query, bpf_prog_test_run, bpf_prog_test_run_raw_tp,
         bpf_prog_test_run_tracing, iter_link_ids, retry_with_verifier_logs,
     },
-    util::KernelVersion,
+    util::{KernelVersion, ifindex_from_ifname},
 };
+
+/// A network interface identified by name or index.
+///
+/// Names are resolved in the calling thread's network namespace when an operation is performed.
+/// Indices must refer to an interface in that same namespace.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum NetworkInterface<'a> {
+    /// The name of the interface, such as `"eth0"`.
+    Name(&'a str),
+    /// The interface index. Existence is not checked when resolving this variant.
+    Index(u32),
+}
+
+impl NetworkInterface<'_> {
+    pub(crate) fn if_index(self) -> io::Result<u32> {
+        match self {
+            Self::Name(name) => ifindex_from_ifname(&CString::new(name)?),
+            Self::Index(index) => Ok(index),
+        }
+    }
+
+    pub(crate) fn if_index_for_program(self) -> Result<u32, ProgramError> {
+        match self {
+            Self::Name(name) => {
+                let if_name =
+                    CString::new(name).map_err(|source| ProgramError::InvalidInterfaceName {
+                        name: name.to_owned(),
+                        source,
+                    })?;
+                ifindex_from_ifname(&if_name).map_err(|io_error| match io_error.raw_os_error() {
+                    // if_nametoindex uses SIOCGIFINDEX, which returns ENODEV for a missing interface.
+                    // https://github.com/torvalds/linux/blob/ffc253263/net/core/dev_ioctl.c#L138-L169
+                    // https://github.com/bminor/glibc/blob/04e750e75/sysdeps/unix/sysv/linux/if_index.c#L45-L51
+                    Some(libc::ENODEV) => ProgramError::UnknownInterface {
+                        name: name.to_owned(),
+                    },
+                    _ => ProgramError::IOError(io_error),
+                })
+            }
+            Self::Index(index) => Ok(index),
+        }
+    }
+}
+
+// `impl Into<NetworkInterface>` does not apply deref coercion, so support
+// borrowed string-like types through `AsRef<str>`.
+impl<'a, T: AsRef<str> + ?Sized> From<&'a T> for NetworkInterface<'a> {
+    fn from(name: &'a T) -> Self {
+        Self::Name(name.as_ref())
+    }
+}
+
+impl From<u32> for NetworkInterface<'_> {
+    fn from(index: u32) -> Self {
+        Self::Index(index)
+    }
+}
 
 /// Error type returned when working with programs.
 #[derive(Debug, Error)]
@@ -192,6 +249,16 @@ pub enum ProgramError {
     UnknownInterface {
         /// interface name
         name: String,
+    },
+
+    /// The network interface name contains an interior NUL byte.
+    #[error("invalid network interface name {name}")]
+    InvalidInterfaceName {
+        /// The interface name.
+        name: String,
+        /// The error returned by [`CString::new`].
+        #[source]
+        source: NulError,
     },
 
     /// The program is not of the expected type.
@@ -752,7 +819,7 @@ fn load_program<T: Link>(
         kernel_version.unwrap_or_else(|| KernelVersion::current().map_or(0, KernelVersion::code));
 
     let prog_name = if let Some(name) = name.as_deref() {
-        let prog_name = CString::new(name).map_err(|err @ std::ffi::NulError { .. }| {
+        let prog_name = CString::new(name).map_err(|err @ NulError { .. }| {
             let name = err.into_vec();
             let name = unsafe { String::from_utf8_unchecked(name) };
             ProgramError::InvalidName { name }
@@ -1638,4 +1705,39 @@ pub fn loaded_links() -> impl Iterator<Item = Result<LinkInfo, LinkError>> {
             let fd = fd?;
             LinkInfo::new_from_fd(fd.as_fd())
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{borrow::Cow, io, rc::Rc, sync::Arc};
+
+    use assert_matches::assert_matches;
+    use rstest::rstest;
+
+    use super::{NetworkInterface, ProgramError};
+
+    #[rstest]
+    #[case(0)]
+    #[case(u32::MAX)]
+    fn network_interface_index_is_not_validated(#[case] index: u32) {
+        assert_eq!(NetworkInterface::from(index).if_index().unwrap(), index);
+    }
+
+    #[rstest]
+    #[case("lo\0")]
+    #[case(&"lo\0")]
+    #[case(String::from("lo\0"))]
+    #[case(Box::<str>::from("lo\0"))]
+    #[case(Rc::<str>::from("lo\0"))]
+    #[case(Arc::<str>::from("lo\0"))]
+    #[case(Cow::Borrowed("lo\0"))]
+    fn network_interface_rejects_interior_nul(#[case] name: impl AsRef<str>) {
+        let interface = NetworkInterface::from(&name);
+        let error = interface.if_index().unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+
+        let error = interface.if_index_for_program().unwrap_err();
+        assert_matches!(error, ProgramError::InvalidInterfaceName { name: actual, source }
+            if actual == name.as_ref() && source.nul_position() == 2);
+    }
 }
