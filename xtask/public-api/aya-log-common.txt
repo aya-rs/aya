@@ -23,7 +23,7 @@ pub aya_log_common::ArgumentKind::U64
 pub aya_log_common::ArgumentKind::U8
 pub aya_log_common::ArgumentKind::Usize
 impl core::clone::Clone for aya_log_common::ArgumentKind
-pub fn aya_log_common::ArgumentKind::clone(&self) -> aya_log_common::ArgumentKind
+pub fn aya_log_common::ArgumentKind::clone(&self) -> Self
 impl core::convert::From<aya_log_common::ArgumentKind> for u8
 pub fn u8::from(aya_log_common::ArgumentKind) -> Self
 impl core::fmt::Debug for aya_log_common::ArgumentKind
@@ -47,10 +47,10 @@ pub aya_log_common::DisplayHint::UpperMac
 impl aya_log_common::Argument for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::as_argument(&self) -> (aya_log_common::ArgumentKind, impl core::convert::AsRef<[u8]>)
 impl core::clone::Clone for aya_log_common::DisplayHint
-pub fn aya_log_common::DisplayHint::clone(&self) -> aya_log_common::DisplayHint
+pub fn aya_log_common::DisplayHint::clone(&self) -> Self
 impl core::cmp::Eq for aya_log_common::DisplayHint
 impl core::cmp::PartialEq for aya_log_common::DisplayHint
-pub fn aya_log_common::DisplayHint::eq(&self, &aya_log_common::DisplayHint) -> bool
+pub fn aya_log_common::DisplayHint::eq(&self, &Self) -> bool
 impl core::convert::From<aya_log_common::DisplayHint> for u8
 pub fn u8::from(aya_log_common::DisplayHint) -> Self
 impl core::fmt::Debug for aya_log_common::DisplayHint
@@ -71,10 +71,10 @@ pub aya_log_common::Level::Info
 pub aya_log_common::Level::Trace
 pub aya_log_common::Level::Warn
 impl core::clone::Clone for aya_log_common::Level
-pub fn aya_log_common::Level::clone(&self) -> aya_log_common::Level
+pub fn aya_log_common::Level::clone(&self) -> Self
 impl core::cmp::Eq for aya_log_common::Level
 impl core::cmp::PartialEq for aya_log_common::Level
-pub fn aya_log_common::Level::eq(&self, &aya_log_common::Level) -> bool
+pub fn aya_log_common::Level::eq(&self, &Self) -> bool
 impl core::convert::From<aya_log_common::Level> for u8
 pub fn u8::from(aya_log_common::Level) -> Self
 impl core::fmt::Debug for aya_log_common::Level
@@ -98,7 +98,7 @@ pub aya_log_common::RecordFieldKind::Module
 pub aya_log_common::RecordFieldKind::NumArgs
 pub aya_log_common::RecordFieldKind::Target
 impl core::clone::Clone for aya_log_common::RecordFieldKind
-pub fn aya_log_common::RecordFieldKind::clone(&self) -> aya_log_common::RecordFieldKind
+pub fn aya_log_common::RecordFieldKind::clone(&self) -> Self
 impl core::convert::From<aya_log_common::RecordFieldKind> for u8
 pub fn u8::from(aya_log_common::RecordFieldKind) -> Self
 impl core::fmt::Debug for aya_log_common::RecordFieldKind

@@ -1224,10 +1224,10 @@ pub aya_ebpf::maps::perf::PerfEventValue::counter: u64
 pub aya_ebpf::maps::perf::PerfEventValue::enabled_nanos: u64
 pub aya_ebpf::maps::perf::PerfEventValue::running_nanos: u64
 impl core::clone::Clone for aya_ebpf::maps::perf::PerfEventValue
-pub fn aya_ebpf::maps::perf::PerfEventValue::clone(&self) -> aya_ebpf::maps::perf::PerfEventValue
+pub fn aya_ebpf::maps::perf::PerfEventValue::clone(&self) -> Self
 impl core::cmp::Eq for aya_ebpf::maps::perf::PerfEventValue
 impl core::cmp::PartialEq for aya_ebpf::maps::perf::PerfEventValue
-pub fn aya_ebpf::maps::perf::PerfEventValue::eq(&self, &aya_ebpf::maps::perf::PerfEventValue) -> bool
+pub fn aya_ebpf::maps::perf::PerfEventValue::eq(&self, &Self) -> bool
 impl core::fmt::Debug for aya_ebpf::maps::perf::PerfEventValue
 pub fn aya_ebpf::maps::perf::PerfEventValue::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf::maps::perf::PerfEventValue
@@ -1432,7 +1432,7 @@ pub struct aya_ebpf::maps::xdp::DevMapValue
 pub aya_ebpf::maps::xdp::DevMapValue::if_index: u32
 pub aya_ebpf::maps::xdp::DevMapValue::prog_id: core::option::Option<core::num::nonzero::NonZeroU32>
 impl core::clone::Clone for aya_ebpf::maps::xdp::DevMapValue
-pub fn aya_ebpf::maps::xdp::DevMapValue::clone(&self) -> aya_ebpf::maps::xdp::DevMapValue
+pub fn aya_ebpf::maps::xdp::DevMapValue::clone(&self) -> Self
 impl core::marker::Copy for aya_ebpf::maps::xdp::DevMapValue
 impl core::marker::Freeze for aya_ebpf::maps::xdp::DevMapValue
 impl core::marker::Send for aya_ebpf::maps::xdp::DevMapValue
@@ -1687,10 +1687,10 @@ pub aya_ebpf::maps::PerfEventValue::counter: u64
 pub aya_ebpf::maps::PerfEventValue::enabled_nanos: u64
 pub aya_ebpf::maps::PerfEventValue::running_nanos: u64
 impl core::clone::Clone for aya_ebpf::maps::perf::PerfEventValue
-pub fn aya_ebpf::maps::perf::PerfEventValue::clone(&self) -> aya_ebpf::maps::perf::PerfEventValue
+pub fn aya_ebpf::maps::perf::PerfEventValue::clone(&self) -> Self
 impl core::cmp::Eq for aya_ebpf::maps::perf::PerfEventValue
 impl core::cmp::PartialEq for aya_ebpf::maps::perf::PerfEventValue
-pub fn aya_ebpf::maps::perf::PerfEventValue::eq(&self, &aya_ebpf::maps::perf::PerfEventValue) -> bool
+pub fn aya_ebpf::maps::perf::PerfEventValue::eq(&self, &Self) -> bool
 impl core::fmt::Debug for aya_ebpf::maps::perf::PerfEventValue
 pub fn aya_ebpf::maps::perf::PerfEventValue::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_ebpf::maps::perf::PerfEventValue

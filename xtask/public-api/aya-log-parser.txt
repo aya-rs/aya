@@ -3,10 +3,10 @@ pub enum aya_log_parser::Fragment
 pub aya_log_parser::Fragment::Literal(alloc::string::String)
 pub aya_log_parser::Fragment::Parameter(aya_log_parser::Parameter)
 impl core::clone::Clone for aya_log_parser::Fragment
-pub fn aya_log_parser::Fragment::clone(&self) -> aya_log_parser::Fragment
+pub fn aya_log_parser::Fragment::clone(&self) -> Self
 impl core::cmp::Eq for aya_log_parser::Fragment
 impl core::cmp::PartialEq for aya_log_parser::Fragment
-pub fn aya_log_parser::Fragment::eq(&self, &aya_log_parser::Fragment) -> bool
+pub fn aya_log_parser::Fragment::eq(&self, &Self) -> bool
 impl core::fmt::Debug for aya_log_parser::Fragment
 pub fn aya_log_parser::Fragment::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::StructuralPartialEq for aya_log_parser::Fragment
@@ -20,10 +20,10 @@ impl core::panic::unwind_safe::UnwindSafe for aya_log_parser::Fragment
 pub struct aya_log_parser::Parameter
 pub aya_log_parser::Parameter::hint: aya_log_common::DisplayHint
 impl core::clone::Clone for aya_log_parser::Parameter
-pub fn aya_log_parser::Parameter::clone(&self) -> aya_log_parser::Parameter
+pub fn aya_log_parser::Parameter::clone(&self) -> Self
 impl core::cmp::Eq for aya_log_parser::Parameter
 impl core::cmp::PartialEq for aya_log_parser::Parameter
-pub fn aya_log_parser::Parameter::eq(&self, &aya_log_parser::Parameter) -> bool
+pub fn aya_log_parser::Parameter::eq(&self, &Self) -> bool
 impl core::fmt::Debug for aya_log_parser::Parameter
 pub fn aya_log_parser::Parameter::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::StructuralPartialEq for aya_log_parser::Parameter
