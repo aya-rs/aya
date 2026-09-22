@@ -6,7 +6,7 @@ use std::{
     fs::{self, File},
     io::{self, Write as _},
     path::{Path, PathBuf},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use anyhow::{Context as _, Result, anyhow, bail};
@@ -39,16 +39,31 @@ impl HttpClient {
     }
 
     pub(crate) fn get_text(&self, url: &str) -> Result<String> {
+        let start = Instant::now();
         let mut response = self
             .agent
             .get(url)
             .header("User-Agent", USER_AGENT)
             .call()
-            .with_context(|| format!("GET {url} failed"))?;
-        response
-            .body_mut()
-            .read_to_string()
-            .with_context(|| format!("read response body from {url} failed"))
+            .with_context(|| format!("GET {url} failed after {:?}", start.elapsed()))?;
+        println!(
+            "GET {url}: received headers in {:?} ({})",
+            start.elapsed(),
+            response.status()
+        );
+        let start = Instant::now();
+        let text = response.body_mut().read_to_string().with_context(|| {
+            format!(
+                "read response body from {url} failed after {:?}",
+                start.elapsed()
+            )
+        })?;
+        println!(
+            "GET {url}: read {} bytes in {:?}",
+            text.len(),
+            start.elapsed()
+        );
+        Ok(text)
     }
 
     pub(crate) fn download_to_dir(&self, url: &str, output_dir: &Path) -> Result<PathBuf> {
@@ -201,7 +216,7 @@ pub(crate) fn url_file_name(url: &str) -> Result<&str> {
 
 #[cfg(test)]
 mod tests {
-    use std::{io::BufRead as _, net::TcpListener, thread, time::Instant};
+    use std::{io::BufRead as _, net::TcpListener, thread};
 
     use super::*;
 
