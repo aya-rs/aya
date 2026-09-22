@@ -490,10 +490,11 @@ fn pin_tcx_link() {
 
 #[test_log::test]
 fn pin_cgroup_link() {
-    // bpf_link for cgroup programs requires kernel >= 5.7; below that `attach`
-    // produces a BPF_PROG_ATTACH link, which cannot be pinned or updated.
+    // Pinning cgroup links is supported since 5.7, but restoring the typed link
+    // from its FD needs link info (5.8) to recover the actual attach type.
+    // https://github.com/torvalds/linux/blob/f2e10bff1/kernel/bpf/cgroup.c#L855-L869
     let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 7, 0) {
+    if kernel_version < KernelVersion::new(5, 8, 0) {
         eprintln!("skipping pin_cgroup_link test on kernel {kernel_version:?}");
         return;
     }
