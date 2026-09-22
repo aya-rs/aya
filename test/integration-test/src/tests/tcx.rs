@@ -4,7 +4,7 @@ use aya::{
     Ebpf,
     maps::Array,
     programs::{
-        LinkOrder, ProgramId, SchedClassifier, TcAttachType,
+        LinkOrder, NetworkInterface, ProgramId, SchedClassifier, TcAttachType,
         tc::{NlOptions, TcAttachOptions, qdisc_add_clsact},
     },
     test_helpers::NetNsGuard,
@@ -18,18 +18,26 @@ use rstest::rstest;
 #[test_attr(test_log::test)]
 fn tc_attach(
     #[values(TcAttachType::Ingress, TcAttachType::Egress)] attach_type: TcAttachType,
+    #[values(false, true)] by_index: bool,
     #[case] options: Option<TcAttachOptions>,
 ) {
     let _netns = NetNsGuard::new().unwrap();
-    qdisc_add_clsact("lo").unwrap();
+    let index = unsafe { libc::if_nametoindex(c"lo".as_ptr()) };
+    assert_ne!(index, 0);
+    let interface = if by_index {
+        NetworkInterface::Index(index)
+    } else {
+        NetworkInterface::Name("lo")
+    };
+    qdisc_add_clsact(interface).unwrap();
 
     let mut ebpf = Ebpf::load(crate::TCX).unwrap();
     let mut seen: Array<_, u32> = ebpf.take_map("SEEN").unwrap().try_into().unwrap();
     let prog: &mut SchedClassifier = ebpf.program_mut("tcx_next").unwrap().try_into().unwrap();
     prog.load().unwrap();
     let link = match options {
-        None => prog.attach("lo", attach_type),
-        Some(options) => prog.attach_with_options("lo", attach_type, options),
+        None => prog.attach(interface, attach_type),
+        Some(options) => prog.attach_with_options(interface, attach_type, options),
     }
     .unwrap();
 
@@ -143,13 +151,18 @@ fn tcx_link_order() {
     .map(|program| program.info().unwrap().id())
     .collect::<Vec<_>>();
 
-    let (revision, got_order) = SchedClassifier::query_tcx("lo", TcAttachType::Ingress).unwrap();
-    assert_eq!(revision, (expected_order.len() + 1) as u64);
-    assert_eq!(
-        got_order
-            .iter()
-            .map(aya::programs::ProgramInfo::id)
-            .collect::<Vec<_>>(),
-        expected_order
-    );
+    let index = unsafe { libc::if_nametoindex(c"lo".as_ptr()) };
+    assert_ne!(index, 0);
+    for interface in [NetworkInterface::Name("lo"), NetworkInterface::Index(index)] {
+        let (revision, got_order) =
+            SchedClassifier::query_tcx(interface, TcAttachType::Ingress).unwrap();
+        assert_eq!(revision, (expected_order.len() + 1) as u64);
+        assert_eq!(
+            got_order
+                .iter()
+                .map(aya::programs::ProgramInfo::id)
+                .collect::<Vec<_>>(),
+            expected_order
+        );
+    }
 }

@@ -2,7 +2,6 @@
 
 use std::{
     convert::Infallible,
-    ffi::CString,
     hash::Hash,
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
     path::Path,
@@ -20,8 +19,9 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, Link, ProgramData, ProgramError, ProgramType, define_link_wrapper, id_as_key,
-        impl_try_from_fdlink, impl_try_into_fdlink, load_program_with_attach_type,
+        FdLink, Link, NetworkInterface, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, id_as_key, impl_try_from_fdlink, impl_try_into_fdlink,
+        load_program_with_attach_type,
     },
     sys::{
         LinkTarget, NetlinkError, SyscallError, bpf_link_create, bpf_link_update,
@@ -101,42 +101,31 @@ impl Xdp {
         load_program_with_attach_type(BPF_PROG_TYPE_XDP, *attach_type, data)
     }
 
-    /// Attaches the program to the given `interface`.
+    /// Attaches the program to an interface specified by name or index.
+    ///
+    /// Pass a name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
     ///
     /// The returned value can be used to detach, see [`Xdp::detach`].
     ///
     /// # Errors
     ///
-    /// If the given `interface` does not exist
+    /// If the given interface name is invalid or does not exist,
     /// [`ProgramError::UnknownInterface`] is returned.
     ///
     /// When `bpf_link_create` is unavailable or rejects the request, the call
     /// transparently falls back to the legacy netlink-based attach path.
-    pub fn attach(&mut self, interface: &str, mode: XdpMode) -> Result<XdpLinkId, ProgramError> {
-        // TODO: avoid this unwrap by adding a new error variant.
-        let c_interface = CString::new(interface).unwrap();
-        let if_index = unsafe { libc::if_nametoindex(c_interface.as_ptr()) };
-        if if_index == 0 {
-            return Err(ProgramError::UnknownInterface {
-                name: interface.to_string(),
-            });
-        }
-        self.attach_to_if_index(if_index, mode)
-    }
-
-    /// Attaches the program to the given interface index.
-    ///
-    /// The returned value can be used to detach, see [`Xdp::detach`].
-    ///
-    /// # Errors
-    ///
-    /// When `bpf_link_create` is unavailable or rejects the request, the call
-    /// transparently falls back to the legacy netlink-based attach path.
-    pub fn attach_to_if_index(
+    pub fn attach<'a>(
         &mut self,
-        if_index: u32,
+        interface: impl Into<NetworkInterface<'a>>,
         mode: XdpMode,
     ) -> Result<XdpLinkId, ProgramError> {
+        let interface = interface.into();
+        let if_index = interface.if_index().map_err(|error| match interface {
+            NetworkInterface::Name(name) => ProgramError::UnknownInterface {
+                name: name.to_owned(),
+            },
+            NetworkInterface::Index(_) => ProgramError::IOError(error),
+        })?;
         let Self { data, attach_type } = self;
         let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
@@ -322,3 +311,37 @@ impl_try_into_fdlink!(XdpLink, XdpLinkInner);
 impl_try_from_fdlink!(XdpLink, XdpLinkInner, bpf_link_type::BPF_LINK_TYPE_XDP);
 
 define_link_wrapper!(XdpLink, XdpLinkId, XdpLinkInner, XdpLinkIdInner, Xdp);
+
+#[cfg(test)]
+mod tests {
+    use std::{mem, os::fd::FromRawFd as _};
+
+    use assert_matches::assert_matches;
+    use rstest::rstest;
+
+    use super::*;
+    use crate::{MockableFd, sys::override_syscall};
+
+    #[rstest]
+    #[case::lookup_failure("interface-name-longer-than-IFNAMSIZ")]
+    #[case::interior_nul("lo\0")]
+    fn attach_rejects_invalid_interface_name(#[case] name: &str) {
+        override_syscall(|call| panic!("unexpected syscall: {call:?}"));
+        let mut xdp = Xdp {
+            data: ProgramData::from_bpf_prog_info(
+                None,
+                unsafe { MockableFd::from_raw_fd(MockableFd::mock_signed_fd()) },
+                Path::new(""),
+                unsafe { mem::zeroed() },
+                VerifierLogLevel::default(),
+            )
+            .unwrap(),
+            attach_type: XdpAttachType::Interface,
+        };
+
+        assert_matches!(
+            xdp.attach(name, XdpMode::Skb),
+            Err(ProgramError::UnknownInterface { name: actual }) if actual == name
+        );
+    }
+}

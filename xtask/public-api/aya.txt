@@ -5069,12 +5069,12 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::NlOptions
 pub struct aya::programs::tc::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub const aya::programs::tc::SchedClassifier::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::tc::SchedClassifier::attach(&mut self, &str, aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::attach<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::attach_to_link(&mut self, aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::attach_with_options(&mut self, &str, aya::programs::tc::TcAttachType, aya::programs::tc::TcAttachOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::attach_with_options<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType, aya::programs::tc::TcAttachOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::query_tcx(&str, aya::programs::tc::TcAttachType) -> core::result::Result<(u64, alloc::vec::Vec<aya::programs::ProgramInfo>), aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::query_tcx<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType) -> core::result::Result<(u64, alloc::vec::Vec<aya::programs::ProgramInfo>), aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::detach(&mut self, aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::take_link(&mut self, aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<aya::programs::tc::SchedClassifierLink, aya::programs::ProgramError>
@@ -5115,7 +5115,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifier
 pub struct aya::programs::tc::SchedClassifierLink(_)
 impl aya::programs::tc::SchedClassifierLink
 pub fn aya::programs::tc::SchedClassifierLink::attach_type(&self) -> core::result::Result<aya::programs::tc::TcAttachType, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifierLink::attached(&str, aya::programs::tc::TcAttachType, u16, aya::programs::tc::TcHandle, core::option::Option<aya::programs::tc::TcHandle>) -> core::result::Result<Self, core::io::error::Error>
+pub fn aya::programs::tc::SchedClassifierLink::attached<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType, u16, aya::programs::tc::TcHandle, core::option::Option<aya::programs::tc::TcHandle>) -> core::result::Result<Self, core::io::error::Error>
 pub fn aya::programs::tc::SchedClassifierLink::classid(&self) -> core::result::Result<core::option::Option<aya::programs::tc::TcHandle>, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifierLink::handle(&self) -> core::result::Result<aya::programs::tc::TcHandle, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifierLink::priority(&self) -> core::result::Result<u16, aya::programs::ProgramError>
@@ -5199,8 +5199,8 @@ impl core::marker::Unpin for aya::programs::tc::TcHandle
 impl core::marker::UnsafeUnpin for aya::programs::tc::TcHandle
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcHandle
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcHandle
-pub fn aya::programs::tc::qdisc_add_clsact(&str) -> core::result::Result<(), aya::programs::tc::TcError>
-pub fn aya::programs::tc::qdisc_detach_program(&str, aya::programs::tc::TcAttachType, &str) -> core::result::Result<(), aya::programs::tc::TcError>
+pub fn aya::programs::tc::qdisc_add_clsact<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>) -> core::result::Result<(), aya::programs::tc::TcError>
+pub fn aya::programs::tc::qdisc_detach_program<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType, &str) -> core::result::Result<(), aya::programs::tc::TcError>
 pub mod aya::programs::tp_btf
 pub struct aya::programs::tp_btf::BtfTracePoint
 impl aya::programs::tp_btf::BtfTracePoint
@@ -5666,8 +5666,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpMode
 pub struct aya::programs::xdp::Xdp
 impl aya::programs::xdp::Xdp
 pub const aya::programs::xdp::Xdp::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::xdp::Xdp::attach(&mut self, &str, aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
-pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, u32, aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::attach<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::attach_to_link(&mut self, aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
@@ -5828,6 +5827,31 @@ impl core::marker::Unpin for aya::programs::LsmAttachType
 impl core::marker::UnsafeUnpin for aya::programs::LsmAttachType
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::LsmAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::LsmAttachType
+pub enum aya::programs::NetworkInterface<'a>
+pub aya::programs::NetworkInterface::Index(u32)
+pub aya::programs::NetworkInterface::Name(&'a str)
+impl core::convert::From<u32> for aya::programs::NetworkInterface<'_>
+pub fn aya::programs::NetworkInterface<'_>::from(u32) -> Self
+impl<'a> core::clone::Clone for aya::programs::NetworkInterface<'a>
+pub fn aya::programs::NetworkInterface<'a>::clone(&self) -> aya::programs::NetworkInterface<'a>
+impl<'a> core::cmp::Eq for aya::programs::NetworkInterface<'a>
+impl<'a> core::cmp::PartialEq for aya::programs::NetworkInterface<'a>
+pub fn aya::programs::NetworkInterface<'a>::eq(&self, &aya::programs::NetworkInterface<'a>) -> bool
+impl<'a> core::convert::From<&'a alloc::string::String> for aya::programs::NetworkInterface<'a>
+pub fn aya::programs::NetworkInterface<'a>::from(&'a alloc::string::String) -> Self
+impl<'a> core::convert::From<&'a str> for aya::programs::NetworkInterface<'a>
+pub fn aya::programs::NetworkInterface<'a>::from(&'a str) -> Self
+impl<'a> core::fmt::Debug for aya::programs::NetworkInterface<'a>
+pub fn aya::programs::NetworkInterface<'a>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<'a> core::marker::Copy for aya::programs::NetworkInterface<'a>
+impl<'a> core::marker::StructuralPartialEq for aya::programs::NetworkInterface<'a>
+impl<'a> core::marker::Freeze for aya::programs::NetworkInterface<'a>
+impl<'a> core::marker::Send for aya::programs::NetworkInterface<'a>
+impl<'a> core::marker::Sync for aya::programs::NetworkInterface<'a>
+impl<'a> core::marker::Unpin for aya::programs::NetworkInterface<'a>
+impl<'a> core::marker::UnsafeUnpin for aya::programs::NetworkInterface<'a>
+impl<'a> core::panic::unwind_safe::RefUnwindSafe for aya::programs::NetworkInterface<'a>
+impl<'a> core::panic::unwind_safe::UnwindSafe for aya::programs::NetworkInterface<'a>
 pub enum aya::programs::ProbeKind
 pub aya::programs::ProbeKind::Entry
 pub aya::programs::ProbeKind::Return
@@ -7209,12 +7233,12 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::Reus
 pub struct aya::programs::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub const aya::programs::tc::SchedClassifier::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::tc::SchedClassifier::attach(&mut self, &str, aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::attach<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::attach_to_link(&mut self, aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::attach_with_options(&mut self, &str, aya::programs::tc::TcAttachType, aya::programs::tc::TcAttachOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::attach_with_options<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType, aya::programs::tc::TcAttachOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::query_tcx(&str, aya::programs::tc::TcAttachType) -> core::result::Result<(u64, alloc::vec::Vec<aya::programs::ProgramInfo>), aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::query_tcx<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType) -> core::result::Result<(u64, alloc::vec::Vec<aya::programs::ProgramInfo>), aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::detach(&mut self, aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::take_link(&mut self, aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<aya::programs::tc::SchedClassifierLink, aya::programs::ProgramError>
@@ -7633,8 +7657,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbe
 pub struct aya::programs::Xdp
 impl aya::programs::xdp::Xdp
 pub const aya::programs::xdp::Xdp::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::xdp::Xdp::attach(&mut self, &str, aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
-pub fn aya::programs::xdp::Xdp::attach_to_if_index(&mut self, u32, aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
+pub fn aya::programs::xdp::Xdp::attach<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::attach_to_link(&mut self, aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>

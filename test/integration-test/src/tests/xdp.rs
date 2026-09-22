@@ -13,6 +13,18 @@ use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use rstest::rstest;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
+#[test_log::test]
+fn attach_by_index() {
+    let _netns = NetNsGuard::new().unwrap();
+    let mut bpf = Ebpf::load(crate::XDP_SEC).unwrap();
+    let xdp: &mut Xdp = bpf.program_mut("xdp_plain").unwrap().try_into().unwrap();
+    xdp.load().unwrap();
+    let index = unsafe { libc::if_nametoindex(c"lo".as_ptr()) };
+    assert_ne!(index, 0);
+    let id = xdp.attach(index, XdpMode::Skb).unwrap();
+    xdp.detach(id).unwrap();
+}
+
 #[rstest]
 #[case::legacy("SOCKS", "redirect_sock")]
 #[case::btf("SOCKS_BTF", "redirect_sock_btf")]

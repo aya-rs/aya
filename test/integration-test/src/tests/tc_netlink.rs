@@ -106,12 +106,13 @@ fn netlink_attach_preserves_explicit_handle() {
 // The kernel's NLA_NUL_STRING limit excludes the trailing NUL. Adjacent lengths
 // also exercise the padding between TCA_BPF_NAME and TCA_BPF_FLAGS.
 #[rstest]
-#[case::unaligned(254, true)]
-#[case::aligned(255, true)]
-#[case::maximum(256, true)]
-#[case::too_long(257, false)]
+#[case::unaligned(254, true, false)]
+#[case::aligned(255, true, false)]
+#[case::maximum(256, true, false)]
+#[case::too_long(257, false, false)]
+#[case::by_index(16, true, true)]
 #[test_log::test]
-fn netlink_program_name(#[case] len: usize, #[case] valid: bool) {
+fn netlink_program_name(#[case] len: usize, #[case] valid: bool, #[case] by_index: bool) {
     let _netns = NetNsGuard::new().unwrap();
     qdisc_add_clsact("lo").unwrap();
 
@@ -133,7 +134,13 @@ fn netlink_program_name(#[case] len: usize, #[case] valid: bool) {
     if valid {
         let _link = prog.take_link(result.unwrap()).unwrap();
         // Looking up the full name verifies that the kernel received it intact.
-        qdisc_detach_program("lo", TcAttachType::Ingress, &name).unwrap();
+        if by_index {
+            let index = unsafe { libc::if_nametoindex(c"lo".as_ptr()) };
+            assert_ne!(index, 0);
+            qdisc_detach_program(index, TcAttachType::Ingress, &name).unwrap();
+        } else {
+            qdisc_detach_program("lo", TcAttachType::Ingress, &name).unwrap();
+        }
     } else {
         assert_matches!(result, Err(ProgramError::TcError(TcError::NetlinkError(err))) => {
             assert_eq!(err.to_string(), "program name exceeds CLS_BPF_NAME_LEN");
