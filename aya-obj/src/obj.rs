@@ -1701,6 +1701,58 @@ mod tests {
         Object::new(Endianness::Little, CString::new("GPL").unwrap(), None)
     }
 
+    #[rstest]
+    fn test_kconfig_datasec_size_matches_map(#[values(0, 4, 8)] original_size: u32) {
+        use crate::btf::{DataSec, Int, IntEncoding, Var, VarLinkage};
+
+        let mut obj = fake_obj();
+        let mut btf = Btf::new();
+        let int = btf.add_type(BtfType::Int(Int::new(0, 4, IntEncoding::None, 0)));
+        let name = btf.add_string("CONFIG_TEST");
+        let var = btf.add_type(BtfType::Var(Var::new(name, int, VarLinkage::Extern)));
+        let name = btf.add_string(".kconfig");
+        let section = btf.add_type(BtfType::DataSec(DataSec::new(
+            name,
+            vec![DataSecEntry {
+                btf_type: var,
+                offset: 0,
+                size: 4,
+            }],
+            original_size,
+        )));
+        obj.btf = Some(btf);
+        obj.symbol_table.insert(
+            1,
+            Symbol {
+                index: 1,
+                section_index: None,
+                name: Some("CONFIG_TEST".to_owned()),
+                address: 0,
+                size: 0,
+                is_definition: false,
+                is_external: true,
+                is_weak: false,
+                kind: SymbolKind::Unknown,
+            },
+        );
+        obj.prepare_kconfig_section(&HashMap::from([(
+            "CONFIG_TEST".to_owned(),
+            vec![1, 0, 0, 0, 0, 0, 0, 0],
+        )]))
+        .unwrap();
+        let map_size = obj.maps[".kconfig"].value_size();
+        assert_eq!(map_size, 4);
+
+        // rebuilding the section must replace its original size, including any padding
+        let btf = obj
+            .fixup_and_sanitize_btf(|| Some(|_: BtfFeature| true))
+            .unwrap()
+            .unwrap();
+        assert_matches!(btf.type_by_id(section).unwrap(), BtfType::DataSec(datasec) => {
+            assert_eq!(datasec.size, map_size);
+        });
+    }
+
     #[test]
     fn sanitizes_empty_btf_files_to_none() {
         let mut obj = fake_obj();
