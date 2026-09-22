@@ -13,16 +13,16 @@ use super::{FdLink, ProgramInfo};
 use crate::{
     VerifierLogLevel,
     programs::{
-        Link, LinkError, LinkOrder, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        id_as_key, impl_try_from_fdlink, impl_try_into_fdlink, load_program_without_attach_type,
-        query,
+        Link, LinkError, LinkOrder, NetworkInterface, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, id_as_key, impl_try_from_fdlink, impl_try_into_fdlink,
+        load_program_without_attach_type, query,
     },
     sys::{
         BpfLinkCreateArgs, LinkTarget, NetlinkError, NetlinkSocket, ProgQueryTarget, SyscallError,
         bpf_link_create, bpf_link_update, bpf_prog_get_fd_by_id, netlink_find_filter_with_name,
         netlink_qdisc_add_clsact, netlink_qdisc_attach, netlink_qdisc_detach,
     },
-    util::{KernelVersion, ifindex_from_ifname, tc_handler_make},
+    util::{KernelVersion, tc_handler_make},
 };
 
 /// Traffic control attach type.
@@ -215,7 +215,9 @@ impl SchedClassifier {
         load_program_without_attach_type(BPF_PROG_TYPE_SCHED_CLS, data)
     }
 
-    /// Attaches the program to the given `interface`.
+    /// Attaches the program to an interface specified by name or index.
+    ///
+    /// Pass a name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
     ///
     /// On kernels >= 6.6.0, it will attempt to use the TCX interface and attach as
     /// the last TCX program. On older kernels, it will fallback to using the
@@ -227,14 +229,16 @@ impl SchedClassifier {
     ///
     /// # Errors
     ///
+    /// [`TcError::IoError`] is returned if the interface name is invalid or does not exist.
+    ///
     /// When attaching fails, [`ProgramError::SyscallError`] is returned for
     /// kernels `>= 6.6.0`, and [`TcError::NetlinkError`] is returned for
     /// older kernels. A common cause of netlink attachment failure is not having added
     /// the `clsact` qdisc to the given interface, see [`qdisc_add_clsact`]
     ///
-    pub fn attach(
+    pub fn attach<'a>(
         &mut self,
-        interface: &str,
+        interface: impl Into<NetworkInterface<'a>>,
         attach_type: TcAttachType,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
         if !matches!(attach_type, TcAttachType::Custom(_)) && KernelVersion::at_least(6, 6, 0) {
@@ -253,6 +257,8 @@ impl SchedClassifier {
     }
 
     /// Attaches the program to the given `interface` with options defined in [`TcAttachOptions`].
+    ///
+    /// Pass a name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
     ///
     /// The returned value can be used to detach, see [`SchedClassifier::detach`].
     ///
@@ -302,16 +308,18 @@ impl SchedClassifier {
     ///
     /// # Errors
     ///
+    /// [`TcError::IoError`] is returned if the interface name is invalid or does not exist.
+    ///
     /// [`TcError::NetlinkError`] is returned if attaching fails. A common cause
     /// of failure is not having added the `clsact` qdisc to the given
     /// interface, see [`qdisc_add_clsact`].
-    pub fn attach_with_options(
+    pub fn attach_with_options<'a>(
         &mut self,
-        interface: &str,
+        interface: impl Into<NetworkInterface<'a>>,
         attach_type: TcAttachType,
         options: TcAttachOptions,
     ) -> Result<SchedClassifierLinkId, ProgramError> {
-        let if_index = ifindex_from_ifname(interface).map_err(TcError::IoError)?;
+        let if_index = interface.into().if_index().map_err(TcError::IoError)?;
         self.do_attach(if_index, attach_type, options, true)
     }
 
@@ -431,6 +439,8 @@ impl SchedClassifier {
 
     /// Queries a given interface for attached TCX programs.
     ///
+    /// Pass a name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
+    ///
     /// # Example
     ///
     /// ```no_run
@@ -443,11 +453,11 @@ impl SchedClassifier {
     /// let (revision, programs) = SchedClassifier::query_tcx("eth0", TcAttachType::Ingress)?;
     /// # Ok::<(), Error>(())
     /// ```
-    pub fn query_tcx(
-        interface: &str,
+    pub fn query_tcx<'a>(
+        interface: impl Into<NetworkInterface<'a>>,
         attach_type: TcAttachType,
     ) -> Result<(u64, Vec<ProgramInfo>), ProgramError> {
-        let if_index = ifindex_from_ifname(interface).map_err(TcError::IoError)?;
+        let if_index = interface.into().if_index().map_err(TcError::IoError)?;
 
         let (revision, prog_ids) = query(
             ProgQueryTarget::IfIndex(if_index),
@@ -574,9 +584,12 @@ impl SchedClassifierLink {
     /// Note: If you create a link for a program that you do not own, detaching it may have
     /// unintended consequences.
     ///
+    /// Pass a name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
+    ///
     /// # Errors
-    /// Returns [`io::Error`] if `if_name` is invalid. If the other parameters are invalid this call
-    /// will succeed, but calling [`SchedClassifierLink::detach`] will return [`TcError::NetlinkError`].
+    /// Returns [`io::Error`] if the interface name is invalid or does not exist. Interface indices
+    /// and the other parameters are not validated by this call; invalid values will cause a later
+    /// [`SchedClassifierLink::detach`] to return [`TcError::NetlinkError`].
     ///
     /// # Examples
     /// ```no_run
@@ -598,14 +611,14 @@ impl SchedClassifierLink {
     ///
     /// # Ok::<(), Error>(())
     /// ```
-    pub fn attached(
-        if_name: &str,
+    pub fn attached<'a>(
+        interface: impl Into<NetworkInterface<'a>>,
         attach_type: TcAttachType,
         priority: u16,
         handle: TcHandle,
         classid: Option<TcHandle>,
     ) -> Result<Self, io::Error> {
-        let if_index = ifindex_from_ifname(if_name)?;
+        let if_index = interface.into().if_index()?;
         Ok(Self(Some(TcLinkInner::NlLink(NlLink {
             if_index,
             attach_type,
@@ -653,29 +666,33 @@ impl SchedClassifierLink {
     }
 }
 
-/// Add the `clasct` qdisc to the given interface.
+/// Add the `clsact` qdisc to the given interface.
 ///
 /// The `clsact` qdisc must be added to an interface before [`SchedClassifier`]
 /// programs can be attached.
-pub fn qdisc_add_clsact(if_name: &str) -> Result<(), TcError> {
-    let if_index = ifindex_from_ifname(if_name)?;
+///
+/// Pass a name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
+pub fn qdisc_add_clsact<'a>(interface: impl Into<NetworkInterface<'a>>) -> Result<(), TcError> {
+    let if_index = interface.into().if_index()?;
     netlink_qdisc_add_clsact(if_index as i32).map_err(TcError::NetlinkError)
 }
 
 /// Detaches the programs with the given name.
+///
+/// Pass an interface name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
 ///
 /// # Errors
 ///
 /// Returns [`io::ErrorKind::NotFound`] to indicate that no programs with the
 /// given name were found, so nothing was detached. Other error kinds indicate
 /// an actual failure while detaching a program.
-pub fn qdisc_detach_program(
-    if_name: &str,
+pub fn qdisc_detach_program<'a>(
+    interface: impl Into<NetworkInterface<'a>>,
     attach_type: TcAttachType,
     name: &str,
 ) -> Result<(), TcError> {
     let cstr = CString::new(name).map_err(TcError::NulError)?;
-    let if_index = ifindex_from_ifname(if_name)? as i32;
+    let if_index = interface.into().if_index()? as i32;
 
     let sock = NetlinkSocket::open().map_err(NetlinkError::from)?;
     let filter_info = netlink_find_filter_with_name(&sock, if_index, attach_type, &cstr)?;

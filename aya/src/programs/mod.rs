@@ -147,8 +147,43 @@ use crate::{
         bpf_prog_get_fd_by_id, bpf_prog_query, bpf_prog_test_run, bpf_prog_test_run_raw_tp,
         bpf_prog_test_run_tracing, iter_link_ids, retry_with_verifier_logs,
     },
-    util::KernelVersion,
+    util::{KernelVersion, ifindex_from_ifname},
 };
+
+/// A network interface identified by name or index.
+///
+/// Names are resolved in the calling thread's network namespace when an operation is performed.
+/// Indices must refer to an interface in that same namespace.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum NetworkInterface<'a> {
+    /// The name of the interface, such as `"eth0"`.
+    Name(&'a str),
+    /// The interface index. Existence is not checked when resolving this variant.
+    Index(u32),
+}
+
+impl NetworkInterface<'_> {
+    pub(crate) fn if_index(self) -> io::Result<u32> {
+        match self {
+            Self::Name(name) => ifindex_from_ifname(name),
+            Self::Index(index) => Ok(index),
+        }
+    }
+}
+
+// `impl Into<NetworkInterface>` does not apply deref coercion, so support
+// borrowed string-like types through `AsRef<str>`.
+impl<'a, T: AsRef<str> + ?Sized> From<&'a T> for NetworkInterface<'a> {
+    fn from(name: &'a T) -> Self {
+        Self::Name(name.as_ref())
+    }
+}
+
+impl From<u32> for NetworkInterface<'_> {
+    fn from(index: u32) -> Self {
+        Self::Index(index)
+    }
+}
 
 /// Error type returned when working with programs.
 #[derive(Debug, Error)]
@@ -1638,4 +1673,33 @@ pub fn loaded_links() -> impl Iterator<Item = Result<LinkInfo, LinkError>> {
             let fd = fd?;
             LinkInfo::new_from_fd(fd.as_fd())
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{borrow::Cow, io, rc::Rc, sync::Arc};
+
+    use rstest::rstest;
+
+    use super::NetworkInterface;
+
+    #[rstest]
+    #[case(0)]
+    #[case(u32::MAX)]
+    fn network_interface_index_is_not_validated(#[case] index: u32) {
+        assert_eq!(NetworkInterface::from(index).if_index().unwrap(), index);
+    }
+
+    #[rstest]
+    #[case("lo\0")]
+    #[case(&"lo\0")]
+    #[case(String::from("lo\0"))]
+    #[case(Box::<str>::from("lo\0"))]
+    #[case(Rc::<str>::from("lo\0"))]
+    #[case(Arc::<str>::from("lo\0"))]
+    #[case(Cow::Borrowed("lo\0"))]
+    fn network_interface_rejects_interior_nul(#[case] name: impl AsRef<str>) {
+        let error = NetworkInterface::from(&name).if_index().unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+    }
 }

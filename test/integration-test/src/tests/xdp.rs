@@ -40,7 +40,7 @@ fn netlink_attach_to_link_replaces_program() {
         .unwrap();
     old.load().unwrap();
     let old_program_id = old.info().unwrap().id();
-    let id = with_netlink_xdp(|| old.attach_to_if_index(if_index, XdpMode::Skb)).unwrap();
+    let id = with_netlink_xdp(|| old.attach(if_index, XdpMode::Skb)).unwrap();
     let old_link = old.take_link(id).unwrap();
     assert_eq!(attached_program(), old_program_id);
 
