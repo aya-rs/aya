@@ -609,13 +609,16 @@ define_link_wrapper!(
 );
 
 impl SchedClassifierLink {
-    /// Constructs a [`SchedClassifierLink`] where the `interface`, `parent`,
-    /// `priority` and `handle` are already known. This may have been found from a link created by
-    /// [`SchedClassifier::attach`], the output of the `tc filter` command or from the output of
-    /// another BPF loader.
+    /// Reconstructs an owned link to an existing netlink TC filter from its known parts.
     ///
-    /// Note: If you create a link for a program that you do not own, detaching it may have
-    /// unintended consequences.
+    /// The parts may come from a link created by [`SchedClassifier::attach`], the
+    /// output of `tc filter`, or another BPF loader. This does not attach a program
+    /// or query the kernel to check whether the filter exists.
+    ///
+    /// The returned link attempts to detach the filter when dropped or explicitly
+    /// detached. Ensure the parts identify the intended filter and that no other
+    /// owner will detach it independently. Incorrect parts may cause an unrelated
+    /// filter to be detached.
     ///
     /// Pass a name such as `c"eth0"`, an interface index, or a [`NetworkInterface`].
     ///
@@ -624,9 +627,10 @@ impl SchedClassifierLink {
     /// interface in the same namespace.
     ///
     /// # Errors
-    /// Returns [`io::Error`] if the interface name cannot be resolved. Interface indices
-    /// and the other parameters are not validated by this call; invalid values will cause a later
-    /// [`SchedClassifierLink::detach`] to return [`TcError::NetlinkError`].
+    ///
+    /// Returns [`io::Error`] if the interface name cannot be resolved.
+    /// Interface indices, parent handles, and the other parts are not validated
+    /// by this call.
     ///
     /// # Examples
     /// ```no_run
@@ -644,11 +648,11 @@ impl SchedClassifierLink {
     /// // persisted is up to your application.
     /// let (if_name, parent, priority, handle, classid) = read_persisted_link_details();
     /// let new_tc_link =
-    ///     SchedClassifierLink::attached(if_name, parent, priority, handle, classid)?;
+    ///     SchedClassifierLink::from_netlink_parts(if_name, parent, priority, handle, classid)?;
     ///
     /// # Ok::<(), Error>(())
     /// ```
-    pub fn attached<'a>(
+    pub fn from_netlink_parts<'a>(
         interface: impl Into<NetworkInterface<'a>>,
         parent: TcHandle,
         priority: u16,
