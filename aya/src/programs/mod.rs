@@ -122,7 +122,7 @@ pub use crate::programs::{
     sk_skb::{SkSkb, SkSkbKind},
     sock_ops::SockOps,
     socket_filter::{ReusePortSocketFilter, SocketFilter, SocketFilterError},
-    tc::{SchedClassifier, TcAttachType, TcError, TcHandle},
+    tc::{SchedClassifier, TcAttach, TcAttachType, TcError, TcHandle},
     tp_btf::BtfTracePoint,
     trace_point::{TracePoint, TracePointError},
     uprobe::{UProbe, UProbeError},

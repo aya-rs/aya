@@ -2,10 +2,8 @@ use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     programs::{
-        ProgramError, SchedClassifier, TcAttachType,
-        tc::{
-            NlOptions, TcAttachOptions, TcError, TcHandle, qdisc_add_clsact, qdisc_detach_program,
-        },
+        ProgramError, SchedClassifier, TcAttach, TcAttachType,
+        tc::{NlOptions, TcError, TcHandle, qdisc_add_clsact, qdisc_detach_program},
     },
     test_helpers::NetNsGuard,
 };
@@ -33,21 +31,25 @@ fn netlink_attach_to_link_preserves_classid() {
     let classid = TcHandle::new(1, 1);
 
     let link_id = prog
-        .attach_with_options(
+        .attach(
             "lo",
-            TcAttachType::Ingress,
-            TcAttachOptions::Netlink(NlOptions {
-                classid: Some(classid),
-                ..Default::default()
-            }),
+            TcAttach::Netlink {
+                parent: TcAttachType::Ingress.into(),
+                options: NlOptions {
+                    classid: Some(classid),
+                    ..Default::default()
+                },
+            },
         )
         .unwrap();
 
     let link = prog.take_link(link_id).unwrap();
+    assert_eq!(link.parent().unwrap(), TcHandle::new(0xffff, 0xfff2));
     assert_eq!(link.classid().unwrap(), Some(classid));
 
     let new_link_id = prog.attach_to_link(link).unwrap();
     let new_link = prog.take_link(new_link_id).unwrap();
+    assert_eq!(new_link.parent().unwrap(), TcHandle::new(0xffff, 0xfff2));
     assert_eq!(new_link.classid().unwrap(), Some(classid));
 }
 
@@ -64,10 +66,12 @@ fn netlink_attach_auto_assigns_handle() {
     prog.load().unwrap();
 
     let link_id = prog
-        .attach_with_options(
+        .attach(
             "lo",
-            TcAttachType::Ingress,
-            TcAttachOptions::Netlink(NlOptions::default()),
+            TcAttach::Netlink {
+                parent: TcAttachType::Ingress.into(),
+                options: NlOptions::default(),
+            },
         )
         .unwrap();
 
@@ -89,13 +93,15 @@ fn netlink_attach_preserves_explicit_handle() {
     let handle = TcHandle::new(1, 0xfffe);
 
     let link_id = prog
-        .attach_with_options(
+        .attach(
             "lo",
-            TcAttachType::Ingress,
-            TcAttachOptions::Netlink(NlOptions {
-                handle,
-                ..Default::default()
-            }),
+            TcAttach::Netlink {
+                parent: TcAttachType::Ingress.into(),
+                options: NlOptions {
+                    handle,
+                    ..Default::default()
+                },
+            },
         )
         .unwrap();
 
@@ -122,18 +128,20 @@ fn netlink_program_name(#[case] len: usize, #[case] valid: bool) {
     let name = "a".repeat(len);
     let mut prog =
         SchedClassifier::from_program_info(prog.info().unwrap(), name.clone().into()).unwrap();
-    let result = prog.attach_with_options(
+    let result = prog.attach(
         "lo",
-        TcAttachType::Ingress,
-        TcAttachOptions::Netlink(NlOptions {
-            classid: Some(TcHandle::new(1, 1)),
-            ..Default::default()
-        }),
+        TcAttach::Netlink {
+            parent: TcAttachType::Ingress.into(),
+            options: NlOptions {
+                classid: Some(TcHandle::new(1, 1)),
+                ..Default::default()
+            },
+        },
     );
     if valid {
         let _link = prog.take_link(result.unwrap()).unwrap();
         // Looking up the full name verifies that the kernel received it intact.
-        qdisc_detach_program("lo", TcAttachType::Ingress, &name).unwrap();
+        qdisc_detach_program("lo", TcHandle::new(0xffff, 0xfff2), &name).unwrap();
     } else {
         assert_matches!(result, Err(ProgramError::TcError(TcError::NetlinkError(err))) => {
             assert_eq!(err.to_string(), "program name exceeds CLS_BPF_NAME_LEN");

@@ -1,11 +1,12 @@
 use std::{net::UdpSocket, time::Duration};
 
+use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::Array,
     programs::{
-        LinkOrder, ProgramId, SchedClassifier, TcAttachType,
-        tc::{NlOptions, TcAttachOptions, qdisc_add_clsact},
+        LinkOrder, ProgramError, ProgramId, SchedClassifier, TcAttach, TcAttachType,
+        tc::{NlOptions, qdisc_add_clsact},
     },
     test_helpers::NetNsGuard,
     util::KernelVersion,
@@ -13,13 +14,18 @@ use aya::{
 use rstest::rstest;
 
 #[rstest]
-#[case::default(None)]
-#[case::netlink(Some(TcAttachOptions::Netlink(NlOptions::default())))]
+#[case::auto_ingress(TcAttach::Auto(TcAttachType::Ingress), Some(TcAttachType::Ingress))]
+#[case::auto_egress(TcAttach::Auto(TcAttachType::Egress), Some(TcAttachType::Egress))]
+#[case::netlink_ingress(TcAttach::Netlink {
+    parent: TcAttachType::Ingress.into(),
+    options: NlOptions::default(),
+}, None)]
+#[case::netlink_egress(TcAttach::Netlink {
+    parent: TcAttachType::Egress.into(),
+    options: NlOptions::default(),
+}, None)]
 #[test_attr(test_log::test)]
-fn tc_attach(
-    #[values(TcAttachType::Ingress, TcAttachType::Egress)] attach_type: TcAttachType,
-    #[case] options: Option<TcAttachOptions>,
-) {
+fn tc_attach(#[case] attach: TcAttach, #[case] expected_tcx: Option<TcAttachType>) {
     let _netns = NetNsGuard::new().unwrap();
     qdisc_add_clsact("lo").unwrap();
 
@@ -27,11 +33,24 @@ fn tc_attach(
     let mut seen: Array<_, u32> = ebpf.take_map("SEEN").unwrap().try_into().unwrap();
     let prog: &mut SchedClassifier = ebpf.program_mut("tcx_next").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    let link = match options {
-        None => prog.attach("lo", attach_type),
-        Some(options) => prog.attach_with_options("lo", attach_type, options),
+    let link = prog.attach("lo", attach).unwrap();
+    if KernelVersion::current().unwrap() >= KernelVersion::new(6, 6, 0) {
+        for query_type in [TcAttachType::Ingress, TcAttachType::Egress] {
+            let expected_ids = if expected_tcx == Some(query_type) {
+                vec![prog.info().unwrap().id()]
+            } else {
+                vec![]
+            };
+            let (_, programs) = SchedClassifier::query_tcx("lo", query_type).unwrap();
+            assert_eq!(
+                programs
+                    .iter()
+                    .map(aya::programs::ProgramInfo::id)
+                    .collect::<Vec<_>>(),
+                expected_ids
+            );
+        }
     }
-    .unwrap();
 
     let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
     let addr = socket.local_addr().unwrap();
@@ -55,6 +74,39 @@ fn tc_attach(
     seen.set(0, &0, 0).unwrap();
     round_trip();
     assert_eq!(seen.get(&0, 0).unwrap(), 0);
+}
+
+#[test_log::test]
+fn tcx_attach_does_not_fall_back_to_netlink() {
+    let _netns = NetNsGuard::new().unwrap();
+    // Install clsact so netlink can attach this program even while it has a
+    // TCX link. An incorrect fallback would then turn the expected TCX error
+    // into success, failing the assertion below.
+    qdisc_add_clsact("lo").unwrap();
+
+    let mut ebpf = Ebpf::load(crate::TCX).unwrap();
+    let prog: &mut SchedClassifier = ebpf.program_mut("tcx_next").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    if KernelVersion::current().unwrap() >= KernelVersion::new(6, 6, 0) {
+        // TCX rejects duplicate program IDs on the same interface and hook.
+        // `prog` retains the link even though we discard the returned ID, so
+        // the second attach below exercises that rejection.
+        prog.attach(
+            "lo",
+            TcAttach::Tcx(TcAttachType::Ingress, LinkOrder::default()),
+        )
+        .unwrap();
+    }
+    // Older kernels reject TCX itself. Both cases must return the TCX
+    // syscall error for this explicit request.
+    assert_matches!(
+        prog.attach(
+            "lo",
+            TcAttach::Tcx(TcAttachType::Ingress, LinkOrder::default()),
+        ),
+        Err(ProgramError::SyscallError(_))
+    );
 }
 
 #[test_log::test]
@@ -88,21 +140,13 @@ fn tcx_link_order() {
         ($program_name:ident, $link_order:expr) => {
             attach_program_with_link_order_inner!($program_name, $link_order);
             $program_name
-                .attach_with_options(
-                    "lo",
-                    TcAttachType::Ingress,
-                    TcAttachOptions::TcxOrder($link_order),
-                )
+                .attach("lo", TcAttach::Tcx(TcAttachType::Ingress, $link_order))
                 .unwrap();
         };
         ($program_name:ident, $link_id_name:ident, $link_order:expr) => {
             attach_program_with_link_order_inner!($program_name, $link_order);
             let $link_id_name = $program_name
-                .attach_with_options(
-                    "lo",
-                    TcAttachType::Ingress,
-                    TcAttachOptions::TcxOrder($link_order),
-                )
+                .attach("lo", TcAttach::Tcx(TcAttachType::Ingress, $link_order))
                 .unwrap();
         };
     }
