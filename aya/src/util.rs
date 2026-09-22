@@ -2,7 +2,7 @@
 use std::{
     collections::BTreeMap,
     error::Error,
-    ffi::{CStr, CString},
+    ffi::CStr,
     fmt::Display,
     fs::{self, File},
     io::{self, BufRead, BufReader},
@@ -359,11 +359,9 @@ pub fn syscall_prefix() -> Result<&'static str, io::Error> {
     Err(io::ErrorKind::NotFound.into())
 }
 
-pub(crate) fn ifindex_from_ifname(if_name: &str) -> Result<u32, io::Error> {
-    let c_str_if_name = CString::new(if_name)?;
-    let c_if_name = c_str_if_name.as_ptr();
+pub(crate) fn ifindex_from_ifname(if_name: &CStr) -> Result<u32, io::Error> {
     // Safety: libc wrapper
-    let if_index = unsafe { if_nametoindex(c_if_name) };
+    let if_index = unsafe { if_nametoindex(if_name.as_ptr()) };
     if if_index == 0 {
         return Err(io::Error::last_os_error());
     }
