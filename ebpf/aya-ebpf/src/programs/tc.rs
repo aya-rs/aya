@@ -58,9 +58,8 @@ impl TcContext {
     /// truncated to the minor id.
     ///
     /// Class routing and pre-population require a netlink `cls_bpf` filter.
-    /// Attach with `aya::programs::tc::SchedClassifier::attach_with_options`
-    /// and `TcAttachOptions::Netlink`, setting `NlOptions::classid` to the
-    /// intended class.
+    /// Attach with `aya::programs::tc::SchedClassifier::attach` and
+    /// `TcAttach::Netlink`, setting `NlOptions::classid` to the intended class.
     ///
     /// In direct-action mode this provides the minor 16 bits of the
     /// resulting class id; [the major 16 bits come from the `classid`

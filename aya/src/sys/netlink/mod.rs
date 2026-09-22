@@ -20,7 +20,7 @@ use thiserror::Error;
 
 use crate::{
     Pod,
-    programs::{TcAttachType, TcHandle, XdpMode},
+    programs::{TcHandle, XdpMode},
     util::tc_handler_make,
 };
 
@@ -150,7 +150,7 @@ pub(crate) fn netlink_qdisc_add_clsact(if_index: i32) -> Result<(), NetlinkError
 #[expect(clippy::too_many_arguments, reason = "internal netlink helper")]
 pub(crate) fn netlink_qdisc_attach(
     if_index: i32,
-    attach_type: TcAttachType,
+    parent: TcHandle,
     prog_fd: BorrowedFd<'_>,
     prog_name: &CStr,
     priority: u16,
@@ -186,7 +186,7 @@ pub(crate) fn netlink_qdisc_attach(
             tcm__pad2: 0,
             tcm_ifindex: if_index,
             tcm_handle: handle.into(),
-            tcm_parent: attach_type.tc_parent(),
+            tcm_parent: parent.into(),
             tcm_info: tc_handler_make(
                 u32::from(priority) << 16,
                 u32::from((ETH_P_ALL as u16).to_be()),
@@ -234,7 +234,7 @@ pub(crate) fn netlink_qdisc_attach(
 
 pub(crate) fn netlink_qdisc_detach(
     if_index: i32,
-    attach_type: TcAttachType,
+    parent: TcHandle,
     priority: u16,
     handle: TcHandle,
 ) -> Result<(), NetlinkError> {
@@ -246,7 +246,7 @@ pub(crate) fn netlink_qdisc_detach(
         tcm__pad2: 0,
         tcm_ifindex: if_index,
         tcm_handle: handle.into(),
-        tcm_parent: attach_type.tc_parent(),
+        tcm_parent: parent.into(),
         tcm_info: tc_handler_make(
             u32::from(priority) << 16,
             u32::from((ETH_P_ALL as u16).to_be()),
@@ -264,7 +264,7 @@ pub(crate) fn netlink_qdisc_detach(
 pub(crate) fn netlink_find_filter_with_name(
     sock: &NetlinkSocket,
     if_index: i32,
-    attach_type: TcAttachType,
+    parent: TcHandle,
     name: &CStr,
 ) -> Result<impl Iterator<Item = Result<(u16, TcHandle), NetlinkError>>, NetlinkError> {
     request::Tc::get_filter(tcmsg {
@@ -273,7 +273,7 @@ pub(crate) fn netlink_find_filter_with_name(
         tcm__pad2: 0,
         tcm_ifindex: if_index,
         tcm_handle: 0,
-        tcm_parent: attach_type.tc_parent(),
+        tcm_parent: parent.into(),
         tcm_info: 0,
     })
     .send(sock, (NLM_F_REQUEST | NLM_F_DUMP) as u16)?;
