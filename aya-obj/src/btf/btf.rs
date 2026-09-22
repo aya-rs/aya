@@ -1392,6 +1392,9 @@ impl Object {
             }
 
             if !kconfig_data.is_empty() {
+                if let BtfType::DataSec(d) = &mut obj_btf.types.types[type_index] {
+                    d.size = kconfig_data.len() as u32;
+                }
                 return Ok(Some((SectionIndex(kconfig_map_index), kconfig_data)));
             }
         }
