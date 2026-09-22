@@ -10,7 +10,7 @@ use crate::{
     programs::{
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramFd,
         ProgramType, bpf_prog_get_fd_by_id, define_link_wrapper, id_as_key,
-        load_program_with_attach_type, query,
+        impl_program_adopt_link, load_program_with_attach_type, query,
     },
     sys::{LinkTarget, ProgQueryTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
@@ -171,3 +171,48 @@ define_link_wrapper!(
     CgroupDeviceLinkIdInner,
     CgroupDevice,
 );
+
+impl_program_adopt_link!(
+    CgroupDevice,
+    CgroupDeviceLink,
+    CgroupDeviceLinkId,
+    CgroupDeviceLinkInner
+);
+
+#[cfg(test)]
+mod tests {
+    use std::{mem, os::fd::FromRawFd as _, path::Path};
+
+    use assert_matches::assert_matches;
+
+    use super::*;
+    use crate::{MockableFd, VerifierLogLevel, programs::links::LinkError, sys::override_syscall};
+
+    #[test]
+    fn adopt_link_rejects_prog_attach_link() {
+        let fd = MockableFd::mock_signed_fd();
+        let mut program = CgroupDevice {
+            data: ProgramData::from_bpf_prog_info(
+                None,
+                unsafe { MockableFd::from_raw_fd(fd) },
+                Path::new(""),
+                unsafe { mem::zeroed() },
+                VerifierLogLevel::default(),
+            )
+            .unwrap(),
+        };
+        let link = CgroupDeviceLink::new(CgroupDeviceLinkInner::ProgAttach(ProgAttachLink::new(
+            ProgramFd(unsafe { MockableFd::from_raw_fd(fd + 1) }),
+            unsafe { MockableFd::from_raw_fd(fd + 2) },
+            BPF_CGROUP_DEVICE,
+        )));
+        let id = link.id();
+        override_syscall(|call| panic!("unexpected syscall: {call:?}"));
+
+        assert_matches!(
+            program.adopt_link(link),
+            Err(ProgramError::LinkError(LinkError::InvalidLink))
+        );
+        assert_matches!(program.take_link(id), Err(ProgramError::NotAttached));
+    }
+}
