@@ -43,9 +43,10 @@ pub trait Link: std::fmt::Debug + Eq + std::hash::Hash + 'static {
 
 /// Updates the program referenced by an attachment, retaining its backend and target.
 ///
-/// The optional name is used by legacy TC filters.
+/// The optional name is used by legacy TC filters. Implementations retain the attachment
+/// on failure and only change its metadata after the kernel update succeeds.
 pub(crate) trait LinkUpdate: Sized {
-    fn update(self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<Self, ProgramError>;
+    fn update(&mut self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<(), ProgramError>;
 }
 
 /// Program attachment mode.
@@ -93,6 +94,27 @@ where
             Entry::Occupied(_entry) => Err(ProgramError::AlreadyAttached),
             Entry::Vacant(entry) => Ok(entry.insert().get().id()),
         }
+    }
+
+    pub(crate) fn try_insert(
+        &mut self,
+        mut link: T,
+        update: impl FnOnce(&mut T) -> Result<(), ProgramError>,
+    ) -> Result<T::Id, (ProgramError, T)> {
+        if self.links.contains(&link) {
+            return Err((ProgramError::AlreadyAttached, link));
+        }
+        if let Err(error) = update(&mut link) {
+            return Err((error, link));
+        }
+        // HashSet::entry consumes the candidate on an occupied entry. Check before
+        // moving it so adoption can return the caller's link on every error path.
+        if self.links.contains(&link) {
+            return Err((ProgramError::AlreadyAttached, link));
+        }
+        let id = link.id();
+        self.links.insert(link);
+        Ok(id)
     }
 
     pub(crate) fn remove(&mut self, link_id: T::Id) -> Result<(), ProgramError> {
@@ -338,12 +360,12 @@ impl Link for FdLink {
 }
 
 impl LinkUpdate for FdLink {
-    fn update(self, prog_fd: BorrowedFd<'_>, _name: Option<&str>) -> Result<Self, ProgramError> {
+    fn update(&mut self, prog_fd: BorrowedFd<'_>, _name: Option<&str>) -> Result<(), ProgramError> {
         bpf_link_update(self.fd.as_fd(), prog_fd, None, 0).map_err(|io_error| SyscallError {
             call: "bpf_link_update",
             io_error,
         })?;
-        Ok(self)
+        Ok(())
     }
 }
 
@@ -528,6 +550,10 @@ macro_rules! define_link_wrapper {
                 self.0.as_ref().unwrap()
             }
 
+            const fn inner_mut(&mut self) -> &mut $base {
+                self.0.as_mut().unwrap()
+            }
+
             fn into_inner(mut self) -> $base {
                 self.0.take().unwrap()
             }
@@ -605,26 +631,37 @@ macro_rules! impl_program_adopt_link {
             /// retaining the attachment target and its options. Other links managed by this program
             /// are unaffected. The returned ID can be used with [`Self::detach`] or [`Self::take_link`].
             ///
-            /// The link is consumed even if adoption fails. For a file-descriptor-backed link,
-            /// failure closes this reference and may detach the previous program if there are no
-            /// other references or pins keeping the link alive.
+            /// On failure, returns the error together with the link without detaching it. The caller
+            /// can retry adoption or detach the returned link. Dropping the error tuple also drops
+            /// the link, with the same detachment behavior as dropping it directly.
             ///
             /// # Errors
             ///
             /// Returns [`ProgramError::NotLoaded`] if this program is not loaded.
-            /// Returns an error if the new program is incompatible with the attachment, or the
-            /// kernel or link backend does not support updating it.
+            /// Returns an error if the new program is incompatible with the attachment, the link
+            /// is already managed by this program, or the kernel or link backend does not support
+            /// updating it.
             /// Legacy `BPF_PROG_ATTACH` links return [`crate::programs::LinkError::InvalidLink`].
-            pub fn adopt_link(&mut self, link: $wrapper) -> Result<$wrapper_id, ProgramError> {
+            pub fn adopt_link(
+                &mut self,
+                link: $wrapper,
+            ) -> Result<$wrapper_id, (ProgramError, $wrapper)> {
                 use std::os::fd::AsFd as _;
 
                 use $crate::programs::links::LinkUpdate as _;
 
-                let prog_fd = self.fd()?.as_fd();
-                let link = link
-                    .into_inner()
-                    .update(prog_fd, self.data.name.as_deref())?;
-                self.data.links.insert($wrapper::new(link))
+                let $crate::programs::ProgramData {
+                    fd, links, name, ..
+                } = &mut self.data;
+                let Some(fd) = fd else {
+                    return Err((ProgramError::NotLoaded, link));
+                };
+
+                // Keep the owning wrapper intact until all fallible updates have finished.
+                // In particular, validation and unsupported backends must not detach the link.
+                links.try_insert(link, |link| {
+                    link.inner_mut().update(fd.as_fd(), name.as_deref())
+                })
             }
         }
     };
@@ -636,14 +673,14 @@ macro_rules! impl_program_adopt_link {
     ) => {
         impl $crate::programs::links::LinkUpdate for $inner {
             fn update(
-                self,
+                &mut self,
                 prog_fd: std::os::fd::BorrowedFd<'_>,
                 name: Option<&str>,
-            ) -> Result<Self, ProgramError> {
+            ) -> Result<(), ProgramError> {
                 match self {
-                    Self::Fd(link) => Ok(Self::Fd($crate::programs::links::LinkUpdate::update(
-                        link, prog_fd, name,
-                    )?)),
+                    Self::Fd(link) => {
+                        $crate::programs::links::LinkUpdate::update(link, prog_fd, name)
+                    }
                     Self::ProgAttach(_) => Err($crate::programs::LinkError::InvalidLink.into()),
                 }
             }
@@ -912,6 +949,30 @@ mod tests {
             links.insert(TestLink::new(1, 2)),
             Err(ProgramError::AlreadyAttached)
         );
+    }
+
+    #[test]
+    fn test_try_insert_already_attached_returns_link_without_update() {
+        let mut links = Links::new();
+        let attached = TestLink::new(1, 2);
+        let attached_detached = Rc::clone(&attached.detached);
+        links.insert(attached).unwrap();
+        let candidate = TestLink::new(1, 2);
+        let candidate_detached = Rc::clone(&candidate.detached);
+
+        let (error, link) = links
+            .try_insert(candidate, |_link| {
+                panic!("duplicate link must not be updated")
+            })
+            .unwrap_err();
+        assert_matches!(error, ProgramError::AlreadyAttached);
+        assert_eq!(*attached_detached.borrow(), 0);
+        assert_eq!(*candidate_detached.borrow(), 0);
+        link.detach().unwrap();
+        assert_eq!(*candidate_detached.borrow(), 1);
+        assert_eq!(*attached_detached.borrow(), 0);
+        links.remove(TestLinkId(1, 2)).unwrap();
+        assert_eq!(*attached_detached.borrow(), 1);
     }
 
     #[test]

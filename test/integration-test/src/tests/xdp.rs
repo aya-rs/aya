@@ -4,8 +4,13 @@ use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
-    programs::{ProgramError, Xdp, XdpError, XdpMode, xdp::XdpLinkId},
-    sys::is_devmap_prog_id_supported,
+    programs::{
+        Link as _, ProgramError, Xdp, XdpError, XdpMode,
+        links::{FdLink, LinkError},
+        loaded_links,
+        xdp::XdpLinkId,
+    },
+    sys::{SyscallError, is_devmap_prog_id_supported},
     test_helpers::{NetNsGuard, with_netlink_xdp},
     util::KernelVersion,
 };
@@ -54,6 +59,145 @@ fn netlink_adopt_link_replaces_program() {
     let new_program_id = new.info().unwrap().id();
     assert_ne!(old_program_id, new_program_id);
     let id = new.adopt_link(old_link).unwrap();
+    drop(old_bpf);
+    assert_eq!(attached_program(), new_program_id);
+    new.detach(id).unwrap();
+    assert_eq!(attached_program(), 0);
+}
+
+#[test_log::test]
+fn adopt_link_transfers_ownership() {
+    if KernelVersion::current().unwrap() < KernelVersion::new(5, 9, 0) {
+        eprintln!("skipping test - XDP BPF links require Linux 5.9");
+        return;
+    }
+    let _netns = NetNsGuard::new().unwrap();
+    let mut old_bpf = Ebpf::load(crate::XDP_SEC).unwrap();
+    let old: &mut Xdp = old_bpf
+        .program_mut("xdp_plain")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    old.load().unwrap();
+    let id = old.attach("lo", XdpMode::Skb).unwrap();
+    let link = old.take_link(id).unwrap();
+    let link = FdLink::try_from(link).unwrap();
+    // Keep the kernel link ID to distinguish updating a link from creating a new one.
+    let kernel_id = link.info().unwrap().id();
+
+    let mut new_bpf = Ebpf::load(crate::XDP_SEC).unwrap();
+    let new: &mut Xdp = new_bpf
+        .program_mut("xdp_plain")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    new.load().unwrap();
+    let program_id = new.info().unwrap().id();
+    let id = new.adopt_link(link.try_into().unwrap()).unwrap();
+    // Dropping the old owner must leave the same link attached to the new program.
+    drop(old_bpf);
+
+    let link = FdLink::try_from(new.take_link(id).unwrap()).unwrap();
+    let info = link.info().unwrap();
+    assert_eq!(info.id(), kernel_id);
+    assert_eq!(info.program_id(), program_id);
+
+    // The receiving program must also be able to adopt its own link and detach it.
+    let id = new.adopt_link(link.try_into().unwrap()).unwrap();
+    new.detach(id).unwrap();
+    // loaded_links() also enumerates links owned by other tests. A parallel test
+    // may drop its link after its ID is found, causing the subsequent fd lookup
+    // to fail with ENOENT. Only ignore this race; other errors must fail the test.
+    let detached_link = loaded_links()
+        .filter_map(|result| match result {
+            Ok(info) => Some(info),
+            Err(LinkError::SyscallError(SyscallError {
+                call: "bpf_link_get_fd_by_id",
+                io_error,
+            })) if io_error.raw_os_error() == Some(libc::ENOENT) => None,
+            Err(err) => panic!("{err:?}"),
+        })
+        .find(|link| link.id() == kernel_id);
+    assert!(
+        detached_link.is_none(),
+        "link {kernel_id} still exists after detach"
+    );
+}
+
+#[test_log::test]
+fn adopt_link_failure_returns_link() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 7, 0) {
+        eprintln!("skipping test - atomic netlink XDP replacement requires Linux 5.7");
+        return;
+    }
+    let _netns = NetNsGuard::new().unwrap();
+    let if_index = unsafe { libc::if_nametoindex(c"lo".as_ptr()) };
+    assert_ne!(if_index, 0);
+    let attached_program = || {
+        let mut id = 0;
+        // SAFETY: The output pointer is writable. Query the SKB attachment on this interface.
+        let result =
+            unsafe { bpf_xdp_query_id(if_index as i32, XDP_FLAGS_SKB_MODE as i32, &raw mut id) };
+        assert_eq!(result, 0);
+        id
+    };
+    let mut old_bpf = Ebpf::load(crate::XDP_SEC).unwrap();
+    let old: &mut Xdp = old_bpf
+        .program_mut("xdp_plain")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    old.load().unwrap();
+    let old_program_id = old.info().unwrap().id();
+    let id = old.attach(if_index, XdpMode::Skb).unwrap();
+    let link = old.take_link(id).unwrap();
+    let original_id = link.id();
+
+    let mut new_bpf = Ebpf::load(crate::XDP_SEC).unwrap();
+    let new: &mut Xdp = new_bpf
+        .program_mut("xdp_plain")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    let (error, mut link) = new.adopt_link(link).unwrap_err();
+    assert_matches!(error, ProgramError::NotLoaded);
+    assert_eq!(link.id(), original_id);
+    assert_eq!(attached_program(), old_program_id);
+
+    if kernel_version >= KernelVersion::new(5, 9, 0) {
+        // The kernel rejects replacing an interface program with a devmap program.
+        // Exercise a real BPF_LINK_UPDATE failure, beyond userspace validation.
+        let incompatible: &mut Xdp = new_bpf
+            .program_mut("xdp_devmap")
+            .unwrap()
+            .try_into()
+            .unwrap();
+        incompatible.load().unwrap();
+        let (error, returned) = incompatible.adopt_link(link).unwrap_err();
+        assert_matches!(
+            error,
+            ProgramError::SyscallError(SyscallError {
+                call: "bpf_link_update",
+                io_error,
+            }) => {
+                assert_eq!(io_error.raw_os_error(), Some(libc::EINVAL));
+            }
+        );
+        link = returned;
+        assert_eq!(link.id(), original_id);
+        assert_eq!(attached_program(), old_program_id);
+    }
+
+    let new: &mut Xdp = new_bpf
+        .program_mut("xdp_plain")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    new.load().unwrap();
+    let new_program_id = new.info().unwrap().id();
+    assert_ne!(new_program_id, old_program_id);
+    let id = new.adopt_link(link).unwrap();
     drop(old_bpf);
     assert_eq!(attached_program(), new_program_id);
     new.detach(id).unwrap();
