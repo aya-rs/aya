@@ -4,7 +4,8 @@ use aya::{
     programs::{
         Link as _, LinkOrder, ProgramError, SchedClassifier, TcAttachType,
         tc::{
-            NlOptions, TcAttachOptions, TcError, TcHandle, qdisc_add_clsact, qdisc_detach_program,
+            NlOptions, SchedClassifierLink, TcAttachOptions, TcError, TcHandle, qdisc_add_clsact,
+            qdisc_detach_program,
         },
     },
     test_helpers::NetNsGuard,
@@ -12,6 +13,23 @@ use aya::{
 use rstest::rstest;
 
 use crate::TCX;
+
+#[test_log::test]
+fn netlink_from_parts_without_filter() {
+    let _netns = NetNsGuard::new().unwrap();
+    qdisc_add_clsact("lo").unwrap();
+
+    // Reconstruction succeeds without an existing filter, but does not create one.
+    let link = SchedClassifierLink::from_netlink_parts(
+        "lo",
+        TcAttachType::Ingress,
+        1,
+        TcHandle::new(0, 1),
+        None,
+    )
+    .unwrap();
+    assert_matches!(link.detach(), Err(ProgramError::NetlinkError(_)));
+}
 
 /// Verify that `classid` set on the initial netlink attach is preserved when
 /// the program is later replaced via [`SchedClassifier::attach_to_link`].
