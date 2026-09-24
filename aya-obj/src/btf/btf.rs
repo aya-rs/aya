@@ -574,58 +574,6 @@ impl Btf {
         })
     }
 
-    pub(crate) fn type_align(&self, root_type_id: u32) -> Result<usize, BtfError> {
-        let mut type_id = root_type_id;
-        for _ in 0..MAX_RESOLVE_DEPTH {
-            let ty = self.types.type_by_id(type_id)?;
-            let size = match ty {
-                BtfType::Array(Array { array, .. }) => {
-                    type_id = array.element_type;
-                    continue;
-                }
-                BtfType::Struct(Struct { size, members, .. })
-                | BtfType::Union(Union { size, members, .. }) => {
-                    let mut max_align = 1;
-
-                    for m in members {
-                        let align = self.type_align(m.btf_type)?;
-                        max_align = usize::max(align, max_align);
-
-                        if ty.member_bit_field_size(m).unwrap() == 0
-                            && m.offset % (8 * align as u32) != 0
-                        {
-                            return Ok(1);
-                        }
-                    }
-
-                    if size % max_align as u32 != 0 {
-                        return Ok(1);
-                    }
-
-                    return Ok(max_align);
-                }
-
-                BtfType::Ptr(_) => self.pointer_size,
-                other => {
-                    if let Some(size) = other.size() {
-                        u32::min(self.pointer_size, size)
-                    } else if let Some(next) = other.btf_type() {
-                        type_id = next;
-                        continue;
-                    } else {
-                        return Err(BtfError::UnexpectedBtfType { type_id });
-                    }
-                }
-            };
-
-            return Ok(size as usize);
-        }
-
-        Err(BtfError::MaximumTypeDepthReached {
-            type_id: root_type_id,
-        })
-    }
-
     /// Encodes the metadata as BTF format
     pub fn to_bytes(&self) -> Vec<u8> {
         // Safety: btf_header is POD
@@ -1185,7 +1133,7 @@ fn materialize_kconfig_extern(
     endianness: Endianness,
 ) -> Result<(u64, Vec<u8>), BtfError> {
     let type_size = obj_btf.type_size(var.btf_type)?;
-    let type_align = obj_btf.type_align(var.btf_type)? as u64;
+    let type_align = usize::min(obj_btf.pointer_size as usize, type_size) as u64;
     let resolved_type = obj_btf.type_by_id(obj_btf.resolve_type(var.btf_type)?)?;
     let supported_symbol_name = symbol_name.starts_with("CONFIG_")
         || matches!(
@@ -1256,7 +1204,7 @@ fn materialize_kconfig_extern(
             // fixed-size strings are padded/truncated, then always NUL-terminated
             data.resize(type_size, 0);
             *data.last_mut().unwrap() = 0;
-            data
+            return Ok((1, data));
         }
         BtfType::Int(int) if int.encoding() == IntEncoding::Bool && int.size == 1 => {
             let data = if let Some(value) = tristate_marker {
@@ -3048,32 +2996,30 @@ mod tests {
     }
 
     #[test]
-    fn type_align_struct_naturally_aligned() {
-        // Build a struct:
-        // struct S { u64 a; u32 b; };
-        // a @ 0 bits (8-byte aligned), b @ 64 bits (8 bytes), total size 16 bytes.
-        // u64 alignment is capped at the BTF pointer size.
+    fn materialize_kconfig_extern_alignment() {
         let mut btf = Btf::new();
-        let u32_ty = btf.add_type(BtfType::Int(Int::new(0, 4, IntEncoding::None, 0)));
-        let u64_ty = btf.add_type(BtfType::Int(Int::new(0, 8, IntEncoding::None, 0)));
+        let byte_type = btf.add_type(BtfType::Int(Int::new(0, 1, IntEncoding::Char, 0)));
+        let array_type = btf.add_type(BtfType::Array(Array::new(0, byte_type, byte_type, 16)));
+        let scalar_type = btf.add_type(BtfType::Int(Int::new(0, 8, IntEncoding::None, 0)));
+        let scalar_type = btf.add_type(BtfType::Const(Const::new(scalar_type)));
+        let raw = btf.to_bytes();
+        let btf = Btf::parse_bpf_object(&raw, Endianness::default()).unwrap();
 
-        let members = vec![
-            BtfMember {
-                name_offset: 0,
-                btf_type: u64_ty,
-                offset: 0, // bits
-            },
-            BtfMember {
-                name_offset: 0,
-                btf_type: u32_ty,
-                offset: 64, // bits
-            },
-        ];
-        let s_id = btf.add_type(BtfType::Struct(Struct::new(0, members, 16)));
-
-        let align = btf.type_align(s_id).unwrap();
-        let expected_align = usize::min(btf.pointer_size as usize, 8);
-        assert_eq!(align, expected_align);
+        for (type_id, alignment, size) in [(array_type, 1, 16), (scalar_type, 8, 8)] {
+            let var = Var::new(0, type_id, VarLinkage::Extern);
+            assert_eq!(
+                materialize_kconfig_extern(
+                    &btf,
+                    &var,
+                    "CONFIG_TEST",
+                    None,
+                    true,
+                    Endianness::default(),
+                )
+                .unwrap(),
+                (alignment, vec![0; size])
+            );
+        }
     }
 
     #[test]
@@ -3086,32 +3032,34 @@ mod tests {
         let btf = Btf::parse_bpf_object(&raw, Endianness::default()).unwrap();
 
         assert_eq!(btf.type_size(ptr_type).unwrap(), 8);
-        assert_eq!(btf.type_align(ptr_type).unwrap(), 8);
     }
 
     #[test]
-    fn type_align_struct_misaligned_member_is_packed() {
-        // Build a struct with a misaligned non-bitfield member:
-        // struct P { u64 a; u32 b; }; where b is at 1-byte offset (misaligned)
-        let mut btf = Btf::new();
-        let u32_ty = btf.add_type(BtfType::Int(Int::new(0, 4, IntEncoding::None, 0)));
-        let u64_ty = btf.add_type(BtfType::Int(Int::new(0, 8, IntEncoding::None, 0)));
-
-        let members = vec![
-            BtfMember {
-                name_offset: 0,
-                btf_type: u64_ty,
-                offset: 0, // bits
-            },
-            BtfMember {
-                name_offset: 0,
-                btf_type: u32_ty,
-                offset: 8, // bits (1 byte) -> not aligned to 4 bytes
-            },
-        ];
-        let p_id = btf.add_type(BtfType::Struct(Struct::new(0, members, 16)));
-
-        let align = btf.type_align(p_id).unwrap();
-        assert_eq!(align, 1);
+    fn materialize_kconfig_extern_rejects_recursive_composites() {
+        let members = vec![BtfMember {
+            name_offset: 0,
+            btf_type: 1,
+            offset: 0,
+        }];
+        for ty in [
+            BtfType::Struct(Struct::new(0, members.clone(), 8)),
+            BtfType::Union(Union::new(0, 8, members, None)),
+        ] {
+            let mut btf = Btf::new();
+            let type_id = btf.add_type(ty);
+            let var = Var::new(0, type_id, VarLinkage::Extern);
+            assert_matches!(
+                materialize_kconfig_extern(
+                    &btf,
+                    &var,
+                    "CONFIG_TEST",
+                    Some(&[0; 8]),
+                    false,
+                    Endianness::default(),
+                ),
+                Err(BtfError::InvalidExternalSymbol { symbol_name })
+                    if symbol_name == "CONFIG_TEST"
+            );
+        }
     }
 }
