@@ -11,14 +11,14 @@ use crate::{
 btf_map_def!(
     /// A BTF-compatible BPF ring buffer map.
     ///
-    /// Ring buffers have a special `value_size` field set to 0.
+    /// `T` records the event type in BTF. Aya and Cilium set the map's value
+    /// size to zero when loading it, as required by the kernel.
     pub struct RingBuf<T; const MAX_ENTRIES: usize, const FLAGS: usize = 0>,
     map_type: BPF_MAP_TYPE_RINGBUF,
     max_entries: MAX_ENTRIES,
     map_flags: FLAGS,
     key_type: (),
     value_type: T,
-    value_size: *const [i32; 0] = ::core::ptr::null(),
 );
 
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> RingBuf<T, MAX_ENTRIES, FLAGS> {

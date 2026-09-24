@@ -183,6 +183,10 @@ pub mod printk {
     pub const TEST_ISIZE: isize = isize::MIN;
 }
 
+pub mod btf_maps {
+    pub type ArrayValue = [[u32; 3]; 2];
+}
+
 pub mod btf_map_of_maps {
     /// Capacity of each inner array shared between userspace and the eBPF probes.
     pub const INNER_MAX_ENTRIES: u32 = 10;
