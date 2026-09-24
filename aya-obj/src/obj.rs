@@ -1702,7 +1702,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_kconfig_datasec_size_matches_map(#[values(0, 4, 8)] original_size: u32) {
+    fn test_kconfig_prepares_datasec_metadata(#[values(0, 4, 8)] original_size: u32) {
         use crate::btf::{DataSec, Int, IntEncoding, Var, VarLinkage};
 
         let mut obj = fake_obj();
@@ -1715,8 +1715,8 @@ mod tests {
             name,
             vec![DataSecEntry {
                 btf_type: var,
-                offset: 0,
-                size: 4,
+                offset: 16,
+                size: 8,
             }],
             original_size,
         )));
@@ -1744,6 +1744,18 @@ mod tests {
         assert_eq!(map_size, 4);
 
         // rebuilding the section must replace its original size, including any padding
+        let btf = obj.btf.as_ref().unwrap();
+        assert_matches!(btf.type_by_id(section).unwrap(), BtfType::DataSec(datasec) => {
+            assert_eq!(datasec.size, map_size);
+            assert_eq!(datasec.entries[0].offset, 0);
+            assert_eq!(datasec.entries[0].size, map_size);
+        });
+        assert_matches!(btf.type_by_id(var).unwrap(), BtfType::Var(var) => {
+            assert_eq!(var.linkage, VarLinkage::Global);
+        });
+
+        // prepared BTF no longer needs ELF symbol offsets during sanitization
+        obj.symbol_offset_by_name.clear();
         let btf = obj
             .fixup_and_sanitize_btf(|| Some(|_: BtfFeature| true))
             .unwrap()
