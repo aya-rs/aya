@@ -8135,7 +8135,7 @@ pub aya::KConfigMode::Auto
 pub aya::KConfigMode::Disabled
 pub aya::KConfigMode::Explicit(aya::KConfig)
 impl core::clone::Clone for aya::KConfigMode
-pub fn aya::KConfigMode::clone(&self) -> aya::KConfigMode
+pub fn aya::KConfigMode::clone(&self) -> Self
 impl core::fmt::Debug for aya::KConfigMode
 pub fn aya::KConfigMode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya::KConfigMode
@@ -8213,7 +8213,7 @@ impl aya::KConfig
 pub fn aya::KConfig::current() -> core::result::Result<Self, aya::KConfigError>
 pub fn aya::KConfig::parse(&[u8]) -> core::result::Result<Self, aya::KConfigError>
 impl core::clone::Clone for aya::KConfig
-pub fn aya::KConfig::clone(&self) -> aya::KConfig
+pub fn aya::KConfig::clone(&self) -> Self
 impl core::fmt::Debug for aya::KConfig
 pub fn aya::KConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya::KConfig
