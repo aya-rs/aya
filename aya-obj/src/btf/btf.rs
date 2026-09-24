@@ -1250,94 +1250,90 @@ impl Object {
         &mut self,
         externs: &HashMap<String, Vec<u8>>,
     ) -> Result<Option<(SectionIndex, Vec<u8>)>, BtfError> {
-        if let Some(obj_btf) = &mut self.btf {
-            if obj_btf.is_empty() {
-                return Ok(None);
-            }
+        let Some(obj_btf) = &mut self.btf else {
+            return Ok(None);
+        };
+        let Some((type_index, datasec)) = find_data_sec(obj_btf, ".kconfig")? else {
+            return Ok(None);
+        };
+        let entries = datasec.entries.clone();
 
-            // We're creating a synthetic section, so we need a synthetic section index too.
-            let kconfig_map_index = self
-                .section_infos
-                .values()
-                .map(|(index, _)| index.0)
-                .max()
-                .unwrap_or(0)
-                + 1;
+        // We're creating a synthetic section, so we need a synthetic section index too.
+        let kconfig_map_index = self
+            .section_infos
+            .values()
+            .map(|(index, _)| index.0)
+            .max()
+            .unwrap_or(0)
+            + 1;
 
-            let external_symbols_by_name = self
-                .symbol_table
-                .iter()
-                .filter(|(_, s)| s.name.is_some() && s.section_index.is_none() && s.is_external)
-                .map(|(index, s)| (s.name.as_ref().unwrap().clone(), *index))
-                .collect::<HashMap<_, _>>();
+        let external_symbols_by_name = self
+            .symbol_table
+            .iter()
+            .filter(|(_, s)| s.name.is_some() && s.section_index.is_none() && s.is_external)
+            .map(|(index, s)| (s.name.as_ref().unwrap().clone(), *index))
+            .collect::<HashMap<_, _>>();
 
-            let mut kconfig_data = Vec::new();
-            let mut write_offset = 0u64;
+        let mut kconfig_data = Vec::new();
+        let mut write_offset = 0u64;
 
-            let Some((type_index, datasec)) = find_data_sec(obj_btf, ".kconfig")? else {
-                return Ok(None);
+        for (entry_index, entry) in entries.iter().enumerate() {
+            let BtfType::Var(var) = obj_btf.types.type_by_id(entry.btf_type)? else {
+                return Err(BtfError::InvalidDatasec);
             };
-            let entries = datasec.entries.clone();
+            let name = obj_btf.string_at(var.name_offset)?.into_owned();
 
-            for (entry_index, entry) in entries.iter().enumerate() {
-                let BtfType::Var(var) = obj_btf.types.type_by_id(entry.btf_type)? else {
-                    return Err(BtfError::InvalidDatasec);
-                };
-                let name = obj_btf.string_at(var.name_offset)?.into_owned();
-
-                if var.linkage != VarLinkage::Extern {
-                    return Err(BtfError::InvalidExternalSymbol { symbol_name: name });
+            if var.linkage != VarLinkage::Extern {
+                return Err(BtfError::InvalidExternalSymbol { symbol_name: name });
+            }
+            let symbol_index = external_symbols_by_name.get(name.as_str()).ok_or_else(|| {
+                BtfError::InvalidExternalSymbol {
+                    symbol_name: name.clone(),
                 }
-                let symbol_index =
-                    external_symbols_by_name.get(name.as_str()).ok_or_else(|| {
-                        BtfError::InvalidExternalSymbol {
-                            symbol_name: name.clone(),
-                        }
-                    })?;
+            })?;
 
-                let (data, aligned_offset) = {
-                    let symbol = self.symbol_table.get_mut(symbol_index).ok_or_else(|| {
-                        BtfError::InvalidExternalSymbol {
-                            symbol_name: name.clone(),
-                        }
-                    })?;
-                    let (type_align, data) = materialize_kconfig_extern(
-                        obj_btf,
-                        var,
-                        &name,
-                        externs.get(&name).map(Vec::as_slice),
-                        symbol.is_weak,
-                        self.endianness,
-                    )?;
-                    let aligned_offset = (write_offset + (type_align - 1)) & !(type_align - 1);
-                    symbol.address = aligned_offset;
-                    symbol.section_index = Some(kconfig_map_index);
-                    // Undefined externs often have size 0; use BTF type size for kconfig.
-                    symbol.size = data.len() as u64;
-                    (data, aligned_offset)
-                };
+            let (data, aligned_offset) = {
+                let symbol = self.symbol_table.get_mut(symbol_index).ok_or_else(|| {
+                    BtfError::InvalidExternalSymbol {
+                        symbol_name: name.clone(),
+                    }
+                })?;
+                let (type_align, data) = materialize_kconfig_extern(
+                    obj_btf,
+                    var,
+                    &name,
+                    externs.get(&name).map(Vec::as_slice),
+                    symbol.is_weak,
+                    self.endianness,
+                )?;
+                let aligned_offset = (write_offset + (type_align - 1)) & !(type_align - 1);
+                symbol.address = aligned_offset;
+                symbol.section_index = Some(kconfig_map_index);
+                // Undefined externs often have size 0; use BTF type size for kconfig.
+                symbol.size = data.len() as u64;
+                (data, aligned_offset)
+            };
 
-                if let BtfType::DataSec(d) = &mut obj_btf.types.types[type_index] {
-                    d.entries[entry_index].offset = aligned_offset as u32;
-                    d.entries[entry_index].size = data.len() as u32;
-                }
-                if let BtfType::Var(var) = &mut obj_btf.types.types[entry.btf_type as usize] {
-                    var.linkage = VarLinkage::Global;
-                }
-
-                kconfig_data.resize(aligned_offset as usize, 0);
-
-                self.symbol_offset_by_name.insert(name, aligned_offset);
-                kconfig_data.extend_from_slice(&data);
-                write_offset = aligned_offset + data.len() as u64;
+            if let BtfType::DataSec(d) = &mut obj_btf.types.types[type_index] {
+                d.entries[entry_index].offset = aligned_offset as u32;
+                d.entries[entry_index].size = data.len() as u32;
+            }
+            if let BtfType::Var(var) = &mut obj_btf.types.types[entry.btf_type as usize] {
+                var.linkage = VarLinkage::Global;
             }
 
-            if !kconfig_data.is_empty() {
-                if let BtfType::DataSec(d) = &mut obj_btf.types.types[type_index] {
-                    d.size = kconfig_data.len() as u32;
-                }
-                return Ok(Some((SectionIndex(kconfig_map_index), kconfig_data)));
+            kconfig_data.resize(aligned_offset as usize, 0);
+
+            self.symbol_offset_by_name.insert(name, aligned_offset);
+            kconfig_data.extend_from_slice(&data);
+            write_offset = aligned_offset + data.len() as u64;
+        }
+
+        if !kconfig_data.is_empty() {
+            if let BtfType::DataSec(d) = &mut obj_btf.types.types[type_index] {
+                d.size = kconfig_data.len() as u32;
             }
+            return Ok(Some((SectionIndex(kconfig_map_index), kconfig_data)));
         }
         Ok(None)
     }
@@ -1391,25 +1387,20 @@ impl Object {
             return Ok(false);
         };
 
-        for ty in &obj_btf.types.types {
-            let BtfType::DataSec(datasec) = ty else {
+        let Some((_, datasec)) = find_data_sec(obj_btf, ".kconfig")? else {
+            return Ok(false);
+        };
+
+        for entry in &datasec.entries {
+            let BtfType::Var(var) = obj_btf.types.type_by_id(entry.btf_type)? else {
                 continue;
             };
-            if obj_btf.string_at(datasec.name_offset)?.as_ref() != ".kconfig" {
+            if var.linkage != VarLinkage::Extern {
                 continue;
             }
-
-            for entry in &datasec.entries {
-                let BtfType::Var(var) = obj_btf.types.type_by_id(entry.btf_type)? else {
-                    continue;
-                };
-                if var.linkage != VarLinkage::Extern {
-                    continue;
-                }
-                let name = obj_btf.string_at(var.name_offset)?;
-                if name.starts_with("CONFIG_") {
-                    return Ok(true);
-                }
+            let name = obj_btf.string_at(var.name_offset)?;
+            if name.starts_with("CONFIG_") {
+                return Ok(true);
             }
         }
 
