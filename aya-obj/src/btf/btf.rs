@@ -1173,139 +1173,139 @@ fn maybe_materialize_libbpf_tristate(
     materialize_scalar_value(symbol_name, data, type_size, false, Some(2), endianness).map(Some)
 }
 
-impl Object {
-    // Validate one __kconfig extern against its declared BTF type and materialize
-    // the bytes that should be written for it into the synthetic .kconfig section.
-    // Returns the extern's required alignment together with its final byte value.
-    fn materialize_kconfig_extern(
-        obj_btf: &Btf,
-        var: &Var,
-        symbol_name: &str,
-        external_value: Option<&[u8]>,
-        symbol_is_weak: bool,
-        endianness: Endianness,
-    ) -> Result<(u64, Vec<u8>), BtfError> {
-        let type_size = obj_btf.type_size(var.btf_type)?;
-        let type_align = obj_btf.type_align(var.btf_type)? as u64;
-        let resolved_type = obj_btf.type_by_id(obj_btf.resolve_type(var.btf_type)?)?;
-        let supported_symbol_name = symbol_name.starts_with("CONFIG_")
-            || matches!(
-                symbol_name,
-                "LINUX_KERNEL_VERSION" | "LINUX_HAS_BPF_COOKIE" | "LINUX_HAS_SYSCALL_WRAPPER"
-            )
-            || (symbol_is_weak && symbol_name.starts_with("LINUX_"));
-        if !supported_symbol_name {
-            return Err(BtfError::InvalidExternalSymbol {
+// Validate one __kconfig extern against its declared BTF type and materialize
+// the bytes that should be written for it into the synthetic .kconfig section.
+// Returns the extern's required alignment together with its final byte value.
+fn materialize_kconfig_extern(
+    obj_btf: &Btf,
+    var: &Var,
+    symbol_name: &str,
+    external_value: Option<&[u8]>,
+    symbol_is_weak: bool,
+    endianness: Endianness,
+) -> Result<(u64, Vec<u8>), BtfError> {
+    let type_size = obj_btf.type_size(var.btf_type)?;
+    let type_align = obj_btf.type_align(var.btf_type)? as u64;
+    let resolved_type = obj_btf.type_by_id(obj_btf.resolve_type(var.btf_type)?)?;
+    let supported_symbol_name = symbol_name.starts_with("CONFIG_")
+        || matches!(
+            symbol_name,
+            "LINUX_KERNEL_VERSION" | "LINUX_HAS_BPF_COOKIE" | "LINUX_HAS_SYSCALL_WRAPPER"
+        )
+        || (symbol_is_weak && symbol_name.starts_with("LINUX_"));
+    if !supported_symbol_name {
+        return Err(BtfError::InvalidExternalSymbol {
+            symbol_name: symbol_name.into(),
+        });
+    }
+
+    let mut data = match external_value {
+        Some(data) => data.to_vec(),
+        None if symbol_is_weak => vec![0; type_size],
+        None => {
+            return Err(BtfError::ExternalSymbolNotFound {
                 symbol_name: symbol_name.into(),
             });
         }
+    };
 
-        let mut data = match external_value {
-            Some(data) => data.to_vec(),
-            None if symbol_is_weak => vec![0; type_size],
-            None => {
-                return Err(BtfError::ExternalSymbolNotFound {
-                    symbol_name: symbol_name.into(),
-                });
-            }
-        };
+    // detect if the data is a tristate marker
+    let tristate_marker = matches!(data.as_slice(), [b'n' | b'y' | b'm']).then(|| data[0]);
 
-        // detect if the data is a tristate marker
-        let tristate_marker = matches!(data.as_slice(), [b'n' | b'y' | b'm']).then(|| data[0]);
+    if let Some(data) = maybe_materialize_libbpf_tristate(
+        obj_btf,
+        resolved_type,
+        symbol_name,
+        &data,
+        tristate_marker,
+        type_size,
+        endianness,
+    )? {
+        return Ok((type_align, data));
+    }
 
-        if let Some(data) = maybe_materialize_libbpf_tristate(
-            obj_btf,
-            resolved_type,
-            symbol_name,
-            &data,
-            tristate_marker,
-            type_size,
-            endianness,
-        )? {
-            return Ok((type_align, data));
-        }
-
-        let data = match resolved_type {
-            BtfType::Array(Array { array, .. }) => {
-                // kconfig strings must declare a concrete destination size
-                if array.len == 0 {
-                    return Err(BtfError::InvalidExternalSymbol {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-
-                // only byte arrays are valid string destinations
-                let element_type = obj_btf.resolve_type(array.element_type)?;
-                let BtfType::Int(int) = obj_btf.type_by_id(element_type)? else {
-                    return Err(BtfError::InvalidExternalSymbol {
-                        symbol_name: symbol_name.into(),
-                    });
-                };
-                if int.size != 1 || int.encoding() == IntEncoding::Bool {
-                    return Err(BtfError::InvalidExternalSymbol {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-
-                // tristate markers are scalar values, not valid string payloads
-                if tristate_marker.is_some() {
-                    return Err(BtfError::ExternalSymbolValueOutOfRange {
-                        symbol_name: symbol_name.into(),
-                    });
-                }
-
-                // fixed-size strings are padded/truncated, then always NUL-terminated
-                data.resize(type_size, 0);
-                *data.last_mut().unwrap() = 0;
-                data
-            }
-            BtfType::Int(int) if int.encoding() == IntEncoding::Bool && int.size == 1 => {
-                let data = if let Some(value) = tristate_marker {
-                    if value == b'm' {
-                        return Err(BtfError::ExternalSymbolValueOutOfRange {
-                            symbol_name: symbol_name.into(),
-                        });
-                    }
-                    vec![u8::from(value == b'y')]
-                } else {
-                    data
-                };
-
-                materialize_scalar_value(symbol_name, &data, type_size, false, Some(1), endianness)?
-            }
-            BtfType::Int(int)
-                if (matches!(int.encoding(), IntEncoding::Signed | IntEncoding::None)
-                    && matches!(int.size, 1 | 2 | 4 | 8))
-                    || (int.encoding() == IntEncoding::Char && int.size == 1) =>
-            {
-                if let Some(value) = tristate_marker {
-                    if int.size != 1 {
-                        return Err(BtfError::ExternalSymbolValueOutOfRange {
-                            symbol_name: symbol_name.into(),
-                        });
-                    }
-                    vec![value]
-                } else {
-                    materialize_scalar_value(
-                        symbol_name,
-                        &data,
-                        type_size,
-                        int.encoding() == IntEncoding::Signed,
-                        None,
-                        endianness,
-                    )?
-                }
-            }
-            _ => {
+    let data = match resolved_type {
+        BtfType::Array(Array { array, .. }) => {
+            // kconfig strings must declare a concrete destination size
+            if array.len == 0 {
                 return Err(BtfError::InvalidExternalSymbol {
                     symbol_name: symbol_name.into(),
                 });
             }
-        };
 
-        Ok((type_align, data))
-    }
+            // only byte arrays are valid string destinations
+            let element_type = obj_btf.resolve_type(array.element_type)?;
+            let BtfType::Int(int) = obj_btf.type_by_id(element_type)? else {
+                return Err(BtfError::InvalidExternalSymbol {
+                    symbol_name: symbol_name.into(),
+                });
+            };
+            if int.size != 1 || int.encoding() == IntEncoding::Bool {
+                return Err(BtfError::InvalidExternalSymbol {
+                    symbol_name: symbol_name.into(),
+                });
+            }
 
+            // tristate markers are scalar values, not valid string payloads
+            if tristate_marker.is_some() {
+                return Err(BtfError::ExternalSymbolValueOutOfRange {
+                    symbol_name: symbol_name.into(),
+                });
+            }
+
+            // fixed-size strings are padded/truncated, then always NUL-terminated
+            data.resize(type_size, 0);
+            *data.last_mut().unwrap() = 0;
+            data
+        }
+        BtfType::Int(int) if int.encoding() == IntEncoding::Bool && int.size == 1 => {
+            let data = if let Some(value) = tristate_marker {
+                if value == b'm' {
+                    return Err(BtfError::ExternalSymbolValueOutOfRange {
+                        symbol_name: symbol_name.into(),
+                    });
+                }
+                vec![u8::from(value == b'y')]
+            } else {
+                data
+            };
+
+            materialize_scalar_value(symbol_name, &data, type_size, false, Some(1), endianness)?
+        }
+        BtfType::Int(int)
+            if (matches!(int.encoding(), IntEncoding::Signed | IntEncoding::None)
+                && matches!(int.size, 1 | 2 | 4 | 8))
+                || (int.encoding() == IntEncoding::Char && int.size == 1) =>
+        {
+            if let Some(value) = tristate_marker {
+                if int.size != 1 {
+                    return Err(BtfError::ExternalSymbolValueOutOfRange {
+                        symbol_name: symbol_name.into(),
+                    });
+                }
+                vec![value]
+            } else {
+                materialize_scalar_value(
+                    symbol_name,
+                    &data,
+                    type_size,
+                    int.encoding() == IntEncoding::Signed,
+                    None,
+                    endianness,
+                )?
+            }
+        }
+        _ => {
+            return Err(BtfError::InvalidExternalSymbol {
+                symbol_name: symbol_name.into(),
+            });
+        }
+    };
+
+    Ok((type_align, data))
+}
+
+impl Object {
     // Build the synthetic .kconfig section by materializing each supported
     // __kconfig extern, assigning its aligned offset, and updating any per-symbol
     // BTF state needed to keep the section layout and type metadata consistent.
@@ -1364,7 +1364,7 @@ impl Object {
                             symbol_name: name.clone(),
                         }
                     })?;
-                    let (type_align, data) = Self::materialize_kconfig_extern(
+                    let (type_align, data) = materialize_kconfig_extern(
                         obj_btf,
                         var,
                         &name,
@@ -1939,7 +1939,7 @@ mod tests {
             (&[255, 0, 0, 0, 0, 0, 0, 0], 255),
         ] {
             assert_eq!(
-                Object::materialize_kconfig_extern(
+                materialize_kconfig_extern(
                     &btf,
                     &var,
                     "CONFIG_CHAR_VALUE",
@@ -1953,7 +1953,7 @@ mod tests {
         }
 
         assert_matches!(
-            Object::materialize_kconfig_extern(
+            materialize_kconfig_extern(
                 &btf,
                 &var,
                 "CONFIG_CHAR_VALUE",
