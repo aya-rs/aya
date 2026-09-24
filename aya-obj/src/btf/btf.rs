@@ -678,7 +678,6 @@ impl Btf {
                     if fixed_name != name {
                         d.name_offset = self.add_string(&fixed_name);
                     }
-                    let is_kconfig_section = fixed_name == ".kconfig";
                     if fixed_ksyms_datasec_id == Some(i) {
                         continue;
                     }
@@ -686,19 +685,17 @@ impl Btf {
                     // There are some cases when the compiler does indeed populate the size.
                     if d.size > 0 {
                         debug!("{kind} {name}: size fixup not required");
-                        if !is_kconfig_section {
-                            continue;
-                        }
-                    } else {
-                        // We need to get the size of the section from the ELF file.
-                        // Fortunately, we cached these when parsing it initially
-                        // and we can this up by name in section_infos.
-                        let Some((_, size)) = section_infos.get(&name) else {
-                            return Err(BtfError::UnknownSectionSize { section_name: name });
-                        };
-                        debug!("{kind} {name}: fixup size to {size}");
-                        d.size = *size as u32;
+                        continue;
                     }
+
+                    // We need to get the size of the section from the ELF file.
+                    // Fortunately, we cached these when parsing it initially
+                    // and we can this up by name in section_infos.
+                    let Some((_, size)) = section_infos.get(&name) else {
+                        return Err(BtfError::UnknownSectionSize { section_name: name });
+                    };
+                    debug!("{kind} {name}: fixup size to {size}");
+                    d.size = *size as u32;
 
                     // The Vec<btf_var_secinfo> contains BTF_KIND_VAR sections
                     // that need to have their offsets adjusted. To do this,
@@ -767,14 +764,6 @@ impl Btf {
                                 });
                             };
                             e.offset = *offset as u32;
-
-                            // For kconfig support
-                            if is_kconfig_section && var.linkage == VarLinkage::Extern {
-                                let mut var = var.clone();
-                                var.linkage = VarLinkage::Global;
-
-                                types.types[e.btf_type as usize] = BtfType::Var(var);
-                            }
 
                             debug!("{kind} {name}: VAR {var_name}: fixup offset {offset}");
                         } else {
@@ -1292,7 +1281,7 @@ impl Object {
 
             for (entry_index, entry) in entries.iter().enumerate() {
                 let BtfType::Var(var) = obj_btf.types.type_by_id(entry.btf_type)? else {
-                    continue;
+                    return Err(BtfError::InvalidDatasec);
                 };
                 let name = obj_btf.string_at(var.name_offset)?.into_owned();
 
@@ -1329,7 +1318,11 @@ impl Object {
                 };
 
                 if let BtfType::DataSec(d) = &mut obj_btf.types.types[type_index] {
+                    d.entries[entry_index].offset = aligned_offset as u32;
                     d.entries[entry_index].size = data.len() as u32;
+                }
+                if let BtfType::Var(var) = &mut obj_btf.types.types[entry.btf_type as usize] {
+                    var.linkage = VarLinkage::Global;
                 }
 
                 kconfig_data.resize(aligned_offset as usize, 0);
