@@ -276,82 +276,6 @@ fn add_type(header: &mut btf_header, types: &mut BtfTypes, btf_type: BtfType) ->
     type_id as u32
 }
 
-// Materialize a numeric value into the BTF-declared scalar width. Values parsed
-// from textual kconfig are stored as 64-bit byte arrays; when the destination is
-// narrower, only redundant sign/zero-extension bytes may be discarded.
-fn materialize_scalar_value(
-    symbol_name: &str,
-    value: &[u8],
-    target_type_size: usize,
-    signed: bool,
-    max_value: Option<u64>,
-    endianness: Endianness,
-) -> Result<Vec<u8>, BtfError> {
-    let out_of_range = || {
-        Err(BtfError::ExternalSymbolValueOutOfRange {
-            symbol_name: symbol_name.into(),
-        })
-    };
-    if value.is_empty()
-        || target_type_size == 0
-        || target_type_size > size_of::<u64>()
-        || value.len() > size_of::<u64>()
-    {
-        return out_of_range();
-    }
-
-    let value_bits = value.len() * u8::BITS as usize;
-    let value = match endianness {
-        Endianness::Little => value
-            .iter()
-            .rev()
-            .fold(0u64, |value, byte| (value << u8::BITS) | u64::from(*byte)),
-        Endianness::Big => value
-            .iter()
-            .fold(0u64, |value, byte| (value << u8::BITS) | u64::from(*byte)),
-    };
-    let target_type_bits = target_type_size * u8::BITS as usize;
-    let value = if signed {
-        let value = if value_bits == u64::BITS as usize {
-            value as i64
-        } else {
-            // sign-extend
-            ((value << (u64::BITS as usize - value_bits)) as i64)
-                >> (u64::BITS as usize - value_bits)
-        };
-        if target_type_bits < i64::BITS as usize {
-            let min = -(1i64 << (target_type_bits - 1));
-            let max = (1i64 << (target_type_bits - 1)) - 1;
-            if !(min..=max).contains(&value) {
-                return out_of_range();
-            }
-        }
-        value as u64
-    } else {
-        if target_type_bits < u64::BITS as usize && value >= (1u64 << target_type_bits) {
-            return out_of_range();
-        }
-        if max_value.is_some_and(|max| value > max) {
-            return out_of_range();
-        }
-        value
-    };
-    #[expect(
-        clippy::big_endian_bytes,
-        clippy::little_endian_bytes,
-        reason = "value is materialized in object endianness"
-    )]
-    let bytes = match endianness {
-        Endianness::Little => value.to_le_bytes(),
-        Endianness::Big => value.to_be_bytes(),
-    };
-    let start = match endianness {
-        Endianness::Little => 0,
-        Endianness::Big => size_of::<u64>() - target_type_size,
-    };
-    Ok(bytes[start..start + target_type_size].to_vec())
-}
-
 impl Btf {
     /// Creates a new empty instance with its header initialized
     pub fn new() -> Self {
@@ -1063,6 +987,78 @@ fn find_data_sec<'a>(btf: &'a Btf, name: &str) -> Result<Option<(usize, &'a Data
     }
 
     Ok(None)
+}
+
+// Materialize a numeric value into the BTF-declared scalar width. Values parsed
+// from textual kconfig are stored as 64-bit byte arrays; when the destination is
+// narrower, only redundant sign/zero-extension bytes may be discarded.
+fn materialize_scalar_value(
+    symbol_name: &str,
+    value: &[u8],
+    target_type_size: usize,
+    signed: bool,
+    max_value: Option<u64>,
+    endianness: Endianness,
+) -> Result<Vec<u8>, BtfError> {
+    let out_of_range = || {
+        Err(BtfError::ExternalSymbolValueOutOfRange {
+            symbol_name: symbol_name.into(),
+        })
+    };
+    if value.is_empty()
+        || target_type_size == 0
+        || target_type_size > size_of::<u64>()
+        || value.len() > size_of::<u64>()
+    {
+        return out_of_range();
+    }
+
+    let value_bits = value.len() * u8::BITS as usize;
+    let value = match endianness {
+        Endianness::Little => value
+            .iter()
+            .rev()
+            .fold(0u64, |value, byte| (value << u8::BITS) | u64::from(*byte)),
+        Endianness::Big => value
+            .iter()
+            .fold(0u64, |value, byte| (value << u8::BITS) | u64::from(*byte)),
+    };
+    let target_type_bits = target_type_size * u8::BITS as usize;
+    let value = if signed {
+        let value = if value_bits == u64::BITS as usize {
+            value as i64
+        } else {
+            // sign-extend
+            ((value << (u64::BITS as usize - value_bits)) as i64)
+                >> (u64::BITS as usize - value_bits)
+        };
+        if target_type_bits < i64::BITS as usize {
+            let min = -(1i64 << (target_type_bits - 1));
+            let max = (1i64 << (target_type_bits - 1)) - 1;
+            if !(min..=max).contains(&value) {
+                return out_of_range();
+            }
+        }
+        value as u64
+    } else {
+        if target_type_bits < u64::BITS as usize && value >= (1u64 << target_type_bits) {
+            return out_of_range();
+        }
+        if max_value.is_some_and(|max| value > max) {
+            return out_of_range();
+        }
+        value
+    };
+    #[expect(
+        clippy::big_endian_bytes,
+        clippy::little_endian_bytes,
+        reason = "value is materialized in object endianness"
+    )]
+    let bytes = match endianness {
+        Endianness::Little => value.to_le_bytes()[..target_type_size].to_vec(),
+        Endianness::Big => value.to_be_bytes()[size_of::<u64>() - target_type_size..].to_vec(),
+    };
+    Ok(bytes)
 }
 
 fn maybe_materialize_libbpf_tristate(
