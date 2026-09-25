@@ -1,4 +1,4 @@
-use std::{thread, time::Duration};
+use std::time::{Duration, Instant};
 
 use aya::{
     EbpfLoader,
@@ -164,10 +164,34 @@ fn read_counter() {
             std::hint::black_box(value);
         }
     };
+    let advance_counters = |group: &mut PerfEventGroup, previous: [u64; 2]| {
+        // The scheduler clock can stay flat until the next tick, so a fixed
+        // number of instructions does not guarantee that the counters advance.
+        let start = Instant::now();
+        loop {
+            run_workload();
+            let PerfEventGroupRead {
+                values,
+                enabled_nanos: _enabled_nanos,
+                running_nanos: _running_nanos,
+            } = group.read().unwrap();
+            if values
+                .iter()
+                .zip(previous)
+                .all(|(value, previous)| *value > previous)
+            {
+                break;
+            }
+            assert!(
+                start.elapsed() < Duration::from_secs(5),
+                "perf counters did not advance from {previous:?}: {values:?}"
+            );
+        }
+    };
 
     // Enable the group, exercise it, and disable it.
     group.enable().unwrap();
-    run_workload();
+    advance_counters(&mut group, [0; 2]);
     group.disable().unwrap();
 
     // read from userspace
@@ -214,9 +238,7 @@ fn read_counter() {
 
     // enabling resumes event collection
     group.enable().unwrap();
-    // Re-enabled group members may not be scheduled until the task is rescheduled.
-    thread::sleep(Duration::from_millis(1));
-    run_workload();
+    advance_counters(&mut group, disabled.values);
     trigger_emit_event();
     group.disable().unwrap();
     let resumed_ebpf_read = read_ebpf_counters(&mut output_buffers);
