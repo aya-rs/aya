@@ -377,7 +377,7 @@ impl SchedClassifier {
                 let (priority, handle) = unsafe {
                     netlink_qdisc_attach(
                         if_index as i32,
-                        &attach_type,
+                        attach_type,
                         prog_fd,
                         &name,
                         options.priority,

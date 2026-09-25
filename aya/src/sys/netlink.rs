@@ -234,7 +234,7 @@ fn write_tc_attach_attrs(
 #[expect(clippy::too_many_arguments, reason = "internal netlink helper")]
 pub(crate) unsafe fn netlink_qdisc_attach(
     if_index: i32,
-    attach_type: &TcAttachType,
+    attach_type: TcAttachType,
     prog_fd: BorrowedFd<'_>,
     prog_name: &CStr,
     priority: u16,
@@ -294,7 +294,8 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     for msg in sock.recv() {
         let msg = msg?;
         if msg.header.nlmsg_type == RTM_NEWTFILTER {
-            tc_msg.push(unsafe { ptr::read_unaligned(msg.data.as_ptr().cast()) });
+            let (msg, _attrs) = msg.tcmsg()?;
+            tc_msg.push(msg);
         }
     }
     match tc_msg.as_slice() {
@@ -382,15 +383,7 @@ pub(crate) fn netlink_find_filter_with_name(
                     return Ok(None);
                 }
 
-                let (tc_msg_buf, attrs_buf) = msg
-                    .data
-                    .split_at_checked(size_of::<tcmsg>())
-                    .ok_or_else(|| {
-                        NetlinkError(NetlinkErrorInternal::IoError(io::Error::other(
-                            "RTM_NEWTFILTER payload smaller than tcmsg",
-                        )))
-                    })?;
-                let tc_msg: tcmsg = unsafe { ptr::read_unaligned(tc_msg_buf.as_ptr().cast()) };
+                let (tc_msg, attrs_buf) = msg.tcmsg()?;
                 let priority = (tc_msg.tcm_info >> 16) as u16;
 
                 let mut filter = None;
@@ -619,6 +612,21 @@ struct NetlinkMessage {
 }
 
 impl NetlinkMessage {
+    fn tcmsg(&self) -> Result<(tcmsg, &[u8]), NetlinkErrorInternal> {
+        let Self {
+            header: _header,
+            data,
+            error: _error,
+        } = self;
+        let (header, attrs) = data
+            .split_at_checked(size_of::<tcmsg>())
+            .ok_or_else(|| io::Error::other("RTM_NEWTFILTER payload smaller than tcmsg"))?;
+        // SAFETY: the checked prefix contains a complete tcmsg, whose integer fields
+        // accept any bit pattern.
+        let header = unsafe { ptr::read_unaligned(header.as_ptr().cast()) };
+        Ok((header, attrs))
+    }
+
     fn read(buf: &[u8]) -> io::Result<Self> {
         let header_buf = buf
             .get(..NLMSG_HDR_LEN)
@@ -850,9 +858,29 @@ unsafe fn request_attributes<T>(req: &mut T, msg_len: usize) -> &mut [u8] {
 
 #[cfg(test)]
 mod tests {
+    use assert_matches::assert_matches;
     use rstest::rstest;
 
     use super::*;
+
+    #[rstest]
+    #[case::empty(0)]
+    #[case::truncated(size_of::<tcmsg>() - 1)]
+    fn test_short_tcmsg(#[case] payload_len: usize) {
+        let msg = NetlinkMessage {
+            header: nlmsghdr {
+                nlmsg_len: (NLMSG_HDR_LEN + payload_len) as u32,
+                nlmsg_type: RTM_NEWTFILTER,
+                nlmsg_flags: 0,
+                nlmsg_seq: 1,
+                nlmsg_pid: 0,
+            },
+            data: vec![0; payload_len],
+            error: None,
+        };
+        let err = assert_matches!(msg.tcmsg(), Err(NetlinkErrorInternal::IoError(err)) => err);
+        assert_eq!(err.to_string(), "RTM_NEWTFILTER payload smaller than tcmsg");
+    }
 
     #[test]
     fn test_nested_attrs() {
