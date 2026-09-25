@@ -6,6 +6,7 @@
   * [Ask for Help](#ask-for-help)
   * [Pull Request Lifecycle](#pull-request-lifecycle)
   * [Pull Request Checklist](#pull-request-checklist)
+  * [Source References](#source-references)
   * [Documentation Style](#documentation-style)
 
 Welcome! We are glad that you want to contribute to our project! 💖
@@ -148,6 +149,12 @@ accept and merge it. Theses requirements are described in the
 
 It is recommended that you run the integration tests locally before submitting
 your Pull Request. Please see [Aya Integration Tests] for more information.
+
+## Source References
+
+When citing another project's source code to justify a claim or explain
+behavior, use a GitHub permalink pinned to a commit. Abbreviate the commit
+SHA to nine hexadecimal digits.
 
 ## Documentation Style
 

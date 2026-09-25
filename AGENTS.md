@@ -16,8 +16,7 @@
   cargo xtask clippy -- --target x86_64-unknown-linux-musl
   ```
 
-- Coding guidelines:
-  - Use github or bootlin permalinks when referencing kernel sources.
+- Follow [CONTRIBUTING.md](CONTRIBUTING.md).
 - Testing (if local machine is not Linux):
 
   ```sh
