@@ -390,7 +390,7 @@ impl Program {
             // - `BPF_TRACE_FEXIT` (`FExit`)
             // - `BPF_TRACE_ITER` (`Iter`)
             //
-            // https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/syscall.c#L3935-L3940
+            // https://github.com/torvalds/linux/blob/adc218676/kernel/bpf/syscall.c#L3935-L3940
             Self::BtfTracePoint(_) | Self::FEntry(_) | Self::FExit(_) | Self::Iter(_) => {
                 ProgramType::Tracing
             }
@@ -1039,7 +1039,7 @@ pub struct RawTracePointRunOptions {
     ///
     /// The array size of 12 matches the kernel's maximum: the longest tracepoint
     /// in the kernel takes 12 arguments. See
-    /// [`net/bpf/test_run.c`](https://github.com/torvalds/linux/blob/d91a46d680/net/bpf/test_run.c#L762).
+    /// [`net/bpf/test_run.c`](https://github.com/torvalds/linux/blob/d91a46d68/net/bpf/test_run.c#L762).
     pub args: [u64; 12],
     /// If `Some(cpu)`, pin execution to that CPU via `BPF_F_TEST_RUN_ON_CPU`.
     ///
@@ -1173,7 +1173,7 @@ impl TestRun for FExit {
     // The kernel tracing test-run handler uses a fixed synthetic fentry/fexit
     // call sequence; packet data, context data, repeat count, CPU pinning, and
     // batch flags do not apply.
-    // https://github.com/torvalds/linux/blob/v7.1-rc4/net/bpf/test_run.c#L690-L735
+    // https://github.com/torvalds/linux/blob/5200f5f49/net/bpf/test_run.c#L690-L735
     type Opts<'a> = ();
     // For fentry/fexit, test-run success only reports that the kernel's fixed
     // synthetic call sequence ran.
@@ -1185,7 +1185,7 @@ impl TestRun for FExit {
 }
 
 /// Trait implemented by the [`Program`] types which support the kernel's
-/// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f235dc3f69d13375b32f4209228e1cb96).
+/// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f2).
 ///
 /// # Minimum kernel version
 ///
@@ -1210,7 +1210,7 @@ macro_rules! impl_multiprog_fd {
 impl_multiprog_fd!(SchedClassifier);
 
 /// Trait implemented by the [`Link`] types which support the kernel's
-/// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f235dc3f69d13375b32f4209228e1cb96).
+/// [generic multi-prog API](https://github.com/torvalds/linux/commit/053c8e1f2).
 ///
 /// # Minimum kernel version
 ///

@@ -17,7 +17,7 @@ use crate::{
 /// descriptors and the values can be accessed both from eBPF using [`bpf_sk_storage_get`] and from
 /// user space through the methods on this type.
 ///
-/// [`bpf_sk_storage_get`]: https://elixir.bootlin.com/linux/v6.12/source/include/uapi/linux/bpf.h#L4064-L4093
+/// [`bpf_sk_storage_get`]: https://github.com/torvalds/linux/blob/adc218676/include/uapi/linux/bpf.h#L4064-L4093
 #[doc(alias = "BPF_MAP_TYPE_SK_STORAGE")]
 #[derive(Debug)]
 pub struct SkStorage<T, V: Pod> {

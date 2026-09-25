@@ -100,7 +100,7 @@ where
 
     // x86 debug registers cannot trigger on read-only watchpoints, so the
     // kernel rejects `HW_BREAKPOINT_R` outright, see
-    // https://github.com/torvalds/linux/blob/v6.12/arch/x86/kernel/hw_breakpoint.c#L345-L377.
+    // https://github.com/torvalds/linux/blob/adc218676/arch/x86/kernel/hw_breakpoint.c#L345-L377.
     let type_supported = !(cfg!(target_arch = "x86_64")
         && matches!(
             config,
@@ -137,7 +137,7 @@ where
         for scope in *scope_group {
             // arm64 rejects per-task kernel breakpoints (the scopes that carry
             // a PID) to avoid single-step bookkeeping, see
-            // https://github.com/torvalds/linux/blob/v6.12/arch/arm64/kernel/hw_breakpoint.c#L566-L571.
+            // https://github.com/torvalds/linux/blob/adc218676/arch/arm64/kernel/hw_breakpoint.c#L566-L571.
             let scope_supported = type_supported
                 && (!cfg!(target_arch = "aarch64")
                     || matches!(scope, PerfEventScope::AllProcessesOneCpu { cpu: _ }));
@@ -232,7 +232,7 @@ fn perf_event_bp() {
     // Trigger the hardware breakpoint by reading or writing
     // /proc/sys/kernel/modprobe, the sysctl connected to modprobe_path.
     //
-    // See https://github.com/torvalds/linux/blob/v6.17/kernel/module/main.c#L132-L150.
+    // See https://github.com/torvalds/linux/blob/e5f0a698b/kernel/module/main.c#L132-L150.
     const MODPROBE_PATH: &str = "/proc/sys/kernel/modprobe";
 
     let read = |modprobe_contents: &mut Option<String>| {

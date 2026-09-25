@@ -46,7 +46,7 @@ use crate::programs::{
 /// # Ok::<(), LsmError>(())
 /// ```
 ///
-/// [1]: https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hook_defs.h
+/// [1]: https://github.com/torvalds/linux/blob/8d3ae5928/include/linux/lsm_hook_defs.h
 #[derive(Debug)]
 #[doc(alias = "BPF_PROG_TYPE_LSM")]
 pub struct Lsm {

@@ -83,7 +83,7 @@ impl SkSkb {
         let prog_fd = prog_fd.as_fd();
         let attach_type = *kind;
         // Sockmap links were added in Linux 6.10.
-        // https://github.com/torvalds/linux/commit/699c23f02c65cbfc3e638f14ce0d70c23a2e1f02
+        // https://github.com/torvalds/linux/commit/699c23f02
         let link = if KernelVersion::at_least(6, 10, 0) {
             let link_fd = bpf_link_create(
                 prog_fd,

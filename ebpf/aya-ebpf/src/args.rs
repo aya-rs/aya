@@ -65,8 +65,8 @@ impl PtRegsLayout for pt_regs {
 
     fn arg_reg(&self, index: usize) -> Option<&Self::Reg> {
         // AArch64 arguments align with libbpf's __PT_PARM{1..8}_REG (regs[0..7]).
-        // https://github.com/torvalds/linux/blob/v6.17/arch/arm64/include/uapi/asm/ptrace.h#L88-L93
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L229-L244
+        // https://github.com/torvalds/linux/blob/e5f0a698b/arch/arm64/include/uapi/asm/ptrace.h#L88-L93
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L229-L244
         match index {
             0..=7 => Some(&self.regs[index]),
             _ => None,
@@ -75,7 +75,7 @@ impl PtRegsLayout for pt_regs {
 
     fn rc_reg(&self) -> &Self::Reg {
         // Return codes use libbpf's __PT_RC_REG (regs[0]/x0).
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L248-L251
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L248-L251
         &self.regs[0]
     }
 }
@@ -86,8 +86,8 @@ impl PtRegsLayout for pt_regs {
 
     fn arg_reg(&self, index: usize) -> Option<&Self::Reg> {
         // ARM arguments follow libbpf's __PT_PARM{1..7}_REG mapping (uregs[0..6]).
-        // https://github.com/torvalds/linux/blob/v6.17/arch/arm/include/uapi/asm/ptrace.h#L124-L152
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L198-L210
+        // https://github.com/torvalds/linux/blob/e5f0a698b/arch/arm/include/uapi/asm/ptrace.h#L124-L152
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L198-L210
         match index {
             0..=6 => Some(&self.uregs[index]),
             _ => None,
@@ -96,7 +96,7 @@ impl PtRegsLayout for pt_regs {
 
     fn rc_reg(&self) -> &Self::Reg {
         // Return codes use libbpf's __PT_RC_REG (uregs[0]).
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L211-L214
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L211-L214
         &self.uregs[0]
     }
 }
@@ -107,8 +107,8 @@ impl PtRegsLayout for pt_regs {
 
     fn arg_reg(&self, index: usize) -> Option<&Self::Reg> {
         // LoongArch arguments correspond to libbpf's __PT_PARM{1..8}_REG (regs[4..11]).
-        // https://github.com/torvalds/linux/blob/v6.17/arch/loongarch/include/asm/ptrace.h#L20-L33
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L427-L444
+        // https://github.com/torvalds/linux/blob/e5f0a698b/arch/loongarch/include/asm/ptrace.h#L20-L33
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L427-L444
         match index {
             0..=7 => Some(&self.regs[4 + index]),
             _ => None,
@@ -117,7 +117,7 @@ impl PtRegsLayout for pt_regs {
 
     fn rc_reg(&self) -> &Self::Reg {
         // Return codes use libbpf's __PT_RC_REG (regs[4], a0).
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L445-L447
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L445-L447
         &self.regs[4]
     }
 }
@@ -128,8 +128,8 @@ impl PtRegsLayout for pt_regs {
 
     fn arg_reg(&self, index: usize) -> Option<&Self::Reg> {
         // MIPS N64 arguments correspond to libbpf's __PT_PARM{1..8}_REG (regs[4..11]).
-        // https://github.com/torvalds/linux/blob/v6.17/arch/mips/include/asm/ptrace.h#L28-L52
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L261-L275
+        // https://github.com/torvalds/linux/blob/e5f0a698b/arch/mips/include/asm/ptrace.h#L28-L52
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L261-L275
         match index {
             0..=7 => Some(&self.regs[4 + index]),
             _ => None,
@@ -138,7 +138,7 @@ impl PtRegsLayout for pt_regs {
 
     fn rc_reg(&self) -> &Self::Reg {
         // Return codes use libbpf's __PT_RC_REG (regs[2], which aliases MIPS $v0).
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L277-L279
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L277-L279
         &self.regs[2]
     }
 }
@@ -149,8 +149,8 @@ impl PtRegsLayout for pt_regs {
 
     fn arg_reg(&self, index: usize) -> Option<&Self::Reg> {
         // PowerPC64 arguments follow libbpf's __PT_PARM{1..8}_REG (gpr[3..10]).
-        // https://github.com/torvalds/linux/blob/v6.17/arch/powerpc/include/asm/ptrace.h#L28-L56
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L290-L308
+        // https://github.com/torvalds/linux/blob/e5f0a698b/arch/powerpc/include/asm/ptrace.h#L28-L56
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L290-L308
         match index {
             0..=7 => Some(&self.gpr[3 + index]),
             _ => None,
@@ -159,7 +159,7 @@ impl PtRegsLayout for pt_regs {
 
     fn rc_reg(&self) -> &Self::Reg {
         // Return codes use libbpf's __PT_RC_REG (gpr[3]).
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L311-L314
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L311-L314
         &self.gpr[3]
     }
 }
@@ -170,8 +170,8 @@ impl PtRegsLayout for pt_regs {
 
     fn arg_reg(&self, index: usize) -> Option<&Self::Reg> {
         // RISC-V arguments track libbpf's __PT_PARM{1..8}_REG (a0-a7).
-        // https://github.com/torvalds/linux/blob/v6.17/arch/riscv/include/asm/ptrace.h#L15-L55
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L360-L376
+        // https://github.com/torvalds/linux/blob/e5f0a698b/arch/riscv/include/asm/ptrace.h#L15-L55
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L360-L376
         match index {
             0 => Some(&self.a0),
             1 => Some(&self.a1),
@@ -187,7 +187,7 @@ impl PtRegsLayout for pt_regs {
 
     fn rc_reg(&self) -> &Self::Reg {
         // Return codes use libbpf's __PT_RC_REG (a0).
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L379-L382
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L379-L382
         &self.a0
     }
 }
@@ -198,8 +198,8 @@ impl PtRegsLayout for pt_regs {
 
     fn arg_reg(&self, index: usize) -> Option<&Self::Reg> {
         // s390 arguments match libbpf's __PT_PARM{1..5}_REG (gprs[2..6]).
-        // https://github.com/torvalds/linux/blob/v6.17/arch/s390/include/asm/ptrace.h#L111-L131
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L170-L181
+        // https://github.com/torvalds/linux/blob/e5f0a698b/arch/s390/include/asm/ptrace.h#L111-L131
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L170-L181
         match index {
             0..=4 => Some(&self.gprs[2 + index]),
             _ => None,
@@ -208,7 +208,7 @@ impl PtRegsLayout for pt_regs {
 
     fn rc_reg(&self) -> &Self::Reg {
         // Return codes use libbpf's __PT_RC_REG (gprs[2]).
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L186-L188
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L186-L188
         &self.gprs[2]
     }
 }
@@ -219,8 +219,8 @@ impl PtRegsLayout for pt_regs {
 
     fn arg_reg(&self, index: usize) -> Option<&Self::Reg> {
         // x86-64 arguments mirror libbpf's __PT_PARM{1..6}_REG mapping (rdi, rsi, rdx, rcx, r8, r9).
-        // https://github.com/torvalds/linux/blob/v6.17/arch/x86/include/asm/ptrace.h#L103-L155
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L134-L152
+        // https://github.com/torvalds/linux/blob/e5f0a698b/arch/x86/include/asm/ptrace.h#L103-L155
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L134-L152
         match index {
             0 => Some(&self.rdi),
             1 => Some(&self.rsi),
@@ -234,7 +234,7 @@ impl PtRegsLayout for pt_regs {
 
     fn rc_reg(&self) -> &Self::Reg {
         // Return codes use libbpf's __PT_RC_REG (rax).
-        // https://github.com/torvalds/linux/blob/v6.17/tools/lib/bpf/bpf_tracing.h#L148-L152
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L148-L152
         &self.rax
     }
 }
@@ -291,7 +291,7 @@ pub(crate) fn ret<T: Argument>(ctx: &pt_regs) -> T {
 /// and their respective types for the accessed tracepoint context.
 pub(crate) fn raw_tracepoint_arg<T: Argument>(ctx: &bpf_raw_tracepoint_args, n: usize) -> T {
     // Raw tracepoint arguments are exposed as `__u64 args[0]`.
-    // https://github.com/torvalds/linux/blob/v6.17/include/uapi/linux/bpf.h#L7231-L7233
+    // https://github.com/torvalds/linux/blob/e5f0a698b/include/uapi/linux/bpf.h#L7231-L7233
     // They are represented as `__IncompleteArrayField<T>` in the Rust
     // wrapper.
     //

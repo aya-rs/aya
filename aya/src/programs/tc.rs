@@ -200,7 +200,7 @@ pub struct NlOptions {
     /// When [`None`], no attribute is sent and the filter is not bound to a
     /// class.
     ///
-    /// [`3a461da1d03e`]: https://github.com/torvalds/linux/commit/3a461da1d03e7a857edfa6a002040d07e118c639
+    /// [`3a461da1d03e`]: https://github.com/torvalds/linux/commit/3a461da1d
     #[doc(alias = "TCA_BPF_CLASSID")]
     pub classid: Option<TcHandle>,
 }

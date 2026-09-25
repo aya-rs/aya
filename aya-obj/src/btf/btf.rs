@@ -469,7 +469,7 @@ impl Btf {
     }
 
     // This follows the same logic as libbpf's bpf_object__sanitize_btf() function.
-    // https://github.com/libbpf/libbpf/blob/05f94ddbb837f5f4b3161e341eed21be307eaa04/src/libbpf.c#L2701
+    // https://github.com/libbpf/libbpf/blob/05f94ddbb/src/libbpf.c#L2701
     //
     // Fixup: The loader needs to adjust values in the BTF before it's loaded into the kernel.
     // Sanitize: Replace an unsupported BTF type with a placeholder type.
@@ -587,10 +587,10 @@ impl Btf {
                         // For a DATASEC with zero entries, inject a filler in either case:
                         // 1. Its section size is zero. The kernel rejects zero-sized DATASECs,
                         //    so the filler makes the size non-zero.
-                        //    https://github.com/torvalds/linux/blob/9f4ad9e4/kernel/bpf/btf.c#L3543-L3546
+                        //    https://github.com/torvalds/linux/blob/9f4ad9e42/kernel/bpf/btf.c#L3543-L3546
                         // 2. Its section size is non-zero, but the kernel does not support
                         //    zero-entry DATASECs, as on kernels before Linux 5.12.
-                        //    https://github.com/torvalds/linux/commit/13ca51d5
+                        //    https://github.com/torvalds/linux/commit/13ca51d5e
                         if entries.is_empty()
                             && (section_size == 0
                                 || !features.is_supported(BtfFeature::DataSecZero))
@@ -736,7 +736,7 @@ impl Btf {
                 // Sanitize ENUM64.
                 BtfType::Enum64(ty) if !features.is_supported(BtfFeature::Enum64) => {
                     // Kernels before 6.0 do not support ENUM64. See
-                    // https://github.com/torvalds/linux/commit/6089fb325cf737eeb2c4d236c94697112ca860da.
+                    // https://github.com/torvalds/linux/commit/6089fb325.
                     debug!("{kind}: not supported. replacing with UNION");
 
                     // `ty` is borrowed from `types` and we use that borrow

@@ -412,7 +412,7 @@ pub fn lsm_cgroup(attrs: TokenStream, item: TokenStream) -> TokenStream {
 /// }
 /// ```
 ///
-/// [1]: https://github.com/torvalds/linux/commit/9e15db66136a14cde3f35691f1d839d950118826
+/// [1]: https://github.com/torvalds/linux/commit/9e15db661
 #[proc_macro_attribute]
 pub fn btf_tracepoint(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match BtfTracePoint::parse(attrs.into(), item.into()) {

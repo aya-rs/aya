@@ -170,8 +170,8 @@ fn probe_supported_programs() {
     // `is_program_supported` checks attach support through `BPF_RAW_TRACEPOINT_OPEN`;
     // tracing and LSM programs go through `bpf_tracing_prog_attach()`, which links a
     // BPF trampoline. On arm64 kernels before 6.4 this can fail with `-ENOTSUPP`.
-    // https://github.com/torvalds/linux/blob/v6.3/kernel/bpf/syscall.c#L3319-L3333
-    // https://github.com/torvalds/linux/blob/v6.3/kernel/bpf/trampoline.c#L234-L237
+    // https://github.com/torvalds/linux/blob/457391b03/kernel/bpf/syscall.c#L3319-L3333
+    // https://github.com/torvalds/linux/blob/457391b03/kernel/bpf/trampoline.c#L234-L237
     let kern_version = if cfg!(target_arch = "aarch64") {
         KernelVersion::new(6, 4, 0)
     } else {
@@ -1316,7 +1316,7 @@ fn probe_supported_helpers() {
     );
     // bpf_skb_output and bpf_xdp_output are exposed through BPF_PROG_TYPE_TRACING,
     // not legacy BPF_PROG_TYPE_RAW_TRACEPOINT:
-    // https://github.com/torvalds/linux/blob/v6.14/kernel/trace/bpf_trace.c#L1981-L1991
+    // https://github.com/torvalds/linux/blob/38fec10eb/kernel/trace/bpf_trace.c#L1981-L1991
     assert_helper_probe_unsupported!(
         ProgramType::Tracing,
         BpfHelper::BPF_FUNC_skb_output // >= v5.5

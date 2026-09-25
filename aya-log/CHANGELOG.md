@@ -502,7 +502,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   upper-case hex representation) format hints for the `[u8; 6]` type,
   which is the standard one in Linux to store physical addresses in.
 
-  Tested with: https://github.com/vadorovsky/aya-examples/tree/main/xdp-mac
+  Tested with: https://github.com/vadorovsky/aya-examples/tree/6db52e813/xdp-mac
 
 - <csr-id-b2924a3a264732e6de6898a1f03d7cb22d1d0dc5/> Make miri happy
   Miri took issue about using slice::from_raw_parts without checking for
@@ -519,7 +519,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   It also gets rid of dyn-fmt and instead comes with our own parser
   implementation.
 
-  Tested on: https://github.com/vadorovsky/aya-examples/tree/main/tc
+  Tested on: https://github.com/vadorovsky/aya-examples/tree/63a9e13c0/tc
 
 - <csr-id-b8b291c51ba1b43ff27c6aab6b55d6af77334aae/> Fix links to aya-log repo
   The aya-log repo ([0]) has been archived, use the link to

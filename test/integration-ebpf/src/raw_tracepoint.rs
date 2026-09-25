@@ -28,7 +28,7 @@ fn sys_enter(ctx: RawTracePointContext) -> i32 {
     }
 
     // Raw sys_enter args are `struct pt_regs *regs, long id`.
-    // https://github.com/torvalds/linux/blob/v6.15/include/trace/events/syscalls.h#L18-L22
+    // https://github.com/torvalds/linux/blob/0ff41df1c/include/trace/events/syscalls.h#L18-L22
     let regs_addr: u64 = ctx.arg(0);
     let syscall_id: i64 = ctx.arg(1);
 
@@ -53,7 +53,7 @@ fn task_rename(ctx: RawTracePointContext) -> i32 {
     }
 
     // Raw task_rename args are `struct task_struct *task, const char *comm`.
-    // https://github.com/torvalds/linux/blob/v6.15/include/trace/events/task.h#L34-L38
+    // https://github.com/torvalds/linux/blob/0ff41df1c/include/trace/events/task.h#L34-L38
     let task_addr: u64 = ctx.arg(0);
     let comm_addr: u64 = ctx.arg(1);
 

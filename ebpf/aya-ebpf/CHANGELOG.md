@@ -433,7 +433,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    The `bpf_strncmp` helper allows for better string comparison in eBPF
    programs.
    
-   Added in https://github.com/torvalds/linux/commit/c5fb19937455095573a19.
+   Added in https://github.com/torvalds/linux/commit/c5fb19937.
 
 ### Commit Statistics
 
@@ -592,8 +592,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    This leads to ebpf loading failures as the kernel can't find the symbol when
    loading the program.
    
-   The implementation is based on https://github.com/rust-lang/compiler-builtins/blob/master/src/mem/mod.rs#L29-L40
-   and https://github.com/rust-lang/compiler-builtins/blob/master/src/mem/impls.rs#L128-L135
+   The implementation is based on https://github.com/rust-lang/compiler-builtins/blob/9ba77d158/src/mem/mod.rs#L29-L40
+   and https://github.com/rust-lang/compiler-builtins/blob/9ba77d158/src/mem/impls.rs#L128-L135
    Only the simplest case has been implemented, none of the word optimizations,
    since memcpy also doesn't seem to have them.
 

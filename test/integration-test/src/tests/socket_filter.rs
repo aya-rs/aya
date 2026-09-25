@@ -39,7 +39,7 @@ fn read_hits(hits: &Array<MapData, u64>, index: u32) -> u64 {
 fn reuseport_detach_supported() -> bool {
     let kernel_version = KernelVersion::current().unwrap();
     // `SO_DETACH_REUSEPORT_BPF` is handled starting in Linux 5.3:
-    // https://github.com/torvalds/linux/blob/v5.3/net/core/sock.c#L1042-L1044
+    // https://github.com/torvalds/linux/blob/4d856f72c/net/core/sock.c#L1042-L1044
     if kernel_version < KernelVersion::new(5, 3, 0) {
         eprintln!(
             "skipping test on kernel {kernel_version:?}, SO_DETACH_REUSEPORT_BPF requires 5.3"
@@ -77,9 +77,9 @@ async fn accept_from_either(first: &TcpListener, second: &TcpListener) -> i64 {
     // `second`, and the kernel indexes reuseport sockets by group insertion
     // order, not by the socket used later for SO_ATTACH_REUSEPORT_EBPF:
     // - first socket becomes socks[0]:
-    //   https://github.com/torvalds/linux/blob/v6.9/net/core/sock_reuseport.c#L233-L238
+    //   https://github.com/torvalds/linux/blob/a38297e3f/net/core/sock_reuseport.c#L233-L238
     // - later sockets are appended at socks[num_socks]:
-    //   https://github.com/torvalds/linux/blob/v6.9/net/core/sock_reuseport.c#L124-L130
+    //   https://github.com/torvalds/linux/blob/a38297e3f/net/core/sock_reuseport.c#L124-L130
     timeout(ACCEPT_TIMEOUT, async {
         tokio::select! {
             result = first.accept() => {
@@ -432,7 +432,7 @@ fn socket_filter_reuseport_replacement_uses_latest_program() {
 
         // A second attach through the same reuseport group replaces `reuse->prog`;
         // it does not create a second attachment or change the socket indexes:
-        // https://github.com/torvalds/linux/blob/v6.9/net/core/sock_reuseport.c#L684-L712
+        // https://github.com/torvalds/linux/blob/a38297e3f/net/core/sock_reuseport.c#L684-L712
         {
             let second_prog: &mut ReusePortSocketFilter = ebpf
                 .program_mut("select_second")
@@ -491,8 +491,8 @@ async fn socket_filter_reuseport_errors_without_reuseport() {
     // A bound listener without `SO_REUSEPORT` has no reuseport group; the
     // `SO_ATTACH_REUSEPORT_EBPF` path rejects that in `reuseport_attach_prog()`
     // with `-EINVAL`:
-    // https://github.com/torvalds/linux/blob/v6.9/net/core/sock.c#L1396-L1405
-    // https://github.com/torvalds/linux/blob/v6.9/net/core/sock_reuseport.c#L698-L700
+    // https://github.com/torvalds/linux/blob/a38297e3f/net/core/sock.c#L1396-L1405
+    // https://github.com/torvalds/linux/blob/a38297e3f/net/core/sock_reuseport.c#L698-L700
     let err = prog.attach(&listener).unwrap_err();
     assert_matches!(
         err,

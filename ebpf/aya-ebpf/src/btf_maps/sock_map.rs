@@ -97,7 +97,7 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> SockMap<MAX_ENTRIES, FLAGS> {
     /// # Minimum kernel version
     ///
     /// The minimum kernel version required to use this method is
-    /// [5.9](https://github.com/torvalds/linux/commit/e9ddbb7707ff5891616240026062b8c1e29864ca),
+    /// [5.9](https://github.com/torvalds/linux/commit/e9ddbb770),
     /// when `bpf_sk_assign` was extended to `SK_LOOKUP` programs.
     ///
     /// # Errors

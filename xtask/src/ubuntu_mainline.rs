@@ -447,7 +447,7 @@ const PE_MACHINE_AARCH64: u16 = 0xaa64;
 // arm64 kernels we cover, and these fields have the same layout across those
 // lines. Older 5.10/5.15 arm64 kernels do not carry this header; those fail the
 // zimg check below and continue using the original kernel image.
-// https://github.com/torvalds/linux/blob/v6.18/drivers/firmware/efi/libstub/zboot-header.S#L14-L30
+// https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/firmware/efi/libstub/zboot-header.S#L14-L30
 const EFI_ZBOOT_MAGIC_OFFSET: usize = 0x04;
 const EFI_ZBOOT_MAGIC: &[u8; 4] = b"zimg";
 const EFI_ZBOOT_PAYLOAD_OFFSET_OFFSET: usize = 0x08;
@@ -455,7 +455,7 @@ const EFI_ZBOOT_PAYLOAD_SIZE_OFFSET: usize = 0x0c;
 const EFI_ZBOOT_COMPRESSION_OFFSET: usize = 0x18;
 const EFI_ZBOOT_COMPRESSION_LEN: usize = 0x20;
 // arm64 Image header magic:
-// https://github.com/torvalds/linux/blob/v6.18/arch/arm64/include/asm/image.h#L6-L43
+// https://github.com/torvalds/linux/blob/7d0a66e4b/arch/arm64/include/asm/image.h#L6-L43
 const ARM64_IMAGE_MAGIC_OFFSET: usize = 0x38;
 const ARM64_IMAGE_MAGIC: &[u8; 4] = b"ARMd";
 
@@ -499,7 +499,7 @@ fn is_aarch64_pe_image(path: &Path) -> Result<bool> {
 }
 
 // Parsed subset of the EFI zboot header fields we need.
-// https://github.com/torvalds/linux/blob/v6.18/drivers/firmware/efi/libstub/zboot-header.S#L14-L30
+// https://github.com/torvalds/linux/blob/7d0a66e4b/drivers/firmware/efi/libstub/zboot-header.S#L14-L30
 struct EfiZbootHeader<'a> {
     compression: &'a str,
     payload_offset: usize,

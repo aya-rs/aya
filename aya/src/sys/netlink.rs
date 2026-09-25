@@ -43,7 +43,7 @@ const NLA_HDR_ALIGN_LEN: usize = nla_align!(NLA_HDR_LEN);
 
 /// `CLS_BPF_NAME_LEN` from the Linux kernel, plus the trailing NUL.
 /// The kernel's `NLA_NUL_STRING` limit excludes the terminator.
-/// <https://github.com/torvalds/linux/blob/v6.19/net/sched/cls_bpf.c#L28>
+/// <https://github.com/torvalds/linux/blob/05f7e89ab/net/sched/cls_bpf.c#L28>
 const CLS_BPF_NAME_LEN: usize = 256 + 1;
 
 // Size of the attribute buffer needed by write_tc_attach_attrs:
@@ -253,7 +253,7 @@ pub(crate) unsafe fn netlink_qdisc_attach(
     //
     // When create=false we're replacing an existing attachment so we must not set either flags.
     //
-    // See https://github.com/torvalds/linux/blob/3a87498/net/sched/cls_api.c#L2304
+    // See https://github.com/torvalds/linux/blob/3a8749886/net/sched/cls_api.c#L2304
     let request_flags = if create {
         NLM_F_CREATE | NLM_F_EXCL
     } else {

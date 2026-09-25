@@ -313,7 +313,7 @@ fn test_uprobe_attach_multi_invalid_symbol() {
         Err(ProgramError::UProbeError(UProbeError::MultiLinkNotSupported)) => {
             let kernel_version = KernelVersion::current().unwrap();
             // Multi-uprobe landed in Linux 6.6 (see BPF_TRACE_UPROBE_MULTI in
-            // https://elixir.bootlin.com/linux/v6.6/source/include/uapi/linux/bpf.h#L1042).
+            // https://github.com/torvalds/linux/blob/ffc253263/include/uapi/linux/bpf.h#L1042).
             let multi_min = KernelVersion::new(6, 6, 0);
             assert!(
                 kernel_version < multi_min,

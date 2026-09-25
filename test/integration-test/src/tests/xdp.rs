@@ -192,7 +192,7 @@ fn cpumap_chain(#[case] cpus_name: &str, #[case] prog_name: &str) {
     let result = xdp.attach("lo", XdpMode::default());
     // Generic devices did not support cpumap XDP programs until 5.15.
     //
-    // See https://github.com/torvalds/linux/commit/11941f8a85362f612df61f4aaab0e41b64d2111d.
+    // See https://github.com/torvalds/linux/commit/11941f8a8.
     if KernelVersion::current().unwrap() < KernelVersion::new(5, 15, 0) {
         assert_matches!(result, Err(ProgramError::XdpError(XdpError::NetlinkError(err))) => {
             assert_eq!(err.raw_os_error(), Some(libc::EINVAL))
@@ -273,7 +273,7 @@ fn devmap_set(
     if !is_devmap_prog_id_supported().unwrap() {
         let kernel_version = KernelVersion::current().unwrap();
         eprintln!(
-            "skipping {dev_get_prog} and {dev_hash_get_prog} on kernel {kernel_version:?}, devmap program IDs are unavailable; see https://github.com/torvalds/linux/commit/fbee97feed9b"
+            "skipping {dev_get_prog} and {dev_hash_get_prog} on kernel {kernel_version:?}, devmap program IDs are unavailable; see https://github.com/torvalds/linux/commit/fbee97fee"
         );
         return;
     }

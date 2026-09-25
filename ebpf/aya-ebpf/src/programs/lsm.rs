@@ -44,7 +44,7 @@ impl LsmContext {
     /// }
     /// ```
     ///
-    /// [1]: https://elixir.bootlin.com/linux/latest/source/include/linux/lsm_hook_defs.h
+    /// [1]: https://github.com/torvalds/linux/blob/8d3ae5928/include/linux/lsm_hook_defs.h
     pub fn arg<T: Argument>(&self, n: usize) -> T {
         btf_arg(self, n)
     }

@@ -23,7 +23,7 @@ fn fexit_error_name(error: i32) -> &'static str {
 }
 
 // Mirrors libbpf's tracing test-run trigger:
-// https://github.com/torvalds/linux/blob/v7.1-rc4/tools/testing/selftests/bpf/prog_tests/fentry_fexit.c#L24-L42
+// https://github.com/torvalds/linux/blob/5200f5f49/tools/testing/selftests/bpf/prog_tests/fentry_fexit.c#L24-L42
 #[rstest]
 #[case::test1("test1", "bpf_fentry_test1", TEST1_INDEX)]
 #[case::test2("test2", "bpf_fentry_test2", TEST2_INDEX)]
@@ -42,8 +42,8 @@ fn fexit_reads_args_and_return_values_from_prog_test_run_targets(
 ) {
     // The fexit program itself requires Linux 5.5, but FExitContext::ret uses
     // bpf_get_func_ret, which was added in Linux 5.17:
-    // https://github.com/torvalds/linux/blob/v5.17/kernel/trace/bpf_trace.c#L1122-L1127
-    // https://github.com/torvalds/linux/blob/v5.17/kernel/trace/bpf_trace.c#L1679-L1683
+    // https://github.com/torvalds/linux/blob/f443e374a/kernel/trace/bpf_trace.c#L1122-L1127
+    // https://github.com/torvalds/linux/blob/f443e374a/kernel/trace/bpf_trace.c#L1679-L1683
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(5, 17, 0) {
         eprintln!("skipping test on kernel {kernel_version:?} - bpf_get_func_ret requires 5.17");
@@ -89,7 +89,7 @@ fn fexit_reads_args_and_return_values_from_prog_test_run_targets(
     // retval carries no additional result. The eBPF program checks the traced
     // function's arguments and return value through FExitContext::{arg,ret}, then
     // records the result in RESULTS.
-    // https://github.com/torvalds/linux/blob/v7.1-rc4/net/bpf/test_run.c#L706-L735
+    // https://github.com/torvalds/linux/blob/5200f5f49/net/bpf/test_run.c#L706-L735
     prog.test_run(()).unwrap();
 
     let actual = results.get(&index, 0).unwrap();

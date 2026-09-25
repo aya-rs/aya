@@ -100,18 +100,18 @@ impl KernelVersion {
         // backports were done to cap the patch version
         let max_patch = match (major, minor) {
             // On 4.4 + 4.9, any patch 257 or above was hardcoded to 255.
-            // See: https://github.com/torvalds/linux/commit/a15813a +
-            // https://github.com/torvalds/linux/commit/42efb098
+            // See: https://github.com/torvalds/linux/commit/a15813a88 +
+            // https://github.com/torvalds/linux/commit/42efb098c
             (4, 4 | 9) => 257,
             // On 4.14, any patch 252 or above was hardcoded to 255.
-            // See: https://github.com/torvalds/linux/commit/e131e0e
+            // See: https://github.com/torvalds/linux/commit/e131e0e88
             (4, 14) => 252,
             // On 4.19, any patch 222 or above was hardcoded to 255.
-            // See: https://github.com/torvalds/linux/commit/a256aac
+            // See: https://github.com/torvalds/linux/commit/a256aac5b
             (4, 19) => 222,
             // For other kernels (i.e., newer LTS kernels as other
             // ones won't reach 255+ patches) clamp it to 255. See:
-            // https://github.com/torvalds/linux/commit/9b82f13e
+            // https://github.com/torvalds/linux/commit/9b82f13e7
             _ => 255,
         };
 
@@ -125,7 +125,7 @@ impl KernelVersion {
     }
 
     // These (get_ubuntu_kernel_version, parse_ubuntu_kernel_version, read_ubuntu_kernel_version_file)
-    // are ported from https://github.com/torvalds/linux/blob/3f01e9f/tools/lib/bpf/libbpf_probes.c#L21-L101.
+    // are ported from https://github.com/torvalds/linux/blob/3f01e9fed/tools/lib/bpf/libbpf_probes.c#L21-L101.
     fn get_ubuntu_kernel_version() -> Result<Option<Self>, CurrentKernelVersionError> {
         let content = Self::read_ubuntu_kernel_version_file()?;
         content

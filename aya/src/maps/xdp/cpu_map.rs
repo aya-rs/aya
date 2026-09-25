@@ -91,7 +91,7 @@ impl<T: Borrow<MapData>> CpuMap<T> {
                 value.map(|value| CpuMapValue {
                     queue_size: value.qsize,
                     // SAFETY: map writes use fd, map reads use id.
-                    // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/include/uapi/linux/bpf.h#L6241
+                    // https://github.com/torvalds/linux/blob/2dde18cd1/include/uapi/linux/bpf.h#L6241
                     prog_id: NonZeroU32::new(unsafe { value.bpf_prog.id }),
                 })
             })
@@ -152,7 +152,7 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
             let mut value = unsafe { std::mem::zeroed::<bpf_cpumap_val>() };
             value.qsize = queue_size;
             // Default is valid as the kernel will only consider fd > 0:
-            // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/cpumap.c#L466
+            // https://github.com/torvalds/linux/blob/2dde18cd1/kernel/bpf/cpumap.c#L466
             value.bpf_prog.fd = program.map_or_default(|prog| prog.as_fd().as_raw_fd());
             bpf_map_update_elem(fd, Some(&cpu_index), &value, flags)
         } else {

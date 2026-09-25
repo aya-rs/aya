@@ -57,8 +57,8 @@ fn expect_ret<T: Argument + PartialEq>(ctx: &FExitContext, expected: T) -> i32 {
 // Mirrors libbpf's fexit selftest and the kernel's synthetic tracing sequence.
 // The argument and return values below come from the kernel's fixed
 // BPF_PROG_TEST_RUN tracing target calls.
-// https://github.com/torvalds/linux/blob/v7.1-rc4/tools/testing/selftests/bpf/progs/fexit_test.c#L10-L80
-// https://github.com/torvalds/linux/blob/v7.1-rc4/net/bpf/test_run.c#L706-L715
+// https://github.com/torvalds/linux/blob/5200f5f49/tools/testing/selftests/bpf/progs/fexit_test.c#L10-L80
+// https://github.com/torvalds/linux/blob/5200f5f49/net/bpf/test_run.c#L706-L715
 #[fexit(function = "bpf_fentry_test1")]
 fn test1(ctx: FExitContext) -> i32 {
     let error = if ctx.arg::<i32>(0) == 1 {

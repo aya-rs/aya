@@ -29,7 +29,7 @@ use crate::programs::{
 /// the function passed to [`FExit::load`]. Instead, it runs the kernel's fixed
 /// `bpf_fentry_test*` sequence, so the [`FExit`] program is executed only when
 /// it is attached to one of those built-in test targets.
-/// <https://github.com/torvalds/linux/blob/v7.1-rc4/net/bpf/test_run.c#L702-L715>
+/// <https://github.com/torvalds/linux/blob/5200f5f49/net/bpf/test_run.c#L702-L715>
 ///
 /// A successful test-run syscall means the kernel sequence completed. To check
 /// that an [`FExit`] program ran, record and verify an explicit side effect such

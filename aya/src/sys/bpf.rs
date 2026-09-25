@@ -112,7 +112,7 @@ pub(crate) fn bpf_create_map(
         }
     }
 
-    // https://github.com/torvalds/linux/commit/ad5b177bd73f5107d97c36f56395c4281fb6f089
+    // https://github.com/torvalds/linux/commit/ad5b177bd
     // The map name was added as a parameter in kernel 4.15+ so we skip adding it on
     // older kernels for compatibility
     if KernelVersion::at_least(4, 15, 0) {
@@ -424,7 +424,7 @@ pub(crate) enum LinkTarget<'f> {
     None,
 }
 
-// Models https://github.com/torvalds/linux/blob/2144da25/include/uapi/linux/bpf.h#L1724-L1782.
+// Models https://github.com/torvalds/linux/blob/2144da255/include/uapi/linux/bpf.h#L1724-L1782.
 pub(crate) enum BpfLinkCreateArgs<'a> {
     TargetBtfId(u32),
     // since kernel 5.15
@@ -466,7 +466,7 @@ pub(crate) fn bpf_link_create(
         // When attaching to an iterator program, no target FD is needed. In
         // fact, the kernel explicitly rejects non-zero target FDs for
         // iterators:
-        // https://github.com/torvalds/linux/blob/v6.12/kernel/bpf/bpf_iter.c#L517-L518
+        // https://github.com/torvalds/linux/blob/adc218676/kernel/bpf/bpf_iter.c#L517-L518
         LinkTarget::Iter | LinkTarget::None => {}
     }
     attr.link_create.attach_type = attach_type.into() as u32;
@@ -521,7 +521,7 @@ pub(crate) fn bpf_link_create(
     }
 
     // Cgroup storage allocation can report memlock failures as ENOMEM:
-    // https://github.com/torvalds/linux/blob/b15dc417/kernel/bpf/cgroup.c#L475-L477
+    // https://github.com/torvalds/linux/blob/b15dc4170/kernel/bpf/cgroup.c#L475-L477
     //
     // SAFETY: BPF_LINK_CREATE returns a new file descriptor.
     with_raised_rlimit_retry(
@@ -595,7 +595,7 @@ pub(crate) fn bpf_prog_attach(
     attr.__bindgen_anon_5.attach_flags = flags;
 
     // Cgroup storage allocation can report memlock failures as ENOMEM:
-    // https://github.com/torvalds/linux/blob/b15dc417/kernel/bpf/cgroup.c#L475-L477
+    // https://github.com/torvalds/linux/blob/b15dc4170/kernel/bpf/cgroup.c#L475-L477
     with_raised_rlimit_retry(
         || unit_sys_bpf(bpf_cmd::BPF_PROG_ATTACH, &mut attr),
         &[EPERM, ENOMEM],
@@ -782,7 +782,7 @@ pub(crate) fn bpf_prog_test_run_tracing(prog_fd: BorrowedFd<'_>) -> Result<(), S
     // The tracing test-run handler uses a fixed synthetic call sequence instead
     // of caller-provided input. It rejects non-zero flags, CPU, and batch size,
     // so only prog_fd is set here.
-    // https://github.com/torvalds/linux/blob/v7.1-rc4/net/bpf/test_run.c#L699-L715
+    // https://github.com/torvalds/linux/blob/5200f5f49/net/bpf/test_run.c#L699-L715
     let test = unsafe { &mut attr.test };
     test.prog_fd = prog_fd.as_raw_fd() as u32;
 
@@ -790,7 +790,7 @@ pub(crate) fn bpf_prog_test_run_tracing(prog_fd: BorrowedFd<'_>) -> Result<(), S
     // For fentry/fexit, the tracing test-run handler writes 0 to attr.test.retval
     // after the fixed synthetic call sequence succeeds. That value carries no
     // extra information beyond syscall success.
-    // https://github.com/torvalds/linux/blob/v7.1-rc4/net/bpf/test_run.c#L695-L732
+    // https://github.com/torvalds/linux/blob/5200f5f49/net/bpf/test_run.c#L695-L732
     Ok(())
 }
 
@@ -1036,7 +1036,7 @@ fn feature_probe_result(
 pub(crate) fn probe_bpf_name() -> io::Result<bool> {
     // Avoid making the name probe depend on CONFIG_BPF_EVENTS by using the same
     // socket-filter carrier as libbpf.
-    // https://github.com/libbpf/libbpf/blob/v1.4.0/src/features.c#L23-L45
+    // https://github.com/libbpf/libbpf/blob/20ea95b45/src/features.c#L23-L45
     with_trivial_prog(ProgramType::SocketFilter, |attr| {
         let u = unsafe { &mut attr.__bindgen_anon_3 };
         let name = c"aya_name_check";
@@ -1071,12 +1071,12 @@ where
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr() as u64;
 
-    // `expected_attach_type` field was added in v4.17 https://elixir.bootlin.com/linux/v4.17/source/include/uapi/linux/bpf.h#L310.
+    // `expected_attach_type` field was added in v4.17 https://github.com/torvalds/linux/blob/29dcea887/include/uapi/linux/bpf.h#L310.
     let expected_attach_type = match program_type {
         ProgramType::SkMsg => Some(bpf_attach_type::BPF_SK_MSG_VERDICT),
         // `CONNECT` is a broader probe target than `BIND`: some sock_addr helpers, such as
         // `bpf_bind`, are available from connect hooks but not bind hooks.
-        // https://github.com/libbpf/libbpf/blob/v1.7.0/src/libbpf_probes.c#L116-L119
+        // https://github.com/libbpf/libbpf/blob/f5dcbae73/src/libbpf_probes.c#L116-L119
         ProgramType::CgroupSockAddr => Some(bpf_attach_type::BPF_CGROUP_INET4_CONNECT),
         ProgramType::LircMode2 => Some(bpf_attach_type::BPF_LIRC_MODE2),
         ProgramType::SkReuseport => Some(bpf_attach_type::BPF_SK_REUSEPORT_SELECT),
@@ -1125,7 +1125,7 @@ where
                 u.kern_version = current_version.code();
             }
         }
-        // syscall required to be sleepable: https://elixir.bootlin.com/linux/v5.14/source/kernel/bpf/verifier.c#L13240
+        // syscall required to be sleepable: https://github.com/torvalds/linux/blob/7d2a07b76/kernel/bpf/verifier.c#L13240
         ProgramType::Syscall => u.prog_flags = aya_obj::generated::BPF_F_SLEEPABLE,
         _ => {}
     }
@@ -1218,8 +1218,8 @@ pub(crate) fn probe_uprobe_multi_link(feature: UProbeMultiFeature) -> io::Result
 
         // Follow libbpf's basic-link probe. "/" resolves to a directory, so a kernel that
         // dispatches BPF_TRACE_UPROBE_MULTI reaches the regular-file check and returns EBADF.
-        // https://github.com/libbpf/libbpf/blob/f5dcbae7/src/features.c#L362-L395
-        // https://github.com/torvalds/linux/blob/89ae89f5/kernel/trace/bpf_trace.c#L3119-L3133
+        // https://github.com/libbpf/libbpf/blob/f5dcbae73/src/features.c#L362-L395
+        // https://github.com/torvalds/linux/blob/89ae89f53/kernel/trace/bpf_trace.c#L3119-L3133
         match create_link(0).map(|_: crate::MockableFd| ()) {
             Ok(()) => return Ok(false),
             Err(error) => match error.raw_os_error() {
@@ -1237,8 +1237,8 @@ pub(crate) fn probe_uprobe_multi_link(feature: UProbeMultiFeature) -> io::Result
         // pid == -1 with EINVAL before resolving "/", while affected kernels inspect the path
         // first and return EBADF. The same fix changes runtime filtering from task identity to
         // address-space identity.
-        // https://github.com/libbpf/libbpf/blob/f5dcbae7/src/features.c#L397-L424
-        // https://github.com/torvalds/linux/commit/46ba0e49
+        // https://github.com/libbpf/libbpf/blob/f5dcbae73/src/features.c#L397-L424
+        // https://github.com/torvalds/linux/commit/46ba0e49b
         let invalid_pid: u32 = -1i32 as u32;
         match create_link(invalid_pid).map(|_: crate::MockableFd| ()) {
             Ok(()) => Ok(false),
@@ -1428,7 +1428,7 @@ pub(crate) fn probe_btf_datasec_zero() -> io::Result<bool> {
     let mut btf = Btf::new();
     let name_offset = btf.add_string(".empty");
     // Linux 5.12 allowed DATASECs with zero entries; their section size must still be non-zero.
-    // https://github.com/torvalds/linux/commit/13ca51d5
+    // https://github.com/torvalds/linux/commit/13ca51d5e
     let datasec_type = BtfType::DataSec(DataSec::new(name_offset, Vec::new(), 4));
     btf.add_type(datasec_type);
 
@@ -1518,11 +1518,11 @@ const BPF_PROG_LOAD_ATTEMPTS: usize = 5;
 pub(super) fn bpf_prog_load(attr: &mut bpf_attr) -> io::Result<crate::MockableFd> {
     // The verifier aborts program verification with EAGAIN when a signal is pending so that it
     // can release the resources used by the current verification attempt:
-    // https://github.com/torvalds/linux/blob/c3494801/kernel/bpf/verifier.c#L5151-L5155
+    // https://github.com/torvalds/linux/blob/c3494801c/kernel/bpf/verifier.c#L5151-L5155
     // Match libbpf by retrying this transient failure, with a bounded attempt count so that
     // continuously delivered signals cannot cause an infinite loop:
-    // https://github.com/libbpf/libbpf/blob/f7081a6b/src/bpf.c#L125-L133
-    // https://github.com/torvalds/linux/commit/d6d418bd
+    // https://github.com/libbpf/libbpf/blob/f7081a6ba/src/bpf.c#L125-L133
+    // https://github.com/torvalds/linux/commit/d6d418bd8
     let mut attempts = BPF_PROG_LOAD_ATTEMPTS;
     loop {
         // SAFETY: BPF_PROG_LOAD returns a new file descriptor.

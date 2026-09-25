@@ -94,9 +94,9 @@ async fn wait_for_accept_tokio(listeners: &[&TokioTcpListener]) -> (usize, Tokio
 // Blocking poll(2)/select(2) would also hang for the same reason.
 // Non-blocking accept(2) checks the queue directly, bypassing readiness notification.
 //
-// [1] https://github.com/torvalds/linux/blob/v6.15/net/ipv4/inet_connection_sock.c#L1070-L1100
-// [2] https://github.com/torvalds/linux/blob/v6.15/net/ipv4/inet_connection_sock.c#L1484-L1554
-// [3] https://github.com/torvalds/linux/blob/v6.15/net/ipv4/inet_connection_sock.c#L1513
+// [1] https://github.com/torvalds/linux/blob/0ff41df1c/net/ipv4/inet_connection_sock.c#L1070-L1100
+// [2] https://github.com/torvalds/linux/blob/0ff41df1c/net/ipv4/inet_connection_sock.c#L1484-L1554
+// [3] https://github.com/torvalds/linux/blob/0ff41df1c/net/ipv4/inet_connection_sock.c#L1513
 async fn wait_for_accept_polling(listeners: [&StdTcpListener; 2]) -> (usize, TokioTcpStream) {
     timeout(ACCEPT_TIMEOUT, async {
         loop {

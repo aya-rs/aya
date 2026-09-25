@@ -58,7 +58,7 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> ReusePortSockArrayMap
 // but not in `/usr/include/linux`. The `codegen` module in our xtask will need
 // to be adjusted accordingly.
 //
-// [0] https://github.com/torvalds/linux/blob/v6.19/include/linux/err.h#L18
+// [0] https://github.com/torvalds/linux/blob/05f7e89ab/include/linux/err.h#L18
 
 /// Read bytes stored at `src` and store them as a `T`.
 ///

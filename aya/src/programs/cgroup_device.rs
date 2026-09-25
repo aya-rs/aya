@@ -25,7 +25,7 @@ use crate::{
 ///
 /// # Minimum kernel version
 ///
-/// The minimum kernel version required to use this feature is [4.15](https://github.com/torvalds/linux/commit/ebc614f687369f9df99828572b1d85a7c2de3d92).
+/// The minimum kernel version required to use this feature is [4.15](https://github.com/torvalds/linux/commit/ebc614f68).
 ///
 /// # Examples
 ///

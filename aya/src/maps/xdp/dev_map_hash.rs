@@ -71,7 +71,7 @@ impl<T: Borrow<MapData>> DevMapHash<T> {
                 value.map(|value| DevMapValue {
                     if_index: value.ifindex,
                     // SAFETY: map writes use fd, map reads use id.
-                    // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/include/uapi/linux/bpf.h#L6228
+                    // https://github.com/torvalds/linux/blob/2dde18cd1/include/uapi/linux/bpf.h#L6228
                     prog_id: NonZeroU32::new(unsafe { value.bpf_prog.id }),
                 })
             })
@@ -140,8 +140,8 @@ impl<T: BorrowMut<MapData>> DevMapHash<T> {
             let mut value = unsafe { std::mem::zeroed::<bpf_devmap_val>() };
             value.ifindex = target_if_index;
             // Default is valid as the kernel will only consider fd > 0:
-            // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/devmap.c#L866
-            // https://github.com/torvalds/linux/blob/2dde18cd1d8fac735875f2e4987f11817cc0bc2c/kernel/bpf/devmap.c#L918
+            // https://github.com/torvalds/linux/blob/2dde18cd1/kernel/bpf/devmap.c#L866
+            // https://github.com/torvalds/linux/blob/2dde18cd1/kernel/bpf/devmap.c#L918
             value.bpf_prog.fd = program.map_or_default(|prog| prog.as_fd().as_raw_fd());
             hash_map::insert(self.inner.borrow_mut(), &key, &value, flags)?;
         } else {

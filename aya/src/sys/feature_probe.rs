@@ -78,8 +78,8 @@ pub fn is_perf_link_supported() -> io::Result<bool> {
 /// attachment scope. Callers should query the capability required by their intended scope and
 /// apply their own fallback policy.
 ///
-/// [kernel-fix]: https://github.com/torvalds/linux/commit/46ba0e49
-/// [libbpf-probe]: https://github.com/libbpf/libbpf/blob/f5dcbae7/src/features.c#L397-L424
+/// [kernel-fix]: https://github.com/torvalds/linux/commit/46ba0e49b
+/// [libbpf-probe]: https://github.com/libbpf/libbpf/blob/f5dcbae73/src/features.c#L397-L424
 ///
 /// The result is not cached; this function performs a new kernel probe on every call.
 /// `Ok(false)` is returned only when the kernel gives the expected response for an unsupported
@@ -207,7 +207,7 @@ pub fn is_helper_supported(
 
     // These program types require a real attach or BTF target, so a minimal
     // helper-call program cannot probe their helper availability reliably.
-    // https://github.com/libbpf/libbpf/blob/v1.7.0/src/libbpf_probes.c#L434-L442
+    // https://github.com/libbpf/libbpf/blob/f5dcbae73/src/libbpf_probes.c#L434-L442
     if matches!(
         program_type,
         ProgramType::Tracing
@@ -225,7 +225,7 @@ pub fn is_helper_supported(
         new_insn(exit, 0, 0, 0, 0),
     ];
     // 4096 bytes is enough for this probe and matches libbpf's helper probe.
-    // https://github.com/libbpf/libbpf/blob/v1.7.0/src/libbpf_probes.c#L430-L479
+    // https://github.com/libbpf/libbpf/blob/f5dcbae73/src/libbpf_probes.c#L420-L428
     let mut verifier_log = [0u8; 4096];
 
     with_prog_insns(program_type, &insns, |attr| {
@@ -237,7 +237,7 @@ pub fn is_helper_supported(
         match bpf_prog_load(attr).map(|_: MockableFd| ()) {
             Ok(()) => Ok(true),
             Err(io_error) => {
-                // https://github.com/libbpf/libbpf/blob/v1.7.0/src/libbpf_probes.c#L452-L466
+                // https://github.com/libbpf/libbpf/blob/f5dcbae73/src/libbpf_probes.c#L452-L466
                 const UNSUPPORTED_HELPER_DIAGNOSTICS: &[&[u8]] = &[
                     b"invalid func ",
                     b"unknown func ",

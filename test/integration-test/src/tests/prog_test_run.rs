@@ -7,7 +7,7 @@ use aya::{
 };
 use integration_common::test_run::{IF_INDEX, XDP_MODIFY_LEN, XDP_MODIFY_VAL};
 
-// https://github.com/torvalds/linux/blob/8fdb05de/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L48
+// https://github.com/torvalds/linux/blob/8fdb05de0/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L48
 // `sizeof(pkt_v4)` = Size(Ethernet) + Size(IPv4) + Size(TCP) = 14 + 20 + 20
 const PKT_ETH_HDR_SIZE: usize = 14;
 const PKT_IP4_HDR_SIZE: usize = 20;
@@ -321,7 +321,7 @@ fn test_xdp_context() {
         egress_ifindex: u32,
     }
 
-    // see: https://github.com/torvalds/linux/blob/63804fed/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L92
+    // see: https://github.com/torvalds/linux/blob/63804fed1/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L92
     // for more details.
     let ctx = XdpMd {
         data: 0,

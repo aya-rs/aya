@@ -13,7 +13,7 @@ pub(super) fn devmap_get(ptr: *mut c_void, key: u32) -> Option<DevMapValue> {
         // SAFETY: `bpf_devmap_val::bpf_prog` is a union of `fd` and `id`; the
         // kernel populates `id` on map lookup (`fd` is only consumed on
         // userspace writes), so reading from `id` is the active variant.
-        // https://github.com/torvalds/linux/blob/v6.2/include/uapi/linux/bpf.h#L6136
+        // https://github.com/torvalds/linux/blob/c9c3395d5/include/uapi/linux/bpf.h#L6136
         prog_id: NonZeroU32::new(unsafe { value.bpf_prog.id }),
     })
 }

@@ -660,7 +660,7 @@ impl<'a> EbpfLoader<'a> {
                     }
                     PinningType::ByName => {
                         // pin maps in /sys/fs/bpf by default to align with libbpf
-                        // behavior https://github.com/libbpf/libbpf/blob/v1.2.2/src/libbpf.c#L2161.
+                        // behavior https://github.com/libbpf/libbpf/blob/1728e3e4b/src/libbpf.c#L2161.
                         let path = default_map_pin_directory
                             .as_deref()
                             .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
@@ -988,7 +988,7 @@ fn value_size_override(map_type: bpf_map_type) -> Option<u32> {
 // Adjusts the byte size of a RingBuf map to match a power-of-two multiple of the page size.
 //
 // This mirrors the logic used by libbpf.
-// See https://github.com/libbpf/libbpf/blob/ec6f716eda43/src/libbpf.c#L2461-L2463
+// See https://github.com/libbpf/libbpf/blob/ec6f716ed/src/libbpf.c#L2461-L2463
 const fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
     // If the byte_size is zero, return zero and let the verifier reject the map
     // when it is loaded. This is the behavior of libbpf.

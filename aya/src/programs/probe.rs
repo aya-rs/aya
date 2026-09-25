@@ -299,7 +299,7 @@ pub(crate) fn attach<P: Probe, T: Link + From<PerfLinkInner>>(
     args: ProbeEventArgs<P::AttachTarget<'_>>,
     cookie: Option<u64>,
 ) -> Result<T::Id, ProgramError> {
-    // https://github.com/torvalds/linux/commit/e12f03d7031a977356e3d7b75a68c2185ff8d155
+    // https://github.com/torvalds/linux/commit/e12f03d70
     // Use debugfs to create probe
     let prog_fd = program_data.fd()?;
     let prog_fd = prog_fd.as_fd();

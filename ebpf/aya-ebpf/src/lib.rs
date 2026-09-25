@@ -141,7 +141,7 @@ mod intrinsics {
 /// Equivalent to the [`BPF_F_ADJ_ROOM_ENCAP_L2`][uapi-bpf-adj-room-encap-l2] macro
 /// in the Linux user-space API.
 ///
-/// [uapi-bpf-adj-room-encap-l2]: https://github.com/torvalds/linux/blob/v6.17/include/uapi/linux/bpf.h#L6181
+/// [uapi-bpf-adj-room-encap-l2]: https://github.com/torvalds/linux/blob/e5f0a698b/include/uapi/linux/bpf.h#L6181
 #[doc(alias = "BPF_F_ADJ_ROOM_ENCAP_L2")]
 #[inline(always)]
 pub const fn bpf_f_adj_room_encap_l2(len: u64) -> u64 {

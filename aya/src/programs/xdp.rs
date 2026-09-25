@@ -271,7 +271,7 @@ impl Link for NlLink {
             mode,
         } = self;
         // IFLA_XDP_EXPECTED_FD and XDP_FLAGS_REPLACE were added in Linux 5.7;
-        // see https://github.com/torvalds/linux/commit/92234c8f. Use them
+        // see https://github.com/torvalds/linux/commit/92234c8f1. Use them
         // when available so detach only clears the program represented by this
         // link. On older kernels, skip the expected fd so detach keeps the
         // legacy best-effort behavior instead of failing because the kernel

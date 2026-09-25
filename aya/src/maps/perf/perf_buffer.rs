@@ -160,7 +160,7 @@ impl PerfEventArrayBuffer {
     /// Read `data_head`, the kernel's producer position. Pairs with the
     /// kernel's `smp_wmb() + WRITE_ONCE()` publish [1].
     ///
-    /// [1]: https://github.com/torvalds/linux/blob/05f7e89a/kernel/events/ring_buffer.c#L113-L114
+    /// [1]: https://github.com/torvalds/linux/blob/05f7e89ab/kernel/events/ring_buffer.c#L113-L114
     fn data_head(&self) -> u64 {
         // SAFETY: `self.buf()` points to the mmap'd `perf_event_mmap_page` for
         // the lifetime of `self`, so the field projection is in-bounds and
@@ -224,7 +224,7 @@ impl PerfEventArrayBuffer {
         // it pairs with the kernel's `READ_ONCE()` [1] in one SeqCst barrier
         // instead of per event, and remains panic-safe.
         //
-        // [1]: https://github.com/torvalds/linux/blob/05f7e89a/kernel/events/ring_buffer.c#L202
+        // [1]: https://github.com/torvalds/linux/blob/05f7e89ab/kernel/events/ring_buffer.c#L202
         let mut guard = scopeguard::guard(initial_tail, |tail| {
             if tail != initial_tail {
                 atomic::fence(Ordering::SeqCst);
@@ -251,7 +251,7 @@ impl PerfEventArrayBuffer {
             // `perf_event_header` and the 8-byte header fits before the wrap
             // boundary.
             //
-            // [1]: https://github.com/torvalds/linux/blob/05f7e89a/kernel/events/core.c#L8451
+            // [1]: https://github.com/torvalds/linux/blob/05f7e89ab/kernel/events/core.c#L8451
             let event: perf_event_header = unsafe { ptr::read(base.add(event_start).cast()) };
             *tail = tail.wrapping_add(u64::from(event.size));
 
@@ -295,7 +295,7 @@ impl PerfEventArrayBuffer {
                     // `{ header, u64 id, u64 lost, sample_id }` [1]; skip past
                     // `id` to read the `lost` count.
                     //
-                    // [1]: https://github.com/torvalds/linux/blob/05f7e89a/include/uapi/linux/perf_event.h#L906-L914
+                    // [1]: https://github.com/torvalds/linux/blob/05f7e89ab/include/uapi/linux/perf_event.h#L906-L914
                     let lost_offset =
                         (event_start + size_of::<perf_event_header>() + size_of::<u64>())
                             % mmap_size;
@@ -309,7 +309,7 @@ impl PerfEventArrayBuffer {
                     // with no side-band attr flags [1]; the kernel only emits
                     // SAMPLE and LOST.
                     //
-                    // [1]: https://github.com/torvalds/linux/blob/05f7e89a/kernel/events/core.c#L5182-L5200
+                    // [1]: https://github.com/torvalds/linux/blob/05f7e89ab/kernel/events/core.c#L5182-L5200
                     debug_assert!(false, "unexpected perf record type: {event_type}");
                     continue;
                 }

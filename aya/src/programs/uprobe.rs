@@ -939,7 +939,7 @@ fn try_attach_uprobe_multi_link(
             Some(code) if code == ENOTSUP || code == EOPNOTSUPP => true,
             // Multi-uprobe landed in Linux 6.6, older kernels may return EINVAL
             // for the unknown attach type (see BPF_TRACE_UPROBE_MULTI in
-            // https://elixir.bootlin.com/linux/v6.6/source/include/uapi/linux/bpf.h#L1042).
+            // https://github.com/torvalds/linux/blob/ffc253263/include/uapi/linux/bpf.h#L1042).
             Some(code) if code == EINVAL => {
                 KernelVersion::current().is_ok_and(|kv| kv < KernelVersion::new(6, 6, 0))
             }
