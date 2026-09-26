@@ -1,6 +1,16 @@
+load("@rules_rust//rust:defs.bzl", "rust_doc_test")
 load("//bazel:rust.bzl", "aya_rust_crate")
 
 aya_rust_crate(
     name = "aya-ebpf",
     ebpf = True,
+)
+
+rust_doc_test(
+    name = "ring-buf-doc-test",
+    size = "small",
+    crate = ":aya-ebpf",
+    rustdoc_flags = [
+        "--test-args=maps::ring_buf::RingBuf",
+    ],
 )

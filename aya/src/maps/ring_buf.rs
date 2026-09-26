@@ -16,6 +16,7 @@ use aya_obj::generated::{BPF_RINGBUF_BUSY_BIT, BPF_RINGBUF_DISCARD_BIT, BPF_RING
 use libc::{MAP_SHARED, PROT_READ, PROT_WRITE};
 
 use crate::{
+    Pod,
     maps::{MapData, MapError},
     util::{MMap, page_size},
 };
@@ -159,6 +160,52 @@ impl<T: Borrow<MapData>> AsRawFd for RingBuf<T> {
 pub struct RingBufItem<'a> {
     data: &'a [u8],
     consumer: &'a mut ConsumerPos,
+}
+
+impl RingBufItem<'_> {
+    /// Borrow the value written by an eBPF typed ring-buffer reservation.
+    ///
+    /// Aya's eBPF `reserve` methods insert padding for types aligned to more than
+    /// eight bytes. This method skips that padding using the mapped address.
+    /// Records written with `output` or `reserve_bytes` do not have this padding;
+    /// for those records this method supports only alignments up to eight bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`MapError::InvalidValueAlignment`] if `T`'s alignment exceeds the
+    /// system page size, or [`MapError::InvalidValueSize`] if the record length
+    /// does not match the size of `T` plus its reservation padding.
+    pub fn as_value<T: Pod>(&self) -> Result<&T, MapError> {
+        let Self {
+            data,
+            consumer:
+                ConsumerPos {
+                    pos: _,
+                    metadata: ConsumerMetadata { mmap },
+                    needs_wakeup: _,
+                },
+        } = self;
+        let alignment = align_of::<T>();
+        let max_alignment = mmap.len();
+        if alignment > max_alignment {
+            return Err(MapError::InvalidValueAlignment {
+                alignment,
+                max_alignment,
+            });
+        }
+        let expected = size_of::<T>() + alignment.saturating_sub(8);
+        let size = data.len();
+        if size != expected {
+            return Err(MapError::InvalidValueSize { size, expected });
+        }
+        let offset = data.as_ptr().align_offset(alignment);
+        // SAFETY: both mappings preserve the offset within each page, so their
+        // padding agrees for alignments no larger than a page. Records start on
+        // eight-byte boundaries, so the checked length includes the whole T.
+        // Pod allows all bit patterns, and the item keeps this record reserved.
+        // https://github.com/torvalds/linux/blob/3f01e9fed/kernel/bpf/ringbuf.c#L108-L142
+        Ok(unsafe { &*data.as_ptr().add(offset).cast::<T>() })
+    }
 }
 
 impl Deref for RingBufItem<'_> {

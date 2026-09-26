@@ -584,6 +584,8 @@ impl<T> core::marker::UnsafeUnpin for aya::maps::ring_buf::RingBuf<T> where T: c
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya::maps::ring_buf::RingBuf<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya::maps::ring_buf::RingBuf<T> where T: core::panic::unwind_safe::UnwindSafe
 pub struct aya::maps::ring_buf::RingBufItem<'a>
+impl aya::maps::ring_buf::RingBufItem<'_>
+pub fn aya::maps::ring_buf::RingBufItem<'_>::as_value<T: aya::Pod>(&self) -> core::result::Result<&T, aya::maps::MapError>
 impl core::fmt::Debug for aya::maps::ring_buf::RingBufItem<'_>
 pub fn aya::maps::ring_buf::RingBufItem<'_>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::ops::deref::Deref for aya::maps::ring_buf::RingBufItem<'_>
@@ -1227,6 +1229,9 @@ pub aya::maps::MapError::InvalidMapType
 pub aya::maps::MapError::InvalidMapType::map_type: u32
 pub aya::maps::MapError::InvalidName
 pub aya::maps::MapError::InvalidName::name: alloc::string::String
+pub aya::maps::MapError::InvalidValueAlignment
+pub aya::maps::MapError::InvalidValueAlignment::alignment: usize
+pub aya::maps::MapError::InvalidValueAlignment::max_alignment: usize
 pub aya::maps::MapError::InvalidValueSize
 pub aya::maps::MapError::InvalidValueSize::expected: usize
 pub aya::maps::MapError::InvalidValueSize::size: usize

@@ -494,6 +494,10 @@ impl MMap {
         .map_err(|SyscallError { io_error, call: _ }| io_error)
     }
 
+    pub(crate) const fn len(&self) -> usize {
+        self.len
+    }
+
     pub(crate) const fn ptr(&self) -> ptr::NonNull<c_void> {
         self.ptr
     }
