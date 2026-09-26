@@ -16,9 +16,9 @@ use aya_obj::{
         VarLinkage,
     },
     generated::{
-        BPF_ALU64, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_F_TEST_RUN_ON_CPU,
-        BPF_F_UPROBE_MULTI_RETURN, BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_MEM, BPF_MOV,
-        BPF_PSEUDO_MAP_VALUE, BPF_ST, bpf_attach_type, bpf_attr, bpf_attr__bindgen_ty_7,
+        BPF_ALU64, BPF_DW, BPF_EXIT, BPF_F_KPROBE_MULTI_RETURN, BPF_F_REPLACE,
+        BPF_F_TEST_RUN_ON_CPU, BPF_F_UPROBE_MULTI_RETURN, BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_MEM,
+        BPF_MOV, BPF_PSEUDO_MAP_VALUE, BPF_ST, bpf_attach_type, bpf_attr, bpf_attr__bindgen_ty_7,
         bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type, bpf_prog_info,
         bpf_prog_type, bpf_stats_type,
     },
@@ -431,6 +431,15 @@ pub(crate) enum BpfLinkCreateArgs<'a> {
     PerfEvent {
         bpf_cookie: u64,
     },
+    // since kernel 5.18
+    KProbeMulti {
+        // The kernel's copy_user_syms() reads each address as an unsigned long.
+        // Use u64 entries so 32-bit userspace matches the 64-bit kernel's layout.
+        // https://github.com/torvalds/linux/blob/7d0a66e4b/kernel/trace/bpf_trace.c#L2313-L2334
+        symbols: &'a [u64],
+        cookies: Option<&'a [u64]>,
+        flags: u32,
+    },
     // since kernel 6.6
     Tcx(&'a LinkRef),
     // since kernel 6.6
@@ -480,6 +489,17 @@ pub(crate) fn bpf_link_create(
             BpfLinkCreateArgs::PerfEvent { bpf_cookie } => {
                 attr.link_create.__bindgen_anon_3.perf_event.bpf_cookie = bpf_cookie;
             }
+            BpfLinkCreateArgs::KProbeMulti {
+                symbols,
+                cookies,
+                flags,
+            } => {
+                let multi = unsafe { &mut attr.link_create.__bindgen_anon_3.kprobe_multi };
+                multi.syms = symbols.as_ptr() as u64;
+                multi.cnt = symbols.len() as u32;
+                multi.cookies = cookies.map_or_default(|slice| slice.as_ptr() as u64);
+                multi.flags = flags;
+            }
             BpfLinkCreateArgs::Tcx(link_ref) => match link_ref {
                 LinkRef::Fd(fd) => {
                     attr.link_create
@@ -527,6 +547,34 @@ pub(crate) fn bpf_link_create(
     with_raised_rlimit_retry(
         || unsafe { fd_sys_bpf(bpf_cmd::BPF_LINK_CREATE, &mut attr) },
         &[EPERM, ENOMEM],
+    )
+}
+
+pub(crate) fn bpf_link_create_kprobe_multi(
+    prog_fd: BorrowedFd<'_>,
+    symbols: &[CString],
+    cookies: Option<&[u64]>,
+    retprobe: bool,
+) -> io::Result<crate::MockableFd> {
+    let symbols = symbols
+        .iter()
+        .map(|symbol| symbol.as_ptr() as u64)
+        .collect::<Vec<_>>();
+    let args = BpfLinkCreateArgs::KProbeMulti {
+        symbols: &symbols,
+        cookies,
+        flags: if retprobe {
+            BPF_F_KPROBE_MULTI_RETURN
+        } else {
+            0
+        },
+    };
+    bpf_link_create(
+        prog_fd,
+        LinkTarget::None,
+        bpf_attach_type::BPF_TRACE_KPROBE_MULTI,
+        0,
+        Some(args),
     )
 }
 
@@ -1756,6 +1804,50 @@ mod tests {
 
         result = bpf_prog_attach(prog_fd, tgt_fd, bpf_attach_type::BPF_CGROUP_SOCK_OPS, 0);
         result.unwrap();
+    }
+
+    #[test]
+    fn test_kprobe_multi_link_create_attributes() {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_LINK_CREATE,
+                attr,
+            } => {
+                assert_eq!(
+                    unsafe { attr.link_create.attach_type },
+                    bpf_attach_type::BPF_TRACE_KPROBE_MULTI as u32
+                );
+                let multi = unsafe { attr.link_create.__bindgen_anon_3.kprobe_multi };
+                assert_eq!(multi.cnt, 2);
+                assert_eq!(multi.flags, BPF_F_KPROBE_MULTI_RETURN);
+
+                let symbols = unsafe {
+                    std::slice::from_raw_parts(multi.syms as *const u64, multi.cnt as usize)
+                };
+                assert_eq!(symbols.len(), 2);
+                assert_eq!(
+                    unsafe { CStr::from_ptr(symbols[0] as *const c_char) }.to_bytes(),
+                    b"schedule"
+                );
+                assert_eq!(
+                    unsafe { CStr::from_ptr(symbols[1] as *const c_char) }.to_bytes(),
+                    b"try_to_wake_up"
+                );
+
+                let cookies = unsafe {
+                    std::slice::from_raw_parts(multi.cookies as *const u64, multi.cnt as usize)
+                };
+                assert_eq!(cookies, &[0x11, 0]);
+                Ok(crate::MockableFd::mock_signed_fd().into())
+            }
+            _ => Err((-1, io::Error::from_raw_os_error(EINVAL))),
+        });
+
+        let schedule = CString::new("schedule").unwrap();
+        let wake_up = CString::new("try_to_wake_up").unwrap();
+        let symbols = [schedule, wake_up];
+        let prog_fd = unsafe { BorrowedFd::borrow_raw(42) };
+        bpf_link_create_kprobe_multi(prog_fd, &symbols, Some(&[0x11, 0]), true).unwrap();
     }
 
     #[test]
