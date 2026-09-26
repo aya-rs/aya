@@ -172,7 +172,7 @@ pub struct aya::maps::cgroup_storage::CgroupStorageKey
 impl aya::maps::cgroup_storage::CgroupStorageKey
 pub const fn aya::maps::cgroup_storage::CgroupStorageKey::new(u64, u32) -> Self
 impl core::clone::Clone for aya::maps::cgroup_storage::CgroupStorageKey
-pub fn aya::maps::cgroup_storage::CgroupStorageKey::clone(&self) -> Self
+pub fn aya::maps::cgroup_storage::CgroupStorageKey::clone(&self) -> aya::maps::cgroup_storage::CgroupStorageKey
 impl core::fmt::Debug for aya::maps::cgroup_storage::CgroupStorageKey
 pub fn aya::maps::cgroup_storage::CgroupStorageKey::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::maps::cgroup_storage::CgroupStorageKey
@@ -343,7 +343,7 @@ pub const fn aya::maps::lpm_trie::Key<K>::new(u32, K) -> Self
 pub const fn aya::maps::lpm_trie::Key<K>::prefix_len(&self) -> u32
 impl<K: aya::Pod> aya::Pod for aya::maps::lpm_trie::Key<K>
 impl<K: core::clone::Clone + core::marker::Copy> core::clone::Clone for aya::maps::lpm_trie::Key<K>
-pub fn aya::maps::lpm_trie::Key<K>::clone(&self) -> Self
+pub fn aya::maps::lpm_trie::Key<K>::clone(&self) -> aya::maps::lpm_trie::Key<K>
 impl<K: core::marker::Copy> core::marker::Copy for aya::maps::lpm_trie::Key<K>
 impl<T: core::borrow::Borrow<aya::maps::MapData>, K: aya::Pod, V: aya::Pod> aya::maps::IterableMap<aya::maps::lpm_trie::Key<K>, V> for aya::maps::lpm_trie::LpmTrie<T, K, V>
 pub fn aya::maps::lpm_trie::LpmTrie<T, K, V>::get(&self, &aya::maps::lpm_trie::Key<K>) -> core::result::Result<V, aya::maps::MapError>
@@ -1227,6 +1227,7 @@ pub aya::maps::MapError::InvalidMapType
 pub aya::maps::MapError::InvalidMapType::map_type: u32
 pub aya::maps::MapError::InvalidName
 pub aya::maps::MapError::InvalidName::name: alloc::string::String
+pub aya::maps::MapError::InvalidName::source: alloc::ffi::c_str::NulError
 pub aya::maps::MapError::InvalidValueSize
 pub aya::maps::MapError::InvalidValueSize::expected: usize
 pub aya::maps::MapError::InvalidValueSize::size: usize
@@ -1314,9 +1315,9 @@ pub aya::maps::MapType::Unspecified = 0
 pub aya::maps::MapType::UserRingBuf = 31
 pub aya::maps::MapType::XskMap = 17
 impl core::clone::Clone for aya::maps::MapType
-pub fn aya::maps::MapType::clone(&self) -> Self
+pub fn aya::maps::MapType::clone(&self) -> aya::maps::MapType
 impl core::cmp::PartialEq for aya::maps::MapType
-pub fn aya::maps::MapType::eq(&self, &Self) -> bool
+pub fn aya::maps::MapType::eq(&self, &aya::maps::MapType) -> bool
 impl core::convert::TryFrom<aya_obj::generated::linux_bindings_x86_64::bpf_map_type> for aya::maps::MapType
 pub type aya::maps::MapType::Error = aya::maps::MapError
 pub fn aya::maps::MapType::try_from(aya_obj::generated::linux_bindings_x86_64::bpf_map_type) -> core::result::Result<Self, Self::Error>
@@ -1469,7 +1470,7 @@ pub struct aya::maps::CgroupStorageKey
 impl aya::maps::cgroup_storage::CgroupStorageKey
 pub const fn aya::maps::cgroup_storage::CgroupStorageKey::new(u64, u32) -> Self
 impl core::clone::Clone for aya::maps::cgroup_storage::CgroupStorageKey
-pub fn aya::maps::cgroup_storage::CgroupStorageKey::clone(&self) -> Self
+pub fn aya::maps::cgroup_storage::CgroupStorageKey::clone(&self) -> aya::maps::cgroup_storage::CgroupStorageKey
 impl core::fmt::Debug for aya::maps::cgroup_storage::CgroupStorageKey
 pub fn aya::maps::cgroup_storage::CgroupStorageKey::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::maps::cgroup_storage::CgroupStorageKey
@@ -2223,11 +2224,15 @@ pub fn aya::maps::loaded_maps() -> impl core::iter::traits::iterator::Iterator<I
 pub mod aya::pin
 pub enum aya::pin::PinError
 pub aya::pin::PinError::InvalidPinPath
-pub aya::pin::PinError::InvalidPinPath::error: alloc::ffi::c_str::NulError
 pub aya::pin::PinError::InvalidPinPath::path: std::path::PathBuf
+pub aya::pin::PinError::InvalidPinPath::source: alloc::ffi::c_str::NulError
 pub aya::pin::PinError::NoFd
 pub aya::pin::PinError::NoFd::name: alloc::string::String
 pub aya::pin::PinError::SyscallError(aya::sys::SyscallError)
+impl core::convert::From<aya::pin::PinError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(aya::pin::PinError) -> Self
+impl core::convert::From<aya::pin::PinError> for aya::programs::links::LinkError
+pub fn aya::programs::links::LinkError::from(aya::pin::PinError) -> Self
 impl core::convert::From<aya::sys::SyscallError> for aya::pin::PinError
 pub fn aya::pin::PinError::from(aya::sys::SyscallError) -> Self
 impl core::error::Error for aya::pin::PinError
@@ -2317,7 +2322,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_device::Cgro
 pub struct aya::programs::cgroup_device::CgroupDeviceLinkId(_)
 impl core::cmp::Eq for aya::programs::cgroup_device::CgroupDeviceLinkId
 impl core::cmp::PartialEq for aya::programs::cgroup_device::CgroupDeviceLinkId
-pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::eq(&self, &aya::programs::cgroup_device::CgroupDeviceLinkId) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_device::CgroupDeviceLinkId
 pub fn aya::programs::cgroup_device::CgroupDeviceLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::cgroup_device::CgroupDeviceLinkId
@@ -2406,7 +2411,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_skb::CgroupS
 pub struct aya::programs::cgroup_skb::CgroupSkbLinkId(_)
 impl core::cmp::Eq for aya::programs::cgroup_skb::CgroupSkbLinkId
 impl core::cmp::PartialEq for aya::programs::cgroup_skb::CgroupSkbLinkId
-pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::eq(&self, &aya::programs::cgroup_skb::CgroupSkbLinkId) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkbLinkId
 pub fn aya::programs::cgroup_skb::CgroupSkbLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::cgroup_skb::CgroupSkbLinkId
@@ -2488,7 +2493,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock::Cgroup
 pub struct aya::programs::cgroup_sock::CgroupSockLinkId(_)
 impl core::cmp::Eq for aya::programs::cgroup_sock::CgroupSockLinkId
 impl core::cmp::PartialEq for aya::programs::cgroup_sock::CgroupSockLinkId
-pub fn aya::programs::cgroup_sock::CgroupSockLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::cgroup_sock::CgroupSockLinkId::eq(&self, &aya::programs::cgroup_sock::CgroupSockLinkId) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_sock::CgroupSockLinkId
 pub fn aya::programs::cgroup_sock::CgroupSockLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::cgroup_sock::CgroupSockLinkId
@@ -2574,7 +2579,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock_addr::C
 pub struct aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId(_)
 impl core::cmp::Eq for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 impl core::cmp::PartialEq for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::eq(&self, &aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId
@@ -2655,7 +2660,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sockopt::Cgr
 pub struct aya::programs::cgroup_sockopt::CgroupSockoptLinkId(_)
 impl core::cmp::Eq for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 impl core::cmp::PartialEq for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
-pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::eq(&self, &aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 pub fn aya::programs::cgroup_sockopt::CgroupSockoptLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
@@ -2736,7 +2741,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sysctl::Cgro
 pub struct aya::programs::cgroup_sysctl::CgroupSysctlLinkId(_)
 impl core::cmp::Eq for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 impl core::cmp::PartialEq for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
-pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::eq(&self, &aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> bool
 impl core::fmt::Debug for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
 pub fn aya::programs::cgroup_sysctl::CgroupSysctlLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::cgroup_sysctl::CgroupSysctlLinkId
@@ -2838,7 +2843,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::extension::Extensio
 pub struct aya::programs::extension::ExtensionLinkId(_)
 impl core::cmp::Eq for aya::programs::extension::ExtensionLinkId
 impl core::cmp::PartialEq for aya::programs::extension::ExtensionLinkId
-pub fn aya::programs::extension::ExtensionLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::extension::ExtensionLinkId::eq(&self, &aya::programs::extension::ExtensionLinkId) -> bool
 impl core::fmt::Debug for aya::programs::extension::ExtensionLinkId
 pub fn aya::programs::extension::ExtensionLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::extension::ExtensionLinkId
@@ -2923,7 +2928,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::fentry::FEntryLink
 pub struct aya::programs::fentry::FEntryLinkId(_)
 impl core::cmp::Eq for aya::programs::fentry::FEntryLinkId
 impl core::cmp::PartialEq for aya::programs::fentry::FEntryLinkId
-pub fn aya::programs::fentry::FEntryLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::fentry::FEntryLinkId::eq(&self, &aya::programs::fentry::FEntryLinkId) -> bool
 impl core::fmt::Debug for aya::programs::fentry::FEntryLinkId
 pub fn aya::programs::fentry::FEntryLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::fentry::FEntryLinkId
@@ -3012,7 +3017,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::fexit::FExitLink
 pub struct aya::programs::fexit::FExitLinkId(_)
 impl core::cmp::Eq for aya::programs::fexit::FExitLinkId
 impl core::cmp::PartialEq for aya::programs::fexit::FExitLinkId
-pub fn aya::programs::fexit::FExitLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::fexit::FExitLinkId::eq(&self, &aya::programs::fexit::FExitLinkId) -> bool
 impl core::fmt::Debug for aya::programs::fexit::FExitLinkId
 pub fn aya::programs::fexit::FExitLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::fexit::FExitLinkId
@@ -3098,7 +3103,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::flow_dissector::Flo
 pub struct aya::programs::flow_dissector::FlowDissectorLinkId(_)
 impl core::cmp::Eq for aya::programs::flow_dissector::FlowDissectorLinkId
 impl core::cmp::PartialEq for aya::programs::flow_dissector::FlowDissectorLinkId
-pub fn aya::programs::flow_dissector::FlowDissectorLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::flow_dissector::FlowDissectorLinkId::eq(&self, &aya::programs::flow_dissector::FlowDissectorLinkId) -> bool
 impl core::fmt::Debug for aya::programs::flow_dissector::FlowDissectorLinkId
 pub fn aya::programs::flow_dissector::FlowDissectorLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::flow_dissector::FlowDissectorLinkId
@@ -3199,7 +3204,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::iter::IterLink
 pub struct aya::programs::iter::IterLinkId(_)
 impl core::cmp::Eq for aya::programs::iter::IterLinkId
 impl core::cmp::PartialEq for aya::programs::iter::IterLinkId
-pub fn aya::programs::iter::IterLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::iter::IterLinkId::eq(&self, &aya::programs::iter::IterLinkId) -> bool
 impl core::fmt::Debug for aya::programs::iter::IterLinkId
 pub fn aya::programs::iter::IterLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::iter::IterLinkId
@@ -3305,7 +3310,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::kprobe::KProbeLink
 pub struct aya::programs::kprobe::KProbeLinkId(_)
 impl core::cmp::Eq for aya::programs::kprobe::KProbeLinkId
 impl core::cmp::PartialEq for aya::programs::kprobe::KProbeLinkId
-pub fn aya::programs::kprobe::KProbeLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::kprobe::KProbeLinkId::eq(&self, &aya::programs::kprobe::KProbeLinkId) -> bool
 impl core::fmt::Debug for aya::programs::kprobe::KProbeLinkId
 pub fn aya::programs::kprobe::KProbeLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::kprobe::KProbeLinkId
@@ -3326,11 +3331,11 @@ pub aya::programs::links::CgroupAttachMode::AllowMultiple
 pub aya::programs::links::CgroupAttachMode::AllowOverride
 pub aya::programs::links::CgroupAttachMode::Single
 impl core::clone::Clone for aya::programs::links::CgroupAttachMode
-pub fn aya::programs::links::CgroupAttachMode::clone(&self) -> Self
+pub fn aya::programs::links::CgroupAttachMode::clone(&self) -> aya::programs::links::CgroupAttachMode
 impl core::convert::From<aya::programs::links::CgroupAttachMode> for u32
 pub fn u32::from(aya::programs::links::CgroupAttachMode) -> Self
 impl core::default::Default for aya::programs::links::CgroupAttachMode
-pub fn aya::programs::links::CgroupAttachMode::default() -> Self
+pub fn aya::programs::links::CgroupAttachMode::default() -> aya::programs::links::CgroupAttachMode
 impl core::fmt::Debug for aya::programs::links::CgroupAttachMode
 pub fn aya::programs::links::CgroupAttachMode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::links::CgroupAttachMode
@@ -3343,8 +3348,11 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::links::CgroupAtt
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::CgroupAttachMode
 pub enum aya::programs::links::LinkError
 pub aya::programs::links::LinkError::InvalidLink
+pub aya::programs::links::LinkError::PinError(aya::pin::PinError)
 pub aya::programs::links::LinkError::SyscallError(aya::sys::SyscallError)
 pub aya::programs::links::LinkError::UnknownLinkType(u32)
+impl core::convert::From<aya::pin::PinError> for aya::programs::links::LinkError
+pub fn aya::programs::links::LinkError::from(aya::pin::PinError) -> Self
 impl core::convert::From<aya::programs::links::LinkError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::links::LinkError) -> Self
 impl core::convert::From<aya::sys::SyscallError> for aya::programs::links::LinkError
@@ -3379,9 +3387,9 @@ pub aya::programs::links::LinkType::UProbeMulti = 12
 pub aya::programs::links::LinkType::Unspecified = 0
 pub aya::programs::links::LinkType::Xdp = 6
 impl core::clone::Clone for aya::programs::links::LinkType
-pub fn aya::programs::links::LinkType::clone(&self) -> Self
+pub fn aya::programs::links::LinkType::clone(&self) -> aya::programs::links::LinkType
 impl core::cmp::PartialEq for aya::programs::links::LinkType
-pub fn aya::programs::links::LinkType::eq(&self, &Self) -> bool
+pub fn aya::programs::links::LinkType::eq(&self, &aya::programs::links::LinkType) -> bool
 impl core::convert::TryFrom<aya_obj::generated::linux_bindings_x86_64::bpf_link_type> for aya::programs::links::LinkType
 pub type aya::programs::links::LinkType::Error = aya::programs::links::LinkError
 pub fn aya::programs::links::LinkType::try_from(aya_obj::generated::linux_bindings_x86_64::bpf_link_type) -> core::result::Result<Self, Self::Error>
@@ -3527,7 +3535,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::FdLink
 pub struct aya::programs::links::FdLinkId(_)
 impl core::cmp::Eq for aya::programs::links::FdLinkId
 impl core::cmp::PartialEq for aya::programs::links::FdLinkId
-pub fn aya::programs::links::FdLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::links::FdLinkId::eq(&self, &aya::programs::links::FdLinkId) -> bool
 impl core::fmt::Debug for aya::programs::links::FdLinkId
 pub fn aya::programs::links::FdLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::links::FdLinkId
@@ -3619,7 +3627,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::links::ProgAttachLi
 pub struct aya::programs::links::ProgAttachLinkId(_, _, _)
 impl core::cmp::Eq for aya::programs::links::ProgAttachLinkId
 impl core::cmp::PartialEq for aya::programs::links::ProgAttachLinkId
-pub fn aya::programs::links::ProgAttachLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::links::ProgAttachLinkId::eq(&self, &aya::programs::links::ProgAttachLinkId) -> bool
 impl core::fmt::Debug for aya::programs::links::ProgAttachLinkId
 pub fn aya::programs::links::ProgAttachLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::links::ProgAttachLinkId
@@ -3807,7 +3815,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::lirc_mode2::LircLin
 pub struct aya::programs::lirc_mode2::LircLinkId(_, _)
 impl core::cmp::Eq for aya::programs::lirc_mode2::LircLinkId
 impl core::cmp::PartialEq for aya::programs::lirc_mode2::LircLinkId
-pub fn aya::programs::lirc_mode2::LircLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::lirc_mode2::LircLinkId::eq(&self, &aya::programs::lirc_mode2::LircLinkId) -> bool
 impl core::fmt::Debug for aya::programs::lirc_mode2::LircLinkId
 pub fn aya::programs::lirc_mode2::LircLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::lirc_mode2::LircLinkId
@@ -3930,7 +3938,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm::LsmLink
 pub struct aya::programs::lsm::LsmLinkId(_)
 impl core::cmp::Eq for aya::programs::lsm::LsmLinkId
 impl core::cmp::PartialEq for aya::programs::lsm::LsmLinkId
-pub fn aya::programs::lsm::LsmLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::lsm::LsmLinkId::eq(&self, &aya::programs::lsm::LsmLinkId) -> bool
 impl core::fmt::Debug for aya::programs::lsm::LsmLinkId
 pub fn aya::programs::lsm::LsmLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::lsm::LsmLinkId
@@ -4011,7 +4019,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm_cgroup::LsmLink
 pub struct aya::programs::lsm_cgroup::LsmLinkId(_)
 impl core::cmp::Eq for aya::programs::lsm_cgroup::LsmLinkId
 impl core::cmp::PartialEq for aya::programs::lsm_cgroup::LsmLinkId
-pub fn aya::programs::lsm_cgroup::LsmLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::lsm_cgroup::LsmLinkId::eq(&self, &aya::programs::lsm_cgroup::LsmLinkId) -> bool
 impl core::fmt::Debug for aya::programs::lsm_cgroup::LsmLinkId
 pub fn aya::programs::lsm_cgroup::LsmLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::lsm_cgroup::LsmLinkId
@@ -4030,7 +4038,7 @@ pub mod aya::programs::perf_attach
 pub struct aya::programs::perf_attach::PerfLinkId(_)
 impl core::cmp::Eq for aya::programs::perf_attach::PerfLinkId
 impl core::cmp::PartialEq for aya::programs::perf_attach::PerfLinkId
-pub fn aya::programs::perf_attach::PerfLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::perf_attach::PerfLinkId::eq(&self, &aya::programs::perf_attach::PerfLinkId) -> bool
 impl core::fmt::Debug for aya::programs::perf_attach::PerfLinkId
 pub fn aya::programs::perf_attach::PerfLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::perf_attach::PerfLinkId
@@ -4052,7 +4060,7 @@ pub aya::programs::perf_event::BreakpointConfig::Data::type: aya::programs::perf
 pub aya::programs::perf_event::BreakpointConfig::Instruction
 pub aya::programs::perf_event::BreakpointConfig::Instruction::address: u64
 impl core::clone::Clone for aya::programs::perf_event::BreakpointConfig
-pub fn aya::programs::perf_event::BreakpointConfig::clone(&self) -> Self
+pub fn aya::programs::perf_event::BreakpointConfig::clone(&self) -> aya::programs::perf_event::BreakpointConfig
 impl core::fmt::Debug for aya::programs::perf_event::BreakpointConfig
 pub fn aya::programs::perf_event::BreakpointConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::perf_event::BreakpointConfig
@@ -4075,7 +4083,7 @@ pub aya::programs::perf_event::HardwareEvent::RefCpuCycles = 9
 pub aya::programs::perf_event::HardwareEvent::StalledCyclesBackend = 8
 pub aya::programs::perf_event::HardwareEvent::StalledCyclesFrontend = 7
 impl core::clone::Clone for aya::programs::perf_event::HardwareEvent
-pub fn aya::programs::perf_event::HardwareEvent::clone(&self) -> Self
+pub fn aya::programs::perf_event::HardwareEvent::clone(&self) -> aya::programs::perf_event::HardwareEvent
 impl core::fmt::Debug for aya::programs::perf_event::HardwareEvent
 pub fn aya::programs::perf_event::HardwareEvent::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::perf_event::HardwareEvent
@@ -4095,7 +4103,7 @@ pub aya::programs::perf_event::HwCacheEvent::L1i = 1
 pub aya::programs::perf_event::HwCacheEvent::Ll = 2
 pub aya::programs::perf_event::HwCacheEvent::Node = 6
 impl core::clone::Clone for aya::programs::perf_event::HwCacheEvent
-pub fn aya::programs::perf_event::HwCacheEvent::clone(&self) -> Self
+pub fn aya::programs::perf_event::HwCacheEvent::clone(&self) -> aya::programs::perf_event::HwCacheEvent
 impl core::fmt::Debug for aya::programs::perf_event::HwCacheEvent
 pub fn aya::programs::perf_event::HwCacheEvent::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::perf_event::HwCacheEvent
@@ -4111,7 +4119,7 @@ pub aya::programs::perf_event::HwCacheOp::Prefetch = 2
 pub aya::programs::perf_event::HwCacheOp::Read = 0
 pub aya::programs::perf_event::HwCacheOp::Write = 1
 impl core::clone::Clone for aya::programs::perf_event::HwCacheOp
-pub fn aya::programs::perf_event::HwCacheOp::clone(&self) -> Self
+pub fn aya::programs::perf_event::HwCacheOp::clone(&self) -> aya::programs::perf_event::HwCacheOp
 impl core::fmt::Debug for aya::programs::perf_event::HwCacheOp
 pub fn aya::programs::perf_event::HwCacheOp::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::perf_event::HwCacheOp
@@ -4126,7 +4134,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::HwCache
 pub aya::programs::perf_event::HwCacheResult::Access = 0
 pub aya::programs::perf_event::HwCacheResult::Miss = 1
 impl core::clone::Clone for aya::programs::perf_event::HwCacheResult
-pub fn aya::programs::perf_event::HwCacheResult::clone(&self) -> Self
+pub fn aya::programs::perf_event::HwCacheResult::clone(&self) -> aya::programs::perf_event::HwCacheResult
 impl core::fmt::Debug for aya::programs::perf_event::HwCacheResult
 pub fn aya::programs::perf_event::HwCacheResult::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::perf_event::HwCacheResult
@@ -4143,7 +4151,7 @@ pub aya::programs::perf_event::PerfBreakpointLength::Len2 = 2
 pub aya::programs::perf_event::PerfBreakpointLength::Len4 = 4
 pub aya::programs::perf_event::PerfBreakpointLength::Len8 = 8
 impl core::clone::Clone for aya::programs::perf_event::PerfBreakpointLength
-pub fn aya::programs::perf_event::PerfBreakpointLength::clone(&self) -> Self
+pub fn aya::programs::perf_event::PerfBreakpointLength::clone(&self) -> aya::programs::perf_event::PerfBreakpointLength
 impl core::fmt::Debug for aya::programs::perf_event::PerfBreakpointLength
 pub fn aya::programs::perf_event::PerfBreakpointLength::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::perf_event::PerfBreakpointLength
@@ -4159,7 +4167,7 @@ pub aya::programs::perf_event::PerfBreakpointType::Read = 1
 pub aya::programs::perf_event::PerfBreakpointType::ReadWrite = 3
 pub aya::programs::perf_event::PerfBreakpointType::Write = 2
 impl core::clone::Clone for aya::programs::perf_event::PerfBreakpointType
-pub fn aya::programs::perf_event::PerfBreakpointType::clone(&self) -> Self
+pub fn aya::programs::perf_event::PerfBreakpointType::clone(&self) -> aya::programs::perf_event::PerfBreakpointType
 impl core::fmt::Debug for aya::programs::perf_event::PerfBreakpointType
 pub fn aya::programs::perf_event::PerfBreakpointType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::perf_event::PerfBreakpointType
@@ -4186,7 +4194,7 @@ pub aya::programs::perf_event::PerfEventConfig::Software(aya::programs::perf_eve
 pub aya::programs::perf_event::PerfEventConfig::TracePoint
 pub aya::programs::perf_event::PerfEventConfig::TracePoint::event_id: u64
 impl core::clone::Clone for aya::programs::perf_event::PerfEventConfig
-pub fn aya::programs::perf_event::PerfEventConfig::clone(&self) -> Self
+pub fn aya::programs::perf_event::PerfEventConfig::clone(&self) -> aya::programs::perf_event::PerfEventConfig
 impl core::fmt::Debug for aya::programs::perf_event::PerfEventConfig
 pub fn aya::programs::perf_event::PerfEventConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::perf_event::PerfEventConfig
@@ -4206,7 +4214,7 @@ pub aya::programs::perf_event::PerfEventScope::OneProcess
 pub aya::programs::perf_event::PerfEventScope::OneProcess::cpu: core::option::Option<u32>
 pub aya::programs::perf_event::PerfEventScope::OneProcess::pid: u32
 impl core::clone::Clone for aya::programs::perf_event::PerfEventScope
-pub fn aya::programs::perf_event::PerfEventScope::clone(&self) -> Self
+pub fn aya::programs::perf_event::PerfEventScope::clone(&self) -> aya::programs::perf_event::PerfEventScope
 impl core::fmt::Debug for aya::programs::perf_event::PerfEventScope
 pub fn aya::programs::perf_event::PerfEventScope::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::perf_event::PerfEventScope
@@ -4221,7 +4229,7 @@ pub enum aya::programs::perf_event::SamplePolicy
 pub aya::programs::perf_event::SamplePolicy::Frequency(u64)
 pub aya::programs::perf_event::SamplePolicy::Period(u64)
 impl core::clone::Clone for aya::programs::perf_event::SamplePolicy
-pub fn aya::programs::perf_event::SamplePolicy::clone(&self) -> Self
+pub fn aya::programs::perf_event::SamplePolicy::clone(&self) -> aya::programs::perf_event::SamplePolicy
 impl core::fmt::Debug for aya::programs::perf_event::SamplePolicy
 pub fn aya::programs::perf_event::SamplePolicy::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::perf_event::SamplePolicy
@@ -4246,7 +4254,7 @@ pub aya::programs::perf_event::SoftwareEvent::PageFaultsMaj = 6
 pub aya::programs::perf_event::SoftwareEvent::PageFaultsMin = 5
 pub aya::programs::perf_event::SoftwareEvent::TaskClock = 1
 impl core::clone::Clone for aya::programs::perf_event::SoftwareEvent
-pub fn aya::programs::perf_event::SoftwareEvent::clone(&self) -> Self
+pub fn aya::programs::perf_event::SoftwareEvent::clone(&self) -> aya::programs::perf_event::SoftwareEvent
 impl core::fmt::Debug for aya::programs::perf_event::SoftwareEvent
 pub fn aya::programs::perf_event::SoftwareEvent::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::perf_event::SoftwareEvent
@@ -4335,10 +4343,10 @@ pub aya::programs::perf_event::PerfEventGroupRead::enabled_nanos: u64
 pub aya::programs::perf_event::PerfEventGroupRead::running_nanos: u64
 pub aya::programs::perf_event::PerfEventGroupRead::values: &'a [u64]
 impl<'a> core::clone::Clone for aya::programs::perf_event::PerfEventGroupRead<'a>
-pub fn aya::programs::perf_event::PerfEventGroupRead<'a>::clone(&self) -> Self
+pub fn aya::programs::perf_event::PerfEventGroupRead<'a>::clone(&self) -> aya::programs::perf_event::PerfEventGroupRead<'a>
 impl<'a> core::cmp::Eq for aya::programs::perf_event::PerfEventGroupRead<'a>
 impl<'a> core::cmp::PartialEq for aya::programs::perf_event::PerfEventGroupRead<'a>
-pub fn aya::programs::perf_event::PerfEventGroupRead<'a>::eq(&self, &Self) -> bool
+pub fn aya::programs::perf_event::PerfEventGroupRead<'a>::eq(&self, &aya::programs::perf_event::PerfEventGroupRead<'a>) -> bool
 impl<'a> core::fmt::Debug for aya::programs::perf_event::PerfEventGroupRead<'a>
 pub fn aya::programs::perf_event::PerfEventGroupRead<'a>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<'a> core::marker::Copy for aya::programs::perf_event::PerfEventGroupRead<'a>
@@ -4383,7 +4391,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEve
 pub struct aya::programs::perf_event::PerfEventLinkId(_)
 impl core::cmp::Eq for aya::programs::perf_event::PerfEventLinkId
 impl core::cmp::PartialEq for aya::programs::perf_event::PerfEventLinkId
-pub fn aya::programs::perf_event::PerfEventLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::perf_event::PerfEventLinkId::eq(&self, &aya::programs::perf_event::PerfEventLinkId) -> bool
 impl core::fmt::Debug for aya::programs::perf_event::PerfEventLinkId
 pub fn aya::programs::perf_event::PerfEventLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::perf_event::PerfEventLinkId
@@ -4399,6 +4407,25 @@ impl core::marker::UnsafeUnpin for aya::programs::perf_event::PerfEventLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::perf_event::PerfEventLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::perf_event::PerfEventLinkId
 pub mod aya::programs::raw_trace_point
+pub enum aya::programs::raw_trace_point::RawTracePointError
+pub aya::programs::raw_trace_point::RawTracePointError::InvalidTracePointName
+pub aya::programs::raw_trace_point::RawTracePointError::InvalidTracePointName::source: alloc::ffi::c_str::NulError
+pub aya::programs::raw_trace_point::RawTracePointError::InvalidTracePointName::tp_name: alloc::string::String
+impl core::convert::From<aya::programs::raw_trace_point::RawTracePointError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(aya::programs::raw_trace_point::RawTracePointError) -> Self
+impl core::error::Error for aya::programs::raw_trace_point::RawTracePointError
+pub fn aya::programs::raw_trace_point::RawTracePointError::source(&self) -> core::option::Option<&(dyn core::error::Error + 'static)>
+impl core::fmt::Debug for aya::programs::raw_trace_point::RawTracePointError
+pub fn aya::programs::raw_trace_point::RawTracePointError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for aya::programs::raw_trace_point::RawTracePointError
+pub fn aya::programs::raw_trace_point::RawTracePointError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::raw_trace_point::RawTracePointError
+impl core::marker::Send for aya::programs::raw_trace_point::RawTracePointError
+impl core::marker::Sync for aya::programs::raw_trace_point::RawTracePointError
+impl core::marker::Unpin for aya::programs::raw_trace_point::RawTracePointError
+impl core::marker::UnsafeUnpin for aya::programs::raw_trace_point::RawTracePointError
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::raw_trace_point::RawTracePointError
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::RawTracePointError
 pub struct aya::programs::raw_trace_point::RawTracePoint
 impl aya::programs::raw_trace_point::RawTracePoint
 pub const aya::programs::raw_trace_point::RawTracePoint::PROGRAM_TYPE: aya::programs::ProgramType
@@ -4472,7 +4499,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::raw_trace_point::Ra
 pub struct aya::programs::raw_trace_point::RawTracePointLinkId(_)
 impl core::cmp::Eq for aya::programs::raw_trace_point::RawTracePointLinkId
 impl core::cmp::PartialEq for aya::programs::raw_trace_point::RawTracePointLinkId
-pub fn aya::programs::raw_trace_point::RawTracePointLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::raw_trace_point::RawTracePointLinkId::eq(&self, &aya::programs::raw_trace_point::RawTracePointLinkId) -> bool
 impl core::fmt::Debug for aya::programs::raw_trace_point::RawTracePointLinkId
 pub fn aya::programs::raw_trace_point::RawTracePointLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::raw_trace_point::RawTracePointLinkId
@@ -4557,7 +4584,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_lookup::SkLookup
 pub struct aya::programs::sk_lookup::SkLookupLinkId(_)
 impl core::cmp::Eq for aya::programs::sk_lookup::SkLookupLinkId
 impl core::cmp::PartialEq for aya::programs::sk_lookup::SkLookupLinkId
-pub fn aya::programs::sk_lookup::SkLookupLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::sk_lookup::SkLookupLinkId::eq(&self, &aya::programs::sk_lookup::SkLookupLinkId) -> bool
 impl core::fmt::Debug for aya::programs::sk_lookup::SkLookupLinkId
 pub fn aya::programs::sk_lookup::SkLookupLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::sk_lookup::SkLookupLinkId
@@ -4643,7 +4670,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_msg::SkMsgLink
 pub struct aya::programs::sk_msg::SkMsgLinkId(_)
 impl core::cmp::Eq for aya::programs::sk_msg::SkMsgLinkId
 impl core::cmp::PartialEq for aya::programs::sk_msg::SkMsgLinkId
-pub fn aya::programs::sk_msg::SkMsgLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::sk_msg::SkMsgLinkId::eq(&self, &aya::programs::sk_msg::SkMsgLinkId) -> bool
 impl core::fmt::Debug for aya::programs::sk_msg::SkMsgLinkId
 pub fn aya::programs::sk_msg::SkMsgLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::sk_msg::SkMsgLinkId
@@ -4785,7 +4812,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkbLink
 pub struct aya::programs::sk_skb::SkSkbLinkId(_)
 impl core::cmp::Eq for aya::programs::sk_skb::SkSkbLinkId
 impl core::cmp::PartialEq for aya::programs::sk_skb::SkSkbLinkId
-pub fn aya::programs::sk_skb::SkSkbLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::sk_skb::SkSkbLinkId::eq(&self, &aya::programs::sk_skb::SkSkbLinkId) -> bool
 impl core::fmt::Debug for aya::programs::sk_skb::SkSkbLinkId
 pub fn aya::programs::sk_skb::SkSkbLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::sk_skb::SkSkbLinkId
@@ -4869,7 +4896,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOpsLi
 pub struct aya::programs::sock_ops::SockOpsLinkId(_)
 impl core::cmp::Eq for aya::programs::sock_ops::SockOpsLinkId
 impl core::cmp::PartialEq for aya::programs::sock_ops::SockOpsLinkId
-pub fn aya::programs::sock_ops::SockOpsLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::sock_ops::SockOpsLinkId::eq(&self, &aya::programs::sock_ops::SockOpsLinkId) -> bool
 impl core::fmt::Debug for aya::programs::sock_ops::SockOpsLinkId
 pub fn aya::programs::sock_ops::SockOpsLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::sock_ops::SockOpsLinkId
@@ -5000,10 +5027,10 @@ pub aya::programs::tc::TcAttachType::Custom(u32)
 pub aya::programs::tc::TcAttachType::Egress
 pub aya::programs::tc::TcAttachType::Ingress
 impl core::clone::Clone for aya::programs::tc::TcAttachType
-pub fn aya::programs::tc::TcAttachType::clone(&self) -> Self
+pub fn aya::programs::tc::TcAttachType::clone(&self) -> aya::programs::tc::TcAttachType
 impl core::cmp::Eq for aya::programs::tc::TcAttachType
 impl core::cmp::PartialEq for aya::programs::tc::TcAttachType
-pub fn aya::programs::tc::TcAttachType::eq(&self, &Self) -> bool
+pub fn aya::programs::tc::TcAttachType::eq(&self, &aya::programs::tc::TcAttachType) -> bool
 impl core::fmt::Debug for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::tc::TcAttachType
@@ -5023,9 +5050,9 @@ pub aya::programs::tc::TcError::InvalidLinkOperation
 pub aya::programs::tc::TcError::InvalidTcxAttach(u32)
 pub aya::programs::tc::TcError::IoError(core::io::error::Error)
 pub aya::programs::tc::TcError::NetlinkError(aya::sys::NetlinkError)
-pub aya::programs::tc::TcError::NulError(alloc::ffi::c_str::NulError)
-impl core::convert::From<alloc::ffi::c_str::NulError> for aya::programs::tc::TcError
-pub fn aya::programs::tc::TcError::from(alloc::ffi::c_str::NulError) -> Self
+pub aya::programs::tc::TcError::NulError
+pub aya::programs::tc::TcError::NulError::name: alloc::string::String
+pub aya::programs::tc::TcError::NulError::source: alloc::ffi::c_str::NulError
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::tc::TcError) -> Self
 impl core::convert::From<aya::sys::NetlinkError> for aya::programs::tc::TcError
@@ -5051,9 +5078,9 @@ pub aya::programs::tc::NlOptions::handle: aya::programs::tc::TcHandle
 pub aya::programs::tc::NlOptions::priority: u16
 impl core::cmp::Eq for aya::programs::tc::NlOptions
 impl core::cmp::PartialEq for aya::programs::tc::NlOptions
-pub fn aya::programs::tc::NlOptions::eq(&self, &Self) -> bool
+pub fn aya::programs::tc::NlOptions::eq(&self, &aya::programs::tc::NlOptions) -> bool
 impl core::default::Default for aya::programs::tc::NlOptions
-pub fn aya::programs::tc::NlOptions::default() -> Self
+pub fn aya::programs::tc::NlOptions::default() -> aya::programs::tc::NlOptions
 impl core::fmt::Debug for aya::programs::tc::NlOptions
 pub fn aya::programs::tc::NlOptions::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::tc::NlOptions
@@ -5156,7 +5183,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifier
 pub struct aya::programs::tc::SchedClassifierLinkId(_)
 impl core::cmp::Eq for aya::programs::tc::SchedClassifierLinkId
 impl core::cmp::PartialEq for aya::programs::tc::SchedClassifierLinkId
-pub fn aya::programs::tc::SchedClassifierLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::tc::SchedClassifierLinkId::eq(&self, &aya::programs::tc::SchedClassifierLinkId) -> bool
 impl core::fmt::Debug for aya::programs::tc::SchedClassifierLinkId
 pub fn aya::programs::tc::SchedClassifierLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::tc::SchedClassifierLinkId
@@ -5176,16 +5203,16 @@ impl aya::programs::tc::TcHandle
 pub const aya::programs::tc::TcHandle::AUTO_ASSIGN: Self
 pub const fn aya::programs::tc::TcHandle::new(u16, u16) -> Self
 impl core::clone::Clone for aya::programs::tc::TcHandle
-pub fn aya::programs::tc::TcHandle::clone(&self) -> Self
+pub fn aya::programs::tc::TcHandle::clone(&self) -> aya::programs::tc::TcHandle
 impl core::cmp::Eq for aya::programs::tc::TcHandle
 impl core::cmp::PartialEq for aya::programs::tc::TcHandle
-pub fn aya::programs::tc::TcHandle::eq(&self, &Self) -> bool
+pub fn aya::programs::tc::TcHandle::eq(&self, &aya::programs::tc::TcHandle) -> bool
 impl core::convert::From<aya::programs::tc::TcHandle> for u32
 pub fn u32::from(aya::programs::tc::TcHandle) -> Self
 impl core::convert::From<u32> for aya::programs::tc::TcHandle
 pub fn aya::programs::tc::TcHandle::from(u32) -> Self
 impl core::default::Default for aya::programs::tc::TcHandle
-pub fn aya::programs::tc::TcHandle::default() -> Self
+pub fn aya::programs::tc::TcHandle::default() -> aya::programs::tc::TcHandle
 impl core::fmt::Debug for aya::programs::tc::TcHandle
 pub fn aya::programs::tc::TcHandle::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::tc::TcHandle
@@ -5271,7 +5298,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::tp_btf::BtfTracePoi
 pub struct aya::programs::tp_btf::BtfTracePointLinkId(_)
 impl core::cmp::Eq for aya::programs::tp_btf::BtfTracePointLinkId
 impl core::cmp::PartialEq for aya::programs::tp_btf::BtfTracePointLinkId
-pub fn aya::programs::tp_btf::BtfTracePointLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::tp_btf::BtfTracePointLinkId::eq(&self, &aya::programs::tp_btf::BtfTracePointLinkId) -> bool
 impl core::fmt::Debug for aya::programs::tp_btf::BtfTracePointLinkId
 pub fn aya::programs::tp_btf::BtfTracePointLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::tp_btf::BtfTracePointLinkId
@@ -5377,7 +5404,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::trace_point::TraceP
 pub struct aya::programs::trace_point::TracePointLinkId(_)
 impl core::cmp::Eq for aya::programs::trace_point::TracePointLinkId
 impl core::cmp::PartialEq for aya::programs::trace_point::TracePointLinkId
-pub fn aya::programs::trace_point::TracePointLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::trace_point::TracePointLinkId::eq(&self, &aya::programs::trace_point::TracePointLinkId) -> bool
 impl core::fmt::Debug for aya::programs::trace_point::TracePointLinkId
 pub fn aya::programs::trace_point::TracePointLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::trace_point::TracePointLinkId
@@ -5421,7 +5448,7 @@ pub fn aya::programs::uprobe::UProbeAttachLocation<'static>::from_virtual_addres
 impl core::convert::From<u64> for aya::programs::uprobe::UProbeAttachLocation<'static>
 pub fn aya::programs::uprobe::UProbeAttachLocation<'static>::from(u64) -> Self
 impl<'a> core::clone::Clone for aya::programs::uprobe::UProbeAttachLocation<'a>
-pub fn aya::programs::uprobe::UProbeAttachLocation<'a>::clone(&self) -> Self
+pub fn aya::programs::uprobe::UProbeAttachLocation<'a>::clone(&self) -> aya::programs::uprobe::UProbeAttachLocation<'a>
 impl<'a> core::convert::From<&'a str> for aya::programs::uprobe::UProbeAttachLocation<'a>
 pub fn aya::programs::uprobe::UProbeAttachLocation<'a>::from(&'a str) -> Self
 impl<'a> core::fmt::Debug for aya::programs::uprobe::UProbeAttachLocation<'a>
@@ -5500,7 +5527,7 @@ pub aya::programs::uprobe::UProbeScope::AllProcesses
 pub aya::programs::uprobe::UProbeScope::CallingProcess
 pub aya::programs::uprobe::UProbeScope::OneProcess(core::num::nonzero::NonZeroU32)
 impl core::clone::Clone for aya::programs::uprobe::UProbeScope
-pub fn aya::programs::uprobe::UProbeScope::clone(&self) -> Self
+pub fn aya::programs::uprobe::UProbeScope::clone(&self) -> aya::programs::uprobe::UProbeScope
 impl core::fmt::Debug for aya::programs::uprobe::UProbeScope
 pub fn aya::programs::uprobe::UProbeScope::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::uprobe::UProbeScope
@@ -5557,7 +5584,7 @@ pub fn aya::programs::uprobe::UProbeAttachPoint<'_>::from(&Self) -> Self
 impl<'a, L: core::convert::Into<aya::programs::uprobe::UProbeAttachLocation<'a>>> core::convert::From<L> for aya::programs::uprobe::UProbeAttachPoint<'a>
 pub fn aya::programs::uprobe::UProbeAttachPoint<'a>::from(L) -> Self
 impl<'a> core::clone::Clone for aya::programs::uprobe::UProbeAttachPoint<'a>
-pub fn aya::programs::uprobe::UProbeAttachPoint<'a>::clone(&self) -> Self
+pub fn aya::programs::uprobe::UProbeAttachPoint<'a>::clone(&self) -> aya::programs::uprobe::UProbeAttachPoint<'a>
 impl<'a> core::fmt::Debug for aya::programs::uprobe::UProbeAttachPoint<'a>
 pub fn aya::programs::uprobe::UProbeAttachPoint<'a>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl<'a> core::marker::Copy for aya::programs::uprobe::UProbeAttachPoint<'a>
@@ -5603,7 +5630,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeLink
 pub struct aya::programs::uprobe::UProbeLinkId(_)
 impl core::cmp::Eq for aya::programs::uprobe::UProbeLinkId
 impl core::cmp::PartialEq for aya::programs::uprobe::UProbeLinkId
-pub fn aya::programs::uprobe::UProbeLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::uprobe::UProbeLinkId::eq(&self, &aya::programs::uprobe::UProbeLinkId) -> bool
 impl core::fmt::Debug for aya::programs::uprobe::UProbeLinkId
 pub fn aya::programs::uprobe::UProbeLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::uprobe::UProbeLinkId
@@ -5620,7 +5647,12 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeLi
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeLinkId
 pub mod aya::programs::xdp
 pub enum aya::programs::xdp::XdpError
+pub aya::programs::xdp::XdpError::InvalidInterfaceName
+pub aya::programs::xdp::XdpError::InvalidInterfaceName::name: alloc::string::String
+pub aya::programs::xdp::XdpError::InvalidInterfaceName::source: alloc::ffi::c_str::NulError
 pub aya::programs::xdp::XdpError::NetlinkError(aya::sys::NetlinkError)
+pub aya::programs::xdp::XdpError::UnknownInterface
+pub aya::programs::xdp::XdpError::UnknownInterface::name: alloc::string::String
 impl core::convert::From<aya::programs::xdp::XdpError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::xdp::XdpError) -> Self
 impl core::convert::From<aya::sys::NetlinkError> for aya::programs::xdp::XdpError
@@ -5644,12 +5676,12 @@ pub aya::programs::xdp::XdpMode::Driver
 pub aya::programs::xdp::XdpMode::Hardware
 pub aya::programs::xdp::XdpMode::Skb
 impl core::clone::Clone for aya::programs::xdp::XdpMode
-pub fn aya::programs::xdp::XdpMode::clone(&self) -> Self
+pub fn aya::programs::xdp::XdpMode::clone(&self) -> aya::programs::xdp::XdpMode
 impl core::cmp::Eq for aya::programs::xdp::XdpMode
 impl core::cmp::PartialEq for aya::programs::xdp::XdpMode
-pub fn aya::programs::xdp::XdpMode::eq(&self, &Self) -> bool
+pub fn aya::programs::xdp::XdpMode::eq(&self, &aya::programs::xdp::XdpMode) -> bool
 impl core::default::Default for aya::programs::xdp::XdpMode
-pub fn aya::programs::xdp::XdpMode::default() -> Self
+pub fn aya::programs::xdp::XdpMode::default() -> aya::programs::xdp::XdpMode
 impl core::fmt::Debug for aya::programs::xdp::XdpMode
 pub fn aya::programs::xdp::XdpMode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::xdp::XdpMode
@@ -5739,7 +5771,7 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::xdp::XdpLink
 pub struct aya::programs::xdp::XdpLinkId(_)
 impl core::cmp::Eq for aya::programs::xdp::XdpLinkId
 impl core::cmp::PartialEq for aya::programs::xdp::XdpLinkId
-pub fn aya::programs::xdp::XdpLinkId::eq(&self, &Self) -> bool
+pub fn aya::programs::xdp::XdpLinkId::eq(&self, &aya::programs::xdp::XdpLinkId) -> bool
 impl core::fmt::Debug for aya::programs::xdp::XdpLinkId
 pub fn aya::programs::xdp::XdpLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::xdp::XdpLinkId
@@ -5759,11 +5791,11 @@ pub aya::programs::CgroupAttachMode::AllowMultiple
 pub aya::programs::CgroupAttachMode::AllowOverride
 pub aya::programs::CgroupAttachMode::Single
 impl core::clone::Clone for aya::programs::links::CgroupAttachMode
-pub fn aya::programs::links::CgroupAttachMode::clone(&self) -> Self
+pub fn aya::programs::links::CgroupAttachMode::clone(&self) -> aya::programs::links::CgroupAttachMode
 impl core::convert::From<aya::programs::links::CgroupAttachMode> for u32
 pub fn u32::from(aya::programs::links::CgroupAttachMode) -> Self
 impl core::default::Default for aya::programs::links::CgroupAttachMode
-pub fn aya::programs::links::CgroupAttachMode::default() -> Self
+pub fn aya::programs::links::CgroupAttachMode::default() -> aya::programs::links::CgroupAttachMode
 impl core::fmt::Debug for aya::programs::links::CgroupAttachMode
 pub fn aya::programs::links::CgroupAttachMode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::links::CgroupAttachMode
@@ -5813,10 +5845,10 @@ pub enum aya::programs::LsmAttachType
 pub aya::programs::LsmAttachType::Cgroup
 pub aya::programs::LsmAttachType::Mac
 impl core::clone::Clone for aya::programs::LsmAttachType
-pub fn aya::programs::LsmAttachType::clone(&self) -> Self
+pub fn aya::programs::LsmAttachType::clone(&self) -> aya::programs::LsmAttachType
 impl core::cmp::Eq for aya::programs::LsmAttachType
 impl core::cmp::PartialEq for aya::programs::LsmAttachType
-pub fn aya::programs::LsmAttachType::eq(&self, &Self) -> bool
+pub fn aya::programs::LsmAttachType::eq(&self, &aya::programs::LsmAttachType) -> bool
 impl core::fmt::Debug for aya::programs::LsmAttachType
 pub fn aya::programs::LsmAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::LsmAttachType
@@ -5832,7 +5864,7 @@ pub enum aya::programs::ProbeKind
 pub aya::programs::ProbeKind::Entry
 pub aya::programs::ProbeKind::Return
 impl core::clone::Clone for aya::programs::ProbeKind
-pub fn aya::programs::ProbeKind::clone(&self) -> Self
+pub fn aya::programs::ProbeKind::clone(&self) -> aya::programs::ProbeKind
 impl core::fmt::Debug for aya::programs::ProbeKind
 pub fn aya::programs::ProbeKind::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::programs::ProbeKind
@@ -6071,6 +6103,7 @@ pub aya::programs::ProgramError::ExtensionError(aya::programs::extension::Extens
 pub aya::programs::ProgramError::IOError(core::io::error::Error)
 pub aya::programs::ProgramError::InvalidName
 pub aya::programs::ProgramError::InvalidName::name: alloc::string::String
+pub aya::programs::ProgramError::InvalidName::source: alloc::ffi::c_str::NulError
 pub aya::programs::ProgramError::KProbeError(aya::programs::kprobe::KProbeError)
 pub aya::programs::ProgramError::LinkError(aya::programs::links::LinkError)
 pub aya::programs::ProgramError::LoadError
@@ -6080,6 +6113,8 @@ pub aya::programs::ProgramError::MapError(aya::maps::MapError)
 pub aya::programs::ProgramError::NetlinkError(aya::sys::NetlinkError)
 pub aya::programs::ProgramError::NotAttached
 pub aya::programs::ProgramError::NotLoaded
+pub aya::programs::ProgramError::PinError(aya::pin::PinError)
+pub aya::programs::ProgramError::RawTracePointError(aya::programs::raw_trace_point::RawTracePointError)
 pub aya::programs::ProgramError::SkReuseportError(aya::programs::sk_reuseport::SkReuseportError)
 pub aya::programs::ProgramError::SocketFilterError(aya::programs::socket_filter::SocketFilterError)
 pub aya::programs::ProgramError::SyscallError(aya::sys::SyscallError)
@@ -6087,11 +6122,11 @@ pub aya::programs::ProgramError::TcError(aya::programs::tc::TcError)
 pub aya::programs::ProgramError::TracePointError(aya::programs::trace_point::TracePointError)
 pub aya::programs::ProgramError::UProbeError(aya::programs::uprobe::UProbeError)
 pub aya::programs::ProgramError::UnexpectedProgramType
-pub aya::programs::ProgramError::UnknownInterface
-pub aya::programs::ProgramError::UnknownInterface::name: alloc::string::String
 pub aya::programs::ProgramError::XdpError(aya::programs::xdp::XdpError)
 impl core::convert::From<aya::maps::MapError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::maps::MapError) -> Self
+impl core::convert::From<aya::pin::PinError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(aya::pin::PinError) -> Self
 impl core::convert::From<aya::programs::ProgramError> for aya::EbpfError
 pub fn aya::EbpfError::from(aya::programs::ProgramError) -> Self
 impl core::convert::From<aya::programs::extension::ExtensionError> for aya::programs::ProgramError
@@ -6100,6 +6135,8 @@ impl core::convert::From<aya::programs::kprobe::KProbeError> for aya::programs::
 pub fn aya::programs::ProgramError::from(aya::programs::kprobe::KProbeError) -> Self
 impl core::convert::From<aya::programs::links::LinkError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::links::LinkError) -> Self
+impl core::convert::From<aya::programs::raw_trace_point::RawTracePointError> for aya::programs::ProgramError
+pub fn aya::programs::ProgramError::from(aya::programs::raw_trace_point::RawTracePointError) -> Self
 impl core::convert::From<aya::programs::sk_reuseport::SkReuseportError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::sk_reuseport::SkReuseportError) -> Self
 impl core::convert::From<aya::programs::socket_filter::SocketFilterError> for aya::programs::ProgramError
@@ -6170,9 +6207,9 @@ pub aya::programs::ProgramType::Tracing
 pub aya::programs::ProgramType::Unspecified
 pub aya::programs::ProgramType::Xdp
 impl core::clone::Clone for aya::programs::ProgramType
-pub fn aya::programs::ProgramType::clone(&self) -> Self
+pub fn aya::programs::ProgramType::clone(&self) -> aya::programs::ProgramType
 impl core::cmp::PartialEq for aya::programs::ProgramType
-pub fn aya::programs::ProgramType::eq(&self, &Self) -> bool
+pub fn aya::programs::ProgramType::eq(&self, &aya::programs::ProgramType) -> bool
 impl core::convert::From<aya::programs::ProgramType> for aya_obj::generated::linux_bindings_x86_64::bpf_prog_type
 pub fn aya_obj::generated::linux_bindings_x86_64::bpf_prog_type::from(aya::programs::ProgramType) -> Self
 impl core::fmt::Debug for aya::programs::ProgramType
@@ -6229,10 +6266,10 @@ pub aya::programs::TcAttachType::Custom(u32)
 pub aya::programs::TcAttachType::Egress
 pub aya::programs::TcAttachType::Ingress
 impl core::clone::Clone for aya::programs::tc::TcAttachType
-pub fn aya::programs::tc::TcAttachType::clone(&self) -> Self
+pub fn aya::programs::tc::TcAttachType::clone(&self) -> aya::programs::tc::TcAttachType
 impl core::cmp::Eq for aya::programs::tc::TcAttachType
 impl core::cmp::PartialEq for aya::programs::tc::TcAttachType
-pub fn aya::programs::tc::TcAttachType::eq(&self, &Self) -> bool
+pub fn aya::programs::tc::TcAttachType::eq(&self, &aya::programs::tc::TcAttachType) -> bool
 impl core::fmt::Debug for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::tc::TcAttachType
@@ -6252,9 +6289,9 @@ pub aya::programs::TcError::InvalidLinkOperation
 pub aya::programs::TcError::InvalidTcxAttach(u32)
 pub aya::programs::TcError::IoError(core::io::error::Error)
 pub aya::programs::TcError::NetlinkError(aya::sys::NetlinkError)
-pub aya::programs::TcError::NulError(alloc::ffi::c_str::NulError)
-impl core::convert::From<alloc::ffi::c_str::NulError> for aya::programs::tc::TcError
-pub fn aya::programs::tc::TcError::from(alloc::ffi::c_str::NulError) -> Self
+pub aya::programs::TcError::NulError
+pub aya::programs::TcError::NulError::name: alloc::string::String
+pub aya::programs::TcError::NulError::source: alloc::ffi::c_str::NulError
 impl core::convert::From<aya::programs::tc::TcError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::tc::TcError) -> Self
 impl core::convert::From<aya::sys::NetlinkError> for aya::programs::tc::TcError
@@ -6333,7 +6370,12 @@ impl core::marker::UnsafeUnpin for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::uprobe::UProbeError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::uprobe::UProbeError
 pub enum aya::programs::XdpError
+pub aya::programs::XdpError::InvalidInterfaceName
+pub aya::programs::XdpError::InvalidInterfaceName::name: alloc::string::String
+pub aya::programs::XdpError::InvalidInterfaceName::source: alloc::ffi::c_str::NulError
 pub aya::programs::XdpError::NetlinkError(aya::sys::NetlinkError)
+pub aya::programs::XdpError::UnknownInterface
+pub aya::programs::XdpError::UnknownInterface::name: alloc::string::String
 impl core::convert::From<aya::programs::xdp::XdpError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::programs::xdp::XdpError) -> Self
 impl core::convert::From<aya::sys::NetlinkError> for aya::programs::xdp::XdpError
@@ -6357,12 +6399,12 @@ pub aya::programs::XdpMode::Driver
 pub aya::programs::XdpMode::Hardware
 pub aya::programs::XdpMode::Skb
 impl core::clone::Clone for aya::programs::xdp::XdpMode
-pub fn aya::programs::xdp::XdpMode::clone(&self) -> Self
+pub fn aya::programs::xdp::XdpMode::clone(&self) -> aya::programs::xdp::XdpMode
 impl core::cmp::Eq for aya::programs::xdp::XdpMode
 impl core::cmp::PartialEq for aya::programs::xdp::XdpMode
-pub fn aya::programs::xdp::XdpMode::eq(&self, &Self) -> bool
+pub fn aya::programs::xdp::XdpMode::eq(&self, &aya::programs::xdp::XdpMode) -> bool
 impl core::default::Default for aya::programs::xdp::XdpMode
-pub fn aya::programs::xdp::XdpMode::default() -> Self
+pub fn aya::programs::xdp::XdpMode::default() -> aya::programs::xdp::XdpMode
 impl core::fmt::Debug for aya::programs::xdp::XdpMode
 pub fn aya::programs::xdp::XdpMode::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::xdp::XdpMode
@@ -7146,7 +7188,7 @@ pub aya::programs::RawTracePointRunOptions::cpu: core::option::Option<u32>
 impl aya::programs::RawTracePointRunOptions
 pub const fn aya::programs::RawTracePointRunOptions::new() -> Self
 impl core::default::Default for aya::programs::RawTracePointRunOptions
-pub fn aya::programs::RawTracePointRunOptions::default() -> Self
+pub fn aya::programs::RawTracePointRunOptions::default() -> aya::programs::RawTracePointRunOptions
 impl core::fmt::Debug for aya::programs::RawTracePointRunOptions
 pub fn aya::programs::RawTracePointRunOptions::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya::programs::RawTracePointRunOptions
@@ -7482,16 +7524,16 @@ impl aya::programs::tc::TcHandle
 pub const aya::programs::tc::TcHandle::AUTO_ASSIGN: Self
 pub const fn aya::programs::tc::TcHandle::new(u16, u16) -> Self
 impl core::clone::Clone for aya::programs::tc::TcHandle
-pub fn aya::programs::tc::TcHandle::clone(&self) -> Self
+pub fn aya::programs::tc::TcHandle::clone(&self) -> aya::programs::tc::TcHandle
 impl core::cmp::Eq for aya::programs::tc::TcHandle
 impl core::cmp::PartialEq for aya::programs::tc::TcHandle
-pub fn aya::programs::tc::TcHandle::eq(&self, &Self) -> bool
+pub fn aya::programs::tc::TcHandle::eq(&self, &aya::programs::tc::TcHandle) -> bool
 impl core::convert::From<aya::programs::tc::TcHandle> for u32
 pub fn u32::from(aya::programs::tc::TcHandle) -> Self
 impl core::convert::From<u32> for aya::programs::tc::TcHandle
 pub fn aya::programs::tc::TcHandle::from(u32) -> Self
 impl core::default::Default for aya::programs::tc::TcHandle
-pub fn aya::programs::tc::TcHandle::default() -> Self
+pub fn aya::programs::tc::TcHandle::default() -> aya::programs::tc::TcHandle
 impl core::fmt::Debug for aya::programs::tc::TcHandle
 pub fn aya::programs::tc::TcHandle::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::tc::TcHandle
@@ -7869,7 +7911,7 @@ pub use aya::sys::BtfFeature
 #[non_exhaustive] pub enum aya::sys::Stats
 pub aya::sys::Stats::RunTime
 impl core::clone::Clone for aya::sys::Stats
-pub fn aya::sys::Stats::clone(&self) -> Self
+pub fn aya::sys::Stats::clone(&self) -> aya::sys::Stats
 impl core::convert::From<aya::sys::Stats> for aya_obj::generated::linux_bindings_x86_64::bpf_stats_type
 pub fn aya_obj::generated::linux_bindings_x86_64::bpf_stats_type::from(aya::sys::Stats) -> Self
 impl core::fmt::Debug for aya::sys::Stats
@@ -7886,7 +7928,7 @@ pub enum aya::sys::UProbeMultiFeature
 pub aya::sys::UProbeMultiFeature::LinkCreation
 pub aya::sys::UProbeMultiFeature::ProcessScopedPidFilter
 impl core::clone::Clone for aya::sys::UProbeMultiFeature
-pub fn aya::sys::UProbeMultiFeature::clone(&self) -> Self
+pub fn aya::sys::UProbeMultiFeature::clone(&self) -> aya::sys::UProbeMultiFeature
 impl core::fmt::Debug for aya::sys::UProbeMultiFeature
 pub fn aya::sys::UProbeMultiFeature::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya::sys::UProbeMultiFeature
@@ -8039,12 +8081,12 @@ pub fn aya::util::KernelVersion::code(self) -> u32
 pub fn aya::util::KernelVersion::current() -> core::result::Result<Self, impl core::error::Error>
 pub const fn aya::util::KernelVersion::new(u8, u8, u16) -> Self
 impl core::clone::Clone for aya::util::KernelVersion
-pub fn aya::util::KernelVersion::clone(&self) -> Self
+pub fn aya::util::KernelVersion::clone(&self) -> aya::util::KernelVersion
 impl core::cmp::Eq for aya::util::KernelVersion
 impl core::cmp::PartialEq for aya::util::KernelVersion
-pub fn aya::util::KernelVersion::eq(&self, &Self) -> bool
+pub fn aya::util::KernelVersion::eq(&self, &aya::util::KernelVersion) -> bool
 impl core::cmp::PartialOrd for aya::util::KernelVersion
-pub fn aya::util::KernelVersion::partial_cmp(&self, &Self) -> core::option::Option<core::cmp::Ordering>
+pub fn aya::util::KernelVersion::partial_cmp(&self, &aya::util::KernelVersion) -> core::option::Option<core::cmp::Ordering>
 impl core::fmt::Debug for aya::util::KernelVersion
 pub fn aya::util::KernelVersion::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya::util::KernelVersion
@@ -8173,7 +8215,7 @@ pub aya::RawTracePointRunOptions::cpu: core::option::Option<u32>
 impl aya::programs::RawTracePointRunOptions
 pub const fn aya::programs::RawTracePointRunOptions::new() -> Self
 impl core::default::Default for aya::programs::RawTracePointRunOptions
-pub fn aya::programs::RawTracePointRunOptions::default() -> Self
+pub fn aya::programs::RawTracePointRunOptions::default() -> aya::programs::RawTracePointRunOptions
 impl core::fmt::Debug for aya::programs::RawTracePointRunOptions
 pub fn aya::programs::RawTracePointRunOptions::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for aya::programs::RawTracePointRunOptions
@@ -8283,7 +8325,7 @@ impl bitflags::traits::PublicFlags for aya::VerifierLogLevel
 pub type aya::VerifierLogLevel::Internal = InternalBitFlags
 pub type aya::VerifierLogLevel::Primitive = u32
 impl core::clone::Clone for aya::VerifierLogLevel
-pub fn aya::VerifierLogLevel::clone(&self) -> Self
+pub fn aya::VerifierLogLevel::clone(&self) -> aya::VerifierLogLevel
 impl core::default::Default for aya::VerifierLogLevel
 pub fn aya::VerifierLogLevel::default() -> Self
 impl core::fmt::Binary for aya::VerifierLogLevel
