@@ -29,6 +29,11 @@ pub struct ProgramArray {
     def: MapDef,
 }
 
+impl super::__MapLayout for ProgramArray {
+    type Key = u32;
+    type Value = u32;
+}
+
 impl ProgramArray {
     map_constructors!(u32, u32, BPF_MAP_TYPE_PROG_ARRAY);
 
