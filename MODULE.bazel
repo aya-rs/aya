@@ -33,6 +33,18 @@ bazel_dep(name = "with_cfg.bzl", version = "0.14.6")
 bazel_dep(name = "xz", version = "5.4.5.bcr.8")
 bazel_dep(name = "zstd", version = "1.5.7.bcr.1")
 
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# iproute2 is not in the Bazel Central Registry, so its release tarball supplies
+# bpf_elf.h for the tc C BPF integration-test objects.
+http_archive(
+    name = "iproute2",
+    build_file = "//bazel:iproute2.BUILD.bazel",
+    integrity = "sha256-TC+hJMLPCv18o00e6sumugSKVvY3Tiqrk9r729TuqcA=",
+    strip_prefix = "iproute2-7.2.0",
+    urls = ["https://cdn.kernel.org/pub/linux/utils/net/iproute2/iproute2-7.2.0.tar.xz"],
+)
+
 # //test/integration-test:bpf_out_dir uses copy_to_directory.
 bazel_lib_toolchains = use_extension("@bazel_lib//lib:extensions.bzl", "toolchains")
 bazel_lib_toolchains.copy_to_directory()

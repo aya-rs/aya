@@ -395,4 +395,4 @@ extend-ignore-re = [
 ]
 
 [workspace.metadata.typos.files]
-extend-exclude = ["xtask/libbpf"]
+extend-exclude = ["xtask/iproute2", "xtask/libbpf"]
