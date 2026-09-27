@@ -606,7 +606,8 @@ macro_rules! impl_program_adopt_link {
             ///
             /// The link is consumed even if adoption fails. For a file-descriptor-backed link,
             /// failure closes this reference and may detach the previous program if there are no
-            /// other references or pins keeping the link alive.
+            /// other references or pins keeping the link alive. For a legacy `BPF_PROG_ATTACH`
+            /// link, failure attempts to detach the previous program.
             ///
             /// # Errors
             ///
@@ -638,7 +639,11 @@ macro_rules! impl_program_adopt_link {
                         $crate::programs::links::LinkUpdate::update(link, prog_fd, name)
                             .map(Self::Fd)
                     }
-                    Self::ProgAttach(_) => Err($crate::programs::LinkError::InvalidLink.into()),
+                    inner @ Self::ProgAttach(_) => {
+                        // The wrapper owns detachment, including for legacy links.
+                        drop($wrapper::new(inner));
+                        Err($crate::programs::LinkError::InvalidLink.into())
+                    }
                 }
             }
         }

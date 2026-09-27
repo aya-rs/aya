@@ -181,15 +181,24 @@ impl_program_adopt_link!(
 
 #[cfg(test)]
 mod tests {
-    use std::{mem, os::fd::FromRawFd as _, path::Path};
+    use std::{cell::Cell, mem, os::fd::FromRawFd as _, path::Path};
 
     use assert_matches::assert_matches;
+    use aya_obj::generated::bpf_cmd;
 
     use super::*;
-    use crate::{MockableFd, VerifierLogLevel, programs::links::LinkError, sys::override_syscall};
+    use crate::{
+        MockableFd, VerifierLogLevel,
+        programs::links::LinkError,
+        sys::{Syscall, override_syscall},
+    };
+
+    thread_local! {
+        static DETACH_CALLS: Cell<usize> = const { Cell::new(0) };
+    }
 
     #[test]
-    fn adopt_link_rejects_prog_attach_link() {
+    fn adopt_link_rejects_and_detaches_prog_attach_link() {
         let fd = MockableFd::mock_signed_fd();
         let mut program = CgroupDevice {
             data: ProgramData::from_bpf_prog_info(
@@ -207,12 +216,31 @@ mod tests {
             BPF_CGROUP_DEVICE,
         )));
         let id = link.id();
-        override_syscall(|call| panic!("unexpected syscall: {call:?}"));
+        DETACH_CALLS.set(0);
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_PROG_DETACH,
+                attr,
+            } => {
+                let attr = unsafe { attr.__bindgen_anon_5 };
+                assert_eq!(attr.attach_bpf_fd, MockableFd::mock_unsigned_fd() + 1);
+                assert_eq!(
+                    unsafe { attr.__bindgen_anon_1.target_fd },
+                    MockableFd::mock_unsigned_fd() + 2
+                );
+                assert_eq!(attr.attach_type, BPF_CGROUP_DEVICE as u32);
+                DETACH_CALLS.set(DETACH_CALLS.get() + 1);
+                Ok(0)
+            }
+            call => panic!("unexpected syscall: {call:?}"),
+        });
 
+        // Rejecting adoption consumes the link, so its legacy attachment must be detached.
         assert_matches!(
             program.adopt_link(link),
             Err(ProgramError::LinkError(LinkError::InvalidLink))
         );
         assert_matches!(program.take_link(id), Err(ProgramError::NotAttached));
+        assert_eq!(DETACH_CALLS.get(), 1);
     }
 }
