@@ -21,6 +21,7 @@ integration-common = { path = "../integration-common" }
 network-types = { workspace = true }
 
 [build-dependencies]
+aya-build = { path = "../../aya-build" }
 which = { workspace = true, features = ["real-sys"] }
 xtask = { path = "../../xtask" }
 

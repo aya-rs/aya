@@ -14,8 +14,10 @@ use xtask::AYA_BUILD_INTEGRATION_BPF;
 /// which would likely mean far too much cache invalidation.
 ///
 /// [bindeps]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html?highlight=feature#artifact-dependencies
-fn main() {
-    println!("cargo:rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
+fn main() -> aya_build::Result<()> {
+    println!("cargo::rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
+
+    aya_build::emit_bpf_target_arch_cfg()?;
 
     let build_integration_bpf = env::var(AYA_BUILD_INTEGRATION_BPF)
         .as_deref()
@@ -26,4 +28,6 @@ fn main() {
         let bpf_linker = which("bpf-linker").unwrap();
         println!("cargo:rerun-if-changed={}", bpf_linker.to_str().unwrap());
     }
+
+    Ok(())
 }
