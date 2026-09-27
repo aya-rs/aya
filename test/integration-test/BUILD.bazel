@@ -87,7 +87,7 @@ initramfs(
     },
     files = {
         "/boot/config": "//test/kernel:aya_kernel_config",
-        "/boot/System.map-6.18.2": "//test/kernel:aya_kernel_system_map",
+        "/boot/System.map-6.18.2-aya-test": "//test/kernel:aya_kernel_system_map",
     },
 )
 

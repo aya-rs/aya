@@ -5,6 +5,11 @@ fragments for the Linux 6.18.2 integration VM kernels declared in
 `MODULE.bazel`. `linux.bzl` resolves each fragment from `allnoconfig` with the
 integrity-pinned Linux source archive and `pahole_version = "131"`.
 
+Both fragments set `CONFIG_LOCALVERSION="-aya-test"` so integration tests can
+identify these source-built kernels independently of their enabled features.
+Keep the `System.map` filename in `test/integration-test/BUILD.bazel` in sync
+with the kernel release.
+
 The fragments contain requested values, not complete Linux `.config` files.
 Linux Kconfig adds defaults and values derived through dependencies, `select`,
 and `imply`. Keep an assignment in a fragment when an integration VM requires
