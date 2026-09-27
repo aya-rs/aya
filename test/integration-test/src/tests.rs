@@ -66,6 +66,7 @@ mod socket_filter;
 mod stack_trace;
 mod stack_trace_lsm;
 mod strncmp;
+mod syscall_args;
 mod tc_classid;
 mod tc_netlink;
 mod tcx;
