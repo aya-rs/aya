@@ -30,6 +30,27 @@ cargo xtask integration-test local
 cargo xtask integration-test vm --cache-dir <CACHE_DIR> <KERNEL_ARCHIVES>...
 ```
 
+### Guest test environment
+
+Bazel VM test targets can set environment variables for test processes inside
+the VM:
+
+```starlark
+aya_qemu_vm_test(
+    # ... kernel, initramfs, and architecture ...
+    guest_env = {"RUST_LOG": "trace"},
+)
+```
+
+The runner passes these as `init.env=NAME=VALUE` boot parameters. The VM's
+`/init` applies them to each test process, including overrides of its default
+`RUST_LOG` and `RUST_BACKTRACE`. Names must be shell identifiers; values must
+not contain ASCII whitespace, double quotes, or NUL. Empty values and additional
+`=` characters are supported. Host environment variables are not implicitly
+forwarded into the VM.
+
+For local tests, set the same variables in the test process's environment.
+
 ### Writing an integration test
 
 Tests should follow these guidelines:
