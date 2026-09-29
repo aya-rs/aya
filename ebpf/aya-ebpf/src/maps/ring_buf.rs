@@ -4,10 +4,9 @@ use core::{
     ptr,
 };
 
-#[cfg(generic_const_exprs)]
-use crate::const_assert::{Assert, IsTrue};
 use crate::{
     bindings::bpf_map_type::BPF_MAP_TYPE_RINGBUF,
+    cty::c_void,
     helpers::{
         bpf_ringbuf_discard, bpf_ringbuf_output, bpf_ringbuf_query, bpf_ringbuf_reserve,
         bpf_ringbuf_submit,
@@ -15,6 +14,17 @@ use crate::{
     maps::{MapDef, PinningType},
 };
 
+/// An eBPF ring buffer.
+///
+/// ```no_run
+/// use aya_ebpf::maps::RingBuf;
+///
+/// let ring = RingBuf::with_byte_size(4096, 0);
+/// if let Some(mut entry) = ring.reserve::<u32>(0) {
+///     entry.write(42);
+///     entry.submit(0);
+/// }
+/// ```
 #[repr(transparent)]
 pub struct RingBuf {
     def: MapDef,
@@ -96,7 +106,12 @@ impl<T> DerefMut for RingBufEntry<T> {
 }
 
 impl<T> RingBufEntry<T> {
-    pub(crate) unsafe fn from_raw(ptr: *mut MaybeUninit<T>) -> Option<Self> {
+    pub(crate) fn reserve(map: *mut c_void, flags: u64) -> Option<Self> {
+        const { assert!(align_of::<T>() <= 8) };
+        let ptr = unsafe { bpf_ringbuf_reserve(map, size_of::<T>() as u64, flags) }
+            .cast::<MaybeUninit<T>>();
+        // SAFETY: the kernel provides an exclusive, eight-byte-aligned reservation.
+        // The assertion above ensures that it is also aligned for T.
         unsafe { ptr.as_mut() }.map(Self)
     }
 
@@ -152,33 +167,21 @@ impl RingBuf {
     /// Reserve memory in the ring buffer that can fit `T`.
     ///
     /// Returns `None` if the ring buffer is full.
-    #[cfg(generic_const_exprs)]
-    pub fn reserve<T: 'static>(&self, flags: u64) -> Option<RingBufEntry<T>>
-    where
-        Assert<{ 8 % mem::align_of::<T>() == 0 }>: IsTrue,
-    {
-        self.reserve_impl(flags)
-    }
-
-    /// Reserve memory in the ring buffer that can fit `T`.
     ///
-    /// Returns `None` if the ring buffer is full.
+    /// The kernel guarantees eight-byte alignment. Reserving a type with a
+    /// greater alignment is a compile-time error:
     ///
-    /// The kernel will reserve memory at an 8-bytes aligned boundary, so `mem::align_of<T>()` must
-    /// be equal or smaller than 8. If you use this with a `T` that isn't properly aligned, this
-    /// function will be compiled to a panic; depending on your `panic_handler`, this may make
-    /// the eBPF program fail to load, or it may make it have undefined behavior.
-    #[cfg(not(generic_const_exprs))]
+    /// ```compile_fail,E0080
+    /// use aya_ebpf::maps::RingBuf;
+    ///
+    /// #[repr(align(16))]
+    /// struct Event([u64; 2]);
+    ///
+    /// let ring = RingBuf::with_byte_size(4096, 0);
+    /// let _entry = ring.reserve::<Event>(0);
+    /// ```
     pub fn reserve<T: 'static>(&self, flags: u64) -> Option<RingBufEntry<T>> {
-        assert_eq!(8 % align_of::<T>(), 0);
-        self.reserve_impl(flags)
-    }
-
-    fn reserve_impl<T: 'static>(&self, flags: u64) -> Option<RingBufEntry<T>> {
-        let ptr =
-            unsafe { bpf_ringbuf_reserve(self.def.as_ptr().cast(), size_of::<T>() as u64, flags) }
-                .cast::<MaybeUninit<T>>();
-        unsafe { RingBufEntry::from_raw(ptr) }
+        RingBufEntry::reserve(self.def.as_ptr().cast(), flags)
     }
 
     /// Copy `data` to the ring buffer output.
@@ -189,15 +192,12 @@ impl RingBuf {
     /// Unlike [`reserve`], this function can handle dynamically sized types (which is hard to
     /// create in eBPF but still possible, e.g. by slicing an array).
     ///
-    /// Note: `T` must be aligned to no more than 8 bytes; it's not possible to fulfill larger
-    /// alignment requests. If you use this with a `T` that isn't properly aligned, this function will
-    /// be compiled to a panic and silently make your eBPF program fail to load.
-    /// See [here](https://github.com/torvalds/linux/blob/3f01e9fed/kernel/bpf/ringbuf.c#L418).
+    /// The kernel guarantees only eight-byte alignment for the copy in the ring
+    /// buffer, regardless of the input's alignment.
     ///
     /// [`reserve`]: RingBuf::reserve
     /// [`submit`]: RingBufEntry::submit
     pub fn output<T: ?Sized>(&self, data: &T, flags: u64) -> Result<(), i32> {
-        assert_eq!(8 % align_of_val(data), 0);
         let ret = unsafe {
             bpf_ringbuf_output(
                 self.def.as_ptr().cast(),

@@ -17,7 +17,7 @@ use aya::{
     programs::{UProbe, uprobe::UProbeScope},
 };
 use aya_obj::generated::BPF_RINGBUF_HDR_SZ;
-use integration_common::ring_buf::Registers;
+use integration_common::ring_buf::{AlignedEvent, Registers};
 use rand::RngExt as _;
 use rstest::rstest;
 use scopeguard::defer;
@@ -32,8 +32,14 @@ struct RingBufTest {
 const RING_BUF: &str = "RING_BUF";
 const RING_BUF_LEGACY: &str = "RING_BUF_LEGACY";
 const RING_BUF_MISMATCH: &str = "RING_BUF_MISMATCH";
+const RING_BUF_ALIGNED: &str = "RING_BUF_ALIGNED";
 
-const ALL_RING_BUFS: &[&str] = &[RING_BUF, RING_BUF_LEGACY, RING_BUF_MISMATCH];
+const ALL_RING_BUFS: &[&str] = &[
+    RING_BUF,
+    RING_BUF_LEGACY,
+    RING_BUF_MISMATCH,
+    RING_BUF_ALIGNED,
+];
 
 #[derive(Clone, Copy)]
 struct RingBufVariant {
@@ -252,6 +258,33 @@ fn ring_buf_mismatch_large() {
             u64::from_ne_bytes(bytes)
         },
     );
+}
+
+#[rstest]
+#[case(RING_BUF_ALIGNED, "ring_buf_output_aligned")]
+#[case(RING_BUF_LEGACY, "ring_buf_output_aligned_legacy")]
+fn ring_buf_output_alignment(#[case] map: &'static str, #[case] prog: &'static str) {
+    let RingBufTest {
+        mut ring_buf,
+        mut bpf,
+        regs: _,
+    } = RingBufTest::new(RingBufVariant {
+        map,
+        regs: "REGISTERS",
+        prog,
+    });
+    let value = AlignedEvent([1, 2, 3, 4]);
+    let mut source = Array::try_from(bpf.map_mut("ALIGNED_SOURCE").unwrap()).unwrap();
+    source.set(0, &value, 0).unwrap();
+
+    ring_buf_trigger_ebpf_program(0);
+    {
+        let item = ring_buf.next().unwrap();
+        let AlignedEvent(value) = value;
+        let expected = value.map(u64::to_ne_bytes);
+        assert_eq!(item.as_ref(), expected.as_flattened());
+    }
+    assert_matches!(ring_buf.next(), None);
 }
 
 // This test differs from the other async test in that it's possible for the producer

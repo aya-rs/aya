@@ -5,12 +5,13 @@
 #![feature(core_intrinsics)]
 
 use aya_ebpf::{
+    bindings::BPF_F_MMAPABLE,
     btf_maps::RingBuf as BtfRingBuf,
     macros::{btf_map, map, uprobe},
     maps::{Array, RingBuf as LegacyRingBuf},
     programs::ProbeContext,
 };
-use integration_common::ring_buf::Registers;
+use integration_common::ring_buf::{AlignedEvent, Registers};
 #[cfg(not(test))]
 extern crate ebpf_panic;
 
@@ -19,6 +20,15 @@ static RING_BUF: BtfRingBuf<u64, 0, 0> = BtfRingBuf::new();
 
 #[btf_map]
 static RING_BUF_MISMATCH: BtfRingBuf<u32, 0, 0> = BtfRingBuf::new();
+
+#[btf_map]
+static RING_BUF_ALIGNED: BtfRingBuf<AlignedEvent, 0, 0> = BtfRingBuf::new();
+
+// Mmapable arrays provide a page-aligned source; the BPF stack guarantees only
+// eight-byte alignment.
+// https://github.com/torvalds/linux/blob/adc218676/kernel/bpf/arraymap.c#L119-L139
+#[map]
+static ALIGNED_SOURCE: Array<AlignedEvent> = Array::with_max_entries(1, BPF_F_MMAPABLE);
 
 #[map]
 static RING_BUF_LEGACY: LegacyRingBuf = LegacyRingBuf::with_byte_size(0, 0);
@@ -95,3 +105,17 @@ macro_rules! define_ring_buf_mismatch {
 
 define_ring_buf_mismatch!(ring_buf_mismatch_small, u16);
 define_ring_buf_mismatch!(ring_buf_mismatch_large, u64);
+
+#[uprobe]
+fn ring_buf_output_aligned(_ctx: ProbeContext) {
+    if let Some(value) = ALIGNED_SOURCE.get(0) {
+        let _result = RING_BUF_ALIGNED.output(value, 0);
+    }
+}
+
+#[uprobe]
+fn ring_buf_output_aligned_legacy(_ctx: ProbeContext) {
+    if let Some(value) = ALIGNED_SOURCE.get(0) {
+        let _result = RING_BUF_LEGACY.output(value, 0);
+    }
+}

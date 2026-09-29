@@ -9,18 +9,6 @@
     html_favicon_url = "https://aya-rs.dev/assets/images/crabby.svg"
 )]
 #![cfg_attr(
-    generic_const_exprs,
-    expect(
-        incomplete_features,
-        reason = "generic_const_exprs requires incomplete features"
-    ),
-    expect(
-        unstable_features,
-        reason = "generic_const_exprs requires unstable features"
-    ),
-    feature(generic_const_exprs)
-)]
-#![cfg_attr(
     target_arch = "bpf",
     expect(
         unstable_features,
@@ -33,8 +21,6 @@
 
 mod args;
 pub mod bindings;
-#[cfg(generic_const_exprs)]
-mod const_assert;
 pub use args::Argument;
 pub mod btf_maps;
 #[expect(
