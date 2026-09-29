@@ -8,18 +8,62 @@
     reason = "debug formatting aids diagnostics in tests"
 )]
 
+use std::{
+    collections::HashSet,
+    fs,
+    path::{Path, PathBuf},
+};
+
+use aya::test_helpers::{NetNsGuard, with_tracefs_probes};
+
 fn run_netns_tokio<F, Fut, T>(test: F) -> T
 where
     F: FnOnce() -> Fut,
     Fut: Future<Output = T>,
 {
-    let _netns = aya::test_helpers::NetNsGuard::new().unwrap();
+    let _netns = NetNsGuard::new().unwrap();
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .unwrap();
 
     runtime.block_on(test())
+}
+
+// Tests must run serially (--test-threads=1, as configured by xtask and Bazel).
+fn check_tracefs_cleanup<L>(pmu: &str, count: usize, attach: impl FnOnce() -> L, finish: fn(L)) {
+    fn events(path: &Path) -> HashSet<String> {
+        fs::read_to_string(path)
+            .unwrap()
+            .lines()
+            .map(str::to_owned)
+            .collect()
+    }
+
+    let tracefs = ["/sys/kernel/tracing", "/sys/kernel/debug/tracing"]
+        .into_iter()
+        .map(PathBuf::from)
+        .find(|path| path.join(format!("{pmu}_events")).try_exists().unwrap())
+        .unwrap();
+    let events_path = tracefs.join(format!("{pmu}_events"));
+    let before = events(&events_path);
+    let link = with_tracefs_probes(attach);
+    let attached = events(&events_path);
+    // These snapshots are system-wide, so concurrent tests could make us count
+    // another test's events as ours.
+    let added: Vec<_> = attached.difference(&before).collect();
+    assert_eq!(added.len(), count);
+
+    // Run detach or the rejected conversion before checking the registrations.
+    finish(link);
+
+    let remaining = events(&events_path);
+    for event in added {
+        assert!(
+            !remaining.contains(event),
+            "event still registered: {event}"
+        );
+    }
 }
 
 mod array;

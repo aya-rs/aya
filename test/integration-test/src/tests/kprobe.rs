@@ -1,10 +1,26 @@
 use std::{sync::mpsc::sync_channel, thread};
 
 use aya::{
-    EbpfLoader,
+    Ebpf, EbpfLoader,
     maps::{Array, MapData},
-    programs::KProbe,
+    programs::{KProbe, links::Link as _},
 };
+
+#[test_log::test]
+fn tracefs_cleanup() {
+    let mut bpf = Ebpf::load(crate::TEST).unwrap();
+    let program: &mut KProbe = bpf.program_mut("test_kprobe").unwrap().try_into().unwrap();
+    program.load().unwrap();
+    super::check_tracefs_cleanup(
+        "kprobe",
+        1,
+        || {
+            let id = program.attach("try_to_wake_up", 0).unwrap();
+            program.take_link(id).unwrap()
+        },
+        |link| link.detach().unwrap(),
+    );
+}
 
 #[test_log::test]
 fn kprobe_triggers() {
