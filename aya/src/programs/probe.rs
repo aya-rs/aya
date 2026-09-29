@@ -532,3 +532,84 @@ fn read_sys_fs_perf_ret_probe(pmu: &str) -> Result<u32, (PathBuf, io::Error)> {
         })
         .map_err(|e| (file, e))
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{cell::RefCell, io::Read as _, os::unix::net::UnixStream};
+
+    use assert_matches::assert_matches;
+    use rstest::rstest;
+
+    use super::*;
+    use crate::sys::{PerfEventIoctlRequest, SysResult, Syscall, override_syscall};
+
+    type SyscallFn = unsafe fn(Syscall<'_>) -> SysResult;
+
+    #[rstest]
+    #[case::detach(|_: Syscall<'_>| Ok(0), None)]
+    #[case::set_bpf_failure(
+        |_: Syscall<'_>| Err((-1, io::Error::from_raw_os_error(libc::EIO))),
+        Some("PERF_EVENT_IOC_SET_BPF")
+    )]
+    #[case::enable_failure(
+        |call: Syscall<'_>| match call {
+            Syscall::PerfEventIoctl { request: PerfEventIoctlRequest::Enable { .. }, .. } => {
+                Err((-1, io::Error::from_raw_os_error(libc::EIO)))
+            }
+            _ => Ok(0),
+        },
+        Some("PERF_EVENT_IOC_ENABLE")
+    )]
+    fn perf_link_closes_fd_before_event_cleanup(
+        #[case] syscall: SyscallFn,
+        #[case] expected_error: Option<&str>,
+    ) {
+        struct Cleanup {
+            peer: UnixStream,
+            fd_closed: bool,
+        }
+
+        thread_local! {
+            static CLEANUP: RefCell<Option<Cleanup>> = const { RefCell::new(None) };
+        }
+
+        // The syscall mock controls only ioctl outcomes; this fd and its close are real.
+        // Reading its peer during cleanup checks drop order without requiring tracefs.
+        let (perf_fd, peer) = UnixStream::pair().unwrap();
+        peer.set_nonblocking(true).unwrap();
+        CLEANUP.set(Some(Cleanup {
+            peer,
+            fd_closed: false,
+        }));
+        let event = ProbeEvent {
+            event_alias: OsString::new(),
+            detach_debug_fs: Some((
+                |_: &OsStr| {
+                    CLEANUP.with_borrow_mut(|cleanup| {
+                        let Cleanup { peer, fd_closed } = cleanup.as_mut().unwrap();
+                        // EOF proves the owned fd was closed before event cleanup started.
+                        *fd_closed = matches!(peer.read(&mut [0]), Ok(0));
+                    });
+                    Ok(())
+                },
+                true,
+            )),
+        };
+        // The ioctl is mocked, so any live fd can stand in for the program.
+        let (prog_fd, _) = UnixStream::pair().unwrap();
+        override_syscall(syscall);
+        let link = attach_perf_event(prog_fd.as_fd(), perf_fd.into(), Some(event));
+        match expected_error {
+            Some(expected) => assert_matches!(
+                link,
+                Err(ProgramError::SyscallError(SyscallError { call, io_error })) => {
+                    assert_eq!(call, expected);
+                    assert_eq!(io_error.raw_os_error(), Some(libc::EIO));
+                }
+            ),
+            None => link.unwrap().detach().unwrap(),
+        }
+        let Cleanup { peer: _, fd_closed } = CLEANUP.take().unwrap();
+        assert!(fd_closed, "perf fd must be closed before event cleanup");
+    }
+}

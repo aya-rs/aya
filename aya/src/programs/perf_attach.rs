@@ -58,6 +58,8 @@ pub struct PerfLinkId(RawFd);
 /// [`PerfEvent`]: crate::programs::PerfEvent
 #[derive(Debug)]
 pub(crate) struct PerfLink {
+    // Fields drop in declaration order. Keep perf_fd before event so attach failures
+    // close the fd before the guard tries to delete the tracefs event.
     perf_fd: crate::MockableFd,
     event: Option<ProbeEvent>,
 }
@@ -76,6 +78,12 @@ impl Link for PerfLink {
             perf_fd.as_fd(),
             PerfEventIoctlRequest::Disable { group: false },
         );
+        // A disabled perf event still holds a reference to the tracefs event.
+        // perf_trace_destroy() releases the reference:
+        // https://github.com/torvalds/linux/blob/830b3c68c/kernel/trace/trace_event_perf.c#L237-L244
+        // Event removal returns EBUSY while perf_refcount is nonzero:
+        // https://github.com/torvalds/linux/blob/830b3c68c/kernel/trace/trace_events.c#L2865-L2873
+        drop(perf_fd);
         if let Some(event) = event {
             let _unused: Result<(), ProgramError> = event.detach();
         }
@@ -126,8 +134,12 @@ pub(crate) fn attach_bpf_link(
 pub(crate) fn attach_perf_event(
     prog_fd: BorrowedFd<'_>,
     perf_fd: crate::MockableFd,
-    mut event: Option<ProbeEvent>,
+    event: Option<ProbeEvent>,
 ) -> Result<PerfLink, ProgramError> {
+    // Own both resources in field drop order before either ioctl can fail. Otherwise,
+    // the parameters drop in reverse order, deleting the event while its fd is open.
+    let mut link = PerfLink { perf_fd, event };
+    let PerfLink { perf_fd, event } = &mut link;
     perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::SetBpf(prog_fd)).map_err(
         |io_error| SyscallError {
             call: "PERF_EVENT_IOC_SET_BPF",
@@ -147,5 +159,5 @@ pub(crate) fn attach_perf_event(
         event.disarm();
     }
 
-    Ok(PerfLink { perf_fd, event })
+    Ok(link)
 }
