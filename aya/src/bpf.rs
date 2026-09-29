@@ -34,8 +34,9 @@ use crate::{
 ///
 /// # Safety
 ///
-/// This trait is unsafe because it allows for the conversion of types to and
-/// from byte slices.
+/// Every sequence of initialized bytes of the appropriate size must represent
+/// a valid value of the type. The type must not contain padding or uninitialized
+/// bytes.
 pub unsafe trait Pod: Copy + 'static {}
 
 macro_rules! unsafe_impl_pod {
