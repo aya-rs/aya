@@ -726,6 +726,7 @@ impl TryFrom<UProbeLink> for FdLink {
         match value.into_inner() {
             ProbeLinkInner::One(PerfLinkInner::Fd(link)) => Ok(link),
             ProbeLinkInner::One(PerfLinkInner::PerfLink(_)) | ProbeLinkInner::Many(_) => {
+                // FdLink and PerfLink clean up on drop, including each link in Many.
                 Err(LinkError::InvalidLink)
             }
         }

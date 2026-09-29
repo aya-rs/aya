@@ -58,6 +58,11 @@ pub struct PerfLinkId(RawFd);
 /// [`PerfEvent`]: crate::programs::PerfEvent
 #[derive(Debug)]
 pub(crate) struct PerfLink {
+    // Fields drop in declaration order. Close the perf fd before deleting the tracefs event.
+    // A disabled perf event still holds a reference to the tracefs event:
+    // https://github.com/torvalds/linux/blob/830b3c68c/kernel/trace/trace_event_perf.c#L237-L244
+    // Event removal returns EBUSY while perf_refcount is nonzero:
+    // https://github.com/torvalds/linux/blob/830b3c68c/kernel/trace/trace_events.c#L2865-L2873
     perf_fd: crate::MockableFd,
     event: Option<ProbeEvent>,
 }
@@ -71,15 +76,14 @@ impl Link for PerfLink {
     }
 
     fn detach(self) -> Result<(), Self::Error> {
-        let Self { perf_fd, event } = self;
+        let Self {
+            perf_fd,
+            event: _event,
+        } = &self;
         let _unused: io::Result<()> = perf_event_ioctl(
             perf_fd.as_fd(),
             PerfEventIoctlRequest::Disable { group: false },
         );
-        if let Some(event) = event {
-            let _unused: Result<(), ProgramError> = event.detach();
-        }
-
         Ok(())
     }
 }
@@ -126,8 +130,15 @@ pub(crate) fn attach_bpf_link(
 pub(crate) fn attach_perf_event(
     prog_fd: BorrowedFd<'_>,
     perf_fd: crate::MockableFd,
-    mut event: Option<ProbeEvent>,
+    event: Option<ProbeEvent>,
 ) -> Result<PerfLink, ProgramError> {
+    // Own both resources in field drop order before either ioctl can fail. Otherwise,
+    // the parameters drop in reverse order, deleting the event while its fd is open.
+    let link = PerfLink { perf_fd, event };
+    let PerfLink {
+        perf_fd,
+        event: _event,
+    } = &link;
     perf_event_ioctl(perf_fd.as_fd(), PerfEventIoctlRequest::SetBpf(prog_fd)).map_err(
         |io_error| SyscallError {
             call: "PERF_EVENT_IOC_SET_BPF",
@@ -143,9 +154,5 @@ pub(crate) fn attach_perf_event(
         io_error,
     })?;
 
-    if let Some(event) = event.as_mut() {
-        event.disarm();
-    }
-
-    Ok(PerfLink { perf_fd, event })
+    Ok(link)
 }
