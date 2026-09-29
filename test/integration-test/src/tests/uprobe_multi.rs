@@ -4,15 +4,17 @@ use std::{
 };
 
 use aya::{
-    EbpfLoader,
+    Ebpf, EbpfLoader,
     maps::ring_buf::RingBuf,
     programs::{
         ProbeKind, ProgramError, ProgramType, UProbe,
-        uprobe::{UProbeAttachLocation, UProbeAttachPoint, UProbeError, UProbeScope},
+        links::{FdLink, Link as _, LinkError},
+        uprobe::{UProbeAttachLocation, UProbeAttachPoint, UProbeError, UProbeLink, UProbeScope},
     },
     sys::{BpfHelper, is_helper_supported},
     util::KernelVersion,
 };
+use rstest::rstest;
 
 const PROG_A: &str = "uprobe_multi_trigger_program_a";
 const PROG_B: &str = "uprobe_multi_trigger_program_b";
@@ -26,6 +28,37 @@ const UPROBE_SCOPE_CHILD: &str = "AYA_INTEGRATION_TEST_UPROBE_SCOPE_CHILD";
 // buffer on supported test systems, which is ample for the handful of `u64`
 // cookie records emitted by these tests.
 const RING_BUF_BYTE_SIZE: u32 = 512;
+
+#[rstest]
+#[case::detach(|link: UProbeLink| link.detach().unwrap())]
+#[case::drop(drop)]
+#[case::rejected_conversion(|link: UProbeLink| {
+    assert!(matches!(FdLink::try_from(link), Err(LinkError::InvalidLink)));
+})]
+fn tracefs_cleanup(#[values(1, 2)] count: usize, #[case] finish: fn(UProbeLink)) {
+    let mut bpf = Ebpf::load(crate::TEST).unwrap();
+    // The ordinary uprobe section uses per-point links, including Many for two points.
+    let program: &mut UProbe = bpf.program_mut("test_uprobe").unwrap().try_into().unwrap();
+    program.load().unwrap();
+    let points = [PROG_A, PROG_B];
+    uprobe_multi_trigger_program_a();
+    uprobe_multi_trigger_program_b();
+    super::check_tracefs_cleanup(
+        "uprobe",
+        count,
+        || {
+            let id = program
+                .attach(
+                    points[..count].iter().copied(),
+                    "/proc/self/exe",
+                    UProbeScope::CallingProcess,
+                )
+                .unwrap();
+            program.take_link(id).unwrap()
+        },
+        finish,
+    );
+}
 
 fn bpf_cookie_supported() -> bool {
     is_helper_supported(ProgramType::KProbe, BpfHelper::BPF_FUNC_get_attach_cookie).unwrap()

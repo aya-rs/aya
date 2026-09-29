@@ -2,6 +2,7 @@
 
 use std::{
     borrow::Cow,
+    cell::Cell,
     fs,
     io::{self, BufRead as _, BufReader, Write as _},
     marker::PhantomData,
@@ -14,6 +15,20 @@ use std::{
 use libc::if_nametoindex;
 
 use crate::sys::{NetlinkError, netlink_set_link_up};
+
+thread_local! {
+    pub(crate) static FORCE_TRACEFS: Cell<bool> = const { Cell::new(false) };
+}
+
+/// Forces per-point kprobe and uprobe attachments to use tracefs while running `f`.
+///
+/// Attachments must be made synchronously on the calling thread.
+pub fn with_tracefs_probes<T>(f: impl FnOnce() -> T) -> T {
+    let _restore = scopeguard::guard(FORCE_TRACEFS.replace(true), |was_forced| {
+        FORCE_TRACEFS.set(was_forced);
+    });
+    f()
+}
 
 /// The cgroup-relative name of the file to which a PID is written to assign
 /// that process to the cgroup.
@@ -524,3 +539,38 @@ macro_rules! __aya_kernel_assert_eq {
 pub use crate::__aya_kernel_assert as kernel_assert;
 /// Asserts equality based on the running kernel version.
 pub use crate::__aya_kernel_assert_eq as kernel_assert_eq;
+
+#[cfg(test)]
+mod tests {
+    use std::{panic::catch_unwind, thread};
+
+    use super::{FORCE_TRACEFS, with_tracefs_probes};
+
+    #[test]
+    fn tracefs_override_is_scoped() {
+        assert!(!FORCE_TRACEFS.get());
+        with_tracefs_probes(|| {
+            assert!(FORCE_TRACEFS.get());
+            with_tracefs_probes(|| assert!(FORCE_TRACEFS.get()));
+            assert!(FORCE_TRACEFS.get());
+            assert!(!thread::spawn(|| FORCE_TRACEFS.get()).join().unwrap());
+        });
+        assert!(!FORCE_TRACEFS.get());
+    }
+
+    #[test]
+    fn tracefs_override_is_restored_on_unwind() {
+        let result = catch_unwind(|| {
+            with_tracefs_probes(|| {
+                let nested = catch_unwind(|| {
+                    with_tracefs_probes(|| panic!("nested attachment failed"));
+                });
+                assert!(nested.is_err());
+                assert!(FORCE_TRACEFS.get());
+                panic!("attachment failed");
+            });
+        });
+        assert!(result.is_err());
+        assert!(!FORCE_TRACEFS.get());
+    }
+}

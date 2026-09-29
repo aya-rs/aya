@@ -1,10 +1,36 @@
 use std::{sync::mpsc::sync_channel, thread};
 
 use aya::{
-    EbpfLoader,
+    Ebpf, EbpfLoader,
     maps::{Array, MapData},
-    programs::KProbe,
+    programs::{
+        KProbe,
+        kprobe::KProbeLink,
+        links::{FdLink, Link as _, LinkError},
+    },
 };
+use rstest::rstest;
+
+#[rstest]
+#[case::detach(|link: KProbeLink| link.detach().unwrap())]
+#[case::drop(drop)]
+#[case::rejected_conversion(|link: KProbeLink| {
+    assert!(matches!(FdLink::try_from(link), Err(LinkError::InvalidLink)));
+})]
+fn tracefs_cleanup(#[case] finish: fn(KProbeLink)) {
+    let mut bpf = Ebpf::load(crate::TEST).unwrap();
+    let program: &mut KProbe = bpf.program_mut("test_kprobe").unwrap().try_into().unwrap();
+    program.load().unwrap();
+    super::check_tracefs_cleanup(
+        "kprobe",
+        1,
+        || {
+            let id = program.attach("try_to_wake_up", 0).unwrap();
+            program.take_link(id).unwrap()
+        },
+        finish,
+    );
+}
 
 #[test_log::test]
 fn kprobe_triggers() {

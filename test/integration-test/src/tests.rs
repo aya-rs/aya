@@ -8,18 +8,83 @@
     reason = "debug formatting aids diagnostics in tests"
 )]
 
+use std::{
+    collections::HashSet,
+    fs,
+    path::{Path, PathBuf},
+    sync::{Mutex, PoisonError},
+};
+
+use aya::test_helpers::{NetNsGuard, with_tracefs_probes};
+
 fn run_netns_tokio<F, Fut, T>(test: F) -> T
 where
     F: FnOnce() -> Fut,
     Fut: Future<Output = T>,
 {
-    let _netns = aya::test_helpers::NetNsGuard::new().unwrap();
+    let _netns = NetNsGuard::new().unwrap();
     let runtime = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .unwrap();
 
     runtime.block_on(test())
+}
+
+fn check_tracefs_cleanup<L>(pmu: &str, count: usize, attach: impl FnOnce() -> L, finish: fn(L)) {
+    fn events(path: &Path) -> HashSet<String> {
+        fs::read_to_string(path)
+            .unwrap()
+            .lines()
+            .map(str::to_owned)
+            .collect()
+    }
+
+    // Serialize these cases because tracefs registrations are shared across threads.
+    static LOCK: Mutex<()> = Mutex::new(());
+    let _guard = LOCK.lock().unwrap_or_else(PoisonError::into_inner);
+    let tracefs = ["/sys/kernel/tracing", "/sys/kernel/debug/tracing"]
+        .into_iter()
+        .map(PathBuf::from)
+        .find(|path| path.join(format!("{pmu}_events")).try_exists().unwrap())
+        .unwrap();
+    let events_path = tracefs.join(format!("{pmu}_events"));
+    let before = events(&events_path);
+    let link = with_tracefs_probes(attach);
+    let attached = events(&events_path);
+    let added: Vec<_> = attached.difference(&before).collect();
+    assert_eq!(added.len(), count);
+    let event_paths: Vec<_> = added
+        .iter()
+        .map(|event| {
+            // E.g. `p:uprobes/aya_probe /proc/self/exe:0x1234` yields
+            // `uprobes/aya_probe`, relative to the tracefs `events/` directory.
+            let (_, name) = event
+                .split_whitespace()
+                .next()
+                .unwrap()
+                .split_once(':')
+                .unwrap();
+            let path = tracefs.join("events").join(name);
+            assert!(path.try_exists().unwrap(), "missing event: {event}");
+            path
+        })
+        .collect();
+
+    // Run detach, drop, or the rejected conversion before checking the registrations.
+    finish(link);
+
+    let remaining = events(&events_path);
+    for (event, path) in added.into_iter().zip(event_paths) {
+        assert!(
+            !remaining.contains(event),
+            "event still registered: {event}"
+        );
+        assert!(
+            !path.try_exists().unwrap(),
+            "event directory remains: {event}"
+        );
+    }
 }
 
 mod array;

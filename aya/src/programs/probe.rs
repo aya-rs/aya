@@ -253,31 +253,7 @@ type DetachDebugFs = fn(&OsStr) -> Result<(), ProgramError>;
 #[derive(Debug)]
 pub(crate) struct ProbeEvent {
     event_alias: OsString,
-    detach_debug_fs: Option<(DetachDebugFs, bool)>,
-}
-
-impl ProbeEvent {
-    pub(crate) fn disarm(&mut self) {
-        let Self {
-            event_alias: _,
-            detach_debug_fs,
-        } = self;
-        if let Some((_detach_debug_fs, is_guard)) = detach_debug_fs {
-            *is_guard = false;
-        }
-    }
-
-    pub(crate) fn detach(mut self) -> Result<(), ProgramError> {
-        let Self {
-            event_alias,
-            detach_debug_fs,
-        } = &mut self;
-        detach_debug_fs
-            .take()
-            .map(|(detach_debug_fs, _is_guard)| detach_debug_fs(event_alias))
-            .transpose()?;
-        Ok(())
-    }
+    detach_debug_fs: DetachDebugFs,
 }
 
 impl Drop for ProbeEvent {
@@ -286,11 +262,7 @@ impl Drop for ProbeEvent {
             event_alias,
             detach_debug_fs,
         } = self;
-        if let Some((detach_debug_fs, is_guard)) = detach_debug_fs
-            && *is_guard
-        {
-            let _unused: Result<(), ProgramError> = detach_debug_fs(event_alias);
-        }
+        let _unused: Result<(), ProgramError> = detach_debug_fs(event_alias);
     }
 }
 
@@ -347,6 +319,13 @@ fn attach_perf_event_probe<P: Probe>(
 }
 
 fn probe_pmu_supported() -> bool {
+    // TODO: Remove this hook once CI runs the tracefs cleanup tests on kernels
+    // older than 4.17, where per-point probes use tracefs by default.
+    #[cfg(feature = "test-helpers")]
+    if crate::test_helpers::FORCE_TRACEFS.get() {
+        return false;
+    }
+
     KernelVersion::at_least(4, 17, 0)
 }
 
@@ -456,7 +435,7 @@ fn create_probe_event<P: Probe>(
 
     Ok(ProbeEvent {
         event_alias,
-        detach_debug_fs: Some((detach_debug_fs::<P>, true)),
+        detach_debug_fs: detach_debug_fs::<P>,
     })
 }
 
@@ -531,4 +510,129 @@ fn read_sys_fs_perf_ret_probe(pmu: &str) -> Result<u32, (PathBuf, io::Error)> {
             config.parse().map_err(io::Error::other)
         })
         .map_err(|e| (file, e))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{cell::RefCell, io::Read as _, os::unix::net::UnixStream};
+
+    use assert_matches::assert_matches;
+    use rstest::rstest;
+
+    use super::*;
+    use crate::{
+        programs::{LinkError, uprobe::UProbeLink},
+        sys::{PerfEventIoctlRequest, SysResult, Syscall, override_syscall},
+    };
+
+    type SyscallFn = unsafe fn(Syscall<'_>) -> SysResult;
+
+    #[rstest]
+    #[case::detach(|_: Syscall<'_>| Ok(0), None, |links: Vec<PerfLink>| {
+        for link in links {
+            link.detach().unwrap();
+        }
+    })]
+    #[case::drop_inner(|_: Syscall<'_>| Ok(0), None, drop)]
+    #[case::reject_single(|_: Syscall<'_>| Ok(0), None, |links: Vec<PerfLink>| {
+        for link in links {
+            let link = UProbeLink::from(PerfLinkInner::PerfLink(link));
+            assert_matches!(FdLink::try_from(link), Err(LinkError::InvalidLink));
+        }
+    })]
+    #[case::reject_many(|_: Syscall<'_>| Ok(0), None, |links: Vec<PerfLink>| {
+        let link = UProbeLink::from(ProbeLinkInner::Many(ManyProbeLinks::PerfLink(links)));
+        assert_matches!(FdLink::try_from(link), Err(LinkError::InvalidLink));
+    })]
+    #[case::set_bpf_failure(
+        |_: Syscall<'_>| Err((-1, io::Error::from_raw_os_error(libc::EIO))),
+        Some("PERF_EVENT_IOC_SET_BPF"),
+        drop
+    )]
+    #[case::enable_failure(
+        |call: Syscall<'_>| match call {
+            Syscall::PerfEventIoctl { request: PerfEventIoctlRequest::Enable { .. }, .. } => {
+                Err((-1, io::Error::from_raw_os_error(libc::EIO)))
+            }
+            _ => Ok(0),
+        },
+        Some("PERF_EVENT_IOC_ENABLE"),
+        drop
+    )]
+    fn perf_link_closes_fd_before_event_cleanup(
+        #[case] syscall: SyscallFn,
+        #[case] expected_error: Option<&str>,
+        #[case] finish: fn(Vec<PerfLink>),
+    ) {
+        struct Cleanup {
+            peer: UnixStream,
+            fd_closed: bool,
+            calls: usize,
+        }
+
+        thread_local! {
+            static CLEANUP: RefCell<Vec<Cleanup>> = const { RefCell::new(Vec::new()) };
+        }
+
+        // The ioctl is mocked, so any live fd can stand in for the program.
+        let (prog_fd, _) = UnixStream::pair().unwrap();
+        override_syscall(syscall);
+        let mut links = Vec::new();
+        for index in 0..2 {
+            // The syscall mock controls only ioctl outcomes; this fd and its close are real.
+            // Reading its peer during cleanup checks drop order without requiring tracefs.
+            let (perf_fd, peer) = UnixStream::pair().unwrap();
+            peer.set_nonblocking(true).unwrap();
+            CLEANUP.with_borrow_mut(|cleanup| {
+                cleanup.push(Cleanup {
+                    peer,
+                    fd_closed: false,
+                    calls: 0,
+                });
+            });
+            let event = ProbeEvent {
+                event_alias: index.to_string().into(),
+                detach_debug_fs: |event_alias| {
+                    let index: usize = event_alias.to_str().unwrap().parse().unwrap();
+                    CLEANUP.with_borrow_mut(|cleanup| {
+                        let Cleanup {
+                            peer,
+                            fd_closed,
+                            calls,
+                        } = &mut cleanup[index];
+                        // EOF proves the owned fd was closed before event cleanup started.
+                        *fd_closed = matches!(peer.read(&mut [0]), Ok(0));
+                        *calls += 1;
+                    });
+                    Ok(())
+                },
+            };
+            let link = attach_perf_event(prog_fd.as_fd(), perf_fd.into(), Some(event));
+            match expected_error {
+                Some(expected) => assert_matches!(
+                    link,
+                    Err(ProgramError::SyscallError(SyscallError { call, io_error })) => {
+                        assert_eq!(call, expected);
+                        assert_eq!(io_error.raw_os_error(), Some(libc::EIO));
+                    }
+                ),
+                None => links.push(link.unwrap()),
+            }
+        }
+
+        // Run the case's detach, drop, or rejected conversion before checking cleanup.
+        // On ioctl failure, attach_perf_event has already dropped the resources,
+        // leaving links empty.
+        finish(links);
+
+        for Cleanup {
+            peer: _,
+            fd_closed,
+            calls,
+        } in CLEANUP.take()
+        {
+            assert_eq!(calls, 1, "each event must be cleaned up exactly once");
+            assert!(fd_closed, "perf fd must be closed before event cleanup");
+        }
+    }
 }

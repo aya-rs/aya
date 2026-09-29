@@ -586,7 +586,8 @@ macro_rules! impl_try_into_fdlink {
                 match value.into_inner() {
                     $inner::Fd(fd) => Ok(fd),
                     inner => {
-                        // The wrapper owns detachment, including for legacy links.
+                        // FdLink and PerfLink clean up on drop. Other links, such as ProgAttachLink
+                        // and NlLink, need an explicit detach(), which the wrapper's Drop calls.
                         drop($wrapper::new(inner));
                         Err($crate::programs::LinkError::InvalidLink)
                     }
