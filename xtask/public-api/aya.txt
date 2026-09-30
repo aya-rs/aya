@@ -1243,6 +1243,10 @@ pub aya::maps::MapError::OutOfBounds::max_entries: u32
 pub aya::maps::MapError::PinError
 pub aya::maps::MapError::PinError::error: aya::pin::PinError
 pub aya::maps::MapError::PinError::name: core::option::Option<alloc::string::String>
+pub aya::maps::MapError::PinnedValueSizeMismatch
+pub aya::maps::MapError::PinnedValueSizeMismatch::declared_size: u32
+pub aya::maps::MapError::PinnedValueSizeMismatch::kernel_size: u32
+pub aya::maps::MapError::PinnedValueSizeMismatch::name: alloc::string::String
 pub aya::maps::MapError::ProgIdNotSupported
 pub aya::maps::MapError::ProgramNotLoaded
 pub aya::maps::MapError::SyscallError(aya::sys::SyscallError)
