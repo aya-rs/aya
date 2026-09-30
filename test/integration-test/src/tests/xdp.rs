@@ -1,16 +1,20 @@
-use std::{ffi::CString, net::UdpSocket, num::NonZeroU32, time::Duration};
+use std::{ffi::CString, net::UdpSocket, num::NonZeroU32, path::Path, time::Duration};
 
 use assert_matches::assert_matches;
 use aya::{
-    Ebpf,
-    maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
+    Ebpf, EbpfError, EbpfLoader,
+    maps::{
+        Array, CpuMap, DevMap, DevMapHash, IterableMap as _, MapError, XskMap, xdp::XdpMapError,
+    },
     programs::{ProgramError, Xdp, XdpError, XdpMode, xdp::XdpLinkId},
     sys::is_devmap_prog_id_supported,
     test_helpers::NetNsGuard,
     util::KernelVersion,
 };
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
+use rand::RngExt as _;
 use rstest::rstest;
+use scopeguard::defer;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
 
 #[rstest]
@@ -294,4 +298,110 @@ fn devmap_get_ifindex(#[case] prog_name: &str) {
     let mut bpf = Ebpf::load(crate::DEV_MAP).unwrap();
     let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     xdp.load().unwrap();
+}
+
+#[test_log::test]
+fn devmap_4byte() {
+    let _netns = NetNsGuard::new().unwrap();
+
+    let mut bpf = Ebpf::load(crate::DEV_MAP).unwrap();
+    let mut devs: DevMap<_> = bpf.take_map("DEVS_4B").unwrap().try_into().unwrap();
+    assert_eq!(devs.map().info().unwrap().value_size(), 4);
+
+    let mut devs_hash: DevMapHash<_> = bpf.take_map("DEVS_HASH_4B").unwrap().try_into().unwrap();
+    assert_eq!(devs_hash.map().info().unwrap().value_size(), 4);
+
+    let lo = {
+        let name = CString::new("lo").unwrap();
+        let idx = unsafe { libc::if_nametoindex(name.as_ptr()) };
+        assert!(idx != 0, "interface `lo` not found");
+        idx
+    };
+
+    // Round-trip interface index with no chained program.
+    devs.set(0, lo, None, 0).unwrap();
+    let val = devs.get(0, 0).unwrap();
+    assert_eq!(val.if_index, lo);
+    assert_eq!(val.prog_id, None);
+
+    devs_hash.insert(10, lo, None, 0).unwrap();
+    let val = devs_hash.get(10, 0).unwrap();
+    assert_eq!(val.if_index, lo);
+    assert_eq!(val.prog_id, None);
+
+    // Supplying a program is rejected with ChainedProgramNotSupported.
+    let xdp: &mut Xdp = bpf.program_mut("redirect_dev").unwrap().try_into().unwrap();
+    xdp.load().unwrap();
+    let prog_fd = xdp.fd().unwrap();
+
+    assert_matches!(
+        devs.set(0, lo, Some(prog_fd), 0),
+        Err(XdpMapError::ChainedProgramNotSupported)
+    );
+    assert_matches!(
+        devs_hash.insert(10, lo, Some(prog_fd), 0),
+        Err(XdpMapError::ChainedProgramNotSupported)
+    );
+}
+
+#[test_log::test]
+fn cpumap_4byte() {
+    let _netns = NetNsGuard::new().unwrap();
+
+    let mut bpf = Ebpf::load(crate::CPU_MAP).unwrap();
+    let mut cpus: CpuMap<_> = bpf.take_map("CPUS_4B").unwrap().try_into().unwrap();
+    assert_eq!(cpus.map().info().unwrap().value_size(), 4);
+
+    // Round-trip queue size with no chained program.
+    cpus.set(0, 2048, None, 0).unwrap();
+    let val = cpus.get(0, 0).unwrap();
+    assert_eq!(val.queue_size, 2048);
+    assert_eq!(val.prog_id, None);
+
+    // Supplying a program is rejected with ChainedProgramNotSupported.
+    let xdp: &mut Xdp = bpf
+        .program_mut("redirect_cpu_chain")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    xdp.load().unwrap();
+    let prog_fd = xdp.fd().unwrap();
+
+    assert_matches!(
+        cpus.set(0, 2048, Some(prog_fd), 0),
+        Err(XdpMapError::ChainedProgramNotSupported)
+    );
+}
+
+#[test_log::test]
+fn pinned_map_layout_mismatch_rejected() {
+    let bpf = Ebpf::load(crate::DEV_MAP).unwrap();
+    let devs = bpf.map("DEVS").unwrap();
+
+    let mut rng = rand::rng();
+    let pin_dir =
+        Path::new("/sys/fs/bpf/").join(format!("test_pin_mismatch_{:x}", rng.random::<u64>()));
+    std::fs::create_dir_all(&pin_dir).unwrap();
+    defer! {
+        drop(std::fs::remove_dir_all(&pin_dir));
+    }
+
+    // Pre-pin the 8-byte DEVS map at the path where the 4-byte map DEVS_4B would look.
+    let pin_path = pin_dir.join("DEVS_4B");
+    devs.pin(&pin_path).unwrap();
+
+    // Attempt to load DEV_MAP with map_pin_path set to pin_dir.
+    // DEVS_4B expects a 4-byte map, but the pinned map has 8 bytes.
+    // This must be rejected before any typed lookup can occur.
+    let result = EbpfLoader::new()
+        .map_pin_path("DEVS_4B", &pin_path)
+        .load(crate::DEV_MAP);
+    assert_matches!(
+        result,
+        Err(EbpfError::MapError(MapError::PinnedValueSizeMismatch {
+            name,
+            kernel_size: 8,
+            declared_size: 4,
+        })) if name == "DEVS_4B"
+    );
 }
