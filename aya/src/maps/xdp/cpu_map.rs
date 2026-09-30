@@ -59,10 +59,20 @@ impl<T: Borrow<MapData>> CpuMap<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
 
-        if FEATURES.is_supported(Feature::CpuMapProgId) {
-            check_kv_size::<u32, bpf_cpumap_val>(data)?;
-        } else {
-            check_kv_size::<u32, u32>(data)?;
+        match data.obj.value_size() {
+            4 => check_kv_size::<u32, u32>(data)?,
+            8 => {
+                if !FEATURES.is_supported(Feature::CpuMapProgId) {
+                    return Err(MapError::ProgIdNotSupported);
+                }
+                check_kv_size::<u32, bpf_cpumap_val>(data)?;
+            }
+            size => {
+                return Err(MapError::InvalidValueSize {
+                    size: size as usize,
+                    expected: 4,
+                });
+            }
         }
 
         Ok(Self { inner: map })
@@ -86,7 +96,7 @@ impl<T: Borrow<MapData>> CpuMap<T> {
         check_bounds(data, cpu_index)?;
         let fd = data.fd().as_fd();
 
-        let value = if FEATURES.is_supported(Feature::CpuMapProgId) {
+        let value = if data.obj.value_size() == 8 {
             bpf_map_lookup_elem::<_, bpf_cpumap_val>(fd, &cpu_index, flags).map(|value| {
                 value.map(|value| CpuMapValue {
                     queue_size: value.qsize,
@@ -148,7 +158,7 @@ impl<T: BorrowMut<MapData>> CpuMap<T> {
         check_bounds(data, cpu_index)?;
         let fd = data.fd().as_fd();
 
-        let res = if FEATURES.is_supported(Feature::CpuMapProgId) {
+        let res = if data.obj.value_size() == 8 {
             let mut value = unsafe { std::mem::zeroed::<bpf_cpumap_val>() };
             value.qsize = queue_size;
             // Default is valid as the kernel will only consider fd > 0:

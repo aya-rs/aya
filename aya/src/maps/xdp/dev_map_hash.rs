@@ -49,10 +49,20 @@ impl<T: Borrow<MapData>> DevMapHash<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
 
-        if FEATURES.is_supported(Feature::DevMapProgId) {
-            check_kv_size::<u32, bpf_devmap_val>(data)?;
-        } else {
-            check_kv_size::<u32, u32>(data)?;
+        match data.obj.value_size() {
+            4 => check_kv_size::<u32, u32>(data)?,
+            8 => {
+                if !FEATURES.is_supported(Feature::DevMapProgId) {
+                    return Err(MapError::ProgIdNotSupported);
+                }
+                check_kv_size::<u32, bpf_devmap_val>(data)?;
+            }
+            size => {
+                return Err(MapError::InvalidValueSize {
+                    size: size as usize,
+                    expected: 4,
+                });
+            }
         }
 
         Ok(Self { inner: map })
@@ -64,9 +74,10 @@ impl<T: Borrow<MapData>> DevMapHash<T> {
     ///
     /// Returns [`MapError::SyscallError`] if `bpf_map_lookup_elem` fails.
     pub fn get(&self, key: u32, flags: u64) -> Result<DevMapValue, MapError> {
-        let fd = self.inner.borrow().fd().as_fd();
+        let data = self.inner.borrow();
+        let fd = data.fd().as_fd();
 
-        let value = if FEATURES.is_supported(Feature::DevMapProgId) {
+        let value = if data.obj.value_size() == 8 {
             bpf_map_lookup_elem::<_, bpf_devmap_val>(fd, &key, flags).map(|value| {
                 value.map(|value| DevMapValue {
                     if_index: value.ifindex,
@@ -136,19 +147,20 @@ impl<T: BorrowMut<MapData>> DevMapHash<T> {
         program: Option<&ProgramFd>,
         flags: u64,
     ) -> Result<(), XdpMapError> {
-        if FEATURES.is_supported(Feature::DevMapProgId) {
+        let data = self.inner.borrow_mut();
+        if data.obj.value_size() == 8 {
             let mut value = unsafe { std::mem::zeroed::<bpf_devmap_val>() };
             value.ifindex = target_if_index;
             // Default is valid as the kernel will only consider fd > 0:
             // https://github.com/torvalds/linux/blob/2dde18cd1/kernel/bpf/devmap.c#L866
             // https://github.com/torvalds/linux/blob/2dde18cd1/kernel/bpf/devmap.c#L918
             value.bpf_prog.fd = program.map_or_default(|prog| prog.as_fd().as_raw_fd());
-            hash_map::insert(self.inner.borrow_mut(), &key, &value, flags)?;
+            hash_map::insert(data, &key, &value, flags)?;
         } else {
             if program.is_some() {
                 return Err(XdpMapError::ChainedProgramNotSupported);
             }
-            hash_map::insert(self.inner.borrow_mut(), &key, &target_if_index, flags)?;
+            hash_map::insert(data, &key, &target_if_index, flags)?;
         }
         Ok(())
     }

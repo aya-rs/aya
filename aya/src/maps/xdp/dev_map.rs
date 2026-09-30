@@ -50,10 +50,20 @@ impl<T: Borrow<MapData>> DevMap<T> {
     pub(crate) fn new(map: T) -> Result<Self, MapError> {
         let data = map.borrow();
 
-        if FEATURES.is_supported(Feature::DevMapProgId) {
-            check_kv_size::<u32, bpf_devmap_val>(data)?;
-        } else {
-            check_kv_size::<u32, u32>(data)?;
+        match data.obj.value_size() {
+            4 => check_kv_size::<u32, u32>(data)?,
+            8 => {
+                if !FEATURES.is_supported(Feature::DevMapProgId) {
+                    return Err(MapError::ProgIdNotSupported);
+                }
+                check_kv_size::<u32, bpf_devmap_val>(data)?;
+            }
+            size => {
+                return Err(MapError::InvalidValueSize {
+                    size: size as usize,
+                    expected: 4,
+                });
+            }
         }
 
         Ok(Self { inner: map })
@@ -77,7 +87,7 @@ impl<T: Borrow<MapData>> DevMap<T> {
         check_bounds(data, index)?;
         let fd = data.fd().as_fd();
 
-        let value = if FEATURES.is_supported(Feature::DevMapProgId) {
+        let value = if data.obj.value_size() == 8 {
             bpf_map_lookup_elem::<_, bpf_devmap_val>(fd, &index, flags).map(|value| {
                 value.map(|value| DevMapValue {
                     if_index: value.ifindex,
@@ -138,7 +148,7 @@ impl<T: BorrowMut<MapData>> DevMap<T> {
         check_bounds(data, index)?;
         let fd = data.fd().as_fd();
 
-        let res = if FEATURES.is_supported(Feature::DevMapProgId) {
+        let res = if data.obj.value_size() == 8 {
             let mut value = unsafe { std::mem::zeroed::<bpf_devmap_val>() };
             value.ifindex = target_if_index;
             // Default is valid as the kernel will only consider fd > 0:

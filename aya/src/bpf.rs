@@ -639,7 +639,7 @@ impl<'a> EbpfLoader<'a> {
             for (map_obj, map_type) in
                 iter::once((&mut map_obj, map_type)).chain(inner_map.as_mut().map(|(m, t)| (m, *t)))
             {
-                if let Some(value_size) = value_size_override(map_type) {
+                if let Some(value_size) = value_size_override(map_type, map_obj.value_size()) {
                     map_obj.set_value_size(value_size);
                 }
             }
@@ -965,21 +965,13 @@ fn max_entries_override(
 
 /// Computes the value which should be used to override the `value_size` value of the map
 /// based on the rules for that map type.
-fn value_size_override(map_type: bpf_map_type) -> Option<u32> {
+fn value_size_override(map_type: bpf_map_type, value_size: u32) -> Option<u32> {
     match map_type {
         bpf_map_type::BPF_MAP_TYPE_CPUMAP => {
-            Some(if FEATURES.is_supported(Feature::CpuMapProgId) {
-                8
-            } else {
-                4
-            })
+            (!FEATURES.is_supported(Feature::CpuMapProgId) && value_size == 8).then_some(4)
         }
         bpf_map_type::BPF_MAP_TYPE_DEVMAP | bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => {
-            Some(if FEATURES.is_supported(Feature::DevMapProgId) {
-                8
-            } else {
-                4
-            })
+            (!FEATURES.is_supported(Feature::DevMapProgId) && value_size == 8).then_some(4)
         }
         bpf_map_type::BPF_MAP_TYPE_RINGBUF => Some(0),
         _ => None,
