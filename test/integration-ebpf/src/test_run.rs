@@ -2,12 +2,15 @@
 #![no_main]
 
 use aya_ebpf::{
-    bindings::{sk_action::SK_PASS, xdp_action},
+    bindings::{TC_ACT_OK, TC_ACT_SHOT, sk_action::SK_PASS, xdp_action},
     macros::{classifier, map, raw_tracepoint, socket_filter, xdp},
     maps::Array,
     programs::{RawTracePointContext, SkBuffContext, TcContext, XdpContext},
 };
-use integration_common::test_run::{IF_INDEX, XDP_MODIFY_LEN, XDP_MODIFY_VAL};
+use integration_common::test_run::{
+    CHANGE_HEAD_LEN, CHANGE_HEAD_VAL, CHANGE_TAIL_GROW_LEN, CHANGE_TAIL_SHRINK_LEN, IF_INDEX,
+    XDP_MODIFY_LEN, XDP_MODIFY_VAL,
+};
 #[cfg(not(test))]
 extern crate ebpf_panic;
 
@@ -86,4 +89,38 @@ fn test_raw_tp(ctx: RawTracePointContext) -> i32 {
         }
     }
     0
+}
+
+/// Prepends `CHANGE_HEAD_LEN` bytes to the packet and fills them with
+/// `CHANGE_HEAD_VAL`.
+#[classifier]
+fn test_change_head(ctx: TcContext) -> i32 {
+    if ctx.change_head(CHANGE_HEAD_LEN as u32, 0).is_err() {
+        return TC_ACT_SHOT;
+    }
+    if ctx
+        .store(0, &[CHANGE_HEAD_VAL; CHANGE_HEAD_LEN], 0)
+        .is_err()
+    {
+        return TC_ACT_SHOT;
+    }
+    TC_ACT_OK
+}
+
+/// Grows the packet by `CHANGE_TAIL_GROW_LEN` bytes.
+#[classifier]
+fn test_change_tail_grow(ctx: TcContext) -> i32 {
+    match ctx.change_tail(ctx.len() + CHANGE_TAIL_GROW_LEN, 0) {
+        Ok(()) => TC_ACT_OK,
+        Err(_) => TC_ACT_SHOT,
+    }
+}
+
+/// Shrinks the packet by `CHANGE_TAIL_SHRINK_LEN` bytes.
+#[classifier]
+fn test_change_tail_shrink(ctx: TcContext) -> i32 {
+    match ctx.change_tail(ctx.len() - CHANGE_TAIL_SHRINK_LEN, 0) {
+        Ok(()) => TC_ACT_OK,
+        Err(_) => TC_ACT_SHOT,
+    }
 }
