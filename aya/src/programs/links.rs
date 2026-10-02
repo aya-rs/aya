@@ -643,7 +643,7 @@ pub(crate) enum LinkRef {
 }
 
 bitflags::bitflags! {
-    /// Flags which are use to build a set of MprogOptions.
+    /// Flags used to build a [`LinkOrder`].
     #[derive(Clone, Copy, Debug, Default)]
     pub(crate) struct MprogFlags: u32 {
         const REPLACE = BPF_F_REPLACE;
