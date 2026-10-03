@@ -18,6 +18,7 @@ use crate::sys::{NetlinkError, netlink_set_link_up};
 
 thread_local! {
     pub(crate) static FORCE_TRACEFS: Cell<bool> = const { Cell::new(false) };
+    pub(crate) static FORCE_LEGACY_CGROUP_LINKS: Cell<bool> = const { Cell::new(false) };
     pub(crate) static FORCE_NETLINK_XDP: Cell<bool> = const { Cell::new(false) };
 }
 
@@ -27,6 +28,16 @@ thread_local! {
 pub fn with_tracefs_probes<T>(f: impl FnOnce() -> T) -> T {
     let _restore = scopeguard::guard(FORCE_TRACEFS.replace(true), |was_forced| {
         FORCE_TRACEFS.set(was_forced);
+    });
+    f()
+}
+
+/// Forces cgroup attachments to use `BPF_PROG_ATTACH` while running `f`.
+///
+/// Attachments must be made synchronously on the calling thread.
+pub fn with_legacy_cgroup_links<T>(f: impl FnOnce() -> T) -> T {
+    let _restore = scopeguard::guard(FORCE_LEGACY_CGROUP_LINKS.replace(true), |was_forced| {
+        FORCE_LEGACY_CGROUP_LINKS.set(was_forced);
     });
     f()
 }

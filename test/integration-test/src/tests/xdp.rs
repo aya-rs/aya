@@ -4,12 +4,7 @@ use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
-    programs::{
-        Link as _, ProgramError, Xdp, XdpError, XdpMode,
-        links::{FdLink, LinkError},
-        loaded_links,
-        xdp::XdpLinkId,
-    },
+    programs::{Link as _, ProgramError, Xdp, XdpError, XdpMode, links::FdLink, xdp::XdpLinkId},
     sys::{SyscallError, is_devmap_prog_id_supported},
     test_helpers::{NetNsGuard, with_netlink_xdp},
     util::KernelVersion,
@@ -19,6 +14,8 @@ use libbpf_rs::libbpf_sys::bpf_xdp_query_id;
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use rstest::rstest;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
+
+use super::assert_link_program;
 
 #[test_log::test]
 fn netlink_adopt_link_replaces_program() {
@@ -105,23 +102,7 @@ fn adopt_link_transfers_ownership() {
     // The receiving program must also be able to adopt its own link and detach it.
     let id = new.adopt_link(link.try_into().unwrap()).unwrap();
     new.detach(id).unwrap();
-    // loaded_links() also enumerates links owned by other tests. A parallel test
-    // may drop its link after its ID is found, causing the subsequent fd lookup
-    // to fail with ENOENT. Only ignore this race; other errors must fail the test.
-    let detached_link = loaded_links()
-        .filter_map(|result| match result {
-            Ok(info) => Some(info),
-            Err(LinkError::SyscallError(SyscallError {
-                call: "bpf_link_get_fd_by_id",
-                io_error,
-            })) if io_error.raw_os_error() == Some(libc::ENOENT) => None,
-            Err(err) => panic!("{err:?}"),
-        })
-        .find(|link| link.id() == kernel_id);
-    assert!(
-        detached_link.is_none(),
-        "link {kernel_id} still exists after detach"
-    );
+    assert_link_program(kernel_id, None);
 }
 
 #[test_log::test]

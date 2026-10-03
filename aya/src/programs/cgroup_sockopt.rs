@@ -9,10 +9,11 @@ use crate::{
     VerifierLogLevel,
     programs::{
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, load_program_with_attach_type,
+        define_link_wrapper, id_as_key, impl_program_adopt_link,
+        links::{CgroupFdLink, cgroup_fd_link_supported},
+        load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
-    util::KernelVersion,
 };
 
 /// A program that can be used to get or set options on sockets.
@@ -77,7 +78,7 @@ impl CgroupSockopt {
         let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
-        if KernelVersion::at_least(5, 7, 0) {
+        if cgroup_fd_link_supported() {
             let link_fd = bpf_link_create(
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),
@@ -91,7 +92,7 @@ impl CgroupSockopt {
             })?;
             data.links
                 .insert(CgroupSockoptLink::new(CgroupSockoptLinkInner::Fd(
-                    FdLink::new(link_fd),
+                    CgroupFdLink::new(link_fd, (*attach_type).into()),
                 )))
         } else {
             let link = ProgAttachLink::attach(prog_fd, cgroup_fd, *attach_type, mode)?;
@@ -126,7 +127,7 @@ enum CgroupSockoptLinkIdInner {
 
 #[derive(Debug)]
 enum CgroupSockoptLinkInner {
-    Fd(FdLink),
+    Fd(CgroupFdLink),
     ProgAttach(ProgAttachLink),
 }
 
@@ -157,4 +158,12 @@ define_link_wrapper!(
     CgroupSockoptLinkInner,
     CgroupSockoptLinkIdInner,
     CgroupSockopt,
+);
+
+impl_program_adopt_link!(
+    CgroupSockopt,
+    CgroupSockoptLink,
+    CgroupSockoptLinkId,
+    CgroupSockoptLinkInner,
+    |program: &CgroupSockopt| Some(program.attach_type.into()),
 );
