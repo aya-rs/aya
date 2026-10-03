@@ -2,7 +2,7 @@
 #![no_main]
 
 use aya_ebpf::{
-    bindings::xdp_action,
+    bindings::{bpf_map_def, bpf_map_type, xdp_action},
     btf_maps::{DevMap as BtfDevMap, DevMapHash as BtfDevMapHash},
     macros::{btf_map, map, xdp},
     maps::{DevMap, DevMapHash, xdp::DevMapValue},
@@ -15,6 +15,30 @@ extern crate ebpf_panic;
 static DEVS: DevMap = DevMap::with_max_entries(1, 0);
 #[map]
 static DEVS_HASH: DevMapHash = DevMapHash::with_max_entries(1, 0);
+
+/// Explicit 4-byte `DevMap`: `value_size` = 4, no prog-id slot.
+#[map]
+static DEVS_4B: bpf_map_def = bpf_map_def {
+    type_: bpf_map_type::BPF_MAP_TYPE_DEVMAP,
+    key_size: 4,
+    value_size: 4,
+    max_entries: 1,
+    map_flags: 0,
+    id: 0,
+    pinning: 0,
+};
+
+/// Explicit 4-byte `DevMapHash`: `value_size` = 4, no prog-id slot.
+#[map]
+static DEVS_HASH_4B: bpf_map_def = bpf_map_def {
+    type_: bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH,
+    key_size: 4,
+    value_size: 4,
+    max_entries: 1,
+    map_flags: 0,
+    id: 0,
+    pinning: 0,
+};
 
 #[btf_map]
 static DEVS_BTF: BtfDevMap<1> = BtfDevMap::new();
