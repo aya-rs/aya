@@ -300,4 +300,9 @@ pub mod test_run {
     pub const XDP_MODIFY_VAL: u8 = 0xAA;
     pub const IF_INDEX: u32 = 1;
     pub const XDP_MODIFY_LEN: usize = 16;
+
+    pub const CHANGE_HEAD_LEN: usize = 14;
+    pub const CHANGE_HEAD_VAL: u8 = 0xBB;
+    pub const CHANGE_TAIL_GROW_LEN: u32 = 32;
+    pub const CHANGE_TAIL_SHRINK_LEN: u32 = 20;
 }
