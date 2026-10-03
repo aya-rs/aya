@@ -24,6 +24,7 @@ use crate::{
         SyscallError, bpf_get_object, bpf_link_get_info_by_fd, bpf_link_update, bpf_pin_object,
         bpf_prog_attach, bpf_prog_detach,
     },
+    util::KernelVersion,
 };
 
 /// A Link.
@@ -71,6 +72,15 @@ impl From<CgroupAttachMode> for u32 {
             CgroupAttachMode::AllowMultiple => BPF_F_ALLOW_MULTI,
         }
     }
+}
+
+pub(crate) fn cgroup_fd_link_supported() -> bool {
+    // TODO: Remove this hook when CI runs legacy cgroup tests on kernels older than 5.7.
+    #[cfg(feature = "test-helpers")]
+    if crate::test_helpers::FORCE_LEGACY_CGROUP_LINKS.get() {
+        return false;
+    }
+    KernelVersion::at_least(5, 7, 0)
 }
 
 #[derive(Debug)]

@@ -10,10 +10,10 @@ use crate::{
     programs::{
         CgroupAttachMode, FdLink, Link, LinkError, ProgAttachLink, ProgramData, ProgramError,
         ProgramType, define_link_wrapper, id_as_key, impl_program_adopt_link, impl_try_into_fdlink,
-        links::CgroupFdLink, load_program_with_attach_type,
+        links::{CgroupFdLink, cgroup_fd_link_supported},
+        load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
-    util::KernelVersion,
 };
 
 /// A program that can be used to inspect or modify socket addresses (`struct sockaddr`).
@@ -84,7 +84,7 @@ impl CgroupSockAddr {
         let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
-        if KernelVersion::at_least(5, 7, 0) {
+        if cgroup_fd_link_supported() {
             let link_fd = bpf_link_create(
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),

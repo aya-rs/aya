@@ -10,7 +10,7 @@ use aya_obj::{
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, FdLinkId, ProgramData, ProgramError, define_link_wrapper,
+        FdLink, FdLinkId, ProgramData, ProgramError, define_link_wrapper, impl_program_adopt_link,
         load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
@@ -113,3 +113,5 @@ impl LsmCgroup {
 }
 
 define_link_wrapper!(LsmLink, LsmLinkId, FdLink, FdLinkId, LsmCgroup,);
+
+impl_program_adopt_link!(LsmCgroup, LsmLink, LsmLinkId);
