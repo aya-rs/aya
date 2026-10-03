@@ -105,9 +105,18 @@ pub(crate) fn bpf_create_map(
                 u.btf_fd = btf_fd.map_or_default(|fd| fd.as_raw_fd()) as u32;
             }
             _ => {
-                u.btf_key_type_id = m.def.btf_key_type_id;
-                u.btf_value_type_id = m.def.btf_value_type_id;
-                u.btf_fd = btf_fd.map_or_default(|fd| fd.as_raw_fd()) as u32;
+                let raw_btf_fd = btf_fd.map_or_default(|fd| fd.as_raw_fd()) as u32;
+                if raw_btf_fd == 0 {
+                    // No BTF was loaded into the kernel, so the type IDs parsed
+                    // out of the object refer to nothing. Kernels that predate
+                    // BTF reject a nonzero type ID together with a zero btf_fd.
+                    u.btf_key_type_id = 0;
+                    u.btf_value_type_id = 0;
+                } else {
+                    u.btf_key_type_id = m.def.btf_key_type_id;
+                    u.btf_value_type_id = m.def.btf_value_type_id;
+                }
+                u.btf_fd = raw_btf_fd;
             }
         }
     }
@@ -1943,5 +1952,34 @@ bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
         let name = CString::new("TEST").unwrap();
         let btf_fd = unsafe { BorrowedFd::borrow_raw(BTF_FD) };
         bpf_create_map(&name, &map, Some(btf_fd), None).unwrap();
+    }
+
+    #[test]
+    fn test_btf_type_ids_stripped_without_btf_fd() {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                attr,
+            } => {
+                let u = unsafe { attr.__bindgen_anon_1 };
+                assert_eq!(u.btf_key_type_id, 0);
+                assert_eq!(u.btf_value_type_id, 0);
+                assert_eq!(u.btf_fd, 0);
+                Ok(crate::MockableFd::mock_signed_fd().into())
+            }
+            _ => Err((-1, io::Error::from_raw_os_error(EINVAL))),
+        });
+
+        let mut info = unsafe { mem::zeroed::<bpf_map_info>() };
+        info.type_ = bpf_map_type::BPF_MAP_TYPE_HASH as u32;
+        info.key_size = 4;
+        info.value_size = 4;
+        info.max_entries = 64;
+        info.btf_key_type_id = 99;
+        info.btf_value_type_id = 7;
+        let map = parse_map_info(info, PinningType::None);
+
+        let name = CString::new("TEST").unwrap();
+        bpf_create_map(&name, &map, None, None).unwrap();
     }
 }
