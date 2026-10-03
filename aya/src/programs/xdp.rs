@@ -2,7 +2,6 @@
 
 use std::{
     convert::Infallible,
-    ffi::CString,
     hash::Hash,
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
     path::Path,
@@ -20,13 +19,11 @@ use thiserror::Error;
 use crate::{
     VerifierLogLevel,
     programs::{
-        FdLink, Link, ProgramData, ProgramError, ProgramType, define_link_wrapper, id_as_key,
-        impl_try_from_fdlink, impl_try_into_fdlink, load_program_with_attach_type,
+        FdLink, Link, LinkUpdate, NetworkInterface, ProgramData, ProgramError, ProgramType,
+        define_link_wrapper, id_as_key, impl_program_adopt_link, impl_try_from_fdlink,
+        impl_try_into_fdlink, load_program_with_attach_type,
     },
-    sys::{
-        LinkTarget, NetlinkError, SyscallError, bpf_link_create, bpf_link_update,
-        netlink_set_xdp_fd,
-    },
+    sys::{LinkTarget, NetlinkError, SyscallError, bpf_link_create, netlink_set_xdp_fd},
     util::KernelVersion,
 };
 
@@ -101,42 +98,31 @@ impl Xdp {
         load_program_with_attach_type(BPF_PROG_TYPE_XDP, *attach_type, data)
     }
 
-    /// Attaches the program to the given `interface`.
+    /// Attaches the program to an interface specified by name or index.
+    ///
+    /// Pass a name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
     ///
     /// The returned value can be used to detach, see [`Xdp::detach`].
     ///
     /// # Errors
     ///
-    /// If the given `interface` does not exist
+    /// If the given interface name is invalid or does not exist,
     /// [`ProgramError::UnknownInterface`] is returned.
     ///
     /// When `bpf_link_create` is unavailable or rejects the request, the call
     /// transparently falls back to the legacy netlink-based attach path.
-    pub fn attach(&mut self, interface: &str, mode: XdpMode) -> Result<XdpLinkId, ProgramError> {
-        // TODO: avoid this unwrap by adding a new error variant.
-        let c_interface = CString::new(interface).unwrap();
-        let if_index = unsafe { libc::if_nametoindex(c_interface.as_ptr()) };
-        if if_index == 0 {
-            return Err(ProgramError::UnknownInterface {
-                name: interface.to_string(),
-            });
-        }
-        self.attach_to_if_index(if_index, mode)
-    }
-
-    /// Attaches the program to the given interface index.
-    ///
-    /// The returned value can be used to detach, see [`Xdp::detach`].
-    ///
-    /// # Errors
-    ///
-    /// When `bpf_link_create` is unavailable or rejects the request, the call
-    /// transparently falls back to the legacy netlink-based attach path.
-    pub fn attach_to_if_index(
+    pub fn attach<'a>(
         &mut self,
-        if_index: u32,
+        interface: impl Into<NetworkInterface<'a>>,
         mode: XdpMode,
     ) -> Result<XdpLinkId, ProgramError> {
+        let interface = interface.into();
+        let if_index = interface.if_index().map_err(|error| match interface {
+            NetworkInterface::Name(name) => ProgramError::UnknownInterface {
+                name: name.to_owned(),
+            },
+            NetworkInterface::Index(_) => ProgramError::IOError(error),
+        })?;
         let Self { data, attach_type } = self;
         let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
@@ -186,56 +172,6 @@ impl Xdp {
     ) -> Result<Self, ProgramError> {
         let data = ProgramData::from_pinned_path(path, VerifierLogLevel::default())?;
         Ok(Self { data, attach_type })
-    }
-
-    /// Atomically replaces the program referenced by the provided link.
-    ///
-    /// Ownership of the link will transfer to this program.
-    pub fn attach_to_link(&mut self, link: XdpLink) -> Result<XdpLinkId, ProgramError> {
-        let prog_fd = self.fd()?;
-        let prog_fd = prog_fd.as_fd();
-        match link.into_inner() {
-            XdpLinkInner::Fd(fd_link) => {
-                let link_fd = fd_link.fd;
-                bpf_link_update(link_fd.as_fd(), prog_fd, None, 0).map_err(|io_error| {
-                    SyscallError {
-                        call: "bpf_link_update",
-                        io_error,
-                    }
-                })?;
-
-                self.data
-                    .links
-                    .insert(XdpLink::new(XdpLinkInner::Fd(FdLink::new(link_fd))))
-            }
-            XdpLinkInner::NlLink(NlLink {
-                if_index,
-                prog_fd: old_prog_fd,
-                mode,
-            }) => {
-                // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
-                let old_prog_fd = unsafe { BorrowedFd::borrow_raw(old_prog_fd) };
-                // Preserve the atomic replacement contract for netlink
-                // links: only replace the current XDP program if it still
-                // matches the program fd recorded in this link. The
-                // netlink API expresses that compare-and-replace operation
-                // with XDP_FLAGS_REPLACE and IFLA_XDP_EXPECTED_FD, which
-                // were added in Linux 5.7. On older kernels this request
-                // is expected to fail in the kernel instead of degrading to
-                // an unconditional replacement.
-                netlink_set_xdp_fd(if_index, Some(prog_fd), Some(old_prog_fd), mode)
-                    .map_err(XdpError::NetlinkError)?;
-
-                let prog_fd = prog_fd.as_raw_fd();
-                self.data
-                    .links
-                    .insert(XdpLink::new(XdpLinkInner::NlLink(NlLink {
-                        if_index,
-                        prog_fd,
-                        mode,
-                    })))
-            }
-        }
     }
 }
 
@@ -316,9 +252,76 @@ impl Link for XdpLinkInner {
     }
 }
 
+impl LinkUpdate for XdpLinkInner {
+    fn update(self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<Self, ProgramError> {
+        match self {
+            Self::Fd(link) => link.update(prog_fd, name).map(Self::Fd),
+            Self::NlLink(NlLink {
+                if_index,
+                prog_fd: old_prog_fd,
+                mode,
+            }) => {
+                // SAFETY: TODO(https://github.com/aya-rs/aya/issues/612): make this safe by not holding `RawFd`s.
+                let old_prog_fd = unsafe { BorrowedFd::borrow_raw(old_prog_fd) };
+                // Preserve the atomic replacement contract for netlink
+                // links: only replace the current XDP program if it still
+                // matches the program fd recorded in this link. The
+                // netlink API expresses that compare-and-replace operation
+                // with XDP_FLAGS_REPLACE and IFLA_XDP_EXPECTED_FD, which
+                // were added in Linux 5.7. On older kernels this request
+                // is expected to fail in the kernel instead of degrading to
+                // an unconditional replacement.
+                netlink_set_xdp_fd(if_index, Some(prog_fd), Some(old_prog_fd), mode)
+                    .map_err(XdpError::NetlinkError)?;
+                Ok(Self::NlLink(NlLink {
+                    if_index,
+                    prog_fd: prog_fd.as_raw_fd(),
+                    mode,
+                }))
+            }
+        }
+    }
+}
+
 id_as_key!(XdpLinkInner, XdpLinkIdInner);
 
 impl_try_into_fdlink!(XdpLink, XdpLinkInner);
 impl_try_from_fdlink!(XdpLink, XdpLinkInner, bpf_link_type::BPF_LINK_TYPE_XDP);
 
 define_link_wrapper!(XdpLink, XdpLinkId, XdpLinkInner, XdpLinkIdInner, Xdp);
+
+impl_program_adopt_link!(Xdp, XdpLink, XdpLinkId);
+
+#[cfg(test)]
+mod tests {
+    use std::{mem, os::fd::FromRawFd as _};
+
+    use assert_matches::assert_matches;
+    use rstest::rstest;
+
+    use super::*;
+    use crate::{MockableFd, sys::override_syscall};
+
+    #[rstest]
+    #[case::lookup_failure("interface-name-longer-than-IFNAMSIZ")]
+    #[case::interior_nul("lo\0")]
+    fn attach_rejects_invalid_interface_name(#[case] name: &str) {
+        override_syscall(|call| panic!("unexpected syscall: {call:?}"));
+        let mut xdp = Xdp {
+            data: ProgramData::from_bpf_prog_info(
+                None,
+                unsafe { MockableFd::from_raw_fd(MockableFd::mock_signed_fd()) },
+                Path::new(""),
+                unsafe { mem::zeroed() },
+                VerifierLogLevel::default(),
+            )
+            .unwrap(),
+            attach_type: XdpAttachType::Interface,
+        };
+
+        assert_matches!(
+            xdp.attach(name, XdpMode::Skb),
+            Err(ProgramError::UnknownInterface { name: actual }) if actual == name
+        );
+    }
+}

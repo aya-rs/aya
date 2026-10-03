@@ -7,7 +7,7 @@ use super::links::FdLink;
 use crate::{
     programs::{
         FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper,
-        load_program_with_attach_type,
+        impl_program_adopt_link, load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
 };
@@ -84,3 +84,5 @@ impl SkLookup {
 }
 
 define_link_wrapper!(SkLookupLink, SkLookupLinkId, FdLink, FdLinkId, SkLookup);
+
+impl_program_adopt_link!(SkLookup, SkLookupLink, SkLookupLinkId);

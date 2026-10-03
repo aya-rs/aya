@@ -4,11 +4,12 @@
 use aya_ebpf::{
     bindings::{bpf_ret_code, xdp_action},
     macros::{
-        cgroup_skb, flow_dissector, kprobe, kretprobe, lsm, lsm_cgroup, tracepoint, uprobe,
-        uretprobe, xdp,
+        cgroup_device, cgroup_skb, cgroup_sock, cgroup_sockopt, cgroup_sysctl, flow_dissector,
+        kprobe, kretprobe, lsm, lsm_cgroup, sock_ops, tracepoint, uprobe, uretprobe, xdp,
     },
     programs::{
-        FlowDissectorContext, LsmContext, ProbeContext, RetProbeContext, SkBuffContext,
+        DeviceContext, FlowDissectorContext, LsmContext, ProbeContext, RetProbeContext,
+        SkBuffContext, SockContext, SockOpsContext, SockoptContext, SysctlContext,
         TracePointContext, XdpContext,
     },
 };
@@ -62,7 +63,37 @@ const fn test_lsm_cgroup(_ctx: LsmContext) -> i32 {
     0 // Disallow.
 }
 
+#[lsm_cgroup(hook = "socket_bind")]
+const fn allow_bind(_ctx: LsmContext) -> i32 {
+    1 // Allow.
+}
+
+#[cgroup_device]
+const fn test_device(_ctx: DeviceContext) -> i32 {
+    1
+}
+
 #[cgroup_skb(egress)]
 const fn test_cgroup_skb(_ctx: SkBuffContext) -> i32 {
     1
+}
+
+#[cgroup_sock(sock_create)]
+const fn test_sock(_ctx: SockContext) -> i32 {
+    1
+}
+
+#[cgroup_sockopt(getsockopt)]
+const fn test_sockopt(_ctx: SockoptContext) -> i32 {
+    1
+}
+
+#[cgroup_sysctl]
+const fn test_sysctl(_ctx: SysctlContext) -> i32 {
+    1
+}
+
+#[sock_ops]
+const fn test_sock_ops(_ctx: SockOpsContext) -> u32 {
+    0
 }

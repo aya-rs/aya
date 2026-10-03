@@ -8,18 +8,25 @@ use aya::{
     maps::{Array, RingBuf},
     pin::PinError,
     programs::{
-        CgroupAttachMode, CgroupSockAddr, FlowDissector, KProbe, LinkOrder, ProbeKind, Program,
-        ProgramError, SchedClassifier, TcAttachType, TracePoint, UProbe, Xdp, XdpMode,
+        CgroupAttachMode, CgroupDevice, CgroupSkb, CgroupSkbAttachType, CgroupSock, CgroupSockAddr,
+        CgroupSockopt, CgroupSysctl, FlowDissector, KProbe, LinkOrder, ProbeKind, Program,
+        ProgramError, SchedClassifier, SockOps, TcAttachType, TracePoint, UProbe, Xdp, XdpMode,
+        cgroup_device::{CgroupDeviceLink, CgroupDeviceLinkId},
+        cgroup_skb::{CgroupSkbLink, CgroupSkbLinkId},
+        cgroup_sock::{CgroupSockLink, CgroupSockLinkId},
+        cgroup_sockopt::{CgroupSockoptLink, CgroupSockoptLinkId},
+        cgroup_sysctl::{CgroupSysctlLink, CgroupSysctlLinkId},
         flow_dissector::{FlowDissectorLink, FlowDissectorLinkId},
         kprobe::{KProbeLink, KProbeLinkId},
         links::{FdLink, LinkError, PinnedLink},
         loaded_links, loaded_programs,
-        tc::TcAttachOptions,
+        sock_ops::{SockOpsLink, SockOpsLinkId},
         trace_point::{TracePointLink, TracePointLinkId},
         uprobe::{UProbeLink, UProbeLinkId, UProbeScope},
         xdp::{XdpLink, XdpLinkId},
     },
-    sys::is_perf_link_supported,
+    sys::{is_perf_link_supported, is_program_supported},
+    test_helpers::{Cgroup, NetNsGuard},
     util::KernelVersion,
 };
 use aya_obj::programs::XdpAttachType;
@@ -276,6 +283,257 @@ impl_unload_program_ops!(KProbe, KProbeLinkId, KProbeLink);
 impl_unload_program_ops!(TracePoint, TracePointLinkId, TracePointLink);
 impl_unload_program_ops!(UProbe, UProbeLinkId, UProbeLink);
 impl_unload_program_ops!(FlowDissector, FlowDissectorLinkId, FlowDissectorLink);
+impl_unload_program_ops!(CgroupDevice, CgroupDeviceLinkId, CgroupDeviceLink);
+impl_unload_program_ops!(CgroupSkb, CgroupSkbLinkId, CgroupSkbLink);
+impl_unload_program_ops!(CgroupSock, CgroupSockLinkId, CgroupSockLink);
+impl_unload_program_ops!(CgroupSockopt, CgroupSockoptLinkId, CgroupSockoptLink);
+impl_unload_program_ops!(CgroupSysctl, CgroupSysctlLinkId, CgroupSysctlLink);
+impl_unload_program_ops!(SockOps, SockOpsLinkId, SockOpsLink);
+
+trait AdoptLinkProgramOps: UnloadProgramOps {
+    fn adopt_link(&mut self, link: Self::OwnedLink) -> Result<Self::LinkId, ProgramError>;
+    fn detach(&mut self, id: Self::LinkId) -> Result<(), ProgramError>;
+}
+
+macro_rules! impl_adopt_link_program_ops {
+    ($program:ty) => {
+        impl AdoptLinkProgramOps for $program {
+            fn adopt_link(&mut self, link: Self::OwnedLink) -> Result<Self::LinkId, ProgramError> {
+                <$program>::adopt_link(self, link)
+            }
+
+            fn detach(&mut self, id: Self::LinkId) -> Result<(), ProgramError> {
+                <$program>::detach(self, id)
+            }
+        }
+    };
+}
+
+impl_adopt_link_program_ops!(CgroupDevice);
+impl_adopt_link_program_ops!(CgroupSkb);
+impl_adopt_link_program_ops!(CgroupSock);
+impl_adopt_link_program_ops!(CgroupSockopt);
+impl_adopt_link_program_ops!(CgroupSysctl);
+impl_adopt_link_program_ops!(SockOps);
+impl_adopt_link_program_ops!(FlowDissector);
+
+#[track_caller]
+pub(super) fn assert_link_program(link_id: u32, program_id: Option<u32>) {
+    // loaded_links() also enumerates links owned by other tests. A parallel test
+    // may drop its link after its ID is found, causing the subsequent fd lookup
+    // to fail with ENOENT. Only ignore this race; other errors must fail the test.
+    let actual = loaded_links()
+        .filter_map(|result| match result {
+            Ok(info) => Some(info),
+            Err(LinkError::SyscallError(err))
+                if err.call == "bpf_link_get_fd_by_id"
+                    && err.io_error.raw_os_error() == Some(libc::ENOENT) =>
+            {
+                None
+            }
+            Err(err) => panic!("{err:?}"),
+        })
+        .find(|link| link.id() == link_id)
+        .map(|link| link.program_id());
+    assert_eq!(actual, program_id, "unexpected program for link {link_id}");
+}
+
+fn run_adopt_link_program_test<P, F>(program_name: &str, attach: F, drop_program: bool)
+where
+    P: AdoptLinkProgramOps,
+    F: Fn(&mut P) -> P::LinkId,
+    for<'a> &'a mut Program: TryInto<&'a mut P, Error = ProgramError>,
+{
+    let mut old_bpf = Ebpf::load(crate::TEST).unwrap();
+    let old: &mut P = old_bpf
+        .program_mut(program_name)
+        .unwrap()
+        .try_into()
+        .unwrap();
+    old.load().unwrap();
+    let id = attach(old);
+    let link = old.take_link(id).unwrap();
+    let old_program_id = old_bpf.program(program_name).unwrap().info().unwrap().id();
+    let kernel_link_id = loaded_links()
+        .filter_map(Result::ok)
+        .find(|link| link.program_id() == old_program_id)
+        .unwrap()
+        .id();
+
+    // Load a second instance so the kernel program ID exposes whether adoption
+    // updated the existing link.
+    let mut new_bpf = Ebpf::load(crate::TEST).unwrap();
+    let new: &mut P = new_bpf
+        .program_mut(program_name)
+        .unwrap()
+        .try_into()
+        .unwrap();
+    new.load().unwrap();
+    let new_program_id = new_bpf.program(program_name).unwrap().info().unwrap().id();
+    assert_ne!(old_program_id, new_program_id);
+    let new: &mut P = new_bpf
+        .program_mut(program_name)
+        .unwrap()
+        .try_into()
+        .unwrap();
+    let id = new.adopt_link(link).unwrap();
+    assert_link_program(kernel_link_id, Some(new_program_id));
+
+    // Dropping the old owner must leave the link attached to the new program.
+    drop(old_bpf);
+    assert_link_program(kernel_link_id, Some(new_program_id));
+
+    // The returned ID belongs to the receiving program. It can also adopt its own link.
+    let link = new.take_link(id).unwrap();
+    let id = new.adopt_link(link).unwrap();
+    assert_link_program(kernel_link_id, Some(new_program_id));
+
+    // Both explicit detach and dropping the new owner must release the kernel link.
+    if drop_program {
+        drop(new_bpf);
+    } else {
+        new.detach(id).unwrap();
+    }
+    assert_link_program(kernel_link_id, None);
+}
+
+// Run both cleanup paths for each cgroup program type using isolated cgroups.
+macro_rules! test_adopt_link_cgroup {
+    ($test:ident, $program:ty, $name:literal $(, $attach_type:expr)?) => {
+        #[rstest]
+        #[case::detach(false)]
+        #[case::drop(true)]
+        #[test_attr(test_log::test)]
+        fn $test(#[case] drop_program: bool) {
+            let kernel_version = KernelVersion::current().unwrap();
+            if kernel_version < KernelVersion::new(5, 7, 0)
+                || !is_program_supported(<$program>::PROGRAM_TYPE).unwrap()
+            {
+                eprintln!("skipping {} on kernel {kernel_version:?}", stringify!($test));
+                return;
+            }
+            let root = Cgroup::root().unwrap();
+            let cgroup = root
+                .create_child(&format!("{}-{drop_program}", stringify!($test)))
+                .unwrap();
+            run_adopt_link_program_test(
+                $name,
+                |prog: &mut $program| {
+                    prog.attach(cgroup.fd().unwrap(), $($attach_type,)? CgroupAttachMode::Single)
+                        .unwrap()
+                },
+                drop_program,
+            );
+        }
+    };
+}
+
+test_adopt_link_cgroup!(adopt_link_cgroup_device, CgroupDevice, "test_device");
+test_adopt_link_cgroup!(
+    adopt_link_cgroup_skb,
+    CgroupSkb,
+    "test_cgroup_skb",
+    CgroupSkbAttachType::Egress
+);
+test_adopt_link_cgroup!(adopt_link_cgroup_sock, CgroupSock, "test_sock");
+test_adopt_link_cgroup!(adopt_link_cgroup_sockopt, CgroupSockopt, "test_sockopt");
+test_adopt_link_cgroup!(adopt_link_cgroup_sysctl, CgroupSysctl, "test_sysctl");
+test_adopt_link_cgroup!(adopt_link_sock_ops, SockOps, "test_sock_ops");
+
+#[rstest]
+#[case::detach(false)]
+#[case::drop(true)]
+#[test_attr(test_log::test)]
+fn adopt_link_flow_dissector(#[case] drop_program: bool) {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 7, 0)
+        || !is_program_supported(FlowDissector::PROGRAM_TYPE).unwrap()
+    {
+        eprintln!("skipping adopt_link_flow_dissector on kernel {kernel_version:?}");
+        return;
+    }
+    // Isolate the flow dissector attachment from other tests in its own netns.
+    let netns = NetNsGuard::new().unwrap();
+    run_adopt_link_program_test(
+        "test_flow",
+        |prog: &mut FlowDissector| prog.attach(&netns).unwrap(),
+        drop_program,
+    );
+}
+
+#[test_log::test]
+fn adopt_link_cgroup_preserves_existing_attachment() {
+    let kernel_version = KernelVersion::current().unwrap();
+    if kernel_version < KernelVersion::new(5, 7, 0) {
+        eprintln!(
+            "skipping adopt_link_cgroup_preserves_existing_attachment on kernel {kernel_version:?}"
+        );
+        return;
+    }
+    // Use separate cgroups to give the receiving program its own attachment before
+    // it adopts the old program's link.
+    let root = Cgroup::root().unwrap();
+    let first = root.create_child("aya-adopt-first").unwrap();
+    let second = root.create_child("aya-adopt-second").unwrap();
+    let mut old_bpf = Ebpf::load(crate::TEST).unwrap();
+    let old: &mut CgroupSkb = old_bpf
+        .program_mut("test_cgroup_skb")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    old.load().unwrap();
+    let id = old
+        .attach(
+            first.fd().unwrap(),
+            CgroupSkbAttachType::Egress,
+            CgroupAttachMode::Single,
+        )
+        .unwrap();
+    let link = old.take_link(id).unwrap();
+    let old_program_id = old_bpf
+        .program("test_cgroup_skb")
+        .unwrap()
+        .info()
+        .unwrap()
+        .id();
+    let adopted_id = loaded_links()
+        .filter_map(Result::ok)
+        .find(|link| link.program_id() == old_program_id)
+        .unwrap()
+        .id();
+
+    let mut new_bpf = Ebpf::load(crate::TEST).unwrap();
+    let new: &mut CgroupSkb = new_bpf
+        .program_mut("test_cgroup_skb")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    new.load().unwrap();
+    let existing = new
+        .attach(
+            second.fd().unwrap(),
+            CgroupSkbAttachType::Egress,
+            CgroupAttachMode::Single,
+        )
+        .unwrap();
+    let adopted = new.adopt_link(link).unwrap();
+    drop(old_bpf);
+
+    // The receiver must still track its original link ID after adoption. Both kernel
+    // links must reference the receiving program even after the old owner is dropped.
+    let existing: FdLink = new.take_link(existing).unwrap().try_into().unwrap();
+    let existing_info = existing.info().unwrap();
+    assert_ne!(adopted_id, existing_info.id());
+    assert_link_program(adopted_id, Some(existing_info.program_id()));
+
+    // Detaching the adopted link must leave the original link alive. The original
+    // link is detached only when its own handle is dropped.
+    new.detach(adopted).unwrap();
+    assert_link_program(adopted_id, None);
+    assert_link_program(existing_info.id(), Some(existing_info.program_id()));
+    drop(existing);
+    assert_link_program(existing_info.id(), None);
+}
 
 #[test_log::test]
 fn unload_xdp() {
@@ -457,11 +715,7 @@ fn pin_tcx_link() {
     prog.load().unwrap();
 
     let link_id = prog
-        .attach_with_options(
-            "lo",
-            TcAttachType::Ingress,
-            TcAttachOptions::TcxOrder(LinkOrder::default()),
-        )
+        .attach("lo", TcAttachType::Ingress, LinkOrder::default())
         .unwrap();
     let link = prog.take_link(link_id).unwrap();
     assert_loaded(program_name);
@@ -473,14 +727,14 @@ fn pin_tcx_link() {
     prog.unload().unwrap();
     assert_loaded(program_name);
 
-    // Load a new program and atomically replace the old one using attach_to_link
+    // Load a new program and atomically replace the old one using adopt_link
     let mut bpf = Ebpf::load(crate::TCX).unwrap();
     let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
     let old_link = PinnedLink::from_pin(pin_path).unwrap();
     let link = FdLink::from(old_link).try_into().unwrap();
-    let _link_id = prog.attach_to_link(link).unwrap();
+    let _link_id = prog.adopt_link(link).unwrap();
 
     assert_loaded(program_name);
 
@@ -525,14 +779,14 @@ fn pin_cgroup_link() {
     prog.unload().unwrap();
     assert_loaded(program_name);
 
-    // Load a new program and atomically replace the old one using attach_to_link
+    // Load a new program and atomically replace the old one using adopt_link
     let mut bpf = Ebpf::load(crate::CGROUP_CONNECT).unwrap();
     let prog: &mut CgroupSockAddr = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
     let old_link = PinnedLink::from_pin(pin_path).unwrap();
     let link = FdLink::from(old_link).try_into().unwrap();
-    let _link_id = prog.attach_to_link(link).unwrap();
+    let _link_id = prog.adopt_link(link).unwrap();
 
     assert_loaded(program_name);
 
@@ -590,9 +844,7 @@ fn pin_lifecycle() {
         link_pin,
         from_pin,
         attach,
-        Some(|prog: &mut P, pinned: FdLink| {
-            prog.attach_to_link(pinned.try_into().unwrap()).unwrap()
-        }),
+        Some(|prog: &mut P, pinned: FdLink| prog.adopt_link(pinned.try_into().unwrap()).unwrap()),
         /* expect_fd_link: */
         true, // xdp fallback is automatic, minimum version unclear.
     );
@@ -606,7 +858,7 @@ fn run_pin_program_lifecycle_test<P>(
     link_pin: &str,
     from_pin: fn(&str) -> P,
     attach: fn(&mut P) -> P::LinkId,
-    attach_to_link: Option<fn(&mut P, FdLink) -> P::LinkId>,
+    adopt_link: Option<fn(&mut P, FdLink) -> P::LinkId>,
     expect_fd_link: bool,
 ) where
     P: UnloadProgramOps + PinProgramOps,
@@ -653,12 +905,12 @@ fn run_pin_program_lifecycle_test<P>(
                         .try_into()
                         .expect("pinned link should round-trip through FdLink");
                     let link: FdLink = link.try_into().unwrap();
-                    if let Some(attach_to_link) = attach_to_link {
+                    if let Some(adopt_link) = adopt_link {
                         let mut bpf = Ebpf::load(bpf_image).unwrap();
                         let prog: &mut P =
                             bpf.program_mut(program_name).unwrap().try_into().unwrap();
                         prog.load().unwrap();
-                        attach_to_link(prog, link);
+                        adopt_link(prog, link);
                         assert_loaded(program_name);
                     }
                 }

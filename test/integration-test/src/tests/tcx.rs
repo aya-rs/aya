@@ -1,10 +1,11 @@
 use std::{net::UdpSocket, time::Duration};
 
+use assert_matches::assert_matches;
 use aya::{
     Ebpf,
     maps::Array,
     programs::{
-        LinkOrder, ProgramId, SchedClassifier, TcAttachType,
+        LinkOrder, NetworkInterface, ProgramError, ProgramId, SchedClassifier, TcAttachType,
         tc::{NlOptions, TcAttachOptions, qdisc_add_clsact},
     },
     test_helpers::NetNsGuard,
@@ -13,25 +14,43 @@ use aya::{
 use rstest::rstest;
 
 #[rstest]
-#[case::default(None)]
-#[case::netlink(Some(TcAttachOptions::Netlink(NlOptions::default())))]
+#[case::auto(TcAttachOptions::Auto)]
+#[case::netlink(TcAttachOptions::Netlink(NlOptions::default()))]
 #[test_attr(test_log::test)]
 fn tc_attach(
     #[values(TcAttachType::Ingress, TcAttachType::Egress)] attach_type: TcAttachType,
-    #[case] options: Option<TcAttachOptions>,
+    #[values(false, true)] by_index: bool,
+    #[case] options: TcAttachOptions,
 ) {
     let _netns = NetNsGuard::new().unwrap();
-    qdisc_add_clsact("lo").unwrap();
+    let index = unsafe { libc::if_nametoindex(c"lo".as_ptr()) };
+    assert_ne!(index, 0);
+    let interface = if by_index {
+        NetworkInterface::Index(index)
+    } else {
+        NetworkInterface::Name("lo")
+    };
+    qdisc_add_clsact(interface).unwrap();
 
     let mut ebpf = Ebpf::load(crate::TCX).unwrap();
     let mut seen: Array<_, u32> = ebpf.take_map("SEEN").unwrap().try_into().unwrap();
     let prog: &mut SchedClassifier = ebpf.program_mut("tcx_next").unwrap().try_into().unwrap();
     prog.load().unwrap();
-    let link = match options {
-        None => prog.attach("lo", attach_type),
-        Some(options) => prog.attach_with_options("lo", attach_type, options),
+    let expected_tcx = match &options {
+        TcAttachOptions::Auto | TcAttachOptions::TcxOrder(_) => vec![prog.info().unwrap().id()],
+        TcAttachOptions::Netlink(_) => vec![],
+    };
+    let link = prog.attach(interface, attach_type, options).unwrap();
+    if KernelVersion::current().unwrap() >= KernelVersion::new(6, 6, 0) {
+        let (_, programs) = SchedClassifier::query_tcx(interface, attach_type).unwrap();
+        assert_eq!(
+            programs
+                .iter()
+                .map(aya::programs::ProgramInfo::id)
+                .collect::<Vec<_>>(),
+            expected_tcx
+        );
     }
-    .unwrap();
 
     let socket = UdpSocket::bind("127.0.0.1:0").unwrap();
     let addr = socket.local_addr().unwrap();
@@ -55,6 +74,28 @@ fn tc_attach(
     seen.set(0, &0, 0).unwrap();
     round_trip();
     assert_eq!(seen.get(&0, 0).unwrap(), 0);
+}
+
+#[test_log::test]
+fn tcx_attach_does_not_fall_back_to_netlink() {
+    let _netns = NetNsGuard::new().unwrap();
+    // Netlink would succeed if a failed TCX attachment silently fell back.
+    qdisc_add_clsact("lo").unwrap();
+
+    let mut ebpf = Ebpf::load(crate::TCX).unwrap();
+    let prog: &mut SchedClassifier = ebpf.program_mut("tcx_next").unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    if KernelVersion::current().unwrap() >= KernelVersion::new(6, 6, 0) {
+        // TCX rejects attaching the same program twice to the same hook.
+        prog.attach("lo", TcAttachType::Ingress, LinkOrder::default())
+            .unwrap();
+    }
+    // Older kernels reject TCX altogether.
+    assert_matches!(
+        prog.attach("lo", TcAttachType::Ingress, LinkOrder::default()),
+        Err(ProgramError::SyscallError(_))
+    );
 }
 
 #[test_log::test]
@@ -88,21 +129,13 @@ fn tcx_link_order() {
         ($program_name:ident, $link_order:expr) => {
             attach_program_with_link_order_inner!($program_name, $link_order);
             $program_name
-                .attach_with_options(
-                    "lo",
-                    TcAttachType::Ingress,
-                    TcAttachOptions::TcxOrder($link_order),
-                )
+                .attach("lo", TcAttachType::Ingress, $link_order)
                 .unwrap();
         };
         ($program_name:ident, $link_id_name:ident, $link_order:expr) => {
             attach_program_with_link_order_inner!($program_name, $link_order);
             let $link_id_name = $program_name
-                .attach_with_options(
-                    "lo",
-                    TcAttachType::Ingress,
-                    TcAttachOptions::TcxOrder($link_order),
-                )
+                .attach("lo", TcAttachType::Ingress, $link_order)
                 .unwrap();
         };
     }
@@ -143,13 +176,18 @@ fn tcx_link_order() {
     .map(|program| program.info().unwrap().id())
     .collect::<Vec<_>>();
 
-    let (revision, got_order) = SchedClassifier::query_tcx("lo", TcAttachType::Ingress).unwrap();
-    assert_eq!(revision, (expected_order.len() + 1) as u64);
-    assert_eq!(
-        got_order
-            .iter()
-            .map(aya::programs::ProgramInfo::id)
-            .collect::<Vec<_>>(),
-        expected_order
-    );
+    let index = unsafe { libc::if_nametoindex(c"lo".as_ptr()) };
+    assert_ne!(index, 0);
+    for interface in [NetworkInterface::Name("lo"), NetworkInterface::Index(index)] {
+        let (revision, got_order) =
+            SchedClassifier::query_tcx(interface, TcAttachType::Ingress).unwrap();
+        assert_eq!(revision, (expected_order.len() + 1) as u64);
+        assert_eq!(
+            got_order
+                .iter()
+                .map(aya::programs::ProgramInfo::id)
+                .collect::<Vec<_>>(),
+            expected_order
+        );
+    }
 }

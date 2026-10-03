@@ -9,7 +9,7 @@ use crate::{
     VerifierLogLevel,
     programs::{
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, load_program_with_attach_type,
+        define_link_wrapper, id_as_key, impl_program_adopt_link, load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
@@ -157,4 +157,11 @@ define_link_wrapper!(
     CgroupSockoptLinkInner,
     CgroupSockoptLinkIdInner,
     CgroupSockopt,
+);
+
+impl_program_adopt_link!(
+    CgroupSockopt,
+    CgroupSockoptLink,
+    CgroupSockoptLinkId,
+    CgroupSockoptLinkInner
 );
