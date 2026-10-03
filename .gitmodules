@@ -1,3 +1,6 @@
+[submodule "iproute2"]
+	path = xtask/iproute2
+	url = https://github.com/iproute2/iproute2
 [submodule "libbpf"]
 	path = xtask/libbpf
 	url = https://github.com/libbpf/libbpf
