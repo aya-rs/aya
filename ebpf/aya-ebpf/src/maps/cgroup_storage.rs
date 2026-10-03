@@ -21,6 +21,11 @@ macro_rules! define_cgroup_storage {
             _v: PhantomData<V>,
         }
 
+        impl<V> super::__MapLayout for $name<V> {
+            type Key = bpf_cgroup_storage_key;
+            type Value = V;
+        }
+
         impl<V> $name<V> {
             /// Creates the map definition. Cgroup storage maps have no capacity
             /// of their own; the kernel allocates one entry per cgroup the
