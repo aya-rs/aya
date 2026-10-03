@@ -104,6 +104,7 @@ bpf_file!(
     INODE_STORAGE => "inode-storage",
     CGRP_STORAGE => "cgrp-storage",
     UPROBE_MULTI => "uprobe-multi",
+    SYSCALL_ARGS => "syscall-args",
 );
 
 #[cfg(test)]
