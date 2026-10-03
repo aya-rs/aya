@@ -3045,6 +3045,8 @@ pub const aya::programs::flow_dissector::FlowDissector::PROGRAM_TYPE: aya::progr
 pub fn aya::programs::flow_dissector::FlowDissector::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLinkId, aya::programs::ProgramError>
 pub fn aya::programs::flow_dissector::FlowDissector::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::adopt_link(&mut self, aya::programs::flow_dissector::FlowDissectorLink) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLinkId, (aya::programs::ProgramError, aya::programs::flow_dissector::FlowDissectorLink)>
+impl aya::programs::flow_dissector::FlowDissector
 pub fn aya::programs::flow_dissector::FlowDissector::detach(&mut self, aya::programs::flow_dissector::FlowDissectorLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::flow_dissector::FlowDissector::take_link(&mut self, aya::programs::flow_dissector::FlowDissectorLinkId) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLink, aya::programs::ProgramError>
 impl aya::programs::flow_dissector::FlowDissector
@@ -4506,6 +4508,8 @@ impl aya::programs::sk_lookup::SkLookup
 pub const aya::programs::sk_lookup::SkLookup::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::sk_lookup::SkLookup::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::sk_lookup::SkLookupLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sk_lookup::SkLookup::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::adopt_link(&mut self, aya::programs::sk_lookup::SkLookupLink) -> core::result::Result<aya::programs::sk_lookup::SkLookupLinkId, (aya::programs::ProgramError, aya::programs::sk_lookup::SkLookupLink)>
 impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::detach(&mut self, aya::programs::sk_lookup::SkLookupLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::sk_lookup::SkLookup::take_link(&mut self, aya::programs::sk_lookup::SkLookupLinkId) -> core::result::Result<aya::programs::sk_lookup::SkLookupLink, aya::programs::ProgramError>
@@ -6844,6 +6848,8 @@ pub const aya::programs::flow_dissector::FlowDissector::PROGRAM_TYPE: aya::progr
 pub fn aya::programs::flow_dissector::FlowDissector::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLinkId, aya::programs::ProgramError>
 pub fn aya::programs::flow_dissector::FlowDissector::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::adopt_link(&mut self, aya::programs::flow_dissector::FlowDissectorLink) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLinkId, (aya::programs::ProgramError, aya::programs::flow_dissector::FlowDissectorLink)>
+impl aya::programs::flow_dissector::FlowDissector
 pub fn aya::programs::flow_dissector::FlowDissector::detach(&mut self, aya::programs::flow_dissector::FlowDissectorLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::flow_dissector::FlowDissector::take_link(&mut self, aya::programs::flow_dissector::FlowDissectorLinkId) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLink, aya::programs::ProgramError>
 impl aya::programs::flow_dissector::FlowDissector
@@ -7338,6 +7344,8 @@ impl aya::programs::sk_lookup::SkLookup
 pub const aya::programs::sk_lookup::SkLookup::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::sk_lookup::SkLookup::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::sk_lookup::SkLookupLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sk_lookup::SkLookup::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::adopt_link(&mut self, aya::programs::sk_lookup::SkLookupLink) -> core::result::Result<aya::programs::sk_lookup::SkLookupLinkId, (aya::programs::ProgramError, aya::programs::sk_lookup::SkLookupLink)>
 impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::detach(&mut self, aya::programs::sk_lookup::SkLookupLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::sk_lookup::SkLookup::take_link(&mut self, aya::programs::sk_lookup::SkLookupLinkId) -> core::result::Result<aya::programs::sk_lookup::SkLookupLink, aya::programs::ProgramError>

@@ -9,7 +9,8 @@ use aya_obj::generated::{
 use crate::{
     programs::{
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program_with_attach_type,
+        define_link_wrapper, id_as_key, impl_program_adopt_link, impl_try_into_fdlink,
+        load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
     util::KernelVersion,
@@ -82,7 +83,9 @@ impl FlowDissector {
         let prog_fd = prog_fd.as_fd();
         let netns_fd = netns.as_fd();
         let attach_type = BPF_FLOW_DISSECTOR;
-        if KernelVersion::at_least(5, 7, 0) {
+        // Netns links arrived after cgroup links, in Linux 5.8.
+        // https://github.com/torvalds/linux/commit/7f045a49f
+        if KernelVersion::at_least(5, 8, 0) {
             let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(netns_fd), attach_type, 0, None)
                 .map_err(|io_error| SyscallError {
                     call: "bpf_link_create",
@@ -149,6 +152,13 @@ define_link_wrapper!(
     FlowDissectorLinkInner,
     FlowDissectorLinkIdInner,
     FlowDissector,
+);
+
+impl_program_adopt_link!(
+    FlowDissector,
+    FlowDissectorLink,
+    FlowDissectorLinkId,
+    FlowDissectorLinkInner
 );
 
 impl_try_into_fdlink!(FlowDissectorLink, FlowDissectorLinkInner);

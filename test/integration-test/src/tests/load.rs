@@ -403,7 +403,7 @@ fn basic_flow_dissector() {
         crate::TEST,
         program_name,
         attach,
-        KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0), // See FlowDissector::attach.
+        KernelVersion::current().unwrap() >= KernelVersion::new(5, 8, 0), // See FlowDissector::attach.
     );
 }
 

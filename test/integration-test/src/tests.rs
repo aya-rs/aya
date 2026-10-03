@@ -285,6 +285,7 @@ mod cgrp_storage;
 mod elf;
 mod feature_probe;
 mod fexit;
+mod flow_dissector;
 mod hash_map;
 mod info;
 mod inode_storage;
