@@ -1,7 +1,7 @@
 use std::{fmt, io, sync::OnceLock};
 
 use crate::{
-    programs::ProgramType,
+    programs::{ProgramType, is_syscall_wrapper_supported},
     sys::{
         BpfHelper, BtfFeature, UProbeMultiFeature, is_bpf_global_data_supported,
         is_bpf_name_supported, is_btf_feature_supported, is_btf_supported,
@@ -71,6 +71,7 @@ pub(crate) enum Feature {
     BpfCookie,
     CpuMapProgId,
     DevMapProgId,
+    BpfSyscallWrapper,
     Btf,
     #[expect(dead_code, reason = "reserved for future USDT attach mode selection")]
     UProbeMultiLink,
@@ -89,6 +90,7 @@ pub(crate) struct Features {
     bpf_cookie: FeatureProbe,
     cpumap_prog_id: FeatureProbe,
     devmap_prog_id: FeatureProbe,
+    bpf_syscall_wrapper: FeatureProbe,
     btf: FeatureProbe,
     uprobe_multi_link: FeatureProbe,
     btf_capabilities: BtfFeatures,
@@ -104,6 +106,9 @@ impl Features {
             bpf_cookie: feature_probe!(probe_bpf_cookie_feature),
             cpumap_prog_id: feature_probe!(is_cpumap_prog_id_supported),
             devmap_prog_id: feature_probe!(is_devmap_prog_id_supported),
+            bpf_syscall_wrapper: FeatureProbe::new("is_syscall_wrapper_supported", || {
+                Ok(is_syscall_wrapper_supported())
+            }),
             btf: feature_probe!(is_btf_supported),
             uprobe_multi_link: feature_probe!(
                 probe_uprobe_multi_link,
@@ -122,6 +127,7 @@ impl Features {
             bpf_cookie,
             cpumap_prog_id,
             devmap_prog_id,
+            bpf_syscall_wrapper,
             btf,
             uprobe_multi_link,
             btf_capabilities: _,
@@ -134,6 +140,7 @@ impl Features {
             Feature::BpfCookie => bpf_cookie,
             Feature::CpuMapProgId => cpumap_prog_id,
             Feature::DevMapProgId => devmap_prog_id,
+            Feature::BpfSyscallWrapper => bpf_syscall_wrapper,
             Feature::Btf => btf,
             Feature::UProbeMultiLink => uprobe_multi_link,
         };
