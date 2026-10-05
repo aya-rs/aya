@@ -6,12 +6,59 @@ use aya::{
     maps::{Array, CpuMap, DevMap, DevMapHash, XskMap},
     programs::{ProgramError, Xdp, XdpError, XdpMode, xdp::XdpLinkId},
     sys::is_devmap_prog_id_supported,
-    test_helpers::NetNsGuard,
+    test_helpers::{NetNsGuard, with_netlink_xdp},
     util::KernelVersion,
 };
+use aya_obj::generated::XDP_FLAGS_SKB_MODE;
+use libbpf_rs::libbpf_sys::bpf_xdp_query_id;
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _, SymbolSection};
 use rstest::rstest;
 use xdpilone::{BufIdx, IfInfo, Socket, SocketConfig, Umem, UmemConfig};
+
+#[test_log::test]
+fn netlink_attach_to_link_replaces_program() {
+    if KernelVersion::current().unwrap() < KernelVersion::new(5, 7, 0) {
+        eprintln!("skipping test - atomic netlink XDP replacement requires Linux 5.7");
+        return;
+    }
+    let _netns = NetNsGuard::new().unwrap();
+    let if_index = unsafe { libc::if_nametoindex(c"lo".as_ptr()) };
+    assert_ne!(if_index, 0);
+    let attached_program = || {
+        let mut id = 0;
+        // SAFETY: The output pointer is writable. Query the SKB attachment on this interface.
+        let result =
+            unsafe { bpf_xdp_query_id(if_index as i32, XDP_FLAGS_SKB_MODE as i32, &raw mut id) };
+        assert_eq!(result, 0);
+        id
+    };
+    let mut old_bpf = Ebpf::load(crate::XDP_SEC).unwrap();
+    let old: &mut Xdp = old_bpf
+        .program_mut("xdp_plain")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    old.load().unwrap();
+    let old_program_id = old.info().unwrap().id();
+    let id = with_netlink_xdp(|| old.attach_to_if_index(if_index, XdpMode::Skb)).unwrap();
+    let old_link = old.take_link(id).unwrap();
+    assert_eq!(attached_program(), old_program_id);
+
+    let mut new_bpf = Ebpf::load(crate::XDP_SEC).unwrap();
+    let new: &mut Xdp = new_bpf
+        .program_mut("xdp_plain")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    new.load().unwrap();
+    let new_program_id = new.info().unwrap().id();
+    assert_ne!(old_program_id, new_program_id);
+    let id = new.attach_to_link(old_link).unwrap();
+    drop(old_bpf);
+    assert_eq!(attached_program(), new_program_id);
+    new.detach(id).unwrap();
+    assert_eq!(attached_program(), 0);
+}
 
 #[rstest]
 #[case::legacy("SOCKS", "redirect_sock")]
