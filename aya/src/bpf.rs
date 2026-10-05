@@ -544,10 +544,6 @@ impl<'a> EbpfLoader<'a> {
                         }
                     }
 
-                    if obj.has_btf_relocations() {
-                        return Err(EbpfError::BtfError(err));
-                    }
-
                     warn!("object BTF couldn't be loaded in the kernel: {err}");
 
                     None
