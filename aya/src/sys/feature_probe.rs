@@ -673,12 +673,12 @@ pub(crate) fn is_prog_info_license_supported() -> Result<bool, ProgramError> {
 }
 
 /// Probes program and map info.
-fn probe_bpf_info<T>(fd: MockableFd, info: T) -> Result<bool, SyscallError> {
+fn probe_bpf_info<T>(fd: MockableFd, mut info: T) -> Result<bool, SyscallError> {
     // SAFETY: all-zero byte-pattern valid for `bpf_attr`
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     attr.info.bpf_fd = fd.as_raw_fd() as u32;
     attr.info.info_len = size_of_val(&info) as u32;
-    attr.info.info = ptr::from_ref(&info) as u64;
+    attr.info.info = ptr::from_mut(&mut info) as u64;
 
     let io_error = match unit_sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
         Ok(()) => return Ok(true),
@@ -697,6 +697,8 @@ fn probe_bpf_info<T>(fd: MockableFd, info: T) -> Result<bool, SyscallError> {
 #[cfg(test)]
 mod tests {
     use std::cell::Cell;
+
+    use rstest::rstest;
 
     use super::*;
     use crate::sys::{Syscall, override_syscall};
@@ -717,5 +719,34 @@ mod tests {
         assert!(is_bpf_name_supported().unwrap());
         assert!(is_bpf_name_supported().unwrap());
         assert_eq!(PROBE_CALLS.get(), 2);
+    }
+
+    #[rstest]
+    #[case::map_ids(is_prog_info_map_ids_supported)]
+    #[case::license(is_prog_info_license_supported)]
+    fn prog_info_probe_allows_kernel_writeback(#[case] probe: fn() -> Result<bool, ProgramError>) {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_PROG_LOAD,
+                ..
+            } => Ok(MockableFd::mock_signed_fd().into()),
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                attr,
+            } => {
+                // SAFETY: union access.
+                let attr = unsafe { attr.info };
+                assert_eq!(attr.info_len, size_of::<bpf_prog_info>() as u32);
+                // Reborrow mutably so Miri checks the output pointer's write permission.
+                // Casting to *mut alone does not grant that permission.
+                // SAFETY: the syscall receives a writable, aligned bpf_prog_info buffer.
+                let info = unsafe { &mut *(attr.info as *mut bpf_prog_info) };
+                info.id = 42;
+                Ok(0)
+            }
+            unexpected => panic!("unexpected syscall: {unexpected:?}"),
+        });
+
+        assert!(probe().unwrap());
     }
 }

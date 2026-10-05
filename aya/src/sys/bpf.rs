@@ -805,7 +805,7 @@ fn bpf_obj_get_info_by_fd<T, F: FnOnce(&mut T)>(
     init(&mut info);
 
     attr.info.bpf_fd = fd.as_raw_fd() as u32;
-    attr.info.info = ptr::from_ref(&info) as u64;
+    attr.info.info = ptr::from_mut(&mut info) as u64;
     attr.info.info_len = size_of_val(&info) as u32;
 
     match unit_sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {

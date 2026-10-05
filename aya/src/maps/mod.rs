@@ -1425,12 +1425,12 @@ mod tests {
                 );
                 unsafe {
                     let name_bytes = std::mem::transmute::<&[u8], &[c_char]>(TEST_NAME.as_bytes());
-                    let map_info = attr.info.info as *mut bpf_map_info;
-                    map_info.write({
-                        let mut map_info = map_info.read();
-                        map_info.name[..name_bytes.len()].copy_from_slice(name_bytes);
-                        map_info
-                    })
+                    let info_addr = attr.info.info;
+                    let p = info_addr as *mut bpf_map_info;
+                    // Reborrow mutably so Miri checks the output pointer's write permission.
+                    // Casting to *mut alone does not grant that permission.
+                    let map_info = &mut *p;
+                    map_info.name[..name_bytes.len()].copy_from_slice(name_bytes);
                 }
                 Ok(0)
             }
