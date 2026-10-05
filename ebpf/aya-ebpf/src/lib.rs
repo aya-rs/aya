@@ -96,7 +96,7 @@ mod intrinsics {
 
     #[unsafe(no_mangle)]
     unsafe extern "C" fn memmove(dest: *mut u8, src: *mut u8, n: usize) {
-        let delta = (dest as usize).wrapping_sub(src as usize);
+        let delta = dest.addr().wrapping_sub(src.addr());
         if delta >= n {
             // We can copy forwards because either dest is far enough ahead of src,
             // or src is ahead of dest (and delta overflowed).

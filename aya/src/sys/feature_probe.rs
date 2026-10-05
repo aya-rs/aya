@@ -231,7 +231,7 @@ pub fn is_helper_supported(
     with_prog_insns(program_type, &insns, |attr| {
         // SAFETY: union access
         let u = unsafe { &mut attr.__bindgen_anon_3 };
-        u.log_buf = verifier_log.as_mut_ptr() as u64;
+        u.log_buf = verifier_log.as_mut_ptr().expose_provenance() as u64;
         u.log_level = 1;
         u.log_size = verifier_log.len() as u32;
         match bpf_prog_load(attr).map(|_: MockableFd| ()) {
@@ -354,7 +354,7 @@ pub fn is_program_supported(program_type: ProgramType) -> Result<bool, ProgramEr
         // If loading fails for tracing, extension, and lsm types due to unset `attach_btf_id`,
         // then we defer to verifier log to verify whether type is supported.
         if let Some(verifier_log) = verifier_log.as_mut() {
-            u.log_buf = verifier_log.as_mut_ptr() as u64;
+            u.log_buf = verifier_log.as_mut_ptr().expose_provenance() as u64;
             u.log_level = 1;
             u.log_size = verifier_log.len() as u32;
         }
@@ -678,7 +678,7 @@ fn probe_bpf_info<T>(fd: MockableFd, mut info: T) -> Result<bool, SyscallError> 
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     attr.info.bpf_fd = fd.as_raw_fd() as u32;
     attr.info.info_len = size_of_val(&info) as u32;
-    attr.info.info = ptr::from_mut(&mut info) as u64;
+    attr.info.info = ptr::from_mut(&mut info).expose_provenance() as u64;
 
     let io_error = match unit_sys_bpf(bpf_cmd::BPF_OBJ_GET_INFO_BY_FD, &mut attr) {
         Ok(()) => return Ok(true),
@@ -738,9 +738,11 @@ mod tests {
                 let attr = unsafe { attr.info };
                 assert_eq!(attr.info_len, size_of::<bpf_prog_info>() as u32);
                 // Reborrow mutably so Miri checks the output pointer's write permission.
-                // Casting to *mut alone does not grant that permission.
+                // Recovering a pointer alone does not grant that permission.
                 // SAFETY: the syscall receives a writable, aligned bpf_prog_info buffer.
-                let info = unsafe { &mut *(attr.info as *mut bpf_prog_info) };
+                let info = unsafe {
+                    &mut *ptr::with_exposed_provenance_mut::<bpf_prog_info>(attr.info as usize)
+                };
                 info.id = 42;
                 Ok(0)
             }

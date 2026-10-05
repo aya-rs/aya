@@ -176,7 +176,7 @@ pub(crate) fn perf_event_open_probe(
 
     attr.size = size_of::<perf_event_attr>() as u32;
     attr.type_ = ty;
-    attr.__bindgen_anon_3.config1 = c_name.as_ptr() as u64;
+    attr.__bindgen_anon_3.config1 = c_name.as_ptr().expose_provenance() as u64;
     attr.__bindgen_anon_4.config2 = offset;
 
     let (pid, cpu) = match pid {

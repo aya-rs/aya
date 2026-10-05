@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 
-use core::mem;
+use core::{mem, ptr};
 
 use aya_ebpf::{
     bindings::{BPF_F_NO_PREALLOC, xdp_action},
@@ -26,7 +26,7 @@ fn ptr_at<T>(ctx: &XdpContext, offset: usize) -> Result<*const T, ()> {
         return Err(());
     }
 
-    Ok((start + offset) as *const T)
+    Ok(ptr::with_exposed_provenance(start + offset))
 }
 
 struct Value {

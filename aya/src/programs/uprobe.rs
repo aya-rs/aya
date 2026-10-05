@@ -1840,7 +1840,7 @@ mod tests {
             vec.resize(total_size, 0);
         }
 
-        let ptr = vec.as_ptr() as usize;
+        let ptr = vec.as_ptr().addr();
 
         let aligned_ptr = ptr.next_multiple_of(alignment);
 

@@ -4,6 +4,7 @@
 use core::{
     hint::black_box,
     net::{IpAddr, Ipv4Addr, Ipv6Addr},
+    ptr,
 };
 
 use aya_ebpf::{
@@ -87,7 +88,7 @@ fn test_log(ctx: ProbeContext) {
         &ctx,
         "{} {} {} {} {} {} {}", header, tmp, kind, value, size, op, buf
     );
-    let ptr = 0xdeadbeef as *const u8;
+    let ptr = ptr::without_provenance::<u8>(0xdeadbeef);
     debug!(&ctx, "ptr: {:p}", ptr);
 
     // Testing compilation only.
