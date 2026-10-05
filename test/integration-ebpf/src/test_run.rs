@@ -1,6 +1,8 @@
 #![no_std]
 #![no_main]
 
+use core::ptr;
+
 use aya_ebpf::{
     bindings::{sk_action::SK_PASS, xdp_action},
     macros::{classifier, map, raw_tracepoint, socket_filter, xdp},
@@ -52,7 +54,7 @@ fn test_xdp_modify(ctx: XdpContext) -> u32 {
         return xdp_action::XDP_PASS;
     }
 
-    let packet = data as *mut u8;
+    let packet = ptr::with_exposed_provenance_mut::<u8>(data);
     unsafe {
         packet.write_bytes(XDP_MODIFY_VAL, XDP_MODIFY_LEN);
     }

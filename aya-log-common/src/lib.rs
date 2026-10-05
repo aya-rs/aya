@@ -301,14 +301,14 @@ impl Argument for DisplayHint {
 impl<T> sealed::Sealed for *const T {}
 impl<T> Argument for *const T {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
-        (ArgumentKind::Pointer, (*self as usize).to_ne_bytes())
+        (ArgumentKind::Pointer, self.addr().to_ne_bytes())
     }
 }
 
 impl<T> sealed::Sealed for *mut T {}
 impl<T> Argument for *mut T {
     fn as_argument(&self) -> (ArgumentKind, impl AsRef<[u8]>) {
-        (ArgumentKind::Pointer, (*self as usize).to_ne_bytes())
+        (ArgumentKind::Pointer, self.addr().to_ne_bytes())
     }
 }
 

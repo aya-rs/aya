@@ -98,7 +98,7 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> IterableMap<K, V> for HashMap<T, K, V> 
 
 #[cfg(test)]
 mod tests {
-    use std::io;
+    use std::{io, ptr};
 
     use assert_matches::assert_matches;
     use aya_obj::generated::{bpf_attr, bpf_cmd, bpf_map_type};
@@ -298,10 +298,8 @@ mod tests {
     }
 
     fn bpf_key<T: Copy>(attr: &bpf_attr) -> Option<T> {
-        match unsafe { attr.__bindgen_anon_2.key } as *const T {
-            p if p.is_null() => None,
-            p => Some(unsafe { *p }),
-        }
+        let key = ptr::with_exposed_provenance::<T>(unsafe { attr.__bindgen_anon_2.key } as usize);
+        unsafe { key.as_ref() }.copied()
     }
 
     #[expect(
@@ -309,8 +307,9 @@ mod tests {
         reason = "mock syscall handlers use SysResult"
     )]
     fn set_next_key<T: Copy>(attr: &bpf_attr, next: T) -> SysResult {
-        let key =
-            (unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.next_key } as *const T).cast_mut();
+        let key = ptr::with_exposed_provenance_mut::<T>(unsafe {
+            attr.__bindgen_anon_2.__bindgen_anon_1.next_key
+        } as usize);
         unsafe { *key = next }
         Ok(0)
     }
@@ -320,8 +319,9 @@ mod tests {
         reason = "mock syscall handlers use SysResult"
     )]
     fn set_ret<T: Copy>(attr: &bpf_attr, ret: T) -> SysResult {
-        let value =
-            (unsafe { attr.__bindgen_anon_2.__bindgen_anon_1.value } as *const T).cast_mut();
+        let value = ptr::with_exposed_provenance_mut::<T>(unsafe {
+            attr.__bindgen_anon_2.__bindgen_anon_1.value
+        } as usize);
         unsafe { *value = ret }
         Ok(0)
     }
