@@ -94,9 +94,17 @@ pub(crate) fn netlink_set_xdp_fd(
 ) -> Result<(), NetlinkError> {
     let sock = NetlinkSocket::open()?;
 
-    let flags = mode.flags() | XDP_FLAGS_UPDATE_IF_NOEXIST;
+    let flags = mode.flags();
     let (flags, expected_fd) = match expected_fd {
-        None => (flags, None),
+        // Initial attachment must not overwrite a program already installed in this mode.
+        None => (flags | XDP_FLAGS_UPDATE_IF_NOEXIST, None),
+        // REPLACE requires the attached program to match the program referenced by
+        // IFLA_XDP_EXPECTED_FD before replacing or detaching it:
+        // https://github.com/torvalds/linux/blob/adc218676/net/core/dev.c#L9544-L9547
+        // Do not also set UPDATE_IF_NOEXIST: when installing the replacement,
+        // the kernel would return EBUSY because a program is already attached
+        // in this mode, even if the expected-program check above succeeded:
+        // https://github.com/torvalds/linux/blob/adc218676/net/core/dev.c#L9553-L9560
         Some(fd) => (flags | XDP_FLAGS_REPLACE, Some(fd.as_raw_fd())),
     };
 

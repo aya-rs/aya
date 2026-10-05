@@ -140,36 +140,46 @@ impl Xdp {
         let Self { data, attach_type } = self;
         let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
+        // TODO: Remove this hook when CI runs XDP netlink tests on kernels older than 5.9.
+        #[cfg(feature = "test-helpers")]
+        let force_netlink = crate::test_helpers::FORCE_NETLINK_XDP.get();
+        #[cfg(not(feature = "test-helpers"))]
+        let force_netlink = false;
         let flags = mode.flags();
-        let link = match bpf_link_create(
-            prog_fd,
-            LinkTarget::IfIndex(if_index),
-            *attach_type,
-            flags,
-            None,
-        ) {
-            Ok(link_fd) => XdpLinkInner::Fd(FdLink::new(link_fd)),
-            Err(io_error) => {
-                if io_error.raw_os_error() != Some(libc::EINVAL) {
-                    return Err(ProgramError::SyscallError(SyscallError {
-                        call: "bpf_link_create",
-                        io_error,
-                    }));
+        let link_fd = if force_netlink {
+            None
+        } else {
+            match bpf_link_create(
+                prog_fd,
+                LinkTarget::IfIndex(if_index),
+                *attach_type,
+                flags,
+                None,
+            ) {
+                Ok(link_fd) => Some(link_fd),
+                Err(io_error) => {
+                    if io_error.raw_os_error() != Some(libc::EINVAL) {
+                        return Err(ProgramError::SyscallError(SyscallError {
+                            call: "bpf_link_create",
+                            io_error,
+                        }));
+                    }
+                    None
                 }
-
-                // Fall back to netlink-based attachment.
-
-                let if_index = if_index as i32;
-                netlink_set_xdp_fd(if_index, Some(prog_fd), None, mode)
-                    .map_err(XdpError::NetlinkError)?;
-
-                let prog_fd = prog_fd.as_raw_fd();
-                XdpLinkInner::NlLink(NlLink {
-                    if_index,
-                    prog_fd,
-                    mode,
-                })
             }
+        };
+        let link = if let Some(link_fd) = link_fd {
+            XdpLinkInner::Fd(FdLink::new(link_fd))
+        } else {
+            let if_index = if_index as i32;
+            netlink_set_xdp_fd(if_index, Some(prog_fd), None, mode)
+                .map_err(XdpError::NetlinkError)?;
+
+            XdpLinkInner::NlLink(NlLink {
+                if_index,
+                prog_fd: prog_fd.as_raw_fd(),
+                mode,
+            })
         };
         data.links.insert(XdpLink::new(link))
     }
