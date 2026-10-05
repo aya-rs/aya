@@ -29,13 +29,13 @@ impl SkReuseportContext {
     /// Returns the start of the directly accessible data.
     #[inline]
     pub fn data(&self) -> usize {
-        unsafe { self.md().__bindgen_anon_1.data as usize }
+        unsafe { self.md().__bindgen_anon_1.data.expose_provenance() }
     }
 
     /// Returns the end of the directly accessible data.
     #[inline]
     pub fn data_end(&self) -> usize {
-        unsafe { self.md().__bindgen_anon_2.data_end as usize }
+        unsafe { self.md().__bindgen_anon_2.data_end.expose_provenance() }
     }
 
     /// Returns the total packet length.

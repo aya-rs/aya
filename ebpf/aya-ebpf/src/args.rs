@@ -1,17 +1,19 @@
 use crate::bindings::{bpf_raw_tracepoint_args, pt_regs};
 
 mod sealed {
+    use core::ptr;
+
     #[expect(unnameable_types, reason = "this is the sealed trait pattern")]
     pub trait Argument {
         fn from_register(value: u64) -> Self;
     }
 
     macro_rules! impl_argument {
-        ($($( { $($generics:tt)* } )? $ty:ty $( { where $($where:tt)* } )?),+ $(,)?) => {
+        ($($ty:ty),+ $(,)?) => {
             $(
                 #[expect(clippy::allow_attributes, reason = "macro")]
                 #[allow(clippy::cast_lossless, trivial_numeric_casts, reason = "macro")]
-                impl$($($generics)*)? Argument for $ty $(where $($where)*)? {
+                impl Argument for $ty {
                     fn from_register(value: u64) -> Self {
                         value as Self
                     }
@@ -21,21 +23,20 @@ mod sealed {
     }
 
     impl_argument!(
-        i8,
-        u8,
-        i16,
-        u16,
-        i32,
-        u32,
-        i64,
-        u64,
-        i128,
-        u128,
-        isize,
-        usize,
-        {<T>} *const T {where T: 'static},
-        {<T>} *mut T {where T: 'static},
+        i8, u8, i16, u16, i32, u32, i64, u64, i128, u128, isize, usize,
     );
+
+    impl<T: 'static> Argument for *const T {
+        fn from_register(value: u64) -> Self {
+            ptr::with_exposed_provenance(value as usize)
+        }
+    }
+
+    impl<T: 'static> Argument for *mut T {
+        fn from_register(value: u64) -> Self {
+            ptr::with_exposed_provenance_mut(value as usize)
+        }
+    }
 }
 
 pub trait Argument: sealed::Argument {}

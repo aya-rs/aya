@@ -776,7 +776,7 @@ fn log_buf<T: ?Sized + Log>(mut buf: &[u8], logger: &T) -> Result<(), ()> {
                 let value = value
                     .try_into()
                     .map_err(|std::array::TryFromSliceError { .. }| ())?;
-                let ptr = usize::from_ne_bytes(value) as *const ();
+                let ptr = ptr::without_provenance::<()>(usize::from_ne_bytes(value));
                 full_log_msg.push_str(&ptr.format(last_hint.take())?);
             }
         }

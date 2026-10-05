@@ -108,8 +108,16 @@ fn use_map_with_rbpf() {
 #[track_caller]
 fn bpf_map_update_elem_multimap(map: u64, key: u64, value: u64, _: u64, _: u64) -> u64 {
     assert_matches!(map, 0xCAFE00 | 0xCAFE01 | 0xCAFE02);
-    let key = *unsafe { (key as usize as *const u32).as_ref().unwrap() };
-    let value = *unsafe { (value as usize as *const u64).as_ref().unwrap() };
+    let key = *unsafe {
+        ptr::with_exposed_provenance::<u32>(key as usize)
+            .as_ref()
+            .unwrap()
+    };
+    let value = *unsafe {
+        ptr::with_exposed_provenance::<u64>(value as usize)
+            .as_ref()
+            .unwrap()
+    };
     assert_eq!(key, 0);
     unsafe {
         let map_instance = MULTIMAP_MAPS[map as usize & 0xFF].as_mut().unwrap();

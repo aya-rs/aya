@@ -94,7 +94,7 @@ fn test3(ctx: FExitContext) -> i32 {
 
 #[fexit(function = "bpf_fentry_test4")]
 fn test4(ctx: FExitContext) -> i32 {
-    let error = if ctx.arg::<*mut c_void>(0) as u64 != 7
+    let error = if ctx.arg::<*mut c_void>(0).addr() != 7
         || ctx.arg::<i8>(1) != 8
         || ctx.arg::<i32>(2) != 9
         || ctx.arg::<u64>(3) != 10
@@ -110,7 +110,7 @@ fn test4(ctx: FExitContext) -> i32 {
 #[fexit(function = "bpf_fentry_test5")]
 fn test5(ctx: FExitContext) -> i32 {
     let error = if ctx.arg::<u64>(0) != 11
-        || ctx.arg::<*mut c_void>(1) as u64 != 12
+        || ctx.arg::<*mut c_void>(1).addr() != 12
         || ctx.arg::<i16>(2) != 13
         || ctx.arg::<i32>(3) != 14
         || ctx.arg::<u64>(4) != 15
@@ -126,10 +126,10 @@ fn test5(ctx: FExitContext) -> i32 {
 #[fexit(function = "bpf_fentry_test6")]
 fn test6(ctx: FExitContext) -> i32 {
     let error = if ctx.arg::<u64>(0) != 16
-        || ctx.arg::<*mut c_void>(1) as u64 != 17
+        || ctx.arg::<*mut c_void>(1).addr() != 17
         || ctx.arg::<i16>(2) != 18
         || ctx.arg::<i32>(3) != 19
-        || ctx.arg::<*mut c_void>(4) as u64 != 20
+        || ctx.arg::<*mut c_void>(4).addr() != 20
         || ctx.arg::<u64>(5) != 21
     {
         ARG_MISMATCH

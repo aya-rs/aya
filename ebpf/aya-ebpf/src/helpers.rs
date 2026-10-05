@@ -73,7 +73,7 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> ReusePortSockArrayMap
 /// ```no_run
 /// # use aya_ebpf::{cty::c_int , helpers::bpf_probe_read};
 /// # fn try_test() -> Result<(), i32> {
-/// # let kernel_ptr: *const c_int = 0 as _;
+/// # let kernel_ptr: *const c_int = core::ptr::null();
 /// let my_int: c_int = unsafe { bpf_probe_read(kernel_ptr)? };
 ///
 /// // Do something with my_int
@@ -107,7 +107,7 @@ pub unsafe fn bpf_probe_read<T>(src: *const T) -> Result<T, i32> {
 /// ```no_run
 /// # use aya_ebpf::{cty::c_int, helpers::bpf_probe_read_buf};
 /// # fn try_test() -> Result<(), i32> {
-/// # let ptr: *const u8 = 0 as _;
+/// # let ptr: *const u8 = core::ptr::null();
 /// let mut buf = [0u8; 16];
 /// unsafe { bpf_probe_read_buf(ptr, &mut buf)? };
 ///
@@ -135,7 +135,7 @@ pub unsafe fn bpf_probe_read_buf(src: *const u8, dst: &mut [u8]) -> Result<(), i
 /// ```no_run
 /// # use aya_ebpf::{cty::c_int, helpers::bpf_probe_read_user};
 /// # fn try_test() -> Result<(), i32> {
-/// # let user_ptr: *const c_int = 0 as _;
+/// # let user_ptr: *const c_int = core::ptr::null();
 /// let my_int: c_int = unsafe { bpf_probe_read_user(user_ptr)? };
 ///
 /// // Do something with my_int
@@ -167,7 +167,7 @@ pub unsafe fn bpf_probe_read_user<T>(src: *const T) -> Result<T, i32> {
 /// ```no_run
 /// # use aya_ebpf::{cty::c_int, helpers::bpf_probe_read_user_buf};
 /// # fn try_test() -> Result<(), i32> {
-/// # let user_ptr: *const u8 = 0 as _;
+/// # let user_ptr: *const u8 = core::ptr::null();
 /// let mut buf = [0u8; 16];
 /// unsafe { bpf_probe_read_user_buf(user_ptr, &mut buf)? };
 ///
@@ -196,7 +196,7 @@ pub unsafe fn bpf_probe_read_user_buf(src: *const u8, dst: &mut [u8]) -> Result<
 /// ```no_run
 /// # use aya_ebpf::{cty::c_int, helpers::bpf_probe_read_kernel};
 /// # fn try_test() -> Result<(), i32> {
-/// # let kernel_ptr: *const c_int = 0 as _;
+/// # let kernel_ptr: *const c_int = core::ptr::null();
 /// let my_int: c_int = unsafe { bpf_probe_read_kernel(kernel_ptr)? };
 ///
 /// // Do something with my_int
@@ -228,7 +228,7 @@ pub unsafe fn bpf_probe_read_kernel<T>(src: *const T) -> Result<T, i32> {
 /// ```no_run
 /// # use aya_ebpf::{cty::c_int, helpers::bpf_probe_read_kernel_buf};
 /// # fn try_test() -> Result<(), i32> {
-/// # let kernel_ptr: *const u8 = 0 as _;
+/// # let kernel_ptr: *const u8 = core::ptr::null();
 /// let mut buf = [0u8; 16];
 /// unsafe { bpf_probe_read_kernel_buf(kernel_ptr, &mut buf)? };
 ///
@@ -261,7 +261,7 @@ pub unsafe fn bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> Resul
 /// # #[expect(deprecated)]
 /// # use aya_ebpf::{helpers::bpf_probe_read_str};
 /// # fn try_test() -> Result<(), i32> {
-/// # let kernel_ptr: *const u8 = 0 as _;
+/// # let kernel_ptr: *const u8 = core::ptr::null();
 /// let mut my_str = [0u8; 16];
 /// # #[expect(deprecated)]
 /// let num_read = unsafe { bpf_probe_read_str(kernel_ptr, &mut my_str)? };
@@ -298,7 +298,7 @@ pub unsafe fn bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> Result<usiz
 /// # #[expect(deprecated)]
 /// # use aya_ebpf::{helpers::bpf_probe_read_user_str};
 /// # fn try_test() -> Result<(), i32> {
-/// # let user_ptr: *const u8 = 0 as _;
+/// # let user_ptr: *const u8 = core::ptr::null();
 /// let mut my_str = [0u8; 16];
 /// # #[expect(deprecated)]
 /// let num_read = unsafe { bpf_probe_read_user_str(user_ptr, &mut my_str)? };
@@ -337,7 +337,7 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 /// ```no_run
 /// # use aya_ebpf::{helpers::bpf_probe_read_user_str_bytes};
 /// # fn try_test() -> Result<(), i32> {
-/// # let user_ptr: *const u8 = 0 as _;
+/// # let user_ptr: *const u8 = core::ptr::null();
 /// let mut buf = [0u8; 16];
 /// let my_str_bytes = unsafe { bpf_probe_read_user_str_bytes(user_ptr, &mut buf)? };
 ///
@@ -361,7 +361,7 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 /// pub static BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
 ///
 /// # fn try_test() -> Result<(), i32> {
-/// # let user_ptr: *const u8 = 0 as _;
+/// # let user_ptr: *const u8 = core::ptr::null();
 /// let buf = unsafe {
 ///     let ptr = BUF.get_ptr_mut(0).ok_or(0)?;
 ///     &mut *ptr
@@ -386,7 +386,7 @@ pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result
 /// # #[map]
 /// # pub static BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
 /// # fn try_test() -> Result<(), i32> {
-/// # let user_ptr: *const u8 = 0 as _;
+/// # let user_ptr: *const u8 = core::ptr::null();
 /// # let buf = unsafe {
 /// #     let ptr = BUF.get_ptr_mut(0).ok_or(0)?;
 /// #     &mut *ptr
@@ -440,7 +440,7 @@ fn read_str_bytes(len: c_long, dest: &[u8]) -> Result<&[u8], i32> {
 /// # #[expect(deprecated)]
 /// # use aya_ebpf::{helpers::bpf_probe_read_kernel_str};
 /// # fn try_test() -> Result<(), i32> {
-/// # let kernel_ptr: *const u8 = 0 as _;
+/// # let kernel_ptr: *const u8 = core::ptr::null();
 /// let mut my_str = [0u8; 16];
 /// # #[expect(deprecated)]
 /// let num_read = unsafe { bpf_probe_read_kernel_str(kernel_ptr, &mut my_str)? };
@@ -483,7 +483,7 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 /// ```no_run
 /// # use aya_ebpf::{helpers::bpf_probe_read_kernel_str_bytes};
 /// # fn try_test() -> Result<(), i32> {
-/// # let kernel_ptr: *const u8 = 0 as _;
+/// # let kernel_ptr: *const u8 = core::ptr::null();
 /// let mut buf = [0u8; 16];
 /// let my_str_bytes = unsafe { bpf_probe_read_kernel_str_bytes(kernel_ptr, &mut buf)? };
 ///
@@ -507,7 +507,7 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 /// pub static BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
 ///
 /// # fn try_test() -> Result<(), i32> {
-/// # let kernel_ptr: *const u8 = 0 as _;
+/// # let kernel_ptr: *const u8 = core::ptr::null();
 /// let buf = unsafe {
 ///     let ptr = BUF.get_ptr_mut(0).ok_or(0)?;
 ///     &mut *ptr
@@ -532,7 +532,7 @@ pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Resu
 /// # #[map]
 /// # pub static BUF: PerCpuArray<Buf> = PerCpuArray::with_max_entries(1, 0);
 /// # fn try_test() -> Result<(), i32> {
-/// # let kernel_ptr: *const u8 = 0 as _;
+/// # let kernel_ptr: *const u8 = core::ptr::null();
 /// # let buf = unsafe {
 /// #     let ptr = BUF.get_ptr_mut(0).ok_or(0)?;
 /// #     &mut *ptr
@@ -579,7 +579,7 @@ pub unsafe fn bpf_probe_read_kernel_str_bytes(
 ///     let retp: *mut c_int = ctx.arg(0).ok_or(1)?;
 ///     let val: i32 = 1;
 ///     // Write the value to the userspace pointer.
-///     unsafe { bpf_probe_write_user(retp, &val as *const i32)? };
+///     unsafe { bpf_probe_write_user(retp, &raw const val)? };
 ///
 ///     Ok::<(), i32>(())
 /// }
@@ -776,7 +776,7 @@ impl_integer_promotion!(
 impl<T> From<*const T> for PrintkArg {
     #[inline]
     fn from(x: *const T) -> Self {
-        Self(x as usize as u64)
+        Self(x.expose_provenance() as u64)
     }
 }
 
@@ -784,7 +784,7 @@ impl<T> From<*const T> for PrintkArg {
 impl<T> From<*mut T> for PrintkArg {
     #[inline]
     fn from(x: *mut T) -> Self {
-        Self(x as usize as u64)
+        Self(x.expose_provenance() as u64)
     }
 }
 
