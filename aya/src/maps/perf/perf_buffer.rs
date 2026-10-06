@@ -542,10 +542,9 @@ mod tests {
     // Wrap fixtures fix `data_head` up afterwards to match the real kernel
     // contract (tail + total_event_size).
     fn fixture_wrap_data(mmapped_buf: &mut MMappedBuf) -> &'static [u8] {
-        let (left, right) = if cfg!(target_endian = "little") {
-            (0xCAFEBABEu32, 0xBAADCAFEu32)
-        } else {
-            (0xBAADCAFEu32, 0xCAFEBABEu32)
+        let (left, right) = cfg_select! {
+            target_endian = "little" => (0xCAFEBABEu32, 0xBAADCAFEu32),
+            target_endian = "big" => (0xBAADCAFEu32, 0xCAFEBABEu32),
         };
         let offset = page_size() - size_of::<TestPerfRecord<u32>>();
         write(

@@ -123,71 +123,68 @@ impl std::fmt::Debug for Syscall<'_> {
 }
 
 fn syscall(call: Syscall<'_>) -> SysResult {
-    #[cfg(test)]
-    {
-        TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) })
-    }
+    cfg_select! {
+        test => TEST_SYSCALL.with(|test_impl| unsafe { test_impl.borrow()(call) }),
+        _ => {
+            use std::os::fd::AsRawFd as _;
 
-    #[cfg(not(test))]
-    {
-        use std::os::fd::AsRawFd as _;
-
-        let ret = unsafe {
-            match call {
-                Syscall::Ebpf { cmd, attr } => {
-                    libc::syscall(libc::SYS_bpf, cmd, attr, size_of::<bpf_attr>())
-                }
-                Syscall::PerfEventOpen {
-                    attr,
-                    pid,
-                    cpu,
-                    group,
-                    flags,
-                } => libc::syscall(libc::SYS_perf_event_open, &attr, pid, cpu, group, flags),
-                Syscall::PerfEventIoctl { fd, request } => {
-                    let fd = fd.as_raw_fd();
-                    match request {
-                        PerfEventIoctlRequest::Enable { group } => libc::syscall(
-                            libc::SYS_ioctl,
-                            fd,
-                            aya_obj::generated::PERF_EVENT_IOC_ENABLE,
-                            libc::c_ulong::from(group),
-                        ),
-                        PerfEventIoctlRequest::Disable { group } => libc::syscall(
-                            libc::SYS_ioctl,
-                            fd,
-                            aya_obj::generated::PERF_EVENT_IOC_DISABLE,
-                            libc::c_ulong::from(group),
-                        ),
-                        PerfEventIoctlRequest::Reset { group } => libc::syscall(
-                            libc::SYS_ioctl,
-                            fd,
-                            aya_obj::generated::PERF_EVENT_IOC_RESET,
-                            libc::c_ulong::from(group),
-                        ),
-                        PerfEventIoctlRequest::SetBpf(bpf_fd) => libc::syscall(
-                            libc::SYS_ioctl,
-                            fd,
-                            aya_obj::generated::PERF_EVENT_IOC_SET_BPF,
-                            bpf_fd.as_raw_fd(),
-                        ),
+            let ret = unsafe {
+                match call {
+                    Syscall::Ebpf { cmd, attr } => {
+                        libc::syscall(libc::SYS_bpf, cmd, attr, size_of::<bpf_attr>())
                     }
+                    Syscall::PerfEventOpen {
+                        attr,
+                        pid,
+                        cpu,
+                        group,
+                        flags,
+                    } => libc::syscall(libc::SYS_perf_event_open, &attr, pid, cpu, group, flags),
+                    Syscall::PerfEventIoctl { fd, request } => {
+                        let fd = fd.as_raw_fd();
+                        match request {
+                            PerfEventIoctlRequest::Enable { group } => libc::syscall(
+                                libc::SYS_ioctl,
+                                fd,
+                                aya_obj::generated::PERF_EVENT_IOC_ENABLE,
+                                libc::c_ulong::from(group),
+                            ),
+                            PerfEventIoctlRequest::Disable { group } => libc::syscall(
+                                libc::SYS_ioctl,
+                                fd,
+                                aya_obj::generated::PERF_EVENT_IOC_DISABLE,
+                                libc::c_ulong::from(group),
+                            ),
+                            PerfEventIoctlRequest::Reset { group } => libc::syscall(
+                                libc::SYS_ioctl,
+                                fd,
+                                aya_obj::generated::PERF_EVENT_IOC_RESET,
+                                libc::c_ulong::from(group),
+                            ),
+                            PerfEventIoctlRequest::SetBpf(bpf_fd) => libc::syscall(
+                                libc::SYS_ioctl,
+                                fd,
+                                aya_obj::generated::PERF_EVENT_IOC_SET_BPF,
+                                bpf_fd.as_raw_fd(),
+                            ),
+                        }
+                    }
+                    Syscall::PerfEventRead { fd, values } => libc::read(
+                        fd.as_raw_fd(),
+                        values.as_mut_ptr().cast(),
+                        size_of_val(values),
+                    ) as libc::c_long,
                 }
-                Syscall::PerfEventRead { fd, values } => libc::read(
-                    fd.as_raw_fd(),
-                    values.as_mut_ptr().cast(),
-                    size_of_val(values),
-                ) as libc::c_long,
-            }
-        };
-        // c_long is i32 on armv7.
-        #[expect(clippy::allow_attributes, reason = "architecture specific")]
-        #[allow(clippy::useless_conversion, reason = "architecture specific")]
-        let ret: i64 = ret.into();
+            };
+            // c_long is i32 on armv7.
+            #[expect(clippy::allow_attributes, reason = "architecture specific")]
+            #[allow(clippy::useless_conversion, reason = "architecture specific")]
+            let ret: i64 = ret.into();
 
-        match ret {
-            0.. => Ok(ret),
-            ret => Err((ret, io::Error::last_os_error())),
+            match ret {
+                0.. => Ok(ret),
+                ret => Err((ret, io::Error::last_os_error())),
+            }
         }
     }
 }
@@ -204,32 +201,20 @@ pub(crate) unsafe fn mmap(
     fd: BorrowedFd<'_>,
     offset: libc::off_t,
 ) -> *mut c_void {
-    #[cfg(test)]
-    {
-        TEST_MMAP_RET.with(|ret| *ret.borrow())
-    }
+    cfg_select! {
+        test => TEST_MMAP_RET.with(|ret| *ret.borrow()),
+        _ => {
+            use std::os::fd::AsRawFd as _;
 
-    #[cfg(not(test))]
-    {
-        use std::os::fd::AsRawFd as _;
-
-        unsafe { libc::mmap(addr, len, prot, flags, fd.as_raw_fd(), offset) }
+            unsafe { libc::mmap(addr, len, prot, flags, fd.as_raw_fd(), offset) }
+        }
     }
 }
 
-#[cfg_attr(
-    test,
-    expect(clippy::missing_const_for_fn, reason = "only const in cfg(test)"),
-    expect(unused_variables, reason = "TODO: we should validate all arguments")
-)]
 pub(crate) unsafe fn munmap(addr: *mut c_void, len: usize) -> c_int {
-    #[cfg(test)]
-    {
+    if cfg!(test) {
         0
-    }
-
-    #[cfg(not(test))]
-    {
+    } else {
         unsafe { libc::munmap(addr, len) }
     }
 }
