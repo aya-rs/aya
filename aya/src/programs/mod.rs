@@ -134,8 +134,9 @@ use crate::{
     pin::PinError,
     programs::{
         links::{
-            FdLink, FdLinkId, LinkError, LinkInfo, Links, ProgAttachLink, define_link_wrapper,
-            id_as_key, impl_try_from_fdlink, impl_try_into_fdlink,
+            FdLink, FdLinkId, LinkError, LinkInfo, LinkUpdate, Links, ProgAttachLink,
+            define_link_wrapper, id_as_key, impl_program_adopt_link, impl_try_from_fdlink,
+            impl_try_into_fdlink,
         },
         perf_attach::{
             PerfLink, PerfLinkIdInner, PerfLinkInner, attach_bpf_link, attach_perf_event,
@@ -147,8 +148,47 @@ use crate::{
         bpf_prog_get_fd_by_id, bpf_prog_query, bpf_prog_test_run, bpf_prog_test_run_raw_tp,
         bpf_prog_test_run_tracing, iter_link_ids, retry_with_verifier_logs,
     },
-    util::KernelVersion,
+    util::{KernelVersion, ifindex_from_ifname},
 };
+
+/// A network interface identified by name or index.
+///
+/// Names are resolved in the calling thread's network namespace when an operation is performed.
+/// Indices must refer to an interface in that same namespace.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum NetworkInterface<'a> {
+    /// The name of the interface, such as `"eth0"`.
+    Name(&'a str),
+    /// The interface index. Existence is not checked when resolving this variant.
+    Index(u32),
+}
+
+impl NetworkInterface<'_> {
+    pub(crate) fn if_index(self) -> io::Result<u32> {
+        match self {
+            Self::Name(name) => ifindex_from_ifname(name),
+            Self::Index(index) => Ok(index),
+        }
+    }
+}
+
+impl<'a> From<&'a str> for NetworkInterface<'a> {
+    fn from(name: &'a str) -> Self {
+        Self::Name(name)
+    }
+}
+
+impl<'a> From<&'a String> for NetworkInterface<'a> {
+    fn from(name: &'a String) -> Self {
+        Self::Name(name)
+    }
+}
+
+impl From<u32> for NetworkInterface<'_> {
+    fn from(index: u32) -> Self {
+        Self::Index(index)
+    }
+}
 
 /// Error type returned when working with programs.
 #[derive(Debug, Error)]
