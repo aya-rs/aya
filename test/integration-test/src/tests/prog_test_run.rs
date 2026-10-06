@@ -5,7 +5,10 @@ use aya::{
         RawTracePoint, RawTracePointTestRunResult, SchedClassifier, SocketFilter, TestRun as _, Xdp,
     },
 };
-use integration_common::test_run::{IF_INDEX, XDP_MODIFY_LEN, XDP_MODIFY_VAL};
+use integration_common::test_run::{
+    CHANGE_HEAD_LEN, CHANGE_HEAD_VAL, CHANGE_TAIL_GROW_LEN, CHANGE_TAIL_SHRINK_LEN, IF_INDEX,
+    XDP_MODIFY_LEN, XDP_MODIFY_VAL,
+};
 
 // https://github.com/torvalds/linux/blob/8fdb05de0/tools/testing/selftests/bpf/prog_tests/xdp_context_test_run.c#L48
 // `sizeof(pkt_v4)` = Size(Ethernet) + Size(IPv4) + Size(TCP) = 14 + 20 + 20
@@ -357,4 +360,114 @@ fn test_xdp_context() {
     assert!(!duration.is_zero());
     assert_eq!(data_size_out as usize, PKT_V4_SIZE);
     assert_eq!(ctx_size_out as usize, size_of::<XdpMd>());
+}
+
+/// Runs the classifier `name` from the `test-run` object against a packet of
+/// `PKT_V4_SIZE` bytes with a recognizable pattern, returning the input packet,
+/// the test run result, and the output buffer (sized with enough slack for
+/// programs that grow the packet).
+fn run_classifier(name: &str) -> (Vec<u8>, TestRunResult, Vec<u8>) {
+    let mut bpf = Ebpf::load(crate::TEST_RUN).unwrap();
+    let prog: &mut SchedClassifier = bpf.program_mut(name).unwrap().try_into().unwrap();
+    prog.load().unwrap();
+
+    let data_in: Vec<u8> = (0..PKT_V4_SIZE).map(|i| i as u8).collect();
+    let mut data_out = vec![0u8; PKT_V4_SIZE * 2];
+
+    let opts = TestRunOptions {
+        data_in: Some(&data_in),
+        data_out: Some(&mut data_out),
+        ..TestRunOptions::default()
+    };
+    let result = prog.test_run(opts).unwrap();
+
+    (data_in, result, data_out)
+}
+
+#[test_log::test]
+fn test_classifier_change_head() {
+    let kernel_version = aya::util::KernelVersion::current().unwrap();
+    // bpf_skb_change_head was introduced in v4.10 (3a0af8fd61f9, "bpf:
+    // BPF for lightweight tunnel infrastructure") and BPF_PROG_TEST_RUN for
+    // sched_cls in v4.12 (1cf1cae963c2), so the latter is the binding
+    // requirement.
+    if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
+        return;
+    }
+
+    let (
+        data_in,
+        TestRunResult {
+            return_value,
+            data_size_out,
+            ..
+        },
+        data_out,
+    ) = run_classifier("test_change_head");
+
+    assert_eq!(return_value, 0, "Expected TC_ACT_OK(0)");
+    assert_eq!(data_size_out as usize, PKT_V4_SIZE + CHANGE_HEAD_LEN);
+    assert_eq!(
+        &data_out[..CHANGE_HEAD_LEN],
+        &[CHANGE_HEAD_VAL; CHANGE_HEAD_LEN]
+    );
+    assert_eq!(
+        &data_out[CHANGE_HEAD_LEN..PKT_V4_SIZE + CHANGE_HEAD_LEN],
+        &*data_in
+    );
+}
+
+#[test_log::test]
+fn test_classifier_change_tail_grow() {
+    let kernel_version = aya::util::KernelVersion::current().unwrap();
+    // bpf_skb_change_tail was introduced in v4.9 (5293efe62df8, "bpf: add
+    // bpf_skb_change_tail helper") and BPF_PROG_TEST_RUN for sched_cls in
+    // v4.12 (1cf1cae963c2), so the latter is the binding requirement.
+    if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
+        return;
+    }
+
+    let (
+        data_in,
+        TestRunResult {
+            return_value,
+            data_size_out,
+            ..
+        },
+        data_out,
+    ) = run_classifier("test_change_tail_grow");
+
+    let grow_len = CHANGE_TAIL_GROW_LEN as usize;
+    assert_eq!(return_value, 0, "Expected TC_ACT_OK(0)");
+    assert_eq!(data_size_out as usize, PKT_V4_SIZE + grow_len);
+    assert_eq!(&data_out[..PKT_V4_SIZE], &*data_in);
+    // The kernel zero-fills the newly added tail bytes.
+    assert_eq!(
+        &data_out[PKT_V4_SIZE..PKT_V4_SIZE + grow_len],
+        &*vec![0u8; grow_len]
+    );
+}
+
+#[test_log::test]
+fn test_classifier_change_tail_shrink() {
+    let kernel_version = aya::util::KernelVersion::current().unwrap();
+    // See test_classifier_change_tail_grow.
+    if kernel_version < aya::util::KernelVersion::new(4, 12, 0) {
+        return;
+    }
+
+    let (
+        data_in,
+        TestRunResult {
+            return_value,
+            data_size_out,
+            ..
+        },
+        data_out,
+    ) = run_classifier("test_change_tail_shrink");
+
+    let new_len = PKT_V4_SIZE - CHANGE_TAIL_SHRINK_LEN as usize;
+    assert_eq!(return_value, 0, "Expected TC_ACT_OK(0)");
+    assert_eq!(data_size_out as usize, new_len);
+    assert_eq!(&data_out[..new_len], &data_in[..new_len]);
 }
