@@ -172,10 +172,9 @@ fn probe_supported_programs() {
     // BPF trampoline. On arm64 kernels before 6.4 this can fail with `-ENOTSUPP`.
     // https://github.com/torvalds/linux/blob/457391b03/kernel/bpf/syscall.c#L3319-L3333
     // https://github.com/torvalds/linux/blob/457391b03/kernel/bpf/trampoline.c#L234-L237
-    let kern_version = if cfg!(target_arch = "aarch64") {
-        KernelVersion::new(6, 4, 0)
-    } else {
-        KernelVersion::new(5, 5, 0)
+    let kern_version = cfg_select! {
+        target_arch = "aarch64" => KernelVersion::new(6, 4, 0),
+        _ => KernelVersion::new(5, 5, 0),
     };
     kernel_assert!(is_supported!(ProgramType::Tracing), kern_version); // Requires `CONFIG_DEBUG_INFO_BTF=y`
 
@@ -184,11 +183,10 @@ fn probe_supported_programs() {
     kernel_assert!(is_supported!(ProgramType::Extension), kern_version);
 
     {
-        let kern_version = if cfg!(target_arch = "aarch64") {
-            // Same attach-time BPF trampoline limitation as tracing above.
-            KernelVersion::new(6, 4, 0)
-        } else {
-            KernelVersion::new(5, 7, 0)
+        // Same attach-time BPF trampoline limitation as tracing above.
+        let kern_version = cfg_select! {
+            target_arch = "aarch64" => KernelVersion::new(6, 4, 0),
+            _ => KernelVersion::new(5, 7, 0),
         };
         // `lsm` requires `CONFIG_DEBUG_INFO_BTF=y` & `CONFIG_BPF_LSM=y`
         // Ways to check if `CONFIG_BPF_LSM` is enabled:

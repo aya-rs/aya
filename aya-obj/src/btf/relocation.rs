@@ -1292,10 +1292,13 @@ impl ComputedRelocation {
                 _ => (),
             },
             RelocationKind::FieldLShift64 => {
-                value.value = if cfg!(target_endian = "little") {
-                    64 - u64::from(bit_off + bit_size - byte_off * 8)
-                } else {
-                    u64::from((8 - byte_size) * 8 + (bit_off - byte_off * 8))
+                value.value = cfg_select! {
+                    target_endian = "little" => {
+                        64 - u64::from(bit_off + bit_size - byte_off * 8)
+                    }
+                    target_endian = "big" => {
+                        u64::from((8 - byte_size) * 8 + (bit_off - byte_off * 8))
+                    }
                 }
             }
             RelocationKind::FieldRShift64 => {

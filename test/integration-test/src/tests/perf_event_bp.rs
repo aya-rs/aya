@@ -297,12 +297,10 @@ fn perf_event_bp() {
     assert_eq!(modprobe_contents_before, modprobe_contents_after);
 
     let execute_addr = {
-        let getpgid_symbol = if cfg!(target_arch = "x86_64") {
-            "__x64_sys_getpgid"
-        } else if cfg!(target_arch = "aarch64") {
-            "__arm64_sys_getpgid"
-        } else {
-            panic!("unsupported architecture");
+        let getpgid_symbol = cfg_select! {
+            target_arch = "x86_64" => "__x64_sys_getpgid",
+            target_arch = "aarch64" => "__arm64_sys_getpgid",
+            _ => panic!("unsupported architecture"),
         };
         get_address(&kernel_symbols, getpgid_symbol)
             .unwrap_or_else(|| panic!("{getpgid_symbol} not found in {kernel_symbols:?}"))
