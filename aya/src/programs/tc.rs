@@ -195,12 +195,12 @@ pub struct NlOptions {
     /// In direct-action mode the major 16 bits of the resulting class id come
     /// from this attribute and the minor 16 bits come from the program at run
     /// time via `__sk_buff::tc_classid`. This split requires Linux 4.6 (commit
-    /// [`3a461da1d03e`]).
+    /// [`3a461da1d`]).
     ///
     /// When [`None`], no attribute is sent and the filter is not bound to a
     /// class.
     ///
-    /// [`3a461da1d03e`]: https://github.com/torvalds/linux/commit/3a461da1d
+    /// [`3a461da1d`]: https://github.com/torvalds/linux/commit/3a461da1d
     #[doc(alias = "TCA_BPF_CLASSID")]
     pub classid: Option<TcHandle>,
 }

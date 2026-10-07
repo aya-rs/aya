@@ -27,7 +27,8 @@ use crate::{
 };
 
 /// Represents a kernel version, in major.minor.release version.
-// Adapted from https://docs.rs/procfs/latest/procfs/sys/kernel/struct.Version.html.
+// Adapted from procfs 0.15.1:
+// https://github.com/eminence/procfs/blob/16ccc15aa/src/sys/kernel/mod.rs#L17-L70
 #[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub struct KernelVersion {
     pub(crate) major: u8,
