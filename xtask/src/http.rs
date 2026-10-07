@@ -44,10 +44,16 @@ impl HttpClient {
                 Ok(text) => return Ok(text),
                 Err(error) => error,
             };
-            if !matches!(error.downcast_ref(), Some(ureq::Error::Timeout(_))) {
+            let Some(cause) = error.downcast_ref::<ureq::Error>() else {
                 return Err(error);
-            }
-            println!("{error:#}; retrying (attempt {attempt}/3 failed)");
+            };
+            let delay = match cause {
+                ureq::Error::Timeout(_) => Duration::ZERO,
+                ureq::Error::StatusCode(503) => Duration::from_secs(1),
+                _ => return Err(error),
+            };
+            println!("{error:#}; retrying in {delay:?} (attempt {attempt}/3 failed)");
+            std::thread::sleep(delay);
         }
         self.get_text_once(url)
     }
@@ -329,32 +335,52 @@ mod tests {
 
     #[test]
     #[cfg_attr(miri, ignore = "requires networking")]
-    fn get_text_does_not_retry_http_errors() -> Result<()> {
-        let listener = TcpListener::bind("127.0.0.1:0")?;
-        listener.set_nonblocking(true)?;
-        let url = format!("http://{}/", listener.local_addr()?);
-        let client = thread::spawn(move || {
-            let client = HttpClient {
-                agent: ureq::Agent::config_builder()
-                    .proxy(None)
-                    .timeout_global(Some(Duration::from_secs(1)))
-                    .build()
-                    .into(),
-            };
-            client.get_text(&url)
-        });
-        let mut stream = read_request(&listener)?;
-        stream.write_all(
-            b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n",
-        )?;
-        let error = client
-            .join()
-            .expect("client panicked")
-            .expect_err("404 must fail");
-        assert!(
-            matches!(error.downcast_ref(), Some(ureq::Error::StatusCode(404))),
-            "{error:#}"
-        );
+    fn get_text_http_statuses() -> Result<()> {
+        for (statuses, expected) in [
+            ([404].as_slice(), Err(404)),
+            ([503, 200].as_slice(), Ok("ok")),
+            ([503, 503, 503].as_slice(), Err(503)),
+        ] {
+            let listener = TcpListener::bind("127.0.0.1:0")?;
+            listener.set_nonblocking(true)?;
+            let url = format!("http://{}/", listener.local_addr()?);
+            let client = thread::spawn(move || {
+                let client = HttpClient {
+                    agent: ureq::Agent::config_builder()
+                        .proxy(None)
+                        .timeout_global(Some(Duration::from_secs(1)))
+                        .build()
+                        .into(),
+                };
+                client.get_text(&url)
+            });
+            for status in statuses {
+                let mut stream = read_request(&listener)?;
+                write!(
+                    stream,
+                    "HTTP/1.1 {status} Test\r\nContent-Length: 2\r\nConnection: close\r\n\r\nok",
+                )?;
+            }
+            let result = client.join().expect("client panicked");
+            match expected {
+                Ok(text) => assert_eq!(result?, text),
+                Err(status) => {
+                    let error = result.expect_err("HTTP error must fail");
+                    let error = error.downcast::<ureq::Error>()?;
+                    let ureq::Error::StatusCode(actual) = error else {
+                        panic!("expected HTTP status {status}, got {error}");
+                    };
+                    assert_eq!(actual, status);
+                }
+            }
+            assert_eq!(
+                listener
+                    .accept()
+                    .expect_err("unexpected extra request")
+                    .kind(),
+                io::ErrorKind::WouldBlock
+            );
+        }
         Ok(())
     }
 
