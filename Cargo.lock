@@ -1996,6 +1996,7 @@ dependencies = [
  "proc-macro2",
  "public-api",
  "quote",
+ "rstest",
  "rustdoc-json",
  "rustup-toolchain",
  "syn 3.0.6",
