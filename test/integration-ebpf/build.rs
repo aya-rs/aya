@@ -15,7 +15,7 @@ use xtask::AYA_BUILD_INTEGRATION_BPF;
 ///
 /// [bindeps]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html?highlight=feature#artifact-dependencies
 fn main() {
-    println!("cargo:rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
+    println!("cargo::rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
 
     let build_integration_bpf = env::var(AYA_BUILD_INTEGRATION_BPF)
         .as_deref()
@@ -24,6 +24,6 @@ fn main() {
 
     if build_integration_bpf {
         let bpf_linker = which("bpf-linker").unwrap();
-        println!("cargo:rerun-if-changed={}", bpf_linker.to_str().unwrap());
+        println!("cargo::rerun-if-changed={}", bpf_linker.to_str().unwrap());
     }
 }

@@ -26,7 +26,7 @@ use xtask::{AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR, exec, install_libbpf_headers_
 /// that naively attempting to `cargo test --no-run` this crate will produce binaries that fail at
 /// runtime because the stubs are inadequate for actually running the tests.
 fn main() -> Result<()> {
-    println!("cargo:rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
+    println!("cargo::rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
 
     // TODO(https://github.com/rust-lang/cargo/issues/4001): generalize this and move it to
     // aya-build if we can determine that we're in a check build.
@@ -121,7 +121,7 @@ fn main() -> Result<()> {
         };
 
         let libbpf_dir = workspace_root.join(LIBBPF_DIR);
-        println!("cargo:rerun-if-changed={libbpf_dir}");
+        println!("cargo::rerun-if-changed={libbpf_dir}");
 
         let libbpf_headers_dir = out_dir.join("libbpf_headers");
         let mut cmd = install_libbpf_headers_cmd(&libbpf_dir, &libbpf_headers_dir);
@@ -169,7 +169,7 @@ fn main() -> Result<()> {
             use std::{io::Write as _, os::unix::ffi::OsStrExt as _};
 
             let mut stdout = std::io::stdout().lock();
-            stdout.write_all(b"cargo:rerun-if-changed=")?;
+            stdout.write_all(b"cargo::rerun-if-changed=")?;
             stdout.write_all(path.as_os_str().as_bytes())?;
             stdout.write_all(b"\n")?;
 

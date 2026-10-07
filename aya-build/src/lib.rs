@@ -42,18 +42,18 @@ fn target_arch_fixup(target_arch: Cow<'_, str>) -> Cow<'_, str> {
 /// prevent their use for the time being.
 ///
 /// [bindeps]: https://doc.rust-lang.org/nightly/cargo/reference/unstable.html?highlight=feature#artifact-dependencies
-#[expect(clippy::print_stdout, reason = "println! is used for cargo:warning")]
+#[expect(clippy::print_stdout, reason = "println! is used for cargo::warning")]
 pub fn build_ebpf<'a>(
     packages: impl IntoIterator<Item = Package<'a>>,
     toolchain: Toolchain<'a>,
 ) -> Result<()> {
     const AYA_BUILD_SKIP: &str = "AYA_BUILD_SKIP";
-    println!("cargo:rerun-if-env-changed={AYA_BUILD_SKIP}");
+    println!("cargo::rerun-if-env-changed={AYA_BUILD_SKIP}");
     if let Some(aya_build_skip) = env::var_os(AYA_BUILD_SKIP)
         && (aya_build_skip.eq("1") || aya_build_skip.eq_ignore_ascii_case("true"))
     {
         println!(
-            "cargo:warning={AYA_BUILD_SKIP}={}; skipping eBPF build",
+            "cargo::warning={AYA_BUILD_SKIP}={}; skipping eBPF build",
             aya_build_skip.display()
         );
         return Ok(());
@@ -95,7 +95,7 @@ pub fn build_ebpf<'a>(
             OsStr::new(toolchain.as_str()),
         ],
         Err(err) => {
-            println!("cargo:warning=which({RUSTUP})={err}; proceeding with current toolchain");
+            println!("cargo::warning=which({RUSTUP})={err}; proceeding with current toolchain");
             &[]
         }
     };
@@ -134,7 +134,7 @@ pub fn build_ebpf<'a>(
         // *library* target or any of its dependencies change. Since we depend on `name`'s *binary*
         // targets, that only gets us half of the way. This stanza ensures cargo will rebuild us on
         // changes to the binaries too, which gets us the rest of the way.
-        println!("cargo:rerun-if-changed={root_dir}");
+        println!("cargo::rerun-if-changed={root_dir}");
 
         let mut cmd = cmd("cargo");
         cmd.args([
@@ -223,7 +223,7 @@ pub fn build_ebpf<'a>(
         let stderr = std::thread::spawn(move || {
             for line in stderr.lines() {
                 let line = line.expect("read line");
-                println!("cargo:warning={line}");
+                println!("cargo::warning={line}");
             }
         });
 
@@ -244,11 +244,11 @@ pub fn build_ebpf<'a>(
                 }
                 Message::CompilerMessage(CompilerMessage { message, .. }) => {
                     for line in message.rendered.unwrap_or_default().split('\n') {
-                        println!("cargo:warning={line}");
+                        println!("cargo::warning={line}");
                     }
                 }
                 Message::TextLine(line) => {
-                    println!("cargo:warning={line}");
+                    println!("cargo::warning={line}");
                 }
                 _ => {}
             }
@@ -298,14 +298,14 @@ impl<'a> Toolchain<'a> {
 }
 
 /// Emit cfg flags that describe the desired BPF target architecture.
-#[expect(clippy::print_stdout, reason = "println! is used for cargo:warning")]
+#[expect(clippy::print_stdout, reason = "println! is used for cargo::warning")]
 pub fn emit_bpf_target_arch_cfg() -> Result<()> {
     // Users may directly set this environment variable in situations where
     // using RUSTFLAGS to set `--cfg bpf_target_arch="..."` is not possible or
     // not ergonomic. In contrast to RUSTFLAGS this mechanism reuses the target
     // cache for all values, producing many more invalidations.
     const AYA_BPF_TARGET_ARCH: &str = "AYA_BPF_TARGET_ARCH";
-    println!("cargo:rerun-if-env-changed={AYA_BPF_TARGET_ARCH}");
+    println!("cargo::rerun-if-env-changed={AYA_BPF_TARGET_ARCH}");
 
     // The presence of this environment variable indicates that `--cfg
     // bpf_target_arch="..."` was passed to the compiler, so we don't need to
@@ -351,7 +351,7 @@ pub fn emit_bpf_target_arch_cfg() -> Result<()> {
             };
             target_arch_fixup(target_arch)
         };
-        println!("cargo:rustc-cfg=bpf_target_arch=\"{bpf_target_arch}\"");
+        println!("cargo::rustc-cfg=bpf_target_arch=\"{bpf_target_arch}\"");
     }
 
     print!("cargo::rustc-check-cfg=cfg(bpf_target_arch, values(");
