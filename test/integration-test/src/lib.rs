@@ -72,6 +72,7 @@ bpf_file!(
     LPM_TRIE => "lpm-trie",
     MAP_TEST => "map-test",
     MEMMOVE_TEST => "memmove-test",
+    MULTIMAP_LEGACY => "multimap-legacy",
     NAME_TEST => "name-test",
     PASS => "pass",
     PER_CPU_ARRAY => "per-cpu-array",
