@@ -60,6 +60,25 @@ trait PtRegsLayout {
     fn rc_reg(&self) -> &Self::Reg;
 }
 
+/// Returns the offset of the field holding the `index`th syscall argument
+/// within the runtime [`pt_regs`] layout, or `None` if the index is out of
+/// range. The offset may reference a field that is part of the kernel's
+/// internal `struct pt_regs` but not of the ABI-stable `user_pt_regs`
+/// exposed to userspace (e.g. `orig_x0` on `AArch64`).
+///
+/// Callers are expected to read the value using a helper such as
+/// [`bpf_probe_read_kernel`](crate::helpers::bpf_probe_read_kernel):
+/// kprobes on syscall wrappers receive a `const struct pt_regs *` argument
+/// that the verifier tracks as a scalar, so reinterpreting it as
+/// `&pt_regs` and accessing fields directly is rejected.
+///
+/// Only implemented on architectures that support syscall argument
+/// extraction.
+#[cfg(any(bpf_target_arch = "aarch64", bpf_target_arch = "x86_64"))]
+trait SyscallPtRegsLayout: PtRegsLayout {
+    fn syscall_arg_reg_offset(index: usize) -> Option<usize>;
+}
+
 #[cfg(bpf_target_arch = "aarch64")]
 impl PtRegsLayout for pt_regs {
     type Reg = crate::bindings::__u64;
@@ -78,6 +97,37 @@ impl PtRegsLayout for pt_regs {
         // Return codes use libbpf's __PT_RC_REG (regs[0]/x0).
         // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L248-L251
         &self.regs[0]
+    }
+}
+
+#[cfg(bpf_target_arch = "aarch64")]
+impl SyscallPtRegsLayout for pt_regs {
+    fn syscall_arg_reg_offset(index: usize) -> Option<usize> {
+        // `AArch64` syscall arguments differ from regular call arguments only
+        // in the first argument: it lives in `orig_x0`, which is part of the
+        // kernel's internal `struct pt_regs` but NOT of the ABI-stable
+        // `user_pt_regs` that `pt_regs` aliases here.
+        // https://github.com/torvalds/linux/blob/e5f0a698b/arch/arm64/include/uapi/asm/ptrace.h#L88-L93
+        // https://github.com/torvalds/linux/blob/e5f0a698b/arch/arm64/include/asm/ptrace.h#L154-L166
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L238-L246
+        //
+        // Limitation: on kernels without the `orig_x0` synchronization fix,
+        // a ptrace syscall-entry stop can change `regs[0]` without updating
+        // `orig_x0`. The older native wrapper invokes the syscall with the
+        // changed `regs[0]`, while this accessor reports the original value.
+        // See https://github.com/torvalds/linux/commit/e057b947
+        // and the fix in https://github.com/torvalds/linux/commit/5a87e8c7
+        // which makes `orig_x0` authoritative for native syscall invocation.
+        let offset = match index {
+            // `orig_x0` immediately follows the `user_regs` prefix of the
+            // kernel's `struct pt_regs`.
+            // https://github.com/torvalds/linux/blob/e5f0a698b/arch/arm64/include/asm/ptrace.h#L154-L166
+            0 => size_of::<Self>(),
+            // syscall args 1..5 live in `regs[1..5]`.
+            n @ 1..=5 => core::mem::offset_of!(Self, regs) + n * size_of::<Self::Reg>(),
+            _ => return None,
+        };
+        Some(offset)
     }
 }
 
@@ -240,6 +290,28 @@ impl PtRegsLayout for pt_regs {
     }
 }
 
+#[cfg(bpf_target_arch = "x86_64")]
+impl SyscallPtRegsLayout for pt_regs {
+    fn syscall_arg_reg_offset(index: usize) -> Option<usize> {
+        // x86-64 syscall arguments differ from regular call arguments only in
+        // the 4th argument (index 3): it is passed in `r10` instead of `rcx`
+        // because `rcx` is clobbered by the `syscall` instruction (it holds
+        // the return address).
+        // https://github.com/torvalds/linux/blob/e5f0a698b/arch/x86/include/asm/ptrace.h#L103-L155
+        // https://github.com/torvalds/linux/blob/e5f0a698b/tools/lib/bpf/bpf_tracing.h#L93-L102
+        let offset = match index {
+            0 => core::mem::offset_of!(Self, rdi),
+            1 => core::mem::offset_of!(Self, rsi),
+            2 => core::mem::offset_of!(Self, rdx),
+            3 => core::mem::offset_of!(Self, r10),
+            4 => core::mem::offset_of!(Self, r8),
+            5 => core::mem::offset_of!(Self, r9),
+            _ => return None,
+        };
+        Some(offset)
+    }
+}
+
 /// Coerces a `T` from the `n`th argument of a `pt_regs` context where `n` starts
 /// at 0 and increases by 1 for each successive argument.
 pub(crate) fn arg<T: Argument>(ctx: &pt_regs, n: usize) -> Option<T> {
@@ -252,6 +324,35 @@ pub(crate) fn arg<T: Argument>(ctx: &pt_regs, n: usize) -> Option<T> {
         reason = "architecture-specific"
     )]
     Some(T::from_register((*reg) as u64))
+}
+
+/// Coerces a `T` from the `n`th syscall argument of a `pt_regs` context where
+/// `n` starts at 0 and increases by 1 for each successive argument.
+///
+/// Unlike [`arg`], this uses the syscall calling convention rather than the
+/// regular call convention. On some architectures this differs from [`arg`]:
+///
+/// - `AArch64`: the first syscall argument lives in `orig_x0`, not `regs[0]`
+///   (which is overwritten with the return value).
+/// - `x86-64`: the 4th syscall argument (index 3) is passed in `r10` rather
+///   than `rcx` (which is clobbered by the `syscall` instruction).
+///
+/// Reads are performed with [`bpf_probe_read_kernel`] because `pt_regs`
+/// pointers obtained from a kprobe on a syscall wrapper are tracked by the
+/// verifier as scalars and cannot be dereferenced directly.
+///
+/// # Safety
+///
+/// Whether the returned arguments are meaningful depends on the probed
+/// function being a syscall wrapper. The address is formed with wrapping
+/// arithmetic and read via `bpf_probe_read_kernel`, so an invalid `ctx`
+/// surfaces as `None` rather than undefined behavior.
+#[cfg(any(bpf_target_arch = "aarch64", bpf_target_arch = "x86_64"))]
+pub(crate) unsafe fn syscall_arg<T: Argument>(ctx: *const pt_regs, n: usize) -> Option<T> {
+    let offset = pt_regs::syscall_arg_reg_offset(n)?;
+    let ptr = ctx.wrapping_byte_add(offset).cast::<u64>();
+    let reg = unsafe { crate::helpers::bpf_probe_read_kernel(ptr).ok() }?;
+    Some(T::from_register(reg))
 }
 
 /// Coerces a `T` from the return value of a `pt_regs` context.
