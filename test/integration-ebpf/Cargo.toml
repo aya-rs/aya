@@ -81,6 +81,10 @@ name = "memmove-test"
 path = "src/memmove_test.rs"
 
 [[bin]]
+name = "multimap"
+path = "src/multimap.rs"
+
+[[bin]]
 name = "name-test"
 path = "src/name_test.rs"
 
