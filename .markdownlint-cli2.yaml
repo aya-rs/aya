@@ -7,4 +7,5 @@ ignores:
   - "**/CHANGELOG.md"
   - "bazel-*/**/*"
   - "target/**/*"
+  - "xtask/iproute2/**/*"
   - "xtask/libbpf/**/*"
