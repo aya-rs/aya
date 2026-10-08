@@ -9,6 +9,10 @@ pub mod array {
     pub const ARRAY_LEN: u32 = 4;
 }
 
+pub mod multimap {
+    pub const VALUES: [u64; 3] = [24, 42, 44];
+}
+
 pub mod prog_array {
     /// Slot written by the uprobe after `tail_call` falls through.
     pub const RESULT_INDEX: u32 = 0;
