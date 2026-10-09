@@ -56,6 +56,11 @@ use tracepoint::TracePoint;
 use uprobe::{UProbe, UProbeKind};
 use xdp::Xdp;
 
+/// Declares a BTF map in the `.maps` section.
+///
+/// `name = "..."` overrides the exported map name. `pin_by_name` requests
+/// automatic pinning and reuse by the loader, and changes the static's type
+/// to `aya_ebpf::btf_maps::Pinned<OriginalType>`.
 #[proc_macro_attribute]
 pub fn btf_map(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match BtfMap::parse(attrs.into(), item.into()) {

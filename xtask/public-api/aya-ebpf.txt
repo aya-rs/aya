@@ -14,6 +14,8 @@ pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::get_ptr_mut(&sel
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::set(&self, u32, &T, u64) -> core::result::Result<(), i32>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
@@ -30,6 +32,8 @@ pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH
 pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::insert(&self, &T, u64) -> core::result::Result<(), i32>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
 pub const fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::new() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
+pub const fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> core::default::Default for aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
 pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::default() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> core::marker::Sync for aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
@@ -45,6 +49,8 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cgroup_ar
 pub fn aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>::current_task_under_cgroup(&self, u32) -> core::result::Result<bool, aya_ebpf_cty::od::c_long>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>::default() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
@@ -60,6 +66,8 @@ impl<V> aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
 pub fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::get_ptr_mut(&self) -> *mut V
 impl<V> aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
 pub const fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::new() -> Self
+impl<V> aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+pub const fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<V> core::default::Default for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
 pub fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::default() -> Self
 impl<V> core::marker::Sync for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
@@ -74,6 +82,8 @@ impl<V> aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
 pub fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::get_ptr_mut(&self) -> *mut V
 impl<V> aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
 pub const fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::new() -> Self
+impl<V> aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+pub const fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<V> core::default::Default for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
 pub fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::default() -> Self
 impl<V> core::marker::Sync for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
@@ -91,6 +101,8 @@ pub fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::get_or_insert_ptr_mut(&
 pub fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::get_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup) -> *mut T
 impl<T> aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
 pub const fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::new() -> Self
+impl<T> aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
+pub const fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T> core::default::Default for aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
 pub fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::default() -> Self
 impl<T> core::marker::Sync for aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
@@ -104,6 +116,8 @@ pub mod aya_ebpf::btf_maps::cpu_map
 #[repr(C)] pub struct aya_ebpf::btf_maps::cpu_map::CpuMap<const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>::redirect(&self, u32, u64) -> core::result::Result<u32, u32>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>
@@ -123,6 +137,8 @@ pub fn aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>::get_ifindex(&sel
 pub fn aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>::redirect(&self, u32, u64) -> core::result::Result<u32, u32>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>::default() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>
@@ -140,6 +156,8 @@ pub fn aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>::get_ifi
 pub fn aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>::redirect(&self, u32, u64) -> core::result::Result<u32, u32>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>::default() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>
@@ -159,6 +177,8 @@ pub fn aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>::insert(&
 pub fn aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>::remove(&self, &K) -> core::result::Result<(), i32>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>
@@ -177,6 +197,8 @@ pub fn aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>::inser
 pub fn aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>::remove(&self, &K) -> core::result::Result<(), i32>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>
@@ -195,6 +217,8 @@ pub fn aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>:
 pub fn aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::remove(&self, &K) -> core::result::Result<(), i32>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
@@ -213,6 +237,8 @@ pub fn aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::in
 pub fn aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::remove(&self, &K) -> core::result::Result<(), i32>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
@@ -230,6 +256,8 @@ pub fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::get_or_insert_ptr_mut
 pub fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::get_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode) -> *mut T
 impl<T> aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
 pub const fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::new() -> Self
+impl<T> aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
+pub const fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T> core::default::Default for aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
 pub fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::default() -> Self
 impl<T> core::marker::Sync for aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
@@ -259,6 +287,8 @@ pub fn aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>::insert(&
 pub fn aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>::remove(&self, &aya_ebpf::maps::lpm_trie::Key<K>) -> core::result::Result<(), i32>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>
@@ -274,6 +304,8 @@ impl<V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ArrayO
 pub fn aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>::get(&self, u32) -> core::option::Option<&V>
 impl<V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<V: aya_ebpf::btf_maps::MapDef, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>::get_value_ptr_mut(&self, u32, &<V as aya_ebpf::btf_maps::private::MapDef>::Key) -> core::option::Option<*mut <V as aya_ebpf::btf_maps::private::MapDef>::Value>
 impl<V: aya_ebpf::btf_maps::SafeInnerLookup, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>
@@ -292,6 +324,8 @@ impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::Has
 pub unsafe fn aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>::get(&self, &K) -> core::option::Option<&V>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, V: aya_ebpf::btf_maps::MapDef, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>
 pub unsafe fn aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>::get_value(&self, &K, &<V as aya_ebpf::btf_maps::private::MapDef>::Key) -> core::option::Option<&<V as aya_ebpf::btf_maps::private::MapDef>::Value>
 pub unsafe fn aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>::get_value_ptr_mut(&self, &K, &<V as aya_ebpf::btf_maps::private::MapDef>::Key) -> core::option::Option<*mut <V as aya_ebpf::btf_maps::private::MapDef>::Value>
@@ -313,6 +347,8 @@ pub fn aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>::ge
 pub fn aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>::set(&self, u32, &T, u64) -> core::result::Result<(), i32>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>
@@ -330,6 +366,8 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::perf_even
 pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::output<T, C: aya_ebpf::EbpfContext>(&self, &C, &T, u32)
 pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::output_at_index<T, C: aya_ebpf::EbpfContext>(&self, &C, u32, &T, u32)
 pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::read_value(&self, u32) -> core::result::Result<aya_ebpf::maps::perf::PerfEventValue, i32>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::default() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
@@ -346,6 +384,8 @@ pub const fn aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS
 impl<const FLAGS: usize> aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>
 pub fn aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>::output<C: aya_ebpf::EbpfContext>(&self, &C, &[u8], u32)
 pub fn aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>::output_at_index<C: aya_ebpf::EbpfContext>(&self, &C, u32, &[u8], u32)
+impl<const FLAGS: usize> aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>
+pub const fn aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>
 pub fn aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>::default() -> Self
 impl<const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>
@@ -359,6 +399,8 @@ pub mod aya_ebpf::btf_maps::program_array
 #[repr(C)] pub struct aya_ebpf::btf_maps::program_array::ProgramArray<const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
 pub unsafe fn aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>::tail_call<C: aya_ebpf::EbpfContext>(&self, &C, u32)
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
@@ -378,6 +420,8 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::queue:
 pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::peek(&self) -> core::result::Result<core::option::Option<T>, i32>
 pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::pop(&self) -> core::result::Result<core::option::Option<T>, i32>
 pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::push(&self, &T, u64) -> core::result::Result<(), i32>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
@@ -391,6 +435,8 @@ pub mod aya_ebpf::btf_maps::reuseport_sock_array
 #[repr(C)] pub struct aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<u32, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<u32, MAX_ENTRIES, FLAGS>::select_reuseport(&self, &aya_ebpf::programs::sk_reuseport::SkReuseportContext, u32) -> core::result::Result<(), aya_ebpf_cty::od::c_long>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<T, MAX_ENTRIES, FLAGS>
@@ -413,6 +459,8 @@ pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::output_unty
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::reserve(&self, u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where T: 'static
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::reserve_bytes(&self, usize, u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufBytes<'_>>
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::reserve_untyped<U: 'static>(&self, u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<U>>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
@@ -430,6 +478,8 @@ pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_or_insert_ptr_mut(&self
 pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_ptr_mut(&self, &aya_ebpf::programs::sock_addr::SockAddrContext) -> *mut T
 impl<T> aya_ebpf::btf_maps::sk_storage::SkStorage<T>
 pub const fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::new() -> Self
+impl<T> aya_ebpf::btf_maps::sk_storage::SkStorage<T>
+pub const fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T> core::default::Default for aya_ebpf::btf_maps::sk_storage::SkStorage<T>
 pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::default() -> Self
 impl<T> core::marker::Sync for aya_ebpf::btf_maps::sk_storage::SkStorage<T>
@@ -443,6 +493,8 @@ pub mod aya_ebpf::btf_maps::sock_hash
 #[repr(C)] pub struct aya_ebpf::btf_maps::sock_hash::SockHash<K, const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>::redirect_msg(&self, &aya_ebpf::programs::sk_msg::SkMsgContext, &mut K, u64) -> aya_ebpf_cty::od::c_long
 pub fn aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>::redirect_sk_lookup(&self, &aya_ebpf::programs::sk_lookup::SkLookupContext, &K, u64) -> core::result::Result<(), i32>
@@ -461,6 +513,8 @@ pub mod aya_ebpf::btf_maps::sock_map
 #[repr(C)] pub struct aya_ebpf::btf_maps::sock_map::SockMap<const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>::redirect_msg(&self, &aya_ebpf::programs::sk_msg::SkMsgContext, u32, u64) -> aya_ebpf_cty::od::c_long
 pub fn aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>::redirect_sk_lookup(&self, &aya_ebpf::programs::sk_lookup::SkLookupContext, u32, u64) -> core::result::Result<(), i32>
@@ -483,6 +537,8 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::stack:
 pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::peek(&self) -> core::result::Result<core::option::Option<T>, i32>
 pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::pop(&self) -> core::result::Result<core::option::Option<T>, i32>
 pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::push(&self, &T, u64) -> core::result::Result<(), i32>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
@@ -496,6 +552,8 @@ pub mod aya_ebpf::btf_maps::stack_trace
 #[repr(C)] pub struct aya_ebpf::btf_maps::stack_trace::StackTrace<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
 pub const fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
+pub const fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> core::default::Default for aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
 pub fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::default() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> core::marker::Sync for aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
@@ -512,6 +570,8 @@ pub fn aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>::get(&self, u32) 
 pub fn aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>::redirect(&self, u32, u64) -> core::result::Result<u32, u32>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>::default() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>
@@ -529,6 +589,8 @@ pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::get_ptr_mut(&sel
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::set(&self, u32, &T, u64) -> core::result::Result<(), i32>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::array::Array<T, MAX_ENTRIES, FLAGS>
@@ -543,6 +605,8 @@ impl<V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ArrayO
 pub fn aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>::get(&self, u32) -> core::option::Option<&V>
 impl<V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<V: aya_ebpf::btf_maps::MapDef, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>::get_value_ptr_mut(&self, u32, &<V as aya_ebpf::btf_maps::private::MapDef>::Key) -> core::option::Option<*mut <V as aya_ebpf::btf_maps::private::MapDef>::Value>
 impl<V: aya_ebpf::btf_maps::SafeInnerLookup, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ArrayOfMaps<V, MAX_ENTRIES, FLAGS>
@@ -562,6 +626,8 @@ pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH
 pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::insert(&self, &T, u64) -> core::result::Result<(), i32>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
 pub const fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::new() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
+pub const fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> core::default::Default for aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
 pub fn aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>::default() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize, const HASH_FUNCS: usize> core::marker::Sync for aya_ebpf::btf_maps::bloom_filter::BloomFilter<T, MAX_ENTRIES, FLAGS, HASH_FUNCS>
@@ -576,6 +642,8 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cgroup_ar
 pub fn aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>::current_task_under_cgroup(&self, u32) -> core::result::Result<bool, aya_ebpf_cty::od::c_long>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>::default() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::cgroup_array::CgroupArray<MAX_ENTRIES, FLAGS>
@@ -590,6 +658,8 @@ impl<V> aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
 pub fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::get_ptr_mut(&self) -> *mut V
 impl<V> aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
 pub const fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::new() -> Self
+impl<V> aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
+pub const fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<V> core::default::Default for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
 pub fn aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>::default() -> Self
 impl<V> core::marker::Sync for aya_ebpf::btf_maps::cgroup_storage::CgroupStorage<V>
@@ -606,6 +676,8 @@ pub fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::get_or_insert_ptr_mut(&
 pub fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::get_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::cgroup) -> *mut T
 impl<T> aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
 pub const fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::new() -> Self
+impl<T> aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
+pub const fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T> core::default::Default for aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
 pub fn aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>::default() -> Self
 impl<T> core::marker::Sync for aya_ebpf::btf_maps::cgrp_storage::CgrpStorage<T>
@@ -618,6 +690,8 @@ impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::cgrp_storag
 #[repr(C)] pub struct aya_ebpf::btf_maps::CpuMap<const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>::redirect(&self, u32, u64) -> core::result::Result<u32, u32>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::cpu_map::CpuMap<MAX_ENTRIES, FLAGS>
@@ -636,6 +710,8 @@ pub fn aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>::get_ifindex(&sel
 pub fn aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>::redirect(&self, u32, u64) -> core::result::Result<u32, u32>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>::default() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::dev_map::DevMap<MAX_ENTRIES, FLAGS>
@@ -652,6 +728,8 @@ pub fn aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>::get_ifi
 pub fn aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>::redirect(&self, u32, u64) -> core::result::Result<u32, u32>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>::default() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::dev_map_hash::DevMapHash<MAX_ENTRIES, FLAGS>
@@ -670,6 +748,8 @@ pub fn aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>::insert(&
 pub fn aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>::remove(&self, &K) -> core::result::Result<(), i32>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::hash_map::HashMap<K, V, MAX_ENTRIES, FLAGS>
@@ -684,6 +764,8 @@ impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::Has
 pub unsafe fn aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>::get(&self, &K) -> core::option::Option<&V>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, V: aya_ebpf::btf_maps::MapDef, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>
 pub unsafe fn aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>::get_value(&self, &K, &<V as aya_ebpf::btf_maps::private::MapDef>::Key) -> core::option::Option<&<V as aya_ebpf::btf_maps::private::MapDef>::Value>
 pub unsafe fn aya_ebpf::btf_maps::HashOfMaps<K, V, MAX_ENTRIES, FLAGS>::get_value_ptr_mut(&self, &K, &<V as aya_ebpf::btf_maps::private::MapDef>::Key) -> core::option::Option<*mut <V as aya_ebpf::btf_maps::private::MapDef>::Value>
@@ -703,6 +785,8 @@ pub fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::get_or_insert_ptr_mut
 pub fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::get_ptr_mut(&self, *mut aya_ebpf_bindings::x86_64::bindings::inode) -> *mut T
 impl<T> aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
 pub const fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::new() -> Self
+impl<T> aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
+pub const fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T> core::default::Default for aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
 pub fn aya_ebpf::btf_maps::inode_storage::InodeStorage<T>::default() -> Self
 impl<T> core::marker::Sync for aya_ebpf::btf_maps::inode_storage::InodeStorage<T>
@@ -719,6 +803,8 @@ pub fn aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>::insert(&
 pub fn aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>::remove(&self, &aya_ebpf::maps::lpm_trie::Key<K>) -> core::result::Result<(), i32>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::lpm_trie::LpmTrie<K, V, MAX_ENTRIES, FLAGS>
@@ -737,6 +823,8 @@ pub fn aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>::inser
 pub fn aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>::remove(&self, &K) -> core::result::Result<(), i32>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::hash_map::LruHashMap<K, V, MAX_ENTRIES, FLAGS>
@@ -755,6 +843,8 @@ pub fn aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>:
 pub fn aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::remove(&self, &K) -> core::result::Result<(), i32>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::hash_map::LruPerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
@@ -772,6 +862,8 @@ pub fn aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>::ge
 pub fn aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>::set(&self, u32, &T, u64) -> core::result::Result<(), i32>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::per_cpu_array::PerCpuArray<T, MAX_ENTRIES, FLAGS>
@@ -786,6 +878,8 @@ impl<V> aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
 pub fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::get_ptr_mut(&self) -> *mut V
 impl<V> aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
 pub const fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::new() -> Self
+impl<V> aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
+pub const fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<V> core::default::Default for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
 pub fn aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>::default() -> Self
 impl<V> core::marker::Sync for aya_ebpf::btf_maps::cgroup_storage::PerCpuCgroupStorage<V>
@@ -804,6 +898,8 @@ pub fn aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::in
 pub fn aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::remove(&self, &K) -> core::result::Result<(), i32>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<K, V, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::hash_map::PerCpuHashMap<K, V, MAX_ENTRIES, FLAGS>
@@ -820,6 +916,8 @@ impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::perf_even
 pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::output<T, C: aya_ebpf::EbpfContext>(&self, &C, &T, u32)
 pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::output_at_index<T, C: aya_ebpf::EbpfContext>(&self, &C, u32, &T, u32)
 pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::read_value(&self, u32) -> core::result::Result<aya_ebpf::maps::perf::PerfEventValue, i32>
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>::default() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::perf_event_array::PerfEventArray<MAX_ENTRIES, FLAGS>
@@ -835,6 +933,8 @@ pub const fn aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS
 impl<const FLAGS: usize> aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>
 pub fn aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>::output<C: aya_ebpf::EbpfContext>(&self, &C, &[u8], u32)
 pub fn aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>::output_at_index<C: aya_ebpf::EbpfContext>(&self, &C, u32, &[u8], u32)
+impl<const FLAGS: usize> aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>
+pub const fn aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>
 pub fn aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>::default() -> Self
 impl<const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::perf_event_byte_array::PerfEventByteArray<FLAGS>
@@ -847,6 +947,8 @@ impl<const FLAGS: usize> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_
 #[repr(C)] pub struct aya_ebpf::btf_maps::ProgramArray<const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
 pub unsafe fn aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>::tail_call<C: aya_ebpf::EbpfContext>(&self, &C, u32)
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::program_array::ProgramArray<MAX_ENTRIES, FLAGS>
@@ -865,6 +967,8 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::queue:
 pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::peek(&self) -> core::result::Result<core::option::Option<T>, i32>
 pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::pop(&self) -> core::result::Result<core::option::Option<T>, i32>
 pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::push(&self, &T, u64) -> core::result::Result<(), i32>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::queue::Queue<T, MAX_ENTRIES, FLAGS>
@@ -883,6 +987,8 @@ pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::output_unty
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::reserve(&self, u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<T>> where T: 'static
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::reserve_bytes(&self, usize, u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufBytes<'_>>
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::reserve_untyped<U: 'static>(&self, u64) -> core::option::Option<aya_ebpf::maps::ring_buf::RingBufEntry<U>>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::ring_buf::RingBuf<T, MAX_ENTRIES, FLAGS>
@@ -899,6 +1005,8 @@ pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_or_insert_ptr_mut(&self
 pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::get_ptr_mut(&self, &aya_ebpf::programs::sock_addr::SockAddrContext) -> *mut T
 impl<T> aya_ebpf::btf_maps::sk_storage::SkStorage<T>
 pub const fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::new() -> Self
+impl<T> aya_ebpf::btf_maps::sk_storage::SkStorage<T>
+pub const fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T> core::default::Default for aya_ebpf::btf_maps::sk_storage::SkStorage<T>
 pub fn aya_ebpf::btf_maps::sk_storage::SkStorage<T>::default() -> Self
 impl<T> core::marker::Sync for aya_ebpf::btf_maps::sk_storage::SkStorage<T>
@@ -911,6 +1019,8 @@ impl<T> core::panic::unwind_safe::UnwindSafe for aya_ebpf::btf_maps::sk_storage:
 #[repr(C)] pub struct aya_ebpf::btf_maps::SockHash<K, const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>::new() -> Self
+impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>::redirect_msg(&self, &aya_ebpf::programs::sk_msg::SkMsgContext, &mut K, u64) -> aya_ebpf_cty::od::c_long
 pub fn aya_ebpf::btf_maps::sock_hash::SockHash<K, MAX_ENTRIES, FLAGS>::redirect_sk_lookup(&self, &aya_ebpf::programs::sk_lookup::SkLookupContext, &K, u64) -> core::result::Result<(), i32>
@@ -928,6 +1038,8 @@ impl<K, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::
 #[repr(C)] pub struct aya_ebpf::btf_maps::SockMap<const MAX_ENTRIES: usize, const FLAGS: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>::redirect_msg(&self, &aya_ebpf::programs::sk_msg::SkMsgContext, u32, u64) -> aya_ebpf_cty::od::c_long
 pub fn aya_ebpf::btf_maps::sock_map::SockMap<MAX_ENTRIES, FLAGS>::redirect_sk_lookup(&self, &aya_ebpf::programs::sk_lookup::SkLookupContext, u32, u64) -> core::result::Result<(), i32>
@@ -949,6 +1061,8 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::stack:
 pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::peek(&self) -> core::result::Result<core::option::Option<T>, i32>
 pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::pop(&self) -> core::result::Result<core::option::Option<T>, i32>
 pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::push(&self, &T, u64) -> core::result::Result<(), i32>
+impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>::default() -> Self
 impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::stack::Stack<T, MAX_ENTRIES, FLAGS>
@@ -961,6 +1075,8 @@ impl<T, const MAX_ENTRIES: usize, const FLAGS: usize> core::panic::unwind_safe::
 #[repr(C)] pub struct aya_ebpf::btf_maps::StackTrace<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
 pub const fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
+pub const fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> core::default::Default for aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
 pub fn aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>::default() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize, const DEPTH: usize> core::marker::Sync for aya_ebpf::btf_maps::stack_trace::StackTrace<MAX_ENTRIES, FLAGS, DEPTH>
@@ -976,6 +1092,8 @@ pub fn aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>::get(&self, u32) 
 pub fn aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>::redirect(&self, u32, u64) -> core::result::Result<u32, u32>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>
 pub const fn aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>::new() -> Self
+impl<const MAX_ENTRIES: usize, const FLAGS: usize> aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>
+pub const fn aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>::pin_by_name(self) -> aya_ebpf::btf_maps::Pinned<Self>
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::default::Default for aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>
 pub fn aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>::default() -> Self
 impl<const MAX_ENTRIES: usize, const FLAGS: usize> core::marker::Sync for aya_ebpf::btf_maps::xsk_map::XskMap<MAX_ENTRIES, FLAGS>
@@ -989,6 +1107,7 @@ pub trait aya_ebpf::btf_maps::MapDef: aya_ebpf::btf_maps::private::MapDef
 impl<T: aya_ebpf::btf_maps::private::MapDef> aya_ebpf::btf_maps::MapDef for T
 pub trait aya_ebpf::btf_maps::SafeInnerLookup: aya_ebpf::btf_maps::private::SafeInnerLookup
 impl<T: aya_ebpf::btf_maps::private::SafeInnerLookup> aya_ebpf::btf_maps::SafeInnerLookup for T
+pub type aya_ebpf::btf_maps::Pinned<M> = <M as aya_ebpf::btf_maps::private::MapDef>::Pinned
 pub type aya_ebpf::btf_maps::ReusePortSockArray<const MAX_ENTRIES: usize, const FLAGS: usize> = aya_ebpf::btf_maps::reuseport_sock_array::ReusePortSockArrayImpl<u32, MAX_ENTRIES, FLAGS>
 pub mod aya_ebpf::helpers
 pub use aya_ebpf::helpers::generated
