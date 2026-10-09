@@ -25,6 +25,7 @@ btf_map_def!(
     /// ```
     pub struct CgroupArray<; const MAX_ENTRIES: usize, const FLAGS: usize = 0>,
     map_type: BPF_MAP_TYPE_CGROUP_ARRAY,
+    map_trait: crate::programs::tc::sealed::CgroupArrayMap,
     max_entries: MAX_ENTRIES,
     map_flags: FLAGS,
     key_type: u32,
