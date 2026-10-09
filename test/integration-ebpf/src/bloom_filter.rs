@@ -17,7 +17,7 @@ const RESULT_SLOTS: u32 = CONTAINS_ABSENT_INDEX + 1;
 #[btf_map]
 static RESULT: BtfArray<i32, { RESULT_SLOTS as usize }, 0> = BtfArray::new();
 
-#[btf_map]
+#[btf_map(pin_by_name)]
 static FILTER: BtfBloomFilter<u32, 64, 0, 3> = BtfBloomFilter::new();
 
 #[map]

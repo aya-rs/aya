@@ -75,33 +75,34 @@ fn ringbuffer_btf_map() {
 }
 
 #[rstest]
-#[case::btf(crate::MULTIMAP_BTF)]
-#[case::legacy(crate::MULTIMAP_LEGACY)]
+#[case::btf(["map_1", "map_2", "map_pin_by_name"])]
+#[case::legacy(["map_1_legacy", "map_2_legacy", "map_pin_by_name_legacy"])]
 #[test_attr(test_log::test)]
-fn pin_lifecycle_multiple_maps(#[case] elf: &[u8]) {
+fn pin_lifecycle_multiple_maps(#[case] map_names: [&str; 3]) {
+    let [_, _, pinned_name] = map_names;
     let directory = tempfile::Builder::new()
         .prefix("map-pin-")
         .tempdir_in("/sys/fs/bpf")
         .unwrap();
     let mut loader = EbpfLoader::new();
     loader.default_map_pin_directory(directory.path());
-    let map_pin_by_name_path = directory.path().join("map_pin_by_name");
+    let map_pin_by_name_path = directory.path().join(pinned_name);
 
     // Only the pin should keep the map alive between loads.
     {
-        let mut bpf = loader.load(elf).unwrap();
-        let mut map: Array<_, u64> = bpf.map_mut("map_pin_by_name").unwrap().try_into().unwrap();
+        let mut bpf = loader.load(crate::MULTIMAP).unwrap();
+        let mut map: Array<_, u64> = bpf.map_mut(pinned_name).unwrap().try_into().unwrap();
         map.set(0, &1, 0).unwrap();
     }
     assert!(map_pin_by_name_path.exists());
 
-    let mut bpf = loader.load(elf).unwrap();
-    let map_pin_by_name: Array<_, u64> = bpf.map("map_pin_by_name").unwrap().try_into().unwrap();
+    let mut bpf = loader.load(crate::MULTIMAP).unwrap();
+    let map_pin_by_name: Array<_, u64> = bpf.map(pinned_name).unwrap().try_into().unwrap();
     assert_eq!(map_pin_by_name.get(&0, 0).unwrap(), 1);
     remove_file(&map_pin_by_name_path).unwrap();
 
     // Pin and unpin through the untyped map API before using typed arrays.
-    for name in ["map_1", "map_2", "map_pin_by_name"] {
+    for name in map_names {
         let map = bpf.map(name).unwrap();
         let path = directory.path().join(name);
         map.pin(&path).unwrap();
@@ -120,7 +121,7 @@ fn pin_lifecycle_multiple_maps(#[case] elf: &[u8]) {
 
     trigger_bpf_program();
 
-    for (name, expected) in [("map_1", 24), ("map_2", 42), ("map_pin_by_name", 44)] {
+    for (name, expected) in map_names.into_iter().zip([24, 42, 44]) {
         let map: Array<_, u64> = bpf.map(name).unwrap().try_into().unwrap();
         assert_eq!(map.get(&0, 0).unwrap(), expected, "{name}");
         let path = directory.path().join(name);

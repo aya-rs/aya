@@ -30,11 +30,11 @@ fn run_with_rbpf() {
     assert_eq!(vm.execute_program().unwrap(), XDP_PASS);
 }
 
-static mut MULTIMAP_MAPS: [*mut Vec<u64>; 3] = [ptr::null_mut(); 3];
+static mut MULTIMAP_MAPS: [*mut Vec<u64>; 6] = [ptr::null_mut(); 6];
 
 #[test_log::test]
 fn use_map_with_rbpf() {
-    let mut object = Object::parse(crate::MULTIMAP_BTF).unwrap();
+    let mut object = Object::parse(crate::MULTIMAP).unwrap();
 
     assert_eq!(object.programs.len(), 1);
     assert_matches!(
@@ -47,9 +47,9 @@ fn use_map_with_rbpf() {
     // - Note that rbpf does not convert fds into real pointers,
     //   so we keeps the pointers to our maps in MULTIMAP_MAPS, to be used in helpers.
     let mut maps = HashMap::new();
-    let mut map_instances = vec![vec![0u64], vec![0u64], vec![0u64]];
+    let mut map_instances = vec![vec![0u64]; 6];
     unsafe {
-        MULTIMAP_MAPS = [ptr::null_mut(); 3];
+        MULTIMAP_MAPS = [ptr::null_mut(); 6];
     }
     for (name, map) in &object.maps {
         assert_eq!(map.key_size(), size_of::<u32>() as u32);
@@ -63,6 +63,9 @@ fn use_map_with_rbpf() {
             "map_1" => 0,
             "map_2" => 1,
             "map_pin_by_name" => 2,
+            "map_1_legacy" => 3,
+            "map_2_legacy" => 4,
+            "map_pin_by_name_legacy" => 5,
             n => panic!("unexpected map: {n}"),
         };
 
@@ -102,12 +105,12 @@ fn use_map_with_rbpf() {
         .expect("Helper failed");
     assert_eq!(vm.execute_program().unwrap(), 0);
 
-    assert_eq!(map_instances, [[24], [42], [44]]);
+    assert_eq!(map_instances, [[24], [42], [44], [24], [42], [44]]);
 }
 
 #[track_caller]
 fn bpf_map_update_elem_multimap(map: u64, key: u64, value: u64, _: u64, _: u64) -> u64 {
-    assert_matches!(map, 0xCAFE00 | 0xCAFE01 | 0xCAFE02);
+    assert_matches!(map, 0xCAFE00..=0xCAFE05);
     let key = *unsafe {
         ptr::with_exposed_provenance::<u32>(key as usize)
             .as_ref()

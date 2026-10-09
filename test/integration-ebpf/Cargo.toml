@@ -81,8 +81,8 @@ name = "memmove-test"
 path = "src/memmove_test.rs"
 
 [[bin]]
-name = "multimap-legacy"
-path = "src/multimap_legacy.rs"
+name = "multimap"
+path = "src/multimap.rs"
 
 [[bin]]
 name = "name-test"

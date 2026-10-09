@@ -14,7 +14,7 @@ use aya_ebpf::{
 };
 use integration_common::stack_trace::TestResult;
 
-#[btf_map]
+#[btf_map(pin_by_name)]
 static STACKS: BtfStackTrace<1> = BtfStackTrace::new();
 
 #[btf_map]
