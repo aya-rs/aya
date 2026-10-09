@@ -2,12 +2,22 @@
 
 use std::ffi::OsStr;
 
-use aya::{Ebpf, maps::Array, programs::UProbe};
+use aya::{EbpfLoader, maps::Array, programs::UProbe};
 use integration_common::btf_maps::ArrayValue;
 
 #[test_log::test]
 fn aya_can_load_multidimensional_array() {
-    let mut ebpf = Ebpf::load(crate::BTF_MAPS_PLAIN).unwrap();
+    let directory = tempfile::Builder::new()
+        .prefix("btf-map-pin-")
+        .tempdir_in("/sys/fs/bpf")
+        .unwrap();
+    let mut ebpf = EbpfLoader::new()
+        .default_map_pin_directory(directory.path())
+        .load(crate::BTF_MAPS_PLAIN)
+        .unwrap();
+    for name in ["BTF_ARRAY", "BTF_OUTER"] {
+        assert!(directory.path().join(name).exists());
+    }
     let program: &mut UProbe = ebpf
         .program_mut("btf_maps_plain")
         .unwrap()
@@ -37,6 +47,7 @@ fn libbpf_can_open_btf_maps() {
         maps,
         [
             ("BTF_ARRAY", size_of::<ArrayValue>()),
+            ("BTF_OUTER", size_of::<u32>()),
             ("BTF_RING_BUF", size_of::<u32>()),
         ]
         .map(|(name, value_size)| (OsStr::new(name), value_size as u32))

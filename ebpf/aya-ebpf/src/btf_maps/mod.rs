@@ -65,6 +65,8 @@ mod private {
         type Key;
         /// The value type of this map.
         type Value;
+        /// The flat definition with pin-by-name metadata.
+        type Pinned: core::ops::Deref<Target = Self>;
     }
 
     /// Sealed marker for inner-map types whose `bpf_map_lookup_elem` returns
@@ -89,6 +91,21 @@ mod private {
 pub trait MapDef: private::MapDef {}
 
 impl<T: private::MapDef> MapDef for T {}
+
+/// A BTF map definition that requests pinning by name.
+///
+/// Declare one with `#[btf_map(pin_by_name)]`. The attribute preserves access
+/// to the original map's methods through [`core::ops::Deref`].
+///
+/// ```
+/// use aya_ebpf::{btf_maps::Array, macros::btf_map};
+///
+/// #[btf_map(pin_by_name)]
+/// static COUNTERS: Array<u64, 16> = Array::new();
+/// ```
+///
+/// Inner-map templates must use the original, unpinned map type.
+pub type Pinned<M> = <M as private::MapDef>::Pinned;
 
 /// Marks a BTF map type whose fused inner lookup via [`ArrayOfMaps::get_value`]
 /// is safe without an additional `unsafe` contract from the caller.
@@ -179,8 +196,18 @@ pub(crate) fn lookup_inner_ptr_mut<M: private::MapDef>(
 /// map type `V` is encoded in BTF so that loaders can resolve the inner map
 /// template.
 macro_rules! btf_map_def {
-    // Map-of-maps (with inner_map) - rewrites into the regular arm with a
-    // `values` extra field whose initializer is `[]` (a zero-length array).
+    (@map_trait [] [$($generics:tt)*] $pinned:ty, $original:ty) => {};
+    (@map_trait [$map_trait:path] [$($generics:tt)*] $pinned:ty, $original:ty) => {
+        impl<$($generics)*> $map_trait for $pinned {
+            fn as_ptr(&self) -> *mut ::core::ffi::c_void {
+                <$original as $map_trait>::as_ptr(self)
+            }
+        }
+    };
+
+    // Keep the zero-sized `values` member separate from ordinary extra fields:
+    // libbpf requires it to remain last, including when pinning is added.
+    // https://github.com/libbpf/libbpf/blob/f5dcbae73/src/libbpf.c#L2688-L2705
     (
         $(#[$attr:meta])*
         $vis:vis struct $name:ident<
@@ -189,6 +216,7 @@ macro_rules! btf_map_def {
             $(,)?
         >,
         map_type: $map_type:ident,
+        $(map_trait: $map_trait:path,)?
         max_entries: $max_entries:expr,
         map_flags: $map_flags:expr,
         key_type: $key_ty:ty,
@@ -203,11 +231,12 @@ macro_rules! btf_map_def {
                 $(; $(const $const_gen : $const_ty $(= $const_default)?),+)?
             >,
             map_type: $map_type,
+            $(map_trait: $map_trait,)?
             max_entries: $max_entries,
             map_flags: $map_flags,
             key_type: $key_ty,
-            value_type: $value_ty,
-            values: [*const $inner_ty; 0] = []
+            value_type: $value_ty;
+            values: $inner_ty
         );
     };
 
@@ -220,11 +249,13 @@ macro_rules! btf_map_def {
             $(,)?
         >,
         map_type: $map_type:ident,
+        $(map_trait: $map_trait:path,)?
         max_entries: $max_entries:expr,
         map_flags: $map_flags:expr,
         key_type: $key_ty:ty,
         value_type: $value_ty:ty
         $(, $extra_field:ident : $extra_ty:ty = $extra_init:expr)*
+        $(; $values:ident : $inner_ty:ty)?
         $(,)?
     ) => {
         $(#[$attr])*
@@ -243,6 +274,7 @@ macro_rules! btf_map_def {
             map_flags: *const [i32; $map_flags],
 
             $($extra_field: $extra_ty,)*
+            $($values: [*const $inner_ty; 0],)?
         }
 
         // SAFETY: The struct fields are placeholder raw pointers that the
@@ -290,6 +322,7 @@ macro_rules! btf_map_def {
                     map_flags: ::core::ptr::null(),
 
                     $($extra_field: $extra_init,)*
+                    $($values: [],)?
                 }
             }
 
@@ -299,16 +332,93 @@ macro_rules! btf_map_def {
             }
         }
 
-        impl<
-            $($ty_gen,)*
-            $($(const $const_gen : $const_ty,)+)?
-        > $crate::btf_maps::private::MapDef for $name<
-            $($ty_gen,)*
-            $($($const_gen,)+)?
-        > {
-            type Key = $key_ty;
-            type Value = $value_ty;
-        }
+        const _: () = {
+            #[repr(C)]
+            #[expect(unnameable_types, reason = "named through btf_maps::Pinned<M>")]
+            pub struct Pinned<
+                $($ty_gen,)*
+                $($(const $const_gen : $const_ty,)+)?
+            > {
+                r#type: *const [i32; $crate::bindings::bpf_map_type::$map_type as usize],
+                key: *const $key_ty,
+                value: *const $value_ty,
+                max_entries: *const [i32; $max_entries],
+                map_flags: *const [i32; $map_flags],
+                $($extra_field: $extra_ty,)*
+                pinning: *const [i32; 1],
+                $($values: [*const $inner_ty; 0],)?
+            }
+
+            // SAFETY: These are the same placeholder pointers as the unpinned
+            // definition, with one additional, never-dereferenced marker.
+            unsafe impl<
+                $($ty_gen,)*
+                $($(const $const_gen : $const_ty,)+)?
+            > Sync for Pinned<$($ty_gen,)* $($($const_gen,)+)?> {}
+
+            impl<
+                $($ty_gen,)*
+                $($(const $const_gen : $const_ty,)+)?
+            > ::core::ops::Deref for Pinned<$($ty_gen,)* $($($const_gen,)+)?> {
+                type Target = $name<$($ty_gen,)* $($($const_gen,)+)?>;
+
+                fn deref(&self) -> &Self::Target {
+                    // SAFETY: Both definitions are repr(C) with identical
+                    // nonzero-sized fields at the same offsets. Only the
+                    // trailing zero-sized `values` member may move past pinning.
+                    unsafe { &*::core::ptr::from_ref(self).cast() }
+                }
+            }
+
+            impl<
+                $($ty_gen,)*
+                $($(const $const_gen : $const_ty,)+)?
+            > $crate::btf_maps::private::MapDef for $name<
+                $($ty_gen,)*
+                $($($const_gen,)+)?
+            > {
+                type Key = $key_ty;
+                type Value = $value_ty;
+                type Pinned = Pinned<$($ty_gen,)* $($($const_gen,)+)?>;
+            }
+
+            $crate::btf_maps::btf_map_def!(
+                @map_trait [$($map_trait)?]
+                [$($ty_gen,)* $($(const $const_gen: $const_ty,)+)?]
+                Pinned<$($ty_gen,)* $($($const_gen,)+)?>,
+                $name<$($ty_gen,)* $($($const_gen,)+)?>
+            );
+
+            impl<
+                $($ty_gen,)*
+                $($(const $const_gen : $const_ty,)+)?
+            > $name<$($ty_gen,)* $($($const_gen,)+)?> {
+                /// Adds pin-by-name metadata to this map definition.
+                ///
+                /// Normally applied by `#[btf_map(pin_by_name)]`.
+                pub const fn pin_by_name(self) -> $crate::btf_maps::Pinned<Self> {
+                    let Self {
+                        r#type,
+                        key,
+                        value,
+                        max_entries,
+                        map_flags,
+                        $($extra_field,)*
+                        $($values,)?
+                    } = self;
+                    Pinned {
+                        r#type,
+                        key,
+                        value,
+                        max_entries,
+                        map_flags,
+                        $($extra_field,)*
+                        pinning: ::core::ptr::null(),
+                        $($values,)?
+                    }
+                }
+            }
+        };
     };
 }
 
