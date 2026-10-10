@@ -128,7 +128,6 @@ pub struct Function {
 /// - `flow_dissector`: `BPF_PROG_TYPE_FLOW_DISSECTOR`
 /// - `ksyscall+` or `kretsyscall+`
 /// - `usdt+`
-/// - `kprobe.multi+` or `kretprobe.multi+`: `BPF_TRACE_KPROBE_MULTI`
 /// - `lsm_cgroup+`
 /// - `lwt_in`, `lwt_out`, `lwt_seg6local`, `lwt_xmit`
 /// - `raw_tp.w+`, `raw_tracepoint.w+`
@@ -140,8 +139,12 @@ pub struct Function {
 #[derive(Debug, Clone)]
 #[expect(missing_docs, reason = "TODO")]
 pub enum ProgramSection {
-    KRetProbe,
-    KProbe,
+    KRetProbe {
+        multi: bool,
+    },
+    KProbe {
+        multi: bool,
+    },
     UProbe {
         sleepable: bool,
         multi: bool,
@@ -218,8 +221,10 @@ impl FromStr for ProgramSection {
         let kind = next()?;
 
         Ok(match kind {
-            "kprobe" => Self::KProbe,
-            "kretprobe" => Self::KRetProbe,
+            "kprobe" => Self::KProbe { multi: false },
+            "kretprobe" => Self::KRetProbe { multi: false },
+            "kprobe.multi" => Self::KProbe { multi: true },
+            "kretprobe.multi" => Self::KRetProbe { multi: true },
             "uprobe" => Self::UProbe {
                 sleepable: false,
                 multi: false,
@@ -1770,7 +1775,7 @@ mod tests {
         assert_matches!(prog_foo, Program {
             license,
             kernel_version: None,
-            section: ProgramSection::KProbe,
+            section: ProgramSection::KProbe { multi: false },
             ..
         } => assert_eq!(license.to_str().unwrap(), "GPL"));
 
@@ -1834,7 +1839,7 @@ mod tests {
         assert_matches!(prog_foo, Program {
             license,
             kernel_version: None,
-            section: ProgramSection::KProbe,
+            section: ProgramSection::KProbe { multi: false },
             ..
         } => assert_eq!(license.to_str().unwrap(), "GPL"));
         assert_matches!(
@@ -1852,7 +1857,7 @@ mod tests {
         assert_matches!(prog_bar, Program {
             license,
             kernel_version: None,
-            section: ProgramSection::KProbe ,
+            section: ProgramSection::KProbe { multi: false },
             ..
         } => assert_eq!(license.to_str().unwrap(), "GPL"));
         assert_matches!(
@@ -1984,10 +1989,36 @@ mod tests {
         assert_matches!(
             obj.programs.get("foo"),
             Some(Program {
-                section: ProgramSection::KProbe,
+                section: ProgramSection::KProbe { multi: false },
                 ..
             })
         );
+    }
+
+    #[rstest]
+    #[case::kprobe_bare("kprobe.multi", false)]
+    #[case::kprobe_suffix("kprobe.multi/foo*", false)]
+    #[case::kretprobe_bare("kretprobe.multi", true)]
+    #[case::kretprobe_suffix("kretprobe.multi/foo*", true)]
+    fn test_parse_section_kprobe_multi(#[case] section: &str, #[case] retprobe: bool) {
+        let mut obj = fake_obj();
+        fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+
+        assert_matches!(
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                section,
+                bytes_of(&fake_ins()),
+                None
+            )),
+            Ok(())
+        );
+        let program = &obj.programs["foo"];
+        if retprobe {
+            assert_matches!(&program.section, ProgramSection::KRetProbe { multi: true });
+        } else {
+            assert_matches!(&program.section, ProgramSection::KProbe { multi: true });
+        }
     }
 
     #[rstest]
