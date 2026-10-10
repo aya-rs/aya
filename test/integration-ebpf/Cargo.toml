@@ -21,6 +21,7 @@ integration-common = { path = "../integration-common" }
 network-types = { workspace = true }
 
 [build-dependencies]
+aya-build = { path = "../../aya-build" }
 which = { workspace = true, features = ["real-sys"] }
 xtask = { path = "../../xtask" }
 
@@ -219,3 +220,7 @@ path = "src/inode_storage.rs"
 [[bin]]
 name = "cgrp-storage"
 path = "src/cgrp_storage.rs"
+
+[[bin]]
+name = "syscall-args"
+path = "src/syscall_args.rs"
