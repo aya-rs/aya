@@ -9,14 +9,17 @@
 extern crate ebpf_panic;
 
 use aya_ebpf::{
-    btf_maps::{Array, RingBuf},
+    btf_maps::{Array, ArrayOfMaps, RingBuf},
     macros::{btf_map, uprobe},
     programs::ProbeContext,
 };
 use integration_common::btf_maps::ArrayValue;
 
-#[btf_map]
+#[btf_map(pin_by_name)]
 static BTF_ARRAY: Array<ArrayValue, 16> = Array::new();
+
+#[btf_map(pin_by_name)]
+static BTF_OUTER: ArrayOfMaps<Array<u32, 1>, 1> = ArrayOfMaps::new();
 
 #[btf_map]
 static BTF_RING_BUF: RingBuf<u32, 4096> = RingBuf::new();
