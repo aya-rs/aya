@@ -4,7 +4,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{ItemStatic, Result};
 
-use crate::args::Args;
+use crate::{args::Args, map_layout};
 pub(crate) struct Map {
     item: ItemStatic,
     name: String,
@@ -23,10 +23,14 @@ impl Map {
         let section_name: Cow<'_, _> = "maps".into();
         let name = &self.name;
         let item = &self.item;
+        let map_ty = &self.item.ty;
+        let layout_check = map_layout::map(map_ty);
         quote! {
             #[unsafe(link_section = #section_name)]
             #[unsafe(export_name = #name)]
             #item
+
+            #layout_check
         }
     }
 }
@@ -47,10 +51,13 @@ mod tests {
         )
         .unwrap();
         let expanded = map.expand();
+        let layout_check = map_layout::map(&parse_quote!(HashMap<&'static str, u32>));
         let expected = quote!(
             #[unsafe(link_section = "maps")]
             #[unsafe(export_name = "foo")]
             static BAR: HashMap<&'static str, u32> = HashMap::new();
+
+            #layout_check
         );
         assert_eq!(expected.to_string(), expanded.to_string());
     }
@@ -65,10 +72,13 @@ mod tests {
         )
         .unwrap();
         let expanded = map.expand();
+        let layout_check = map_layout::map(&parse_quote!(HashMap<&'static str, u32>));
         let expected = quote!(
             #[unsafe(link_section = "maps")]
             #[unsafe(export_name = "BAR")]
             static BAR: HashMap<&'static str, u32> = HashMap::new();
+
+            #layout_check
         );
         assert_eq!(expected.to_string(), expanded.to_string());
     }
