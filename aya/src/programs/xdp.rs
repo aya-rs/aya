@@ -2,7 +2,7 @@
 
 use std::{
     convert::Infallible,
-    ffi::CString,
+    ffi::{CString, NulError},
     hash::Hash,
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, RawFd},
     path::Path,
@@ -36,6 +36,23 @@ pub enum XdpError {
     /// A netlink error occurred.
     #[error(transparent)]
     NetlinkError(#[from] NetlinkError),
+
+    /// The network interface does not exist.
+    #[error("unknown network interface {name}")]
+    UnknownInterface {
+        /// interface name
+        name: String,
+    },
+
+    /// The network interface is invalid `CString`.
+    #[error("invalid network interface name {name}")]
+    InvalidInterfaceName {
+        /// interface name
+        name: String,
+        /// The [`NulError`] returned while cstring conversion
+        #[source]
+        source: NulError,
+    },
 }
 
 /// XDP attachment mode.
@@ -108,18 +125,25 @@ impl Xdp {
     /// # Errors
     ///
     /// If the given `interface` does not exist
-    /// [`ProgramError::UnknownInterface`] is returned.
+    /// [`XdpError::UnknownInterface`] is returned.
+    ///
+    /// If the given `interface` is an invalid cstring
+    /// [`XdpError::InvalidInterfaceName`] is returned.
     ///
     /// When `bpf_link_create` is unavailable or rejects the request, the call
     /// transparently falls back to the legacy netlink-based attach path.
     pub fn attach(&mut self, interface: &str, mode: XdpMode) -> Result<XdpLinkId, ProgramError> {
-        // TODO: avoid this unwrap by adding a new error variant.
-        let c_interface = CString::new(interface).unwrap();
+        let c_interface =
+            CString::new(interface).map_err(|source| XdpError::InvalidInterfaceName {
+                name: interface.into(),
+                source,
+            })?;
         let if_index = unsafe { libc::if_nametoindex(c_interface.as_ptr()) };
         if if_index == 0 {
-            return Err(ProgramError::UnknownInterface {
+            return Err(XdpError::UnknownInterface {
                 name: interface.to_string(),
-            });
+            }
+            .into());
         }
         self.attach_to_if_index(if_index, mode)
     }
