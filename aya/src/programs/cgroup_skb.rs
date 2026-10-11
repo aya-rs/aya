@@ -65,7 +65,12 @@ impl CgroupSkb {
     /// Loads the program inside the kernel.
     pub fn load(&mut self) -> Result<(), ProgramError> {
         let Self { data, attach_type } = self;
-        load_program(BPF_PROG_TYPE_CGROUP_SKB, attach_type.map(Into::into), data)
+        load_program(
+            BPF_PROG_TYPE_CGROUP_SKB,
+            attach_type.map(Into::into),
+            data,
+            0,
+        )
     }
 
     /// Returns the expected attach type of the program.
