@@ -26,7 +26,7 @@ use crate::{
         SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SockOps, SocketFilter, TracePoint,
         UProbe, Xdp, uprobe::AttachMode,
     },
-    sys::{bpf_load_btf, retry_with_verifier_logs},
+    sys::{BtfFeature, bpf_load_btf, retry_with_verifier_logs},
     util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
 };
 
@@ -704,7 +704,29 @@ impl<'a> EbpfLoader<'a> {
                 let section = prog_obj.section.clone();
                 let obj = (prog_obj, function_obj);
 
-                let btf_fd = btf_fd.as_ref().map(Arc::clone);
+                // Distinguish three BTF capabilities:
+                // 1. Loading basic BTF and obtaining a BTF fd (Feature::Btf).
+                // 2. Loading FUNC/FUNC_PROTO types (BtfFeature::Func).
+                // 3. Passing prog_btf_fd and func/line info to BPF_PROG_LOAD.
+                //
+                // Aya probes (1) and (2) with BPF_BTF_LOAD. Success of (1) alone does not
+                // establish (2) or (3): Linux v4.19 supports (1), but neither (2) nor (3).
+                // https://github.com/torvalds/linux/blob/84df9525b/include/uapi/linux/bpf.h#L315-L332
+                // https://github.com/torvalds/linux/blob/84df9525b/include/uapi/linux/btf.h#L55-L68
+                //
+                // Upstream added (2) and (3) in v5.0, so use the Func probe for (2) as a
+                // proxy for (3), following libbpf. This does not probe BPF_PROG_LOAD directly.
+                // https://github.com/torvalds/linux/blob/1c163f4c7/include/uapi/linux/bpf.h#L363-L369
+                // https://github.com/libbpf/libbpf/blob/85c0d575a/src/libbpf.c#L8467-L8476
+                // Keep BTF available to maps; gate only prog_btf_fd and func/line info together.
+                let btf_fd = btf_fd
+                    .as_ref()
+                    .filter(|_| {
+                        FEATURES
+                            .btf()
+                            .is_some_and(|features| features.is_supported(BtfFeature::Func))
+                    })
+                    .map(Arc::clone);
                 let program = if extensions.contains(name.as_str()) {
                     Program::Extension(Extension {
                         data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
