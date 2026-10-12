@@ -26,7 +26,7 @@ use crate::{
         SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SockOps, SocketFilter, TracePoint,
         UProbe, Xdp, uprobe::AttachMode,
     },
-    sys::{bpf_load_btf, retry_with_verifier_logs},
+    sys::{BtfFeature, bpf_load_btf, retry_with_verifier_logs},
     util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
 };
 
@@ -704,7 +704,10 @@ impl<'a> EbpfLoader<'a> {
                 let section = prog_obj.section.clone();
                 let obj = (prog_obj, function_obj);
 
-                let btf_fd = btf_fd.as_ref().map(Arc::clone);
+                let btf_func_supported = FEATURES
+                    .btf()
+                    .is_some_and(|features| features.is_supported(BtfFeature::Func));
+                let btf_fd = prog_btf_fd(btf_fd.as_ref(), btf_func_supported).map(Arc::clone);
                 let program = if extensions.contains(name.as_str()) {
                     Program::Extension(Extension {
                         data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
@@ -1007,14 +1010,41 @@ const fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
     page_size * pages_needed.next_power_of_two()
 }
 
+// Distinguish three BTF capabilities:
+// 1. Loading basic BTF and obtaining a BTF fd (Feature::Btf).
+// 2. Loading FUNC/FUNC_PROTO types (BtfFeature::Func).
+// 3. Passing prog_btf_fd and func/line info to BPF_PROG_LOAD.
+//
+// Aya probes (1) and (2) with BPF_BTF_LOAD. Success of (1) alone does not
+// establish (2) or (3): Linux v4.19 supports (1), but neither (2) nor (3).
+// https://github.com/torvalds/linux/blob/84df9525b/include/uapi/linux/bpf.h#L315-L332
+// https://github.com/torvalds/linux/blob/84df9525b/include/uapi/linux/btf.h#L55-L68
+//
+// Upstream added (2) and (3) in v5.0, so use the Func probe for (2) as a
+// proxy for (3), following libbpf. This does not probe BPF_PROG_LOAD directly.
+// https://github.com/torvalds/linux/blob/1c163f4c7/include/uapi/linux/bpf.h#L363-L369
+// https://github.com/libbpf/libbpf/blob/85c0d575a/src/libbpf.c#L8467-L8476
+// Keep BTF available to maps; gate only prog_btf_fd and func/line info together.
+fn prog_btf_fd<T>(btf_fd: Option<T>, func_supported: bool) -> Option<T> {
+    btf_fd.filter(|_| func_supported)
+}
+
 #[cfg(test)]
 mod tests {
     use aya_obj::generated::bpf_map_type::*;
 
-    use super::{Btf, BtfSource, EbpfLoader, TargetBtf};
+    use super::{Btf, BtfSource, EbpfLoader, TargetBtf, prog_btf_fd};
 
     const PAGE_SIZE: u32 = 4096;
     const NUM_CPUS: u32 = 4;
+
+    #[test]
+    fn test_prog_btf_fd_requires_btf_func_support() {
+        assert_eq!(prog_btf_fd(Some(0), true), Some(0));
+        assert_eq!(prog_btf_fd(Some(0), false), None);
+        assert_eq!(prog_btf_fd::<i32>(None, true), None);
+        assert_eq!(prog_btf_fd::<i32>(None, false), None);
+    }
 
     #[test]
     fn test_adjust_to_page_size() {
