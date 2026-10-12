@@ -10,8 +10,8 @@ use std::{
 
 use aya_obj::{
     generated::{
-        XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_SKB_MODE, bpf_link_type,
-        bpf_prog_type::BPF_PROG_TYPE_XDP,
+        BPF_F_XDP_DEV_BOUND_ONLY, XDP_FLAGS_DRV_MODE, XDP_FLAGS_HW_MODE, XDP_FLAGS_SKB_MODE,
+        bpf_attach_type, bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_XDP,
     },
     programs::XdpAttachType,
 };
@@ -21,7 +21,7 @@ use crate::{
     VerifierLogLevel,
     programs::{
         FdLink, Link, ProgramData, ProgramError, ProgramType, define_link_wrapper, id_as_key,
-        impl_try_from_fdlink, impl_try_into_fdlink, load_program_with_attach_type,
+        impl_try_from_fdlink, impl_try_into_fdlink, load_program, load_program_with_attach_type,
     },
     sys::{
         LinkTarget, NetlinkError, SyscallError, bpf_link_create, bpf_link_update,
@@ -99,6 +99,52 @@ impl Xdp {
     pub fn load(&mut self) -> Result<(), ProgramError> {
         let Self { data, attach_type } = self;
         load_program_with_attach_type(BPF_PROG_TYPE_XDP, *attach_type, data)
+    }
+
+    /// Loads the program bound to `interface` so it can call XDP metadata
+    /// kfuncs (e.g. `bpf_xdp_metadata_rx_timestamp`).
+    ///
+    /// The program remains executed by the kernel — this only associates it
+    /// with a device so the verifier permits device-bound kfuncs. To offload
+    /// the program to the device instead, attach with [`XdpMode::Hardware`].
+    ///
+    /// # Errors
+    ///
+    /// If the given `interface` does not exist
+    /// [`ProgramError::UnknownInterface`] is returned.
+    ///
+    /// # Minimum kernel version
+    ///
+    /// The minimum kernel version required to use this feature is 6.3.
+    pub fn load_dev_bound(&mut self, interface: &str) -> Result<(), ProgramError> {
+        // TODO: avoid this unwrap by adding a new error variant.
+        let c_interface = CString::new(interface).unwrap();
+        let if_index = unsafe { libc::if_nametoindex(c_interface.as_ptr()) };
+        if if_index == 0 {
+            return Err(ProgramError::UnknownInterface {
+                name: interface.to_string(),
+            });
+        }
+        self.load_dev_bound_by_if_index(if_index)
+    }
+
+    /// Loads the program bound to the interface identified by `if_index` so
+    /// it can call XDP metadata kfuncs (e.g. `bpf_xdp_metadata_rx_timestamp`).
+    ///
+    /// See [`Xdp::load_dev_bound`] for details.
+    ///
+    /// # Minimum kernel version
+    ///
+    /// The minimum kernel version required to use this feature is 6.3.
+    pub fn load_dev_bound_by_if_index(&mut self, if_index: u32) -> Result<(), ProgramError> {
+        let Self { data, attach_type } = self;
+        data.flags |= BPF_F_XDP_DEV_BOUND_ONLY;
+        load_program(
+            BPF_PROG_TYPE_XDP,
+            Some(bpf_attach_type::from(*attach_type)),
+            data,
+            if_index,
+        )
     }
 
     /// Attaches the program to the given `interface`.
