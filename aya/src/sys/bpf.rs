@@ -167,59 +167,77 @@ pub(crate) fn bpf_load_program(
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
-    let u = unsafe { &mut attr.__bindgen_anon_3 };
+    {
+        let u = unsafe { &mut attr.__bindgen_anon_3 };
 
-    if let Some(name) = &aya_attr.name {
-        let name_bytes = name.to_bytes();
-        let len = cmp::min(name_bytes.len(), u.prog_name.len() - 1); // Ensure NULL termination.
-        u.prog_name[..len]
-            .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
-    }
-
-    u.prog_flags = aya_attr.flags;
-    u.prog_type = aya_attr.ty as u32;
-    if let Some(v) = aya_attr.expected_attach_type {
-        u.expected_attach_type = v as u32;
-    }
-    u.insns = aya_attr.insns.as_ptr().expose_provenance() as u64;
-    u.insn_cnt = aya_attr.insns.len() as u32;
-    u.license = aya_attr.license.as_ptr().expose_provenance() as u64;
-    u.kern_version = aya_attr.kernel_version;
-
-    // these must be allocated here to ensure the slice outlives the pointer
-    // so .as_ptr below won't point to garbage
-    let line_info_buf = aya_attr.line_info.line_info_bytes();
-    let func_info_buf = aya_attr.func_info.func_info_bytes();
-
-    if let Some(btf_fd) = aya_attr.prog_btf_fd {
-        u.prog_btf_fd = btf_fd.as_raw_fd() as u32;
-        if aya_attr.line_info_rec_size > 0 {
-            u.line_info = line_info_buf.as_ptr().expose_provenance() as u64;
-            u.line_info_cnt = aya_attr.line_info.len() as u32;
-            u.line_info_rec_size = aya_attr.line_info_rec_size as u32;
+        if let Some(name) = &aya_attr.name {
+            let name_bytes = name.to_bytes();
+            let len = cmp::min(name_bytes.len(), u.prog_name.len() - 1); // Ensure NULL termination.
+            u.prog_name[..len]
+                .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
         }
-        if aya_attr.func_info_rec_size > 0 {
-            u.func_info = func_info_buf.as_ptr().expose_provenance() as u64;
-            u.func_info_cnt = aya_attr.func_info.len() as u32;
-            u.func_info_rec_size = aya_attr.func_info_rec_size as u32;
+
+        u.prog_flags = aya_attr.flags;
+        u.prog_type = aya_attr.ty as u32;
+        if let Some(v) = aya_attr.expected_attach_type {
+            u.expected_attach_type = v as u32;
+        }
+        u.insns = aya_attr.insns.as_ptr().expose_provenance() as u64;
+        u.insn_cnt = aya_attr.insns.len() as u32;
+        u.license = aya_attr.license.as_ptr().expose_provenance() as u64;
+        u.kern_version = aya_attr.kernel_version;
+
+        // these must be allocated here to ensure the slice outlives the pointer
+        // so .as_ptr below won't point to garbage
+        let line_info_buf = aya_attr.line_info.line_info_bytes();
+        let func_info_buf = aya_attr.func_info.func_info_bytes();
+
+        if let Some(btf_fd) = aya_attr.prog_btf_fd {
+            u.prog_btf_fd = btf_fd.as_raw_fd() as u32;
+            if aya_attr.line_info_rec_size > 0 {
+                u.line_info = line_info_buf.as_ptr().expose_provenance() as u64;
+                u.line_info_cnt = aya_attr.line_info.len() as u32;
+                u.line_info_rec_size = aya_attr.line_info_rec_size as u32;
+            }
+            if aya_attr.func_info_rec_size > 0 {
+                u.func_info = func_info_buf.as_ptr().expose_provenance() as u64;
+                u.func_info_cnt = aya_attr.func_info.len() as u32;
+                u.func_info_rec_size = aya_attr.func_info_rec_size as u32;
+            }
+        }
+        if !log_buf.is_empty() {
+            u.log_level = verifier_log_level.bits();
+            u.log_buf = log_buf.as_mut_ptr().expose_provenance() as u64;
+            u.log_size = log_buf.len() as u32;
+        }
+        if let Some(v) = aya_attr.attach_btf_obj_fd {
+            u.__bindgen_anon_1.attach_btf_obj_fd = v.as_raw_fd() as u32;
+        }
+        if let Some(v) = aya_attr.attach_prog_fd {
+            u.__bindgen_anon_1.attach_prog_fd = v.as_raw_fd() as u32;
+        }
+
+        if let Some(v) = aya_attr.attach_btf_id {
+            u.attach_btf_id = v;
         }
     }
-    if !log_buf.is_empty() {
-        u.log_level = verifier_log_level.bits();
-        u.log_buf = log_buf.as_mut_ptr().expose_provenance() as u64;
-        u.log_size = log_buf.len() as u32;
-    }
-    if let Some(v) = aya_attr.attach_btf_obj_fd {
-        u.__bindgen_anon_1.attach_btf_obj_fd = v.as_raw_fd() as u32;
-    }
-    if let Some(v) = aya_attr.attach_prog_fd {
-        u.__bindgen_anon_1.attach_prog_fd = v.as_raw_fd() as u32;
-    }
 
-    if let Some(v) = aya_attr.attach_btf_id {
-        u.attach_btf_id = v;
+    let result = bpf_prog_load(&mut attr);
+    // https://github.com/torvalds/linux/blob/c3494801c/kernel/bpf/syscall.c#L4791-L4813
+    let has_btf_ext = matches!(&result, Err(error) if error.raw_os_error() == Some(E2BIG))
+        && unsafe { attr.__bindgen_anon_3.prog_btf_fd } != 0;
+    if has_btf_ext {
+        let u = unsafe { &mut attr.__bindgen_anon_3 };
+        u.prog_btf_fd = 0;
+        u.line_info = 0;
+        u.line_info_cnt = 0;
+        u.line_info_rec_size = 0;
+        u.func_info = 0;
+        u.func_info_cnt = 0;
+        u.func_info_rec_size = 0;
+        return bpf_prog_load(&mut attr);
     }
-    bpf_prog_load(&mut attr)
+    result
 }
 
 fn lookup<K: Pod, V: Pod>(
@@ -1660,7 +1678,12 @@ mod tests {
     use std::cell::Cell;
 
     use aya_obj::{
-        generated::bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, maps::PinningType, obj::parse_map_info,
+        generated::{
+            bpf_func_info, bpf_line_info, bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER,
+            bpf_prog_type::BPF_PROG_TYPE_KPROBE,
+        },
+        maps::PinningType,
+        obj::parse_map_info,
     };
     use libc::EIO;
     use rstest::rstest;
@@ -1670,6 +1693,125 @@ mod tests {
 
     thread_local! {
         static BPF_PROG_LOAD_CALLS: Cell<usize> = const { Cell::new(0) };
+    }
+
+    #[test]
+    fn test_bpf_prog_load_retries_e2big_without_btf_ext() {
+        BPF_PROG_LOAD_CALLS.set(0);
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_PROG_LOAD,
+                attr,
+            } => {
+                let calls = BPF_PROG_LOAD_CALLS.get() + 1;
+                BPF_PROG_LOAD_CALLS.set(calls);
+                let u = unsafe { attr.__bindgen_anon_3 };
+                match calls {
+                    1 => {
+                        assert_eq!(u.prog_btf_fd, 42);
+                        assert_eq!(u.func_info_cnt, 1);
+                        assert_eq!(u.line_info_cnt, 1);
+                        Err((-1, io::Error::from_raw_os_error(libc::E2BIG)))
+                    }
+                    _ => {
+                        assert_eq!(u.prog_btf_fd, 0);
+                        assert_eq!(u.line_info_cnt, 0);
+                        assert_eq!(u.func_info_cnt, 0);
+                        Ok(crate::MockableFd::mock_signed_fd().into())
+                    }
+                }
+            }
+            unexpected => panic!("unexpected syscall: {unexpected:?}"),
+        });
+
+        let license = CStr::from_bytes_with_nul(b"GPL\0").unwrap();
+        let insns = [bpf_insn {
+            code: 0,
+            _bitfield_1: bpf_insn::new_bitfield_1(0, 0),
+            off: 0,
+            imm: 0,
+        }];
+        let mut func_info = FuncSecInfo::default();
+        func_info.num_info = 1;
+        func_info.func_info = vec![bpf_func_info {
+            insn_off: 0,
+            type_id: 1,
+        }];
+        let mut line_info = LineSecInfo::default();
+        line_info.num_info = 1;
+        line_info.line_info = vec![bpf_line_info {
+            insn_off: 0,
+            file_name_off: 0,
+            line_off: 0,
+            line_col: 0,
+        }];
+        let aya_attr = EbpfLoadProgramAttrs {
+            name: None,
+            ty: bpf_prog_type::BPF_PROG_TYPE_KPROBE,
+            expected_attach_type: None,
+            insns: &insns,
+            license,
+            kernel_version: 0,
+            prog_btf_fd: Some(unsafe { BorrowedFd::borrow_raw(42) }),
+            attach_btf_obj_fd: None,
+            attach_btf_id: None,
+            attach_prog_fd: None,
+            func_info_rec_size: size_of::<bpf_func_info>(),
+            func_info,
+            line_info_rec_size: size_of::<bpf_line_info>(),
+            line_info,
+            flags: 0,
+        };
+        let mut log_buf = Vec::new();
+        bpf_load_program(&aya_attr, &mut log_buf, VerifierLogLevel::default()).unwrap();
+        assert_eq!(BPF_PROG_LOAD_CALLS.get(), 2);
+    }
+
+    #[test]
+    fn test_bpf_prog_load_propagates_e2big_without_btf_ext() {
+        BPF_PROG_LOAD_CALLS.set(0);
+        override_syscall(|call| {
+            assert_matches!(
+                call,
+                Syscall::Ebpf {
+                    cmd: bpf_cmd::BPF_PROG_LOAD,
+                    attr: _
+                }
+            );
+            let calls = BPF_PROG_LOAD_CALLS.get() + 1;
+            BPF_PROG_LOAD_CALLS.set(calls);
+            Err((-1, io::Error::from_raw_os_error(libc::E2BIG)))
+        });
+
+        let license = CStr::from_bytes_with_nul(b"GPL\0").unwrap();
+        let insns = [bpf_insn {
+            code: 0,
+            _bitfield_1: bpf_insn::new_bitfield_1(0, 0),
+            off: 0,
+            imm: 0,
+        }];
+        let aya_attr = EbpfLoadProgramAttrs {
+            name: None,
+            ty: bpf_prog_type::BPF_PROG_TYPE_KPROBE,
+            expected_attach_type: None,
+            insns: &insns,
+            license,
+            kernel_version: 0,
+            prog_btf_fd: None,
+            attach_btf_obj_fd: None,
+            attach_btf_id: None,
+            attach_prog_fd: None,
+            func_info_rec_size: 0,
+            func_info: FuncSecInfo::default(),
+            line_info_rec_size: 0,
+            line_info: LineSecInfo::default(),
+            flags: 0,
+        };
+        let mut log_buf = Vec::new();
+        let error =
+            bpf_load_program(&aya_attr, &mut log_buf, VerifierLogLevel::default()).unwrap_err();
+        assert_eq!(error.raw_os_error(), Some(libc::E2BIG));
+        assert_eq!(BPF_PROG_LOAD_CALLS.get(), 1);
     }
 
     #[test]
