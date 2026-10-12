@@ -219,7 +219,23 @@ pub(crate) fn bpf_load_program(
     if let Some(v) = aya_attr.attach_btf_id {
         u.attach_btf_id = v;
     }
-    bpf_prog_load(&mut attr)
+
+    let had_btf_ext = u.prog_btf_fd != 0;
+
+    let result = bpf_prog_load(&mut attr);
+    // https://github.com/torvalds/linux/blob/c3494801c/kernel/bpf/syscall.c#L4791-L4813
+    if matches!(&result, Err(error) if error.raw_os_error() == Some(E2BIG)) && had_btf_ext {
+        let u = unsafe { &mut attr.__bindgen_anon_3 };
+        u.prog_btf_fd = 0;
+        u.line_info = 0;
+        u.line_info_cnt = 0;
+        u.line_info_rec_size = 0;
+        u.func_info = 0;
+        u.func_info_cnt = 0;
+        u.func_info_rec_size = 0;
+        return bpf_prog_load(&mut attr);
+    }
+    result
 }
 
 fn lookup<K: Pod, V: Pod>(
@@ -1660,7 +1676,9 @@ mod tests {
     use std::cell::Cell;
 
     use aya_obj::{
-        generated::bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER, maps::PinningType, obj::parse_map_info,
+        generated::{bpf_func_info, bpf_line_info, bpf_map_type::BPF_MAP_TYPE_BLOOM_FILTER},
+        maps::PinningType,
+        obj::parse_map_info,
     };
     use libc::EIO;
     use rstest::rstest;
@@ -1670,6 +1688,122 @@ mod tests {
 
     thread_local! {
         static BPF_PROG_LOAD_CALLS: Cell<usize> = const { Cell::new(0) };
+    }
+
+    #[test]
+    fn test_bpf_prog_load_retries_e2big_without_btf_ext() {
+        BPF_PROG_LOAD_CALLS.set(0);
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_PROG_LOAD,
+                attr,
+            } => {
+                let calls = BPF_PROG_LOAD_CALLS.get() + 1;
+                BPF_PROG_LOAD_CALLS.set(calls);
+                let u = unsafe { attr.__bindgen_anon_3 };
+                if calls == 1 {
+                    assert_eq!(u.prog_btf_fd, 42);
+                    assert_eq!(u.func_info_cnt, 1);
+                    assert_eq!(u.line_info_cnt, 1);
+                    Err((-1, io::Error::from_raw_os_error(E2BIG)))
+                } else {
+                    assert_eq!(u.prog_btf_fd, 0);
+                    assert_eq!(u.line_info_cnt, 0);
+                    assert_eq!(u.func_info_cnt, 0);
+                    Ok(crate::MockableFd::mock_signed_fd().into())
+                }
+            }
+            unexpected => panic!("unexpected syscall: {unexpected:?}"),
+        });
+
+        let license = c"GPL";
+        let insns = [bpf_insn {
+            code: 0,
+            _bitfield_1: bpf_insn::new_bitfield_1(0, 0),
+            off: 0,
+            imm: 0,
+        }];
+        let mut func_info = FuncSecInfo::default();
+        func_info.num_info = 1;
+        func_info.func_info = vec![bpf_func_info {
+            insn_off: 0,
+            type_id: 1,
+        }];
+        let mut line_info = LineSecInfo::default();
+        line_info.num_info = 1;
+        line_info.line_info = vec![bpf_line_info {
+            insn_off: 0,
+            file_name_off: 0,
+            line_off: 0,
+            line_col: 0,
+        }];
+        let aya_attr = EbpfLoadProgramAttrs {
+            name: None,
+            ty: bpf_prog_type::BPF_PROG_TYPE_KPROBE,
+            expected_attach_type: None,
+            insns: &insns,
+            license,
+            kernel_version: 0,
+            prog_btf_fd: Some(unsafe { BorrowedFd::borrow_raw(42) }),
+            attach_btf_obj_fd: None,
+            attach_btf_id: None,
+            attach_prog_fd: None,
+            func_info_rec_size: size_of::<bpf_func_info>(),
+            func_info,
+            line_info_rec_size: size_of::<bpf_line_info>(),
+            line_info,
+            flags: 0,
+        };
+        let mut log_buf = Vec::new();
+        bpf_load_program(&aya_attr, &mut log_buf, VerifierLogLevel::default()).unwrap();
+        assert_eq!(BPF_PROG_LOAD_CALLS.get(), 2);
+    }
+
+    #[test]
+    fn test_bpf_prog_load_propagates_e2big_without_btf_ext() {
+        BPF_PROG_LOAD_CALLS.set(0);
+        override_syscall(|call| {
+            assert_matches!(
+                call,
+                Syscall::Ebpf {
+                    cmd: bpf_cmd::BPF_PROG_LOAD,
+                    attr: _
+                }
+            );
+            let calls = BPF_PROG_LOAD_CALLS.get() + 1;
+            BPF_PROG_LOAD_CALLS.set(calls);
+            Err((-1, io::Error::from_raw_os_error(E2BIG)))
+        });
+
+        let license = c"GPL";
+        let insns = [bpf_insn {
+            code: 0,
+            _bitfield_1: bpf_insn::new_bitfield_1(0, 0),
+            off: 0,
+            imm: 0,
+        }];
+        let aya_attr = EbpfLoadProgramAttrs {
+            name: None,
+            ty: bpf_prog_type::BPF_PROG_TYPE_KPROBE,
+            expected_attach_type: None,
+            insns: &insns,
+            license,
+            kernel_version: 0,
+            prog_btf_fd: None,
+            attach_btf_obj_fd: None,
+            attach_btf_id: None,
+            attach_prog_fd: None,
+            func_info_rec_size: 0,
+            func_info: FuncSecInfo::default(),
+            line_info_rec_size: 0,
+            line_info: LineSecInfo::default(),
+            flags: 0,
+        };
+        let mut log_buf = Vec::new();
+        let error =
+            bpf_load_program(&aya_attr, &mut log_buf, VerifierLogLevel::default()).unwrap_err();
+        assert_eq!(error.raw_os_error(), Some(E2BIG));
+        assert_eq!(BPF_PROG_LOAD_CALLS.get(), 1);
     }
 
     #[test]
