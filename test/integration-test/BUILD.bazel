@@ -38,7 +38,17 @@ C_BPF_OBJECTS = [
     ("bpf/ksyms_typed_missing_kfunc.bpf.c", True),
     ("bpf/ksyms_typed_missing_var.bpf.c", True),
     ("bpf/ksyms_typeless_missing.bpf.c", True),
+    ("bpf/jumptable.bpf.c", False),
 ]
+
+# Keep this dict synchronized with C_BPF_COPTS in build.rs.
+C_BPF_COPTS = {
+    "bpf/jumptable.bpf.c": [
+        "-mcpu=v4",
+        "-mllvm",
+        "-bpf-min-jump-table-entries=4",
+    ],
+}
 
 aya_c_bpf_objects(
     name = "c_bpf_objects",
@@ -46,6 +56,7 @@ aya_c_bpf_objects(
         "bpf/reloc.h",
         "bpf/struct_with_scalars.h",
     ],
+    copts = C_BPF_COPTS,
     objects = C_BPF_OBJECTS,
     vmlinux = "@crates//:libbpf-sys-vmlinux-h-1.7.0+v1.7.0",
     deps = ["@libbpf"],
