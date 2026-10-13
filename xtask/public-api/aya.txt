@@ -5829,10 +5829,10 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::LsmAttachType
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::LsmAttachType
 pub enum aya::programs::NetworkInterface<'a>
 pub aya::programs::NetworkInterface::Index(u32)
-pub aya::programs::NetworkInterface::Name(&'a str)
+pub aya::programs::NetworkInterface::Name(&'a core::ffi::c_str::CStr)
 impl core::convert::From<u32> for aya::programs::NetworkInterface<'_>
 pub fn aya::programs::NetworkInterface<'_>::from(u32) -> Self
-impl<'a, T: core::convert::AsRef<str> + ?core::marker::Sized> core::convert::From<&'a T> for aya::programs::NetworkInterface<'a>
+impl<'a, T: core::convert::AsRef<core::ffi::c_str::CStr> + ?core::marker::Sized> core::convert::From<&'a T> for aya::programs::NetworkInterface<'a>
 pub fn aya::programs::NetworkInterface<'a>::from(&'a T) -> Self
 impl<'a> core::clone::Clone for aya::programs::NetworkInterface<'a>
 pub fn aya::programs::NetworkInterface<'a>::clone(&self) -> Self
@@ -6091,9 +6091,6 @@ pub aya::programs::ProgramError::AttachCookieNotSupported
 pub aya::programs::ProgramError::Btf(aya_obj::btf::btf::BtfError)
 pub aya::programs::ProgramError::ExtensionError(aya::programs::extension::ExtensionError)
 pub aya::programs::ProgramError::IOError(core::io::error::Error)
-pub aya::programs::ProgramError::InvalidInterfaceName
-pub aya::programs::ProgramError::InvalidInterfaceName::name: alloc::string::String
-pub aya::programs::ProgramError::InvalidInterfaceName::source: alloc::ffi::c_str::NulError
 pub aya::programs::ProgramError::InvalidName
 pub aya::programs::ProgramError::InvalidName::name: alloc::string::String
 pub aya::programs::ProgramError::KProbeError(aya::programs::kprobe::KProbeError)
@@ -6113,7 +6110,7 @@ pub aya::programs::ProgramError::TracePointError(aya::programs::trace_point::Tra
 pub aya::programs::ProgramError::UProbeError(aya::programs::uprobe::UProbeError)
 pub aya::programs::ProgramError::UnexpectedProgramType
 pub aya::programs::ProgramError::UnknownInterface
-pub aya::programs::ProgramError::UnknownInterface::name: alloc::string::String
+pub aya::programs::ProgramError::UnknownInterface::name: alloc::ffi::c_str::CString
 pub aya::programs::ProgramError::XdpError(aya::programs::xdp::XdpError)
 impl core::convert::From<aya::maps::MapError> for aya::programs::ProgramError
 pub fn aya::programs::ProgramError::from(aya::maps::MapError) -> Self

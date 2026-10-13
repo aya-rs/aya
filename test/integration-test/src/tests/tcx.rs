@@ -21,15 +21,15 @@ fn tc_attach(
     #[case] options: Option<TcAttachOptions>,
 ) {
     let _netns = NetNsGuard::new().unwrap();
-    qdisc_add_clsact("lo").unwrap();
+    qdisc_add_clsact(c"lo").unwrap();
 
     let mut ebpf = Ebpf::load(crate::TCX).unwrap();
     let mut seen: Array<_, u32> = ebpf.take_map("SEEN").unwrap().try_into().unwrap();
     let prog: &mut SchedClassifier = ebpf.program_mut("tcx_next").unwrap().try_into().unwrap();
     prog.load().unwrap();
     let link = match options {
-        None => prog.attach("lo", attach_type),
-        Some(options) => prog.attach_with_options("lo", attach_type, options),
+        None => prog.attach(c"lo", attach_type),
+        Some(options) => prog.attach_with_options(c"lo", attach_type, options),
     }
     .unwrap();
 
@@ -89,7 +89,7 @@ fn tcx_link_order() {
             attach_program_with_link_order_inner!($program_name, $link_order);
             $program_name
                 .attach_with_options(
-                    "lo",
+                    c"lo",
                     TcAttachType::Ingress,
                     TcAttachOptions::TcxOrder($link_order),
                 )
@@ -99,7 +99,7 @@ fn tcx_link_order() {
             attach_program_with_link_order_inner!($program_name, $link_order);
             let $link_id_name = $program_name
                 .attach_with_options(
-                    "lo",
+                    c"lo",
                     TcAttachType::Ingress,
                     TcAttachOptions::TcxOrder($link_order),
                 )
@@ -143,7 +143,7 @@ fn tcx_link_order() {
     .map(|program| program.info().unwrap().id())
     .collect::<Vec<_>>();
 
-    let (revision, got_order) = SchedClassifier::query_tcx("lo", TcAttachType::Ingress).unwrap();
+    let (revision, got_order) = SchedClassifier::query_tcx(c"lo", TcAttachType::Ingress).unwrap();
     assert_eq!(revision, (expected_order.len() + 1) as u64);
     assert_eq!(
         got_order

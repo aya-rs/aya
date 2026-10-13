@@ -669,7 +669,7 @@ bitflags::bitflags! {
 /// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
 /// let options = TcAttachOptions::TcxOrder(LinkOrder::first());
-/// prog.attach_with_options("eth0", TcAttachType::Ingress, options)?;
+/// prog.attach_with_options(c"eth0", TcAttachType::Ingress, options)?;
 ///
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
