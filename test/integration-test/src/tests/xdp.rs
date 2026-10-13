@@ -72,7 +72,7 @@ fn af_xdp(#[case] socks_name: &str, #[case] prog_name: &str) {
 
     let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     xdp.load().unwrap();
-    xdp.attach("lo", XdpMode::default()).unwrap();
+    xdp.attach(c"lo", XdpMode::default()).unwrap();
 
     const SIZE: usize = 2 * 4096;
 
@@ -236,7 +236,7 @@ fn cpumap_chain(#[case] cpus_name: &str, #[case] prog_name: &str) {
     // Load the main program
     let xdp: &mut Xdp = bpf.program_mut(prog_name).unwrap().try_into().unwrap();
     xdp.load().unwrap();
-    let result = xdp.attach("lo", XdpMode::default());
+    let result = xdp.attach(c"lo", XdpMode::default());
     // Generic devices did not support cpumap XDP programs until 5.15.
     //
     // See https://github.com/torvalds/linux/commit/11941f8a8.

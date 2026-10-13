@@ -68,11 +68,11 @@ pub enum TcAttachType {
 ///
 /// // the clsact qdisc needs to be added before SchedClassifier programs can be
 /// // attached
-/// tc::qdisc_add_clsact("eth0")?;
+/// tc::qdisc_add_clsact(c"eth0")?;
 ///
 /// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
-/// prog.attach("eth0", TcAttachType::Ingress)?;
+/// prog.attach(c"eth0", TcAttachType::Ingress)?;
 ///
 /// # Ok::<(), Error>(())
 /// ```
@@ -217,7 +217,11 @@ impl SchedClassifier {
 
     /// Attaches the program to an interface specified by name or index.
     ///
-    /// Pass a name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
+    /// Pass a name such as `c"eth0"`, an interface index, or a [`NetworkInterface`].
+    ///
+    /// Names are resolved in the calling thread's network namespace at the time of
+    /// this call. Indices are used without an interface lookup and must refer to an
+    /// interface in the same namespace.
     ///
     /// On kernels >= 6.6.0, it will attempt to use the TCX interface and attach as
     /// the last TCX program. On older kernels, it will fallback to using the
@@ -231,9 +235,6 @@ impl SchedClassifier {
     ///
     /// If no interface with the given name exists,
     /// [`ProgramError::UnknownInterface`] is returned.
-    ///
-    /// If the interface name contains an interior NUL byte,
-    /// [`ProgramError::InvalidInterfaceName`] is returned.
     ///
     /// Other interface lookup failures return [`ProgramError::IOError`].
     ///
@@ -264,7 +265,11 @@ impl SchedClassifier {
 
     /// Attaches the program to the given `interface` with options defined in [`TcAttachOptions`].
     ///
-    /// Pass a name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
+    /// Pass a name such as `c"eth0"`, an interface index, or a [`NetworkInterface`].
+    ///
+    /// Names are resolved in the calling thread's network namespace at the time of
+    /// this call. Indices are used without an interface lookup and must refer to an
+    /// interface in the same namespace.
     ///
     /// The returned value can be used to detach, see [`SchedClassifier::detach`].
     ///
@@ -298,7 +303,7 @@ impl SchedClassifier {
     ///         if io_error.kind() == io::ErrorKind::NotFound =>
     ///     {
     ///         prog.attach_with_options(
-    ///             "eth0",
+    ///             c"eth0",
     ///             TcAttachType::Ingress,
     ///             TcAttachOptions::TcxOrder(LinkOrder::default()),
     ///         )?
@@ -316,9 +321,6 @@ impl SchedClassifier {
     ///
     /// If no interface with the given name exists,
     /// [`ProgramError::UnknownInterface`] is returned.
-    ///
-    /// If the interface name contains an interior NUL byte,
-    /// [`ProgramError::InvalidInterfaceName`] is returned.
     ///
     /// Other interface lookup failures return [`ProgramError::IOError`].
     ///
@@ -451,15 +453,16 @@ impl SchedClassifier {
 
     /// Queries a given interface for attached TCX programs.
     ///
-    /// Pass a name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
+    /// Pass a name such as `c"eth0"`, an interface index, or a [`NetworkInterface`].
+    ///
+    /// Names are resolved in the calling thread's network namespace at the time of
+    /// this call. Indices are used without an interface lookup and must refer to an
+    /// interface in the same namespace.
     ///
     /// # Errors
     ///
     /// If no interface with the given name exists,
     /// [`ProgramError::UnknownInterface`] is returned.
-    ///
-    /// If the interface name contains an interior NUL byte,
-    /// [`ProgramError::InvalidInterfaceName`] is returned.
     ///
     /// Other interface lookup failures return [`ProgramError::IOError`].
     ///
@@ -472,7 +475,7 @@ impl SchedClassifier {
     /// #     #[error(transparent)]
     /// #     Program(#[from] aya::programs::ProgramError),
     /// # }
-    /// let (revision, programs) = SchedClassifier::query_tcx("eth0", TcAttachType::Ingress)?;
+    /// let (revision, programs) = SchedClassifier::query_tcx(c"eth0", TcAttachType::Ingress)?;
     /// # Ok::<(), Error>(())
     /// ```
     pub fn query_tcx<'a>(
@@ -598,7 +601,7 @@ define_link_wrapper!(
 );
 
 impl SchedClassifierLink {
-    /// Constructs a [`SchedClassifierLink`] where the `if_name`, `attach_type`,
+    /// Constructs a [`SchedClassifierLink`] where the `interface`, `attach_type`,
     /// `priority` and `handle` are already known. This may have been found from a link created by
     /// [`SchedClassifier::attach`], the output of the `tc filter` command or from the output of
     /// another BPF loader.
@@ -606,10 +609,14 @@ impl SchedClassifierLink {
     /// Note: If you create a link for a program that you do not own, detaching it may have
     /// unintended consequences.
     ///
-    /// Pass a name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
+    /// Pass a name such as `c"eth0"`, an interface index, or a [`NetworkInterface`].
+    ///
+    /// Names are resolved in the calling thread's network namespace at the time of
+    /// this call. Indices are used without an interface lookup and must refer to an
+    /// interface in the same namespace.
     ///
     /// # Errors
-    /// Returns [`io::Error`] if the interface name is invalid or does not exist. Interface indices
+    /// Returns [`io::Error`] if the interface name cannot be resolved. Interface indices
     /// and the other parameters are not validated by this call; invalid values will cause a later
     /// [`SchedClassifierLink::detach`] to return [`TcError::NetlinkError`].
     ///
@@ -622,8 +629,8 @@ impl SchedClassifierLink {
     /// #     #[error(transparent)]
     /// #     IO(#[from] std::io::Error),
     /// # }
-    /// # fn read_persisted_link_details() -> (&'static str, TcAttachType, u16, TcHandle, Option<TcHandle>) {
-    /// #     ("eth0", TcAttachType::Ingress, 50, TcHandle::new(0, 1), None)
+    /// # fn read_persisted_link_details() -> (&'static std::ffi::CStr, TcAttachType, u16, TcHandle, Option<TcHandle>) {
+    /// #     (c"eth0", TcAttachType::Ingress, 50, TcHandle::new(0, 1), None)
     /// # }
     /// // Get the link parameters from some external source. Where and how the parameters are
     /// // persisted is up to your application.
@@ -693,7 +700,11 @@ impl SchedClassifierLink {
 /// The `clsact` qdisc must be added to an interface before [`SchedClassifier`]
 /// programs can be attached.
 ///
-/// Pass a name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
+/// Pass a name such as `c"eth0"`, an interface index, or a [`NetworkInterface`].
+///
+/// Names are resolved in the calling thread's network namespace at the time of
+/// this call. Indices are used without an interface lookup and must refer to an
+/// interface in the same namespace.
 pub fn qdisc_add_clsact<'a>(interface: impl Into<NetworkInterface<'a>>) -> Result<(), TcError> {
     let if_index = interface.into().if_index()?;
     netlink_qdisc_add_clsact(if_index as i32).map_err(TcError::NetlinkError)
@@ -701,7 +712,11 @@ pub fn qdisc_add_clsact<'a>(interface: impl Into<NetworkInterface<'a>>) -> Resul
 
 /// Detaches the programs with the given name.
 ///
-/// Pass an interface name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
+/// Pass an interface name such as `c"eth0"`, an interface index, or a [`NetworkInterface`].
+///
+/// Names are resolved in the calling thread's network namespace at the time of
+/// this call. Indices are used without an interface lookup and must refer to an
+/// interface in the same namespace.
 ///
 /// # Errors
 ///
