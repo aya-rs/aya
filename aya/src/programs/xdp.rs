@@ -81,7 +81,7 @@ impl XdpMode {
 /// use aya::{Ebpf, programs::{Xdp, XdpMode}};
 ///
 /// let program: &mut Xdp = bpf.program_mut("intercept_packets").unwrap().try_into()?;
-/// program.attach("eth0", XdpMode::default())?;
+/// program.attach(c"eth0", XdpMode::default())?;
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
 #[derive(Debug)]
@@ -103,7 +103,11 @@ impl Xdp {
 
     /// Attaches the program to an interface specified by name or index.
     ///
-    /// Pass a name such as `"eth0"`, an interface index, or a [`NetworkInterface`].
+    /// Pass a name such as `c"eth0"`, an interface index, or a [`NetworkInterface`].
+    ///
+    /// Names are resolved in the calling thread's network namespace at the time of
+    /// this call. Indices are used without an interface lookup and must refer to an
+    /// interface in the same namespace.
     ///
     /// The returned value can be used to detach, see [`Xdp::detach`].
     ///
@@ -111,9 +115,6 @@ impl Xdp {
     ///
     /// If no interface with the given name exists,
     /// [`ProgramError::UnknownInterface`] is returned.
-    ///
-    /// If the interface name contains an interior NUL byte,
-    /// [`ProgramError::InvalidInterfaceName`] is returned.
     ///
     /// Other interface lookup failures return [`ProgramError::IOError`].
     ///

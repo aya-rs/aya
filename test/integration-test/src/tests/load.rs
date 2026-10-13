@@ -37,7 +37,7 @@ fn long_name() {
         .try_into()
         .unwrap();
     name_prog.load().unwrap();
-    name_prog.attach("lo", XdpMode::default()).unwrap();
+    name_prog.attach(c"lo", XdpMode::default()).unwrap();
 
     // We used to be able to assert with bpftool that the program name was short.
     // It seem though that it now uses the name from the ELF symbol table instead.
@@ -282,7 +282,7 @@ fn unload_xdp() {
     type P = Xdp;
 
     let program_name = "pass";
-    let attach = |prog: &mut P| prog.attach("lo", XdpMode::default()).unwrap();
+    let attach = |prog: &mut P| prog.attach(c"lo", XdpMode::default()).unwrap();
     run_unload_program_test(
         crate::TEST,
         program_name,
@@ -413,7 +413,7 @@ fn pin_link() {
     type P = Xdp;
 
     let program_name = "pass";
-    let attach = |prog: &mut P| prog.attach("lo", XdpMode::default()).unwrap();
+    let attach = |prog: &mut P| prog.attach(c"lo", XdpMode::default()).unwrap();
 
     let mut bpf = Ebpf::load(crate::TEST).unwrap();
     let prog: &mut P = bpf.program_mut(program_name).unwrap().try_into().unwrap();
@@ -458,7 +458,7 @@ fn pin_tcx_link() {
 
     let link_id = prog
         .attach_with_options(
-            "lo",
+            c"lo",
             TcAttachType::Ingress,
             TcAttachOptions::TcxOrder(LinkOrder::default()),
         )
@@ -571,7 +571,7 @@ fn pin_lifecycle() {
     type P = Xdp;
 
     let program_name = "pass";
-    let attach = |prog: &mut P| prog.attach("lo", XdpMode::default()).unwrap();
+    let attach = |prog: &mut P| prog.attach(c"lo", XdpMode::default()).unwrap();
     let program_pin = "/sys/fs/bpf/aya-xdp-test-prog";
     let link_pin = "/sys/fs/bpf/aya-xdp-test-lo";
     let from_pin = |program_pin: &str| P::from_pin(program_pin, XdpAttachType::Interface).unwrap();

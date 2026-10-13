@@ -24,7 +24,7 @@ use crate::TCX;
 fn netlink_attach_to_link_preserves_classid() {
     let _netns = NetNsGuard::new().unwrap();
 
-    qdisc_add_clsact("lo").unwrap();
+    qdisc_add_clsact(c"lo").unwrap();
 
     let mut bpf = Ebpf::load(TCX).unwrap();
     let prog: &mut SchedClassifier = bpf.program_mut("tcx_next").unwrap().try_into().unwrap();
@@ -34,7 +34,7 @@ fn netlink_attach_to_link_preserves_classid() {
 
     let link_id = prog
         .attach_with_options(
-            "lo",
+            c"lo",
             TcAttachType::Ingress,
             TcAttachOptions::Netlink(NlOptions {
                 classid: Some(classid),
@@ -57,7 +57,7 @@ fn netlink_attach_to_link_preserves_classid() {
 fn netlink_attach_auto_assigns_handle() {
     let _netns = NetNsGuard::new().unwrap();
 
-    qdisc_add_clsact("lo").unwrap();
+    qdisc_add_clsact(c"lo").unwrap();
 
     let mut bpf = Ebpf::load(TCX).unwrap();
     let prog: &mut SchedClassifier = bpf.program_mut("tcx_next").unwrap().try_into().unwrap();
@@ -65,7 +65,7 @@ fn netlink_attach_auto_assigns_handle() {
 
     let link_id = prog
         .attach_with_options(
-            "lo",
+            c"lo",
             TcAttachType::Ingress,
             TcAttachOptions::Netlink(NlOptions::default()),
         )
@@ -80,7 +80,7 @@ fn netlink_attach_auto_assigns_handle() {
 fn netlink_attach_preserves_explicit_handle() {
     let _netns = NetNsGuard::new().unwrap();
 
-    qdisc_add_clsact("lo").unwrap();
+    qdisc_add_clsact(c"lo").unwrap();
 
     let mut bpf = Ebpf::load(TCX).unwrap();
     let prog: &mut SchedClassifier = bpf.program_mut("tcx_next").unwrap().try_into().unwrap();
@@ -90,7 +90,7 @@ fn netlink_attach_preserves_explicit_handle() {
 
     let link_id = prog
         .attach_with_options(
-            "lo",
+            c"lo",
             TcAttachType::Ingress,
             TcAttachOptions::Netlink(NlOptions {
                 handle,
@@ -113,7 +113,7 @@ fn netlink_attach_preserves_explicit_handle() {
 #[test_log::test]
 fn netlink_program_name(#[case] len: usize, #[case] valid: bool) {
     let _netns = NetNsGuard::new().unwrap();
-    qdisc_add_clsact("lo").unwrap();
+    qdisc_add_clsact(c"lo").unwrap();
 
     let mut bpf = Ebpf::load(TCX).unwrap();
     let prog: &mut SchedClassifier = bpf.program_mut("tcx_next").unwrap().try_into().unwrap();
@@ -123,7 +123,7 @@ fn netlink_program_name(#[case] len: usize, #[case] valid: bool) {
     let mut prog =
         SchedClassifier::from_program_info(prog.info().unwrap(), name.clone().into()).unwrap();
     let result = prog.attach_with_options(
-        "lo",
+        c"lo",
         TcAttachType::Ingress,
         TcAttachOptions::Netlink(NlOptions {
             classid: Some(TcHandle::new(1, 1)),
@@ -133,7 +133,7 @@ fn netlink_program_name(#[case] len: usize, #[case] valid: bool) {
     if valid {
         let _link = prog.take_link(result.unwrap()).unwrap();
         // Looking up the full name verifies that the kernel received it intact.
-        qdisc_detach_program("lo", TcAttachType::Ingress, &name).unwrap();
+        qdisc_detach_program(c"lo", TcAttachType::Ingress, &name).unwrap();
     } else {
         assert_matches!(result, Err(ProgramError::TcError(TcError::NetlinkError(err))) => {
             assert_eq!(err.to_string(), "program name exceeds CLS_BPF_NAME_LEN");
