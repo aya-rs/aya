@@ -162,6 +162,7 @@ jobs:
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
             --exclude integration-ebpf \
+            --exclude integration-ebpf-jumptable \
             --exclude integration-test \
             --workspace
 
@@ -224,6 +225,7 @@ jobs:
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
             --exclude integration-ebpf \
+            --exclude integration-ebpf-jumptable \
             --exclude xtask \
             --workspace
 
@@ -237,6 +239,7 @@ jobs:
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
             --exclude integration-ebpf \
+            --exclude integration-ebpf-jumptable \
             --exclude integration-test \
             --feature-powerset
 
@@ -250,6 +253,7 @@ jobs:
             --exclude aya-ebpf-bindings \
             --exclude aya-log-ebpf \
             --exclude integration-ebpf \
+            --exclude integration-ebpf-jumptable \
             --exclude integration-test \
             --feature-powerset
 
@@ -308,6 +312,7 @@ jobs:
                   --package aya-ebpf-bindings \
                   --package aya-log-ebpf \
                   --package integration-ebpf \
+                  --package integration-ebpf-jumptable \
                   --feature-powerset
               ); then
                 failures+=("build: $arch/$target")
@@ -320,6 +325,7 @@ jobs:
                 --package aya-ebpf-bindings \
                 --package aya-log-ebpf \
                 --package integration-ebpf \
+                --package integration-ebpf-jumptable \
                 --feature-powerset
             ); then
               failures+=("doctests: $arch")
