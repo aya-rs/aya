@@ -76,7 +76,7 @@ pub mod xdp;
 use std::{
     borrow::Cow,
     convert::Infallible,
-    ffi::{CString, NulError},
+    ffi::{CStr, CString, NulError},
     io,
     os::fd::{AsFd, BorrowedFd},
     path::{Path, PathBuf},
@@ -151,51 +151,40 @@ use crate::{
 };
 
 /// A network interface identified by name or index.
-///
-/// Names are resolved in the calling thread's network namespace when an operation is performed.
-/// Indices must refer to an interface in that same namespace.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum NetworkInterface<'a> {
-    /// The name of the interface, such as `"eth0"`.
-    Name(&'a str),
-    /// The interface index. Existence is not checked when resolving this variant.
+    /// The name of the interface, such as `c"eth0"`.
+    Name(&'a CStr),
+    /// The interface index.
     Index(u32),
 }
 
 impl NetworkInterface<'_> {
     pub(crate) fn if_index(self) -> io::Result<u32> {
         match self {
-            Self::Name(name) => ifindex_from_ifname(&CString::new(name)?),
+            Self::Name(name) => ifindex_from_ifname(name),
             Self::Index(index) => Ok(index),
         }
     }
 
     pub(crate) fn if_index_for_program(self) -> Result<u32, ProgramError> {
-        match self {
-            Self::Name(name) => {
-                let if_name =
-                    CString::new(name).map_err(|source| ProgramError::InvalidInterfaceName {
-                        name: name.to_owned(),
-                        source,
-                    })?;
-                ifindex_from_ifname(&if_name).map_err(|io_error| match io_error.raw_os_error() {
-                    // if_nametoindex uses SIOCGIFINDEX, which returns ENODEV for a missing interface.
-                    // https://github.com/torvalds/linux/blob/ffc253263/net/core/dev_ioctl.c#L138-L169
-                    // https://github.com/bminor/glibc/blob/04e750e75/sysdeps/unix/sysv/linux/if_index.c#L45-L51
-                    Some(libc::ENODEV) => ProgramError::UnknownInterface {
-                        name: name.to_owned(),
-                    },
-                    _ => ProgramError::IOError(io_error),
-                })
+        self.if_index().map_err(|io_error| {
+            match (self, io_error.raw_os_error()) {
+                // if_nametoindex uses SIOCGIFINDEX, which returns ENODEV for a missing interface.
+                // https://github.com/torvalds/linux/blob/ffc253263/net/core/dev_ioctl.c#L138-L169
+                // https://github.com/bminor/glibc/blob/04e750e75/sysdeps/unix/sysv/linux/if_index.c#L45-L51
+                (Self::Name(name), Some(libc::ENODEV)) => ProgramError::UnknownInterface {
+                    name: name.to_owned(),
+                },
+                _ => ProgramError::IOError(io_error),
             }
-            Self::Index(index) => Ok(index),
-        }
+        })
     }
 }
 
 // `impl Into<NetworkInterface>` does not apply deref coercion, so support
-// borrowed string-like types through `AsRef<str>`.
-impl<'a, T: AsRef<str> + ?Sized> From<&'a T> for NetworkInterface<'a> {
+// borrowed C string types through `AsRef<CStr>`.
+impl<'a, T: AsRef<CStr> + ?Sized> From<&'a T> for NetworkInterface<'a> {
     fn from(name: &'a T) -> Self {
         Self::Name(name.as_ref())
     }
@@ -245,20 +234,10 @@ pub enum ProgramError {
     LinkError(#[from] LinkError),
 
     /// The network interface does not exist.
-    #[error("unknown network interface {name}")]
+    #[error("unknown network interface {name:?}")]
     UnknownInterface {
-        /// interface name
-        name: String,
-    },
-
-    /// The network interface name contains an interior NUL byte.
-    #[error("invalid network interface name {name}")]
-    InvalidInterfaceName {
         /// The interface name.
-        name: String,
-        /// The error returned by [`CString::new`].
-        #[source]
-        source: NulError,
+        name: CString,
     },
 
     /// The program is not of the expected type.
@@ -1709,7 +1688,12 @@ pub fn loaded_links() -> impl Iterator<Item = Result<LinkInfo, LinkError>> {
 
 #[cfg(test)]
 mod tests {
-    use std::{borrow::Cow, io, rc::Rc, sync::Arc};
+    use std::{
+        borrow::Cow,
+        ffi::{CStr, CString},
+        rc::Rc,
+        sync::Arc,
+    };
 
     use assert_matches::assert_matches;
     use rstest::rstest;
@@ -1724,20 +1708,32 @@ mod tests {
     }
 
     #[rstest]
-    #[case("lo\0")]
-    #[case(&"lo\0")]
-    #[case(String::from("lo\0"))]
-    #[case(Box::<str>::from("lo\0"))]
-    #[case(Rc::<str>::from("lo\0"))]
-    #[case(Arc::<str>::from("lo\0"))]
-    #[case(Cow::Borrowed("lo\0"))]
-    fn network_interface_rejects_interior_nul(#[case] name: impl AsRef<str>) {
+    #[case(c"lo")]
+    #[case(&c"lo")]
+    #[case(CString::new("lo").unwrap())]
+    #[case(Box::<CStr>::from(c"lo"))]
+    #[case(Rc::<CStr>::from(c"lo"))]
+    #[case(Arc::<CStr>::from(c"lo"))]
+    #[case(Cow::Borrowed(c"lo"))]
+    #[cfg_attr(miri, ignore = "`if_nametoindex` is not supported by Miri")]
+    fn network_interface_resolves_c_string_names(#[case] name: impl AsRef<CStr>) {
         let interface = NetworkInterface::from(&name);
-        let error = interface.if_index().unwrap_err();
-        assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+        let index = interface.if_index_for_program().unwrap();
+        assert_ne!(index, 0);
+    }
 
-        let error = interface.if_index_for_program().unwrap_err();
-        assert_matches!(error, ProgramError::InvalidInterfaceName { name: actual, source }
-            if actual == name.as_ref() && source.nul_position() == 2);
+    #[rstest]
+    #[case(c"aya-no-iface")]
+    #[case(c"aya-\xff")]
+    #[cfg_attr(miri, ignore = "`if_nametoindex` is not supported by Miri")]
+    fn network_interface_unknown_name(#[case] name: &CStr) {
+        let interface = NetworkInterface::from(name);
+        assert_eq!(
+            interface.if_index().unwrap_err().raw_os_error(),
+            Some(libc::ENODEV)
+        );
+        assert_matches!(interface.if_index_for_program(),
+            Err(ProgramError::UnknownInterface { name: actual })
+                if actual.as_c_str() == name);
     }
 }
