@@ -40,6 +40,10 @@ Tests should follow these guidelines:
 - C eBPF code should live in `integration-test/bpf/${NAME}.bpf.c`. It should be
   added to the list of files in `integration-test/build.rs` and the list of
   constants in `integration-test/src/lib.rs` using `include_bytes_aligned!`.
+  Sources that need extra clang flags list them in `C_BPF_COPTS` in
+  `integration-test/build.rs` (and `BUILD.bazel`); if the host clang rejects
+  the flags an empty object is produced, so the test must skip itself when its
+  bytes are empty.
 - Tests should be added to `integration-test/tests`.
 - You may add a new module, or use an existing one.
 - Test functions should not return `anyhow::Result<()>` since this produces
