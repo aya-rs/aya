@@ -105,8 +105,19 @@ fn main() -> Result<()> {
         ("ksyms_typed_missing_var.bpf.c", true),
         ("ksyms_typed_missing_kfunc.bpf.c", true),
         ("ksyms_typeless_missing.bpf.c", true),
+        ("jumptable.bpf.c", false),
     ];
     const C_BPF_HEADERS: &[&str] = &["reloc.h", "struct_with_scalars.h"];
+    // Extra clang flags for the sources in C_BPF that need them. Keep this synchronized with
+    // C_BPF_COPTS in BUILD.bazel.
+    //
+    // `jumptable.bpf.c` only exercises jump tables (`.jumptables` section + `gotox`) when LLVM is
+    // told to use them; clang older than LLVM 22 rejects these flags, in which case an empty object
+    // is written and the corresponding test skips itself.
+    const C_BPF_COPTS: &[(&str, &[&str])] = &[(
+        "jumptable.bpf.c",
+        &["-mcpu=v4", "-mllvm", "-bpf-min-jump-table-entries=4"],
+    )];
 
     if build_integration_bpf {
         const CARGO_CFG_TARGET_ENDIAN: &str = "CARGO_CFG_TARGET_ENDIAN";
@@ -185,17 +196,47 @@ fn main() -> Result<()> {
             rerun_if_changed(&hdr).with_context(|| format!("{}", hdr.display()))?;
         }
 
+        // Compiles an empty translation unit from stdin to learn whether clang accepts `flags`.
+        let clang_accepts = |flags: &[&str]| -> Result<bool> {
+            let mut cmd = clang();
+            cmd.args(flags)
+                .args(["-x", "c", "-", "-o", "/dev/null"])
+                .stdin(Stdio::null())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null());
+            let status = cmd
+                .status()
+                .with_context(|| format!("failed to run {cmd:?}"))?;
+            Ok(status.success())
+        };
+
         for (src, build_btf) in C_BPF {
             let dst = out_dir.join(src).with_extension("o");
+            let copts = C_BPF_COPTS
+                .iter()
+                .find_map(|(name, copts)| (name == src).then_some(*copts))
+                .unwrap_or_default();
             let src = bpf_dir.join(src);
 
             rerun_if_changed(&src).with_context(|| format!("{}", src.display()))?;
 
-            exec(clang().arg(&src).arg("-o").arg(&dst))?;
+            if !copts.is_empty() && !clang_accepts(copts)? {
+                println!(
+                    "cargo::warning=clang rejected `{}`; writing empty {}",
+                    copts.join(" "),
+                    dst.display()
+                );
+                fs::write(&dst, [])
+                    .with_context(|| format!("failed to create {}", dst.display()))?;
+                continue;
+            }
+
+            exec(clang().args(copts).arg(&src).arg("-o").arg(&dst))?;
 
             if *build_btf {
                 let mut cmd = clang();
                 let mut child = cmd
+                    .args(copts)
                     .arg("-DTARGET")
                     .arg(&src)
                     .args(["-o", "-"])

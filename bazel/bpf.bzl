@@ -68,7 +68,7 @@ def _c_bpf_compile(ctx, cc_toolchain, feature_configuration, name, defines = [])
         user_compile_flags = [
             "-g",
             "-O2",
-        ],
+        ] + ctx.attr.copts,
         compilation_contexts = [
             dep[CcInfo].compilation_context
             for dep in ctx.attr.deps
@@ -122,6 +122,7 @@ _c_bpf_object_rule = rule(
     attrs = {
         "src": attr.label(allow_single_file = True, mandatory = True),
         "build_btf": attr.bool(default = False),
+        "copts": attr.string_list(),
         "deps": attr.label_list(
             allow_empty = False,
             providers = [CcInfo],
@@ -159,7 +160,7 @@ def _c_bpf_object_out(src):
 def _c_bpf_target_name(src):
     return _c_bpf_object_out(src)[:-2].replace("-", "_").replace(".", "_")
 
-def aya_c_bpf_objects(name, objects, deps, hdrs, vmlinux):
+def aya_c_bpf_objects(name, objects, deps, hdrs, vmlinux, copts = {}):
     """Compiles integration-test C eBPF inputs and collects their objects.
 
     Args:
@@ -168,6 +169,7 @@ def aya_c_bpf_objects(name, objects, deps, hdrs, vmlinux):
       deps: C dependencies for every source.
       hdrs: C headers for every source.
       vmlinux: `vmlinux.h` label for every source.
+      copts: Dict from `src` to extra clang flags for that source.
     """
     targets = []
     for src, build_btf in objects:
@@ -175,6 +177,7 @@ def aya_c_bpf_objects(name, objects, deps, hdrs, vmlinux):
         _c_bpf_object(
             name = target_name,
             build_btf = build_btf,
+            copts = copts.get(src, []),
             deps = deps,
             hdrs = hdrs,
             src = src,
