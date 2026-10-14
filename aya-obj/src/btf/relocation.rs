@@ -1,6 +1,6 @@
 use std::{
     borrow::{Cow, ToOwned as _},
-    collections::BTreeMap,
+    collections::{BTreeMap, hash_map::Entry},
     format,
     num::ParseIntError,
     ops::Bound::Included,
@@ -330,23 +330,32 @@ fn relocate_btf_functions<'target>(
             // we don't need to look at target types to relocate this value
             Vec::new()
         } else {
-            let candidates = if let Some(cands) = candidates_cache.get(&rel.type_id) {
-                cands
-            } else {
-                candidates_cache.insert(
-                    rel.type_id,
-                    find_candidates(local_ty, local_name, target_btf)?,
-                );
-                candidates_cache.get(&rel.type_id).unwrap()
+            let candidates = match candidates_cache.entry(rel.type_id) {
+                Entry::Occupied(entry) => entry.into_mut(),
+                Entry::Vacant(entry) => {
+                    entry.insert(find_candidates(local_ty, local_name, target_btf)?)
+                }
             };
 
             let mut matches = Vec::new();
-            for candidate in candidates {
+            for candidate in &*candidates {
                 if let Some(candidate_spec) = match_candidate(&local_spec, candidate)? {
                     let comp_rel =
                         ComputedRelocation::new(rel, &local_spec, Some(&candidate_spec))?;
                     matches.push((candidate.name.clone(), candidate_spec, comp_rel));
                 }
+            }
+
+            // Every relocation of this local type shares these candidates, and a program
+            // runs against one target layout. Keep only the candidates that matched, so
+            // later relocations can't pick another type of the same name. If none
+            // matched, keep them all, as libbpf does.
+            if !matches.is_empty() {
+                candidates.retain(|candidate| {
+                    matches
+                        .iter()
+                        .any(|(_, spec, _)| spec.root_type_id == candidate.type_id)
+                });
             }
 
             matches
@@ -463,7 +472,7 @@ fn find_candidates<'target>(
 
 fn match_candidate<'target>(
     local_spec: &AccessSpec<'_>,
-    candidate: &'target Candidate<'_>,
+    candidate: &Candidate<'target>,
 ) -> Result<Option<AccessSpec<'target>>, RelocationError> {
     let mut target_spec = AccessSpec {
         btf: candidate.btf,
@@ -1352,5 +1361,186 @@ impl ComputedRelocation {
             size: 0,
             type_id: None,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::ffi::CString;
+
+    use object::Endianness;
+    use rstest::rstest;
+
+    use super::*;
+    use crate::{
+        btf::{
+            BtfExt, Int,
+            info::{FuncSecInfo, LineSecInfo},
+        },
+        generated::{BPF_MEM, btf_ext_header},
+        util::bytes_of,
+    };
+
+    // Access strings of the members of the local `e1000_adapter` built by `relocate`.
+    const PTP_DELTA: &str = "0:0";
+    const GOTCL_OLD: &str = "0:1";
+    const MISSING: &str = "0:2";
+
+    fn add_struct(btf: &mut Btf, name: &str, int_id: u32, members: &[&str]) -> u32 {
+        let name_offset = btf.add_string(name);
+        let members = members
+            .iter()
+            .enumerate()
+            .map(|(index, member)| BtfMember {
+                name_offset: btf.add_string(member),
+                btf_type: int_id,
+                offset: index as u32 * 64,
+            })
+            .collect::<Vec<_>>();
+        let size = members.len() as u32 * 8;
+        btf.add_type(BtfType::Struct(Struct::new(name_offset, members, size)))
+    }
+
+    /// Relocates programs that each load the members named by one slice of access strings
+    /// from the local `e1000_adapter`, one `FieldByteOffset` relocation per member.
+    ///
+    /// The target BTF holds two structs named `e1000_adapter`, like vmlinux does for the
+    /// e1000 and e1000e drivers. `gotcl_old` is only in the first, at byte 16, and `ptp_delta`
+    /// is only in the second, at byte 32. `missing` is in neither.
+    ///
+    /// Returns the offset each instruction ends up with, or `None` if it was poisoned.
+    fn relocate(programs: &[&[&str]]) -> Vec<Vec<Option<i16>>> {
+        let mut local_btf = Btf::new();
+        let u64_name = local_btf.add_string("__u64");
+        let u64_id = local_btf.add_type(BtfType::Int(Int::new(u64_name, 8, IntEncoding::None, 0)));
+        let local_id = add_struct(
+            &mut local_btf,
+            "e1000_adapter",
+            u64_id,
+            &["ptp_delta", "gotcl_old", "missing"],
+        );
+
+        let mut target_btf = Btf::new();
+        let u64_name = target_btf.add_string("long unsigned int");
+        let u64_id = target_btf.add_type(BtfType::Int(Int::new(u64_name, 8, IntEncoding::None, 0)));
+        add_struct(
+            &mut target_btf,
+            "e1000_adapter",
+            u64_id,
+            &["pad0", "pad1", "gotcl_old"],
+        );
+        add_struct(
+            &mut target_btf,
+            "e1000_adapter",
+            u64_id,
+            &["pad0", "pad1", "pad2", "pad3", "ptp_delta"],
+        );
+
+        let mut obj = Object::new(Endianness::default(), CString::new("GPL").unwrap(), None);
+        // The `.BTF.ext` core relocation info: the record size, then for each program its
+        // section name and its `bpf_core_relo` records.
+        let mut core_relo_info = vec![size_of::<bpf_core_relo>() as u32];
+        for (index, accesses) in programs.iter().enumerate() {
+            let section_name = format!("kprobe/prog{index}");
+            let section_index = SectionIndex(index);
+            core_relo_info.extend([local_btf.add_string(&section_name), accesses.len() as u32]);
+            for (insn_index, access) in accesses.iter().enumerate() {
+                core_relo_info.extend([
+                    (insn_index * size_of::<bpf_insn>()) as u32,
+                    local_id,
+                    local_btf.add_string(access),
+                    bpf_core_relo_kind::BPF_CORE_FIELD_BYTE_OFFSET,
+                ]);
+            }
+
+            obj.section_infos.insert(section_name, (section_index, 0));
+            obj.functions.insert(
+                (index, 0),
+                Function {
+                    address: 0,
+                    name: format!("prog{index}"),
+                    section_index,
+                    section_offset: 0,
+                    instructions: accesses
+                        .iter()
+                        .map(|_| bpf_insn {
+                            code: (BPF_LDX | BPF_MEM | BPF_DW) as u8,
+                            _bitfield_1: bpf_insn::new_bitfield_1(0, 0),
+                            off: 0,
+                            imm: 0,
+                        })
+                        .collect(),
+                    func_info: FuncSecInfo::default(),
+                    line_info: LineSecInfo::default(),
+                    func_info_rec_size: 0,
+                    line_info_rec_size: 0,
+                },
+            );
+        }
+
+        let header = btf_ext_header {
+            magic: 0xeb9f,
+            version: 1,
+            flags: 0,
+            hdr_len: size_of::<btf_ext_header>() as u32,
+            func_info_off: 0,
+            func_info_len: 0,
+            line_info_off: 0,
+            line_info_len: 0,
+            core_relo_off: 0,
+            core_relo_len: (core_relo_info.len() * size_of::<u32>()) as u32,
+        };
+        // Safety: `btf_ext_header` is POD.
+        let mut btf_ext_data = unsafe { bytes_of(&header) }.to_vec();
+        btf_ext_data.extend(core_relo_info.iter().flat_map(|word| word.to_ne_bytes()));
+        obj.btf_ext =
+            Some(BtfExt::parse(&btf_ext_data, Endianness::default(), &local_btf).unwrap());
+        obj.btf = Some(local_btf);
+
+        obj.relocate_btf(&target_btf).unwrap();
+
+        (0..programs.len())
+            .map(|index| {
+                obj.functions[&(index, 0)]
+                    .instructions
+                    .iter()
+                    .map(|ins| {
+                        let poisoned =
+                            ins.code == (BPF_JMP | BPF_CALL) as u8 && ins.imm == 0xBAD2310;
+                        (!poisoned).then_some(ins.off)
+                    })
+                    .collect()
+            })
+            .collect()
+    }
+
+    // A program only runs against one target layout, so once a relocation has picked the
+    // struct holding one member, the ones that exist only in the other struct are poisoned.
+    #[rstest]
+    #[case::classic_first(&[GOTCL_OLD, PTP_DELTA], &[Some(16), None])]
+    #[case::extended_first(&[PTP_DELTA, GOTCL_OLD], &[Some(32), None])]
+    fn relocations_of_a_type_share_candidates(
+        #[case] accesses: &[&str],
+        #[case] expected: &[Option<i16>],
+    ) {
+        assert_eq!(relocate(&[accesses]), [expected]);
+    }
+
+    // A relocation that no candidate matches doesn't narrow the candidates.
+    #[test]
+    fn unmatched_relocation_keeps_candidates() {
+        assert_eq!(
+            relocate(&[&[MISSING, GOTCL_OLD, PTP_DELTA]]),
+            [[None, Some(16), None]],
+        );
+    }
+
+    // The candidates are shared by all programs of the object.
+    #[test]
+    fn relocations_in_different_programs_share_candidates() {
+        assert_eq!(
+            relocate(&[&[GOTCL_OLD], &[PTP_DELTA]]),
+            [vec![Some(16)], vec![None]],
+        );
     }
 }
