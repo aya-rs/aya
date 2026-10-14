@@ -58,6 +58,11 @@ use rstest::rstest;
 )]
 #[case(crate::FIELD_RELOC_BPF, crate::FIELD_RELOC_BTF, 1)]
 #[case(crate::FLEX_ARRAY_RELOC_BPF, crate::FLEX_ARRAY_RELOC_BTF, 24)]
+#[case::target_duplicate_struct(
+    crate::TARGET_DUPLICATE_STRUCT_RELOC_BPF,
+    crate::TARGET_DUPLICATE_STRUCT_RELOC_BTF,
+    1
+)]
 #[case::target_fixed_array(
     crate::TARGET_FIXED_ARRAY_RELOC_BPF,
     crate::TARGET_FIXED_ARRAY_RELOC_BTF,

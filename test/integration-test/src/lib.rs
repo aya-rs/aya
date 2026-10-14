@@ -40,6 +40,8 @@ bpf_file!(
     FLEX_ARRAY_RELOC_BTF => "flex_array_reloc.bpf.target.o",
     NONFINAL_ZERO_ARRAY_RELOC_BPF => "nonfinal_zero_array_reloc.bpf.o",
     NESTED_ARRAY_BOUNDS_RELOC_BPF => "nested_array_bounds_reloc.bpf.o",
+    TARGET_DUPLICATE_STRUCT_RELOC_BPF => "target_duplicate_struct_reloc.bpf.o",
+    TARGET_DUPLICATE_STRUCT_RELOC_BTF => "target_duplicate_struct_reloc.bpf.target.o",
     TARGET_FIXED_ARRAY_RELOC_BPF => "target_fixed_array_reloc.bpf.o",
     TARGET_FIXED_ARRAY_RELOC_BTF => "target_fixed_array_reloc.bpf.target.o",
     TARGET_NONFINAL_ZERO_ARRAY_RELOC_BPF => "target_nonfinal_zero_array_reloc.bpf.o",
