@@ -21,6 +21,11 @@ pub struct ReusePortSockArray {
     def: MapDef,
 }
 
+impl super::__MapLayout for ReusePortSockArray {
+    type Key = u32;
+    type Value = u32;
+}
+
 impl ReusePortSockArray {
     map_constructors!(u32, u32, BPF_MAP_TYPE_REUSEPORT_SOCKARRAY);
 

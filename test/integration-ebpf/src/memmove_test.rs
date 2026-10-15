@@ -29,6 +29,7 @@ fn ptr_at<T>(ctx: &XdpContext, offset: usize) -> Result<*const T, ()> {
     Ok(ptr::with_exposed_provenance(start + offset))
 }
 
+#[repr(C)]
 struct Value {
     pub orig_ip: [u8; 16],
 }
