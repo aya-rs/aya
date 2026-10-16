@@ -173,7 +173,7 @@ dependencies = [
 
 [[package]]
 name = "aya-log-common"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "num_enum",
 ]
