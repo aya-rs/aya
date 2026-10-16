@@ -16,7 +16,7 @@ workspace = true
 [dependencies]
 aya-ebpf-bindings = { version = "^0.2.0", path = "../aya-ebpf-bindings" }
 aya-ebpf-cty = { version = "^0.3.0", path = "../aya-ebpf-cty" }
-aya-ebpf-macros = { version = "^0.2.0", path = "../../aya-ebpf-macros" }
+aya-ebpf-macros = { version = "^0.3.0", path = "../../aya-ebpf-macros" }
 
 [build-dependencies]
 aya-build = { version = "^0.2.1", path = "../../aya-build" }
