@@ -1,5 +1,6 @@
 load("@bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@linux.bzl//:linux.bzl", "initramfs")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 load("//bazel:bpf.bzl", "aya_c_bpf_objects")
 load("//bazel:rust.bzl", "aya_rust_crate")
 load("//bazel:vm.bzl", "aya_qemu_vm_test")
@@ -38,7 +39,16 @@ C_BPF_OBJECTS = [
     ("bpf/ksyms_typed_missing_kfunc.bpf.c", True),
     ("bpf/ksyms_typed_missing_var.bpf.c", True),
     ("bpf/ksyms_typeless_missing.bpf.c", True),
+    ("bpf/tc_legacy_map.bpf.c", False),
+    ("bpf/tc_legacy_map_in_map.bpf.c", False),
 ]
+
+# Satisfies the <asm/types.h> include in iproute2's bpf_elf.h.
+cc_library(
+    name = "asm_types_stub",
+    hdrs = ["bpf/headers/asm/types.h"],
+    strip_include_prefix = "bpf/headers",
+)
 
 aya_c_bpf_objects(
     name = "c_bpf_objects",
@@ -48,7 +58,11 @@ aya_c_bpf_objects(
     ],
     objects = C_BPF_OBJECTS,
     vmlinux = "@crates//:libbpf-sys-vmlinux-h-1.7.0+v1.7.0",
-    deps = ["@libbpf"],
+    deps = [
+        ":asm_types_stub",
+        "@iproute2",
+        "@libbpf",
+    ],
 )
 
 copy_to_directory(
