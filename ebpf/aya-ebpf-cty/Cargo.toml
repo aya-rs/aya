@@ -3,7 +3,7 @@ categories = ["embedded", "external-ffi-bindings", "no-std"]
 description = "Type aliases to C types like c_int for use with bindgen"
 documentation = "https://docs.rs/aya-bpf-cty"
 name = "aya-ebpf-cty"
-version = "0.3.0"
+version = "0.4.0"
 
 authors.workspace = true
 edition.workspace = true
