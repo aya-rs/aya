@@ -91,6 +91,7 @@ fn main() -> Result<()> {
         ("flex_array_reloc.bpf.c", true),
         ("nonfinal_zero_array_reloc.bpf.c", false),
         ("nested_array_bounds_reloc.bpf.c", false),
+        ("target_duplicate_struct_reloc.bpf.c", true),
         ("target_fixed_array_reloc.bpf.c", true),
         ("target_nonfinal_zero_array_reloc.bpf.c", true),
         ("pointer_reloc.bpf.c", true),
