@@ -16,7 +16,7 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-aya = { path = "../aya", version = "^0.14.0", default-features = false }
+aya = { path = "../aya", version = "^0.15.0", default-features = false }
 aya-log-common = { path = "../aya-log-common", version = "^0.3.0", default-features = false }
 log = { workspace = true }
 thiserror = { workspace = true }
