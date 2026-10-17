@@ -58,6 +58,7 @@
 //! [log]: https://docs.rs/log
 
 use std::{
+    ffi::CStr,
     fmt::{LowerHex, UpperHex},
     net::{Ipv4Addr, Ipv6Addr},
     os::fd::{AsFd, AsRawFd},
@@ -302,11 +303,24 @@ trait Format {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()>;
 }
 
+/// Decodes `bytes` up to the first NUL byte (or the end of the slice, if there is
+/// no NUL byte) as UTF-8. Returns `Err(())` if those bytes are not valid UTF-8,
+/// rather than silently replacing invalid sequences.
+fn parse_nul_terminated_str(bytes: &[u8]) -> Result<&str, ()> {
+    match CStr::from_bytes_until_nul(bytes) {
+        Ok(value) => value.to_str(),
+        // String-reading helpers return slices without the NUL terminator.
+        Err(_nul_error) => str::from_utf8(bytes),
+    }
+    .map_err(|str::Utf8Error { .. }| ())
+}
+
 impl Format for &[u8] {
     fn format(&self, last_hint: Option<DisplayHintWrapper>) -> Result<String, ()> {
         match last_hint.map(|DisplayHintWrapper(dh)| dh) {
             Some(DisplayHint::LowerHex) => Ok(LowerHexBytesFormatter::format(self)),
             Some(DisplayHint::UpperHex) => Ok(UpperHexBytesFormatter::format(self)),
+            Some(DisplayHint::Str) => parse_nul_terminated_str(self).map(str::to_owned),
             _ => Err(()),
         }
     }
@@ -322,6 +336,7 @@ impl Format for u32 {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => Err(()),
             None => Ok(DefaultFormatter::format(self)),
         }
     }
@@ -337,6 +352,7 @@ impl Format for Ipv4Addr {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => Err(()),
             None => Ok(Ipv4Formatter::format(*self)),
         }
     }
@@ -352,6 +368,7 @@ impl Format for Ipv6Addr {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => Err(()),
             None => Ok(Ipv6Formatter::format(*self)),
         }
     }
@@ -367,6 +384,7 @@ impl Format for [u8; 4] {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => parse_nul_terminated_str(self).map(str::to_owned),
             None => Ok(Ipv4Formatter::format(*self)),
         }
     }
@@ -382,6 +400,7 @@ impl Format for [u8; 6] {
             Some(DisplayHint::LowerMac) => Ok(LowerMacFormatter::format(*self)),
             Some(DisplayHint::UpperMac) => Ok(UpperMacFormatter::format(*self)),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => parse_nul_terminated_str(self).map(str::to_owned),
             None => Err(()),
         }
     }
@@ -397,6 +416,7 @@ impl Format for [u8; 16] {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => parse_nul_terminated_str(self).map(str::to_owned),
             None => Err(()),
         }
     }
@@ -412,6 +432,7 @@ impl Format for [u16; 8] {
             Some(DisplayHint::LowerMac) => Err(()),
             Some(DisplayHint::UpperMac) => Err(()),
             Some(DisplayHint::Pointer) => Err(()),
+            Some(DisplayHint::Str) => Err(()),
             None => Err(()),
         }
     }
@@ -429,6 +450,7 @@ macro_rules! impl_format {
                     Some(DisplayHint::LowerMac) => Err(()),
                     Some(DisplayHint::UpperMac) => Err(()),
                     Some(DisplayHint::Pointer) => Err(()),
+                    Some(DisplayHint::Str) => Err(()),
                     None => Ok(DefaultFormatter::format(self)),
                 }
             }
@@ -459,6 +481,7 @@ macro_rules! impl_format_float {
                     Some(DisplayHint::LowerMac) => Err(()),
                     Some(DisplayHint::UpperMac) => Err(()),
                     Some(DisplayHint::Pointer) => Err(()),
+                    Some(DisplayHint::Str) => Err(()),
                     None => Ok(DefaultFormatter::format(self)),
                 }
             }
@@ -1298,6 +1321,110 @@ mod test {
             assert_eq!(captured_logs.len(), 1);
             assert_eq!(captured_logs[0].body, "mac: 00:00:5E:00:53:AF");
             assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_parse_nul_terminated_str() {
+        for (bytes, expected) in [
+            (&b"bash\0\0"[..], Ok("bash")),
+            (&b"bash"[..], Ok("bash")),
+            (&b"bash\0\xff"[..], Ok("bash")),
+            (&b"\0\xff"[..], Ok("")),
+            (&b""[..], Ok("")),
+            (&b"\xc3\xa9\0"[..], Ok("\u{e9}")),
+            (&b"\xff\0"[..], Err(())),
+            (&b"\xff"[..], Err(())),
+            (&b"\xc3\0"[..], Err(())),
+        ] {
+            let value = parse_nul_terminated_str(bytes);
+            assert_eq!(value, expected);
+            if let Ok(value) = value {
+                assert_eq!(value.as_ptr(), bytes.as_ptr());
+            }
+        }
+    }
+
+    #[test]
+    fn test_display_hint_str_buffers() {
+        fn check(value: impl Argument, expected: Result<&str, ()>) {
+            testing_logger::setup();
+            let (mut len, mut input) = new_log(2).unwrap();
+            len += DisplayHint::Str.write(&mut input[len..]).unwrap().get();
+            len += value.write(&mut input[len..]).unwrap().get();
+
+            let len = u16::try_from(len).unwrap();
+            input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
+
+            assert_eq!(log_buf(&input, logger()), expected.map(|_| ()));
+            testing_logger::validate(|captured_logs| match expected {
+                Ok(body) => {
+                    assert_eq!(captured_logs.len(), 1);
+                    assert_eq!(captured_logs[0].body, body);
+                    assert_eq!(captured_logs[0].level, Level::Info);
+                }
+                Err(()) => assert_eq!(captured_logs.len(), 0),
+            });
+        }
+
+        check(*b"foo\0", Ok("foo"));
+        check(*b"hello\0", Ok("hello"));
+        check(*b"bash\0\0\0\0\0\0\0\0\0\0\0\0", Ok("bash"));
+        for (bytes, expected) in [
+            (&b"helper"[..], Ok("helper")),
+            (&b""[..], Ok("")),
+            (&b"bash\0\xff"[..], Ok("bash")),
+            (&b"\xc3\xa9\0"[..], Ok("\u{e9}")),
+            (&b"\xff\0"[..], Err(())),
+            (&b"\xff"[..], Err(())),
+        ] {
+            check(bytes, expected);
+        }
+    }
+
+    #[test]
+    fn test_display_hint_str() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(3).unwrap();
+
+        len += "comm: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::Str.write(&mut input[len..]).unwrap().get();
+        // "bash" null-terminated, padded to 16 bytes
+        let comm: [u8; 16] = *b"bash\0\0\0\0\0\0\0\0\0\0\0\0";
+        len += comm.write(&mut input[len..]).unwrap().get();
+
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
+
+        let logger = logger();
+        let () = log_buf(&input, logger).unwrap();
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 1);
+            assert_eq!(captured_logs[0].body, "comm: bash");
+            assert_eq!(captured_logs[0].level, Level::Info);
+        });
+    }
+
+    #[test]
+    fn test_display_hint_str_invalid_utf8() {
+        testing_logger::setup();
+        let (mut len, mut input) = new_log(3).unwrap();
+
+        len += "comm: ".write(&mut input[len..]).unwrap().get();
+        len += DisplayHint::Str.write(&mut input[len..]).unwrap().get();
+        // Invalid UTF-8 byte (0xFF), null-terminated, padded to 16 bytes.
+        let comm: [u8; 16] = *b"\xff\xff\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+        len += comm.write(&mut input[len..]).unwrap().get();
+
+        let len = u16::try_from(len).unwrap();
+        input.splice(0..0, (len + 2).to_ne_bytes().iter().copied());
+
+        let logger = logger();
+        // Formatting must fail rather than silently substituting replacement
+        // characters for the invalid bytes.
+        assert_eq!(log_buf(&input, logger), Err(()));
+        testing_logger::validate(|captured_logs| {
+            assert_eq!(captured_logs.len(), 0);
         });
     }
 }
