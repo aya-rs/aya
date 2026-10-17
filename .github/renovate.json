@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["schedule:weekly"],
+  "enabledManagers": ["bazel-module", "cargo", "github-actions"],
+  "constraints": {
+    "ghActionsLock": "v0.2.0"
+  },
+  "separateMajorMinor": false,
+  "packageRules": [
+    {
+      "matchManagers": ["bazel-module"],
+      "groupName": "bazel-modules"
+    },
+    {
+      "matchManagers": ["cargo"],
+      "groupName": "cargo-crates"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions"
+    }
+  ]
+}
