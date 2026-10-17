@@ -9,7 +9,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: ./.github/actions/setup-rust
+    - uses: $/.github/actions/setup-rust
       with:
         toolchain: ${{ inputs.toolchain }}
         components: rustfmt, clippy
