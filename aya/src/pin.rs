@@ -1,5 +1,7 @@
 //! Pinning BPF objects to the BPF filesystem.
 
+use std::ffi::NulError;
+
 use thiserror::Error;
 
 use crate::sys::SyscallError;
@@ -21,7 +23,7 @@ pub enum PinError {
 
         #[source]
         /// The source error.
-        error: std::ffi::NulError,
+        source: NulError,
     },
     /// An error occurred making a syscall.
     #[error(transparent)]

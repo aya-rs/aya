@@ -1,7 +1,8 @@
 //! Raw tracepoints.
-use std::ffi::CString;
+use std::ffi::{CString, NulError};
 
 use aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_RAW_TRACEPOINT;
+use thiserror::Error;
 
 use crate::programs::{
     FdLink, FdLinkId, ProgramData, ProgramError, ProgramType, define_link_wrapper,
@@ -38,6 +39,19 @@ pub struct RawTracePoint {
     pub(crate) data: ProgramData<RawTracePointLink>,
 }
 
+/// An error that occurred while working with `RawTracePoint` program.
+#[derive(Debug, Error)]
+pub enum RawTracePointError {
+    /// The tracepoint name is invalid.
+    #[error("the provided tracepoint name `{tp_name}` is invalid")]
+    InvalidTracePointName {
+        /// tracepoint name
+        tp_name: String,
+        /// the source error
+        source: NulError,
+    },
+}
+
 impl RawTracePoint {
     /// The type of the program according to the kernel.
     pub const PROGRAM_TYPE: ProgramType = ProgramType::RawTracePoint;
@@ -52,7 +66,11 @@ impl RawTracePoint {
     ///
     /// The returned value can be used to detach, see [`RawTracePoint::detach`].
     pub fn attach(&mut self, tp_name: &str) -> Result<RawTracePointLinkId, ProgramError> {
-        let tp_name_c = CString::new(tp_name).unwrap();
+        let tp_name_c =
+            CString::new(tp_name).map_err(|source| RawTracePointError::InvalidTracePointName {
+                tp_name: tp_name.into(),
+                source,
+            })?;
         attach_raw_tracepoint(&mut self.data, Some(&tp_name_c))
     }
 }
