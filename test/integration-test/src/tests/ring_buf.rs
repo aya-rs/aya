@@ -304,7 +304,9 @@ async fn ring_buf_async_with_drops() {
             data,
         ) = WithData::new(RING_BUF_MAX_ENTRIES * 8, variant);
 
-        let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
+        // SAFETY: The RingBuf owns its map FD, and consuming records does not close or replace it.
+        let mut async_fd =
+            unsafe { AsyncFd::register_with_interest(ring_buf, Interest::READABLE) }.unwrap();
 
         // Spawn the writer which internally will spawn many parallel writers.
         // Construct an AsyncFd from the RingBuf in order to receive readiness notifications.
@@ -421,7 +423,9 @@ async fn ring_buf_async_no_drop() {
         };
 
         // Construct an AsyncFd from the RingBuf in order to receive readiness notifications.
-        let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
+        // SAFETY: The RingBuf owns its map FD, and consuming records does not close or replace it.
+        let mut async_fd =
+            unsafe { AsyncFd::register_with_interest(ring_buf, Interest::READABLE) }.unwrap();
         // Note that unlike in the synchronous case where all of the entries are written before any of
         // them are read, in this case we expect all of the entries to make their way to userspace
         // because entries are being consumed as they are produced.
@@ -507,7 +511,9 @@ async fn ring_buf_asyncfd_events() {
             bpf: _bpf,
         } = RingBufTest::new(variant);
 
-        let mut async_fd = AsyncFd::with_interest(ring_buf, Interest::READABLE).unwrap();
+        // SAFETY: The RingBuf owns its map FD, and consuming records does not close or replace it.
+        let mut async_fd =
+            unsafe { AsyncFd::register_with_interest(ring_buf, Interest::READABLE) }.unwrap();
         let mut total_events = 0;
         let writer = WriterThread::spawn();
         while total_events < WriterThread::NUM_MESSAGES {

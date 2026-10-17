@@ -118,7 +118,8 @@ async fn bpf_printk<const N: usize>(
             )
         });
 
-    let mut pipe = AsyncFd::with_interest(pipe, Interest::READABLE).unwrap();
+    // SAFETY: The File owns its FD, and reading does not close or replace it.
+    let mut pipe = unsafe { AsyncFd::register_with_interest(pipe, Interest::READABLE) }.unwrap();
 
     let mut trace_lines = Vec::new();
     let mut read_buf = String::new();
