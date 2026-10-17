@@ -248,6 +248,21 @@ pub enum MapError {
     #[error("program ids are not supported by the current kernel")]
     ProgIdNotSupported,
 
+    /// Pinned map value size does not match the requested definition
+    #[error(
+        "pinned map `{name}` has kernel value_size {kernel_size} but the \
+         requested definition declares {declared_size}; refusing to reuse \
+         the pin to prevent buffer overflows"
+    )]
+    PinnedValueSizeMismatch {
+        /// Map name
+        name: String,
+        /// Value size reported by the kernel for the existing pin
+        kernel_size: u32,
+        /// Value size from the ELF object definition
+        declared_size: u32,
+    },
+
     /// Unsupported Map type
     #[error(
         "type of {name} ({map_type:?}) is unsupported; see `EbpfLoader::allow_unsupported_maps`"
@@ -899,6 +914,21 @@ impl MapData {
             }
         };
         if let Ok(fd) = bpf_get_object(&path_string) {
+            // Validate the existing pin's kernel-reported layout against the
+            // requested definition. If they differ we must refuse to reuse the
+            // pin: a `get()` call would pass a buffer sized for `declared_size`
+            // bytes while the kernel copies `kernel_size` bytes, causing an
+            // out-of-bounds write.
+            let MapInfo(info) = MapInfo::new_from_fd(fd.as_fd())?;
+            let kernel_size = info.value_size;
+            let declared_size = obj.value_size();
+            if kernel_size != declared_size {
+                return Err(MapError::PinnedValueSizeMismatch {
+                    name: name.into(),
+                    kernel_size,
+                    declared_size,
+                });
+            }
             Ok(Self {
                 obj,
                 fd: MapFd::from_fd(fd),
