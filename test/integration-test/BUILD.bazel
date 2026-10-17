@@ -96,6 +96,7 @@ initramfs(
         name = "vm_" + qemu_system_target,
         timeout = "long",
         args = ["--test-threads=1"],
+        guest_env = {"AYA_TEST_REQUIRE_KPROBE_MULTI": "1"},
         initrd = ":vm_initramfs",
         kernel = "//test/kernel:aya_kernel",
         qemu_system_target = qemu_system_target,

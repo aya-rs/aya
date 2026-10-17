@@ -1,5 +1,7 @@
 """Hermetic VM helpers for integration tests."""
 
+load("@bazel_skylib//lib:shell.bzl", "shell")
+
 _QEMU_SYSTEM_TOOLCHAIN_TYPE = "@rules_qemu//qemu:exec_toolchain_type"
 
 # Keep the QEMU settings and result protocol synchronized with
@@ -58,6 +60,17 @@ def _aya_qemu_vm_test_impl(ctx):
     guest = _GUESTS[qemu.target_arch]
     script = ctx.actions.declare_file(ctx.label.name + ".sh")
 
+    # Shell identifiers match [A-Za-z_][A-Za-z0-9_]*.
+    env_name_start_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+    env_name_chars = env_name_start_chars + "0123456789"
+    kernel_args = [guest.kernel_args]
+    for name, value in sorted(ctx.attr.guest_env.items()):
+        if not name or name[0] not in env_name_start_chars or any([c not in env_name_chars for c in name.elems()]):
+            fail("guest_env names must be shell identifiers: " + repr(name))
+        if any([c.isspace() or c in "\"\000" for c in value.elems()]):
+            fail("guest_env values cannot contain ASCII whitespace, double quotes, or NUL: " + repr(name))
+        kernel_args.append("init.env={}={}".format(name, value))
+
     qemu_args = [
         "-machine",
         qemu.machine,
@@ -96,7 +109,7 @@ qemu_data_dir="${{TEST_SRCDIR}}/{qemu_data_dir}"
 kernel="${{TEST_SRCDIR}}/{kernel}"
 initrd="${{TEST_SRCDIR}}/{initrd}"
 
-kernel_args="{kernel_args}"
+kernel_args={kernel_args}
 for arg in "$@"; do
   kernel_args="${{kernel_args}} init.arg=${{arg}}"
 done
@@ -200,7 +213,7 @@ esac
 """.format(
             initrd = _rootpath(initrd, ctx.workspace_name),
             kernel = _rootpath(kernel, ctx.workspace_name),
-            kernel_args = guest.kernel_args,
+            kernel_args = shell.quote(" ".join(kernel_args)),
             name = ctx.label.name,
             qemu = _rootpath(qemu.qemu_system, ctx.workspace_name),
             qemu_args = " ".join(qemu_args),
@@ -219,6 +232,9 @@ esac
 aya_qemu_vm_test = rule(
     implementation = _aya_qemu_vm_test_impl,
     attrs = {
+        "guest_env": attr.string_dict(
+            doc = "Environment variables for test processes inside the VM. Names must be shell identifiers; values cannot contain ASCII whitespace, double quotes, or NUL.",
+        ),
         "kernel": attr.label(
             allow_single_file = True,
             cfg = _guest_platform_transition,

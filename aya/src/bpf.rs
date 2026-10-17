@@ -20,11 +20,11 @@ use crate::{
     kernel_features::{FEATURES, Feature},
     maps::{Map, MapData, MapError},
     programs::{
-        BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSock, CgroupSockAddr, CgroupSockopt,
-        CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe, LircMode2, Lsm,
-        LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError, RawTracePoint,
-        SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SockOps, SocketFilter, TracePoint,
-        UProbe, Xdp, uprobe::AttachMode,
+        AttachMode, BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSock, CgroupSockAddr,
+        CgroupSockopt, CgroupSysctl, Extension, FEntry, FExit, FlowDissector, Iter, KProbe,
+        LircMode2, Lsm, LsmCgroup, PerfEvent, ProbeKind, Program, ProgramData, ProgramError,
+        RawTracePoint, SchedClassifier, SkLookup, SkMsg, SkReuseport, SkSkb, SockOps, SocketFilter,
+        TracePoint, UProbe, Xdp,
     },
     sys::{bpf_load_btf, retry_with_verifier_logs},
     util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
@@ -482,8 +482,8 @@ impl<'a> EbpfLoader<'a> {
                             | ProgramSection::Iter { sleepable: _ } => {
                                 return Err(EbpfError::BtfError(err));
                             }
-                            ProgramSection::KRetProbe
-                            | ProgramSection::KProbe
+                            ProgramSection::KRetProbe { multi: _ }
+                            | ProgramSection::KProbe { multi: _ }
                             | ProgramSection::UProbe {
                                 sleepable: _,
                                 multi: _,
@@ -711,13 +711,23 @@ impl<'a> EbpfLoader<'a> {
                     })
                 } else {
                     match &section {
-                        ProgramSection::KProbe => Program::KProbe(KProbe {
+                        ProgramSection::KProbe { multi } => Program::KProbe(KProbe {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             kind: ProbeKind::Entry,
+                            attach_mode: if *multi {
+                                AttachMode::Multi
+                            } else {
+                                AttachMode::Single
+                            },
                         }),
-                        ProgramSection::KRetProbe => Program::KProbe(KProbe {
+                        ProgramSection::KRetProbe { multi } => Program::KProbe(KProbe {
                             data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                             kind: ProbeKind::Return,
+                            attach_mode: if *multi {
+                                AttachMode::Multi
+                            } else {
+                                AttachMode::Single
+                            },
                         }),
                         ProgramSection::UProbe { sleepable, multi } => {
                             let mut data =
