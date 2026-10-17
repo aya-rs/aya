@@ -275,6 +275,7 @@ pub unsafe fn bpf_probe_read_kernel_buf(src: *const u8, dst: &mut [u8]) -> Resul
 ///
 /// On failure, this function returns Err(-1).
 #[deprecated(
+    since = "0.1.0",
     note = "Use `bpf_probe_read_user_str_bytes` or `bpf_probe_read_kernel_str_bytes` instead"
 )]
 #[inline]
@@ -311,7 +312,7 @@ pub unsafe fn bpf_probe_read_str(src: *const u8, dest: &mut [u8]) -> Result<usiz
 /// # Errors
 ///
 /// On failure, this function returns Err(-1).
-#[deprecated(note = "Use `bpf_probe_read_user_str_bytes` instead")]
+#[deprecated(since = "0.1.0", note = "Use `bpf_probe_read_user_str_bytes` instead")]
 #[inline]
 pub unsafe fn bpf_probe_read_user_str(src: *const u8, dest: &mut [u8]) -> Result<usize, i32> {
     let len = unsafe {
@@ -453,7 +454,7 @@ fn read_str_bytes(len: c_long, dest: &[u8]) -> Result<&[u8], i32> {
 /// # Errors
 ///
 /// On failure, this function returns Err(-1).
-#[deprecated(note = "Use bpf_probe_read_kernel_str_bytes instead")]
+#[deprecated(since = "0.1.0", note = "Use bpf_probe_read_kernel_str_bytes instead")]
 #[inline]
 pub unsafe fn bpf_probe_read_kernel_str(src: *const u8, dest: &mut [u8]) -> Result<usize, i32> {
     let len = unsafe {

@@ -11,7 +11,10 @@ macro_rules! define_cgroup_storage {
     ($(#[$doc:meta])* $name:ident, $map_type:ident $(,)?) => {
         btf_map_def!(
             $(#[$doc])*
-            #[deprecated = "use the `BPF_MAP_TYPE_CGRP_STORAGE` map type, available since Linux 6.2"]
+            #[deprecated(
+                since = "0.2.0",
+                note = "use the `BPF_MAP_TYPE_CGRP_STORAGE` map type, available since Linux 6.2"
+            )]
             pub struct $name<V>,
             map_type: $map_type,
             max_entries: 0,
