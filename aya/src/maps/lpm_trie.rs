@@ -119,6 +119,15 @@ impl<T: Borrow<MapData>, K: Pod, V: Pod> LpmTrie<T, K, V> {
         hash_map::get(self.inner.borrow(), key, flags)
     }
 
+    /// Returns `true` if the map contains a key matching the longest prefix.
+    pub fn contains_key(&self, key: &Key<K>, flags: u64) -> Result<bool, MapError> {
+        match self.get(key, flags) {
+            Ok(_) => Ok(true),
+            Err(MapError::KeyNotFound) => Ok(false),
+            Err(e) => Err(e),
+        }
+    }
+
     /// An iterator visiting all key-value pairs. The
     /// iterator item type is `Result<(K, V), MapError>`.
     pub fn iter(&self) -> MapIter<'_, Key<K>, V, Self> {
@@ -339,5 +348,41 @@ mod tests {
         });
 
         assert_matches!(trie.get(&key, 0), Err(MapError::KeyNotFound));
+    }
+
+    #[test]
+    fn test_contains_key_found() {
+        let map = new_map(new_obj_map());
+        let trie = LpmTrie::<_, u32, u32>::new(&map).unwrap();
+        let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
+        let key = Key::new(16, u32::from(ipaddr).to_be());
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
+                ..
+            } => Ok(0),
+            _ => sys_error(EFAULT),
+        });
+
+        assert_matches!(trie.contains_key(&key, 0), Ok(true));
+    }
+
+    #[test]
+    fn test_contains_key_not_found() {
+        let map = new_map(new_obj_map());
+        let trie = LpmTrie::<_, u32, u32>::new(&map).unwrap();
+        let ipaddr = Ipv4Addr::new(8, 8, 8, 8);
+        let key = Key::new(16, u32::from(ipaddr).to_be());
+
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_LOOKUP_ELEM,
+                ..
+            } => sys_error(ENOENT),
+            _ => sys_error(EFAULT),
+        });
+
+        assert_matches!(trie.contains_key(&key, 0), Ok(false));
     }
 }
