@@ -3,6 +3,7 @@ name: Update Rust toolchains
 on:
   pull_request:
     paths:
+      - .github/workflows/actions.lock
       - .github/workflows/nightly-update.yml
       - .github/workflows/rust-toolchains.yml
       - scripts/rust_toolchains.py
@@ -53,7 +54,7 @@ jobs:
       - name: Update the Bazel lockfile
         run: bazel mod deps --lockfile_mode=update
 
-      - uses: ./.github/actions/codegen
+      - uses: $/.github/actions/codegen
         with:
           toolchain: ${{ fromJSON(needs.resolve.outputs.rust-toolchains).nightly.rust }}
 
