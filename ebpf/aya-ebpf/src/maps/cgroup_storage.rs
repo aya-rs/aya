@@ -14,7 +14,10 @@ use crate::{
 macro_rules! define_cgroup_storage {
     ($(#[$doc:meta])* $name:ident, $map_type:expr $(,)?) => {
         $(#[$doc])*
-        #[deprecated = "use the `BPF_MAP_TYPE_CGRP_STORAGE` map type, available since Linux 6.2"]
+        #[deprecated(
+            since = "0.2.0",
+            note = "use the `BPF_MAP_TYPE_CGRP_STORAGE` map type, available since Linux 6.2"
+        )]
         #[repr(transparent)]
         pub struct $name<V> {
             def: MapDef,
