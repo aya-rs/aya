@@ -99,6 +99,7 @@ dependencies = [
  "assert_matches",
  "aya-obj",
  "bitflags",
+ "flate2",
  "hashbrown 0.17.1",
  "libc",
  "log",
