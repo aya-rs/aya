@@ -40,6 +40,7 @@ btf_map_def!(
         const DEPTH: usize = { PERF_MAX_STACK_DEPTH as usize },
     >,
     map_type: BPF_MAP_TYPE_STACK_TRACE,
+    map_trait: crate::programs::tracing::sealed::StackTraceMap,
     max_entries: MAX_ENTRIES,
     map_flags: FLAGS,
     key_type: u32,

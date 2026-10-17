@@ -48,7 +48,15 @@ fn bloom_filter_basic(
         return;
     }
 
+    let object = aya_obj::Object::parse(crate::BLOOM_FILTER).unwrap();
+    assert_eq!(object.maps["FILTER"].map_extra(), 3);
+
+    let directory = tempfile::Builder::new()
+        .prefix("bloom-pin-")
+        .tempdir_in("/sys/fs/bpf")
+        .unwrap();
     let mut bpf = EbpfLoader::new()
+        .default_map_pin_directory(directory.path())
         .load(crate::BLOOM_FILTER)
         .expect("load bloom_filter program");
 
