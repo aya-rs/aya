@@ -2258,6 +2258,8 @@ pub fn aya::programs::cgroup_device::CgroupDevice::attach<T: std::os::fd::owned:
 pub fn aya::programs::cgroup_device::CgroupDevice::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_device::CgroupDevice::query<T: std::os::fd::owned::AsFd>(T) -> core::result::Result<alloc::vec::Vec<aya::programs::cgroup_device::CgroupDeviceLink>, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
+pub fn aya::programs::cgroup_device::CgroupDevice::adopt_link(&mut self, aya::programs::cgroup_device::CgroupDeviceLink) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLinkId, (aya::programs::ProgramError, aya::programs::cgroup_device::CgroupDeviceLink)>
+impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::detach(&mut self, aya::programs::cgroup_device::CgroupDeviceLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_device::CgroupDevice::take_link(&mut self, aya::programs::cgroup_device::CgroupDeviceLinkId) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLink, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
@@ -2341,6 +2343,8 @@ pub fn aya::programs::cgroup_skb::CgroupSkb::attach<T: std::os::fd::owned::AsFd>
 pub const fn aya::programs::cgroup_skb::CgroupSkb::expected_attach_type(&self) -> &core::option::Option<aya_obj::programs::cgroup_skb::CgroupSkbAttachType>
 pub fn aya::programs::cgroup_skb::CgroupSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_skb::CgroupSkbAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_skb::CgroupSkb::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::cgroup_skb::CgroupSkb
+pub fn aya::programs::cgroup_skb::CgroupSkb::adopt_link(&mut self, aya::programs::cgroup_skb::CgroupSkbLink) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLinkId, (aya::programs::ProgramError, aya::programs::cgroup_skb::CgroupSkbLink)>
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::detach(&mut self, aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_skb::CgroupSkb::take_link(&mut self, aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLink, aya::programs::ProgramError>
@@ -2430,6 +2434,8 @@ pub fn aya::programs::cgroup_sock::CgroupSock::attach<T: std::os::fd::owned::AsF
 pub fn aya::programs::cgroup_sock::CgroupSock::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock::CgroupSock::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::cgroup_sock::CgroupSock
+pub fn aya::programs::cgroup_sock::CgroupSock::adopt_link(&mut self, aya::programs::cgroup_sock::CgroupSockLink) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLinkId, (aya::programs::ProgramError, aya::programs::cgroup_sock::CgroupSockLink)>
+impl aya::programs::cgroup_sock::CgroupSock
 pub fn aya::programs::cgroup_sock::CgroupSock::detach(&mut self, aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock::CgroupSock::take_link(&mut self, aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLink, aya::programs::ProgramError>
 impl aya::programs::cgroup_sock::CgroupSock
@@ -2509,9 +2515,10 @@ pub struct aya::programs::cgroup_sock_addr::CgroupSockAddr
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub const aya::programs::cgroup_sock_addr::CgroupSockAddr::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach_to_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::cgroup_sock_addr::CgroupSockAddr
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::adopt_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, (aya::programs::ProgramError, aya::programs::cgroup_sock_addr::CgroupSockAddrLink)>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::detach(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::take_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLink, aya::programs::ProgramError>
@@ -2598,6 +2605,8 @@ pub fn aya::programs::cgroup_sockopt::CgroupSockopt::attach<T: std::os::fd::owne
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
+pub fn aya::programs::cgroup_sockopt::CgroupSockopt::adopt_link(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLink) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLinkId, (aya::programs::ProgramError, aya::programs::cgroup_sockopt::CgroupSockoptLink)>
+impl aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::detach(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::take_link(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLink, aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
@@ -2676,6 +2685,8 @@ impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub const aya::programs::cgroup_sysctl::CgroupSysctl::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::cgroup_sysctl::CgroupSysctl
+pub fn aya::programs::cgroup_sysctl::CgroupSysctl::adopt_link(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLink) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLinkId, (aya::programs::ProgramError, aya::programs::cgroup_sysctl::CgroupSysctlLink)>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::detach(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::take_link(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLink, aya::programs::ProgramError>
@@ -3033,6 +3044,8 @@ impl aya::programs::flow_dissector::FlowDissector
 pub const aya::programs::flow_dissector::FlowDissector::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::flow_dissector::FlowDissector::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLinkId, aya::programs::ProgramError>
 pub fn aya::programs::flow_dissector::FlowDissector::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::adopt_link(&mut self, aya::programs::flow_dissector::FlowDissectorLink) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLinkId, (aya::programs::ProgramError, aya::programs::flow_dissector::FlowDissectorLink)>
 impl aya::programs::flow_dissector::FlowDissector
 pub fn aya::programs::flow_dissector::FlowDissector::detach(&mut self, aya::programs::flow_dissector::FlowDissectorLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::flow_dissector::FlowDissector::take_link(&mut self, aya::programs::flow_dissector::FlowDissectorLinkId) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLink, aya::programs::ProgramError>
@@ -3948,6 +3961,8 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm::LsmLinkId
 pub mod aya::programs::lsm_cgroup
 pub struct aya::programs::lsm_cgroup::LsmCgroup
 impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::adopt_link(&mut self, aya::programs::lsm_cgroup::LsmLink) -> core::result::Result<aya::programs::lsm_cgroup::LsmLinkId, (aya::programs::ProgramError, aya::programs::lsm_cgroup::LsmLink)>
+impl aya::programs::lsm_cgroup::LsmCgroup
 pub fn aya::programs::lsm_cgroup::LsmCgroup::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::lsm_cgroup::LsmLinkId, aya::programs::ProgramError>
 pub fn aya::programs::lsm_cgroup::LsmCgroup::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::lsm_cgroup::LsmCgroup::load(&mut self, &str, &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
@@ -4494,6 +4509,8 @@ pub const aya::programs::sk_lookup::SkLookup::PROGRAM_TYPE: aya::programs::Progr
 pub fn aya::programs::sk_lookup::SkLookup::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::sk_lookup::SkLookupLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sk_lookup::SkLookup::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::adopt_link(&mut self, aya::programs::sk_lookup::SkLookupLink) -> core::result::Result<aya::programs::sk_lookup::SkLookupLinkId, (aya::programs::ProgramError, aya::programs::sk_lookup::SkLookupLink)>
+impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::detach(&mut self, aya::programs::sk_lookup::SkLookupLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::sk_lookup::SkLookup::take_link(&mut self, aya::programs::sk_lookup::SkLookupLinkId) -> core::result::Result<aya::programs::sk_lookup::SkLookupLink, aya::programs::ProgramError>
 impl aya::programs::sk_lookup::SkLookup
@@ -4807,6 +4824,8 @@ pub const aya::programs::sock_ops::SockOps::PROGRAM_TYPE: aya::programs::Program
 pub fn aya::programs::sock_ops::SockOps::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::sock_ops::SockOpsLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sock_ops::SockOps::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::adopt_link(&mut self, aya::programs::sock_ops::SockOpsLink) -> core::result::Result<aya::programs::sock_ops::SockOpsLinkId, (aya::programs::ProgramError, aya::programs::sock_ops::SockOpsLink)>
+impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::detach(&mut self, aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::sock_ops::SockOps::take_link(&mut self, aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<aya::programs::sock_ops::SockOpsLink, aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
@@ -4983,20 +5002,24 @@ impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilter
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilter
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilter
 pub mod aya::programs::tc
-pub enum aya::programs::tc::TcAttachOptions
-pub aya::programs::tc::TcAttachOptions::Netlink(aya::programs::tc::NlOptions)
-pub aya::programs::tc::TcAttachOptions::TcxOrder(aya::programs::links::LinkOrder)
-impl core::fmt::Debug for aya::programs::tc::TcAttachOptions
-pub fn aya::programs::tc::TcAttachOptions::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for aya::programs::tc::TcAttachOptions
-impl core::marker::Send for aya::programs::tc::TcAttachOptions
-impl core::marker::Sync for aya::programs::tc::TcAttachOptions
-impl core::marker::Unpin for aya::programs::tc::TcAttachOptions
-impl core::marker::UnsafeUnpin for aya::programs::tc::TcAttachOptions
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcAttachOptions
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttachOptions
+pub enum aya::programs::tc::TcAttach
+pub aya::programs::tc::TcAttach::Auto(aya::programs::tc::TcAttachType)
+pub aya::programs::tc::TcAttach::Netlink
+pub aya::programs::tc::TcAttach::Netlink::options: aya::programs::tc::NlOptions
+pub aya::programs::tc::TcAttach::Netlink::parent: aya::programs::tc::TcHandle
+pub aya::programs::tc::TcAttach::Tcx(aya::programs::tc::TcAttachType, aya::programs::links::LinkOrder)
+impl core::convert::From<aya::programs::tc::TcAttachType> for aya::programs::tc::TcAttach
+pub fn aya::programs::tc::TcAttach::from(aya::programs::tc::TcAttachType) -> Self
+impl core::fmt::Debug for aya::programs::tc::TcAttach
+pub fn aya::programs::tc::TcAttach::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::tc::TcAttach
+impl core::marker::Send for aya::programs::tc::TcAttach
+impl core::marker::Sync for aya::programs::tc::TcAttach
+impl core::marker::Unpin for aya::programs::tc::TcAttach
+impl core::marker::UnsafeUnpin for aya::programs::tc::TcAttach
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcAttach
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttach
 pub enum aya::programs::tc::TcAttachType
-pub aya::programs::tc::TcAttachType::Custom(u32)
 pub aya::programs::tc::TcAttachType::Egress
 pub aya::programs::tc::TcAttachType::Ingress
 impl core::clone::Clone for aya::programs::tc::TcAttachType
@@ -5004,6 +5027,10 @@ pub fn aya::programs::tc::TcAttachType::clone(&self) -> Self
 impl core::cmp::Eq for aya::programs::tc::TcAttachType
 impl core::cmp::PartialEq for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::eq(&self, &Self) -> bool
+impl core::convert::From<aya::programs::tc::TcAttachType> for aya::programs::tc::TcAttach
+pub fn aya::programs::tc::TcAttach::from(aya::programs::tc::TcAttachType) -> Self
+impl core::convert::From<aya::programs::tc::TcAttachType> for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::from(aya::programs::tc::TcAttachType) -> Self
 impl core::fmt::Debug for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::tc::TcAttachType
@@ -5020,7 +5047,6 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttachType
 pub enum aya::programs::tc::TcError
 pub aya::programs::tc::TcError::AlreadyAttached
 pub aya::programs::tc::TcError::InvalidLinkOperation
-pub aya::programs::tc::TcError::InvalidTcxAttach(u32)
 pub aya::programs::tc::TcError::IoError(core::io::error::Error)
 pub aya::programs::tc::TcError::NetlinkError(aya::sys::NetlinkError)
 pub aya::programs::tc::TcError::NulError(alloc::ffi::c_str::NulError)
@@ -5069,17 +5095,18 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::NlOptions
 pub struct aya::programs::tc::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub const aya::programs::tc::SchedClassifier::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::tc::SchedClassifier::attach<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::attach_to_link(&mut self, aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::attach_with_options<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType, aya::programs::tc::TcAttachOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::attach<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, impl core::convert::Into<aya::programs::tc::TcAttach>) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::query_tcx<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType) -> core::result::Result<(u64, alloc::vec::Vec<aya::programs::ProgramInfo>), aya::programs::ProgramError>
+impl aya::programs::tc::SchedClassifier
+pub fn aya::programs::tc::SchedClassifier::adopt_link(&mut self, aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, (aya::programs::ProgramError, aya::programs::tc::SchedClassifierLink)>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::detach(&mut self, aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::take_link(&mut self, aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<aya::programs::tc::SchedClassifierLink, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::tc::SchedClassifier
+pub fn aya::programs::tc::SchedClassifier::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::query_tcx<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType) -> core::result::Result<(u64, alloc::vec::Vec<aya::programs::ProgramInfo>), aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
@@ -5114,10 +5141,10 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::SchedClassif
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::SchedClassifier
 pub struct aya::programs::tc::SchedClassifierLink(_)
 impl aya::programs::tc::SchedClassifierLink
-pub fn aya::programs::tc::SchedClassifierLink::attach_type(&self) -> core::result::Result<aya::programs::tc::TcAttachType, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifierLink::attached<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType, u16, aya::programs::tc::TcHandle, core::option::Option<aya::programs::tc::TcHandle>) -> core::result::Result<Self, core::io::error::Error>
 pub fn aya::programs::tc::SchedClassifierLink::classid(&self) -> core::result::Result<core::option::Option<aya::programs::tc::TcHandle>, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifierLink::from_netlink_parts<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcHandle, u16, aya::programs::tc::TcHandle, core::option::Option<aya::programs::tc::TcHandle>) -> core::result::Result<Self, core::io::error::Error>
 pub fn aya::programs::tc::SchedClassifierLink::handle(&self) -> core::result::Result<aya::programs::tc::TcHandle, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifierLink::parent(&self) -> core::result::Result<aya::programs::tc::TcHandle, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifierLink::priority(&self) -> core::result::Result<u16, aya::programs::ProgramError>
 impl aya::programs::MultiProgLink for aya::programs::tc::SchedClassifierLink
 pub fn aya::programs::tc::SchedClassifierLink::fd(&self) -> core::result::Result<std::os::fd::owned::BorrowedFd<'_>, aya::programs::links::LinkError>
@@ -5180,6 +5207,8 @@ pub fn aya::programs::tc::TcHandle::clone(&self) -> Self
 impl core::cmp::Eq for aya::programs::tc::TcHandle
 impl core::cmp::PartialEq for aya::programs::tc::TcHandle
 pub fn aya::programs::tc::TcHandle::eq(&self, &Self) -> bool
+impl core::convert::From<aya::programs::tc::TcAttachType> for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::from(aya::programs::tc::TcAttachType) -> Self
 impl core::convert::From<aya::programs::tc::TcHandle> for u32
 pub fn u32::from(aya::programs::tc::TcHandle) -> Self
 impl core::convert::From<u32> for aya::programs::tc::TcHandle
@@ -5200,7 +5229,7 @@ impl core::marker::UnsafeUnpin for aya::programs::tc::TcHandle
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcHandle
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcHandle
 pub fn aya::programs::tc::qdisc_add_clsact<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>) -> core::result::Result<(), aya::programs::tc::TcError>
-pub fn aya::programs::tc::qdisc_detach_program<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType, &str) -> core::result::Result<(), aya::programs::tc::TcError>
+pub fn aya::programs::tc::qdisc_detach_program<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcHandle, &str) -> core::result::Result<(), aya::programs::tc::TcError>
 pub mod aya::programs::tp_btf
 pub struct aya::programs::tp_btf::BtfTracePoint
 impl aya::programs::tp_btf::BtfTracePoint
@@ -5667,9 +5696,10 @@ pub struct aya::programs::xdp::Xdp
 impl aya::programs::xdp::Xdp
 pub const aya::programs::xdp::Xdp::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::xdp::Xdp::attach<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
-pub fn aya::programs::xdp::Xdp::attach_to_link(&mut self, aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::xdp::Xdp
+pub fn aya::programs::xdp::Xdp::adopt_link(&mut self, aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, (aya::programs::ProgramError, aya::programs::xdp::XdpLink)>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::detach(&mut self, aya::programs::xdp::XdpLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::take_link(&mut self, aya::programs::xdp::XdpLinkId) -> core::result::Result<aya::programs::xdp::XdpLink, aya::programs::ProgramError>
@@ -6246,8 +6276,24 @@ impl core::marker::Unpin for aya::programs::socket_filter::SocketFilterError
 impl core::marker::UnsafeUnpin for aya::programs::socket_filter::SocketFilterError
 impl !core::panic::unwind_safe::RefUnwindSafe for aya::programs::socket_filter::SocketFilterError
 impl !core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::SocketFilterError
+pub enum aya::programs::TcAttach
+pub aya::programs::TcAttach::Auto(aya::programs::tc::TcAttachType)
+pub aya::programs::TcAttach::Netlink
+pub aya::programs::TcAttach::Netlink::options: aya::programs::tc::NlOptions
+pub aya::programs::TcAttach::Netlink::parent: aya::programs::tc::TcHandle
+pub aya::programs::TcAttach::Tcx(aya::programs::tc::TcAttachType, aya::programs::links::LinkOrder)
+impl core::convert::From<aya::programs::tc::TcAttachType> for aya::programs::tc::TcAttach
+pub fn aya::programs::tc::TcAttach::from(aya::programs::tc::TcAttachType) -> Self
+impl core::fmt::Debug for aya::programs::tc::TcAttach
+pub fn aya::programs::tc::TcAttach::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::programs::tc::TcAttach
+impl core::marker::Send for aya::programs::tc::TcAttach
+impl core::marker::Sync for aya::programs::tc::TcAttach
+impl core::marker::Unpin for aya::programs::tc::TcAttach
+impl core::marker::UnsafeUnpin for aya::programs::tc::TcAttach
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tc::TcAttach
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttach
 pub enum aya::programs::TcAttachType
-pub aya::programs::TcAttachType::Custom(u32)
 pub aya::programs::TcAttachType::Egress
 pub aya::programs::TcAttachType::Ingress
 impl core::clone::Clone for aya::programs::tc::TcAttachType
@@ -6255,6 +6301,10 @@ pub fn aya::programs::tc::TcAttachType::clone(&self) -> Self
 impl core::cmp::Eq for aya::programs::tc::TcAttachType
 impl core::cmp::PartialEq for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::eq(&self, &Self) -> bool
+impl core::convert::From<aya::programs::tc::TcAttachType> for aya::programs::tc::TcAttach
+pub fn aya::programs::tc::TcAttach::from(aya::programs::tc::TcAttachType) -> Self
+impl core::convert::From<aya::programs::tc::TcAttachType> for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::from(aya::programs::tc::TcAttachType) -> Self
 impl core::fmt::Debug for aya::programs::tc::TcAttachType
 pub fn aya::programs::tc::TcAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::hash::Hash for aya::programs::tc::TcAttachType
@@ -6271,7 +6321,6 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::tc::TcAttachType
 pub enum aya::programs::TcError
 pub aya::programs::TcError::AlreadyAttached
 pub aya::programs::TcError::InvalidLinkOperation
-pub aya::programs::TcError::InvalidTcxAttach(u32)
 pub aya::programs::TcError::IoError(core::io::error::Error)
 pub aya::programs::TcError::NetlinkError(aya::sys::NetlinkError)
 pub aya::programs::TcError::NulError(alloc::ffi::c_str::NulError)
@@ -6443,6 +6492,8 @@ pub fn aya::programs::cgroup_device::CgroupDevice::attach<T: std::os::fd::owned:
 pub fn aya::programs::cgroup_device::CgroupDevice::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_device::CgroupDevice::query<T: std::os::fd::owned::AsFd>(T) -> core::result::Result<alloc::vec::Vec<aya::programs::cgroup_device::CgroupDeviceLink>, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
+pub fn aya::programs::cgroup_device::CgroupDevice::adopt_link(&mut self, aya::programs::cgroup_device::CgroupDeviceLink) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLinkId, (aya::programs::ProgramError, aya::programs::cgroup_device::CgroupDeviceLink)>
+impl aya::programs::cgroup_device::CgroupDevice
 pub fn aya::programs::cgroup_device::CgroupDevice::detach(&mut self, aya::programs::cgroup_device::CgroupDeviceLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_device::CgroupDevice::take_link(&mut self, aya::programs::cgroup_device::CgroupDeviceLinkId) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLink, aya::programs::ProgramError>
 impl aya::programs::cgroup_device::CgroupDevice
@@ -6482,6 +6533,8 @@ pub fn aya::programs::cgroup_skb::CgroupSkb::attach<T: std::os::fd::owned::AsFd>
 pub const fn aya::programs::cgroup_skb::CgroupSkb::expected_attach_type(&self) -> &core::option::Option<aya_obj::programs::cgroup_skb::CgroupSkbAttachType>
 pub fn aya::programs::cgroup_skb::CgroupSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_skb::CgroupSkbAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_skb::CgroupSkb::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::cgroup_skb::CgroupSkb
+pub fn aya::programs::cgroup_skb::CgroupSkb::adopt_link(&mut self, aya::programs::cgroup_skb::CgroupSkbLink) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLinkId, (aya::programs::ProgramError, aya::programs::cgroup_skb::CgroupSkbLink)>
 impl aya::programs::cgroup_skb::CgroupSkb
 pub fn aya::programs::cgroup_skb::CgroupSkb::detach(&mut self, aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_skb::CgroupSkb::take_link(&mut self, aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLink, aya::programs::ProgramError>
@@ -6524,6 +6577,8 @@ pub fn aya::programs::cgroup_sock::CgroupSock::attach<T: std::os::fd::owned::AsF
 pub fn aya::programs::cgroup_sock::CgroupSock::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock::CgroupSock::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::cgroup_sock::CgroupSock
+pub fn aya::programs::cgroup_sock::CgroupSock::adopt_link(&mut self, aya::programs::cgroup_sock::CgroupSockLink) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLinkId, (aya::programs::ProgramError, aya::programs::cgroup_sock::CgroupSockLink)>
+impl aya::programs::cgroup_sock::CgroupSock
 pub fn aya::programs::cgroup_sock::CgroupSock::detach(&mut self, aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock::CgroupSock::take_link(&mut self, aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLink, aya::programs::ProgramError>
 impl aya::programs::cgroup_sock::CgroupSock
@@ -6556,9 +6611,10 @@ pub struct aya::programs::CgroupSockAddr
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub const aya::programs::cgroup_sock_addr::CgroupSockAddr::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach_to_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::cgroup_sock_addr::CgroupSockAddr
+pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::adopt_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, (aya::programs::ProgramError, aya::programs::cgroup_sock_addr::CgroupSockAddrLink)>
 impl aya::programs::cgroup_sock_addr::CgroupSockAddr
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::detach(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::take_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLink, aya::programs::ProgramError>
@@ -6595,6 +6651,8 @@ pub fn aya::programs::cgroup_sockopt::CgroupSockopt::attach<T: std::os::fd::owne
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
+pub fn aya::programs::cgroup_sockopt::CgroupSockopt::adopt_link(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLink) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLinkId, (aya::programs::ProgramError, aya::programs::cgroup_sockopt::CgroupSockoptLink)>
+impl aya::programs::cgroup_sockopt::CgroupSockopt
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::detach(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sockopt::CgroupSockopt::take_link(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLink, aya::programs::ProgramError>
 impl aya::programs::cgroup_sockopt::CgroupSockopt
@@ -6630,6 +6688,8 @@ impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub const aya::programs::cgroup_sysctl::CgroupSysctl::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLinkId, aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::cgroup_sysctl::CgroupSysctl
+pub fn aya::programs::cgroup_sysctl::CgroupSysctl::adopt_link(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLink) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLinkId, (aya::programs::ProgramError, aya::programs::cgroup_sysctl::CgroupSysctlLink)>
 impl aya::programs::cgroup_sysctl::CgroupSysctl
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::detach(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::cgroup_sysctl::CgroupSysctl::take_link(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLink, aya::programs::ProgramError>
@@ -6787,6 +6847,8 @@ impl aya::programs::flow_dissector::FlowDissector
 pub const aya::programs::flow_dissector::FlowDissector::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::flow_dissector::FlowDissector::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLinkId, aya::programs::ProgramError>
 pub fn aya::programs::flow_dissector::FlowDissector::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::flow_dissector::FlowDissector
+pub fn aya::programs::flow_dissector::FlowDissector::adopt_link(&mut self, aya::programs::flow_dissector::FlowDissectorLink) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLinkId, (aya::programs::ProgramError, aya::programs::flow_dissector::FlowDissectorLink)>
 impl aya::programs::flow_dissector::FlowDissector
 pub fn aya::programs::flow_dissector::FlowDissector::detach(&mut self, aya::programs::flow_dissector::FlowDissectorLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::flow_dissector::FlowDissector::take_link(&mut self, aya::programs::flow_dissector::FlowDissectorLinkId) -> core::result::Result<aya::programs::flow_dissector::FlowDissectorLink, aya::programs::ProgramError>
@@ -6996,6 +7058,8 @@ impl core::marker::UnsafeUnpin for aya::programs::lsm::Lsm
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm::Lsm
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm::Lsm
 pub struct aya::programs::LsmCgroup
+impl aya::programs::lsm_cgroup::LsmCgroup
+pub fn aya::programs::lsm_cgroup::LsmCgroup::adopt_link(&mut self, aya::programs::lsm_cgroup::LsmLink) -> core::result::Result<aya::programs::lsm_cgroup::LsmLinkId, (aya::programs::ProgramError, aya::programs::lsm_cgroup::LsmLink)>
 impl aya::programs::lsm_cgroup::LsmCgroup
 pub fn aya::programs::lsm_cgroup::LsmCgroup::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::lsm_cgroup::LsmLinkId, aya::programs::ProgramError>
 pub fn aya::programs::lsm_cgroup::LsmCgroup::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
@@ -7231,17 +7295,18 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::socket_filter::Reus
 pub struct aya::programs::SchedClassifier
 impl aya::programs::tc::SchedClassifier
 pub const aya::programs::tc::SchedClassifier::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::tc::SchedClassifier::attach<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::attach_to_link(&mut self, aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::attach_with_options<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType, aya::programs::tc::TcAttachOptions) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::attach<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, impl core::convert::Into<aya::programs::tc::TcAttach>) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::tc::SchedClassifier::query_tcx<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType) -> core::result::Result<(u64, alloc::vec::Vec<aya::programs::ProgramInfo>), aya::programs::ProgramError>
+impl aya::programs::tc::SchedClassifier
+pub fn aya::programs::tc::SchedClassifier::adopt_link(&mut self, aya::programs::tc::SchedClassifierLink) -> core::result::Result<aya::programs::tc::SchedClassifierLinkId, (aya::programs::ProgramError, aya::programs::tc::SchedClassifierLink)>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::detach(&mut self, aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::tc::SchedClassifier::take_link(&mut self, aya::programs::tc::SchedClassifierLinkId) -> core::result::Result<aya::programs::tc::SchedClassifierLink, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::tc::SchedClassifier
+pub fn aya::programs::tc::SchedClassifier::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::tc::SchedClassifier::query_tcx<'a>(impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::tc::TcAttachType) -> core::result::Result<(u64, alloc::vec::Vec<aya::programs::ProgramInfo>), aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
 pub fn aya::programs::tc::SchedClassifier::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
 impl aya::programs::tc::SchedClassifier
@@ -7279,6 +7344,8 @@ impl aya::programs::sk_lookup::SkLookup
 pub const aya::programs::sk_lookup::SkLookup::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::sk_lookup::SkLookup::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::sk_lookup::SkLookupLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sk_lookup::SkLookup::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::sk_lookup::SkLookup
+pub fn aya::programs::sk_lookup::SkLookup::adopt_link(&mut self, aya::programs::sk_lookup::SkLookupLink) -> core::result::Result<aya::programs::sk_lookup::SkLookupLinkId, (aya::programs::ProgramError, aya::programs::sk_lookup::SkLookupLink)>
 impl aya::programs::sk_lookup::SkLookup
 pub fn aya::programs::sk_lookup::SkLookup::detach(&mut self, aya::programs::sk_lookup::SkLookupLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::sk_lookup::SkLookup::take_link(&mut self, aya::programs::sk_lookup::SkLookupLinkId) -> core::result::Result<aya::programs::sk_lookup::SkLookupLink, aya::programs::ProgramError>
@@ -7428,6 +7495,8 @@ pub const aya::programs::sock_ops::SockOps::PROGRAM_TYPE: aya::programs::Program
 pub fn aya::programs::sock_ops::SockOps::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::sock_ops::SockOpsLinkId, aya::programs::ProgramError>
 pub fn aya::programs::sock_ops::SockOps::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
+pub fn aya::programs::sock_ops::SockOps::adopt_link(&mut self, aya::programs::sock_ops::SockOpsLink) -> core::result::Result<aya::programs::sock_ops::SockOpsLinkId, (aya::programs::ProgramError, aya::programs::sock_ops::SockOpsLink)>
+impl aya::programs::sock_ops::SockOps
 pub fn aya::programs::sock_ops::SockOps::detach(&mut self, aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::sock_ops::SockOps::take_link(&mut self, aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<aya::programs::sock_ops::SockOpsLink, aya::programs::ProgramError>
 impl aya::programs::sock_ops::SockOps
@@ -7508,6 +7577,8 @@ pub fn aya::programs::tc::TcHandle::clone(&self) -> Self
 impl core::cmp::Eq for aya::programs::tc::TcHandle
 impl core::cmp::PartialEq for aya::programs::tc::TcHandle
 pub fn aya::programs::tc::TcHandle::eq(&self, &Self) -> bool
+impl core::convert::From<aya::programs::tc::TcAttachType> for aya::programs::tc::TcHandle
+pub fn aya::programs::tc::TcHandle::from(aya::programs::tc::TcAttachType) -> Self
 impl core::convert::From<aya::programs::tc::TcHandle> for u32
 pub fn u32::from(aya::programs::tc::TcHandle) -> Self
 impl core::convert::From<u32> for aya::programs::tc::TcHandle
@@ -7656,9 +7727,10 @@ pub struct aya::programs::Xdp
 impl aya::programs::xdp::Xdp
 pub const aya::programs::xdp::Xdp::PROGRAM_TYPE: aya::programs::ProgramType
 pub fn aya::programs::xdp::Xdp::attach<'a>(&mut self, impl core::convert::Into<aya::programs::NetworkInterface<'a>>, aya::programs::xdp::XdpMode) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
-pub fn aya::programs::xdp::Xdp::attach_to_link(&mut self, aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::xdp::XdpAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::xdp::Xdp
+pub fn aya::programs::xdp::Xdp::adopt_link(&mut self, aya::programs::xdp::XdpLink) -> core::result::Result<aya::programs::xdp::XdpLinkId, (aya::programs::ProgramError, aya::programs::xdp::XdpLink)>
 impl aya::programs::xdp::Xdp
 pub fn aya::programs::xdp::Xdp::detach(&mut self, aya::programs::xdp::XdpLinkId) -> core::result::Result<(), aya::programs::ProgramError>
 pub fn aya::programs::xdp::Xdp::take_link(&mut self, aya::programs::xdp::XdpLinkId) -> core::result::Result<aya::programs::xdp::XdpLink, aya::programs::ProgramError>
@@ -8052,6 +8124,7 @@ impl core::marker::Unpin for aya::test_helpers::NetNsGuard
 impl core::marker::UnsafeUnpin for aya::test_helpers::NetNsGuard
 impl core::panic::unwind_safe::RefUnwindSafe for aya::test_helpers::NetNsGuard
 impl core::panic::unwind_safe::UnwindSafe for aya::test_helpers::NetNsGuard
+pub fn aya::test_helpers::with_legacy_cgroup_links<T>(impl core::ops::function::FnOnce() -> T) -> T
 pub fn aya::test_helpers::with_netlink_xdp<T>(impl core::ops::function::FnOnce() -> T) -> T
 pub fn aya::test_helpers::with_tracefs_probes<T>(impl core::ops::function::FnOnce() -> T) -> T
 pub type aya::test_helpers::AyaTestResult<T> = core::result::Result<T, aya::test_helpers::AyaTestError>

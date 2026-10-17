@@ -9,12 +9,11 @@ use aya::{
     pin::PinError,
     programs::{
         CgroupAttachMode, CgroupSockAddr, FlowDissector, KProbe, LinkOrder, ProbeKind, Program,
-        ProgramError, SchedClassifier, TcAttachType, TracePoint, UProbe, Xdp, XdpMode,
+        ProgramError, SchedClassifier, TcAttach, TcAttachType, TracePoint, UProbe, Xdp, XdpMode,
         flow_dissector::{FlowDissectorLink, FlowDissectorLinkId},
         kprobe::{KProbeLink, KProbeLinkId},
         links::{FdLink, LinkError, PinnedLink},
         loaded_links, loaded_programs,
-        tc::TcAttachOptions,
         trace_point::{TracePointLink, TracePointLinkId},
         uprobe::{UProbeLink, UProbeLinkId, UProbeScope},
         xdp::{XdpLink, XdpLinkId},
@@ -404,7 +403,7 @@ fn basic_flow_dissector() {
         crate::TEST,
         program_name,
         attach,
-        KernelVersion::current().unwrap() >= KernelVersion::new(5, 7, 0), // See FlowDissector::attach.
+        KernelVersion::current().unwrap() >= KernelVersion::new(5, 8, 0), // See FlowDissector::attach.
     );
 }
 
@@ -457,10 +456,9 @@ fn pin_tcx_link() {
     prog.load().unwrap();
 
     let link_id = prog
-        .attach_with_options(
+        .attach(
             c"lo",
-            TcAttachType::Ingress,
-            TcAttachOptions::TcxOrder(LinkOrder::default()),
+            TcAttach::Tcx(TcAttachType::Ingress, LinkOrder::default()),
         )
         .unwrap();
     let link = prog.take_link(link_id).unwrap();
@@ -473,14 +471,14 @@ fn pin_tcx_link() {
     prog.unload().unwrap();
     assert_loaded(program_name);
 
-    // Load a new program and atomically replace the old one using attach_to_link
+    // Load a new program and atomically replace the old one using adopt_link
     let mut bpf = Ebpf::load(crate::TCX).unwrap();
     let prog: &mut SchedClassifier = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
     let old_link = PinnedLink::from_pin(pin_path).unwrap();
     let link = FdLink::from(old_link).try_into().unwrap();
-    let _link_id = prog.attach_to_link(link).unwrap();
+    let _link_id = prog.adopt_link(link).unwrap();
 
     assert_loaded(program_name);
 
@@ -492,10 +490,11 @@ fn pin_tcx_link() {
 
 #[test_log::test]
 fn pin_cgroup_link() {
-    // bpf_link for cgroup programs requires kernel >= 5.7; below that `attach`
-    // produces a BPF_PROG_ATTACH link, which cannot be pinned or updated.
+    // Pinning cgroup links is supported since 5.7, but restoring the typed link
+    // from its FD needs link info (5.8) to recover the actual attach type.
+    // https://github.com/torvalds/linux/blob/f2e10bff1/kernel/bpf/cgroup.c#L855-L869
     let kernel_version = KernelVersion::current().unwrap();
-    if kernel_version < KernelVersion::new(5, 7, 0) {
+    if kernel_version < KernelVersion::new(5, 8, 0) {
         eprintln!("skipping pin_cgroup_link test on kernel {kernel_version:?}");
         return;
     }
@@ -525,14 +524,14 @@ fn pin_cgroup_link() {
     prog.unload().unwrap();
     assert_loaded(program_name);
 
-    // Load a new program and atomically replace the old one using attach_to_link
+    // Load a new program and atomically replace the old one using adopt_link
     let mut bpf = Ebpf::load(crate::CGROUP_CONNECT).unwrap();
     let prog: &mut CgroupSockAddr = bpf.program_mut(program_name).unwrap().try_into().unwrap();
     prog.load().unwrap();
 
     let old_link = PinnedLink::from_pin(pin_path).unwrap();
     let link = FdLink::from(old_link).try_into().unwrap();
-    let _link_id = prog.attach_to_link(link).unwrap();
+    let _link_id = prog.adopt_link(link).unwrap();
 
     assert_loaded(program_name);
 
@@ -590,9 +589,7 @@ fn pin_lifecycle() {
         link_pin,
         from_pin,
         attach,
-        Some(|prog: &mut P, pinned: FdLink| {
-            prog.attach_to_link(pinned.try_into().unwrap()).unwrap()
-        }),
+        Some(|prog: &mut P, pinned: FdLink| prog.adopt_link(pinned.try_into().unwrap()).unwrap()),
         /* expect_fd_link: */
         true, // xdp fallback is automatic, minimum version unclear.
     );
@@ -606,7 +603,7 @@ fn run_pin_program_lifecycle_test<P>(
     link_pin: &str,
     from_pin: fn(&str) -> P,
     attach: fn(&mut P) -> P::LinkId,
-    attach_to_link: Option<fn(&mut P, FdLink) -> P::LinkId>,
+    adopt_link: Option<fn(&mut P, FdLink) -> P::LinkId>,
     expect_fd_link: bool,
 ) where
     P: UnloadProgramOps + PinProgramOps,
@@ -653,12 +650,12 @@ fn run_pin_program_lifecycle_test<P>(
                         .try_into()
                         .expect("pinned link should round-trip through FdLink");
                     let link: FdLink = link.try_into().unwrap();
-                    if let Some(attach_to_link) = attach_to_link {
+                    if let Some(adopt_link) = adopt_link {
                         let mut bpf = Ebpf::load(bpf_image).unwrap();
                         let prog: &mut P =
                             bpf.program_mut(program_name).unwrap().try_into().unwrap();
                         prog.load().unwrap();
-                        attach_to_link(prog, link);
+                        adopt_link(prog, link);
                         assert_loaded(program_name);
                     }
                 }

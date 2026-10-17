@@ -9,10 +9,10 @@ use aya_obj::generated::{
 use crate::{
     programs::{
         CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, load_program_with_attach_type,
+        define_link_wrapper, id_as_key, impl_program_adopt_link, links::cgroup_fd_link_supported,
+        load_program_with_attach_type,
     },
     sys::{LinkTarget, SyscallError, bpf_link_create},
-    util::KernelVersion,
 };
 
 /// A program used to watch for sysctl changes.
@@ -76,7 +76,7 @@ impl CgroupSysctl {
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
         let attach_type = BPF_CGROUP_SYSCTL;
-        if KernelVersion::at_least(5, 7, 0) {
+        if cgroup_fd_link_supported() {
             let link_fd = bpf_link_create(
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),
@@ -144,4 +144,11 @@ define_link_wrapper!(
     CgroupSysctlLinkInner,
     CgroupSysctlLinkIdInner,
     CgroupSysctl,
+);
+
+impl_program_adopt_link!(
+    CgroupSysctl,
+    CgroupSysctlLink,
+    CgroupSysctlLinkId,
+    CgroupSysctlLinkInner
 );

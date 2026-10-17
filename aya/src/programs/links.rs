@@ -21,9 +21,10 @@ use crate::{
     pin::PinError,
     programs::{MultiProgLink, MultiProgram, ProgramError, ProgramFd, ProgramId},
     sys::{
-        SyscallError, bpf_get_object, bpf_link_get_info_by_fd, bpf_pin_object, bpf_prog_attach,
-        bpf_prog_detach,
+        SyscallError, bpf_get_object, bpf_link_get_info_by_fd, bpf_link_update, bpf_pin_object,
+        bpf_prog_attach, bpf_prog_detach,
     },
+    util::KernelVersion,
 };
 
 /// A Link.
@@ -39,6 +40,14 @@ pub trait Link: std::fmt::Debug + Eq + std::hash::Hash + 'static {
 
     /// Detaches the `LinkOwnedLink` is gone... but this doesn't work :(
     fn detach(self) -> Result<(), Self::Error>;
+}
+
+/// Updates the program referenced by an attachment, retaining its backend and target.
+///
+/// The optional name is used by legacy TC filters. Implementations retain the attachment
+/// on failure and only change its metadata after the kernel update succeeds.
+pub(crate) trait LinkUpdate: Sized {
+    fn update(&mut self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<(), ProgramError>;
 }
 
 /// Program attachment mode.
@@ -65,6 +74,15 @@ impl From<CgroupAttachMode> for u32 {
     }
 }
 
+pub(crate) fn cgroup_fd_link_supported() -> bool {
+    // TODO: Remove this hook when CI runs legacy cgroup tests on kernels older than 5.7.
+    #[cfg(feature = "test-helpers")]
+    if crate::test_helpers::FORCE_LEGACY_CGROUP_LINKS.get() {
+        return false;
+    }
+    KernelVersion::at_least(5, 7, 0)
+}
+
 #[derive(Debug)]
 pub(crate) struct Links<T: Link> {
     links: HashSet<T>,
@@ -86,6 +104,27 @@ where
             Entry::Occupied(_entry) => Err(ProgramError::AlreadyAttached),
             Entry::Vacant(entry) => Ok(entry.insert().get().id()),
         }
+    }
+
+    pub(crate) fn try_insert(
+        &mut self,
+        mut link: T,
+        update: impl FnOnce(&mut T) -> Result<(), ProgramError>,
+    ) -> Result<T::Id, (ProgramError, T)> {
+        if self.links.contains(&link) {
+            return Err((ProgramError::AlreadyAttached, link));
+        }
+        if let Err(error) = update(&mut link) {
+            return Err((error, link));
+        }
+        // HashSet::entry consumes the candidate on an occupied entry. Check before
+        // moving it so adoption can return the caller's link on every error path.
+        if self.links.contains(&link) {
+            return Err((ProgramError::AlreadyAttached, link));
+        }
+        let id = link.id();
+        self.links.insert(link);
+        Ok(id)
     }
 
     pub(crate) fn remove(&mut self, link_id: T::Id) -> Result<(), ProgramError> {
@@ -330,6 +369,16 @@ impl Link for FdLink {
     }
 }
 
+impl LinkUpdate for FdLink {
+    fn update(&mut self, prog_fd: BorrowedFd<'_>, _name: Option<&str>) -> Result<(), ProgramError> {
+        bpf_link_update(self.fd.as_fd(), prog_fd, None, 0).map_err(|io_error| SyscallError {
+            call: "bpf_link_update",
+            io_error,
+        })?;
+        Ok(())
+    }
+}
+
 id_as_key!(FdLink, FdLinkId);
 
 impl From<PinnedLink> for FdLink {
@@ -375,6 +424,66 @@ impl PinnedLink {
         Ok(self.inner)
     }
 }
+
+/// A cgroup FD link with its immutable attachment type.
+///
+/// Cgroup link creation and updates are supported since Linux 5.7, but querying
+/// link info requires 5.8. Keep the actual attach type so adoption works on 5.7.
+/// <https://github.com/torvalds/linux/commit/f2e10bff1>
+#[derive(Debug)]
+pub(crate) struct CgroupFdLink {
+    pub(crate) link: FdLink,
+    pub(crate) attach_type: bpf_attach_type,
+}
+
+impl CgroupFdLink {
+    pub(crate) const fn new(fd: crate::MockableFd, attach_type: bpf_attach_type) -> Self {
+        Self {
+            link: FdLink::new(fd),
+            attach_type,
+        }
+    }
+}
+
+impl TryFrom<FdLink> for CgroupFdLink {
+    type Error = LinkError;
+
+    fn try_from(link: FdLink) -> Result<Self, Self::Error> {
+        // A bare FD has no trusted attachment metadata. Query it here and propagate
+        // errors; guessing the attach type would bypass the checks during adoption.
+        let info = bpf_link_get_info_by_fd(link.fd.as_fd())?;
+        if info.type_ != bpf_link_type::BPF_LINK_TYPE_CGROUP as u32 {
+            return Err(LinkError::InvalidLink);
+        }
+        // SAFETY: The kernel returned link info tagged BPF_LINK_TYPE_CGROUP,
+        // which identifies the cgroup union member containing attach_type.
+        let attach_type =
+            bpf_attach_type::try_from(unsafe { info.__bindgen_anon_1.cgroup.attach_type })
+                .map_err(|_error| LinkError::InvalidLink)?;
+        Ok(Self { link, attach_type })
+    }
+}
+
+impl Link for CgroupFdLink {
+    type Id = FdLinkId;
+    type Error = Infallible;
+
+    fn id(&self) -> Self::Id {
+        self.link.id()
+    }
+
+    fn detach(self) -> Result<(), Self::Error> {
+        self.link.detach()
+    }
+}
+
+impl LinkUpdate for CgroupFdLink {
+    fn update(&mut self, prog_fd: BorrowedFd<'_>, name: Option<&str>) -> Result<(), ProgramError> {
+        self.link.update(prog_fd, name)
+    }
+}
+
+id_as_key!(CgroupFdLink, FdLinkId);
 
 /// The identifier of a `ProgAttachLink`.
 #[derive(Debug, Hash, Eq, PartialEq)]
@@ -501,8 +610,7 @@ macro_rules! define_link_wrapper {
 
         #[expect(clippy::allow_attributes, reason = "macro")]
         #[allow(dead_code, reason = "macro")]
-        // allow dead code since currently XDP/TC are the only consumers of inner and
-        // into_inner
+        // Some wrappers do not need direct access to the underlying link.
         impl $wrapper {
             const fn new(base: $base) -> $wrapper {
                 $wrapper(Some(base))
@@ -510,6 +618,10 @@ macro_rules! define_link_wrapper {
 
             const fn inner(&self) -> &$base {
                 self.0.as_ref().unwrap()
+            }
+
+            const fn inner_mut(&mut self) -> &mut $base {
+                self.0.as_mut().unwrap()
             }
 
             fn into_inner(mut self) -> $base {
@@ -577,14 +689,106 @@ macro_rules! define_link_wrapper {
 
 pub(crate) use define_link_wrapper;
 
+macro_rules! impl_program_adopt_link {
+    (
+        $program:ident, $wrapper:ident, $wrapper_id:ident
+        $(; $inner:ident, $expected_attach_type:expr)?
+        $(,)?
+    ) => {
+        impl $program {
+            /// Takes ownership of an existing link, associating it with this program.
+            ///
+            /// The program referenced by the link is atomically replaced with this program, while
+            /// retaining the attachment target and its options. Other links managed by this program
+            /// are unaffected. The returned ID can be used with [`Self::detach`] or [`Self::take_link`].
+            ///
+            /// On failure, returns the error together with the link without detaching it. The caller
+            /// can retry adoption or detach the returned link. Dropping the error tuple also drops
+            /// the link, with the same detachment behavior as dropping it directly.
+            ///
+            /// # Errors
+            ///
+            /// Returns [`ProgramError::NotLoaded`] if this program is not loaded.
+            /// Returns an error if the new program is incompatible with the attachment, the link
+            /// is already managed by this program, or the kernel or link backend does not support
+            /// updating it.
+            /// Legacy `BPF_PROG_ATTACH` links return [`crate::programs::LinkError::InvalidLink`].
+            pub fn adopt_link(
+                &mut self,
+                link: $wrapper,
+            ) -> Result<$wrapper_id, (ProgramError, $wrapper)> {
+                use std::os::fd::AsFd as _;
+
+                use $crate::programs::links::LinkUpdate as _;
+
+                $(
+                    let expected_attach_type: Option<aya_obj::generated::bpf_attach_type> =
+                        ($expected_attach_type)(self);
+                )?
+                let $crate::programs::ProgramData { fd, links, name, .. } = &mut self.data;
+                let Some(fd) = fd else {
+                    return Err((ProgramError::NotLoaded, link));
+                };
+
+                // Keep the owning wrapper intact until all fallible updates have finished.
+                // In particular, validation and unsupported backends must not detach the link.
+                links.try_insert(link, |link| {
+                    $(
+                        if let ($inner::Fd(fd_link), Some(attach_type)) =
+                            (link.inner(), expected_attach_type)
+                        {
+                            // Cgroup link updates check the program type, but not its expected attach type.
+                            // https://github.com/torvalds/linux/blob/adc218676/kernel/bpf/cgroup.c#L810-L841
+                            if fd_link.attach_type != attach_type {
+                                return Err($crate::programs::LinkError::InvalidLink.into());
+                            }
+                        }
+                    )?
+                    link.inner_mut().update(fd.as_fd(), name.as_deref())
+                })
+            }
+        }
+    };
+    // Cgroup programs use this arm for their Fd/ProgAttach link enums.
+    // Updates Fd links and rejects legacy BPF_PROG_ATTACH links.
+    (
+        $program:ident, $wrapper:ident, $wrapper_id:ident, $inner:ident
+        $(, $expected_attach_type:expr)?
+        $(,)?
+    ) => {
+        impl $crate::programs::links::LinkUpdate for $inner {
+            fn update(
+                &mut self,
+                prog_fd: std::os::fd::BorrowedFd<'_>,
+                name: Option<&str>,
+            ) -> Result<(), ProgramError> {
+                match self {
+                    Self::Fd(link) => {
+                        $crate::programs::links::LinkUpdate::update(link, prog_fd, name)
+                    }
+                    Self::ProgAttach(_) => {
+                        Err($crate::programs::LinkError::InvalidLink.into())
+                    }
+                }
+            }
+        }
+
+        $crate::programs::links::impl_program_adopt_link!(
+            $program, $wrapper, $wrapper_id $(; $inner, $expected_attach_type)?
+        );
+    };
+}
+
+pub(crate) use impl_program_adopt_link;
+
 macro_rules! impl_try_into_fdlink {
-    ($wrapper:ident, $inner:ident) => {
+    ($wrapper:ident, $inner:ident $(, $field:ident)?) => {
         impl TryFrom<$wrapper> for $crate::programs::FdLink {
             type Error = $crate::programs::LinkError;
 
             fn try_from(value: $wrapper) -> Result<Self, Self::Error> {
                 match value.into_inner() {
-                    $inner::Fd(fd) => Ok(fd),
+                    $inner::Fd(fd) => Ok(fd$(.$field)?),
                     inner => {
                         // FdLink and PerfLink clean up on drop. Other links, such as ProgAttachLink
                         // and NlLink, need an explicit detach(), which the wrapper's Drop calls.
@@ -664,12 +868,11 @@ bitflags::bitflags! {
 ///
 /// ```no_run
 /// # let mut bpf = aya::Ebpf::load(&[])?;
-/// use aya::programs::{tc, SchedClassifier, TcAttachType, tc::TcAttachOptions, LinkOrder};
+/// use aya::programs::{LinkOrder, SchedClassifier, TcAttach, TcAttachType};
 ///
 /// let prog: &mut SchedClassifier = bpf.program_mut("redirect_ingress").unwrap().try_into()?;
 /// prog.load()?;
-/// let options = TcAttachOptions::TcxOrder(LinkOrder::first());
-/// prog.attach_with_options(c"eth0", TcAttachType::Ingress, options)?;
+/// prog.attach(c"eth0", TcAttach::Tcx(TcAttachType::Ingress, LinkOrder::first()))?;
 ///
 /// # Ok::<(), aya::EbpfError>(())
 /// ```
@@ -757,17 +960,100 @@ impl LinkOrder {
 
 #[cfg(test)]
 mod tests {
-    use std::{cell::RefCell, fs::File, rc::Rc};
+    use std::{
+        cell::{Cell, RefCell},
+        fs::File,
+        io, mem,
+        os::fd::FromRawFd as _,
+        ptr,
+        rc::Rc,
+    };
 
     use assert_matches::assert_matches;
-    use aya_obj::generated::{BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE};
+    use aya_obj::generated::{
+        BPF_F_ALLOW_MULTI, BPF_F_ALLOW_OVERRIDE,
+        bpf_attach_type::BPF_CGROUP_INET4_CONNECT,
+        bpf_cmd, bpf_link_info,
+        bpf_link_type::{self, BPF_LINK_TYPE_CGROUP, BPF_LINK_TYPE_NETNS},
+    };
+    use rstest::rstest;
     use tempfile::tempdir;
 
-    use super::{FdLink, Link, Links};
+    use super::{CgroupFdLink, FdLink, Link, LinkError, Links};
     use crate::{
+        MockableFd,
         programs::{CgroupAttachMode, ProgramError},
-        sys::override_syscall,
+        sys::{Syscall, SyscallError, override_syscall},
     };
+
+    thread_local! {
+        static LINK_INFO: Cell<(bpf_link_type, u32)> =
+            const { Cell::new((BPF_LINK_TYPE_CGROUP, BPF_CGROUP_INET4_CONNECT as u32)) };
+    }
+
+    #[rstest]
+    #[case::wrong_link_type(BPF_LINK_TYPE_NETNS, BPF_CGROUP_INET4_CONNECT as u32)]
+    #[case::unknown_attach_type(BPF_LINK_TYPE_CGROUP, u32::MAX)]
+    fn cgroup_fd_link_rejects_invalid_info(
+        #[case] link_type: bpf_link_type,
+        #[case] attach_type: u32,
+    ) {
+        LINK_INFO.set((link_type, attach_type));
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                attr,
+            } => {
+                // SAFETY: bpf_obj_get_info_by_fd initialized the info union
+                // member before invoking this BPF_OBJ_GET_INFO_BY_FD mock.
+                let attr = unsafe { attr.info };
+                let (link_type, attach_type) = LINK_INFO.get();
+                // SAFETY: bpf_link_info contains integers, byte arrays and
+                // unions of these types, so all-zero bytes are valid.
+                let mut info: bpf_link_info = unsafe { mem::zeroed() };
+                info.type_ = link_type as u32;
+                info.__bindgen_anon_1.cgroup.attach_type = attach_type;
+                // SAFETY: bpf_link_get_info_by_fd supplied an exposed pointer
+                // to its live, aligned bpf_link_info buffer. This synchronous
+                // mock writes one bpf_link_info within that buffer.
+                unsafe {
+                    ptr::with_exposed_provenance_mut::<bpf_link_info>(attr.info as usize)
+                        .write(info);
+                }
+                Ok(0)
+            }
+            call => panic!("unexpected syscall: {call:?}"),
+        });
+
+        // SAFETY: This synthetic FD is only used by mocked syscalls.
+        // MockableFd's test Drop skips closing FDs at or above mock_signed_fd().
+        let link =
+            FdLink::new(unsafe { MockableFd::from_raw_fd(MockableFd::mock_signed_fd() + 1) });
+        assert_matches!(CgroupFdLink::try_from(link), Err(LinkError::InvalidLink));
+    }
+
+    #[test]
+    fn cgroup_fd_link_propagates_link_info_error() {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                ..
+            } => Err((-1, io::Error::from_raw_os_error(libc::EINVAL))),
+            call => panic!("unexpected syscall: {call:?}"),
+        });
+
+        // SAFETY: This synthetic FD is only used by mocked syscalls.
+        // MockableFd's test Drop skips closing FDs at or above mock_signed_fd().
+        let link =
+            FdLink::new(unsafe { MockableFd::from_raw_fd(MockableFd::mock_signed_fd() + 1) });
+        assert_matches!(
+            CgroupFdLink::try_from(link),
+            Err(LinkError::SyscallError(SyscallError {
+                call: "bpf_obj_get_info_by_fd",
+                io_error,
+            })) if io_error.raw_os_error() == Some(libc::EINVAL)
+        );
+    }
 
     #[derive(Debug, Hash, Eq, PartialEq)]
     struct TestLinkId(u8, u8);
@@ -835,6 +1121,30 @@ mod tests {
             links.insert(TestLink::new(1, 2)),
             Err(ProgramError::AlreadyAttached)
         );
+    }
+
+    #[test]
+    fn test_try_insert_already_attached_returns_link_without_update() {
+        let mut links = Links::new();
+        let attached = TestLink::new(1, 2);
+        let attached_detached = Rc::clone(&attached.detached);
+        links.insert(attached).unwrap();
+        let candidate = TestLink::new(1, 2);
+        let candidate_detached = Rc::clone(&candidate.detached);
+
+        let (error, link) = links
+            .try_insert(candidate, |_link| {
+                panic!("duplicate link must not be updated")
+            })
+            .unwrap_err();
+        assert_matches!(error, ProgramError::AlreadyAttached);
+        assert_eq!(*attached_detached.borrow(), 0);
+        assert_eq!(*candidate_detached.borrow(), 0);
+        link.detach().unwrap();
+        assert_eq!(*candidate_detached.borrow(), 1);
+        assert_eq!(*attached_detached.borrow(), 0);
+        links.remove(TestLinkId(1, 2)).unwrap();
+        assert_eq!(*attached_detached.borrow(), 1);
     }
 
     #[test]
