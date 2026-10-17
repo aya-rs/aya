@@ -14,7 +14,7 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-aya-ebpf-cty = { version = "^0.3.0", path = "../aya-ebpf-cty" }
+aya-ebpf-cty = { version = "^0.4.0", path = "../aya-ebpf-cty" }
 
 [build-dependencies]
 aya-build = { version = "^0.2.1", path = "../../aya-build" }
