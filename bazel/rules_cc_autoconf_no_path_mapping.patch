@@ -1,0 +1,19 @@
+diff --git a/autoconf/private/autoconf_library.bzl b/autoconf/private/autoconf_library.bzl
+--- a/autoconf/private/autoconf_library.bzl
++++ b/autoconf/private/autoconf_library.bzl
+@@ -1,6 +1,5 @@
+ """autoconf implementation"""
+ 
+-load("@bazel_features//:features.bzl", "bazel_features")
+ load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
+ load("@rules_cc//cc:find_cc_toolchain.bzl", "use_cc_toolchain")
+ load(
+@@ -485,6 +484,6 @@
+             progress_message = "CcAutoconfCheck %{label} - " + check_name,
+             env = env | ctx.configuration.default_shell_env,
+             tools = toolchain_info.cc_toolchain.all_files,
+-            # TODO: https://github.com/periareon/rules_cc_autoconf/issues/148
+-            execution_requirements = {"supports-path-mapping": ""} if bazel_features.rules.write_action_has_execution_requirements else {},
++            # Compiler/linker paths embedded in config_json retain their original
++            # output roots. Mapping only the action's argv would break those paths.
+         )

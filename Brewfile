@@ -1,4 +1,4 @@
-# Keep this congruent with `.github/workflows/ci.yml`.
+# macOS dependencies for manual xtask integration builds.
 
 # The clang shipped on macOS doesn't support BPF, so we need LLVM from brew.
 brew "llvm"
