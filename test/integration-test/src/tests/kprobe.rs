@@ -1,4 +1,4 @@
-use std::{sync::mpsc::sync_channel, thread};
+use std::{fs::File, io::Read as _};
 
 use aya::{
     Ebpf, EbpfLoader,
@@ -38,18 +38,13 @@ fn kprobe_triggers() {
         .try_into()
         .unwrap();
     prog.load().unwrap();
-    prog.attach("try_to_wake_up", 0).unwrap();
+    prog.attach("vfs_read", 0).unwrap();
 
+    let mut file = File::open("/dev/null").unwrap();
     let hits_before = read_hits(&hits);
 
-    let (tx, rx) = sync_channel::<()>(0);
-    let worker = thread::spawn(move || {
-        rx.recv().unwrap();
-    });
-
-    tx.send(()).unwrap();
-
-    worker.join().unwrap();
+    // A synchronous read triggers the probe without depending on thread scheduling.
+    assert_eq!(file.read(&mut [0]).unwrap(), 0);
 
     let hits_after = read_hits(&hits);
     assert!(
