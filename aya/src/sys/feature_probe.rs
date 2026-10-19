@@ -16,7 +16,7 @@ use aya_obj::{
         bpf_prog_info,
     },
 };
-use libc::{E2BIG, EBADF, EINVAL};
+use libc::{E2BIG, EBADF, EINVAL, EOPNOTSUPP};
 
 use super::{
     SyscallError, UProbeMultiFeature, bpf_map_create, bpf_prog_load, bpf_raw_tracepoint_open,
@@ -587,6 +587,12 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
         Err(io_error) => io_error,
     };
 
+    // Inode storage requires the BPF LSM to have initialized its security blob at boot.
+    // https://github.com/torvalds/linux/blob/a6f0643e4/kernel/bpf/bpf_inode_storage.c#L179-L191
+    if map_type == MapType::InodeStorage && io_error.raw_os_error() == Some(EOPNOTSUPP) {
+        return Ok(false);
+    }
+
     // sk_storage, struct_ops, inode_storage, task_storage, & cgrp_storage requires further
     // examination to verify support.
     match io_error.raw_os_error() {
@@ -698,10 +704,36 @@ fn probe_bpf_info<T>(fd: MockableFd, mut info: T) -> Result<bool, SyscallError> 
 mod tests {
     use std::cell::Cell;
 
+    use libc::EPERM;
     use rstest::rstest;
 
     use super::*;
-    use crate::sys::{Syscall, override_syscall};
+    use crate::sys::{SysResult, Syscall, override_syscall};
+
+    fn map_create_error<const ERRNO: i32>(call: Syscall<'_>) -> SysResult {
+        assert_matches::assert_matches!(call, Syscall::Ebpf { cmd, attr: _ } => {
+            assert_eq!(cmd, bpf_cmd::BPF_MAP_CREATE);
+        });
+        Err((-1, io::Error::from_raw_os_error(ERRNO)))
+    }
+
+    #[rstest]
+    #[case::inactive_inode_storage(MapType::InodeStorage, map_create_error::<EOPNOTSUPP>, Ok(false))]
+    #[case::supported_inode_storage(MapType::InodeStorage, map_create_error::<EBADF>, Ok(true))]
+    #[case::permission_denied(MapType::InodeStorage, map_create_error::<EPERM>, Err(EPERM))]
+    #[case::unrelated_map(MapType::Hash, map_create_error::<EOPNOTSUPP>, Err(EOPNOTSUPP))]
+    fn inode_storage_probe_errors(
+        #[case] map_type: MapType,
+        #[case] syscall: fn(Syscall<'_>) -> SysResult,
+        #[case] expected: Result<bool, i32>,
+    ) {
+        override_syscall(syscall);
+        let result = is_map_supported(map_type).map_err(|SyscallError { call, io_error }| {
+            assert_eq!(call, "bpf_map_create");
+            io_error.raw_os_error().unwrap()
+        });
+        assert_eq!(result, expected);
+    }
 
     // Syscall overrides are function pointers, so they cannot capture a local counter.
     thread_local! {
