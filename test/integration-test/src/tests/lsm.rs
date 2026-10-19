@@ -7,10 +7,12 @@ use aya::{
     util::KernelVersion,
 };
 
+use super::is_bpf_lsm_active;
+
 macro_rules! expect_permission_denied {
     ($result:expr) => {
         let result = $result;
-        if !std::fs::read_to_string("/sys/kernel/security/lsm").unwrap().contains("bpf") {
+        if !is_bpf_lsm_active() {
             assert_matches!(result, Ok(_));
         } else {
             assert_matches!(result, Err(e) => assert_eq!(
@@ -38,7 +40,6 @@ fn lsm() {
                 assert_eq!(call, "bpf_raw_tracepoint_open");
                 assert_eq!(io_error.raw_os_error(), Some(524));
             });
-            eprintln!("skipping test - LSM programs not supported");
             return;
         }
         result.unwrap()
@@ -60,12 +61,17 @@ fn lsm_cgroup() {
     match prog.load("socket_bind", &btf) {
         Ok(()) => {}
         Err(err) => match err {
-            ProgramError::LoadError { io_error, .. }
-                if !is_program_supported(ProgramType::Lsm(LsmAttachType::Cgroup)).unwrap() =>
-            {
-                assert_eq!(io_error.raw_os_error(), Some(libc::EINVAL));
-                eprintln!("skipping test - LSM cgroup programs not supported at load");
-                return;
+            ProgramError::LoadError {
+                io_error,
+                verifier_log,
+            } => {
+                if !is_program_supported(ProgramType::Lsm(LsmAttachType::Cgroup)).unwrap() {
+                    assert_eq!(io_error.raw_os_error(), Some(libc::EINVAL));
+                    return;
+                }
+                panic!(
+                    "unexpected error loading LSM cgroup program: {io_error}. Verifier output: {verifier_log}"
+                );
             }
             err => panic!("unexpected error loading LSM cgroup program: {err}"),
         },
@@ -88,7 +94,6 @@ fn lsm_cgroup() {
                 assert_eq!(call, "bpf_link_create");
                 assert_eq!(io_error.raw_os_error(), Some(524));
             });
-            eprintln!("skipping test - LSM cgroup programs not supported at attach");
             return;
         }
         result.unwrap()
