@@ -1454,8 +1454,8 @@ fn probe_supported_maps() {
     let kern_version = KernelVersion::new(5, 8, 0);
     kernel_assert!(is_supported!(MapType::RingBuf), kern_version);
 
-    let kern_version = KernelVersion::new(5, 10, 0);
-    kernel_assert!(is_supported!(MapType::InodeStorage), kern_version); // Requires `CONFIG_BPF_LSM=y`
+    // The inode_storage test checks its probe against map creation and the active BPF LSM.
+    // A backported boot-initialization check makes kernel version alone insufficient.
 
     let kern_version = KernelVersion::new(5, 11, 0);
     kernel_assert!(is_supported!(MapType::TaskStorage), kern_version);
