@@ -9,8 +9,16 @@ common --test_output=errors
 common --repo_env=BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
 common --repo_env=BAZEL_NO_APPLE_CPP_TOOLCHAIN=1
 
-# Use platform names in output directories created by BPF and VM transitions.
-common --experimental_platform_in_output_dir
+# Kernel actions depend on native configuration and compiler probe results.
+build --experimental_allow_map_directory
+
+# Allow actions that support path mapping to share work across configurations.
+common --experimental_output_paths=strip
+
+# Rust links flatten C/C++ toolchain paths into strings that Bazel cannot map.
+# Remove this restriction when rules_rust uses path-aware cc_common expansion.
+# https://github.com/bazelbuild/rules_rust/issues/4250
+common --modify_execution_info=Rustc=-supports-path-mapping
 
 # Aya's eBPF crates require unstable BPF inline assembly.
 common --@rules_rust//rust/toolchain/channel=nightly
@@ -18,12 +26,11 @@ common --@rules_rust//rust/toolchain/channel=nightly
 # Keep remote connections healthy.
 common:remote --grpc_keepalive_time=10s
 common:remote --remote_timeout=30
-common:remote --experimental_remote_execution_keepalive
 
 # Use BuildBuddy for all remote APIs.
 common:remote --bes_results_url=https://app.buildbuddy.io/invocation/
 common:remote --bes_backend=grpcs://remote.buildbuddy.io
-common:remote --experimental_remote_downloader=grpcs://remote.buildbuddy.io
+common:remote --remote_downloader=grpcs://remote.buildbuddy.io
 common:remote --remote_cache=grpcs://remote.buildbuddy.io
 common:remote --remote_executor=grpcs://remote.buildbuddy.io
 
@@ -34,7 +41,9 @@ common:remote --remote_download_minimal
 # Keep remote backends fed; throttling also waits for remote uploads.
 # https://github.com/bazelbuild/bazel/issues/28734
 common:remote --noexperimental_throttle_remote_action_building
-common:remote --jobs=400
+
+# Bound concurrent input preparation for source-built kernel graphs.
+common:remote --jobs=50
 
 # Use the RBE platform to execute remote actions and build remote test targets.
 common:remote --extra_execution_platforms=//bazel/toolchains:rbe_x86_64_linux

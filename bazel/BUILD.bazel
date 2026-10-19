@@ -1,5 +1,16 @@
 load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
 
+exports_files(
+    [
+        "bazel_lib_copy_tool.patch",
+        "rules_bison_cstdlib.patch",
+        "rules_cc_autoconf_no_host_shell.patch",
+        "rules_cc_autoconf_no_path_mapping.patch",
+        "zlib_optional_header_macros.patch",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 string_flag(
     name = "bpf_target_arch",
     build_setting_default = "x86_64",

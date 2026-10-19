@@ -1,0 +1,104 @@
+diff --git a/autoconf/private/checker/declared_process.h b/autoconf/private/checker/declared_process.h
+--- /dev/null
++++ b/autoconf/private/checker/declared_process.h
+@@ -0,0 +1,37 @@
++#pragma once
++#ifndef _WIN32
++#include <cerrno>
++#include <fcntl.h>
++#include <string>
++#include <vector>
++#include <sys/wait.h>
++#include <unistd.h>
++
++namespace rules_cc_autoconf {
++// Execute the toolchain's argv directly: no host shell or shell tokenization.
++inline int run_declared_argv(const std::vector<std::string>& command, bool quiet) {
++    if (command.empty()) return 127;
++    std::vector<char*> args;
++    for (const auto& arg : command) args.push_back(const_cast<char*>(arg.c_str()));
++    args.push_back(nullptr);
++    const pid_t child = fork();
++    if (child == -1) return 127;
++    if (child == 0) {
++        if (quiet) {
++            const int output = open("/dev/null", O_WRONLY);
++            if (output == -1 || dup2(output, STDOUT_FILENO) == -1 ||
++                dup2(output, STDERR_FILENO) == -1) _exit(127);
++            if (output > STDERR_FILENO) close(output);
++        }
++        execv(args[0], args.data());
++        _exit(127);
++    }
++    int status;
++    while (waitpid(child, &status, 0) == -1) {
++        if (errno != EINTR) return 127;
++    }
++    if (WIFEXITED(status)) return WEXITSTATUS(status);
++    return WIFSIGNALED(status) ? 128 + WTERMSIG(status) : 127;
++}
++}  // namespace rules_cc_autoconf
++#endif
+diff --git a/autoconf/private/checker/compilation.cc b/autoconf/private/checker/compilation.cc
+--- a/autoconf/private/checker/compilation.cc
++++ b/autoconf/private/checker/compilation.cc
+@@ -15,6 +15,7 @@
+ #endif
+ 
+ #include "autoconf/private/checker/check_runner.h"
++#include "autoconf/private/checker/declared_process.h"
+ #include "autoconf/private/checker/debug_logger.h"
+ #include "autoconf/private/common/file_util.h"
+ 
+@@ -189,11 +190,10 @@
+ 
+     DebugLogger::debug("Executing " + label + " command: " + full_cmd);
+ 
+-    int result = std::system(full_cmd.c_str());
+ #ifdef _WIN32
+-    return result;
++    return std::system(full_cmd.c_str());
+ #else
+-    return WEXITSTATUS(result);
++    return run_declared_argv(cmd, !DebugLogger::is_verbose_debug_enabled());
+ #endif
+ }
+ 
+diff --git a/autoconf/private/checker/system_header.cc b/autoconf/private/checker/system_header.cc
+--- a/autoconf/private/checker/system_header.cc
++++ b/autoconf/private/checker/system_header.cc
+@@ -12,6 +12,7 @@
+ #endif
+ 
+ #include "autoconf/private/checker/config.h"
++#include "autoconf/private/checker/declared_process.h"
+ #include "autoconf/private/checker/debug_logger.h"
+ #include "autoconf/private/common/file_util.h"
+ 
+@@ -148,9 +149,13 @@
+ 
+     DebugLogger::debug("GL_NEXT_HEADER: running preprocessor: " + cmd.str());
+ 
++#ifdef _WIN32
+     int rc = std::system(cmd.str().c_str());
+-#ifndef _WIN32
+-    rc = WEXITSTATUS(rc);
++#else
++    std::vector<std::string> arguments = {compiler};
++    arguments.insert(arguments.end(), flags.begin(), flags.end());
++    arguments.insert(arguments.end(), {"-E", src_path.string(), "-o", pp_out.string()});
++    int rc = run_declared_argv(arguments, !DebugLogger::is_verbose_debug_enabled());
+ #endif
+ 
+     // Clean up source file
+diff --git a/autoconf/private/checker/BUILD.bazel b/autoconf/private/checker/BUILD.bazel
+--- a/autoconf/private/checker/BUILD.bazel
++++ b/autoconf/private/checker/BUILD.bazel
+@@ -66,6 +66,7 @@
+     ],
+     hdrs = [
+         "check_runner.h",
++        "declared_process.h",
+         "system_header.h",
+     ],
+     cxxopts = cxxopts(),
