@@ -1,22 +1,54 @@
 use assert_matches::assert_matches;
 use aya::{
-    Btf, Ebpf,
+    Btf, Ebpf, EbpfError,
     maps::{Array, InodeStorage, MapError, MapType},
     programs::{Lsm, LsmAttachType, ProgramError, ProgramType},
     sys::{SyscallError, is_map_supported, is_program_supported},
+    util::KernelVersion,
 };
 use integration_common::local_storage::SENTINEL;
 use test_log::test;
 
 #[test]
 fn inode_storage() {
-    if !is_map_supported(MapType::InodeStorage).unwrap() {
-        eprintln!("skipping test - inode storage maps not supported");
+    let config = procfs::kernel_config().unwrap();
+    let available = KernelVersion::current().unwrap() >= KernelVersion::new(5, 10, 0)
+        && matches!(
+            config.get("CONFIG_BPF_LSM"),
+            Some(procfs::ConfigSetting::Yes)
+        );
+    let active = std::fs::read_to_string("/sys/kernel/security/lsm")
+        .unwrap()
+        .trim()
+        .split(',')
+        .any(|lsm| lsm == "bpf");
+    let supported = is_map_supported(MapType::InodeStorage).unwrap();
+    if !available {
+        assert!(
+            !supported,
+            "inode storage requires Linux 5.10 and CONFIG_BPF_LSM=y"
+        );
+    } else if active {
+        assert!(supported, "an initialized BPF LSM supports inode storage");
+    }
+
+    let result = Ebpf::load(crate::INODE_STORAGE);
+    if !supported {
+        let Err(error) = result else {
+            panic!("inode storage loaded despite a negative capability probe");
+        };
+        assert_matches!(error, EbpfError::MapError(error) => {
+            assert_matches!(error, MapError::CreateError { name, io_error } => {
+                assert_eq!(name, "INODE_STORAGE");
+                let errno = if available { libc::EOPNOTSUPP } else { libc::EINVAL };
+                assert_eq!(io_error.raw_os_error(), Some(errno));
+            });
+        });
         return;
     }
 
     let btf = Btf::from_sys_fs().unwrap();
-    let mut bpf: Ebpf = Ebpf::load(crate::INODE_STORAGE).unwrap();
+    let mut bpf = result.unwrap();
     {
         let mut target_tgid: Array<_, u32> =
             Array::try_from(bpf.map_mut("TARGET_TGID").unwrap()).unwrap();
@@ -35,22 +67,10 @@ fn inode_storage() {
                 assert_eq!(call, "bpf_raw_tracepoint_open");
                 assert_eq!(io_error.raw_os_error(), Some(524));
             });
-            eprintln!("skipping test - LSM programs not supported");
             return;
         }
         result.unwrap()
     };
-
-    // The BPF LSM module is only active on kernels booted with `lsm=bpf`.
-    // Attach succeeds either way (`is_program_supported` only requires
-    // `CONFIG_BPF_LSM=y`), but the hook only fires when the module is live.
-    if !std::fs::read_to_string("/sys/kernel/security/lsm")
-        .unwrap()
-        .contains("bpf")
-    {
-        eprintln!("skipping runtime assertions - BPF LSM not active");
-        return;
-    }
 
     // Opening a file fires `inode_permission` for its inode under this process.
     let temp_dir = tempfile::tempdir().unwrap();
@@ -58,14 +78,19 @@ fn inode_storage() {
     std::fs::write(&path, b"aya").unwrap();
     let file = std::fs::File::open(&path).unwrap();
 
-    let mut storage =
-        InodeStorage::<_, u64>::try_from(bpf.map_mut("INODE_STORAGE").unwrap()).unwrap();
-    assert_matches!(storage.get(&file, 0), Ok(value) => {
-        assert_eq!(value, SENTINEL);
-    });
-    storage.remove(&file).unwrap();
-    assert_matches!(storage.get(&file, 0), Err(MapError::KeyNotFound));
-
+    let ran = Array::<_, u32>::try_from(bpf.map("RAN").unwrap()).unwrap();
+    assert_eq!(ran.get(&0, 0).unwrap(), u32::from(active));
+    // Older kernels allowed these maps without initializing their inode security storage.
+    // Check the hook's absence through RAN; even a storage lookup can touch the invalid blob.
+    if active {
+        let mut storage =
+            InodeStorage::<_, u64>::try_from(bpf.map_mut("INODE_STORAGE").unwrap()).unwrap();
+        assert_matches!(storage.get(&file, 0), Ok(value) => {
+            assert_eq!(value, SENTINEL);
+        });
+        storage.remove(&file).unwrap();
+        assert_matches!(storage.get(&file, 0), Err(MapError::KeyNotFound));
+    }
     let lsm: &mut Lsm = bpf
         .program_mut("inode_storage_test")
         .unwrap()
