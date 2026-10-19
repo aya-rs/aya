@@ -1,25 +1,20 @@
-"""Hermetic VM helpers for integration tests."""
+"""VM helpers for integration tests."""
 
 _QEMU_SYSTEM_TOOLCHAIN_TYPE = "@rules_qemu//qemu:exec_toolchain_type"
 
-# Keep the QEMU settings and result protocol synchronized with
-# xtask/src/run.rs::run. Bazel cannot invoke that Cargo runner because this rule
-# must execute the configured QEMU toolchain with the transitioned kernel and
-# initramfs as declared runfiles.
+# Keep kernel command lines and the result protocol aligned with
+# xtask/src/run.rs::run. Run QEMU with Bazel's configured toolchain and
+# the transitioned kernel and initramfs as declared runfiles.
 _GUESTS = {
     "aarch64": struct(
-        cpu = "max",
         kernel_args = "console=ttyAMA0 lsm=bpf panic=-1",
         platform = "@rules_rs//rs/platforms:aarch64-unknown-linux-musl",
-        smp = "2",
     ),
     "x86_64": struct(
-        cpu = "max",
         # xtask/src/run.rs::run uses noapic after observed
         # "IO-APIC + timer doesn't work!" kernel panics.
         kernel_args = "console=ttyS0,115200n8 rdinit=/init lsm=bpf noapic panic=-1",
         platform = "@rules_rs//rs/platforms:x86_64-unknown-linux-musl",
-        smp = "1",
     ),
 }
 
@@ -62,12 +57,9 @@ def _aya_qemu_vm_test_impl(ctx):
         "-machine",
         qemu.machine,
         "-cpu",
-        guest.cpu,
+        "max",
         "-accel",
         "kvm",
-        # TODO(https://github.com/hermeticbuild/qemu-prebuilt/issues/4): Bump
-        # rules_qemu to a qemu-prebuilt release with macOS host artifacts so
-        # local macOS VM tests can use HVF.
         "-accel",
         "hvf",
         "-accel",
@@ -82,7 +74,7 @@ def _aya_qemu_vm_test_impl(ctx):
         "-m",
         "1024M",
         "-smp",
-        guest.smp,
+        "2",
     ]
 
     ctx.actions.write(
