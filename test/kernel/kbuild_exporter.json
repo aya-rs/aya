@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "platforms": {
+    "linux_x86_64": {
+      "url": "https://github.com/tamird/linux.bzl/releases/download/kbuild-exporter-a5e523ec6242b820d3caa05259d18033b425664a/kbuild-exporter-linux-x86_64.tar.gz",
+      "integrity": "sha256-xPaRUFt/uRbrr3c6VUsck7CHGqWAlgIZgWE+2f6n0Eo="
+    },
+    "macos_aarch64": {
+      "url": "https://github.com/tamird/linux.bzl/releases/download/kbuild-exporter-a5e523ec6242b820d3caa05259d18033b425664a/kbuild-exporter-macos-aarch64.tar.gz",
+      "integrity": "sha256-/14Gu/NUInTjtBoZ1wDDG7B83wWiWcI6PrsNP/WBw20="
+    }
+  }
+}

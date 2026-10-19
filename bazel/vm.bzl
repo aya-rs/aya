@@ -1,11 +1,10 @@
-"""Hermetic VM helpers for integration tests."""
+"""VM helpers for integration tests."""
 
 _QEMU_SYSTEM_TOOLCHAIN_TYPE = "@rules_qemu//qemu:exec_toolchain_type"
 
-# Keep the QEMU settings and result protocol synchronized with
-# xtask/src/run.rs::run. Bazel cannot invoke that Cargo runner because this rule
-# must execute the configured QEMU toolchain with the transitioned kernel and
-# initramfs as declared runfiles.
+# Keep kernel command lines and the result protocol aligned with
+# xtask/src/run.rs::run. Run QEMU with Bazel's configured toolchain and
+# the transitioned kernel and initramfs as declared runfiles.
 _GUESTS = {
     "aarch64": struct(
         cpu = "max",
@@ -65,9 +64,6 @@ def _aya_qemu_vm_test_impl(ctx):
         guest.cpu,
         "-accel",
         "kvm",
-        # TODO(https://github.com/hermeticbuild/qemu-prebuilt/issues/4): Bump
-        # rules_qemu to a qemu-prebuilt release with macOS host artifacts so
-        # local macOS VM tests can use HVF.
         "-accel",
         "hvf",
         "-accel",
