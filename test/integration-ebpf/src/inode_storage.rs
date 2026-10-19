@@ -22,6 +22,9 @@ static INODE_STORAGE: InodeStorage<u64> = InodeStorage::new();
 #[map]
 static TARGET_TGID: Array<u32> = Array::with_max_entries(1, 0);
 
+#[map]
+static RAN: Array<u32> = Array::with_max_entries(1, 0);
+
 #[lsm(hook = "inode_permission")]
 fn inode_storage_test(ctx: LsmContext) -> i32 {
     // `inode_permission(inode, mask)` has 2 arguments; the prior LSM program's
@@ -29,6 +32,9 @@ fn inode_storage_test(ctx: LsmContext) -> i32 {
     let retval: i32 = ctx.arg(2);
     if TARGET_TGID.get(0).copied() != Some(ctx.tgid()) {
         return retval;
+    }
+    if let Some(ran) = RAN.get_ptr_mut(0) {
+        unsafe { *ran = 1 }
     }
     let inode: *mut inode = ctx.arg(0);
     let storage = INODE_STORAGE.get_or_insert_ptr_mut(inode, None);
