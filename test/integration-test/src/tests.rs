@@ -10,11 +10,20 @@
 
 use std::{
     collections::HashSet,
-    fs,
+    fs::{self, File},
+    io::{BufRead as _, BufReader},
     path::{Path, PathBuf},
 };
 
 use aya::test_helpers::{NetNsGuard, with_tracefs_probes};
+
+// Returns whether BPF LSM was activated at boot.
+fn is_bpf_lsm_active() -> bool {
+    let file = File::open("/sys/kernel/security/lsm").unwrap();
+    BufReader::new(file)
+        .split(b',')
+        .any(|entry| entry.unwrap().trim_ascii() == b"bpf")
+}
 
 fn run_netns_tokio<F, Fut, T>(test: F) -> T
 where

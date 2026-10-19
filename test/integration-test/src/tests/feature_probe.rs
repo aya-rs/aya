@@ -1454,9 +1454,6 @@ fn probe_supported_maps() {
     let kern_version = KernelVersion::new(5, 8, 0);
     kernel_assert!(is_supported!(MapType::RingBuf), kern_version);
 
-    let kern_version = KernelVersion::new(5, 10, 0);
-    kernel_assert!(is_supported!(MapType::InodeStorage), kern_version); // Requires `CONFIG_BPF_LSM=y`
-
     let kern_version = KernelVersion::new(5, 11, 0);
     kernel_assert!(is_supported!(MapType::TaskStorage), kern_version);
 
