@@ -8,6 +8,8 @@ use aya::{
 use integration_common::stack_trace::TestResult;
 use rstest::rstest;
 
+use super::is_bpf_lsm_active;
+
 #[rstest]
 #[case::legacy("STACKS_LEGACY", "RESULT_LEGACY", "record_stackid_lsm_legacy")]
 #[case::btf("STACKS", "RESULT", "record_stackid_lsm")]
@@ -49,10 +51,7 @@ fn record_stackid_lsm(#[case] stacks_map: &str, #[case] result_map: &str, #[case
     // The BPF LSM module is only active on kernels booted with `lsm=bpf`.
     // Attach succeeds either way (`is_program_supported` only requires
     // `CONFIG_BPF_LSM=y`), but the hook only fires when the module is live.
-    if !std::fs::read_to_string("/sys/kernel/security/lsm")
-        .unwrap()
-        .contains("bpf")
-    {
+    if !is_bpf_lsm_active() {
         eprintln!("skipping runtime assertions - BPF LSM not active");
         return;
     }

@@ -7,10 +7,12 @@ use aya::{
     util::KernelVersion,
 };
 
+use super::is_bpf_lsm_active;
+
 macro_rules! expect_permission_denied {
     ($result:expr) => {
         let result = $result;
-        if !std::fs::read_to_string("/sys/kernel/security/lsm").unwrap().contains("bpf") {
+        if !is_bpf_lsm_active() {
             assert_matches!(result, Ok(_));
         } else {
             assert_matches!(result, Err(e) => assert_eq!(
