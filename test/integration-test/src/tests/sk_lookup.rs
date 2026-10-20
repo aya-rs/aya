@@ -161,3 +161,50 @@ fn redirect_sk_lookup_miss_propagates_enoent(
         .expect("LAST_ERRNO is not an Array");
     assert_eq!(last_errno.get(&0, 0).unwrap(), -ENOENT);
 }
+
+#[test_log::test]
+fn adopt_link_transfers_ownership() {
+    if !is_program_supported(ProgramType::SkLookup).unwrap() {
+        eprintln!("skipping test - sk_lookup not supported");
+        return;
+    }
+    let netns = NetNsGuard::new().unwrap();
+    let canary = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+    // Reserve and immediately release a port so the kernel's normal lookup
+    // misses; SK_LOOKUP must then redirect the SYN to canary.
+    let probe_addr = {
+        let probe = TcpListener::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+        probe.local_addr().unwrap()
+    };
+
+    let mut old_bpf = Ebpf::load(crate::SOCK_MAP).unwrap();
+    let old: &mut SkLookup = old_bpf
+        .program_mut("sk_lookup_btf")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    old.load().unwrap();
+    let id = old.attach(&netns).unwrap();
+    let link = old.take_link(id).unwrap();
+
+    // Only the replacement program's map contains the redirect target.
+    let mut new_bpf = Ebpf::load(crate::SOCK_MAP).unwrap();
+    MapKind::Map.insert_canary(&mut new_bpf, "SOCKETS_BTF", &canary);
+    let new: &mut SkLookup = new_bpf
+        .program_mut("sk_lookup_btf")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    new.load().unwrap();
+    let id = new.adopt_link(link).unwrap();
+    drop(old_bpf);
+
+    // A connection reaching canary proves the new program is active after the
+    // old owner is dropped.
+    let _stream = TcpStream::connect_timeout(&probe_addr, CONNECT_TIMEOUT).unwrap();
+    let _accepted = canary.accept().unwrap();
+    // Detaching through the new owner must stop redirecting new connections.
+    new.detach(id).unwrap();
+    let error = TcpStream::connect_timeout(&probe_addr, CONNECT_TIMEOUT).unwrap_err();
+    assert_eq!(error.kind(), ErrorKind::ConnectionRefused);
+}

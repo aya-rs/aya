@@ -2,18 +2,18 @@
 
 use std::{hash::Hash, os::fd::AsFd, path::Path};
 
-use aya_obj::generated::{bpf_link_type, bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK_ADDR};
+use aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SOCK_ADDR;
 pub use aya_obj::programs::CgroupSockAddrAttachType;
 
 use crate::{
     VerifierLogLevel,
     programs::{
         CgroupAttachMode, FdLink, Link, LinkError, ProgAttachLink, ProgramData, ProgramError,
-        ProgramType, define_link_wrapper, id_as_key, impl_try_from_fdlink, impl_try_into_fdlink,
+        ProgramType, define_link_wrapper, id_as_key, impl_program_adopt_link, impl_try_into_fdlink,
+        links::{CgroupFdLink, cgroup_fd_link_supported},
         load_program_with_attach_type,
     },
-    sys::{LinkTarget, SyscallError, bpf_link_create, bpf_link_update},
-    util::KernelVersion,
+    sys::{LinkTarget, SyscallError, bpf_link_create},
 };
 
 /// A program that can be used to inspect or modify socket addresses (`struct sockaddr`).
@@ -27,6 +27,9 @@ use crate::{
 /// # Minimum kernel version
 ///
 /// The minimum kernel version required to use this feature is 4.17.
+///
+/// On kernels before 5.7, [`Self::attach`] creates legacy `BPF_PROG_ATTACH` links,
+/// which [`Self::adopt_link`] rejects with [`crate::programs::LinkError::InvalidLink`].
 ///
 /// # Examples
 ///
@@ -81,7 +84,7 @@ impl CgroupSockAddr {
         let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
-        if KernelVersion::at_least(5, 7, 0) {
+        if cgroup_fd_link_supported() {
             let link_fd = bpf_link_create(
                 prog_fd,
                 LinkTarget::Fd(cgroup_fd),
@@ -95,7 +98,7 @@ impl CgroupSockAddr {
             })?;
             data.links
                 .insert(CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(
-                    FdLink::new(link_fd),
+                    CgroupFdLink::new(link_fd, (*attach_type).into()),
                 )))
         } else {
             let link = ProgAttachLink::attach(prog_fd, cgroup_fd, *attach_type, mode)?;
@@ -103,40 +106,6 @@ impl CgroupSockAddr {
             data.links.insert(CgroupSockAddrLink::new(
                 CgroupSockAddrLinkInner::ProgAttach(link),
             ))
-        }
-    }
-
-    /// Atomically replaces the program referenced by the provided link.
-    ///
-    /// Ownership of the link will transfer to this program.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`LinkError::InvalidLink`] for a `BPF_PROG_ATTACH` attachment,
-    /// which is what kernels before 5.7 get, as it's currently not supported.
-    pub fn attach_to_link(
-        &mut self,
-        link: CgroupSockAddrLink,
-    ) -> Result<CgroupSockAddrLinkId, ProgramError> {
-        let prog_fd = self.fd()?;
-        let prog_fd = prog_fd.as_fd();
-        match link.into_inner() {
-            CgroupSockAddrLinkInner::Fd(fd_link) => {
-                let link_fd = fd_link.fd;
-                bpf_link_update(link_fd.as_fd(), prog_fd, None, 0).map_err(|io_error| {
-                    SyscallError {
-                        call: "bpf_link_update",
-                        io_error,
-                    }
-                })?;
-
-                self.data
-                    .links
-                    .insert(CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(
-                        FdLink::new(link_fd),
-                    )))
-            }
-            CgroupSockAddrLinkInner::ProgAttach(_) => Err(LinkError::InvalidLink.into()),
         }
     }
 
@@ -163,7 +132,7 @@ enum CgroupSockAddrLinkIdInner {
 
 #[derive(Debug)]
 enum CgroupSockAddrLinkInner {
-    Fd(FdLink),
+    Fd(CgroupFdLink),
     ProgAttach(ProgAttachLink),
 }
 
@@ -196,10 +165,129 @@ define_link_wrapper!(
     CgroupSockAddr,
 );
 
-impl_try_into_fdlink!(CgroupSockAddrLink, CgroupSockAddrLinkInner);
-
-impl_try_from_fdlink!(
+impl_program_adopt_link!(
+    CgroupSockAddr,
     CgroupSockAddrLink,
+    CgroupSockAddrLinkId,
     CgroupSockAddrLinkInner,
-    bpf_link_type::BPF_LINK_TYPE_CGROUP
+    |program: &CgroupSockAddr| Some(program.attach_type.into()),
 );
+
+impl_try_into_fdlink!(CgroupSockAddrLink, CgroupSockAddrLinkInner, link);
+
+impl TryFrom<FdLink> for CgroupSockAddrLink {
+    type Error = LinkError;
+
+    fn try_from(link: FdLink) -> Result<Self, Self::Error> {
+        Ok(Self::new(CgroupSockAddrLinkInner::Fd(link.try_into()?)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{cell::Cell, io, mem, os::fd::FromRawFd as _, path::Path};
+
+    use assert_matches::assert_matches;
+    use aya_obj::generated::{
+        bpf_attach_type::{self, BPF_CGROUP_INET4_BIND, BPF_CGROUP_INET4_CONNECT},
+        bpf_cmd, bpf_prog_info,
+    };
+    use rstest::rstest;
+
+    use super::{
+        CgroupSockAddr, CgroupSockAddrAttachType, CgroupSockAddrLink, CgroupSockAddrLinkInner,
+    };
+    use crate::{
+        MockableFd, VerifierLogLevel,
+        programs::{
+            Link as _, ProgramData, ProgramError,
+            links::{CgroupFdLink, LinkError},
+        },
+        sys::{Syscall, override_syscall},
+    };
+
+    thread_local! {
+        static UPDATED: Cell<bool> = const { Cell::new(false) };
+        static INFO_QUERIED: Cell<bool> = const { Cell::new(false) };
+    }
+
+    // CI does not run Linux 5.7. Simulate its syscall behavior: link updates
+    // succeed, but link info queries fail with EINVAL. Adoption must use the
+    // cached attach type without querying link info, even for mismatched hooks.
+    #[rstest]
+    #[case::matching(BPF_CGROUP_INET4_CONNECT, true)]
+    #[case::mismatched(BPF_CGROUP_INET4_BIND, false)]
+    fn adopt_link_does_not_query_link_info(
+        #[case] attach_type: bpf_attach_type,
+        #[case] compatible: bool,
+    ) {
+        let fd = MockableFd::mock_signed_fd();
+        // Adoption does not use kernel program metadata. Zero BTF IDs also keep
+        // from_bpf_prog_info from issuing extra BTF lookups during test setup.
+        // SAFETY: bpf_prog_info contains only integers and byte arrays,
+        // including its bitfield storage, so all-zero bytes are valid.
+        let program_info: bpf_prog_info = unsafe { mem::zeroed() };
+        let mut program = CgroupSockAddr {
+            data: ProgramData::from_bpf_prog_info(
+                None,
+                // SAFETY: This synthetic FD is only used by mocked syscalls.
+                // MockableFd's test Drop skips closing FDs at or above mock_signed_fd().
+                unsafe { MockableFd::from_raw_fd(fd) },
+                Path::new(""),
+                program_info,
+                VerifierLogLevel::default(),
+            )
+            .unwrap(),
+            attach_type: CgroupSockAddrAttachType::Connect4,
+        };
+        let link = CgroupSockAddrLink::new(CgroupSockAddrLinkInner::Fd(CgroupFdLink::new(
+            // SAFETY: This synthetic FD is only used by mocked syscalls.
+            // MockableFd's test Drop skips closing FDs at or above mock_signed_fd().
+            unsafe { MockableFd::from_raw_fd(fd + 1) },
+            attach_type,
+        )));
+        let link_id = link.id();
+        UPDATED.set(false);
+        INFO_QUERIED.set(false);
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_LINK_UPDATE,
+                attr,
+            } => {
+                // SAFETY: bpf_link_update initialized the link_update union member
+                // before invoking this BPF_LINK_UPDATE syscall mock.
+                let attr = unsafe { attr.link_update };
+                assert_eq!(attr.link_fd, MockableFd::mock_unsigned_fd() + 1);
+                assert_eq!(
+                    // SAFETY: bpf_link_update initialized the new_prog_fd union member.
+                    unsafe { attr.__bindgen_anon_1.new_prog_fd },
+                    MockableFd::mock_unsigned_fd()
+                );
+                assert_eq!(attr.flags, 0);
+                UPDATED.set(true);
+                Ok(0)
+            }
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                ..
+            } => {
+                INFO_QUERIED.set(true);
+                Err((-1, io::Error::from_raw_os_error(libc::EINVAL)))
+            }
+            call => panic!("unexpected syscall: {call:?}"),
+        });
+
+        let result = program.adopt_link(link);
+        assert!(!INFO_QUERIED.get());
+        assert_eq!(UPDATED.get(), compatible);
+        if compatible {
+            let adopted_link_id = result.unwrap();
+            assert_eq!(adopted_link_id, link_id);
+            assert_eq!(program.take_link(adopted_link_id).unwrap().id(), link_id);
+        } else {
+            let (error, link) = result.unwrap_err();
+            assert_matches!(error, ProgramError::LinkError(LinkError::InvalidLink));
+            assert_eq!(link.id(), link_id);
+        }
+    }
+}
