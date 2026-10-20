@@ -16,6 +16,8 @@ use aya::{
 };
 use procfs::kernel_config;
 
+use super::is_bpf_lsm_active;
+
 #[test_log::test]
 fn probe_empty_btf_datasec() {
     kernel_assert!(
@@ -1455,7 +1457,26 @@ fn probe_supported_maps() {
     kernel_assert!(is_supported!(MapType::RingBuf), kern_version);
 
     let kern_version = KernelVersion::new(5, 10, 0);
-    kernel_assert!(is_supported!(MapType::InodeStorage), kern_version); // Requires `CONFIG_BPF_LSM=y`
+    let inode_storage_supported = is_supported!(MapType::InodeStorage);
+    let kernel_config = kernel_config().unwrap();
+    if matches!(
+        kernel_config.get("CONFIG_BPF_LSM"),
+        Some(procfs::ConfigSetting::Yes)
+    ) {
+        // With BPF LSM inactive, the probe returns false on kernels with this
+        // fix and true on kernels without it. The fix is backported, and native
+        // tests use the runner's own kernel, so accept either boolean result
+        // while still rejecting probe errors.
+        // https://github.com/torvalds/linux/commit/a6f0643e4
+        if is_bpf_lsm_active() || KernelVersion::current().unwrap() < kern_version {
+            kernel_assert!(inode_storage_supported, kern_version);
+        }
+    } else {
+        assert!(
+            !inode_storage_supported,
+            "inode storage requires CONFIG_BPF_LSM=y"
+        );
+    }
 
     let kern_version = KernelVersion::new(5, 11, 0);
     kernel_assert!(is_supported!(MapType::TaskStorage), kern_version);
