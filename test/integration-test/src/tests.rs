@@ -16,6 +16,14 @@ use std::{
 
 use aya::test_helpers::{NetNsGuard, with_tracefs_probes};
 
+// LSM programs can load and attach even when their hooks are inactive.
+fn is_bpf_lsm_active() -> bool {
+    fs::read_to_string("/sys/kernel/security/lsm")
+        .unwrap()
+        .split(',')
+        .any(|lsm| lsm.trim() == "bpf")
+}
+
 fn run_netns_tokio<F, Fut, T>(test: F) -> T
 where
     F: FnOnce() -> Fut,

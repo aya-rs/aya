@@ -8,6 +8,8 @@ use aya::{
 use integration_common::local_storage::SENTINEL;
 use test_log::test;
 
+use super::is_bpf_lsm_active;
+
 #[test]
 fn inode_storage() {
     if !is_map_supported(MapType::InodeStorage).unwrap() {
@@ -44,10 +46,7 @@ fn inode_storage() {
     // The BPF LSM module is only active on kernels booted with `lsm=bpf`.
     // Attach succeeds either way (`is_program_supported` only requires
     // `CONFIG_BPF_LSM=y`), but the hook only fires when the module is live.
-    if !std::fs::read_to_string("/sys/kernel/security/lsm")
-        .unwrap()
-        .contains("bpf")
-    {
+    if !is_bpf_lsm_active() {
         eprintln!("skipping runtime assertions - BPF LSM not active");
         return;
     }
