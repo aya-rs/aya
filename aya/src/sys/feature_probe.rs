@@ -16,7 +16,7 @@ use aya_obj::{
         bpf_prog_info,
     },
 };
-use libc::{E2BIG, EBADF, EINVAL};
+use libc::{E2BIG, EBADF, EINVAL, EOPNOTSUPP};
 
 use super::{
     SyscallError, UProbeMultiFeature, bpf_map_create, bpf_prog_load, bpf_raw_tracepoint_open,
@@ -591,6 +591,11 @@ pub fn is_map_supported(map_type: MapType) -> Result<bool, SyscallError> {
     // examination to verify support.
     match io_error.raw_os_error() {
         Some(EINVAL) => Ok(false),
+        // Linux 7.2-rc2 added this check, also backported to stable kernels:
+        // inode storage allocation returns EOPNOTSUPP when BPF LSM was not
+        // initialized at boot, before reaching the probe's invalid BTF fd.
+        // https://github.com/torvalds/linux/blob/a6f0643e4/kernel/bpf/bpf_inode_storage.c#L179-L190
+        Some(EOPNOTSUPP) if map_type == MapType::InodeStorage => Ok(false),
         // These types use fields that may not exist at the kernel's current version. Supplying
         // `bpf_attr` fields unknown to the kernel triggers `E2BIG` from `bpf_check_uarg_tail_zero()`[0].
         //
@@ -719,6 +724,28 @@ mod tests {
         assert!(is_bpf_name_supported().unwrap());
         assert!(is_bpf_name_supported().unwrap());
         assert_eq!(PROBE_CALLS.get(), 2);
+    }
+
+    #[rstest]
+    #[case::inode_storage_is_unsupported(MapType::InodeStorage, Ok(false))]
+    #[case::other_map_preserves_error(MapType::Hash, Err(EOPNOTSUPP))]
+    fn map_probe_eopnotsupp_is_unsupported_only_for_inode_storage(
+        #[case] map_type: MapType,
+        #[case] expected: Result<bool, i32>,
+    ) {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_MAP_CREATE,
+                ..
+            } => Err((-1, io::Error::from_raw_os_error(EOPNOTSUPP))),
+            unexpected => panic!("unexpected syscall: {unexpected:?}"),
+        });
+
+        let result = is_map_supported(map_type).map_err(|error| {
+            assert_eq!(error.call, "bpf_map_create");
+            error.io_error.raw_os_error().unwrap()
+        });
+        assert_eq!(result, expected);
     }
 
     #[rstest]
