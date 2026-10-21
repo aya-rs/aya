@@ -8,12 +8,11 @@ use aya_obj::generated::{
 
 use crate::{
     programs::{
-        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramFd,
-        ProgramType, bpf_prog_get_fd_by_id, define_link_wrapper, id_as_key,
+        ProgAttachLink, ProgramData, ProgramError, ProgramFd, ProgramType, bpf_prog_get_fd_by_id,
+        cgroup::{define_cgroup_link, impl_cgroup_attach},
         load_program_with_attach_type, query,
     },
-    sys::{LinkTarget, ProgQueryTarget, SyscallError, bpf_link_create},
-    util::KernelVersion,
+    sys::ProgQueryTarget,
 };
 
 /// A program used to watch or prevent device interaction from a cgroup.
@@ -66,45 +65,7 @@ impl CgroupDevice {
         load_program_with_attach_type(BPF_PROG_TYPE_CGROUP_DEVICE, BPF_CGROUP_DEVICE, data)
     }
 
-    /// Attaches the program to the given cgroup.
-    ///
-    /// The returned value can be used to detach, see [`CgroupDevice::detach`].
-    pub fn attach<T: AsFd>(
-        &mut self,
-        cgroup: T,
-        mode: CgroupAttachMode,
-    ) -> Result<CgroupDeviceLinkId, ProgramError> {
-        let prog_fd = self.fd()?;
-        let prog_fd = prog_fd.as_fd();
-        let cgroup_fd = cgroup.as_fd();
-        let attach_type = BPF_CGROUP_DEVICE;
-        if KernelVersion::at_least(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(cgroup_fd),
-                attach_type,
-                mode.into(),
-                None,
-            )
-            .map_err(|io_error| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
-            self.data
-                .links
-                .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::Fd(
-                    FdLink::new(link_fd),
-                )))
-        } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
-
-            self.data
-                .links
-                .insert(CgroupDeviceLink::new(CgroupDeviceLinkInner::ProgAttach(
-                    link,
-                )))
-        }
-    }
+    impl_cgroup_attach!(CgroupDeviceLinkId, CgroupDeviceLinkInner, BPF_CGROUP_DEVICE);
 
     /// Queries the cgroup for attached programs.
     pub fn query<T: AsFd>(target_fd: T) -> Result<Vec<CgroupDeviceLink>, ProgramError> {
@@ -131,40 +92,7 @@ impl CgroupDevice {
     }
 }
 
-#[derive(Debug, Hash, Eq, PartialEq)]
-enum CgroupDeviceLinkIdInner {
-    Fd(<FdLink as Link>::Id),
-    ProgAttach(<ProgAttachLink as Link>::Id),
-}
-
-#[derive(Debug)]
-enum CgroupDeviceLinkInner {
-    Fd(FdLink),
-    ProgAttach(ProgAttachLink),
-}
-
-impl Link for CgroupDeviceLinkInner {
-    type Id = CgroupDeviceLinkIdInner;
-    type Error = ProgramError;
-
-    fn id(&self) -> Self::Id {
-        match self {
-            Self::Fd(fd) => CgroupDeviceLinkIdInner::Fd(fd.id()),
-            Self::ProgAttach(p) => CgroupDeviceLinkIdInner::ProgAttach(p.id()),
-        }
-    }
-
-    fn detach(self) -> Result<(), Self::Error> {
-        match self {
-            Self::Fd(fd) => fd.detach().map_err(Into::into),
-            Self::ProgAttach(p) => p.detach(),
-        }
-    }
-}
-
-id_as_key!(CgroupDeviceLinkInner, CgroupDeviceLinkIdInner);
-
-define_link_wrapper!(
+define_cgroup_link!(
     CgroupDeviceLink,
     CgroupDeviceLinkId,
     CgroupDeviceLinkInner,
