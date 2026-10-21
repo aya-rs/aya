@@ -955,7 +955,13 @@ fn max_entries_override(
 ) -> Result<Option<u32>, EbpfError> {
     let max_entries = || user_override.unwrap_or_else(&current_value);
     Ok(match map_type {
-        bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY if max_entries() == 0 => Some(num_cpus()?),
+        bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY => {
+            if max_entries() == 0 {
+                Some(num_cpus()?)
+            } else {
+                user_override
+            }
+        }
         bpf_map_type::BPF_MAP_TYPE_RINGBUF => Some(adjust_to_page_size(max_entries(), page_size()))
             .filter(|adjusted| *adjusted != max_entries())
             .or(user_override),
@@ -1058,6 +1064,25 @@ mod tests {
                 )
                 .unwrap()
             );
+        }
+    }
+
+    #[test]
+    fn test_lru_max_entries_without_cpu_count() {
+        for map_type in [BPF_MAP_TYPE_LRU_HASH, BPF_MAP_TYPE_LRU_PERCPU_HASH] {
+            for user_override in [None, Some(7)] {
+                assert_eq!(
+                    super::max_entries_override(
+                        map_type,
+                        user_override,
+                        || 5,
+                        || panic!("map creation must not require the CPU count"),
+                        || PAGE_SIZE,
+                    )
+                    .unwrap(),
+                    user_override,
+                );
+            }
         }
     }
 
