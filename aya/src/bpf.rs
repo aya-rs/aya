@@ -1014,7 +1014,8 @@ const fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
 mod tests {
     use std::num::NonZeroU32;
 
-    use aya_obj::generated::bpf_map_type::*;
+    use aya_obj::generated::{bpf_map_type, bpf_map_type::*};
+    use rstest::rstest;
 
     use super::{Btf, BtfSource, EbpfLoader, TargetBtf};
 
@@ -1064,6 +1065,24 @@ mod tests {
                 .unwrap()
             );
         }
+    }
+
+    #[rstest]
+    fn test_lru_max_entries_without_cpu_count(
+        #[values(BPF_MAP_TYPE_LRU_HASH, BPF_MAP_TYPE_LRU_PERCPU_HASH)] map_type: bpf_map_type,
+        #[values(None, Some(7))] user_override: Option<u32>,
+    ) {
+        assert_eq!(
+            super::max_entries_override(
+                map_type,
+                user_override,
+                || 5,
+                || panic!("map creation must not require the CPU count"),
+                || PAGE_SIZE,
+            )
+            .unwrap(),
+            user_override,
+        );
     }
 
     #[test]
