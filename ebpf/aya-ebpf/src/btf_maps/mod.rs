@@ -65,6 +65,8 @@ mod private {
         type Key;
         /// The value type of this map.
         type Value;
+        /// The inner map type, or `()` if this is not a map of maps.
+        type Inner;
     }
 
     /// Sealed marker for inner-map types whose `bpf_map_lookup_elem` returns
@@ -89,6 +91,29 @@ mod private {
 pub trait MapDef: private::MapDef {}
 
 impl<T: private::MapDef> MapDef for T {}
+
+#[doc(hidden)]
+pub trait __MapLayout {
+    type Key;
+    type Value;
+    type Inner: __MapLayout;
+}
+
+impl<T> __MapLayout for T
+where
+    T: private::MapDef,
+    T::Inner: __MapLayout,
+{
+    type Key = T::Key;
+    type Value = T::Value;
+    type Inner = T::Inner;
+}
+
+impl __MapLayout for () {
+    type Key = ();
+    type Value = ();
+    type Inner = ();
+}
 
 /// Marks a BTF map type whose fused inner lookup via [`ArrayOfMaps::get_value`]
 /// is safe without an additional `unsafe` contract from the caller.
@@ -179,8 +204,8 @@ pub(crate) fn lookup_inner_ptr_mut<M: private::MapDef>(
 /// map type `V` is encoded in BTF so that loaders can resolve the inner map
 /// template.
 macro_rules! btf_map_def {
-    // Map-of-maps (with inner_map) - rewrites into the regular arm with a
-    // `values` extra field whose initializer is `[]` (a zero-length array).
+    // Map-of-maps (with inner_map) - rewrites into the implementation arm with
+    // a `values` extra field whose initializer is `[]` (a zero-length array).
     (
         $(#[$attr:meta])*
         $vis:vis struct $name:ident<
@@ -197,6 +222,7 @@ macro_rules! btf_map_def {
         $(,)?
     ) => {
         $crate::btf_maps::btf_map_def!(
+            @impl
             $(#[$attr])*
             $vis struct $name<
                 $($ty_gen $(= $ty_default)?),+
@@ -207,7 +233,8 @@ macro_rules! btf_map_def {
             map_flags: $map_flags,
             key_type: $key_ty,
             value_type: $value_ty,
-            values: [*const $inner_ty; 0] = []
+            inner_type: $inner_ty,
+            values: [*const $inner_ty; 0] = [],
         );
     };
 
@@ -226,6 +253,39 @@ macro_rules! btf_map_def {
         value_type: $value_ty:ty
         $(, $extra_field:ident : $extra_ty:ty = $extra_init:expr)*
         $(,)?
+    ) => {
+        $crate::btf_maps::btf_map_def!(
+            @impl
+            $(#[$attr])*
+            $vis struct $name<
+                $($ty_gen $(= $ty_default)?),*
+                $(; $(const $const_gen : $const_ty $(= $const_default)?),+)?
+            >,
+            map_type: $map_type,
+            max_entries: $max_entries,
+            map_flags: $map_flags,
+            key_type: $key_ty,
+            value_type: $value_ty,
+            inner_type: (),
+            $($extra_field: $extra_ty = $extra_init,)*
+        );
+    };
+
+    (
+        @impl
+        $(#[$attr:meta])*
+        $vis:vis struct $name:ident<
+            $($ty_gen:ident $(= $ty_default:ty)?),*
+            $(; $(const $const_gen:ident : $const_ty:ty $(= $const_default:tt)?),+)?
+            $(,)?
+        >,
+        map_type: $map_type:ident,
+        max_entries: $max_entries:expr,
+        map_flags: $map_flags:expr,
+        key_type: $key_ty:ty,
+        value_type: $value_ty:ty,
+        inner_type: $inner_ty:ty,
+        $($extra_field:ident : $extra_ty:ty = $extra_init:expr,)*
     ) => {
         $(#[$attr])*
         // repr(C) is required to ensure fields maintain their declared order in BTF.
@@ -308,6 +368,7 @@ macro_rules! btf_map_def {
         > {
             type Key = $key_ty;
             type Value = $value_ty;
+            type Inner = $inner_ty;
         }
     };
 }
