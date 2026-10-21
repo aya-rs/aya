@@ -10,7 +10,7 @@ use std::{
 use aya_obj::{
     EbpfSectionKind, KsymsError, Object, ParseError, ProgramSection,
     btf::{Btf, BtfError, BtfRelocationError},
-    generated::{BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
+    generated::{BPF_F_NO_COMMON_LRU, BPF_F_SLEEPABLE, BPF_F_XDP_HAS_FRAGS, bpf_map_type},
     relocation::EbpfRelocationError,
 };
 use log::warn;
@@ -614,6 +614,7 @@ impl<'a> EbpfLoader<'a> {
             };
             let max_entries_val = max_entries_override(
                 map_type,
+                map_obj.map_flags(),
                 max_entries.get(name.as_str()).copied(),
                 || map_obj.max_entries(),
                 num_cpus,
@@ -948,14 +949,39 @@ fn parse_map(
 /// based on the user-provided override and the rules for that map type.
 fn max_entries_override(
     map_type: bpf_map_type,
+    map_flags: u32,
     user_override: Option<u32>,
     current_value: impl Fn() -> u32,
     num_cpus: impl Fn() -> Result<u32, EbpfError>,
     page_size: impl Fn() -> u32,
 ) -> Result<Option<u32>, EbpfError> {
     let max_entries = || user_override.unwrap_or_else(&current_value);
+    if matches!(
+        map_type,
+        bpf_map_type::BPF_MAP_TYPE_LRU_HASH | bpf_map_type::BPF_MAP_TYPE_LRU_PERCPU_HASH
+    ) && map_flags & BPF_F_NO_COMMON_LRU != 0
+    {
+        let num_cpus = num_cpus()?;
+        let max_entries = max_entries();
+        // Per-CPU LRU lists require equal capacity on each possible CPU. Match the
+        // kernel's round-up, including its round-down fallback on u32 overflow.
+        // https://github.com/torvalds/linux/blob/2c85ebc57/kernel/bpf/hashtab.c#L434-L443
+        let adjusted = max_entries.checked_add(num_cpus - 1).map_or_else(
+            || max_entries / num_cpus * num_cpus,
+            |sum| sum / num_cpus * num_cpus,
+        );
+        return Ok(Some(adjusted)
+            .filter(|adjusted| *adjusted != max_entries)
+            .or(user_override));
+    }
     Ok(match map_type {
-        bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY if max_entries() == 0 => Some(num_cpus()?),
+        bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY => {
+            if max_entries() == 0 {
+                Some(num_cpus()?)
+            } else {
+                user_override
+            }
+        }
         bpf_map_type::BPF_MAP_TYPE_RINGBUF => Some(adjust_to_page_size(max_entries(), page_size()))
             .filter(|adjusted| *adjusted != max_entries())
             .or(user_override),
@@ -1009,7 +1035,7 @@ const fn adjust_to_page_size(byte_size: u32, page_size: u32) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use aya_obj::generated::bpf_map_type::*;
+    use aya_obj::generated::{BPF_F_NO_COMMON_LRU, bpf_map_type::*};
 
     use super::{Btf, BtfSource, EbpfLoader, TargetBtf};
 
@@ -1035,25 +1061,113 @@ mod tests {
     #[test]
     fn test_max_entries_override() {
         use super::max_entries_override;
-        for (map_type, user_override, current_value, exp) in [
-            (BPF_MAP_TYPE_RINGBUF, Some(1), 1, Some(PAGE_SIZE)),
-            (BPF_MAP_TYPE_RINGBUF, None, 1, Some(PAGE_SIZE)),
-            (BPF_MAP_TYPE_RINGBUF, None, PAGE_SIZE, None),
-            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 1, None),
-            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, Some(42), 1, Some(42)),
-            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, Some(0), 1, Some(NUM_CPUS)),
-            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 0, Some(NUM_CPUS)),
-            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, None, 42, None),
-            (BPF_MAP_TYPE_ARRAY, None, 1, None),
-            (BPF_MAP_TYPE_ARRAY, Some(2), 1, Some(2)),
+        for (map_type, flags, user_override, current_value, num_cpus, exp) in [
+            (
+                BPF_MAP_TYPE_RINGBUF,
+                0,
+                Some(1),
+                1,
+                NUM_CPUS,
+                Some(PAGE_SIZE),
+            ),
+            (BPF_MAP_TYPE_RINGBUF, 0, None, 1, NUM_CPUS, Some(PAGE_SIZE)),
+            (BPF_MAP_TYPE_RINGBUF, 0, None, PAGE_SIZE, NUM_CPUS, None),
+            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, 0, None, 1, NUM_CPUS, None),
+            (
+                BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                0,
+                Some(42),
+                1,
+                NUM_CPUS,
+                Some(42),
+            ),
+            (
+                BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                0,
+                Some(0),
+                1,
+                NUM_CPUS,
+                Some(NUM_CPUS),
+            ),
+            (
+                BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+                0,
+                None,
+                0,
+                NUM_CPUS,
+                Some(NUM_CPUS),
+            ),
+            (BPF_MAP_TYPE_PERF_EVENT_ARRAY, 0, None, 42, NUM_CPUS, None),
+            (BPF_MAP_TYPE_ARRAY, 0, None, 1, NUM_CPUS, None),
+            (BPF_MAP_TYPE_ARRAY, 0, Some(2), 1, NUM_CPUS, Some(2)),
+            (
+                BPF_MAP_TYPE_LRU_HASH,
+                BPF_F_NO_COMMON_LRU,
+                None,
+                5,
+                3,
+                Some(6),
+            ),
+            (
+                BPF_MAP_TYPE_LRU_PERCPU_HASH,
+                BPF_F_NO_COMMON_LRU,
+                None,
+                5,
+                3,
+                Some(6),
+            ),
+            (BPF_MAP_TYPE_LRU_HASH, BPF_F_NO_COMMON_LRU, None, 6, 3, None),
+            (
+                BPF_MAP_TYPE_LRU_HASH,
+                BPF_F_NO_COMMON_LRU,
+                Some(6),
+                1,
+                3,
+                Some(6),
+            ),
+            (
+                BPF_MAP_TYPE_LRU_HASH,
+                BPF_F_NO_COMMON_LRU,
+                Some(5),
+                6,
+                3,
+                Some(6),
+            ),
+            (
+                BPF_MAP_TYPE_LRU_HASH,
+                BPF_F_NO_COMMON_LRU,
+                None,
+                u32::MAX,
+                4,
+                Some(u32::MAX - 3),
+            ),
+            (
+                BPF_MAP_TYPE_LRU_HASH,
+                BPF_F_NO_COMMON_LRU,
+                None,
+                u32::MAX - 1,
+                3,
+                Some(u32::MAX - 3),
+            ),
+            (BPF_MAP_TYPE_LRU_HASH, 0, None, 5, 3, None),
+            (BPF_MAP_TYPE_LRU_PERCPU_HASH, 0, None, 5, 3, None),
+            (
+                BPF_MAP_TYPE_PERCPU_HASH,
+                BPF_F_NO_COMMON_LRU,
+                None,
+                5,
+                3,
+                None,
+            ),
         ] {
             assert_eq!(
                 exp,
                 max_entries_override(
                     map_type,
+                    flags,
                     user_override,
                     || current_value,
-                    || Ok(NUM_CPUS),
+                    || Ok(num_cpus),
                     || PAGE_SIZE,
                 )
                 .unwrap()
