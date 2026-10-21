@@ -58,7 +58,11 @@ use std::{
     ptr,
 };
 
-use aya_obj::{EbpfSectionKind, InvalidTypeBinding, generated::bpf_map_type, parse_map_info};
+use aya_obj::{
+    EbpfSectionKind, InvalidTypeBinding,
+    generated::{BPF_F_RDONLY, BPF_F_RDONLY_PROG, BPF_F_WRONLY, bpf_map_type},
+    parse_map_info,
+};
 use thiserror::Error;
 
 use crate::{
@@ -176,6 +180,19 @@ pub enum MapError {
         #[source]
         /// Original [`io::Error`]
         io_error: io::Error,
+    },
+
+    /// A pinned map is incompatible with the map definition being loaded.
+    #[error("cannot reuse pinned map `{name}`: {property} is {actual}, expected {expected}")]
+    IncompatiblePinnedMap {
+        /// Map name.
+        name: String,
+        /// Incompatible map property.
+        property: &'static str,
+        /// Value required by the map definition.
+        expected: u64,
+        /// Value reported by the kernel for the pinned map.
+        actual: u64,
     },
 
     /// Invalid key size
@@ -899,6 +916,49 @@ impl MapData {
             }
         };
         if let Ok(fd) = bpf_get_object(&path_string) {
+            let MapInfo(info) = MapInfo::new_from_fd(fd.as_fd())?;
+            let map_type = obj.map_type();
+            // Descriptor access modes are not part of the stored map flags.
+            // https://github.com/torvalds/linux/blob/2c85ebc57/kernel/bpf/syscall.c#L322-L331
+            let mut map_flags = obj.map_flags() & !(BPF_F_RDONLY | BPF_F_WRONLY);
+            if map_type == bpf_map_type::BPF_MAP_TYPE_DEVMAP as u32
+                || map_type == bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH as u32
+            {
+                // Newer kernels add this flag when creating a device map.
+                // https://github.com/torvalds/linux/blob/e8f897f4a/kernel/bpf/devmap.c#L127
+                map_flags |= info.map_flags & BPF_F_RDONLY_PROG;
+            }
+            // Typed map operations and initialization use the object's buffer sizes,
+            // while the kernel copies according to the actual map's layout.
+            for (property, expected, actual) in [
+                ("map_type", u64::from(map_type), u64::from(info.type_)),
+                (
+                    "key_size",
+                    u64::from(obj.key_size()),
+                    u64::from(info.key_size),
+                ),
+                (
+                    "value_size",
+                    u64::from(obj.value_size()),
+                    u64::from(info.value_size),
+                ),
+                (
+                    "max_entries",
+                    u64::from(obj.max_entries()),
+                    u64::from(info.max_entries),
+                ),
+                ("map_flags", u64::from(map_flags), u64::from(info.map_flags)),
+                ("map_extra", obj.map_extra(), info.map_extra),
+            ] {
+                if expected != actual {
+                    return Err(MapError::IncompatiblePinnedMap {
+                        name: name.into(),
+                        property,
+                        expected,
+                        actual,
+                    });
+                }
+            }
             Ok(Self {
                 obj,
                 fd: MapFd::from_fd(fd),
@@ -1297,17 +1357,155 @@ mod test_utils {
 
 #[cfg(test)]
 mod tests {
-    use std::{ffi::c_char, os::fd::AsRawFd as _};
+    use std::{cell::Cell, ffi::c_char, os::fd::AsRawFd as _};
 
     use assert_matches::assert_matches;
     use aya_obj::generated::{bpf_cmd, bpf_map_info};
     use libc::EFAULT;
+    use rstest::rstest;
 
     use super::*;
     use crate::sys::{Syscall, override_syscall};
 
     fn new_obj_map() -> aya_obj::Map {
         test_utils::new_obj_map::<u32>(bpf_map_type::BPF_MAP_TYPE_HASH)
+    }
+
+    fn pinned_map_info() -> bpf_map_info {
+        // SAFETY: bpf_map_info is a C structure containing only integer fields.
+        bpf_map_info {
+            type_: bpf_map_type::BPF_MAP_TYPE_HASH as u32,
+            key_size: 4,
+            value_size: 4,
+            max_entries: 1024,
+            ..unsafe { std::mem::zeroed() }
+        }
+    }
+
+    thread_local! {
+        static PINNED_MAP_INFO: Cell<Option<bpf_map_info>> = const { Cell::new(None) };
+    }
+
+    fn mock_pinned_map(info: bpf_map_info) {
+        PINNED_MAP_INFO.set(Some(info));
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET,
+                ..
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                attr,
+            } => {
+                let output = unsafe { attr.info };
+                assert_eq!(output.bpf_fd, crate::MockableFd::mock_unsigned_fd());
+                assert_eq!(output.info_len, size_of::<bpf_map_info>() as u32);
+                let output = ptr::with_exposed_provenance_mut::<bpf_map_info>(output.info as usize);
+                let info = PINNED_MAP_INFO.get().unwrap();
+                // SAFETY: the syscall supplied a writable bpf_map_info buffer.
+                unsafe { *output = info };
+                Ok(0)
+            }
+            call => panic!("unexpected syscall {call:?}"),
+        });
+    }
+
+    #[rstest]
+    #[case::hash(bpf_map_type::BPF_MAP_TYPE_HASH, 0, 0)]
+    #[case::descriptor_readonly(bpf_map_type::BPF_MAP_TYPE_HASH, BPF_F_RDONLY, 0)]
+    #[case::descriptor_writeonly(bpf_map_type::BPF_MAP_TYPE_HASH, BPF_F_WRONLY, 0)]
+    #[case::devmap_descriptor_readonly(
+        bpf_map_type::BPF_MAP_TYPE_DEVMAP,
+        BPF_F_RDONLY,
+        BPF_F_RDONLY_PROG
+    )]
+    #[case::devmap(bpf_map_type::BPF_MAP_TYPE_DEVMAP, 0, BPF_F_RDONLY_PROG)]
+    #[case::devmap_without_readonly(bpf_map_type::BPF_MAP_TYPE_DEVMAP, 0, 0)]
+    #[case::devmap_hash(bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH, 0, BPF_F_RDONLY_PROG)]
+    #[case::explicit_readonly(
+        bpf_map_type::BPF_MAP_TYPE_DEVMAP,
+        BPF_F_RDONLY_PROG,
+        BPF_F_RDONLY_PROG
+    )]
+    fn test_reuse_pinned_map(
+        #[case] map_type: bpf_map_type,
+        #[case] flags: u32,
+        #[case] kernel_flags: u32,
+    ) {
+        mock_pinned_map(bpf_map_info {
+            type_: map_type as u32,
+            map_flags: kernel_flags,
+            ..pinned_map_info()
+        });
+        let mut obj = aya_obj::Map::new_from_params(map_type as u32, 4, 4, 1024, flags);
+        obj.data_mut().extend_from_slice(&[1, 2, 3, 4]);
+        let map = MapData::create_pinned_by_name("/pin/foo", obj, "foo", None, None).unwrap();
+        assert_eq!(
+            map.fd().as_fd().as_raw_fd(),
+            crate::MockableFd::mock_signed_fd()
+        );
+        assert_eq!(map.obj.data(), &[1, 2, 3, 4]);
+        assert_eq!(map.obj.map_flags(), flags);
+    }
+
+    #[rstest]
+    #[case::map_type(new_obj_map(), bpf_map_info { type_: bpf_map_type::BPF_MAP_TYPE_PERCPU_HASH as u32, ..pinned_map_info() }, "map_type", 1, 5)]
+    #[case::key_size(new_obj_map(), bpf_map_info { key_size: 8, ..pinned_map_info() }, "key_size", 4, 8)]
+    #[case::value_size(new_obj_map(), bpf_map_info { value_size: 4096, ..pinned_map_info() }, "value_size", 4, 4096)]
+    #[case::max_entries(new_obj_map(), bpf_map_info { max_entries: 2048, ..pinned_map_info() }, "max_entries", 1024, 2048)]
+    #[case::map_flags(new_obj_map(), bpf_map_info { map_flags: BPF_F_RDONLY_PROG, ..pinned_map_info() }, "map_flags", 0, u64::from(BPF_F_RDONLY_PROG))]
+    #[case::map_extra(new_obj_map(), bpf_map_info { map_extra: 1, ..pinned_map_info() }, "map_extra", 0, 1)]
+    #[case::devmap_missing_readonly(
+        aya_obj::Map::new_from_params(bpf_map_type::BPF_MAP_TYPE_DEVMAP as u32, 4, 4, 1024, BPF_F_RDONLY_PROG),
+        bpf_map_info { type_: bpf_map_type::BPF_MAP_TYPE_DEVMAP as u32, ..pinned_map_info() },
+        "map_flags",
+        u64::from(BPF_F_RDONLY_PROG),
+        0
+    )]
+    fn test_reuse_incompatible_pinned_map(
+        #[case] obj: aya_obj::Map,
+        #[case] info: bpf_map_info,
+        #[case] property: &'static str,
+        #[case] expected: u64,
+        #[case] actual: u64,
+    ) {
+        mock_pinned_map(info);
+        assert_matches!(
+            MapData::create_pinned_by_name("/pin/foo", obj, "foo", None, None),
+            Err(MapError::IncompatiblePinnedMap {
+                name,
+                property: got_property,
+                expected: got_expected,
+                actual: got_actual,
+            }) => {
+                assert_eq!(name, "foo");
+                assert_eq!(got_property, property);
+                assert_eq!(got_expected, expected);
+                assert_eq!(got_actual, actual);
+            }
+        );
+    }
+
+    #[test]
+    fn test_reuse_pinned_map_info_error() {
+        override_syscall(|call| match call {
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET,
+                ..
+            } => Ok(crate::MockableFd::mock_signed_fd().into()),
+            Syscall::Ebpf {
+                cmd: bpf_cmd::BPF_OBJ_GET_INFO_BY_FD,
+                ..
+            } => Err((-1, io::Error::from_raw_os_error(EFAULT))),
+            call => panic!("unexpected syscall {call:?}"),
+        });
+        assert_matches!(
+            MapData::create_pinned_by_name("/pin/foo", new_obj_map(), "foo", None, None),
+            Err(MapError::SyscallError(SyscallError { call, io_error })) => {
+                assert_eq!(call, "bpf_obj_get_info_by_fd");
+                assert_eq!(io_error.raw_os_error(), Some(EFAULT));
+            }
+        );
     }
 
     #[test]
