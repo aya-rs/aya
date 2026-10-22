@@ -32,7 +32,8 @@ jobs:
     needs: resolve
     if: >-
       github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-    runs-on: ubuntu-latest
+    # Code generation requires the MIPS libc headers available in Ubuntu 24.04.
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       pull-requests: write
