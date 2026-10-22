@@ -205,6 +205,11 @@ jobs:
         with:
           target: ${{ matrix.arch }}
 
+      - name: Isolate target pkg-config lookups
+        # Keep cross probes out of pkg-config's default host library paths.
+        # TARGET_ leaves native host probes unchanged.
+        run: echo "TARGET_PKG_CONFIG_LIBDIR=${PKG_CONFIG_PATH:-}" >> "$GITHUB_ENV"
+
       - name: Install libbpf-rs prerequisites
         run: |
           set -euxo pipefail
