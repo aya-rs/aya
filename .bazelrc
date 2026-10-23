@@ -40,5 +40,9 @@ common:remote --jobs=400
 common:remote --extra_execution_platforms=//bazel/toolchains:rbe_x86_64_linux
 test:remote --platforms=//bazel/toolchains:rbe_x86_64_linux
 
+# CI uses a public BuildBuddy key so pull requests from forks can run.
+common:ci --config=remote
+common:ci --remote_header=x-buildbuddy-api-key=5CeVmFS0jDnutd00x9Xl
+
 # Allow users to specify repo-specific personal settings.
 try-import %workspace%/.bazelrc.user
