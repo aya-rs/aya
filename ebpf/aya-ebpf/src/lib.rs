@@ -155,13 +155,10 @@ pub fn check_bounds_signed<T: Into<i64>>(value: T, lower: T, upper: T) -> bool {
             );
             in_bounds == 1
         },
-        _ => {
-            // We only need this for doc tests which are compiled for the host target
-            #[expect(clippy::unreachable, reason = "only used for doc tests")]
-            {
-                unreachable!("value={value} lower={lower} upper={upper}")
-            }
-        }
+        _ => {#[expect(clippy::unreachable, reason = "only used for doc tests")]
+        {
+            unreachable!("value={value} lower={lower} upper={upper}")
+        }}
     }
 }
 

@@ -130,11 +130,10 @@ impl Xdp {
         let prog_fd = data.fd()?;
         let prog_fd = prog_fd.as_fd();
         // TODO: Remove this hook when CI runs XDP netlink tests on kernels older than 5.9.
-        let force_netlink =
-            cfg_select! {
-                feature = "test-helpers" => crate::test_helpers::FORCE_NETLINK_XDP.get(),
-                _ => false,
-            };
+        let force_netlink = cfg_select! {
+            feature = "test-helpers" => crate::test_helpers::FORCE_NETLINK_XDP.get(),
+            _ => false,
+        };
         let flags = mode.flags();
         let link_fd = if force_netlink {
             None
