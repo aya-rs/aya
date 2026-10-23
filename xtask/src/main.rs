@@ -1,5 +1,4 @@
 mod clippy;
-mod codegen;
 mod docs;
 mod http;
 mod public_api;
@@ -22,7 +21,6 @@ pub struct XtaskOptions {
 #[derive(Parser)]
 enum Subcommand {
     Clippy(clippy::Options),
-    Codegen(codegen::Options),
     Docs,
     IntegrationTest(run::Options),
     PublicApi(public_api::Options),
@@ -60,12 +58,8 @@ fn main() -> Result<()> {
         ]))?;
     }
 
-    let libbpf_dir = workspace_root.join(LIBBPF_DIR);
-    let libbpf_dir = libbpf_dir.as_std_path();
-
     match command {
         Subcommand::Clippy(opts) => clippy::run(opts, workspace_root.as_std_path()),
-        Subcommand::Codegen(opts) => codegen::codegen(opts, libbpf_dir),
         Subcommand::Docs => docs::docs(metadata),
         Subcommand::IntegrationTest(opts) => run::run(opts, workspace_root.as_std_path()),
         Subcommand::PublicApi(opts) => public_api::public_api(opts, metadata),
