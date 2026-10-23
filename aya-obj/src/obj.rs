@@ -135,7 +135,6 @@ pub struct Function {
 /// - `action`
 /// - `syscall`
 /// - `struct_ops+`
-/// - `fmod_ret+`, `fmod_ret.s+`
 /// - `iter+`, `iter.s+`
 #[derive(Debug, Clone)]
 #[expect(missing_docs, reason = "TODO")]
@@ -184,6 +183,9 @@ pub enum ProgramSection {
         sleepable: bool,
     },
     FExit {
+        sleepable: bool,
+    },
+    FModRet {
         sleepable: bool,
     },
     FlowDissector,
@@ -377,6 +379,8 @@ impl FromStr for ProgramSection {
             "fentry.s" => Self::FEntry { sleepable: true },
             "fexit" => Self::FExit { sleepable: false },
             "fexit.s" => Self::FExit { sleepable: true },
+            "fmod_ret" => Self::FModRet { sleepable: false },
+            "fmod_ret.s" => Self::FModRet { sleepable: true },
             "flow_dissector" => Self::FlowDissector,
             "freplace" => Self::Extension,
             "sk_lookup" => Self::SkLookup,
@@ -2500,6 +2504,24 @@ mod tests {
                 ..
             })
         );
+    }
+
+    #[test]
+    fn test_parse_section_fmod_ret() {
+        for section in ["fmod_ret", "fmod_ret/foo", "fmod_ret.s", "fmod_ret.s/foo"] {
+            let mut obj = fake_obj();
+            fake_sym(&mut obj, 0, 0, "foo", FAKE_INS_LEN);
+            obj.parse_section(fake_section(
+                EbpfSectionKind::Program,
+                section,
+                bytes_of(&fake_ins()),
+                None,
+            ))
+            .unwrap();
+            assert_matches!(obj.programs.get("foo"), Some(Program {
+                section: ProgramSection::FModRet { sleepable }, ..
+            }) => assert_eq!(*sleepable, section.starts_with("fmod_ret.s")));
+        }
     }
 
     #[test]
