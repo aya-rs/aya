@@ -371,8 +371,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
-        with:
-          submodules: recursive
 
       - name: Install prerequisites
         if: runner.os == 'Linux'

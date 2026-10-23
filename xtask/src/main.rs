@@ -5,12 +5,9 @@ mod public_api;
 mod run;
 mod ubuntu_mainline;
 
-use std::process::Command;
-
 use anyhow::{Context as _, Result};
 use cargo_metadata::{Metadata, MetadataCommand};
 use clap::Parser;
-use xtask::{LIBBPF_DIR, exec};
 
 #[derive(Parser)]
 pub struct XtaskOptions {
@@ -38,17 +35,7 @@ fn main() -> Result<()> {
     match command {
         Subcommand::Clippy(opts) => clippy::run(opts, workspace_root.as_std_path()),
         Subcommand::Docs => docs::docs(metadata),
-        Subcommand::IntegrationTest(opts) => {
-            // Integration BPF compilation consumes these headers.
-            exec(Command::new("git").arg("-C").arg(workspace_root).args([
-                "submodule",
-                "update",
-                "--init",
-                "--",
-                LIBBPF_DIR,
-            ]))?;
-            run::run(opts, workspace_root.as_std_path())
-        }
+        Subcommand::IntegrationTest(opts) => run::run(opts, workspace_root.as_std_path()),
         Subcommand::PublicApi(opts) => public_api::public_api(opts, metadata),
     }
 }
