@@ -1,5 +1,27 @@
+load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
+load("//bazel:codegen.bzl", "aya_bindings")
 load("//bazel:rust.bzl", "aya_rust_crate")
 
 aya_rust_crate(
     name = "xtask",
+)
+
+aya_bindings(name = "bindings")
+
+write_source_files(
+    name = "codegen",
+    additional_update_targets = [
+        "//aya-obj:update_bindings",
+        "//ebpf/aya-ebpf-bindings:update_bindings",
+    ],
+    tags = ["manual"],
+)
+
+test_suite(
+    name = "codegen_tests",
+    tags = ["manual"],
+    tests = [
+        "//aya-obj:update_bindings_tests",
+        "//ebpf/aya-ebpf-bindings:update_bindings_tests",
+    ],
 )
