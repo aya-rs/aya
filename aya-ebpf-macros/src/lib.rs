@@ -10,6 +10,7 @@ mod cgroup_sysctl;
 mod fentry;
 mod fexit;
 mod flow_dissector;
+mod fmod_ret;
 mod kprobe;
 mod lsm;
 mod lsm_cgroup;
@@ -38,6 +39,7 @@ use cgroup_sysctl::CgroupSysctl;
 use fentry::FEntry;
 use fexit::FExit;
 use flow_dissector::FlowDissector;
+use fmod_ret::FModRet;
 use kprobe::{KProbe, KProbeKind};
 use lsm::Lsm;
 use lsm_cgroup::LsmCgroup;
@@ -606,6 +608,35 @@ pub fn fentry(attrs: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn fexit(attrs: TokenStream, item: TokenStream) -> TokenStream {
     match FExit::parse(attrs.into(), item.into()) {
+        Ok(prog) => prog.expand(),
+        Err(err) => err.into_compile_error(),
+    }
+    .into()
+}
+
+/// Marks a function as a function return modification program.
+///
+/// The function takes an `aya_ebpf::programs::FModRetContext` and returns `i32`
+/// or `i64`. The wrapper converts the result to `i64`, sign-extending an `i32`
+/// result so negative errors retain their value for both `int` and `long` targets.
+/// Zero lets the target run; a nonzero value skips the target and supplies its
+/// result in the target's return type. Unlike `fentry` and `fexit`, the return is
+/// not discarded.
+///
+/// `function = "name"` selects a target in the section name. `sleepable` emits
+/// `fmod_ret.s` and requires a target that permits sleepable attachment.
+///
+/// ```no_run
+/// use aya_ebpf::{macros::fmod_ret, programs::FModRetContext};
+///
+/// #[fmod_ret(function = "security_socket_sendmsg")]
+/// fn deny_send(_ctx: FModRetContext) -> i32 {
+///     -1
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn fmod_ret(attrs: TokenStream, item: TokenStream) -> TokenStream {
+    match FModRet::parse(attrs.into(), item.into()) {
         Ok(prog) => prog.expand(),
         Err(err) => err.into_compile_error(),
     }
