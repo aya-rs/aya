@@ -6,12 +6,9 @@ mod public_api;
 mod run;
 mod ubuntu_mainline;
 
-use std::process::Command;
-
 use anyhow::{Context as _, Result};
 use cargo_metadata::MetadataCommand;
 use clap::Parser;
-use xtask::{LIBBPF_DIR, exec};
 
 #[derive(Parser)]
 pub struct XtaskOptions {
@@ -43,17 +40,7 @@ fn main() -> Result<()> {
         Subcommand::Codegen(opts) => codegen::codegen(*opts),
         Subcommand::Docs => docs::docs(metadata()?),
         Subcommand::IntegrationTest(opts) => {
-            let metadata = metadata()?;
-            let workspace_root = metadata.workspace_root.as_std_path();
-            // Integration BPF compilation consumes these headers.
-            exec(Command::new("git").arg("-C").arg(workspace_root).args([
-                "submodule",
-                "update",
-                "--init",
-                "--",
-                LIBBPF_DIR,
-            ]))?;
-            run::run(opts, workspace_root)
+            run::run(opts, metadata()?.workspace_root.as_std_path())
         }
         Subcommand::PublicApi(opts) => public_api::public_api(opts, metadata()?),
     }
