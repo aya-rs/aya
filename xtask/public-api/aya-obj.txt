@@ -4905,6 +4905,7 @@ pub aya_obj::obj::EbpfSectionKind::Btf
 pub aya_obj::obj::EbpfSectionKind::BtfExt
 pub aya_obj::obj::EbpfSectionKind::BtfMaps
 pub aya_obj::obj::EbpfSectionKind::Data
+pub aya_obj::obj::EbpfSectionKind::JumpTables
 pub aya_obj::obj::EbpfSectionKind::License
 pub aya_obj::obj::EbpfSectionKind::Maps
 pub aya_obj::obj::EbpfSectionKind::Program
@@ -5049,6 +5050,7 @@ pub aya_obj::obj::Function::address: u64
 pub aya_obj::obj::Function::func_info: aya_obj::btf::FuncSecInfo
 pub aya_obj::obj::Function::func_info_rec_size: usize
 pub aya_obj::obj::Function::instructions: alloc::vec::Vec<aya_obj::generated::bpf_insn>
+pub aya_obj::obj::Function::jump_tables: alloc::vec::Vec<aya_obj::JumpTable>
 pub aya_obj::obj::Function::line_info: aya_obj::btf::LineSecInfo
 pub aya_obj::obj::Function::line_info_rec_size: usize
 pub aya_obj::obj::Function::name: alloc::string::String
@@ -5074,6 +5076,24 @@ impl<T> core::marker::Unpin for aya_obj::InvalidTypeBinding<T> where T: core::ma
 impl<T> core::marker::UnsafeUnpin for aya_obj::InvalidTypeBinding<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::UnwindSafe
+pub struct aya_obj::obj::JumpTable
+pub aya_obj::obj::JumpTable::insn_indices: alloc::vec::Vec<usize>
+pub aya_obj::obj::JumpTable::targets: alloc::vec::Vec<u32>
+impl core::clone::Clone for aya_obj::JumpTable
+pub fn aya_obj::JumpTable::clone(&self) -> Self
+impl core::cmp::Eq for aya_obj::JumpTable
+impl core::cmp::PartialEq for aya_obj::JumpTable
+pub fn aya_obj::JumpTable::eq(&self, &Self) -> bool
+impl core::fmt::Debug for aya_obj::JumpTable
+pub fn aya_obj::JumpTable::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for aya_obj::JumpTable
+impl core::marker::Freeze for aya_obj::JumpTable
+impl core::marker::Send for aya_obj::JumpTable
+impl core::marker::Sync for aya_obj::JumpTable
+impl core::marker::Unpin for aya_obj::JumpTable
+impl core::marker::UnsafeUnpin for aya_obj::JumpTable
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::JumpTable
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::JumpTable
 pub struct aya_obj::obj::Object
 pub aya_obj::obj::Object::btf: core::option::Option<aya_obj::btf::Btf>
 pub aya_obj::obj::Object::btf_ext: core::option::Option<aya_obj::btf::BtfExt>
@@ -5414,6 +5434,9 @@ pub aya_obj::relocation::RelocationError::ExternNotFound
 pub aya_obj::relocation::RelocationError::ExternNotFound::name: alloc::string::String
 pub aya_obj::relocation::RelocationError::FunctionInfoMismatch
 pub aya_obj::relocation::RelocationError::FunctionInfoMismatch::name: alloc::string::String
+pub aya_obj::relocation::RelocationError::InvalidJumpTable
+pub aya_obj::relocation::RelocationError::InvalidJumpTable::reason: alloc::string::String
+pub aya_obj::relocation::RelocationError::InvalidJumpTable::symbol_name: core::option::Option<alloc::string::String>
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::offset: u64
 pub aya_obj::relocation::RelocationError::InvalidRelocationOffset::relocation_number: usize
@@ -5463,6 +5486,7 @@ pub aya_obj::EbpfSectionKind::Btf
 pub aya_obj::EbpfSectionKind::BtfExt
 pub aya_obj::EbpfSectionKind::BtfMaps
 pub aya_obj::EbpfSectionKind::Data
+pub aya_obj::EbpfSectionKind::JumpTables
 pub aya_obj::EbpfSectionKind::License
 pub aya_obj::EbpfSectionKind::Maps
 pub aya_obj::EbpfSectionKind::Program
@@ -5674,6 +5698,7 @@ pub aya_obj::Function::address: u64
 pub aya_obj::Function::func_info: aya_obj::btf::FuncSecInfo
 pub aya_obj::Function::func_info_rec_size: usize
 pub aya_obj::Function::instructions: alloc::vec::Vec<aya_obj::generated::bpf_insn>
+pub aya_obj::Function::jump_tables: alloc::vec::Vec<aya_obj::JumpTable>
 pub aya_obj::Function::line_info: aya_obj::btf::LineSecInfo
 pub aya_obj::Function::line_info_rec_size: usize
 pub aya_obj::Function::name: alloc::string::String
@@ -5699,6 +5724,24 @@ impl<T> core::marker::Unpin for aya_obj::InvalidTypeBinding<T> where T: core::ma
 impl<T> core::marker::UnsafeUnpin for aya_obj::InvalidTypeBinding<T> where T: core::marker::UnsafeUnpin
 impl<T> core::panic::unwind_safe::RefUnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::RefUnwindSafe
 impl<T> core::panic::unwind_safe::UnwindSafe for aya_obj::InvalidTypeBinding<T> where T: core::panic::unwind_safe::UnwindSafe
+pub struct aya_obj::JumpTable
+pub aya_obj::JumpTable::insn_indices: alloc::vec::Vec<usize>
+pub aya_obj::JumpTable::targets: alloc::vec::Vec<u32>
+impl core::clone::Clone for aya_obj::JumpTable
+pub fn aya_obj::JumpTable::clone(&self) -> Self
+impl core::cmp::Eq for aya_obj::JumpTable
+impl core::cmp::PartialEq for aya_obj::JumpTable
+pub fn aya_obj::JumpTable::eq(&self, &Self) -> bool
+impl core::fmt::Debug for aya_obj::JumpTable
+pub fn aya_obj::JumpTable::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for aya_obj::JumpTable
+impl core::marker::Freeze for aya_obj::JumpTable
+impl core::marker::Send for aya_obj::JumpTable
+impl core::marker::Sync for aya_obj::JumpTable
+impl core::marker::Unpin for aya_obj::JumpTable
+impl core::marker::UnsafeUnpin for aya_obj::JumpTable
+impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::JumpTable
+impl core::panic::unwind_safe::UnwindSafe for aya_obj::JumpTable
 pub struct aya_obj::Object
 pub aya_obj::Object::btf: core::option::Option<aya_obj::btf::Btf>
 pub aya_obj::Object::btf_ext: core::option::Option<aya_obj::btf::BtfExt>
