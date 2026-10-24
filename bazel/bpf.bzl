@@ -33,12 +33,15 @@ BPF_RUSTC_FLAGS = select({
 ]
 
 def _bpf_filegroup(target_platform):
-    # with_cfg applies the BPF target platform and no_std setting to the
+    # with_cfg applies the BPF target platform, nightly, and no_std setting to the
     # filegroup and its transitive dependencies:
     # https://bazel.build/extending/config#user-defined-transitions
     return with_cfg(native.filegroup).set(
         "platforms",
         [target_platform],
+    ).set(
+        Label("@rules_rust//rust/toolchain/channel"),
+        "nightly",
     ).set(
         # rules_rust supports "alloc" as its only no_std mode; Aya uses core
         # only. Use core after rules_rust supports core-only no_std:

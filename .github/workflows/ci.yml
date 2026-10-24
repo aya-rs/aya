@@ -26,8 +26,11 @@ jobs:
       contents: read
     outputs:
       rust-toolchains: ${{ steps.toolchains.outputs.rust-toolchains }}
+      kernel-lines: ${{ steps.kernels.outputs.kernel-lines }}
     steps:
       - uses: actions/checkout@v7
+
+      - uses: $/.github/actions/setup-bazel
 
       - name: Read the committed Rust toolchains
         id: toolchains
@@ -37,23 +40,34 @@ jobs:
           toolchains=$(python3 -B scripts/rust-toolchain-pins.py current)
           printf 'rust-toolchains=%s\n' "$toolchains" >> "$GITHUB_OUTPUT"
 
+      - name: Read the pinned kernel lines
+        id: kernels
+        run: |
+          set -euo pipefail
+
+          kernel_lines=$(bazel run --lockfile_mode=error @buildifier_prebuilt//:buildozer -- \
+            'print name' 'MODULE.bazel:%kernel_source_archive' | \
+            jq --raw-input --slurp --compact-output --exit-status \
+              'split("\n") | map(select(length > 0) | ltrimstr("aya_kernel_")) | select(length > 0)')
+          printf 'kernel-lines=%s\n' "$kernel_lines" >> "$GITHUB_OUTPUT"
+
   bazel:
     name: bazel (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - macos-latest
+        os: [ubuntu-latest, macos-latest]
     defaults:
       run:
         shell: bash
     steps:
       - uses: actions/checkout@v7
 
+      - uses: $/.github/actions/setup-bazel
+
       - name: Check Starlark
-        run: bazel run //bazel/format:format.check
+        run: bazel run //bazel/format:format.check --lockfile_mode=error
 
       - name: Test
         run: |
@@ -61,7 +75,9 @@ jobs:
           # The default JVM heap is under 2 GB on 7 GB macOS runners.
           bazel --host_jvm_args=-Xmx4g test //... \
             --config=remote \
-            --remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY"
+            --lockfile_mode=error \
+            --remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY" \
+            --remote_downloader_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY"
 
   codegen:
     needs: prepare
@@ -335,166 +351,89 @@ jobs:
           fi
 
   run-integration-test:
+    name: integration VMs (${{ matrix.kernel_line }})
     needs: prepare
     strategy:
       fail-fast: false
       matrix:
-        # We don't have a fast solution for running virtualized integration
-        # tests on arm64 because:
-        # - GitHub Ubuntu arm64 runners don't support nested virtualization (see
-        #   https://github.com/orgs/community/discussions/148648#discussioncomment-11863547).
-        # - GitHub macOS arm64 runners don't support nested virtualization (see
-        #   https://docs.github.com/en/actions/reference/runners/github-hosted-runners#limitations-for-arm64-macos-runners).
-        #
-        # So we spin a runner for every arm64 kernel to avoid waiting 20 minutes
-        # for CI. We use arm64 runners to avoid cross-compilation.
-        os:
-          - ubuntu-24.04-arm
-        vm-kernels:
-          - arm64 5.10
-          - arm64 5.15
-          - arm64 6.1
-          - arm64 6.6
-          - arm64 6.12
-          - arm64 6.18
-        skip-local:
-          - true
-        include:
-          - os: macos-latest
-            # Just one kernel to keep things fast. We just want to keep things from rotting on
-            # macOS. We use amd64 because otherwise qemu tries to use HVF and hits a hard error:
-            # qemu-system-aarch64: -accel hvf: Error: ret = HV_UNSUPPORTED (0xfae9400f, at ../target/arm/hvf/hvf.c:956)
-            vm-kernels: amd64 5.10
+        kernel_line: ${{ fromJSON(needs.prepare.outputs.kernel-lines) }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
 
-          # We don't use ubuntu-latest because we care about the apt packages available.
-          - os: ubuntu-24.04
-            vm-kernels: amd64 5.10 5.15 6.1 6.6 6.12 6.18
-          - os: ubuntu-24.04-arm
-            # Native arm runner for local tests only; arm runners don't support
-            # nested virtualization so running them here would be slow.
-            vm-kernels: local
+      - uses: $/.github/actions/setup-bazel
 
+      - name: Run both guest architectures
+        run: |
+          set -euxo pipefail
+          # Allow enough heap for both per-object kernel graphs.
+          bazel --host_jvm_args=-Xmx8g test --config=remote \
+            --lockfile_mode=error \
+            --remote_download_outputs=toplevel \
+            --@rules_rust//rust/toolchain/channel=stable \
+            --remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY" \
+            --remote_downloader_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY" \
+            //test/integration-test:vm_aarch64_${{ matrix.kernel_line }} \
+            //test/integration-test:vm_x86_64_${{ matrix.kernel_line }}
+
+      - name: Save kernel validation results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: kernel-validation-${{ matrix.kernel_line }}
+          path: |
+            bazel-out/*/testlogs/test/integration-test/vm_*_${{ matrix.kernel_line }}/
+
+  run-native-integration-test:
+    name: native integration (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
-        with:
-          submodules: recursive
 
-      - name: Install prerequisites
-        if: runner.os == 'Linux'
+      - uses: $/.github/actions/setup-bazel
+
+      - name: Test the host kernel in both Rust modes
         run: |
           set -euxo pipefail
+          # Both test actions and host-specific build tools run on this runner;
+          # BuildBuddy's anonymous executor is x86_64 only. Keep its cache.
+          bazel --host_jvm_args=-Xmx4g test --config=remote \
+            --lockfile_mode=error \
+            --@rules_rust//rust/toolchain/channel=stable \
+            --remote_executor= \
+            --extra_execution_platforms=@platforms//host:host \
+            --platforms=@platforms//host:host \
+            --jobs=4 \
+            --remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY" \
+            --remote_downloader_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY" \
+            //test/integration-test:native_fastbuild \
+            //test/integration-test:native_opt
 
-          # https://github.blog/changelog/2023-02-23-hardware-accelerated-android-virtualization-on-actions-windows-and-linux-larger-hosted-runners/
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm || true # kvm is not available on arm64.
+  run-macos-integration-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
 
-          sudo apt update
-          # linux-libc-dev provides kernel UAPI headers for libbpf-sys cross-compilation.
-          #
-          # llvm provides llvm-objcopy for integration tests.
-          #
-          # See https://github.com/libbpf/libbpf-sys/issues/137.
-          sudo apt -y install \
-            autopoint \
-            linux-libc-dev \
-            liblzma-dev \
-            llvm \
-            musl-tools \
-            qemu-system-{arm,x86}
+      - uses: $/.github/actions/setup-bazel
 
-      - name: Install prerequisites
-        if: runner.os == 'macOS'
+      - name: Install host QEMU
+        run: brew install qemu
+
+      - name: Boot a source-built VM on macOS
         run: |
           set -euxo pipefail
-          # Dependencies are tracked in `Brewfile`.
-          brew trust --formula filosottile/musl-cross/musl-cross
-          brew bundle
-          echo $(brew --prefix llvm)/bin >> $GITHUB_PATH
-
-          # https://github.com/actions/setup-python/issues/577
-          find /usr/local/bin -type l -exec sh -c 'readlink -f "$1" \
-          | grep -q ^/Library/Frameworks/Python.framework/Versions/' _ {} \; -exec rm -v {} \;
-
-      - uses: $/.github/actions/setup-rust
-        with:
-          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
-          components: rust-src
-
-      # Installed *after* nightly so it is the default.
-      - uses: $/.github/actions/setup-rust
-        with:
-          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).stable }}
-          targets: aarch64-unknown-linux-musl,x86_64-unknown-linux-musl
-
-      # Cache usage approaches GitHub's default 10 GB repository allowance.
-      # Only save default-branch entries, which every branch and PR can
-      # restore, so branch- and PR-scoped entries do not evict shared caches.
-      - uses: Swatinem/rust-cache@v2
-        with:
-          save-if: >-
-            ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
-
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: bpf-linker,cargo-hack
-
-      - name: Restore VM integration test cache
-        id: vm-cache
-        # `local` is the native arm64 test job; it does not run a VM or
-        # populate the VM cache directory.
-        if: matrix.vm-kernels != 'local'
-        uses: actions/cache/restore@v6
-        with:
-          path: test/.tmp
-          # xtask does not resolve the exact package versions until after this
-          # step, so they cannot be included in the restore key. Restore by the
-          # stable matrix prefix instead. The trailing `-` delimits the matrix
-          # value, preventing overlap between prefixes such as `6.1` and `6.12`.
-          #
-          # When several keys match a prefix, GitHub selects the most recently
-          # created cache:
-          # https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#cache-key-matching
-          key: ${{ runner.arch }}-${{ runner.os }}-integration-test-vm-cache-v3-${{ matrix.vm-kernels }}-
-
-      - name: Cleanup stale kernels and modules
-        run: rm -rf test/.tmp/boot test/.tmp/lib
-
-      - name: Run local integration tests
-        if: runner.os == 'Linux' && matrix.skip-local != true
-        run: cargo xtask integration-test local
-
-      - name: Run virtualized integration tests
-        if: matrix.vm-kernels != 'local'
-        run: |
-          set -euxo pipefail
-
-          cargo xtask integration-test vm --cache-dir test/.tmp \
-            --kernel-arch ${{ matrix.vm-kernels }}
-
-      - name: Compute VM integration test cache key
-        id: vm-cache-key
-        if: >-
-          matrix.vm-kernels != 'local' &&
-          github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-        run: |
-          set -euo pipefail
-          printf 'key=%s%s\n' \
-            "${{ steps.vm-cache.outputs.cache-primary-key }}" \
-            "${{ hashFiles('test/.tmp/**') }}" \
-            >> "$GITHUB_OUTPUT"
-
-      - name: Save VM integration test cache
-        # The local job skips both restore and key computation, so the empty
-        # outputs compare equal and this step is skipped. Only default-branch VM
-        # jobs produce a non-empty computed key; save when it differs from the
-        # restored key. actions/cache/save ignores empty keys from other jobs.
-        if: steps.vm-cache.outputs.cache-matched-key != steps.vm-cache-key.outputs.key
-        uses: actions/cache/save@v6
-        with:
-          path: test/.tmp
-          key: ${{ steps.vm-cache-key.outputs.key }}
+          bazel --host_jvm_args=-Xmx4g test --config=remote \
+            --lockfile_mode=error \
+            --@rules_rust//rust/toolchain/channel=stable \
+            --platforms=@platforms//host:host \
+            --extra_toolchains=@homebrew_qemu//:x86_64 \
+            --remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY" \
+            --remote_downloader_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY" \
+            //test/integration-test:vm_x86_64_5_10_macos
 
   check:
     if: always()
@@ -506,6 +445,8 @@ jobs:
       - build-test-aya
       - build-test-aya-ebpf
       - run-integration-test
+      - run-native-integration-test
+      - run-macos-integration-test
     runs-on: ubuntu-latest
     steps:
       - name: Verify all required jobs succeeded
