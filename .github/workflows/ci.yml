@@ -64,19 +64,13 @@ jobs:
             --remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY"
 
   codegen:
-    needs: prepare
-    # Ubuntu 26.04 no longer provides the required MIPS libc headers.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v7
-        with:
-          submodules: recursive
 
       - uses: $/.github/actions/codegen
-        with:
-          toolchain: ${{ fromJSON(needs.prepare.outputs.rust-toolchains).nightly }}
       - name: Check generated files
         id: generated
         run: |
@@ -377,8 +371,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
-        with:
-          submodules: recursive
 
       - name: Install prerequisites
         if: runner.os == 'Linux'

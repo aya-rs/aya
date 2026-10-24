@@ -1,37 +1,12 @@
 name: Regenerate source bindings
-description: Regenerate and format source bindings
-
-inputs:
-  toolchain:
-    description: Immutable Rust nightly toolchain to use
-    required: true
+description: Regenerate source bindings with declared Bazel tools and headers
 
 runs:
   using: composite
   steps:
-    - uses: $/.github/actions/setup-rust
-      with:
-        toolchain: ${{ inputs.toolchain }}
-        components: rustfmt, clippy
-
-    - uses: Swatinem/rust-cache@v2
-      with:
-        shared-key: codegen
-        save-if: >-
-          ${{ github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
-
-    - name: Install headers
-      shell: bash
-      run: |
-        set -euxo pipefail
-        sudo apt -y update
-        sudo apt -y install libelf-dev libc6-dev libc6-dev-{arm64,armel,loong64,riscv64,ppc64el,s390x,mips,mips64}-cross
-
     - name: Generate source bindings
       shell: bash
-      run: cargo xtask codegen
-
-    # eBPF bindings are rewritten after bindgen, so format them explicitly.
-    - name: Format generated files
-      shell: bash
-      run: cargo fmt --all
+      run: |
+        bazel run //xtask:codegen \
+          --config=remote \
+          --remote_header=x-buildbuddy-api-key="$BUILDBUDDY_API_KEY"
