@@ -1220,6 +1220,11 @@ pub aya::maps::MapError::CreateError
 pub aya::maps::MapError::CreateError::io_error: core::io::error::Error
 pub aya::maps::MapError::CreateError::name: alloc::string::String
 pub aya::maps::MapError::ElementNotFound
+pub aya::maps::MapError::IncompatiblePinnedMap
+pub aya::maps::MapError::IncompatiblePinnedMap::actual: u64
+pub aya::maps::MapError::IncompatiblePinnedMap::expected: u64
+pub aya::maps::MapError::IncompatiblePinnedMap::name: alloc::string::String
+pub aya::maps::MapError::IncompatiblePinnedMap::property: &'static str
 pub aya::maps::MapError::InvalidKeySize
 pub aya::maps::MapError::InvalidKeySize::expected: usize
 pub aya::maps::MapError::InvalidKeySize::size: usize
