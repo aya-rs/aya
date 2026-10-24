@@ -17,6 +17,8 @@ use xtask::AYA_BUILD_INTEGRATION_BPF;
 fn main() {
     println!("cargo::rerun-if-env-changed={AYA_BUILD_INTEGRATION_BPF}");
 
+    aya_build::emit_bpf_target_arch_cfg().unwrap();
+
     let build_integration_bpf = env::var(AYA_BUILD_INTEGRATION_BPF)
         .as_deref()
         .map(str::parse)
