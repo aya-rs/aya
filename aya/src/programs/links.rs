@@ -243,7 +243,7 @@ pub struct FdLinkId(pub(crate) RawFd);
 ///
 /// let program: &mut KProbe = bpf.program_mut("intercept_wakeups").unwrap().try_into()?;
 /// program.load()?;
-/// let link_id = program.attach("try_to_wake_up", 0)?;
+/// let link_id = program.attach(["try_to_wake_up"])?;
 /// let link = program.take_link(link_id).unwrap();
 /// let fd_link: FdLink = link.try_into().unwrap();
 /// fd_link.pin("/sys/fs/bpf/intercept_wakeups_link").unwrap();
