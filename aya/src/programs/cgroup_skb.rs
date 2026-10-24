@@ -81,6 +81,12 @@ impl CgroupSkb {
     /// Attaches the program to the given cgroup.
     ///
     /// The returned value can be used to detach, see [`CgroupSkb::detach`].
+    ///
+    /// On kernels 5.7.0 and later, [`CgroupAttachMode::AllowMultiple`] attaches the program with
+    /// `bpf_link_create`, so the returned link can be converted into an [`FdLink`] and pinned.
+    /// [`CgroupAttachMode::Single`] and [`CgroupAttachMode::AllowOverride`] (and every mode on
+    /// older kernels) use `bpf_prog_attach`, because cgroup links always allow multiple programs;
+    /// those links cannot be pinned.
     pub fn attach<T: AsFd>(
         &mut self,
         cgroup: T,
@@ -90,18 +96,12 @@ impl CgroupSkb {
         let prog_fd = self.fd()?;
         let prog_fd = prog_fd.as_fd();
         let cgroup_fd = cgroup.as_fd();
-        if KernelVersion::at_least(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(cgroup_fd),
-                attach_type,
-                mode.into(),
-                None,
-            )
-            .map_err(|io_error| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
+        if KernelVersion::at_least(5, 7, 0) && matches!(mode, CgroupAttachMode::AllowMultiple) {
+            let link_fd = bpf_link_create(prog_fd, LinkTarget::Fd(cgroup_fd), attach_type, 0, None)
+                .map_err(|io_error| SyscallError {
+                    call: "bpf_link_create",
+                    io_error,
+                })?;
             self.data
                 .links
                 .insert(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(
