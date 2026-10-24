@@ -639,7 +639,7 @@ impl<'a> EbpfLoader<'a> {
             for (map_obj, map_type) in
                 iter::once((&mut map_obj, map_type)).chain(inner_map.as_mut().map(|(m, t)| (m, *t)))
             {
-                if let Some(value_size) = value_size_override(map_type) {
+                if let Some(value_size) = value_size_override(map_type, map_obj.value_size()) {
                     map_obj.set_value_size(value_size);
                 }
             }
@@ -965,25 +965,26 @@ fn max_entries_override(
 
 /// Computes the value which should be used to override the `value_size` value of the map
 /// based on the rules for that map type.
-fn value_size_override(map_type: bpf_map_type) -> Option<u32> {
-    match map_type {
-        bpf_map_type::BPF_MAP_TYPE_CPUMAP => {
-            Some(if FEATURES.is_supported(Feature::CpuMapProgId) {
-                8
-            } else {
-                4
-            })
-        }
+///
+/// For `DEVMAP`, `DEVMAP_HASH`, and `CPUMAP`, the ELF may declare either a 4-byte
+/// or 8-byte value. The 8-byte layout carries a chained-program fd; the
+/// 4-byte layout does not. When the kernel lacks the feature that enables
+/// chained programs (`DevMapProgId` / `CpuMapProgId`), an 8-byte declaration
+/// must be shrunk to 4 bytes so that map creation succeeds on older kernels.
+/// A 4-byte declaration is kept as-is so that the explicit user intent is
+/// preserved and the kernel enforces the correct layout at verification time.
+fn value_size_override(map_type: bpf_map_type, value_size: u32) -> Option<u32> {
+    let feature = match map_type {
+        bpf_map_type::BPF_MAP_TYPE_CPUMAP => Feature::CpuMapProgId,
         bpf_map_type::BPF_MAP_TYPE_DEVMAP | bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => {
-            Some(if FEATURES.is_supported(Feature::DevMapProgId) {
-                8
-            } else {
-                4
-            })
+            Feature::DevMapProgId
         }
-        bpf_map_type::BPF_MAP_TYPE_RINGBUF => Some(0),
-        _ => None,
-    }
+        bpf_map_type::BPF_MAP_TYPE_RINGBUF => return Some(0),
+        _ => return None,
+    };
+    // Only downgrade 8→4 when the kernel doesn't support the wider layout.
+    // Leave explicit 4-byte declarations unchanged.
+    (!FEATURES.is_supported(feature) && value_size == 8).then_some(4)
 }
 
 // Adjusts the byte size of a RingBuf map to match a power-of-two multiple of the page size.
