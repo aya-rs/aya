@@ -2025,6 +2025,26 @@ impl core::marker::Unpin for aya_ebpf::programs::flow_dissector::FlowDissectorCo
 impl core::marker::UnsafeUnpin for aya_ebpf::programs::flow_dissector::FlowDissectorContext
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::flow_dissector::FlowDissectorContext
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::flow_dissector::FlowDissectorContext
+pub mod aya_ebpf::programs::fmod_ret
+pub struct aya_ebpf::programs::fmod_ret::FModRetContext
+impl aya_ebpf::programs::fmod_ret::FModRetContext
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::arg<T: aya_ebpf::Argument>(&self, usize) -> T
+pub const fn aya_ebpf::programs::fmod_ret::FModRetContext::new(*mut core::ffi::c_void) -> Self
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::ret<T: aya_ebpf::Argument>(&self) -> core::result::Result<T, i32>
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::fmod_ret::FModRetContext
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::as_ptr(&self) -> *mut core::ffi::c_void
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::command(&self) -> core::result::Result<[u8; 16], i32>
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::gid(&self) -> u32
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::pid(&self) -> u32
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::tgid(&self) -> u32
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::uid(&self) -> u32
+impl core::marker::Freeze for aya_ebpf::programs::fmod_ret::FModRetContext
+impl !core::marker::Send for aya_ebpf::programs::fmod_ret::FModRetContext
+impl !core::marker::Sync for aya_ebpf::programs::fmod_ret::FModRetContext
+impl core::marker::Unpin for aya_ebpf::programs::fmod_ret::FModRetContext
+impl core::marker::UnsafeUnpin for aya_ebpf::programs::fmod_ret::FModRetContext
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::fmod_ret::FModRetContext
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::fmod_ret::FModRetContext
 pub mod aya_ebpf::programs::lsm
 pub struct aya_ebpf::programs::lsm::LsmContext
 impl aya_ebpf::programs::lsm::LsmContext
@@ -2556,6 +2576,25 @@ impl core::marker::Unpin for aya_ebpf::programs::fexit::FExitContext
 impl core::marker::UnsafeUnpin for aya_ebpf::programs::fexit::FExitContext
 impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::fexit::FExitContext
 impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::fexit::FExitContext
+pub struct aya_ebpf::programs::FModRetContext
+impl aya_ebpf::programs::fmod_ret::FModRetContext
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::arg<T: aya_ebpf::Argument>(&self, usize) -> T
+pub const fn aya_ebpf::programs::fmod_ret::FModRetContext::new(*mut core::ffi::c_void) -> Self
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::ret<T: aya_ebpf::Argument>(&self) -> core::result::Result<T, i32>
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::fmod_ret::FModRetContext
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::as_ptr(&self) -> *mut core::ffi::c_void
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::command(&self) -> core::result::Result<[u8; 16], i32>
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::gid(&self) -> u32
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::pid(&self) -> u32
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::tgid(&self) -> u32
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::uid(&self) -> u32
+impl core::marker::Freeze for aya_ebpf::programs::fmod_ret::FModRetContext
+impl !core::marker::Send for aya_ebpf::programs::fmod_ret::FModRetContext
+impl !core::marker::Sync for aya_ebpf::programs::fmod_ret::FModRetContext
+impl core::marker::Unpin for aya_ebpf::programs::fmod_ret::FModRetContext
+impl core::marker::UnsafeUnpin for aya_ebpf::programs::fmod_ret::FModRetContext
+impl core::panic::unwind_safe::RefUnwindSafe for aya_ebpf::programs::fmod_ret::FModRetContext
+impl core::panic::unwind_safe::UnwindSafe for aya_ebpf::programs::fmod_ret::FModRetContext
 pub struct aya_ebpf::programs::FlowDissectorContext
 impl aya_ebpf::programs::flow_dissector::FlowDissectorContext
 pub const fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::data(&self) -> usize
@@ -3008,6 +3047,13 @@ pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::gid(&self) -> u
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::pid(&self) -> u32
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::tgid(&self) -> u32
 pub fn aya_ebpf::programs::flow_dissector::FlowDissectorContext::uid(&self) -> u32
+impl aya_ebpf::EbpfContext for aya_ebpf::programs::fmod_ret::FModRetContext
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::as_ptr(&self) -> *mut core::ffi::c_void
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::command(&self) -> core::result::Result<[u8; 16], i32>
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::gid(&self) -> u32
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::pid(&self) -> u32
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::tgid(&self) -> u32
+pub fn aya_ebpf::programs::fmod_ret::FModRetContext::uid(&self) -> u32
 impl aya_ebpf::EbpfContext for aya_ebpf::programs::lsm::LsmContext
 pub fn aya_ebpf::programs::lsm::LsmContext::as_ptr(&self) -> *mut core::ffi::c_void
 pub fn aya_ebpf::programs::lsm::LsmContext::command(&self) -> core::result::Result<[u8; 16], i32>

@@ -3113,6 +3113,95 @@ impl core::marker::Unpin for aya::programs::flow_dissector::FlowDissectorLinkId
 impl core::marker::UnsafeUnpin for aya::programs::flow_dissector::FlowDissectorLinkId
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::flow_dissector::FlowDissectorLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::flow_dissector::FlowDissectorLinkId
+pub mod aya::programs::fmod_ret
+pub struct aya::programs::fmod_ret::FModRet
+impl aya::programs::fmod_ret::FModRet
+pub const aya::programs::fmod_ret::FModRet::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::fmod_ret::FModRet::attach(&mut self) -> core::result::Result<aya::programs::fmod_ret::FModRetLinkId, aya::programs::ProgramError>
+pub fn aya::programs::fmod_ret::FModRet::load(&mut self, &str, &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::detach(&mut self, aya::programs::fmod_ret::FModRetLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::fmod_ret::FModRet::take_link(&mut self, aya::programs::fmod_ret::FModRetLinkId) -> core::result::Result<aya::programs::fmod_ret::FModRetLink, aya::programs::ProgramError>
+impl aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::fmod_ret::FModRet
+pub unsafe fn aya::programs::fmod_ret::FModRet::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::fmod_ret::FModRet::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::fmod_ret::FModRet
+pub type aya::programs::fmod_ret::FModRet::Opts<'a> = ()
+pub type aya::programs::fmod_ret::FModRet::Result = ()
+pub fn aya::programs::fmod_ret::FModRet::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::fmod_ret::FModRet
+pub type &'a aya::programs::fmod_ret::FModRet::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::fmod_ret::FModRet::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::fmod_ret::FModRet, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::fmod_ret::FModRet
+pub type &'a mut aya::programs::fmod_ret::FModRet::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::fmod_ret::FModRet::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::fmod_ret::FModRet, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::fmod_ret::FModRet
+impl core::marker::Send for aya::programs::fmod_ret::FModRet
+impl core::marker::Sync for aya::programs::fmod_ret::FModRet
+impl core::marker::Unpin for aya::programs::fmod_ret::FModRet
+impl core::marker::UnsafeUnpin for aya::programs::fmod_ret::FModRet
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fmod_ret::FModRet
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::fmod_ret::FModRet
+pub struct aya::programs::fmod_ret::FModRetLink(_)
+impl aya::programs::links::Link for aya::programs::fmod_ret::FModRetLink
+pub type aya::programs::fmod_ret::FModRetLink::Error = aya::programs::ProgramError
+pub type aya::programs::fmod_ret::FModRetLink::Id = aya::programs::fmod_ret::FModRetLinkId
+pub fn aya::programs::fmod_ret::FModRetLink::detach(self) -> core::result::Result<(), Self::Error>
+pub fn aya::programs::fmod_ret::FModRetLink::id(&self) -> Self::Id
+impl core::cmp::Eq for aya::programs::fmod_ret::FModRetLink
+impl core::cmp::PartialEq for aya::programs::fmod_ret::FModRetLink
+pub fn aya::programs::fmod_ret::FModRetLink::eq(&self, &Self) -> bool
+impl core::convert::From<aya::programs::fmod_ret::FModRetLink> for aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::from(aya::programs::fmod_ret::FModRetLink) -> aya::programs::links::FdLink
+impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fmod_ret::FModRetLink
+pub fn aya::programs::fmod_ret::FModRetLink::from(aya::programs::links::FdLink) -> aya::programs::fmod_ret::FModRetLink
+impl core::fmt::Debug for aya::programs::fmod_ret::FModRetLink
+pub fn aya::programs::fmod_ret::FModRetLink::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::fmod_ret::FModRetLink
+pub fn aya::programs::fmod_ret::FModRetLink::hash<H: core::hash::Hasher>(&self, &mut H)
+impl core::ops::drop::Drop for aya::programs::fmod_ret::FModRetLink
+pub fn aya::programs::fmod_ret::FModRetLink::drop(&mut self)
+impl equivalent::Equivalent<aya::programs::fmod_ret::FModRetLink> for aya::programs::fmod_ret::FModRetLinkId
+pub fn aya::programs::fmod_ret::FModRetLinkId::equivalent(&self, &aya::programs::fmod_ret::FModRetLink) -> bool
+impl core::marker::Freeze for aya::programs::fmod_ret::FModRetLink
+impl core::marker::Send for aya::programs::fmod_ret::FModRetLink
+impl core::marker::Sync for aya::programs::fmod_ret::FModRetLink
+impl core::marker::Unpin for aya::programs::fmod_ret::FModRetLink
+impl core::marker::UnsafeUnpin for aya::programs::fmod_ret::FModRetLink
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fmod_ret::FModRetLink
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::fmod_ret::FModRetLink
+pub struct aya::programs::fmod_ret::FModRetLinkId(_)
+impl core::cmp::Eq for aya::programs::fmod_ret::FModRetLinkId
+impl core::cmp::PartialEq for aya::programs::fmod_ret::FModRetLinkId
+pub fn aya::programs::fmod_ret::FModRetLinkId::eq(&self, &Self) -> bool
+impl core::fmt::Debug for aya::programs::fmod_ret::FModRetLinkId
+pub fn aya::programs::fmod_ret::FModRetLinkId::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for aya::programs::fmod_ret::FModRetLinkId
+pub fn aya::programs::fmod_ret::FModRetLinkId::hash<__H: core::hash::Hasher>(&self, &mut __H)
+impl core::marker::StructuralPartialEq for aya::programs::fmod_ret::FModRetLinkId
+impl equivalent::Equivalent<aya::programs::fmod_ret::FModRetLink> for aya::programs::fmod_ret::FModRetLinkId
+pub fn aya::programs::fmod_ret::FModRetLinkId::equivalent(&self, &aya::programs::fmod_ret::FModRetLink) -> bool
+impl core::marker::Freeze for aya::programs::fmod_ret::FModRetLinkId
+impl core::marker::Send for aya::programs::fmod_ret::FModRetLinkId
+impl core::marker::Sync for aya::programs::fmod_ret::FModRetLinkId
+impl core::marker::Unpin for aya::programs::fmod_ret::FModRetLinkId
+impl core::marker::UnsafeUnpin for aya::programs::fmod_ret::FModRetLinkId
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fmod_ret::FModRetLinkId
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::fmod_ret::FModRetLinkId
 pub mod aya::programs::iter
 pub struct aya::programs::iter::Iter
 impl aya::programs::iter::Iter
@@ -3414,12 +3503,16 @@ impl core::convert::From<aya::programs::fentry::FEntryLink> for aya::programs::l
 pub fn aya::programs::links::FdLink::from(aya::programs::fentry::FEntryLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::fexit::FExitLink> for aya::programs::links::FdLink
 pub fn aya::programs::links::FdLink::from(aya::programs::fexit::FExitLink) -> aya::programs::links::FdLink
+impl core::convert::From<aya::programs::fmod_ret::FModRetLink> for aya::programs::links::FdLink
+pub fn aya::programs::links::FdLink::from(aya::programs::fmod_ret::FModRetLink) -> aya::programs::links::FdLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::extension::ExtensionLink
 pub fn aya::programs::extension::ExtensionLink::from(aya::programs::links::FdLink) -> aya::programs::extension::ExtensionLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fentry::FEntryLink
 pub fn aya::programs::fentry::FEntryLink::from(aya::programs::links::FdLink) -> aya::programs::fentry::FEntryLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fexit::FExitLink
 pub fn aya::programs::fexit::FExitLink::from(aya::programs::links::FdLink) -> aya::programs::fexit::FExitLink
+impl core::convert::From<aya::programs::links::FdLink> for aya::programs::fmod_ret::FModRetLink
+pub fn aya::programs::fmod_ret::FModRetLink::from(aya::programs::links::FdLink) -> aya::programs::fmod_ret::FModRetLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::lsm::LsmLink
 pub fn aya::programs::lsm::LsmLink::from(aya::programs::links::FdLink) -> aya::programs::lsm::LsmLink
 impl core::convert::From<aya::programs::links::FdLink> for aya::programs::lsm_cgroup::LsmLink
@@ -3689,6 +3782,11 @@ pub type aya::programs::flow_dissector::FlowDissectorLink::Error = aya::programs
 pub type aya::programs::flow_dissector::FlowDissectorLink::Id = aya::programs::flow_dissector::FlowDissectorLinkId
 pub fn aya::programs::flow_dissector::FlowDissectorLink::detach(self) -> core::result::Result<(), Self::Error>
 pub fn aya::programs::flow_dissector::FlowDissectorLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::fmod_ret::FModRetLink
+pub type aya::programs::fmod_ret::FModRetLink::Error = aya::programs::ProgramError
+pub type aya::programs::fmod_ret::FModRetLink::Id = aya::programs::fmod_ret::FModRetLinkId
+pub fn aya::programs::fmod_ret::FModRetLink::detach(self) -> core::result::Result<(), Self::Error>
+pub fn aya::programs::fmod_ret::FModRetLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::iter::IterLink
 pub type aya::programs::iter::IterLink::Error = aya::programs::ProgramError
 pub type aya::programs::iter::IterLink::Id = aya::programs::iter::IterLinkId
@@ -5886,6 +5984,7 @@ pub aya::programs::Program::CgroupSysctl(aya::programs::cgroup_sysctl::CgroupSys
 pub aya::programs::Program::Extension(aya::programs::extension::Extension)
 pub aya::programs::Program::FEntry(aya::programs::fentry::FEntry)
 pub aya::programs::Program::FExit(aya::programs::fexit::FExit)
+pub aya::programs::Program::FModRet(aya::programs::fmod_ret::FModRet)
 pub aya::programs::Program::FlowDissector(aya::programs::flow_dissector::FlowDissector)
 pub aya::programs::Program::Iter(aya::programs::iter::Iter)
 pub aya::programs::Program::KProbe(aya::programs::kprobe::KProbe)
@@ -5943,6 +6042,9 @@ pub fn &'a aya::programs::fexit::FExit::try_from(&'a aya::programs::Program) -> 
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::flow_dissector::FlowDissector
 pub type &'a aya::programs::flow_dissector::FlowDissector::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::flow_dissector::FlowDissector::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::flow_dissector::FlowDissector, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::fmod_ret::FModRet
+pub type &'a aya::programs::fmod_ret::FModRet::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::fmod_ret::FModRet::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::fmod_ret::FModRet, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::iter::Iter
 pub type &'a aya::programs::iter::Iter::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::iter::Iter::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::iter::Iter, aya::programs::ProgramError>
@@ -6030,6 +6132,9 @@ pub fn &'a mut aya::programs::fexit::FExit::try_from(&'a mut aya::programs::Prog
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::flow_dissector::FlowDissector
 pub type &'a mut aya::programs::flow_dissector::FlowDissector::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::flow_dissector::FlowDissector::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::flow_dissector::FlowDissector, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::fmod_ret::FModRet
+pub type &'a mut aya::programs::fmod_ret::FModRet::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::fmod_ret::FModRet::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::fmod_ret::FModRet, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::iter::Iter
 pub type &'a mut aya::programs::iter::Iter::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::iter::Iter::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::iter::Iter, aya::programs::ProgramError>
@@ -6813,6 +6918,48 @@ impl core::marker::Unpin for aya::programs::fexit::FExit
 impl core::marker::UnsafeUnpin for aya::programs::fexit::FExit
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fexit::FExit
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::fexit::FExit
+pub struct aya::programs::FModRet
+impl aya::programs::fmod_ret::FModRet
+pub const aya::programs::fmod_ret::FModRet::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::fmod_ret::FModRet::attach(&mut self) -> core::result::Result<aya::programs::fmod_ret::FModRetLinkId, aya::programs::ProgramError>
+pub fn aya::programs::fmod_ret::FModRet::load(&mut self, &str, &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::detach(&mut self, aya::programs::fmod_ret::FModRetLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::fmod_ret::FModRet::take_link(&mut self, aya::programs::fmod_ret::FModRetLinkId) -> core::result::Result<aya::programs::fmod_ret::FModRetLink, aya::programs::ProgramError>
+impl aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::fmod_ret::FModRet
+pub unsafe fn aya::programs::fmod_ret::FModRet::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::fmod_ret::FModRet::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::fmod_ret::FModRet
+pub type aya::programs::fmod_ret::FModRet::Opts<'a> = ()
+pub type aya::programs::fmod_ret::FModRet::Result = ()
+pub fn aya::programs::fmod_ret::FModRet::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::fmod_ret::FModRet
+pub fn aya::programs::fmod_ret::FModRet::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::fmod_ret::FModRet
+pub type &'a aya::programs::fmod_ret::FModRet::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::fmod_ret::FModRet::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::fmod_ret::FModRet, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::fmod_ret::FModRet
+pub type &'a mut aya::programs::fmod_ret::FModRet::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::fmod_ret::FModRet::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::fmod_ret::FModRet, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::fmod_ret::FModRet
+impl core::marker::Send for aya::programs::fmod_ret::FModRet
+impl core::marker::Sync for aya::programs::fmod_ret::FModRet
+impl core::marker::Unpin for aya::programs::fmod_ret::FModRet
+impl core::marker::UnsafeUnpin for aya::programs::fmod_ret::FModRet
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::fmod_ret::FModRet
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::fmod_ret::FModRet
 pub struct aya::programs::FlowDissector
 impl aya::programs::flow_dissector::FlowDissector
 pub const aya::programs::flow_dissector::FlowDissector::PROGRAM_TYPE: aya::programs::ProgramType
@@ -7781,6 +7928,11 @@ pub type aya::programs::flow_dissector::FlowDissectorLink::Error = aya::programs
 pub type aya::programs::flow_dissector::FlowDissectorLink::Id = aya::programs::flow_dissector::FlowDissectorLinkId
 pub fn aya::programs::flow_dissector::FlowDissectorLink::detach(self) -> core::result::Result<(), Self::Error>
 pub fn aya::programs::flow_dissector::FlowDissectorLink::id(&self) -> Self::Id
+impl aya::programs::links::Link for aya::programs::fmod_ret::FModRetLink
+pub type aya::programs::fmod_ret::FModRetLink::Error = aya::programs::ProgramError
+pub type aya::programs::fmod_ret::FModRetLink::Id = aya::programs::fmod_ret::FModRetLinkId
+pub fn aya::programs::fmod_ret::FModRetLink::detach(self) -> core::result::Result<(), Self::Error>
+pub fn aya::programs::fmod_ret::FModRetLink::id(&self) -> Self::Id
 impl aya::programs::links::Link for aya::programs::iter::IterLink
 pub type aya::programs::iter::IterLink::Error = aya::programs::ProgramError
 pub type aya::programs::iter::IterLink::Id = aya::programs::iter::IterLinkId
@@ -7895,6 +8047,10 @@ impl aya::programs::TestRun for aya::programs::flow_dissector::FlowDissector
 pub type aya::programs::flow_dissector::FlowDissector::Opts<'a> = aya::programs::TestRunOptions<'a>
 pub type aya::programs::flow_dissector::FlowDissector::Result = aya::programs::TestRunResult
 pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::fmod_ret::FModRet
+pub type aya::programs::fmod_ret::FModRet::Opts<'a> = ()
+pub type aya::programs::fmod_ret::FModRet::Result = ()
+pub fn aya::programs::fmod_ret::FModRet::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::raw_trace_point::RawTracePoint
 pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions
 pub type aya::programs::raw_trace_point::RawTracePoint::Result = aya::programs::RawTracePointTestRunResult
@@ -8426,6 +8582,10 @@ impl aya::programs::TestRun for aya::programs::flow_dissector::FlowDissector
 pub type aya::programs::flow_dissector::FlowDissector::Opts<'a> = aya::programs::TestRunOptions<'a>
 pub type aya::programs::flow_dissector::FlowDissector::Result = aya::programs::TestRunResult
 pub fn aya::programs::flow_dissector::FlowDissector::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::fmod_ret::FModRet
+pub type aya::programs::fmod_ret::FModRet::Opts<'a> = ()
+pub type aya::programs::fmod_ret::FModRet::Result = ()
+pub fn aya::programs::fmod_ret::FModRet::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::raw_trace_point::RawTracePoint
 pub type aya::programs::raw_trace_point::RawTracePoint::Opts<'a> = aya::programs::RawTracePointRunOptions
 pub type aya::programs::raw_trace_point::RawTracePoint::Result = aya::programs::RawTracePointTestRunResult
