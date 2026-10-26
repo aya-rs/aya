@@ -70,9 +70,8 @@ fn hash_basic(
             bpf.map_mut(map_name).unwrap().try_into().unwrap();
         // Distinct value per CPU exercises per-CPU divergence: the
         // kernel must keep slots independent across CPUs.
-        let expected_per_cpu: Vec<u64> = (0..nr_cpus().unwrap())
-            .map(|i| EXPECTED + i as u64)
-            .collect();
+        let count = u64::from(nr_cpus().unwrap().get());
+        let expected_per_cpu: Vec<u64> = (EXPECTED..EXPECTED + count).collect();
         map.insert(
             &0u32,
             PerCpuValues::try_from(expected_per_cpu.clone()).unwrap(),
@@ -102,7 +101,7 @@ fn hash_basic(
     let result: Array<_, u64> = bpf.map(result_map).unwrap().try_into().unwrap();
     let observed = result.get(&0, 0).unwrap();
     if per_cpu {
-        let range = EXPECTED..EXPECTED + nr_cpus().unwrap() as u64;
+        let range = EXPECTED..EXPECTED + u64::from(nr_cpus().unwrap().get());
         assert!(
             range.contains(&observed),
             "per-CPU read {observed} not in {range:?}",
