@@ -68,7 +68,7 @@ use crate::{
         SyscallError, bpf_create_map, bpf_get_object, bpf_map_freeze, bpf_map_get_fd_by_id,
         bpf_map_get_next_key, bpf_map_update_elem_ptr, bpf_pin_object,
     },
-    util::nr_cpus,
+    util::{nr_cpus, possible_cpu_count},
 };
 
 pub mod array;
@@ -859,8 +859,8 @@ impl MapData {
         if obj.map_type() == bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32
             && obj.max_entries() == 0
         {
-            let nr_cpus = nr_cpus().map_err(|(_, error)| MapError::IoError(error))? as u32;
-            obj.set_max_entries(nr_cpus);
+            let nr_cpus = possible_cpu_count().map_err(|(_, error)| MapError::IoError(error))?;
+            obj.set_max_entries(nr_cpus.get());
         }
 
         let fd = bpf_create_map(&c_name, &obj, btf_fd, inner_map_fd).map_err(|io_error| {
@@ -1375,7 +1375,7 @@ mod tests {
         });
 
         // Create with max_entries = 0 is set to nr_cpus
-        let nr_cpus = nr_cpus().unwrap() as u32;
+        let nr_cpus = possible_cpu_count().unwrap().get();
         assert_matches!(
             MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
                 bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,
