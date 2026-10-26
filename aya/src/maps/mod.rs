@@ -859,8 +859,8 @@ impl MapData {
         if obj.map_type() == bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY as u32
             && obj.max_entries() == 0
         {
-            let nr_cpus = nr_cpus().map_err(|(_, error)| MapError::IoError(error))? as u32;
-            obj.set_max_entries(nr_cpus);
+            let nr_cpus = nr_cpus().map_err(|(_, error)| MapError::IoError(error))?;
+            obj.set_max_entries(nr_cpus.get());
         }
 
         let fd = bpf_create_map(&c_name, &obj, btf_fd, inner_map_fd).map_err(|io_error| {
@@ -1164,7 +1164,7 @@ impl PerCpuKernelMem {
 /// use aya::util::nr_cpus;
 ///
 /// let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
-/// let values = PerCpuValues::try_from(vec![42u32; nr_cpus])?;
+/// let values = PerCpuValues::try_from(vec![42u32; nr_cpus.get() as usize])?;
 /// # Ok::<(), Error>(())
 /// ```
 #[derive(Debug)]
@@ -1177,7 +1177,7 @@ impl<T: Pod> TryFrom<Vec<T>> for PerCpuValues<T> {
 
     fn try_from(values: Vec<T>) -> Result<Self, Self::Error> {
         let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
-        if values.len() != nr_cpus {
+        if values.len() != nr_cpus.get() as usize {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
                 format!("not enough values ({}), nr_cpus: {}", values.len(), nr_cpus),
@@ -1194,7 +1194,7 @@ impl<T: Pod> PerCpuValues<T> {
         let value_size = size_of::<T>().next_multiple_of(8);
         let nr_cpus = nr_cpus().map_err(|(_, error)| error)?;
         Ok(PerCpuKernelMem {
-            bytes: vec![0u8; nr_cpus * value_size],
+            bytes: vec![0u8; nr_cpus.get() as usize * value_size],
         })
     }
 
@@ -1375,7 +1375,7 @@ mod tests {
         });
 
         // Create with max_entries = 0 is set to nr_cpus
-        let nr_cpus = nr_cpus().unwrap() as u32;
+        let nr_cpus = nr_cpus().unwrap().get();
         assert_matches!(
             MapData::create(test_utils::new_obj_map_with_max_entries::<u32>(
                 bpf_map_type::BPF_MAP_TYPE_PERF_EVENT_ARRAY,

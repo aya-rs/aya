@@ -7,7 +7,7 @@ use std::{
     fs::{self, File},
     io::{self, BufRead, BufReader},
     mem,
-    num::ParseIntError,
+    num::{NonZeroU32, NonZeroUsize, ParseIntError},
     os::fd::{AsFd as _, BorrowedFd},
     path::Path,
     ptr, slice,
@@ -225,28 +225,35 @@ pub fn online_cpus() -> Result<Vec<u32>, (&'static str, io::Error)> {
     read_cpu_ranges(ONLINE_CPUS)
 }
 
-/// Get the number of possible cpus.
+/// Returns the number of possible CPUs.
 ///
 /// See `/sys/devices/system/cpu/possible`.
-pub fn nr_cpus() -> Result<usize, (&'static str, io::Error)> {
+pub fn nr_cpus() -> Result<NonZeroU32, (&'static str, io::Error)> {
     const POSSIBLE_CPUS: &str = "/sys/devices/system/cpu/possible";
 
     thread_local! {
         // TODO(https://github.com/rust-lang/rust/issues/109737): Use
         // `std::cell::OnceCell` when `get_or_try_init` is stabilized.
-        static CACHE: once_cell::unsync::OnceCell<usize> = const { once_cell::unsync::OnceCell::new() };
+        static CACHE: once_cell::unsync::OnceCell<NonZeroU32> = const { once_cell::unsync::OnceCell::new() };
     }
     CACHE.with(|cell| {
         // TODO(https://github.com/rust-lang/rust/issues/109737): Replace `once_cell` with
         // `std::cell::OnceCell`.
         cell.get_or_try_init(|| {
             // error: unsupported operation: `open` not available when isolation is enabled
-            if cfg!(miri) {
+            let cpus = if cfg!(miri) {
                 parse_cpu_ranges("0-3").map_err(|error| (POSSIBLE_CPUS, error))
             } else {
                 read_cpu_ranges(POSSIBLE_CPUS)
-            }
-            .map(|cpus| cpus.len())
+            }?;
+            NonZeroUsize::try_from(cpus.len())
+                .and_then(NonZeroU32::try_from)
+                .map_err(|err| {
+                    (
+                        POSSIBLE_CPUS,
+                        io::Error::new(io::ErrorKind::InvalidData, err),
+                    )
+                })
         })
         .copied()
     })
@@ -276,6 +283,9 @@ fn parse_cpu_ranges(data: &str) -> Result<Vec<u32>, io::Error> {
                     end?
                 }
             };
+            if start > end {
+                return Err(range);
+            }
             Ok(start..=end)
         })
         .try_fold(Vec::new(), |mut cpus, range| {
@@ -515,6 +525,7 @@ impl Drop for MMap {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
+    use rstest::rstest;
 
     use super::*;
 
@@ -536,26 +547,24 @@ mod tests {
         });
     }
 
-    #[test]
-    fn test_parse_online_cpus() {
-        assert_eq!(parse_cpu_ranges("0").unwrap(), vec![0]);
-        assert_eq!(parse_cpu_ranges("0,1").unwrap(), vec![0, 1]);
-        assert_eq!(parse_cpu_ranges("0,1,2").unwrap(), vec![0, 1, 2]);
+    #[rstest]
+    #[case::single("0", &[0])]
+    #[case::pair("0,1", &[0, 1])]
+    #[case::list("0,1,2", &[0, 1, 2])]
+    #[case::range("0-7", &[0, 1, 2, 3, 4, 5, 6, 7])]
+    #[case::adjacent_ranges("0-3,4-7", &[0, 1, 2, 3, 4, 5, 6, 7])]
+    #[case::range_and_list("0-5,6,7", &[0, 1, 2, 3, 4, 5, 6, 7])]
+    #[case::sparse("0,2-3", &[0, 2, 3])]
+    fn test_parse_cpu_ranges(#[case] data: &str, #[case] expected: &[u32]) {
+        assert_eq!(parse_cpu_ranges(data).unwrap(), expected);
+    }
+
+    #[rstest]
+    fn test_parse_invalid_cpu_ranges(#[values("", "0-1,2-", "foo", "3-1", "0,3-1")] data: &str) {
         assert_eq!(
-            parse_cpu_ranges("0-7").unwrap(),
-            (0..=7).collect::<Vec<_>>()
+            parse_cpu_ranges(data).unwrap_err().kind(),
+            io::ErrorKind::InvalidData
         );
-        assert_eq!(
-            parse_cpu_ranges("0-3,4-7").unwrap(),
-            (0..=7).collect::<Vec<_>>()
-        );
-        assert_eq!(
-            parse_cpu_ranges("0-5,6,7").unwrap(),
-            (0..=7).collect::<Vec<_>>()
-        );
-        assert_matches!(parse_cpu_ranges(""), Err(_));
-        assert_matches!(parse_cpu_ranges("0-1,2-"), Err(_));
-        assert_matches!(parse_cpu_ranges("foo"), Err(_));
     }
 
     #[test]
