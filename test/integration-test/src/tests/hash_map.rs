@@ -1,3 +1,5 @@
+use std::num::NonZeroU64;
+
 use aya::{
     EbpfLoader,
     maps::{Array, HashMap, MapType, PerCpuHashMap, PerCpuValues},
@@ -62,17 +64,19 @@ fn hash_basic(
         eprintln!("skipping test - {map_type:?} not supported");
         return;
     }
-    let per_cpu = matches!(map_type, MapType::PerCpuHash | MapType::LruPerCpuHash);
     let mut bpf = EbpfLoader::new().load(crate::HASH_MAP).unwrap();
+    let per_cpu_range =
+        matches!(map_type, MapType::PerCpuHash | MapType::LruPerCpuHash).then(|| {
+            let count = NonZeroU64::from(nr_cpus().unwrap());
+            EXPECTED..EXPECTED + count.get()
+        });
 
-    if per_cpu {
+    if let Some(range) = &per_cpu_range {
         let mut map: PerCpuHashMap<_, u32, u64> =
             bpf.map_mut(map_name).unwrap().try_into().unwrap();
         // Distinct value per CPU exercises per-CPU divergence: the
         // kernel must keep slots independent across CPUs.
-        let expected_per_cpu: Vec<u64> = (0..nr_cpus().unwrap())
-            .map(|i| EXPECTED + i as u64)
-            .collect();
+        let expected_per_cpu: Vec<u64> = range.clone().collect();
         map.insert(
             &0u32,
             PerCpuValues::try_from(expected_per_cpu.clone()).unwrap(),
@@ -101,8 +105,7 @@ fn hash_basic(
 
     let result: Array<_, u64> = bpf.map(result_map).unwrap().try_into().unwrap();
     let observed = result.get(&0, 0).unwrap();
-    if per_cpu {
-        let range = EXPECTED..EXPECTED + nr_cpus().unwrap() as u64;
+    if let Some(range) = per_cpu_range {
         assert!(
             range.contains(&observed),
             "per-CPU read {observed} not in {range:?}",
