@@ -89,6 +89,7 @@ pub struct EbpfLoader<'a> {
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
     allow_unsupported_maps: bool,
+    allow_btf_reloc_errors: bool,
 }
 
 #[derive(Debug)]
@@ -157,6 +158,7 @@ impl<'a> EbpfLoader<'a> {
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
             allow_unsupported_maps: false,
+            allow_btf_reloc_errors: false,
         }
     }
 
@@ -249,6 +251,13 @@ impl<'a> EbpfLoader<'a> {
     ///
     pub const fn allow_unsupported_maps(&mut self) -> &mut Self {
         self.allow_unsupported_maps = true;
+        self
+    }
+
+    /// Allows programs containing CO-RE relocations to load even when the
+    /// target BTF could not be loaded.
+    pub const fn allow_btf_reloc_errors(&mut self) -> &mut Self {
+        self.allow_btf_reloc_errors = true;
         self
     }
 
@@ -582,7 +591,9 @@ impl<'a> EbpfLoader<'a> {
                 Err(err) => {
                     // CO-RE relocations and strong typed ksyms cannot be resolved without target
                     // BTF, so preserve the original loading error.
-                    if obj.has_btf_relocations() || obj.has_strong_typed_ksyms() {
+                    if !self.allow_btf_reloc_errors && obj.has_btf_relocations()
+                        || obj.has_strong_typed_ksyms()
+                    {
                         return Err(err);
                     }
 
