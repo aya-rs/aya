@@ -5,7 +5,10 @@
   * [Find an Issue](#find-an-issue)
   * [Ask for Help](#ask-for-help)
   * [Pull Request Lifecycle](#pull-request-lifecycle)
+  * [Logical Grouping of Commits](#logical-grouping-of-commits)
+  * [Commit message guidelines](#commit-message-guidelines)
   * [Pull Request Checklist](#pull-request-checklist)
+  * [Testing Expectations](#testing-expectations)
   * [Workflow Dependencies](#workflow-dependencies)
   * [Source References](#source-references)
   * [Documentation Style](#documentation-style)
@@ -87,40 +90,66 @@ label will be automatically removed.
 
 ## Logical Grouping of Commits
 
-It is a recommended best practice to keep your changes as logically grouped as
-possible within individual commits. If while you're developing you prefer doing
-a number of commits that are "checkpoints" and don't represent a single logical
-change, please squash those together before asking for a review.
-When addressing review comments, please perform an interactive rebase and edit
-commits directly rather than adding new commits with messages like
-"Fix review comments".
+Prefer small, focused pull requests that can be reviewed and merged independently.
+Split changes that do not depend on one another into separate PRs.
+
+Keep each commit focused on one logical change. For work with multiple distinct
+steps, prefer an ordered series of reviewable commits, with prerequisites before
+the changes that use them. A simple change can remain a single commit. Each
+commit should build, pass the tests relevant to its change, and pass the public
+API check (`cargo xtask public-api --target x86_64-unknown-linux-gnu`). Use this
+target to match the checked-in fixtures. Do not rely on a later commit to make
+an earlier one work.
+
+Include tests for a behavior change or bug fix in the commit that introduces it,
+together with any required caller and documentation updates. Separate test
+commits can be useful for shared test infrastructure, coverage of existing
+behavior, or a review split with a clear reason.
+
+Present API changes in their intended final form in the submitted series. When
+a new API's name, signature, or ownership model changes during review, revise
+earlier commits rather than leaving temporary designs in the series. If this is
+difficult, split the work into smaller PRs with clear, stable API boundaries.
+Retain staged migrations of existing APIs only when each step has a clear
+compatibility or review benefit.
+
+Before requesting review, use an interactive rebase to organize checkpoint
+commits into logical changes. Fold subsequent review fixes into the relevant
+commits rather than adding commits such as "Fix review comments".
 
 ## Commit message guidelines
 
-A good commit message should describe what changed and why.
+A good commit message should describe what changed and why. Keep relevant
+context in the commit message itself, rather than only in the PR description.
 
-1. The first line should:
-    * Contain a short description of the change (preferably 50 characters or less,
-      and no more than 72 characters)
+See [How to Write a Git Commit Message](https://cbea.ms/git-commit/) for
+background. The Aya-specific rules below take precedence; unlike the article,
+Aya uses lowercase subjects.
+
+1. The first line must:
+    * Briefly describe the change in at most 50 characters, including the prefix
     * Be entirely in lowercase with the exception of proper nouns, acronyms, and
       the words that refer to code, like function/variable names
-    * Be prefixed with the name of the sub crate being changed
+    * Be prefixed with the name of the affected crate or area, followed by a
+      colon and a space
 
     Examples:
     * `aya: handle reordered functions`
     * `aya-bpf: SkSkbContext: add ::l3_csum_replace`
 
 1. Keep the second line blank.
-1. Wrap all other lines at 72 columns (except for long URLs).
-1. If your patch fixes an open issue, you can add a reference to it at the end
-   of the log. Use the `Fixes: #` prefix and the issue number. For other
-   references use `Refs: #`. `Refs` may include multiple issues, separated by a
-   comma.
+1. Keep each body line at or below 72 columns (except for long URLs).
+1. If your patch fully resolves an open issue, you can add an issue-closing
+   reference at the end of the commit message. Use `Fixes #1337.` or
+   `Closes #1337.` for closing references, and `Refs #1234.` for related issues
+   that are not fully resolved. Omit the colon and end each reference with a
+   period. Multiple related issues may be listed together, separated by commas.
 
    Examples:
 
-   * `Fixes: #1337`
-   * `Refs: #1234`
+   * `Fixes #1337.`
+   * `Closes #1337.`
+   * `Refs #1234.`
 
 Sample complete commit message:
 
@@ -136,8 +165,8 @@ please do proper word-wrap and keep columns shorter than about
 72 characters or so. That way, `git log` will show things
 nicely even when it is indented.
 
-Fixes: #1337
-Refs: #453, #154
+Fixes #1337.
+Refs #453, #154.
 ```
 
 ## Pull Request Checklist
@@ -148,8 +177,32 @@ passes these checks, but we also have more criteria than just that before we can
 accept and merge it. Theses requirements are described in the
 [Pull Request Template].
 
-It is recommended that you run the integration tests locally before submitting
-your Pull Request. Please see [Aya Integration Tests] for more information.
+## Testing Expectations
+
+Tests should exercise observable Aya behavior and fail for plausible broken
+implementations. For a bug fix, prefer a regression test that distinguishes the
+fix from the previous behavior. Test shared behavior in the module that owns it;
+add caller-specific cases when they cover a distinct contract or failure mode.
+
+Use unit tests for local contracts, such as argument translation or error
+mapping. When the claim depends on kernel behavior, use integration coverage
+that observes the result, such as program execution or actual resource cleanup.
+A mock that checks parameters or call order alone does not establish that the
+kernel operation worked.
+
+Cover defined behavior for both supported and unsupported features. When an API
+specifies the unsupported result, assert that result instead of returning early.
+Tests may skip when the environment genuinely cannot exercise their contract;
+make the reason clear.
+
+Prefer `rstest` for parameterized tests; tests that do not need parameterization
+can use their usual test attributes. When combining `rstest` with `test_log` or
+`tokio`, use explicit `#[test_attr(...)]` wrappers to select the intended test
+harness rather than relying on implicit test-attribute detection.
+
+Run the relevant integration tests locally before submitting your pull request
+when your environment supports them. See [Aya Integration Tests] for
+instructions.
 
 ## Workflow Dependencies
 
@@ -172,6 +225,8 @@ to refresh the commits behind unchanged references.
 When citing another project's source code to justify a claim or explain
 behavior, use a GitHub permalink pinned to a commit. Abbreviate the commit
 SHA to nine hexadecimal digits.
+
+Use full URLs for cross-repository references in commit messages.
 
 ## Documentation Style
 
