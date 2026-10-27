@@ -17,6 +17,17 @@
   ```
 
 - Follow [CONTRIBUTING.md](CONTRIBUTING.md).
+- Test observable behavior at the layer that owns it; see
+  [testing expectations](CONTRIBUTING.md#testing-expectations).
+- Commit preparation:
+  - Follow the [commit message](CONTRIBUTING.md#commit-message-guidelines) and
+    [grouping](CONTRIBUTING.md#logical-grouping-of-commits) guidelines.
+  - Use `<crate-or-area>: <summary>` with Aya's lowercase convention; subject at
+    most 50 characters total, body lines at most 72 columns (except long URLs).
+  - Use `Fixes #1234.` / `Closes #1234.` for closing, `Refs #1234.` for references.
+  - Keep PRs small and commits coherent, with their tests and documentation.
+    Fold review fixes into the original commits and keep API changes consistent.
+  - Each commit should build and pass relevant tests and `cargo xtask public-api`.
 - Testing (if local machine is not Linux):
 
   ```sh
