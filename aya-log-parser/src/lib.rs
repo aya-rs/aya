@@ -65,6 +65,7 @@ fn parse_param(input: &str) -> Result<Parameter, String> {
             "mac" => DisplayHint::LowerMac,
             "MAC" => DisplayHint::UpperMac,
             "p" => DisplayHint::Pointer,
+            "s" => DisplayHint::Str,
             input => return Err(format!("unknown display hint: {input:?}")),
         }
     } else {
@@ -167,5 +168,22 @@ mod test {
         assert_matches!(parse("foo { bar"), Err(_));
         assert_matches!(parse("foo } bar"), Err(_));
         assert_matches!(parse("foo { bar }"), Err(_));
+    }
+
+    #[expect(
+        clippy::literal_string_with_formatting_args,
+        reason = "that's the point"
+    )]
+    #[test]
+    fn test_parse_str_hint() {
+        assert_eq!(
+            parse("comm={:s}"),
+            Ok(vec![
+                Fragment::Literal("comm=".into()),
+                Fragment::Parameter(Parameter {
+                    hint: DisplayHint::Str
+                }),
+            ])
+        );
     }
 }
