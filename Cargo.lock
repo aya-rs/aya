@@ -149,7 +149,7 @@ dependencies = [
 
 [[package]]
 name = "aya-ebpf-macros"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "aya-ebpf",
  "proc-macro2",
