@@ -741,6 +741,7 @@ dependencies = [
 name = "integration-ebpf"
 version = "0.1.0"
 dependencies = [
+ "aya-build",
  "aya-ebpf",
  "aya-log-ebpf",
  "ebpf-panic",
