@@ -14,7 +14,7 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-aya = { path = "../../aya", version = "^0.15.0", default-features = false, features = [
+aya = { path = "../../aya", version = "^0.16.0", default-features = false, features = [
     "test-helpers",
 ] }
 
