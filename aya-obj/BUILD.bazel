@@ -1,5 +1,22 @@
+load("@bazel_lib//lib:write_source_files.bzl", "write_source_files")
+load("//bazel:codegen_architectures.bzl", "CODEGEN_ARCHITECTURES")
 load("//bazel:rust.bzl", "aya_rust_crate")
+
+exports_files(["include/linux_wrapper.h"])
 
 aya_rust_crate(
     name = "aya-obj",
+)
+
+write_source_files(
+    name = "update_bindings",
+    files = {
+        "src/generated/linux_bindings_%s.rs" % arch: "//xtask:generated/linux_bindings_%s.rs" % arch
+        for arch in CODEGEN_ARCHITECTURES
+    } | {
+        "src/generated/btf_internal_bindings.rs": "//xtask:generated/x86_64/btf_internal_bindings.rs",
+    },
+    suggested_update_target = "//xtask:codegen",
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
 )

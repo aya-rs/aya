@@ -16,7 +16,6 @@ workflows:
         - 'actions/checkout@v7'
         - 'dtolnay/rust-toolchain@master'
         - 'peter-evans/create-pull-request@v8'
-        - 'swatinem/rust-cache@v2'
     '.github/workflows/rust-toolchains.yml':
         - 'actions/checkout@v7'
 dependencies:

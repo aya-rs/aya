@@ -10,7 +10,7 @@ use anyhow::{Context as _, Ok, Result, anyhow};
 use cargo_metadata::{Metadata, MetadataCommand, Package, Target, TargetKind};
 // Keep this build dependency in Cargo's graph to invalidate eBPF artifacts after source changes.
 use integration_ebpf as _;
-use xtask::{AYA_BUILD_INTEGRATION_BPF, LIBBPF_DIR, exec, install_libbpf_headers_cmd};
+use xtask::{AYA_BUILD_INTEGRATION_BPF, exec};
 
 /// This file, along with the xtask crate, allows analysis tools such as `cargo check`, `cargo
 /// clippy`, and even `cargo build` to work as users expect. Prior to this file's existence, this
@@ -49,16 +49,21 @@ fn main() -> Result<()> {
         .transpose()?
         .unwrap_or_default();
 
+    let mut metadata = MetadataCommand::new();
+    if build_integration_bpf {
+        const TARGET: &str = "TARGET";
+        let target = env::var(TARGET).with_context(|| format!("{TARGET} not set"))?;
+        metadata.other_options(vec!["--locked".into(), "--filter-platform".into(), target]);
+    } else {
+        metadata.no_deps();
+    }
     let Metadata {
         packages,
         workspace_root,
         ..
-    } = MetadataCommand::new()
-        .no_deps()
-        .exec()
-        .context("MetadataCommand::exec")?;
+    } = metadata.exec().context("MetadataCommand::exec")?;
     let integration_ebpf_package = packages
-        .into_iter()
+        .iter()
         .find(|Package { name, .. }| name.as_str() == "integration-ebpf")
         .ok_or_else(|| anyhow!("integration-ebpf package not found"))?;
 
@@ -119,13 +124,31 @@ fn main() -> Result<()> {
             return Err(anyhow!("unsupported endian={}", endian.display()));
         };
 
-        let libbpf_dir = workspace_root.join(LIBBPF_DIR);
+        let Package { manifest_path, .. } = packages
+            .iter()
+            .find(|Package { name, .. }| name.as_str() == "libbpf-sys")
+            .ok_or_else(|| anyhow!("libbpf-sys package not found"))?;
+        let libbpf_sys_dir = manifest_path
+            .parent()
+            .ok_or_else(|| anyhow!("no parent for {manifest_path}"))?;
+        let libbpf_dir = libbpf_sys_dir.join("libbpf");
+        println!(
+            "cargo::rerun-if-changed={}",
+            workspace_root.join("Cargo.lock")
+        );
         println!("cargo::rerun-if-changed={libbpf_dir}");
 
         let libbpf_headers_dir = out_dir.join("libbpf_headers");
-        let mut cmd = install_libbpf_headers_cmd(&libbpf_dir, &libbpf_headers_dir);
-        cmd.stdout(Stdio::null());
-        exec(&mut cmd)?;
+        let mut includedir = OsString::from("INCLUDEDIR=");
+        includedir.push(libbpf_headers_dir.as_os_str());
+        exec(
+            Command::new("make")
+                .arg("-C")
+                .arg(libbpf_dir.join("src"))
+                .arg(includedir)
+                .arg("install_headers")
+                .stdout(Stdio::null()),
+        )?;
 
         let bpf_dir = manifest_dir.join("bpf");
 
@@ -148,8 +171,8 @@ fn main() -> Result<()> {
         //
         // However in our tests we do not make use of kernel data structures, and so any vmlinux.h
         // which defines the constants we need (e.g. `__u8`, `__u64`, `BPF_MAP_TYPE_ARRAY`,
-        // `BPF_ANY`, `XDP_PASS`, `XDP_DROP`, etc.) will suffice. Since we already have a libbpf
-        // submodule which happens to include such a file, we use it.
+        // `BPF_ANY`, `XDP_PASS`, `XDP_DROP`, etc.) will suffice. The locked libbpf-sys
+        // source already includes such a file.
         let libbpf_vmlinux_dir = libbpf_dir.join(".github/actions/build-selftests");
 
         let clang = || {
