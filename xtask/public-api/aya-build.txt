@@ -17,6 +17,7 @@ pub aya_build::Package::features: &'a [&'a str]
 pub aya_build::Package::name: &'a str
 pub aya_build::Package::no_default_features: bool
 pub aya_build::Package::root_dir: &'a str
+pub aya_build::Package::rustflags: &'a [&'a str]
 impl<'a> core::default::Default for aya_build::Package<'a>
 pub fn aya_build::Package<'a>::default() -> Self
 impl<'a> core::marker::Freeze for aya_build::Package<'a>

@@ -751,6 +751,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "integration-ebpf-jumptable"
+version = "0.1.0"
+dependencies = [
+ "aya-ebpf",
+ "ebpf-panic",
+ "which",
+ "xtask",
+]
+
+[[package]]
 name = "integration-test"
 version = "0.1.0"
 dependencies = [
@@ -765,6 +775,7 @@ dependencies = [
  "futures",
  "integration-common",
  "integration-ebpf",
+ "integration-ebpf-jumptable",
  "libbpf-rs",
  "libc",
  "log",
