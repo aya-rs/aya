@@ -7,7 +7,7 @@ workflows:
         - 'actions/cache@v6'
         - 'actions/checkout@v7'
         - 'actions/upload-artifact@v7'
-        - 'davidanson/markdownlint-cli2-action@v24'
+        - 'davidanson/markdownlint-cli2-action@v25'
         - 'dtolnay/rust-toolchain@master'
         - 'swatinem/rust-cache@v2'
         - 'taiki-e/install-action@v2'
@@ -35,9 +35,9 @@ dependencies:
         commit: 'sha1-cf430e030ddbb5b0abf93d22962f4752f3646cd9'
         owner_id: 44036562
         repo_id: 192625955
-    'davidanson/markdownlint-cli2-action@v24':
-        ref: 'v24'
-        commit: 'sha1-21c1be1b93ad9ed58fa840aacc3f279cde2a72ff'
+    'davidanson/markdownlint-cli2-action@v25':
+        ref: 'v25'
+        commit: 'sha1-696eb3f2509270d7b882d2aa68347bc676e7af34'
         owner_id: 1828270
         repo_id: 329203602
     'dtolnay/rust-toolchain@master':
