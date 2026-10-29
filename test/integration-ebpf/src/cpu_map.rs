@@ -2,7 +2,7 @@
 #![no_main]
 
 use aya_ebpf::{
-    bindings::xdp_action,
+    bindings::{bpf_map_def, bpf_map_type, xdp_action},
     btf_maps::CpuMap as BtfCpuMap,
     macros::{btf_map, map, xdp},
     maps::{Array, CpuMap},
@@ -13,6 +13,18 @@ extern crate ebpf_panic;
 
 #[map]
 static CPUS: CpuMap = CpuMap::with_max_entries(1, 0);
+
+/// Explicit 4-byte `CpuMap`: `value_size` = 4, no prog-id slot.
+#[map]
+static CPUS_4B: bpf_map_def = bpf_map_def {
+    type_: bpf_map_type::BPF_MAP_TYPE_CPUMAP,
+    key_size: 4,
+    value_size: 4,
+    max_entries: 1,
+    map_flags: 0,
+    id: 0,
+    pinning: 0,
+};
 
 #[btf_map]
 static CPUS_BTF: BtfCpuMap<1> = BtfCpuMap::new();
