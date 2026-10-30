@@ -51,7 +51,9 @@ jobs:
           TOOLCHAINS: ${{ needs.resolve.outputs.rust-toolchains }}
         run: python3 -B scripts/rust-toolchain-pins.py update "$TOOLCHAINS"
 
-      # Keep the lockfile synchronized with the native toolchain declarations.
+      # Refresh for toolchain changes and for Cargo updates merged to main.
+      # Cargo-only Renovate PRs don't refresh the crate facts in MODULE.bazel.lock:
+      # https://github.com/renovatebot/renovate/discussions/47308#discussioncomment-19148695
       - name: Update the Bazel lockfile
         run: bazel mod deps --lockfile_mode=update
 
