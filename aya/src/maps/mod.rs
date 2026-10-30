@@ -914,7 +914,7 @@ impl MapData {
 
     pub(crate) fn create_pinned_by_name<P: AsRef<Path>>(
         path: P,
-        obj: aya_obj::Map,
+        mut obj: aya_obj::Map,
         name: &str,
         btf_fd: Option<BorrowedFd<'_>>,
         inner_map_obj: Option<aya_obj::Map>,
@@ -953,10 +953,19 @@ impl MapData {
                     // the kernel round it without requiring access to CPU sysfs.
                     max_entries = lru_max_entries(max_entries, info.max_entries, nr_cpus)?;
                 }
+                // The loader sizes the values of CPU and device maps from probed kernel
+                // features, which don't tell how a map created elsewhere is laid out, e.g.
+                // when probing through a BPF token that doesn't delegate the map type. The
+                // map types derive program support from the value size, so reuse the
+                // pinned map's.
+                bpf_map_type::BPF_MAP_TYPE_CPUMAP => {
+                    obj.set_value_size(info.value_size);
+                }
                 bpf_map_type::BPF_MAP_TYPE_DEVMAP | bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => {
                     // Newer kernels add this flag when creating a device map.
                     // https://github.com/torvalds/linux/blob/e8f897f4a/kernel/bpf/devmap.c#L127
                     map_flags |= info.map_flags & BPF_F_RDONLY_PROG;
+                    obj.set_value_size(info.value_size);
                 }
                 _ => {}
             }
@@ -1497,6 +1506,22 @@ mod tests {
         );
         assert_eq!(map.obj.data(), &DATA);
         assert_eq!(map.obj.map_flags(), flags);
+    }
+
+    #[rstest]
+    #[case::cpumap(bpf_map_type::BPF_MAP_TYPE_CPUMAP)]
+    #[case::devmap(bpf_map_type::BPF_MAP_TYPE_DEVMAP)]
+    #[case::devmap_hash(bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH)]
+    fn test_reuse_pinned_map_value_size(#[case] map_type: bpf_map_type) {
+        // The object was sized without program ids, but the pinned map has them.
+        mock_pinned_map(bpf_map_info {
+            type_: map_type as u32,
+            value_size: 8,
+            ..pinned_map_info()
+        });
+        let obj = aya_obj::Map::new_from_params(map_type as u32, 4, 4, 1024, 0);
+        let map = MapData::create_pinned_by_name("/pin/foo", obj, "foo", None, None).unwrap();
+        assert_eq!(map.obj.value_size(), 8);
     }
 
     #[rstest]
