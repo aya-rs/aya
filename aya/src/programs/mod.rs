@@ -52,6 +52,7 @@ pub mod extension;
 pub mod fentry;
 pub mod fexit;
 pub mod flow_dissector;
+pub mod fmod_ret;
 pub mod iter;
 pub mod kprobe;
 pub mod links;
@@ -107,6 +108,7 @@ pub use crate::programs::{
     fentry::FEntry,
     fexit::FExit,
     flow_dissector::FlowDissector,
+    fmod_ret::FModRet,
     iter::Iter,
     kprobe::{KProbe, KProbeError},
     links::{CgroupAttachMode, Link, LinkOrder},
@@ -392,6 +394,8 @@ pub enum Program {
     FEntry(FEntry),
     /// A [`FExit`] program
     FExit(FExit),
+    /// A [`FModRet`] program
+    FModRet(FModRet),
     /// A [`FlowDissector`] program
     FlowDissector(FlowDissector),
     /// A [`Extension`] program
@@ -432,14 +436,16 @@ impl Program {
             //
             // - `BPF_TRACE_RAW_TP` (`BtfTracePoint`)
             // - `BTF_TRACE_FENTRY` (`FEntry`)
-            // - `BPF_MODIFY_RETURN` (not supported yet in Aya)
+            // - `BPF_MODIFY_RETURN` (`FModRet`)
             // - `BPF_TRACE_FEXIT` (`FExit`)
             // - `BPF_TRACE_ITER` (`Iter`)
             //
             // https://github.com/torvalds/linux/blob/adc218676/kernel/bpf/syscall.c#L3935-L3940
-            Self::BtfTracePoint(_) | Self::FEntry(_) | Self::FExit(_) | Self::Iter(_) => {
-                ProgramType::Tracing
-            }
+            Self::BtfTracePoint(_)
+            | Self::FEntry(_)
+            | Self::FExit(_)
+            | Self::FModRet(_)
+            | Self::Iter(_) => ProgramType::Tracing,
             Self::Extension(_) => ProgramType::Extension,
             Self::CgroupSockAddr(_) => ProgramType::CgroupSockAddr,
             Self::SkLookup(_) => ProgramType::SkLookup,
@@ -474,6 +480,7 @@ impl Program {
             Self::BtfTracePoint(p) => p.pin(path),
             Self::FEntry(p) => p.pin(path),
             Self::FExit(p) => p.pin(path),
+            Self::FModRet(p) => p.pin(path),
             Self::FlowDissector(p) => p.pin(path),
             Self::Extension(p) => p.pin(path),
             Self::CgroupSockAddr(p) => p.pin(path),
@@ -509,6 +516,7 @@ impl Program {
             Self::BtfTracePoint(mut p) => p.unload(),
             Self::FEntry(mut p) => p.unload(),
             Self::FExit(mut p) => p.unload(),
+            Self::FModRet(mut p) => p.unload(),
             Self::FlowDissector(mut p) => p.unload(),
             Self::Extension(mut p) => p.unload(),
             Self::CgroupSockAddr(mut p) => p.unload(),
@@ -546,6 +554,7 @@ impl Program {
             Self::BtfTracePoint(p) => p.fd(),
             Self::FEntry(p) => p.fd(),
             Self::FExit(p) => p.fd(),
+            Self::FModRet(p) => p.fd(),
             Self::FlowDissector(p) => p.fd(),
             Self::Extension(p) => p.fd(),
             Self::CgroupSockAddr(p) => p.fd(),
@@ -584,6 +593,7 @@ impl Program {
             Self::BtfTracePoint(p) => p.info(),
             Self::FEntry(p) => p.info(),
             Self::FExit(p) => p.info(),
+            Self::FModRet(p) => p.info(),
             Self::FlowDissector(p) => p.info(),
             Self::Extension(p) => p.info(),
             Self::CgroupSockAddr(p) => p.info(),
@@ -929,6 +939,7 @@ impl_program_unload!(
     BtfTracePoint,
     FEntry,
     FExit,
+    FModRet,
     FlowDissector,
     Extension,
     CgroupSockAddr,
@@ -974,6 +985,7 @@ impl_fd!(
     BtfTracePoint,
     FEntry,
     FExit,
+    FModRet,
     FlowDissector,
     Extension,
     CgroupSockAddr,
@@ -1133,8 +1145,8 @@ pub trait TestRun {
     ///
     /// Different program types require different options: skb/XDP programs use
     /// [`TestRunOptions`], raw tracepoint programs use
-    /// [`RawTracePointRunOptions`], and [`FExit`] programs use `()`. See
-    /// [`FExit`] for the tracing-specific test-run semantics.
+    /// [`RawTracePointRunOptions`], and [`FExit`] and [`FModRet`] programs use `()`. See
+    /// [`FExit`] and [`FModRet`] for their tracing-specific test-run semantics.
     type Opts<'a>;
 
     /// The Result type for a single test invocation.
@@ -1154,8 +1166,8 @@ pub trait TestRun {
     /// Returns a [`Self::Result`] containing the program-specific test output.
     ///
     /// For most program types this is [`crate::TestRunResult`]. For
-    /// [`RawTracePoint`] it is [`RawTracePointTestRunResult`]. For [`FExit`]
-    /// it is `()`; see [`FExit`] for what a successful tracing test run means.
+    /// [`RawTracePoint`] it is [`RawTracePointTestRunResult`]. For [`FExit`] and [`FModRet`]
+    /// it is `()`; see those program types for what a successful tracing test run means.
     ///
     /// # Errors
     ///
@@ -1223,6 +1235,15 @@ impl TestRun for FExit {
     type Opts<'a> = ();
     // For fentry/fexit, test-run success only reports that the kernel's fixed
     // synthetic call sequence ran.
+    type Result = ();
+
+    fn test_run(&self, _opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError> {
+        test_run_tracing(&self.data)
+    }
+}
+
+impl TestRun for FModRet {
+    type Opts<'a> = ();
     type Result = ();
 
     fn test_run(&self, _opts: Self::Opts<'_>) -> Result<Self::Result, ProgramError> {
@@ -1329,6 +1350,7 @@ impl_program_pin!(
     BtfTracePoint,
     FEntry,
     FExit,
+    FModRet,
     FlowDissector,
     Extension,
     CgroupSockAddr,
@@ -1371,6 +1393,7 @@ impl_from_pin!(
     BtfTracePoint,
     FEntry,
     FExit,
+    FModRet,
     FlowDissector,
     Extension,
     SkLookup,
@@ -1511,6 +1534,7 @@ impl_from_prog_info!(
     unsafe BtfTracePoint,
     unsafe FEntry,
     unsafe FExit,
+    unsafe FModRet,
     Extension,
     SkLookup,
     SkReuseport attach_type : SkReuseportAttachType,
@@ -1611,6 +1635,7 @@ impl_try_from_program!(
     BtfTracePoint,
     FEntry,
     FExit,
+    FModRet,
     FlowDissector,
     Extension,
     CgroupSockAddr,
@@ -1642,6 +1667,7 @@ impl_info!(
     BtfTracePoint,
     FEntry,
     FExit,
+    FModRet,
     FlowDissector,
     Extension,
     CgroupSockAddr,

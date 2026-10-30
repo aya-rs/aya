@@ -64,6 +64,34 @@ pub mod fexit {
     unsafe impl aya::Pod for TestResult {}
 }
 
+pub mod fmod_ret {
+    pub const RETURN_VALUE_INDEX: u32 = 0;
+    pub const SENDER_TGID_INDEX: u32 = 1;
+    pub const CONTROL_COUNT: u32 = 2;
+
+    pub const MODIFIER_RAN_INDEX: u32 = 0;
+    pub const ARGUMENT_INDEX: u32 = 1;
+    pub const INCOMING_RETURN_INDEX: u32 = 2;
+    pub const FEXIT_RAN_INDEX: u32 = 3;
+    pub const RETURNED_VALUE_INDEX: u32 = 4;
+    pub const SIDE_EFFECT_INDEX: u32 = 5;
+    pub const LONG_MODIFIER_RAN_INDEX: u32 = 6;
+    pub const RESULT_COUNT: u32 = 7;
+
+    pub const TEST_RAN: i32 = 1;
+    pub const NOT_RUN: i32 = i32::MIN;
+    pub const PASS_THROUGH: i32 = 0;
+    pub const OVERRIDE_ERROR: i32 = -1;
+
+    // bpf_prog_test_run_tracing calls bpf_modify_return_test(1, &b), with b = 2.
+    // https://github.com/torvalds/linux/blob/0c3836482/net/bpf/test_run.c#L565-L569
+    // https://github.com/torvalds/linux/blob/0c3836482/net/bpf/test_run.c#L677-L705
+    pub const TARGET_ARGUMENT: i32 = 1;
+    pub const INITIAL_SIDE_EFFECT: i32 = 2;
+    pub const ORIGINAL_SIDE_EFFECT: i32 = 3;
+    pub const ORIGINAL_RETURN: i32 = 4;
+}
+
 pub mod bpf_probe_read {
     pub const RESULT_BUF_LEN: usize = 1024;
 
