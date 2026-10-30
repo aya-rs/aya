@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, HashSet},
     fmt, fs, io, iter,
     num::NonZeroU32,
-    os::fd::{AsFd as _, AsRawFd as _},
+    os::fd::{AsFd, AsRawFd as _, BorrowedFd},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -18,7 +18,7 @@ use log::warn;
 use thiserror::Error;
 
 use crate::{
-    kernel_features::{FEATURES, Feature},
+    kernel_features::{FEATURES, Feature, Features},
     maps::{Map, MapData, MapError},
     programs::{
         BtfTracePoint, CgroupDevice, CgroupSkb, CgroupSock, CgroupSockAddr, CgroupSockopt,
@@ -28,6 +28,7 @@ use crate::{
         UProbe, Xdp, uprobe::AttachMode,
     },
     sys::{bpf_load_btf, retry_with_verifier_logs},
+    token::BpfToken,
     util::{bytes_of, bytes_of_slice, nr_cpus, page_size},
 };
 
@@ -88,6 +89,7 @@ pub struct EbpfLoader<'a> {
     extensions: HashSet<&'a str>,
     verifier_log_level: VerifierLogLevel,
     allow_unsupported_maps: bool,
+    token: Option<BpfToken>,
 }
 
 #[derive(Debug)]
@@ -155,6 +157,7 @@ impl<'a> EbpfLoader<'a> {
             extensions: HashSet::new(),
             verifier_log_level: VerifierLogLevel::default(),
             allow_unsupported_maps: false,
+            token: None,
         }
     }
 
@@ -247,6 +250,38 @@ impl<'a> EbpfLoader<'a> {
     ///
     pub const fn allow_unsupported_maps(&mut self) -> &mut Self {
         self.allow_unsupported_maps = true;
+        self
+    }
+
+    /// Sets the [BPF token](BpfToken) used to load BTF, create maps and load programs.
+    ///
+    /// The token grants the BPF functionality delegated by the bpffs instance it was created
+    /// from, so that the object can be loaded without the corresponding capabilities in the
+    /// initial user namespace. Programs keep a reference to the token so that they can be
+    /// loaded later with [`Program::load`](crate::programs::Program).
+    ///
+    /// Kernel features are probed through the token too, as libbpf does, so the token should
+    /// also delegate what the probes use: the `BPF_BTF_LOAD`, `BPF_MAP_CREATE` and
+    /// `BPF_PROG_LOAD` commands, `BPF_MAP_TYPE_ARRAY` maps, and `BPF_PROG_TYPE_SOCKET_FILTER`
+    /// and `BPF_PROG_TYPE_TRACEPOINT` programs. The probe programs have no expected attach
+    /// type, which the kernel checks as attach type 0, `BPF_CGROUP_INET_INGRESS`. Features
+    /// whose probe isn't delegated are treated as unsupported: for example global variables
+    /// can't be used without socket filters, and without tracepoints calls to
+    /// `bpf_probe_read_kernel` and `bpf_probe_read_user` are replaced with `bpf_probe_read`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use std::fs::File;
+    ///
+    /// use aya::{EbpfLoader, token::BpfToken};
+    ///
+    /// let token = BpfToken::create(File::open("/sys/fs/bpf")?)?;
+    /// let bpf = EbpfLoader::new().token(&token).load_file("file.o")?;
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn token(&mut self, token: &BpfToken) -> &mut Self {
+        self.token = Some(token.clone());
         self
     }
 
@@ -459,16 +494,24 @@ impl<'a> EbpfLoader<'a> {
             verifier_log_level,
             allow_unsupported_maps,
             map_pin_path_by_name,
+            token,
         } = self;
+        let token_fd = token.as_ref().map(AsFd::as_fd);
+        // Without the capabilities of the initial user namespace, kernel features can only be
+        // probed through the token.
+        let token_features;
+        let features = match token.as_ref() {
+            Some(token) => {
+                token_features = Features::with_token(token.clone());
+                &token_features
+            }
+            None => &FEATURES,
+        };
         let mut obj = Object::parse(data)?;
         obj.patch_map_data(globals.clone())?;
 
-        let btf_fd = if let Some(btf) = obj.fixup_and_sanitize_btf(|| {
-            FEATURES
-                .btf()
-                .map(|features| move |feature| features.is_supported(feature))
-        })? {
-            match load_btf(btf.to_bytes(), *verifier_log_level) {
+        let btf_fd = if let Some(btf) = obj.fixup_and_sanitize_btf(|| features.btf())? {
+            match load_btf(btf.to_bytes(), *verifier_log_level, token_fd) {
                 Ok(btf_fd) => Some(Arc::new(btf_fd)),
                 // Only report an error here if the BTF is truly needed, otherwise proceed without.
                 Err(err) => {
@@ -589,7 +632,7 @@ impl<'a> EbpfLoader<'a> {
             if matches!(
                 map_obj.section_kind(),
                 EbpfSectionKind::Bss | EbpfSectionKind::Data | EbpfSectionKind::Rodata
-            ) && !FEATURES.is_supported(Feature::BpfGlobalData)
+            ) && !features.is_supported(Feature::BpfGlobalData)
             {
                 continue;
             }
@@ -639,25 +682,43 @@ impl<'a> EbpfLoader<'a> {
             for (map_obj, map_type) in
                 iter::once((&mut map_obj, map_type)).chain(inner_map.as_mut().map(|(m, t)| (m, *t)))
             {
-                if let Some(value_size) = value_size_override(map_type) {
+                if let Some(value_size) = value_size_override(map_type, features) {
                     map_obj.set_value_size(value_size);
                 }
             }
             let inner_map_obj = inner_map.map(|(m, _)| m);
             let mut map = if let Some(pin_path) = map_pin_path_by_name.get(name.as_str()) {
-                MapData::create_pinned_by_name(pin_path, map_obj, &name, btf_fd, inner_map_obj)?
+                MapData::create_pinned_by_name(
+                    pin_path,
+                    map_obj,
+                    &name,
+                    btf_fd,
+                    inner_map_obj,
+                    token_fd,
+                )?
             } else {
                 match map_obj.pinning() {
                     PinningType::None => {
                         let btf_inner_map;
                         let inner_map_fd = if let Some(inner_map_obj) = inner_map_obj {
-                            btf_inner_map =
-                                MapData::create(inner_map_obj, &format!("{name}.inner"), btf_fd)?;
+                            btf_inner_map = MapData::create_with_inner_map_fd(
+                                inner_map_obj,
+                                &format!("{name}.inner"),
+                                btf_fd,
+                                None,
+                                token_fd,
+                            )?;
                             Some(btf_inner_map.fd().as_fd())
                         } else {
                             None
                         };
-                        MapData::create_with_inner_map_fd(map_obj, &name, btf_fd, inner_map_fd)?
+                        MapData::create_with_inner_map_fd(
+                            map_obj,
+                            &name,
+                            btf_fd,
+                            inner_map_fd,
+                            token_fd,
+                        )?
                     }
                     PinningType::ByName => {
                         // pin maps in /sys/fs/bpf by default to align with libbpf
@@ -667,7 +728,14 @@ impl<'a> EbpfLoader<'a> {
                             .unwrap_or_else(|| Path::new("/sys/fs/bpf"));
                         let path = path.join(&name);
 
-                        MapData::create_pinned_by_name(path, map_obj, &name, btf_fd, inner_map_obj)?
+                        MapData::create_pinned_by_name(
+                            path,
+                            map_obj,
+                            &name,
+                            btf_fd,
+                            inner_map_obj,
+                            token_fd,
+                        )?
                     }
                 }
             };
@@ -690,7 +758,7 @@ impl<'a> EbpfLoader<'a> {
         obj.relocate_externs()?;
 
         obj.relocate_calls(&text_sections)?;
-        obj.sanitize_functions(|| FEATURES.is_supported(Feature::BpfProbeReadKernel));
+        obj.sanitize_functions(|| features.is_supported(Feature::BpfProbeReadKernel));
 
         let programs = obj
             .programs
@@ -698,14 +766,14 @@ impl<'a> EbpfLoader<'a> {
             .map(|(name, prog_obj)| {
                 let function_obj = obj.functions[&prog_obj.function_key()].clone();
 
-                let prog_name = FEATURES
+                let prog_name = features
                     .is_supported(Feature::BpfName)
                     .then(|| name.clone().into());
                 let section = prog_obj.section.clone();
                 let obj = (prog_obj, function_obj);
 
                 let btf_fd = btf_fd.as_ref().map(Arc::clone);
-                let program = if extensions.contains(name.as_str()) {
+                let mut program = if extensions.contains(name.as_str()) {
                     Program::Extension(Extension {
                         data: ProgramData::new(prog_name, obj, btf_fd, *verifier_log_level),
                     })
@@ -879,6 +947,9 @@ impl<'a> EbpfLoader<'a> {
                         }
                     }
                 };
+                if let Some(token) = token {
+                    program.set_token(token.clone());
+                }
                 (name, program)
             })
             .collect();
@@ -968,17 +1039,24 @@ fn max_entries_override(
 
 /// Computes the value which should be used to override the `value_size` value of the map
 /// based on the rules for that map type.
-fn value_size_override(map_type: bpf_map_type) -> Option<u32> {
+fn value_size_override(map_type: bpf_map_type, features: &Features) -> Option<u32> {
     match map_type {
         bpf_map_type::BPF_MAP_TYPE_CPUMAP => {
-            Some(if FEATURES.is_supported(Feature::CpuMapProgId) {
+            Some(if features.is_supported(Feature::CpuMapProgId) {
                 8
             } else {
                 4
             })
         }
-        bpf_map_type::BPF_MAP_TYPE_DEVMAP | bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => {
-            Some(if FEATURES.is_supported(Feature::DevMapProgId) {
+        bpf_map_type::BPF_MAP_TYPE_DEVMAP => {
+            Some(if features.is_supported(Feature::DevMapProgId) {
+                8
+            } else {
+                4
+            })
+        }
+        bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH => {
+            Some(if features.is_supported(Feature::DevMapHashProgId) {
                 8
             } else {
                 4
@@ -1429,9 +1507,10 @@ pub type BpfError = EbpfError;
 fn load_btf(
     raw_btf: Vec<u8>,
     verifier_log_level: VerifierLogLevel,
+    token_fd: Option<BorrowedFd<'_>>,
 ) -> Result<crate::MockableFd, BtfError> {
     let (ret, verifier_log) = retry_with_verifier_logs(10, |logger| {
-        bpf_load_btf(raw_btf.as_slice(), logger, verifier_log_level)
+        bpf_load_btf(raw_btf.as_slice(), logger, verifier_log_level, token_fd)
     });
     ret.map_err(|io_error| BtfError::LoadError {
         io_error,
