@@ -11,14 +11,21 @@
 //! See <https://github.com/torvalds/linux/blob/v6.9/tools/testing/selftests/bpf/prog_tests/token.c>.
 
 use std::{
+    error::Error,
     ffi::CStr,
-    fs,
+    fs, io,
     io::{IoSlice, IoSliceMut},
     os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, OwnedFd, RawFd},
     panic::{self, AssertUnwindSafe},
 };
 
-use aya::{sys::SyscallError, token::BpfToken, util::KernelVersion};
+use aya::{
+    Ebpf, EbpfLoader,
+    maps::CpuMap,
+    programs::{SocketFilter, Xdp},
+    token::BpfToken,
+    util::KernelVersion,
+};
 use nix::{
     errno::Errno,
     fcntl::{OFlag, openat},
@@ -211,13 +218,90 @@ fn with_userns_bpffs(
     }
 }
 
-fn errno(err: &SyscallError) -> Errno {
-    let SyscallError { call: _, io_error } = err;
-    Errno::from_raw(io_error.raw_os_error().unwrap())
+/// Returns the OS error at the root of `err`, printing `err` to help debugging.
+fn errno(err: &(dyn Error + 'static)) -> Errno {
+    eprintln!("{err:?}");
+    let mut source = Some(err);
+    while let Some(err) = source {
+        if let Some(raw) = err
+            .downcast_ref::<io::Error>()
+            .and_then(io::Error::raw_os_error)
+        {
+            return Errno::from_raw(raw);
+        }
+        source = err.source();
+    }
+    Errno::UnknownErrno
 }
 
 fn create_token(bpffs: OwnedFd) -> Result<(), Errno> {
     BpfToken::create(bpffs).map(drop).map_err(|err| errno(&err))
+}
+
+const DELEGATE_ANY: &[(&CStr, &CStr)] = &[
+    (c"delegate_cmds", c"any"),
+    (c"delegate_maps", c"any"),
+    (c"delegate_progs", c"any"),
+    (c"delegate_attachs", c"any"),
+];
+
+fn load_socket_filter(mut bpf: Ebpf) -> Result<(), Errno> {
+    let prog: &mut SocketFilter = bpf.program_mut("simple_prog").unwrap().try_into().unwrap();
+    prog.load().map_err(|err| errno(&err))
+}
+
+fn load_with_token(bpffs: OwnedFd) -> Result<(), Errno> {
+    let token = BpfToken::create(bpffs).map_err(|err| errno(&err))?;
+    let bpf = EbpfLoader::new()
+        .token(&token)
+        .load(crate::MAP_TEST)
+        .map_err(|err| errno(&err))?;
+    load_socket_filter(bpf)
+}
+
+/// Loads an object whose global variables and BTF are only usable when the
+/// kernel features are probed through the token.
+fn load_global_data_with_token(bpffs: OwnedFd) -> Result<(), Errno> {
+    let token = BpfToken::create(bpffs).map_err(|err| errno(&err))?;
+    let mut bpf = EbpfLoader::new()
+        .token(&token)
+        .load(crate::VARIABLES_RELOC)
+        .map_err(|err| errno(&err))?;
+    // Aya skips global data maps when it believes the kernel doesn't support them.
+    for name in [".bss", ".data", ".rodata"] {
+        if bpf.map(name).is_none() {
+            eprintln!("missing global data map {name}");
+            return Err(Errno::ENOENT);
+        }
+    }
+    let prog: &mut Xdp = bpf
+        .program_mut("variables_reloc")
+        .unwrap()
+        .try_into()
+        .unwrap();
+    prog.load().map_err(|err| errno(&err))
+}
+
+/// Uses a map whose layout depends on kernel features probed through the token.
+fn use_cpu_map_with_token(bpffs: OwnedFd) -> Result<(), Errno> {
+    let token = BpfToken::create(bpffs).map_err(|err| errno(&err))?;
+    let mut bpf = EbpfLoader::new()
+        .token(&token)
+        .load(crate::CPU_MAP)
+        .map_err(|err| errno(&err))?;
+    let mut cpus = CpuMap::try_from(bpf.take_map("CPUS").unwrap()).map_err(|err| errno(&err))?;
+    cpus.set(0, 2048, None, 0).map_err(|err| errno(&err))?;
+    let value = cpus.get(0, 0).map_err(|err| errno(&err))?;
+    if value.queue_size != 2048 {
+        eprintln!("unexpected CPU map value {value:?}");
+        return Err(Errno::EINVAL);
+    }
+    Ok(())
+}
+
+fn load_without_token(_bpffs: OwnedFd) -> Result<(), Errno> {
+    let bpf = Ebpf::load(crate::MAP_TEST).map_err(|err| errno(&err))?;
+    load_socket_filter(bpf)
 }
 
 #[test_log::test]
@@ -249,4 +333,46 @@ fn create_in_init_user_ns() {
     let bpffs = mount_bpffs(fs_fd.as_fd(), &[(c"delegate_cmds", c"any")]).unwrap();
     // https://github.com/torvalds/linux/blob/v6.9/kernel/bpf/token.c#L159-L163
     assert_eq!(create_token(bpffs), Err(Errno::EOPNOTSUPP));
+}
+
+#[test_log::test]
+fn load() {
+    if !kernel_supports_bpf_token() {
+        return;
+    }
+    assert_eq!(with_userns_bpffs(DELEGATE_ANY, load_with_token), Ok(()));
+}
+
+#[test_log::test]
+fn load_requires_token() {
+    if !kernel_supports_bpf_token() {
+        return;
+    }
+    // Inside the user namespace, BPF commands are only permitted through the token.
+    assert_eq!(
+        with_userns_bpffs(DELEGATE_ANY, load_without_token),
+        Err(Errno::EPERM)
+    );
+}
+
+#[test_log::test]
+fn load_global_data() {
+    if !kernel_supports_bpf_token() {
+        return;
+    }
+    assert_eq!(
+        with_userns_bpffs(DELEGATE_ANY, load_global_data_with_token),
+        Ok(())
+    );
+}
+
+#[test_log::test]
+fn cpu_map() {
+    if !kernel_supports_bpf_token() {
+        return;
+    }
+    assert_eq!(
+        with_userns_bpffs(DELEGATE_ANY, use_cpu_map_with_token),
+        Ok(())
+    );
 }
