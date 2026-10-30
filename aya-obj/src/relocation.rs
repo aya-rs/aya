@@ -556,57 +556,26 @@ impl<'a> FunctionLinker<'a> {
         // patch pc-relative calls too.
         for ins_index in start_ins..start_ins + n_instructions {
             let ins = program.instructions[ins_index];
-            let is_call = insn_is_call(ins);
-
-            let rel = relocations
-                .and_then(|relocations| {
-                    relocations
-                        .get(&((fun.section_offset + (ins_index - start_ins) * INS_SIZE) as u64))
-                })
-                .and_then(|rel| {
-                    // get the symbol for the relocation
-                    self.symbol_table
-                        .get(&rel.symbol_index)
-                        .map(|sym| (rel, sym))
-                })
-                .filter(|(_rel, sym)| {
-                    if sym.is_extern() {
-                        return false;
-                    }
-                    sym.kind == SymbolKind::Text
-                        || sym.section_index.is_some_and(|section_index| {
-                            self.text_sections.contains(&section_index)
-                        })
-                });
-
-            // not a call and not a text relocation, we don't need to do anything
-            if !is_call && rel.is_none() {
+            let Some(FunctionRef {
+                is_call,
+                is_relocation,
+                callee,
+            }) = function_ref(
+                fun,
+                ins_index - start_ins,
+                ins,
+                relocations,
+                self.symbol_table,
+                self.text_sections,
+            )
+            else {
+                // not a call and not a text relocation, we don't need to do anything
                 continue;
-            }
-
-            let (callee_section_index, callee_address) = if let Some((rel, sym)) = rel {
-                let address = match sym.kind {
-                    SymbolKind::Text => sym.address,
-                    // R_BPF_64_32 this is a call
-                    SymbolKind::Section if rel.size == 32 => {
-                        sym.address + (ins.imm + 1) as u64 * INS_SIZE as u64
-                    }
-                    // R_BPF_64_64 this is a ld_imm64 text relocation
-                    SymbolKind::Section if rel.size == 64 => sym.address + ins.imm as u64,
-                    #[expect(clippy::todo, reason = "TODO")]
-                    kind => todo!("FIXME: return an error here for kind={kind:?}"),
-                };
-                (sym.section_index.unwrap(), address)
-            } else {
-                // The caller and the callee are in the same ELF section and this is a pc-relative
-                // call. Resolve the pc-relative imm to an absolute address.
-                let ins_size = INS_SIZE as i64;
-                (
-                    fun.section_index.0,
-                    (fun.section_offset as i64
-                        + ((ins_index - start_ins) as i64) * ins_size
-                        + i64::from(ins.imm + 1) * ins_size) as u64,
-                )
+            };
+            let (callee_section_index, callee_address) = match callee {
+                Ok(callee) => callee,
+                #[expect(clippy::todo, reason = "TODO")]
+                Err(kind) => todo!("FIXME: return an error here for kind={kind:?}"),
             };
 
             debug!(
@@ -614,7 +583,7 @@ impl<'a> FunctionLinker<'a> {
                 if is_call { "call" } else { "reference" },
                 callee_address,
                 callee_section_index,
-                if rel.is_some() {
+                if is_relocation {
                     "relocation"
                 } else {
                     "pc-relative"
@@ -681,6 +650,85 @@ impl<'a> FunctionLinker<'a> {
             program.line_info.num_info = program.line_info.line_info.len() as u32;
         }
     }
+}
+
+/// How an instruction refers to another function.
+pub(crate) struct FunctionRef {
+    /// Whether the instruction is a pseudo-call, as opposed to a text relocation.
+    pub(crate) is_call: bool,
+    /// Whether a relocation, as opposed to a pc-relative offset, tells where the callee is.
+    pub(crate) is_relocation: bool,
+    /// The section index and the address of the callee, or the kind of the relocation symbol
+    /// when it can't be resolved.
+    pub(crate) callee: Result<(usize, u64), SymbolKind>,
+}
+
+/// Resolves the function that the instruction `ins`, at `ins_index` in `fun`, calls or
+/// references, or returns `None` if it is neither a pseudo-call nor a text relocation.
+///
+/// `relocations` are the ones of the section of `fun`.
+pub(crate) fn function_ref(
+    fun: &Function,
+    ins_index: usize,
+    ins: bpf_insn,
+    relocations: Option<&HashMap<u64, Relocation>>,
+    symbol_table: &HashMap<usize, Symbol>,
+    text_sections: &HashSet<usize>,
+) -> Option<FunctionRef> {
+    let is_call = insn_is_call(ins);
+
+    let rel = relocations
+        .and_then(|relocations| {
+            relocations.get(&((fun.section_offset + ins_index * INS_SIZE) as u64))
+        })
+        .and_then(|rel| {
+            // get the symbol for the relocation
+            symbol_table.get(&rel.symbol_index).map(|sym| (rel, sym))
+        })
+        .filter(|(_rel, sym)| {
+            if sym.is_extern() {
+                return false;
+            }
+            sym.kind == SymbolKind::Text
+                || sym
+                    .section_index
+                    .is_some_and(|section_index| text_sections.contains(&section_index))
+        });
+
+    // not a call and not a text relocation
+    if !is_call && rel.is_none() {
+        return None;
+    }
+
+    let callee = if let Some((rel, sym)) = rel {
+        let address = match sym.kind {
+            SymbolKind::Text => Ok(sym.address),
+            // R_BPF_64_32 this is a call
+            SymbolKind::Section if rel.size == 32 => {
+                Ok(sym.address + (ins.imm + 1) as u64 * INS_SIZE as u64)
+            }
+            // R_BPF_64_64 this is a ld_imm64 text relocation
+            SymbolKind::Section if rel.size == 64 => Ok(sym.address + ins.imm as u64),
+            kind => Err(kind),
+        };
+        address.map(|address| (sym.section_index.unwrap(), address))
+    } else {
+        // The caller and the callee are in the same ELF section and this is a pc-relative
+        // call. Resolve the pc-relative imm to an absolute address.
+        let ins_size = INS_SIZE as i64;
+        Ok((
+            fun.section_index.0,
+            (fun.section_offset as i64
+                + (ins_index as i64) * ins_size
+                + i64::from(ins.imm + 1) * ins_size) as u64,
+        ))
+    };
+
+    Some(FunctionRef {
+        is_call,
+        is_relocation: rel.is_some(),
+        callee,
+    })
 }
 
 fn insn_is_call(ins: bpf_insn) -> bool {
