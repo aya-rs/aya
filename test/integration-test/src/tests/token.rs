@@ -11,17 +11,26 @@
 //! See <https://github.com/torvalds/linux/blob/a38297e3f/tools/testing/selftests/bpf/prog_tests/token.c>.
 
 use std::{
-    ffi::CStr,
     fs,
     io::{IoSlice, IoSliceMut},
-    os::fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, OwnedFd, RawFd},
+    os::{
+        fd::{AsFd as _, AsRawFd as _, BorrowedFd, FromRawFd as _, OwnedFd, RawFd},
+        unix::ffi::OsStrExt as _,
+    },
     panic::{self, AssertUnwindSafe},
 };
 
-use aya::{sys::SyscallError, token::BpfToken, util::KernelVersion};
+use aya::{
+    maps::MapType,
+    programs::{CgroupSkbAttachType, ProgramType},
+    sys::SyscallError,
+    token::{BpfCommand, BpfToken, BpffsDelegation, create_bpffs_context, mount_delegated_bpffs},
+    util::KernelVersion,
+};
 use nix::{
     errno::Errno,
     fcntl::{OFlag, openat},
+    mount::{MntFlags, umount2},
     sched::{CloneFlags, unshare},
     sys::{
         socket::{
@@ -34,12 +43,6 @@ use nix::{
     unistd::{ForkResult, fork},
 };
 
-// https://github.com/torvalds/linux/blob/a38297e3f/include/uapi/linux/mount.h#L83-L111
-const FSOPEN_CLOEXEC: libc::c_uint = 0x1;
-const FSCONFIG_SET_STRING: libc::c_uint = 1;
-const FSCONFIG_CMD_CREATE: libc::c_uint = 6;
-const FSMOUNT_CLOEXEC: libc::c_uint = 0x1;
-
 fn kernel_supports_bpf_token() -> bool {
     let kernel_version = KernelVersion::current().unwrap();
     if kernel_version < KernelVersion::new(6, 9, 0) {
@@ -51,50 +54,12 @@ fn kernel_supports_bpf_token() -> bool {
     true
 }
 
-fn syscall_fd(ret: libc::c_long) -> Result<OwnedFd, Errno> {
-    let fd = Errno::result(ret)?;
-    let fd = RawFd::try_from(fd).map_err(|_overflow| Errno::EBADF)?;
-    // SAFETY: the syscall returned a new file descriptor.
-    Ok(unsafe { OwnedFd::from_raw_fd(fd) })
-}
-
-fn fsopen_bpf() -> Result<OwnedFd, Errno> {
-    syscall_fd(unsafe { libc::syscall(libc::SYS_fsopen, c"bpf".as_ptr(), FSOPEN_CLOEXEC) })
-}
-
-fn fsconfig(
-    fs_fd: BorrowedFd<'_>,
-    cmd: libc::c_uint,
-    key: Option<&CStr>,
-    value: Option<&CStr>,
-) -> Result<(), Errno> {
-    let ret = unsafe {
-        libc::syscall(
-            libc::SYS_fsconfig,
-            fs_fd.as_raw_fd(),
-            cmd,
-            key.map_or(std::ptr::null(), CStr::as_ptr),
-            value.map_or(std::ptr::null(), CStr::as_ptr),
-            0,
-        )
-    };
-    Errno::result(ret).map(drop)
-}
-
-/// Sets the delegation options of a bpffs context, then creates and mounts it.
+/// Opens the root directory of a detached bpffs mount.
 ///
-/// Returns a file descriptor for the root directory of the detached mount.
-fn mount_bpffs(fs_fd: BorrowedFd<'_>, options: &[(&CStr, &CStr)]) -> Result<OwnedFd, Errno> {
-    for (key, value) in options {
-        fsconfig(fs_fd, FSCONFIG_SET_STRING, Some(key), Some(value))?;
-    }
-    fsconfig(fs_fd, FSCONFIG_CMD_CREATE, None, None)?;
-    let mnt_fd = syscall_fd(unsafe {
-        libc::syscall(libc::SYS_fsmount, fs_fd.as_raw_fd(), FSMOUNT_CLOEXEC, 0)
-    })?;
-    // `fsmount` returns an `O_PATH` file descriptor, which `BPF_TOKEN_CREATE` rejects.
+/// `fsmount(2)` returns an `O_PATH` file descriptor, which `BPF_TOKEN_CREATE` rejects.
+fn open_root(mount: OwnedFd) -> Result<OwnedFd, Errno> {
     openat(
-        mnt_fd,
+        mount,
         c".",
         OFlag::O_RDONLY | OFlag::O_DIRECTORY | OFlag::O_CLOEXEC,
         Mode::empty(),
@@ -148,9 +113,9 @@ fn enter_userns() -> Result<(), Errno> {
 
 fn child_main(sock: BorrowedFd<'_>, f: fn(OwnedFd) -> Result<(), Errno>) -> Result<(), Errno> {
     enter_userns()?;
-    let fs_fd = fsopen_bpf()?;
+    let fs_fd = create_bpffs_context().map_err(|err| errno(&err))?;
     send_fd(sock, fs_fd.as_fd())?;
-    let bpffs = recv_fd(sock)?;
+    let bpffs = open_root(recv_fd(sock)?)?;
     // 0 encodes success, so encode `Errno::UnknownErrno` (0) as -1.
     let result: i32 = match f(bpffs) {
         Ok(()) => 0,
@@ -163,11 +128,11 @@ fn child_main(sock: BorrowedFd<'_>, f: fn(OwnedFd) -> Result<(), Errno>) -> Resu
 }
 
 /// Runs `f` in a child process inside a new user namespace that owns a bpffs
-/// instance mounted with the delegation `options`.
+/// instance mounted with `delegation`.
 ///
 /// `f` receives a file descriptor for the root directory of that instance.
 fn with_userns_bpffs(
-    options: &[(&CStr, &CStr)],
+    delegation: &BpffsDelegation,
     f: fn(OwnedFd) -> Result<(), Errno>,
 ) -> Result<(), Errno> {
     let (parent_sock, child_sock) = socketpair(
@@ -196,8 +161,8 @@ fn with_userns_bpffs(
         ForkResult::Parent { child } => {
             drop(child_sock);
             let fs_fd = recv_fd(parent_sock.as_fd()).unwrap();
-            let bpffs = mount_bpffs(fs_fd.as_fd(), options).unwrap();
-            send_fd(parent_sock.as_fd(), bpffs.as_fd()).unwrap();
+            let mount = mount_delegated_bpffs(fs_fd, delegation).unwrap();
+            send_fd(parent_sock.as_fd(), mount.as_fd()).unwrap();
 
             let mut result = [0; size_of::<i32>()];
             let read = nix::unistd::read(parent_sock.as_fd(), &mut result).unwrap();
@@ -226,7 +191,7 @@ fn create() {
         return;
     }
     assert_eq!(
-        with_userns_bpffs(&[(c"delegate_cmds", c"any")], create_token),
+        with_userns_bpffs(BpffsDelegation::default().all_commands(), create_token),
         Ok(())
     );
 }
@@ -237,7 +202,10 @@ fn create_without_delegation() {
         return;
     }
     // https://github.com/torvalds/linux/blob/a38297e3f/kernel/bpf/token.c#L165-L172
-    assert_eq!(with_userns_bpffs(&[], create_token), Err(Errno::ENOENT));
+    assert_eq!(
+        with_userns_bpffs(&BpffsDelegation::default(), create_token),
+        Err(Errno::ENOENT)
+    );
 }
 
 #[test_log::test]
@@ -245,8 +213,87 @@ fn create_in_init_user_ns() {
     if !kernel_supports_bpf_token() {
         return;
     }
-    let fs_fd = fsopen_bpf().unwrap();
-    let bpffs = mount_bpffs(fs_fd.as_fd(), &[(c"delegate_cmds", c"any")]).unwrap();
+    let fs_fd = create_bpffs_context().unwrap();
+    let mount = mount_delegated_bpffs(fs_fd, BpffsDelegation::default().all_commands()).unwrap();
+    let bpffs = open_root(mount).unwrap();
     // https://github.com/torvalds/linux/blob/a38297e3f/kernel/bpf/token.c#L159-L163
     assert_eq!(create_token(bpffs), Err(Errno::EOPNOTSUPP));
+}
+
+/// Attaches a detached bpffs mount and returns its super block options.
+fn bpffs_options(mount: BorrowedFd<'_>) -> String {
+    // https://github.com/torvalds/linux/blob/a38297e3f/include/uapi/linux/mount.h#L72
+    const MOVE_MOUNT_F_EMPTY_PATH: libc::c_uint = 0x4;
+
+    let dir = tempfile::tempdir().unwrap();
+    let path = std::ffi::CString::new(dir.path().as_os_str().as_bytes()).unwrap();
+    let ret = unsafe {
+        libc::syscall(
+            libc::SYS_move_mount,
+            mount.as_raw_fd(),
+            c"".as_ptr(),
+            libc::AT_FDCWD,
+            path.as_ptr(),
+            MOVE_MOUNT_F_EMPTY_PATH,
+        )
+    };
+    Errno::result(ret).unwrap();
+    let mountinfo = fs::read_to_string("/proc/self/mountinfo").unwrap();
+    // The caller still holds the mount file descriptor.
+    umount2(dir.path(), MntFlags::MNT_DETACH).unwrap();
+
+    // https://docs.kernel.org/filesystems/proc.html#proc-pid-mountinfo-information-about-mounts
+    let mount_point = dir.path().to_str().unwrap();
+    let line = mountinfo
+        .lines()
+        .find(|line| line.split(' ').nth(4) == Some(mount_point))
+        .unwrap();
+    line.rsplit(' ').next().unwrap().to_owned()
+}
+
+#[test_log::test]
+fn delegation_options() {
+    if !kernel_supports_bpf_token() {
+        return;
+    }
+    let mut delegation = BpffsDelegation::default();
+    delegation
+        .command(BpfCommand::BPF_MAP_CREATE)
+        .command(BpfCommand::BPF_PROG_LOAD)
+        .map_type(MapType::Array)
+        .program_type(ProgramType::SocketFilter)
+        .attach_type(CgroupSkbAttachType::Ingress);
+    let mount = mount_delegated_bpffs(create_bpffs_context().unwrap(), &delegation).unwrap();
+    let options = bpffs_options(mount.as_fd());
+    for expected in [
+        "delegate_cmds=map_create:prog_load",
+        "delegate_maps=array",
+        "delegate_progs=socket_filter",
+        "delegate_attachs=cgroup_inet_ingress",
+    ] {
+        assert!(
+            options.split(',').any(|option| option == expected),
+            "{expected} not in {options}"
+        );
+    }
+
+    let mut delegation = BpffsDelegation::default();
+    delegation
+        .all_commands()
+        .all_map_types()
+        .all_program_types()
+        .all_attach_types();
+    let mount = mount_delegated_bpffs(create_bpffs_context().unwrap(), &delegation).unwrap();
+    let options = bpffs_options(mount.as_fd());
+    for expected in [
+        "delegate_cmds=any",
+        "delegate_maps=any",
+        "delegate_progs=any",
+        "delegate_attachs=any",
+    ] {
+        assert!(
+            options.split(',').any(|option| option == expected),
+            "{expected} not in {options}"
+        );
+    }
 }
