@@ -8092,6 +8092,23 @@ impl core::panic::unwind_safe::UnwindSafe for aya::test_helpers::NetNsGuard
 pub fn aya::test_helpers::with_netlink_xdp<T>(impl core::ops::function::FnOnce() -> T) -> T
 pub fn aya::test_helpers::with_tracefs_probes<T>(impl core::ops::function::FnOnce() -> T) -> T
 pub type aya::test_helpers::AyaTestResult<T> = core::result::Result<T, aya::test_helpers::AyaTestError>
+pub mod aya::token
+pub struct aya::token::BpfToken(_)
+impl aya::token::BpfToken
+pub fn aya::token::BpfToken::create<Fd: std::os::fd::owned::AsFd>(Fd) -> core::result::Result<Self, aya::sys::SyscallError>
+impl core::clone::Clone for aya::token::BpfToken
+pub fn aya::token::BpfToken::clone(&self) -> Self
+impl core::fmt::Debug for aya::token::BpfToken
+pub fn aya::token::BpfToken::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl std::os::fd::owned::AsFd for aya::token::BpfToken
+pub fn aya::token::BpfToken::as_fd(&self) -> std::os::fd::owned::BorrowedFd<'_>
+impl core::marker::Freeze for aya::token::BpfToken
+impl core::marker::Send for aya::token::BpfToken
+impl core::marker::Sync for aya::token::BpfToken
+impl core::marker::Unpin for aya::token::BpfToken
+impl core::marker::UnsafeUnpin for aya::token::BpfToken
+impl core::panic::unwind_safe::RefUnwindSafe for aya::token::BpfToken
+impl core::panic::unwind_safe::UnwindSafe for aya::token::BpfToken
 pub mod aya::util
 pub struct aya::util::KernelVersion
 impl aya::util::KernelVersion
@@ -8203,6 +8220,7 @@ pub fn aya::EbpfLoader<'a>::new() -> Self
 pub fn aya::EbpfLoader<'a>::override_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, &'a str, T, bool) -> &mut Self
 pub fn aya::EbpfLoader<'a>::set_global<T: core::convert::Into<aya::GlobalData<'a>>>(&mut self, &'a str, T, bool) -> &mut Self
 pub fn aya::EbpfLoader<'a>::set_max_entries(&mut self, &'a str, u32) -> &mut Self
+pub fn aya::EbpfLoader<'a>::token(&mut self, &aya::token::BpfToken) -> &mut Self
 pub const fn aya::EbpfLoader<'a>::verifier_log_level(&mut self, aya::VerifierLogLevel) -> &mut Self
 impl core::default::Default for aya::EbpfLoader<'_>
 pub fn aya::EbpfLoader<'_>::default() -> Self
