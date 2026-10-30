@@ -142,6 +142,14 @@ pub(crate) fn bpf_get_object(path: &CStr) -> io::Result<crate::MockableFd> {
     unsafe { fd_sys_bpf(bpf_cmd::BPF_OBJ_GET, &mut attr) }
 }
 
+pub(crate) fn bpf_token_create(bpffs_fd: BorrowedFd<'_>) -> io::Result<crate::MockableFd> {
+    let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
+    let u = unsafe { &mut attr.token_create };
+    u.bpffs_fd = bpffs_fd.as_raw_fd() as u32;
+    // SAFETY: BPF_TOKEN_CREATE returns a new file descriptor.
+    unsafe { fd_sys_bpf(bpf_cmd::BPF_TOKEN_CREATE, &mut attr) }
+}
+
 pub(crate) struct EbpfLoadProgramAttrs<'a> {
     pub(crate) name: Option<CString>,
     pub(crate) ty: bpf_prog_type,
