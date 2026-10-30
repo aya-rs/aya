@@ -10,14 +10,18 @@
 //!
 //! [kernel documentation of BPF token]: https://github.com/torvalds/linux/blob/a38297e3f/include/uapi/linux/bpf.h#L876-L904
 
-use std::os::fd::{AsFd, BorrowedFd};
+use std::{
+    os::fd::{AsFd, BorrowedFd},
+    sync::Arc,
+};
 
 use crate::sys::{SyscallError, bpf_token_create};
 
 /// A BPF token.
 ///
 /// A token is created from the root of a bpffs instance and carries the
-/// delegation options of that instance.
+/// delegation options of that instance. Cloning a token shares the same
+/// underlying file descriptor.
 ///
 /// The kernel only creates tokens for processes in the user namespace that
 /// owns the bpffs instance, and never in the initial user namespace; see
@@ -44,9 +48,9 @@ use crate::sys::{SyscallError, bpf_token_create};
 /// ```
 ///
 /// [`bpf_token_create`]: https://github.com/torvalds/linux/blob/a38297e3f/kernel/bpf/token.c#L112-L231
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 #[doc(alias = "bpf_token")]
-pub struct BpfToken(crate::MockableFd);
+pub struct BpfToken(Arc<crate::MockableFd>);
 
 impl BpfToken {
     /// Creates a BPF token from the root directory of a bpffs instance.
@@ -74,7 +78,7 @@ impl BpfToken {
             call: "bpf_token_create",
             io_error,
         })?;
-        Ok(Self(fd))
+        Ok(Self(Arc::new(fd)))
     }
 }
 

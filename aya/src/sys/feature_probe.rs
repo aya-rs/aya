@@ -3,7 +3,7 @@
 use std::{
     ffi::CStr,
     io, mem,
-    os::fd::{AsFd as _, AsRawFd as _},
+    os::fd::{AsFd as _, AsRawFd as _, BorrowedFd},
     ptr,
 };
 
@@ -23,7 +23,7 @@ use super::{
     new_insn, probe_bpf_global_data, probe_bpf_name, probe_btf, probe_btf_datasec,
     probe_btf_datasec_zero, probe_btf_decl_tag, probe_btf_enum64, probe_btf_float, probe_btf_func,
     probe_btf_func_global, probe_btf_type_tag, probe_perf_link, probe_prog_id,
-    probe_uprobe_multi_link, unit_sys_bpf, with_prog_insns, with_trivial_prog,
+    probe_uprobe_multi_link, set_prog_token, unit_sys_bpf, with_prog_insns, with_trivial_prog,
 };
 use crate::{
     MockableFd,
@@ -46,7 +46,7 @@ pub type BpfHelper = bpf_func_id;
 ///
 /// Returns an I/O error if support cannot be determined.
 pub fn is_bpf_name_supported() -> io::Result<bool> {
-    probe_bpf_name()
+    probe_bpf_name(None)
 }
 
 /// Whether the host kernel supports attaching perf events using BPF links.
@@ -59,7 +59,7 @@ pub fn is_bpf_name_supported() -> io::Result<bool> {
 ///
 /// Returns an I/O error if support cannot be determined.
 pub fn is_perf_link_supported() -> io::Result<bool> {
-    probe_perf_link()
+    probe_perf_link(None)
 }
 
 /// Whether the host kernel supports the requested [`UProbeMultiFeature`].
@@ -90,7 +90,7 @@ pub fn is_perf_link_supported() -> io::Result<bool> {
 ///
 /// Returns an I/O error if support cannot be determined.
 pub fn is_uprobe_multi_supported(feature: UProbeMultiFeature) -> io::Result<bool> {
-    probe_uprobe_multi_link(feature)
+    probe_uprobe_multi_link(feature, None)
 }
 
 /// Whether the host kernel supports BPF global data.
@@ -103,7 +103,7 @@ pub fn is_uprobe_multi_supported(feature: UProbeMultiFeature) -> io::Result<bool
 ///
 /// Returns an I/O error if support cannot be determined.
 pub fn is_bpf_global_data_supported() -> io::Result<bool> {
-    probe_bpf_global_data()
+    probe_bpf_global_data(None)
 }
 
 /// Whether CPU map values support program IDs.
@@ -116,7 +116,7 @@ pub fn is_bpf_global_data_supported() -> io::Result<bool> {
 ///
 /// Returns an I/O error if support cannot be determined.
 pub fn is_cpumap_prog_id_supported() -> io::Result<bool> {
-    probe_prog_id(bpf_map_type::BPF_MAP_TYPE_CPUMAP)
+    probe_prog_id(bpf_map_type::BPF_MAP_TYPE_CPUMAP, None)
 }
 
 /// Whether device map and device map hash values support program IDs.
@@ -129,7 +129,7 @@ pub fn is_cpumap_prog_id_supported() -> io::Result<bool> {
 ///
 /// Returns an I/O error if support cannot be determined.
 pub fn is_devmap_prog_id_supported() -> io::Result<bool> {
-    probe_prog_id(bpf_map_type::BPF_MAP_TYPE_DEVMAP)
+    probe_prog_id(bpf_map_type::BPF_MAP_TYPE_DEVMAP, None)
 }
 
 /// Whether the host kernel supports BTF.
@@ -142,7 +142,7 @@ pub fn is_devmap_prog_id_supported() -> io::Result<bool> {
 ///
 /// Returns an I/O error if support cannot be determined.
 pub fn is_btf_supported() -> io::Result<bool> {
-    probe_btf()
+    probe_btf(None)
 }
 
 /// Whether the host kernel supports the given [`BtfFeature`].
@@ -155,15 +155,22 @@ pub fn is_btf_supported() -> io::Result<bool> {
 ///
 /// Returns an I/O error if support cannot be determined.
 pub fn is_btf_feature_supported(feature: BtfFeature) -> io::Result<bool> {
+    probe_btf_feature(feature, None)
+}
+
+pub(crate) fn probe_btf_feature(
+    feature: BtfFeature,
+    token_fd: Option<BorrowedFd<'_>>,
+) -> io::Result<bool> {
     match feature {
-        BtfFeature::Func => probe_btf_func(),
-        BtfFeature::FuncGlobal => probe_btf_func_global(),
-        BtfFeature::DataSec => probe_btf_datasec(),
-        BtfFeature::DataSecZero => probe_btf_datasec_zero(),
-        BtfFeature::Float => probe_btf_float(),
-        BtfFeature::DeclTag => probe_btf_decl_tag(),
-        BtfFeature::TypeTag => probe_btf_type_tag(),
-        BtfFeature::Enum64 => probe_btf_enum64(),
+        BtfFeature::Func => probe_btf_func(token_fd),
+        BtfFeature::FuncGlobal => probe_btf_func_global(token_fd),
+        BtfFeature::DataSec => probe_btf_datasec(token_fd),
+        BtfFeature::DataSecZero => probe_btf_datasec_zero(token_fd),
+        BtfFeature::Float => probe_btf_float(token_fd),
+        BtfFeature::DeclTag => probe_btf_decl_tag(token_fd),
+        BtfFeature::TypeTag => probe_btf_type_tag(token_fd),
+        BtfFeature::Enum64 => probe_btf_enum64(token_fd),
     }
 }
 
@@ -201,6 +208,14 @@ pub fn is_helper_supported(
     program_type: ProgramType,
     helper: BpfHelper,
 ) -> Result<bool, ProgramError> {
+    probe_helper(program_type, helper, None)
+}
+
+pub(crate) fn probe_helper(
+    program_type: ProgramType,
+    helper: BpfHelper,
+    token_fd: Option<BorrowedFd<'_>>,
+) -> Result<bool, ProgramError> {
     if program_type == ProgramType::Unspecified {
         return Ok(false);
     }
@@ -234,6 +249,7 @@ pub fn is_helper_supported(
         u.log_buf = verifier_log.as_mut_ptr().expose_provenance() as u64;
         u.log_level = 1;
         u.log_size = verifier_log.len() as u32;
+        set_prog_token(attr, token_fd);
         match bpf_prog_load(attr).map(|_: MockableFd| ()) {
             Ok(()) => Ok(true),
             Err(io_error) => {
