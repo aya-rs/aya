@@ -11,8 +11,8 @@ platform(
         # We just need an image with a new-enough glibc for the prebuilt rustc
         # to work. All other tools should be provided as hermetic action
         # inputs, and LLVM/bsdtar are statically linked.
-        # This digest pins ubuntu:24.04.
-        "container-image": "docker://ubuntu@sha256:023f8a753c22258c9fe2d0005a7d28258038da7d620e9f93e9ad78aa266f9f11",
+        # Use Docker's official ECR mirror for the pinned ubuntu:24.04 image.
+        "container-image": "docker://public.ecr.aws/docker/library/ubuntu@sha256:023f8a753c22258c9fe2d0005a7d28258038da7d620e9f93e9ad78aa266f9f11",
     },
     visibility = ["//visibility:public"],
 )

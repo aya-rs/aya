@@ -46,6 +46,8 @@ jobs:
         with:
           submodules: recursive
 
+      - uses: $/.github/actions/setup-bazel
+
       - name: Update the pinned Rust toolchains
         env:
           TOOLCHAINS: ${{ needs.resolve.outputs.rust-toolchains }}

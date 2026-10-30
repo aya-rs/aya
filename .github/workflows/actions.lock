@@ -4,7 +4,6 @@
 version: 'v0.0.3'
 workflows:
     '.github/workflows/ci.yml':
-        - 'actions/cache@v6'
         - 'actions/checkout@v7'
         - 'actions/upload-artifact@v7'
         - 'davidanson/markdownlint-cli2-action@v25'
@@ -20,11 +19,6 @@ workflows:
     '.github/workflows/rust-toolchains.yml':
         - 'actions/checkout@v7'
 dependencies:
-    'actions/cache@v6':
-        ref: 'v6'
-        commit: 'sha1-55cc8345863c7cc4c66a329aec7e433d2d1c52a9'
-        owner_id: 44036562
-        repo_id: 215566462
     'actions/checkout@v7':
         ref: 'v7'
         commit: 'sha1-3d3c42e5aac5ba805825da76410c181273ba90b1'

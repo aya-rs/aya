@@ -1,0 +1,14 @@
+load("@linux.bzl//rules:source_files.bzl", "kernel_source_files")
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["Makefile"])
+
+kernel_source_files(name = "sources")
+
+cc_binary(
+    name = "gen_init_cpio",
+    srcs = ["usr/gen_init_cpio.c"],
+    target_compatible_with = ["@platforms//os:linux"],
+)
