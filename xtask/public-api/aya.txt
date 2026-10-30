@@ -8107,6 +8107,32 @@ impl core::marker::Unpin for aya::token::BpfToken
 impl core::marker::UnsafeUnpin for aya::token::BpfToken
 impl core::panic::unwind_safe::RefUnwindSafe for aya::token::BpfToken
 impl core::panic::unwind_safe::UnwindSafe for aya::token::BpfToken
+pub struct aya::token::BpffsDelegation
+impl aya::token::BpffsDelegation
+pub const fn aya::token::BpffsDelegation::all_attach_types(&mut self) -> &mut Self
+pub const fn aya::token::BpffsDelegation::all_commands(&mut self) -> &mut Self
+pub const fn aya::token::BpffsDelegation::all_map_types(&mut self) -> &mut Self
+pub const fn aya::token::BpffsDelegation::all_program_types(&mut self) -> &mut Self
+pub fn aya::token::BpffsDelegation::attach_type<A: core::convert::Into<aya_obj::generated::linux_bindings_x86_64::bpf_attach_type>>(&mut self, A) -> &mut Self
+pub const fn aya::token::BpffsDelegation::command(&mut self, aya::token::BpfCommand) -> &mut Self
+pub const fn aya::token::BpffsDelegation::map_type(&mut self, aya::maps::MapType) -> &mut Self
+pub fn aya::token::BpffsDelegation::program_type(&mut self, aya::programs::ProgramType) -> &mut Self
+impl core::clone::Clone for aya::token::BpffsDelegation
+pub fn aya::token::BpffsDelegation::clone(&self) -> Self
+impl core::default::Default for aya::token::BpffsDelegation
+pub fn aya::token::BpffsDelegation::default() -> Self
+impl core::fmt::Debug for aya::token::BpffsDelegation
+pub fn aya::token::BpffsDelegation::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for aya::token::BpffsDelegation
+impl core::marker::Send for aya::token::BpffsDelegation
+impl core::marker::Sync for aya::token::BpffsDelegation
+impl core::marker::Unpin for aya::token::BpffsDelegation
+impl core::marker::UnsafeUnpin for aya::token::BpffsDelegation
+impl core::panic::unwind_safe::RefUnwindSafe for aya::token::BpffsDelegation
+impl core::panic::unwind_safe::UnwindSafe for aya::token::BpffsDelegation
+pub fn aya::token::create_bpffs_context() -> core::result::Result<std::os::fd::owned::OwnedFd, aya::sys::SyscallError>
+pub fn aya::token::mount_delegated_bpffs<Fd: std::os::fd::owned::AsFd>(Fd, &aya::token::BpffsDelegation) -> core::result::Result<std::os::fd::owned::OwnedFd, aya::sys::SyscallError>
+pub type aya::token::BpfCommand = aya_obj::generated::linux_bindings_x86_64::bpf_cmd
 pub mod aya::util
 pub struct aya::util::KernelVersion
 impl aya::util::KernelVersion
