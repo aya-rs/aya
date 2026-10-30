@@ -2,6 +2,7 @@
 
 mod bpf;
 pub(crate) mod feature_probe;
+pub(crate) mod mount;
 mod netlink;
 mod perf_event;
 
