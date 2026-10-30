@@ -16,7 +16,7 @@ use aya_obj::{
         VarLinkage,
     },
     generated::{
-        BPF_ALU64, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_F_TEST_RUN_ON_CPU,
+        BPF_ALU64, BPF_DW, BPF_EXIT, BPF_F_REPLACE, BPF_F_TEST_RUN_ON_CPU, BPF_F_TOKEN_FD,
         BPF_F_UPROBE_MULTI_RETURN, BPF_IMM, BPF_JMP, BPF_K, BPF_LD, BPF_MEM, BPF_MOV,
         BPF_PSEUDO_MAP_VALUE, BPF_ST, bpf_attach_type, bpf_attr, bpf_attr__bindgen_ty_7,
         bpf_btf_info, bpf_cmd, bpf_insn, bpf_link_info, bpf_map_info, bpf_map_type, bpf_prog_info,
@@ -56,6 +56,7 @@ pub(crate) fn bpf_create_map(
     def: &aya_obj::Map,
     btf_fd: Option<BorrowedFd<'_>>,
     inner_map_fd: Option<BorrowedFd<'_>>,
+    token_fd: Option<BorrowedFd<'_>>,
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
 
@@ -122,7 +123,24 @@ pub(crate) fn bpf_create_map(
             .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
     }
 
+    set_map_token(&mut attr, token_fd);
     bpf_map_create(&mut attr)
+}
+
+fn set_map_token(attr: &mut bpf_attr, token_fd: Option<BorrowedFd<'_>>) {
+    if let Some(token_fd) = token_fd {
+        let u = unsafe { &mut attr.__bindgen_anon_1 };
+        u.map_flags |= BPF_F_TOKEN_FD;
+        u.map_token_fd = token_fd.as_raw_fd();
+    }
+}
+
+pub(super) fn set_prog_token(attr: &mut bpf_attr, token_fd: Option<BorrowedFd<'_>>) {
+    if let Some(token_fd) = token_fd {
+        let u = unsafe { &mut attr.__bindgen_anon_3 };
+        u.prog_flags |= BPF_F_TOKEN_FD;
+        u.prog_token_fd = token_fd.as_raw_fd();
+    }
 }
 
 pub(crate) fn bpf_pin_object(fd: BorrowedFd<'_>, path: &CStr) -> io::Result<()> {
@@ -166,6 +184,7 @@ pub(crate) struct EbpfLoadProgramAttrs<'a> {
     pub(crate) line_info_rec_size: usize,
     pub(crate) line_info: LineSecInfo,
     pub(crate) flags: u32,
+    pub(crate) token_fd: Option<BorrowedFd<'a>>,
 }
 
 pub(crate) fn bpf_load_program(
@@ -227,6 +246,7 @@ pub(crate) fn bpf_load_program(
     if let Some(v) = aya_attr.attach_btf_id {
         u.attach_btf_id = v;
     }
+    set_prog_token(&mut attr, aya_attr.token_fd);
     bpf_prog_load(&mut attr)
 }
 
@@ -907,6 +927,7 @@ pub(crate) fn bpf_load_btf(
     raw_btf: &[u8],
     log_buf: &mut [u8],
     verifier_log_level: VerifierLogLevel,
+    token_fd: Option<BorrowedFd<'_>>,
 ) -> io::Result<crate::MockableFd> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_7 };
@@ -916,6 +937,10 @@ pub(crate) fn bpf_load_btf(
         u.btf_log_level = verifier_log_level.bits();
         u.btf_log_buf = log_buf.as_mut_ptr().expose_provenance() as u64;
         u.btf_log_size = log_buf.len() as u32;
+    }
+    if let Some(token_fd) = token_fd {
+        u.btf_flags |= BPF_F_TOKEN_FD;
+        u.btf_token_fd = token_fd.as_raw_fd();
     }
     // SAFETY: `BPF_BTF_LOAD` returns a newly created fd.
     unsafe { fd_sys_bpf(bpf_cmd::BPF_BTF_LOAD, &mut attr) }
@@ -1042,7 +1067,7 @@ fn feature_probe_result(
     }
 }
 
-pub(crate) fn probe_bpf_name() -> io::Result<bool> {
+pub(crate) fn probe_bpf_name(token_fd: Option<BorrowedFd<'_>>) -> io::Result<bool> {
     // Avoid making the name probe depend on CONFIG_BPF_EVENTS by using the same
     // socket-filter carrier as libbpf.
     // https://github.com/libbpf/libbpf/blob/20ea95b45/src/features.c#L23-L45
@@ -1053,6 +1078,7 @@ pub(crate) fn probe_bpf_name() -> io::Result<bool> {
         let len = cmp::min(name_bytes.len(), u.prog_name.len() - 1); // Ensure NULL termination.
         u.prog_name[..len]
             .copy_from_slice(unsafe { mem::transmute::<&[u8], &[c_char]>(&name_bytes[..len]) });
+        set_prog_token(attr, token_fd);
         feature_probe_result(bpf_prog_load(attr), &[EINVAL, E2BIG])
     })
 }
@@ -1159,8 +1185,9 @@ where
     with_prog_insns(program_type, &insns, op)
 }
 
-pub(crate) fn probe_perf_link() -> io::Result<bool> {
+pub(crate) fn probe_perf_link(token_fd: Option<BorrowedFd<'_>>) -> io::Result<bool> {
     with_trivial_prog(ProgramType::TracePoint, |attr| {
+        set_prog_token(attr, token_fd);
         let fd = match bpf_prog_load(attr) {
             Ok(fd) => fd,
             Err(error) => match error.raw_os_error() {
@@ -1189,10 +1216,14 @@ pub(crate) fn probe_perf_link() -> io::Result<bool> {
     })
 }
 
-pub(crate) fn probe_uprobe_multi_link(feature: UProbeMultiFeature) -> io::Result<bool> {
+pub(crate) fn probe_uprobe_multi_link(
+    feature: UProbeMultiFeature,
+    token_fd: Option<BorrowedFd<'_>>,
+) -> io::Result<bool> {
     with_trivial_prog(ProgramType::KProbe, |attr| {
         let u = unsafe { &mut attr.__bindgen_anon_3 };
         u.expected_attach_type = bpf_attach_type::BPF_TRACE_UPROBE_MULTI as u32;
+        set_prog_token(attr, token_fd);
 
         let prog_fd = match bpf_prog_load(attr) {
             Ok(fd) => fd,
@@ -1260,11 +1291,11 @@ pub(crate) fn probe_uprobe_multi_link(feature: UProbeMultiFeature) -> io::Result
     })
 }
 
-pub(crate) fn probe_bpf_global_data() -> io::Result<bool> {
+pub(crate) fn probe_bpf_global_data(token_fd: Option<BorrowedFd<'_>>) -> io::Result<bool> {
     let mut attr = unsafe { mem::zeroed::<bpf_attr>() };
     let u = unsafe { &mut attr.__bindgen_anon_3 };
 
-    let map = MapData::create(
+    let map = MapData::create_with_inner_map_fd(
         aya_obj::Map::Legacy(LegacyMap {
             def: bpf_map_def {
                 map_type: bpf_map_type::BPF_MAP_TYPE_ARRAY as u32,
@@ -1281,6 +1312,8 @@ pub(crate) fn probe_bpf_global_data() -> io::Result<bool> {
         }),
         "aya_global",
         None,
+        None,
+        token_fd,
     )
     .map_err(io::Error::other)?;
 
@@ -1303,12 +1336,16 @@ pub(crate) fn probe_bpf_global_data() -> io::Result<bool> {
     u.insn_cnt = insns.len() as u32;
     u.insns = insns.as_ptr().expose_provenance() as u64;
     u.prog_type = bpf_prog_type::BPF_PROG_TYPE_SOCKET_FILTER as u32;
+    set_prog_token(&mut attr, token_fd);
 
     feature_probe_result(bpf_prog_load(&mut attr), &[EINVAL, E2BIG])
 }
 
 /// Tests whether [`CpuMap`], [`DevMap`] and [`DevMapHash`] support program ids.
-pub(crate) fn probe_prog_id(map_type: bpf_map_type) -> io::Result<bool> {
+pub(crate) fn probe_prog_id(
+    map_type: bpf_map_type,
+    token_fd: Option<BorrowedFd<'_>>,
+) -> io::Result<bool> {
     assert_matches!(
         map_type,
         bpf_map_type::BPF_MAP_TYPE_CPUMAP
@@ -1324,23 +1361,24 @@ pub(crate) fn probe_prog_id(map_type: bpf_map_type) -> io::Result<bool> {
     u.value_size = 8; // 4 for CPU ID, 8 for CPU ID + prog ID
     u.max_entries = 1;
     u.map_flags = 0;
+    set_map_token(&mut attr, token_fd);
 
     feature_probe_result(bpf_map_create(&mut attr), &[EINVAL])
 }
 
-pub(crate) fn probe_btf() -> io::Result<bool> {
+pub(crate) fn probe_btf(token_fd: Option<BorrowedFd<'_>>) -> io::Result<bool> {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
     btf.add_type(int_type);
     let btf_bytes = btf.to_bytes();
     feature_probe_result(
-        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()),
+        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd),
         &[EINVAL],
     )
 }
 
-pub(crate) fn probe_btf_func() -> io::Result<bool> {
+pub(crate) fn probe_btf_func(token_fd: Option<BorrowedFd<'_>>) -> io::Result<bool> {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
@@ -1368,12 +1406,12 @@ pub(crate) fn probe_btf_func() -> io::Result<bool> {
     let btf_bytes = btf.to_bytes();
 
     feature_probe_result(
-        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()),
+        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd),
         &[EINVAL],
     )
 }
 
-pub(crate) fn probe_btf_func_global() -> io::Result<bool> {
+pub(crate) fn probe_btf_func_global(token_fd: Option<BorrowedFd<'_>>) -> io::Result<bool> {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
@@ -1401,12 +1439,12 @@ pub(crate) fn probe_btf_func_global() -> io::Result<bool> {
     let btf_bytes = btf.to_bytes();
 
     feature_probe_result(
-        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()),
+        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd),
         &[EINVAL],
     )
 }
 
-pub(crate) fn probe_btf_datasec() -> io::Result<bool> {
+pub(crate) fn probe_btf_datasec(token_fd: Option<BorrowedFd<'_>>) -> io::Result<bool> {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
@@ -1428,12 +1466,12 @@ pub(crate) fn probe_btf_datasec() -> io::Result<bool> {
     let btf_bytes = btf.to_bytes();
 
     feature_probe_result(
-        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()),
+        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd),
         &[EINVAL],
     )
 }
 
-pub(crate) fn probe_btf_datasec_zero() -> io::Result<bool> {
+pub(crate) fn probe_btf_datasec_zero(token_fd: Option<BorrowedFd<'_>>) -> io::Result<bool> {
     let mut btf = Btf::new();
     let name_offset = btf.add_string(".empty");
     // Linux 5.12 allowed DATASECs with zero entries; their section size must still be non-zero.
@@ -1442,12 +1480,17 @@ pub(crate) fn probe_btf_datasec_zero() -> io::Result<bool> {
     btf.add_type(datasec_type);
 
     feature_probe_result(
-        bpf_load_btf(btf.to_bytes().as_slice(), &mut [], Default::default()),
+        bpf_load_btf(
+            btf.to_bytes().as_slice(),
+            &mut [],
+            Default::default(),
+            token_fd,
+        ),
         &[EINVAL],
     )
 }
 
-pub(crate) fn probe_btf_enum64() -> io::Result<bool> {
+pub(crate) fn probe_btf_enum64(token_fd: Option<BorrowedFd<'_>>) -> io::Result<bool> {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("enum64");
 
@@ -1461,12 +1504,12 @@ pub(crate) fn probe_btf_enum64() -> io::Result<bool> {
     let btf_bytes = btf.to_bytes();
 
     feature_probe_result(
-        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()),
+        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd),
         &[EINVAL],
     )
 }
 
-pub(crate) fn probe_btf_float() -> io::Result<bool> {
+pub(crate) fn probe_btf_float(token_fd: Option<BorrowedFd<'_>>) -> io::Result<bool> {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("float");
     let float_type = BtfType::Float(Float::new(name_offset, 16));
@@ -1475,12 +1518,12 @@ pub(crate) fn probe_btf_float() -> io::Result<bool> {
     let btf_bytes = btf.to_bytes();
 
     feature_probe_result(
-        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()),
+        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd),
         &[EINVAL],
     )
 }
 
-pub(crate) fn probe_btf_decl_tag() -> io::Result<bool> {
+pub(crate) fn probe_btf_decl_tag(token_fd: Option<BorrowedFd<'_>>) -> io::Result<bool> {
     let mut btf = Btf::new();
     let name_offset = btf.add_string("int");
     let int_type = BtfType::Int(Int::new(name_offset, 4, IntEncoding::Signed, 0));
@@ -1497,12 +1540,12 @@ pub(crate) fn probe_btf_decl_tag() -> io::Result<bool> {
     let btf_bytes = btf.to_bytes();
 
     feature_probe_result(
-        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()),
+        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd),
         &[EINVAL],
     )
 }
 
-pub(crate) fn probe_btf_type_tag() -> io::Result<bool> {
+pub(crate) fn probe_btf_type_tag(token_fd: Option<BorrowedFd<'_>>) -> io::Result<bool> {
     let mut btf = Btf::new();
 
     let int_type = BtfType::Int(Int::new(0, 4, IntEncoding::Signed, 0));
@@ -1517,7 +1560,7 @@ pub(crate) fn probe_btf_type_tag() -> io::Result<bool> {
     let btf_bytes = btf.to_bytes();
 
     feature_probe_result(
-        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default()),
+        bpf_load_btf(btf_bytes.as_slice(), &mut [], Default::default(), token_fd),
         &[EINVAL],
     )
 }
@@ -1776,7 +1819,7 @@ mod tests {
             } => Err((-1, io::Error::from_raw_os_error(EBADF))),
             _ => Ok(crate::MockableFd::mock_signed_fd().into()),
         });
-        let supported = probe_perf_link().unwrap();
+        let supported = probe_perf_link(None).unwrap();
         assert!(supported);
 
         override_syscall(|call| match call {
@@ -1786,7 +1829,7 @@ mod tests {
             } => Err((-1, io::Error::from_raw_os_error(EINVAL))),
             _ => Ok(crate::MockableFd::mock_signed_fd().into()),
         });
-        let supported = probe_perf_link().unwrap();
+        let supported = probe_perf_link(None).unwrap();
         assert!(!supported);
 
         override_syscall(|call| match call {
@@ -1796,7 +1839,7 @@ mod tests {
             } => Err((-1, io::Error::from_raw_os_error(EIO))),
             _ => Ok(crate::MockableFd::mock_signed_fd().into()),
         });
-        let error = probe_perf_link().unwrap_err();
+        let error = probe_perf_link(None).unwrap_err();
         assert_eq!(error.raw_os_error(), Some(EIO));
     }
 
@@ -1842,13 +1885,15 @@ mod tests {
 
         // Simulate the buggy kernel returning EBADF for both the basic and invalid-PID probes.
         override_syscall(mock_syscall::<EBADF>);
-        assert!(probe_uprobe_multi_link(UProbeMultiFeature::LinkCreation).unwrap());
-        assert!(!probe_uprobe_multi_link(UProbeMultiFeature::ProcessScopedPidFilter).unwrap());
+        assert!(probe_uprobe_multi_link(UProbeMultiFeature::LinkCreation, None).unwrap());
+        assert!(
+            !probe_uprobe_multi_link(UProbeMultiFeature::ProcessScopedPidFilter, None).unwrap()
+        );
 
         // As a positive control, simulate a fixed kernel returning EINVAL for the invalid PID.
         override_syscall(mock_syscall::<EINVAL>);
-        assert!(probe_uprobe_multi_link(UProbeMultiFeature::LinkCreation).unwrap());
-        assert!(probe_uprobe_multi_link(UProbeMultiFeature::ProcessScopedPidFilter).unwrap());
+        assert!(probe_uprobe_multi_link(UProbeMultiFeature::LinkCreation, None).unwrap());
+        assert!(probe_uprobe_multi_link(UProbeMultiFeature::ProcessScopedPidFilter, None).unwrap());
     }
 
     #[test]
@@ -1856,19 +1901,19 @@ mod tests {
         override_syscall(|_: Syscall<'_>| Ok(crate::MockableFd::mock_signed_fd().into()));
 
         // Ensure that the three map types we can check are accepted
-        let supported = probe_prog_id(bpf_map_type::BPF_MAP_TYPE_CPUMAP).unwrap();
+        let supported = probe_prog_id(bpf_map_type::BPF_MAP_TYPE_CPUMAP, None).unwrap();
         assert!(supported);
-        let supported = probe_prog_id(bpf_map_type::BPF_MAP_TYPE_DEVMAP).unwrap();
+        let supported = probe_prog_id(bpf_map_type::BPF_MAP_TYPE_DEVMAP, None).unwrap();
         assert!(supported);
-        let supported = probe_prog_id(bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH).unwrap();
+        let supported = probe_prog_id(bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH, None).unwrap();
         assert!(supported);
 
         override_syscall(|_: Syscall<'_>| Err((-1, io::Error::from_raw_os_error(EINVAL))));
-        let supported = probe_prog_id(bpf_map_type::BPF_MAP_TYPE_CPUMAP).unwrap();
+        let supported = probe_prog_id(bpf_map_type::BPF_MAP_TYPE_CPUMAP, None).unwrap();
         assert!(!supported);
 
         override_syscall(|_: Syscall<'_>| Err((-1, io::Error::from_raw_os_error(EIO))));
-        let error = probe_prog_id(bpf_map_type::BPF_MAP_TYPE_CPUMAP).unwrap_err();
+        let error = probe_prog_id(bpf_map_type::BPF_MAP_TYPE_CPUMAP, None).unwrap_err();
         assert_eq!(error.raw_os_error(), Some(EIO));
     }
 
@@ -1876,7 +1921,7 @@ mod tests {
     #[should_panic = "assertion failed: `BPF_MAP_TYPE_HASH` does not match `bpf_map_type::BPF_MAP_TYPE_CPUMAP | bpf_map_type::BPF_MAP_TYPE_DEVMAP |
 bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
     fn test_prog_id_supported_reject_types() {
-        drop(probe_prog_id(bpf_map_type::BPF_MAP_TYPE_HASH));
+        drop(probe_prog_id(bpf_map_type::BPF_MAP_TYPE_HASH, None));
     }
 
     #[test]
@@ -1912,7 +1957,7 @@ bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
 
         let name = CString::new("FILTER").unwrap();
         let btf_fd = unsafe { BorrowedFd::borrow_raw(BTF_FD) };
-        bpf_create_map(&name, &map, Some(btf_fd), None).unwrap();
+        bpf_create_map(&name, &map, Some(btf_fd), None, None).unwrap();
     }
 
     #[rstest]
@@ -1958,6 +2003,6 @@ bpf_map_type::BPF_MAP_TYPE_DEVMAP_HASH`"]
 
         let name = CString::new("TEST").unwrap();
         let btf_fd = unsafe { BorrowedFd::borrow_raw(BTF_FD) };
-        bpf_create_map(&name, &map, Some(btf_fd), None).unwrap();
+        bpf_create_map(&name, &map, Some(btf_fd), None, None).unwrap();
     }
 }

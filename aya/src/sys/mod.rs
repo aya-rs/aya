@@ -24,6 +24,7 @@ pub use feature_probe::{
     is_devmap_prog_id_supported, is_helper_supported, is_map_supported, is_perf_link_supported,
     is_program_supported, is_uprobe_multi_supported,
 };
+pub(crate) use feature_probe::{probe_btf_feature, probe_helper};
 pub use netlink::NetlinkError;
 pub(crate) use netlink::*;
 pub(crate) use perf_event::*;
