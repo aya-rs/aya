@@ -73,6 +73,8 @@ pub struct Program {
     pub kernel_version: Option<u32>,
     /// The section containing the program
     pub section: ProgramSection,
+    /// The section name of the program
+    pub section_name: String,
     /// The section index of the program
     pub section_index: usize,
     /// The address of the program
@@ -83,6 +85,11 @@ impl Program {
     /// The key used by [`Object::functions`]
     pub const fn function_key(&self) -> (usize, u64) {
         (self.section_index, self.address)
+    }
+
+    /// The ELF section name of the program
+    pub fn section_name(&self) -> &str {
+        &self.section_name
     }
 }
 
@@ -629,6 +636,7 @@ impl Object {
                 license: self.license.clone(),
                 kernel_version: self.kernel_version,
                 section: program_section,
+                section_name: section.name.to_string(),
                 section_index: section.index.0,
                 address: symbol.address,
             },
@@ -1985,9 +1993,11 @@ mod tests {
             obj.programs.get("foo"),
             Some(Program {
                 section: ProgramSection::KProbe,
+                section_name,
                 ..
-            })
+            }) if section_name == "kprobe/foo"
         );
+        assert_eq!(obj.programs["foo"].section_name(), "kprobe/foo");
     }
 
     #[rstest]
@@ -2040,6 +2050,7 @@ mod tests {
             Ok(())
         );
         let program = obj.programs.remove("foo").unwrap();
+        assert_eq!(program.section_name(), section);
         assert_matches!((program.section, expected_section),
             (
                 ProgramSection::UProbe {
