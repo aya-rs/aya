@@ -30,6 +30,34 @@ cargo xtask integration-test local
 cargo xtask integration-test vm --cache-dir <CACHE_DIR> <KERNEL_ARCHIVES>...
 ```
 
+### Required feature coverage
+
+Bazel VM test targets can set environment variables for test processes inside
+the VM:
+
+```starlark
+aya_qemu_vm_test(
+    # ... kernel, initramfs, and architecture ...
+    guest_env = {"AYA_TEST_REQUIRE_KPROBE_MULTI": "1"},
+)
+```
+
+The runner passes these as `init.env=NAME=VALUE` boot parameters. The VM's
+`/init` applies them to each test process, including overrides of its default
+`RUST_LOG` and `RUST_BACKTRACE`. Names must be shell identifiers; values must
+not contain ASCII whitespace, double quotes, or NUL. Empty values and additional
+`=` characters are supported. Host environment variables are not implicitly
+forwarded into the VM.
+
+For local tests, set the same variables in the test process's environment.
+
+`AYA_TEST_REQUIRE_KPROBE_MULTI=1` requires the kprobe helpers and native
+multi-kprobe configuration used by the kprobe integration tests. Missing
+prerequisites fail instead of skipping. Keep this expectation in the test
+target independently of the kernel configuration, so disabling a required
+kernel option cannot silently remove coverage. Unset or `0` leaves this
+coverage optional; any value other than `0` or `1` fails the test.
+
 ### Writing an integration test
 
 Tests should follow these guidelines:

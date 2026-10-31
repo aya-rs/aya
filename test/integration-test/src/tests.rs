@@ -10,12 +10,26 @@
 
 use std::{
     collections::HashSet,
+    env,
     fs::{self, File},
     io::{BufRead as _, BufReader},
     path::{Path, PathBuf},
 };
 
 use aya::test_helpers::{NetNsGuard, with_tracefs_probes};
+
+/// Whether native multi-kprobe coverage must succeed, including loading its helpers.
+///
+/// Bazel VM test targets enable this requirement; local runs may opt in with the same option.
+fn kprobe_multi_required() -> bool {
+    const ENV_VAR: &str = "AYA_TEST_REQUIRE_KPROBE_MULTI";
+    match env::var_os(ENV_VAR) {
+        None => false,
+        Some(value) if value == "0" => false,
+        Some(value) if value == "1" => true,
+        Some(value) => panic!("{ENV_VAR} must be 0 or 1, got {value:?}"),
+    }
+}
 
 // Returns whether BPF LSM was activated at boot.
 fn is_bpf_lsm_active() -> bool {
