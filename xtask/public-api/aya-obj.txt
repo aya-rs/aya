@@ -5117,8 +5117,10 @@ pub aya_obj::obj::Program::kernel_version: core::option::Option<u32>
 pub aya_obj::obj::Program::license: alloc::ffi::c_str::CString
 pub aya_obj::obj::Program::section: aya_obj::ProgramSection
 pub aya_obj::obj::Program::section_index: usize
+pub aya_obj::obj::Program::section_name: alloc::string::String
 impl aya_obj::Program
 pub const fn aya_obj::Program::function_key(&self) -> (usize, u64)
+pub fn aya_obj::Program::section_name(&self) -> &str
 impl core::clone::Clone for aya_obj::Program
 pub fn aya_obj::Program::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Program
@@ -5742,8 +5744,10 @@ pub aya_obj::Program::kernel_version: core::option::Option<u32>
 pub aya_obj::Program::license: alloc::ffi::c_str::CString
 pub aya_obj::Program::section: aya_obj::ProgramSection
 pub aya_obj::Program::section_index: usize
+pub aya_obj::Program::section_name: alloc::string::String
 impl aya_obj::Program
 pub const fn aya_obj::Program::function_key(&self) -> (usize, u64)
+pub fn aya_obj::Program::section_name(&self) -> &str
 impl core::clone::Clone for aya_obj::Program
 pub fn aya_obj::Program::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Program
