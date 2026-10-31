@@ -37,17 +37,12 @@
 //! [`maps`]: crate::maps
 
 // modules we don't export
+mod cgroup;
 mod info;
 mod probe;
 mod utils;
 
 // modules we explicitly export so their pub items (Links etc) get exported too
-pub mod cgroup_device;
-pub mod cgroup_skb;
-pub mod cgroup_sock;
-pub mod cgroup_sock_addr;
-pub mod cgroup_sockopt;
-pub mod cgroup_sysctl;
 pub mod extension;
 pub mod fentry;
 pub mod fexit;
@@ -57,7 +52,6 @@ pub mod kprobe;
 pub mod links;
 pub mod lirc_mode2;
 pub mod lsm;
-pub mod lsm_cgroup;
 pub mod perf_attach;
 pub mod perf_event;
 pub mod raw_trace_point;
@@ -65,7 +59,6 @@ pub mod sk_lookup;
 pub mod sk_msg;
 pub mod sk_reuseport;
 pub mod sk_skb;
-pub mod sock_ops;
 pub mod socket_filter;
 pub mod tc;
 pub mod tp_btf;
@@ -88,6 +81,11 @@ use aya_obj::{
     btf::BtfError,
     generated::{BPF_F_TEST_XDP_LIVE_FRAMES, bpf_attach_type, bpf_prog_info, bpf_prog_type},
     programs::XdpAttachType,
+};
+// Preserve the public module paths for cgroup programs.
+pub use cgroup::{
+    cgroup_device, cgroup_skb, cgroup_sock, cgroup_sock_addr, cgroup_sockopt, cgroup_sysctl,
+    lsm_cgroup, sock_ops,
 };
 use info::impl_info;
 pub use info::{LsmAttachType, ProgramInfo, ProgramType, loaded_programs};

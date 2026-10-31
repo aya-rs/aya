@@ -1,6 +1,6 @@
 //! Cgroup skb programs.
 
-use std::{hash::Hash, os::fd::AsFd, path::Path};
+use std::path::Path;
 
 use aya_obj::generated::bpf_prog_type::BPF_PROG_TYPE_CGROUP_SKB;
 pub use aya_obj::programs::CgroupSkbAttachType;
@@ -8,11 +8,10 @@ pub use aya_obj::programs::CgroupSkbAttachType;
 use crate::{
     VerifierLogLevel,
     programs::{
-        CgroupAttachMode, FdLink, Link, ProgAttachLink, ProgramData, ProgramError, ProgramType,
-        define_link_wrapper, id_as_key, impl_try_into_fdlink, load_program,
+        ProgramData, ProgramError, ProgramType,
+        cgroup::{define_cgroup_link, impl_cgroup_attach},
+        impl_try_into_fdlink, load_program,
     },
-    sys::{LinkTarget, SyscallError, bpf_link_create},
-    util::KernelVersion,
 };
 
 /// A program used to inspect or filter network activity for a given cgroup.
@@ -78,43 +77,7 @@ impl CgroupSkb {
         &self.attach_type
     }
 
-    /// Attaches the program to the given cgroup.
-    ///
-    /// The returned value can be used to detach, see [`CgroupSkb::detach`].
-    pub fn attach<T: AsFd>(
-        &mut self,
-        cgroup: T,
-        attach_type: CgroupSkbAttachType,
-        mode: CgroupAttachMode,
-    ) -> Result<CgroupSkbLinkId, ProgramError> {
-        let prog_fd = self.fd()?;
-        let prog_fd = prog_fd.as_fd();
-        let cgroup_fd = cgroup.as_fd();
-        if KernelVersion::at_least(5, 7, 0) {
-            let link_fd = bpf_link_create(
-                prog_fd,
-                LinkTarget::Fd(cgroup_fd),
-                attach_type,
-                mode.into(),
-                None,
-            )
-            .map_err(|io_error| SyscallError {
-                call: "bpf_link_create",
-                io_error,
-            })?;
-            self.data
-                .links
-                .insert(CgroupSkbLink::new(CgroupSkbLinkInner::Fd(FdLink::new(
-                    link_fd,
-                ))))
-        } else {
-            let link = ProgAttachLink::attach(prog_fd, cgroup_fd, attach_type, mode)?;
-
-            self.data
-                .links
-                .insert(CgroupSkbLink::new(CgroupSkbLinkInner::ProgAttach(link)))
-        }
-    }
+    impl_cgroup_attach!(CgroupSkbLinkId, CgroupSkbLinkInner, attach_type: CgroupSkbAttachType);
 
     /// Creates a program from a pinned entry on a bpffs.
     ///
@@ -134,40 +97,7 @@ impl CgroupSkb {
     }
 }
 
-#[derive(Debug, Hash, Eq, PartialEq)]
-enum CgroupSkbLinkIdInner {
-    Fd(<FdLink as Link>::Id),
-    ProgAttach(<ProgAttachLink as Link>::Id),
-}
-
-#[derive(Debug)]
-enum CgroupSkbLinkInner {
-    Fd(FdLink),
-    ProgAttach(ProgAttachLink),
-}
-
-impl Link for CgroupSkbLinkInner {
-    type Id = CgroupSkbLinkIdInner;
-    type Error = ProgramError;
-
-    fn id(&self) -> Self::Id {
-        match self {
-            Self::Fd(fd) => CgroupSkbLinkIdInner::Fd(fd.id()),
-            Self::ProgAttach(p) => CgroupSkbLinkIdInner::ProgAttach(p.id()),
-        }
-    }
-
-    fn detach(self) -> Result<(), Self::Error> {
-        match self {
-            Self::Fd(fd) => fd.detach().map_err(Into::into),
-            Self::ProgAttach(p) => p.detach(),
-        }
-    }
-}
-
-id_as_key!(CgroupSkbLinkInner, CgroupSkbLinkIdInner);
-
-define_link_wrapper!(
+define_cgroup_link!(
     CgroupSkbLink,
     CgroupSkbLinkId,
     CgroupSkbLinkInner,

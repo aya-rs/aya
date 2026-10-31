@@ -2257,44 +2257,44 @@ pub use aya::programs::SkReuseportAttachType
 pub use aya::programs::SkSkbKind
 pub mod aya::programs::cgroup_device
 pub struct aya::programs::cgroup_device::CgroupDevice
-impl aya::programs::cgroup_device::CgroupDevice
-pub const aya::programs::cgroup_device::CgroupDevice::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::cgroup_device::CgroupDevice::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_device::CgroupDevice::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_device::CgroupDevice::query<T: std::os::fd::owned::AsFd>(T) -> core::result::Result<alloc::vec::Vec<aya::programs::cgroup_device::CgroupDeviceLink>, aya::programs::ProgramError>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::detach(&mut self, aya::programs::cgroup_device::CgroupDeviceLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_device::CgroupDevice::take_link(&mut self, aya::programs::cgroup_device::CgroupDeviceLinkId) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLink, aya::programs::ProgramError>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::cgroup_device::CgroupDevice::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_device::CgroupDevice
-pub type &'a aya::programs::cgroup_device::CgroupDevice::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_device::CgroupDevice::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_device::CgroupDevice, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_device::CgroupDevice
-pub type &'a mut aya::programs::cgroup_device::CgroupDevice::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_device::CgroupDevice::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_device::CgroupDevice, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::cgroup_device::CgroupDevice
-impl core::marker::Send for aya::programs::cgroup_device::CgroupDevice
-impl core::marker::Sync for aya::programs::cgroup_device::CgroupDevice
-impl core::marker::Unpin for aya::programs::cgroup_device::CgroupDevice
-impl core::marker::UnsafeUnpin for aya::programs::cgroup_device::CgroupDevice
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_device::CgroupDevice
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_device::CgroupDevice
+impl aya::programs::CgroupDevice
+pub const aya::programs::CgroupDevice::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::CgroupDevice::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLinkId, aya::programs::ProgramError>
+pub fn aya::programs::CgroupDevice::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupDevice::query<T: std::os::fd::owned::AsFd>(T) -> core::result::Result<alloc::vec::Vec<aya::programs::cgroup_device::CgroupDeviceLink>, aya::programs::ProgramError>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::detach(&mut self, aya::programs::cgroup_device::CgroupDeviceLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupDevice::take_link(&mut self, aya::programs::cgroup_device::CgroupDeviceLinkId) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLink, aya::programs::ProgramError>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::CgroupDevice::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupDevice
+pub type &'a aya::programs::CgroupDevice::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupDevice::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupDevice, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupDevice
+pub type &'a mut aya::programs::CgroupDevice::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupDevice::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupDevice, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::CgroupDevice
+impl core::marker::Send for aya::programs::CgroupDevice
+impl core::marker::Sync for aya::programs::CgroupDevice
+impl core::marker::Unpin for aya::programs::CgroupDevice
+impl core::marker::UnsafeUnpin for aya::programs::CgroupDevice
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::CgroupDevice
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::CgroupDevice
 pub struct aya::programs::cgroup_device::CgroupDeviceLink(_)
 impl aya::programs::links::Link for aya::programs::cgroup_device::CgroupDeviceLink
 pub type aya::programs::cgroup_device::CgroupDeviceLink::Error = aya::programs::ProgramError
@@ -2340,47 +2340,47 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_device::Cgro
 pub mod aya::programs::cgroup_skb
 pub use aya::programs::cgroup_skb::CgroupSkbAttachType
 pub struct aya::programs::cgroup_skb::CgroupSkb
-impl aya::programs::cgroup_skb::CgroupSkb
-pub const aya::programs::cgroup_skb::CgroupSkb::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::cgroup_skb::CgroupSkb::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya_obj::programs::cgroup_skb::CgroupSkbAttachType, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLinkId, aya::programs::ProgramError>
-pub const fn aya::programs::cgroup_skb::CgroupSkb::expected_attach_type(&self) -> &core::option::Option<aya_obj::programs::cgroup_skb::CgroupSkbAttachType>
-pub fn aya::programs::cgroup_skb::CgroupSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_skb::CgroupSkbAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_skb::CgroupSkb::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::detach(&mut self, aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_skb::CgroupSkb::take_link(&mut self, aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLink, aya::programs::ProgramError>
-impl aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>, core::option::Option<aya_obj::programs::cgroup_skb::CgroupSkbAttachType>) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::cgroup_skb::CgroupSkb::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
-pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
-pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_skb::CgroupSkb
-pub type &'a aya::programs::cgroup_skb::CgroupSkb::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_skb::CgroupSkb::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_skb::CgroupSkb, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_skb::CgroupSkb
-pub type &'a mut aya::programs::cgroup_skb::CgroupSkb::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_skb::CgroupSkb::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_skb::CgroupSkb, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::cgroup_skb::CgroupSkb
-impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkb
-impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkb
-impl core::marker::Unpin for aya::programs::cgroup_skb::CgroupSkb
-impl core::marker::UnsafeUnpin for aya::programs::cgroup_skb::CgroupSkb
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_skb::CgroupSkb
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_skb::CgroupSkb
+impl aya::programs::CgroupSkb
+pub const aya::programs::CgroupSkb::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::CgroupSkb::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya_obj::programs::cgroup_skb::CgroupSkbAttachType, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLinkId, aya::programs::ProgramError>
+pub const fn aya::programs::CgroupSkb::expected_attach_type(&self) -> &core::option::Option<aya_obj::programs::cgroup_skb::CgroupSkbAttachType>
+pub fn aya::programs::CgroupSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_skb::CgroupSkbAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSkb::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::detach(&mut self, aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupSkb::take_link(&mut self, aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLink, aya::programs::ProgramError>
+impl aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>, core::option::Option<aya_obj::programs::cgroup_skb::CgroupSkbAttachType>) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::CgroupSkb::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::CgroupSkb
+pub type aya::programs::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::CgroupSkb::Result = aya::programs::TestRunResult
+pub fn aya::programs::CgroupSkb::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSkb
+pub type &'a aya::programs::CgroupSkb::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSkb::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSkb, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSkb
+pub type &'a mut aya::programs::CgroupSkb::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSkb::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSkb, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::CgroupSkb
+impl core::marker::Send for aya::programs::CgroupSkb
+impl core::marker::Sync for aya::programs::CgroupSkb
+impl core::marker::Unpin for aya::programs::CgroupSkb
+impl core::marker::UnsafeUnpin for aya::programs::CgroupSkb
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::CgroupSkb
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::CgroupSkb
 pub struct aya::programs::cgroup_skb::CgroupSkbLink(_)
 impl aya::programs::links::Link for aya::programs::cgroup_skb::CgroupSkbLink
 pub type aya::programs::cgroup_skb::CgroupSkbLink::Error = aya::programs::ProgramError
@@ -2429,40 +2429,40 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_skb::CgroupS
 pub mod aya::programs::cgroup_sock
 pub use aya::programs::cgroup_sock::CgroupSockAttachType
 pub struct aya::programs::cgroup_sock::CgroupSock
-impl aya::programs::cgroup_sock::CgroupSock
-pub const aya::programs::cgroup_sock::CgroupSock::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::cgroup_sock::CgroupSock::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock::CgroupSock::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock::CgroupSock::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::detach(&mut self, aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock::CgroupSock::take_link(&mut self, aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLink, aya::programs::ProgramError>
-impl aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::cgroup_sock::CgroupSock::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sock::CgroupSock
-pub type &'a aya::programs::cgroup_sock::CgroupSock::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_sock::CgroupSock::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_sock::CgroupSock, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sock::CgroupSock
-pub type &'a mut aya::programs::cgroup_sock::CgroupSock::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_sock::CgroupSock::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sock::CgroupSock, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::cgroup_sock::CgroupSock
-impl core::marker::Send for aya::programs::cgroup_sock::CgroupSock
-impl core::marker::Sync for aya::programs::cgroup_sock::CgroupSock
-impl core::marker::Unpin for aya::programs::cgroup_sock::CgroupSock
-impl core::marker::UnsafeUnpin for aya::programs::cgroup_sock::CgroupSock
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock::CgroupSock
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock::CgroupSock
+impl aya::programs::CgroupSock
+pub const aya::programs::CgroupSock::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::CgroupSock::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLinkId, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSock::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSock::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::detach(&mut self, aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupSock::take_link(&mut self, aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLink, aya::programs::ProgramError>
+impl aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::CgroupSock::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSock
+pub type &'a aya::programs::CgroupSock::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSock::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSock, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSock
+pub type &'a mut aya::programs::CgroupSock::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSock::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSock, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::CgroupSock
+impl core::marker::Send for aya::programs::CgroupSock
+impl core::marker::Sync for aya::programs::CgroupSock
+impl core::marker::Unpin for aya::programs::CgroupSock
+impl core::marker::UnsafeUnpin for aya::programs::CgroupSock
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::CgroupSock
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::CgroupSock
 pub struct aya::programs::cgroup_sock::CgroupSockLink(_)
 impl aya::programs::links::Link for aya::programs::cgroup_sock::CgroupSockLink
 pub type aya::programs::cgroup_sock::CgroupSockLink::Error = aya::programs::ProgramError
@@ -2511,41 +2511,41 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock::Cgroup
 pub mod aya::programs::cgroup_sock_addr
 pub use aya::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 pub struct aya::programs::cgroup_sock_addr::CgroupSockAddr
-impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub const aya::programs::cgroup_sock_addr::CgroupSockAddr::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach_to_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::detach(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::take_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLink, aya::programs::ProgramError>
-impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub type &'a aya::programs::cgroup_sock_addr::CgroupSockAddr::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_sock_addr::CgroupSockAddr::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_sock_addr::CgroupSockAddr, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub type &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::cgroup_sock_addr::CgroupSockAddr
-impl core::marker::Send for aya::programs::cgroup_sock_addr::CgroupSockAddr
-impl core::marker::Sync for aya::programs::cgroup_sock_addr::CgroupSockAddr
-impl core::marker::Unpin for aya::programs::cgroup_sock_addr::CgroupSockAddr
-impl core::marker::UnsafeUnpin for aya::programs::cgroup_sock_addr::CgroupSockAddr
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddr
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddr
+impl aya::programs::CgroupSockAddr
+pub const aya::programs::CgroupSockAddr::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::CgroupSockAddr::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockAddr::attach_to_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockAddr::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockAddr::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::detach(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockAddr::take_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLink, aya::programs::ProgramError>
+impl aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::CgroupSockAddr::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSockAddr
+pub type &'a aya::programs::CgroupSockAddr::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSockAddr::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSockAddr, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSockAddr
+pub type &'a mut aya::programs::CgroupSockAddr::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSockAddr::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSockAddr, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::CgroupSockAddr
+impl core::marker::Send for aya::programs::CgroupSockAddr
+impl core::marker::Sync for aya::programs::CgroupSockAddr
+impl core::marker::Unpin for aya::programs::CgroupSockAddr
+impl core::marker::UnsafeUnpin for aya::programs::CgroupSockAddr
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::CgroupSockAddr
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::CgroupSockAddr
 pub struct aya::programs::cgroup_sock_addr::CgroupSockAddrLink(_)
 impl aya::programs::links::Link for aya::programs::cgroup_sock_addr::CgroupSockAddrLink
 pub type aya::programs::cgroup_sock_addr::CgroupSockAddrLink::Error = aya::programs::ProgramError
@@ -2597,42 +2597,42 @@ impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock_addr::C
 pub mod aya::programs::cgroup_sockopt
 pub use aya::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub struct aya::programs::cgroup_sockopt::CgroupSockopt
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub const aya::programs::cgroup_sockopt::CgroupSockopt::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::detach(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::take_link(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLink, aya::programs::ProgramError>
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>, aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sockopt::CgroupSockopt
-pub type &'a aya::programs::cgroup_sockopt::CgroupSockopt::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_sockopt::CgroupSockopt::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_sockopt::CgroupSockopt, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sockopt::CgroupSockopt
-pub type &'a mut aya::programs::cgroup_sockopt::CgroupSockopt::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_sockopt::CgroupSockopt::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sockopt::CgroupSockopt, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::cgroup_sockopt::CgroupSockopt
-impl core::marker::Send for aya::programs::cgroup_sockopt::CgroupSockopt
-impl core::marker::Sync for aya::programs::cgroup_sockopt::CgroupSockopt
-impl core::marker::Unpin for aya::programs::cgroup_sockopt::CgroupSockopt
-impl core::marker::UnsafeUnpin for aya::programs::cgroup_sockopt::CgroupSockopt
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sockopt::CgroupSockopt
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sockopt::CgroupSockopt
+impl aya::programs::CgroupSockopt
+pub const aya::programs::CgroupSockopt::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::CgroupSockopt::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLinkId, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockopt::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockopt::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::detach(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockopt::take_link(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLink, aya::programs::ProgramError>
+impl aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>, aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::CgroupSockopt::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSockopt
+pub type &'a aya::programs::CgroupSockopt::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSockopt::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSockopt, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSockopt
+pub type &'a mut aya::programs::CgroupSockopt::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSockopt::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSockopt, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::CgroupSockopt
+impl core::marker::Send for aya::programs::CgroupSockopt
+impl core::marker::Sync for aya::programs::CgroupSockopt
+impl core::marker::Unpin for aya::programs::CgroupSockopt
+impl core::marker::UnsafeUnpin for aya::programs::CgroupSockopt
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::CgroupSockopt
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::CgroupSockopt
 pub struct aya::programs::cgroup_sockopt::CgroupSockoptLink(_)
 impl aya::programs::links::Link for aya::programs::cgroup_sockopt::CgroupSockoptLink
 pub type aya::programs::cgroup_sockopt::CgroupSockoptLink::Error = aya::programs::ProgramError
@@ -2677,43 +2677,43 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sockopt::
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sockopt::CgroupSockoptLinkId
 pub mod aya::programs::cgroup_sysctl
 pub struct aya::programs::cgroup_sysctl::CgroupSysctl
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub const aya::programs::cgroup_sysctl::CgroupSysctl::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::detach(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::take_link(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLink, aya::programs::ProgramError>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sysctl::CgroupSysctl
-pub type &'a aya::programs::cgroup_sysctl::CgroupSysctl::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_sysctl::CgroupSysctl::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_sysctl::CgroupSysctl, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sysctl::CgroupSysctl
-pub type &'a mut aya::programs::cgroup_sysctl::CgroupSysctl::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_sysctl::CgroupSysctl::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sysctl::CgroupSysctl, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::cgroup_sysctl::CgroupSysctl
-impl core::marker::Send for aya::programs::cgroup_sysctl::CgroupSysctl
-impl core::marker::Sync for aya::programs::cgroup_sysctl::CgroupSysctl
-impl core::marker::Unpin for aya::programs::cgroup_sysctl::CgroupSysctl
-impl core::marker::UnsafeUnpin for aya::programs::cgroup_sysctl::CgroupSysctl
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctl
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctl
+impl aya::programs::CgroupSysctl
+pub const aya::programs::CgroupSysctl::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::CgroupSysctl::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLinkId, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSysctl::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::detach(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupSysctl::take_link(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLink, aya::programs::ProgramError>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::CgroupSysctl::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSysctl
+pub type &'a aya::programs::CgroupSysctl::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSysctl::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSysctl, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSysctl
+pub type &'a mut aya::programs::CgroupSysctl::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSysctl::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSysctl, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::CgroupSysctl
+impl core::marker::Send for aya::programs::CgroupSysctl
+impl core::marker::Sync for aya::programs::CgroupSysctl
+impl core::marker::Unpin for aya::programs::CgroupSysctl
+impl core::marker::UnsafeUnpin for aya::programs::CgroupSysctl
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::CgroupSysctl
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::CgroupSysctl
 pub struct aya::programs::cgroup_sysctl::CgroupSysctlLink(_)
 impl aya::programs::links::Link for aya::programs::cgroup_sysctl::CgroupSysctlLink
 pub type aya::programs::cgroup_sysctl::CgroupSysctlLink::Error = aya::programs::ProgramError
@@ -3952,39 +3952,39 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm::LsmLinkId
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm::LsmLinkId
 pub mod aya::programs::lsm_cgroup
 pub struct aya::programs::lsm_cgroup::LsmCgroup
-impl aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::lsm_cgroup::LsmLinkId, aya::programs::ProgramError>
-pub fn aya::programs::lsm_cgroup::LsmCgroup::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
-pub fn aya::programs::lsm_cgroup::LsmCgroup::load(&mut self, &str, &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::detach(&mut self, aya::programs::lsm_cgroup::LsmLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::lsm_cgroup::LsmCgroup::take_link(&mut self, aya::programs::lsm_cgroup::LsmLinkId) -> core::result::Result<aya::programs::lsm_cgroup::LsmLink, aya::programs::ProgramError>
-impl aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::lsm_cgroup::LsmCgroup::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::lsm_cgroup::LsmCgroup
-pub type &'a aya::programs::lsm_cgroup::LsmCgroup::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::lsm_cgroup::LsmCgroup::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::lsm_cgroup::LsmCgroup, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::lsm_cgroup::LsmCgroup
-pub type &'a mut aya::programs::lsm_cgroup::LsmCgroup::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::lsm_cgroup::LsmCgroup::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::lsm_cgroup::LsmCgroup, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::lsm_cgroup::LsmCgroup
-impl core::marker::Send for aya::programs::lsm_cgroup::LsmCgroup
-impl core::marker::Sync for aya::programs::lsm_cgroup::LsmCgroup
-impl core::marker::Unpin for aya::programs::lsm_cgroup::LsmCgroup
-impl core::marker::UnsafeUnpin for aya::programs::lsm_cgroup::LsmCgroup
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm_cgroup::LsmCgroup
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm_cgroup::LsmCgroup
+impl aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::lsm_cgroup::LsmLinkId, aya::programs::ProgramError>
+pub fn aya::programs::LsmCgroup::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::LsmCgroup::load(&mut self, &str, &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::detach(&mut self, aya::programs::lsm_cgroup::LsmLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::LsmCgroup::take_link(&mut self, aya::programs::lsm_cgroup::LsmLinkId) -> core::result::Result<aya::programs::lsm_cgroup::LsmLink, aya::programs::ProgramError>
+impl aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::LsmCgroup::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::LsmCgroup
+pub type &'a aya::programs::LsmCgroup::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::LsmCgroup::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::LsmCgroup, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::LsmCgroup
+pub type &'a mut aya::programs::LsmCgroup::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::LsmCgroup::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::LsmCgroup, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::LsmCgroup
+impl core::marker::Send for aya::programs::LsmCgroup
+impl core::marker::Sync for aya::programs::LsmCgroup
+impl core::marker::Unpin for aya::programs::LsmCgroup
+impl core::marker::UnsafeUnpin for aya::programs::LsmCgroup
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::LsmCgroup
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::LsmCgroup
 pub struct aya::programs::lsm_cgroup::LsmLink(_)
 impl aya::programs::links::Link for aya::programs::lsm_cgroup::LsmLink
 pub type aya::programs::lsm_cgroup::LsmLink::Error = aya::programs::ProgramError
@@ -4807,43 +4807,43 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkbLin
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkbLinkId
 pub mod aya::programs::sock_ops
 pub struct aya::programs::sock_ops::SockOps
-impl aya::programs::sock_ops::SockOps
-pub const aya::programs::sock_ops::SockOps::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::sock_ops::SockOps::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::sock_ops::SockOpsLinkId, aya::programs::ProgramError>
-pub fn aya::programs::sock_ops::SockOps::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::detach(&mut self, aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::sock_ops::SockOps::take_link(&mut self, aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<aya::programs::sock_ops::SockOpsLink, aya::programs::ProgramError>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::sock_ops::SockOps::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sock_ops::SockOps
-pub type &'a aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::sock_ops::SockOps::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sock_ops::SockOps
-pub type &'a mut aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::sock_ops::SockOps::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::sock_ops::SockOps
-impl core::marker::Send for aya::programs::sock_ops::SockOps
-impl core::marker::Sync for aya::programs::sock_ops::SockOps
-impl core::marker::Unpin for aya::programs::sock_ops::SockOps
-impl core::marker::UnsafeUnpin for aya::programs::sock_ops::SockOps
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOps
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOps
+impl aya::programs::SockOps
+pub const aya::programs::SockOps::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::SockOps::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::sock_ops::SockOpsLinkId, aya::programs::ProgramError>
+pub fn aya::programs::SockOps::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::detach(&mut self, aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::SockOps::take_link(&mut self, aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<aya::programs::sock_ops::SockOpsLink, aya::programs::ProgramError>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::SockOps::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::SockOps
+pub fn aya::programs::SockOps::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::SockOps
+pub fn aya::programs::SockOps::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SockOps
+pub type &'a aya::programs::SockOps::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::SockOps::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::SockOps, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SockOps
+pub type &'a mut aya::programs::SockOps::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::SockOps::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SockOps, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::SockOps
+impl core::marker::Send for aya::programs::SockOps
+impl core::marker::Sync for aya::programs::SockOps
+impl core::marker::Unpin for aya::programs::SockOps
+impl core::marker::UnsafeUnpin for aya::programs::SockOps
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::SockOps
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::SockOps
 pub struct aya::programs::sock_ops::SockOpsLink(_)
 impl aya::programs::links::Link for aya::programs::sock_ops::SockOpsLink
 pub type aya::programs::sock_ops::SockOpsLink::Error = aya::programs::ProgramError
@@ -5882,12 +5882,12 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::ProbeKind
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::ProbeKind
 pub enum aya::programs::Program
 pub aya::programs::Program::BtfTracePoint(aya::programs::tp_btf::BtfTracePoint)
-pub aya::programs::Program::CgroupDevice(aya::programs::cgroup_device::CgroupDevice)
-pub aya::programs::Program::CgroupSkb(aya::programs::cgroup_skb::CgroupSkb)
-pub aya::programs::Program::CgroupSock(aya::programs::cgroup_sock::CgroupSock)
-pub aya::programs::Program::CgroupSockAddr(aya::programs::cgroup_sock_addr::CgroupSockAddr)
-pub aya::programs::Program::CgroupSockopt(aya::programs::cgroup_sockopt::CgroupSockopt)
-pub aya::programs::Program::CgroupSysctl(aya::programs::cgroup_sysctl::CgroupSysctl)
+pub aya::programs::Program::CgroupDevice(aya::programs::CgroupDevice)
+pub aya::programs::Program::CgroupSkb(aya::programs::CgroupSkb)
+pub aya::programs::Program::CgroupSock(aya::programs::CgroupSock)
+pub aya::programs::Program::CgroupSockAddr(aya::programs::CgroupSockAddr)
+pub aya::programs::Program::CgroupSockopt(aya::programs::CgroupSockopt)
+pub aya::programs::Program::CgroupSysctl(aya::programs::CgroupSysctl)
 pub aya::programs::Program::Extension(aya::programs::extension::Extension)
 pub aya::programs::Program::FEntry(aya::programs::fentry::FEntry)
 pub aya::programs::Program::FExit(aya::programs::fexit::FExit)
@@ -5896,7 +5896,7 @@ pub aya::programs::Program::Iter(aya::programs::iter::Iter)
 pub aya::programs::Program::KProbe(aya::programs::kprobe::KProbe)
 pub aya::programs::Program::LircMode2(aya::programs::lirc_mode2::LircMode2)
 pub aya::programs::Program::Lsm(aya::programs::lsm::Lsm)
-pub aya::programs::Program::LsmCgroup(aya::programs::lsm_cgroup::LsmCgroup)
+pub aya::programs::Program::LsmCgroup(aya::programs::LsmCgroup)
 pub aya::programs::Program::PerfEvent(aya::programs::perf_event::PerfEvent)
 pub aya::programs::Program::RawTracePoint(aya::programs::raw_trace_point::RawTracePoint)
 pub aya::programs::Program::ReusePortSocketFilter(aya::programs::socket_filter::ReusePortSocketFilter)
@@ -5905,7 +5905,7 @@ pub aya::programs::Program::SkLookup(aya::programs::sk_lookup::SkLookup)
 pub aya::programs::Program::SkMsg(aya::programs::sk_msg::SkMsg)
 pub aya::programs::Program::SkReuseport(aya::programs::sk_reuseport::SkReuseport)
 pub aya::programs::Program::SkSkb(aya::programs::sk_skb::SkSkb)
-pub aya::programs::Program::SockOps(aya::programs::sock_ops::SockOps)
+pub aya::programs::Program::SockOps(aya::programs::SockOps)
 pub aya::programs::Program::SocketFilter(aya::programs::socket_filter::SocketFilter)
 pub aya::programs::Program::TracePoint(aya::programs::trace_point::TracePoint)
 pub aya::programs::Program::UProbe(aya::programs::uprobe::UProbe)
@@ -5918,24 +5918,30 @@ pub const fn aya::programs::Program::prog_type(&self) -> aya::programs::ProgramT
 pub fn aya::programs::Program::unload(self) -> core::result::Result<(), aya::programs::ProgramError>
 impl core::fmt::Debug for aya::programs::Program
 pub fn aya::programs::Program::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_device::CgroupDevice
-pub type &'a aya::programs::cgroup_device::CgroupDevice::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_device::CgroupDevice::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_device::CgroupDevice, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_skb::CgroupSkb
-pub type &'a aya::programs::cgroup_skb::CgroupSkb::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_skb::CgroupSkb::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_skb::CgroupSkb, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sock::CgroupSock
-pub type &'a aya::programs::cgroup_sock::CgroupSock::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_sock::CgroupSock::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_sock::CgroupSock, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub type &'a aya::programs::cgroup_sock_addr::CgroupSockAddr::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_sock_addr::CgroupSockAddr::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_sock_addr::CgroupSockAddr, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sockopt::CgroupSockopt
-pub type &'a aya::programs::cgroup_sockopt::CgroupSockopt::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_sockopt::CgroupSockopt::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_sockopt::CgroupSockopt, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sysctl::CgroupSysctl
-pub type &'a aya::programs::cgroup_sysctl::CgroupSysctl::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_sysctl::CgroupSysctl::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_sysctl::CgroupSysctl, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupDevice
+pub type &'a aya::programs::CgroupDevice::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupDevice::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupDevice, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSkb
+pub type &'a aya::programs::CgroupSkb::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSkb::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSkb, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSock
+pub type &'a aya::programs::CgroupSock::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSock::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSock, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSockAddr
+pub type &'a aya::programs::CgroupSockAddr::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSockAddr::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSockAddr, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSockopt
+pub type &'a aya::programs::CgroupSockopt::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSockopt::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSockopt, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSysctl
+pub type &'a aya::programs::CgroupSysctl::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSysctl::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSysctl, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::LsmCgroup
+pub type &'a aya::programs::LsmCgroup::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::LsmCgroup::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::LsmCgroup, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SockOps
+pub type &'a aya::programs::SockOps::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::SockOps::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::SockOps, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::extension::Extension
 pub type &'a aya::programs::extension::Extension::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::extension::Extension::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::extension::Extension, aya::programs::ProgramError>
@@ -5960,9 +5966,6 @@ pub fn &'a aya::programs::lirc_mode2::LircMode2::try_from(&'a aya::programs::Pro
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::lsm::Lsm
 pub type &'a aya::programs::lsm::Lsm::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::lsm::Lsm::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::lsm::Lsm, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::lsm_cgroup::LsmCgroup
-pub type &'a aya::programs::lsm_cgroup::LsmCgroup::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::lsm_cgroup::LsmCgroup::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::lsm_cgroup::LsmCgroup, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::perf_event::PerfEvent
 pub type &'a aya::programs::perf_event::PerfEvent::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::perf_event::PerfEvent::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::perf_event::PerfEvent, aya::programs::ProgramError>
@@ -5981,9 +5984,6 @@ pub fn &'a aya::programs::sk_reuseport::SkReuseport::try_from(&'a aya::programs:
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sk_skb::SkSkb
 pub type &'a aya::programs::sk_skb::SkSkb::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::sk_skb::SkSkb::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sk_skb::SkSkb, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sock_ops::SockOps
-pub type &'a aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::sock_ops::SockOps::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::socket_filter::ReusePortSocketFilter
 pub type &'a aya::programs::socket_filter::ReusePortSocketFilter::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::socket_filter::ReusePortSocketFilter::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::socket_filter::ReusePortSocketFilter, aya::programs::ProgramError>
@@ -6005,24 +6005,30 @@ pub fn &'a aya::programs::uprobe::UProbe::try_from(&'a aya::programs::Program) -
 impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::xdp::Xdp
 pub type &'a aya::programs::xdp::Xdp::Error = aya::programs::ProgramError
 pub fn &'a aya::programs::xdp::Xdp::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::xdp::Xdp, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_device::CgroupDevice
-pub type &'a mut aya::programs::cgroup_device::CgroupDevice::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_device::CgroupDevice::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_device::CgroupDevice, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_skb::CgroupSkb
-pub type &'a mut aya::programs::cgroup_skb::CgroupSkb::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_skb::CgroupSkb::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_skb::CgroupSkb, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sock::CgroupSock
-pub type &'a mut aya::programs::cgroup_sock::CgroupSock::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_sock::CgroupSock::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sock::CgroupSock, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub type &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sockopt::CgroupSockopt
-pub type &'a mut aya::programs::cgroup_sockopt::CgroupSockopt::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_sockopt::CgroupSockopt::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sockopt::CgroupSockopt, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sysctl::CgroupSysctl
-pub type &'a mut aya::programs::cgroup_sysctl::CgroupSysctl::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_sysctl::CgroupSysctl::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sysctl::CgroupSysctl, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupDevice
+pub type &'a mut aya::programs::CgroupDevice::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupDevice::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupDevice, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSkb
+pub type &'a mut aya::programs::CgroupSkb::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSkb::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSkb, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSock
+pub type &'a mut aya::programs::CgroupSock::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSock::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSock, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSockAddr
+pub type &'a mut aya::programs::CgroupSockAddr::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSockAddr::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSockAddr, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSockopt
+pub type &'a mut aya::programs::CgroupSockopt::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSockopt::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSockopt, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSysctl
+pub type &'a mut aya::programs::CgroupSysctl::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSysctl::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSysctl, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::LsmCgroup
+pub type &'a mut aya::programs::LsmCgroup::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::LsmCgroup::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::LsmCgroup, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SockOps
+pub type &'a mut aya::programs::SockOps::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::SockOps::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SockOps, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::extension::Extension
 pub type &'a mut aya::programs::extension::Extension::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::extension::Extension::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::extension::Extension, aya::programs::ProgramError>
@@ -6047,9 +6053,6 @@ pub fn &'a mut aya::programs::lirc_mode2::LircMode2::try_from(&'a mut aya::progr
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::lsm::Lsm
 pub type &'a mut aya::programs::lsm::Lsm::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::lsm::Lsm::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::lsm::Lsm, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::lsm_cgroup::LsmCgroup
-pub type &'a mut aya::programs::lsm_cgroup::LsmCgroup::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::lsm_cgroup::LsmCgroup::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::lsm_cgroup::LsmCgroup, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::perf_event::PerfEvent
 pub type &'a mut aya::programs::perf_event::PerfEvent::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::perf_event::PerfEvent::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::perf_event::PerfEvent, aya::programs::ProgramError>
@@ -6068,9 +6071,6 @@ pub fn &'a mut aya::programs::sk_reuseport::SkReuseport::try_from(&'a mut aya::p
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sk_skb::SkSkb
 pub type &'a mut aya::programs::sk_skb::SkSkb::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::sk_skb::SkSkb::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sk_skb::SkSkb, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sock_ops::SockOps
-pub type &'a mut aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::sock_ops::SockOps::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
 impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::socket_filter::ReusePortSocketFilter
 pub type &'a mut aya::programs::socket_filter::ReusePortSocketFilter::Error = aya::programs::ProgramError
 pub fn &'a mut aya::programs::socket_filter::ReusePortSocketFilter::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::socket_filter::ReusePortSocketFilter, aya::programs::ProgramError>
@@ -6473,232 +6473,232 @@ impl core::marker::UnsafeUnpin for aya::programs::tp_btf::BtfTracePoint
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::tp_btf::BtfTracePoint
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::tp_btf::BtfTracePoint
 pub struct aya::programs::CgroupDevice
-impl aya::programs::cgroup_device::CgroupDevice
-pub const aya::programs::cgroup_device::CgroupDevice::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::cgroup_device::CgroupDevice::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_device::CgroupDevice::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_device::CgroupDevice::query<T: std::os::fd::owned::AsFd>(T) -> core::result::Result<alloc::vec::Vec<aya::programs::cgroup_device::CgroupDeviceLink>, aya::programs::ProgramError>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::detach(&mut self, aya::programs::cgroup_device::CgroupDeviceLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_device::CgroupDevice::take_link(&mut self, aya::programs::cgroup_device::CgroupDeviceLinkId) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLink, aya::programs::ProgramError>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::cgroup_device::CgroupDevice::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::cgroup_device::CgroupDevice
-pub fn aya::programs::cgroup_device::CgroupDevice::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_device::CgroupDevice
-pub type &'a aya::programs::cgroup_device::CgroupDevice::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_device::CgroupDevice::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_device::CgroupDevice, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_device::CgroupDevice
-pub type &'a mut aya::programs::cgroup_device::CgroupDevice::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_device::CgroupDevice::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_device::CgroupDevice, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::cgroup_device::CgroupDevice
-impl core::marker::Send for aya::programs::cgroup_device::CgroupDevice
-impl core::marker::Sync for aya::programs::cgroup_device::CgroupDevice
-impl core::marker::Unpin for aya::programs::cgroup_device::CgroupDevice
-impl core::marker::UnsafeUnpin for aya::programs::cgroup_device::CgroupDevice
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_device::CgroupDevice
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_device::CgroupDevice
+impl aya::programs::CgroupDevice
+pub const aya::programs::CgroupDevice::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::CgroupDevice::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLinkId, aya::programs::ProgramError>
+pub fn aya::programs::CgroupDevice::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupDevice::query<T: std::os::fd::owned::AsFd>(T) -> core::result::Result<alloc::vec::Vec<aya::programs::cgroup_device::CgroupDeviceLink>, aya::programs::ProgramError>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::detach(&mut self, aya::programs::cgroup_device::CgroupDeviceLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupDevice::take_link(&mut self, aya::programs::cgroup_device::CgroupDeviceLinkId) -> core::result::Result<aya::programs::cgroup_device::CgroupDeviceLink, aya::programs::ProgramError>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::CgroupDevice::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::CgroupDevice
+pub fn aya::programs::CgroupDevice::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupDevice
+pub type &'a aya::programs::CgroupDevice::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupDevice::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupDevice, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupDevice
+pub type &'a mut aya::programs::CgroupDevice::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupDevice::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupDevice, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::CgroupDevice
+impl core::marker::Send for aya::programs::CgroupDevice
+impl core::marker::Sync for aya::programs::CgroupDevice
+impl core::marker::Unpin for aya::programs::CgroupDevice
+impl core::marker::UnsafeUnpin for aya::programs::CgroupDevice
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::CgroupDevice
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::CgroupDevice
 pub struct aya::programs::CgroupSkb
-impl aya::programs::cgroup_skb::CgroupSkb
-pub const aya::programs::cgroup_skb::CgroupSkb::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::cgroup_skb::CgroupSkb::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya_obj::programs::cgroup_skb::CgroupSkbAttachType, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLinkId, aya::programs::ProgramError>
-pub const fn aya::programs::cgroup_skb::CgroupSkb::expected_attach_type(&self) -> &core::option::Option<aya_obj::programs::cgroup_skb::CgroupSkbAttachType>
-pub fn aya::programs::cgroup_skb::CgroupSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_skb::CgroupSkbAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_skb::CgroupSkb::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::detach(&mut self, aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_skb::CgroupSkb::take_link(&mut self, aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLink, aya::programs::ProgramError>
-impl aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>, core::option::Option<aya_obj::programs::cgroup_skb::CgroupSkbAttachType>) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::cgroup_skb::CgroupSkb::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
-pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
-pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::cgroup_skb::CgroupSkb
-pub fn aya::programs::cgroup_skb::CgroupSkb::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_skb::CgroupSkb
-pub type &'a aya::programs::cgroup_skb::CgroupSkb::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_skb::CgroupSkb::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_skb::CgroupSkb, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_skb::CgroupSkb
-pub type &'a mut aya::programs::cgroup_skb::CgroupSkb::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_skb::CgroupSkb::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_skb::CgroupSkb, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::cgroup_skb::CgroupSkb
-impl core::marker::Send for aya::programs::cgroup_skb::CgroupSkb
-impl core::marker::Sync for aya::programs::cgroup_skb::CgroupSkb
-impl core::marker::Unpin for aya::programs::cgroup_skb::CgroupSkb
-impl core::marker::UnsafeUnpin for aya::programs::cgroup_skb::CgroupSkb
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_skb::CgroupSkb
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_skb::CgroupSkb
+impl aya::programs::CgroupSkb
+pub const aya::programs::CgroupSkb::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::CgroupSkb::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya_obj::programs::cgroup_skb::CgroupSkbAttachType, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLinkId, aya::programs::ProgramError>
+pub const fn aya::programs::CgroupSkb::expected_attach_type(&self) -> &core::option::Option<aya_obj::programs::cgroup_skb::CgroupSkbAttachType>
+pub fn aya::programs::CgroupSkb::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_skb::CgroupSkbAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSkb::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::detach(&mut self, aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupSkb::take_link(&mut self, aya::programs::cgroup_skb::CgroupSkbLinkId) -> core::result::Result<aya::programs::cgroup_skb::CgroupSkbLink, aya::programs::ProgramError>
+impl aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>, core::option::Option<aya_obj::programs::cgroup_skb::CgroupSkbAttachType>) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::CgroupSkb::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::CgroupSkb
+pub type aya::programs::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::CgroupSkb::Result = aya::programs::TestRunResult
+pub fn aya::programs::CgroupSkb::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::CgroupSkb
+pub fn aya::programs::CgroupSkb::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSkb
+pub type &'a aya::programs::CgroupSkb::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSkb::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSkb, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSkb
+pub type &'a mut aya::programs::CgroupSkb::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSkb::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSkb, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::CgroupSkb
+impl core::marker::Send for aya::programs::CgroupSkb
+impl core::marker::Sync for aya::programs::CgroupSkb
+impl core::marker::Unpin for aya::programs::CgroupSkb
+impl core::marker::UnsafeUnpin for aya::programs::CgroupSkb
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::CgroupSkb
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::CgroupSkb
 pub struct aya::programs::CgroupSock
-impl aya::programs::cgroup_sock::CgroupSock
-pub const aya::programs::cgroup_sock::CgroupSock::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::cgroup_sock::CgroupSock::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock::CgroupSock::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock::CgroupSock::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::detach(&mut self, aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock::CgroupSock::take_link(&mut self, aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLink, aya::programs::ProgramError>
-impl aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::cgroup_sock::CgroupSock::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::cgroup_sock::CgroupSock
-pub fn aya::programs::cgroup_sock::CgroupSock::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sock::CgroupSock
-pub type &'a aya::programs::cgroup_sock::CgroupSock::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_sock::CgroupSock::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_sock::CgroupSock, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sock::CgroupSock
-pub type &'a mut aya::programs::cgroup_sock::CgroupSock::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_sock::CgroupSock::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sock::CgroupSock, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::cgroup_sock::CgroupSock
-impl core::marker::Send for aya::programs::cgroup_sock::CgroupSock
-impl core::marker::Sync for aya::programs::cgroup_sock::CgroupSock
-impl core::marker::Unpin for aya::programs::cgroup_sock::CgroupSock
-impl core::marker::UnsafeUnpin for aya::programs::cgroup_sock::CgroupSock
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock::CgroupSock
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock::CgroupSock
+impl aya::programs::CgroupSock
+pub const aya::programs::CgroupSock::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::CgroupSock::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLinkId, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSock::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock::CgroupSockAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSock::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::detach(&mut self, aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupSock::take_link(&mut self, aya::programs::cgroup_sock::CgroupSockLinkId) -> core::result::Result<aya::programs::cgroup_sock::CgroupSockLink, aya::programs::ProgramError>
+impl aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::CgroupSock::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::CgroupSock
+pub fn aya::programs::CgroupSock::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSock
+pub type &'a aya::programs::CgroupSock::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSock::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSock, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSock
+pub type &'a mut aya::programs::CgroupSock::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSock::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSock, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::CgroupSock
+impl core::marker::Send for aya::programs::CgroupSock
+impl core::marker::Sync for aya::programs::CgroupSock
+impl core::marker::Unpin for aya::programs::CgroupSock
+impl core::marker::UnsafeUnpin for aya::programs::CgroupSock
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::CgroupSock
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::CgroupSock
 pub struct aya::programs::CgroupSockAddr
-impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub const aya::programs::cgroup_sock_addr::CgroupSockAddr::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::attach_to_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::detach(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::take_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLink, aya::programs::ProgramError>
-impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub fn aya::programs::cgroup_sock_addr::CgroupSockAddr::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub type &'a aya::programs::cgroup_sock_addr::CgroupSockAddr::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_sock_addr::CgroupSockAddr::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_sock_addr::CgroupSockAddr, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr
-pub type &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sock_addr::CgroupSockAddr, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::cgroup_sock_addr::CgroupSockAddr
-impl core::marker::Send for aya::programs::cgroup_sock_addr::CgroupSockAddr
-impl core::marker::Sync for aya::programs::cgroup_sock_addr::CgroupSockAddr
-impl core::marker::Unpin for aya::programs::cgroup_sock_addr::CgroupSockAddr
-impl core::marker::UnsafeUnpin for aya::programs::cgroup_sock_addr::CgroupSockAddr
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddr
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sock_addr::CgroupSockAddr
+impl aya::programs::CgroupSockAddr
+pub const aya::programs::CgroupSockAddr::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::CgroupSockAddr::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockAddr::attach_to_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLink) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockAddr::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockAddr::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::detach(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockAddr::take_link(&mut self, aya::programs::cgroup_sock_addr::CgroupSockAddrLinkId) -> core::result::Result<aya::programs::cgroup_sock_addr::CgroupSockAddrLink, aya::programs::ProgramError>
+impl aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::CgroupSockAddr::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::CgroupSockAddr
+pub fn aya::programs::CgroupSockAddr::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSockAddr
+pub type &'a aya::programs::CgroupSockAddr::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSockAddr::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSockAddr, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSockAddr
+pub type &'a mut aya::programs::CgroupSockAddr::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSockAddr::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSockAddr, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::CgroupSockAddr
+impl core::marker::Send for aya::programs::CgroupSockAddr
+impl core::marker::Sync for aya::programs::CgroupSockAddr
+impl core::marker::Unpin for aya::programs::CgroupSockAddr
+impl core::marker::UnsafeUnpin for aya::programs::CgroupSockAddr
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::CgroupSockAddr
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::CgroupSockAddr
 pub struct aya::programs::CgroupSockopt
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub const aya::programs::cgroup_sockopt::CgroupSockopt::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::detach(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::take_link(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLink, aya::programs::ProgramError>
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>, aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::cgroup_sockopt::CgroupSockopt
-pub fn aya::programs::cgroup_sockopt::CgroupSockopt::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sockopt::CgroupSockopt
-pub type &'a aya::programs::cgroup_sockopt::CgroupSockopt::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_sockopt::CgroupSockopt::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_sockopt::CgroupSockopt, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sockopt::CgroupSockopt
-pub type &'a mut aya::programs::cgroup_sockopt::CgroupSockopt::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_sockopt::CgroupSockopt::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sockopt::CgroupSockopt, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::cgroup_sockopt::CgroupSockopt
-impl core::marker::Send for aya::programs::cgroup_sockopt::CgroupSockopt
-impl core::marker::Sync for aya::programs::cgroup_sockopt::CgroupSockopt
-impl core::marker::Unpin for aya::programs::cgroup_sockopt::CgroupSockopt
-impl core::marker::UnsafeUnpin for aya::programs::cgroup_sockopt::CgroupSockopt
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sockopt::CgroupSockopt
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sockopt::CgroupSockopt
+impl aya::programs::CgroupSockopt
+pub const aya::programs::CgroupSockopt::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::CgroupSockopt::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLinkId, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockopt::from_pin<P: core::convert::AsRef<std::path::Path>>(P, aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockopt::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::detach(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupSockopt::take_link(&mut self, aya::programs::cgroup_sockopt::CgroupSockoptLinkId) -> core::result::Result<aya::programs::cgroup_sockopt::CgroupSockoptLink, aya::programs::ProgramError>
+impl aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>, aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::CgroupSockopt::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::CgroupSockopt
+pub fn aya::programs::CgroupSockopt::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSockopt
+pub type &'a aya::programs::CgroupSockopt::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSockopt::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSockopt, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSockopt
+pub type &'a mut aya::programs::CgroupSockopt::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSockopt::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSockopt, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::CgroupSockopt
+impl core::marker::Send for aya::programs::CgroupSockopt
+impl core::marker::Sync for aya::programs::CgroupSockopt
+impl core::marker::Unpin for aya::programs::CgroupSockopt
+impl core::marker::UnsafeUnpin for aya::programs::CgroupSockopt
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::CgroupSockopt
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::CgroupSockopt
 pub struct aya::programs::CgroupSysctl
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub const aya::programs::cgroup_sysctl::CgroupSysctl::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLinkId, aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::detach(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::take_link(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLink, aya::programs::ProgramError>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::cgroup_sysctl::CgroupSysctl
-pub fn aya::programs::cgroup_sysctl::CgroupSysctl::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::cgroup_sysctl::CgroupSysctl
-pub type &'a aya::programs::cgroup_sysctl::CgroupSysctl::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::cgroup_sysctl::CgroupSysctl::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::cgroup_sysctl::CgroupSysctl, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::cgroup_sysctl::CgroupSysctl
-pub type &'a mut aya::programs::cgroup_sysctl::CgroupSysctl::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::cgroup_sysctl::CgroupSysctl::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::cgroup_sysctl::CgroupSysctl, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::cgroup_sysctl::CgroupSysctl
-impl core::marker::Send for aya::programs::cgroup_sysctl::CgroupSysctl
-impl core::marker::Sync for aya::programs::cgroup_sysctl::CgroupSysctl
-impl core::marker::Unpin for aya::programs::cgroup_sysctl::CgroupSysctl
-impl core::marker::UnsafeUnpin for aya::programs::cgroup_sysctl::CgroupSysctl
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctl
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::cgroup_sysctl::CgroupSysctl
+impl aya::programs::CgroupSysctl
+pub const aya::programs::CgroupSysctl::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::CgroupSysctl::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLinkId, aya::programs::ProgramError>
+pub fn aya::programs::CgroupSysctl::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::detach(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::CgroupSysctl::take_link(&mut self, aya::programs::cgroup_sysctl::CgroupSysctlLinkId) -> core::result::Result<aya::programs::cgroup_sysctl::CgroupSysctlLink, aya::programs::ProgramError>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::CgroupSysctl::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::CgroupSysctl
+pub fn aya::programs::CgroupSysctl::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::CgroupSysctl
+pub type &'a aya::programs::CgroupSysctl::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::CgroupSysctl::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::CgroupSysctl, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::CgroupSysctl
+pub type &'a mut aya::programs::CgroupSysctl::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::CgroupSysctl::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::CgroupSysctl, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::CgroupSysctl
+impl core::marker::Send for aya::programs::CgroupSysctl
+impl core::marker::Sync for aya::programs::CgroupSysctl
+impl core::marker::Unpin for aya::programs::CgroupSysctl
+impl core::marker::UnsafeUnpin for aya::programs::CgroupSysctl
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::CgroupSysctl
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::CgroupSysctl
 pub struct aya::programs::Extension
 impl aya::programs::extension::Extension
 pub const aya::programs::extension::Extension::PROGRAM_TYPE: aya::programs::ProgramType
@@ -7032,39 +7032,39 @@ impl core::marker::UnsafeUnpin for aya::programs::lsm::Lsm
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm::Lsm
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm::Lsm
 pub struct aya::programs::LsmCgroup
-impl aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::lsm_cgroup::LsmLinkId, aya::programs::ProgramError>
-pub fn aya::programs::lsm_cgroup::LsmCgroup::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
-pub fn aya::programs::lsm_cgroup::LsmCgroup::load(&mut self, &str, &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::detach(&mut self, aya::programs::lsm_cgroup::LsmLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::lsm_cgroup::LsmCgroup::take_link(&mut self, aya::programs::lsm_cgroup::LsmLinkId) -> core::result::Result<aya::programs::lsm_cgroup::LsmLink, aya::programs::ProgramError>
-impl aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::lsm_cgroup::LsmCgroup::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::lsm_cgroup::LsmCgroup
-pub fn aya::programs::lsm_cgroup::LsmCgroup::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::lsm_cgroup::LsmCgroup
-pub type &'a aya::programs::lsm_cgroup::LsmCgroup::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::lsm_cgroup::LsmCgroup::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::lsm_cgroup::LsmCgroup, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::lsm_cgroup::LsmCgroup
-pub type &'a mut aya::programs::lsm_cgroup::LsmCgroup::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::lsm_cgroup::LsmCgroup::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::lsm_cgroup::LsmCgroup, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::lsm_cgroup::LsmCgroup
-impl core::marker::Send for aya::programs::lsm_cgroup::LsmCgroup
-impl core::marker::Sync for aya::programs::lsm_cgroup::LsmCgroup
-impl core::marker::Unpin for aya::programs::lsm_cgroup::LsmCgroup
-impl core::marker::UnsafeUnpin for aya::programs::lsm_cgroup::LsmCgroup
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::lsm_cgroup::LsmCgroup
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::lsm_cgroup::LsmCgroup
+impl aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::attach<T: std::os::fd::owned::AsFd>(&mut self, T) -> core::result::Result<aya::programs::lsm_cgroup::LsmLinkId, aya::programs::ProgramError>
+pub fn aya::programs::LsmCgroup::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+pub fn aya::programs::LsmCgroup::load(&mut self, &str, &aya_obj::btf::btf::Btf) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::detach(&mut self, aya::programs::lsm_cgroup::LsmLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::LsmCgroup::take_link(&mut self, aya::programs::lsm_cgroup::LsmLinkId) -> core::result::Result<aya::programs::lsm_cgroup::LsmLink, aya::programs::ProgramError>
+impl aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::LsmCgroup::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::LsmCgroup
+pub fn aya::programs::LsmCgroup::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::LsmCgroup
+pub type &'a aya::programs::LsmCgroup::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::LsmCgroup::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::LsmCgroup, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::LsmCgroup
+pub type &'a mut aya::programs::LsmCgroup::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::LsmCgroup::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::LsmCgroup, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::LsmCgroup
+impl core::marker::Send for aya::programs::LsmCgroup
+impl core::marker::Sync for aya::programs::LsmCgroup
+impl core::marker::Unpin for aya::programs::LsmCgroup
+impl core::marker::UnsafeUnpin for aya::programs::LsmCgroup
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::LsmCgroup
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::LsmCgroup
 pub struct aya::programs::PerfEvent
 impl aya::programs::perf_event::PerfEvent
 pub const aya::programs::perf_event::PerfEvent::PROGRAM_TYPE: aya::programs::ProgramType
@@ -7458,43 +7458,43 @@ impl core::marker::UnsafeUnpin for aya::programs::sk_skb::SkSkb
 impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sk_skb::SkSkb
 impl core::panic::unwind_safe::UnwindSafe for aya::programs::sk_skb::SkSkb
 pub struct aya::programs::SockOps
-impl aya::programs::sock_ops::SockOps
-pub const aya::programs::sock_ops::SockOps::PROGRAM_TYPE: aya::programs::ProgramType
-pub fn aya::programs::sock_ops::SockOps::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::sock_ops::SockOpsLinkId, aya::programs::ProgramError>
-pub fn aya::programs::sock_ops::SockOps::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::detach(&mut self, aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<(), aya::programs::ProgramError>
-pub fn aya::programs::sock_ops::SockOps::take_link(&mut self, aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<aya::programs::sock_ops::SockOpsLink, aya::programs::ProgramError>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
-pub fn aya::programs::sock_ops::SockOps::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
-impl aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
-impl core::fmt::Debug for aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for aya::programs::sock_ops::SockOps
-pub fn aya::programs::sock_ops::SockOps::drop(&mut self)
-impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::sock_ops::SockOps
-pub type &'a aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
-pub fn &'a aya::programs::sock_ops::SockOps::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
-impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::sock_ops::SockOps
-pub type &'a mut aya::programs::sock_ops::SockOps::Error = aya::programs::ProgramError
-pub fn &'a mut aya::programs::sock_ops::SockOps::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::sock_ops::SockOps, aya::programs::ProgramError>
-impl core::marker::Freeze for aya::programs::sock_ops::SockOps
-impl core::marker::Send for aya::programs::sock_ops::SockOps
-impl core::marker::Sync for aya::programs::sock_ops::SockOps
-impl core::marker::Unpin for aya::programs::sock_ops::SockOps
-impl core::marker::UnsafeUnpin for aya::programs::sock_ops::SockOps
-impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::sock_ops::SockOps
-impl core::panic::unwind_safe::UnwindSafe for aya::programs::sock_ops::SockOps
+impl aya::programs::SockOps
+pub const aya::programs::SockOps::PROGRAM_TYPE: aya::programs::ProgramType
+pub fn aya::programs::SockOps::attach<T: std::os::fd::owned::AsFd>(&mut self, T, aya::programs::links::CgroupAttachMode) -> core::result::Result<aya::programs::sock_ops::SockOpsLinkId, aya::programs::ProgramError>
+pub fn aya::programs::SockOps::load(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::detach(&mut self, aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<(), aya::programs::ProgramError>
+pub fn aya::programs::SockOps::take_link(&mut self, aya::programs::sock_ops::SockOpsLinkId) -> core::result::Result<aya::programs::sock_ops::SockOpsLink, aya::programs::ProgramError>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::fd(&self) -> core::result::Result<&aya::programs::ProgramFd, aya::programs::ProgramError>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::from_pin<P: core::convert::AsRef<std::path::Path>>(P) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::from_program_info(aya::programs::ProgramInfo, alloc::borrow::Cow<'static, str>) -> core::result::Result<Self, aya::programs::ProgramError>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::info(&self) -> core::result::Result<aya::programs::ProgramInfo, aya::programs::ProgramError>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::pin<P: core::convert::AsRef<std::path::Path>>(&mut self, P) -> core::result::Result<(), aya::pin::PinError>
+pub fn aya::programs::SockOps::unpin(&mut self) -> core::result::Result<(), core::io::error::Error>
+impl aya::programs::SockOps
+pub fn aya::programs::SockOps::unload(&mut self) -> core::result::Result<(), aya::programs::ProgramError>
+impl core::fmt::Debug for aya::programs::SockOps
+pub fn aya::programs::SockOps::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for aya::programs::SockOps
+pub fn aya::programs::SockOps::drop(&mut self)
+impl<'a> core::convert::TryFrom<&'a aya::programs::Program> for &'a aya::programs::SockOps
+pub type &'a aya::programs::SockOps::Error = aya::programs::ProgramError
+pub fn &'a aya::programs::SockOps::try_from(&'a aya::programs::Program) -> core::result::Result<&'a aya::programs::SockOps, aya::programs::ProgramError>
+impl<'a> core::convert::TryFrom<&'a mut aya::programs::Program> for &'a mut aya::programs::SockOps
+pub type &'a mut aya::programs::SockOps::Error = aya::programs::ProgramError
+pub fn &'a mut aya::programs::SockOps::try_from(&'a mut aya::programs::Program) -> core::result::Result<&'a mut aya::programs::SockOps, aya::programs::ProgramError>
+impl core::marker::Freeze for aya::programs::SockOps
+impl core::marker::Send for aya::programs::SockOps
+impl core::marker::Sync for aya::programs::SockOps
+impl core::marker::Unpin for aya::programs::SockOps
+impl core::marker::UnsafeUnpin for aya::programs::SockOps
+impl core::panic::unwind_safe::RefUnwindSafe for aya::programs::SockOps
+impl core::panic::unwind_safe::UnwindSafe for aya::programs::SockOps
 #[repr(transparent)] pub struct aya::programs::SocketFilter
 impl aya::programs::socket_filter::SocketFilter
 pub const aya::programs::socket_filter::SocketFilter::PROGRAM_TYPE: aya::programs::ProgramType
@@ -7888,10 +7888,10 @@ pub trait aya::programs::TestRun
 pub type aya::programs::TestRun::Opts<'a>
 pub type aya::programs::TestRun::Result
 pub fn aya::programs::TestRun::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
-impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
-pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
-pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::CgroupSkb
+pub type aya::programs::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::CgroupSkb::Result = aya::programs::TestRunResult
+pub fn aya::programs::CgroupSkb::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::fexit::FExit
 pub type aya::programs::fexit::FExit::Opts<'a> = ()
 pub type aya::programs::fexit::FExit::Result = ()
@@ -8419,10 +8419,10 @@ pub trait aya::TestRun
 pub type aya::TestRun::Opts<'a>
 pub type aya::TestRun::Result
 pub fn aya::TestRun::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
-impl aya::programs::TestRun for aya::programs::cgroup_skb::CgroupSkb
-pub type aya::programs::cgroup_skb::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
-pub type aya::programs::cgroup_skb::CgroupSkb::Result = aya::programs::TestRunResult
-pub fn aya::programs::cgroup_skb::CgroupSkb::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
+impl aya::programs::TestRun for aya::programs::CgroupSkb
+pub type aya::programs::CgroupSkb::Opts<'a> = aya::programs::TestRunOptions<'a>
+pub type aya::programs::CgroupSkb::Result = aya::programs::TestRunResult
+pub fn aya::programs::CgroupSkb::test_run(&self, Self::Opts) -> core::result::Result<Self::Result, aya::programs::ProgramError>
 impl aya::programs::TestRun for aya::programs::fexit::FExit
 pub type aya::programs::fexit::FExit::Opts<'a> = ()
 pub type aya::programs::fexit::FExit::Result = ()
