@@ -499,7 +499,6 @@ macro_rules! define_link_wrapper {
         #[derive(Debug)]
         pub struct $wrapper(Option<$base>);
 
-        #[expect(clippy::allow_attributes, reason = "macro")]
         #[allow(dead_code, reason = "macro")]
         // allow dead code since currently XDP/TC are the only consumers of inner and
         // into_inner

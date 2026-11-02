@@ -11,7 +11,6 @@ mod sealed {
     macro_rules! impl_argument {
         ($($ty:ty),+ $(,)?) => {
             $(
-                #[expect(clippy::allow_attributes, reason = "macro")]
                 #[allow(clippy::cast_lossless, trivial_numeric_casts, reason = "macro")]
                 impl Argument for $ty {
                     fn from_register(value: u64) -> Self {
