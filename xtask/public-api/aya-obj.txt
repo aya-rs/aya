@@ -54,6 +54,7 @@ impl core::fmt::Debug for aya_obj::btf::BtfError
 pub fn aya_obj::btf::BtfError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya_obj::btf::BtfError
 pub fn aya_obj::btf::BtfError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::BtfError
 impl core::marker::Freeze for aya_obj::btf::BtfError
 impl core::marker::Send for aya_obj::btf::BtfError
 impl core::marker::Sync for aya_obj::btf::BtfError
@@ -81,6 +82,7 @@ impl core::hash::Hash for aya_obj::btf::BtfFeature
 pub fn aya_obj::btf::BtfFeature::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::btf::BtfFeature
 impl core::marker::StructuralPartialEq for aya_obj::btf::BtfFeature
+impl core::marker::Forget for aya_obj::btf::BtfFeature
 impl core::marker::Freeze for aya_obj::btf::BtfFeature
 impl core::marker::Send for aya_obj::btf::BtfFeature
 impl core::marker::Sync for aya_obj::btf::BtfFeature
@@ -125,6 +127,7 @@ impl core::fmt::Display for aya_obj::btf::BtfKind
 pub fn aya_obj::btf::BtfKind::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::btf::BtfKind
 impl core::marker::StructuralPartialEq for aya_obj::btf::BtfKind
+impl core::marker::Forget for aya_obj::btf::BtfKind
 impl core::marker::Freeze for aya_obj::btf::BtfKind
 impl core::marker::Send for aya_obj::btf::BtfKind
 impl core::marker::Sync for aya_obj::btf::BtfKind
@@ -157,6 +160,7 @@ impl core::clone::Clone for aya_obj::btf::BtfType
 pub fn aya_obj::btf::BtfType::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::BtfType
 pub fn aya_obj::btf::BtfType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::BtfType
 impl core::marker::Freeze for aya_obj::btf::BtfType
 impl core::marker::Send for aya_obj::btf::BtfType
 impl core::marker::Sync for aya_obj::btf::BtfType
@@ -179,6 +183,7 @@ pub fn aya_obj::btf::FuncLinkage::from(u32) -> Self
 impl core::fmt::Debug for aya_obj::btf::FuncLinkage
 pub fn aya_obj::btf::FuncLinkage::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::StructuralPartialEq for aya_obj::btf::FuncLinkage
+impl core::marker::Forget for aya_obj::btf::FuncLinkage
 impl core::marker::Freeze for aya_obj::btf::FuncLinkage
 impl core::marker::Send for aya_obj::btf::FuncLinkage
 impl core::marker::Sync for aya_obj::btf::FuncLinkage
@@ -202,6 +207,7 @@ pub fn aya_obj::btf::IntEncoding::from(u32) -> Self
 impl core::fmt::Debug for aya_obj::btf::IntEncoding
 pub fn aya_obj::btf::IntEncoding::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::StructuralPartialEq for aya_obj::btf::IntEncoding
+impl core::marker::Forget for aya_obj::btf::IntEncoding
 impl core::marker::Freeze for aya_obj::btf::IntEncoding
 impl core::marker::Send for aya_obj::btf::IntEncoding
 impl core::marker::Sync for aya_obj::btf::IntEncoding
@@ -224,6 +230,7 @@ pub fn aya_obj::btf::VarLinkage::from(u32) -> Self
 impl core::fmt::Debug for aya_obj::btf::VarLinkage
 pub fn aya_obj::btf::VarLinkage::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::StructuralPartialEq for aya_obj::btf::VarLinkage
+impl core::marker::Forget for aya_obj::btf::VarLinkage
 impl core::marker::Freeze for aya_obj::btf::VarLinkage
 impl core::marker::Send for aya_obj::btf::VarLinkage
 impl core::marker::Sync for aya_obj::btf::VarLinkage
@@ -236,6 +243,7 @@ impl core::clone::Clone for aya_obj::btf::Array
 pub fn aya_obj::btf::Array::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Array
 pub fn aya_obj::btf::Array::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Array
 impl core::marker::Freeze for aya_obj::btf::Array
 impl core::marker::Send for aya_obj::btf::Array
 impl core::marker::Sync for aya_obj::btf::Array
@@ -259,6 +267,7 @@ impl core::default::Default for aya_obj::btf::Btf
 pub fn aya_obj::btf::Btf::default() -> Self
 impl core::fmt::Debug for aya_obj::btf::Btf
 pub fn aya_obj::btf::Btf::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Btf
 impl core::marker::Freeze for aya_obj::btf::Btf
 impl core::marker::Send for aya_obj::btf::Btf
 impl core::marker::Sync for aya_obj::btf::Btf
@@ -275,6 +284,7 @@ impl core::clone::Clone for aya_obj::btf::BtfEnum
 pub fn aya_obj::btf::BtfEnum::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::BtfEnum
 pub fn aya_obj::btf::BtfEnum::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::BtfEnum
 impl core::marker::Freeze for aya_obj::btf::BtfEnum
 impl core::marker::Send for aya_obj::btf::BtfEnum
 impl core::marker::Sync for aya_obj::btf::BtfEnum
@@ -290,6 +300,7 @@ pub fn aya_obj::btf::BtfEnum64::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::BtfEnum64
 pub fn aya_obj::btf::BtfEnum64::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::btf::BtfEnum64
+impl core::marker::Forget for aya_obj::btf::BtfEnum64
 impl core::marker::Freeze for aya_obj::btf::BtfEnum64
 impl core::marker::Send for aya_obj::btf::BtfEnum64
 impl core::marker::Sync for aya_obj::btf::BtfEnum64
@@ -302,6 +313,7 @@ impl core::clone::Clone for aya_obj::btf::BtfExt
 pub fn aya_obj::btf::BtfExt::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::BtfExt
 pub fn aya_obj::btf::BtfExt::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::BtfExt
 impl core::marker::Freeze for aya_obj::btf::BtfExt
 impl core::marker::Send for aya_obj::btf::BtfExt
 impl core::marker::Sync for aya_obj::btf::BtfExt
@@ -316,6 +328,7 @@ impl core::clone::Clone for aya_obj::btf::BtfParam
 pub fn aya_obj::btf::BtfParam::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::BtfParam
 pub fn aya_obj::btf::BtfParam::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::BtfParam
 impl core::marker::Freeze for aya_obj::btf::BtfParam
 impl core::marker::Send for aya_obj::btf::BtfParam
 impl core::marker::Sync for aya_obj::btf::BtfParam
@@ -331,6 +344,7 @@ impl core::fmt::Debug for aya_obj::btf::BtfRelocationError
 pub fn aya_obj::btf::BtfRelocationError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya_obj::btf::BtfRelocationError
 pub fn aya_obj::btf::BtfRelocationError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::BtfRelocationError
 impl core::marker::Freeze for aya_obj::btf::BtfRelocationError
 impl core::marker::Send for aya_obj::btf::BtfRelocationError
 impl core::marker::Sync for aya_obj::btf::BtfRelocationError
@@ -343,6 +357,7 @@ impl core::clone::Clone for aya_obj::btf::Const
 pub fn aya_obj::btf::Const::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Const
 pub fn aya_obj::btf::Const::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Const
 impl core::marker::Freeze for aya_obj::btf::Const
 impl core::marker::Send for aya_obj::btf::Const
 impl core::marker::Sync for aya_obj::btf::Const
@@ -357,6 +372,7 @@ impl core::clone::Clone for aya_obj::btf::DataSec
 pub fn aya_obj::btf::DataSec::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::DataSec
 pub fn aya_obj::btf::DataSec::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::DataSec
 impl core::marker::Freeze for aya_obj::btf::DataSec
 impl core::marker::Send for aya_obj::btf::DataSec
 impl core::marker::Sync for aya_obj::btf::DataSec
@@ -372,6 +388,7 @@ impl core::clone::Clone for aya_obj::btf::DataSecEntry
 pub fn aya_obj::btf::DataSecEntry::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::DataSecEntry
 pub fn aya_obj::btf::DataSecEntry::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::DataSecEntry
 impl core::marker::Freeze for aya_obj::btf::DataSecEntry
 impl core::marker::Send for aya_obj::btf::DataSecEntry
 impl core::marker::Sync for aya_obj::btf::DataSecEntry
@@ -386,6 +403,7 @@ impl core::clone::Clone for aya_obj::btf::DeclTag
 pub fn aya_obj::btf::DeclTag::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::DeclTag
 pub fn aya_obj::btf::DeclTag::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::DeclTag
 impl core::marker::Freeze for aya_obj::btf::DeclTag
 impl core::marker::Send for aya_obj::btf::DeclTag
 impl core::marker::Sync for aya_obj::btf::DeclTag
@@ -400,6 +418,7 @@ impl core::clone::Clone for aya_obj::btf::Enum
 pub fn aya_obj::btf::Enum::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Enum
 pub fn aya_obj::btf::Enum::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Enum
 impl core::marker::Freeze for aya_obj::btf::Enum
 impl core::marker::Send for aya_obj::btf::Enum
 impl core::marker::Sync for aya_obj::btf::Enum
@@ -414,6 +433,7 @@ impl core::clone::Clone for aya_obj::btf::Enum64
 pub fn aya_obj::btf::Enum64::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Enum64
 pub fn aya_obj::btf::Enum64::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Enum64
 impl core::marker::Freeze for aya_obj::btf::Enum64
 impl core::marker::Send for aya_obj::btf::Enum64
 impl core::marker::Sync for aya_obj::btf::Enum64
@@ -428,6 +448,7 @@ impl core::clone::Clone for aya_obj::btf::Float
 pub fn aya_obj::btf::Float::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Float
 pub fn aya_obj::btf::Float::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Float
 impl core::marker::Freeze for aya_obj::btf::Float
 impl core::marker::Send for aya_obj::btf::Float
 impl core::marker::Sync for aya_obj::btf::Float
@@ -442,6 +463,7 @@ impl core::clone::Clone for aya_obj::btf::Func
 pub fn aya_obj::btf::Func::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Func
 pub fn aya_obj::btf::Func::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Func
 impl core::marker::Freeze for aya_obj::btf::Func
 impl core::marker::Send for aya_obj::btf::Func
 impl core::marker::Sync for aya_obj::btf::Func
@@ -455,6 +477,7 @@ impl core::clone::Clone for aya_obj::btf::FuncInfo
 pub fn aya_obj::btf::FuncInfo::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::FuncInfo
 pub fn aya_obj::btf::FuncInfo::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::FuncInfo
 impl core::marker::Freeze for aya_obj::btf::FuncInfo
 impl core::marker::Send for aya_obj::btf::FuncInfo
 impl core::marker::Sync for aya_obj::btf::FuncInfo
@@ -469,6 +492,7 @@ impl core::clone::Clone for aya_obj::btf::FuncProto
 pub fn aya_obj::btf::FuncProto::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::FuncProto
 pub fn aya_obj::btf::FuncProto::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::FuncProto
 impl core::marker::Freeze for aya_obj::btf::FuncProto
 impl core::marker::Send for aya_obj::btf::FuncProto
 impl core::marker::Sync for aya_obj::btf::FuncProto
@@ -488,6 +512,7 @@ impl core::default::Default for aya_obj::btf::FuncSecInfo
 pub fn aya_obj::btf::FuncSecInfo::default() -> Self
 impl core::fmt::Debug for aya_obj::btf::FuncSecInfo
 pub fn aya_obj::btf::FuncSecInfo::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::FuncSecInfo
 impl core::marker::Freeze for aya_obj::btf::FuncSecInfo
 impl core::marker::Send for aya_obj::btf::FuncSecInfo
 impl core::marker::Sync for aya_obj::btf::FuncSecInfo
@@ -500,6 +525,7 @@ impl core::clone::Clone for aya_obj::btf::Fwd
 pub fn aya_obj::btf::Fwd::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Fwd
 pub fn aya_obj::btf::Fwd::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Fwd
 impl core::marker::Freeze for aya_obj::btf::Fwd
 impl core::marker::Send for aya_obj::btf::Fwd
 impl core::marker::Sync for aya_obj::btf::Fwd
@@ -514,6 +540,7 @@ impl core::clone::Clone for aya_obj::btf::Int
 pub fn aya_obj::btf::Int::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Int
 pub fn aya_obj::btf::Int::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Int
 impl core::marker::Freeze for aya_obj::btf::Int
 impl core::marker::Send for aya_obj::btf::Int
 impl core::marker::Sync for aya_obj::btf::Int
@@ -533,6 +560,7 @@ impl core::default::Default for aya_obj::btf::LineSecInfo
 pub fn aya_obj::btf::LineSecInfo::default() -> Self
 impl core::fmt::Debug for aya_obj::btf::LineSecInfo
 pub fn aya_obj::btf::LineSecInfo::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::LineSecInfo
 impl core::marker::Freeze for aya_obj::btf::LineSecInfo
 impl core::marker::Send for aya_obj::btf::LineSecInfo
 impl core::marker::Sync for aya_obj::btf::LineSecInfo
@@ -547,6 +575,7 @@ impl core::clone::Clone for aya_obj::btf::Ptr
 pub fn aya_obj::btf::Ptr::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Ptr
 pub fn aya_obj::btf::Ptr::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Ptr
 impl core::marker::Freeze for aya_obj::btf::Ptr
 impl core::marker::Send for aya_obj::btf::Ptr
 impl core::marker::Sync for aya_obj::btf::Ptr
@@ -559,6 +588,7 @@ impl core::clone::Clone for aya_obj::btf::Restrict
 pub fn aya_obj::btf::Restrict::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Restrict
 pub fn aya_obj::btf::Restrict::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Restrict
 impl core::marker::Freeze for aya_obj::btf::Restrict
 impl core::marker::Send for aya_obj::btf::Restrict
 impl core::marker::Sync for aya_obj::btf::Restrict
@@ -571,6 +601,7 @@ impl core::clone::Clone for aya_obj::btf::Struct
 pub fn aya_obj::btf::Struct::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Struct
 pub fn aya_obj::btf::Struct::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Struct
 impl core::marker::Freeze for aya_obj::btf::Struct
 impl core::marker::Send for aya_obj::btf::Struct
 impl core::marker::Sync for aya_obj::btf::Struct
@@ -585,6 +616,7 @@ impl core::clone::Clone for aya_obj::btf::TypeTag
 pub fn aya_obj::btf::TypeTag::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::TypeTag
 pub fn aya_obj::btf::TypeTag::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::TypeTag
 impl core::marker::Freeze for aya_obj::btf::TypeTag
 impl core::marker::Send for aya_obj::btf::TypeTag
 impl core::marker::Sync for aya_obj::btf::TypeTag
@@ -597,6 +629,7 @@ impl core::clone::Clone for aya_obj::btf::Typedef
 pub fn aya_obj::btf::Typedef::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Typedef
 pub fn aya_obj::btf::Typedef::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Typedef
 impl core::marker::Freeze for aya_obj::btf::Typedef
 impl core::marker::Send for aya_obj::btf::Typedef
 impl core::marker::Sync for aya_obj::btf::Typedef
@@ -609,6 +642,7 @@ impl core::clone::Clone for aya_obj::btf::Union
 pub fn aya_obj::btf::Union::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Union
 pub fn aya_obj::btf::Union::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Union
 impl core::marker::Freeze for aya_obj::btf::Union
 impl core::marker::Send for aya_obj::btf::Union
 impl core::marker::Sync for aya_obj::btf::Union
@@ -623,6 +657,7 @@ impl core::clone::Clone for aya_obj::btf::Var
 pub fn aya_obj::btf::Var::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Var
 pub fn aya_obj::btf::Var::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Var
 impl core::marker::Freeze for aya_obj::btf::Var
 impl core::marker::Send for aya_obj::btf::Var
 impl core::marker::Sync for aya_obj::btf::Var
@@ -635,6 +670,7 @@ impl core::clone::Clone for aya_obj::btf::Volatile
 pub fn aya_obj::btf::Volatile::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::btf::Volatile
 pub fn aya_obj::btf::Volatile::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::btf::Volatile
 impl core::marker::Freeze for aya_obj::btf::Volatile
 impl core::marker::Send for aya_obj::btf::Volatile
 impl core::marker::Sync for aya_obj::btf::Volatile
@@ -682,6 +718,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_1
 pub fn aya_obj::generated::_bindgen_ty_1::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_1
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_1
@@ -705,6 +742,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_16
 pub fn aya_obj::generated::_bindgen_ty_16::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_16
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_16
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_16
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_16
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_16
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_16
@@ -726,6 +764,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_18
 pub fn aya_obj::generated::_bindgen_ty_18::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_18
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_18
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_18
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_18
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_18
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_18
@@ -746,6 +785,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_20
 pub fn aya_obj::generated::_bindgen_ty_20::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_20
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_20
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_20
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_20
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_20
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_20
@@ -767,6 +807,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_22
 pub fn aya_obj::generated::_bindgen_ty_22::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_22
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_22
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_22
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_22
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_22
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_22
@@ -791,6 +832,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_23
 pub fn aya_obj::generated::_bindgen_ty_23::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_23
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_23
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_23
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_23
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_23
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_23
@@ -812,6 +854,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_25
 pub fn aya_obj::generated::_bindgen_ty_25::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_25
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_25
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_25
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_25
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_25
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_25
@@ -834,6 +877,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_28
 pub fn aya_obj::generated::_bindgen_ty_28::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_28
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_28
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_28
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_28
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_28
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_28
@@ -861,6 +905,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_29
 pub fn aya_obj::generated::_bindgen_ty_29::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_29
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_29
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_29
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_29
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_29
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_29
@@ -901,6 +946,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_31
 pub fn aya_obj::generated::_bindgen_ty_31::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_31
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_31
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_31
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_31
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_31
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_31
@@ -934,6 +980,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_32
 pub fn aya_obj::generated::_bindgen_ty_32::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_32
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_32
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_32
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_32
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_32
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_32
@@ -954,6 +1001,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_34
 pub fn aya_obj::generated::_bindgen_ty_34::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_34
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_34
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_34
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_34
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_34
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_34
@@ -975,6 +1023,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_35
 pub fn aya_obj::generated::_bindgen_ty_35::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_35
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_35
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_35
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_35
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_35
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_35
@@ -997,6 +1046,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_36
 pub fn aya_obj::generated::_bindgen_ty_36::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_36
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_36
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_36
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_36
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_36
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_36
@@ -1018,6 +1068,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_37
 pub fn aya_obj::generated::_bindgen_ty_37::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_37
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_37
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_37
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_37
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_37
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_37
@@ -1043,6 +1094,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_38
 pub fn aya_obj::generated::_bindgen_ty_38::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_38
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_38
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_38
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_38
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_38
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_38
@@ -1072,6 +1124,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_39
 pub fn aya_obj::generated::_bindgen_ty_39::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_39
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_39
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_39
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_39
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_39
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_39
@@ -1094,6 +1147,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_40
 pub fn aya_obj::generated::_bindgen_ty_40::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_40
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_40
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_40
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_40
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_40
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_40
@@ -1115,6 +1169,7 @@ impl core::hash::Hash for aya_obj::generated::_bindgen_ty_6
 pub fn aya_obj::generated::_bindgen_ty_6::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::_bindgen_ty_6
 impl core::marker::StructuralPartialEq for aya_obj::generated::_bindgen_ty_6
+impl core::marker::Forget for aya_obj::generated::_bindgen_ty_6
 impl core::marker::Freeze for aya_obj::generated::_bindgen_ty_6
 impl core::marker::Send for aya_obj::generated::_bindgen_ty_6
 impl core::marker::Sync for aya_obj::generated::_bindgen_ty_6
@@ -1211,6 +1266,7 @@ impl core::hash::Hash for aya_obj::generated::bpf_attach_type
 pub fn aya_obj::generated::bpf_attach_type::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::bpf_attach_type
 impl core::marker::StructuralPartialEq for aya_obj::generated::bpf_attach_type
+impl core::marker::Forget for aya_obj::generated::bpf_attach_type
 impl core::marker::Freeze for aya_obj::generated::bpf_attach_type
 impl core::marker::Send for aya_obj::generated::bpf_attach_type
 impl core::marker::Sync for aya_obj::generated::bpf_attach_type
@@ -1236,6 +1292,7 @@ impl core::hash::Hash for aya_obj::generated::bpf_cgroup_iter_order
 pub fn aya_obj::generated::bpf_cgroup_iter_order::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::bpf_cgroup_iter_order
 impl core::marker::StructuralPartialEq for aya_obj::generated::bpf_cgroup_iter_order
+impl core::marker::Forget for aya_obj::generated::bpf_cgroup_iter_order
 impl core::marker::Freeze for aya_obj::generated::bpf_cgroup_iter_order
 impl core::marker::Send for aya_obj::generated::bpf_cgroup_iter_order
 impl core::marker::Sync for aya_obj::generated::bpf_cgroup_iter_order
@@ -1297,6 +1354,7 @@ impl core::hash::Hash for aya_obj::generated::bpf_cmd
 pub fn aya_obj::generated::bpf_cmd::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::bpf_cmd
 impl core::marker::StructuralPartialEq for aya_obj::generated::bpf_cmd
+impl core::marker::Forget for aya_obj::generated::bpf_cmd
 impl core::marker::Freeze for aya_obj::generated::bpf_cmd
 impl core::marker::Send for aya_obj::generated::bpf_cmd
 impl core::marker::Sync for aya_obj::generated::bpf_cmd
@@ -1529,6 +1587,7 @@ impl core::hash::Hash for aya_obj::generated::bpf_func_id
 pub fn aya_obj::generated::bpf_func_id::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::bpf_func_id
 impl core::marker::StructuralPartialEq for aya_obj::generated::bpf_func_id
+impl core::marker::Forget for aya_obj::generated::bpf_func_id
 impl core::marker::Freeze for aya_obj::generated::bpf_func_id
 impl core::marker::Send for aya_obj::generated::bpf_func_id
 impl core::marker::Sync for aya_obj::generated::bpf_func_id
@@ -1567,6 +1626,7 @@ impl core::hash::Hash for aya_obj::generated::bpf_link_type
 pub fn aya_obj::generated::bpf_link_type::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::bpf_link_type
 impl core::marker::StructuralPartialEq for aya_obj::generated::bpf_link_type
+impl core::marker::Forget for aya_obj::generated::bpf_link_type
 impl core::marker::Freeze for aya_obj::generated::bpf_link_type
 impl core::marker::Send for aya_obj::generated::bpf_link_type
 impl core::marker::Sync for aya_obj::generated::bpf_link_type
@@ -1629,6 +1689,7 @@ impl core::hash::Hash for aya_obj::generated::bpf_map_type
 pub fn aya_obj::generated::bpf_map_type::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::bpf_map_type
 impl core::marker::StructuralPartialEq for aya_obj::generated::bpf_map_type
+impl core::marker::Forget for aya_obj::generated::bpf_map_type
 impl core::marker::Freeze for aya_obj::generated::bpf_map_type
 impl core::marker::Send for aya_obj::generated::bpf_map_type
 impl core::marker::Sync for aya_obj::generated::bpf_map_type
@@ -1655,6 +1716,7 @@ impl core::hash::Hash for aya_obj::generated::bpf_perf_event_type
 pub fn aya_obj::generated::bpf_perf_event_type::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::bpf_perf_event_type
 impl core::marker::StructuralPartialEq for aya_obj::generated::bpf_perf_event_type
+impl core::marker::Forget for aya_obj::generated::bpf_perf_event_type
 impl core::marker::Freeze for aya_obj::generated::bpf_perf_event_type
 impl core::marker::Send for aya_obj::generated::bpf_perf_event_type
 impl core::marker::Sync for aya_obj::generated::bpf_perf_event_type
@@ -1711,6 +1773,7 @@ impl core::hash::Hash for aya_obj::generated::bpf_prog_type
 pub fn aya_obj::generated::bpf_prog_type::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::bpf_prog_type
 impl core::marker::StructuralPartialEq for aya_obj::generated::bpf_prog_type
+impl core::marker::Forget for aya_obj::generated::bpf_prog_type
 impl core::marker::Freeze for aya_obj::generated::bpf_prog_type
 impl core::marker::Send for aya_obj::generated::bpf_prog_type
 impl core::marker::Sync for aya_obj::generated::bpf_prog_type
@@ -1731,6 +1794,7 @@ impl core::hash::Hash for aya_obj::generated::bpf_stats_type
 pub fn aya_obj::generated::bpf_stats_type::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::bpf_stats_type
 impl core::marker::StructuralPartialEq for aya_obj::generated::bpf_stats_type
+impl core::marker::Forget for aya_obj::generated::bpf_stats_type
 impl core::marker::Freeze for aya_obj::generated::bpf_stats_type
 impl core::marker::Send for aya_obj::generated::bpf_stats_type
 impl core::marker::Sync for aya_obj::generated::bpf_stats_type
@@ -1756,6 +1820,7 @@ impl core::hash::Hash for aya_obj::generated::bpf_task_fd_type
 pub fn aya_obj::generated::bpf_task_fd_type::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::bpf_task_fd_type
 impl core::marker::StructuralPartialEq for aya_obj::generated::bpf_task_fd_type
+impl core::marker::Forget for aya_obj::generated::bpf_task_fd_type
 impl core::marker::Freeze for aya_obj::generated::bpf_task_fd_type
 impl core::marker::Send for aya_obj::generated::bpf_task_fd_type
 impl core::marker::Sync for aya_obj::generated::bpf_task_fd_type
@@ -1778,6 +1843,7 @@ impl core::hash::Hash for aya_obj::generated::btf_func_linkage
 pub fn aya_obj::generated::btf_func_linkage::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::btf_func_linkage
 impl core::marker::StructuralPartialEq for aya_obj::generated::btf_func_linkage
+impl core::marker::Forget for aya_obj::generated::btf_func_linkage
 impl core::marker::Freeze for aya_obj::generated::btf_func_linkage
 impl core::marker::Send for aya_obj::generated::btf_func_linkage
 impl core::marker::Sync for aya_obj::generated::btf_func_linkage
@@ -1805,6 +1871,7 @@ impl core::hash::Hash for aya_obj::generated::nf_inet_hooks
 pub fn aya_obj::generated::nf_inet_hooks::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::nf_inet_hooks
 impl core::marker::StructuralPartialEq for aya_obj::generated::nf_inet_hooks
+impl core::marker::Forget for aya_obj::generated::nf_inet_hooks
 impl core::marker::Freeze for aya_obj::generated::nf_inet_hooks
 impl core::marker::Send for aya_obj::generated::nf_inet_hooks
 impl core::marker::Sync for aya_obj::generated::nf_inet_hooks
@@ -1834,6 +1901,7 @@ impl core::hash::Hash for aya_obj::generated::nlmsgerr_attrs
 pub fn aya_obj::generated::nlmsgerr_attrs::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::nlmsgerr_attrs
 impl core::marker::StructuralPartialEq for aya_obj::generated::nlmsgerr_attrs
+impl core::marker::Forget for aya_obj::generated::nlmsgerr_attrs
 impl core::marker::Freeze for aya_obj::generated::nlmsgerr_attrs
 impl core::marker::Send for aya_obj::generated::nlmsgerr_attrs
 impl core::marker::Sync for aya_obj::generated::nlmsgerr_attrs
@@ -1859,6 +1927,7 @@ impl core::hash::Hash for aya_obj::generated::perf_event_read_format
 pub fn aya_obj::generated::perf_event_read_format::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::perf_event_read_format
 impl core::marker::StructuralPartialEq for aya_obj::generated::perf_event_read_format
+impl core::marker::Forget for aya_obj::generated::perf_event_read_format
 impl core::marker::Freeze for aya_obj::generated::perf_event_read_format
 impl core::marker::Send for aya_obj::generated::perf_event_read_format
 impl core::marker::Sync for aya_obj::generated::perf_event_read_format
@@ -1904,6 +1973,7 @@ impl core::hash::Hash for aya_obj::generated::perf_event_sample_format
 pub fn aya_obj::generated::perf_event_sample_format::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::perf_event_sample_format
 impl core::marker::StructuralPartialEq for aya_obj::generated::perf_event_sample_format
+impl core::marker::Forget for aya_obj::generated::perf_event_sample_format
 impl core::marker::Freeze for aya_obj::generated::perf_event_sample_format
 impl core::marker::Send for aya_obj::generated::perf_event_sample_format
 impl core::marker::Sync for aya_obj::generated::perf_event_sample_format
@@ -1946,6 +2016,7 @@ impl core::hash::Hash for aya_obj::generated::perf_event_type
 pub fn aya_obj::generated::perf_event_type::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::perf_event_type
 impl core::marker::StructuralPartialEq for aya_obj::generated::perf_event_type
+impl core::marker::Forget for aya_obj::generated::perf_event_type
 impl core::marker::Freeze for aya_obj::generated::perf_event_type
 impl core::marker::Send for aya_obj::generated::perf_event_type
 impl core::marker::Sync for aya_obj::generated::perf_event_type
@@ -1973,6 +2044,7 @@ impl core::hash::Hash for aya_obj::generated::perf_hw_cache_id
 pub fn aya_obj::generated::perf_hw_cache_id::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::perf_hw_cache_id
 impl core::marker::StructuralPartialEq for aya_obj::generated::perf_hw_cache_id
+impl core::marker::Forget for aya_obj::generated::perf_hw_cache_id
 impl core::marker::Freeze for aya_obj::generated::perf_hw_cache_id
 impl core::marker::Send for aya_obj::generated::perf_hw_cache_id
 impl core::marker::Sync for aya_obj::generated::perf_hw_cache_id
@@ -1996,6 +2068,7 @@ impl core::hash::Hash for aya_obj::generated::perf_hw_cache_op_id
 pub fn aya_obj::generated::perf_hw_cache_op_id::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::perf_hw_cache_op_id
 impl core::marker::StructuralPartialEq for aya_obj::generated::perf_hw_cache_op_id
+impl core::marker::Forget for aya_obj::generated::perf_hw_cache_op_id
 impl core::marker::Freeze for aya_obj::generated::perf_hw_cache_op_id
 impl core::marker::Send for aya_obj::generated::perf_hw_cache_op_id
 impl core::marker::Sync for aya_obj::generated::perf_hw_cache_op_id
@@ -2018,6 +2091,7 @@ impl core::hash::Hash for aya_obj::generated::perf_hw_cache_op_result_id
 pub fn aya_obj::generated::perf_hw_cache_op_result_id::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::perf_hw_cache_op_result_id
 impl core::marker::StructuralPartialEq for aya_obj::generated::perf_hw_cache_op_result_id
+impl core::marker::Forget for aya_obj::generated::perf_hw_cache_op_result_id
 impl core::marker::Freeze for aya_obj::generated::perf_hw_cache_op_result_id
 impl core::marker::Send for aya_obj::generated::perf_hw_cache_op_result_id
 impl core::marker::Sync for aya_obj::generated::perf_hw_cache_op_result_id
@@ -2048,6 +2122,7 @@ impl core::hash::Hash for aya_obj::generated::perf_hw_id
 pub fn aya_obj::generated::perf_hw_id::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::perf_hw_id
 impl core::marker::StructuralPartialEq for aya_obj::generated::perf_hw_id
+impl core::marker::Forget for aya_obj::generated::perf_hw_id
 impl core::marker::Freeze for aya_obj::generated::perf_hw_id
 impl core::marker::Send for aya_obj::generated::perf_hw_id
 impl core::marker::Sync for aya_obj::generated::perf_hw_id
@@ -2080,6 +2155,7 @@ impl core::hash::Hash for aya_obj::generated::perf_sw_ids
 pub fn aya_obj::generated::perf_sw_ids::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::perf_sw_ids
 impl core::marker::StructuralPartialEq for aya_obj::generated::perf_sw_ids
+impl core::marker::Forget for aya_obj::generated::perf_sw_ids
 impl core::marker::Freeze for aya_obj::generated::perf_sw_ids
 impl core::marker::Send for aya_obj::generated::perf_sw_ids
 impl core::marker::Sync for aya_obj::generated::perf_sw_ids
@@ -2106,6 +2182,7 @@ impl core::hash::Hash for aya_obj::generated::perf_type_id
 pub fn aya_obj::generated::perf_type_id::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_obj::generated::perf_type_id
 impl core::marker::StructuralPartialEq for aya_obj::generated::perf_type_id
+impl core::marker::Forget for aya_obj::generated::perf_type_id
 impl core::marker::Freeze for aya_obj::generated::perf_type_id
 impl core::marker::Send for aya_obj::generated::perf_type_id
 impl core::marker::Sync for aya_obj::generated::perf_type_id
@@ -2139,6 +2216,7 @@ pub aya_obj::generated::bpf_attr::token_create: aya_obj::generated::bpf_attr__bi
 impl core::clone::Clone for aya_obj::generated::bpf_attr
 pub fn aya_obj::generated::bpf_attr::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr
+impl core::marker::Forget for aya_obj::generated::bpf_attr
 impl core::marker::Freeze for aya_obj::generated::bpf_attr
 impl core::marker::Send for aya_obj::generated::bpf_attr
 impl core::marker::Sync for aya_obj::generated::bpf_attr
@@ -2152,6 +2230,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::target_ifindex: a
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_1
@@ -2165,6 +2244,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::prog_cnt: aya_obj
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_10__bindgen_ty_2
@@ -2178,6 +2258,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1::prog_fd: aya_obj:
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_1
@@ -2191,6 +2272,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2::target_ifindex: a
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_2
@@ -2212,6 +2294,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::uprobe_multi: aya
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3
@@ -2225,6 +2308,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bin
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6__bindgen_ty_1
@@ -2238,6 +2322,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bin
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8__bindgen_ty_1
@@ -2251,6 +2336,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bin
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9__bindgen_ty_1
@@ -2264,6 +2350,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1::new_prog_fd: aya_
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_1
@@ -2277,6 +2364,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2::old_prog_fd: aya_
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_15__bindgen_ty_2
@@ -2290,6 +2378,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1::value: aya_obj::ge
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_2__bindgen_ty_1
@@ -2303,6 +2392,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1::attach_prog_fd: ay
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_4__bindgen_ty_1
@@ -2316,6 +2406,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::target_ifindex: ay
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_1
@@ -2329,6 +2420,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::relative_id: aya_o
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_6__bindgen_ty_2
@@ -2345,6 +2437,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1::start_id: aya_obj:
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_8__bindgen_ty_1
@@ -2358,6 +2451,7 @@ pub aya_obj::generated::bpf_cpumap_val__bindgen_ty_1::id: aya_obj::generated::__
 impl core::clone::Clone for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 pub fn aya_obj::generated::bpf_cpumap_val__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_cpumap_val__bindgen_ty_1
@@ -2371,6 +2465,7 @@ pub aya_obj::generated::bpf_devmap_val__bindgen_ty_1::id: aya_obj::generated::__
 impl core::clone::Clone for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 pub fn aya_obj::generated::bpf_devmap_val__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_devmap_val__bindgen_ty_1
@@ -2396,6 +2491,7 @@ pub aya_obj::generated::bpf_link_info__bindgen_ty_1::xdp: aya_obj::generated::bp
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1
@@ -2411,6 +2507,7 @@ pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1
@@ -2423,6 +2520,7 @@ pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1:
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1
@@ -2436,6 +2534,7 @@ pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2:
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2
@@ -2449,6 +2548,7 @@ pub aya_obj::generated::btf_type__bindgen_ty_1::type_: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::btf_type__bindgen_ty_1
 pub fn aya_obj::generated::btf_type__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::btf_type__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::btf_type__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::btf_type__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::btf_type__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::btf_type__bindgen_ty_1
@@ -2462,6 +2562,7 @@ pub aya_obj::generated::perf_event_attr__bindgen_ty_1::sample_period: aya_obj::g
 impl core::clone::Clone for aya_obj::generated::perf_event_attr__bindgen_ty_1
 pub fn aya_obj::generated::perf_event_attr__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::perf_event_attr__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::perf_event_attr__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::perf_event_attr__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::perf_event_attr__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::perf_event_attr__bindgen_ty_1
@@ -2475,6 +2576,7 @@ pub aya_obj::generated::perf_event_attr__bindgen_ty_2::wakeup_watermark: aya_obj
 impl core::clone::Clone for aya_obj::generated::perf_event_attr__bindgen_ty_2
 pub fn aya_obj::generated::perf_event_attr__bindgen_ty_2::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::perf_event_attr__bindgen_ty_2
+impl core::marker::Forget for aya_obj::generated::perf_event_attr__bindgen_ty_2
 impl core::marker::Freeze for aya_obj::generated::perf_event_attr__bindgen_ty_2
 impl core::marker::Send for aya_obj::generated::perf_event_attr__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::perf_event_attr__bindgen_ty_2
@@ -2490,6 +2592,7 @@ pub aya_obj::generated::perf_event_attr__bindgen_ty_3::uprobe_path: aya_obj::gen
 impl core::clone::Clone for aya_obj::generated::perf_event_attr__bindgen_ty_3
 pub fn aya_obj::generated::perf_event_attr__bindgen_ty_3::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::perf_event_attr__bindgen_ty_3
+impl core::marker::Forget for aya_obj::generated::perf_event_attr__bindgen_ty_3
 impl core::marker::Freeze for aya_obj::generated::perf_event_attr__bindgen_ty_3
 impl core::marker::Send for aya_obj::generated::perf_event_attr__bindgen_ty_3
 impl core::marker::Sync for aya_obj::generated::perf_event_attr__bindgen_ty_3
@@ -2505,6 +2608,7 @@ pub aya_obj::generated::perf_event_attr__bindgen_ty_4::probe_offset: aya_obj::ge
 impl core::clone::Clone for aya_obj::generated::perf_event_attr__bindgen_ty_4
 pub fn aya_obj::generated::perf_event_attr__bindgen_ty_4::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::perf_event_attr__bindgen_ty_4
+impl core::marker::Forget for aya_obj::generated::perf_event_attr__bindgen_ty_4
 impl core::marker::Freeze for aya_obj::generated::perf_event_attr__bindgen_ty_4
 impl core::marker::Send for aya_obj::generated::perf_event_attr__bindgen_ty_4
 impl core::marker::Sync for aya_obj::generated::perf_event_attr__bindgen_ty_4
@@ -2518,6 +2622,7 @@ pub aya_obj::generated::perf_event_attr__bindgen_ty_5::aux_action: aya_obj::gene
 impl core::clone::Clone for aya_obj::generated::perf_event_attr__bindgen_ty_5
 pub fn aya_obj::generated::perf_event_attr__bindgen_ty_5::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::perf_event_attr__bindgen_ty_5
+impl core::marker::Forget for aya_obj::generated::perf_event_attr__bindgen_ty_5
 impl core::marker::Freeze for aya_obj::generated::perf_event_attr__bindgen_ty_5
 impl core::marker::Send for aya_obj::generated::perf_event_attr__bindgen_ty_5
 impl core::marker::Sync for aya_obj::generated::perf_event_attr__bindgen_ty_5
@@ -2531,6 +2636,7 @@ pub aya_obj::generated::perf_event_mmap_page__bindgen_ty_1::capabilities: aya_ob
 impl core::clone::Clone for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1
@@ -2572,6 +2678,7 @@ pub fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::fmt(&self, &mut core:
 impl<Storage: core::hash::Hash> core::hash::Hash for aya_obj::generated::__BindgenBitfieldUnit<Storage>
 pub fn aya_obj::generated::__BindgenBitfieldUnit<Storage>::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl<Storage: core::marker::Copy> core::marker::Copy for aya_obj::generated::__BindgenBitfieldUnit<Storage>
+impl<Storage> core::marker::Forget for aya_obj::generated::__BindgenBitfieldUnit<Storage>
 impl<Storage> core::marker::Freeze for aya_obj::generated::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Freeze
 impl<Storage> core::marker::Send for aya_obj::generated::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Send
 impl<Storage> core::marker::Sync for aya_obj::generated::__BindgenBitfieldUnit<Storage> where Storage: core::marker::Sync
@@ -2590,6 +2697,7 @@ impl<T: core::default::Default> core::default::Default for aya_obj::generated::_
 pub fn aya_obj::generated::__IncompleteArrayField<T>::default() -> Self
 impl<T> core::fmt::Debug for aya_obj::generated::__IncompleteArrayField<T>
 pub fn aya_obj::generated::__IncompleteArrayField<T>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<T> core::marker::Forget for aya_obj::generated::__IncompleteArrayField<T>
 impl<T> core::marker::Freeze for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::Freeze, [T; 0]: core::marker::Freeze
 impl<T> core::marker::Send for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::Send, [T; 0]: core::marker::Send
 impl<T> core::marker::Sync for aya_obj::generated::__IncompleteArrayField<T> where core::marker::PhantomData<T>: core::marker::Sync, [T; 0]: core::marker::Sync
@@ -2621,6 +2729,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_1::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_1
@@ -2645,6 +2754,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_10::new_bitfield_1() -> aya_obj:
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_10
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_10::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_10
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_10
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_10
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_10
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_10
@@ -2664,6 +2774,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_11::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_11
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_11::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_11
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_11
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_11
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_11
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_11
@@ -2685,6 +2796,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_12::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_12
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_12::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_12
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_12
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_12
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_12
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_12
@@ -2707,6 +2819,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_13::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_13
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_13::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_13
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_13
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_13
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_13
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_13
@@ -2723,6 +2836,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_14::flags: aya_obj::generated::__u3
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14
@@ -2738,6 +2852,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1::
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_1
@@ -2752,6 +2867,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2::
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_2
@@ -2770,6 +2886,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_3
@@ -2785,6 +2902,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4::
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_4
@@ -2802,6 +2920,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_5
@@ -2815,6 +2934,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::exp
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_6
@@ -2835,6 +2955,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_7
@@ -2848,6 +2969,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::exp
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_8
@@ -2861,6 +2983,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9::exp
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_14__bindgen_ty_3__bindgen_ty_9
@@ -2876,6 +2999,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_15::link_fd: aya_obj::generated::__
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_15
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_15::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_15
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_15
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_15
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_15
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_15
@@ -2890,6 +3014,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_16::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_16
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_16::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_16
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_16
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_16
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_16
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_16
@@ -2904,6 +3029,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_17::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_17
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_17::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_17
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_17
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_17
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_17
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_17
@@ -2919,6 +3045,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_18::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_18
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_18::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_18
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_18
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_18
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_18
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_18
@@ -2935,6 +3062,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_19::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_19
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_19::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_19
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_19
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_19
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_19
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_19
@@ -2950,6 +3078,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_2::map_fd: aya_obj::generated::__u3
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_2
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_2::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_2
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_2
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_2
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_2
@@ -2965,6 +3094,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_20
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_20::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_20
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_20
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_20
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_20
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_20
@@ -2982,6 +3112,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_21::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_21
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_21::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_21
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_21
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_21
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_21
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_21
@@ -2998,6 +3129,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_22::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_22
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_22::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_22
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_22
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_22
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_22
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_22
@@ -3019,6 +3151,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_3::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_3
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_3::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_3
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_3
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_3
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_3
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_3
@@ -3061,6 +3194,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_4::signature_size: aya_obj::generat
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_4
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_4::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_4
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_4
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_4
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_4
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_4
@@ -3078,6 +3212,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_5::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_5
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_5::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_5
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_5
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_5
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_5
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_5
@@ -3096,6 +3231,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_6::replace_bpf_fd: aya_obj::generat
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_6
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_6::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_6
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_6
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_6
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_6
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_6
@@ -3124,6 +3260,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_7::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_7
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_7::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_7
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_7
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_7
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_7
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_7
@@ -3139,6 +3276,7 @@ pub aya_obj::generated::bpf_attr__bindgen_ty_8::open_flags: aya_obj::generated::
 impl core::clone::Clone for aya_obj::generated::bpf_attr__bindgen_ty_8
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_8::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_8
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_8
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_8
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_8
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_8
@@ -3155,6 +3293,7 @@ pub fn aya_obj::generated::bpf_attr__bindgen_ty_9::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_attr__bindgen_ty_9
 pub fn aya_obj::generated::bpf_attr__bindgen_ty_9::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_attr__bindgen_ty_9
+impl core::marker::Forget for aya_obj::generated::bpf_attr__bindgen_ty_9
 impl core::marker::Freeze for aya_obj::generated::bpf_attr__bindgen_ty_9
 impl core::marker::Send for aya_obj::generated::bpf_attr__bindgen_ty_9
 impl core::marker::Sync for aya_obj::generated::bpf_attr__bindgen_ty_9
@@ -3174,6 +3313,7 @@ pub fn aya_obj::generated::bpf_btf_info::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_btf_info
 pub fn aya_obj::generated::bpf_btf_info::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_btf_info
+impl core::marker::Forget for aya_obj::generated::bpf_btf_info
 impl core::marker::Freeze for aya_obj::generated::bpf_btf_info
 impl core::marker::Send for aya_obj::generated::bpf_btf_info
 impl core::marker::Sync for aya_obj::generated::bpf_btf_info
@@ -3189,6 +3329,7 @@ pub fn aya_obj::generated::bpf_cgroup_storage_key::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_cgroup_storage_key
 pub fn aya_obj::generated::bpf_cgroup_storage_key::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_cgroup_storage_key
+impl core::marker::Forget for aya_obj::generated::bpf_cgroup_storage_key
 impl core::marker::Freeze for aya_obj::generated::bpf_cgroup_storage_key
 impl core::marker::Send for aya_obj::generated::bpf_cgroup_storage_key
 impl core::marker::Sync for aya_obj::generated::bpf_cgroup_storage_key
@@ -3206,6 +3347,7 @@ pub fn aya_obj::generated::bpf_core_relo::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_core_relo
 pub fn aya_obj::generated::bpf_core_relo::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_core_relo
+impl core::marker::Forget for aya_obj::generated::bpf_core_relo
 impl core::marker::Freeze for aya_obj::generated::bpf_core_relo
 impl core::marker::Send for aya_obj::generated::bpf_core_relo
 impl core::marker::Sync for aya_obj::generated::bpf_core_relo
@@ -3219,6 +3361,7 @@ pub aya_obj::generated::bpf_cpumap_val::qsize: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_cpumap_val
 pub fn aya_obj::generated::bpf_cpumap_val::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_cpumap_val
+impl core::marker::Forget for aya_obj::generated::bpf_cpumap_val
 impl core::marker::Freeze for aya_obj::generated::bpf_cpumap_val
 impl core::marker::Send for aya_obj::generated::bpf_cpumap_val
 impl core::marker::Sync for aya_obj::generated::bpf_cpumap_val
@@ -3232,6 +3375,7 @@ pub aya_obj::generated::bpf_devmap_val::ifindex: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_devmap_val
 pub fn aya_obj::generated::bpf_devmap_val::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_devmap_val
+impl core::marker::Forget for aya_obj::generated::bpf_devmap_val
 impl core::marker::Freeze for aya_obj::generated::bpf_devmap_val
 impl core::marker::Send for aya_obj::generated::bpf_devmap_val
 impl core::marker::Sync for aya_obj::generated::bpf_devmap_val
@@ -3247,6 +3391,7 @@ pub fn aya_obj::generated::bpf_func_info::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_func_info
 pub fn aya_obj::generated::bpf_func_info::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_func_info
+impl core::marker::Forget for aya_obj::generated::bpf_func_info
 impl core::marker::Freeze for aya_obj::generated::bpf_func_info
 impl core::marker::Send for aya_obj::generated::bpf_func_info
 impl core::marker::Sync for aya_obj::generated::bpf_func_info
@@ -3274,6 +3419,7 @@ pub fn aya_obj::generated::bpf_insn::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_insn
 pub fn aya_obj::generated::bpf_insn::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_insn
+impl core::marker::Forget for aya_obj::generated::bpf_insn
 impl core::marker::Freeze for aya_obj::generated::bpf_insn
 impl core::marker::Send for aya_obj::generated::bpf_insn
 impl core::marker::Sync for aya_obj::generated::bpf_insn
@@ -3293,6 +3439,7 @@ pub fn aya_obj::generated::bpf_insn_array_value::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_insn_array_value
 pub fn aya_obj::generated::bpf_insn_array_value::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_insn_array_value
+impl core::marker::Forget for aya_obj::generated::bpf_insn_array_value
 impl core::marker::Freeze for aya_obj::generated::bpf_insn_array_value
 impl core::marker::Send for aya_obj::generated::bpf_insn_array_value
 impl core::marker::Sync for aya_obj::generated::bpf_insn_array_value
@@ -3310,6 +3457,7 @@ pub fn aya_obj::generated::bpf_line_info::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_line_info
 pub fn aya_obj::generated::bpf_line_info::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_line_info
+impl core::marker::Forget for aya_obj::generated::bpf_line_info
 impl core::marker::Freeze for aya_obj::generated::bpf_line_info
 impl core::marker::Send for aya_obj::generated::bpf_line_info
 impl core::marker::Sync for aya_obj::generated::bpf_line_info
@@ -3325,6 +3473,7 @@ pub aya_obj::generated::bpf_link_info::type_: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::bpf_link_info
 pub fn aya_obj::generated::bpf_link_info::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_link_info
+impl core::marker::Forget for aya_obj::generated::bpf_link_info
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info
 impl core::marker::Send for aya_obj::generated::bpf_link_info
 impl core::marker::Sync for aya_obj::generated::bpf_link_info
@@ -3344,6 +3493,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1::clone(&sel
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_1
@@ -3365,6 +3515,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::clone(&se
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_10
@@ -3381,6 +3532,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::new_bitfi
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11
@@ -3399,6 +3551,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_t
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_1
@@ -3418,6 +3571,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_t
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_2
@@ -3437,6 +3591,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_t
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_3
@@ -3456,6 +3611,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_t
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_11__bindgen_ty_1__bindgen_ty_4
@@ -3471,6 +3627,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::clone(&se
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_12
@@ -3486,6 +3643,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::clone(&se
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_13
@@ -3501,6 +3659,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14::clone(&se
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_14
@@ -3521,6 +3680,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2::clone(&sel
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_2
@@ -3536,6 +3696,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3::clone(&sel
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_3
@@ -3551,6 +3712,7 @@ pub aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4::target_name_l
 impl core::clone::Clone for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4
@@ -3565,6 +3727,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_1__bindgen_ty_1
@@ -3580,6 +3743,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_1
@@ -3595,6 +3759,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_4__bindgen_ty_2__bindgen_ty_2
@@ -3610,6 +3775,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5::clone(&sel
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_5
@@ -3624,6 +3790,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6::clone(&sel
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_6
@@ -3638,6 +3805,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7::clone(&sel
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_7
@@ -3655,6 +3823,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8::clone(&sel
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_8
@@ -3673,6 +3842,7 @@ pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::clone(&sel
 impl core::fmt::Debug for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 pub fn aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
+impl core::marker::Forget for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::marker::Freeze for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::marker::Send for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
 impl core::marker::Sync for aya_obj::generated::bpf_link_info__bindgen_ty_1__bindgen_ty_9
@@ -3685,6 +3855,7 @@ pub aya_obj::generated::bpf_lpm_trie_key::data: aya_obj::generated::__Incomplete
 pub aya_obj::generated::bpf_lpm_trie_key::prefixlen: aya_obj::generated::__u32
 impl core::fmt::Debug for aya_obj::generated::bpf_lpm_trie_key
 pub fn aya_obj::generated::bpf_lpm_trie_key::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::generated::bpf_lpm_trie_key
 impl core::marker::Freeze for aya_obj::generated::bpf_lpm_trie_key
 impl core::marker::Send for aya_obj::generated::bpf_lpm_trie_key
 impl core::marker::Sync for aya_obj::generated::bpf_lpm_trie_key
@@ -3716,6 +3887,7 @@ pub fn aya_obj::generated::bpf_map_info::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_map_info
 pub fn aya_obj::generated::bpf_map_info::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_map_info
+impl core::marker::Forget for aya_obj::generated::bpf_map_info
 impl core::marker::Freeze for aya_obj::generated::bpf_map_info
 impl core::marker::Send for aya_obj::generated::bpf_map_info
 impl core::marker::Sync for aya_obj::generated::bpf_map_info
@@ -3773,6 +3945,7 @@ pub fn aya_obj::generated::bpf_prog_info::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::bpf_prog_info
 pub fn aya_obj::generated::bpf_prog_info::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::bpf_prog_info
+impl core::marker::Forget for aya_obj::generated::bpf_prog_info
 impl core::marker::Freeze for aya_obj::generated::bpf_prog_info
 impl core::marker::Send for aya_obj::generated::bpf_prog_info
 impl core::marker::Sync for aya_obj::generated::bpf_prog_info
@@ -3789,6 +3962,7 @@ pub fn aya_obj::generated::btf_array::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::btf_array
 pub fn aya_obj::generated::btf_array::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::btf_array
+impl core::marker::Forget for aya_obj::generated::btf_array
 impl core::marker::Freeze for aya_obj::generated::btf_array
 impl core::marker::Send for aya_obj::generated::btf_array
 impl core::marker::Sync for aya_obj::generated::btf_array
@@ -3803,6 +3977,7 @@ pub fn aya_obj::generated::btf_decl_tag::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::btf_decl_tag
 pub fn aya_obj::generated::btf_decl_tag::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::btf_decl_tag
+impl core::marker::Forget for aya_obj::generated::btf_decl_tag
 impl core::marker::Freeze for aya_obj::generated::btf_decl_tag
 impl core::marker::Send for aya_obj::generated::btf_decl_tag
 impl core::marker::Sync for aya_obj::generated::btf_decl_tag
@@ -3818,6 +3993,7 @@ pub fn aya_obj::generated::btf_enum::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::btf_enum
 pub fn aya_obj::generated::btf_enum::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::btf_enum
+impl core::marker::Forget for aya_obj::generated::btf_enum
 impl core::marker::Freeze for aya_obj::generated::btf_enum
 impl core::marker::Send for aya_obj::generated::btf_enum
 impl core::marker::Sync for aya_obj::generated::btf_enum
@@ -3841,6 +4017,7 @@ pub fn aya_obj::generated::btf_ext_header::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::btf_ext_header
 pub fn aya_obj::generated::btf_ext_header::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::btf_ext_header
+impl core::marker::Forget for aya_obj::generated::btf_ext_header
 impl core::marker::Freeze for aya_obj::generated::btf_ext_header
 impl core::marker::Send for aya_obj::generated::btf_ext_header
 impl core::marker::Sync for aya_obj::generated::btf_ext_header
@@ -3862,6 +4039,7 @@ pub fn aya_obj::generated::btf_header::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::btf_header
 pub fn aya_obj::generated::btf_header::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::btf_header
+impl core::marker::Forget for aya_obj::generated::btf_header
 impl core::marker::Freeze for aya_obj::generated::btf_header
 impl core::marker::Send for aya_obj::generated::btf_header
 impl core::marker::Sync for aya_obj::generated::btf_header
@@ -3878,6 +4056,7 @@ pub fn aya_obj::generated::btf_member::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::btf_member
 pub fn aya_obj::generated::btf_member::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::btf_member
+impl core::marker::Forget for aya_obj::generated::btf_member
 impl core::marker::Freeze for aya_obj::generated::btf_member
 impl core::marker::Send for aya_obj::generated::btf_member
 impl core::marker::Sync for aya_obj::generated::btf_member
@@ -3893,6 +4072,7 @@ pub fn aya_obj::generated::btf_param::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::btf_param
 pub fn aya_obj::generated::btf_param::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::btf_param
+impl core::marker::Forget for aya_obj::generated::btf_param
 impl core::marker::Freeze for aya_obj::generated::btf_param
 impl core::marker::Send for aya_obj::generated::btf_param
 impl core::marker::Sync for aya_obj::generated::btf_param
@@ -3907,6 +4087,7 @@ pub aya_obj::generated::btf_type::name_off: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::btf_type
 pub fn aya_obj::generated::btf_type::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::btf_type
+impl core::marker::Forget for aya_obj::generated::btf_type
 impl core::marker::Freeze for aya_obj::generated::btf_type
 impl core::marker::Send for aya_obj::generated::btf_type
 impl core::marker::Sync for aya_obj::generated::btf_type
@@ -3921,6 +4102,7 @@ pub fn aya_obj::generated::btf_var::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::btf_var
 pub fn aya_obj::generated::btf_var::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::btf_var
+impl core::marker::Forget for aya_obj::generated::btf_var
 impl core::marker::Freeze for aya_obj::generated::btf_var
 impl core::marker::Send for aya_obj::generated::btf_var
 impl core::marker::Sync for aya_obj::generated::btf_var
@@ -3937,6 +4119,7 @@ pub fn aya_obj::generated::btf_var_secinfo::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::btf_var_secinfo
 pub fn aya_obj::generated::btf_var_secinfo::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::btf_var_secinfo
+impl core::marker::Forget for aya_obj::generated::btf_var_secinfo
 impl core::marker::Freeze for aya_obj::generated::btf_var_secinfo
 impl core::marker::Send for aya_obj::generated::btf_var_secinfo
 impl core::marker::Sync for aya_obj::generated::btf_var_secinfo
@@ -3956,6 +4139,7 @@ pub fn aya_obj::generated::ifinfomsg::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::ifinfomsg
 pub fn aya_obj::generated::ifinfomsg::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::ifinfomsg
+impl core::marker::Forget for aya_obj::generated::ifinfomsg
 impl core::marker::Freeze for aya_obj::generated::ifinfomsg
 impl core::marker::Send for aya_obj::generated::ifinfomsg
 impl core::marker::Sync for aya_obj::generated::ifinfomsg
@@ -4153,6 +4337,7 @@ pub unsafe fn aya_obj::generated::perf_event_attr::write_backward_raw(*const Sel
 impl core::clone::Clone for aya_obj::generated::perf_event_attr
 pub fn aya_obj::generated::perf_event_attr::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::perf_event_attr
+impl core::marker::Forget for aya_obj::generated::perf_event_attr
 impl core::marker::Freeze for aya_obj::generated::perf_event_attr
 impl core::marker::Send for aya_obj::generated::perf_event_attr
 impl core::marker::Sync for aya_obj::generated::perf_event_attr
@@ -4186,6 +4371,7 @@ pub fn aya_obj::generated::perf_event_attr__bindgen_ty_5__bindgen_ty_1::clone(&s
 impl core::fmt::Debug for aya_obj::generated::perf_event_attr__bindgen_ty_5__bindgen_ty_1
 pub fn aya_obj::generated::perf_event_attr__bindgen_ty_5__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::perf_event_attr__bindgen_ty_5__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::perf_event_attr__bindgen_ty_5__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::perf_event_attr__bindgen_ty_5__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::perf_event_attr__bindgen_ty_5__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::perf_event_attr__bindgen_ty_5__bindgen_ty_1
@@ -4202,6 +4388,7 @@ pub fn aya_obj::generated::perf_event_header::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::perf_event_header
 pub fn aya_obj::generated::perf_event_header::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::perf_event_header
+impl core::marker::Forget for aya_obj::generated::perf_event_header
 impl core::marker::Freeze for aya_obj::generated::perf_event_header
 impl core::marker::Send for aya_obj::generated::perf_event_header
 impl core::marker::Sync for aya_obj::generated::perf_event_header
@@ -4239,6 +4426,7 @@ pub aya_obj::generated::perf_event_mmap_page::version: aya_obj::generated::__u32
 impl core::clone::Clone for aya_obj::generated::perf_event_mmap_page
 pub fn aya_obj::generated::perf_event_mmap_page::clone(&self) -> Self
 impl core::marker::Copy for aya_obj::generated::perf_event_mmap_page
+impl core::marker::Forget for aya_obj::generated::perf_event_mmap_page
 impl core::marker::Freeze for aya_obj::generated::perf_event_mmap_page
 impl core::marker::Send for aya_obj::generated::perf_event_mmap_page
 impl core::marker::Sync for aya_obj::generated::perf_event_mmap_page
@@ -4284,6 +4472,7 @@ pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::clo
 impl core::fmt::Debug for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 pub fn aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
+impl core::marker::Forget for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Freeze for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Send for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
 impl core::marker::Sync for aya_obj::generated::perf_event_mmap_page__bindgen_ty_1__bindgen_ty_1
@@ -4304,6 +4493,7 @@ pub fn aya_obj::generated::tcmsg::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::generated::tcmsg
 pub fn aya_obj::generated::tcmsg::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::generated::tcmsg
+impl core::marker::Forget for aya_obj::generated::tcmsg
 impl core::marker::Freeze for aya_obj::generated::tcmsg
 impl core::marker::Send for aya_obj::generated::tcmsg
 impl core::marker::Sync for aya_obj::generated::tcmsg
@@ -4774,6 +4964,7 @@ impl core::clone::Clone for aya_obj::maps::Map
 pub fn aya_obj::maps::Map::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::maps::Map
 pub fn aya_obj::maps::Map::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::maps::Map
 impl core::marker::Freeze for aya_obj::maps::Map
 impl core::marker::Send for aya_obj::maps::Map
 impl core::marker::Sync for aya_obj::maps::Map
@@ -4789,6 +4980,7 @@ impl core::fmt::Debug for aya_obj::maps::PinningError
 pub fn aya_obj::maps::PinningError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya_obj::maps::PinningError
 pub fn aya_obj::maps::PinningError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::maps::PinningError
 impl core::marker::Freeze for aya_obj::maps::PinningError
 impl core::marker::Send for aya_obj::maps::PinningError
 impl core::marker::Sync for aya_obj::maps::PinningError
@@ -4813,6 +5005,7 @@ impl core::fmt::Debug for aya_obj::maps::PinningType
 pub fn aya_obj::maps::PinningType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::maps::PinningType
 impl core::marker::StructuralPartialEq for aya_obj::maps::PinningType
+impl core::marker::Forget for aya_obj::maps::PinningType
 impl core::marker::Freeze for aya_obj::maps::PinningType
 impl core::marker::Send for aya_obj::maps::PinningType
 impl core::marker::Sync for aya_obj::maps::PinningType
@@ -4826,6 +5019,7 @@ impl core::clone::Clone for aya_obj::maps::BtfMap
 pub fn aya_obj::maps::BtfMap::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::maps::BtfMap
 pub fn aya_obj::maps::BtfMap::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::maps::BtfMap
 impl core::marker::Freeze for aya_obj::maps::BtfMap
 impl core::marker::Send for aya_obj::maps::BtfMap
 impl core::marker::Sync for aya_obj::maps::BtfMap
@@ -4847,6 +5041,7 @@ impl core::fmt::Debug for aya_obj::maps::BtfMapDef
 pub fn aya_obj::maps::BtfMapDef::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::maps::BtfMapDef
 impl core::marker::StructuralPartialEq for aya_obj::maps::BtfMapDef
+impl core::marker::Forget for aya_obj::maps::BtfMapDef
 impl core::marker::Freeze for aya_obj::maps::BtfMapDef
 impl core::marker::Send for aya_obj::maps::BtfMapDef
 impl core::marker::Sync for aya_obj::maps::BtfMapDef
@@ -4865,6 +5060,7 @@ impl core::clone::Clone for aya_obj::maps::LegacyMap
 pub fn aya_obj::maps::LegacyMap::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::maps::LegacyMap
 pub fn aya_obj::maps::LegacyMap::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::maps::LegacyMap
 impl core::marker::Freeze for aya_obj::maps::LegacyMap
 impl core::marker::Send for aya_obj::maps::LegacyMap
 impl core::marker::Sync for aya_obj::maps::LegacyMap
@@ -4891,6 +5087,7 @@ impl core::fmt::Debug for aya_obj::maps::bpf_map_def
 pub fn aya_obj::maps::bpf_map_def::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::maps::bpf_map_def
 impl core::marker::StructuralPartialEq for aya_obj::maps::bpf_map_def
+impl core::marker::Forget for aya_obj::maps::bpf_map_def
 impl core::marker::Freeze for aya_obj::maps::bpf_map_def
 impl core::marker::Send for aya_obj::maps::bpf_map_def
 impl core::marker::Sync for aya_obj::maps::bpf_map_def
@@ -4921,6 +5118,7 @@ impl core::fmt::Debug for aya_obj::EbpfSectionKind
 pub fn aya_obj::EbpfSectionKind::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::EbpfSectionKind
 impl core::marker::StructuralPartialEq for aya_obj::EbpfSectionKind
+impl core::marker::Forget for aya_obj::EbpfSectionKind
 impl core::marker::Freeze for aya_obj::EbpfSectionKind
 impl core::marker::Send for aya_obj::EbpfSectionKind
 impl core::marker::Sync for aya_obj::EbpfSectionKind
@@ -4976,6 +5174,7 @@ impl core::fmt::Debug for aya_obj::ParseError
 pub fn aya_obj::ParseError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya_obj::ParseError
 pub fn aya_obj::ParseError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::ParseError
 impl core::marker::Freeze for aya_obj::ParseError
 impl core::marker::Send for aya_obj::ParseError
 impl core::marker::Sync for aya_obj::ParseError
@@ -5037,6 +5236,7 @@ pub fn aya_obj::ProgramSection::fmt(&self, &mut core::fmt::Formatter<'_>) -> cor
 impl core::str::traits::FromStr for aya_obj::ProgramSection
 pub type aya_obj::ProgramSection::Err = aya_obj::ParseError
 pub fn aya_obj::ProgramSection::from_str(&str) -> core::result::Result<Self, aya_obj::ParseError>
+impl core::marker::Forget for aya_obj::ProgramSection
 impl core::marker::Freeze for aya_obj::ProgramSection
 impl core::marker::Send for aya_obj::ProgramSection
 impl core::marker::Sync for aya_obj::ProgramSection
@@ -5058,6 +5258,7 @@ impl core::clone::Clone for aya_obj::Function
 pub fn aya_obj::Function::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Function
 pub fn aya_obj::Function::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::Function
 impl core::marker::Freeze for aya_obj::Function
 impl core::marker::Send for aya_obj::Function
 impl core::marker::Sync for aya_obj::Function
@@ -5067,6 +5268,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Function
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::Function
 pub struct aya_obj::obj::InvalidTypeBinding<T>
 pub aya_obj::obj::InvalidTypeBinding::value: T
+impl<T> core::marker::Forget for aya_obj::InvalidTypeBinding<T>
 impl<T> core::marker::Freeze for aya_obj::InvalidTypeBinding<T> where T: core::marker::Freeze
 impl<T> core::marker::Send for aya_obj::InvalidTypeBinding<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_obj::InvalidTypeBinding<T> where T: core::marker::Sync
@@ -5104,6 +5306,7 @@ impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Object
 pub fn aya_obj::Object::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::Object
 impl core::marker::Freeze for aya_obj::Object
 impl core::marker::Send for aya_obj::Object
 impl core::marker::Sync for aya_obj::Object
@@ -5123,6 +5326,7 @@ impl core::clone::Clone for aya_obj::Program
 pub fn aya_obj::Program::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Program
 pub fn aya_obj::Program::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::Program
 impl core::marker::Freeze for aya_obj::Program
 impl core::marker::Send for aya_obj::Program
 impl core::marker::Sync for aya_obj::Program
@@ -5144,6 +5348,7 @@ pub fn aya_obj::generated::bpf_attach_type::from(aya_obj::programs::cgroup_skb::
 impl core::fmt::Debug for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
 pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::Forget for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
 impl core::marker::Freeze for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
 impl core::marker::Send for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
@@ -5166,6 +5371,7 @@ pub fn aya_obj::programs::cgroup_sock::CgroupSockAttachType::default() -> Self
 impl core::fmt::Debug for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 pub fn aya_obj::programs::cgroup_sock::CgroupSockAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::cgroup_sock::CgroupSockAttachType
+impl core::marker::Forget for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::marker::Freeze for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::marker::Send for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_sock::CgroupSockAttachType
@@ -5194,6 +5400,7 @@ pub fn aya_obj::generated::bpf_attach_type::from(aya_obj::programs::cgroup_sock_
 impl core::fmt::Debug for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 pub fn aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
+impl core::marker::Forget for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::marker::Freeze for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::marker::Send for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
@@ -5212,6 +5419,7 @@ pub fn aya_obj::generated::bpf_attach_type::from(aya_obj::programs::cgroup_socko
 impl core::fmt::Debug for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
+impl core::marker::Forget for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::marker::Freeze for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::marker::Send for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
@@ -5230,6 +5438,7 @@ pub fn aya_obj::generated::bpf_attach_type::from(aya_obj::programs::sk_reuseport
 impl core::fmt::Debug for aya_obj::programs::sk_reuseport::SkReuseportAttachType
 pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Forget for aya_obj::programs::sk_reuseport::SkReuseportAttachType
 impl core::marker::Freeze for aya_obj::programs::sk_reuseport::SkReuseportAttachType
 impl core::marker::Send for aya_obj::programs::sk_reuseport::SkReuseportAttachType
 impl core::marker::Sync for aya_obj::programs::sk_reuseport::SkReuseportAttachType
@@ -5248,6 +5457,7 @@ pub fn aya_obj::generated::bpf_attach_type::from(aya_obj::programs::sk_skb::SkSk
 impl core::fmt::Debug for aya_obj::programs::sk_skb::SkSkbKind
 pub fn aya_obj::programs::sk_skb::SkSkbKind::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::sk_skb::SkSkbKind
+impl core::marker::Forget for aya_obj::programs::sk_skb::SkSkbKind
 impl core::marker::Freeze for aya_obj::programs::sk_skb::SkSkbKind
 impl core::marker::Send for aya_obj::programs::sk_skb::SkSkbKind
 impl core::marker::Sync for aya_obj::programs::sk_skb::SkSkbKind
@@ -5267,6 +5477,7 @@ pub fn aya_obj::generated::bpf_attach_type::from(aya_obj::programs::xdp::XdpAtta
 impl core::fmt::Debug for aya_obj::programs::xdp::XdpAttachType
 pub fn aya_obj::programs::xdp::XdpAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::xdp::XdpAttachType
+impl core::marker::Forget for aya_obj::programs::xdp::XdpAttachType
 impl core::marker::Freeze for aya_obj::programs::xdp::XdpAttachType
 impl core::marker::Send for aya_obj::programs::xdp::XdpAttachType
 impl core::marker::Sync for aya_obj::programs::xdp::XdpAttachType
@@ -5284,6 +5495,7 @@ pub fn aya_obj::generated::bpf_attach_type::from(aya_obj::programs::cgroup_skb::
 impl core::fmt::Debug for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
 pub fn aya_obj::programs::cgroup_skb::CgroupSkbAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
+impl core::marker::Forget for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
 impl core::marker::Freeze for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
 impl core::marker::Send for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_skb::CgroupSkbAttachType
@@ -5311,6 +5523,7 @@ pub fn aya_obj::generated::bpf_attach_type::from(aya_obj::programs::cgroup_sock_
 impl core::fmt::Debug for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 pub fn aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
+impl core::marker::Forget for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::marker::Freeze for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::marker::Send for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_sock_addr::CgroupSockAddrAttachType
@@ -5332,6 +5545,7 @@ pub fn aya_obj::programs::cgroup_sock::CgroupSockAttachType::default() -> Self
 impl core::fmt::Debug for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 pub fn aya_obj::programs::cgroup_sock::CgroupSockAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::cgroup_sock::CgroupSockAttachType
+impl core::marker::Forget for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::marker::Freeze for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::marker::Send for aya_obj::programs::cgroup_sock::CgroupSockAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_sock::CgroupSockAttachType
@@ -5349,6 +5563,7 @@ pub fn aya_obj::generated::bpf_attach_type::from(aya_obj::programs::cgroup_socko
 impl core::fmt::Debug for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 pub fn aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
+impl core::marker::Forget for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::marker::Freeze for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::marker::Send for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
 impl core::marker::Sync for aya_obj::programs::cgroup_sockopt::CgroupSockoptAttachType
@@ -5366,6 +5581,7 @@ pub fn aya_obj::generated::bpf_attach_type::from(aya_obj::programs::sk_reuseport
 impl core::fmt::Debug for aya_obj::programs::sk_reuseport::SkReuseportAttachType
 pub fn aya_obj::programs::sk_reuseport::SkReuseportAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::sk_reuseport::SkReuseportAttachType
+impl core::marker::Forget for aya_obj::programs::sk_reuseport::SkReuseportAttachType
 impl core::marker::Freeze for aya_obj::programs::sk_reuseport::SkReuseportAttachType
 impl core::marker::Send for aya_obj::programs::sk_reuseport::SkReuseportAttachType
 impl core::marker::Sync for aya_obj::programs::sk_reuseport::SkReuseportAttachType
@@ -5383,6 +5599,7 @@ pub fn aya_obj::generated::bpf_attach_type::from(aya_obj::programs::sk_skb::SkSk
 impl core::fmt::Debug for aya_obj::programs::sk_skb::SkSkbKind
 pub fn aya_obj::programs::sk_skb::SkSkbKind::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::sk_skb::SkSkbKind
+impl core::marker::Forget for aya_obj::programs::sk_skb::SkSkbKind
 impl core::marker::Freeze for aya_obj::programs::sk_skb::SkSkbKind
 impl core::marker::Send for aya_obj::programs::sk_skb::SkSkbKind
 impl core::marker::Sync for aya_obj::programs::sk_skb::SkSkbKind
@@ -5401,6 +5618,7 @@ pub fn aya_obj::generated::bpf_attach_type::from(aya_obj::programs::xdp::XdpAtta
 impl core::fmt::Debug for aya_obj::programs::xdp::XdpAttachType
 pub fn aya_obj::programs::xdp::XdpAttachType::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::programs::xdp::XdpAttachType
+impl core::marker::Forget for aya_obj::programs::xdp::XdpAttachType
 impl core::marker::Freeze for aya_obj::programs::xdp::XdpAttachType
 impl core::marker::Send for aya_obj::programs::xdp::XdpAttachType
 impl core::marker::Sync for aya_obj::programs::xdp::XdpAttachType
@@ -5436,6 +5654,7 @@ impl core::fmt::Debug for aya_obj::relocation::RelocationError
 pub fn aya_obj::relocation::RelocationError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya_obj::relocation::RelocationError
 pub fn aya_obj::relocation::RelocationError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::relocation::RelocationError
 impl core::marker::Freeze for aya_obj::relocation::RelocationError
 impl core::marker::Send for aya_obj::relocation::RelocationError
 impl core::marker::Sync for aya_obj::relocation::RelocationError
@@ -5450,6 +5669,7 @@ impl core::fmt::Debug for aya_obj::relocation::EbpfRelocationError
 pub fn aya_obj::relocation::EbpfRelocationError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya_obj::relocation::EbpfRelocationError
 pub fn aya_obj::relocation::EbpfRelocationError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::relocation::EbpfRelocationError
 impl core::marker::Freeze for aya_obj::relocation::EbpfRelocationError
 impl core::marker::Send for aya_obj::relocation::EbpfRelocationError
 impl core::marker::Sync for aya_obj::relocation::EbpfRelocationError
@@ -5479,6 +5699,7 @@ impl core::fmt::Debug for aya_obj::EbpfSectionKind
 pub fn aya_obj::EbpfSectionKind::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_obj::EbpfSectionKind
 impl core::marker::StructuralPartialEq for aya_obj::EbpfSectionKind
+impl core::marker::Forget for aya_obj::EbpfSectionKind
 impl core::marker::Freeze for aya_obj::EbpfSectionKind
 impl core::marker::Send for aya_obj::EbpfSectionKind
 impl core::marker::Sync for aya_obj::EbpfSectionKind
@@ -5515,6 +5736,7 @@ impl core::fmt::Debug for aya_obj::KsymsError
 pub fn aya_obj::KsymsError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya_obj::KsymsError
 pub fn aya_obj::KsymsError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::KsymsError
 impl core::marker::Freeze for aya_obj::KsymsError
 impl core::marker::Send for aya_obj::KsymsError
 impl core::marker::Sync for aya_obj::KsymsError
@@ -5546,6 +5768,7 @@ impl core::clone::Clone for aya_obj::maps::Map
 pub fn aya_obj::maps::Map::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::maps::Map
 pub fn aya_obj::maps::Map::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::maps::Map
 impl core::marker::Freeze for aya_obj::maps::Map
 impl core::marker::Send for aya_obj::maps::Map
 impl core::marker::Sync for aya_obj::maps::Map
@@ -5601,6 +5824,7 @@ impl core::fmt::Debug for aya_obj::ParseError
 pub fn aya_obj::ParseError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya_obj::ParseError
 pub fn aya_obj::ParseError::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::ParseError
 impl core::marker::Freeze for aya_obj::ParseError
 impl core::marker::Send for aya_obj::ParseError
 impl core::marker::Sync for aya_obj::ParseError
@@ -5662,6 +5886,7 @@ pub fn aya_obj::ProgramSection::fmt(&self, &mut core::fmt::Formatter<'_>) -> cor
 impl core::str::traits::FromStr for aya_obj::ProgramSection
 pub type aya_obj::ProgramSection::Err = aya_obj::ParseError
 pub fn aya_obj::ProgramSection::from_str(&str) -> core::result::Result<Self, aya_obj::ParseError>
+impl core::marker::Forget for aya_obj::ProgramSection
 impl core::marker::Freeze for aya_obj::ProgramSection
 impl core::marker::Send for aya_obj::ProgramSection
 impl core::marker::Sync for aya_obj::ProgramSection
@@ -5683,6 +5908,7 @@ impl core::clone::Clone for aya_obj::Function
 pub fn aya_obj::Function::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Function
 pub fn aya_obj::Function::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::Function
 impl core::marker::Freeze for aya_obj::Function
 impl core::marker::Send for aya_obj::Function
 impl core::marker::Sync for aya_obj::Function
@@ -5692,6 +5918,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for aya_obj::Function
 impl core::panic::unwind_safe::UnwindSafe for aya_obj::Function
 pub struct aya_obj::InvalidTypeBinding<T>
 pub aya_obj::InvalidTypeBinding::value: T
+impl<T> core::marker::Forget for aya_obj::InvalidTypeBinding<T>
 impl<T> core::marker::Freeze for aya_obj::InvalidTypeBinding<T> where T: core::marker::Freeze
 impl<T> core::marker::Send for aya_obj::InvalidTypeBinding<T> where T: core::marker::Send
 impl<T> core::marker::Sync for aya_obj::InvalidTypeBinding<T> where T: core::marker::Sync
@@ -5729,6 +5956,7 @@ impl core::clone::Clone for aya_obj::Object
 pub fn aya_obj::Object::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Object
 pub fn aya_obj::Object::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::Object
 impl core::marker::Freeze for aya_obj::Object
 impl core::marker::Send for aya_obj::Object
 impl core::marker::Sync for aya_obj::Object
@@ -5748,6 +5976,7 @@ impl core::clone::Clone for aya_obj::Program
 pub fn aya_obj::Program::clone(&self) -> Self
 impl core::fmt::Debug for aya_obj::Program
 pub fn aya_obj::Program::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::Program
 impl core::marker::Freeze for aya_obj::Program
 impl core::marker::Send for aya_obj::Program
 impl core::marker::Sync for aya_obj::Program
@@ -5762,6 +5991,7 @@ impl core::fmt::Debug for aya_obj::VerifierLog
 pub fn aya_obj::VerifierLog::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::fmt::Display for aya_obj::VerifierLog
 pub fn aya_obj::VerifierLog::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Forget for aya_obj::VerifierLog
 impl core::marker::Freeze for aya_obj::VerifierLog
 impl core::marker::Send for aya_obj::VerifierLog
 impl core::marker::Sync for aya_obj::VerifierLog

@@ -5,6 +5,7 @@ pub aya_build::Toolchain::Custom(&'a str)
 pub aya_build::Toolchain::Nightly
 impl<'a> core::default::Default for aya_build::Toolchain<'a>
 pub fn aya_build::Toolchain<'a>::default() -> Self
+impl<'a> core::marker::Forget for aya_build::Toolchain<'a>
 impl<'a> core::marker::Freeze for aya_build::Toolchain<'a>
 impl<'a> core::marker::Send for aya_build::Toolchain<'a>
 impl<'a> core::marker::Sync for aya_build::Toolchain<'a>
@@ -19,6 +20,7 @@ pub aya_build::Package::no_default_features: bool
 pub aya_build::Package::root_dir: &'a str
 impl<'a> core::default::Default for aya_build::Package<'a>
 pub fn aya_build::Package<'a>::default() -> Self
+impl<'a> core::marker::Forget for aya_build::Package<'a>
 impl<'a> core::marker::Freeze for aya_build::Package<'a>
 impl<'a> core::marker::Send for aya_build::Package<'a>
 impl<'a> core::marker::Sync for aya_build::Package<'a>
