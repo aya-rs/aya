@@ -29,6 +29,7 @@ pub fn u8::from(aya_log_common::ArgumentKind) -> Self
 impl core::fmt::Debug for aya_log_common::ArgumentKind
 pub fn aya_log_common::ArgumentKind::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_log_common::ArgumentKind
+impl core::marker::Forget for aya_log_common::ArgumentKind
 impl core::marker::Freeze for aya_log_common::ArgumentKind
 impl core::marker::Send for aya_log_common::ArgumentKind
 impl core::marker::Sync for aya_log_common::ArgumentKind
@@ -57,6 +58,7 @@ impl core::fmt::Debug for aya_log_common::DisplayHint
 pub fn aya_log_common::DisplayHint::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_log_common::DisplayHint
 impl core::marker::StructuralPartialEq for aya_log_common::DisplayHint
+impl core::marker::Forget for aya_log_common::DisplayHint
 impl core::marker::Freeze for aya_log_common::DisplayHint
 impl core::marker::Send for aya_log_common::DisplayHint
 impl core::marker::Sync for aya_log_common::DisplayHint
@@ -83,6 +85,7 @@ impl core::hash::Hash for aya_log_common::Level
 pub fn aya_log_common::Level::hash<__H: core::hash::Hasher>(&self, &mut __H)
 impl core::marker::Copy for aya_log_common::Level
 impl core::marker::StructuralPartialEq for aya_log_common::Level
+impl core::marker::Forget for aya_log_common::Level
 impl core::marker::Freeze for aya_log_common::Level
 impl core::marker::Send for aya_log_common::Level
 impl core::marker::Sync for aya_log_common::Level
@@ -104,6 +107,7 @@ pub fn u8::from(aya_log_common::RecordFieldKind) -> Self
 impl core::fmt::Debug for aya_log_common::RecordFieldKind
 pub fn aya_log_common::RecordFieldKind::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for aya_log_common::RecordFieldKind
+impl core::marker::Forget for aya_log_common::RecordFieldKind
 impl core::marker::Freeze for aya_log_common::RecordFieldKind
 impl core::marker::Send for aya_log_common::RecordFieldKind
 impl core::marker::Sync for aya_log_common::RecordFieldKind
